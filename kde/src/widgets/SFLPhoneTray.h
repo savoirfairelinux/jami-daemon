@@ -47,8 +47,8 @@ public:
 
 private:
    //Attributes
-   QMenu* trayIconMenu;
-   bool   initialized_;
+   QMenu* m_pTrayIconMenu;
+   bool   m_Init;
 };
 
 #endif // SFLPHONETRAY_H

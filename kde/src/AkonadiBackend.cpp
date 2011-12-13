@@ -88,13 +88,13 @@ ContactBackend* AkonadiBackend::getInstance()
 ///Find contact using a phone number
 Contact* AkonadiBackend::getContactByPhone(QString phoneNumber)
 {
-   return m_pContactByPhone[phoneNumber];
+   return m_ContactByPhone[phoneNumber];
 }
 
 ///Find contact by UID
 Contact* AkonadiBackend::getContactByUid(QString uid)
 {
-   return m_pContactByUid[uid];
+   return m_ContactByUid[uid];
 }
 
 
@@ -107,7 +107,7 @@ Contact* AkonadiBackend::getContactByUid(QString uid)
 ///Update the contact list when a new Akonadi collection is added
 ContactList AkonadiBackend::update(Akonadi::Collection collection)
 {
-   m_pCollection = collection;
+   m_Collection = collection;
    ContactList contacts;
    if ( !collection.isValid() ) {
       qDebug() << "The current collection is not valid";
@@ -128,15 +128,15 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
          if ( item.hasPayload<KABC::Addressee>() ) {
             KABC::Addressee tmp = item.payload<KABC::Addressee>();
             Contact* aContact   = new Contact();
-            m_pAddrHash[tmp.uid()] = tmp;
+            m_AddrHash[tmp.uid()] = tmp;
             
             KABC::PhoneNumber::List numbers = tmp.phoneNumbers();
             PhoneNumbers newNumbers;
             foreach (KABC::PhoneNumber number, numbers) {
                newNumbers << new Contact::PhoneNumber(number.number(),number.typeLabel());
-               m_pContactByPhone[number.number()] = aContact;
+               m_ContactByPhone[number.number()] = aContact;
             }
-            m_pContactByUid[tmp.uid()] = aContact;
+            m_ContactByUid[tmp.uid()] = aContact;
             
             aContact->setNickName       (tmp.nickName()       );
             aContact->setFormattedName  (tmp.formattedName()  );
@@ -161,7 +161,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
 ///Edit backend value using an updated frontend contact
 void AkonadiBackend::editContact(Contact* contact)
 {
-   KABC::Addressee ct = m_pAddrHash[contact->getUid()];
+   KABC::Addressee ct = m_AddrHash[contact->getUid()];
    if (ct.uid() != contact->getUid()) {
       qDebug() << "Contact not found";
       return;
@@ -243,5 +243,5 @@ void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list
 ///Update the contact list even without a new collection
 ContactList AkonadiBackend::update_slot()
 {
-   return update(m_pCollection);
+   return update(m_Collection);
 }

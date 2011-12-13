@@ -54,8 +54,8 @@ class AccountView : public Account, public Item<AccountItemWidget> {
       
    private:
       //Attributes
-      QListWidgetItem*   item2;
-      AccountItemWidget* itemWidget;
+      QListWidgetItem*   m_pItem;
+      AccountItemWidget* m_pWidget;
 
       //Private constructor
       void initItemWidget();

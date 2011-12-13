@@ -48,38 +48,39 @@ public:
    class PhoneNumber {
    public:
       PhoneNumber(QString number, QString type)
-      : m_pNumber(number),m_pType(type){}
+      : m_Number(number),m_Type(type){}
       QString& getNumber() {
-         return m_pNumber ;
+         return m_Number ;
       }
       QString& getType() {
-         return m_pType   ;
+         return m_Type   ;
       }
       
    private:
-      QString m_pNumber   ;
-      QString m_pType     ;
+      QString m_Number   ;
+      QString m_Type     ;
    };
    
    typedef QList<Contact::PhoneNumber*> PhoneNumbers;
    
 private:
-   QString      m_pFirstName      ;
-   QString      m_pSecondName     ;
-   QString      m_pNickName       ;
-   QPixmap*     m_pPhoto          ;
-   QString      m_pType           ;
-   QString      m_pFormattedName  ;
-   QString      m_pPreferredEmail ;
-   QString      m_pOrganization   ;
-   QString      m_pUid            ;
-   bool         displayPhoto      ;
-   PhoneNumbers m_pNumbers        ;
+   QString      m_FirstName      ;
+   QString      m_SecondName     ;
+   QString      m_NickName       ;
+   QPixmap*     m_pPhoto         ;
+   QString      m_Type           ;
+   QString      m_FormattedName  ;
+   QString      m_PreferredEmail ;
+   QString      m_Organization   ;
+   QString      m_Uid            ;
+   bool         m_DisplayPhoto   ;
+   PhoneNumbers m_Numbers        ;
    
 public:
    //Constructors & Destructors
    explicit Contact();
    virtual ~Contact();
+   virtual void initItem();
    
    //Getters
    virtual PhoneNumbers   getPhoneNumbers()    const;
@@ -92,7 +93,6 @@ public:
    virtual QString        getPreferredEmail()  const;
    virtual const QPixmap* getPhoto()           const;
    virtual QString        getType()            const;
-   virtual void           initItem();
 
    //Setters
    virtual void setPhoneNumbers   (PhoneNumbers   );

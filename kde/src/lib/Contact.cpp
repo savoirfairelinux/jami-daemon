@@ -56,25 +56,25 @@ void Contact::initItemWidget()
 ///Get the phone number list
 PhoneNumbers Contact::getPhoneNumbers() const
 {
-   return m_pNumbers;
+   return m_Numbers;
 }
 
 ///Get the nickname
 QString Contact::getNickName() const
 {
-   return m_pNickName;
+   return m_NickName;
 }
 
 ///Get the firstname
 QString Contact::getFirstName() const
 {
-   return m_pFirstName;
+   return m_FirstName;
 }
 
 ///Get the second/family name
 QString Contact::getSecondName() const
 {
-   return m_pSecondName;
+   return m_SecondName;
 }
 
 ///Get the photo
@@ -86,55 +86,55 @@ const QPixmap* Contact::getPhoto() const
 ///Get the formatted name
 QString Contact::getFormattedName() const
 {
-   return m_pFormattedName;
+   return m_FormattedName;
 }
 
 ///Get the organisation
 QString Contact::getOrganization()  const
 {
-   return m_pOrganization;
+   return m_Organization;
 }
 
 ///Get the preferred email
 QString Contact::getPreferredEmail()  const
 {
-   return m_pPreferredEmail;
+   return m_PreferredEmail;
 }
 
 ///Get the unique identifier (used for drag and drop) 
 QString Contact::getUid() const
 {
-   return m_pUid;
+   return m_Uid;
 }
 
 ///Get the contact type
 QString Contact::getType() const
 {
-   return m_pType;
+   return m_Type;
 }
 
 ///Set the phone number (type and number) 
 void Contact::setPhoneNumbers(PhoneNumbers numbers)
 {
-   m_pNumbers    = numbers;
+   m_Numbers    = numbers;
 }
 
 ///Set the nickname
 void Contact::setNickName(QString name)
 {
-   m_pNickName   = name;
+   m_NickName   = name;
 }
 
 ///Set the first name
 void Contact::setFirstName(QString name)
 {
-   m_pFirstName  = name;
+   m_FirstName  = name;
 }
 
 ///Set the family name
 void Contact::setFamilyName(QString name)
 {
-   m_pSecondName = name;
+   m_SecondName = name;
 }
 
 ///Set the Photo/Avatar
@@ -146,23 +146,23 @@ void Contact::setPhoto(QPixmap* photo)
 ///Set the formatted name (display name)
 void Contact::setFormattedName(QString name)
 {
-   m_pFormattedName = name;
+   m_FormattedName = name;
 }
 
 ///Set the organisation / business
 void Contact::setOrganization(QString name)
 {
-   m_pOrganization = name;
+   m_Organization = name;
 }
 
 ///Set the default email
 void Contact::setPreferredEmail(QString name)
 {
-   m_pPreferredEmail = name;
+   m_PreferredEmail = name;
 }
 
 ///Set UID
 void Contact::setUid(QString id)
 {
-   m_pUid = id;
+   m_Uid = id;
 }

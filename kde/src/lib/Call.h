@@ -116,97 +116,6 @@ typedef  void (Call::*function)();
 class  LIB_EXPORT Call : public QObject
 {
    Q_OBJECT
-private:
-
-   //Call attributes
-   
-   QString       m_pAccount;
-   QString       m_pCallId;
-   QString       m_pConfId;
-   QString       m_pPeerPhoneNumber;
-   QString       m_pPeerName;
-   history_state m_pHistoryState;
-   QDateTime*    m_pStartTime;
-   QDateTime*    m_pStopTime;
-   
-   /*
-   QWidget * historyItemWidget;
-   QLabel * labelHistoryIcon;
-   QLabel * labelHistoryPeerName;
-   QLabel * labelHistoryCallNumber;
-   QLabel * labelHistoryTime;
-   */
-
-   QString m_pTransferNumber;
-   QString m_pCallNumber;
-   static ContactBackend* m_pContactBackend;
-   
-   bool conference;
-   
-   //Automate attributes
-   /**
-    *  actionPerformedStateMap[orig_state][action]
-    *  Map of the states to go to when the action action is 
-    *  performed on a call in state orig_state.
-   **/
-   static const call_state actionPerformedStateMap [11][5];
-   
-   /**
-    *  actionPerformedFunctionMap[orig_state][action]
-    *  Map of the functions to call when the action action is 
-    *  performed on a call in state orig_state.
-   **/
-   static const function actionPerformedFunctionMap [11][5];
-   
-   /**
-    *  stateChangedStateMap[orig_state][daemon_new_state]
-    *  Map of the states to go to when the daemon sends the signal 
-    *  callStateChanged with arg daemon_new_state
-    *  on a call in state orig_state.
-   **/
-   static const call_state stateChangedStateMap [11][6];
-   
-   /**
-    *  stateChangedFunctionMap[orig_state][daemon_new_state]
-    *  Map of the functions to call when the daemon sends the signal 
-    *  callStateChanged with arg daemon_new_state
-    *  on a call in state orig_state.
-   **/
-   static const function stateChangedFunctionMap [11][6];
-   
-   static const char * historyIcons[3];
-   
-   call_state currentState;
-   bool recording;
-   
-   static const char * callStateIcons[11];
-
-   Call(call_state startState, QString callId, QString peerNumber = "", QString account = "", QString peerName = "");
-   
-   static daemon_call_state toDaemonCallState(const QString & stateName);
-   
-   //Automate functions
-   // See actionPerformedFunctionMap and stateChangedFunctionMap
-   // to know when it is called.
-   void nothing      ();
-   void accept       ();
-   void refuse       ();
-   void acceptTransf ();
-   void acceptHold   ();
-   void hangUp       ();
-   void cancel       ();
-   void hold         ();
-   void call         ();
-   void transfer     ();
-   void unhold       ();
-   void switchRecord ();
-   void setRecord    ();
-   void start        ();
-   void startStop    ();
-   void stop         ();
-   void startWeird   ();
-   void warning      ();
-
 public:
    //Constructors & Destructors
    Call(QString confId, QString account);
@@ -258,6 +167,85 @@ public:
    void backspaceItemText();
    void changeCurrentState(call_state newState);
    
+private:
+
+   //Attributes
+   QString                m_Account;
+   QString                m_CallId;
+   QString                m_ConfId;
+   QString                m_PeerPhoneNumber;
+   QString                m_PeerName;
+   history_state          m_HistoryState;
+   QDateTime*             m_pStartTime;
+   QDateTime*             m_pStopTime;
+   QString                m_TransferNumber;
+   QString                m_CallNumber;
+   static ContactBackend* m_pContactBackend;
+   bool                   m_isConference;
+   call_state             m_CurrentState;
+   bool                   m_Recording;
+   
+   //Automate attributes
+   /**
+    *  actionPerformedStateMap[orig_state][action]
+    *  Map of the states to go to when the action action is 
+    *  performed on a call in state orig_state.
+   **/
+   static const call_state actionPerformedStateMap [11][5];
+   
+   /**
+    *  actionPerformedFunctionMap[orig_state][action]
+    *  Map of the functions to call when the action action is 
+    *  performed on a call in state orig_state.
+   **/
+   static const function actionPerformedFunctionMap [11][5];
+   
+   /**
+    *  stateChangedStateMap[orig_state][daemon_new_state]
+    *  Map of the states to go to when the daemon sends the signal 
+    *  callStateChanged with arg daemon_new_state
+    *  on a call in state orig_state.
+   **/
+   static const call_state stateChangedStateMap [11][6];
+   
+   /**
+    *  stateChangedFunctionMap[orig_state][daemon_new_state]
+    *  Map of the functions to call when the daemon sends the signal 
+    *  callStateChanged with arg daemon_new_state
+    *  on a call in state orig_state.
+   **/
+   static const function stateChangedFunctionMap [11][6];
+   
+   static const char * historyIcons[3];
+   
+   static const char * callStateIcons[11];
+
+   Call(call_state startState, QString callId, QString peerNumber = "", QString account = "", QString peerName = "");
+   
+   static daemon_call_state toDaemonCallState(const QString & stateName);
+   
+   //Automate functions
+   // See actionPerformedFunctionMap and stateChangedFunctionMap
+   // to know when it is called.
+   void nothing      ();
+   void accept       ();
+   void refuse       ();
+   void acceptTransf ();
+   void acceptHold   ();
+   void hangUp       ();
+   void cancel       ();
+   void hold         ();
+   void call         ();
+   void transfer     ();
+   void unhold       ();
+   void switchRecord ();
+   void setRecord    ();
+   void start        ();
+   void startStop    ();
+   void stop         ();
+   void startWeird   ();
+   void warning      ();
+
 signals:
    void changed();
    void isOver(Call*);

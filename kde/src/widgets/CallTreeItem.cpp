@@ -48,7 +48,7 @@ const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, IC
 
 ///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
-   : QWidget(parent), itemCall(0), init(false)
+   : QWidget(parent), m_pItemCall(0), m_Init(false)
 {
    setMaximumSize(99999,50);
 }
@@ -69,7 +69,7 @@ CallTreeItem::~CallTreeItem()
 ///Return the call item
 Call* CallTreeItem::call() const
 {
-   return itemCall;
+   return m_pItemCall;
 }
 
 
@@ -82,38 +82,38 @@ Call* CallTreeItem::call() const
 ///Set the call item
 void CallTreeItem::setCall(Call *call)
 {
-   itemCall = call;
+   m_pItemCall = call;
    
-   if (itemCall->isConference()) {
-      if (!init) {
-         labelHistoryPeerName = new QLabel(i18n("Conference"),this);
-         labelIcon = new QLabel("",this);
+   if (m_pItemCall->isConference()) {
+      if (!m_Init) {
+         m_pHistoryPeerL = new QLabel(i18n("Conference"),this);
+         m_pIconL = new QLabel("",this);
          QHBoxLayout* mainLayout = new QHBoxLayout();
-         mainLayout->addWidget(labelIcon);
-         mainLayout->addWidget(labelHistoryPeerName);
+         mainLayout->addWidget(m_pIconL);
+         mainLayout->addWidget(m_pHistoryPeerL);
          setLayout(mainLayout);
-         init = true;
+         m_Init = true;
       }
-      labelIcon->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(48,48)));
-      labelIcon->setVisible(true);
-      labelHistoryPeerName->setVisible(true);
+      m_pIconL->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(48,48)));
+      m_pIconL->setVisible(true);
+      m_pHistoryPeerL->setVisible(true);
       return;
    }
 
-   labelIcon           = new QLabel();
-   labelCallNumber2    = new QLabel(itemCall->getPeerPhoneNumber());
-   labelTransferPrefix = new QLabel(i18n("Transfer to : "));
-   labelTransferNumber = new QLabel();
-   labelPeerName       = new QLabel();
+   m_pIconL            = new QLabel();
+   m_pCallNumberL      = new QLabel(m_pItemCall->getPeerPhoneNumber());
+   m_pTransferPrefixL  = new QLabel(i18n("Transfer to : "));
+   m_pTransferNumberL  = new QLabel();
+   m_pPeerL            = new QLabel();
    QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
    
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
    
-   labelCodec = new QLabel(this);
-   //labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
+   m_pCodecL = new QLabel(this);
+   //m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
 
-   labelSecure = new QLabel(this);
+   m_pSecureL = new QLabel(this);
    
    mainLayout->setSpacing(4);
    QVBoxLayout* descr = new QVBoxLayout();
@@ -122,18 +122,18 @@ void CallTreeItem::setCall(Call *call)
    QHBoxLayout* transfer = new QHBoxLayout();
    transfer->setMargin(0);
    transfer->setSpacing(0);
-   mainLayout->addWidget(labelIcon);
+   mainLayout->addWidget(m_pIconL);
         
-   if(! itemCall->getPeerName().isEmpty()) {
-      labelPeerName->setText(itemCall->getPeerName());
-      descr->addWidget(labelPeerName);
+   if(! m_pItemCall->getPeerName().isEmpty()) {
+      m_pPeerL->setText(m_pItemCall->getPeerName());
+      descr->addWidget(m_pPeerL);
    }
 
-   descr->addWidget(labelCallNumber2);
-   descr->addWidget(labelSecure);
-   descr->addWidget(labelCodec);
-   transfer->addWidget(labelTransferPrefix);
-   transfer->addWidget(labelTransferNumber);
+   descr->addWidget(m_pCallNumberL);
+   descr->addWidget(m_pSecureL);
+   descr->addWidget(m_pCodecL);
+   transfer->addWidget(m_pTransferPrefixL);
+   transfer->addWidget(m_pTransferNumberL);
    descr->addLayout(transfer);
    descr->addItem(verticalSpacer);
    mainLayout->addLayout(descr);
@@ -141,7 +141,7 @@ void CallTreeItem::setCall(Call *call)
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
 
-   connect(itemCall, SIGNAL(changed()), this,     SLOT(updated()));
+   connect(m_pItemCall, SIGNAL(changed()), this,     SLOT(updated()));
 
    updated();
 }
@@ -150,49 +150,49 @@ void CallTreeItem::setCall(Call *call)
 void CallTreeItem::updated()
 {
    qDebug() << "Updating tree item";
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(itemCall->getPeerPhoneNumber());
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
    if (contact) {
-      labelIcon->setPixmap(*contact->getPhoto());
-      labelPeerName->setText("<b>"+contact->getFormattedName()+"</b>");
+      m_pIconL->setPixmap(*contact->getPhoto());
+      m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
    }
    else {
-      labelIcon->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
 
-      if(! itemCall->getPeerName().trimmed().isEmpty()) {
-         labelPeerName->setText("<b>"+itemCall->getPeerName()+"</b>");
+      if(! m_pItemCall->getPeerName().trimmed().isEmpty()) {
+         m_pPeerL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
       }
       else {
-         labelPeerName->setText(i18n("<b>Unknow</b>"));
+         m_pPeerL->setText(i18n("<b>Unknow</b>"));
       }
    }
       
-   call_state state = itemCall->getState();
-   bool recording = itemCall->getRecording();
+   call_state state = m_pItemCall->getState();
+   bool recording = m_pItemCall->getRecording();
    if(state != CALL_STATE_OVER) {
       if(state == CALL_STATE_CURRENT && recording) {
-         labelIcon->setPixmap(QPixmap(ICON_CURRENT_REC));
+         m_pIconL->setPixmap(QPixmap(ICON_CURRENT_REC));
       }
       else {
          QString str = QString(callStateIcons[state]);
-         labelIcon->setPixmap(QPixmap(str));
+         m_pIconL->setPixmap(QPixmap(str));
       }
       bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
-      labelTransferPrefix->setVisible(transfer);
-      labelTransferNumber->setVisible(transfer);
+      m_pTransferPrefixL->setVisible(transfer);
+      m_pTransferNumberL->setVisible(transfer);
 
       if(!transfer) {
-         labelTransferNumber->setText("");
+         m_pTransferNumberL->setText("");
       }
-      labelTransferNumber->setText(itemCall->getTransferNumber());
-      labelCallNumber2->setText(itemCall->getPeerPhoneNumber());
+      m_pTransferNumberL->setText(m_pItemCall->getTransferNumber());
+      m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
                 
       if(state == CALL_STATE_DIALING) {
-         labelCallNumber2->setText(itemCall->getCallNumber());
+         m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
       else {
-         labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
-         if (itemCall->isSecure())
-            labelSecure->setText("⚷");
+         m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
+         if (m_pItemCall->isSecure())
+            m_pSecureL->setText("⚷");
       }
    }
    else {

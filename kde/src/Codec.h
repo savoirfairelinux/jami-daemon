@@ -30,24 +30,19 @@ class QString;
 class Codec : public QObject
 {
 Q_OBJECT
-private:
-   QString payload   ;
-   QString name      ;
-   QString frequency ;
-   QString bitrate   ;
-   QString bandwidth ;
-   bool enabled;
 
 public:
    Codec(int payload, bool enabled);
-    
+
+   //Getters
    QString getPayload   () const;
    QString getName      () const;
    QString getFrequency () const;
    QString getBitrate   () const;
    QString getBandwidth () const;
    bool isEnabled       () const;
-   
+
+   //Setters
    void setPayload   ( QString payload   );
    void setName      ( QString name      );
    void setFrequency ( QString frequency );
@@ -55,7 +50,17 @@ public:
    void setBandwidth ( QString bandwidth );
    void setEnabled   ( bool enabled      );
    
-   Codec & operator=(const Codec&);
+private:
+   //Attributes
+   QString m_Payload   ;
+   QString m_Name      ;
+   QString m_Frequency ;
+   QString m_Bitrate   ;
+   QString m_Bandwidth ;
+   bool    m_Enabled   ;
+   
+   //Operators
+   Codec& operator=(const Codec&);
 };
 
 #endif

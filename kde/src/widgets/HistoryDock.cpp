@@ -144,8 +144,8 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pFromDW->setDate(date);
    
    reload();
-   m_pCurrentFromDate = m_pFromDW->date();
-   m_pCurrentToDate   = m_pToDW->date();
+   m_CurrentFromDate = m_pFromDW->date();
+   m_CurrentToDate   = m_pToDW->date();
 
    connect(m_pAllTimeCB,                  SIGNAL(toggled(bool)),            this, SLOT(enableDateRange(bool)       ));
    connect(m_pFilterLE,                   SIGNAL(textChanged(QString)),     this, SLOT(filter(QString)             ));
@@ -186,7 +186,7 @@ QString HistoryDock::getIdentity(HistoryTreeItem* item)
 ///Update informations
 void HistoryDock::updateContactInfo()
 {
-   foreach(HistoryTreeItem* hitem, m_pHistory) {
+   foreach(HistoryTreeItem* hitem, m_History) {
       hitem->updated();
    }
 }
@@ -195,20 +195,20 @@ void HistoryDock::updateContactInfo()
 void HistoryDock::reload()
 {
    m_pItemView->clear();
-   foreach(HistoryTreeItem* hitem, m_pHistory) {
+   foreach(HistoryTreeItem* hitem, m_History) {
       delete hitem;
    }
-   m_pHistory.clear();
+   m_History.clear();
    foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
       if (!m_pAllTimeCB->isChecked() || (QDateTime(m_pFromDW->date()).toTime_t() < call->getStartTimeStamp().toUInt() && QDateTime(m_pToDW->date().addDays(1)).toTime_t() > call->getStartTimeStamp().toUInt() )) {
          HistoryTreeItem* callItem = new HistoryTreeItem(m_pItemView);
          callItem->setCall(call);
-         m_pHistory << callItem;
+         m_History << callItem;
       }
    }
    switch (m_pSortByCBB->currentIndex()) {
       case Date:
-         foreach(HistoryTreeItem* hitem, m_pHistory) {
+         foreach(HistoryTreeItem* hitem, m_History) {
             QNumericTreeWidgetItem* item = new QNumericTreeWidgetItem(m_pItemView);
             item->widget = hitem;
             hitem->setItem(item);
@@ -218,7 +218,7 @@ void HistoryDock::reload()
          break;
       case Name: {
          QHash<QString,QTreeWidgetItem*> group;
-         foreach(HistoryTreeItem* item, m_pHistory) {
+         foreach(HistoryTreeItem* item, m_History) {
             if (!group[getIdentity(item)]) {
                group[getIdentity(item)] = new QTreeWidgetItem(m_pItemView);
                group[getIdentity(item)]->setText(0,getIdentity(item));
@@ -233,7 +233,7 @@ void HistoryDock::reload()
       }
       case Popularity: {
          QHash<QString,QNumericTreeWidgetItem*> group;
-         foreach(HistoryTreeItem* item, m_pHistory) {
+         foreach(HistoryTreeItem* item, m_History) {
             if (!group[getIdentity(item)]) {
                group[getIdentity(item)] = new QNumericTreeWidgetItem(m_pItemView);
                group[getIdentity(item)]->weight = 0;
@@ -249,7 +249,7 @@ void HistoryDock::reload()
          break;
       }
       case Duration:
-         foreach(HistoryTreeItem* hitem, m_pHistory) {
+         foreach(HistoryTreeItem* hitem, m_History) {
             QNumericTreeWidgetItem* item = new QNumericTreeWidgetItem(m_pItemView);
             item->weight = hitem->getDuration();
             hitem->setItem(item);
@@ -276,7 +276,7 @@ void HistoryDock::enableDateRange(bool enable)
 ///Filter the history
 void HistoryDock::filter(QString text)
 {
-   foreach(HistoryTreeItem* item, m_pHistory) {
+   foreach(HistoryTreeItem* item, m_History) {
       bool visible = (item->getName().toLower().indexOf(text) != -1) || (item->getPhoneNumber().toLower().indexOf(text) != -1);
       item->getItem()-> setHidden(!visible);
    }
@@ -310,7 +310,7 @@ void HistoryDock::updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& ne
 void HistoryDock::updateLinkedFromDate(QDate date)
 {
    disconnect (m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
-   updateLinkedDate(m_pToDW,m_pCurrentFromDate,date);
+   updateLinkedDate(m_pToDW,m_CurrentFromDate,date);
    connect    (m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
 }
 
@@ -318,7 +318,7 @@ void HistoryDock::updateLinkedFromDate(QDate date)
 void HistoryDock::updateLinkedToDate(QDate date)
 {
    disconnect(m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
-   updateLinkedDate(m_pFromDW,m_pCurrentToDate,date);
+   updateLinkedDate(m_pFromDW,m_CurrentToDate,date);
    connect   (m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
 }
 

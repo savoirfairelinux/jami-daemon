@@ -43,8 +43,8 @@ public:
    virtual void        addNewContact     ( Contact* contact    ) = 0;
 protected:
    virtual ContactList update_slot       (                     ) = 0;
-   QHash<QString,Contact*>        m_pContactByPhone ;
-   QHash<QString,Contact*>        m_pContactByUid   ;
+   QHash<QString,Contact*>        m_ContactByPhone ;
+   QHash<QString,Contact*>        m_ContactByUid   ;
 public slots:
    ContactList update();
    

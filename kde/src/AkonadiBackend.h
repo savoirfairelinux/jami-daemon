@@ -58,10 +58,10 @@ private:
    virtual ~AkonadiBackend();
    
    //Attributes
-   static AkonadiBackend*         m_pInstance   ;
-   Akonadi::Session*              m_pSession    ;
-   Akonadi::Collection            m_pCollection ;
-   QHash<QString,KABC::Addressee> m_pAddrHash   ;
+   static AkonadiBackend*         m_pInstance  ;
+   Akonadi::Session*              m_pSession   ;
+   Akonadi::Collection            m_Collection ;
+   QHash<QString,KABC::Addressee> m_AddrHash   ;
    
 protected:
    ContactList update_slot();

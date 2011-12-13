@@ -67,11 +67,11 @@ class HistoryTreeItem : public QWidget
     
  private:
     //Attributes
-    Call*    itemCall         ;
+    Call*    m_pItemCall      ;
 
-    QLabel*  labelIcon        ;
-    QLabel*  labelPeerName    ;
-    QLabel*  labelCallNumber2 ;
+    QLabel*  m_pIconL         ;
+    QLabel*  m_pPeerNameL     ;
+    QLabel*  m_pCallNumberL   ;
     QLabel*  m_pTimeL         ;
     QLabel*  m_pDurationL     ;
 
@@ -83,12 +83,10 @@ class HistoryTreeItem : public QWidget
     KAction* m_pBookmark      ;
     QMenu*   m_pMenu          ;
 
-    uint     m_pTimeStamp     ;
-    uint     m_pDuration      ;
-    QString  m_pName          ;
-    QString  m_pPhoneNumber   ;
-    
-    bool      init            ;
+    uint     m_TimeStamp      ;
+    uint     m_Duration       ;
+    QString  m_Name           ;
+    QString  m_PhoneNumber    ;
     
     QTreeWidgetItem* m_pItem;
 

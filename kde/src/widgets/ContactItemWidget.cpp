@@ -50,7 +50,7 @@
 
 ///Constructor
 ContactItemWidget::ContactItemWidget(QWidget *parent)
-   : QWidget(parent), m_pMenu(0),init(false)
+   : QWidget(parent), m_pMenu(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
    m_pCallAgain  = new KAction(this);

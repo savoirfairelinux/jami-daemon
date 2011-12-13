@@ -61,8 +61,11 @@ class LIB_EXPORT Account : public QObject {
       bool operator==(const Account&)const;
    
    protected:
+      //Constructors
       Account();
-      QString* m_pAccountId;
+
+      //Attributes
+      QString*         m_pAccountId;
       MapStringString* m_pAccountDetails;
 
    public slots:

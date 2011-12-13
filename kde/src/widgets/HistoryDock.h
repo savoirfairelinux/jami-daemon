@@ -80,9 +80,9 @@ private:
    KDateWidget*  m_pToDW            ;
    QCheckBox*    m_pAllTimeCB       ;
    QPushButton*  m_pLinkPB          ;
-   HistoryList   m_pHistory         ;
-   QDate         m_pCurrentFromDate ;
-   QDate         m_pCurrentToDate   ;
+   HistoryList   m_History          ;
+   QDate         m_CurrentFromDate  ;
+   QDate         m_CurrentToDate    ;
 
    //Mutator
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);

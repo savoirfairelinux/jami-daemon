@@ -49,15 +49,6 @@ class ContactItemWidget : public QWidget
     ContactItemWidget(QWidget* parent =0);
     ~ContactItemWidget();
 
-    //Actions
-    KAction* m_pCallAgain   ;
-    KAction* m_pEditContact ;
-    KAction* m_pCopy        ;
-    KAction* m_pEmail       ;
-    KAction* m_pAddPhone    ;
-    KAction* m_pBookmark    ;
-    QMenu*   m_pMenu        ;
-
     //Getters
     KABC::Addressee* contact()         const;
     QString          getContactName()  const;
@@ -77,14 +68,22 @@ class ContactItemWidget : public QWidget
 
  private:
     //Attributes
-    Contact* m_pContactKA   ;
-    QLabel* m_pIconL        ;
-    QLabel* m_pContactNameL ;
-    QLabel* m_pCallNumberL  ;
-    QLabel* m_pOrganizationL;
-    QLabel* m_pEmailL       ;
-    QTreeWidgetItem* m_pItem;
-    bool init               ;
+    Contact* m_pContactKA    ;
+    QLabel*  m_pIconL        ;
+    QLabel*  m_pContactNameL ;
+    QLabel*  m_pCallNumberL  ;
+    QLabel*  m_pOrganizationL;
+    QLabel*  m_pEmailL       ;
+    QTreeWidgetItem* m_pItem ;
+
+    //Actions
+    KAction* m_pCallAgain   ;
+    KAction* m_pEditContact ;
+    KAction* m_pCopy        ;
+    KAction* m_pEmail       ;
+    KAction* m_pAddPhone    ;
+    KAction* m_pBookmark    ;
+    QMenu*   m_pMenu        ;
 
 public slots:
    void updated();

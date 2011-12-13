@@ -107,16 +107,16 @@ void Call::setContactBackend(ContactBackend* be)
 
 ///Constructor
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
-   : conference(false)
+   : m_isConference(false)
 {
-   this->m_pCallId          = callId     ;
-   this->m_pPeerPhoneNumber = peerNumber ;
-   this->m_pPeerName        = peerName   ;
-   changeCurrentState(startState)        ;
-   this->m_pAccount         = account    ;
-   this->recording          = false      ;
-   this->m_pStartTime       = NULL       ;
-   this->m_pStopTime        = NULL       ;
+   this->m_CallId          = callId     ;
+   this->m_PeerPhoneNumber = peerNumber ;
+   this->m_PeerName        = peerName   ;
+   changeCurrentState(startState)       ;
+   this->m_Account         = account    ;
+   this->m_Recording       = false      ;
+   this->m_pStartTime      = NULL       ;
+   this->m_pStopTime       = NULL       ;
    emit changed();
 }
 
@@ -129,10 +129,10 @@ Call::~Call()
 
 ///Constructor
 Call::Call(QString confId, QString account) 
-   : conference(true)
+   : m_isConference(true)
 {
-   this->m_pConfId  = confId  ;
-   this->m_pAccount = account ;
+   this->m_ConfId  = confId  ;
+   this->m_Account = account ;
 }
 
 /*****************************************************************************
@@ -156,8 +156,8 @@ Call* Call::buildExistingCall(QString callId)
    
    Call* call            = new Call(startState, callId, peerName, peerNumber, account)                 ;
    call->m_pStartTime    = new QDateTime(QDateTime::currentDateTime())                                 ;
-   call->recording       = callManager.getIsRecording(callId)                                          ;
-   call->m_pHistoryState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]) ;
+   call->m_Recording     = callManager.getIsRecording(callId)                                          ;
+   call->m_HistoryState  = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]) ;
    
    return call;
 }
@@ -166,7 +166,7 @@ Call* Call::buildExistingCall(QString callId)
 Call* Call::buildDialingCall(QString callId, const QString & peerName, QString account)
 {
    Call* call = new Call(CALL_STATE_DIALING, callId, peerName, "", account);
-   call->m_pHistoryState = NONE;
+   call->m_HistoryState = NONE;
    return call;
 }
 
@@ -183,7 +183,7 @@ Call* Call::buildIncomingCall(const QString & callId)
    QString peerName = details[ CALL_PEER_NAME   ];
    
    Call* call = new Call(CALL_STATE_INCOMING, callId, peerName, from, account);
-   call->m_pHistoryState = MISSED;
+   call->m_HistoryState = MISSED;
    return call;
 }
 
@@ -198,7 +198,7 @@ Call* Call::buildRingingCall(const QString & callId)
    QString peerName = details[ CALL_PEER_NAME   ];
    
    Call* call = new Call(CALL_STATE_RINGING, callId, peerName, from, account);
-   call->m_pHistoryState = OUTGOING;
+   call->m_HistoryState = OUTGOING;
    return call;
 }
 
@@ -215,7 +215,7 @@ Call* Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint s
    Call* call            = new Call(CALL_STATE_OVER, callId, name, number, account );
    call->m_pStartTime    = new QDateTime(QDateTime::fromTime_t(startTimeStamp)     );
    call->m_pStopTime     = new QDateTime(QDateTime::fromTime_t(stopTimeStamp)      );
-   call->m_pHistoryState = getHistoryStateFromType(type                            );
+   call->m_HistoryState  = getHistoryStateFromType(type                            );
    return call;
 }
 
@@ -330,80 +330,80 @@ QString Call::getStartTimeStamp()   const
 ///Get the number where the call have been transferred
 QString Call::getTransferNumber()    const
 {
-   return m_pTransferNumber;
+   return m_TransferNumber;
 }
 
 ///Get the call / peer number
 QString Call::getCallNumber()        const
 {
-   return m_pCallNumber;
+   return m_CallNumber;
 }
 
 ///Return the call id
 QString Call::getCallId()            const
 {
-   return m_pCallId;
+   return m_CallId;
 }
 
 ///Return the peer phone number
 QString Call::getPeerPhoneNumber()   const
 {
-   return m_pPeerPhoneNumber;
+   return m_PeerPhoneNumber;
 }
 
 ///Get the peer name
 QString Call::getPeerName()          const
 {
-   return m_pPeerName;
+   return m_PeerName;
 }
 
 ///Get the current state
 call_state Call::getCurrentState()   const
 {
-   return currentState;
+   return m_CurrentState;
 }
 
 ///Get the call recording
 bool Call::getRecording()            const
 {
-   return recording;
+   return m_Recording;
 }
 
 ///Get the call account id
 QString Call::getAccountId()         const
 {
-   return m_pAccount;
+   return m_Account;
 }
 
 ///Is this call a conference
 bool Call::isConference()            const
 {
-   return conference;
+   return m_isConference;
 }
 
 ///Get the conference ID
 QString Call::getConfId()            const
 {
-   return m_pConfId;
+   return m_ConfId;
 }
 
 ///Get the current codec
 QString Call::getCurrentCodecName()  const
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   return callManager.getCurrentAudioCodecName(m_pCallId);
+   return callManager.getCurrentAudioCodecName(m_CallId);
 }
 
 ///Get the state
 call_state Call::getState()          const
 {
-   return currentState;
+   return m_CurrentState;
 }
 
 ///Get the history state
 history_state Call::getHistoryState() const
 {
-   return m_pHistoryState;
+   return m_HistoryState;
 }
 
 ///Is this call over?
@@ -415,13 +415,13 @@ bool Call::isHistory()               const
 ///This function could also be called mayBeSecure or haveChancesToBeEncryptedButWeCantTell.
 bool Call::isSecure() const {
 
-   if (m_pAccount.isEmpty()) {
+   if (m_Account.isEmpty()) {
       qDebug() << "Account not set, can't check security";
       return false;
    }
 
    AccountList accountList(true);
-   Account* currentAccount = accountList.getAccountById(m_pAccount);
+   Account* currentAccount = accountList.getAccountById(m_Account);
 
    if ((currentAccount->getAccountDetail(TLS_ENABLE ) == "true") || (currentAccount->getAccountDetail(TLS_METHOD).toInt())) {
       return true;
@@ -439,26 +439,26 @@ bool Call::isSecure() const {
 ///Set the transfer number
 void Call::setTransferNumber(QString number)
 {
-   m_pTransferNumber = number;
+   m_TransferNumber = number;
 }
 
 ///This call is a conference
 void Call::setConference(bool value)
 {
-   conference = value;
+   m_isConference = value;
 }
 
 ///Set the call number
 void Call::setCallNumber(QString number)
 {
-   m_pCallNumber = number;
+   m_CallNumber = number;
    emit changed();
 }
 
 ///Set the conference ID
 void Call::setConfId(QString value)
 {
-   m_pConfId = value;
+   m_ConfId = value;
 }
 
 /*****************************************************************************
@@ -470,13 +470,13 @@ void Call::setConfId(QString value)
 ///The call state just changed
 call_state Call::stateChanged(const QString& newStateName)
 {
-   if (!conference) {
-      call_state previousState = currentState;
+   if (!m_isConference) {
+      call_state previousState = m_CurrentState;
       daemon_call_state dcs = toDaemonCallState(newStateName);
-      changeCurrentState(stateChangedStateMap[currentState][dcs]);
+      changeCurrentState(stateChangedStateMap[m_CurrentState][dcs]);
       (this->*(stateChangedFunctionMap[previousState][dcs]))();
-      qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << currentState;
-      return currentState;
+      qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << m_CurrentState;
+      return m_CurrentState;
    }
    else {
       qDebug() << "A conference have no call state";
@@ -487,7 +487,7 @@ call_state Call::stateChanged(const QString& newStateName)
 ///An acount have been performed
 call_state Call::actionPerformed(call_action action)
 {
-   call_state previousState = currentState;
+   call_state previousState = m_CurrentState;
    Q_ASSERT_X((previousState>10) || (previousState<0),"perform action","Invalid previous state ("+QString::number(previousState)+")");
    Q_ASSERT_X((state>4) || (state < 0),"perform action","Invalid action ("+QString::number(action)+")");
    Q_ASSERT_X((action>5) || (action < 0),"perform action","Invalid action ("+QString::number(action)+")");
@@ -495,19 +495,19 @@ call_state Call::actionPerformed(call_action action)
    changeCurrentState(actionPerformedStateMap[previousState][action]);
    //execute the action associated with this transition
    (this->*(actionPerformedFunctionMap[previousState][action]))(); //WARNING BUG //WARNING SEGFAULT //TODO remove this node, it was not a good idea, it is not stable
-   qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << currentState;
+   qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << m_CurrentState;
    //return the new state
-   return currentState;
+   return m_CurrentState;
 }
 
 /*
 void Call::putRecording()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   bool daemonRecording = callManager.getIsRecording(this -> m_pCallId);
-   if(daemonRecording != recording)
+   bool daemonRecording = callManager.getIsRecording(this -> m_CallId);
+   if(daemonRecording != m_Recording)
    {
-      callManager.setRecording(this->m_pCallId);
+      callManager.setRecording(this->m_CallId);
    }
 }
 */
@@ -515,11 +515,11 @@ void Call::putRecording()
 void Call::changeCurrentState(call_state newState)
 {
    //qDebug() << "Call state changed to: " << newState;
-   currentState = newState;
+   m_CurrentState = newState;
 
    emit changed();
 
-   if (currentState == CALL_STATE_OVER)
+   if (m_CurrentState == CALL_STATE_OVER)
       emit isOver(this);
 }
 
@@ -540,40 +540,40 @@ void Call::nothing()
 void Call::accept()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call. callId : " << m_pCallId;
-   callManager.accept(m_pCallId);
+   qDebug() << "Accepting call. callId : " << m_CallId;
+   callManager.accept(m_CallId);
    this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
-   this->m_pHistoryState = INCOMING;
+   this->m_HistoryState = INCOMING;
 }
 
 ///Refuse the call
 void Call::refuse()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Refusing call. callId : " << m_pCallId;
-   callManager.refuse(m_pCallId);
+   qDebug() << "Refusing call. callId : " << m_CallId;
+   callManager.refuse(m_CallId);
    this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
-   this->m_pHistoryState = MISSED;
+   this->m_HistoryState = MISSED;
 }
 
 ///Accept the transfer
 void Call::acceptTransf()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call and transfering it to number : " << m_pTransferNumber << ". callId : " << m_pCallId;
-   callManager.accept(m_pCallId);
-   callManager.transfer(m_pCallId, m_pTransferNumber);
-//   m_pHistoryState = TRANSFERED;
+   qDebug() << "Accepting call and transfering it to number : " << m_TransferNumber << ". callId : " << m_CallId;
+   callManager.accept(m_CallId);
+   callManager.transfer(m_CallId, m_TransferNumber);
+//   m_HistoryState = TRANSFERED;
 }
 
 ///Put the call on hold
 void Call::acceptHold()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call and holding it. callId : " << m_pCallId;
-   callManager.accept(m_pCallId);
-   callManager.hold(m_pCallId);
-   this->m_pHistoryState = INCOMING;
+   qDebug() << "Accepting call and holding it. callId : " << m_CallId;
+   callManager.accept(m_CallId);
+   callManager.hold(m_CallId);
+   this->m_HistoryState = INCOMING;
 }
 
 ///Hang up
@@ -581,51 +581,51 @@ void Call::hangUp()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
-   qDebug() << "Hanging up call. callId : " << m_pCallId;
-   callManager.hangUp(m_pCallId);
+   qDebug() << "Hanging up call. callId : " << m_CallId;
+   callManager.hangUp(m_CallId);
 }
 
 ///Cancel this call
 void Call::cancel()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Canceling call. callId : " << m_pCallId;
-   callManager.hangUp(m_pCallId);
+   qDebug() << "Canceling call. callId : " << m_CallId;
+   callManager.hangUp(m_CallId);
 }
 
 ///Put on hold
 void Call::hold()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Holding call. callId : " << m_pCallId;
-   callManager.hold(m_pCallId);
+   qDebug() << "Holding call. callId : " << m_CallId;
+   callManager.hold(m_CallId);
 }
 
 ///Start the call
 void Call::call()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "account = " << m_pAccount;
-   if(m_pAccount.isEmpty()) {
+   qDebug() << "account = " << m_Account;
+   if(m_Account.isEmpty()) {
       qDebug() << "account is not set, taking the first registered.";
-      this->m_pAccount = CallModelConvenience::getCurrentAccountId();
+      this->m_Account = CallModelConvenience::getCurrentAccountId();
    }
-   if(!m_pAccount.isEmpty()) {
-      qDebug() << "Calling " << m_pCallNumber << " with account " << m_pAccount << ". callId : " << m_pCallId;
-      callManager.placeCall(m_pAccount, m_pCallId, m_pCallNumber);
-      this->m_pAccount = m_pAccount;
-      this->m_pPeerPhoneNumber = m_pCallNumber;
+   if(!m_Account.isEmpty()) {
+      qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId;
+      callManager.placeCall(m_Account, m_CallId, m_CallNumber);
+      this->m_Account = m_Account;
+      this->m_PeerPhoneNumber = m_CallNumber;
       if (m_pContactBackend) {
-         Contact* contact = m_pContactBackend->getContactByPhone(m_pPeerPhoneNumber);
+         Contact* contact = m_pContactBackend->getContactByPhone(m_PeerPhoneNumber);
          if (contact)
-            m_pPeerName = contact->getFormattedName();
+            m_PeerName = contact->getFormattedName();
       }
       this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
-      this->m_pHistoryState = OUTGOING;
+      this->m_HistoryState = OUTGOING;
    }
    else {
-      qDebug() << "Trying to call " << m_pTransferNumber << " with no account registered . callId : " << m_pCallId;
-      this->m_pHistoryState = NONE;
+      qDebug() << "Trying to call " << m_TransferNumber << " with no account registered . callId : " << m_CallId;
+      this->m_HistoryState = NONE;
       throw "No account registered!";
    }
 }
@@ -634,23 +634,23 @@ void Call::call()
 void Call::transfer()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Transfering call to number : " << m_pTransferNumber << ". callId : " << m_pCallId;
-   callManager.transfer(m_pCallId, m_pTransferNumber);
+   qDebug() << "Transfering call to number : " << m_TransferNumber << ". callId : " << m_CallId;
+   callManager.transfer(m_CallId, m_TransferNumber);
    this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
 void Call::unhold()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Unholding call. callId : " << m_pCallId;
-   callManager.unhold(m_pCallId);
+   qDebug() << "Unholding call. callId : " << m_CallId;
+   callManager.unhold(m_CallId);
 }
 
 /*
 void Call::switchRecord()
 {
    qDebug() << "Switching record state for call automate. callId : " << callId;
-   recording = !recording;
+   m_Recording = !m_Recording;
 }
 */
 
@@ -658,22 +658,22 @@ void Call::switchRecord()
 void Call::setRecord()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Setting record " << !recording << " for call. callId : " << m_pCallId;
-   callManager.setRecording(m_pCallId);
-   recording = !recording;
+   qDebug() << "Setting record " << !m_Recording << " for call. callId : " << m_CallId;
+   callManager.setRecording(m_CallId);
+   m_Recording = !m_Recording;
 }
 
 ///Start the timer
 void Call::start()
 {
-   qDebug() << "Starting call. callId : " << m_pCallId;
+   qDebug() << "Starting call. callId : " << m_CallId;
    this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
 }
 
 ///Toggle the timer
 void Call::startStop()
 {
-   qDebug() << "Starting and stoping call. callId : " << m_pCallId;
+   qDebug() << "Starting and stoping call. callId : " << m_CallId;
    this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
    this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
 }
@@ -681,22 +681,22 @@ void Call::startStop()
 ///Stop the timer
 void Call::stop()
 {
-   qDebug() << "Stoping call. callId : " << m_pCallId;
+   qDebug() << "Stoping call. callId : " << m_CallId;
    this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
 ///Handle error instead of crashing
 void Call::startWeird()
 {
-   qDebug() << "Starting call. callId : " << m_pCallId;
+   qDebug() << "Starting call. callId : " << m_CallId;
    this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
-   qDebug() << "Warning : call " << m_pCallId << " had an unexpected transition of state at its start.";
+   qDebug() << "Warning : call " << m_CallId << " had an unexpected transition of state at its start.";
 }
 
 ///Print a warning
 void Call::warning()
 {
-   qDebug() << "Warning : call " << m_pCallId << " had an unexpected transition of state.";
+   qDebug() << "Warning : call " << m_CallId << " had an unexpected transition of state.";
 }
 
 /*****************************************************************************
@@ -710,13 +710,13 @@ void Call::appendText(QString str)
 {
    QString * editNumber;
    
-   switch (currentState) {
+   switch (m_CurrentState) {
    case CALL_STATE_TRANSFER    :
    case CALL_STATE_TRANSF_HOLD :
-      editNumber = &m_pTransferNumber;
+      editNumber = &m_TransferNumber;
       break;
    case CALL_STATE_DIALING     :
-      editNumber = &m_pCallNumber;
+      editNumber = &m_CallNumber;
       break;
    default                     :
       qDebug() << "Backspace on call not editable. Doing nothing.";
@@ -733,15 +733,15 @@ void Call::backspaceItemText()
 {
    QString * editNumber;
 
-   switch (currentState) {
-      case CALL_STATE_TRANSFER        :
-      case CALL_STATE_TRANSF_HOLD     :
-         editNumber = &m_pTransferNumber;
+   switch (m_CurrentState) {
+      case CALL_STATE_TRANSFER         :
+      case CALL_STATE_TRANSF_HOLD      :
+         editNumber = &m_TransferNumber;
          break;
-      case CALL_STATE_DIALING         :
-         editNumber = &m_pCallNumber;
+      case CALL_STATE_DIALING          :
+         editNumber = &m_CallNumber;
          break;
-      default                         :
+      default                          :
          qDebug() << "Backspace on call not editable. Doing nothing.";
          return;
    }

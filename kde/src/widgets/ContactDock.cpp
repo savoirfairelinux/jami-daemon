@@ -177,7 +177,7 @@ void ContactDock::reloadContact()
 
       m_pContactView->addTopLevelItem(item);
       m_pContactView->setItemWidget(item,0,aContact);
-      m_pContacts << aContact;
+      m_Contacts << aContact;
    }
 }
 
@@ -204,7 +204,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
 ///Filter contact
 void ContactDock::filter(QString text)
 {
-   foreach(ContactItemWidget* item, m_pContacts) {
+   foreach(ContactItemWidget* item, m_Contacts) {
       bool foundNumber = false;
       foreach (Contact::PhoneNumber* number, item->getContact()->getPhoneNumbers()) {
          foundNumber |= number->getNumber().toLower().indexOf(text) != -1;

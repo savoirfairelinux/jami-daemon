@@ -34,12 +34,12 @@ Codec::Codec(int payload, bool enabled)
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    QStringList details = configurationManager.getAudioCodecDetails(payload);
-   this->payload   = QString::number(payload);
-   this->enabled   = enabled;
-   this->name      = details[CODEC_NAME];
-   this->frequency = details[CODEC_SAMPLE_RATE];
-   this->bitrate   = details[CODEC_BIT_RATE];
-   this->bandwidth = details[CODEC_BANDWIDTH];
+   m_Payload   = QString::number(payload);
+   m_Enabled   = enabled;
+   m_Name      = details[CODEC_NAME];
+   m_Frequency = details[CODEC_SAMPLE_RATE];
+   m_Bitrate   = details[CODEC_BIT_RATE];
+   m_Bandwidth = details[CODEC_BANDWIDTH];
 }
 
 
@@ -52,37 +52,37 @@ Codec::Codec(int payload, bool enabled)
 ///Return the payload
 QString Codec::getPayload() const
 {
-  return payload;
+  return m_Payload;
 }
 
 ///Return the codec name
 QString Codec::getName() const
 {
-  return name;
+  return m_Name;
 }
 
 ///Return the frequency
 QString Codec::getFrequency() const
 {
-  return frequency;
+  return m_Frequency;
 }
 
 ///Return the bitrate
 QString Codec::getBitrate() const
 {
-  return bitrate;
+  return m_Bitrate;
 }
 
 ///Return the bandwidth
 QString Codec::getBandwidth() const
 {
-  return bandwidth;
+  return m_Bandwidth;
 }
 
 ///Is this codec enabled
 bool Codec::isEnabled() const
 {
-  return enabled;
+  return m_Enabled;
 }
 
 
@@ -95,35 +95,35 @@ bool Codec::isEnabled() const
 ///Set the payload
 void Codec::setPayload(QString payload)
 {
-  this->payload = payload;
+  m_Payload = payload;
 }
 
 ///Set the codec name
 void Codec::setName(QString name)
 {
-  this->name = name;
+  m_Name = name;
 }
 
 ///Set the frequency
 void Codec::setFrequency(QString frequency)
 {
-  this->frequency = frequency;
+  m_Frequency = frequency;
 }
 
 ///Set the bitrate
 void Codec::setBitrate(QString bitrate)
 {
-  this->bitrate = bitrate;
+  m_Bitrate = bitrate;
 }
 
 ///Set the bandwidth
 void Codec::setBandwidth(QString bandwidth)
 {
-  this->bandwidth = bandwidth;
+  m_Bandwidth = bandwidth;
 }
 
 ///Make this cedec enabled
 void Codec::setEnabled(bool enabled)
 {
-  this->enabled = enabled;
+  m_Enabled = enabled;
 }

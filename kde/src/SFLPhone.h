@@ -75,7 +75,7 @@ enum CallAction {
 };
 
 private:
-   // Whether or not the object has been initialized
+   //Attributes
    bool   m_pInitialized;
    KAction* action_accept                ;
    KAction* action_refuse                ;
@@ -91,8 +91,7 @@ private:
    KAction* action_configureSflPhone     ;
    KAction* action_configureShortcut     ;
    KAction* action_accountCreationWizard ;
-   
-   QActionGroup * action_screen;
+   QActionGroup* action_screen           ;
 
    SFLPhoneView*  m_pView            ;
    bool           m_pIconChanged     ;
@@ -105,7 +104,8 @@ private:
    
    static SFLPhone* m_sApp;
    static TreeWidgetCallModel* m_pModel;
-private:
+
+   //Setters
    void setObjectNames();
 
 protected:

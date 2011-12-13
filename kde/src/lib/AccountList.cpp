@@ -39,6 +39,7 @@ AccountList::AccountList(QStringList & _accountIds)
 }
 
 ///Constructors
+///@param fill Whether to fill the list with accounts from configurationManager or not.
 AccountList::AccountList(bool fill)
 {
    m_pAccounts = new QVector<Account *>();

@@ -33,8 +33,8 @@
 ///Constructor
 SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)
       : KSystemTrayIcon(icon, parent),
-         trayIconMenu(0),
-         initialized_(false)
+         m_pTrayIconMenu(0),
+         m_Init(false)
 {
 }
 
@@ -46,15 +46,15 @@ SFLPhoneTray::~SFLPhoneTray()
 ///Initializer
 bool SFLPhoneTray::initialize()
 {
-   if ( initialized_ ) {
+   if ( m_Init ) {
       qDebug() << "Already initialized.";
       return false;
    }
 
-   trayIconMenu = new QMenu(parentWidget());
-   setContextMenu(trayIconMenu);
+   m_pTrayIconMenu = new QMenu(parentWidget());
+   setContextMenu(m_pTrayIconMenu);
 
-   initialized_ = true;
+   m_Init = true;
 
    return true;
 }
@@ -69,5 +69,5 @@ bool SFLPhoneTray::initialize()
 ///Add a new action
 void SFLPhoneTray::addAction(KAction *action)
 {
-   trayIconMenu->addAction(action);
+   m_pTrayIconMenu->addAction(action);
 }

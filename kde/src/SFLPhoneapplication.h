@@ -12,23 +12,24 @@ class SFLPhoneApplication : public KApplication
 {
   Q_OBJECT
 
-  public:
+public:
    // Constructor
    SFLPhoneApplication();
 
    // Destructor
    virtual    ~SFLPhoneApplication();
 
-  private:  // private methods
-    void         initializeMainWindow();
-    void         initializePaths();
+private:
+   //Constructor
+   void         initializeMainWindow();
+   void         initializePaths();
 
-  private:
-    // Reference to the sflphone window
-    //SFLPhone       *sflphoneWindow_;
+private:
+   // Reference to the sflphone window
+   //SFLPhone       *sflphoneWindow_;
 
-  private slots:
-     Q_NOREPLY void quit2();
+private slots:
+   Q_NOREPLY void quit2();
 };
 
 #endif // SFLPHONEAPPLICATION_H

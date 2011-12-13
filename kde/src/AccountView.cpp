@@ -31,7 +31,7 @@
 #include "lib/configurationmanager_interface_singleton.h"
 
 ///Constructor
-AccountView::AccountView() : Account(), item2(0), itemWidget(0)
+AccountView::AccountView() : Account(), m_pItem(0), m_pWidget(0)
 {
 
 }
@@ -39,32 +39,32 @@ AccountView::AccountView() : Account(), item2(0), itemWidget(0)
 ///Init
 void AccountView::initItem()
 {
-   if(item2 != NULL)
-      delete item2;
-   item2 = new QListWidgetItem();
-   item2->setSizeHint(QSize(140,25));
-   item2->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
+   if(m_pItem != NULL)
+      delete m_pItem;
+   m_pItem = new QListWidgetItem();
+   m_pItem->setSizeHint(QSize(140,25));
+   m_pItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
    initItemWidget();
 }
 
 ///Init widget
 void AccountView::initItemWidget()
 {
-   if(itemWidget != NULL)
-      delete itemWidget;
+   if(m_pWidget != NULL)
+      delete m_pWidget;
         
    bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
-   itemWidget = new AccountItemWidget();
-   itemWidget->setEnabled(enabled);
-   itemWidget->setAccountText(getAccountDetail(ACCOUNT_ALIAS));
+   m_pWidget = new AccountItemWidget();
+   m_pWidget->setEnabled(enabled);
+   m_pWidget->setAccountText(getAccountDetail(ACCOUNT_ALIAS));
 
    if(isNew() || !enabled)
-      itemWidget->setState(AccountItemWidget::Unregistered);
+      m_pWidget->setState(AccountItemWidget::Unregistered);
    else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
-      itemWidget->setState(AccountItemWidget::Registered);
+      m_pWidget->setState(AccountItemWidget::Registered);
    else
-      itemWidget->setState(AccountItemWidget::NotWorking);
-   connect(itemWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
+      m_pWidget->setState(AccountItemWidget::NotWorking);
+   connect(m_pWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
 }
 
 
@@ -77,13 +77,13 @@ void AccountView::initItemWidget()
 ///Get the current item
 QListWidgetItem* AccountView::getItem()
 {
-   return item2;
+   return m_pItem;
 }
 
 ///Get the current widget
 AccountItemWidget* AccountView::getItemWidget()
 {
-   return itemWidget;
+   return m_pWidget;
 }
 
 ///Return the state color
@@ -109,7 +109,7 @@ QString AccountView::getStateColorName()
 ///Is this item checked?
 bool AccountView::isChecked() const
 {
-   return itemWidget->getEnabled();
+   return m_pWidget->getEnabled();
 }
 
 
@@ -149,18 +149,18 @@ void AccountView::updateState()
    if(! isNew()) {
       Account::updateState();
       
-      AccountItemWidget * itemWidget = getItemWidget();
+      AccountItemWidget * m_pWidget = getItemWidget();
       if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE ) {
-         qDebug() << "itemWidget->setState(AccountItemWidget::Unregistered);";
-         itemWidget->setState(AccountItemWidget::Unregistered);
+         qDebug() << "m_pWidget->setState(AccountItemWidget::Unregistered);";
+         m_pWidget->setState(AccountItemWidget::Unregistered);
       }
       else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY) {
-         qDebug() << "itemWidget->setState(AccountItemWidget::Registered);";
-         itemWidget->setState(AccountItemWidget::Registered);
+         qDebug() << "m_pWidget->setState(AccountItemWidget::Registered);";
+         m_pWidget->setState(AccountItemWidget::Registered);
       }
       else {
-         qDebug() << "itemWidget->setState(AccountItemWidget::NotWorking);";
-         itemWidget->setState(AccountItemWidget::NotWorking);
+         qDebug() << "m_pWidget->setState(AccountItemWidget::NotWorking);";
+         m_pWidget->setState(AccountItemWidget::NotWorking);
       }
    }
 }

@@ -115,8 +115,8 @@ class LIB_EXPORT CallModel : public CallModelBase {
       bool mergeConferences          ( Call* conf1, Call* conf2                    );
       bool addParticipant            ( Call* call2, Call* conference               );
       bool detachParticipant         ( Call* call                                  );
-      virtual bool changeConference ( const QString &confId, const QString &state );
-      virtual void removeConference ( const QString &confId                       );
+      virtual bool changeConference  ( const QString &confId, const QString &state );
+      virtual void removeConference  ( const QString &confId                       );
       virtual Call* addConference    ( const QString &confID                       );
       void removeConference          ( Call* call                                  );
 
@@ -169,6 +169,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       
       
    protected:
+      //Struct
       struct InternalStruct;
       typedef QList<InternalStruct*> InternalCallList;
       struct InternalStruct {
@@ -182,28 +183,27 @@ class LIB_EXPORT CallModel : public CallModelBase {
       typedef QHash< QString    , InternalStruct* > InternalCallId;
       typedef QHash< CallWidget , InternalStruct* > InternalWidget;
       typedef QHash< Index      , InternalStruct* > InternalIndex ;
+
+      //Static attributes
+      static CallHash m_sActiveCalls ;
+      static CallHash m_sHistoryCalls;
       
-      static CallHash m_pActiveCalls ;
-      static CallHash m_pHistoryCalls;
+      static InternalCall   m_sPrivateCallList_call  ;
+      static InternalCallId m_sPrivateCallList_callId;
+      static InternalWidget m_sPrivateCallList_widget;
+      static InternalIndex  m_sPrivateCallList_index ;
       
-      static InternalCall   m_pPrivateCallList_call  ;
-      static InternalCallId m_pPrivateCallList_callId;
-      static InternalWidget m_pPrivateCallList_widget;
-      static InternalIndex  m_pPrivateCallList_index ;
-      
-      static QString      m_pPriorAccountId;
-      static AccountList* m_pAccountList   ;
-      static bool         m_pCallInit      ;
-      static bool         m_pHistoryInit   ;
+      static QString      m_sPriorAccountId;
+      static AccountList* m_spAccountList  ;
+      static bool         m_sCallInit      ;
+      static bool         m_sHistoryInit   ;
 
    private:
-      static bool m_pInstanceInit;
+      static bool m_sInstanceInit;
 
       //Helpers
       Call* addCallCommon(Call* call);
-      bool updateCommon(Call* call);
-   //public slots:
-      //void clearHistory();
+      bool  updateCommon (Call* call);
 };
 
 class CallModelConvenience : public CallModel<QWidget*,QModelIndex*>

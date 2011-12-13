@@ -56,14 +56,14 @@ public:
    
 private:
    //Attributes
-   int        state;
-   bool       enabled;
-   QLabel*    led;
-   QCheckBox* checkBox;
-   QLabel*    textLabel;
+   int        m_State     ;
+   bool       m_Enabled   ;
+   QLabel*    m_pLed      ;
+   QCheckBox* m_pCheckBox ;
+   QLabel*    m_pTextLabel;
    
 private slots:   
-   void on_checkBox_stateChanged(int state);
+   void on_m_pCheckBox_stateChanged(int state);
    
 signals:
    void checkStateChanged(bool checked);
