@@ -717,9 +717,9 @@ void SFLPhoneView::record()
 ///Access the voice mail list
 void SFLPhoneView::mailBox()
 {
-   Account * account = SFLPhone::model()->getCurrentAccount();
+   Account* account = SFLPhone::model()->getCurrentAccount();
    QString mailBoxNumber = account->getAccountDetail(ACCOUNT_MAILBOX);
-   Call * call = SFLPhone::model()->addDialingCall();
+   Call* call = SFLPhone::model()->addDialingCall();
    call->appendText(mailBoxNumber);
    action(call, CALL_ACTION_ACCEPT);
 }
