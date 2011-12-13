@@ -83,27 +83,27 @@ public:
    virtual void initItem();
    
    //Getters
-   virtual PhoneNumbers   getPhoneNumbers()    const;
-   virtual QString        getNickName()        const;
-   virtual QString        getFirstName()       const;
-   virtual QString        getSecondName()      const;
-   virtual QString        getFormattedName()   const;
-   virtual QString        getOrganization()    const;
-   virtual QString        getUid()             const;
-   virtual QString        getPreferredEmail()  const;
-   virtual const QPixmap* getPhoto()           const;
-   virtual QString        getType()            const;
+   virtual PhoneNumbers          getPhoneNumbers()    const;
+   virtual const QString&        getNickName()        const;
+   virtual const QString&        getFirstName()       const;
+   virtual const QString&        getSecondName()      const;
+   virtual const QString&        getFormattedName()   const;
+   virtual const QString&        getOrganization()    const;
+   virtual const QString&        getUid()             const;
+   virtual const QString&        getPreferredEmail()  const;
+   virtual const QPixmap*        getPhoto()           const;
+   virtual const QString&        getType()            const;
 
    //Setters
-   virtual void setPhoneNumbers   (PhoneNumbers   );
-   virtual void setFormattedName  (QString name   );
-   virtual void setNickName       (QString name   );
-   virtual void setFirstName      (QString name   );
-   virtual void setFamilyName     (QString name   );
-   virtual void setOrganization   (QString name   );
-   virtual void setPreferredEmail (QString name   );
-   virtual void setUid            (QString id     );
-   virtual void setPhoto          (QPixmap* photo );
+   virtual void setPhoneNumbers   (PhoneNumbers          );
+   virtual void setFormattedName  (const QString& name   );
+   virtual void setNickName       (const QString& name   );
+   virtual void setFirstName      (const QString& name   );
+   virtual void setFamilyName     (const QString& name   );
+   virtual void setOrganization   (const QString& name   );
+   virtual void setPreferredEmail (const QString& name   );
+   virtual void setUid            (const QString& id     );
+   virtual void setPhoto          (QPixmap* photo        );
    
 protected:
    virtual void initItemWidget();

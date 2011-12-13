@@ -35,19 +35,19 @@ public:
    Codec(int payload, bool enabled);
 
    //Getters
-   QString getPayload   () const;
-   QString getName      () const;
-   QString getFrequency () const;
-   QString getBitrate   () const;
-   QString getBandwidth () const;
-   bool isEnabled       () const;
+   const QString& getPayload   () const;
+   const QString& getName      () const;
+   const QString& getFrequency () const;
+   const QString& getBitrate   () const;
+   const QString& getBandwidth () const;
+   bool isEnabled              () const;
 
    //Setters
-   void setPayload   ( QString payload   );
-   void setName      ( QString name      );
-   void setFrequency ( QString frequency );
-   void setBitrate   ( QString bitrate   );
-   void setBandwidth ( QString bandwidth );
+   void setPayload   ( const QString& payload   );
+   void setName      ( const QString& name      );
+   void setFrequency ( const QString& frequency );
+   void setBitrate   ( const QString& bitrate   );
+   void setBandwidth ( const QString& bandwidth );
    void setEnabled   ( bool enabled      );
    
 private:

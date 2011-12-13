@@ -312,7 +312,7 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 }
 
 ///Get the time (second from 1 jan 1970) when the call ended
-QString Call::getStopTimeStamp()    const
+QString Call::getStopTimeStamp()     const
 {
    if (m_pStopTime == NULL)
       return QString();
@@ -320,7 +320,7 @@ QString Call::getStopTimeStamp()    const
 }
 
 ///Get the time (second from 1 jan 1970) when the call started
-QString Call::getStartTimeStamp()   const
+QString Call::getStartTimeStamp()    const
 {
    if (m_pStartTime == NULL)
       return QString();
@@ -328,61 +328,61 @@ QString Call::getStartTimeStamp()   const
 }
 
 ///Get the number where the call have been transferred
-QString Call::getTransferNumber()    const
+const QString& Call::getTransferNumber()    const
 {
    return m_TransferNumber;
 }
 
 ///Get the call / peer number
-QString Call::getCallNumber()        const
+const QString& Call::getCallNumber()        const
 {
    return m_CallNumber;
 }
 
 ///Return the call id
-QString Call::getCallId()            const
+const QString& Call::getCallId()            const
 {
    return m_CallId;
 }
 
 ///Return the peer phone number
-QString Call::getPeerPhoneNumber()   const
+const QString& Call::getPeerPhoneNumber()   const
 {
    return m_PeerPhoneNumber;
 }
 
 ///Get the peer name
-QString Call::getPeerName()          const
+const QString& Call::getPeerName()          const
 {
    return m_PeerName;
 }
 
 ///Get the current state
-call_state Call::getCurrentState()   const
+call_state Call::getCurrentState()          const
 {
    return m_CurrentState;
 }
 
 ///Get the call recording
-bool Call::getRecording()            const
+bool Call::getRecording()                   const
 {
    return m_Recording;
 }
 
 ///Get the call account id
-QString Call::getAccountId()         const
+const QString& Call::getAccountId()         const
 {
    return m_Account;
 }
 
 ///Is this call a conference
-bool Call::isConference()            const
+bool Call::isConference()                   const
 {
    return m_isConference;
 }
 
 ///Get the conference ID
-QString Call::getConfId()            const
+const QString& Call::getConfId()            const
 {
    return m_ConfId;
 }
@@ -395,19 +395,19 @@ QString Call::getCurrentCodecName()  const
 }
 
 ///Get the state
-call_state Call::getState()          const
+call_state Call::getState()                 const
 {
    return m_CurrentState;
 }
 
 ///Get the history state
-history_state Call::getHistoryState() const
+history_state Call::getHistoryState()       const
 {
    return m_HistoryState;
 }
 
 ///Is this call over?
-bool Call::isHistory()               const
+bool Call::isHistory()                      const
 {
    return (getState() == CALL_STATE_OVER);
 }
@@ -437,7 +437,7 @@ bool Call::isSecure() const {
  ****************************************************************************/
 
 ///Set the transfer number
-void Call::setTransferNumber(QString number)
+void Call::setTransferNumber(const QString& number)
 {
    m_TransferNumber = number;
 }
@@ -449,7 +449,7 @@ void Call::setConference(bool value)
 }
 
 ///Set the call number
-void Call::setCallNumber(QString number)
+void Call::setCallNumber(const QString& number)
 {
    m_CallNumber = number;
    emit changed();
@@ -706,7 +706,7 @@ void Call::warning()
  ****************************************************************************/
 
 ///Input text on the call item
-void Call::appendText(QString str)
+void Call::appendText(const QString& str)
 {
    QString * editNumber;
    

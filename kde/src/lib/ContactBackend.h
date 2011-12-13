@@ -37,10 +37,10 @@ class LIB_EXPORT ContactBackend : public QObject {
    Q_OBJECT
 public:
    ContactBackend(QObject* parent);
-   virtual Contact*    getContactByPhone ( QString phoneNumber ) = 0;
-   virtual Contact*    getContactByUid   ( QString uid         ) = 0;
-   virtual void        editContact       ( Contact* contact    ) = 0;
-   virtual void        addNewContact     ( Contact* contact    ) = 0;
+   virtual Contact*    getContactByPhone ( const QString& phoneNumber ) = 0;
+   virtual Contact*    getContactByUid   ( const QString& uid         ) = 0;
+   virtual void        editContact       ( Contact*       contact     ) = 0;
+   virtual void        addNewContact     ( Contact*       contact     ) = 0;
 protected:
    virtual ContactList update_slot       (                     ) = 0;
    QHash<QString,Contact*>        m_ContactByPhone ;

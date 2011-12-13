@@ -134,23 +134,23 @@ public:
    static history_state getHistoryStateFromDaemonCallState ( QString daemonCallState, QString daemonCallType );
    
    //Getters
-   call_state    getState            () const;
-   QString       getCallId           () const;
-   QString       getPeerPhoneNumber  () const;
-   QString       getPeerName         () const;
-   call_state    getCurrentState     () const;
-   history_state getHistoryState     () const;
-   bool          getRecording        () const;
-   QString       getAccountId        () const;
-   bool          isHistory           () const;
-   QString       getStopTimeStamp    () const;
-   QString       getStartTimeStamp   () const;
-   QString       getCurrentCodecName () const;
-   bool          isSecure            () const;
-   bool          isConference        () const;
-   QString       getConfId           () const;
-   QString       getTransferNumber   () const;
-   QString       getCallNumber       () const;
+   call_state           getState            () const;
+   const QString&       getCallId           () const;
+   const QString&       getPeerPhoneNumber  () const;
+   const QString&       getPeerName         () const;
+   call_state           getCurrentState     () const;
+   history_state        getHistoryState     () const;
+   bool                 getRecording        () const;
+   const QString&       getAccountId        () const;
+   bool                 isHistory           () const;
+   QString              getStopTimeStamp    () const;
+   QString              getStartTimeStamp   () const;
+   QString              getCurrentCodecName () const;
+   bool                 isSecure            () const;
+   bool                 isConference        () const;
+   const QString&       getConfId           () const;
+   const QString&       getTransferNumber   () const;
+   const QString&       getCallNumber       () const;
 
    //Automated function
    call_state stateChanged(const QString & newState);
@@ -159,31 +159,31 @@ public:
    //Setters
    void setConference(bool value);
    void setConfId(QString value);
-   void setTransferNumber(QString number);
-   void setCallNumber(QString number);
+   void setTransferNumber(const QString& number);
+   void setCallNumber(const QString& number);
    
    //Mutotors
-   void appendText(QString str);
+   void appendText(const QString& str);
    void backspaceItemText();
    void changeCurrentState(call_state newState);
    
 private:
 
    //Attributes
-   QString                m_Account;
-   QString                m_CallId;
-   QString                m_ConfId;
+   QString                m_Account        ;
+   QString                m_CallId         ;
+   QString                m_ConfId         ;
    QString                m_PeerPhoneNumber;
-   QString                m_PeerName;
-   history_state          m_HistoryState;
-   QDateTime*             m_pStartTime;
-   QDateTime*             m_pStopTime;
-   QString                m_TransferNumber;
-   QString                m_CallNumber;
+   QString                m_PeerName       ;
+   history_state          m_HistoryState   ;
+   QDateTime*             m_pStartTime     ;
+   QDateTime*             m_pStopTime      ;
+   QString                m_TransferNumber ;
+   QString                m_CallNumber     ;
    static ContactBackend* m_pContactBackend;
-   bool                   m_isConference;
-   call_state             m_CurrentState;
-   bool                   m_Recording;
+   bool                   m_isConference   ;
+   call_state             m_CurrentState   ;
+   bool                   m_Recording      ;
    
    //Automate attributes
    /**

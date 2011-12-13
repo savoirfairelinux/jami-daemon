@@ -97,7 +97,7 @@ QColor AccountView::getStateColor()
 }
 
 ///Get the color name
-QString AccountView::getStateColorName()
+const QString& AccountView::getStateColorName()
 {
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
           return "black";
@@ -120,7 +120,7 @@ bool AccountView::isChecked() const
  ****************************************************************************/
 
 ///Build an item from an account id
-AccountView* AccountView::buildExistingAccountFromId(QString _accountId)
+AccountView* AccountView::buildExistingAccountFromId(const QString& _accountId)
 {
    //Account* a = Account::buildExistingAccountFromId( _accountId);
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -132,7 +132,7 @@ AccountView* AccountView::buildExistingAccountFromId(QString _accountId)
 }
 
 ///Build an item from an alias
-AccountView* AccountView::buildNewAccountFromAlias(QString alias)
+AccountView* AccountView::buildNewAccountFromAlias(const QString& alias)
 {
    //Account* a = Account::buildNewAccountFromAlias(alias);
    AccountView* a = new AccountView();

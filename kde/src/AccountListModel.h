@@ -49,10 +49,10 @@ public:
    virtual bool setData   ( const QModelIndex& index, const QVariant &value, int role)  ;
 
    //Mutators
-   bool accountUp     ( int index     );
-   bool accountDown   ( int index     );
-   bool removeAccount ( int index     );
-   bool addAccount    ( QString alias );
+   bool accountUp     ( int index            );
+   bool accountDown   ( int index            );
+   bool removeAccount ( int index            );
+   bool addAccount    ( const QString& alias );
    
    QString getOrderedList() const;
 };

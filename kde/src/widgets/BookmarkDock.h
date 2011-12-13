@@ -44,7 +44,7 @@ public:
    virtual ~BookmarkDock();
 
    //Mutators
-   void addBookmark(QString phone);
+   void addBookmark(const QString& phone);
 private:
    //Attributes
    QTreeWidget*  m_pItemView;
@@ -53,7 +53,7 @@ private:
    BookmarkList  m_pBookmark;
 
    //Mutators
-   void addBookmark_internal(QString phone);
+   void addBookmark_internal(const QString& phone);
 private slots:
    void filter(QString text);
 };

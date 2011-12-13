@@ -326,7 +326,7 @@ Call* CallView::addCall(Call* call, Call* parent)
  ****************************************************************************/
 
 ///Set the TreeView header text
-void CallView::setTitle(QString title) 
+void CallView::setTitle(const QString& title) 
 {
    headerItem()->setText(0,title);
 }
@@ -369,7 +369,7 @@ QWidget* CallView::getWidget()
 }
 
 ///Convenience wrapper around extractItem(QTreeWidgetItem*)
-QTreeWidgetItem* CallView::extractItem(QString callId) 
+QTreeWidgetItem* CallView::extractItem(const QString& callId) 
 {
    QTreeWidgetItem* currentItem = SFLPhone::model()->getIndex(callId);
    return extractItem(currentItem);

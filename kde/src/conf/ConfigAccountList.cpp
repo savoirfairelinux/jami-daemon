@@ -29,7 +29,7 @@ AccountView* ConfigAccountList::getAccountByItem(QListWidgetItem * item)
    return NULL;
 }
 
-AccountView* ConfigAccountList::addAccount(QString & alias)
+AccountView* ConfigAccountList::addAccount(const QString& alias)
 {
    AccountView* a = AccountView::buildNewAccountFromAlias(alias);
    (*accounts) += a;

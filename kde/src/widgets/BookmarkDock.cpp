@@ -103,7 +103,7 @@ BookmarkDock::~BookmarkDock()
  ****************************************************************************/
 
 ///Add a new bookmark
-void BookmarkDock::addBookmark_internal(QString phone)
+void BookmarkDock::addBookmark_internal(const QString& phone)
 {
    HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone);
    QTreeWidgetItem* item   = new QTreeWidgetItem(m_pItemView      );
@@ -114,7 +114,7 @@ void BookmarkDock::addBookmark_internal(QString phone)
 }
 
 ///Proxy to add a new bookmark
-void BookmarkDock::addBookmark(QString phone)
+void BookmarkDock::addBookmark(const QString& phone)
 {
    addBookmark_internal(phone);
    ConfigurationSkeleton::setBookmarkList(ConfigurationSkeleton::bookmarkList() << phone);

@@ -202,7 +202,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
 }
 
 ///Filter contact
-void ContactDock::filter(QString text)
+void ContactDock::filter(const QString& text)
 {
    foreach(ContactItemWidget* item, m_Contacts) {
       bool foundNumber = false;

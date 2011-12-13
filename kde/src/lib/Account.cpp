@@ -33,27 +33,38 @@
 #include "configurationmanager_interface_singleton.h"
 
 ///Match state name to user readable string
-const QString account_state_name(QString & s)
+const QString& account_state_name(const QString& s)
 {
+   static const QString registered             = "Registered"               ;
+   static const QString notRegistered          = "Not Registered"           ;
+   static const QString trying                 = "Trying..."                ;
+   static const QString error                  = "Error"                    ;
+   static const QString authenticationFailed   = "Authentication Failed"    ;
+   static const QString networkUnreachable     = "Network unreachable"      ;
+   static const QString hostUnreachable        = "Host unreachable"         ;
+   static const QString stunConfigurationError = "Stun configuration error" ;
+   static const QString stunServerInvalid      = "Stun server invalid"      ;
+   static const QString invalid                = "Invalid"                  ;
+   
    if(s == QString(ACCOUNT_STATE_REGISTERED)       )
-      return "Registered"               ;
+      return registered             ;
    if(s == QString(ACCOUNT_STATE_UNREGISTERED)     )
-      return "Not Registered"           ;
+      return notRegistered          ;
    if(s == QString(ACCOUNT_STATE_TRYING)           )
-      return "Trying..."                ;
+      return trying                 ;
    if(s == QString(ACCOUNT_STATE_ERROR)            )
-      return "Error"                    ;
+      return error                  ;
    if(s == QString(ACCOUNT_STATE_ERROR_AUTH)       )
-      return "Authentication Failed"    ;
+      return authenticationFailed   ;
    if(s == QString(ACCOUNT_STATE_ERROR_NETWORK)    )
-      return "Network unreachable"      ;
+      return networkUnreachable     ;
    if(s == QString(ACCOUNT_STATE_ERROR_HOST)       )
-      return "Host unreachable"         ;
+      return hostUnreachable        ;
    if(s == QString(ACCOUNT_STATE_ERROR_CONF_STUN)  )
-      return "Stun configuration error" ;
+      return stunConfigurationError ;
    if(s == QString(ACCOUNT_STATE_ERROR_EXIST_STUN) )
-      return "Stun server invalid"      ;
-   return "Invalid"                     ;
+      return stunServerInvalid      ;
+   return invalid                   ;
 }
 
 ///Constructors
@@ -62,7 +73,7 @@ Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
 }
 
 ///Build an account from it'id
-Account* Account::buildExistingAccountFromId(QString _accountId)
+Account* Account::buildExistingAccountFromId(const QString& _accountId)
 {
    qDebug() << "Building an account from id: " << _accountId;
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -79,7 +90,7 @@ Account* Account::buildExistingAccountFromId(QString _accountId)
 }
 
 ///Build an account from it's name / alias
-Account* Account::buildNewAccountFromAlias(QString alias)
+Account* Account::buildNewAccountFromAlias(const QString& alias)
 {
    qDebug() << "Building an account from alias: " << alias;
    Account* a = new Account();
@@ -108,7 +119,7 @@ bool Account::isNew() const
 }
 
 ///Get this account ID
-const QString & Account::getAccountId() const
+const QString& Account::getAccountId() const
 {
    if (isNew())
       qDebug() << "Error : getting AccountId of a new account.";
@@ -121,19 +132,19 @@ const QString & Account::getAccountId() const
 }
 
 ///Get this account details
-MapStringString& Account::getAccountDetails() const
+const MapStringString& Account::getAccountDetails() const
 {
    return *m_pAccountDetails;
 }
 
 ///Get current state
-QString Account::getStateName(QString & state)
+const QString& Account::getStateName(const QString& state) const
 {
-   return account_state_name(state);
+   return (const QString&)account_state_name(state);
 }
 
 ///Get an account detail
-QString Account::getAccountDetail(QString param) const
+const QString& Account::getAccountDetail(const QString& param) const
 {
    if (!m_pAccountDetails) {
       qDebug() << "The account list is not set";
@@ -148,7 +159,7 @@ QString Account::getAccountDetail(QString param) const
 }
 
 ///Get the alias
-QString Account::getAlias() const
+const QString& Account::getAlias() const
 {
    return getAccountDetail(ACCOUNT_ALIAS);
 }
@@ -175,19 +186,19 @@ bool Account::isRegistered() const
  ****************************************************************************/
 
 ///Set account details
-void Account::setAccountDetails(MapStringString m)
+void Account::setAccountDetails(const MapStringString& m)
 {
    *m_pAccountDetails = m;
 }
 
 ///Set a specific detail
-void Account::setAccountDetail(QString param, QString val)
+void Account::setAccountDetail(const QString& param, const QString& val)
 {
    (*m_pAccountDetails)[param] = val;
 }
 
 ///Set the account id
-void Account::setAccountId(QString id)
+void Account::setAccountId(const QString& id)
 {
    qDebug() << "accountId = " << m_pAccountId;
    if (! isNew())

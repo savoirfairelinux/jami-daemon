@@ -124,7 +124,7 @@ void AccountItemWidget::setEnabled(bool enabled)
 }
 
 ///Set the widget text
-void AccountItemWidget::setAccountText(QString text)
+void AccountItemWidget::setAccountText(const QString& text)
 {
    this->m_pTextLabel->setText(text);
 }

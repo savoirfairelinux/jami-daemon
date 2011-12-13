@@ -86,13 +86,13 @@ ContactBackend* AkonadiBackend::getInstance()
 }
 
 ///Find contact using a phone number
-Contact* AkonadiBackend::getContactByPhone(QString phoneNumber)
+Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber)
 {
    return m_ContactByPhone[phoneNumber];
 }
 
 ///Find contact by UID
-Contact* AkonadiBackend::getContactByUid(QString uid)
+Contact* AkonadiBackend::getContactByUid(const QString& uid)
 {
    return m_ContactByUid[uid];
 }

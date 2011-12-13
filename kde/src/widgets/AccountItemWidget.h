@@ -45,9 +45,9 @@ public:
    bool getEnabled();
    
    //Setters
-   void setState       (int state    );
-   void setEnabled     (bool enabled );
-   void setAccountText (QString text );
+   void setState       (int        state    );
+   void setEnabled     (bool        enabled );
+   void setAccountText (const QString& text );
    
    //Updates
    void updateStateDisplay   ();

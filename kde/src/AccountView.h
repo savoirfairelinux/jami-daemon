@@ -44,12 +44,12 @@ class AccountView : public Account, public Item<AccountItemWidget> {
       QListWidgetItem*   getItem           ()      ;
       AccountItemWidget* getItemWidget     ()      ;
       QColor             getStateColor     ()      ;
-      QString            getStateColorName ()      ;
+      const QString&     getStateColorName ()      ;
       bool               isChecked         () const;
 
       //Mutators
-      static AccountView* buildExistingAccountFromId ( QString _accountId );
-      static AccountView* buildNewAccountFromAlias   ( QString alias      );
+      static AccountView* buildExistingAccountFromId (const QString& _accountId );
+      static AccountView* buildNewAccountFromAlias   (const QString& alias      );
       virtual void updateState();
       
    private:

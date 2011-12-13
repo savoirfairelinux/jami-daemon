@@ -40,14 +40,14 @@ public:
    ~AccountList();
    
    //Getters
-   QVector<Account*>& getAccounts            (                   );
-   QVector<Account*>  getAccountsByState     ( QString & state   );
-   QString            getOrderedList         (                   ) const;
-   Account*           getAccountById         ( const QString& id ) const;
-   Account*           getAccountAt           ( int i             );
-   const Account*     getAccountAt           ( int i             ) const;
-   int                size                   (                   ) const;
-   Account*           firstRegisteredAccount (                   ) const;
+   const QVector<Account*>& getAccounts            (                        );
+   QVector<Account*>        getAccountsByState     ( const QString& state   );
+   QString                  getOrderedList         (                        ) const;
+   Account*                 getAccountById         ( const QString& id      ) const;
+   Account*                 getAccountAt           ( int i                  );
+   const Account*           getAccountAt           ( int i                  ) const;
+   int                      size                   (                        ) const;
+   Account*                 firstRegisteredAccount (                        ) const;
    
    //Mutators
    virtual Account*  addAccount        ( QString & alias  )      ;

@@ -26,7 +26,7 @@ class ConfigAccountList : public QObject {
       AccountView*            getAccountById         ( const QString & id    ) const;
       
       ///Mutators
-      virtual AccountView* addAccount     ( QString & alias       );
+      virtual AccountView* addAccount     ( const QString & alias );
       void                 removeAccount  ( QListWidgetItem* item );
       void                 removeAccount  ( AccountView* account  );
       void                 update         (                       );

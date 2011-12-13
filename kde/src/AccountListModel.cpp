@@ -146,7 +146,7 @@ bool AccountListModel::removeAccount( int index )
 }
 
 ///Add an account
-bool AccountListModel::addAccount( QString alias )
+bool AccountListModel::addAccount(const QString& alias )
 {
    accounts->addAccount(alias);
    emit dataChanged(this->index(0, 0, QModelIndex()), this->index(rowCount(), 0, QModelIndex()));

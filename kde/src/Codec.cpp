@@ -50,31 +50,31 @@ Codec::Codec(int payload, bool enabled)
  ****************************************************************************/
 
 ///Return the payload
-QString Codec::getPayload() const
+const QString& Codec::getPayload() const
 {
   return m_Payload;
 }
 
 ///Return the codec name
-QString Codec::getName() const
+const QString& Codec::getName() const
 {
   return m_Name;
 }
 
 ///Return the frequency
-QString Codec::getFrequency() const
+const QString& Codec::getFrequency() const
 {
   return m_Frequency;
 }
 
 ///Return the bitrate
-QString Codec::getBitrate() const
+const QString& Codec::getBitrate() const
 {
   return m_Bitrate;
 }
 
 ///Return the bandwidth
-QString Codec::getBandwidth() const
+const QString& Codec::getBandwidth() const
 {
   return m_Bandwidth;
 }
@@ -93,31 +93,31 @@ bool Codec::isEnabled() const
  ****************************************************************************/
 
 ///Set the payload
-void Codec::setPayload(QString payload)
+void Codec::setPayload(const QString& payload)
 {
   m_Payload = payload;
 }
 
 ///Set the codec name
-void Codec::setName(QString name)
+void Codec::setName(const QString& name)
 {
   m_Name = name;
 }
 
 ///Set the frequency
-void Codec::setFrequency(QString frequency)
+void Codec::setFrequency(const QString& frequency)
 {
   m_Frequency = frequency;
 }
 
 ///Set the bitrate
-void Codec::setBitrate(QString bitrate)
+void Codec::setBitrate(const QString& bitrate)
 {
   m_Bitrate = bitrate;
 }
 
 ///Set the bandwidth
-void Codec::setBandwidth(QString bandwidth)
+void Codec::setBandwidth(const QString& bandwidth)
 {
   m_Bandwidth = bandwidth;
 }

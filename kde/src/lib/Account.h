@@ -27,7 +27,7 @@ class QString;
 
 #include "typedefs.h"
 
-const QString account_state_name(QString & s);
+const QString& account_state_name(const QString& s);
 
 ///@class Account a daemon account (SIP or AIX)
 class LIB_EXPORT Account : public QObject {
@@ -36,23 +36,23 @@ class LIB_EXPORT Account : public QObject {
    public:
       ~Account();
       //Constructors
-      static Account* buildExistingAccountFromId(QString _accountId);
-      static Account* buildNewAccountFromAlias(QString alias);
+      static Account* buildExistingAccountFromId(const QString& _accountId);
+      static Account* buildNewAccountFromAlias(const QString& alias);
    
       //Getters
-      bool              isNew()                         const;
-      const QString&    getAccountId()                  const;
-      MapStringString&  getAccountDetails()             const;
-      QString           getStateName(QString & state)        ;
-      QString           getAccountDetail(QString param) const;
-      QString           getAlias()                      const;
-      bool              isEnabled()                     const;
-      bool              isRegistered()                  const;
+      bool                    isNew()                                const;
+      const QString&          getAccountId()                         const;
+      const MapStringString&  getAccountDetails()                    const;
+      const QString&          getStateName(const QString& state)     const;
+      const QString&          getAccountDetail(const QString& param) const;
+      const QString&          getAlias()                             const;
+      bool                    isEnabled()                            const;
+      bool                    isRegistered()                         const;
    
       //Setters
-      void setAccountId      (QString id                 );
-      void setAccountDetails (MapStringString m          );
-      void setAccountDetail  (QString param, QString val );
+      void setAccountId      (const QString& id                        );
+      void setAccountDetails (const MapStringString& m                 );
+      void setAccountDetail  (const QString& param, const QString& val );
    
       //Updates
       virtual void updateState();

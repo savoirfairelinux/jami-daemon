@@ -48,10 +48,10 @@ class AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:
    static   ContactBackend* getInstance();
-   Contact* getContactByPhone ( QString phoneNumber );
-   Contact* getContactByUid   ( QString uid         );
-   void     editContact       ( Contact* contact    );
-   void     addNewContact     ( Contact* contact    );
+   Contact* getContactByPhone ( const QString& phoneNumber );
+   Contact* getContactByUid   ( const QString& uid         );
+   void     editContact       ( Contact*       contact     );
+   void     addNewContact     ( Contact*       contact     );
    
 private:
    AkonadiBackend(QObject* parent);

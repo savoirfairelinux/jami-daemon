@@ -53,14 +53,14 @@ class CallView : public QTreeWidget {
       CallView                    ( QWidget* parent = 0                                                               );
       Call* getCurrentItem        (                                                                                   );
       QWidget* getWidget          (                                                                                   );
-      void setTitle               ( QString title                                                                     );
+      void setTitle               ( const QString& title                                                              );
       bool selectItem             ( Call* item                                                                        );
       bool removeItem             ( Call* item                                                                        );
       bool dropMimeData           ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
       virtual QMimeData* mimeData ( const QList<QTreeWidgetItem *> items                                              ) const;
       
    private:
-      QTreeWidgetItem* extractItem ( QString callId                                    );
+      QTreeWidgetItem* extractItem ( const QString& callId                             );
       QTreeWidgetItem* extractItem ( QTreeWidgetItem* item                             );
       CallTreeItem* insertItem     ( QTreeWidgetItem* item, QTreeWidgetItem* parent=0  );
       CallTreeItem* insertItem     ( QTreeWidgetItem* item, Call* parent               );

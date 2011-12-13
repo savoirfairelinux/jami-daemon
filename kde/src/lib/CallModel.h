@@ -51,11 +51,11 @@ public:
    virtual bool changeConference  ( const QString &confId, const QString &state ) = 0;
    virtual void removeConference  ( const QString &confId                       ) = 0;
    virtual Call* addConference    ( const QString &confID                       ) = 0;
-   virtual Call* findCallByCallId ( QString callId                              ) = 0;
+   virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
    virtual Call* addRingingCall   ( const QString& callId                       ) = 0;
    virtual Call* addIncomingCall  ( const QString& callId                       ) = 0;
    virtual Call* addCall          ( Call* call           , Call* parent =0      );
-   virtual Call* getCall          ( const QString callId                        ) const = 0;
+   virtual Call* getCall          ( const QString& callId                       ) const = 0;
 public slots:
    void on1_callStateChanged   ( const QString& callID    , const QString &state   );
    void on1_incomingCall       ( const QString& accountID , const QString & callID );
@@ -127,42 +127,42 @@ class LIB_EXPORT CallModel : public CallModelBase {
       static const QStringList getHistoryCallId ();
 
       //Account related
-      static Account* getCurrentAccount  (               );
-      static QString getCurrentAccountId (               );
-      static AccountList* getAccountList (               );
-      static QString getPriorAccoundId   (               );
-      static void setPriorAccountId      ( QString value );
+      static Account* getCurrentAccount  (                     );
+      static QString getCurrentAccountId (                     );
+      static AccountList* getAccountList (                     );
+      static QString getPriorAccoundId   (                     );
+      static void setPriorAccountId      (const QString& value );
 
       //Connection related
       static bool init();
       
       //Magic dispatcher
-      Call* findCallByCallId( QString callId         );
-      CallList getCalls     (                        );
-      CallList getCalls     ( const CallWidget widget) const;
-      CallList getCalls     ( const QString callId   ) const;
-      CallList getCalls     ( const Call* call       ) const;
-      CallList getCalls     ( const Index idx        ) const;
+      Call* findCallByCallId( const QString& callId   );
+      CallList getCalls     (                         );
+      CallList getCalls     ( const CallWidget widget ) const;
+      CallList getCalls     ( const QString& callId   ) const;
+      CallList getCalls     ( const Call* call        ) const;
+      CallList getCalls     ( const Index idx         ) const;
       
-      bool isConference     ( const Call* call       ) const;
-      bool isConference     ( const QString callId   ) const;
-      bool isConference     ( const Index idx        ) const;
-      bool isConference     ( const CallWidget widget) const;
+      bool isConference     ( const Call* call        ) const;
+      bool isConference     ( const QString& callId   ) const;
+      bool isConference     ( const Index idx         ) const;
+      bool isConference     ( const CallWidget widget ) const;
       
-      Call* getCall         ( const QString callId   ) const;
-      Call* getCall         ( const Index idx        ) const;
-      Call* getCall         ( const Call* call       ) const;
-      Call* getCall         ( const CallWidget widget) const;
+      Call* getCall         ( const QString& callId   ) const;
+      Call* getCall         ( const Index idx         ) const;
+      Call* getCall         ( const Call* call        ) const;
+      Call* getCall         ( const CallWidget widget ) const;
       
-      Index getIndex        ( const Call* call       ) const;
-      Index getIndex        ( const Index idx        ) const;
-      Index getIndex        ( const CallWidget widget) const;
-      Index getIndex        ( const QString callId   ) const;
+      Index getIndex        ( const Call* call        ) const;
+      Index getIndex        ( const Index idx         ) const;
+      Index getIndex        ( const CallWidget widget ) const;
+      Index getIndex        ( const QString& callId   ) const;
       
-      CallWidget getWidget  ( const Call* call       ) const;
-      CallWidget getWidget  ( const Index idx        ) const;
-      CallWidget getWidget  ( const CallWidget widget) const;
-      CallWidget getWidget  ( const QString getWidget) const;
+      CallWidget getWidget  ( const Call* call        ) const;
+      CallWidget getWidget  ( const Index idx         ) const;
+      CallWidget getWidget  ( const CallWidget widget ) const;
+      CallWidget getWidget  ( const QString& getWidget) const;
       
       bool updateIndex      ( Call* call, Index value      );
       bool updateWidget     ( Call* call, CallWidget value );

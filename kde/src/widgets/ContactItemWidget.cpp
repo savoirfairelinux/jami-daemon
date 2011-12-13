@@ -195,7 +195,7 @@ void ContactItemWidget::updated()
  ****************************************************************************/
 
 ///Return contact name
-QString ContactItemWidget::getContactName() const
+const QString& ContactItemWidget::getContactName() const
 {
    return m_pContactKA->getFormattedName();
 }
@@ -207,13 +207,13 @@ PhoneNumbers ContactItemWidget::getCallNumbers() const
 }
 
 ///Return the organisation
-QString ContactItemWidget::getOrganization() const
+const QString& ContactItemWidget::getOrganization() const
 {
    return m_pContactKA->getOrganization();
 }
 
 ///Return the email address
-QString ContactItemWidget::getEmail() const
+const QString& ContactItemWidget::getEmail() const
 {
    return m_pContactKA->getPreferredEmail();
 }
@@ -225,13 +225,13 @@ QPixmap* ContactItemWidget::getPicture() const
 }
 
 ///Return the model index
-QTreeWidgetItem* ContactItemWidget::getItem()
+QTreeWidgetItem* ContactItemWidget::getItem() const
 {
    return m_pItem;
 }
 
 ///Return the contact object
-Contact* ContactItemWidget::getContact()
+Contact* ContactItemWidget::getContact() const
 {
    return m_pContactKA;
 }
