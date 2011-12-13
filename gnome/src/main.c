@@ -54,9 +54,11 @@ main(int argc, char *argv[])
         if (g_strcmp0(argv[i], "--debug") == 0)
             set_log_level(LOG_DEBUG);
 
+#if !GTK_CHECK_VERSION(2,32,0)
     g_thread_init(NULL);
     gdk_threads_init();
     gdk_threads_enter();
+#endif
 
     // Start GTK application
     gtk_init(&argc, &argv);
@@ -127,7 +129,9 @@ main(int argc, char *argv[])
     shortcuts_destroy_bindings();
 
 OUT:
+#if !GTK_CHECK_VERSION(2,32,0)
     gdk_threads_leave();
+#endif
 
     return error != NULL;
 }
