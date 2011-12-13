@@ -125,7 +125,7 @@ const QString& Account::getAccountId() const
       qDebug() << "Error : getting AccountId of a new account.";
    if (!m_pAccountId) {
       qDebug() << "Account not configured";
-      return ""; //WARNING May explode
+      return EMPTY_STRING; //WARNING May explode
    }
    
    return *m_pAccountId; 
@@ -148,13 +148,13 @@ const QString& Account::getAccountDetail(const QString& param) const
 {
    if (!m_pAccountDetails) {
       qDebug() << "The account list is not set";
-      return NULL; //May crash, but better than crashing now
+      return EMPTY_STRING; //May crash, but better than crashing now
    }
    if (m_pAccountDetails->find(param) != m_pAccountDetails->end())
       return (*m_pAccountDetails)[param];
    else {
       qDebug() << "Account details not found, there is " << m_pAccountDetails->count() << " details available";
-      return NULL;
+      return EMPTY_STRING;
    }
 }
 

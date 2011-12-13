@@ -99,11 +99,14 @@ QColor AccountView::getStateColor()
 ///Get the color name
 const QString& AccountView::getStateColorName()
 {
+   static const QString black("black");
+   static const QString darkGreen("darkGreen");
+   static const QString red("red");
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
-          return "black";
+          return black;
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
-          return "darkGreen";
-   return "red";
+          return darkGreen;
+   return red;
 }
 
 ///Is this item checked?
