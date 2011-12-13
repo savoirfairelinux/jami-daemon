@@ -61,7 +61,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    
-   errorWindow = new QErrorMessage(this);
+   
    callTreeModel->setTitle(i18n("Calls"));
    
    QPalette pal = QPalette(palette());
@@ -110,6 +110,8 @@ void SFLPhoneView::loadWindow()
 ///Return the error window
 QErrorMessage * SFLPhoneView::getErrorWindow()
 {
+   if (!errorWindow)
+      errorWindow = new QErrorMessage(this);
    return errorWindow;
 }
 
@@ -228,7 +230,7 @@ void SFLPhoneView::action(Call* call, call_action action)
          call->actionPerformed(action);
       }
       catch(const char * msg) {
-         errorWindow->showMessage(QString(msg));
+         getErrorWindow()->showMessage(QString(msg));
       }
       updateWindowCallState();
    }
