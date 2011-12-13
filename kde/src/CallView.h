@@ -1,7 +1,7 @@
 #ifndef CALL_VIEW
 #define CALL_VIEW
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -30,6 +30,9 @@ class QTreeWidgetItem;
 //SFLPhone
 class CallTreeItem;
 
+//Typedef
+typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
+
 ///@class CallTreeItemDelegate Delegates for CallTreeItem
 class CallTreeItemDelegate : public QItemDelegate
 {
@@ -42,8 +45,6 @@ class CallTreeItemDelegate : public QItemDelegate
          return QSize(0,60); 
       }
 };
-
-typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
 ///@class CallView Central tree widget managing active calls
 class CallView : public QTreeWidget {
