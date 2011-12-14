@@ -17,10 +17,6 @@
 			<Action name="action_record" />
 			<Action name="action_mailBox" />
 			<Separator />
-			<Action name="action_main" />
-			<Action name="action_history" />
-			<Action name="action_addressBook" />
-			<Separator />
 			<Action name="action_close" />
 			<Separator />
 			<Action name="action_quit" />
@@ -44,8 +40,5 @@
                 <Action name="action_hold" />
                 <Action name="action_transfer" />
                 <Action name="action_record" />
-		<Action name="action_main" />
-		<Action name="action_history" />
-		<Action name="action_addressBook" />
 	</ToolBar>	
 </gui>

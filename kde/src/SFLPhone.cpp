@@ -178,11 +178,6 @@ void SFLPhone::setupActions()
    action_screen = new QActionGroup(this);
    action_screen->setExclusive(true);
    
-   action_main = new KAction(KIcon(QIcon(ICON_SCREEN_MAIN)), i18n("Main screen"), action_screen);
-   action_main->setCheckable( true );
-   action_main->setChecked  ( true );
-   action_screen->addAction(action_main);
-
    action_close = KStandardAction::close(this, SLOT(close()), this);
    action_quit  = KStandardAction::quit(this, SLOT(quitButton()), this);
    
@@ -214,14 +209,12 @@ void SFLPhone::setupActions()
    /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
    /*                                                                                                                   */
 
-   action_screen->addAction(action_main);
    
    actionCollection()->addAction("action_accept"                , action_accept                );
    actionCollection()->addAction("action_refuse"                , action_refuse                );
    actionCollection()->addAction("action_hold"                  , action_hold                  );
    actionCollection()->addAction("action_transfer"              , action_transfer              );
    actionCollection()->addAction("action_record"                , action_record                );
-   actionCollection()->addAction("action_main"                  , action_main                  );
    actionCollection()->addAction("action_mailBox"               , action_mailBox               );
    actionCollection()->addAction("action_close"                 , action_close                 );
    actionCollection()->addAction("action_quit"                  , action_quit                  );
@@ -398,13 +391,6 @@ void SFLPhone::on_m_pView_transferCheckStateChangeAsked(bool transferCheckState)
 void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 {
    action_record->setChecked(recordCheckState);
-}
-
-///Do nothing
-/// @deprecated This function can be removed
-void SFLPhone::on_m_pView_screenChanged(int screen)
-{
-   if(screen == SCREEN_MAIN)   action_main->setChecked(true);
 }
 
 ///Called when a call is coming

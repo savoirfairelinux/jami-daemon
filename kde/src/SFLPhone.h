@@ -82,7 +82,6 @@ private:
    KAction* action_hold                  ;
    KAction* action_transfer              ;
    KAction* action_record                ;
-   KAction* action_main                  ;
    KAction* action_mailBox               ;
    KAction* action_close                 ;
    KAction* action_quit                  ;
@@ -139,7 +138,6 @@ private slots:
    void on_m_pView_actionTextsChangeAsked        ( const QString* actionTexts    );
    void on_m_pView_transferCheckStateChangeAsked ( bool  transferCheckState      );
    void on_m_pView_recordCheckStateChangeAsked   ( bool  recordCheckState        );
-   void on_m_pView_screenChanged                 ( int screen                    );
    void on_m_pView_incomingCall                  ( const Call * call             );
    void showShortCutEditor                       (                               );
 
