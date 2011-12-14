@@ -324,7 +324,6 @@ void SFLPhone::setObjectNames()
 ///[Action]Hide sflphone
 bool SFLPhone::queryClose()
 {
-   qDebug() << "queryClose";
    hide();
    return false;
 }
@@ -346,21 +345,18 @@ void SFLPhone::changeEvent(QEvent* event)
 ///Change status message
 void SFLPhone::on_m_pView_statusMessageChangeAsked(const QString & message)
 {
-   qDebug() << "on_m_pView_statusMessageChangeAsked : " + message;
    m_pStatusBarWidget->setText(message);
 }
 
 ///Change windowtitle
 void SFLPhone::on_m_pView_windowTitleChangeAsked(const QString & message)
 {
-   qDebug() << "on_m_pView_windowTitleChangeAsked : " + message;
    setWindowTitle(message);
 }
 
 ///Enable or disable toolbar items
 void SFLPhone::on_m_pView_enabledActionsChangeAsked(const bool * enabledActions)
 {
-   qDebug() << "on_m_pView_enabledActionsChangeAsked";
    action_accept->setVisible   ( enabledActions[SFLPhone::Accept   ]);
    action_refuse->setVisible   ( enabledActions[SFLPhone::Refuse   ]);
    action_hold->setVisible     ( enabledActions[SFLPhone::Hold     ]);
@@ -372,7 +368,6 @@ void SFLPhone::on_m_pView_enabledActionsChangeAsked(const bool * enabledActions)
 ///Change icons
 void SFLPhone::on_m_pView_actionIconsChangeAsked(const QString * actionIcons)
 {
-   qDebug() << "on_m_pView_actionIconsChangeAsked";
    action_accept->setIcon   ( QIcon(actionIcons[SFLPhone::Accept   ]));
    action_refuse->setIcon   ( QIcon(actionIcons[SFLPhone::Refuse   ]));
    action_hold->setIcon     ( QIcon(actionIcons[SFLPhone::Hold     ]));
@@ -384,7 +379,6 @@ void SFLPhone::on_m_pView_actionIconsChangeAsked(const QString * actionIcons)
 ///Change text
 void SFLPhone::on_m_pView_actionTextsChangeAsked(const QString * actionTexts)
 {
-   qDebug() << "on_m_pView_actionTextsChangeAsked";
    action_accept->setText   ( actionTexts[SFLPhone::Accept   ]);
    action_refuse->setText   ( actionTexts[SFLPhone::Refuse   ]);
    action_hold->setText     ( actionTexts[SFLPhone::Hold     ]);
@@ -396,14 +390,12 @@ void SFLPhone::on_m_pView_actionTextsChangeAsked(const QString * actionTexts)
 ///Change transfer state
 void SFLPhone::on_m_pView_transferCheckStateChangeAsked(bool transferCheckState)
 {
-   qDebug() << "Changing transfer action checkState";
    action_transfer->setChecked(transferCheckState);
 }
 
 ///Change record state
 void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 {
-   qDebug() << "Changing record action checkState";
    action_record->setChecked(recordCheckState);
 }
 
@@ -411,7 +403,6 @@ void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 /// @deprecated This function can be removed
 void SFLPhone::on_m_pView_screenChanged(int screen)
 {
-   qDebug() << "on_m_pView_screenChanged";
    if(screen == SCREEN_MAIN)   action_main->setChecked(true);
 }
 

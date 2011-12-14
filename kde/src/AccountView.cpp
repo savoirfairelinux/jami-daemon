@@ -148,21 +148,20 @@ AccountView* AccountView::buildNewAccountFromAlias(const QString& alias)
 ///Change LED color
 void AccountView::updateState()
 {
-   qDebug() << "updateState";
    if(! isNew()) {
       Account::updateState();
       
       AccountItemWidget * m_pWidget = getItemWidget();
       if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE ) {
-         qDebug() << "m_pWidget->setState(AccountItemWidget::Unregistered);";
+         qDebug() << "Changing account state to Unregistered";
          m_pWidget->setState(AccountItemWidget::Unregistered);
       }
       else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY) {
-         qDebug() << "m_pWidget->setState(AccountItemWidget::Registered);";
+         qDebug() << "Changing account state to  Registered";
          m_pWidget->setState(AccountItemWidget::Registered);
       }
       else {
-         qDebug() << "m_pWidget->setState(AccountItemWidget::NotWorking);";
+         qDebug() << "Changing account state to NotWorking";
          m_pWidget->setState(AccountItemWidget::NotWorking);
       }
    }
