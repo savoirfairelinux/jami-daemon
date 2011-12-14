@@ -52,14 +52,15 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent)
    setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
 
    //User Interface even
-   //              SENDER                              SIGNAL                       RECEIVER                  SLOT                          /
-   /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int) ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
-   /**/connect(this              , SIGNAL(itemClicked(QTreeWidgetItem*,int)       ) , this, SLOT( itemClicked(QTreeWidgetItem*,int))       );
-   /**/connect(SFLPhone::model() , SIGNAL(conferenceCreated(Call*)                ) , this, SLOT( addConference(Call*))                    );
-   /**/connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*)                ) , this, SLOT( conferenceChanged(Call*))                );
-   /**/connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*)          ) , this, SLOT( conferenceRemoved(Call*))                );
-   /**/connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*)                  ) , this, SLOT( addCall(Call*,Call*))                    );
-   /*                                                                                                                                      */
+   //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                        /
+   /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)              ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
+   /**/connect(this              , SIGNAL(itemClicked(QTreeWidgetItem*,int)                    ) , this, SLOT( itemClicked(QTreeWidgetItem*,int))       );
+   /**/connect(this              , SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)) , this, SLOT( itemClicked(QTreeWidgetItem*))           );
+   /**/connect(SFLPhone::model() , SIGNAL(conferenceCreated(Call*)                             ) , this, SLOT( addConference(Call*))                    );
+   /**/connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*)                             ) , this, SLOT( conferenceChanged(Call*))                );
+   /**/connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*)                       ) , this, SLOT( conferenceRemoved(Call*))                );
+   /**/connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*)                               ) , this, SLOT( addCall(Call*,Call*))                    );
+   /*                                                                                                                                                   */
 
 }
 

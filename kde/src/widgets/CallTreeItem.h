@@ -70,7 +70,8 @@ class CallTreeItem : public QWidget
 public slots:
    void updated();
 signals:
-   void over(Call*);  
+   void over(Call*);
+   void changed();
  };
 
 #endif // CALLTREE_ITEM_H

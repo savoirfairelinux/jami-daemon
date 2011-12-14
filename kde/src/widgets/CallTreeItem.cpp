@@ -198,4 +198,5 @@ void CallTreeItem::updated()
    else {
       //kDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
+   changed();
 }

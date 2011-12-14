@@ -83,8 +83,7 @@ public:
    
    
    QErrorMessage * getErrorWindow();
-
-   CallView* model();
+   
    
    //Daemon getters
    /**
@@ -150,12 +149,6 @@ private slots:
     *   Keeps the peer name of the contact or past call.
     */
    void editBeforeCall();
-   
-   /**
-    *   Updates the toolbar's actions' display according to the selected 
-    *   item's state.
-    */
-   void updateWindowCallState();
 
    /**
     * Updates the history's search bar's display according to the current
@@ -176,6 +169,12 @@ public slots:
     * according to the settings.
     */
    void loadWindow();
+   
+   /**
+    *   Updates the toolbar's actions' display according to the selected 
+    *   item's state.
+    */
+   void updateWindowCallState();
    
    
    void updateStatusMessage();

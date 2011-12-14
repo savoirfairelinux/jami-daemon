@@ -71,6 +71,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    //                SENDER                                        SIGNAL                             RECEIVER                                            SLOT                                  /
    /**/connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
    /**/connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
+   /**/connect(callTreeModel                         , SIGNAL(itemChanged(Call*))                    , this                                  , SLOT(updateWindowCallState()                    ));
    /**///connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                , SLOT(on1_volumeChanged(const QString &, double) ));
    /**/connect(SFLPhone::model()                     , SIGNAL(callStateChanged(Call*))               , this                                  , SLOT(updateWindowCallState()                    ));
    /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
@@ -246,6 +247,7 @@ void SFLPhoneView::action(Call* call, call_action action)
 ///Change GUI icons
 void SFLPhoneView::updateWindowCallState()
 {
+   kDebug() << "Call state changed";
    bool enabledActions[6]= {true,true,true,true,true,true};
    QString buttonIconFiles[6] = {ICON_CALL, ICON_HANGUP, ICON_HOLD, ICON_TRANSFER, ICON_REC_DEL_OFF, ICON_MAILBOX};
    QString actionTexts[6] = {ACTION_LABEL_CALL, ACTION_LABEL_HANG_UP, ACTION_LABEL_HOLD, ACTION_LABEL_TRANSFER, ACTION_LABEL_RECORD, ACTION_LABEL_MAILBOX};

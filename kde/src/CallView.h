@@ -75,12 +75,12 @@ class CallView : public QTreeWidget {
       
    public slots:
       void destroyCall        ( Call* toDestroy);
-      void itemDoubleClicked  ( QTreeWidgetItem* item, int column  );
-      void itemClicked        ( QTreeWidgetItem* item, int column  );
-      Call* addCall           ( Call* call, Call* parent =0        );
-      Call* addConference     ( Call* conf                         );
-      bool conferenceChanged  ( Call* conf                         );
-      void conferenceRemoved  ( Call* conf                         );
+      void itemDoubleClicked  ( QTreeWidgetItem* item, int column    );
+      void itemClicked        ( QTreeWidgetItem* item, int column =0 );
+      Call* addCall           ( Call* call, Call* parent =0          );
+      Call* addConference     ( Call* conf                           );
+      bool conferenceChanged  ( Call* conf                           );
+      void conferenceRemoved  ( Call* conf                           );
 
       virtual void keyPressEvent(QKeyEvent* event);
 
