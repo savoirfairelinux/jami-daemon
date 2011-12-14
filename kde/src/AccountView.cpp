@@ -23,8 +23,10 @@
 
 
 //Qt
-#include <QtCore/QDebug>
 #include <QtGui/QListWidgetItem>
+
+//KDE
+#include <KDebug>
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -99,9 +101,9 @@ QColor AccountView::getStateColor()
 ///Get the color name
 const QString& AccountView::getStateColorName()
 {
-   static const QString black("black");
-   static const QString darkGreen("darkGreen");
-   static const QString red("red");
+   static const QString black    ( "black"     );
+   static const QString darkGreen( "darkGreen" );
+   static const QString red      ( "red"       );
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
           return black;
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
@@ -153,15 +155,15 @@ void AccountView::updateState()
       
       AccountItemWidget * m_pWidget = getItemWidget();
       if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE ) {
-         qDebug() << "Changing account state to Unregistered";
+         kDebug() << "Changing account state to Unregistered";
          m_pWidget->setState(AccountItemWidget::Unregistered);
       }
       else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY) {
-         qDebug() << "Changing account state to  Registered";
+         kDebug() << "Changing account state to  Registered";
          m_pWidget->setState(AccountItemWidget::Registered);
       }
       else {
-         qDebug() << "Changing account state to NotWorking";
+         kDebug() << "Changing account state to NotWorking";
          m_pWidget->setState(AccountItemWidget::NotWorking);
       }
    }

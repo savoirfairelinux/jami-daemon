@@ -173,7 +173,7 @@ void ContactItemWidget::updated()
    
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
    foreach (Contact::PhoneNumber* number, numbers) {
-      qDebug() << "Phone:" << number->getNumber() << number->getType();
+      kDebug() << "Phone:" << number->getNumber() << number->getType();
    }
 
    if (getCallNumbers().count() == 1)
@@ -264,20 +264,20 @@ void ContactItemWidget::showContext(const QPoint& pos)
 //TODO
 void ContactItemWidget::sendEmail()
 {
-   qDebug() << "Sending email";
+   kDebug() << "Sending email";
 }
 
 ///Call the same number again
 //TODO
 void ContactItemWidget::callAgain()
 {
-   qDebug() << "Calling ";
+   kDebug() << "Calling ";
 }
 
 ///Copy contact to clipboard
 void ContactItemWidget::copy()
 {
-   qDebug() << "Copying contact";
+   kDebug() << "Copying contact";
    QMimeData* mimeData = new QMimeData();
    mimeData->setData(MIME_CONTACT, m_pContactKA->getUid().toUtf8());
    QClipboard* clipboard = QApplication::clipboard();
@@ -287,7 +287,7 @@ void ContactItemWidget::copy()
 ///Edit this contact
 void ContactItemWidget::editContact()
 {
-   qDebug() << "Edit contact";
+   kDebug() << "Edit contact";
    AkonadiBackend::getInstance()->editContact(m_pContactKA);
 }
 
@@ -295,7 +295,7 @@ void ContactItemWidget::editContact()
 //TODO
 void ContactItemWidget::addPhone()
 {
-   qDebug() << "Adding to contact";
+   kDebug() << "Adding to contact";
 }
 
 ///Add this contact to the bookmark list

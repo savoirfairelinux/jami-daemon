@@ -124,7 +124,6 @@ void SFLPhoneApplication::initializePaths()
   KGlobal::dirs()       -> addPrefix( QString(DATA_INSTALL_DIR) );
   KIconLoader::global() -> addAppDir( QString(DATA_INSTALL_DIR) + "/share" );
 
-  qDebug() << "KGlobal::dirs" << QString(DATA_INSTALL_DIR);
 }
 
 Q_NOREPLY void SFLPhoneApplication::quit2()

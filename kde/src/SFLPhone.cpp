@@ -32,6 +32,7 @@
 #include <QtGui/QCursor>
 
 //KDE
+#include <KDebug>
 #include <KStandardAction>
 #include <KAction>
 #include <KStatusBar>
@@ -78,7 +79,7 @@ SFLPhone::~SFLPhone()
 bool SFLPhone::initialize()
 {
   if ( m_pInitialized ) {
-    qDebug() << "Already initialized.";
+    kDebug() << "Already initialized.";
     return false;
   }
 
@@ -158,7 +159,7 @@ bool SFLPhone::initialize()
 ///Setup evry actions
 void SFLPhone::setupActions()
 {
-   qDebug() << "setupActions";
+   kDebug() << "setupActions";
    
    action_accept   = new KAction(this);
    action_refuse   = new KAction(this);

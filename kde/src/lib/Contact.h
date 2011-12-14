@@ -37,11 +37,7 @@ namespace KABC {
 
 #include "typedefs.h"
 
-/**
- * @class Contact Abstract version of a contact
-   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-   @author Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
-*/
+///@class Contact Abstract version of a contact
 class LIB_EXPORT Contact : public QObject{
    Q_OBJECT
 public:
@@ -83,16 +79,16 @@ public:
    virtual void initItem();
    
    //Getters
-   virtual PhoneNumbers          getPhoneNumbers()    const;
-   virtual const QString&        getNickName()        const;
-   virtual const QString&        getFirstName()       const;
-   virtual const QString&        getSecondName()      const;
-   virtual const QString&        getFormattedName()   const;
-   virtual const QString&        getOrganization()    const;
-   virtual const QString&        getUid()             const;
-   virtual const QString&        getPreferredEmail()  const;
-   virtual const QPixmap*        getPhoto()           const;
-   virtual const QString&        getType()            const;
+   virtual PhoneNumbers   getPhoneNumbers()    const;
+   virtual const QString& getNickName()        const;
+   virtual const QString& getFirstName()       const;
+   virtual const QString& getSecondName()      const;
+   virtual const QString& getFormattedName()   const;
+   virtual const QString& getOrganization()    const;
+   virtual const QString& getUid()             const;
+   virtual const QString& getPreferredEmail()  const;
+   virtual const QPixmap* getPhoto()           const;
+   virtual const QString& getType()            const;
 
    //Setters
    virtual void setPhoneNumbers   (PhoneNumbers          );

@@ -149,7 +149,7 @@ void CallTreeItem::setCall(Call *call)
 ///Update data
 void CallTreeItem::updated()
 {
-   qDebug() << "Updating tree item";
+   kDebug() << "Updating tree item";
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
    if (contact) {
       m_pIconL->setPixmap(*contact->getPhoto());
@@ -196,6 +196,6 @@ void CallTreeItem::updated()
       }
    }
    else {
-      //qDebug() << "Updating item of call of state OVER. Doing nothing.";
+      //kDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
 }

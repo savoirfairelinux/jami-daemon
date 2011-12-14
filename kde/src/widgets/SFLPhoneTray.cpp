@@ -23,11 +23,11 @@
 #include "SFLPhoneTray.h"
 
 //Qt
-#include <QtCore/QDebug>
 #include <QtGui/QMenu>
 #include <QtGui/QIcon>
 
 //KDE
+#include <KDebug>
 #include <KAction>
 
 ///Constructor
@@ -47,7 +47,7 @@ SFLPhoneTray::~SFLPhoneTray()
 bool SFLPhoneTray::initialize()
 {
    if ( m_Init ) {
-      qDebug() << "Already initialized.";
+      kDebug() << "Already initialized.";
       return false;
    }
 

@@ -24,7 +24,9 @@
 
 //Qt
 #include <QtGui/QHBoxLayout>
-#include <QtCore/QDebug>
+
+//KDE
+#include <KDebug>
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -85,7 +87,7 @@ void AccountItemWidget::updateStateDisplay()
          m_pLed->setPixmap(QPixmap(ICON_ACCOUNT_LED_RED));
          break;
       default:
-         qDebug() << "Calling AccountItemWidget::setState with value " << m_State << ", not part of enum AccountItemWidget::State.";
+         kDebug() << "Calling AccountItemWidget::setState with value " << m_State << ", not part of enum AccountItemWidget::State.";
    }
 }
 

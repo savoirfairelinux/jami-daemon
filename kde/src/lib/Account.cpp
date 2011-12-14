@@ -167,14 +167,12 @@ const QString& Account::getAlias() const
 ///Is this account enabled
 bool Account::isEnabled() const
 {
-   qDebug() << "isEnabled = " << getAccountDetail(ACCOUNT_ENABLED);
    return (getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE);
 }
 
 ///Is this account registered
 bool Account::isRegistered() const
 {
-   qDebug() << "isRegistered = " << getAccountDetail(ACCOUNT_STATUS);
    return (getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
@@ -200,7 +198,7 @@ void Account::setAccountDetail(const QString& param, const QString& val)
 ///Set the account id
 void Account::setAccountId(const QString& id)
 {
-   qDebug() << "accountId = " << m_pAccountId;
+   qDebug() << "Setting accountId = " << m_pAccountId;
    if (! isNew())
       qDebug() << "Error : setting AccountId of an existing account.";
    m_pAccountId = new QString(id);
@@ -221,7 +219,6 @@ void Account::setEnabled(bool checked)
 ///Update the account
 void Account::updateState()
 {
-   qDebug() << "updateState";
    if(! isNew()) {
       ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();

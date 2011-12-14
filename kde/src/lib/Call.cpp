@@ -176,8 +176,6 @@ Call* Call::buildIncomingCall(const QString & callId)
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    MapStringString details = callManager.getCallDetails(callId).value();
    
-   qDebug() << "details = " << details;
-   
    QString from     = details[ CALL_PEER_NUMBER ];
    QString account  = details[ CALL_ACCOUNTID   ];
    QString peerName = details[ CALL_PEER_NAME   ];
@@ -607,7 +605,7 @@ void Call::call()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "account = " << m_Account;
    if(m_Account.isEmpty()) {
-      qDebug() << "account is not set, taking the first registered.";
+      qDebug() << "Account is not set, taking the first registered.";
       this->m_Account = CallModelConvenience::getCurrentAccountId();
    }
    if(!m_Account.isEmpty()) {

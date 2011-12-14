@@ -22,7 +22,6 @@
 #include "HistoryDock.h"
 
 //Qt
-#include <QtCore/QDebug>
 #include <QtCore/QString>
 #include <QtCore/QDate>
 #include <QtGui/QTreeWidget>
@@ -35,6 +34,7 @@
 #include <QtGui/QHeaderView>
 
 //KDE
+#include <KDebug>
 #include <KIcon>
 #include <KLineEdit>
 #include <KDateWidget>
@@ -332,7 +332,7 @@ void HistoryDock::updateLinkedToDate(QDate date)
 ///Generate serializerd version of the content 
 QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
-   qDebug() << "An history call is being dragged";
+   kDebug() << "An history call is being dragged";
    if (items.size() < 1) {
       return NULL;
    }
@@ -347,7 +347,7 @@ QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
       }
    }
    else {
-      qDebug() << "the item is not a call";
+      kDebug() << "the item is not a call";
    }
    return mimeData;
 }
@@ -361,7 +361,7 @@ bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 
    QByteArray encodedData = data->data(MIME_CALLID);
 
-   qDebug() << "In history import"<< QString(encodedData);
+   kDebug() << "In history import"<< QString(encodedData);
 
    return false;
 }

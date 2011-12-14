@@ -55,7 +55,7 @@
 ///Constructor
 SFLPhoneView::SFLPhoneView(QWidget *parent)
    : QWidget(parent),
-     wizard(0)
+     wizard(0), errorWindow(0)
 {
    setupUi(this);
    
@@ -148,7 +148,7 @@ void SFLPhoneView::typeString(QString str)
    }
 
    if(!currentCall && !candidate) {
-      qDebug() << "Typing when no item is selected. Opening an item.";
+      kDebug() << "Typing when no item is selected. Opening an item.";
       candidate = SFLPhone::model()->addDialingCall();
    }
 
@@ -160,11 +160,10 @@ void SFLPhoneView::typeString(QString str)
 ///Called when a backspace is detected
 void SFLPhoneView::backspace()
 {
-   qDebug() << "backspace";
-   qDebug() << "In call list.";
+   kDebug() << "backspace";
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Error : Backspace on unexisting call.";
+      kDebug() << "Error : Backspace on unexisting call.";
    }
    else {
       call->backspaceItemText();
@@ -178,10 +177,10 @@ void SFLPhoneView::backspace()
 ///Called when escape is detected
 void SFLPhoneView::escape()
 {
-   qDebug() << "escape";
+   kDebug() << "escape";
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Escape when no item is selected. Doing nothing.";
+      kDebug() << "Escape when no item is selected. Doing nothing.";
    }
    else {
       if(call->getState() == CALL_STATE_TRANSFER || call->getState() == CALL_STATE_TRANSF_HOLD) {
@@ -196,10 +195,10 @@ void SFLPhoneView::escape()
 ///Called when enter is detected
 void SFLPhoneView::enter()
 {
-   qDebug() << "enter";
+   kDebug() << "enter";
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Error : Enter on unexisting call.";
+      kDebug() << "Error : Enter on unexisting call.";
    }
    else {
       int state = call->getState();
@@ -207,7 +206,7 @@ void SFLPhoneView::enter()
          action(call, CALL_ACTION_ACCEPT);
       }
       else {
-         qDebug() << "Enter when call selected not in appropriate state. Doing nothing.";
+         kDebug() << "Enter when call selected not in appropriate state. Doing nothing.";
       }
    }
 }
@@ -223,7 +222,7 @@ void SFLPhoneView::enter()
 void SFLPhoneView::action(Call* call, call_action action)
 {
    if(! call) {
-      qDebug() << "Error : action " << action << "applied on null object call. Should not happen.";
+      kDebug() << "Error : action " << action << "applied on null object call. Should not happen.";
    }
    else {
       try {
@@ -237,8 +236,6 @@ void SFLPhoneView::action(Call* call, call_action action)
 }
 
 
-
-
 /*****************************************************************************
  *                                                                           *
  *                       Update display related code                         *
@@ -249,8 +246,6 @@ void SFLPhoneView::action(Call* call, call_action action)
 ///Change GUI icons
 void SFLPhoneView::updateWindowCallState()
 {
-   qDebug() << "updateWindowCallState";
-   
    bool enabledActions[6]= {true,true,true,true,true,true};
    QString buttonIconFiles[6] = {ICON_CALL, ICON_HANGUP, ICON_HOLD, ICON_TRANSFER, ICON_REC_DEL_OFF, ICON_MAILBOX};
    QString actionTexts[6] = {ACTION_LABEL_CALL, ACTION_LABEL_HANG_UP, ACTION_LABEL_HOLD, ACTION_LABEL_TRANSFER, ACTION_LABEL_RECORD, ACTION_LABEL_MAILBOX};
@@ -264,7 +259,7 @@ void SFLPhoneView::updateWindowCallState()
 
    call = callTreeModel->getCurrentItem();
    if (!call) {
-      qDebug() << "No item selected.";
+      kDebug() << "No item selected.";
       enabledActions[ SFLPhone::Refuse   ] = false;
       enabledActions[ SFLPhone::Hold     ] = false;
       enabledActions[ SFLPhone::Transfer ] = false;
@@ -274,7 +269,7 @@ void SFLPhoneView::updateWindowCallState()
       call_state state = call->getState();
       recordActivated = call->getRecording();
 
-      qDebug() << "Reached  State" << state << " with call" << call->getCallId();
+      kDebug() << "Reached  State" << state << " with call" << call->getCallId();
 
       switch (state) {
          case CALL_STATE_INCOMING:
@@ -327,18 +322,18 @@ void SFLPhoneView::updateWindowCallState()
             transfer = true;
             break;
          case CALL_STATE_OVER:
-            qDebug() << "Error : Reached CALL_STATE_OVER with call "  << call->getCallId() << "!";
+            kDebug() << "Error : Reached CALL_STATE_OVER with call "  << call->getCallId() << "!";
             break;
          case CALL_STATE_ERROR:
-            qDebug() << "Error : Reached CALL_STATE_ERROR with call " << call->getCallId() << "!";
+            kDebug() << "Error : Reached CALL_STATE_ERROR with call " << call->getCallId() << "!";
             break;
          default:
-            qDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "!";
+            kDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "!";
             break;
       }
    }
    
-   qDebug() << "Updating Window.";
+   kDebug() << "Updating Window.";
    
    emit enabledActionsChangeAsked     ( enabledActions  );
    emit actionIconsChangeAsked        ( buttonIconFiles );
@@ -346,7 +341,7 @@ void SFLPhoneView::updateWindowCallState()
    emit transferCheckStateChangeAsked ( transfer        );
    emit recordCheckStateChangeAsked   ( recordActivated );
 
-   qDebug() << "Window updated.";
+   kDebug() << "Window updated.";
 }
 
 ///Deprecated?
@@ -373,7 +368,7 @@ int SFLPhoneView::phoneNumberTypesDisplayed()
 ///Change icon of the record button
 void SFLPhoneView::updateRecordButton()
 {
-   qDebug() << "updateRecordButton";
+   kDebug() << "updateRecordButton";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    double recVol = callManager.getVolume(RECORD_DEVICE);
    if(recVol == 0.00) {
@@ -397,7 +392,7 @@ void SFLPhoneView::updateRecordButton()
 ///Update the colume button icon
 void SFLPhoneView::updateVolumeButton()
 {
-   qDebug() << "updateVolumeButton";
+   kDebug() << "updateVolumeButton";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    double sndVol = callManager.getVolume(SOUND_DEVICE);
         
@@ -424,7 +419,7 @@ void SFLPhoneView::updateRecordBar(double _value)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    double recVol = callManager.getVolume(RECORD_DEVICE);
-   qDebug() << "updateRecordBar" << recVol;
+   kDebug() << "updateRecordBar" << recVol;
    int value = (_value > 0)?_value:(int)(recVol * 100);
    slider_recVol->setValue(value);
 }
@@ -432,7 +427,7 @@ void SFLPhoneView::updateVolumeBar(double _value)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    double sndVol = callManager.getVolume(SOUND_DEVICE);
-   qDebug() << "updateVolumeBar" << sndVol;
+   kDebug() << "updateVolumeBar" << sndVol;
    int value = (_value > 0)?_value:(int)(sndVol * 100);
    slider_sndVol->setValue(value);
 }
@@ -459,7 +454,6 @@ void SFLPhoneView::updateDialpad()
 ///Change the statusbar message
 void SFLPhoneView::updateStatusMessage()
 {
-   qDebug() << "updateStatusMessage";
    Account * account = SFLPhone::model()->getCurrentAccount();
 
    if(account == NULL) {
@@ -492,7 +486,6 @@ void SFLPhoneView::displayVolumeControls(bool checked)
 ///@TODO is it still needed? <elepage 2011>
 void SFLPhoneView::displayDialpad(bool checked)
 {
-   qDebug() <<  "Max res2: " << ConfigurationSkeleton::displayDialpad();
    ConfigurationSkeleton::setDisplayDialpad(checked);
    updateDialpad();
 }
@@ -506,7 +499,7 @@ void SFLPhoneView::on_widget_dialpad_typed(QString text)
 ///The value on the slider changed
 void SFLPhoneView::on_slider_recVol_valueChanged(int value)
 {
-   qDebug() << "on_slider_recVol_valueChanged(" << value << ")";
+   kDebug() << "on_slider_recVol_valueChanged(" << value << ")";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    callManager.setVolume(RECORD_DEVICE, (double)value / 100.0);
    updateRecordButton();
@@ -515,7 +508,7 @@ void SFLPhoneView::on_slider_recVol_valueChanged(int value)
 ///The value on the slider changed
 void SFLPhoneView::on_slider_sndVol_valueChanged(int value)
 {
-   qDebug() << "on_slider_sndVol_valueChanged(" << value << ")";
+   kDebug() << "on_slider_sndVol_valueChanged(" << value << ")";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    callManager.setVolume(SOUND_DEVICE, (double)value / 100.0);
    updateVolumeButton();
@@ -525,15 +518,13 @@ void SFLPhoneView::on_slider_sndVol_valueChanged(int value)
 void SFLPhoneView::on_toolButton_recVol_clicked(bool checked)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "on_toolButton_recVol_clicked().";
+   kDebug() << "on_toolButton_recVol_clicked().";
    if(!checked) {
-      qDebug() << "checked";
       toolButton_recVol->setChecked(false);
       slider_recVol->setEnabled(true);
       callManager.setVolume(RECORD_DEVICE, (double)slider_recVol->value() / 100.0);
    }
    else {
-      qDebug() << "unchecked";
       toolButton_recVol->setChecked(true);
       slider_recVol->setEnabled(false);
       callManager.setVolume(RECORD_DEVICE, 0.0);
@@ -545,15 +536,13 @@ void SFLPhoneView::on_toolButton_recVol_clicked(bool checked)
 void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "on_toolButton_sndVol_clicked().";
+   kDebug() << "on_toolButton_sndVol_clicked().";
    if(!checked) {
-      qDebug() << "checked";
       toolButton_sndVol->setChecked(false);
       slider_sndVol->setEnabled(true);
       callManager.setVolume(SOUND_DEVICE, (double)slider_sndVol->value() / 100.0);
    }
    else {
-      qDebug() << "unchecked";
       toolButton_sndVol->setChecked(true);
       slider_sndVol->setEnabled(false);
       callManager.setVolume(SOUND_DEVICE, 0.0);
@@ -596,7 +585,6 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 ///
 void SFLPhoneView::editBeforeCall()
 {
-   qDebug() << "editBeforeCall";
    QString name;
    QString number;
         
@@ -613,14 +601,14 @@ void SFLPhoneView::editBeforeCall()
 ///Pick the default account and load it
 void SFLPhoneView::setAccountFirst(Account * account)
 {
-   qDebug() << "setAccountFirst : " << (account ? account->getAlias() : QString()) << (account ? account->getAccountId() : QString());
+   kDebug() << "setAccountFirst : " << (account ? account->getAlias() : QString()) << (account ? account->getAccountId() : QString());
    if(account) {
       SFLPhone::model()->setPriorAccountId(account->getAccountId());
    }
    else {
       SFLPhone::model()->setPriorAccountId(QString());
    }
-   qDebug() << "Current account id" << SFLPhone::model()->getCurrentAccountId();
+   kDebug() << "Current account id" << SFLPhone::model()->getCurrentAccountId();
    updateStatusMessage();
 }
 
@@ -652,14 +640,14 @@ void SFLPhoneView::accept()
 {
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Calling when no item is selected. Opening an item.";
+      kDebug() << "Calling when no item is selected. Opening an item.";
       SFLPhone::model()->addDialingCall();
    }
    else {
       int state = call->getState();
       if(state == CALL_STATE_RINGING || state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_BUSY)
       {
-         qDebug() << "Calling when item currently ringing, current, hold or busy. Opening an item.";
+         kDebug() << "Calling when item currently ringing, current, hold or busy. Opening an item.";
          SFLPhone::model()->addDialingCall();
       }
       else {
@@ -673,7 +661,7 @@ void SFLPhoneView::refuse()
 {
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Error : Hanging up when no item selected. Should not happen.";
+      kDebug() << "Error : Hanging up when no item selected. Should not happen.";
    }
    else {
       action(call, CALL_ACTION_REFUSE);
@@ -685,7 +673,7 @@ void SFLPhoneView::hold()
 {
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Error : Holding when no item selected. Should not happen.";
+      kDebug() << "Error : Holding when no item selected. Should not happen.";
    }
    else {
       action(call, CALL_ACTION_HOLD);
@@ -697,7 +685,7 @@ void SFLPhoneView::transfer()
 {
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Error : Transfering when no item selected. Should not happen.";
+      kDebug() << "Error : Transfering when no item selected. Should not happen.";
    }
    else {
       action(call, CALL_ACTION_TRANSFER);
@@ -709,7 +697,7 @@ void SFLPhoneView::record()
 {
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      qDebug() << "Error : Recording when no item selected. Should not happen.";
+      kDebug() << "Error : Recording when no item selected. Should not happen.";
    }
    else {
       action(call, CALL_ACTION_RECORD);
@@ -729,13 +717,13 @@ void SFLPhoneView::mailBox()
 ///Called the there is an error (dbus)
 void SFLPhoneView::on1_error(MapStringString details)
 {
-   qDebug() << "Signal : Daemon error : " << details;
+   kDebug() << "Signal : Daemon error : " << details;
 }
 
 ///When a call is comming (dbus)
 void SFLPhoneView::on1_incomingCall(Call* call)
 {
-   qDebug() << "Signal : Incoming Call ! ID = " << call->getCallId();
+   kDebug() << "Signal : Incoming Call ! ID = " << call->getCallId();
    
    updateWindowCallState();
 
@@ -749,13 +737,13 @@ void SFLPhoneView::on1_incomingCall(Call* call)
 ///When a new voice mail is comming
 void SFLPhoneView::on1_voiceMailNotify(const QString &accountID, int count)
 {
-   qDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
+   kDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
 }
 
 ///When the volume change
 void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
 {
-   qDebug() << "Signal : Volume Changed !" << value;
+   kDebug() << "Signal : Volume Changed !" << value;
    if(! (toolButton_recVol->isChecked() && value == 0.0))
       updateRecordBar(value);
    if(! (toolButton_sndVol->isChecked() && value == 0.0))

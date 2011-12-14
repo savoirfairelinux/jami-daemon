@@ -33,6 +33,7 @@
 #include <QtGui/QComboBox>
 
 //KDE
+#include <KDebug>
 #include <KLineEdit>
 #include <KLocalizedString>
 #include <KIcon>
@@ -162,7 +163,7 @@ void ContactDock::reloadContact()
       aContact->setContact(cont);
 
       PhoneNumbers numbers =  aContact->getContact()->getPhoneNumbers();
-      qDebug() << "Phone count" << numbers.count();
+      kDebug() << "Phone count" << numbers.count();
       if (numbers.count() > 1) {
          foreach (Contact::PhoneNumber* number, numbers) {
             QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
@@ -228,7 +229,7 @@ void ContactDock::filter(const QString& text)
 ///Serialize informations to be used for drag and drop
 QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
-   qDebug() << "An history call is being dragged";
+   kDebug() << "An history call is being dragged";
    if (items.size() < 1) {
       return NULL;
    }
@@ -246,7 +247,7 @@ QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
       }
    }
    else {
-      qDebug() << "the item is not a call";
+      kDebug() << "the item is not a call";
    }
    return mimeData;
 }
@@ -260,7 +261,7 @@ bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 
    QByteArray encodedData = data->data(MIME_CALLID);
 
-   qDebug() << "In history import"<< QString(encodedData);
+   kDebug() << "In history import"<< QString(encodedData);
 
    return false;
 }
@@ -275,7 +276,7 @@ bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 ///Show or hide the history list 
 void ContactDock::setHistoryVisible(bool visible)
 {
-   qDebug() << "Toggling history visibility";
+   kDebug() << "Toggling history visibility";
    m_pCallView->setVisible(visible);
    ConfigurationSkeleton::setDisplayContactCallHistory(visible);
 }

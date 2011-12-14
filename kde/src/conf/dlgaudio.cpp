@@ -60,7 +60,6 @@ void DlgAudio::updateWidgets()
 
 void DlgAudio::updateSettings()
 {
-   qDebug() << "DlgAudio::updateSettings";
    //alsaPlugin
    ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
    skeleton->setAlsaPlugin(box_alsaPlugin->currentText());
@@ -70,7 +69,6 @@ void DlgAudio::updateSettings()
 
 bool DlgAudio::hasChanged()
 {
-   qDebug() << "DlgAudio::hasChanged";
    ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
    bool alsaPluginHasChanged = skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA && skeleton->alsaPlugin() != box_alsaPlugin->currentText();
    return alsaPluginHasChanged ;
@@ -78,7 +76,6 @@ bool DlgAudio::hasChanged()
 
 void DlgAudio::loadAlsaSettings()
 {
-   qDebug() << "DlgAudio::loadAlsaSettings";
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    if(QString(configurationManager.getAudioManager()) == "alsa") {
       ConfigurationSkeleton* skeleton = ConfigurationSkeleton::self();

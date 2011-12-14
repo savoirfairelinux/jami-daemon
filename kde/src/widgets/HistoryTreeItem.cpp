@@ -186,14 +186,14 @@ void HistoryTreeItem::showContext(const QPoint& pos)
 void HistoryTreeItem::sendEmail()
 {
    //TODO
-   qDebug() << "Sending email";
+   kDebug() << "Sending email";
 }
 
 ///Call the caller again
 void HistoryTreeItem::callAgain()
 {
    if (m_pItemCall) {
-      qDebug() << "Calling "<< m_pItemCall->getPeerPhoneNumber();
+      kDebug() << "Calling "<< m_pItemCall->getPeerPhoneNumber();
    }
    SFLPhone::model()->addDialingCall(m_Name, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_PhoneNumber);
 }
@@ -202,13 +202,13 @@ void HistoryTreeItem::callAgain()
 void HistoryTreeItem::copy()
 {
    //TODO
-   qDebug() << "Copying contact";
+   kDebug() << "Copying contact";
 }
 
 ///Create a contact from those informations
 void HistoryTreeItem::addContact()
 {
-   qDebug() << "Adding contact";
+   kDebug() << "Adding contact";
    Contact* aContact = new Contact();
    aContact->setPhoneNumbers(PhoneNumbers() << new Contact::PhoneNumber(m_PhoneNumber, "Home"));
    aContact->setFormattedName(m_Name);
@@ -219,13 +219,12 @@ void HistoryTreeItem::addContact()
 void HistoryTreeItem::addToContact()
 {
    //TODO
-   qDebug() << "Adding to contact";
+   kDebug() << "Adding to contact";
 }
 
 ///Bookmark this contact
 void HistoryTreeItem::bookmark()
 {
-   qDebug() << "bookmark";
    SFLPhone::app()->bookmarkDock()->addBookmark(m_PhoneNumber);
 }
 

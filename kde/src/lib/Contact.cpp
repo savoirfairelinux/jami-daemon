@@ -23,7 +23,6 @@
 #include "Contact.h"
 
 //Qt
-#include <QtCore/QDebug>
 #include <QtGui/QPixmap>
 
 //SFLPhone library

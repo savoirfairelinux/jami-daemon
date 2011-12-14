@@ -33,6 +33,9 @@
 
 #include <netdb.h>
 
+//KDE
+#include <KDebug>
+
 
 #define FIELD_SFL_ACCOUNT        "SFL"
 #define FIELD_OTHER_ACCOUNT      "OTHER"
@@ -142,7 +145,7 @@ rest_account get_rest_account(QString host, QString email)
    QString req = "GET /rest/accountcreator?email=" + email;
    QString ret;
    rest_account ra;
-   qDebug() << "HOST: " << host;
+   kDebug() << "HOST: " << host;
    int res = sendRequest(host, 80, req, ret);
    if (res != -1) {
       QStringList list = ret.split("\n");
@@ -153,7 +156,7 @@ rest_account get_rest_account(QString host, QString email)
       ra.success = false;
       ra.reason = ret;
    }
-   qDebug() << ret;
+   kDebug() << ret;
    return ra;
 } 
 
@@ -320,7 +323,7 @@ void AccountWizard::accept()
    if(is_create_account) {
       QString accountId = configurationManager.addAccount(accountDetails);
    }
-   qDebug() << ret;
+   kDebug() << ret;
    QDialog::accept();
    restart();
 }

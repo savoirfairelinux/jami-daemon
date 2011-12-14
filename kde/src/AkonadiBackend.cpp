@@ -26,6 +26,7 @@
 #include <QtCore/QObject>
 
 //KDE
+#include <KDebug>
 #include <kdialog.h>
 #include <akonadi/control.h>
 #include <akonadi/collectionfilterproxymodel.h>
@@ -110,7 +111,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
    m_Collection = collection;
    ContactList contacts;
    if ( !collection.isValid() ) {
-      qDebug() << "The current collection is not valid";
+      kDebug() << "The current collection is not valid";
       return contacts;
    }
 
@@ -122,7 +123,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
 
       foreach ( const Akonadi::Item &item, items ) {
          if ( item.hasPayload<KABC::ContactGroup>() ) {
-            qDebug() << "Group:" << item.payload<KABC::ContactGroup>().name();
+            kDebug() << "Group:" << item.payload<KABC::ContactGroup>().name();
          }
 
          if ( item.hasPayload<KABC::Addressee>() ) {
@@ -163,7 +164,7 @@ void AkonadiBackend::editContact(Contact* contact)
 {
    KABC::Addressee ct = m_AddrHash[contact->getUid()];
    if (ct.uid() != contact->getUid()) {
-      qDebug() << "Contact not found";
+      kDebug() << "Contact not found";
       return;
    }
    Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, SFLPhone::app()->view() );
@@ -219,7 +220,7 @@ void AkonadiBackend::addNewContact(Contact* contact)
    dlg->exec();
    
    if ( !editor->saveContact() ) {
-      qDebug() << "Unable to save new contact to storage";
+      kDebug() << "Unable to save new contact to storage";
       return;
    }
 }

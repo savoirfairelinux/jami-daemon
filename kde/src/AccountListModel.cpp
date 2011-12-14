@@ -28,9 +28,6 @@
 //SFLPhone
 #include "conf/ConfigAccountList.h"
 
-//Qt
-#include <QtCore/QDebug>
-
 ///Constructor
 AccountListModel::AccountListModel(QObject *parent)
  : QAbstractListModel(parent)
@@ -96,7 +93,6 @@ QString AccountListModel::getOrderedList() const
 ///Set model data
 bool AccountListModel::setData(const QModelIndex & index, const QVariant &value, int role)
 {
-   qDebug() << "setData";
    if (index.isValid() && index.column() == 0 && role == Qt::CheckStateRole) {
       (*accounts)[index.row()]->setEnabled(value.toBool());
       emit dataChanged(index, index);
