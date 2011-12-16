@@ -101,12 +101,14 @@ class LIB_EXPORT CallModel : public CallModelBase {
       virtual void initContact ( ContactBackend* be );
 
       //Call related
-      virtual Call*  addCall         ( Call* call                , Call* parent =0    );
-      Call*          addDialingCall  ( const QString& peerName="", QString account="" );
-      Call*          addIncomingCall ( const QString& callId                          );
-      Call*          addRingingCall  ( const QString& callId                          );
-      static QString generateCallId  (                                                );
-      void           removeCall      ( Call* call                                     );
+      virtual Call*  addCall          ( Call* call                , Call* parent =0    );
+      Call*          addDialingCall   ( const QString& peerName="", QString account="" );
+      Call*          addIncomingCall  ( const QString& callId                          );
+      Call*          addRingingCall   ( const QString& callId                          );
+      static QString generateCallId   (                                                );
+      void           removeCall       ( Call* call                                     );
+      void           attendedTransfer ( Call* toTransfer           , Call* target      );
+      void           transfer         ( Call* toTransfer           , QString target    );
       
       virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
 

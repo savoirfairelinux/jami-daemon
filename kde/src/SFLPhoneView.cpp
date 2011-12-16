@@ -180,7 +180,10 @@ void SFLPhoneView::escape()
 {
    kDebug() << "escape";
    Call* call = callTreeModel->getCurrentItem();
-   if(!call) {
+   if (callTreeModel->haveOverlay()) {
+      callTreeModel->hideOverlay();
+   }
+   else if(!call) {
       kDebug() << "Escape when no item is selected. Doing nothing.";
    }
    else {

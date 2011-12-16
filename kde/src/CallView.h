@@ -22,10 +22,16 @@
 
 #include <QtGui/QItemDelegate>
 #include <QtGui/QTreeWidget>
+#include <QtGui/QPainter>
+#include <QtCore/QTimer>
 #include "lib/CallModel.h"
 
 //Qt
 class QTreeWidgetItem;
+class QPushButton;
+
+//KDE
+class KLineEdit;
 
 //SFLPhone
 class CallTreeItem;
@@ -46,6 +52,66 @@ class CallTreeItemDelegate : public QItemDelegate
       }
 };
 
+///@class CallViewOverlay Display overlay on top of the call tree
+class CallViewOverlay : public QWidget {
+   Q_OBJECT
+public:
+   CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m_enabled(true),black("black"),m_pTimer(0)
+   {
+      black.setAlpha(75);
+   }
+   void setCornerWidget(QWidget* wdg) {
+      wdg->setParent(this);
+      wdg->setMinimumSize(100,100);
+      wdg->resize(100,100);
+      wdg->move(width()-100,height()-100);
+      m_pIcon = wdg;
+   }
+
+   void setVisible(bool enabled) {
+      if (m_enabled != enabled) {
+         if (m_pTimer) {
+            m_pTimer->stop();
+            disconnect(m_pTimer);
+         }
+         m_pTimer = new QTimer(this); //TODO LEAK
+         connect(m_pTimer, SIGNAL(timeout()), this, SLOT(changeVisibility()));
+         m_step = 0;
+         black.setAlpha(0);
+         repaint();
+         m_pTimer->start(10);
+      }
+      m_enabled = enabled;
+      QWidget::setVisible(enabled);
+   }
+protected:
+   void paintEvent(QPaintEvent* event) {
+      QPainter customPainter(this);
+      customPainter.fillRect(rect(),black);
+   }
+   virtual void resizeEvent(QResizeEvent *e) {
+      if (m_pIcon) {
+         m_pIcon->setMinimumSize(100,100);
+         m_pIcon->move(width()-100,height()-100);
+      }
+   }
+private:
+   QWidget* m_pIcon;
+   uint m_step;
+   QTimer* m_pTimer;
+   bool m_enabled;
+   QColor black;
+   
+private slots:
+   void changeVisibility() {
+      m_step++;
+      black.setAlpha(0.1*m_step*m_step);
+      repaint();
+      if (m_step >= 35)
+         m_pTimer->stop();
+   }
+};
+
 ///@class CallView Central tree widget managing active calls
 class CallView : public QTreeWidget {
    Q_OBJECT
@@ -58,6 +124,7 @@ class CallView : public QTreeWidget {
       bool removeItem             ( Call* item                                                                        );
       bool dropMimeData           ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
       virtual QMimeData* mimeData ( const QList<QTreeWidgetItem *> items                                              ) const;
+      bool haveOverlay();
       
    private:
       QTreeWidgetItem* extractItem ( const QString& callId                             );
@@ -66,9 +133,17 @@ class CallView : public QTreeWidget {
       CallTreeItem* insertItem     ( QTreeWidgetItem* item, Call* parent               );
       void clearArtefact           ( QTreeWidgetItem* item                             );
 
+      QPushButton*     m_pTransferB;
+      KLineEdit*       m_pTransferLE;
+      CallViewOverlay* m_pTransferOverlay;
+      CallViewOverlay* m_pActiveOverlay;
+      Call*            m_pCallPendingTransfer;
+
    protected:
-      void dragEnterEvent( QDragEnterEvent *e) { e->accept(); }
-      void dragMoveEvent ( QDragMoveEvent *e)  { e->accept(); }
+      virtual void dragEnterEvent ( QDragEnterEvent *e );
+      virtual void dragMoveEvent  ( QDragMoveEvent  *e );
+      virtual void dragLeaveEvent ( QDragLeaveEvent *e );
+      virtual void resizeEvent    ( QResizeEvent    *e );
       bool callToCall        ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
       bool phoneNumberToCall ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
       bool contactToCall     ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
@@ -81,11 +156,17 @@ class CallView : public QTreeWidget {
       Call* addConference     ( Call* conf                           );
       bool conferenceChanged  ( Call* conf                           );
       void conferenceRemoved  ( Call* conf                           );
+      void showDropOptions    ( CallTreeItem* widget                 );
 
       virtual void keyPressEvent(QKeyEvent* event);
 
    public slots:
       void clearHistory();
+      void showTransferOverlay(Call* call);
+      void transfer();
+      void transferDropEvent(Call* call,QMimeData* data);
+      void conversationDropEvent(Call* call,QMimeData* data);
+      void hideOverlay();
 
    signals:
       void itemChanged(Call*);

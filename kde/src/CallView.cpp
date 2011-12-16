@@ -25,9 +25,13 @@
 #include <QtGui/QInputDialog>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QTreeWidgetItem>
+#include <QtGui/QPushButton>
+#include <QtGui/QSpacerItem>
+#include <QtGui/QGridLayout>
 
 //KDE
 #include <KDebug>
+#include <KLineEdit>
 
 //SFLPhone library
 #include "lib/Contact.h"
@@ -42,14 +46,30 @@
 
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-CallView::CallView(QWidget* parent) : QTreeWidget(parent)
+CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pCallPendingTransfer(0),m_pActiveOverlay(0)
 {
    //Widget part
    setAcceptDrops(true);
    setDragEnabled(true);
+   setAnimated(true);
    CallTreeItemDelegate *delegate = new CallTreeItemDelegate();
    setItemDelegate(delegate); 
    setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
+   
+   m_pTransferOverlay = new CallViewOverlay(this);
+   m_pTransferOverlay->setVisible(false);
+   m_pTransferOverlay->resize(size());
+   m_pTransferOverlay->setCornerWidget(new QTreeWidget());
+
+   m_pTransferB  = new QPushButton(m_pTransferOverlay);
+   m_pTransferLE = new KLineEdit(m_pTransferOverlay);
+   m_pTransferB->setText("Transfer");
+   m_pTransferB->setMaximumSize(70,9000);
+   QGridLayout* gl = new QGridLayout(m_pTransferOverlay);
+   gl->addItem(new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum),0,0,1,3);
+   gl->addWidget(m_pTransferLE,1,1,1,2);
+   gl->addWidget(m_pTransferB,1,4,1,2);
+   gl->addItem(new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum),2,0,1,3);
 
    //User Interface even
    //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                        /
@@ -60,6 +80,8 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent)
    /**/connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*)                             ) , this, SLOT( conferenceChanged(Call*))                );
    /**/connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*)                       ) , this, SLOT( conferenceRemoved(Call*))                );
    /**/connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*)                               ) , this, SLOT( addCall(Call*,Call*))                    );
+   /**/connect(m_pTransferB      , SIGNAL(clicked()                                            ) , this, SLOT( transfer())                              );
+   /**/connect(m_pTransferLE     , SIGNAL(returnPressed()                                      ) , this, SLOT( transfer())                              );
    /*                                                                                                                                                   */
 
 }
@@ -70,6 +92,46 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent)
  *                        Drag and drop related code                         *
  *                                                                           *
  ****************************************************************************/
+
+///Called when someone try to drop something on the tree
+void CallView::dragEnterEvent ( QDragEnterEvent *e )
+{
+   kDebug() << "Potential drag event enter";
+   e->accept();
+}
+
+///When a drag position change
+void CallView::dragMoveEvent  ( QDragMoveEvent  *e )
+{
+   e->ignore();
+}
+
+///When a drag event is leaving the widget
+void CallView::dragLeaveEvent ( QDragLeaveEvent *e )
+{
+   kDebug() << "Potential drag event leave";
+   e->accept();
+}
+
+///Add some child to the QTreeWidgetItem to show drop options (conference or transfer)
+void CallView::showDropOptions(CallTreeItem* widget)
+{
+   //TODO remove?
+}
+
+///Proxy to handle transfer mime data
+void CallView::transferDropEvent(Call* call,QMimeData* data)
+{
+   QByteArray encodedCallId = data->data( MIME_CALLID );
+   SFLPhone::model()->attendedTransfer(SFLPhone::model()->getCall(encodedCallId),call);
+}
+
+///Proxy to handle conversation mime data
+void CallView::conversationDropEvent(Call* call,QMimeData* data)
+{
+   kDebug() << "Calling real drag and drop function";
+   dropMimeData(SFLPhone::model()->getIndex(call), 0, data, (Qt::DropAction)0);
+}
 
 ///A call is dropped on another call
 bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
@@ -320,11 +382,57 @@ Call* CallView::addCall(Call* call, Call* parent)
    return call;
 }
 
+///Transfer a call
+void CallView::transfer()
+{
+   if (m_pCallPendingTransfer) {
+      SFLPhone::model()->transfer(m_pCallPendingTransfer,m_pTransferLE->text());
+      m_pCallPendingTransfer = 0;
+      m_pTransferLE->clear();
+      m_pTransferOverlay->setVisible(false);
+   }
+}
+
 /*****************************************************************************
  *                                                                           *
  *                            View related code                              *
  *                                                                           *
  ****************************************************************************/
+
+///Show the transfer overlay
+void CallView::showTransferOverlay(Call* call)
+{
+   if (!m_pTransferOverlay) {
+      kDebug() << "Creating overlay";
+   }
+   m_pTransferOverlay->setVisible(true);
+   m_pCallPendingTransfer = call;
+   m_pActiveOverlay = m_pTransferOverlay;
+   m_pTransferLE->setFocus();
+   connect(call,SIGNAL(changed()),this,SLOT(hideOverlay()));
+}
+
+///Is there an active overlay
+bool CallView::haveOverlay()
+{
+   return (m_pActiveOverlay && m_pActiveOverlay->isVisible());
+}
+
+///Remove the active overlay
+void CallView::hideOverlay()
+{
+   if (m_pActiveOverlay)
+      m_pActiveOverlay->setVisible(false);
+   m_pActiveOverlay = 0;
+}
+
+///Be sure the size of the overlay stay the same
+void CallView::resizeEvent (QResizeEvent *e)
+{
+   if (m_pTransferOverlay)
+      m_pTransferOverlay->resize(size());
+   QTreeWidget::resizeEvent(e);
+}
 
 ///Set the TreeView header text
 void CallView::setTitle(const QString& title) 
@@ -415,6 +523,11 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
       parent->addChild(item);
    
    CallTreeItem* callItem = new CallTreeItem();
+   connect(callItem, SIGNAL(showChilds(CallTreeItem*)), this, SLOT(showDropOptions(CallTreeItem*)));
+   connect(callItem, SIGNAL(askTransfer(Call*)), this, SLOT(showTransferOverlay(Call*)));
+   connect(callItem, SIGNAL(transferDropEvent(Call*,QMimeData*)), this, SLOT(transferDropEvent(Call*,QMimeData*)));
+   connect(callItem, SIGNAL(conversationDropEvent(Call*,QMimeData*)), this, SLOT(conversationDropEvent(Call*,QMimeData*)));
+   
    SFLPhone::model()->updateWidget(SFLPhone::model()->getCall(item), callItem);
    callItem->setCall(SFLPhone::model()->getCall(item));
    

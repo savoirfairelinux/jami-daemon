@@ -28,6 +28,11 @@
 #include <QtGui/QSpacerItem>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QVBoxLayout>
+#include <QtGui/QDragEnterEvent>
+#include <QtGui/QDragMoveEvent>
+#include <QtGui/QDragLeaveEvent>
+#include <QtGui/QPushButton>
+#include <QtCore/QMimeData>
 
 //KDE
 #include <KLocale>
@@ -41,14 +46,14 @@
 
 //SFLPhone
 #include "AkonadiBackend.h"
-
+#include "widgets/TranslucentButtons.h"
 
 ///Constant
 const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
 ///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
-   : QWidget(parent), m_pItemCall(0), m_Init(false)
+   : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0)
 {
    setMaximumSize(99999,50);
 }
@@ -83,6 +88,7 @@ Call* CallTreeItem::call() const
 void CallTreeItem::setCall(Call *call)
 {
    m_pItemCall = call;
+   setAcceptDrops(true);
    
    if (m_pItemCall->isConference()) {
       if (!m_Init) {
@@ -109,6 +115,18 @@ void CallTreeItem::setCall(Call *call)
    
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
+
+   
+   m_pBtnConf = new TranslucentButtons(this);
+   m_pBtnConf->setVisible(false);
+   m_pBtnConf->setParent(this);
+   m_pBtnConf->setText("Conference");
+   connect(m_pBtnConf,SIGNAL(dataDropped(QMimeData*)),this,SLOT(conversationEvent(QMimeData*)));
+
+   m_pBtnTrans = new TranslucentButtons(this);
+   m_pBtnTrans->setText("Transfer");
+   m_pBtnTrans->setVisible(false);
+   connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
    
    m_pCodecL = new QLabel(this);
    //m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
@@ -149,6 +167,7 @@ void CallTreeItem::setCall(Call *call)
 ///Update data
 void CallTreeItem::updated()
 {
+   kDebug() << "\n\n\n\nI am here\n\n\n\n\n" << m_pItemCall->getState() << "\n\n\n";
    kDebug() << "Updating tree item";
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
    if (contact) {
@@ -198,5 +217,73 @@ void CallTreeItem::updated()
    else {
       //kDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
+   if (state == CALL_STATE_TRANSFER) {
+      kDebug() << "emmiting tranfer signal";
+      emit askTransfer(m_pItemCall);
+   }
+   else {
+      kDebug() << "not emmiting tranfer signal";
+   }
    changed();
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                               Drag and drop                               *
+ *                                                                           *
+ ****************************************************************************/
+
+///Called when a drag and drop occure while the item have not been dropped yet
+void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
+{
+   kDebug() << "Drag enter";
+   if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans) {
+      m_pBtnConf->setVisible(true);
+      m_pBtnTrans->setVisible(true);
+      emit showChilds(this);
+      e->accept();
+   }
+   else
+      e->ignore();
+}
+
+///The cursor move on a potential drag event
+void CallTreeItem::dragMoveEvent  ( QDragMoveEvent  *e )
+{
+   e->accept();
+}
+
+///A potential drag event is cancelled
+void CallTreeItem::dragLeaveEvent ( QDragLeaveEvent *e )
+{
+   m_pBtnConf->setVisible(false);
+   m_pBtnTrans->setVisible(false);
+   kDebug() << "Drag leave";
+   e->ignore();
+}
+
+void CallTreeItem::resizeEvent ( QResizeEvent *e )
+{
+   kDebug() << "Resize";
+   if (m_pBtnConf) {
+      m_pBtnConf->setMinimumSize(width()/2-5,height());
+      m_pBtnConf->setMaximumSize(width()/2-5,height());
+      m_pBtnTrans->setMinimumSize(width()/2-5,height());
+      m_pBtnTrans->setMaximumSize(width()/2-5,height());
+      m_pBtnTrans->move(width()/2+10,m_pBtnTrans->y());
+   }
+   
+   e->accept();
+}
+
+void CallTreeItem::transferEvent(QMimeData* data)
+{
+   emit transferDropEvent(m_pItemCall,data);
+}
+
+void CallTreeItem::conversationEvent(QMimeData* data)
+{
+   kDebug() << "Proxying conversation mime";
+   emit conversationDropEvent(m_pItemCall,data);
 }

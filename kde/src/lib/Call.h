@@ -162,7 +162,7 @@ public:
    void setTransferNumber(const QString& number);
    void setCallNumber(const QString& number);
    
-   //Mutotors
+   //Mutators
    void appendText(const QString& str);
    void backspaceItemText();
    void changeCurrentState(call_state newState);

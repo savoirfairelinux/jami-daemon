@@ -263,6 +263,25 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
    }
 }
 
+///Transfer "toTransfer" to "target" and wait to see it it succeeded
+template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::attendedTransfer(Call* toTransfer, Call* target)
+{
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   callManager.attendedTransfer(toTransfer->getCallId(),target->getCallId());
+
+   //TODO [Daemon] Implement this correctly
+   toTransfer->changeCurrentState(CALL_STATE_OVER);
+   target->changeCurrentState(CALL_STATE_OVER);
+}
+
+///Transfer this call to  "target" number
+template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::transfer(Call* toTransfer, QString target)
+{
+   qDebug() << "Transferring call " << target;
+   toTransfer->setTransferNumber(target);
+   toTransfer->actionPerformed(CALL_ACTION_ACCEPT);
+   toTransfer->changeCurrentState(CALL_STATE_OVER);
+}
 
 /*****************************************************************************
  *                                                                           *

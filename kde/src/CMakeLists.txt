@@ -43,6 +43,7 @@ SET(	sflphone_client_kde_SRCS
 	widgets/ContactDock.cpp
 	widgets/HistoryDock.cpp
 	widgets/BookmarkDock.cpp
+	widgets/TranslucentButtons.cpp
 	Codec.cpp
 	AccountListModel.cpp
 	AkonadiBackend.cpp

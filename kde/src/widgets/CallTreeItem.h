@@ -29,12 +29,15 @@
 
 //Qt
 class QLabel;
+class QPushButton;
+class QMimeData;
 
 //KDE
 class KIcon;
 
 //SFLPhone
 class Call;
+class TranslucentButtons;
 
 ///@class CallTreeItem Widget for the central call treeview
 class CallTreeItem : public QWidget
@@ -66,12 +69,29 @@ class CallTreeItem : public QWidget
     QLabel*  m_pCodecL;
     QLabel*  m_pSecureL;
     QLabel*  m_pHistoryPeerL;
+    TranslucentButtons* m_pBtnConf;
+    TranslucentButtons* m_pBtnTrans;
+    
+  protected:
+    virtual void dragEnterEvent ( QDragEnterEvent *e );
+    virtual void dragMoveEvent  ( QDragMoveEvent  *e );
+    virtual void dragLeaveEvent ( QDragLeaveEvent *e );
+    virtual void resizeEvent    ( QResizeEvent    *e );
+
+private slots:
+   void transferEvent(QMimeData* data);
+   void conversationEvent(QMimeData* data);
 
 public slots:
    void updated();
+   
 signals:
    void over(Call*);
    void changed();
+   void showChilds(CallTreeItem*);
+   void askTransfer(Call*);
+   void transferDropEvent(Call*,QMimeData*);
+   void conversationDropEvent(Call*,QMimeData*);
  };
 
 #endif // CALLTREE_ITEM_H
