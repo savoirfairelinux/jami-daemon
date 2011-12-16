@@ -23,6 +23,8 @@
 
 //Qt
 #include <QtCore/QStringList>
+#include <QtCore/QMimeData>
+#include <QtCore/QTimer>
 #include <QtGui/QWidget>
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
@@ -32,12 +34,12 @@
 #include <QtGui/QDragMoveEvent>
 #include <QtGui/QDragLeaveEvent>
 #include <QtGui/QPushButton>
-#include <QtCore/QMimeData>
 
 //KDE
 #include <KLocale>
 #include <KDebug>
 #include <KIcon>
+#include <KStandardDirs>
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -121,11 +123,13 @@ void CallTreeItem::setCall(Call *call)
    m_pBtnConf->setVisible(false);
    m_pBtnConf->setParent(this);
    m_pBtnConf->setText("Conference");
+   m_pBtnConf->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/confBlackWhite.png")));
    connect(m_pBtnConf,SIGNAL(dataDropped(QMimeData*)),this,SLOT(conversationEvent(QMimeData*)));
 
    m_pBtnTrans = new TranslucentButtons(this);
    m_pBtnTrans->setText("Transfer");
    m_pBtnTrans->setVisible(false);
+   m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
    connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
    
    m_pCodecL = new QLabel(this);
@@ -141,7 +145,7 @@ void CallTreeItem::setCall(Call *call)
    transfer->setMargin(0);
    transfer->setSpacing(0);
    mainLayout->addWidget(m_pIconL);
-        
+   
    if(! m_pItemCall->getPeerName().isEmpty()) {
       m_pPeerL->setText(m_pItemCall->getPeerName());
       descr->addWidget(m_pPeerL);
@@ -238,10 +242,12 @@ void CallTreeItem::updated()
 void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
 {
    kDebug() << "Drag enter";
-   if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans) {
+   if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans && (e->mimeData()->data( MIME_CALLID) != m_pItemCall->getCallId())) {
       m_pBtnConf->setVisible(true);
       m_pBtnTrans->setVisible(true);
       emit showChilds(this);
+      m_pBtnConf->forceDragState(e);
+      m_isHover = true;
       e->accept();
    }
    else
@@ -251,16 +257,34 @@ void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
 ///The cursor move on a potential drag event
 void CallTreeItem::dragMoveEvent  ( QDragMoveEvent  *e )
 {
+   QPoint pos = e->pos();
+   m_pBtnConf->setHoverState (pos.x() < rect().width()/2);
+   m_pBtnTrans->setHoverState(pos.x() > rect().width()/2);
+   m_isHover = true;
    e->accept();
 }
 
 ///A potential drag event is cancelled
 void CallTreeItem::dragLeaveEvent ( QDragLeaveEvent *e )
 {
-   m_pBtnConf->setVisible(false);
-   m_pBtnTrans->setVisible(false);
+   QTimer::singleShot(500, this, SLOT(hide()));
    kDebug() << "Drag leave";
-   e->ignore();
+   m_isHover = false;
+   e->accept();
+}
+
+///Something is being dropped
+void CallTreeItem::dropEvent(QDropEvent *e)
+{
+   kDebug() << "Drop accepted" << e->pos();
+   QTimer::singleShot(500, this, SLOT(hide()));
+   if (e->pos().x() < rect().width()/2) {
+      emit conversationDropEvent(m_pItemCall,(QMimeData*)e->mimeData());
+   }
+   else {
+      emit transferDropEvent(m_pItemCall,(QMimeData*)e->mimeData());
+   }
+   //emit dataDropped((QMimeData*)e->mimeData());
 }
 
 void CallTreeItem::resizeEvent ( QResizeEvent *e )
@@ -286,4 +310,12 @@ void CallTreeItem::conversationEvent(QMimeData* data)
 {
    kDebug() << "Proxying conversation mime";
    emit conversationDropEvent(m_pItemCall,data);
+}
+
+void CallTreeItem::hide()
+{
+   if (!m_isHover) {
+      m_pBtnConf->setVisible(false);
+      m_pBtnTrans->setVisible(false);
+   }
 }

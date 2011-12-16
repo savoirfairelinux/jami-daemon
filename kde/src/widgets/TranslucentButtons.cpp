@@ -2,6 +2,7 @@
 
 #include <QtGui/QPainter>
 #include <KDebug>
+
 #include <QtCore/QTimer>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -10,7 +11,7 @@
 
 TranslucentButtons* TranslucentButtons::m_psActiveButton =0;
 
-TranslucentButtons::TranslucentButtons(QWidget* parent):QPushButton(parent),m_enabled(true),m_pTimer(0)
+TranslucentButtons::TranslucentButtons(QWidget* parent):QPushButton(parent),m_enabled(true),m_pTimer(0),m_CurrentState(0),m_pImg(0)
 {
    setAcceptDrops(true);
    m_CurrentColor = "black";
@@ -28,14 +29,21 @@ void TranslucentButtons::paintEvent(QPaintEvent* event)
    
    QPainter customPainter(this);
    //kDebug() << m_CurrentColor.name();
-   customPainter.setBackgroundMode( Qt::OpaqueMode );
+   //customPainter.setBackgroundMode( Qt::OpaqueMode );
    customPainter.setBackground(m_CurrentColor);
    customPainter.setBrush(m_CurrentColor);
    customPainter.setPen(Qt::NoPen);
    customPainter.drawRoundedRect(rect(), 10, 10);
-   customPainter.setPen("white");
-   customPainter.drawText (rect(), Qt::AlignVCenter|Qt::AlignHCenter, text() );
+   customPainter.setPen(m_Pen);
 
+   if (m_pImg) {
+      customPainter.drawImage(QRect(QPoint(rect().x()+rect().width()-50,10),QSize(40,rect().height()-20)),*m_pImg, QRectF(m_pImg->rect()));
+   }
+
+   QFont font = customPainter.font();
+   font.setBold(true);
+   customPainter.setFont(font);
+   customPainter.drawText (rect(), Qt::AlignVCenter|Qt::AlignHCenter, text().replace("&","") );
 }
 
 void TranslucentButtons::setVisible(bool enabled)
@@ -69,46 +77,80 @@ void TranslucentButtons::changeVisibility()
 
 void TranslucentButtons::dragEnterEvent ( QDragEnterEvent *e )
 {
-//    if (m_psActiveButton && m_psActiveButton != this) {
-//       m_psActiveButton->dragLeaveEvent(0);
-//    }
-   m_psActiveButton = this;
-   kDebug() << "In button event";
-   int alpha = m_CurrentColor.alpha();
-   m_CurrentColor = "#FF0000";
-   m_CurrentColor.setAlpha(alpha);
-   repaint();
-   e->acceptProposedAction();
+// //    if (m_psActiveButton && m_psActiveButton != this) {
+// //       m_psActiveButton->dragLeaveEvent(0);
+// //    }
+//    m_psActiveButton = this;
+//    kDebug() << "In button event";
+//    int alpha = m_CurrentColor.alpha();
+//    m_CurrentColor = "#FF0000";
+//    m_CurrentColor.setAlpha(alpha);
+//    repaint();
+//    e->accept();
+e->ignore();
 }
 
 void TranslucentButtons::dragMoveEvent  ( QDragMoveEvent  *e )
 {
-   kDebug() << "In button move event";
-   int alpha = m_CurrentColor.alpha();
-   m_CurrentColor = "#FF0000";
-   m_CurrentColor.setAlpha(alpha);
-   e->accept();
+//    kDebug() << "In button move event";
+//    int alpha = m_CurrentColor.alpha();
+//    m_CurrentColor = "#FF0000";
+//    m_CurrentColor.setAlpha(alpha);
+//    e->accept();
+e->ignore();
 }
 
 void TranslucentButtons::dragLeaveEvent ( QDragLeaveEvent *e )
 {
-   kDebug() << "Button drag leave";
-   int alpha = m_CurrentColor.alpha();
-   m_CurrentColor = "black";
-   m_CurrentColor.setAlpha(alpha);
-   //m_CurrentColor = "black";
-   if (e)
-      e->accept();
-   else {
-      repaint();
-   }
-   e->accept();
+//    kDebug() << "Button drag leave";
+//    int alpha = m_CurrentColor.alpha();
+//    m_CurrentColor = "black";
+//    m_CurrentColor.setAlpha(alpha);
+//    //m_CurrentColor = "black";
+//    if (e)
+//       e->ignore();
+//    else {
+//       repaint();
+//    }
+//    e->ignore();
+e->ignore();
 }
 
 void TranslucentButtons::dropEvent(QDropEvent *e)
 {
    kDebug() << "Drop accepted";
    emit dataDropped((QMimeData*)e->mimeData());
+}
+
+void TranslucentButtons::forceDragState(QDragEnterEvent *e)
+{
+   dragMoveEvent(e);
+}
+
+void TranslucentButtons::setHoverState(bool hover)
+{
+   if (hover != m_CurrentState) {
+      if (hover) {
+         int alpha = m_CurrentColor.alpha();
+         m_CurrentColor = "grey";
+         m_CurrentColor.setAlpha(alpha);
+         m_Pen.setColor("black");
+      }
+      else {
+         int alpha = m_CurrentColor.alpha();
+         m_CurrentColor = "black";
+         m_CurrentColor.setAlpha(alpha);
+         m_Pen.setColor("white");
+      }
+      repaint();
+      m_CurrentState = hover;
+   }
+}
+
+
+void TranslucentButtons::setPixmap(QImage* img)
+{
+   m_pImg = img;
 }
 
 bool TranslucentButtons::event(QEvent* e)

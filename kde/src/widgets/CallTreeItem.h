@@ -61,6 +61,7 @@ class CallTreeItem : public QWidget
     //Attributes
     Call*    m_pItemCall;
     bool     m_Init;
+    bool     m_isHover;
     QLabel*  m_pIconL;
     QLabel*  m_pPeerL;
     QLabel*  m_pCallNumberL;
@@ -77,10 +78,12 @@ class CallTreeItem : public QWidget
     virtual void dragMoveEvent  ( QDragMoveEvent  *e );
     virtual void dragLeaveEvent ( QDragLeaveEvent *e );
     virtual void resizeEvent    ( QResizeEvent    *e );
+    virtual void dropEvent      ( QDropEvent      *e );
 
 private slots:
    void transferEvent(QMimeData* data);
    void conversationEvent(QMimeData* data);
+   void hide();
 
 public slots:
    void updated();

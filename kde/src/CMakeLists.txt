@@ -80,5 +80,7 @@ TARGET_LINK_LIBRARIES(sflphone-client-kde qtsflphone ${KDE4_KDEUI_LIBS} ${KDE4_K
 ########### install files ###############
 
 INSTALL(TARGETS sflphone-client-kde DESTINATION ${BIN_INSTALL_DIR})
-
-
+INSTALL( FILES icons/transferarraw.png   DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )
+INSTALL( FILES icons/transfertarrow.svg  DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )
+INSTALL( FILES icons/confBlackWhite.svg  DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )
+INSTALL( FILES icons/confBlackWhite.png  DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )

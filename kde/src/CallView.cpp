@@ -28,10 +28,12 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QSpacerItem>
 #include <QtGui/QGridLayout>
+#include <QtGui/QLabel>
 
 //KDE
 #include <KDebug>
 #include <KLineEdit>
+#include <KStandardDirs>
 
 //SFLPhone library
 #include "lib/Contact.h"
@@ -59,7 +61,8 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pCallPendingTransfer
    m_pTransferOverlay = new CallViewOverlay(this);
    m_pTransferOverlay->setVisible(false);
    m_pTransferOverlay->resize(size());
-   m_pTransferOverlay->setCornerWidget(new QTreeWidget());
+   QLabel* lblImg = new QLabel("<img width=100 height=100  src='"+KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")+"' />");
+   m_pTransferOverlay->setCornerWidget(lblImg);
 
    m_pTransferB  = new QPushButton(m_pTransferOverlay);
    m_pTransferLE = new KLineEdit(m_pTransferOverlay);
@@ -103,7 +106,7 @@ void CallView::dragEnterEvent ( QDragEnterEvent *e )
 ///When a drag position change
 void CallView::dragMoveEvent  ( QDragMoveEvent  *e )
 {
-   e->ignore();
+   e->accept();
 }
 
 ///When a drag event is leaving the widget

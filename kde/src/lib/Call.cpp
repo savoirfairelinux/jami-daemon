@@ -490,11 +490,13 @@ call_state Call::actionPerformed(call_action action)
    Q_ASSERT_X((state>4) || (state < 0),"perform action","Invalid action ("+QString::number(action)+")");
    Q_ASSERT_X((action>5) || (action < 0),"perform action","Invalid action ("+QString::number(action)+")");
    //update the state
-   changeCurrentState(actionPerformedStateMap[previousState][action]);
-   //execute the action associated with this transition
-   (this->*(actionPerformedFunctionMap[previousState][action]))(); //WARNING BUG //WARNING SEGFAULT //TODO remove this node, it was not a good idea, it is not stable
-   qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << m_CurrentState;
-   //return the new state
+   if (previousState < 11 && action < 5) {
+      changeCurrentState(actionPerformedStateMap[previousState][action]);
+      //execute the action associated with this transition
+      (this->*(actionPerformedFunctionMap[previousState][action]))(); //WARNING BUG //WARNING SEGFAULT //TODO remove this node, it was not a good idea, it is not stable
+      qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << m_CurrentState;
+      //return the new state
+   }
    return m_CurrentState;
 }
 

@@ -1,9 +1,11 @@
 #ifndef TRANSLUCENTBUTTONS_H
 #define TRANSLUCENTBUTTONS_H
 #include <QtGui/QPushButton>
+#include <QtGui/QPen>
 
 class QTimer;
 class QMimeData;
+class QImage;
 
 ///@class TranslucentButtons Fancy buttons for the call widget
 class TranslucentButtons : public QPushButton
@@ -12,7 +14,9 @@ class TranslucentButtons : public QPushButton
 public:
    TranslucentButtons(QWidget* parent);
    ~TranslucentButtons();
-   
+   void forceDragState(QDragEnterEvent *e);
+   void setHoverState(bool hover);
+   void setPixmap(QImage* img);
 protected:
    virtual void paintEvent(QPaintEvent* event);
    virtual void dragEnterEvent ( QDragEnterEvent *e );
@@ -25,6 +29,9 @@ private:
    uint m_step;
    QTimer* m_pTimer;
    QColor m_CurrentColor;
+   QPen   m_Pen;
+   bool m_CurrentState;
+   QImage* m_pImg;
    static TranslucentButtons* m_psActiveButton; /*Workaround for a Qt bug*/
 public slots:
    void setVisible(bool enabled);
