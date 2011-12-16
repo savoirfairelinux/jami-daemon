@@ -466,9 +466,12 @@ Call* CallView::getCurrentItem()
 ///Remove a TreeView item and delete it
 bool CallView::removeItem(Call* item) 
 {
-   if (indexOfTopLevelItem(SFLPhone::model()->getIndex(item)) != -1) {//TODO To remove once safe
-     removeItemWidget(SFLPhone::model()->getIndex(item),0);
-     return true;
+   if (indexOfTopLevelItem(SFLPhone::model()->getIndex(item)) != -1) {
+      QTreeWidgetItem* parent = itemAt(indexOfTopLevelItem(SFLPhone::model()->getIndex(item)),0);
+      removeItemWidget(SFLPhone::model()->getIndex(item),0);
+      if (parent->childCount() == 0) //TODO this have to be done in the daemon, not here, but oops still happen too often to ignore
+         removeItemWidget(parent,0);
+      return true;
    }
    else
       return false;
@@ -550,8 +553,16 @@ void CallView::destroyCall(Call* toDestroy)
        kDebug() << "Call not found";
    else if (indexOfTopLevelItem(SFLPhone::model()->getIndex(toDestroy)) != -1)
       takeTopLevelItem(indexOfTopLevelItem(SFLPhone::model()->getIndex(toDestroy)));
-   else if (SFLPhone::model()->getIndex(toDestroy)->parent()) //May crash here
+   else if (SFLPhone::model()->getIndex(toDestroy)->parent()) {
+      QTreeWidgetItem* parent = SFLPhone::model()->getIndex(toDestroy)->parent();
       SFLPhone::model()->getIndex(toDestroy)->parent()->removeChild(SFLPhone::model()->getIndex(toDestroy));
+      if (parent->childCount() == 0) /*This should never happen, but it does*/
+         takeTopLevelItem(indexOfTopLevelItem(parent));
+      else if (parent->childCount() == 1) {
+         addTopLevelItem(extractItem(parent->child(0)));
+         takeTopLevelItem(indexOfTopLevelItem(parent));
+      } //TODO make sure it just never happen and remove this logic code
+   }
    else
       kDebug() << "Call not found";
 }
