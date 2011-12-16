@@ -278,6 +278,7 @@ void CallTreeItem::dropEvent(QDropEvent *e)
 {
    kDebug() << "Drop accepted" << e->pos();
    QTimer::singleShot(500, this, SLOT(hide()));
+   m_isHover = false;
    if (e->pos().x() < rect().width()/2) {
       emit conversationDropEvent(m_pItemCall,(QMimeData*)e->mimeData());
    }
@@ -291,11 +292,12 @@ void CallTreeItem::resizeEvent ( QResizeEvent *e )
 {
    kDebug() << "Resize";
    if (m_pBtnConf) {
-      m_pBtnConf->setMinimumSize(width()/2-5,height());
-      m_pBtnConf->setMaximumSize(width()/2-5,height());
-      m_pBtnTrans->setMinimumSize(width()/2-5,height());
-      m_pBtnTrans->setMaximumSize(width()/2-5,height());
-      m_pBtnTrans->move(width()/2+10,m_pBtnTrans->y());
+      m_pBtnConf->setMinimumSize(width()/2-15,height()-4);
+      m_pBtnConf->setMaximumSize(width()/2-15,height()-4);
+      m_pBtnTrans->setMinimumSize(width()/2-15,height()-4);
+      m_pBtnTrans->setMaximumSize(width()/2-15,height()-4);
+      m_pBtnTrans->move(width()/2+10,m_pBtnTrans->y()+2);
+      m_pBtnConf->move(10,m_pBtnConf->y()+2);
    }
    
    e->accept();

@@ -61,6 +61,7 @@ void TranslucentButtons::setVisible(bool enabled)
       m_CurrentColor.setAlpha(0);
       repaint();
       m_pTimer->start(10);
+      raise();
    }
    m_enabled = enabled;
    QWidget::setVisible(enabled);

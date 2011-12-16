@@ -648,10 +648,11 @@ bool CallView::conferenceChanged(Call* conf)
          kDebug() << "Call " << callId << " does not exist";
    }
 
-   for (int j =0; j < SFLPhone::model()->getIndex(conf)->childCount();j++) {
-      if (buffer.indexOf(SFLPhone::model()->getIndex(conf)->child(j)) == -1)
-         insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(j)));
-   }
+   if (SFLPhone::model()->getIndex(conf)) /*Can happen is the daemon crashed*/
+      for (int j =0; j < SFLPhone::model()->getIndex(conf)->childCount();j++) {
+         if (buffer.indexOf(SFLPhone::model()->getIndex(conf)->child(j)) == -1)
+            insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(j)));
+      }
    
    Q_ASSERT_X(SFLPhone::model()->getIndex(conf)->childCount() == 0,"changind conference","A conference can't have no participants");
    
