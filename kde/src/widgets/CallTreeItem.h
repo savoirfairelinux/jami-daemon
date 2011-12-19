@@ -74,6 +74,7 @@ class CallTreeItem : public QWidget
     TranslucentButtons* m_pBtnTrans;
     
   protected:
+    //Reimplementation
     virtual void dragEnterEvent ( QDragEnterEvent *e );
     virtual void dragMoveEvent  ( QDragMoveEvent  *e );
     virtual void dragLeaveEvent ( QDragLeaveEvent *e );

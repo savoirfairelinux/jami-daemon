@@ -34,6 +34,7 @@
 #include <QtGui/QDragMoveEvent>
 #include <QtGui/QDragLeaveEvent>
 #include <QtGui/QPushButton>
+#include <QtGui/QTreeWidgetItem>
 
 //KDE
 #include <KLocale>
@@ -49,6 +50,7 @@
 //SFLPhone
 #include "AkonadiBackend.h"
 #include "widgets/TranslucentButtons.h"
+#include "SFLPhone.h"
 
 ///Constant
 const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
@@ -242,7 +244,17 @@ void CallTreeItem::updated()
 void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
 {
    kDebug() << "Drag enter";
-   if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans && (e->mimeData()->data( MIME_CALLID) != m_pItemCall->getCallId())) {
+   if (SFLPhone::model()->getIndex(this)->parent() &&
+      SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
+      SFLPhone::model()->getIndex(this)->parent() == SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
+      e->mimeData()->data( MIME_CALLID) != SFLPhone::model()->getCall(this)->getCallId()) {
+      m_pBtnTrans->setVisible(true);
+      emit showChilds(this);
+      m_pBtnConf->forceDragState(e);
+      m_isHover = true;
+      e->accept();
+   }
+   else if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans && (e->mimeData()->data( MIME_CALLID) != m_pItemCall->getCallId())) {
       m_pBtnConf->setVisible(true);
       m_pBtnTrans->setVisible(true);
       emit showChilds(this);
