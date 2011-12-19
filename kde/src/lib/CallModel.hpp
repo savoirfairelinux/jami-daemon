@@ -277,8 +277,9 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
 ///Transfer this call to  "target" number
 template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::transfer(Call* toTransfer, QString target)
 {
-   qDebug() << "Transferring call " << target;
+   qDebug() << "\n\n\n\n\nTransferring call " << toTransfer->getCallId() << target << "\n\n\n\n\n";
    toTransfer->setTransferNumber(target);
+   toTransfer->changeCurrentState(CALL_STATE_TRANSFER);
    toTransfer->actionPerformed(CALL_ACTION_ACCEPT);
    toTransfer->changeCurrentState(CALL_STATE_OVER);
 }

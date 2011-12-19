@@ -692,3 +692,68 @@ void CallView::clearHistory()
 void CallView::keyPressEvent(QKeyEvent* event) {
    SFLPhone::app()->view()->keyPressEvent(event);
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                 Overlay                                   *
+ *                                                                           *
+ ****************************************************************************/
+
+///Constructor
+CallViewOverlay::CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m_pTimer(0),m_enabled(true),m_black("black")
+{
+   m_black.setAlpha(75);
+}
+
+///Add a widget (usually an icon) in the corner
+void CallViewOverlay::setCornerWidget(QWidget* wdg) {
+   wdg->setParent      ( this                       );
+   wdg->setMinimumSize ( 100         , 100          );
+   wdg->resize         ( 100         , 100          );
+   wdg->move           ( width()-100 , height()-100 );
+   m_pIcon = wdg;
+}
+
+///Overload the setVisible method to trigger the timer
+void CallViewOverlay::setVisible(bool enabled) {
+   if (m_enabled != enabled) {
+      if (m_pTimer) {
+         m_pTimer->stop();
+         disconnect(m_pTimer);
+      }
+      m_pTimer = new QTimer(this); //TODO LEAK?
+      connect(m_pTimer, SIGNAL(timeout()), this, SLOT(changeVisibility()));
+      m_step = 0;
+      m_black.setAlpha(0);
+      repaint();
+      m_pTimer->start(10);
+   }
+   m_enabled = enabled;
+   QWidget::setVisible(enabled);
+}
+
+///How to paint the overlay
+void CallViewOverlay::paintEvent(QPaintEvent* event) {
+   Q_UNUSED(event)
+   QPainter customPainter(this);
+   customPainter.fillRect(rect(),m_black);
+}
+
+///Be sure the event is always the right size
+void CallViewOverlay::resizeEvent(QResizeEvent *e) {
+   Q_UNUSED(e)
+   if (m_pIcon) {
+      m_pIcon->setMinimumSize(100,100);
+      m_pIcon->move(width()-100,height()-100);
+   }
+}
+
+///Step by step animation to fade in/out
+void CallViewOverlay::changeVisibility() {
+   m_step++;
+   m_black.setAlpha(0.1*m_step*m_step);
+   repaint();
+   if (m_step >= 35)
+      m_pTimer->stop();
+}

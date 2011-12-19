@@ -56,62 +56,26 @@ class CallTreeItemDelegate : public QItemDelegate
 class CallViewOverlay : public QWidget {
    Q_OBJECT
 public:
-   CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m_pTimer(0),m_enabled(true),black("black")
-   {
-      black.setAlpha(75);
-   }
-   void setCornerWidget(QWidget* wdg) {
-      wdg->setParent(this);
-      wdg->setMinimumSize(100,100);
-      wdg->resize(100,100);
-      wdg->move(width()-100,height()-100);
-      m_pIcon = wdg;
-   }
+   //Constructor
+   CallViewOverlay(QWidget* parent);
 
-   void setVisible(bool enabled) {
-      if (m_enabled != enabled) {
-         if (m_pTimer) {
-            m_pTimer->stop();
-            disconnect(m_pTimer);
-         }
-         m_pTimer = new QTimer(this); //TODO LEAK
-         connect(m_pTimer, SIGNAL(timeout()), this, SLOT(changeVisibility()));
-         m_step = 0;
-         black.setAlpha(0);
-         repaint();
-         m_pTimer->start(10);
-      }
-      m_enabled = enabled;
-      QWidget::setVisible(enabled);
-   }
+   //Setters
+   void setCornerWidget(QWidget* wdg);
+   void setVisible(bool enabled);
+   
 protected:
-   void paintEvent(QPaintEvent* event) {
-      Q_UNUSED(event)
-      QPainter customPainter(this);
-      customPainter.fillRect(rect(),black);
-   }
-   virtual void resizeEvent(QResizeEvent *e) {
-      Q_UNUSED(e)
-      if (m_pIcon) {
-         m_pIcon->setMinimumSize(100,100);
-         m_pIcon->move(width()-100,height()-100);
-      }
-   }
+   virtual void paintEvent  (QPaintEvent*  event );
+   virtual void resizeEvent (QResizeEvent* e     );
+   
 private:
-   QWidget* m_pIcon;
-   uint m_step;
-   QTimer* m_pTimer;
-   bool m_enabled;
-   QColor black;
+   QWidget* m_pIcon  ;
+   uint     m_step   ;
+   QTimer*  m_pTimer ;
+   bool     m_enabled;
+   QColor   m_black  ;
    
 private slots:
-   void changeVisibility() {
-      m_step++;
-      black.setAlpha(0.1*m_step*m_step);
-      repaint();
-      if (m_step >= 35)
-         m_pTimer->stop();
-   }
+   void changeVisibility();
 };
 
 ///@class CallView Central tree widget managing active calls

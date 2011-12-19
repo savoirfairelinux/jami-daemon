@@ -493,7 +493,7 @@ call_state Call::actionPerformed(call_action action)
    if (previousState < 11 && action < 5) {
       changeCurrentState(actionPerformedStateMap[previousState][action]);
       //execute the action associated with this transition
-      (this->*(actionPerformedFunctionMap[previousState][action]))(); //WARNING BUG //WARNING SEGFAULT //TODO remove this node, it was not a good idea, it is not stable
+      (this->*(actionPerformedFunctionMap[previousState][action]))();
       qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << m_CurrentState;
       //return the new state
    }

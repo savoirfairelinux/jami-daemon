@@ -250,7 +250,6 @@ void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
       e->mimeData()->data( MIME_CALLID) != SFLPhone::model()->getCall(this)->getCallId()) {
       m_pBtnTrans->setVisible(true);
       emit showChilds(this);
-      m_pBtnConf->forceDragState(e);
       m_isHover = true;
       e->accept();
    }
@@ -258,7 +257,6 @@ void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
       m_pBtnConf->setVisible(true);
       m_pBtnTrans->setVisible(true);
       emit showChilds(this);
-      m_pBtnConf->forceDragState(e);
       m_isHover = true;
       e->accept();
    }
