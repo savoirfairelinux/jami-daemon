@@ -48,7 +48,7 @@
 
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pCallPendingTransfer(0),m_pActiveOverlay(0)
+CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_pCallPendingTransfer(0)
 {
    //Widget part
    setAcceptDrops(true);
@@ -114,12 +114,6 @@ void CallView::dragLeaveEvent ( QDragLeaveEvent *e )
 {
    kDebug() << "Potential drag event leave";
    e->accept();
-}
-
-///Add some child to the QTreeWidgetItem to show drop options (conference or transfer)
-void CallView::showDropOptions(CallTreeItem* widget)
-{
-   //TODO remove?
 }
 
 ///Proxy to handle transfer mime data

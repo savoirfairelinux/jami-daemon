@@ -26,7 +26,7 @@ TranslucentButtons::~TranslucentButtons()
 
 void TranslucentButtons::paintEvent(QPaintEvent* event)
 {
-   
+   Q_UNUSED(event)
    QPainter customPainter(this);
    //kDebug() << m_CurrentColor.name();
    //customPainter.setBackgroundMode( Qt::OpaqueMode );

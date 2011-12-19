@@ -56,7 +56,7 @@ class CallTreeItemDelegate : public QItemDelegate
 class CallViewOverlay : public QWidget {
    Q_OBJECT
 public:
-   CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m_enabled(true),black("black"),m_pTimer(0)
+   CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m_pTimer(0),m_enabled(true),black("black")
    {
       black.setAlpha(75);
    }
@@ -86,10 +86,12 @@ public:
    }
 protected:
    void paintEvent(QPaintEvent* event) {
+      Q_UNUSED(event)
       QPainter customPainter(this);
       customPainter.fillRect(rect(),black);
    }
    virtual void resizeEvent(QResizeEvent *e) {
+      Q_UNUSED(e)
       if (m_pIcon) {
          m_pIcon->setMinimumSize(100,100);
          m_pIcon->move(width()-100,height()-100);
@@ -156,7 +158,6 @@ class CallView : public QTreeWidget {
       Call* addConference     ( Call* conf                           );
       bool conferenceChanged  ( Call* conf                           );
       void conferenceRemoved  ( Call* conf                           );
-      void showDropOptions    ( CallTreeItem* widget                 );
 
       virtual void keyPressEvent(QKeyEvent* event);
 
