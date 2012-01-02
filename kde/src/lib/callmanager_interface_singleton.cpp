@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -21,17 +21,11 @@
 #include "callmanager_interface_singleton.h"
 
 
-CallManagerInterface * CallManagerInterfaceSingleton::interface 
-    = new CallManagerInterface(
-            "org.sflphone.SFLphone", 
-            "/org/sflphone/SFLphone/CallManager", 
-            QDBusConnection::sessionBus());
+CallManagerInterface * CallManagerInterfaceSingleton::interface = new CallManagerInterface( "org.sflphone.SFLphone", "/org/sflphone/SFLphone/CallManager", QDBusConnection::sessionBus());
 
 
 CallManagerInterface & CallManagerInterfaceSingleton::getInstance(){
-	if(!interface->connection().isConnected())
-	{
-		throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From call manager interface.";
-	}
-	return *interface;
+   if(!interface->connection().isConnected())
+      throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From call manager interface.";
+   return *interface;
 }

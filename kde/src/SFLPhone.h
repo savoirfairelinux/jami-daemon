@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -23,7 +23,6 @@
 #define SFLPHONE_H
 
 #include <KXmlGuiWindow>
-#include <QtCore/QVector>
 #include <lib/CallModel.h>
 
 //Qt
@@ -76,14 +75,13 @@ enum CallAction {
 };
 
 private:
-   // Whether or not the object has been initialized
+   //Attributes
    bool   m_pInitialized;
    KAction* action_accept                ;
    KAction* action_refuse                ;
    KAction* action_hold                  ;
    KAction* action_transfer              ;
    KAction* action_record                ;
-   KAction* action_main                  ;
    KAction* action_mailBox               ;
    KAction* action_close                 ;
    KAction* action_quit                  ;
@@ -92,8 +90,7 @@ private:
    KAction* action_configureSflPhone     ;
    KAction* action_configureShortcut     ;
    KAction* action_accountCreationWizard ;
-   
-   QActionGroup * action_screen;
+   QActionGroup* action_screen           ;
 
    SFLPhoneView*  m_pView            ;
    bool           m_pIconChanged     ;
@@ -106,7 +103,8 @@ private:
    
    static SFLPhone* m_sApp;
    static TreeWidgetCallModel* m_pModel;
-private:
+
+   //Setters
    void setObjectNames();
 
 protected:
@@ -140,10 +138,8 @@ private slots:
    void on_m_pView_actionTextsChangeAsked        ( const QString* actionTexts    );
    void on_m_pView_transferCheckStateChangeAsked ( bool  transferCheckState      );
    void on_m_pView_recordCheckStateChangeAsked   ( bool  recordCheckState        );
-   void on_m_pView_screenChanged                 ( int screen                    );
    void on_m_pView_incomingCall                  ( const Call * call             );
    void showShortCutEditor                       (                               );
-   void updateScreen(QAction * action);
 
    void quitButton();
 

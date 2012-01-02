@@ -308,7 +308,7 @@
 	   <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>

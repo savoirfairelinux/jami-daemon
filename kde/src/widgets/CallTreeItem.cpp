@@ -18,35 +18,46 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
-#include <QtCore/QStringList>
-
-#include <klocale.h>
-#include <kdebug.h>
-#include <unistd.h>
-
-#include "lib/sflphone_const.h"
+//Parent
 #include "CallTreeItem.h"
-#include "lib/Contact.h"
-#include "lib/Call.h"
-#include "AkonadiBackend.h"
 
-#include <QtCore/QList>
-#include <QtCore/QVariant>
-#include <QtCore/QVector>
-
+//Qt
+#include <QtCore/QStringList>
+#include <QtCore/QMimeData>
+#include <QtCore/QTimer>
 #include <QtGui/QWidget>
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QVBoxLayout>
+#include <QtGui/QDragEnterEvent>
+#include <QtGui/QDragMoveEvent>
+#include <QtGui/QDragLeaveEvent>
+#include <QtGui/QPushButton>
+#include <QtGui/QTreeWidgetItem>
+
+//KDE
+#include <KLocale>
+#include <KDebug>
 #include <KIcon>
+#include <KStandardDirs>
+
+//SFLPhone library
+#include "lib/sflphone_const.h"
+#include "lib/Contact.h"
+#include "lib/Call.h"
+
+//SFLPhone
+#include "AkonadiBackend.h"
+#include "widgets/TranslucentButtons.h"
+#include "SFLPhone.h"
 
 ///Constant
 const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
 ///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
-   : QWidget(parent), itemCall(0), init(false)
+   : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0)
 {
    setMaximumSize(99999,50);
 }
@@ -57,47 +68,76 @@ CallTreeItem::~CallTreeItem()
    
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Return the call item
 Call* CallTreeItem::call() const
 {
-   return itemCall;
+   return m_pItemCall;
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Set the call item
 void CallTreeItem::setCall(Call *call)
 {
-   itemCall = call;
+   m_pItemCall = call;
+   setAcceptDrops(true);
    
-   if (itemCall->isConference()) {
-      if (!init) {
-         labelHistoryPeerName = new QLabel(i18n("Conference"),this);
-         labelIcon = new QLabel("",this);
+   if (m_pItemCall->isConference()) {
+      if (!m_Init) {
+         m_pHistoryPeerL = new QLabel(i18n("Conference"),this);
+         m_pIconL = new QLabel("",this);
          QHBoxLayout* mainLayout = new QHBoxLayout();
-         mainLayout->addWidget(labelIcon);
-         mainLayout->addWidget(labelHistoryPeerName);
+         mainLayout->addWidget(m_pIconL);
+         mainLayout->addWidget(m_pHistoryPeerL);
          setLayout(mainLayout);
-         init = true;
+         m_Init = true;
       }
-      labelIcon->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(48,48)));
-      labelIcon->setVisible(true);
-      labelHistoryPeerName->setVisible(true);
+      m_pIconL->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(48,48)));
+      m_pIconL->setVisible(true);
+      m_pHistoryPeerL->setVisible(true);
       return;
    }
 
-   labelIcon           = new QLabel();
-   labelCallNumber2    = new QLabel(itemCall->getPeerPhoneNumber());
-   labelTransferPrefix = new QLabel(i18n("Transfer to : "));
-   labelTransferNumber = new QLabel();
-   labelPeerName       = new QLabel();
+   m_pIconL            = new QLabel();
+   m_pCallNumberL      = new QLabel(m_pItemCall->getPeerPhoneNumber());
+   m_pTransferPrefixL  = new QLabel(i18n("Transfer to : "));
+   m_pTransferNumberL  = new QLabel();
+   m_pPeerL            = new QLabel();
    QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
    
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
-   
-   labelCodec = new QLabel(this);
-   //labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
 
-   labelSecure = new QLabel(this);
+   
+   m_pBtnConf = new TranslucentButtons(this);
+   m_pBtnConf->setVisible(false);
+   m_pBtnConf->setParent(this);
+   m_pBtnConf->setText("Conference");
+   m_pBtnConf->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/confBlackWhite.png")));
+   connect(m_pBtnConf,SIGNAL(dataDropped(QMimeData*)),this,SLOT(conversationEvent(QMimeData*)));
+
+   m_pBtnTrans = new TranslucentButtons(this);
+   m_pBtnTrans->setText("Transfer");
+   m_pBtnTrans->setVisible(false);
+   m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
+   connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
+   
+   m_pCodecL = new QLabel(this);
+   //m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
+
+   m_pSecureL = new QLabel(this);
    
    mainLayout->setSpacing(4);
    QVBoxLayout* descr = new QVBoxLayout();
@@ -106,18 +146,18 @@ void CallTreeItem::setCall(Call *call)
    QHBoxLayout* transfer = new QHBoxLayout();
    transfer->setMargin(0);
    transfer->setSpacing(0);
-   mainLayout->addWidget(labelIcon);
-        
-   if(! itemCall->getPeerName().isEmpty()) {
-      labelPeerName->setText(itemCall->getPeerName());
-      descr->addWidget(labelPeerName);
+   mainLayout->addWidget(m_pIconL);
+   
+   if(! m_pItemCall->getPeerName().isEmpty()) {
+      m_pPeerL->setText(m_pItemCall->getPeerName());
+      descr->addWidget(m_pPeerL);
    }
 
-   descr->addWidget(labelCallNumber2);
-   descr->addWidget(labelSecure);
-   descr->addWidget(labelCodec);
-   transfer->addWidget(labelTransferPrefix);
-   transfer->addWidget(labelTransferNumber);
+   descr->addWidget(m_pCallNumberL);
+   descr->addWidget(m_pSecureL);
+   descr->addWidget(m_pCodecL);
+   transfer->addWidget(m_pTransferPrefixL);
+   transfer->addWidget(m_pTransferNumberL);
    descr->addLayout(transfer);
    descr->addItem(verticalSpacer);
    mainLayout->addLayout(descr);
@@ -125,7 +165,7 @@ void CallTreeItem::setCall(Call *call)
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
 
-   connect(itemCall, SIGNAL(changed()), this,     SLOT(updated()));
+   connect(m_pItemCall, SIGNAL(changed()), this,     SLOT(updated()));
 
    updated();
 }
@@ -133,54 +173,161 @@ void CallTreeItem::setCall(Call *call)
 ///Update data
 void CallTreeItem::updated()
 {
-   qDebug() << "Updating tree item";
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(itemCall->getPeerPhoneNumber());
+   kDebug() << "\n\n\n\nI am here\n\n\n\n\n" << m_pItemCall->getState() << "\n\n\n";
+   kDebug() << "Updating tree item";
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
    if (contact) {
-      labelIcon->setPixmap(*contact->getPhoto());
-      labelPeerName->setText("<b>"+contact->getFormattedName()+"</b>");
+      m_pIconL->setPixmap(*contact->getPhoto());
+      m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
    }
    else {
-      labelIcon->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
 
-      if(! itemCall->getPeerName().trimmed().isEmpty()) {
-         labelPeerName->setText("<b>"+itemCall->getPeerName()+"</b>");
+      if(! m_pItemCall->getPeerName().trimmed().isEmpty()) {
+         m_pPeerL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
       }
       else {
-         labelPeerName->setText(i18n("<b>Unknow</b>"));
+         m_pPeerL->setText(i18n("<b>Unknow</b>"));
       }
    }
       
-   call_state state = itemCall->getState();
-   bool recording = itemCall->getRecording();
+   call_state state = m_pItemCall->getState();
+   bool recording = m_pItemCall->getRecording();
    if(state != CALL_STATE_OVER) {
       if(state == CALL_STATE_CURRENT && recording) {
-         labelIcon->setPixmap(QPixmap(ICON_CURRENT_REC));
+         m_pIconL->setPixmap(QPixmap(ICON_CURRENT_REC));
       }
       else {
          QString str = QString(callStateIcons[state]);
-         labelIcon->setPixmap(QPixmap(str));
+         m_pIconL->setPixmap(QPixmap(str));
       }
       bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
-      labelTransferPrefix->setVisible(transfer);
-      labelTransferNumber->setVisible(transfer);
+      m_pTransferPrefixL->setVisible(transfer);
+      m_pTransferNumberL->setVisible(transfer);
 
       if(!transfer) {
-         labelTransferNumber->setText("");
+         m_pTransferNumberL->setText("");
       }
-      labelTransferNumber->setText(itemCall->getTransferNumber());
-      labelCallNumber2->setText(itemCall->getPeerPhoneNumber());
+      m_pTransferNumberL->setText(m_pItemCall->getTransferNumber());
+      m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
                 
       if(state == CALL_STATE_DIALING) {
-         labelCallNumber2->setText(itemCall->getCallNumber());
+         m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
       else {
-         labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
-         if (itemCall->isSecure())
-            labelSecure->setText("⚷");
+         m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
+         if (m_pItemCall->isSecure())
+            m_pSecureL->setText("⚷");
       }
    }
    else {
-      //qDebug() << "Updating item of call of state OVER. Doing nothing.";
+      //kDebug() << "Updating item of call of state OVER. Doing nothing.";
+   }
+   if (state == CALL_STATE_TRANSFER) {
+      kDebug() << "emmiting tranfer signal";
+      emit askTransfer(m_pItemCall);
+   }
+   else {
+      kDebug() << "not emmiting tranfer signal";
+   }
+   changed();
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                               Drag and drop                               *
+ *                                                                           *
+ ****************************************************************************/
+
+///Called when a drag and drop occure while the item have not been dropped yet
+void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
+{
+   kDebug() << "Drag enter";
+   if (SFLPhone::model()->getIndex(this)->parent() &&
+      SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
+      SFLPhone::model()->getIndex(this)->parent() == SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
+      e->mimeData()->data( MIME_CALLID) != SFLPhone::model()->getCall(this)->getCallId()) {
+      m_pBtnTrans->setVisible(true);
+      emit showChilds(this);
+      m_isHover = true;
+      e->accept();
+   }
+   else if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans && (e->mimeData()->data( MIME_CALLID) != m_pItemCall->getCallId())) {
+      m_pBtnConf->setVisible(true);
+      m_pBtnTrans->setVisible(true);
+      emit showChilds(this);
+      m_isHover = true;
+      e->accept();
+   }
+   else
+      e->ignore();
+}
+
+///The cursor move on a potential drag event
+void CallTreeItem::dragMoveEvent  ( QDragMoveEvent  *e )
+{
+   QPoint pos = e->pos();
+   m_pBtnConf->setHoverState (pos.x() < rect().width()/2);
+   m_pBtnTrans->setHoverState(pos.x() > rect().width()/2);
+   m_isHover = true;
+   e->accept();
+}
+
+///A potential drag event is cancelled
+void CallTreeItem::dragLeaveEvent ( QDragLeaveEvent *e )
+{
+   QTimer::singleShot(500, this, SLOT(hide()));
+   kDebug() << "Drag leave";
+   m_isHover = false;
+   e->accept();
+}
+
+///Something is being dropped
+void CallTreeItem::dropEvent(QDropEvent *e)
+{
+   kDebug() << "Drop accepted" << e->pos();
+   QTimer::singleShot(500, this, SLOT(hide()));
+   m_isHover = false;
+   if (e->pos().x() < rect().width()/2) {
+      emit conversationDropEvent(m_pItemCall,(QMimeData*)e->mimeData());
+   }
+   else {
+      emit transferDropEvent(m_pItemCall,(QMimeData*)e->mimeData());
+   }
+   //emit dataDropped((QMimeData*)e->mimeData());
+}
+
+void CallTreeItem::resizeEvent ( QResizeEvent *e )
+{
+   kDebug() << "Resize";
+   if (m_pBtnConf) {
+      m_pBtnConf->setMinimumSize(width()/2-15,height()-4);
+      m_pBtnConf->setMaximumSize(width()/2-15,height()-4);
+      m_pBtnTrans->setMinimumSize(width()/2-15,height()-4);
+      m_pBtnTrans->setMaximumSize(width()/2-15,height()-4);
+      m_pBtnTrans->move(width()/2+10,m_pBtnTrans->y()+2);
+      m_pBtnConf->move(10,m_pBtnConf->y()+2);
    }
    
+   e->accept();
+}
+
+void CallTreeItem::transferEvent(QMimeData* data)
+{
+   emit transferDropEvent(m_pItemCall,data);
+}
+
+void CallTreeItem::conversationEvent(QMimeData* data)
+{
+   kDebug() << "Proxying conversation mime";
+   emit conversationDropEvent(m_pItemCall,data);
+}
+
+void CallTreeItem::hide()
+{
+   if (!m_isHover) {
+      m_pBtnConf->setVisible(false);
+      m_pBtnTrans->setVisible(false);
+   }
 }

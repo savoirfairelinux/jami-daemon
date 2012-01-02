@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -18,16 +18,14 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+
+//Parent
 #include "Contact.h"
 
-#include <QtCore/QDebug>
-#include <kabc/addressee.h>
-#include <kabc/picture.h>
-#include <kabc/phonenumber.h>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QWidget>
-#include <QPixmap>
+//Qt
+#include <QtGui/QPixmap>
 
+//SFLPhone library
 #include "sflphone_const.h"
 
 ///Constructor
@@ -57,25 +55,25 @@ void Contact::initItemWidget()
 ///Get the phone number list
 PhoneNumbers Contact::getPhoneNumbers() const
 {
-   return m_pNumbers;
+   return m_Numbers;
 }
 
 ///Get the nickname
-QString Contact::getNickName() const
+const QString& Contact::getNickName() const
 {
-   return m_pNickName;
+   return m_NickName;
 }
 
 ///Get the firstname
-QString Contact::getFirstName() const
+const QString& Contact::getFirstName() const
 {
-   return m_pFirstName;
+   return m_FirstName;
 }
 
 ///Get the second/family name
-QString Contact::getSecondName() const
+const QString& Contact::getSecondName() const
 {
-   return m_pSecondName;
+   return m_SecondName;
 }
 
 ///Get the photo
@@ -85,57 +83,57 @@ const QPixmap* Contact::getPhoto() const
 }
 
 ///Get the formatted name
-QString Contact::getFormattedName() const
+const QString& Contact::getFormattedName() const
 {
-   return m_pFormattedName;
+   return m_FormattedName;
 }
 
 ///Get the organisation
-QString Contact::getOrganization()  const
+const QString& Contact::getOrganization()  const
 {
-   return m_pOrganization;
+   return m_Organization;
 }
 
 ///Get the preferred email
-QString Contact::getPreferredEmail()  const
+const QString& Contact::getPreferredEmail()  const
 {
-   return m_pPreferredEmail;
+   return m_PreferredEmail;
 }
 
 ///Get the unique identifier (used for drag and drop) 
-QString Contact::getUid() const
+const QString& Contact::getUid() const
 {
-   return m_pUid;
+   return m_Uid;
 }
 
 ///Get the contact type
-QString Contact::getType() const
+const QString& Contact::getType() const
 {
-   return m_pType;
+   return m_Type;
 }
 
 ///Set the phone number (type and number) 
 void Contact::setPhoneNumbers(PhoneNumbers numbers)
 {
-   m_pNumbers    = numbers;
+   m_Numbers    = numbers;
 }
 
 ///Set the nickname
-void Contact::setNickName(QString name)
+void Contact::setNickName(const QString& name)
 {
-   m_pNickName   = name;
+   m_NickName   = name;
 }
 
 ///Set the first name
-void Contact::setFirstName(QString name)
+void Contact::setFirstName(const QString& name)
 {
-   m_pFirstName  = name;
+   m_FirstName  = name;
 }
 
 ///Set the family name
-void Contact::setFamilyName(QString name)
+void Contact::setFamilyName(const QString& name)
 {
-   m_pSecondName = name;
+   m_SecondName = name;
 }
 
 ///Set the Photo/Avatar
@@ -145,25 +143,25 @@ void Contact::setPhoto(QPixmap* photo)
 }
 
 ///Set the formatted name (display name)
-void Contact::setFormattedName(QString name)
+void Contact::setFormattedName(const QString& name)
 {
-   m_pFormattedName = name;
+   m_FormattedName = name;
 }
 
 ///Set the organisation / business
-void Contact::setOrganization(QString name)
+void Contact::setOrganization(const QString& name)
 {
-   m_pOrganization = name;
+   m_Organization = name;
 }
 
 ///Set the default email
-void Contact::setPreferredEmail(QString name)
+void Contact::setPreferredEmail(const QString& name)
 {
-   m_pPreferredEmail = name;
+   m_PreferredEmail = name;
 }
 
 ///Set UID
-void Contact::setUid(QString id)
+void Contact::setUid(const QString& id)
 {
-   m_pUid = id;
+   m_Uid = id;
 }

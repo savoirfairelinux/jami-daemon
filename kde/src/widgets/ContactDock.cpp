@@ -1,44 +1,54 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
 
+//Parent
 #include "ContactDock.h"
 
+//Qt
+#include <QtCore/QDateTime>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QListWidget>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QHeaderView>
 #include <QtGui/QCheckBox>
-#include <QtCore/QDateTime>
-#include <QSplitter>
-#include <klineedit.h>
-#include <KLocalizedString>
+#include <QtGui/QSplitter>
 #include <QtGui/QLabel>
+#include <QtGui/QComboBox>
 
-#include <akonadi/collectionfilterproxymodel.h>
-#include <akonadi/contact/contactstreemodel.h>
-#include <akonadi/kmime/messagemodel.h>
-#include <akonadi/changerecorder.h>
-#include <kabc/addressee.h>
-#include <kabc/picture.h>
-#include <kabc/phonenumber.h>
-#include <kabc/vcard.h>
-#include <kabc/field.h>
-#include <kabc/vcardline.h>
-#include <kabc/contactgroup.h>
-#include <akonadi/itemfetchscope.h>
-#include <akonadi/entitydisplayattribute.h>
-#include <akonadi/recursiveitemfetchjob.h>
-#include <kicon.h>
-#include <akonadi/entitytreeview.h>
-#include <akonadi/itemview.h>
-#include <akonadi/collectioncombobox.h>
+//KDE
+#include <KDebug>
+#include <KLineEdit>
+#include <KLocalizedString>
+#include <KIcon>
 
+//SFLPhone
 #include "AkonadiBackend.h"
 #include "ContactItemWidget.h"
-#include "conf/ConfigurationSkeleton.h"
-#include "lib/Call.h"
 #include "SFLPhone.h"
+#include "conf/ConfigurationSkeleton.h"
+
+//SFLPhone library
+#include "lib/Call.h"
 #include "lib/Contact.h"
 
-///Hack around Qt sorting limitation
+///@class QNumericTreeWidgetItem_hist TreeWidget using different sorting criterias
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -134,6 +144,13 @@ ContactDock::~ContactDock()
 
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Reload the contact
 void ContactDock::reloadContact()
 {
@@ -146,7 +163,7 @@ void ContactDock::reloadContact()
       aContact->setContact(cont);
 
       PhoneNumbers numbers =  aContact->getContact()->getPhoneNumbers();
-      qDebug() << "Phone count" << numbers.count();
+      kDebug() << "Phone count" << numbers.count();
       if (numbers.count() > 1) {
          foreach (Contact::PhoneNumber* number, numbers) {
             QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
@@ -161,7 +178,7 @@ void ContactDock::reloadContact()
 
       m_pContactView->addTopLevelItem(item);
       m_pContactView->setItemWidget(item,0,aContact);
-      m_pContacts << aContact;
+      m_Contacts << aContact;
    }
 }
 
@@ -186,9 +203,9 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
 }
 
 ///Filter contact
-void ContactDock::filter(QString text)
+void ContactDock::filter(const QString& text)
 {
-   foreach(ContactItemWidget* item, m_pContacts) {
+   foreach(ContactItemWidget* item, m_Contacts) {
       bool foundNumber = false;
       foreach (Contact::PhoneNumber* number, item->getContact()->getPhoneNumbers()) {
          foundNumber |= number->getNumber().toLower().indexOf(text) != -1;
@@ -202,10 +219,17 @@ void ContactDock::filter(QString text)
    m_pContactView->expandAll();
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                Drag and Drop                              *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Serialize informations to be used for drag and drop
 QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
-   qDebug() << "An history call is being dragged";
+   kDebug() << "An history call is being dragged";
    if (items.size() < 1) {
       return NULL;
    }
@@ -223,7 +247,7 @@ QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
       }
    }
    else {
-      qDebug() << "the item is not a call";
+      kDebug() << "the item is not a call";
    }
    return mimeData;
 }
@@ -237,18 +261,32 @@ bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 
    QByteArray encodedData = data->data(MIME_CALLID);
 
-   qDebug() << "In history import"<< QString(encodedData);
+   kDebug() << "In history import"<< QString(encodedData);
 
    return false;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Show or hide the history list 
 void ContactDock::setHistoryVisible(bool visible)
 {
-   qDebug() << "Toggling history visibility";
+   kDebug() << "Toggling history visibility";
    m_pCallView->setVisible(visible);
    ConfigurationSkeleton::setDisplayContactCallHistory(visible);
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                             Keyboard handling                             *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Handle keypresses ont the dock
 void ContactDock::keyPressEvent(QKeyEvent* event) {

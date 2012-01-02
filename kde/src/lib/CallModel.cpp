@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,6 +17,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+//Parent
 #include <CallModel.h>
 
 bool CallModelBase::dbusInit = false;
@@ -25,13 +26,17 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 {
    if (!dbusInit) {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-      connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( on1_callStateChanged  ( const QString &, const QString & ) ) );
-      connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( on1_incomingCall      ( const QString &, const QString & ) ) );
-      connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( on1_incomingConference( const QString &                  ) ) );
-      connect(&callManager, SIGNAL( conferenceChanged (const QString &, const QString &                  ) ), this , SLOT( on1_changingConference( const QString &, const QString & ) ) );
-      connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( on1_conferenceRemoved ( const QString &                  ) ) );
-      connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( on1_voiceMailNotify   ( const QString &, int             ) ) );
-      connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( on1_volumeChanged     ( const QString &, double          ) ) );
+
+      //SLOTS
+      //             SENDER                                        SIGNAL                                      RECEIVER                             SLOT                                    /
+      /**/connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( on1_callStateChanged  ( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( on1_incomingCall      ( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( on1_incomingConference( const QString &                  ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceChanged (const QString &, const QString &                  ) ), this , SLOT( on1_changingConference( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( on1_conferenceRemoved ( const QString &                  ) ) );
+      /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( on1_voiceMailNotify   ( const QString &, int             ) ) );
+      /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( on1_volumeChanged     ( const QString &, double          ) ) );
+      /*                                                                                                                                                                                    */
       dbusInit = true;
    }
 }
@@ -67,8 +72,6 @@ void CallModelBase::on1_incomingCall(const QString & accountID, const QString & 
    Call* call = addIncomingCall(callID);
 
    //NEED_PORT
-//    changeScreen(SCREEN_MAIN);
-// 
 //    SFLPhone::app()->activateWindow();
 //    SFLPhone::app()->raise();
 //    SFLPhone::app()->setVisible(true);

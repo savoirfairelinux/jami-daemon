@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -27,23 +27,13 @@
 #include <QLabel>
 #include <kled.h>
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-*/
+///@class AccountItemWidget Widget for the config dialog account list
 class AccountItemWidget : public QWidget
 {
 Q_OBJECT
 
-private:
-
-   int state;
-   bool enabled;
-   QLabel * led;
-   QCheckBox * checkBox;
-   QLabel * textLabel;
-
 public:
-
+   //Enum
    enum State {Registered, Unregistered, NotWorking};
 
    //Constructors & Destructors
@@ -51,22 +41,29 @@ public:
    ~AccountItemWidget();
 
    //Getters
-   int getState();
+   int  getState  ();
    bool getEnabled();
    
    //Setters
-   void setState(int state);
-   void setEnabled(bool enabled);
-   void setAccountText(QString text);
+   void setState       (int        state    );
+   void setEnabled     (bool        enabled );
+   void setAccountText (const QString& text );
    
    //Updates
-   void updateStateDisplay();
-   void updateEnabledDisplay();
-   void updateDisplay();
+   void updateStateDisplay   ();
+   void updateEnabledDisplay ();
+   void updateDisplay        ();
+   
+private:
+   //Attributes
+   int        m_State     ;
+   bool       m_Enabled   ;
+   QLabel*    m_pLed      ;
+   QCheckBox* m_pCheckBox ;
+   QLabel*    m_pTextLabel;
    
 private slots:   
-   void on_checkBox_stateChanged(int state);
-   
+   void on_m_pCheckBox_stateChanged(int state);
    
 signals:
    void checkStateChanged(bool checked);

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -23,8 +23,6 @@
 #define SFLPHONEVIEW_H
 
 #include "ui_SFLPhoneView_base.h"
-#include <QtCore/QVector>
-#include <QtCore/QList>
 #include <QtGui/QWidget>
 
 //Qt
@@ -85,8 +83,7 @@ public:
    
    
    QErrorMessage * getErrorWindow();
-
-   CallView* model();
+   
    
    //Daemon getters
    /**
@@ -152,12 +149,6 @@ private slots:
     *   Keeps the peer name of the contact or past call.
     */
    void editBeforeCall();
-   
-   /**
-    *   Updates the toolbar's actions' display according to the selected 
-    *   item's state.
-    */
-   void updateWindowCallState();
 
    /**
     * Updates the history's search bar's display according to the current
@@ -178,6 +169,12 @@ public slots:
     * according to the settings.
     */
    void loadWindow();
+   
+   /**
+    *   Updates the toolbar's actions' display according to the selected 
+    *   item's state.
+    */
+   void updateWindowCallState();
    
    
    void updateStatusMessage();
@@ -224,7 +221,6 @@ public slots:
    void on1_incomingCall(Call* call);
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
-   void changeScreen(int screen);
    
 signals:
    void statusMessageChangeAsked      ( const QString&  message            );

@@ -1,15 +1,42 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
+
+//Parent
 #include "BookmarkDock.h"
 
+//Qt
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QTreeWidgetItem>
-#include <KLocalizedString>
-#include <kicon.h>
-#include <klineedit.h>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QSplitter>
+
+//KDE
+#include <KLocalizedString>
+#include <KIcon>
+#include <KLineEdit>
+
+//SFLPhone
 #include "conf/ConfigurationSkeleton.h"
 #include "widgets/HistoryTreeItem.h"
 
+///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -29,6 +56,7 @@ class QNumericTreeWidgetItem : public QTreeWidgetItem {
       }
 };
 
+///Constructor
 BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
 {
    setObjectName("bookmarkDock");
@@ -61,12 +89,21 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    connect(m_pFilterLE, SIGNAL(textChanged(QString)), this, SLOT(filter(QString) ));
 }
 
+///Destructor
 BookmarkDock::~BookmarkDock()
 {
    
 }
 
-void BookmarkDock::addBookmark_internal(QString phone)
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Add a new bookmark
+void BookmarkDock::addBookmark_internal(const QString& phone)
 {
    HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone);
    QTreeWidgetItem* item   = new QTreeWidgetItem(m_pItemView      );
@@ -76,12 +113,14 @@ void BookmarkDock::addBookmark_internal(QString phone)
    m_pBookmark << widget;
 }
 
-void BookmarkDock::addBookmark(QString phone)
+///Proxy to add a new bookmark
+void BookmarkDock::addBookmark(const QString& phone)
 {
    addBookmark_internal(phone);
    ConfigurationSkeleton::setBookmarkList(ConfigurationSkeleton::bookmarkList() << phone);
 }
 
+///Filter the list
 void BookmarkDock::filter(QString text)
 {
    foreach(HistoryTreeItem* item, m_pBookmark) {

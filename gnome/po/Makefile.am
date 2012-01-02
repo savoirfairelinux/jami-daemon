@@ -16,6 +16,7 @@ POFILES=\
 	it.po \
 	ja.po \
 	ko.po \
+	nl.po \
 	oc.po \
 	pl.po \
 	pt_BR.po \
@@ -41,6 +42,7 @@ MOFILES=\
 	it.mo \
 	ja.mo \
 	ko.mo \
+	nl.mo \
 	oc.mo \
 	pl.mo \
 	pt_BR.mo \

@@ -1,6 +1,7 @@
 #include "ConfigAccountList.h"
 
-#include <QDebug>
+//KDE
+#include <KDebug>
 
 #include "lib/sflphone_const.h"
 #include "lib/configurationmanager_interface_singleton.h"
@@ -29,7 +30,7 @@ AccountView* ConfigAccountList::getAccountByItem(QListWidgetItem * item)
    return NULL;
 }
 
-AccountView* ConfigAccountList::addAccount(QString & alias)
+AccountView* ConfigAccountList::addAccount(const QString& alias)
 {
    AccountView* a = AccountView::buildNewAccountFromAlias(alias);
    (*accounts) += a;
@@ -39,11 +40,11 @@ AccountView* ConfigAccountList::addAccount(QString & alias)
 void ConfigAccountList::removeAccount(QListWidgetItem* item)
 {
    if(!item) 
-      qDebug() << "Attempting to remove an account from a NULL item."; return; 
+      kDebug() << "Attempting to remove an account from a NULL item."; return;
 
    AccountView* a = (AccountView*) getAccountByItem(item);
    if(!a)
-      qDebug() << "Attempting to remove an unexisting account."; return;
+      kDebug() << "Attempting to remove an unexisting account."; return;
 
    accounts->remove(accounts->indexOf(a));
 }
@@ -118,7 +119,7 @@ void ConfigAccountList::update()
 
 void ConfigAccountList::updateAccounts()
 {
-   qDebug() << "updateAccounts";
+   kDebug() << "updateAccounts";
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    QStringList accountIds = configurationManager.getAccountList().value();
    accounts->clear();
@@ -131,7 +132,7 @@ void ConfigAccountList::updateAccounts()
 void ConfigAccountList::upAccount(int index)
 {
    if(index <= 0 || index >= size()) {
-      qDebug() << "Error : index or future index out of range in upAccount.";
+      kDebug() << "Error : index or future index out of range in upAccount.";
       return;
    }
    AccountView* account = getAccountAt(index);
@@ -142,7 +143,7 @@ void ConfigAccountList::upAccount(int index)
 void ConfigAccountList::downAccount(int index)
 {
    if(index < 0 || index >= size() - 1) {
-      qDebug() << "Error : index or future index out of range in upAccount.";
+      kDebug() << "Error : index or future index out of range in upAccount.";
       return;
    }
    AccountView* account = getAccountAt(index);
@@ -162,13 +163,12 @@ QString ConfigAccountList::getOrderedList() const
 
 QVector<AccountView*> ConfigAccountList::registeredAccounts() const
 {
-   qDebug() << "registeredAccounts";
    QVector<AccountView*> registeredAccounts;
    AccountView* current;
    for (int i = 0; i < accounts->count(); ++i) {
       current = (*accounts)[i];
       if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED) {
-         qDebug() << current->getAlias() << " : " << current;
+         kDebug() << current->getAlias() << " : " << current;
          registeredAccounts.append(current);
       }
    }

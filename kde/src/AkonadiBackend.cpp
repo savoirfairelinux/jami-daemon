@@ -1,23 +1,51 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
+
+//Parent
 #include "AkonadiBackend.h"
+
+//Qt
 #include <QtCore/QTimer>
+#include <QtCore/QObject>
+
+//KDE
+#include <KDebug>
+#include <kdialog.h>
 #include <akonadi/control.h>
 #include <akonadi/collectionfilterproxymodel.h>
 #include <akonadi/kmime/messagemodel.h>
-#include <kabc/contactgroup.h>
-#include <kabc/phonenumber.h>
 #include <akonadi/recursiveitemfetchjob.h>
 #include <akonadi/itemfetchscope.h>
 #include <akonadi/collectionfetchjob.h>
 #include <akonadi/collectionfetchscope.h>
 #include <akonadi/contact/contacteditor.h>
-#include <kdialog.h>
-
-#include <QObject>
 #include <akonadi/session.h>
 #include <kabc/addressee.h>
 #include <kabc/addresseelist.h>
+#include <kabc/contactgroup.h>
+#include <kabc/phonenumber.h>
 
+//SFLPhone library
 #include "lib/Contact.h"
+
+//SFLPhone
 #include "SFLPhone.h"
 #include "SFLPhoneView.h"
 
@@ -42,6 +70,13 @@ AkonadiBackend::~AkonadiBackend()
    
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Singleton
 ContactBackend* AkonadiBackend::getInstance()
 {
@@ -51,13 +86,32 @@ ContactBackend* AkonadiBackend::getInstance()
    return m_pInstance;
 }
 
+///Find contact using a phone number
+Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber)
+{
+   return m_ContactByPhone[phoneNumber];
+}
+
+///Find contact by UID
+Contact* AkonadiBackend::getContactByUid(const QString& uid)
+{
+   return m_ContactByUid[uid];
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Update the contact list when a new Akonadi collection is added
 ContactList AkonadiBackend::update(Akonadi::Collection collection)
 {
-   m_pCollection = collection;
+   m_Collection = collection;
    ContactList contacts;
    if ( !collection.isValid() ) {
-      qDebug() << "The current collection is not valid";
+      kDebug() << "The current collection is not valid";
       return contacts;
    }
 
@@ -69,21 +123,21 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
 
       foreach ( const Akonadi::Item &item, items ) {
          if ( item.hasPayload<KABC::ContactGroup>() ) {
-            qDebug() << "Group:" << item.payload<KABC::ContactGroup>().name();
+            kDebug() << "Group:" << item.payload<KABC::ContactGroup>().name();
          }
 
          if ( item.hasPayload<KABC::Addressee>() ) {
             KABC::Addressee tmp = item.payload<KABC::Addressee>();
             Contact* aContact   = new Contact();
-            m_pAddrHash[tmp.uid()] = tmp;
+            m_AddrHash[tmp.uid()] = tmp;
             
             KABC::PhoneNumber::List numbers = tmp.phoneNumbers();
             PhoneNumbers newNumbers;
             foreach (KABC::PhoneNumber number, numbers) {
                newNumbers << new Contact::PhoneNumber(number.number(),number.typeLabel());
-               m_pContactByPhone[number.number()] = aContact;
+               m_ContactByPhone[number.number()] = aContact;
             }
-            m_pContactByUid[tmp.uid()] = aContact;
+            m_ContactByUid[tmp.uid()] = aContact;
             
             aContact->setNickName       (tmp.nickName()       );
             aContact->setFormattedName  (tmp.formattedName()  );
@@ -105,39 +159,12 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
    return contacts;
 }
 
-///Update the contact list even without a new collection
-ContactList AkonadiBackend::update_slot()
-{
-   return update(m_pCollection);
-}
-
-///Find contact using a phone number
-Contact* AkonadiBackend::getContactByPhone(QString phoneNumber)
-{
-   return m_pContactByPhone[phoneNumber];
-}
-
-///Find contact by UID
-Contact* AkonadiBackend::getContactByUid(QString uid)
-{
-   return m_pContactByUid[uid];
-}
-
-///Called when a new collection is added
-void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
-{
-   foreach (Akonadi::Collection coll, list) {
-      update(coll);
-      emit collectionChanged();
-   }
-}
-
 ///Edit backend value using an updated frontend contact
 void AkonadiBackend::editContact(Contact* contact)
 {
-   KABC::Addressee ct = m_pAddrHash[contact->getUid()];
+   KABC::Addressee ct = m_AddrHash[contact->getUid()];
    if (ct.uid() != contact->getUid()) {
-      qDebug() << "Contact not found";
+      kDebug() << "Contact not found";
       return;
    }
    Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, SFLPhone::app()->view() );
@@ -193,7 +220,29 @@ void AkonadiBackend::addNewContact(Contact* contact)
    dlg->exec();
    
    if ( !editor->saveContact() ) {
-      qDebug() << "Unable to save new contact to storage";
+      kDebug() << "Unable to save new contact to storage";
       return;
    }
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                    Slots                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Called when a new collection is added
+void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
+{
+   foreach (Akonadi::Collection coll, list) {
+      update(coll);
+      emit collectionChanged();
+   }
+}
+
+///Update the contact list even without a new collection
+ContactList AkonadiBackend::update_slot()
+{
+   return update(m_Collection);
 }

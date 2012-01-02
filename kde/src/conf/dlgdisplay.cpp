@@ -23,7 +23,7 @@
 DlgDisplay::DlgDisplay(QWidget *parent)
  : QWidget(parent)
 {
-	setupUi(this);
+   setupUi(this);
 }
 
 

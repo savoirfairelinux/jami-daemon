@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -22,40 +22,45 @@
 #define CODEC_H
 
 #include <QObject>
-#include <QtCore/QString>
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
+//Qt
+class QString;
+
+///@class Codec A SIP codec
 class Codec : public QObject
 {
 Q_OBJECT
-private:
-   QString payload   ;
-   QString name      ;
-   QString frequency ;
-   QString bitrate   ;
-   QString bandwidth ;
-   bool enabled;
 
 public:
    Codec(int payload, bool enabled);
-    
-   QString getPayload   () const;
-   QString getName      () const;
-   QString getFrequency () const;
-   QString getBitrate   () const;
-   QString getBandwidth () const;
-   bool isEnabled       () const;
-   
-   void setPayload   ( QString payload   );
-   void setName      ( QString name      );
-   void setFrequency ( QString frequency );
-   void setBitrate   ( QString bitrate   );
-   void setBandwidth ( QString bandwidth );
+
+   //Getters
+   const QString& getPayload   () const;
+   const QString& getName      () const;
+   const QString& getFrequency () const;
+   const QString& getBitrate   () const;
+   const QString& getBandwidth () const;
+   bool isEnabled              () const;
+
+   //Setters
+   void setPayload   ( const QString& payload   );
+   void setName      ( const QString& name      );
+   void setFrequency ( const QString& frequency );
+   void setBitrate   ( const QString& bitrate   );
+   void setBandwidth ( const QString& bandwidth );
    void setEnabled   ( bool enabled      );
    
-   Codec & operator=(const Codec&);
+private:
+   //Attributes
+   QString m_Payload   ;
+   QString m_Name      ;
+   QString m_Frequency ;
+   QString m_Bitrate   ;
+   QString m_Bandwidth ;
+   bool    m_Enabled   ;
+   
+   //Operators
+   Codec& operator=(const Codec&);
 };
 
 #endif

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -27,31 +27,32 @@ class QString;
 
 #include "typedefs.h"
 
-const QString account_state_name(QString & s);
+const QString& account_state_name(const QString& s);
 
+///@class Account a daemon account (SIP or AIX)
 class LIB_EXPORT Account : public QObject {
    Q_OBJECT
 
    public:
       ~Account();
       //Constructors
-      static Account* buildExistingAccountFromId(QString _accountId);
-      static Account* buildNewAccountFromAlias(QString alias);
+      static Account* buildExistingAccountFromId(const QString& _accountId);
+      static Account* buildNewAccountFromAlias(const QString& alias);
    
       //Getters
-      bool isNew() const;
-      const QString & getAccountId() const;
-      MapStringString & getAccountDetails() const;
-      QString getStateName(QString & state);
-      QString getAccountDetail(QString param) const;
-      QString getAlias() const;
-      bool isEnabled() const;
-      bool isRegistered() const;
+      bool                    isNew()                                const;
+      const QString&          getAccountId()                         const;
+      const MapStringString&  getAccountDetails()                    const;
+      const QString&          getStateName(const QString& state)     const;
+      const QString&          getAccountDetail(const QString& param) const;
+      const QString&          getAlias()                             const;
+      bool                    isEnabled()                            const;
+      bool                    isRegistered()                         const;
    
       //Setters
-      void setAccountId(QString id);
-      void setAccountDetails(MapStringString m);
-      void setAccountDetail(QString param, QString val);
+      void setAccountId      (const QString& id                        );
+      void setAccountDetails (const MapStringString& m                 );
+      void setAccountDetail  (const QString& param, const QString& val );
    
       //Updates
       virtual void updateState();
@@ -60,8 +61,11 @@ class LIB_EXPORT Account : public QObject {
       bool operator==(const Account&)const;
    
    protected:
+      //Constructors
       Account();
-      QString* m_pAccountId;
+
+      //Attributes
+      QString*         m_pAccountId;
       MapStringString* m_pAccountDetails;
 
    public slots:

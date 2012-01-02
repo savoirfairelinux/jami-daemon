@@ -91,8 +91,8 @@ void MainWidget::dataUpdated(const QString& source, const Plasma::DataEngine::Da
          topLevelItems[value.key(call)] = callWidgetList[value.key(call)];
       }
 
-      //if (modified)
-        //sflphoneEngine->connectSource("conferences", this,0/*Update only if something happen*/);
+//       if (modified)
+//         sflphoneEngine->connectSource("conferences", this,0/*Update only if something happen*/);
    }
    else if (source == "info") {
       if (!data["Account"].isNull() || data["Account"].isValid())
@@ -153,6 +153,7 @@ QGraphicsLinearLayout* MainWidget::mainLayout()
 
 void MainWidget::call(QString number)
 {
+   Q_UNUSED(number);
 //    qDebug() << "Calling " << number << " with account " << currentAccountId << ", " << CallModelConvenience::getAccountList()->size() << " account registred";
 //    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
 //    callManager.placeCall(currentAccountId, CallModelConvenience::generateCallId(), number);

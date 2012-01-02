@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef ACCOUNTLISTMODEL_H
 #define ACCOUNTLISTMODEL_H
 
@@ -26,9 +26,7 @@
 //SFLPhone
 class ConfigAccountList;
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
+///@class AccountListModel Model for the account list widget
 class AccountListModel : public QAbstractListModel
 {
 Q_OBJECT
@@ -36,19 +34,25 @@ private:
    ConfigAccountList* accounts;
 
 public:
+   //Constructor
    AccountListModel(QObject *parent = 0);
 
+   //Destructor
    ~AccountListModel();
-   
-   QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-   int rowCount(const QModelIndex & parent = QModelIndex()) const;
-   Qt::ItemFlags flags(const QModelIndex & index) const;
-   virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
-   
-   bool accountUp( int index );
-   bool accountDown( int index );
-   bool removeAccount( int index );
-   bool addAccount( QString alias );
+
+   //Getters
+   QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole ) const;
+   int           rowCount ( const QModelIndex& parent = QModelIndex()            ) const;
+   Qt::ItemFlags flags    ( const QModelIndex& index                             ) const;
+
+   //Setters
+   virtual bool setData   ( const QModelIndex& index, const QVariant &value, int role)  ;
+
+   //Mutators
+   bool accountUp     ( int index            );
+   bool accountDown   ( int index            );
+   bool removeAccount ( int index            );
+   bool addAccount    ( const QString& alias );
    
    QString getOrderedList() const;
 };

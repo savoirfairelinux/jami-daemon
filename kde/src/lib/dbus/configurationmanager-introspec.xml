@@ -71,11 +71,11 @@
 				<tp:rationale>Account settings are written to the configuration file when sflphone properly quits.</tp:rationale>
 				<tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
 			</tp:docstring>
+			<annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
 			<arg type="s" name="accountID" direction="in">
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
-			<annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
 			<arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
@@ -89,7 +89,7 @@
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
-                        <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+			<annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
 			<arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
@@ -101,6 +101,7 @@
             Get configuration settings of the IP2IP_PROFILE. They are sligthly different from account settings since no VoIP accounts are involved.
             </tp:docstring>
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+			<!--<annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>-->
             <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
             <tp:docstring>
             Available parameters are:
@@ -307,12 +308,12 @@
 	   <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
-		   <arg type="as" name="list" direction="out">
+		   <arg type="ai" name="list" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
@@ -605,6 +606,7 @@
 	   <method name="getHistory" tp:name-for-bindings="getHistory">
 		   <tp:docstring>
 		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="as" name="entries" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -706,9 +708,9 @@
 	   </method>
 
 	   <method name="getShortcuts" tp:name-for-bindings="getShortcuts">
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="a{ss}" name="shortcutsMap" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -716,9 +718,9 @@
 	   </method>
 
 	   <method name="setShortcuts" tp:name-for-bindings="setShortcuts">
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <arg type="a{ss}" name="shortcutsMap" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>

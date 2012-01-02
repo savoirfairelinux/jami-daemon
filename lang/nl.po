@@ -1,0 +1,1272 @@
+# SFLphone Dutch translation
+# Copyright (C) 2011 Savoir-Faire Linux
+# This file is distributed under the same license as the SFLphone package.
+#
+# Jan Middelkoop <jan@recreatie-zorg.nl>, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.9.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"PO-Revision-Date: 2011-05-10 15:26+0100\n"
+"Last-Translator: Jan Middelkoop <jan@recreatie-zorg.nl>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../gnome/src/sflnotify.c:85
+#, c-format
+msgid "%s says:"
+msgstr "%s zegt:"
+
+#: ../gnome/src/sflnotify.c:103 ../gnome/src/sflnotify.c:122
+#, c-format
+msgid "%s account : %s"
+msgstr "%s account : %s"
+
+#: ../gnome/src/sflnotify.c:108
+#, c-format
+msgid "<i>From</i> %s"
+msgstr "<i>Van</i> %s"
+
+#: ../gnome/src/sflnotify.c:125
+#, c-format
+msgid "%d voice mail"
+msgid_plural "%d voice mails"
+msgstr[0] "%d voicemail"
+msgstr[1] "%d voicemails"
+
+#: ../gnome/src/sflnotify.c:139
+#, c-format
+msgid "Calling with %s account <i>%s</i>"
+msgstr "Oproep met %s account <i>%s</i>"
+
+#: ../gnome/src/sflnotify.c:143
+msgid "Current account"
+msgstr "Huidige account"
+
+#: ../gnome/src/sflnotify.c:154
+msgid "You have no accounts set up"
+msgstr "Er zijn geen accounts geconfigureerd"
+
+#: ../gnome/src/sflnotify.c:155 ../gnome/src/sflnotify.c:168
+#: ../gnome/src/accountlist.c:160
+msgid "Error"
+msgstr "Fout"
+
+#: ../gnome/src/sflnotify.c:167
+msgid "You have no registered accounts"
+msgstr "Er zijn geen accounts geregistreerd"
+
+#: ../gnome/src/sflnotify.c:181
+#, c-format
+msgid ""
+"<i>With:</i> %s \n"
+"using %s"
+msgstr ""
+"<i>Met:</i> %s \n"
+"gebruikt %s"
+
+#: ../gnome/src/sflnotify.c:194
+#, c-format
+msgid "%s does not support ZRTP."
+msgstr "%s ondersteunt geen ZRTP."
+
+#: ../gnome/src/sflnotify.c:207
+#, c-format
+msgid "ZRTP negotiation failed with %s"
+msgstr "ZRTP onderhandeling mislukt met %s"
+
+#: ../gnome/src/sflnotify.c:220
+#, c-format
+msgid "<i>With:</i> %s"
+msgstr "<i>Met:</i> %s"
+
+#: ../gnome/src/statusicon.c:135
+msgid "_Show main window"
+msgstr "_Weergeven"
+
+#: ../gnome/src/statusicon.c:142 ../gnome/src/uimanager.c:970
+#: ../gnome/src/uimanager.c:1286 ../gnome/src/uimanager.c:1346
+msgid "_Hang up"
+msgstr "_Ophangen"
+
+#: ../gnome/src/statusicon.c:193
+#, c-format
+msgid "%i active account"
+msgid_plural "%i active accounts"
+msgstr[0] "%i actieve account"
+msgstr[1] "%i actieve accounts"
+
+#: ../gnome/src/statusicon.c:194
+msgid "SFLphone"
+msgstr "SFLphone"
+
+#: ../gnome/src/actions.c:176
+msgid "Using account"
+msgstr "Via account"
+
+#: ../gnome/src/actions.c:180
+msgid "No registered accounts"
+msgstr "Geen account aangemeld"
+
+#: ../gnome/src/actions.c:609 ../gnome/src/actions.c:881
+msgid "Direct SIP call"
+msgstr "Directe SIP oproep"
+
+#: ../gnome/src/callable_obj.c:340
+msgid "today at %R"
+msgstr "vandaag om %R"
+
+#: ../gnome/src/callable_obj.c:343
+msgid "yesterday at %R"
+msgstr "gisteren om %R"
+
+#: ../gnome/src/callable_obj.c:345
+msgid "%A at %R"
+msgstr "%A om %R"
+
+#: ../gnome/src/callable_obj.c:349
+msgid "%x at %R"
+msgstr "%x om %R"
+
+#: ../gnome/src/main.c:96 ../gnome/src/dbus/dbus.c:515
+msgid "SFLphone Error"
+msgstr "SFLphone fout"
+
+#: ../gnome/src/eel-gconf-extensions.c:73
+msgid ""
+"Cannot find a schema for gpdf preferences. \n"
+"Check your gconf setup, look at gpdf FAQ for \n"
+"more info"
+msgstr ""
+"Geen schema gevonden voor gpdf voorkeuren. \n"
+"Controleer de gconf instellingen.  Bekijk de \n"
+"gconf veelgestelde vragen voor meer informatie."
+
+#: ../gnome/src/accountlist.c:151
+msgid "Registered"
+msgstr "Aangemeld"
+
+#: ../gnome/src/accountlist.c:154
+msgid "Not Registered"
+msgstr "Niet aangemeld"
+
+#: ../gnome/src/accountlist.c:157
+msgid "Trying..."
+msgstr "Proberen..."
+
+#: ../gnome/src/accountlist.c:163
+msgid "Authentication Failed"
+msgstr "Authenticatie mislukt"
+
+#: ../gnome/src/accountlist.c:166
+msgid "Network unreachable"
+msgstr "Netwerk onbereikbaar"
+
+#: ../gnome/src/accountlist.c:169
+msgid "Host unreachable"
+msgstr "Server niet bereikbaar"
+
+#: ../gnome/src/accountlist.c:172
+msgid "Stun configuration error"
+msgstr "Stun configuratie fout"
+
+#: ../gnome/src/accountlist.c:175
+msgid "Stun server invalid"
+msgstr "Stun server ongeldig"
+
+#: ../gnome/src/accountlist.c:178
+msgid "Ready"
+msgstr "Gereed"
+
+#: ../gnome/src/accountlist.c:181
+msgid "Invalid"
+msgstr "Ongeldig"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:51
+msgid "ZRTP Options"
+msgstr "ZRTP instellingen"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:70
+msgid "Send Hello Hash in S_DP"
+msgstr "Verstuur Hello Hash in S_DP"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:75
+msgid "Ask User to Confirm SAS"
+msgstr "Vraag gebruiker om SAS te bevestigen"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:80
+msgid "_Warn if ZRTP not supported"
+msgstr "_Waarschuw wanneer ZRTP niet ondersteund is"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:85
+msgid "Display SAS once for hold events"
+msgstr "Geef SAS éénmalig weer voor wacht acties"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:124
+msgid "SDES Options"
+msgstr "SDES opties"
+
+#: ../gnome/src/config/zrtpadvanceddialog.c:142
+msgid "Fallback on RTP on SDES failure"
+msgstr "Terugvallen op RTP bij SDES fout"
+
+#: ../gnome/src/config/audioconf.c:549
+#: ../gnome/src/config/addressbook-config.c:425
+msgid "Name"
+msgstr "Naam"
+
+#: ../gnome/src/config/audioconf.c:554
+msgid "Frequency"
+msgstr "Frequentie"
+
+#: ../gnome/src/config/audioconf.c:559
+msgid "Bitrate"
+msgstr "Bitsnelheid"
+
+#: ../gnome/src/config/audioconf.c:669
+msgid "ALSA plugin"
+msgstr "ALSA plugin"
+
+#: ../gnome/src/config/audioconf.c:691
+msgid "Output"
+msgstr "Uitgaand"
+
+#: ../gnome/src/config/audioconf.c:713
+msgid "Input"
+msgstr "Inkomend"
+
+#: ../gnome/src/config/audioconf.c:734
+msgid "Ringtone"
+msgstr "Beltoon"
+
+#: ../gnome/src/config/audioconf.c:775
+msgid "Sound Manager"
+msgstr "Geluidsmanager"
+
+#: ../gnome/src/config/audioconf.c:786
+msgid "_Pulseaudio"
+msgstr "_PulseAudio"
+
+#: ../gnome/src/config/audioconf.c:790
+msgid "_ALSA"
+msgstr "_ALSA"
+
+#: ../gnome/src/config/audioconf.c:796
+msgid "ALSA settings"
+msgstr "ALSA instellingen"
+
+#: ../gnome/src/config/audioconf.c:807
+msgid "Recordings"
+msgstr "Opgenomen gesprekken"
+
+#: ../gnome/src/config/audioconf.c:811
+msgid "Destination folder"
+msgstr "Opslaan in"
+
+#: ../gnome/src/config/audioconf.c:815
+msgid "Select a folder"
+msgstr "Kies een map"
+
+#: ../gnome/src/config/audioconf.c:827
+msgid "_Always recording"
+msgstr ""
+
+#: ../gnome/src/config/audioconf.c:834
+msgid "Voice enhancement settings"
+msgstr "Geluidsverbeterende instellingen"
+
+#: ../gnome/src/config/audioconf.c:837
+msgid "_Noise Reduction"
+msgstr "_Ruisonderdrukking"
+
+#: ../gnome/src/config/audioconf.c:851
+msgid "_Echo Cancellation"
+msgstr ""
+
+#: ../gnome/src/config/addressbook-config.c:339
+#: ../gnome/src/config/preferencesdialog.c:416
+#: ../gnome/src/config/shortcuts-config.c:115
+msgid "General"
+msgstr "Algemeen"
+
+#: ../gnome/src/config/addressbook-config.c:343
+msgid "_Use Evolution address books"
+msgstr "_Gebruik Evolution adresboek"
+
+#: ../gnome/src/config/addressbook-config.c:350
+msgid "Download limit :"
+msgstr "Download limiet:"
+
+#: ../gnome/src/config/addressbook-config.c:358
+msgid "cards"
+msgstr "contacten"
+
+#: ../gnome/src/config/addressbook-config.c:363
+msgid "_Display contact photo if available"
+msgstr "_Geef foto weer indien beschikbaar"
+
+#: ../gnome/src/config/addressbook-config.c:369
+msgid "Fields from Evolution's address books"
+msgstr "Velden uit Evolution adresboek"
+
+#: ../gnome/src/config/addressbook-config.c:372
+msgid "_Work"
+msgstr "_Werk"
+
+#: ../gnome/src/config/addressbook-config.c:378
+msgid "_Home"
+msgstr "_Thuis"
+
+#: ../gnome/src/config/addressbook-config.c:384
+msgid "_Mobile"
+msgstr "_Mobiel"
+
+#: ../gnome/src/config/addressbook-config.c:390
+msgid "Address Books"
+msgstr "Adresboeken"
+
+#: ../gnome/src/config/addressbook-config.c:394
+msgid "Select which Evolution address books to use"
+msgstr "Selecteer de te gebruiken Evolution adresboeken"
+
+#: ../gnome/src/config/hooks-config.c:149
+msgid "URL Argument"
+msgstr "URL argument"
+
+#: ../gnome/src/config/hooks-config.c:157
+msgid "Trigger on specific _SIP header"
+msgstr "Reageer op specifieke _SIP header"
+
+#: ../gnome/src/config/hooks-config.c:166
+msgid "Trigger on _IAX2 URL"
+msgstr "Reageer op _IAX2 URL"
+
+#: ../gnome/src/config/hooks-config.c:171
+msgid "Command to _run"
+msgstr "_Uit te voeren opdracht"
+
+#: ../gnome/src/config/hooks-config.c:181
+msgid "Phone number rewriting"
+msgstr "Telefoonnummer herschrijving"
+
+#: ../gnome/src/config/hooks-config.c:185
+msgid "_Prefix dialed numbers with"
+msgstr "_Begin ingevoerde nummers met"
+
+#: ../gnome/src/config/assistant.c:78
+#, c-format
+msgid "This assistant is now finished."
+msgstr "De assistent is nu klaar."
+
+#: ../gnome/src/config/assistant.c:80
+msgid ""
+"You can at any time check your registration state or modify your accounts "
+"parameters in the Options/Accounts window."
+msgstr ""
+"De status van een account of de account instellingen kunnen altijd "
+"opgevraagd en gewijzigd worden in het Opties/Accounts scherm."
+
+#: ../gnome/src/config/assistant.c:83
+msgid "Alias"
+msgstr "Alias"
+
+#: ../gnome/src/config/assistant.c:87
+msgid "Server"
+msgstr "Server"
+
+#: ../gnome/src/config/assistant.c:91
+msgid "Username"
+msgstr "Gebruikersnaam"
+
+#: ../gnome/src/config/assistant.c:95
+msgid "Security: "
+msgstr "Beveiliging:"
+
+#: ../gnome/src/config/assistant.c:98
+msgid "SRTP/ZRTP draft-zimmermann"
+msgstr "SRTP/ZRTP Zimmermann concept"
+
+#: ../gnome/src/config/assistant.c:100
+msgid "None"
+msgstr "Geen"
+
+#: ../gnome/src/config/assistant.c:244
+msgid "SFLphone account creation wizard"
+msgstr "SFLphone wizard account aanmaken"
+
+#: ../gnome/src/config/assistant.c:271
+msgid "Welcome to the Account creation wizard of SFLphone!"
+msgstr "Welkom bij de account aanmaken wizard van SFLphone!"
+
+#: ../gnome/src/config/assistant.c:272
+msgid "This installation wizard will help you configure an account."
+msgstr "Deze installatiewizard helpt met het aanmaken van een account."
+
+#: ../gnome/src/config/assistant.c:287
+msgid "VoIP Protocols"
+msgstr "VoIP protocollen"
+
+#: ../gnome/src/config/assistant.c:287
+msgid "Select an account type"
+msgstr "Kies een type account"
+
+#: ../gnome/src/config/assistant.c:289
+msgid "SIP (Session Initiation Protocol)"
+msgstr "SIP (Sessie Initiatie Protocol) "
+
+#: ../gnome/src/config/assistant.c:291
+msgid "IAX2 (InterAsterix Exchange)"
+msgstr "IAX2 (InterAsterix Exchange)"
+
+#: ../gnome/src/config/assistant.c:306
+msgid "Account"
+msgstr "Account"
+
+#: ../gnome/src/config/assistant.c:306
+msgid "Please select one of the following options"
+msgstr "Selecteer één van de volgende opties"
+
+#: ../gnome/src/config/assistant.c:308
+#, fuzzy
+msgid ""
+"Create a free SIP/IAX2 account on sflphone.org \n"
+"(For testing purpose only)"
+msgstr "Maak een gratis SIP/IAX2 account op sflphone.org"
+
+#: ../gnome/src/config/assistant.c:310
+msgid "Register an existing SIP or IAX2 account"
+msgstr "Registreer een bestaande SIP of IAX2 account"
+
+#: ../gnome/src/config/assistant.c:324
+msgid "SIP account settings"
+msgstr "SIP account instellingen"
+
+#: ../gnome/src/config/assistant.c:324 ../gnome/src/config/assistant.c:424
+msgid "Please fill the following information"
+msgstr "Vul de volgende velden in"
+
+#: ../gnome/src/config/assistant.c:332 ../gnome/src/config/assistant.c:432
+#: ../gnome/src/config/accountconfigdialog.c:250
+msgid "_Alias"
+msgstr "_Alias"
+
+#: ../gnome/src/config/assistant.c:340 ../gnome/src/config/assistant.c:440
+#: ../gnome/src/config/accountconfigdialog.c:289
+msgid "_Host name"
+msgstr "_Hostnaam"
+
+#: ../gnome/src/config/assistant.c:348 ../gnome/src/config/assistant.c:448
+#: ../gnome/src/config/accountconfigdialog.c:298
+msgid "_User name"
+msgstr "_Gebruikersnaam"
+
+#: ../gnome/src/config/assistant.c:358 ../gnome/src/config/assistant.c:457
+#: ../gnome/src/config/accountconfigdialog.c:313
+msgid "_Password"
+msgstr "_Wachtwoord"
+
+#: ../gnome/src/config/assistant.c:367 ../gnome/src/config/assistant.c:466
+#: ../gnome/src/config/accountconfigdialog.c:329
+msgid "Show password"
+msgstr "Wachtwoord tonen"
+
+#: ../gnome/src/config/assistant.c:372 ../gnome/src/config/assistant.c:471
+#: ../gnome/src/config/accountconfigdialog.c:343
+msgid "_Voicemail number"
+msgstr "_Voicemail nummer"
+
+#: ../gnome/src/config/assistant.c:380 ../gnome/src/config/assistant.c:410
+msgid "Secure communications with _ZRTP"
+msgstr "Beveiligde communicatie met _ZRTP"
+
+#: ../gnome/src/config/assistant.c:394
+msgid "Optional email address"
+msgstr "Optioneel e-mail adres"
+
+#: ../gnome/src/config/assistant.c:394
+msgid "This email address will be used to send your voicemail messages."
+msgstr ""
+"Dit e-mail adres wordt gebruikt voor het versturen van voicemail berichten."
+
+#: ../gnome/src/config/assistant.c:402
+msgid "_Email address"
+msgstr "_E-mail adres"
+
+#: ../gnome/src/config/assistant.c:424
+msgid "IAX2 account settings"
+msgstr "IAX2 account instellingen"
+
+#: ../gnome/src/config/assistant.c:490
+msgid "Network Address Translation (NAT)"
+msgstr "Netwerkadres maskering (NAT)"
+
+#: ../gnome/src/config/assistant.c:490
+msgid "You should probably enable this if you are behind a firewall."
+msgstr ""
+"Dit moet waarschijnlijk aan staan als de verbinding via een router loopt."
+
+#: ../gnome/src/config/assistant.c:499
+msgid "E_nable STUN"
+msgstr "STUN _inschakelen"
+
+#: ../gnome/src/config/assistant.c:506
+msgid "_STUN server"
+msgstr "_STUN server"
+
+#: ../gnome/src/config/assistant.c:521
+msgid "Account Registration"
+msgstr "Account registratie"
+
+#: ../gnome/src/config/assistant.c:521
+msgid "Congratulations!"
+msgstr "Gefeliciteerd!"
+
+#: ../gnome/src/config/preferencesdialog.c:169
+msgid "Desktop Notifications"
+msgstr "Bureaublad notificaties"
+
+#: ../gnome/src/config/preferencesdialog.c:174
+msgid "_Enable notifications"
+msgstr "_Notificaties inschakelen"
+
+#: ../gnome/src/config/preferencesdialog.c:181
+msgid "System Tray Icon"
+msgstr "Systeemvak icoon"
+
+#: ../gnome/src/config/preferencesdialog.c:189
+msgid "Show SFLphone in the system tray"
+msgstr "Geef SFLphone weer in het systeemvak"
+
+#: ../gnome/src/config/preferencesdialog.c:196
+msgid "_Popup main window on incoming call"
+msgstr "_Popup hoofdvenster bij inkomende oproep"
+
+#: ../gnome/src/config/preferencesdialog.c:202
+msgid "Ne_ver popup main window"
+msgstr "_Nooit het hoofdvenster naar voren brengen"
+
+#: ../gnome/src/config/preferencesdialog.c:215
+msgid "Hide SFLphone window on _startup"
+msgstr "Verberg het hoofdvenster bij het opstarten"
+
+#: ../gnome/src/config/preferencesdialog.c:229
+msgid "Calls History"
+msgstr "Gespreksgeschiedenis"
+
+#: ../gnome/src/config/preferencesdialog.c:233
+msgid "_Keep my history for at least"
+msgstr "_Bewaar geschiedenis voor ten minste"
+
+#: ../gnome/src/config/preferencesdialog.c:248
+msgid "days"
+msgstr "dagen"
+
+#: ../gnome/src/config/preferencesdialog.c:253
+msgid "Instant Messaging"
+msgstr "Directe berichten (chat)"
+
+#: ../gnome/src/config/preferencesdialog.c:257
+msgid "Enable instant messaging"
+msgstr "Directe berichten inschakelen"
+
+#: ../gnome/src/config/preferencesdialog.c:377
+msgid "Preferences"
+msgstr "Instellingen"
+
+#: ../gnome/src/config/preferencesdialog.c:422
+#: ../gnome/src/config/accountconfigdialog.c:1070
+#: ../gnome/src/config/accountconfigdialog.c:1208
+msgid "Audio"
+msgstr "Geluid"
+
+#: ../gnome/src/config/preferencesdialog.c:427
+msgid "Hooks"
+msgstr "Acties"
+
+#: ../gnome/src/config/preferencesdialog.c:432
+msgid "Shortcuts"
+msgstr "Sneltoesten"
+
+#: ../gnome/src/config/preferencesdialog.c:438
+msgid "Address Book"
+msgstr "Adresboek"
+
+#: ../gnome/src/config/accountconfigdialog.c:231
+msgid "Account Parameters"
+msgstr "Account opties"
+
+#: ../gnome/src/config/accountconfigdialog.c:260
+msgid "_Protocol"
+msgstr "_Protocol"
+
+#: ../gnome/src/config/accountconfigdialog.c:277
+msgid "Unknown"
+msgstr "Onbekend"
+
+#: ../gnome/src/config/accountconfigdialog.c:334
+msgid "_Proxy"
+msgstr "_Proxy"
+
+#: ../gnome/src/config/accountconfigdialog.c:352
+msgid "_User-agent"
+msgstr "_User-agent"
+
+#: ../gnome/src/config/accountconfigdialog.c:413
+msgid "Authentication"
+msgstr "Authenticatie"
+
+#: ../gnome/src/config/accountconfigdialog.c:414
+msgid "Secret"
+msgstr "Geheim"
+
+#: ../gnome/src/config/accountconfigdialog.c:658
+msgid "Credential"
+msgstr "Credentialen"
+
+#: ../gnome/src/config/accountconfigdialog.c:692
+msgid "Authentication name"
+msgstr "Authenticatie naam"
+
+#: ../gnome/src/config/accountconfigdialog.c:703
+msgid "Password"
+msgstr "Wachtwoord"
+
+#: ../gnome/src/config/accountconfigdialog.c:756
+#: ../gnome/src/config/accountconfigdialog.c:1229
+msgid "Security"
+msgstr "Beveiliging"
+
+#: ../gnome/src/config/accountconfigdialog.c:767
+#, fuzzy
+msgid "Use TLS transport(sips)"
+msgstr "Gebruik TLS verkeer (SIPS)"
+
+#: ../gnome/src/config/accountconfigdialog.c:773
+msgid "SRTP key exchange"
+msgstr "SRTP sleutel uitwisseling"
+
+#: ../gnome/src/config/accountconfigdialog.c:779
+msgid "Disabled"
+msgstr "Uitgeschakeld"
+
+#: ../gnome/src/config/accountconfigdialog.c:843
+msgid "Registration"
+msgstr "Registratie"
+
+#: ../gnome/src/config/accountconfigdialog.c:847
+msgid "Registration expire"
+msgstr "Registratie verloop"
+
+#: ../gnome/src/config/accountconfigdialog.c:856
+msgid "_Comply with RFC 3263"
+msgstr "_Voldoen aan RFC 3263"
+
+#: ../gnome/src/config/accountconfigdialog.c:876
+msgid "Network Interface"
+msgstr "Netwerk interface"
+
+#: ../gnome/src/config/accountconfigdialog.c:887
+msgid "Local address"
+msgstr "Lokaal adres"
+
+#: ../gnome/src/config/accountconfigdialog.c:918
+msgid "Local port"
+msgstr "Lokale poort"
+
+#: ../gnome/src/config/accountconfigdialog.c:960
+#: ../gnome/src/config/accountconfigdialog.c:994
+msgid "Published address"
+msgstr "Adres van buitenaf"
+
+#: ../gnome/src/config/accountconfigdialog.c:964
+msgid "Using STUN"
+msgstr "Gebruikt STUN"
+
+#: ../gnome/src/config/accountconfigdialog.c:972
+msgid "STUN server URL"
+msgstr "STUN server URL"
+
+#: ../gnome/src/config/accountconfigdialog.c:980
+msgid "Same as local parameters"
+msgstr "Zelfde als lokale opties"
+
+#: ../gnome/src/config/accountconfigdialog.c:983
+msgid "Set published address and port:"
+msgstr "Extern adres en poort instellen:"
+
+#: ../gnome/src/config/accountconfigdialog.c:1003
+msgid "Published port"
+msgstr "Externe poort:"
+
+#: ../gnome/src/config/accountconfigdialog.c:1084
+msgid "DTMF"
+msgstr "DTMF"
+
+#: ../gnome/src/config/accountconfigdialog.c:1095
+msgid "RTP"
+msgstr "RTP"
+
+#: ../gnome/src/config/accountconfigdialog.c:1099
+msgid "SIP"
+msgstr "SIP"
+
+#: ../gnome/src/config/accountconfigdialog.c:1107
+msgid "Ringtones"
+msgstr "Beltoon"
+
+#: ../gnome/src/config/accountconfigdialog.c:1110
+msgid "Choose a ringtone"
+msgstr "Kies een beltoon"
+
+#: ../gnome/src/config/accountconfigdialog.c:1115
+msgid "_Enable ringtones"
+msgstr "_Beltoon inschakelen"
+
+#: ../gnome/src/config/accountconfigdialog.c:1127
+msgid "Audio Files"
+msgstr "Audio bestanden"
+
+#: ../gnome/src/config/accountconfigdialog.c:1145
+msgid ""
+"This profile is used when you want to reach a remote peer simply by typing a "
+"sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
+"also be used if no account can be matched to an incoming or outgoing call."
+msgstr ""
+"Dit profiel wordt gebruikt voor het maken van een verbinding met een SIP "
+"URI, zoals <b>sip:telefoon</b>. De instellingen die hier ingevoerd zijn, "
+"worden gebruikt wanneer er geen account gevonden kan worden voor een "
+"inkomende of uitgaande oproep."
+
+#: ../gnome/src/config/accountconfigdialog.c:1182
+msgid "Account settings"
+msgstr "Account instellingen"
+
+#: ../gnome/src/config/accountconfigdialog.c:1202
+msgid "Basic"
+msgstr "Standaard"
+
+#: ../gnome/src/config/accountconfigdialog.c:1224
+msgid "Advanced"
+msgstr "Geavanceerd"
+
+#: ../gnome/src/config/accountconfigdialog.c:1235
+msgid "Network"
+msgstr "Netwerk"
+
+#: ../gnome/src/config/shortcuts-config.c:117
+msgid "Be careful: these shortcuts might override system-wide shortcuts."
+msgstr ""
+"Waarschuwing: deze sneltoesten overschrijven mogelijk andere globale "
+"sneltoetsen van het systeem."
+
+#: ../gnome/src/config/accountlistconfigdialog.c:202
+#, c-format
+msgid "Server returned \"%s\" (%d)"
+msgstr "Server zegt \"%s\" (%d)"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:494
+msgid "Protocol"
+msgstr "Protocol"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:502
+msgid "Status"
+msgstr "Status"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:581
+msgid "Accounts"
+msgstr "Accounts"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:590
+msgid "Configured Accounts"
+msgstr "Ingestelde accounts"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:608
+#, c-format
+msgid "There is %d active account"
+msgid_plural "There are %d active accounts"
+msgstr[0] "Er is %d actieve account"
+msgstr[1] "Er zijn %d actieve accounts"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:615
+msgid "You have no active account"
+msgstr "Er is geen account actief"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:41
+msgid "Advanced options for TLS"
+msgstr "Geavanceerde opties voor TLS"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:58
+msgid "TLS transport"
+msgstr "TLS verkeer"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:62
+msgid ""
+"TLS transport can be used along with UDP for those calls that would\n"
+"require secure sip transactions (aka SIPS). You can configure a different\n"
+"TLS transport for each account. However, each of them will run on a "
+"dedicated\n"
+"port, different one from each other\n"
+msgstr ""
+"TLS verkeer kan gebruikt worden met UDP voor de gesprekken die\n"
+"beveiligde SIP transacties (SIPS) nodig hebben. Voor elke account\n"
+"kunnen verschillen TLS instellingen opgegeven worden. Echter,\n"
+"elke account zal wel een eigen poort nodig hebben.\n"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:109
+msgid "Global TLS listener (all accounts)"
+msgstr "Globale TLS poort (voor alle accounts)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:123
+msgid "Certificate of Authority list"
+msgstr "Certificaat van authoriteit lijst"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:126
+msgid "Choose a CA list file (optional)"
+msgstr " Kies een CA lijst bestand (optioneel)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:138
+msgid "Public endpoint certificate file"
+msgstr "Public eindpunt certificaat bestand"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:141
+msgid "Choose a public endpoint certificate (optional)"
+msgstr "Kies een public eindpunt certificaat (optioneel)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:159
+msgid "Choose a private key file (optional)"
+msgstr "Kies een privé sleutel bestand (optioneel)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:174
+msgid "Password for the private key"
+msgstr "Wachtwoord voor de privé sleutel"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:189
+msgid "TLS protocol method"
+msgstr "TLS protocol methode"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:217
+msgid "TLS cipher list"
+msgstr "TLS cipher lijst"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:226
+msgid "Server name instance for outgoing TLS connection"
+msgstr "Server naam instantie voor uitgaande TLS verbindingen"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:234
+msgid "Negotiation timeout (sec:msec)"
+msgstr "Onderhandeling timeout (sec:msec)"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:251
+msgid "Verify incoming certificates, as a server"
+msgstr "Controleer inkomende certificaten, wanneer server"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:257
+msgid "Verify certificates from answer, as a client"
+msgstr "Controleer certificaat antwoorden, wanneer client"
+
+#: ../gnome/src/config/tlsadvanceddialog.c:263
+msgid "Require certificate for incoming tls connections"
+msgstr "Eis een certificaat voor inkomende TLS verbindingen"
+
+#: ../gnome/src/contacts/searchbar.c:198
+msgid "Search all"
+msgstr "Alles doorzoeken"
+
+#: ../gnome/src/contacts/searchbar.c:199 ../gnome/src/contacts/searchbar.c:214
+#: ../gnome/src/contacts/searchbar.c:226 ../gnome/src/contacts/searchbar.c:238
+msgid "Click here to change the search type"
+msgstr "Klik hier om het zoektype te wijzigen"
+
+#: ../gnome/src/contacts/searchbar.c:213
+msgid "Search by missed call"
+msgstr "Zoek op gemiste oproepen"
+
+#: ../gnome/src/contacts/searchbar.c:225
+msgid "Search by incoming call"
+msgstr "Zoek op inkomende oproepen"
+
+#: ../gnome/src/contacts/searchbar.c:237
+msgid "Search by outgoing call"
+msgstr "Zoek op uitgaande oproepen"
+
+#: ../gnome/src/sliders.c:174
+msgid "Speakers volume"
+msgstr "Weergave volume"
+
+#: ../gnome/src/sliders.c:174
+msgid "Mic volume"
+msgstr "Microfoon volume"
+
+#: ../gnome/src/mainwindow.c:127
+msgid "There is one call in progress."
+msgstr "Er is 1 actief gesprek."
+
+#: ../gnome/src/mainwindow.c:129
+msgid "There are calls in progress."
+msgstr "Er zijn gesprekken actief."
+
+#: ../gnome/src/mainwindow.c:133
+msgid "Do you still want to quit?"
+msgstr "Wil je nog steeds afsluiten?"
+
+#: ../gnome/src/mainwindow.c:425
+#, c-format
+msgid "ZRTP is not supported by peer %s\n"
+msgstr "ZRTP wordt niet ondersteund door partij %s\n"
+
+#: ../gnome/src/mainwindow.c:427
+msgid "Secure Communication Unavailable"
+msgstr "Versleutelde communicatie niet beschikbaar"
+
+#: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:456
+msgid "Continue"
+msgstr "Doorgaan"
+
+#: ../gnome/src/mainwindow.c:431 ../gnome/src/mainwindow.c:457
+#: ../gnome/src/mainwindow.c:474
+msgid "Stop Call"
+msgstr "Oproep beëindigen"
+
+#: ../gnome/src/mainwindow.c:449
+#, c-format
+msgid ""
+"A %s error forced the call with %s to fall under unencrypted mode.\n"
+"Exact reason: %s\n"
+msgstr ""
+"Vanwege een %s fout is de oproep met %s teruggevallen naar onversleutelde "
+"modus.\n"
+"Specifieke reden: %s\n"
+
+#: ../gnome/src/mainwindow.c:453
+msgid "ZRTP negotiation failed"
+msgstr "ZRTP onderhandeling mislukt"
+
+#: ../gnome/src/mainwindow.c:467
+#, c-format
+msgid ""
+"%s wants to stop using secure communication. Confirm will resume "
+"conversation without SRTP.\n"
+msgstr ""
+"%s wil stoppen met versleutelde communicatie. Bevestiging zal communicatie "
+"voortzetten zonder SRTP.\n"
+
+#: ../gnome/src/mainwindow.c:469
+msgid "Confirm Go Clear"
+msgstr "Bevestigen Ga Wissen"
+
+#: ../gnome/src/mainwindow.c:472
+msgid "Confirm"
+msgstr "Bevestigen"
+
+#: ../gnome/src/uimanager.c:159
+msgid "No address book selected"
+msgstr "Geen adresboek geselecteerd"
+
+#: ../gnome/src/uimanager.c:183 ../gnome/src/uimanager.c:1051
+msgid "Address book"
+msgstr "Adresboek"
+
+#: ../gnome/src/uimanager.c:428
+#, fuzzy, c-format
+msgid "Voicemail(%i)"
+msgstr "Voicemail (%i)"
+
+#: ../gnome/src/uimanager.c:507
+msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
+msgstr "SFLphone is een VoIP telefoon compatibel met SIP en IAX2 protocollen."
+
+#: ../gnome/src/uimanager.c:510
+msgid "About SFLphone"
+msgstr "Over SFLphone"
+
+#: ../gnome/src/uimanager.c:931 ../gnome/src/uimanager.c:990
+msgid "Voicemail"
+msgstr "Voicemail"
+
+#: ../gnome/src/uimanager.c:960
+msgid "Call"
+msgstr "Oproep"
+
+#: ../gnome/src/uimanager.c:962 ../gnome/src/uimanager.c:1435
+msgid "_New call"
+msgstr "_Nieuwe oproep"
+
+#: ../gnome/src/uimanager.c:963
+msgid "Place a new call"
+msgstr "Nieuwe oproep beginnen"
+
+#: ../gnome/src/uimanager.c:966 ../gnome/src/uimanager.c:1275
+msgid "_Pick up"
+msgstr "_Opnemen"
+
+#: ../gnome/src/uimanager.c:967
+msgid "Answer the call"
+msgstr "Oproep beantwoorden"
+
+#: ../gnome/src/uimanager.c:971
+msgid "Finish the call"
+msgstr "Oproep beëindigen"
+
+#: ../gnome/src/uimanager.c:974
+msgid "O_n hold"
+msgstr "_In wacht"
+
+#: ../gnome/src/uimanager.c:975
+msgid "Place the call on hold"
+msgstr "Plaats de oproep in de wacht"
+
+#: ../gnome/src/uimanager.c:978
+msgid "O_ff hold"
+msgstr "_Uit wacht"
+
+#: ../gnome/src/uimanager.c:979
+msgid "Place the call off hold"
+msgstr "Haal de oproep uit de wacht"
+
+#: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1331
+msgid "Send _message"
+msgstr "Verstuur _bericht"
+
+#: ../gnome/src/uimanager.c:983
+msgid "Send message"
+msgstr "Verstuur bericht"
+
+#: ../gnome/src/uimanager.c:986
+msgid "Configuration _Assistant"
+msgstr "Configuratie _assistent"
+
+#: ../gnome/src/uimanager.c:987
+msgid "Run the configuration assistant"
+msgstr "Start de configuratie assistent"
+
+#: ../gnome/src/uimanager.c:991
+msgid "Call your voicemail"
+msgstr "Bel je voicemail"
+
+#: ../gnome/src/uimanager.c:994
+msgid "_Close"
+msgstr "_Sluiten"
+
+#: ../gnome/src/uimanager.c:995
+msgid "Minimize to system tray"
+msgstr "Minimaliseren naar systeemvak"
+
+#: ../gnome/src/uimanager.c:998
+msgid "_Quit"
+msgstr "_Afsluiten"
+
+#: ../gnome/src/uimanager.c:999
+msgid "Quit the program"
+msgstr "Dit programma afsluiten"
+
+#: ../gnome/src/uimanager.c:1002
+msgid "_Playback record"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1003
+msgid "Playback recorded file"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1006
+msgid "_Stop playback"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1007
+msgid "Stop recorded file playback"
+msgstr ""
+
+#: ../gnome/src/uimanager.c:1011
+msgid "_Edit"
+msgstr "_Bewerken"
+
+#: ../gnome/src/uimanager.c:1013
+msgid "_Copy"
+msgstr "_Kopiëren"
+
+#: ../gnome/src/uimanager.c:1014
+msgid "Copy the selection"
+msgstr "Kopieer selectie"
+
+#: ../gnome/src/uimanager.c:1017
+msgid "_Paste"
+msgstr "_Plakken"
+
+#: ../gnome/src/uimanager.c:1018
+msgid "Paste the clipboard"
+msgstr "Plakken van klembord"
+
+#: ../gnome/src/uimanager.c:1021
+msgid "Clear _history"
+msgstr "_Wis geschiedenis"
+
+#: ../gnome/src/uimanager.c:1022
+msgid "Clear the call history"
+msgstr "Wis gesprek geschiedenis"
+
+#: ../gnome/src/uimanager.c:1025
+msgid "_Accounts"
+msgstr "_Accounts"
+
+#: ../gnome/src/uimanager.c:1026
+msgid "Edit your accounts"
+msgstr "Bewerken"
+
+#: ../gnome/src/uimanager.c:1029
+msgid "_Preferences"
+msgstr "_Voorkeuren"
+
+#: ../gnome/src/uimanager.c:1030
+msgid "Change your preferences"
+msgstr "Voorkeuren instellen"
+
+#: ../gnome/src/uimanager.c:1034
+msgid "_View"
+msgstr "_Weergeven"
+
+#: ../gnome/src/uimanager.c:1037
+msgid "_Help"
+msgstr "_Help"
+
+#: ../gnome/src/uimanager.c:1038
+msgid "Contents"
+msgstr "Inhoud"
+
+#: ../gnome/src/uimanager.c:1039
+msgid "Open the manual"
+msgstr "Open de handleiding"
+
+#: ../gnome/src/uimanager.c:1041
+msgid "About this application"
+msgstr "Over deze software"
+
+#: ../gnome/src/uimanager.c:1045
+msgid "_Transfer"
+msgstr "_Doorverbinden"
+
+#: ../gnome/src/uimanager.c:1045
+msgid "Transfer the call"
+msgstr "Gesprek doorverbinden"
+
+#: ../gnome/src/uimanager.c:1046 ../gnome/src/uimanager.c:1308
+msgid "_Record"
+msgstr "_Opnemen"
+
+#: ../gnome/src/uimanager.c:1046
+msgid "Record the current conversation"
+msgstr "Het huidige gesprek opnemen"
+
+#: ../gnome/src/uimanager.c:1047
+msgid "_Show toolbar"
+msgstr "_Taakbalk weergeven"
+
+#: ../gnome/src/uimanager.c:1047
+msgid "Show the toolbar"
+msgstr "Geef de taakbalk weer"
+
+#: ../gnome/src/uimanager.c:1048
+msgid "_Dialpad"
+msgstr "_Nummerblok"
+
+#: ../gnome/src/uimanager.c:1048
+msgid "Show the dialpad"
+msgstr "Geef het nummerblok weer"
+
+#: ../gnome/src/uimanager.c:1049
+msgid "_Volume controls"
+msgstr "_Volume instellingen"
+
+#: ../gnome/src/uimanager.c:1049
+msgid "Show the volume controls"
+msgstr "Geeft de volume instellingen weer"
+
+#: ../gnome/src/uimanager.c:1050
+msgid "_History"
+msgstr "_Geschiedenis"
+
+#: ../gnome/src/uimanager.c:1050
+msgid "Calls history"
+msgstr "Gesprek geschiedenis"
+
+#: ../gnome/src/uimanager.c:1051
+msgid "_Address book"
+msgstr "_Adresboek"
+
+#: ../gnome/src/uimanager.c:1297 ../gnome/src/uimanager.c:1355
+msgid "On _Hold"
+msgstr "In de _wacht"
+
+#: ../gnome/src/uimanager.c:1392
+msgid "_Call back"
+msgstr "_Terugbellen"
+
+#: ../gnome/src/uimanager.c:1488
+msgid "Edit phone number"
+msgstr "Telefoonnummer bewerken"
+
+#: ../gnome/src/uimanager.c:1499
+msgid "Edit the phone number before making a call"
+msgstr "Telefoonnummer bewerken voor het bellen"
+
+#: ../gnome/src/dbus/dbus.c:495
+msgid ""
+"ALSA notification\n"
+"\n"
+"Error while opening playback device"
+msgstr ""
+"ALSA melding\n"
+"\n"
+"Fout bij het openen van afspeel apparaat"
+
+#: ../gnome/src/dbus/dbus.c:498
+msgid ""
+"ALSA notification\n"
+"\n"
+"Error while opening capture device"
+msgstr ""
+"ALSA melding\n"
+"\n"
+"Fout bij het openen van opname apparaat"
+
+#: ../gnome/src/dbus/dbus.c:501
+msgid ""
+"Pulseaudio notification\n"
+"\n"
+"Pulseaudio is not running"
+msgstr ""
+"Pulseaudio melding\n"
+"\n"
+"Pulseaudio is niet gestart"
+
+#: ../gnome/src/dbus/dbus.c:504
+msgid ""
+"Codecs notification\n"
+"\n"
+"Codecs not found"
+msgstr ""
+
+#~ msgid ""
+#~ "GConf error:\n"
+#~ "  %s"
+#~ msgstr ""
+#~ "GConf fout:\n"
+#~ "  %s"
+
+#~ msgid ""
+#~ "Unable to initialize.\n"
+#~ "Make sure the daemon is running.\n"
+#~ "Error: %s"
+#~ msgstr ""
+#~ "Kan niet initialiseren.\n"
+#~ "Controleer of het achtergrondproces gestart is.\n"
+#~ "Fout: %s"
+
+#~ msgid "Codecs"
+#~ msgstr "Codecs"
+
+#~ msgid "Bandwidth"
+#~ msgstr "Bandbreedte"

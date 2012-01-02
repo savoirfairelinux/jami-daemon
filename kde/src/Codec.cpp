@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -18,8 +18,14 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+
+//Parent
 #include "Codec.h"
 
+//Qt
+#include <QtCore/QString>
+
+//SFLPhone library
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/sflphone_const.h"
 
@@ -28,84 +34,96 @@ Codec::Codec(int payload, bool enabled)
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    QStringList details = configurationManager.getAudioCodecDetails(payload);
-   this->payload   = QString::number(payload);
-   this->enabled   = enabled;
-   this->name      = details[CODEC_NAME];
-   this->frequency = details[CODEC_SAMPLE_RATE];
-   this->bitrate   = details[CODEC_BIT_RATE];
-   this->bandwidth = details[CODEC_BANDWIDTH];
+   m_Payload   = QString::number(payload);
+   m_Enabled   = enabled;
+   m_Name      = details[CODEC_NAME];
+   m_Frequency = details[CODEC_SAMPLE_RATE];
+   m_Bitrate   = details[CODEC_BIT_RATE];
+   m_Bandwidth = details[CODEC_BANDWIDTH];
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Return the payload
-QString Codec::getPayload() const
+const QString& Codec::getPayload() const
 {
-  return payload;
+  return m_Payload;
 }
 
 ///Return the codec name
-QString Codec::getName() const
+const QString& Codec::getName() const
 {
-  return name;
+  return m_Name;
 }
 
 ///Return the frequency
-QString Codec::getFrequency() const
+const QString& Codec::getFrequency() const
 {
-  return frequency;
+  return m_Frequency;
 }
 
 ///Return the bitrate
-QString Codec::getBitrate() const
+const QString& Codec::getBitrate() const
 {
-  return bitrate;
+  return m_Bitrate;
 }
 
 ///Return the bandwidth
-QString Codec::getBandwidth() const
+const QString& Codec::getBandwidth() const
 {
-  return bandwidth;
+  return m_Bandwidth;
 }
 
 ///Is this codec enabled
 bool Codec::isEnabled() const
 {
-  return enabled;
+  return m_Enabled;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Set the payload
-void Codec::setPayload(QString payload)
+void Codec::setPayload(const QString& payload)
 {
-  this->payload = payload;
+  m_Payload = payload;
 }
 
 ///Set the codec name
-void Codec::setName(QString name)
+void Codec::setName(const QString& name)
 {
-  this->name = name;
+  m_Name = name;
 }
 
 ///Set the frequency
-void Codec::setFrequency(QString frequency)
+void Codec::setFrequency(const QString& frequency)
 {
-  this->frequency = frequency;
+  m_Frequency = frequency;
 }
 
 ///Set the bitrate
-void Codec::setBitrate(QString bitrate)
+void Codec::setBitrate(const QString& bitrate)
 {
-  this->bitrate = bitrate;
+  m_Bitrate = bitrate;
 }
 
 ///Set the bandwidth
-void Codec::setBandwidth(QString bandwidth)
+void Codec::setBandwidth(const QString& bandwidth)
 {
-  this->bandwidth = bandwidth;
+  m_Bandwidth = bandwidth;
 }
 
 ///Make this cedec enabled
 void Codec::setEnabled(bool enabled)
 {
-  this->enabled = enabled;
+  m_Enabled = enabled;
 }
-
-
