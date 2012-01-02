@@ -1151,7 +1151,7 @@ class ManagerImpl {
          * Set a list of serialized history entries
          * @param Vector of history entries
              */
-        void setHistorySerialized(const std::vector<std::string> &history);
+        void setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history);
         /**
          * Get an account pointer
          * @param accountID account ID to get

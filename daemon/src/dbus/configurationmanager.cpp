@@ -403,13 +403,13 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistor
     return Manager::instance().getHistory();
 }
 
-void ConfigurationManager::setHistory(const std::vector<std::string>& entries)
+void ConfigurationManager::setHistory(const std::vector<std::map<std::string, std::string> > &entries)
 {
     Manager::instance().setHistorySerialized(entries);
 }
 
-std::string ConfigurationManager::getAddrFromInterfaceName(
-    const std::string& interface)
+std::string
+ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
     return SIPVoIPLink::getInterfaceAddrFromName(interface);
 }

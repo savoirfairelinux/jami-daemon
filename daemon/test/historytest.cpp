@@ -57,8 +57,7 @@ void backup()
 void HistoryTest::setUp()
 {
     backup();
-    // Instantiate the cleaner singleton
-    history = new HistoryManager();
+    history_ = new HistoryManager();
 }
 
 
@@ -68,9 +67,9 @@ void HistoryTest::test_create_history_path()
 
     std::string path(HISTORY_SAMPLE);
 
-    history->createHistoryPath(path);
-    CPPUNIT_ASSERT(!history->isLoaded());
-    CPPUNIT_ASSERT(history->history_path_ == path);
+    history_->createHistoryPath(path);
+    CPPUNIT_ASSERT(!history_->isLoaded());
+    CPPUNIT_ASSERT(history_->history_path_ == path);
 }
 
 void HistoryTest::test_load_history_from_file()
@@ -80,10 +79,10 @@ void HistoryTest::test_load_history_from_file()
     bool res;
     Conf::ConfigTree history_list;
 
-    history->createHistoryPath(HISTORY_SAMPLE);
-    res = history->loadHistoryFromFile(history_list);
+    history_->createHistoryPath(HISTORY_SAMPLE);
+    res = history_->loadHistoryFromFile(history_list);
 
-    CPPUNIT_ASSERT(history->isLoaded());
+    CPPUNIT_ASSERT(history_->isLoaded());
     CPPUNIT_ASSERT(res);
 }
 
@@ -95,11 +94,11 @@ void HistoryTest::test_load_history_items_map()
     int nb_items;
     Conf::ConfigTree history_list;
 
-    history->setHistoryPath(HISTORY_SAMPLE);
-    history->loadHistoryFromFile(history_list);
-    nb_items = history->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
+    history_->setHistoryPath(HISTORY_SAMPLE);
+    history_->loadHistoryFromFile(history_list);
+    nb_items = history_->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
     CPPUNIT_ASSERT(nb_items == HISTORY_SAMPLE_SIZE);
-    CPPUNIT_ASSERT(history->numberOfItems() == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT(history_->numberOfItems() == HISTORY_SAMPLE_SIZE);
 }
 
 void HistoryTest::test_save_history_items_map()
@@ -109,10 +108,10 @@ void HistoryTest::test_save_history_items_map()
     std::string path;
     Conf::ConfigTree history_list, history_list2;
 
-    history->setHistoryPath(HISTORY_SAMPLE);
-    history->loadHistoryFromFile(history_list);
-    history->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
-    history->saveHistoryItemsVector(history_list2);
+    history_->setHistoryPath(HISTORY_SAMPLE);
+    history_->loadHistoryFromFile(history_list);
+    history_->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
+    history_->saveHistoryItemsVector(history_list2);
 }
 
 void HistoryTest::test_save_history_to_file()
@@ -124,11 +123,11 @@ void HistoryTest::test_save_history_to_file()
     std::map<std::string, std::string> res;
     std::map<std::string, std::string>::iterator iter;
 
-    history->setHistoryPath(HISTORY_SAMPLE);
-    history->loadHistoryFromFile(history_list);
-    history->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
-    history->saveHistoryItemsVector(history_list2);
-    CPPUNIT_ASSERT(history->saveHistoryToFile(history_list2));
+    history_->setHistoryPath(HISTORY_SAMPLE);
+    history_->loadHistoryFromFile(history_list);
+    history_->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
+    history_->saveHistoryItemsVector(history_list2);
+    CPPUNIT_ASSERT(history_->saveHistoryToFile(history_list2));
 }
 
 void HistoryTest::test_get_history_serialized()
@@ -138,98 +137,13 @@ void HistoryTest::test_get_history_serialized()
     std::vector<std::string>::iterator iter;
     std::string tmp;
 
-    CPPUNIT_ASSERT(history->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
-    CPPUNIT_ASSERT(history->getSerialized().size() == HISTORY_SAMPLE_SIZE);
-
-
-    // Warning - If you change the history-sample file, you must change the following lines also so that the tests could work
-    // The reference here is the file history-sample in this test directory
-    // The serialized form is: calltype%to%from%callid
-
-    // Check the first
-    tmp = "2|136|Emmanuel Milou|747638685|747638765|Account:1239059899|empty|||";
-    // std::cout << "res[0]    " << res[0] << std::endl;
-    // CPPUNIT_ASSERT (Validator::isEqual (tmp, res[0]));
-
-    // the account ID does not correspond to a loaded account
-    tmp = "2|136|Emmanuel Milou|747638685|747638765|Account:1239059899|empty|||";
-    // std::cout << "res[1]    " << res[1] << std::endl;
-    // CPPUNIT_ASSERT (Validator::isEqual (tmp, res[1]));
-}
-
-void HistoryTest::test_set_serialized_history()
-{
-    DEBUG("-------------------- HistoryTest::test_set_serialized_history --------------------\n");
-
-    // We build a map to have an efficient test
-    std::vector<std::string> test_vector;
-    std::string tmp;
-    Conf::ConfigTree history_list;
-
-    test_vector.push_back("0|514-276-5468|Savoir-faire Linux|144562000|144562458||empty|||");
-    test_vector.push_back("2|136|Emmanuel Milou|747638685|747638765|Account:1239059899||||");
-    test_vector.push_back("1|5143848557|empty|775354456|775354987|Account:43789459478||||");
-
-    CPPUNIT_ASSERT(history->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
-    // We use a large history limit to be able to interpret results
-    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, HUGE_HISTORY_LIMIT) == 3);
-    CPPUNIT_ASSERT(history->numberOfItems() == 3);
-
-    test_vector.clear();
-    CPPUNIT_ASSERT(history->getSerialized().size() == 3);
-
-    // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux|144562000|144562458||empty|||";
-    // CPPUNIT_ASSERT (Validator::isEqual (tmp, test_vector[0]));
-
-    // the account ID does not correspond to a loaded account
-    tmp = "2|136|Emmanuel Milou|747638685|747638765|Account:1239059899|empty|||";
-    // std::cout << "test vector : " << test_vector[1] << std::endl;
-    // CPPUNIT_ASSERT (Validator::isEqual (tmp, test_vector[1]));
-
-    history->saveHistoryItemsVector(history_list);
-    CPPUNIT_ASSERT(history->saveHistoryToFile(history_list));
-}
-
-void HistoryTest::test_set_serialized_history_with_limit()
-{
-    DEBUG("-------------------- HistoryTest::test_set_serialized_history_with_limit --------------------\n");
-
-    // We build a map to have an efficient test
-    std::vector<std::string> test_vector;
-    std::string tmp;
-
-    Conf::ConfigTree history_list;
-    time_t current, day = 86400; // One day in unix timestamp
-    std::stringstream current_1, current_2, current_3;
-    (void) time(&current);
-    current_1 << "0|514-276-5468|Savoir-faire Linux|" << (current - 2 * day) << "|144562458|empty|" << std::endl;
-    current_2 << "2|136|Emmanuel Milou|" << (current - 5 * day) << "|747638765|Account:1239059899|" << std::endl;
-    current_3 << "1|5143848557|empty|" << (current - 11 * day) << "|775354987|Account:43789459478|" << std::endl;
-
-    test_vector.push_back(current_1.str());
-    test_vector.push_back(current_2.str());
-    test_vector.push_back(current_3.str());
-
-    CPPUNIT_ASSERT(history->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
-    // We use different value of history limit
-    // 10 days - the last entry should not be saved
-    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, 10) == 2);
-    CPPUNIT_ASSERT(history->numberOfItems() == 2);
-
-    //  4 days - the two last entries should not be saved
-    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, 4) == 1);
-    CPPUNIT_ASSERT(history->numberOfItems() == 1);
-
-    //  1 day - no entry should not be saved
-    CPPUNIT_ASSERT(history->setSerializedHistory(test_vector, 1) == 0);
-    CPPUNIT_ASSERT(history->numberOfItems() == 0);
+    CPPUNIT_ASSERT(history_->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT(history_->getSerialized().size() == HISTORY_SAMPLE_SIZE);
 }
 
 void HistoryTest::tearDown()
 {
     // Delete the history object
-    delete history;
-    history = 0;
+    delete history_;
     restore();
 }

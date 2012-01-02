@@ -87,14 +87,18 @@ class HistoryManager {
         /*
          *@return int   The number of items found in the history file
          */
-        int numberOfItems() const {
+        size_t numberOfItems() const {
             return history_items_.size();
+        }
+
+        bool empty() const {
+            return history_items_.empty();
         }
 
         std::vector<std::string> getHistorySerialized() const;
         std::vector<std::map<std::string, std::string> > getSerialized() const;
 
-        int setSerializedHistory(const std::vector<std::string> &history, int limit);
+        int setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history, int limit);
 
     private:
         /*

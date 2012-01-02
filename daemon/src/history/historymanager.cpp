@@ -43,16 +43,6 @@ namespace {
         static const int DAY_UNIX_TIMESTAMP = 86400;
         return days * DAY_UNIX_TIMESTAMP;
     }
-
-    int getConfigInt(const std::string& section, const std::string& name, const Conf::ConfigTree &historyList)
-    {
-        return historyList.getConfigTreeItemIntValue(section, name);
-    }
-
-    std::string getConfigString(const std::string& section, const std::string& name, const Conf::ConfigTree &historyList)
-    {
-        return historyList.getConfigTreeItemValue(section, name);
-    }
 }
 
 HistoryManager::HistoryManager() :
@@ -95,19 +85,8 @@ int HistoryManager::loadHistoryItemsMap(Conf::ConfigTree &historyList, int limit
     std::list<std::string> sections(historyList.getSections());
     int nb_items = 0;
     for (std::list<std::string>::const_iterator iter = sections.begin(); iter != sections.end(); ++iter) {
-        HistoryState state = static_cast<HistoryState>(getConfigInt(*iter, HistoryItem::STATE_KEY, historyList));
-        string timestamp_start(getConfigString(*iter, HistoryItem::TIMESTAMP_START_KEY, historyList));
-        string timestamp_stop(getConfigString(*iter, HistoryItem::TIMESTAMP_STOP_KEY, historyList));
-        string peerName(getConfigString(*iter, HistoryItem::PEER_NAME_KEY, historyList));
-        string peerNumber(getConfigString(*iter, HistoryItem::PEER_NUMBER_KEY, historyList));
-        string callID(getConfigString(*iter, HistoryItem::CALLID_KEY, historyList));
-        string accountID(getConfigString(*iter, HistoryItem::ACCOUNT_ID_KEY, historyList));
-        string recording_file(getConfigString(*iter, HistoryItem::RECORDING_PATH_KEY, historyList));
-        string confID(getConfigString(*iter, HistoryItem::CONFID_KEY, historyList));
-        string timeAdded(getConfigString(*iter, HistoryItem::TIME_ADDED_KEY, historyList));
-
+        HistoryItem item(*iter, historyList);
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
-        HistoryItem item(timestamp_start, state, timestamp_stop, peerName, peerNumber, callID, accountID, recording_file, confID, timeAdded);
         if (item.youngerThan(oldestEntryTime)) {
             addNewHistoryEntry(item);
             ++nb_items;
@@ -127,8 +106,7 @@ bool HistoryManager::saveHistoryToFile(const Conf::ConfigTree &historyList) cons
 void HistoryManager::saveHistoryItemsVector(Conf::ConfigTree &historyList) const
 {
     for (std::vector<HistoryItem>::const_iterator iter = history_items_.begin(); iter != history_items_.end(); ++iter)
-        if (not iter->save(historyList))
-            DEBUG("can't save NULL history item\n");
+        iter->save(historyList);
 }
 
 void HistoryManager::addNewHistoryEntry(const HistoryItem &new_item)
@@ -178,9 +156,12 @@ std::vector<std::map<std::string, std::string> > HistoryManager::getSerialized()
     return result;
 }
 
-int HistoryManager::setSerializedHistory(const std::vector<std::string> &history, int limit)
+int HistoryManager::setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history, int limit)
 {
     history_items_.clear();
+    using std::map;
+    using std::string;
+    using std::vector;
 
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp
@@ -189,9 +170,9 @@ int HistoryManager::setSerializedHistory(const std::vector<std::string> &history
     int history_limit = get_unix_timestamp_equivalent(limit);
 
     int items_added = 0;
-    for (std::vector<std::string>::const_iterator iter = history.begin(); iter != history.end(); ++iter) {
+    for (vector<map<string, string> >::const_iterator iter = history.begin(); iter != history.end(); ++iter) {
         HistoryItem new_item(*iter);
-        int item_timestamp = atoi(new_item.get_timestamp().c_str());
+        int item_timestamp = atol(new_item.getTimestampStart().c_str());
 
         if (item_timestamp >= ((int) current_timestamp - history_limit)) {
             addNewHistoryEntry(new_item);

@@ -2959,9 +2959,9 @@ std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory() const
     return history_.getSerialized();
 }
 
-void ManagerImpl::setHistorySerialized(const std::vector<std::string> &history)
+void ManagerImpl::setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history)
 {
-    history_.setSerializedHistory(history, preferences.getHistoryLimit());
+    history_.setHistorySerialized(history, preferences.getHistoryLimit());
     history_.saveHistory();
 }
 
