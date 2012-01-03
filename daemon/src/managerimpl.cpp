@@ -2410,19 +2410,19 @@ std::string ManagerImpl::getConfigString(const std::string& section,
 }
 
 //THREAD=Main
-bool ManagerImpl::setConfig(const std::string& section,
+void ManagerImpl::setConfig(const std::string& section,
                             const std::string& name, const std::string& value)
 {
-    return config_.setConfigTreeItem(section, name, value);
+    config_.setConfigTreeItem(section, name, value);
 }
 
 //THREAD=Main
-bool ManagerImpl::setConfig(const std::string& section,
+void ManagerImpl::setConfig(const std::string& section,
                             const std::string& name, int value)
 {
     std::ostringstream valueStream;
     valueStream << value;
-    return config_.setConfigTreeItem(section, name, valueStream.str());
+    config_.setConfigTreeItem(section, name, valueStream.str());
 }
 
 void ManagerImpl::setAccountsOrder(const std::string& order)

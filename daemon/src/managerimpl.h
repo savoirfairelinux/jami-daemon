@@ -758,7 +758,7 @@ class ManagerImpl {
          * @return bool	true on success
          *		      false otherwise
          */
-        bool setConfig(const std::string& section, const std::string& name, const std::string& value);
+        void setConfig(const std::string& section, const std::string& name, const std::string& value);
 
         /**
          * Change a specific value in the configuration tree.
@@ -769,7 +769,7 @@ class ManagerImpl {
          * @return bool	true on success
          *		      false otherwise
          */
-        bool setConfig(const std::string& section, const std::string& name, int value);
+        void setConfig(const std::string& section, const std::string& name, int value);
 
         /**
          * Get a int from the configuration tree

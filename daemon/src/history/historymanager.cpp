@@ -66,9 +66,7 @@ bool HistoryManager::saveHistory()
 
 bool HistoryManager::loadHistoryFromFile(Conf::ConfigTree &historyList)
 {
-    int exist = historyList.populateFromFile(history_path_.c_str());
-    history_loaded_ = (exist == 2) ? false : true;
-
+    history_loaded_ = historyList.populateFromFile(history_path_.c_str());
     return history_loaded_;
 }
 
