@@ -346,12 +346,14 @@ static GtkTreeModel* create_model(GtkWidget *widget)
     };
     GdkPixbuf *pixbuf;
     GtkTreeIter iter;
-    gint i, nb_entries;
 
     GtkListStore *store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
-    nb_entries = sizeof(browser_entries_full) / sizeof(browser_entries_full[0]);
+    gint nb_entries = sizeof(browser_entries_full) / sizeof(browser_entries_full[0]);
+    /* Skip address book entry if that plugin is not installed */
+    if (!addrbook)
+        --nb_entries;
 
-    for (i = 0; i < nb_entries; i++) {
+    for (gint i = 0; i < nb_entries; ++i) {
         gtk_list_store_append (store, &iter);
         pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
         gtk_list_store_set(store, &iter,
