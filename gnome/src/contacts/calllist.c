@@ -29,6 +29,7 @@
  */
 
 #include "calllist.h"
+#include <string.h>
 #include "calltab.h"
 #include "calltree.h"
 #include "unused.h"
@@ -159,7 +160,7 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
     if (c == NULL)
         return;
 
-    QueueElement *element = (QueueElement *)c->data;
+    QueueElement *element = (QueueElement *) c->data;
 
     if (element->type != HIST_CALL) {
         ERROR("CallList: Error: Element %s is not a call", callID);
@@ -168,8 +169,11 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
 
     g_queue_remove(tab->callQueue, element);
 
-    calllist_add_call(history_tab, element->elem.call);
-    calltree_add_history_entry(element->elem.call);
+    /* Don't save empty (i.e. started dialing, then deleted) calls */
+    if (element->elem.call->_peer_number && strlen(element->elem.call->_peer_number) > 0) {
+        calllist_add_call(history_tab, element->elem.call);
+        calltree_add_history_entry(element->elem.call);
+    }
 }
 
 

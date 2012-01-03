@@ -92,6 +92,11 @@ bool HistoryItem::youngerThan(int otherTime) const
     return atol(getTimestampStart().c_str()) >= otherTime;
 }
 
+bool HistoryItem::hasPeerNumber() const
+{
+    return entryMap_.find(PEER_NUMBER_KEY) != entryMap_.end();
+}
+
 std::string HistoryItem::getTimestampStart() const {
     using std::map;
     using std::string;

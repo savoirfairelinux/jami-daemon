@@ -58,7 +58,7 @@ class HistoryItem {
         HistoryItem(const std::map<std::string, std::string> &args);
         HistoryItem(const std::string &item, Conf::ConfigTree &list);
 
-        std::string getTimestampStart() const;
+        bool hasPeerNumber() const;
 
         bool youngerThan(int otherTime) const;
 
@@ -67,6 +67,7 @@ class HistoryItem {
         std::map<std::string, std::string> toMap() const;
 
     private:
+        std::string getTimestampStart() const;
         std::map<std::string, std::string> entryMap_;
 };
 

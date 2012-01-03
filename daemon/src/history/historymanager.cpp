@@ -171,9 +171,8 @@ int HistoryManager::setHistorySerialized(const std::vector<std::map<std::string,
     int items_added = 0;
     for (vector<map<string, string> >::const_iterator iter = history.begin(); iter != history.end(); ++iter) {
         HistoryItem new_item(*iter);
-        int item_timestamp = atol(new_item.getTimestampStart().c_str());
 
-        if (item_timestamp >= ((int) current_timestamp - history_limit)) {
+        if (new_item.hasPeerNumber() and new_item.youngerThan((int) current_timestamp - history_limit)) {
             addNewHistoryEntry(new_item);
             ++items_added;
         }
