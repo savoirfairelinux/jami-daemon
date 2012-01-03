@@ -33,7 +33,7 @@
 #include "historyitem.h"
 #include <sstream>
 #include <cstdlib>
-#include "manager.h"
+#include "config/config.h"
 
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";
@@ -41,7 +41,6 @@ const char * const HistoryItem::CONFID_KEY =            "confid";
 const char * const HistoryItem::PEER_NAME_KEY =         "peer_name";
 const char * const HistoryItem::PEER_NUMBER_KEY =       "peer_number";
 const char * const HistoryItem::RECORDING_PATH_KEY =    "recordfile";
-const char * const HistoryItem::TIME_ADDED_KEY =        "timeadded";
 const char * const HistoryItem::TIMESTAMP_START_KEY =   "timestamp_start";
 const char * const HistoryItem::TIMESTAMP_STOP_KEY =    "timestamp_stop";
 const char * const HistoryItem::STATE_KEY =             "state";
@@ -63,7 +62,6 @@ HistoryItem::HistoryItem(const std::string &item, Conf::ConfigTree &historyList)
         PEER_NAME_KEY,
         PEER_NUMBER_KEY,
         RECORDING_PATH_KEY,
-        TIME_ADDED_KEY,
         TIMESTAMP_START_KEY,
         TIMESTAMP_STOP_KEY,
         STATE_KEY,
@@ -95,7 +93,9 @@ bool HistoryItem::youngerThan(int otherTime) const
 }
 
 std::string HistoryItem::getTimestampStart() const {
-    std::map<std::string, std::string>::const_iterator iter(entryMap_.find(TIMESTAMP_START_KEY));
+    using std::map;
+    using std::string;
+    map<string, string>::const_iterator iter(entryMap_.find(TIMESTAMP_START_KEY));
     if (iter != entryMap_.end())
         return iter->second;
     else

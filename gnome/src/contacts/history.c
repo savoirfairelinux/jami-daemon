@@ -37,6 +37,21 @@
 static GtkTreeModel *history_filter;
 static GtkEntry *history_searchbar_widget;
 
+static gboolean
+search_type_matches_state(SearchType type, const gchar *state)
+{
+    switch (type) {
+        case SEARCH_MISSED:
+            return !g_strcmp0(state, MISSED_STRING);
+        case SEARCH_INCOMING:
+            return !g_strcmp0(state, INCOMING_STRING);
+        case SEARCH_OUTGOING:
+            return !g_strcmp0(state, OUTGOING_STRING);
+        default:
+            return FALSE;
+    }
+}
+
 static gboolean history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
     gboolean ret = TRUE;
@@ -72,8 +87,8 @@ static gboolean history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpoin
 
         if (search_type == SEARCH_ALL)
             goto end;
-        else // We need a match on the history_state_t and the current search type
-            ret = ret && (history_entry->_history_state + 1) == search_type;
+        else // We need a match on the history_state and the current search type
+            ret = ret && search_type_matches_state(search_type, history_entry->_history_state);
     }
 
 end:

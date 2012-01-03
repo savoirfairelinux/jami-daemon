@@ -121,6 +121,15 @@ calllist_add_call(calltab_t* tab, callable_obj_t * c)
 }
 
 void
+calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
+{
+    QueueElement *element = g_new0(QueueElement, 1);
+    element->type = HIST_CALL;
+    element->elem.call = c;
+    g_queue_push_head(tab->callQueue, (gpointer) element);
+}
+
+void
 calllist_clean_history(void)
 {
     guint size = calllist_get_size(history_tab);

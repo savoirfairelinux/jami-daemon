@@ -194,8 +194,8 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
             GHashTable *call_details = dbus_get_call_details(callID);
             callable_obj_t *new_call = create_new_call_from_details(callID, call_details);
 
-            new_call->_history_state = (g_strcasecmp(g_hash_table_lookup(call_details, "CALL_TYPE"), "0") == 0)
-                                       ? INCOMING : OUTGOING;
+            new_call->_history_state = (g_strcasecmp(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING) == 0)
+                                       ? g_strdup(INCOMING_STRING) : g_strdup(OUTGOING_STRING);
 
             calllist_add_call(current_calls_tab, new_call);
             calltree_add_call(current_calls_tab, new_call, NULL);
@@ -274,9 +274,6 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
     // Add conference ID in in each calls
     for (gchar **part = participants; part && *part; ++part) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, *part);
-
-        /* set when this call has been added to the conference */
-        time(&call->_time_added);
 
         im_widget_update_state(IM_WIDGET(call->_im_widget), FALSE);
 
@@ -1961,15 +1958,15 @@ dbus_get_history(void)
 }
 
 void
-dbus_set_history(gchar **entries)
+dbus_set_history(const GPtrArray *entries)
 {
     GError *error = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_set_history(
-        configurationManagerProxy, (const char **)entries, &error);
+        configurationManagerProxy, entries, &error);
 
     if (error) {
-        ERROR("Error calling org_sflphone_SFLphone_CallManager_set_history");
+        ERROR("Error calling org_sflphone_SFLphone_ConfigurationlManager_set_history");
         g_error_free(error);
     }
 }

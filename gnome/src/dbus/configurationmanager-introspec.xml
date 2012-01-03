@@ -89,7 +89,7 @@
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
-			<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+			<annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
 			<arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
@@ -308,7 +308,7 @@
 	   <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -608,12 +608,8 @@
 	   </method>
 
 	   <method name="setHistory" tp:name-for-bindings="setHistory">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
-		   <arg type="as" name="entries" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString"/>
+		   <arg type="aa{ss}" name="entries" direction="in">
 		   </arg>
 	   </method>
 
@@ -661,7 +657,7 @@
 	   <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <arg type="a{ss}" name="details" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>

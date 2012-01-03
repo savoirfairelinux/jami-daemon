@@ -48,7 +48,6 @@ class HistoryItem {
         static const char * const PEER_NAME_KEY;
         static const char * const PEER_NUMBER_KEY;
         static const char * const RECORDING_PATH_KEY;
-        static const char * const TIME_ADDED_KEY;
         static const char * const TIMESTAMP_START_KEY;
         static const char * const TIMESTAMP_STOP_KEY;
         static const char * const STATE_KEY;

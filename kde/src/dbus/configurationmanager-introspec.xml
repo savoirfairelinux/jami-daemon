@@ -89,7 +89,7 @@
 				<tp:docstring>
 				</tp:docstring>
 			</arg>
-			<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+			<annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
 			<arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
 				<tp:docstring>
 				</tp:docstring>
@@ -601,29 +601,15 @@
 		   </arg>
 	   </method>
 
-	   <method name="getHistory" tp:name-for-bindings="getHistory">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-		   <arg type="as" name="entries" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-       <method name="getHistorySimple" tp:name-for-bindings="getHistorySimple">
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapIntMapStringString"/>
-           <!-- Return a Dict of type <int, Dict<string, string> >...a Dict of Dicts -->
-           <arg type="a{ia{ss}}" name="info" direction="out"/>
+       <method name="getHistory" tp:name-for-bindings="getHistory">
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <!-- Return a List of type Dict<string, string> >...a List of Dicts -->
+           <arg type="aa{ss}" name="entries" direction="out"/>
 	   </method>
 
 	   <method name="setHistory" tp:name-for-bindings="setHistory">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
-		   <arg type="as" name="entries" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString"/>
+		   <arg type="aa{ss}" name="entries" direction="in">
 		   </arg>
 	   </method>
 
@@ -671,7 +657,7 @@
 	   <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <arg type="a{ss}" name="details" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>

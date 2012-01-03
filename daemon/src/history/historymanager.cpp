@@ -96,7 +96,6 @@ int HistoryManager::loadHistoryItemsMap(Conf::ConfigTree &historyList, int limit
     return nb_items;
 }
 
-
 bool HistoryManager::saveHistoryToFile(const Conf::ConfigTree &historyList) const
 {
     DEBUG("HistoryManager: Saving history in XDG directory: %s", history_path_.c_str());
@@ -124,7 +123,7 @@ void HistoryManager::createHistoryPath(const std::string &path)
         // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
         if (XDG_DATA_HOME != NULL) {
             std::string xdg_env(XDG_DATA_HOME);
-            (xdg_env.length() > 0) ? userdata = xdg_env : userdata = xdg_data;
+            (!xdg_env.empty()) ? userdata = xdg_env : userdata = xdg_data;
         } else
             userdata = xdg_data;
 
