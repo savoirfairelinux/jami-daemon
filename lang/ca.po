@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2011-03-10 12:31+0000\n"
 "Last-Translator: Pau Iranzo <Unknown>\n"
 "Language-Team: Catalan <ca@li.org>\n"
@@ -568,8 +568,9 @@ msgid "days"
 msgstr "dies"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Activa _els tons de trucada"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1246,11 +1247,9 @@ msgid ""
 "Codecs not found"
 msgstr ""
 
-#, fuzzy
 #~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
 #~ msgstr ""
 #~ "No es pot connectar amb el servidor SFLphone.\n"
 #~ "Assegureu-vos que el dimoni s'està executant."
@@ -1260,6 +1259,9 @@ msgstr ""
 
 #~ msgid "Bandwidth"
 #~ msgstr "Ample de Banda"
+
+#~ msgid "_Echo Suppression"
+#~ msgstr "_Envia la supressió"
 
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "Ordres personalitzdes a les trucades entrants amb un URL"
