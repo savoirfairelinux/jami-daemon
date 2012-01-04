@@ -55,7 +55,6 @@ class HistoryTest : public CppUnit::TestCase {
           */
         CPPUNIT_TEST_SUITE(HistoryTest);
         CPPUNIT_TEST(test_create_path);
-        CPPUNIT_TEST(test_save_items);
         CPPUNIT_TEST(test_load_from_file);
         CPPUNIT_TEST(test_load_items);
         CPPUNIT_TEST(test_get_serialized);
@@ -75,8 +74,6 @@ class HistoryTest : public CppUnit::TestCase {
         void test_load_from_file();
 
         void test_load_items();
-
-        void test_save_items();
 
         void test_save_to_file();
 

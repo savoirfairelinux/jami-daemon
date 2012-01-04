@@ -34,7 +34,7 @@
 #define HISTORY_
 
 #include "historyitem.h"
-#include "global.h"
+#include <vector>
 
 class History {
 
@@ -45,24 +45,20 @@ class History {
         History();
 
         /**
-         *@param path  A specific file to use; if empty, use the global one
+         * Load history from file
          */
-        void load(int limit, const std::string &path="");
+        void load(int limit);
 
         /**
          *@return bool True if the history has been successfully saved in the file
          */
-        bool save();
+        bool save() const;
 
         /**
          *@return bool  True if the history file has been successfully read
          */
         bool isLoaded() const {
             return loaded_;
-        }
-
-        void setPath(const std::string &filename) {
-            path_ = filename;
         }
 
         /*
@@ -82,29 +78,12 @@ class History {
         void setSerialized(const std::vector<std::map<std::string, std::string> > &history, int limit);
 
     private:
-        void loadItems(Conf::ConfigTree &history_list, int limit);
-
-        /*
-         * Inverse method, ie save a data structure containing the history into a file
-         */
-        bool saveToFile(const Conf::ConfigTree &history_list) const;
-
-        void saveItems(Conf::ConfigTree &history_list) const;
-        /*
-         * Set the path to the history file
-         *
-         * @param path  A specific file to use; if empty, use the global one
-         */
-        void createPath(const std::string &path="");
+        void setPath(const std::string &path);
+        void createPath(const std::string &path = "");
         /*
          * Add a new history item in the data structure
          */
-        void addNewEntry(const HistoryItem &new_item);
-
-        /*
-         * Load the history from a file to the dedicated data structure
-         */
-        bool loadFromFile(Conf::ConfigTree &history_list);
+        void addNewEntry(const HistoryItem &new_item, int limit);
 
         /*
          * Vector containing the history items
@@ -119,7 +98,6 @@ class History {
         /*
          * The path to the history file
          */
-
         std::string path_;
 
         friend class HistoryTest;

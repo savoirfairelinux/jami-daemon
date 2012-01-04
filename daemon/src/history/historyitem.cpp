@@ -33,7 +33,6 @@
 #include "historyitem.h"
 #include <sstream>
 #include <cstdlib>
-#include "config/config.h"
 
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";
@@ -41,9 +40,10 @@ const char * const HistoryItem::CONFID_KEY =            "confid";
 const char * const HistoryItem::PEER_NAME_KEY =         "peer_name";
 const char * const HistoryItem::PEER_NUMBER_KEY =       "peer_number";
 const char * const HistoryItem::RECORDING_PATH_KEY =    "recordfile";
+const char * const HistoryItem::STATE_KEY =             "state";
 const char * const HistoryItem::TIMESTAMP_START_KEY =   "timestamp_start";
 const char * const HistoryItem::TIMESTAMP_STOP_KEY =    "timestamp_stop";
-const char * const HistoryItem::STATE_KEY =             "state";
+
 const char * const HistoryItem::MISSED_STRING =         "missed";
 const char * const HistoryItem::INCOMING_STRING =       "incoming";
 const char * const HistoryItem::OUTGOING_STRING =       "outgoing";
@@ -55,34 +55,18 @@ HistoryItem::HistoryItem(const map<string, string> &args)
     : entryMap_(args)
 {}
 
-HistoryItem::HistoryItem(const string &item, const Conf::ConfigTree &historyList)
+HistoryItem::HistoryItem(std::istream &entry)
     : entryMap_()
 {
-    const char *const KEYS [] = {
-        ACCOUNT_ID_KEY,
-        CALLID_KEY,
-        CONFID_KEY,
-        PEER_NAME_KEY,
-        PEER_NUMBER_KEY,
-        RECORDING_PATH_KEY,
-        TIMESTAMP_START_KEY,
-        TIMESTAMP_STOP_KEY,
-        STATE_KEY,
-        NULL};
-    for (int i = 0; KEYS[i]; ++i)
-        entryMap_[KEYS[i]] = historyList.getConfigTreeItemValue(item, KEYS[i]);
-}
-
-void HistoryItem::save(Conf::ConfigTree &history) const
-{
-    // The section is : "[" + random integer = "]"
-    std::stringstream section;
-    section << rand();
-    const string sectionstr = section.str();
-
-    typedef map<string, string>::const_iterator EntryIter;
-    for (EntryIter iter = entryMap_.begin(); iter != entryMap_.end(); ++iter)
-        history.setConfigTreeItem(sectionstr, iter->first, iter->second);
+    std::string tmp;
+    while (std::getline(entry, tmp, '\n')) {
+        size_t pos = tmp.find('=');
+        if (pos == std::string::npos)
+            return;
+        std::string key(tmp.substr(0, pos));
+        std::string val(tmp.substr(pos + 1, tmp.length() - pos - 1));
+        entryMap_[key] = val;
+    }
 }
 
 map<string, string> HistoryItem::toMap() const
@@ -92,7 +76,7 @@ map<string, string> HistoryItem::toMap() const
 
 bool HistoryItem::youngerThan(int otherTime) const
 {
-    return atol(getTimestampStart().c_str()) >= otherTime;
+    return std::atol(getTimestampStart().c_str()) > otherTime;
 }
 
 bool HistoryItem::hasPeerNumber() const
@@ -107,4 +91,18 @@ string HistoryItem::getTimestampStart() const
         return iter->second;
     else
         return "";
+}
+
+void HistoryItem::print(std::ostream &o) const
+{
+    // every entry starts with "[" + random integer = "]"
+    for (map<string, string>::const_iterator iter = entryMap_.begin();
+         iter != entryMap_.end(); ++iter)
+        o << iter->first << "=" << iter->second << std::endl;
+}
+
+std::ostream& operator << (std::ostream& o, const HistoryItem& item)
+{
+    item.print(o);
+    return o;
 }

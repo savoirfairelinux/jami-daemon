@@ -76,52 +76,30 @@ void HistoryTest::test_load_from_file()
 {
     DEBUG("-------------------- HistoryTest::test_load_from_file --------------------\n");
 
-    Conf::ConfigTree history_list;
-
     history_->createPath(HISTORY_SAMPLE);
-    bool res = history_->loadFromFile(history_list);
+    history_->load(HUGE_HISTORY_LIMIT);
 
     CPPUNIT_ASSERT(history_->isLoaded());
-    CPPUNIT_ASSERT(res);
 }
 
 void HistoryTest::test_load_items()
 {
     DEBUG("-------------------- HistoryTest::test_load_items_map --------------------\n");
 
-    Conf::ConfigTree history_list;
-
     history_->setPath(HISTORY_SAMPLE);
-    history_->loadFromFile(history_list);
-    history_->loadItems(history_list, HUGE_HISTORY_LIMIT);
+    history_->load(HUGE_HISTORY_LIMIT);
     CPPUNIT_ASSERT(history_->numberOfItems() == HISTORY_SAMPLE_SIZE);
-}
-
-void HistoryTest::test_save_items()
-{
-    DEBUG("-------------------- HistoryTest::test_save_items_map --------------------\n");
-
-    Conf::ConfigTree history_list, history_list2;
-
-    history_->setPath(HISTORY_SAMPLE);
-    history_->loadFromFile(history_list);
-    history_->loadItems(history_list, HUGE_HISTORY_LIMIT);
-    history_->saveItems(history_list2);
 }
 
 void HistoryTest::test_save_to_file()
 {
     DEBUG("-------------------- HistoryTest::test_save_to_file --------------------\n");
 
-    Conf::ConfigTree history_list, history_list2;
     std::map<std::string, std::string> res;
     std::map<std::string, std::string>::iterator iter;
 
     history_->setPath(HISTORY_SAMPLE);
-    history_->loadFromFile(history_list);
-    history_->loadItems(history_list, HUGE_HISTORY_LIMIT);
-    history_->saveItems(history_list2);
-    CPPUNIT_ASSERT(history_->saveToFile(history_list2));
+    CPPUNIT_ASSERT(history_->save());
 }
 
 void HistoryTest::test_get_serialized()
@@ -131,7 +109,7 @@ void HistoryTest::test_get_serialized()
     std::vector<std::string>::iterator iter;
     std::string tmp;
 
-    history_->load(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE);
+    history_->load(HUGE_HISTORY_LIMIT);
     CPPUNIT_ASSERT(history_->getSerialized().size() == HISTORY_SAMPLE_SIZE);
 }
 

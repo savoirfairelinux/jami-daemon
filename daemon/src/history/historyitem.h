@@ -36,10 +36,6 @@
 #include <string>
 #include <map>
 
-namespace Conf {
-class ConfigTree;
-}
-
 class HistoryItem {
     public:
         static const char * const ACCOUNT_ID_KEY;
@@ -56,20 +52,20 @@ class HistoryItem {
         static const char * const INCOMING_STRING;
         static const char * const OUTGOING_STRING;
         HistoryItem(const std::map<std::string, std::string> &args);
-        HistoryItem(const std::string &item, const Conf::ConfigTree &list);
+        HistoryItem(std::istream &stream);
 
         bool hasPeerNumber() const;
 
         bool youngerThan(int otherTime) const;
 
-        void save(Conf::ConfigTree &history) const;
-
         std::map<std::string, std::string> toMap() const;
+        void print(std::ostream &o) const;
 
     private:
         std::string getTimestampStart() const;
         std::map<std::string, std::string> entryMap_;
 };
 
+std::ostream& operator << (std::ostream& o, const HistoryItem& item);
 
 #endif // HISTORY_ITEM
