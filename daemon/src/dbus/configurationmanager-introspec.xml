@@ -258,7 +258,7 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-	   
+
 	   <method name="getIsAlwaysRecording" tp:name-for-bindings="getIsAlwaysRecording">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -332,7 +332,6 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
 
 	   <!-- Audio devices methods -->
 
@@ -457,7 +456,7 @@
 		     </tp:docstring>
 		   </arg>
 	   </method>
-	   
+
 	   <method name="getEchoCancelTailLength" tp:name-for-bindings="getEchoCancelTailLength">
 	           <tp:docstring>
 		   </tp:docstring>
@@ -466,22 +465,22 @@
 		     </tp:docstring>
 		   </arg>
 	   </method>
-	   
+
 	   <method name="setEchoCancelDelay" tp:name-for-bindings="setEchoCancelDelay">
 	       <tp:docstring>
 	       </tp:docstring>
 	       <arg type="i" name="index" direction="in">
 	       </arg>
-	   </method> 
-	   
+	   </method>
+
 	   <method name="getEchoCancelDelay" tp:name-for-bindings="getEchoCancelDelay">
 	       <tp:docstring>
 	       </tp:docstring>
 	       <arg type="i" name="index" direction="out">
 	       </arg>
 	   </method>
-	   
-	   
+
+
 	   <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
 	           <tp:docstring>
 		   </tp:docstring>
@@ -520,7 +519,6 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
 
 	   <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
 		   <tp:docstring>
@@ -603,35 +601,27 @@
 		   </arg>
 	   </method>
 
-	   <method name="getHistory" tp:name-for-bindings="getHistory">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-		   <arg type="as" name="entries" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
+       <method name="getHistory" tp:name-for-bindings="getHistory">
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <!-- Return a List of type Dict<string, string> >...a List of Dicts -->
+           <arg type="aa{ss}" name="entries" direction="out"/>
 	   </method>
 
 	   <method name="setHistory" tp:name-for-bindings="setHistory">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
-		   <arg type="as" name="entries" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString"/>
+		   <arg type="aa{ss}" name="entries" direction="in">
 		   </arg>
 	   </method>
 
 	   <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
-	   </signal>  
+	   </signal>
 
 	   <signal name="errorAlert" tp:name-for-bindings="errorAlert">
 		   <arg type="i" name="code">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
-	   </signal> 
+	   </signal>
 
 	   <!-- TLS Methods -->
 	   <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">

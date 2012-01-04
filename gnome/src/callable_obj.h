@@ -36,17 +36,6 @@
 #include <gtk/gtk.h>
 
 /**
- * @enum history_state
- * This enum have all the state a call can take in the history
- */
-typedef enum {
-    MISSED      = 0,
-    INCOMING    = 1,
-    OUTGOING    = 2,
-    LAST        = 3,
-} history_state_t;
-
-/**
  * @enum contact_type
  * This enum have all types of contacts: HOME phone, cell phone, etc...
  */
@@ -83,6 +72,11 @@ typedef enum {
     CALL_STATE_RECORD,
 } call_state_t;
 
+static const char * const TIMESTAMP_START_KEY =   "timestamp_start";
+static const char * const MISSED_STRING =         "missed";
+static const char * const INCOMING_STRING =       "incoming";
+static const char * const OUTGOING_STRING =       "outgoing";
+
 typedef enum {
     SRTP_STATE_UNLOCKED = 0,
     SRTP_STATE_SDES_SUCCESS,
@@ -103,11 +97,11 @@ typedef struct  {
     gchar* _state_code_description; // A textual description of _state_code
     gchar* _callID;                 // The call ID
     gchar* _confID;                 // The conference ID (NULL if don't participate to a conference)
-    gchar* _historyConfID;	    // Persistent conf id to be stored in history
+    gchar* _historyConfID;	        // Persistent conf id to be stored in history
     gchar* _accountID;              // The account the call is made with
     time_t _time_start;             // The timestamp the call was initiating
     time_t _time_stop;              // The timestamp the call was over
-    history_state_t _history_state; // The history state if necessary
+    gchar *_history_state;          // The history state if necessary
     srtp_state_t _srtp_state;       // The state of security on the call
     gchar* _srtp_cipher;            // Cipher used for the srtp session
     gchar* _sas;                    // The Short Authentication String that should be displayed
@@ -158,21 +152,21 @@ typedef struct  {
 
     /* Associated IM widget */
     GtkWidget *_im_widget;
-
-    time_t _time_added;
 } callable_obj_t;
 
-callable_obj_t *create_new_call (callable_type_t, call_state_t, const gchar* const, const gchar* const, const gchar* const, const gchar* const);
+callable_obj_t *create_new_call(callable_type_t, call_state_t, const gchar* const, const gchar* const, const gchar* const, const gchar* const);
 
-callable_obj_t *create_new_call_from_details (const gchar *, GHashTable *);
+callable_obj_t *create_new_call_from_details(const gchar *, GHashTable *);
 
-callable_obj_t *create_history_entry_from_serialized_form (const gchar *);
+callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry);
 
-void call_add_error (callable_obj_t * call, gpointer dialog);
+GHashTable* create_hashtable_from_history_entry(callable_obj_t *entry);
 
-void call_remove_error (callable_obj_t * call, gpointer dialog);
+void call_add_error(callable_obj_t * call, gpointer dialog);
 
-void call_remove_all_errors (callable_obj_t * call);
+void call_remove_error(callable_obj_t * call, gpointer dialog);
+
+void call_remove_all_errors(callable_obj_t * call);
 
 /*
  * GCompareFunc to compare a callID (gchar* and a callable_obj_t)
@@ -182,32 +176,30 @@ void call_remove_all_errors (callable_obj_t * call);
 /*
  * GCompareFunc to get current call (gchar* and a callable_obj_t)
  */
-gint get_state_callstruct (gconstpointer, gconstpointer);
+gint get_state_callstruct(gconstpointer, gconstpointer);
 
 /**
   * This function parse the callable_obj_t.from field to return the name
   * @param c The call
   * @return The full name of the caller or an empty string
   */
-gchar* call_get_peer_name (const gchar*);
+gchar* call_get_peer_name(const gchar*);
 
 /**
  * This function parse the callable_obj_t.from field to return the number
  * @param c The call
  * @return The number of the caller
  */
-gchar* call_get_peer_number (const gchar*);
+gchar* call_get_peer_number(const gchar*);
 
-void free_callable_obj_t (callable_obj_t *c);
+void free_callable_obj_t(callable_obj_t *c);
 
-gchar* get_peer_info (const gchar* const, const gchar* const);
+gchar* get_peer_info(const gchar* const, const gchar* const);
 
-gchar* get_call_duration (callable_obj_t *obj);
+gchar* get_call_duration(callable_obj_t *obj);
 
-gchar* serialize_history_call_entry(callable_obj_t *entry);
+gchar* get_formatted_start_timestamp(time_t);
 
-gchar* get_formatted_start_timestamp (time_t);
-
-gchar* call_get_audio_codec (callable_obj_t *obj);
+gchar* call_get_audio_codec(callable_obj_t *obj);
 
 #endif

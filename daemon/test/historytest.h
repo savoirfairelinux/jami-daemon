@@ -59,13 +59,11 @@ class HistoryTest : public CppUnit::TestCase {
         CPPUNIT_TEST(test_load_history_from_file);
         CPPUNIT_TEST(test_load_history_items_map);
         CPPUNIT_TEST(test_get_history_serialized);
-        CPPUNIT_TEST(test_set_serialized_history);
-        CPPUNIT_TEST(test_set_serialized_history_with_limit);
         // CPPUNIT_TEST (test_save_history_to_file);
         CPPUNIT_TEST_SUITE_END();
 
     public:
-        HistoryTest() : CppUnit::TestCase("History Tests"), history(0) {}
+        HistoryTest() : CppUnit::TestCase("History Tests"), history_(0) {}
 
         /*
          * Code factoring - Common resources can be initialized here.
@@ -97,7 +95,7 @@ class HistoryTest : public CppUnit::TestCase {
 
     private:
         NON_COPYABLE(HistoryTest);
-        HistoryManager *history;
+        HistoryManager *history_;
 };
 
 /* Register our test module */

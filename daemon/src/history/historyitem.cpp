@@ -33,127 +33,76 @@
 #include "historyitem.h"
 #include <sstream>
 #include <cstdlib>
-#include "manager.h"
+#include "config/config.h"
 
-static const char * const ITEM_SEPARATOR = "|";
+const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
+const char * const HistoryItem::CALLID_KEY =            "callid";
+const char * const HistoryItem::CONFID_KEY =            "confid";
+const char * const HistoryItem::PEER_NAME_KEY =         "peer_name";
+const char * const HistoryItem::PEER_NUMBER_KEY =       "peer_number";
+const char * const HistoryItem::RECORDING_PATH_KEY =    "recordfile";
+const char * const HistoryItem::TIMESTAMP_START_KEY =   "timestamp_start";
+const char * const HistoryItem::TIMESTAMP_STOP_KEY =    "timestamp_stop";
+const char * const HistoryItem::STATE_KEY =             "state";
+const char * const HistoryItem::MISSED_STRING =         "missed";
+const char * const HistoryItem::INCOMING_STRING =       "incoming";
+const char * const HistoryItem::OUTGOING_STRING =       "outgoing";
 
-HistoryItem::HistoryItem(const std::string &timestamp_start,
-                         CallType call_type, const std::string &timestamp_stop,
-                         const std::string &name, const std::string &number,
-                         const std::string &id, const std::string &account_id,
-                         const std::string &recording,
-                         const std::string &confID,
-                         const std::string &timeAdded)
-    :	timestamp_start_(timestamp_start),
-        timestamp_stop_(timestamp_stop),
-        call_type_(call_type),
-        name_(name),
-        number_(number),
-        id_(id),
-        account_id_(account_id),
-        recording_file_(recording),
-        confID_(confID),
-        timeAdded_(timeAdded)
+HistoryItem::HistoryItem(const std::map<std::string, std::string> &args)
+    : entryMap_(args)
 {}
 
-
-HistoryItem::HistoryItem(std::string serialized_form) :
-    timestamp_start_(), timestamp_stop_(), call_type_(CALL_MISSED), name_(),
-    number_(), id_(), account_id_(), recording_file_(), confID_(), timeAdded_() 
+HistoryItem::HistoryItem(const std::string &item, Conf::ConfigTree &historyList)
+    : entryMap_()
 {
-    for (int index = 0; serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos; ++index) {
-        size_t pos = serialized_form.find(ITEM_SEPARATOR, 0);
-        std::string tmp(serialized_form.substr(0, pos));
-        serialized_form.erase(0, pos + 1);
-
-        switch (index) {
-            case 0: // The call type
-                call_type_ = (CallType) atoi(tmp.c_str());
-                break;
-            case 1: // The number field
-                number_ = tmp;
-                break;
-            case 2: // The name field
-                name_ = tmp;
-
-                if (name_ == "empty")
-                    name_ = "";
-                break;
-            case 3: // The start timestamp
-                timestamp_start_ = tmp;
-                break;
-            case 4: // The end timestamp
-                timestamp_stop_ = tmp;
-                break;
-            case 5: // The ID
-                id_ = tmp;
-                break;
-            case 6: // The account ID
-                account_id_ = tmp;
-                break;
-            case 7: // The recorded file name
-                recording_file_ = tmp;
-                break;
-            case 8: // The conference ID
-                confID_ = tmp;
-                break;
-            case 9: // the time
-                timeAdded_ = tmp;
-                break;
-            default: // error
-                ERROR("Unserialized form %d not recognized\n", index);
-                break;
-        }
-    }
+    const char *const KEYS [] = {
+        ACCOUNT_ID_KEY,
+        CALLID_KEY,
+        CONFID_KEY,
+        PEER_NAME_KEY,
+        PEER_NUMBER_KEY,
+        RECORDING_PATH_KEY,
+        TIMESTAMP_START_KEY,
+        TIMESTAMP_STOP_KEY,
+        STATE_KEY,
+        NULL};
+    for (int i = 0; KEYS[i]; ++i)
+        entryMap_[KEYS[i]] = historyList.getConfigTreeItemValue(item, KEYS[i]);
 }
 
-bool HistoryItem::save(Conf::ConfigTree **history)
+void HistoryItem::save(Conf::ConfigTree &history) const
 {
+    // The section is : "[" + random integer = "]"
     std::stringstream section;
-    std::stringstream call_type;
-
-    // The section is : "[" + timestamp = "]"
     section << rand();
-    std::string sectionstr = section.str();
-    call_type << call_type_;
+    const std::string sectionstr = section.str();
 
-    return (*history)->setConfigTreeItem(sectionstr, "type", call_type.str())
-           && (*history)->setConfigTreeItem(sectionstr, "timestamp_start", timestamp_start_)
-           && (*history)->setConfigTreeItem(sectionstr, "timestamp_stop", timestamp_stop_)
-           && (*history)->setConfigTreeItem(sectionstr, "number", number_)
-           && (*history)->setConfigTreeItem(sectionstr, "id", id_)
-           && (*history)->setConfigTreeItem(sectionstr, "accountid", account_id_)
-           && (*history)->setConfigTreeItem(sectionstr, "name", name_)
-           && (*history)->setConfigTreeItem(sectionstr, "recordfile", recording_file_)
-           && (*history)->setConfigTreeItem(sectionstr, "confid", confID_)
-           && (*history)->setConfigTreeItem(sectionstr, "timeadded", timeAdded_);
+    typedef std::map<std::string, std::string>::const_iterator EntryIter;
+    for (EntryIter iter = entryMap_.begin(); iter != entryMap_.end(); ++iter)
+        history.setConfigTreeItem(sectionstr, iter->first, iter->second);
 }
 
-std::string HistoryItem::serialize() const
+std::map<std::string, std::string> HistoryItem::toMap() const
 {
-    // Replace empty string with a valid standard string value
-    std::string name(name_);
-
-    if (name.empty())
-        name = "empty";
-
-    // For the account ID, check also if the accountID corresponds to an existing account
-    // ie the account may have been removed
-    std::string accountID(account_id_);
-
-    if (account_id_.empty() or not valid_account(account_id_))
-        accountID = "empty";
-
-    std::stringstream res;
-    // Serialize it
-    res << call_type_ << ITEM_SEPARATOR << number_ << ITEM_SEPARATOR << name << ITEM_SEPARATOR << timestamp_start_ << ITEM_SEPARATOR << timestamp_stop_
-        << ITEM_SEPARATOR << id_ << ITEM_SEPARATOR << accountID << ITEM_SEPARATOR << recording_file_ << ITEM_SEPARATOR << confID_ << ITEM_SEPARATOR << timeAdded_;
-
-    return res.str();
+    return entryMap_;
 }
 
-
-bool HistoryItem::valid_account(const std::string &id) const
+bool HistoryItem::youngerThan(int otherTime) const
 {
-    return Manager::instance().accountExists(id);
+    return atol(getTimestampStart().c_str()) >= otherTime;
+}
+
+bool HistoryItem::hasPeerNumber() const
+{
+    return entryMap_.find(PEER_NUMBER_KEY) != entryMap_.end();
+}
+
+std::string HistoryItem::getTimestampStart() const {
+    using std::map;
+    using std::string;
+    map<string, string>::const_iterator iter(entryMap_.find(TIMESTAMP_START_KEY));
+    if (iter != entryMap_.end())
+        return iter->second;
+    else
+        return "";
 }

@@ -51,6 +51,7 @@
 #include "audio/codecs/audiocodecfactory.h"
 
 #include "audio/mainbuffer.h"
+#include "history/historymanager.h"
 #include "preferences.h"
 #include "noncopyable.h"
 
@@ -73,7 +74,6 @@ class VoIPLink;
 class DNSService;
 #endif
 
-class HistoryManager;
 class Account;
 
 /** Define a type for a AccountMap container */
@@ -1145,17 +1145,13 @@ class ManagerImpl {
         */
         bool accountExists(const std::string& accountID);
 
-        /**
-         * Get a list of serialized history entries
-         * @return A list of serialized entry
-         */
-        std::vector<std::string> getHistorySerialized() const;
+        std::vector<std::map<std::string, std::string> > getHistory() const;
 
         /**
          * Set a list of serialized history entries
          * @param Vector of history entries
              */
-        void setHistorySerialized(std::vector<std::string> history);
+        void setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history);
         /**
          * Get an account pointer
          * @param accountID account ID to get
@@ -1200,8 +1196,9 @@ class ManagerImpl {
 
         /**
           * To handle the persistent history
+          * TODO: move this to ConfigurationManager
           */
-        HistoryManager * history_;
+        HistoryManager history_;
 
         /**
          * Instant messaging module, resposible to initiate, format, parse,

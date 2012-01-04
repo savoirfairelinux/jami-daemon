@@ -43,16 +43,7 @@
 namespace Conf {
 
 ConfigTree::~ConfigTree()
-{
-    // erase every new ItemMap (by CreateSection)
-    SectionMap::iterator iter = sections_.begin();
-
-    while (iter != sections_.end()) {
-        delete iter->second;
-        iter->second = NULL;
-        iter++;
-    }
-}
+{}
 
 void ConfigTree::addDefaultValue(const std::pair<std::string, std::string>& token, std::string section)
 {
@@ -81,7 +72,7 @@ ConfigTree::createSection(const std::string& section)
 {
     // if we doesn't find the item, create it
     if (sections_.find(section) == sections_.end())
-        sections_[section] = new ItemMap;
+        sections_[section] = ItemMap();
 }
 
 /**
@@ -98,18 +89,13 @@ ConfigTree::removeSection(const std::string& section)
 }
 
 /** Retrieve the sections as an array */
-TokenList
+std::list<std::string>
 ConfigTree::getSections()
 {
-    TokenList sections;
+    std::list<std::string> sections;
 
-    SectionMap::iterator iter = sections_.begin();
-
-    while (iter != sections_.end()) {
-        // add to token list the: iter->second;
+    for (SectionMap::iterator iter = sections_.begin(); iter != sections_.end(); ++iter)
         sections.push_back(iter->first);
-        iter++;
-    }
 
     return sections;
 }
@@ -125,7 +111,7 @@ ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem i
     SectionMap::iterator iter = sections_.find(section);
 
     if (iter == sections_.end()) {
-        sections_[section] = new ItemMap;
+        sections_[section] = ItemMap();
         iter = sections_.find(section);
     }
 
@@ -133,9 +119,8 @@ ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem i
     if (iter != sections_.end()) {
         std::string name(item.getName());
 
-        if (iter->second->find(name) == iter->second->end()) {
-            (*(iter->second))[name] = item;
-        }
+        if (iter->second.find(name) == iter->second.end())
+            iter->second[name] = item;
     }
 }
 
@@ -163,17 +148,11 @@ ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::str
 bool
 ConfigTree::getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName) const
 {
-    std::string configItem = getConfigTreeItemValue(section, itemName);
-
-    if (configItem == "true") {
-        return true;
-    }
-
-    return false;
+    return getConfigTreeItemValue(section, itemName) == "true";
 }
 
 bool
-ConfigTree::getConfigTreeItemToken(const std::string& section, const std::string& itemName, TokenList& arg) const
+ConfigTree::getConfigTreeItemToken(const std::string& section, const std::string& itemName, std::list<std::string>& arg) const
 {
     const ConfigTreeItem *item = getConfigTreeItem(section, itemName);
 
@@ -186,8 +165,8 @@ ConfigTree::getConfigTreeItemToken(const std::string& section, const std::string
         arg.push_back(item->getDefaultValue());
         return true;
     }
-
-    return false;
+    else
+        return false;
 }
 
 /**
@@ -201,9 +180,9 @@ ConfigTree::getConfigTreeItem(const std::string& section, const std::string& ite
     if (iter == sections_.end())
         return NULL;
 
-    ItemMap::const_iterator iterItem = iter->second->find(itemName);
+    ItemMap::const_iterator iterItem = iter->second.find(itemName);
 
-    if (iterItem == iter->second->end())
+    if (iterItem == iter->second.end())
         return NULL;
 
     return & (iterItem->second);
@@ -220,18 +199,17 @@ ConfigTree::setConfigTreeItem(const std::string& section,
                               const std::string& itemName,
                               const std::string& value)
 {
-
     SectionMap::iterator iter = sections_.find(section);
 
     if (iter == sections_.end()) {
         // Not found, create section
-        sections_[section] = new ItemMap;
+        sections_[section] = ItemMap();
         iter = sections_.find(section);
     }
 
-    ItemMap::iterator iterItem = iter->second->find(itemName);
+    ItemMap::iterator iterItem = iter->second.find(itemName);
 
-    if (iterItem == iter->second->end()) {
+    if (iterItem == iter->second.end()) {
         // If not found, search in our default list to find
         // something that would fit.
         std::string defaultValue = getDefaultValue(itemName);
@@ -240,13 +218,12 @@ ConfigTree::setConfigTreeItem(const std::string& section,
     }
 
     // Use default value if the value is empty.
-    if (value.empty() == true) {
+    if (value.empty()) {
         iterItem->second.setValue(getDefaultValue(itemName));
         return true;
     }
 
     iterItem->second.setValue(value);
-
     return true;
 }
 
@@ -254,7 +231,7 @@ ConfigTree::setConfigTreeItem(const std::string& section,
 // return false if empty, no config, or enable to open
 // return true if everything is ok
 bool
-ConfigTree::saveConfigTree(const std::string& fileName)
+ConfigTree::saveConfigTree(const std::string& fileName) const
 {
     DEBUG("ConfigTree: Save %s", fileName.c_str());
 
@@ -271,20 +248,12 @@ ConfigTree::saveConfigTree(const std::string& fileName)
     }
 
     // for each section, for each item...
-    SectionMap::iterator iter = sections_.begin();
-
-    while (iter != sections_.end()) {
+    for (SectionMap::const_iterator iter = sections_.begin(); iter != sections_.end(); ++iter) {
         file << "[" << iter->first << "]" << std::endl;
-        ItemMap::iterator iterItem = iter->second->begin();
-
-        while (iterItem != iter->second->end()) {
+        for (ItemMap::const_iterator iterItem = iter->second.begin(); iterItem != iter->second.end(); ++iterItem)
             file << iterItem->first << "=" << iterItem->second.getValue() << std::endl;
-            iterItem++;
-        }
 
         file << std::endl;
-
-        iter++;
     }
 
     file.close();
@@ -335,10 +304,9 @@ ConfigTree::populateFromFile(const std::string& fileName)
     }
 
     std::string line;
-
-    std::string section("");
-    std::string key("");
-    std::string val("");
+    std::string section;
+    std::string key;
+    std::string val;
     std::string::size_type pos;
 
     while (!file.eof()) {
@@ -371,16 +339,16 @@ ConfigTree::populateFromFile(const std::string& fileName)
     return 1;
 }
 
-TokenList
-ConfigTreeIterator::begin()
+std::list<std::string>
+ConfigTreeIterator::begin() const
 {
-    TokenList tk;
+    std::list<std::string> tk;
     iter_ = tree_->sections_.begin();
 
-    if (iter_!=tree_->sections_.end()) {
-        iterItem_ = iter_->second->begin();
+    if (iter_ != tree_->sections_.end()) {
+        iterItem_ = iter_->second.begin();
 
-        if (iterItem_!=iter_->second->end()) {
+        if (iterItem_ != iter_->second.end()) {
             tk.push_back(iter_->first);
             tk.push_back(iterItem_->first);
             tk.push_back(iterItem_->second.getType());
@@ -392,26 +360,26 @@ ConfigTreeIterator::begin()
     return tk;
 }
 
-TokenList
+std::list<std::string>
 ConfigTreeIterator::next()
 {
-    TokenList tk;
+    std::list<std::string> tk;
     // we return tk empty if we are at the end of the list...
 
     if (iter_ == tree_->sections_.end())
         return tk;
 
-    if (iterItem_ != iter_->second->end())
+    if (iterItem_ != iter_->second.end())
         iterItem_++;
 
-    if (iterItem_ == iter_->second->end()) {
+    if (iterItem_ == iter_->second.end()) {
         // if we increment, and we are at the end of a section
         iter_++;
 
         if (iter_ != tree_->sections_.end()) {
-            iterItem_ = iter_->second->begin();
+            iterItem_ = iter_->second.begin();
 
-            if (iterItem_ != iter_->second->end()) {
+            if (iterItem_ != iter_->second.end()) {
                 tk.push_back(iter_->first);
                 tk.push_back(iterItem_->first);
                 tk.push_back(iterItem_->second.getType());
