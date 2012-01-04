@@ -30,7 +30,7 @@
  *  as that of the covered work.
  */
 
-#include "historymanager.h"
+#include "history.h"
 #include <cerrno>
 #include <cc++/file.h>
 #include <ctime>
@@ -43,84 +43,82 @@ namespace {
         static const int DAY_UNIX_TIMESTAMP = 86400;
         return days * DAY_UNIX_TIMESTAMP;
     }
+    
+    using std::map;
+    using std::string;
+    using std::list;
+    using std::vector;
 }
 
-HistoryManager::HistoryManager() :
-    history_items_(), history_loaded_(false), history_path_("")
+History::History() :
+    items_(), loaded_(false), path_("")
 {}
 
-int HistoryManager::loadHistory(int limit, const std::string &path)
+void History::load(int limit, const string &path)
 {
     Conf::ConfigTree historyList;
-    createHistoryPath(path);
-    loadHistoryFromFile(historyList);
-    return loadHistoryItemsMap(historyList, limit);
+    createPath(path);
+    loadFromFile(historyList);
+    loadItems(historyList, limit);
 }
 
-bool HistoryManager::saveHistory()
+bool History::save()
 {
     Conf::ConfigTree historyList;
-    saveHistoryItemsVector(historyList);
-    return saveHistoryToFile(historyList);
+    saveItems(historyList);
+    return saveToFile(historyList);
 }
 
-bool HistoryManager::loadHistoryFromFile(Conf::ConfigTree &historyList)
+bool History::loadFromFile(Conf::ConfigTree &historyList)
 {
-    history_loaded_ = historyList.populateFromFile(history_path_.c_str());
-    return history_loaded_;
+    loaded_ = historyList.populateFromFile(path_.c_str());
+    return loaded_;
 }
 
-int HistoryManager::loadHistoryItemsMap(Conf::ConfigTree &historyList, int limit)
+void History::loadItems(Conf::ConfigTree &historyList, int limit)
 {
-    using std::string;
-
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     time_t currentTimestamp;
     time(&currentTimestamp);
     int historyLimit = get_unix_timestamp_equivalent(limit);
     int oldestEntryTime =  static_cast<int>(currentTimestamp) - historyLimit;
 
-    std::list<std::string> sections(historyList.getSections());
-    int nb_items = 0;
-    for (std::list<std::string>::const_iterator iter = sections.begin(); iter != sections.end(); ++iter) {
+    list<string> sections(historyList.getSections());
+    for (list<string>::const_iterator iter = sections.begin(); iter != sections.end(); ++iter) {
         HistoryItem item(*iter, historyList);
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
-        if (item.youngerThan(oldestEntryTime)) {
-            addNewHistoryEntry(item);
-            ++nb_items;
-        }
+        if (item.youngerThan(oldestEntryTime))
+            addNewEntry(item);
     }
-
-    return nb_items;
 }
 
-bool HistoryManager::saveHistoryToFile(const Conf::ConfigTree &historyList) const
+bool History::saveToFile(const Conf::ConfigTree &historyList) const
 {
-    DEBUG("HistoryManager: Saving history in XDG directory: %s", history_path_.c_str());
-    return historyList.saveConfigTree(history_path_.data());
+    DEBUG("History: Saving history in XDG directory: %s", path_.c_str());
+    return historyList.saveConfigTree(path_.data());
 }
 
-void HistoryManager::saveHistoryItemsVector(Conf::ConfigTree &historyList) const
+void History::saveItems(Conf::ConfigTree &historyList) const
 {
-    for (std::vector<HistoryItem>::const_iterator iter = history_items_.begin(); iter != history_items_.end(); ++iter)
+    for (vector<HistoryItem>::const_iterator iter = items_.begin(); iter != items_.end(); ++iter)
         iter->save(historyList);
 }
 
-void HistoryManager::addNewHistoryEntry(const HistoryItem &new_item)
+void History::addNewEntry(const HistoryItem &new_item)
 {
-    history_items_.push_back(new_item);
+    items_.push_back(new_item);
 }
 
-void HistoryManager::createHistoryPath(const std::string &path)
+void History::createPath(const string &path)
 {
-    std::string xdg_data = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
+    string xdg_data = string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 
     if (path.empty()) {
-        std::string userdata;
+        string userdata;
         // If the environment variable is set (not null and not empty), we'll use it to save the history
         // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
         if (XDG_DATA_HOME != NULL) {
-            std::string xdg_env(XDG_DATA_HOME);
+            string xdg_env(XDG_DATA_HOME);
             (!xdg_env.empty()) ? userdata = xdg_env : userdata = xdg_data;
         } else
             userdata = xdg_data;
@@ -128,37 +126,30 @@ void HistoryManager::createHistoryPath(const std::string &path)
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                DEBUG("HistoryManager: Cannot create directory: %m");
+                DEBUG("History: Cannot create directory: %m");
                 return;
             }
         }
         // Load user's history
-        setHistoryPath(userdata + DIR_SEPARATOR_STR + "history");
+        setPath(userdata + DIR_SEPARATOR_STR + "history");
     } else
-        setHistoryPath(path);
+        setPath(path);
 }
 
 
-std::vector<std::map<std::string, std::string> > HistoryManager::getSerialized() const
+vector<map<string, string> > History::getSerialized() const
 {
-    using std::map;
-    using std::string;
-    using std::vector;
-
     vector<map<string, string> > result;
-    for (vector<HistoryItem>::const_iterator iter = history_items_.begin();
-         iter != history_items_.end(); ++iter)
+    for (vector<HistoryItem>::const_iterator iter = items_.begin();
+         iter != items_.end(); ++iter)
         result.push_back(iter->toMap());
 
     return result;
 }
 
-int HistoryManager::setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history, int limit)
+void History::setSerialized(const vector<map<string, string> > &history, int limit)
 {
-    history_items_.clear();
-    using std::map;
-    using std::string;
-    using std::vector;
+    items_.clear();
 
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp
@@ -166,16 +157,11 @@ int HistoryManager::setHistorySerialized(const std::vector<std::map<std::string,
     time(&current_timestamp);
     int history_limit = get_unix_timestamp_equivalent(limit);
 
-    int items_added = 0;
     for (vector<map<string, string> >::const_iterator iter = history.begin(); iter != history.end(); ++iter) {
         HistoryItem new_item(*iter);
 
-        if (new_item.hasPeerNumber() and new_item.youngerThan((int) current_timestamp - history_limit)) {
-            addNewHistoryEntry(new_item);
-            ++items_added;
-        }
+        if (new_item.hasPeerNumber() and new_item.youngerThan((int) current_timestamp - history_limit))
+            addNewEntry(new_item);
     }
-
-    return items_added;
 }
 

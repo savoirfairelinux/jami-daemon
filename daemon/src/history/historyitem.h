@@ -56,7 +56,7 @@ class HistoryItem {
         static const char * const INCOMING_STRING;
         static const char * const OUTGOING_STRING;
         HistoryItem(const std::map<std::string, std::string> &args);
-        HistoryItem(const std::string &item, Conf::ConfigTree &list);
+        HistoryItem(const std::string &item, const Conf::ConfigTree &list);
 
         bool hasPeerNumber() const;
 

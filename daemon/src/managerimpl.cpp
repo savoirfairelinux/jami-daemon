@@ -49,7 +49,7 @@
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
-#include "history/historymanager.h"
+#include "history/history.h"
 #include "sip/sipvoiplink.h"
 #include "iax/iaxvoiplink.h"
 #include "manager.h"
@@ -128,7 +128,7 @@ void ManagerImpl::init(std::string config_file)
 
     audioLayerMutexUnlock();
 
-    history_.loadHistory(preferences.getHistoryLimit());
+    history_.load(preferences.getHistoryLimit());
     registerAccounts();
 }
 
@@ -2961,8 +2961,8 @@ std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory() const
 
 void ManagerImpl::setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history)
 {
-    history_.setHistorySerialized(history, preferences.getHistoryLimit());
-    history_.saveHistory();
+    history_.setSerialized(history, preferences.getHistoryLimit());
+    history_.save();
 }
 
 namespace {

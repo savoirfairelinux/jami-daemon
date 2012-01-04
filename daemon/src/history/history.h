@@ -30,105 +30,99 @@
  *  as that of the covered work.
  */
 
-#ifndef _HISTORY_MANAGER
-#define _HISTORY_MANAGER
+#ifndef HISTORY_
+#define HISTORY_
 
 #include "historyitem.h"
 #include "global.h"
 
-class HistoryManager {
+class History {
 
     public:
         /*
          * Constructor
          */
-        HistoryManager();
+        History();
 
         /**
          *@param path  A specific file to use; if empty, use the global one
-         *
-         *@return int The number of history items successfully loaded
          */
-        int loadHistory(int limit, const std::string &path="");
+        void load(int limit, const std::string &path="");
 
         /**
          *@return bool True if the history has been successfully saved in the file
          */
-        bool saveHistory();
-
-        /*
-         * Load the history from a file to the dedicated data structure
-         */
-        bool loadHistoryFromFile(Conf::ConfigTree &history_list);
-
-        /*
-         * @return int The number of history items loaded
-         */
-        int loadHistoryItemsMap(Conf::ConfigTree &history_list, int limit);
-
-        /*
-         * Inverse method, ie save a data structure containing the history into a file
-         */
-        bool saveHistoryToFile(const Conf::ConfigTree &history_list) const;
-
-        void saveHistoryItemsVector(Conf::ConfigTree &history_list) const;
+        bool save();
 
         /**
          *@return bool  True if the history file has been successfully read
          */
         bool isLoaded() const {
-            return history_loaded_;
+            return loaded_;
         }
 
-        void setHistoryPath(const std::string &filename) {
-            history_path_ = filename;
+        void setPath(const std::string &filename) {
+            path_ = filename;
         }
 
         /*
          *@return int   The number of items found in the history file
          */
         size_t numberOfItems() const {
-            return history_items_.size();
+            return items_.size();
         }
 
         bool empty() const {
-            return history_items_.empty();
+            return items_.empty();
         }
 
-        std::vector<std::string> getHistorySerialized() const;
         std::vector<std::map<std::string, std::string> > getSerialized() const;
 
-        int setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history, int limit);
+        // FIXME:tmatth:get rid of this
+        void setSerialized(const std::vector<std::map<std::string, std::string> > &history, int limit);
 
     private:
+        void loadItems(Conf::ConfigTree &history_list, int limit);
+
+        /*
+         * Inverse method, ie save a data structure containing the history into a file
+         */
+        bool saveToFile(const Conf::ConfigTree &history_list) const;
+
+        void saveItems(Conf::ConfigTree &history_list) const;
         /*
          * Set the path to the history file
          *
          * @param path  A specific file to use; if empty, use the global one
          */
-        void createHistoryPath(const std::string &path="");
+        void createPath(const std::string &path="");
         /*
          * Add a new history item in the data structure
          */
-        void addNewHistoryEntry(const HistoryItem &new_item);
+        void addNewEntry(const HistoryItem &new_item);
+
+        /*
+         * Load the history from a file to the dedicated data structure
+         */
+        bool loadFromFile(Conf::ConfigTree &history_list);
 
         /*
          * Vector containing the history items
          */
-        std::vector<HistoryItem> history_items_;
+        std::vector<HistoryItem> items_;
 
         /*
          * History has been loaded
          */
-        bool history_loaded_;
+        bool loaded_;
 
         /*
          * The path to the history file
          */
 
-        std::string history_path_;
+        std::string path_;
 
         friend class HistoryTest;
 };
 
-#endif //_HISTORY_MANAGER
+#endif // HISTORY_

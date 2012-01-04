@@ -87,11 +87,11 @@ ConfigTree::removeSection(const std::string& section)
 
 /** Retrieve the sections as an array */
 std::list<std::string>
-ConfigTree::getSections()
+ConfigTree::getSections() const
 {
     std::list<std::string> sections;
 
-    for (SectionMap::iterator iter = sections_.begin(); iter != sections_.end(); ++iter)
+    for (SectionMap::const_iterator iter = sections_.begin(); iter != sections_.end(); ++iter)
         sections.push_back(iter->first);
 
     return sections;

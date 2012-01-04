@@ -38,15 +38,15 @@
 
 // Application import
 #include "noncopyable.h"
-#include "history/historymanager.h"
+#include "history/history.h"
 
 /*
  * @file historyTest.h
  * @brief       Regroups unitary tests related to the phone number cleanup function.
  */
 
-#ifndef _HISTORY_TEST_
-#define _HISTORY_TEST_
+#ifndef HISTORY_TEST_
+#define HISTORY_TEST_
 
 class HistoryTest : public CppUnit::TestCase {
 
@@ -54,12 +54,11 @@ class HistoryTest : public CppUnit::TestCase {
           * Use cppunit library macros to add unit test the factory
           */
         CPPUNIT_TEST_SUITE(HistoryTest);
-        CPPUNIT_TEST(test_create_history_path);
-        CPPUNIT_TEST(test_save_history_items_map);
-        CPPUNIT_TEST(test_load_history_from_file);
-        CPPUNIT_TEST(test_load_history_items_map);
-        CPPUNIT_TEST(test_get_history_serialized);
-        // CPPUNIT_TEST (test_save_history_to_file);
+        CPPUNIT_TEST(test_create_path);
+        CPPUNIT_TEST(test_save_items);
+        CPPUNIT_TEST(test_load_from_file);
+        CPPUNIT_TEST(test_load_items);
+        CPPUNIT_TEST(test_get_serialized);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -71,21 +70,17 @@ class HistoryTest : public CppUnit::TestCase {
          */
         void setUp();
 
-        void test_create_history_path();
+        void test_create_path();
 
-        void test_load_history_from_file();
+        void test_load_from_file();
 
-        void test_load_history_items_map();
+        void test_load_items();
 
-        void test_save_history_items_map();
+        void test_save_items();
 
-        void test_save_history_to_file();
+        void test_save_to_file();
 
-        void test_get_history_serialized();
-
-        void test_set_serialized_history();
-
-        void test_set_serialized_history_with_limit();
+        void test_get_serialized();
 
         /*
          * Code factoring - Common resources can be released here.
@@ -95,11 +90,11 @@ class HistoryTest : public CppUnit::TestCase {
 
     private:
         NON_COPYABLE(HistoryTest);
-        HistoryManager *history_;
+        History *history_;
 };
 
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HistoryTest, "HistoryTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(HistoryTest);
 
-#endif
+#endif // HISTORY_TEST_

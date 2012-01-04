@@ -48,11 +48,14 @@ const char * const HistoryItem::MISSED_STRING =         "missed";
 const char * const HistoryItem::INCOMING_STRING =       "incoming";
 const char * const HistoryItem::OUTGOING_STRING =       "outgoing";
 
-HistoryItem::HistoryItem(const std::map<std::string, std::string> &args)
+using std::map;
+using std::string;
+
+HistoryItem::HistoryItem(const map<string, string> &args)
     : entryMap_(args)
 {}
 
-HistoryItem::HistoryItem(const std::string &item, Conf::ConfigTree &historyList)
+HistoryItem::HistoryItem(const string &item, const Conf::ConfigTree &historyList)
     : entryMap_()
 {
     const char *const KEYS [] = {
@@ -75,14 +78,14 @@ void HistoryItem::save(Conf::ConfigTree &history) const
     // The section is : "[" + random integer = "]"
     std::stringstream section;
     section << rand();
-    const std::string sectionstr = section.str();
+    const string sectionstr = section.str();
 
-    typedef std::map<std::string, std::string>::const_iterator EntryIter;
+    typedef map<string, string>::const_iterator EntryIter;
     for (EntryIter iter = entryMap_.begin(); iter != entryMap_.end(); ++iter)
         history.setConfigTreeItem(sectionstr, iter->first, iter->second);
 }
 
-std::map<std::string, std::string> HistoryItem::toMap() const
+map<string, string> HistoryItem::toMap() const
 {
     return entryMap_;
 }
@@ -97,9 +100,8 @@ bool HistoryItem::hasPeerNumber() const
     return entryMap_.find(PEER_NUMBER_KEY) != entryMap_.end();
 }
 
-std::string HistoryItem::getTimestampStart() const {
-    using std::map;
-    using std::string;
+string HistoryItem::getTimestampStart() const
+{
     map<string, string>::const_iterator iter(entryMap_.find(TIMESTAMP_START_KEY));
     if (iter != entryMap_.end())
         return iter->second;

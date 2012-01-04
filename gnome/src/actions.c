@@ -190,7 +190,7 @@ sflphone_hung_up(callable_obj_t * c)
         c->_confID = NULL;
     }
 
-    // test wether the widget contain text, if not remove it
+    // test whether the widget contains text, if not remove it
     if ((im_window_get_nb_tabs() > 1) && c->_im_widget && !(IM_WIDGET(c->_im_widget)->containText))
         im_window_remove_tab(c->_im_widget);
     else
@@ -213,7 +213,7 @@ void sflphone_fill_account_list(void)
 
     if (array) {
         for (gchar **accountID = array; accountID && *accountID; accountID++) {
-            account_t * a = g_new0(account_t,1);
+            account_t * a = g_new0(account_t, 1);
             a->accountID = g_strdup(*accountID);
             a->credential_information = NULL;
             account_list_add(a);

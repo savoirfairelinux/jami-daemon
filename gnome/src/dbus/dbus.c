@@ -355,8 +355,9 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
             ERROR("DBUS: ERROR: Could not find %dth call", i);
             break;
         } else if (element->type == HIST_CALL &&
-                   g_strcmp0(element->elem.call->_recordfile, filepath) == 0)
+                   g_strcmp0(element->elem.call->_recordfile, filepath) == 0) {
             element->elem.call->_record_is_playing = FALSE;
+        }
     }
 
     update_actions();

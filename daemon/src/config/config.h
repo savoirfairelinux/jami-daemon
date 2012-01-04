@@ -104,7 +104,7 @@ class ConfigTree {
          *
          * @return array Strings of the sections
          */
-        std::list<std::string> getSections();
+        std::list<std::string> getSections() const;
 
         void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
         /**

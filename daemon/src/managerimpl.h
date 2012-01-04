@@ -51,7 +51,7 @@
 #include "audio/codecs/audiocodecfactory.h"
 
 #include "audio/mainbuffer.h"
-#include "history/historymanager.h"
+#include "history/history.h"
 #include "preferences.h"
 #include "noncopyable.h"
 
@@ -1198,7 +1198,7 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        HistoryManager history_;
+        History history_;
 
         /**
          * Instant messaging module, resposible to initiate, format, parse,

@@ -104,7 +104,7 @@ remove_from_toolbar(GtkWidget *widget)
 }
 
 static bool
-is_non_empty_string(const char *str)
+is_non_empty(const char *str)
 {
     return str && strlen(str) > 0;
 }
@@ -120,8 +120,6 @@ static void add_to_toolbar(GtkWidget *toolbar, GtkWidget *item, int pos)
 void
 update_actions()
 {
-    DEBUG("UIManager: Update action");
-
     gtk_action_set_sensitive(newCallAction_, TRUE);
     gtk_action_set_sensitive(pickUpAction_, FALSE);
     gtk_action_set_sensitive(hangUpAction_, FALSE);
@@ -268,7 +266,7 @@ update_actions()
                     if (active_calltree_tab == current_calls_tab)
                         add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     else if (active_calltree_tab == history_tab) {
-                        if (is_non_empty_string(selectedCall->_recordfile)) {
+                        if (is_non_empty(selectedCall->_recordfile)) {
                             if (selectedCall->_record_is_playing)
                                 add_to_toolbar(toolbar_, stopRecordWidget_, pos);
                             else
@@ -386,7 +384,7 @@ update_actions()
                         add_to_toolbar(toolbar_, imToolbar_, pos);
                     }
                 } else if (active_calltree_tab == history_tab) {
-                    if (is_non_empty_string(selectedConf->_recordfile)) {
+                    if (is_non_empty(selectedConf->_recordfile)) {
                         int pos = 2;
                         if (selectedConf->_record_is_playing)
                             add_to_toolbar(toolbar_, stopRecordWidget_, pos);

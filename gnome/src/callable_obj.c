@@ -194,11 +194,9 @@ callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry)
     new_call->_time_start = value ? atoi(value) : 0;
     value =  g_hash_table_lookup(entry, TIMESTAMP_STOP_KEY);
     new_call->_time_stop = value ? atoi(value) : 0;
-    value =  g_hash_table_lookup(entry, RECORDING_PATH_KEY);
-    new_call->_recordfile = g_strdup(value);
-    value =  g_hash_table_lookup(entry, CONFID_KEY);
-    new_call->_confID = g_strdup(value);
-    new_call->_historyConfID = g_strdup(value);
+    new_call->_recordfile = g_strdup(g_hash_table_lookup(entry, RECORDING_PATH_KEY));
+    new_call->_confID = g_strdup(g_hash_table_lookup(entry, CONFID_KEY));
+    new_call->_historyConfID = g_strdup(new_call->_confID);
     new_call->_record_is_playing = FALSE;
 
     return new_call;
