@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-10-12 14:55+0000\n"
 "Last-Translator: Jonas Fonseca <fonseca@diku.dk>\n"
 "Language-Team: Danish <da@li.org>\n"
@@ -565,8 +565,9 @@ msgid "days"
 msgstr "dage"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Aktiver _ringetoner"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1261,6 +1262,9 @@ msgstr ""
 #~ msgid "Bandwidth"
 #~ msgstr "Båndbredde"
 
+#~ msgid "_Echo Suppression"
+#~ msgstr "_Fjernelse af ekko"
+
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "Brugerdefinerede kommandoer ved indgående opkald med webadresse"
 
@@ -1327,9 +1331,6 @@ msgstr ""
 
 #~ msgid "Store SIP credentials as MD5 hash"
 #~ msgstr "Gem SIP-legitimationsoplysninger som _MD5-hash-værdi"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "_Fjernelse af ekko"
 
 #~ msgid "Enable STUN"
 #~ msgstr "Aktiver STUN"

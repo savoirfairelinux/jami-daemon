@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-07-15 23:42+0000\n"
 "Last-Translator: Xuacu Saturio <xuacusk8@gmail.com>\n"
 "Language-Team: Asturian <ast@li.org>\n"
@@ -566,8 +566,9 @@ msgid "days"
 msgstr "díes"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "_Activar tonos de llamada"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1250,9 +1251,8 @@ msgstr ""
 
 #, fuzzy
 #~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
 #~ msgstr ""
 #~ "Nun se puede coneutar col sirvidor SFLphone.\n"
 #~ "Compruebe qu'el daemon tea funcionando."

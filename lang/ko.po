@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-06-17 19:27+0000\n"
 "Last-Translator: Bundo <bundo@bundo.biz>\n"
 "Language-Team: Korean <ko@li.org>\n"
@@ -560,8 +560,9 @@ msgid "days"
 msgstr "일"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "착신음 가능(_E)"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1240,9 +1241,8 @@ msgstr ""
 
 #, fuzzy
 #~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
 #~ msgstr ""
 #~ "SFLphone 서버에 연결할 수 없습니다.\n"
 #~ "데몬이 실행중인지 확인하십시오."
