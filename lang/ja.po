@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-06-17 19:19+0000\n"
 "Last-Translator: Launchpad Translations Administrators <rosetta@launchpad."
 "net>\n"
@@ -564,8 +564,9 @@ msgid "days"
 msgstr "曜日"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "着信音可能"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1242,11 +1243,9 @@ msgid ""
 "Codecs not found"
 msgstr ""
 
-#, fuzzy
 #~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
 #~ msgstr ""
 #~ "SFLphoneサーバに接続できません\n"
 #~ "デーモンを確認してください。"

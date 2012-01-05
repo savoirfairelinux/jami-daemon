@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.8\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-06-17 19:33+0000\n"
 "Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -568,8 +568,9 @@ msgid "days"
 msgstr "jours"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Activer les sonneries"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1252,24 +1253,9 @@ msgid ""
 "Codecs not found"
 msgstr ""
 
-#~ msgid "_Echo Suppression"
-#~ msgstr "Suppression de l'écho"
-
-#~ msgid "Connection"
-#~ msgstr "Connexion"
-
 #~ msgid ""
-#~ "GConf error:\n"
-#~ "  %s"
-#~ msgstr ""
-#~ "Erreur GConf:\n"
-#~ "  %s"
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
 #~ msgstr ""
 #~ "Impossible de se connecter au serveur SFLphone.\n"
 #~ " Assurez-vous que le démon est lancé."
@@ -1280,11 +1266,24 @@ msgstr ""
 #~ msgid "Bandwidth"
 #~ msgstr "Bande passante"
 
+#~ msgid "_Echo Suppression"
+#~ msgstr "Suppression de l'écho"
+
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "Commandes personnalisées lors d'appels entrants avec une URL"
 
 #~ msgid "%s will be replaced with the passed URL."
 #~ msgstr "%s sera remplacé par l'URL passé en argument."
+
+#~ msgid "Connection"
+#~ msgstr "Connexion"
+
+#~ msgid ""
+#~ "GConf error:\n"
+#~ "  %s"
+#~ msgstr ""
+#~ "Erreur GConf:\n"
+#~ "  %s"
 
 #~ msgctxt "account state"
 #~ msgid "Registered"

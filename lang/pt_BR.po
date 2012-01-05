@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2011-03-04 17:18+0000\n"
 "Last-Translator: Claudio André <claudio.andre@correios.net.br>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
@@ -567,8 +567,9 @@ msgid "days"
 msgstr "dias"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Habilitar ringtones"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1267,6 +1268,9 @@ msgstr ""
 #~ msgid "Bandwidth"
 #~ msgstr "Largura de banda"
 
+#~ msgid "_Echo Suppression"
+#~ msgstr "Supressão de _Eco"
+
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "Comandos padrões de ligações recebidas com URL"
 
@@ -1616,9 +1620,6 @@ msgstr ""
 #~ "andre@correios.net.br,emmanuel.milou@savoirfairelinux.com,gl4uc0@gmail."
 #~ "com,,maxime.chambreuil@savoirfairelinux.com,ricardo.macedo@yahoo.com.br,,"
 #~ "kalibslack@gmail.com"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "Supressão de _Eco"
 
 #~ msgid "Email address"
 #~ msgstr "Endereço de e-mail"
