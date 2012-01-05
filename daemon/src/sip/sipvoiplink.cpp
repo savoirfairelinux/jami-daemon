@@ -875,7 +875,7 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
         return false;
 
     SIPCall *call = new SIPCall(id, Call::Outgoing, cp_);
-    call->setCallConfiguration(Call::IPtoIP);
+    call->setIPToIP(true);
     call->initRecFileName(to);
 
     std::string localAddress(getInterfaceAddrFromName(account->getLocalInterface()));

@@ -75,7 +75,7 @@ ManagerImpl::ManagerImpl() :
     telephoneTone_(0), audiofile_(0), speakerVolume_(0), micVolume_(0),
     audiolayerMutex_(), waitingCall_(), waitingCallMutex_(),
     nbIncomingWaitingCall_(0), path_(), callAccountMap_(),
-    callAccountMapMutex_(), callConfigMap_(), accountMap_(),
+    callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
     mainBuffer_(), conferenceMap_(), history_(new History),
     imModule_(new sfl::InstantMessaging)
 {
@@ -215,9 +215,10 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
     static const char * const SIP_SCHEME = "sip:";
     static const char * const SIPS_SCHEME = "sips:";
 
-    Call::CallConfiguration callConfig = (to_cleaned.find(SIP_SCHEME) == 0 or to_cleaned.find(SIPS_SCHEME) == 0) ? Call::IPtoIP : Call::Classic;
+    bool IPToIP = to_cleaned.find(SIP_SCHEME) == 0 or
+                  to_cleaned.find(SIPS_SCHEME) == 0;
 
-    associateConfigToCall(call_id, callConfig);
+    setIPToIPForCall(call_id, IPToIP);
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
@@ -230,7 +231,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
             detachParticipant(Call::DEFAULT_ID, current_call_id);
     }
 
-    if (callConfig == Call::IPtoIP) {
+    if (IPToIP) {
         DEBUG("Manager: Start IP2IP call");
 
         /* We need to retrieve the sip voiplink instance */
@@ -351,7 +352,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     DEBUG("Manager: Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
     dbus_.getCallManager()->callStateChanged(callId, "HUNGUP");
 
-    if (not isValidCall(callId) and not getConfigFromCall(callId) == Call::IPtoIP) {
+    if (not isValidCall(callId) and not isIPToIP(callId)) {
         ERROR("Manager: Error: Could not hang up call, call not valid");
         return;
     }
@@ -373,7 +374,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
             switchCall("");
     }
 
-    if (getConfigFromCall(callId) == Call::IPtoIP) {
+    if (isIPToIP(callId)) {
         /* Direct IP to IP call */
         try {
             SIPVoIPLink::instance()->hangup(callId);
@@ -428,7 +429,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
     std::string current_call_id(getCurrentCallId());
 
     try {
-        if (getConfigFromCall(callId) == Call::IPtoIP) {
+        if (isIPToIP(callId)) {
             /* Direct IP to IP call */
             SIPVoIPLink::instance()-> onhold(callId);
         } else {
@@ -488,7 +489,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
     bool isRec = false;
 
     /* Direct IP to IP call */
-    if (getConfigFromCall(callId) == Call::IPtoIP)
+    if (isIPToIP(callId))
         SIPVoIPLink::instance()-> offhold(callId);
     else {
         /* Classic call, attached to an account */
@@ -532,7 +533,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
         switchCall("");
 
     // Direct IP to IP call
-    if (getConfigFromCall(callId) == Call::IPtoIP)
+    if (isIPToIP(callId))
         SIPVoIPLink::instance()->transfer(callId, to);
     else {
         std::string accountid(getAccountFromCall(callId));
@@ -563,7 +564,7 @@ void ManagerImpl::transferSucceded()
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    if (getConfigFromCall(transferID) == Call::IPtoIP)
+    if (isIPToIP(transferID))
         return SIPVoIPLink::instance()->attendedTransfer(transferID, targetID);
 
     // Classic call, attached to an account
@@ -588,7 +589,7 @@ void ManagerImpl::refuseCall(const std::string& id)
 
     /* Direct IP to IP call */
 
-    if (getConfigFromCall(id) == Call::IPtoIP)
+    if (isIPToIP(id))
         SIPVoIPLink::instance()->refuse(id);
     else {
         /* Classic call, attached to an account */
@@ -1382,7 +1383,7 @@ void ManagerImpl::incomingCall(Call* call, const std::string& accountId)
     associateCallToAccount(call->getCallId(), accountId);
 
     if (accountId.empty())
-        associateConfigToCall(call->getCallId(), Call::IPtoIP);
+        setIPToIPForCall(call->getCallId(), true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
@@ -1578,7 +1579,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     }
 
     /* Direct IP to IP call */
-    if (getConfigFromCall(call_id) == Call::IPtoIP)
+    if (isIPToIP(call_id))
         SIPVoIPLink::instance()->hangup(call_id);
     else {
         const std::string account_id(getAccountFromCall(call_id));
@@ -2886,30 +2887,16 @@ void ManagerImpl::setHookSettings(const std::map<std::string, std::string>& sett
     // saveConfig();
 }
 
-bool ManagerImpl::associateConfigToCall(const std::string& callID,
-                                        Call::CallConfiguration config)
+void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)
 {
-    if (getConfigFromCall(callID) == 0) {  // nothing with the same ID
-        callConfigMap_[callID] = config;
-        DEBUG("Manager: Associate call %s with config %d", callID.c_str(), config);
-        return true;
-    } else
-        return false;
+    if (not isIPToIP(callID)) // no IPToIP calls with the same ID
+        IPToIPMap_[callID] = IPToIP;
 }
 
-Call::CallConfiguration ManagerImpl::getConfigFromCall(const std::string& callID) const
+bool ManagerImpl::isIPToIP(const std::string& callID) const
 {
-    CallConfigMap::const_iterator iter = callConfigMap_.find(callID);
-
-    if (iter == callConfigMap_.end())
-        return (Call::CallConfiguration) 0;
-    else
-        return iter->second;
-}
-
-bool ManagerImpl::removeCallConfig(const std::string& callID)
-{
-    return callConfigMap_.erase(callID);
+    std::map<std::string, bool>::const_iterator iter = IPToIPMap_.find(callID);
+    return iter != IPToIPMap_.end() and iter->second;
 }
 
 std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string& callID)

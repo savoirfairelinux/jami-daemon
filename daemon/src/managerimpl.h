@@ -82,8 +82,6 @@ typedef std::map<std::string, Account*> AccountMap;
 /** Define a type for a std::string to std::string Map inside ManagerImpl */
 typedef std::map<std::string, std::string> CallAccountMap;
 
-typedef std::map<std::string, Call::CallConfiguration> CallConfigMap;
-
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
@@ -1060,13 +1058,11 @@ class ManagerImpl {
         /** Mutex to lock the call account map (main thread + voiplink thread) */
         ost::Mutex callAccountMapMutex_;
 
-        CallConfigMap callConfigMap_;
+        std::map<std::string, bool> IPToIPMap_;
 
-        bool associateConfigToCall(const std::string& callID, Call::CallConfiguration config);
+        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
-        Call::CallConfiguration getConfigFromCall(const std::string& callID) const;
-
-        bool removeCallConfig(const std::string& callID);
+        bool isIPToIP(const std::string& callID) const;
 
         /**
          *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */

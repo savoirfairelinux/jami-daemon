@@ -47,11 +47,6 @@ class Call : public Recordable {
         static const char * const DEFAULT_ID;
 
         /**
-         * This determines if the call is a direct IP-to-IP call or a classic call, made with an existing account
-         */
-        enum CallConfiguration {Classic, IPtoIP};
-
-        /**
          * This determines if the call originated from the local user (Outgoing)
          * or from some remote peer (Incoming).
          */
@@ -193,12 +188,12 @@ class Call : public Recordable {
 
         std::string getStateStr();
 
-        void setCallConfiguration(Call::CallConfiguration callConfig) {
-            callConfig_ = callConfig;
+        void setIPToIP(bool IPToIP) {
+            isIPToIP_ = IPToIP;
         }
 
-        Call::CallConfiguration getCallConfiguration() const {
-            return callConfig_;
+        bool isIPtoIP() const {
+            return isIPToIP_;
         }
 
         /**
@@ -267,7 +262,7 @@ class Call : public Recordable {
         CallState callState_;
 
         /** Direct IP-to-IP or classic call */
-        CallConfiguration callConfig_;
+        bool isIPToIP_;
 
         /** Name of the peer */
         std::string peerName_;
