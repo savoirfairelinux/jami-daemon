@@ -76,7 +76,7 @@ ManagerImpl::ManagerImpl() :
     audiolayerMutex_(), waitingCall_(), waitingCallMutex_(),
     nbIncomingWaitingCall_(0), path_(), callAccountMap_(),
     callAccountMapMutex_(), callConfigMap_(), accountMap_(),
-    mainBuffer_(), conferenceMap_(), history_(),
+    mainBuffer_(), conferenceMap_(), history_(new History),
     imModule_(new sfl::InstantMessaging)
 {
     // initialize random generator for call id
@@ -87,6 +87,7 @@ ManagerImpl::ManagerImpl() :
 ManagerImpl::~ManagerImpl()
 {
     delete imModule_;
+    delete history_;
     delete audiofile_;
 }
 
@@ -128,7 +129,7 @@ void ManagerImpl::init(std::string config_file)
 
     audioLayerMutexUnlock();
 
-    history_.load(preferences.getHistoryLimit());
+    history_->load(preferences.getHistoryLimit());
     registerAccounts();
 }
 
@@ -2956,13 +2957,13 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
 
 std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory() const
 {
-    return history_.getSerialized();
+    return history_->getSerialized();
 }
 
 void ManagerImpl::setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history)
 {
-    history_.setSerialized(history, preferences.getHistoryLimit());
-    history_.save();
+    history_->setSerialized(history, preferences.getHistoryLimit());
+    history_->save();
 }
 
 namespace {

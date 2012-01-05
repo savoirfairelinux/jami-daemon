@@ -256,14 +256,12 @@ GHashTable* create_hashtable_from_history_entry(callable_obj_t *entry)
     const gchar *recording_path = entry->_recordfile ? entry->_recordfile : "";
 
     GHashTable *result = g_hash_table_new(NULL, g_str_equal);
+    add_to_hashtable(result, ACCOUNT_ID_KEY, account_id);
     add_to_hashtable(result, CALLID_KEY, call_id);
     add_to_hashtable(result, CONFID_KEY, conf_id);
-    add_to_hashtable(result, PEER_NUMBER_KEY, peer_number);
     add_to_hashtable(result, PEER_NAME_KEY, peer_name);
+    add_to_hashtable(result, PEER_NUMBER_KEY, peer_number);
     add_to_hashtable(result, RECORDING_PATH_KEY, recording_path);
-    add_to_hashtable(result, ACCOUNT_ID_KEY, account_id);
-    add_to_hashtable(result, TIMESTAMP_START_KEY, time_start);
-    add_to_hashtable(result, TIMESTAMP_STOP_KEY, time_stop);
     add_to_hashtable(result, STATE_KEY, history_state);
     /* These values were already allocated dynamically */
     g_hash_table_insert(result, g_strdup(TIMESTAMP_START_KEY), time_start);

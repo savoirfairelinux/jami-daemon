@@ -31,8 +31,8 @@
  */
 
 #include "historyitem.h"
-#include <sstream>
 #include <cstdlib>
+#include <istream>
 
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";
@@ -51,22 +51,24 @@ const char * const HistoryItem::OUTGOING_STRING =       "outgoing";
 using std::map;
 using std::string;
 
-HistoryItem::HistoryItem(const map<string, string> &args)
-    : entryMap_(args)
+HistoryItem::HistoryItem(const map<string, string> &args) : entryMap_(args),
+    timestampStart_(std::atol(entryMap_[TIMESTAMP_START_KEY].c_str()))
 {}
 
-HistoryItem::HistoryItem(std::istream &entry)
-    : entryMap_()
+HistoryItem::HistoryItem(std::istream &entry) : entryMap_(), timestampStart_(0)
 {
     std::string tmp;
     while (std::getline(entry, tmp, '\n')) {
         size_t pos = tmp.find('=');
         if (pos == std::string::npos)
-            return;
-        std::string key(tmp.substr(0, pos));
-        std::string val(tmp.substr(pos + 1, tmp.length() - pos - 1));
-        entryMap_[key] = val;
+            break;
+        else if (pos < tmp.length() - 1) {
+            std::string key(tmp.substr(0, pos));
+            std::string val(tmp.substr(pos + 1, tmp.length() - pos - 1));
+            entryMap_[key] = val;
+        }
     }
+    timestampStart_ = std::atol(entryMap_[TIMESTAMP_START_KEY].c_str());
 }
 
 map<string, string> HistoryItem::toMap() const
@@ -74,23 +76,14 @@ map<string, string> HistoryItem::toMap() const
     return entryMap_;
 }
 
-bool HistoryItem::youngerThan(int otherTime) const
+bool HistoryItem::youngerThan(unsigned long otherTime) const
 {
-    return std::atol(getTimestampStart().c_str()) > otherTime;
+    return timestampStart_ > otherTime;
 }
 
 bool HistoryItem::hasPeerNumber() const
 {
     return entryMap_.find(PEER_NUMBER_KEY) != entryMap_.end();
-}
-
-string HistoryItem::getTimestampStart() const
-{
-    map<string, string>::const_iterator iter(entryMap_.find(TIMESTAMP_START_KEY));
-    if (iter != entryMap_.end())
-        return iter->second;
-    else
-        return "";
 }
 
 void HistoryItem::print(std::ostream &o) const

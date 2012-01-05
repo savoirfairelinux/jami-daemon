@@ -56,14 +56,17 @@ class HistoryItem {
 
         bool hasPeerNumber() const;
 
-        bool youngerThan(int otherTime) const;
+        bool youngerThan(unsigned long otherTime) const;
 
         std::map<std::string, std::string> toMap() const;
         void print(std::ostream &o) const;
+        bool operator< (const HistoryItem &other) const {
+                return timestampStart_ > other.timestampStart_;
+        }
 
     private:
-        std::string getTimestampStart() const;
         std::map<std::string, std::string> entryMap_;
+        unsigned long timestampStart_; // cached as we use this a lot, avoids string ops
 };
 
 std::ostream& operator << (std::ostream& o, const HistoryItem& item);

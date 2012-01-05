@@ -33,6 +33,7 @@
 #include "history.h"
 #include <cerrno>
 #include <cc++/file.h>
+#include <algorithm>
 #include <ctime>
 #include "global.h"
 #include "logger.h"
@@ -54,8 +55,7 @@ namespace {
 
 History::History() :
     items_(), loaded_(false), path_("")
-{
-}
+{}
 
 void History::load(int limit)
 {
@@ -72,9 +72,10 @@ void History::load(int limit)
     loaded_ = true;
 }
 
-bool History::save() const
+bool History::save()
 {
     DEBUG("History: Saving history in XDG directory: %s", path_.c_str());
+    std::sort(items_.begin(), items_.end());
     std::ofstream outfile(path_.c_str());
     if (outfile.fail())
         return false;

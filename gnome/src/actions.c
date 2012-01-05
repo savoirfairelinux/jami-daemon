@@ -1057,33 +1057,11 @@ void sflphone_fill_history(void)
     fill_treeview_with_calls();
 }
 
-/* Ordered from highest timestamp (most recent) to lowest (oldest) */
-static gint
-history_compare_func(gconstpointer a, gconstpointer b)
-{
-    gconstpointer first_value =  g_hash_table_lookup(* (GHashTable **) a, TIMESTAMP_START_KEY);
-    gconstpointer second_value = g_hash_table_lookup(* (GHashTable **) b, TIMESTAMP_START_KEY);
-    /* treat NULL values as less than non-NULL values, like g_strcmp0 does */
-    if (!first_value)
-        return -(first_value != second_value);
-    else if (!second_value)
-        return first_value != second_value;
-
-    long f = atol(first_value);
-    long s = atol(second_value);
-    if (f > s)
-        return -1;
-    else if (f == s)
-        return 0;
-    else
-        return 1;
-}
-
 void sflphone_save_history(void)
 {
     gint size = calllist_get_size(history_tab);
 
-    GPtrArray *sorted_history = g_ptr_array_new();
+    GPtrArray *history_array = g_ptr_array_new();
     /* For each entry in our call history */
     for (gint i = 0; i < size; ++i) {
         QueueElement *current = calllist_get_nth(history_tab, i);
@@ -1095,15 +1073,14 @@ void sflphone_save_history(void)
 
         if (current->type == HIST_CALL) {
             GHashTable *value = create_hashtable_from_history_entry(current->elem.call);
-            g_ptr_array_add(sorted_history, (gpointer) value);
+            g_ptr_array_add(history_array, (gpointer) value);
         }
         else
             ERROR("SFLphone: Error: Unknown type for serialization");
     }
 
-    g_ptr_array_sort(sorted_history, history_compare_func);
-    dbus_set_history(sorted_history);
-    g_ptr_array_free(sorted_history, TRUE);
+    dbus_set_history(history_array);
+    g_ptr_array_free(history_array, TRUE);
 }
 
 void

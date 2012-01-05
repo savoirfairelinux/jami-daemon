@@ -51,7 +51,6 @@
 #include "audio/codecs/audiocodecfactory.h"
 
 #include "audio/mainbuffer.h"
-#include "history/history.h"
 #include "preferences.h"
 #include "noncopyable.h"
 
@@ -67,6 +66,7 @@ class YamlEmitter;
 class DTMF;
 class AudioFile;
 class AudioLayer;
+class History;
 class TelephoneTone;
 class VoIPLink;
 
@@ -1198,7 +1198,7 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        History history_;
+        History *history_;
 
         /**
          * Instant messaging module, resposible to initiate, format, parse,

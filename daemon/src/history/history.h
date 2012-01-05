@@ -52,7 +52,7 @@ class History {
         /**
          *@return bool True if the history has been successfully saved in the file
          */
-        bool save() const;
+        bool save();
 
         /**
          *@return bool  True if the history file has been successfully read
