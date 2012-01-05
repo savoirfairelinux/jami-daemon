@@ -143,6 +143,19 @@ class SIPAccount : public Account {
          */
         void unregisterVoIPLink();
 
+        /**
+         * Start the keep alive function, once started, the account will be registered periodically
+         * a new REGISTER request is sent bey the client application. The account must be initially
+         * registered for this call to be effective.
+         */
+        void startKeepAliveTimer();
+
+        /**
+         * Stop the keep alive timer. Once canceled, no further registration will be scheduled
+         */
+        void stopKeepAliveTimer();
+          
+
         pjsip_cred_info *getCredInfo() const {
             return cred_;
         }
@@ -175,6 +188,15 @@ class SIPAccount : public Account {
         }
 
         /**
+         * Set the expiration for this account as found in 
+         * the "Expire" sip header or the Contact "expire" param.
+         */
+        void setRegistrationExpire(int expire) {
+            if(expire > 0)
+                registrationExpire_ = expire;
+        }
+
+        /**
          * Doubles the Expiration Interval of Contact Addresses.
          */
         void doubleRegistrationExpire() {
@@ -188,10 +210,16 @@ class SIPAccount : public Account {
         bool userMatch(const std::string& username) const;
         bool hostnameMatch(const std::string& hostname) const;
 
-        /* Registration flag */
-        bool isRegister() const {
+        /** 
+         * Registration flag 
+	 */
+        bool isRegistered() const {
             return bRegister_;
         }
+
+	/**
+         * Set registration flag
+         */
         void setRegister(bool result) {
             bRegister_ = result;
         }
@@ -410,6 +438,12 @@ class SIPAccount : public Account {
             return zrtpHelloHash_;
         }
 
+        /**
+         * Timer used to periodically send re-register request based
+         * on the "Expire" sip header (or the "expire" Contact parameter)
+         */
+        static void keepAliveRegistrationCb(pj_timer_heap_t *th, pj_timer_entry *te);
+
         pjsip_transport* transport_;
     private:
         NON_COPYABLE(SIPAccount);
@@ -442,9 +476,14 @@ class SIPAccount : public Account {
          */
         static std::string getLoginName();
 
-        // The pjsip client registration information
+        /**
+         * The pjsip client registration information
+	 */
         pjsip_regc *regc_;
-        // To check if the account is registered
+
+        /**
+	 * To check if the account is registered
+         */
         bool bRegister_;
 
         // Network settings
@@ -517,6 +556,17 @@ class SIPAccount : public Account {
         * This is a protocol Code:Description pair.
         */
         std::pair<int, std::string> registrationStateDetailed_;
+       
+        /**
+         * Timer used to regularrly send re-register request based
+         * on the "Expire" sip header (or the "expire" Contact parameter)
+         */ 
+        pj_timer_entry keepAliveTimer_;
+
+        /**
+         * Delay coresponding to a registration interval
+         */
+        // pj_time_val keepAliveDelay_;
 };
 
 #endif

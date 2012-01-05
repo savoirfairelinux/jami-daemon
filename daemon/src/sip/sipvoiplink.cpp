@@ -346,6 +346,10 @@ void SIPVoIPLink::sendRegister(Account *a)
     pjsip_transport_dec_ref(account->transport_);
 
     account->setRegistrationInfo(regc);
+
+    // start the periodic registration request based on Expire header
+    // account determines itself if a keep alive is required
+    account->startKeepAliveTimer();
 }
 
 void SIPVoIPLink::sendUnregister(Account *a)
@@ -353,10 +357,13 @@ void SIPVoIPLink::sendUnregister(Account *a)
     SIPAccount *account = dynamic_cast<SIPAccount *>(a);
 
     // This may occurs if account failed to register and is in state INVALID
-    if (!account->isRegister()) {
+    if (!account->isRegistered()) {
         account->setRegistrationState(Unregistered);
         return;
     }
+
+    // Make sure to cancel any ongoing timers before unregister
+    account->stopKeepAliveTimer();
 
     pjsip_regc *regc = account->getRegistrationInfo();
 
@@ -372,6 +379,21 @@ void SIPVoIPLink::sendUnregister(Account *a)
         throw VoipLinkException("Unable to send request to unregister sip account");
 
     account->setRegister(false);
+}
+
+void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
+{
+    pj_status_t status;
+
+    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay); 
+    if(status != PJ_SUCCESS) {
+        ERROR("Could not schedule new timer in pjsip endpoint");
+    }
+}
+
+void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
+{
+    pjsip_endpt_cancel_timer(endpt_, &timer); 
 }
 
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
@@ -1599,6 +1621,8 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);
+
+        account->setRegistrationExpire(param->expiration);
     }
 
     if (param->status != PJ_SUCCESS) {
@@ -1642,7 +1666,7 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         SIPVoIPLink::instance()->shutdownSipTransport(account);
 
     } else {
-        if (account->isRegister())
+        if (account->isRegistered())
             account->setRegistrationState(Registered);
         else {
             account->setRegistrationState(Unregistered);
