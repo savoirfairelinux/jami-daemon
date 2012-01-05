@@ -79,7 +79,7 @@ class History {
 
     private:
         void setPath(const std::string &path);
-        void createPath(const std::string &path = "");
+        void ensurePath();
         /*
          * Add a new history item in the data structure
          */

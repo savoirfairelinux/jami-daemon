@@ -59,7 +59,7 @@ History::History() :
 
 void History::load(int limit)
 {
-    createPath();
+    ensurePath();
     std::ifstream infile(path_.c_str());
     if (!infile) {
         DEBUG("No history file to load");
@@ -91,9 +91,9 @@ void History::addNewEntry(const HistoryItem &item, int oldest)
         items_.push_back(item);
 }
 
-void History::createPath(const std::string &path)
+void History::ensurePath()
 {
-    if (path.empty()) {
+    if (path_.empty()) {
         string xdg_data = string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 
         string userdata;
@@ -114,8 +114,7 @@ void History::createPath(const std::string &path)
         }
         // Load user's history
         path_ = userdata + DIR_SEPARATOR_STR + "history";
-    } else
-        path_ = path;
+    }
 }
 
 
