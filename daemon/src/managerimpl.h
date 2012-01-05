@@ -907,11 +907,11 @@ class ManagerImpl {
         void initAudioDriver();
 
         void audioLayerMutexLock() {
-            audiolayerMutex_.enterMutex();
+            audioLayerMutex_.enterMutex();
         }
 
         void audioLayerMutexUnlock() {
-            audiolayerMutex_.leaveMutex();
+            audioLayerMutex_.leaveMutex();
         }
 
         /**
@@ -999,7 +999,7 @@ class ManagerImpl {
         /**
          * Mutex used to protect audio layer
          */
-        ost::Mutex audiolayerMutex_;
+        ost::Mutex audioLayerMutex_;
 
         /**
          * Waiting Call Vectors

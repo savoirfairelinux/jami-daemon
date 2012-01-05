@@ -73,7 +73,7 @@ ManagerImpl::ManagerImpl() :
     hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(), currentCallId_(),
     currentCallMutex_(), audiodriver_(0), dtmfKey_(0), toneMutex_(),
     telephoneTone_(0), audiofile_(0), speakerVolume_(0), micVolume_(0),
-    audiolayerMutex_(), waitingCall_(), waitingCallMutex_(),
+    audioLayerMutex_(), waitingCall_(), waitingCallMutex_(),
     nbIncomingWaitingCall_(0), path_(), callAccountMap_(),
     callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
     mainBuffer_(), conferenceMap_(), history_(new History),
@@ -120,14 +120,13 @@ void ManagerImpl::init(std::string config_file)
     initVolume();
     initAudioDriver();
 
-    audioLayerMutexLock();
-
-    if (audiodriver_) {
-        telephoneTone_ = new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate());
-        dtmfKey_ = new DTMF(8000);
-    }
-
-    audioLayerMutexUnlock();
+    {
+        ost::MutexLock lock(audioLayerMutex_);
+        if (audiodriver_) {
+            telephoneTone_ = new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate());
+            dtmfKey_ = new DTMF(8000);
+        }
+    } 
 
     history_->load(preferences.getHistoryLimit());
     registerAccounts();
@@ -148,12 +147,10 @@ void ManagerImpl::terminate()
     delete telephoneTone_;
     telephoneTone_ = NULL;
 
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     delete audiodriver_;
     audiodriver_ = NULL;
-
-    audioLayerMutexUnlock();
 }
 
 bool ManagerImpl::isCurrentCall(const std::string& callId) const
@@ -430,7 +427,6 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 
     try {
         if (isIPToIP(callId)) {
-            /* Direct IP to IP call */
             SIPVoIPLink::instance()-> onhold(callId);
         } else {
             /* Classic call, attached to an account */
@@ -488,9 +484,8 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
     bool isRec = false;
 
-    /* Direct IP to IP call */
     if (isIPToIP(callId))
-        SIPVoIPLink::instance()-> offhold(callId);
+        SIPVoIPLink::instance()->offhold(callId);
     else {
         /* Classic call, attached to an account */
         accountId = getAccountFromCall(callId);
@@ -582,9 +577,8 @@ void ManagerImpl::refuseCall(const std::string& id)
     stopTone();
 
     if (getCallList().size() <= 1) {
-        audioLayerMutexLock();
+        ost::MutexLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
-        audioLayerMutexUnlock();
     }
 
     /* Direct IP to IP call */
@@ -634,7 +628,6 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
 void ManagerImpl::removeConference(const std::string& conference_id)
 {
     DEBUG("Manager: Remove conference %s", conference_id.c_str());
-
     DEBUG("Manager: number of participants: %u", conferenceMap_.size());
     ConferenceMap::iterator iter = conferenceMap_.find(conference_id);
 
@@ -838,12 +831,13 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
             onHoldCall(current_call_id);
     }
 
-    audioLayerMutexLock();
+    {
+        ost::MutexLock lock(audioLayerMutex_);
 
-    ConferenceMap::const_iterator iter = conferenceMap_.find(conference_id);
+        ConferenceMap::const_iterator iter = conferenceMap_.find(conference_id);
 
-    if (iter != conferenceMap_.end()) {
-        Conference *conf = iter->second;
+        if (iter != conferenceMap_.end()) {
+            Conference *conf = iter->second;
 
         ParticipantSet participants(conf->getParticipantList());
 
@@ -864,9 +858,8 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
             WARN("Manager: Warning: Invalid conference state while adding main participant");
 
         dbus_.getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+        }
     }
-
-    audioLayerMutexUnlock();
 
     switchCall(conference_id);
 }
@@ -961,12 +954,11 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     conf->setState(Conference::ACTIVE_ATTACHED);
 
     // set recording sampling rate
-    audioLayerMutexLock();
-
-    if (audiodriver_)
-        conf->setRecordingSmplRate(audiodriver_->getSampleRate());
-
-    audioLayerMutexUnlock();
+    {
+        ost::MutexLock lock(audioLayerMutex_);
+        if (audiodriver_)
+            conf->setRecordingSmplRate(audiodriver_->getSampleRate());
+    }
 
     getMainBuffer()->stateInfo();
 }
@@ -1012,12 +1004,12 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
         conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
         dbus_.getCallManager()->conferenceCreated(conf->getConfID());
 
-        audioLayerMutexLock();
+        {
+            ost::MutexLock lock(audioLayerMutex_);
 
-        if (audiodriver_)
-            conf->setRecordingSmplRate(audiodriver_->getSampleRate());
-
-        audioLayerMutexUnlock();
+            if (audiodriver_)
+                conf->setRecordingSmplRate(audiodriver_->getSampleRate());
+        }
 
         getMainBuffer()->stateInfo();
     } else
@@ -1230,10 +1222,9 @@ void ManagerImpl::addStream(const std::string& call_id)
         // bind to main
         getMainBuffer()->bindCallID(call_id);
 
-        audioLayerMutexLock();
+        ost::MutexLock lock(audioLayerMutex_);
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
-        audioLayerMutexUnlock();
     }
 
     getMainBuffer()->stateInfo();
@@ -1303,7 +1294,7 @@ void ManagerImpl::playDtmf(char code)
         return;
     }
 
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     // numbers of int = length in milliseconds / 1000 (number of seconds)
     //                = number of seconds * SAMPLING_RATE by SECONDS
@@ -1311,7 +1302,6 @@ void ManagerImpl::playDtmf(char code)
     // fast return, no sound, so no dtmf
     if (audiodriver_ == NULL || dtmfKey_ == NULL) {
         DEBUG("Manager: playDtmf: Error no audio layer...");
-        audioLayerMutexUnlock();
         return;
     }
 
@@ -1337,8 +1327,6 @@ void ManagerImpl::playDtmf(char code)
         audiodriver_->startStream();
         audiodriver_->putUrgent(buf, size * sizeof(SFLDataFormat));
     }
-
-    audioLayerMutexUnlock();
 
     // TODO Cache the DTMF
 
@@ -1536,10 +1524,11 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     // Connect audio streams
     addStream(id);
 
-    audioLayerMutexLock();
-    audiodriver_->flushMain();
-    audiodriver_->flushUrgent();
-    audioLayerMutexUnlock();
+    {
+        ost::MutexLock lock(audioLayerMutex_);
+        audiodriver_->flushMain();
+        audiodriver_->flushUrgent();
+    }
 
     if (audioPreference.getIsAlwaysRecording()) {
         setRecordingCall(id);
@@ -1595,10 +1584,8 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     if (getCallList().empty()) {
         DEBUG("Manager: Stop audio stream, there are no calls remaining");
-
-        audioLayerMutexLock();
+        ost::MutexLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
-        audioLayerMutexUnlock();
     }
 }
 
@@ -1665,22 +1652,21 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
     if (not voipPreferences.getPlayTones())
         return;
 
-    audioLayerMutexLock();
+    {
+        ost::MutexLock lock(audioLayerMutex_);
 
-    if (audiodriver_ == NULL) {
-        ERROR("Manager: Error: Audio layer not initialized");
-        audioLayerMutexUnlock();
-        return;
+        if (audiodriver_ == NULL) {
+            ERROR("Manager: Error: Audio layer not initialized");
+            return;
+        }
+
+        audiodriver_->flushUrgent();
+        audiodriver_->startStream();
     }
 
-    audiodriver_->flushUrgent();
-    audiodriver_->startStream();
-    audioLayerMutexUnlock();
-
     if (telephoneTone_ != 0) {
-        toneMutex_.enterMutex();
+        ost::MutexLock lock(toneMutex_);
         telephoneTone_->setCurrentTone(toneId);
-        toneMutex_.leaveMutex();
     }
 }
 
@@ -1692,7 +1678,7 @@ void ManagerImpl::stopTone()
     if (not voipPreferences.getPlayTones())
         return;
 
-    toneMutex_.enterMutex();
+    ost::MutexLock lock(toneMutex_);
 
     if (telephoneTone_ != NULL)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
@@ -1703,8 +1689,6 @@ void ManagerImpl::stopTone()
         delete audiofile_;
         audiofile_ = NULL;
     }
-
-    toneMutex_.leaveMutex();
 }
 
 /**
@@ -1765,17 +1749,17 @@ void ManagerImpl::ringtone(const std::string& accountID)
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
     }
 
-    audioLayerMutexLock();
+    int samplerate;
+    {
+        ost::MutexLock lock(audioLayerMutex_);
 
-    if (!audiodriver_) {
-        ERROR("Manager: Error: no audio layer in ringtone");
-        audioLayerMutexUnlock();
-        return;
+        if (!audiodriver_) {
+            ERROR("Manager: Error: no audio layer in ringtone");
+            return;
+        }
+
+        samplerate = audiodriver_->getSampleRate();
     }
-
-    int samplerate = audiodriver_->getSampleRate();
-
-    audioLayerMutexUnlock();
 
     {
         ost::MutexLock m(toneMutex_);
@@ -1804,10 +1788,9 @@ void ManagerImpl::ringtone(const std::string& accountID)
         }
     } // leave mutex
 
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
     // start audio if not started AND flush all buffers (main and urgent)
     audiodriver_->startStream();
-    audioLayerMutexUnlock();
 }
 
 AudioLoop*
@@ -1847,7 +1830,7 @@ std::string ManagerImpl::getConfigFile() const
     }
 
     if (mkdir(configdir.data(), 0700) != 0) {
-        // If directory	creation failed
+        // If directory creation failed
         if (errno != EEXIST)
             DEBUG("Cannot create directory: %m");
     }
@@ -1903,7 +1886,7 @@ std::string ManagerImpl::getCurrentCodecName(const std::string& id)
  */
 void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 {
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     audioPreference.setPlugin(audioPlugin);
 
@@ -1911,8 +1894,7 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 
     if (!alsa) {
         ERROR("Can't find alsa device");
-        audioLayerMutexUnlock();
-        return ;
+        return;
     }
 
     bool wasStarted = audiodriver_->isStarted();
@@ -1923,8 +1905,6 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 
     if (wasStarted)
         audiodriver_->startStream();
-
-    audioLayerMutexUnlock();
 }
 
 /**
@@ -1932,13 +1912,12 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
  */
 void ManagerImpl::setAudioDevice(const int index, int streamType)
 {
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     AlsaLayer *alsaLayer = dynamic_cast<AlsaLayer*>(audiodriver_);
 
     if (!alsaLayer) {
         ERROR("Can't find alsa device");
-        audioLayerMutexUnlock();
         return ;
     }
 
@@ -1964,8 +1943,6 @@ void ManagerImpl::setAudioDevice(const int index, int streamType)
 
     if (wasStarted)
         audiodriver_->startStream();
-
-    audioLayerMutexUnlock();
 }
 
 /**
@@ -1975,14 +1952,12 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
 {
     std::vector<std::string> devices;
 
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(audiodriver_);
 
     if (alsalayer)
         devices = alsalayer->getSoundCardsInfo(SFL_PCM_PLAYBACK);
-
-    audioLayerMutexUnlock();
 
     return devices;
 }
@@ -1995,14 +1970,12 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
 {
     std::vector<std::string> devices;
 
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
 
     if (alsalayer)
         devices = alsalayer->getSoundCardsInfo(SFL_PCM_CAPTURE);
-
-    audioLayerMutexUnlock();
 
     return devices;
 }
@@ -2012,7 +1985,7 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
  */
 std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
 {
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     std::vector<std::string> v;
 
@@ -2027,8 +2000,6 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
         ssr << alsa->getIndexRing();
         v.push_back(ssr.str());
     }
-
-    audioLayerMutexUnlock();
 
     return v;
 }
@@ -2119,18 +2090,18 @@ bool ManagerImpl::isRecording(const std::string& id)
 bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 {
     DEBUG("Manager: Start recorded file playback %s", filepath.c_str());
+    
+    int sampleRate;
+    {
+        ost::MutexLock lock(audioLayerMutex_);
 
-    audioLayerMutexLock();
+        if (!audiodriver_) {
+            ERROR("Manager: Error: No audio layer in start recorded file playback");
+            return false;
+        }
 
-    if (!audiodriver_) {
-        ERROR("Manager: Error: No audio layer in start recorded file playback");
-        audioLayerMutexUnlock();
-        return false;
+        sampleRate = audiodriver_->getSampleRate();
     }
-
-    int sampleRate = audiodriver_->getSampleRate();
-
-    audioLayerMutexUnlock();
 
     {
         ost::MutexLock m(toneMutex_);
@@ -2148,9 +2119,8 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         }
     } // release toneMutex
 
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
     audiodriver_->startStream();
-    audioLayerMutexUnlock();
 
     return true;
 }
@@ -2160,9 +2130,10 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 {
     DEBUG("Manager: Stop recorded file playback %s", filepath.c_str());
 
-    audioLayerMutexLock();
-    audiodriver_->stopStream();
-    audioLayerMutexUnlock();
+    {
+        ost::MutexLock lock(audioLayerMutex_);
+        audiodriver_->stopStream();
+    }
 
     {
         ost::MutexLock m(toneMutex_);
@@ -2197,20 +2168,17 @@ void ManagerImpl::setMailNotify()
 
 void ManagerImpl::setAudioManager(const std::string &api)
 {
-    audioLayerMutexLock();
+    {
+        ost::MutexLock lock(audioLayerMutex_);
 
-    if (!audiodriver_) {
-        audioLayerMutexUnlock();
-        return;
+        if (!audiodriver_)
+            return;
+
+        if (api == audioPreference.getAudioApi()) {
+            DEBUG("Manager: Audio manager chosen already in use. No changes made. ");
+            return;
+        }
     }
-
-    if (api == audioPreference.getAudioApi()) {
-        DEBUG("Manager: Audio manager chosen already in use. No changes made. ");
-        audioLayerMutexUnlock();
-        return;
-    }
-
-    audioLayerMutexUnlock();
 
     switchAudioManager();
 
@@ -2227,11 +2195,10 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
 {
     int soundCardIndex = 0;
 
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     if (audiodriver_ == NULL) {
         ERROR("Manager: Error: Audio layer not initialized");
-        audioLayerMutexUnlock();
         return soundCardIndex;
     }
 
@@ -2239,8 +2206,6 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
 
     if (alsalayer)
         soundCardIndex = alsalayer -> soundCardGetIndex(name);
-
-    audioLayerMutexUnlock();
 
     return soundCardIndex;
 }
@@ -2296,15 +2261,13 @@ void ManagerImpl::setEchoCancelDelay(int delay)
  */
 void ManagerImpl::initAudioDriver()
 {
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
     audiodriver_ = audioPreference.createAudioLayer();
-
-    audioLayerMutexUnlock();
 }
 
 void ManagerImpl::switchAudioManager()
 {
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     bool wasStarted = audiodriver_->isStarted();
     delete audiodriver_;
@@ -2312,17 +2275,14 @@ void ManagerImpl::switchAudioManager()
 
     if (wasStarted)
         audiodriver_->startStream();
-
-    audioLayerMutexUnlock();
 }
 
 void ManagerImpl::audioSamplingRateChanged(int samplerate)
 {
-    audioLayerMutexLock();
+    ost::MutexLock lock(audioLayerMutex_);
 
     if (!audiodriver_) {
         DEBUG("Manager: No Audio driver initialized");
-        audioLayerMutexUnlock();
         return;
     }
 
@@ -2331,7 +2291,6 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     if (currentSamplerate >= samplerate) {
         DEBUG("Manager: No need to update audio layer sampling rate");
-        audioLayerMutexUnlock();
         return;
     } else
         DEBUG("Manager: Audio sampling rate changed: %d -> %d", currentSamplerate, samplerate);
@@ -2353,8 +2312,6 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     if (wasActive)
         audiodriver_->startStream();
-
-    audioLayerMutexUnlock();
 }
 
 /**
@@ -2382,7 +2339,6 @@ int ManagerImpl::getLocalIp2IpPort() const
     return preferences.getPortNum();
 }
 
-
 //THREAD=Main
 bool ManagerImpl::getConfig(const std::string& section,
                             const std::string& name, TokenList& arg) const
@@ -2391,7 +2347,6 @@ bool ManagerImpl::getConfig(const std::string& section,
 }
 
 //THREAD=Main
-// throw an Conf::ConfigTreeItemException if not found
 int ManagerImpl::getConfigInt(const std::string& section,
                               const std::string& name) const
 {
@@ -2568,13 +2523,12 @@ std::string ManagerImpl::addAccount(const std::map<std::string, std::string>& de
     // Add the newly created account in the account order list
     std::string accountList(preferences.getAccountOrder());
 
+    newAccountID += "/";
     if (not accountList.empty()) {
-        newAccountID += "/";
         // Prepend the new account
         accountList.insert(0, newAccountID);
         preferences.setAccountOrder(accountList);
     } else {
-        newAccountID += "/";
         accountList = newAccountID;
         preferences.setAccountOrder(accountList);
     }
@@ -2639,12 +2593,10 @@ void ManagerImpl::removeCallAccount(const std::string& callID)
 
     // Stop audio layer if there is no call anymore
     if (callAccountMap_.empty()) {
-        audioLayerMutexLock();
+        ost::MutexLock lock(audioLayerMutex_);
 
         if (audiodriver_)
             audiodriver_->stopStream();
-
-        audioLayerMutexUnlock();
     }
 
 }
@@ -2840,11 +2792,6 @@ void ManagerImpl::setAddressbookSettings(const std::map<std::string, int32_t>& s
     addressbookPreference.setBusiness(settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")->second == 1);
     addressbookPreference.setHone(settings.find("ADDRESSBOOK_DISPLAY_PHONE_HOME")->second == 1);
     addressbookPreference.setMobile(settings.find("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")->second == 1);
-
-    // Write it to the configuration file
-    // TODO save config is called for updateAddressbookSettings, updateHookSettings, setHistoryLimit each called
-    // when closing preference window (in this order)
-    // saveConfig();
 }
 
 void ManagerImpl::setAddressbookList(const std::vector<std::string>& list)
@@ -2880,11 +2827,6 @@ void ManagerImpl::setHookSettings(const std::map<std::string, std::string>& sett
     hookPreference.setSipEnabled(settings.find("URLHOOK_SIP_ENABLED")->second == "true");
     hookPreference.setUrlCommand(settings.find("URLHOOK_COMMAND")->second);
     hookPreference.setUrlSipField(settings.find("URLHOOK_SIP_FIELD")->second);
-
-    // Write it to the configuration file
-    // TODO save config is called for updateAddressbookSettings, updateHookSettings, setHistoryLimit each called
-    // when closing preference window (in this order)
-    // saveConfig();
 }
 
 void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)
@@ -2993,7 +2935,6 @@ std::vector<std::string> ManagerImpl::getConferenceList() const
 std::vector<std::string> ManagerImpl::getParticipantList(const std::string& confID) const
 {
     std::vector<std::string> v;
-
     ConferenceMap::const_iterator iter_conf = conferenceMap_.find(confID);
 
     if (iter_conf != conferenceMap_.end()) {
