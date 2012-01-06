@@ -152,32 +152,37 @@ preferences_dialog_fill_ringtone_audio_device_list()
 void
 select_active_output_audio_device()
 {
-    if (must_show_alsa_conf()) {
-        // Select active output device on server
-        gchar **devices = dbus_get_current_audio_devices_index();
-        int currentDeviceIndex = atoi(devices[0]);
-        DEBUG("audio device index for output = %d", currentDeviceIndex);
-        GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
+    gboolean show_alsa = must_show_alsa_conf();
 
-        // Find the currently set output device
-        GtkTreeIter iter;
-        gtk_tree_model_get_iter_first(model, &iter);
+    if(!show_alsa)
+        return;
 
-        do {
-            int deviceIndex;
-            gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+    // Select active output device on server
+    gchar **devices = dbus_get_current_audio_devices_index();
+    
 
-            if (deviceIndex == currentDeviceIndex) {
-                // Set current iteration the active one
-                gtk_combo_box_set_active_iter(GTK_COMBO_BOX(output), &iter);
-                return;
-            }
-        } while (gtk_tree_model_iter_next(model, &iter));
+    int currentDeviceIndex = atoi(devices[0]);
+    DEBUG("audio device index for output = %d", currentDeviceIndex);
+    GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
 
-        // No index was found, select first one
-        WARN("Warning : No active output device found");
-        gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
-    }
+    // Find the currently set output device
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    do {
+        int deviceIndex;
+        gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+
+        if (deviceIndex == currentDeviceIndex) {
+            // Set current iteration the active one
+            gtk_combo_box_set_active_iter(GTK_COMBO_BOX(output), &iter);
+            return;
+        }
+    } while (gtk_tree_model_iter_next(model, &iter));
+
+    // No index was found, select first one
+    WARN("Warning : No active output device found");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
 }
 
 

@@ -1978,8 +1978,7 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
     AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(audiodriver_);
 
     if (alsalayer)
-        devices = alsalayer->getSoundCardsInfo(SFL_PCM_PLAYBACK);
-
+        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_PLAYBACK);
     audioLayerMutexUnlock();
 
     return devices;
@@ -1998,7 +1997,7 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
     AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
 
     if (alsalayer)
-        devices = alsalayer->getSoundCardsInfo(SFL_PCM_CAPTURE);
+        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_CAPTURE);
 
     audioLayerMutexUnlock();
 
@@ -2018,11 +2017,11 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
 
     if (alsa) {
         std::stringstream ssi, sso, ssr;
-        sso << alsa->getIndexOut();
+        sso << alsa->getIndexPlayback();
         v.push_back(sso.str());
-        ssi << alsa->getIndexIn();
+        ssi << alsa->getIndexCapture();
         v.push_back(ssi.str());
-        ssr << alsa->getIndexRing();
+        ssr << alsa->getIndexRingtone();
         v.push_back(ssr.str());
     }
 
@@ -2236,7 +2235,7 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
     AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
 
     if (alsalayer)
-        soundCardIndex = alsalayer -> soundCardGetIndex(name);
+        soundCardIndex = alsalayer -> getAudioDeviceIndex(name);
 
     audioLayerMutexUnlock();
 

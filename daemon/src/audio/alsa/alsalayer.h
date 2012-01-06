@@ -65,14 +65,14 @@ class AlsaLayer : public AudioLayer {
          * The playback starts accordingly to its threshold
          * ALSA Library API
          */
-        void startStream();
+        virtual void startStream();
 
         /**
          * Stop the playback and capture streams.
          * Drops the pending frames and put the capture and playback handles to PREPARED state
          * ALSA Library API
          */
-        void stopStream();
+        virtual void stopStream();
 
         /**
          * Concatenate two strings. Used to build a valid pcm device name.
@@ -90,7 +90,12 @@ class AlsaLayer : public AudioLayer {
          *		   SFL_PCM_BOTH
          * @return std::vector<std::string> The vector containing the string description of the card
          */
-        std::vector<std::string> getSoundCardsInfo(int stream);
+        virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const;
+
+        /**
+         * Returns a map of audio device hardware description and index
+         */
+        std::vector<HwIDPair> getAudioDeviceIndexMap(AudioStreamDirection dir) const;
 
         /**
          * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
@@ -109,7 +114,7 @@ class AlsaLayer : public AudioLayer {
          * @param description The string description
          * @return	int	  Its index
          */
-        int soundCardGetIndex(const std::string &description);
+        int getAudioDeviceIndex(const std::string &description) const;
 
         void playback(int maxSamples);
         void capture();
@@ -121,7 +126,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for capture
          *                     0 for the first available card on the system, 1 ...
          */
-        int getIndexIn() const {
+        int getIndexCapture() const {
             return indexIn_;
         }
 
@@ -130,7 +135,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for playback
          *                     0 for the first available card on the system, 1 ...
          */
-        int getIndexOut() const {
+        int getIndexPlayback() const {
             return indexOut_;
         }
 
@@ -139,7 +144,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for ringtone
          *                 0 for the first available card on the system, 1 ...
          */
-        int getIndexRing() const {
+        int getIndexRingtone() const {
             return indexRing_;
         }
 
@@ -227,7 +232,7 @@ class AlsaLayer : public AudioLayer {
         std::string audioPlugin_;
 
         /** Vector to manage all soundcard index - description association of the system */
-        std::vector<HwIDPair> IDSoundCards_;
+        // std::vector<HwIDPair> IDSoundCards_;
 
         bool is_playback_prepared_;
         bool is_capture_prepared_;
