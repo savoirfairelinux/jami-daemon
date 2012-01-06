@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-11-04 21:45+0000\n"
 "Last-Translator: Maxime Chambreuil (http://www.savoirfairelinux.com) <maxime."
 "chambreuil@savoirfairelinux.com>\n"
@@ -568,8 +568,9 @@ msgid "days"
 msgstr "giorni"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Abilita suonerie"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1261,6 +1262,15 @@ msgstr ""
 #~ msgid "Bandwidth"
 #~ msgstr "Banda"
 
+#~ msgid "_Echo Suppression"
+#~ msgstr "Soppressione _Eco"
+
+#~ msgid "Custom commands on incoming calls with URL"
+#~ msgstr "Comandi personalizzati su chiamate entranti con URL"
+
+#~ msgid "%s will be replaced with the passed URL."
+#~ msgstr "%s verrà sostituito con la URL passata."
+
 #~ msgid "Codec"
 #~ msgstr "Codec"
 
@@ -1438,15 +1448,6 @@ msgstr ""
 #~ ",,,maxime.chambreuil@gmail.com,,,,maxime.chambreuil@gmail.com,,,,maxime."
 #~ "chambreuil@gmail.com,,,,maxime.chambreuil@gmail.com,milo@casagrande."
 #~ "name,,,,maxime.chambreuil@savoirfairelinux.com,milo@casagrande.name,"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "Soppressione _Eco"
-
-#~ msgid "Custom commands on incoming calls with URL"
-#~ msgstr "Comandi personalizzati su chiamate entranti con URL"
-
-#~ msgid "%s will be replaced with the passed URL."
-#~ msgstr "%s verrà sostituito con la URL passata."
 
 #~ msgctxt "account state"
 #~ msgid "Registered"

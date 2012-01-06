@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2011-03-20 19:51+0000\n"
 "Last-Translator: Felix Braun <Unknown>\n"
 "Language-Team: SavoirFaire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -566,8 +566,9 @@ msgid "days"
 msgstr "Tage"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Klingeltöne aktivieren"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1256,6 +1257,9 @@ msgstr ""
 #~ msgid "Bandwidth"
 #~ msgstr "Bandbreite"
 
+#~ msgid "_Echo Suppression"
+#~ msgstr "Echounterdrückung"
+
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "Eigene Befehle bei eingehenden Anrufen mit URL"
 
@@ -1577,9 +1581,6 @@ msgstr ""
 #~ "sven.werlen@gmail.com,,,,emmanuel.milou@savoirfairelinux.com,,,,"
 #~ "nobodythere@gmail.com,,maxime.chambreuil@savoirfairelinux.com,"
 #~ "Bananeweizen@gmx.de,,,"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "Echounterdrückung"
 
 #~ msgctxt "account state"
 #~ msgid "Registered"

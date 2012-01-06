@@ -38,6 +38,7 @@
 #include <sstream>
 #include <cassert>
 
+
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID, "SIP")
     , transport_(NULL)
@@ -82,6 +83,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , zrtpHelloHash_(true)
     , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
+    , keepAliveTimer_()
 {
     link_ = SIPVoIPLink::instance();
 }
@@ -234,9 +236,9 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
         delete node->getValue(REALM);
         delete node;
     }
+
+    
 }
-
-
 
 void SIPAccount::unserialize(Conf::MappingNode *map)
 {
@@ -567,6 +569,31 @@ void SIPAccount::unregisterVoIPLink()
     }
 }
 
+void SIPAccount::startKeepAliveTimer() {
+    pj_time_val keepAliveDelay_;
+
+    if (isTlsEnabled())
+        return;
+
+    keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
+    keepAliveTimer_.user_data = (void *)this; 
+
+    // expiration may no be determined when during the first registration request
+    if(registrationExpire_ == 0) {
+        keepAliveDelay_.sec = 60;
+    }
+    else {
+        keepAliveDelay_.sec = registrationExpire_;
+    }
+    keepAliveDelay_.msec = 0;
+ 
+    reinterpret_cast<SIPVoIPLink *>(link_)->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_); 
+}
+
+void SIPAccount::stopKeepAliveTimer() {
+     reinterpret_cast<SIPVoIPLink *>(link_)->cancelKeepAliveTimer(keepAliveTimer_); 
+}
+
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 {
     if (method == "Default")
@@ -745,6 +772,25 @@ std::string SIPAccount::getContactHeader(const std::string& address, const std::
            address + ":" + port + transport + ">";
 }
 
+void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te) 
+{
+   SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
+
+   if (sipAccount->isTlsEnabled())
+       return;
+
+   if(sipAccount->isRegistered()) {
+
+       // send a new register request
+       sipAccount->registerVoIPLink();
+
+       // make sure the current timer is deactivated   
+       sipAccount->stopKeepAliveTimer(); 
+
+       // register a new timer
+       sipAccount->startKeepAliveTimer(); 
+   }
+}
 
 namespace {
 std::string computeMd5HashFromCredential(

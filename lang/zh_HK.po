@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2011-03-08 13:53+0000\n"
 "Last-Translator: 英华 <wantinghard@gmail.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -559,8 +559,9 @@ msgid "days"
 msgstr "天"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "启用铃声"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1242,6 +1243,9 @@ msgstr ""
 #~ msgid "Bandwidth"
 #~ msgstr "带宽"
 
+#~ msgid "_Echo Suppression"
+#~ msgstr "回声抑制(_E)"
+
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "定制对带有URL的来电的处理"
 
@@ -1812,9 +1816,6 @@ msgstr ""
 #~ "wzssyqa@gmail.com,rainofchaos@gmail.com,wantinghard@gmail.com,,,happyaron."
 #~ "xu@gmail.com,emmanuel.milou@savoirfairelinux.com,,wzssyqa@gmail.com,"
 #~ "rainofchaos@gmail.com,wantinghard@gmail.com"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "回声抑制(_E)"
 
 #~ msgid "Email address"
 #~ msgstr "邮件地址"

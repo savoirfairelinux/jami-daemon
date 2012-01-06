@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-07-01 20:28+0000\n"
 "Last-Translator: DMG <Unknown>\n"
 "Language-Team: Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -570,8 +570,9 @@ msgid "days"
 msgstr "дней"
 
 #: ../gnome/src/config/preferencesdialog.c:253
+#, fuzzy
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Задействовать мелодии вызова"
 
 #: ../gnome/src/config/preferencesdialog.c:257
 #, fuzzy
@@ -1268,6 +1269,9 @@ msgstr ""
 #~ msgid "Bandwidth"
 #~ msgstr "Полоса пропускания"
 
+#~ msgid "_Echo Suppression"
+#~ msgstr "Борьба с _эхо"
+
 #~ msgid "Custom commands on incoming calls with URL"
 #~ msgstr "Пользовательская команда при входящих вызовах с URL"
 
@@ -1583,9 +1587,6 @@ msgstr ""
 #~ "emmanuel.milou@savoirfairelinux.com,,,,maxime.chambreuil@gmail.com,,,,,,"
 #~ "emmanuel.milou@savoirfairelinux.com,,,,maxime.chambreuil@savoirfairelinux."
 #~ "com,,sedov@webmail.perm.ru"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "Борьба с _эхо"
 
 #~ msgid "Email address"
 #~ msgstr "Адрес эл. почты"

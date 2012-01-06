@@ -65,7 +65,6 @@ void stream_moved_callback(pa_stream *s, void *userdata UNUSED)
 
 } // end anonymous namespace
 
-
 PulseLayer::PulseLayer()
     : playback_(0)
     , record_(0)
@@ -148,6 +147,7 @@ void PulseLayer::context_state_callback(pa_context* c, void* user_data)
                                  PA_SUBSCRIPTION_MASK_SOURCE), NULL, pulse);
             pa_context_set_subscribe_callback(c, context_changed_callback, pulse);
             pulse->updateSinkList();
+            pulse->updateSourceList();
             break;
 
         case PA_CONTEXT_TERMINATED:
@@ -187,30 +187,40 @@ bool PulseLayer::inSourceList(const std::string &deviceName) const
     return std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
 }
 
+std::vector<std::string> PulseLayer::getAudioDeviceList(AudioStreamDirection dir) const 
+{
+    if(AUDIO_STREAM_CAPTURE == dir) {
+        return sinkList_;
+    }
+    if(AUDIO_STREAM_PLAYBACK) {
+        return sourceList_;
+    }
+}
 
 void PulseLayer::createStreams(pa_context* c)
 {
     std::string playbackDevice(audioPref.getDevicePlayback());
-    std::string recordDevice(audioPref.getDeviceRecord());
+    std::string captureDevice(audioPref.getDeviceRecord());
     std::string ringtoneDevice(audioPref.getDeviceRingtone());
+    std::string defaultDevice = "";
 
-    DEBUG("PulseAudio: Devices: playback %s , record %s , ringtone %s",
-           playbackDevice.c_str(), recordDevice.c_str(), ringtoneDevice.c_str());
+    DEBUG("PulseAudio: Devices:\n   playback: %s\n   record: %s\n   ringtone: %s",
+           playbackDevice.c_str(), captureDevice.c_str(), ringtoneDevice.c_str());
 
     playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, audioSampleRate_,
-                                inSinkList(playbackDevice) ? &playbackDevice : NULL);
+                                inSourceList(playbackDevice) ? playbackDevice : defaultDevice);
 
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback(playback_->pulseStream(), stream_moved_callback, this);
 
     record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, audioSampleRate_,
-                              inSourceList(recordDevice) ? &recordDevice : NULL);
+                              inSinkList(captureDevice) ? captureDevice : defaultDevice);
 
     pa_stream_set_read_callback(record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback(record_->pulseStream(), stream_moved_callback, this);
 
     ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, audioSampleRate_,
-                                inSourceList(ringtoneDevice) ? &ringtoneDevice : NULL);
+                                inSourceList(ringtoneDevice) ? ringtoneDevice : defaultDevice);
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone_->pulseStream(), stream_moved_callback, this);
@@ -512,7 +522,7 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
-    if (!eol)
+    if (eol)
         return;
 
     DEBUG("Sink %u\n"

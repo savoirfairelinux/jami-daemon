@@ -31,7 +31,7 @@
 #include <audiostream.h>
 #include "pulselayer.h"
 
-AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string *deviceName)
+AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string& deviceName)
     : audiostream_(0), mainloop_(m)
 {
     static const pa_channel_map channel_map = {
@@ -62,14 +62,14 @@ AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *des
     attributes.fragsize = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
     attributes.minreq = (uint32_t) -1;
 
-    const char *name = deviceName ? deviceName->c_str() : NULL;
-
     pa_threaded_mainloop_lock(mainloop_);
 
     if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM)
-        pa_stream_connect_playback(audiostream_, name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+        pa_stream_connect_playback(audiostream_, deviceName == "" ? NULL : deviceName.c_str(), &attributes, 
+		(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
     else if (type == CAPTURE_STREAM)
-        pa_stream_connect_record(audiostream_, name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+        pa_stream_connect_record(audiostream_, deviceName == "" ? NULL : deviceName.c_str(), &attributes, 
+		(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
 
     pa_threaded_mainloop_unlock(mainloop_);
 

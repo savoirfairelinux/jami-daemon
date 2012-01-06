@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
 "PO-Revision-Date: 2010-11-06 13:49+0000\n"
 "Last-Translator: Sebastian Bujwid <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -1225,12 +1225,15 @@ msgstr ""
 
 #, fuzzy
 #~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
+#~ "Unable to connect to the SFLphone server.\n"
+#~ "Make sure the daemon is running."
 #~ msgstr ""
 #~ "Nie można połączyć się z serwerem SFLphone.\n"
 #~ "Upewnij się, że został uruchomiony daemon SFLphone"
+
+#, fuzzy
+#~ msgid "Codecs"
+#~ msgstr "Kodek"
 
 #~ msgctxt "account state"
 #~ msgid "Registered"
@@ -1238,9 +1241,6 @@ msgstr ""
 
 #~ msgid "IP call - %s"
 #~ msgstr "Telefonów IP - %s"
-
-#~ msgid "Codec"
-#~ msgstr "Kodek"
 
 #~ msgctxt "NAME OF TRANSLATORS"
 #~ msgid "Your names"
