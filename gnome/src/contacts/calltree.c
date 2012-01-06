@@ -211,7 +211,7 @@ row_activated(GtkTreeView *tree_view UNUSED,
                 }
             } else {
                 // If history or contact: double click action places a new call
-                callable_obj_t* new_call = create_new_call(CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_peer_name, selectedCall->_peer_number);
+                callable_obj_t* new_call = create_new_call(CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_display_name, selectedCall->_peer_number);
 
                 calllist_add_call(current_calls_tab, new_call);
                 calltree_add_call(current_calls_tab, new_call, NULL);
@@ -351,8 +351,8 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, con
     // Different display depending on type
     const gchar *name, *details = NULL;
 
-    if (*c->_peer_name) {
-        name = c->_peer_name;
+    if (*c->_display_name) {
+        name = c->_display_name;
         details = display_number;
     } else {
         name = display_number;

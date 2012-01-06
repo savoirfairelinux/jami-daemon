@@ -73,13 +73,13 @@ incoming_call_cb(DBusGProxy *proxy UNUSED, const gchar* accountID,
                  const gchar* callID, const gchar* from, void * foo  UNUSED)
 {
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
-    gchar *peer_name = call_get_peer_name(from);
+    gchar *display_name = call_get_display_name(from);
     gchar *peer_number = call_get_peer_number(from);
 
-    callable_obj_t *c = create_new_call(CALL, CALL_STATE_INCOMING, callID, accountID, peer_name, peer_number);
+    callable_obj_t *c = create_new_call(CALL, CALL_STATE_INCOMING, callID, accountID, display_name, peer_number);
 
     g_free(peer_number);
-    g_free(peer_name);
+    g_free(display_name);
 
     status_tray_icon_blink(TRUE);
     popup_main_window();
@@ -1956,20 +1956,6 @@ dbus_get_history(void)
     }
 
     return entries;
-}
-
-void
-dbus_set_history(const GPtrArray *entries)
-{
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_ConfigurationManager_set_history(
-        configurationManagerProxy, entries, &error);
-
-    if (error) {
-        ERROR("Error calling org_sflphone_SFLphone_ConfigurationlManager_set_history");
-        g_error_free(error);
-    }
 }
 
 void

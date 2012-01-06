@@ -374,13 +374,18 @@ void ManagerImpl::hangupCall(const std::string& callId)
     if (isIPToIP(callId)) {
         /* Direct IP to IP call */
         try {
+            Call * call = SIPVoIPLink::instance()->getCall(callId);
+            history_->addCall(call, preferences.getHistoryLimit());
             SIPVoIPLink::instance()->hangup(callId);
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
         }
     } else {
         std::string accountId(getAccountFromCall(callId));
-        getAccountLink(accountId)->hangup(callId);
+        VoIPLink *link = getAccountLink(accountId);
+        Call * call = link->getCall(callId);
+        history_->addCall(call, preferences.getHistoryLimit());
+        link->hangup(callId);
         removeCallAccount(callId);
     }
 
@@ -524,19 +529,21 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
         removeParticipant(callId);
         Conference *conf = getConferenceFromCallID(callId);
         processRemainingParticipants(callId, conf);
-    } else if (not isConference(getCurrentCallId()))
+    } else if (not isConference(getCurrentCallId())) {
         switchCall("");
+    }
 
     // Direct IP to IP call
-    if (isIPToIP(callId))
+    if (isIPToIP(callId)) {
         SIPVoIPLink::instance()->transfer(callId, to);
-    else {
-        std::string accountid(getAccountFromCall(callId));
+    } else {
+        std::string accountID(getAccountFromCall(callId));
 
-        if (accountid.empty())
+        if (accountID.empty())
             return false;
 
-        getAccountLink(accountid)->transfer(callId, to);
+        VoIPLink *link = getAccountLink(accountID);
+        link->transfer(callId, to);
     }
 
     // remove waiting call in case we make transfer without even answer
@@ -1384,13 +1391,13 @@ void ManagerImpl::incomingCall(Call* call, const std::string& accountId)
     }
 
     if (not hasCurrentCall()) {
-        call->setConnectionState(Call::Ringing);
+        call->setConnectionState(Call::RINGING);
         ringtone(accountId);
     }
 
     addWaitingCall(call->getCallId());
 
-    std::string from(call->getPeerName());
+    std::string from(call->getDisplayName());
     std::string number(call->getPeerNumber());
 
     if (not from.empty() and not number.empty())
@@ -1568,11 +1575,17 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     }
 
     /* Direct IP to IP call */
-    if (isIPToIP(call_id))
+    if (isIPToIP(call_id)) {
+        Call * call = SIPVoIPLink::instance()->getCall(call_id);
+        history_->addCall(call, preferences.getHistoryLimit());
         SIPVoIPLink::instance()->hangup(call_id);
+    }
     else {
         const std::string account_id(getAccountFromCall(call_id));
-        getAccountLink(account_id)->peerHungup(call_id);
+        VoIPLink *link = getAccountLink(account_id);
+        Call * call = link->getCall(call_id);
+        history_->addCall(call, preferences.getHistoryLimit());
+        link->peerHungup(call_id);
     }
 
     /* Broadcast a signal over DBus */
@@ -1874,7 +1887,7 @@ std::string ManagerImpl::getCurrentCodecName(const std::string& id)
     if (call) {
         Call::CallState state = call->getState();
 
-        if (state == Call::Active or state == Call::Conferencing)
+        if (state == Call::ACTIVE or state == Call::CONFERENCING)
             codecName = link->getCurrentCodecName(call);
     }
 
@@ -2077,7 +2090,7 @@ void ManagerImpl::setRecordingCall(const std::string& id)
     }
 
     rec->setRecording();
-    dbus_.getCallManager()->recordPlaybackFilepath(id, rec->getFileName());
+    dbus_.getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
 }
 
 bool ManagerImpl::isRecording(const std::string& id)
@@ -2867,7 +2880,6 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
         type << call->getCallType();
         call_details["ACCOUNTID"] = accountid;
         call_details["PEER_NUMBER"] = call->getPeerNumber();
-        call_details["PEER_NAME"] = call->getPeerName();
         call_details["DISPLAY_NAME"] = call->getDisplayName();
         call_details["CALL_STATE"] = call->getStateStr();
         call_details["CALL_TYPE"] = type.str();
@@ -2887,12 +2899,6 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
 std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory() const
 {
     return history_->getSerialized();
-}
-
-void ManagerImpl::setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history)
-{
-    history_->setSerialized(history, preferences.getHistoryLimit());
-    history_->save();
 }
 
 namespace {
@@ -2944,4 +2950,10 @@ std::vector<std::string> ManagerImpl::getParticipantList(const std::string& conf
         WARN("Manager: Warning: Did not find conference %s", confID.c_str());
 
     return v;
+}
+
+void ManagerImpl::saveHistory()
+{
+    if (!history_->save())
+        ERROR("Manager: could not save history!");
 }

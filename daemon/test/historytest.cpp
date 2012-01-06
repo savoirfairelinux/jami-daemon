@@ -67,7 +67,6 @@ void HistoryTest::test_create_path()
     DEBUG("-------------------- HistoryTest::test_set_path --------------------\n");
 
     std::string path(HISTORY_SAMPLE);
-    CPPUNIT_ASSERT(!history_->isLoaded());
     CPPUNIT_ASSERT(history_->path_ == path);
 }
 
@@ -75,16 +74,15 @@ void HistoryTest::test_load_from_file()
 {
     DEBUG("-------------------- HistoryTest::test_load_from_file --------------------\n");
 
-    history_->load(HISTORY_LIMIT);
-
-    CPPUNIT_ASSERT(history_->isLoaded());
+    bool res = history_->load(HISTORY_LIMIT);
+    CPPUNIT_ASSERT(res);
 }
 
 void HistoryTest::test_load_items()
 {
     DEBUG("-------------------- HistoryTest::test_load_items --------------------\n");
-    history_->load(HISTORY_LIMIT);
-    CPPUNIT_ASSERT(history_->isLoaded());
+    bool res = history_->load(HISTORY_LIMIT);
+    CPPUNIT_ASSERT(res);
     CPPUNIT_ASSERT(history_->numberOfItems() == HISTORY_SAMPLE_SIZE);
 }
 
@@ -97,8 +95,8 @@ void HistoryTest::test_save_to_file()
 void HistoryTest::test_get_serialized()
 {
     DEBUG("-------------------- HistoryTest::test_get_serialized --------------------\n");
-    history_->load(HISTORY_LIMIT);
-    CPPUNIT_ASSERT(history_->isLoaded());
+    bool res = history_->load(HISTORY_LIMIT);
+    CPPUNIT_ASSERT(res);
     CPPUNIT_ASSERT(history_->getSerialized().size() == HISTORY_SAMPLE_SIZE);
 }
 

@@ -155,6 +155,7 @@ main(int argc, char **argv)
 
     DEBUG("Starting DBus event loop");
     Manager::instance().getDbusManager()->exec();
+    Manager::instance().saveHistory();
 
     return 0;
 }

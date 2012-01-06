@@ -41,7 +41,7 @@ class HistoryItem {
         static const char * const ACCOUNT_ID_KEY;
         static const char * const CONFID_KEY;
         static const char * const CALLID_KEY;
-        static const char * const PEER_NAME_KEY;
+        static const char * const DISPLAY_NAME_KEY;
         static const char * const PEER_NUMBER_KEY;
         static const char * const RECORDING_PATH_KEY;
         static const char * const TIMESTAMP_START_KEY;

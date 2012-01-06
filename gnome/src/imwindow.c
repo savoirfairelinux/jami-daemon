@@ -206,7 +206,7 @@ im_window_add_tab(IMWidget *im)
     im->tab = tab_container;
 
     if (im_widget_call)
-        tab_label = gtk_label_new(*im_widget_call->_peer_name ? im_widget_call->_peer_name : im_widget_call->_peer_number);
+        tab_label = gtk_label_new(*im_widget_call->_display_name ? im_widget_call->_display_name : im_widget_call->_peer_number);
     else if (im_widget_conf)
         tab_label = gtk_label_new("Conferencing");
     else

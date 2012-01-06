@@ -36,33 +36,23 @@
 #include "historyitem.h"
 #include <vector>
 
+class Call;
+
 class History {
 
     public:
-        /*
-         * Constructor
-         */
         History();
 
-        /**
-         * Load history from file
-         */
-        void load(int limit);
+        /** Load history from file */
+        bool load(int limit);
 
         /**
-         *@return bool True if the history has been successfully saved in the file
+         *@return True if the history has been successfully saved in the file
          */
         bool save();
 
-        /**
-         *@return bool  True if the history file has been successfully read
-         */
-        bool isLoaded() const {
-            return loaded_;
-        }
-
         /*
-         *@return int   The number of items found in the history file
+         *@return The number of items found in the history file
          */
         size_t numberOfItems() const {
             return items_.size();
@@ -74,30 +64,23 @@ class History {
 
         std::vector<std::map<std::string, std::string> > getSerialized() const;
 
-        // FIXME:tmatth:get rid of this
-        void setSerialized(const std::vector<std::map<std::string, std::string> > &history, int limit);
-
+        void addCall(Call *call, int limit);
     private:
         void setPath(const std::string &path);
+        /* If no path has been set, this will initialize path to a
+         * system-dependent location */
         void ensurePath();
         /*
          * Add a new history item in the data structure
          */
-        void addNewEntry(const HistoryItem &new_item, int limit);
+        void addEntry(const HistoryItem &new_item, int limit);
 
         /*
          * Vector containing the history items
          */
         std::vector<HistoryItem> items_;
 
-        /*
-         * History has been loaded
-         */
-        bool loaded_;
-
-        /*
-         * The path to the history file
-         */
+        /* The path to the history file */
         std::string path_;
 
         friend class HistoryTest;

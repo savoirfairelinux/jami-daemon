@@ -43,8 +43,8 @@ class Recordable {
         /**
          * Return recording state (true/false)
          */
-        bool isRecording() {
-            return recAudio.isRecording();
+        bool isRecording() const {
+            return recAudio_.isRecording();
         }
 
         /**
@@ -57,18 +57,18 @@ class Recordable {
          * Stop recording
          */
         void stopRecording() {
-            recAudio.stopRecording();
+            recAudio_.stopRecording();
         }
 
         /**
          * Init the recording file name according to path specified in configuration
          */
-        void initRecFileName(std::string filename);
+        void initRecFilename(const std::string &filename);
 
         /**
          * Return the file path for this recording
          */
-        std::string getFileName();
+        virtual std::string getFilename() const;
 
         /**
          * Set recording sampling rate.
@@ -82,16 +82,13 @@ class Recordable {
 
         /**
          * Virtual method to be implemented in order to the main
-         * buffer to retreive the recorded id.
+         * buffer to retrieve the recorded id.
          */
         virtual std::string getRecFileId() const = 0;
 
-        /**
-         * An instance of audio recorder
-         */
-        AudioRecord recAudio;
-
-        AudioRecorder recorder;
+    protected:
+        AudioRecord recAudio_;
+        AudioRecorder recorder_;
 };
 
 #endif

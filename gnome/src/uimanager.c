@@ -800,7 +800,7 @@ call_back(void * foo UNUSED)
     }
 
     callable_obj_t *new_call = create_new_call(CALL, CALL_STATE_DIALING, "",
-                               "", selected_call->_peer_name,
+                               "", selected_call->_display_name,
                                selected_call->_peer_number);
 
     calllist_add_call(current_calls_tab, new_call);
@@ -895,7 +895,7 @@ edit_paste(void * foo UNUSED)
                     gchar * temp = g_strconcat(selectedCall->_peer_number,
                                                oneNo, NULL);
                     g_free(selectedCall->_peer_info);
-                    selectedCall->_peer_info = get_peer_info(temp, selectedCall->_peer_name);
+                    selectedCall->_peer_info = get_peer_info(temp, selectedCall->_display_name);
                     g_free(temp);
                     g_free(oneNo);
                     calltree_update_call(current_calls_tab, selectedCall);
@@ -1483,7 +1483,7 @@ ok_cb(GtkWidget *widget UNUSED, gpointer userdata)
 
     // Create the new call
     callable_obj_t *modified_call = create_new_call(CALL, CALL_STATE_DIALING, "", original->_accountID,
-                                    original->_peer_name, new_number);
+                                    original->_display_name, new_number);
 
     // Update the internal data structure and the GUI
     calllist_add_call(current_calls_tab, modified_call);

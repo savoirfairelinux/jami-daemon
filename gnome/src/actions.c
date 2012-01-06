@@ -142,9 +142,6 @@ void
 sflphone_quit()
 {
     if (calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
-        // Save the history
-        sflphone_save_history();
-
         dbus_unregister(getpid());
         dbus_clean();
         account_list_free();
@@ -828,7 +825,7 @@ static int place_registered_call(callable_obj_t * c)
 void
 sflphone_place_call(callable_obj_t * c)
 {
-    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
+    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
 
     if (_is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
@@ -1055,32 +1052,6 @@ void sflphone_fill_history(void)
         g_ptr_array_foreach(entries, create_callable_from_entry, NULL);
 
     fill_treeview_with_calls();
-}
-
-void sflphone_save_history(void)
-{
-    gint size = calllist_get_size(history_tab);
-
-    GPtrArray *history_array = g_ptr_array_new();
-    /* For each entry in our call history */
-    for (gint i = 0; i < size; ++i) {
-        QueueElement *current = calllist_get_nth(history_tab, i);
-
-        if (!current) {
-            WARN("SFLphone: Warning: %dth element is null", i);
-            break;
-        }
-
-        if (current->type == HIST_CALL) {
-            GHashTable *value = create_hashtable_from_history_entry(current->elem.call);
-            g_ptr_array_add(history_array, (gpointer) value);
-        }
-        else
-            ERROR("SFLphone: Error: Unknown type for serialization");
-    }
-
-    dbus_set_history(history_array);
-    g_ptr_array_free(history_array, TRUE);
 }
 
 void

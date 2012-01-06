@@ -59,8 +59,8 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
         return sipaccount->getIp2IpDetails();
 
     std::map<std::string, std::string> tlsSettings = getTlsSettings();
-    std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
-                  ip2ipAccountDetails, ip2ipAccountDetails.end()));
+    std::copy(tlsSettings.begin(), tlsSettings.end(),
+              std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
     return ip2ipAccountDetails;
 }
@@ -155,7 +155,7 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<int32_t > ConfigurationManager::getAudioCodecList()
+std::vector<int32_t> ConfigurationManager::getAudioCodecList()
 {
     std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
 
@@ -401,11 +401,6 @@ void ConfigurationManager::setAccountsOrder(const std::string& order)
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistory()
 {
     return Manager::instance().getHistory();
-}
-
-void ConfigurationManager::setHistory(const std::vector<std::map<std::string, std::string> > &entries)
-{
-    Manager::instance().setHistorySerialized(entries);
 }
 
 std::string

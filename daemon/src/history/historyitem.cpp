@@ -37,7 +37,7 @@
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";
 const char * const HistoryItem::CONFID_KEY =            "confid";
-const char * const HistoryItem::PEER_NAME_KEY =         "peer_name";
+const char * const HistoryItem::DISPLAY_NAME_KEY =      "display_name";
 const char * const HistoryItem::PEER_NUMBER_KEY =       "peer_number";
 const char * const HistoryItem::RECORDING_PATH_KEY =    "recordfile";
 const char * const HistoryItem::STATE_KEY =             "state";

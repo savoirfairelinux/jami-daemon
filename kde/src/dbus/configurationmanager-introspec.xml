@@ -607,12 +607,6 @@
            <arg type="aa{ss}" name="entries" direction="out"/>
 	   </method>
 
-	   <method name="setHistory" tp:name-for-bindings="setHistory">
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorMapStringString"/>
-		   <arg type="aa{ss}" name="entries" direction="in">
-		   </arg>
-	   </method>
-
 	   <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
 	   </signal>
 

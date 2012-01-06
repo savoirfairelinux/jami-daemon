@@ -32,11 +32,12 @@
 
 #include "history.h"
 #include <cerrno>
-#include <cc++/file.h>
 #include <algorithm>
+#include <sys/stat.h> // for mkdir
 #include <ctime>
 #include "global.h"
 #include "logger.h"
+#include "call.h"
 
 namespace {
     int oldestAllowed(int days)
@@ -54,27 +55,28 @@ namespace {
 }
 
 History::History() :
-    items_(), loaded_(false), path_("")
+    items_(), path_("")
 {}
 
-void History::load(int limit)
+bool History::load(int limit)
 {
     ensurePath();
     std::ifstream infile(path_.c_str());
     if (!infile) {
         DEBUG("No history file to load");
-        return;
+        return false;
     }
     while (!infile.eof()) {
         HistoryItem item(infile);
-        addNewEntry(item, limit);
+        addEntry(item, limit);
     }
-    loaded_ = true;
+    return true;
 }
 
 bool History::save()
 {
     DEBUG("History: Saving history in XDG directory: %s", path_.c_str());
+    ensurePath();
     std::sort(items_.begin(), items_.end());
     std::ofstream outfile(path_.c_str());
     if (outfile.fail())
@@ -85,10 +87,12 @@ bool History::save()
     return true;
 }
 
-void History::addNewEntry(const HistoryItem &item, int oldest)
+void History::addEntry(const HistoryItem &item, int oldest)
 {
-    if (item.hasPeerNumber() and item.youngerThan(oldest))
+    if (item.hasPeerNumber() and item.youngerThan(oldest)) {
+        DEBUG("Adding history item");
         items_.push_back(item);
+    }
 }
 
 void History::ensurePath()
@@ -117,7 +121,6 @@ void History::ensurePath()
     }
 }
 
-
 vector<map<string, string> > History::getSerialized() const
 {
     vector<map<string, string> > result;
@@ -128,19 +131,18 @@ vector<map<string, string> > History::getSerialized() const
     return result;
 }
 
-void History::setSerialized(const vector<map<string, string> > &history,
-                            int limit)
-{
-    items_.clear();
-    const int oldest = oldestAllowed(limit);
-    for (vector<map<string, string> >::const_iterator iter = history.begin();
-         iter != history.end(); ++iter) {
-        HistoryItem item(*iter);
-        addNewEntry(item, oldest);
-    }
-}
-
 void History::setPath(const std::string &path)
 {
     path_ = path;
+}
+
+void History::addCall(Call *call, int limit)
+{
+    if (!call) {
+        ERROR("History: Call is NULL, ignoring");
+        return;
+    }
+    call->time_stop();
+    HistoryItem item(call->createHistoryEntry());
+    addEntry(item, limit);
 }

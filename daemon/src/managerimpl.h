@@ -413,7 +413,7 @@ class ManagerImpl {
          *		 0 for unregistration request
          *		 1 for registration request
          */
-        void sendRegister(const ::std::string& accountId , const int32_t& enable);
+        void sendRegister(const std::string& accountId , const int32_t& enable);
 
         /**
          * Get account list
@@ -1186,6 +1186,7 @@ class ManagerImpl {
          * Send registration to all enabled accounts
          */
         void registerAccounts();
+        void saveHistory();
 
     private:
         NON_COPYABLE(ManagerImpl);
