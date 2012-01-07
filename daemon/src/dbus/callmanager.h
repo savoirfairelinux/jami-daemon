@@ -86,7 +86,6 @@ class CallManager
         void attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
-        std::string getCurrentCallID();
 
         /* Conference related methods */
         void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
