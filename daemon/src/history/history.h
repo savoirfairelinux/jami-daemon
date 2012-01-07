@@ -65,6 +65,7 @@ class History {
         std::vector<std::map<std::string, std::string> > getSerialized() const;
 
         void addCall(Call *call, int limit);
+        void clear();
     private:
         void setPath(const std::string &path);
         /* If no path has been set, this will initialize path to a

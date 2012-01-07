@@ -108,6 +108,7 @@ class ConfigurationManager :
 
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
+        void clearHistory();
 
         int32_t getMailNotify();
         void setMailNotify();

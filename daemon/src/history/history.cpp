@@ -146,3 +146,8 @@ void History::addCall(Call *call, int limit)
     HistoryItem item(call->createHistoryEntry());
     addEntry(item, limit);
 }
+
+void History::clear()
+{
+    items_.clear();
+}

@@ -1716,6 +1716,17 @@ dbus_get_history_limit(void)
     return (guint) days;
 }
 
+void 
+dbus_clear_history(void)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_clear_history(
+        configurationManagerProxy, &error);
+
+    if (error)
+        g_error_free(error);
+}
+
 void
 dbus_set_audio_manager(const gchar *api)
 {

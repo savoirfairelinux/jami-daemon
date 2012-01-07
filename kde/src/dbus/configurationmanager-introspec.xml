@@ -607,6 +607,9 @@
            <arg type="aa{ss}" name="entries" direction="out"/>
 	   </method>
 
+       <method name="clearHistory" tp:name-for-bindings="clearHistory">
+	   </method>
+
 	   <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
 	   </signal>
 

@@ -336,6 +336,11 @@ int32_t ConfigurationManager::getHistoryLimit()
     return Manager::instance().getHistoryLimit();
 }
 
+void ConfigurationManager::clearHistory()
+{
+    return Manager::instance().clearHistory();
+}
+
 void ConfigurationManager::setHistoryLimit(const int32_t& days)
 {
     Manager::instance().setHistoryLimit(days);

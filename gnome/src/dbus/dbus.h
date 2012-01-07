@@ -477,6 +477,8 @@ void dbus_set_accounts_order (const gchar* order);
  */
 GPtrArray *dbus_get_history(void);
 
+void dbus_clear_history(void);
+
 void sflphone_display_transfer_status (const gchar* message);
 
 /**

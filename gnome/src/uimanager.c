@@ -924,6 +924,7 @@ static void
 clear_history(void)
 {
     calllist_clean_history();
+    dbus_clear_history();
 }
 
 /**

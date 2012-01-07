@@ -1142,12 +1142,8 @@ class ManagerImpl {
         bool accountExists(const std::string& accountID);
 
         std::vector<std::map<std::string, std::string> > getHistory() const;
+        void clearHistory();
 
-        /**
-         * Set a list of serialized history entries
-         * @param Vector of history entries
-             */
-        void setHistorySerialized(const std::vector<std::map<std::string, std::string> > &history);
         /**
          * Get an account pointer
          * @param accountID account ID to get

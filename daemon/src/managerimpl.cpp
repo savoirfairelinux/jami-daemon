@@ -2957,3 +2957,8 @@ void ManagerImpl::saveHistory()
     if (!history_->save())
         ERROR("Manager: could not save history!");
 }
+
+void ManagerImpl::clearHistory()
+{
+    history_->clear();
+}
