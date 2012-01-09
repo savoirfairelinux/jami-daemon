@@ -89,10 +89,8 @@ bool History::save()
 
 void History::addEntry(const HistoryItem &item, int oldest)
 {
-    if (item.hasPeerNumber() and item.youngerThan(oldest)) {
-        DEBUG("Adding history item");
+    if (item.hasPeerNumber() and item.youngerThan(oldest))
         items_.push_back(item);
-    }
 }
 
 void History::ensurePath()

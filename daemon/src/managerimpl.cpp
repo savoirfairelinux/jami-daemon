@@ -1384,10 +1384,11 @@ void ManagerImpl::incomingCall(Call* call, const std::string& accountId)
         // when placing new call from history (if call is IAX, do nothing)
         std::string peerNumber(call->getPeerNumber());
 
-        size_t startIndex = peerNumber.find("sip:");
+        const char SIP_PREFIX[] = "sip:";
+        size_t startIndex = peerNumber.find(SIP_PREFIX);
 
         if (startIndex != std::string::npos)
-            call->setPeerNumber(peerNumber.substr(startIndex + 4));
+            call->setPeerNumber(peerNumber.substr(startIndex + sizeof(SIP_PREFIX) - 1));
     }
 
     if (not hasCurrentCall()) {
@@ -1397,14 +1398,9 @@ void ManagerImpl::incomingCall(Call* call, const std::string& accountId)
 
     addWaitingCall(call->getCallId());
 
-    std::string from(call->getDisplayName());
     std::string number(call->getPeerNumber());
 
-    if (not from.empty() and not number.empty())
-        from += " ";
-
-    from += "<" + number + ">";
-
+    std::string from("<" + number + ">");
     dbus_.getCallManager()->incomingCall(accountId, call->getCallId(), call->getDisplayName() + " " + from);
 }
 

@@ -1263,7 +1263,6 @@ void SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transpor
 namespace {
 std::string parseDisplayName(const char * buffer)
 {
-    // Parse the display name from "From" header
     const char* from_header = strstr(buffer, "From: ");
 
     if (!from_header)

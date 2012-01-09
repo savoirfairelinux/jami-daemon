@@ -57,14 +57,14 @@ HistoryItem::HistoryItem(const map<string, string> &args) : entryMap_(args),
 
 HistoryItem::HistoryItem(std::istream &entry) : entryMap_(), timestampStart_(0)
 {
-    std::string tmp;
+    string tmp;
     while (std::getline(entry, tmp, '\n')) {
         size_t pos = tmp.find('=');
-        if (pos == std::string::npos)
+        if (pos == string::npos)
             break;
         else if (pos < tmp.length() - 1) {
-            std::string key(tmp.substr(0, pos));
-            std::string val(tmp.substr(pos + 1, tmp.length() - pos - 1));
+            string key(tmp.substr(0, pos));
+            string val(tmp.substr(pos + 1, tmp.length() - pos - 1));
             entryMap_[key] = val;
         }
     }
