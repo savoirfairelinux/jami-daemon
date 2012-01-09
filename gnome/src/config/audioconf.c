@@ -129,32 +129,36 @@ preferences_dialog_fill_audio_plugin_list()
 static void
 preferences_dialog_fill_output_audio_device_list()
 {
+    int device_index = 0;
+
     gtk_list_store_clear(outputlist);
 
     DEBUG("FILL OUTPUT DEVICE LIST");
 
     // Call dbus to retrieve list
     for (gchar **list = dbus_get_audio_output_device_list(); *list ; list++) {
-        int device_index = dbus_get_audio_device_index(*list);
+        // int device_index = dbus_get_audio_device_index(*list);
         GtkTreeIter iter;
         gtk_list_store_append(outputlist, &iter);
-        gtk_list_store_set(outputlist, &iter, 0, *list, 1, device_index, -1);
+        gtk_list_store_set(outputlist, &iter, 0, *list, 1, device_index++, -1);
     }
 }
 
 static void
 preferences_dialog_fill_ringtone_audio_device_list()
 {
+    int device_index = 0;
+
     gtk_list_store_clear(ringtonelist);
 
     DEBUG("FILL RINGTONE DEVICE LIST");
 
     // Call dbus to retreive output device
     for (gchar **list = dbus_get_audio_output_device_list(); *list; list++) {
-        int device_index = dbus_get_audio_device_index(*list);
+        // int device_index = dbus_get_audio_device_index(*list);
         GtkTreeIter iter;
         gtk_list_store_append(ringtonelist, &iter);
-        gtk_list_store_set(ringtonelist, &iter, 0, *list, 1, device_index, -1);
+        gtk_list_store_set(ringtonelist, &iter, 0, *list, 1, device_index++, -1);
     }
 }
 
@@ -234,6 +238,8 @@ select_active_ringtone_audio_device()
 static void
 preferences_dialog_fill_input_audio_device_list()
 {
+    int device_index = 0;
+
     gtk_list_store_clear(inputlist);
 
     DEBUG("FILL INPUT DEVICE LIST");
@@ -243,10 +249,10 @@ preferences_dialog_fill_input_audio_device_list()
 
     // For each device name included in list
     for (; *list; list++) {
-        int device_index = dbus_get_audio_device_index(*list);
+        // int device_index = dbus_get_audio_device_index(*list);
         GtkTreeIter iter;
         gtk_list_store_append(inputlist, &iter);
-        gtk_list_store_set(inputlist, &iter, 0, *list, 1, device_index, -1);
+        gtk_list_store_set(inputlist, &iter, 0, *list, 1, device_index++, -1);
     }
 
 }
@@ -631,6 +637,11 @@ switch_audio_manager(void)
 
         gtk_action_set_sensitive(volumeToggle_, FALSE);
     }
+
+    preferences_dialog_fill_output_audio_device_list();
+    preferences_dialog_fill_input_audio_device_list(); 
+    preferences_dialog_fill_ringtone_audio_device_list();
+
 }
 
 void
@@ -756,7 +767,7 @@ GtkWidget* device_selection_box_alsa()
     gtk_table_attach(GTK_TABLE(table), input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(input);
 
-    DEBUG("Audio: Configuration rintgtone");
+    DEBUG("Audio: Configuration ringtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
