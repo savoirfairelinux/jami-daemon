@@ -97,7 +97,7 @@ sflphone_notify_voice_mail(const gchar* accountID , guint count)
  * Else, check if it an IP call. if not, popup an error message
  */
 
-static gboolean _is_direct_call(callable_obj_t * c)
+static gboolean is_direct_call(callable_obj_t * c)
 {
     if (g_strcasecmp(c->_accountID, "empty") == 0) {
         if (!g_str_has_prefix(c->_peer_number, "sip:")) {
@@ -555,7 +555,7 @@ sflphone_incoming_call(callable_obj_t * c)
     calltree_display(current_calls_tab);
 
     // Change the status bar if we are dealing with a direct SIP call
-    if (_is_direct_call(c)) {
+    if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);
@@ -827,7 +827,7 @@ sflphone_place_call(callable_obj_t * c)
 {
     DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
 
-    if (_is_direct_call(c)) {
+    if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);

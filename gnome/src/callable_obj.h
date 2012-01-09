@@ -202,4 +202,6 @@ gchar* get_formatted_start_timestamp(time_t);
 
 gchar* call_get_audio_codec(callable_obj_t *obj);
 
+gboolean call_was_outgoing(callable_obj_t * obj);
+
 #endif

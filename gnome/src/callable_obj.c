@@ -300,3 +300,8 @@ gchar *get_formatted_start_timestamp(time_t start)
     strftime(str, sizeof str, fmt, &start_tm);
     return g_markup_printf_escaped("%s\n", str);
 }
+
+gboolean call_was_outgoing(callable_obj_t * obj)
+{
+    return g_strcmp0(obj->_history_state, OUTGOING_STRING) == 0;
+}
