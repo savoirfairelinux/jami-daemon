@@ -174,10 +174,6 @@ class Call : public Recordable {
             isIPToIP_ = IPToIP;
         }
 
-        bool isIPtoIP() const {
-            return isIPToIP_;
-        }
-
         /**
          * Set my IP [not protected]
          * @param ip  The local IP address

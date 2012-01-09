@@ -194,6 +194,9 @@ std::map<std::string, std::string> Call::createHistoryEntry() const
     time_str.str("");
     time_str << timestamp_stop_;
     result[HistoryItem::TIMESTAMP_STOP_KEY] = time_str.str();
-    result[HistoryItem::STATE_KEY] = getTypeStr();
+    if (connectionState_ == RINGING)
+        result[HistoryItem::STATE_KEY] = HistoryItem::MISSED_STRING;
+    else
+        result[HistoryItem::STATE_KEY] = getTypeStr();
     return result;
 }
