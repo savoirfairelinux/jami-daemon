@@ -1576,9 +1576,10 @@ create_menus(GtkUIManager *ui_manager)
     volumeToggle_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/VolumeControls");
 
     // Set the toggle buttons
+    SelectedAudioLayer selected = get_selected_audio_api(); 
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean(CONF_SHOW_DIALPAD));
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_),(gboolean) SHOW_VOLUME);
-    gtk_action_set_sensitive(volumeToggle_, must_show_alsa_conf());
+    gtk_action_set_sensitive(volumeToggle_, (ALSA_LAYER_SELECTED == selected) ? TRUE : FALSE);
     gtk_action_set_sensitive(gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/Toolbar"), FALSE);
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */

@@ -39,42 +39,6 @@
  */
 
 /**
- * Fill the input audio plugin list widget with the data the server send
- * Currently not used
- */
-void preferences_dialog_fill_input_audio_plugin_list();
-
-/**
- * Fill the output audio plugin list widget with the data the server send
- */
-void preferences_dialog_fill_output_audio_plugin_list();
-
-/**
- * Fill the output audio device list widget with the data the server send
- */
-void preferences_dialog_fill_output_audio_device_list();
-
-/**
- * Select an output audio device
- */
-void select_active_output_audio_device();
-
-/**
- * Fill the input audio device list widget with the data the server send
- */
-void preferences_dialog_fill_input_audio_device_list();
-
-/**
- * Select an input audio device
- */
-void select_active_input_audio_device();
-
-/**
- * Select an output audio plugin
- */
-void select_active_output_audio_plugin();
-
-/**
  * Update the combo box state.
  * If the default plugin has been selected, the audio devices have to been unsensitive
  * because the default plugin always use default audio device

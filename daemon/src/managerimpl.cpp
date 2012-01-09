@@ -1975,10 +1975,8 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
 
     audioLayerMutexLock();
 
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (alsalayer)
-        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_PLAYBACK);
+    if (audiodriver_)
+        devices = audiodriver_->getAudioDeviceList(AUDIO_STREAM_PLAYBACK);
     audioLayerMutexUnlock();
 
     return devices;
@@ -1994,10 +1992,8 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
 
     audioLayerMutexLock();
 
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
-
-    if (alsalayer)
-        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_CAPTURE);
+    if (audiodriver_)
+        devices = audiodriver_->getAudioDeviceList(AUDIO_STREAM_CAPTURE);
 
     audioLayerMutexUnlock();
 
