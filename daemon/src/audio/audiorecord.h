@@ -57,16 +57,16 @@ class AudioRecord {
         /**
          * Init recording file path
          */
-        void initFileName(std::string peerNumber);
+        void initFilename(const std::string &peerNumber);
 
         /**
         	 * Return the filepath of the recording
         	 */
-        std::string getFileName();
+        std::string getFilename() const;
 
         /**
          * Check if no otehr file is opened, then create a new one
-         * @param fileName A string containing teh file (with/without extension)
+         * @param filename A string containing teh file (with/without extension)
          * @param type     The sound file format (FILE_RAW, FILE_WAVE)
          * @param format   Internal sound format (INT16 / INT32)
          * @return bool    True if file was opened
@@ -81,12 +81,12 @@ class AudioRecord {
         /**
          * Check if a file is already opened
          */
-        bool isOpenFile();
+        bool isOpenFile() const;
 
         /**
          * Check if a file already exists
          */
-        bool fileExists();
+        bool fileExists() const;
 
         /**
          * Check recording state
@@ -231,7 +231,7 @@ class AudioRecord {
         /**
          * Filename for this recording
          */
-        char fileName_[8192];
+        std::string filename_;
 
         /**
          * Path for this recording

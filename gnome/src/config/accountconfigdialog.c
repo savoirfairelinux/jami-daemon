@@ -1064,7 +1064,7 @@ static GtkWidget* create_audiocodecs_configuration(account_t *currentAccount)
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
-    GtkWidget *box = create_audiocodecs_box(currentAccount);
+    GtkWidget *box = audiocodecs_box(currentAccount);
 
     // Box for the audiocodecs
     GtkWidget *audiocodecs = gnome_main_section_new(_("Audio"));

@@ -41,7 +41,7 @@ Conference::Conference()
     , confState_(ACTIVE_ATTACHED)
     , participants_()
 {
-    Recordable::initRecFileName(id_);
+    Recordable::initRecFilename(id_);
 }
 
 int Conference::getState() const
@@ -101,12 +101,12 @@ ParticipantSet Conference::getParticipantList() const
 
 bool Conference::setRecording()
 {
-    bool recordStatus = Recordable::recAudio.isRecording();
+    bool recordStatus = Recordable::recAudio_.isRecording();
 
-    Recordable::recAudio.setRecording();
+    Recordable::recAudio_.setRecording();
     MainBuffer *mbuffer = Manager::instance().getMainBuffer();
 
-    std::string process_id(Recordable::recorder.getRecorderID());
+    std::string process_id(Recordable::recorder_.getRecorderID());
 
     // start recording
     if (!recordStatus) {
@@ -115,7 +115,7 @@ bool Conference::setRecording()
 
         mbuffer->bindHalfDuplexOut(process_id);
 
-        Recordable::recorder.start();
+        Recordable::recorder_.start();
     } else {
         for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
             mbuffer->unBindHalfDuplexOut(process_id, *iter);

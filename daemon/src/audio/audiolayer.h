@@ -64,10 +64,6 @@ class AudioLayer {
         AudioLayer();
         virtual ~AudioLayer();
 
-        /**
-         * Function that returns the list of available audio device provided the stream
-         * type: AUDIO_STREAM_CAPTURE, AUDIO_STREAM_PLAYBACK.
-         */
         virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const = 0;
 
         /**

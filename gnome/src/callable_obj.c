@@ -46,7 +46,7 @@ gint get_state_callstruct(gconstpointer a, gconstpointer b)
     return c->_state == state ? 0 : 1;
 }
 
-gchar* call_get_peer_name(const gchar *format)
+gchar* call_get_display_name(const gchar *format)
 {
     const gchar *end = g_strrstr(format, "<");
     return g_strndup(format, end ? end - format : 0);
@@ -115,7 +115,7 @@ void call_remove_all_errors(callable_obj_t * call)
 callable_obj_t *create_new_call(callable_type_t type, call_state_t state,
                                 const gchar* const callID,
                                 const gchar* const accountID,
-                                const gchar* const peer_name,
+                                const gchar* const display_name,
                                 const gchar* const peer_number)
 {
     callable_obj_t *obj = g_new0(callable_obj_t, 1);
@@ -129,9 +129,9 @@ callable_obj_t *create_new_call(callable_type_t type, call_state_t state,
     time(&obj->_time_start);
     time(&obj->_time_stop);
 
-    obj->_peer_name = g_strdup(peer_name);
+    obj->_display_name = g_strdup(display_name);
     obj->_peer_number = g_strdup(peer_number);
-    obj->_peer_info = get_peer_info(peer_name, peer_number);
+    obj->_peer_info = get_peer_info(display_name, peer_number);
 
     return obj;
 }
@@ -142,7 +142,7 @@ callable_obj_t *create_new_call_from_details(const gchar *call_id, GHashTable *d
 
     const gchar * const accountID = g_hash_table_lookup(details, "ACCOUNTID");
     const gchar * const peer_number = g_hash_table_lookup(details, "PEER_NUMBER");
-    const gchar * const peer_name = g_hash_table_lookup(details, "DISPLAY_NAME");
+    const gchar * const display_name = g_hash_table_lookup(details, "DISPLAY_NAME");
     const gchar * const state_str = g_hash_table_lookup(details, "CALL_STATE");
 
     if (g_strcasecmp(state_str, "CURRENT") == 0)
@@ -159,7 +159,7 @@ callable_obj_t *create_new_call_from_details(const gchar *call_id, GHashTable *d
         state = CALL_STATE_FAILURE;
 
     gchar *number = call_get_peer_number(peer_number);
-    callable_obj_t *c = create_new_call(CALL, state, call_id, accountID, peer_name, number);
+    callable_obj_t *c = create_new_call(CALL, state, call_id, accountID, display_name, number);
     g_free(number);
     return c;
 }
@@ -176,29 +176,27 @@ static gconstpointer get_str(GHashTable *entry, gconstpointer key)
 static const char * const ACCOUNT_ID_KEY =        "accountid";
 static const char * const CALLID_KEY =            "callid";
 static const char * const CONFID_KEY =            "confid";
-static const char * const PEER_NAME_KEY =         "peer_name";
+static const char * const DISPLAY_NAME_KEY =      "display_name";
 static const char * const PEER_NUMBER_KEY =       "peer_number";
 static const char * const RECORDING_PATH_KEY =    "recordfile";
-static const char * const TIMESTAMP_STOP_KEY =    "timestamp_stop";
 static const char * const STATE_KEY =             "state";
+static const char * const TIMESTAMP_STOP_KEY =    "timestamp_stop";
 
 callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry)
 {
     gconstpointer callID = get_str(entry, CALLID_KEY);
     gconstpointer accountID =  get_str(entry, ACCOUNT_ID_KEY);
-    gconstpointer peer_name =  get_str(entry, PEER_NAME_KEY);
+    gconstpointer display_name =  get_str(entry, DISPLAY_NAME_KEY);
     gconstpointer peer_number =  get_str(entry, PEER_NUMBER_KEY);
-    callable_obj_t *new_call = create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, peer_name, peer_number);
+    callable_obj_t *new_call = create_new_call(HISTORY_ENTRY, CALL_STATE_DIALING, callID, accountID, display_name, peer_number);
     new_call->_history_state = g_strdup(get_str(entry, STATE_KEY));
     gconstpointer value =  g_hash_table_lookup(entry, TIMESTAMP_START_KEY);
     new_call->_time_start = value ? atoi(value) : 0;
     value =  g_hash_table_lookup(entry, TIMESTAMP_STOP_KEY);
     new_call->_time_stop = value ? atoi(value) : 0;
-    value =  g_hash_table_lookup(entry, RECORDING_PATH_KEY);
-    new_call->_recordfile = g_strdup(value);
-    value =  g_hash_table_lookup(entry, CONFID_KEY);
-    new_call->_confID = g_strdup(value);
-    new_call->_historyConfID = g_strdup(value);
+    new_call->_recordfile = g_strdup(g_hash_table_lookup(entry, RECORDING_PATH_KEY));
+    new_call->_confID = g_strdup(g_hash_table_lookup(entry, CONFID_KEY));
+    new_call->_historyConfID = g_strdup(new_call->_confID);
     new_call->_record_is_playing = FALSE;
 
     return new_call;
@@ -212,7 +210,7 @@ void free_callable_obj_t (callable_obj_t *c)
     g_free(c->_accountID);
     g_free(c->_srtp_cipher);
     g_free(c->_sas);
-    g_free(c->_peer_name);
+    g_free(c->_display_name);
     g_free(c->_peer_number);
     g_free(c->_trsft_to);
     g_free(c->_peer_info);
@@ -251,21 +249,19 @@ GHashTable* create_hashtable_from_history_entry(callable_obj_t *entry)
 
     const gchar *call_id = entry->_callID ? entry->_callID : "";
     const gchar *peer_number = entry->_peer_number ? entry->_peer_number : "";
-    const gchar *peer_name = (entry->_peer_name && *entry->_peer_name) ? entry->_peer_name : "empty";
+    const gchar *display_name = (entry->_display_name && *entry->_display_name) ? entry->_display_name : "empty";
     const gchar *account_id = (entry->_accountID && *entry->_accountID) ? entry->_accountID : "empty";
 
     const gchar *conf_id = entry->_historyConfID ? entry->_historyConfID : "";
     const gchar *recording_path = entry->_recordfile ? entry->_recordfile : "";
 
     GHashTable *result = g_hash_table_new(NULL, g_str_equal);
+    add_to_hashtable(result, ACCOUNT_ID_KEY, account_id);
     add_to_hashtable(result, CALLID_KEY, call_id);
     add_to_hashtable(result, CONFID_KEY, conf_id);
+    add_to_hashtable(result, DISPLAY_NAME_KEY, display_name);
     add_to_hashtable(result, PEER_NUMBER_KEY, peer_number);
-    add_to_hashtable(result, PEER_NAME_KEY, peer_name);
     add_to_hashtable(result, RECORDING_PATH_KEY, recording_path);
-    add_to_hashtable(result, ACCOUNT_ID_KEY, account_id);
-    add_to_hashtable(result, TIMESTAMP_START_KEY, time_start);
-    add_to_hashtable(result, TIMESTAMP_STOP_KEY, time_stop);
     add_to_hashtable(result, STATE_KEY, history_state);
     /* These values were already allocated dynamically */
     g_hash_table_insert(result, g_strdup(TIMESTAMP_START_KEY), time_start);
@@ -303,4 +299,9 @@ gchar *get_formatted_start_timestamp(time_t start)
     char str[100];
     strftime(str, sizeof str, fmt, &start_tm);
     return g_markup_printf_escaped("%s\n", str);
+}
+
+gboolean call_was_outgoing(callable_obj_t * obj)
+{
+    return g_strcmp0(obj->_history_state, OUTGOING_STRING) == 0;
 }

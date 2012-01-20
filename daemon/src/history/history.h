@@ -2,7 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Alexamdre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,45 +30,61 @@
  *  as that of the covered work.
  */
 
-#ifndef HISTORY_ITEM_H_
-#define HISTORY_ITEM_H_
+#ifndef HISTORY_
+#define HISTORY_
 
-#include <string>
-#include <map>
+#include "historyitem.h"
+#include <vector>
 
-class HistoryItem {
+class Call;
+
+class History {
+
     public:
-        static const char * const ACCOUNT_ID_KEY;
-        static const char * const CONFID_KEY;
-        static const char * const CALLID_KEY;
-        static const char * const DISPLAY_NAME_KEY;
-        static const char * const PEER_NUMBER_KEY;
-        static const char * const RECORDING_PATH_KEY;
-        static const char * const TIMESTAMP_START_KEY;
-        static const char * const TIMESTAMP_STOP_KEY;
-        static const char * const STATE_KEY;
+        History();
 
-        static const char * const MISSED_STRING;
-        static const char * const INCOMING_STRING;
-        static const char * const OUTGOING_STRING;
-        HistoryItem(const std::map<std::string, std::string> &args);
-        HistoryItem(std::istream &stream);
+        /** Load history from file */
+        bool load(int limit);
 
-        bool hasPeerNumber() const;
+        /**
+         *@return True if the history has been successfully saved in the file
+         */
+        bool save();
 
-        bool youngerThan(unsigned long otherTime) const;
-
-        std::map<std::string, std::string> toMap() const;
-        void print(std::ostream &o) const;
-        bool operator< (const HistoryItem &other) const {
-                return timestampStart_ > other.timestampStart_;
+        /*
+         *@return The number of items found in the history file
+         */
+        size_t numberOfItems() const {
+            return items_.size();
         }
 
+        bool empty() const {
+            return items_.empty();
+        }
+
+        std::vector<std::map<std::string, std::string> > getSerialized() const;
+
+        void addCall(Call *call, int limit);
+        void clear();
     private:
-        std::map<std::string, std::string> entryMap_;
-        unsigned long timestampStart_; // cached as we use this a lot, avoids string ops
+        void setPath(const std::string &path);
+        /* If no path has been set, this will initialize path to a
+         * system-dependent location */
+        void ensurePath();
+        /*
+         * Add a new history item in the data structure
+         */
+        void addEntry(const HistoryItem &new_item, int limit);
+
+        /*
+         * Vector containing the history items
+         */
+        std::vector<HistoryItem> items_;
+
+        /* The path to the history file */
+        std::string path_;
+
+        friend class HistoryTest;
 };
 
-std::ostream& operator << (std::ostream& o, const HistoryItem& item);
-
-#endif // HISTORY_ITEM
+#endif // HISTORY_

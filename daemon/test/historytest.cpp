@@ -33,7 +33,7 @@
 #include <cstdlib>
 
 #include "historytest.h"
-#include "manager.h"
+#include "logger.h"
 #include "constants.h"
 #include "validator.h"
 
@@ -57,93 +57,51 @@ void backup()
 void HistoryTest::setUp()
 {
     backup();
-    history_ = new HistoryManager();
+    history_ = new History;
+    history_->setPath(HISTORY_SAMPLE);
 }
 
 
-void HistoryTest::test_create_history_path()
+void HistoryTest::test_create_path()
 {
-    DEBUG("-------------------- HistoryTest::test_create_history_path --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_set_path --------------------\n");
 
     std::string path(HISTORY_SAMPLE);
-
-    history_->createHistoryPath(path);
-    CPPUNIT_ASSERT(!history_->isLoaded());
-    CPPUNIT_ASSERT(history_->history_path_ == path);
+    CPPUNIT_ASSERT(history_->path_ == path);
 }
 
-void HistoryTest::test_load_history_from_file()
+void HistoryTest::test_load_from_file()
 {
-    DEBUG("-------------------- HistoryTest::test_load_history_from_file --------------------\n");
+    DEBUG("-------------------- HistoryTest::test_load_from_file --------------------\n");
 
-    bool res;
-    Conf::ConfigTree history_list;
-
-    history_->createHistoryPath(HISTORY_SAMPLE);
-    res = history_->loadHistoryFromFile(history_list);
-
-    CPPUNIT_ASSERT(history_->isLoaded());
+    bool res = history_->load(HISTORY_LIMIT);
     CPPUNIT_ASSERT(res);
 }
 
-void HistoryTest::test_load_history_items_map()
+void HistoryTest::test_load_items()
 {
-    DEBUG("-------------------- HistoryTest::test_load_history_items_map --------------------\n");
-
-    std::string path;
-    int nb_items;
-    Conf::ConfigTree history_list;
-
-    history_->setHistoryPath(HISTORY_SAMPLE);
-    history_->loadHistoryFromFile(history_list);
-    nb_items = history_->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
-    CPPUNIT_ASSERT(nb_items == HISTORY_SAMPLE_SIZE);
+    DEBUG("-------------------- HistoryTest::test_load_items --------------------\n");
+    bool res = history_->load(HISTORY_LIMIT);
+    CPPUNIT_ASSERT(res);
     CPPUNIT_ASSERT(history_->numberOfItems() == HISTORY_SAMPLE_SIZE);
 }
 
-void HistoryTest::test_save_history_items_map()
+void HistoryTest::test_save_to_file()
 {
-    DEBUG("-------------------- HistoryTest::test_save_history_items_map --------------------\n");
-
-    std::string path;
-    Conf::ConfigTree history_list, history_list2;
-
-    history_->setHistoryPath(HISTORY_SAMPLE);
-    history_->loadHistoryFromFile(history_list);
-    history_->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
-    history_->saveHistoryItemsVector(history_list2);
+    DEBUG("-------------------- HistoryTest::test_save_to_file --------------------\n");
+    CPPUNIT_ASSERT(history_->save());
 }
 
-void HistoryTest::test_save_history_to_file()
+void HistoryTest::test_get_serialized()
 {
-    DEBUG("-------------------- HistoryTest::test_save_history_to_file --------------------\n");
-
-    std::string path;
-    Conf::ConfigTree history_list, history_list2;
-    std::map<std::string, std::string> res;
-    std::map<std::string, std::string>::iterator iter;
-
-    history_->setHistoryPath(HISTORY_SAMPLE);
-    history_->loadHistoryFromFile(history_list);
-    history_->loadHistoryItemsMap(history_list, HUGE_HISTORY_LIMIT);
-    history_->saveHistoryItemsVector(history_list2);
-    CPPUNIT_ASSERT(history_->saveHistoryToFile(history_list2));
-}
-
-void HistoryTest::test_get_history_serialized()
-{
-    DEBUG("-------------------- HistoryTest::test_get_history_serialized --------------------\n");
-
-    std::vector<std::string>::iterator iter;
-    std::string tmp;
-
-    CPPUNIT_ASSERT(history_->loadHistory(HUGE_HISTORY_LIMIT, HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
+    DEBUG("-------------------- HistoryTest::test_get_serialized --------------------\n");
+    bool res = history_->load(HISTORY_LIMIT);
+    CPPUNIT_ASSERT(res);
     CPPUNIT_ASSERT(history_->getSerialized().size() == HISTORY_SAMPLE_SIZE);
 }
 
 void HistoryTest::tearDown()
 {
-    // Delete the history object
     delete history_;
     restore();
 }

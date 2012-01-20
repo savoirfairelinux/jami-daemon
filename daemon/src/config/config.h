@@ -80,7 +80,6 @@ class ConfigTreeIterator {
 class ConfigTree {
     public:
         ConfigTree() : sections_(), defaultValueMap_() {}
-        ~ConfigTree();
         /**
          * Add a default value for a given key.
          * It looks in a map of default values when
@@ -105,7 +104,7 @@ class ConfigTree {
          *
          * @return array Strings of the sections
          */
-        std::list<std::string> getSections();
+        std::list<std::string> getSections() const;
 
         void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
         /**
@@ -115,7 +114,7 @@ class ConfigTree {
          * @param itemName The itemName= in the .ini file
          * @param value The value to assign to that itemName
          */
-        bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
+        void setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
 
         /**
          * Get a value.
@@ -141,7 +140,7 @@ class ConfigTree {
         /**
          * Load data (and fill ConfigTree) from disk
          */
-        int  populateFromFile(const std::string& fileName);
+        bool populateFromFile(const std::string& fileName);
 
         bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, std::list<std::string>& arg) const;
 

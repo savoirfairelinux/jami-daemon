@@ -31,65 +31,54 @@
  */
 
 #include "historyitem.h"
-#include <sstream>
 #include <cstdlib>
-#include "config/config.h"
+#include <istream>
 
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";
 const char * const HistoryItem::CONFID_KEY =            "confid";
-const char * const HistoryItem::PEER_NAME_KEY =         "peer_name";
+const char * const HistoryItem::DISPLAY_NAME_KEY =      "display_name";
 const char * const HistoryItem::PEER_NUMBER_KEY =       "peer_number";
 const char * const HistoryItem::RECORDING_PATH_KEY =    "recordfile";
+const char * const HistoryItem::STATE_KEY =             "state";
 const char * const HistoryItem::TIMESTAMP_START_KEY =   "timestamp_start";
 const char * const HistoryItem::TIMESTAMP_STOP_KEY =    "timestamp_stop";
-const char * const HistoryItem::STATE_KEY =             "state";
+
 const char * const HistoryItem::MISSED_STRING =         "missed";
 const char * const HistoryItem::INCOMING_STRING =       "incoming";
 const char * const HistoryItem::OUTGOING_STRING =       "outgoing";
 
-HistoryItem::HistoryItem(const std::map<std::string, std::string> &args)
-    : entryMap_(args)
+using std::map;
+using std::string;
+
+HistoryItem::HistoryItem(const map<string, string> &args) : entryMap_(args),
+    timestampStart_(std::atol(entryMap_[TIMESTAMP_START_KEY].c_str()))
 {}
 
-HistoryItem::HistoryItem(const std::string &item, Conf::ConfigTree &historyList)
-    : entryMap_()
+HistoryItem::HistoryItem(std::istream &entry) : entryMap_(), timestampStart_(0)
 {
-    const char *const KEYS [] = {
-        ACCOUNT_ID_KEY,
-        CALLID_KEY,
-        CONFID_KEY,
-        PEER_NAME_KEY,
-        PEER_NUMBER_KEY,
-        RECORDING_PATH_KEY,
-        TIMESTAMP_START_KEY,
-        TIMESTAMP_STOP_KEY,
-        STATE_KEY,
-        NULL};
-    for (int i = 0; KEYS[i]; ++i)
-        entryMap_[KEYS[i]] = historyList.getConfigTreeItemValue(item, KEYS[i]);
+    string tmp;
+    while (std::getline(entry, tmp, '\n')) {
+        size_t pos = tmp.find('=');
+        if (pos == string::npos)
+            break;
+        else if (pos < tmp.length() - 1) {
+            string key(tmp.substr(0, pos));
+            string val(tmp.substr(pos + 1, tmp.length() - pos - 1));
+            entryMap_[key] = val;
+        }
+    }
+    timestampStart_ = std::atol(entryMap_[TIMESTAMP_START_KEY].c_str());
 }
 
-void HistoryItem::save(Conf::ConfigTree &history) const
-{
-    // The section is : "[" + random integer = "]"
-    std::stringstream section;
-    section << rand();
-    const std::string sectionstr = section.str();
-
-    typedef std::map<std::string, std::string>::const_iterator EntryIter;
-    for (EntryIter iter = entryMap_.begin(); iter != entryMap_.end(); ++iter)
-        history.setConfigTreeItem(sectionstr, iter->first, iter->second);
-}
-
-std::map<std::string, std::string> HistoryItem::toMap() const
+map<string, string> HistoryItem::toMap() const
 {
     return entryMap_;
 }
 
-bool HistoryItem::youngerThan(int otherTime) const
+bool HistoryItem::youngerThan(unsigned long otherTime) const
 {
-    return atol(getTimestampStart().c_str()) >= otherTime;
+    return timestampStart_ > otherTime;
 }
 
 bool HistoryItem::hasPeerNumber() const
@@ -97,12 +86,16 @@ bool HistoryItem::hasPeerNumber() const
     return entryMap_.find(PEER_NUMBER_KEY) != entryMap_.end();
 }
 
-std::string HistoryItem::getTimestampStart() const {
-    using std::map;
-    using std::string;
-    map<string, string>::const_iterator iter(entryMap_.find(TIMESTAMP_START_KEY));
-    if (iter != entryMap_.end())
-        return iter->second;
-    else
-        return "";
+void HistoryItem::print(std::ostream &o) const
+{
+    // every entry starts with "[" + random integer = "]"
+    for (map<string, string>::const_iterator iter = entryMap_.begin();
+         iter != entryMap_.end(); ++iter)
+        o << iter->first << "=" << iter->second << std::endl;
+}
+
+std::ostream& operator << (std::ostream& o, const HistoryItem& item)
+{
+    item.print(o);
+    return o;
 }

@@ -42,9 +42,6 @@
 
 namespace Conf {
 
-ConfigTree::~ConfigTree()
-{}
-
 void ConfigTree::addDefaultValue(const std::pair<std::string, std::string>& token, std::string section)
 {
     defaultValueMap_.insert(token);
@@ -90,11 +87,11 @@ ConfigTree::removeSection(const std::string& section)
 
 /** Retrieve the sections as an array */
 std::list<std::string>
-ConfigTree::getSections()
+ConfigTree::getSections() const
 {
     std::list<std::string> sections;
 
-    for (SectionMap::iterator iter = sections_.begin(); iter != sections_.end(); ++iter)
+    for (SectionMap::const_iterator iter = sections_.begin(); iter != sections_.end(); ++iter)
         sections.push_back(iter->first);
 
     return sections;
@@ -194,8 +191,7 @@ ConfigTree::getConfigTreeItem(const std::string& section, const std::string& ite
  * @todo Élimier les 45,000 classes qui servent à rien pour Conf.
  * The true/false logic is useless here.
  */
-bool
-ConfigTree::setConfigTreeItem(const std::string& section,
+void ConfigTree::setConfigTreeItem(const std::string& section,
                               const std::string& itemName,
                               const std::string& value)
 {
@@ -214,17 +210,17 @@ ConfigTree::setConfigTreeItem(const std::string& section,
         // something that would fit.
         std::string defaultValue = getDefaultValue(itemName);
         addConfigTreeItem(section, ConfigTreeItem(itemName, value, defaultValue));
-        return true;
+        return;
     }
 
     // Use default value if the value is empty.
     if (value.empty()) {
         iterItem->second.setValue(getDefaultValue(itemName));
-        return true;
+        return;
     }
 
     iterItem->second.setValue(value);
-    return true;
+    return;
 }
 
 // Save config to a file (ini format)
@@ -265,16 +261,15 @@ ConfigTree::saveConfigTree(const std::string& fileName) const
 }
 
 // Create the tree from an existing ini file
-// 0 = error
-// 1 = OK
-// 2 = unable to open
-int
+// false = error
+// true = OK
+bool
 ConfigTree::populateFromFile(const std::string& fileName)
 {
     DEBUG("ConfigTree: Populate from file %s", fileName.c_str());
 
     if (fileName.empty())
-        return 0;
+        return false;
 
     std::fstream file;
 
@@ -284,11 +279,11 @@ ConfigTree::populateFromFile(const std::string& fileName)
         file.open(fileName.data(), std::fstream::out);
 
         if (!file.is_open())
-            return 0;
+            return false;
 
         file.close();
 
-        return 2;
+        return false;
     }
 
     // get length of file:
@@ -300,7 +295,7 @@ ConfigTree::populateFromFile(const std::string& fileName)
 
     if (length == 0) {
         file.close();
-        return 2; // should load config
+        return false; // should load config
     }
 
     std::string line;
@@ -336,7 +331,7 @@ ConfigTree::populateFromFile(const std::string& fileName)
     if (chmod(fileName.c_str(), S_IRUSR | S_IWUSR))
         DEBUG("Failed to set permission on configuration file because: %m");
 
-    return 1;
+    return true;
 }
 
 std::list<std::string>

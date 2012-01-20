@@ -104,7 +104,7 @@ remove_from_toolbar(GtkWidget *widget)
 }
 
 static bool
-is_non_empty_string(const char *str)
+is_non_empty(const char *str)
 {
     return str && strlen(str) > 0;
 }
@@ -120,8 +120,6 @@ static void add_to_toolbar(GtkWidget *toolbar, GtkWidget *item, int pos)
 void
 update_actions()
 {
-    DEBUG("UIManager: Update action");
-
     gtk_action_set_sensitive(newCallAction_, TRUE);
     gtk_action_set_sensitive(pickUpAction_, FALSE);
     gtk_action_set_sensitive(hangUpAction_, FALSE);
@@ -268,7 +266,7 @@ update_actions()
                     if (active_calltree_tab == current_calls_tab)
                         add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     else if (active_calltree_tab == history_tab) {
-                        if (is_non_empty_string(selectedCall->_recordfile)) {
+                        if (is_non_empty(selectedCall->_recordfile)) {
                             if (selectedCall->_record_is_playing)
                                 add_to_toolbar(toolbar_, stopRecordWidget_, pos);
                             else
@@ -386,7 +384,7 @@ update_actions()
                         add_to_toolbar(toolbar_, imToolbar_, pos);
                     }
                 } else if (active_calltree_tab == history_tab) {
-                    if (is_non_empty_string(selectedConf->_recordfile)) {
+                    if (is_non_empty(selectedConf->_recordfile)) {
                         int pos = 2;
                         if (selectedConf->_record_is_playing)
                             add_to_toolbar(toolbar_, stopRecordWidget_, pos);
@@ -802,7 +800,7 @@ call_back(void * foo UNUSED)
     }
 
     callable_obj_t *new_call = create_new_call(CALL, CALL_STATE_DIALING, "",
-                               "", selected_call->_peer_name,
+                               "", selected_call->_display_name,
                                selected_call->_peer_number);
 
     calllist_add_call(current_calls_tab, new_call);
@@ -897,7 +895,7 @@ edit_paste(void * foo UNUSED)
                     gchar * temp = g_strconcat(selectedCall->_peer_number,
                                                oneNo, NULL);
                     g_free(selectedCall->_peer_info);
-                    selectedCall->_peer_info = get_peer_info(temp, selectedCall->_peer_name);
+                    selectedCall->_peer_info = get_peer_info(temp, selectedCall->_display_name);
                     g_free(temp);
                     g_free(oneNo);
                     calltree_update_call(current_calls_tab, selectedCall);
@@ -926,6 +924,7 @@ static void
 clear_history(void)
 {
     calllist_clean_history();
+    dbus_clear_history();
 }
 
 /**
@@ -1485,7 +1484,7 @@ ok_cb(GtkWidget *widget UNUSED, gpointer userdata)
 
     // Create the new call
     callable_obj_t *modified_call = create_new_call(CALL, CALL_STATE_DIALING, "", original->_accountID,
-                                    original->_peer_name, new_number);
+                                    original->_display_name, new_number);
 
     // Update the internal data structure and the GUI
     calllist_add_call(current_calls_tab, modified_call);
@@ -1576,10 +1575,9 @@ create_menus(GtkUIManager *ui_manager)
     volumeToggle_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/VolumeControls");
 
     // Set the toggle buttons
-    SelectedAudioLayer selected = get_selected_audio_api(); 
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean(CONF_SHOW_DIALPAD));
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_),(gboolean) SHOW_VOLUME);
-    gtk_action_set_sensitive(volumeToggle_, (ALSA_LAYER_SELECTED == selected) ? TRUE : FALSE);
+    gtk_action_set_sensitive(volumeToggle_, must_show_alsa_conf());
     gtk_action_set_sensitive(gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/Toolbar"), FALSE);
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */

@@ -345,7 +345,7 @@ im_widget_infobar(IMWidget *im)
     gchar *msg1;
 
     if (im_widget_call)
-        msg1 = g_strdup_printf("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
+        msg1 = g_strdup_printf("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_display_name);
     else if (im_widget_conf)
         msg1 = g_strdup_printf("Conferencing");
     else

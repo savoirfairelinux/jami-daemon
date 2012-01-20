@@ -33,28 +33,15 @@
 
 #include "actions.h"
 
-/**
- * Selected audio layer enumeration type
- */
-typedef enum SelectedAudioLayer_ {
-    ALSA_LAYER_SELECTED,
-    PULSEAUDIO_LAYER_SELECTED,
-    UNKNOWN_AUDIO_LAYER,
-} SelectedAudioLayer;
-
-/**
- * Return the full audio configuration panel
- */
 GtkWidget* create_audio_configuration (void);
 
-/**
- * Returns the audio codec activation/deactivation & preference ordering box
- */
-GtkWidget* create_audiocodecs_box(account_t *);
+GtkWidget* api_box();
+GtkWidget* alsa_box();
+GtkWidget* pulse_box();
+GtkWidget* audiocodecs_box();
+GtkWidget* ringtone_box();
 
-/**
- * Returns the type of the selected api (i.e. ALSA or PULSEAUDIO)
- */
-SelectedAudioLayer get_selected_audio_api(void);
+gboolean get_api();
+gboolean must_show_alsa_conf ();
 
 #endif // __AUDIO_CONF_H

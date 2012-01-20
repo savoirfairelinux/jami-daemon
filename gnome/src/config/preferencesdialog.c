@@ -47,10 +47,10 @@
 #include "addressbook-config.h"
 #include "shortcuts-config.h"
 #include "hooks-config.h"
+#include "audioconf.h"
 #include "uimanager.h"
 #include "unused.h"
 #include "mainwindow.h"
-#include "audioconf.h"
 
 /**
  * Local variables

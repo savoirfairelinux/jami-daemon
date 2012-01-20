@@ -112,7 +112,7 @@ typedef struct  {
     /**
      * The information about the person we are talking
      */
-    gchar *_peer_name;
+    gchar *_display_name;
     gchar *_peer_number;
 
     /**
@@ -183,7 +183,7 @@ gint get_state_callstruct(gconstpointer, gconstpointer);
   * @param c The call
   * @return The full name of the caller or an empty string
   */
-gchar* call_get_peer_name(const gchar*);
+gchar* call_get_display_name(const gchar*);
 
 /**
  * This function parse the callable_obj_t.from field to return the number
@@ -201,5 +201,7 @@ gchar* get_call_duration(callable_obj_t *obj);
 gchar* get_formatted_start_timestamp(time_t);
 
 gchar* call_get_audio_codec(callable_obj_t *obj);
+
+gboolean call_was_outgoing(callable_obj_t * obj);
 
 #endif

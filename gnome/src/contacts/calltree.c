@@ -33,7 +33,6 @@
 #include "calllist.h"
 #include "calltree.h"
 #include <stdlib.h>
-#include <glib/gprintf.h>
 
 #include "eel-gconf-extensions.h"
 #include "unused.h"
@@ -211,7 +210,7 @@ row_activated(GtkTreeView *tree_view UNUSED,
                 }
             } else {
                 // If history or contact: double click action places a new call
-                callable_obj_t* new_call = create_new_call(CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_peer_name, selectedCall->_peer_number);
+                callable_obj_t* new_call = create_new_call(CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_display_name, selectedCall->_peer_number);
 
                 calllist_add_call(current_calls_tab, new_call);
                 calltree_add_call(current_calls_tab, new_call, NULL);
@@ -332,6 +331,16 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     return TRUE;
 }
 
+static gchar *clean_display_number(gchar *name)
+{
+    const gchar SIP_PREFIX[] = "<sip:";
+    const gchar SIPS_PREFIX[] = "<sips:";
+    if (g_str_has_prefix(name, SIP_PREFIX))
+        name += (sizeof(SIP_PREFIX) - 1);
+    else if (g_str_has_prefix(name, SIPS_PREFIX))
+        name += (sizeof(SIPS_PREFIX) - 1);
+    return name;
+}
 
 static gchar *
 calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, const gchar *const audio_codec)
@@ -339,7 +348,7 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, con
     gchar display_number[strlen(c->_peer_number) + 1];
     strcpy(display_number, c->_peer_number);
 
-    if (c->_type != CALL || g_strcmp0(c->_history_state, OUTGOING_STRING)) {
+    if (c->_type != CALL || !call_was_outgoing(c)) {
         // Get the hostname for this call (NULL if not existent)
         gchar * hostname = g_strrstr(c->_peer_number, "@");
 
@@ -349,13 +358,14 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, con
     }
 
     // Different display depending on type
-    const gchar *name, *details = NULL;
+    gchar *name, *details = NULL;
 
-    if (*c->_peer_name) {
-        name = c->_peer_name;
+    if (*c->_display_name) {
+        name = c->_display_name;
         details = display_number;
     } else {
         name = display_number;
+        name = clean_display_number(name);
         details = "";
     }
 
@@ -712,7 +722,7 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
                 g_free(duration);
 
                 gchar *old_description = description;
-                description = g_strconcat(old_description , full_duration, NULL);
+                description = g_strconcat(old_description, full_duration, NULL);
                 g_free(full_duration);
                 g_free(old_description);
             }

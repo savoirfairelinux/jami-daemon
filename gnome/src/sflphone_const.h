@@ -140,7 +140,7 @@
 /** Behaviour of the main window on incoming calls */
 #define __POPUP_WINDOW  (eel_gconf_get_integer (POPUP_ON_CALL))
 /** Show/Hide the volume controls */
-#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && (ALSA_LAYER_SELECTED == get_selected_audio_api()))
+#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && must_show_alsa_conf())
 
 /** DTMF type */
 #define OVERRTP "overrtp"

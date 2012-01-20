@@ -477,12 +477,7 @@ void dbus_set_accounts_order (const gchar* order);
  */
 GPtrArray *dbus_get_history(void);
 
-/**
- * Set the history entries into the daemon. The daemon then writes the content 
- * of this list into the history file
- * @param A list of serialized history entries
- */
-void dbus_set_history (const GPtrArray *history);
+void dbus_clear_history(void);
 
 void sflphone_display_transfer_status (const gchar* message);
 

@@ -97,7 +97,7 @@ sflphone_notify_voice_mail(const gchar* accountID , guint count)
  * Else, check if it an IP call. if not, popup an error message
  */
 
-static gboolean _is_direct_call(callable_obj_t * c)
+static gboolean is_direct_call(callable_obj_t * c)
 {
     if (g_strcasecmp(c->_accountID, "empty") == 0) {
         if (!g_str_has_prefix(c->_peer_number, "sip:")) {
@@ -142,9 +142,6 @@ void
 sflphone_quit()
 {
     if (calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
-        // Save the history
-        sflphone_save_history();
-
         dbus_unregister(getpid());
         dbus_clean();
         account_list_free();
@@ -190,7 +187,7 @@ sflphone_hung_up(callable_obj_t * c)
         c->_confID = NULL;
     }
 
-    // test wether the widget contain text, if not remove it
+    // test whether the widget contains text, if not remove it
     if ((im_window_get_nb_tabs() > 1) && c->_im_widget && !(IM_WIDGET(c->_im_widget)->containText))
         im_window_remove_tab(c->_im_widget);
     else
@@ -213,7 +210,7 @@ void sflphone_fill_account_list(void)
 
     if (array) {
         for (gchar **accountID = array; accountID && *accountID; accountID++) {
-            account_t * a = g_new0(account_t,1);
+            account_t * a = g_new0(account_t, 1);
             a->accountID = g_strdup(*accountID);
             a->credential_information = NULL;
             account_list_add(a);
@@ -558,7 +555,7 @@ sflphone_incoming_call(callable_obj_t * c)
     calltree_display(current_calls_tab);
 
     // Change the status bar if we are dealing with a direct SIP call
-    if (_is_direct_call(c)) {
+    if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);
@@ -828,9 +825,9 @@ static int place_registered_call(callable_obj_t * c)
 void
 sflphone_place_call(callable_obj_t * c)
 {
-    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
+    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
 
-    if (_is_direct_call(c)) {
+    if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);
@@ -1055,55 +1052,6 @@ void sflphone_fill_history(void)
         g_ptr_array_foreach(entries, create_callable_from_entry, NULL);
 
     fill_treeview_with_calls();
-}
-
-/* Ordered from highest timestamp (most recent) to lowest (oldest) */
-static gint
-history_compare_func(gconstpointer a, gconstpointer b)
-{
-    gconstpointer first_value =  g_hash_table_lookup(* (GHashTable **) a, TIMESTAMP_START_KEY);
-    gconstpointer second_value = g_hash_table_lookup(* (GHashTable **) b, TIMESTAMP_START_KEY);
-    /* treat NULL values as less than non-NULL values, like g_strcmp0 does */
-    if (!first_value)
-        return -(first_value != second_value);
-    else if (!second_value)
-        return first_value != second_value;
-
-    long f = atol(first_value);
-    long s = atol(second_value);
-    if (f > s)
-        return -1;
-    else if (f == s)
-        return 0;
-    else
-        return 1;
-}
-
-void sflphone_save_history(void)
-{
-    gint size = calllist_get_size(history_tab);
-
-    GPtrArray *sorted_history = g_ptr_array_new();
-    /* For each entry in our call history */
-    for (gint i = 0; i < size; ++i) {
-        QueueElement *current = calllist_get_nth(history_tab, i);
-
-        if (!current) {
-            WARN("SFLphone: Warning: %dth element is null", i);
-            break;
-        }
-
-        if (current->type == HIST_CALL) {
-            GHashTable *value = create_hashtable_from_history_entry(current->elem.call);
-            g_ptr_array_add(sorted_history, (gpointer) value);
-        }
-        else
-            ERROR("SFLphone: Error: Unknown type for serialization");
-    }
-
-    g_ptr_array_sort(sorted_history, history_compare_func);
-    dbus_set_history(sorted_history);
-    g_ptr_array_free(sorted_history, TRUE);
 }
 
 void

@@ -237,13 +237,10 @@ CallManager::getIsRecording(const std::string& callID)
     return Manager::instance().isRecording(callID);
 }
 
-
-std::string
-CallManager::getCurrentAudioCodecName(const std::string& callID)
+std::string CallManager::getCurrentAudioCodecName(const std::string& callID)
 {
     return Manager::instance().getCurrentCodecName(callID).c_str();
 }
-
 
 std::map<std::string, std::string>
 CallManager::getCallDetails(const std::string& callID)
@@ -255,12 +252,6 @@ std::vector<std::string>
 CallManager::getCallList()
 {
     return Manager::instance().getCallList();
-}
-
-std::string
-CallManager::getCurrentCallID()
-{
-    return Manager::instance().getCurrentCallId();
 }
 
 void
