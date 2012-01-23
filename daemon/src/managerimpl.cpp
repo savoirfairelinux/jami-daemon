@@ -64,6 +64,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
+#include <iterator>
 #include <fstream>
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
@@ -534,9 +535,8 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
         removeParticipant(callId);
         Conference *conf = getConferenceFromCallID(callId);
         processRemainingParticipants(callId, conf);
-    } else if (not isConference(getCurrentCallId())) {
+    } else if (not isConference(getCurrentCallId()))
         switchCall("");
-    }
 
     // Direct IP to IP call
     if (isIPToIP(callId)) {
@@ -822,9 +822,9 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
 
     // reset ring buffer for all conference participant
     // flush conference participants only
-    for (ParticipantSet::const_iterator iter_p = participants.begin();
-            iter_p != participants.end(); ++iter_p)
-        getMainBuffer()->flush(*iter_p);
+    for (ParticipantSet::const_iterator p = participants.begin();
+            p != participants.end(); ++p)
+        getMainBuffer()->flush(*p);
 
     getMainBuffer()->flush(Call::DEFAULT_ID);
 
@@ -987,8 +987,9 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
 
     int successCounter = 0;
 
-    for (std::vector<std::string>::const_iterator iter = participantList.begin(); iter != participantList.end(); ++iter) {
-        std::string numberaccount(*iter);
+    for (std::vector<std::string>::const_iterator p = participantList.begin();
+         p != participantList.end(); ++p) {
+        std::string numberaccount(*p);
         std::string tostr(numberaccount.substr(0, numberaccount.find(",")));
         std::string account(numberaccount.substr(numberaccount.find(",") + 1, numberaccount.size()));
 
@@ -1139,27 +1140,26 @@ void ManagerImpl::processRemainingParticipants(const std::string &current_call_i
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end();
-                ++iter_p)
-            getMainBuffer()->flush(*iter_p);
+        for (ParticipantSet::const_iterator p = participants.begin();
+             p != participants.end(); ++p)
+            getMainBuffer()->flush(*p);
 
         getMainBuffer()->flush(Call::DEFAULT_ID);
     } else if (n == 1) {
-        ParticipantSet::iterator iter_participant = participants.begin();
+        ParticipantSet::iterator p = participants.begin();
 
         // bind main participant to remaining conference call
-        if (iter_participant != participants.end()) {
+        if (p != participants.end()) {
             // this call is no longer a conference participant
-            std::string currentAccountId(getAccountFromCall(*iter_participant));
-            Call *call = getAccountLink(currentAccountId)->getCall(*iter_participant);
+            std::string currentAccountId(getAccountFromCall(*p));
+            Call *call = getAccountLink(currentAccountId)->getCall(*p);
             if (call) {
                 call->setConfId("");
                 // if we are not listening to this conference
                 if (current_call_id != conf->getConfID())
                     onHoldCall(call->getCallId());
                 else
-                    switchCall(*iter_participant);
+                    switchCall(*p);
             }
         }
 
@@ -1192,10 +1192,10 @@ void ManagerImpl::joinConference(const std::string& conf_id1,
         Conference *conf = iter->second;
         ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator iter_p = participants.begin();
-                iter_p != participants.end(); ++iter_p) {
-            detachParticipant(*iter_p, "");
-            addParticipant(*iter_p, conf_id2);
+        for (ParticipantSet::const_iterator p = participants.begin();
+                p != participants.end(); ++p) {
+            detachParticipant(*p, "");
+            addParticipant(*p, conf_id2);
         }
     }
 }
@@ -1346,7 +1346,7 @@ void ManagerImpl::playDtmf(char code)
 }
 
 // Multi-thread
-bool ManagerImpl::incomingCallWaiting()
+bool ManagerImpl::incomingCallWaiting() const
 {
     return nbIncomingWaitingCall_ > 0;
 }
@@ -1366,7 +1366,7 @@ void ManagerImpl::removeWaitingCall(const std::string& id)
         nbIncomingWaitingCall_--;
 }
 
-bool ManagerImpl::isWaitingCall(const std::string& id)
+bool ManagerImpl::isWaitingCall(const std::string &id) const
 {
     return waitingCall_.find(id) != waitingCall_.end();
 }
@@ -1846,7 +1846,7 @@ std::string ManagerImpl::getConfigFile() const
     if (mkdir(configdir.data(), 0700) != 0) {
         // If directory creation failed
         if (errno != EEXIST)
-            DEBUG("Cannot create directory: %m");
+           DEBUG("Cannot create directory: %m");
     }
 
     static const char * const PROGNAME = "sflphoned";
@@ -1870,12 +1870,9 @@ std::vector<std::string> ManagerImpl::unserialize(std::string s)
 
 std::string ManagerImpl::serialize(const std::vector<std::string> &v)
 {
-    std::string res;
-
-    for (std::vector<std::string>::const_iterator iter = v.begin(); iter != v.end(); ++iter)
-        res += *iter + "/";
-
-    return res;
+    std::ostringstream os;
+    std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
+    return os.str();
 }
 
 std::string ManagerImpl::getCurrentVideoCodecName(const std::string& id)

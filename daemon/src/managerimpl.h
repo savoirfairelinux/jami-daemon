@@ -927,7 +927,7 @@ class ManagerImpl {
          * @return true is there is one or many incoming call waiting
          * new call, not anwsered or refused
          */
-        bool incomingCallWaiting();
+        bool incomingCallWaiting() const;
 
         /*
          * Inline functions to manage speaker volume control
@@ -1113,7 +1113,7 @@ class ManagerImpl {
          * @param id std::string to test
          * @return bool True if the call is waiting
          */
-        bool isWaitingCall(const std::string& id);
+        bool isWaitingCall(const std::string& id) const;
 
         /** Remove a CallID/std::string association
          * Protected by mutex
