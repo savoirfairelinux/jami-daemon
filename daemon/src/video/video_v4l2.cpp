@@ -115,14 +115,16 @@ static const unsigned pixelformats_supported[] = {
  *
  */
 
-static unsigned int pixelformat_score(unsigned pixelformat)
+namespace {
+unsigned int pixelformat_score(unsigned pixelformat)
 {
     size_t n = sizeof pixelformats_supported / sizeof *pixelformats_supported;
-    for (unsigned int i = 0; i < n ; i++) {
+    for (unsigned int i = 0; i < n ; i++)
         if (pixelformats_supported[i] == pixelformat)
             return i;
-    }
+
     return UINT_MAX - 1;
+}
 }
 
 VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
@@ -131,11 +133,9 @@ VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
 std::vector<std::string> VideoV4l2Size::getRateList()
 {
 	std::vector<std::string> v;
-	std::stringstream ss;
 
 	size_t n = rates_.size();
-	unsigned i;
-	for (i = 0 ; i < n ; i++) {
+	for (size_t i = 0 ; i < n ; i++) {
 		std::stringstream ss;
 		ss << rates_[i];
 		v.push_back(ss.str());
@@ -143,7 +143,6 @@ std::vector<std::string> VideoV4l2Size::getRateList()
 
 	return v;
 }
-
 
 void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
 {
@@ -196,7 +195,7 @@ void VideoV4l2Channel::setFourcc(unsigned code)
     fourcc_[4] = '\0';
 }
 
-const char * VideoV4l2Channel::getFourcc()
+const char * VideoV4l2Channel::getFourcc() const
 {
 	return fourcc_;
 }
@@ -215,8 +214,6 @@ std::vector<std::string> VideoV4l2Channel::getSizeList()
 
     return v;
 }
-
-
 
 unsigned int VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
 {
@@ -306,7 +303,7 @@ void VideoV4l2Channel::getFormat(int fd)
     setFourcc(pixelformat);
 }
 
-VideoV4l2Size VideoV4l2Channel::getSize(const std::string &name)
+VideoV4l2Size VideoV4l2Channel::getSize(const std::string &name) const
 {
 	for (size_t i = 0; i < sizes_.size(); ++i) {
 		std::stringstream ss;
@@ -375,6 +372,5 @@ VideoV4l2Channel &VideoV4l2Device::getChannel(const std::string &name)
 
 	return channels.back();
 }
-
 
 } // end namespace sfl

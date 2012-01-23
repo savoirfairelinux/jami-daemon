@@ -33,7 +33,6 @@
 
 #include <vector>
 #include <string>
-#include <map>
 
 namespace sfl_video {
 	/**

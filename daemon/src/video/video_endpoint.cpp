@@ -29,10 +29,8 @@
 
 #include "video_endpoint.h"
 
-#include <iostream>
-#include <tr1/memory>
 #include <sstream>
-#include <map>
+#include <vector>
 #include "libav_utils.h"
 
 namespace sfl_video {
@@ -44,6 +42,7 @@ int FAKE_BITRATE()
     return 1000;
 }
 
+/* FIXME: use real bitrates */
 int getBitRate(const std::string & /*codec*/)
 {
     return FAKE_BITRATE();
@@ -63,7 +62,6 @@ std::vector<std::string> getCodecSpecifications(const std::string &codec)
     // Add the bit rate
     ss << getBitRate(codec);
     v.push_back(ss.str());
-    ss.str("");
 
     return v;
 }

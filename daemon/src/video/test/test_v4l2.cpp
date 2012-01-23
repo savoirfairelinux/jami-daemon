@@ -29,40 +29,35 @@
  */
 
 #include <iostream>
+#include <iterator>
 #include <vector>
 #include <string>
-#include <cassert>
-
-using namespace std;
 
 #include "video_v4l2_list.h"
-//#include "video_v4l2.h"
-using namespace sfl_video;
 
 int main()
 {
-    VideoV4l2List list;
-    std::vector<std::string> devlist = list.getDeviceList();
+    using namespace sfl_video;
+    using namespace std;
 
-    for (size_t i=0; i<devlist.size(); i++) {
-        const std::string &dev = devlist[i];
+    VideoV4l2ListThread worker;
+    vector<string> devs(worker.getDeviceList());
+
+    for (size_t i = 0; i < devs.size(); ++i) {
+        const string &dev = devs[i];
         cout << dev << endl;
 
-        std::vector<std::string> channellist = list.getChannelList(dev);
-        for (size_t i=0; i<channellist.size(); i++) {
-            const std::string &chan = channellist[i];
+        vector<string> channels(worker.getChannelList(dev));
+        for (size_t i = 0; i < channels.size(); ++i) {
+            const string &chan = channels[i];
             cout << '\t' << chan << endl;
 
-            std::vector<std::string> sizelist = list.getSizeList(dev, chan);
-            for (size_t i=0; i<sizelist.size(); i++) {
-                const std::string &size = sizelist[i];
+            vector<string> sizes = worker.getSizeList(dev, chan);
+            for (size_t i = 0; i < sizes.size(); ++i) {
+                const string &size(sizes[i]);
                 cout << "\t\t" << size << endl;
-
-                std::vector<std::string> ratelist = list.getRateList(dev, chan, size);
-                for (size_t i=0; i<ratelist.size(); i++) {
-                    const std::string &rate = ratelist[i];
-                    cout << "\t\t\t" << rate << endl;
-                }
+                vector<string> rates(worker.getRateList(dev, chan, size));
+                copy(rates.begin(), rates.end(), ostream_iterator<string>(cout, "\t\t\t"));
                 cout << endl;
             }
             cout << endl;

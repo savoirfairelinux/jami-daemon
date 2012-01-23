@@ -42,7 +42,6 @@ extern "C" {
 #endif
 }
 
-
 namespace sfl_video {
 
 class VideoV4l2Size {
@@ -76,10 +75,10 @@ class VideoV4l2Channel {
         unsigned int getSizes(int fd, unsigned int pixel_format);
 
         void setFourcc(unsigned code);
-        const char * getFourcc();
+        const char * getFourcc() const;
 
         std::vector<std::string> getSizeList();
-        VideoV4l2Size getSize(const std::string &name);
+        VideoV4l2Size getSize(const std::string &name) const;
 
         unsigned idx;
         std::string name;
