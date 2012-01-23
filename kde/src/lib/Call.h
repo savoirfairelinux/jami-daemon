@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
  *                                                                         *
@@ -116,32 +116,74 @@ typedef  void (Call::*function)();
 class  LIB_EXPORT Call : public QObject
 {
    Q_OBJECT
+public:
+   //Constructors & Destructors
+   Call(QString confId, QString account);
+   ~Call();
+   static Call* buildDialingCall  (QString callId, const QString & peerName, QString account = ""                                                               );
+   static Call* buildIncomingCall (const QString & callId                                                                                                       );
+   static Call* buildRingingCall  (const QString & callId                                                                                                       );
+   static Call* buildHistoryCall  (const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type );
+   static Call* buildExistingCall (QString callId                                                                                                               );
+   static void  setContactBackend (ContactBackend* be                                                                                                           );
+
+   //Static getters
+   static history_state getHistoryStateFromType            ( QString type                                    );
+   static QString       getTypeFromHistoryState            ( history_state historyState                      );
+   static call_state    getStartStateFromDaemonCallState   ( QString daemonCallState, QString daemonCallType );
+   static history_state getHistoryStateFromDaemonCallState ( QString daemonCallState, QString daemonCallType );
+   
+   //Getters
+   call_state           getState            () const;
+   const QString&       getCallId           () const;
+   const QString&       getPeerPhoneNumber  () const;
+   const QString&       getPeerName         () const;
+   call_state           getCurrentState     () const;
+   history_state        getHistoryState     () const;
+   bool                 getRecording        () const;
+   const QString&       getAccountId        () const;
+   bool                 isHistory           () const;
+   QString              getStopTimeStamp    () const;
+   QString              getStartTimeStamp   () const;
+   QString              getCurrentCodecName () const;
+   bool                 isSecure            () const;
+   bool                 isConference        () const;
+   const QString&       getConfId           () const;
+   const QString&       getTransferNumber   () const;
+   const QString&       getCallNumber       () const;
+
+   //Automated function
+   call_state stateChanged(const QString & newState);
+   call_state actionPerformed(call_action action);
+   
+   //Setters
+   void setConference(bool value);
+   void setConfId(QString value);
+   void setTransferNumber(const QString& number);
+   void setCallNumber(const QString& number);
+   
+   //Mutators
+   void appendText(const QString& str);
+   void backspaceItemText();
+   void changeCurrentState(call_state newState);
+   
 private:
 
-   //Call attributes
-   
-   QString       m_pAccount;
-   QString       m_pCallId;
-   QString       m_pConfId;
-   QString       m_pPeerPhoneNumber;
-   QString       m_pPeerName;
-   history_state m_pHistoryState;
-   QDateTime*    m_pStartTime;
-   QDateTime*    m_pStopTime;
-   
-   /*
-   QWidget * historyItemWidget;
-   QLabel * labelHistoryIcon;
-   QLabel * labelHistoryPeerName;
-   QLabel * labelHistoryCallNumber;
-   QLabel * labelHistoryTime;
-   */
-
-   QString m_pTransferNumber;
-   QString m_pCallNumber;
+   //Attributes
+   QString                m_Account        ;
+   QString                m_CallId         ;
+   QString                m_ConfId         ;
+   QString                m_PeerPhoneNumber;
+   QString                m_PeerName       ;
+   history_state          m_HistoryState   ;
+   QDateTime*             m_pStartTime     ;
+   QDateTime*             m_pStopTime      ;
+   QString                m_TransferNumber ;
+   QString                m_CallNumber     ;
    static ContactBackend* m_pContactBackend;
-   
-   bool conference;
+   bool                   m_isConference   ;
+   call_state             m_CurrentState   ;
+   bool                   m_Recording      ;
    
    //Automate attributes
    /**
@@ -176,9 +218,6 @@ private:
    
    static const char * historyIcons[3];
    
-   call_state currentState;
-   bool recording;
-   
    static const char * callStateIcons[11];
 
    Call(call_state startState, QString callId, QString peerNumber = "", QString account = "", QString peerName = "");
@@ -207,57 +246,6 @@ private:
    void startWeird   ();
    void warning      ();
 
-public:
-   //Constructors & Destructors
-   Call(QString confId, QString account);
-   ~Call();
-   static Call* buildDialingCall  (QString callId, const QString & peerName, QString account = ""                                                               );
-   static Call* buildIncomingCall (const QString & callId                                                                                                       );
-   static Call* buildRingingCall  (const QString & callId                                                                                                       );
-   static Call* buildHistoryCall  (const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type );
-   static Call* buildExistingCall (QString callId                                                                                                               );
-   static void  setContactBackend (ContactBackend* be                                                                                                           );
-
-   //Static getters
-   static history_state getHistoryStateFromType            ( QString type                                    );
-   static QString       getTypeFromHistoryState            ( history_state historyState                      );
-   static call_state    getStartStateFromDaemonCallState   ( QString daemonCallState, QString daemonCallType );
-   static history_state getHistoryStateFromDaemonCallState ( QString daemonCallState, QString daemonCallType );
-   
-   //Getters
-   call_state    getState            () const;
-   QString       getCallId           () const;
-   QString       getPeerPhoneNumber  () const;
-   QString       getPeerName         () const;
-   call_state    getCurrentState     () const;
-   history_state getHistoryState     () const;
-   bool          getRecording        () const;
-   QString       getAccountId        () const;
-   bool          isHistory           () const;
-   QString       getStopTimeStamp    () const;
-   QString       getStartTimeStamp   () const;
-   QString       getCurrentCodecName () const;
-   bool          isSecure            () const;
-   bool          isConference        () const;
-   QString       getConfId           () const;
-   QString       getTransferNumber   () const;
-   QString       getCallNumber       () const;
-
-   //Automated function
-   call_state stateChanged(const QString & newState);
-   call_state actionPerformed(call_action action);
-   
-   //Setters
-   void setConference(bool value);
-   void setConfId(QString value);
-   void setTransferNumber(QString number);
-   void setCallNumber(QString number);
-   
-   //Mutotors
-   void appendText(QString str);
-   void backspaceItemText();
-   void changeCurrentState(call_state newState);
-   
 signals:
    void changed();
    void isOver(Call*);

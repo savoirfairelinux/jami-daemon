@@ -16,15 +16,12 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #ifndef CONTACTITEMWIDGET_H
 #define CONTACTITEMWIDGET_H
 
 #include <QtGui/QWidget>
-#include <QtCore/QList>
-#include <QtCore/QVariant>
-#include <QtCore/QVector>
 #include "lib/Contact.h"
 
 //Qt
@@ -43,59 +40,62 @@ namespace KABC {
 //SFLPhone
 class Contact;
 
+///@class ContactItemWidget Item for the contact tree
 class ContactItemWidget : public QWidget
 {
    Q_OBJECT
  public:
+    //Constructor
     ContactItemWidget(QWidget* parent =0);
     ~ContactItemWidget();
 
-    KAction* m_pCallAgain;
-    KAction* m_pEditContact;
-    KAction* m_pCopy;
-    KAction* m_pEmail;
-    KAction* m_pAddPhone;
-    KAction* m_pBookmark;
-    QMenu*   m_pMenu;
+    //Getters
+    KABC::Addressee*  contact()         const;
+    const QString&    getContactName()  const;
+    PhoneNumbers      getCallNumbers()  const;
+    const QString&    getOrganization() const;
+    const QString&    getEmail()        const;
+    QPixmap*          getPicture()      const;
+    QTreeWidgetItem*  getItem()         const;
+    Contact*          getContact()      const;
 
-    KABC::Addressee* contact() const;
-    void setContact(Contact* contact);
+    //Setters
+    void setContact ( Contact*         contact );
+    void setItem    ( QTreeWidgetItem* item    );
+
+    //Const
     static const char * callStateIcons[12];
 
-    //QPixmap* getIcon();
-    QString  getContactName() const;
-    PhoneNumbers getCallNumbers() const;
-    QString  getOrganization() const;
-    QString  getEmail() const;
-    QPixmap* getPicture() const;
-    QTreeWidgetItem* getItem();
-    Contact* getContact();
-
-    void setItem(QTreeWidgetItem* item);
-
  private:
-    Contact* m_pContactKA;
+    //Attributes
+    Contact* m_pContactKA    ;
+    QLabel*  m_pIconL        ;
+    QLabel*  m_pContactNameL ;
+    QLabel*  m_pCallNumberL  ;
+    QLabel*  m_pOrganizationL;
+    QLabel*  m_pEmailL       ;
+    QTreeWidgetItem* m_pItem ;
 
-    QLabel* m_pIconL;
-    QLabel* m_pContactNameL;
-    QLabel* m_pCallNumberL;
-    QLabel* m_pOrganizationL;
-    QLabel* m_pEmailL;
-
-    QTreeWidgetItem* m_pItem;
-
-    bool init;
+    //Actions
+    KAction* m_pCallAgain   ;
+    KAction* m_pEditContact ;
+    KAction* m_pCopy        ;
+    KAction* m_pEmail       ;
+    KAction* m_pAddPhone    ;
+    KAction* m_pBookmark    ;
+    QMenu*   m_pMenu        ;
 
 public slots:
    void updated();
+   
 private slots:
    void showContext(const QPoint& pos);
-   void sendEmail();
-   void callAgain();
-   void copy();
-   void editContact();
-   void addPhone();
-   void bookmark();
+   void sendEmail   ();
+   void callAgain   ();
+   void copy        ();
+   void editContact ();
+   void addPhone    ();
+   void bookmark    ();
  };
 
 #endif // CALLTREE_ITEM_H

@@ -349,6 +349,10 @@ void SIPVoIPLink::sendRegister(Account *a)
     pjsip_transport_dec_ref(account->transport_);
 
     account->setRegistrationInfo(regc);
+
+    // start the periodic registration request based on Expire header
+    // account determines itself if a keep alive is required
+    account->startKeepAliveTimer();
 }
 
 void SIPVoIPLink::sendUnregister(Account *a)
@@ -356,10 +360,13 @@ void SIPVoIPLink::sendUnregister(Account *a)
     SIPAccount *account = dynamic_cast<SIPAccount *>(a);
 
     // This may occurs if account failed to register and is in state INVALID
-    if (!account->isRegister()) {
+    if (!account->isRegistered()) {
         account->setRegistrationState(Unregistered);
         return;
     }
+
+    // Make sure to cancel any ongoing timers before unregister
+    account->stopKeepAliveTimer();
 
     pjsip_regc *regc = account->getRegistrationInfo();
 
@@ -377,6 +384,21 @@ void SIPVoIPLink::sendUnregister(Account *a)
     account->setRegister(false);
 }
 
+void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
+{
+    pj_status_t status;
+
+    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay); 
+    if(status != PJ_SUCCESS) {
+        ERROR("Could not schedule new timer in pjsip endpoint");
+    }
+}
+
+void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
+{
+    pjsip_endpt_cancel_timer(endpt_, &timer); 
+}
+
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
@@ -384,7 +406,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     if (account == NULL) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
         throw VoipLinkException("Could not get account for this call");
 
-    SIPCall* call = new SIPCall(id, Call::Outgoing, cp_);
+    SIPCall* call = new SIPCall(id, Call::OUTGOING, cp_);
 
     // If toUri is not a well formated sip URI, use account information to process it
     std::string toUri;
@@ -431,7 +453,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
         throw VoipLinkException("Could not start rtp session for early media");
     }
 
-    call->initRecFileName(toUrl);
+    call->initRecFilename(toUrl);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
     call->getLocalSDP()->createOffer(account->getActiveCodecs(), account->getActiveVideoCodecs());
@@ -460,8 +482,8 @@ SIPVoIPLink::answer(Call *c)
     if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
         throw VoipLinkException("Could not send invite request answer (200 OK)");
 
-    call->setConnectionState(Call::Connected);
-    call->setState(Call::Active);
+    call->setConnectionState(Call::CONNECTED);
+    call->setState(Call::ACTIVE);
 }
 
 void
@@ -535,8 +557,7 @@ void
 SIPVoIPLink::onhold(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
-    
-    call->setState(Call::Hold);
+    call->setState(Call::HOLD);
     call->getAudioRtp().stop();
     call->getVideoRtp()->stop();
 
@@ -594,7 +615,7 @@ SIPVoIPLink::offhold(const std::string& id)
     sdpSession->addAttributeToLocalVideoMedia("sendrecv");
 
     if (SIPSessionReinvite(call) == PJ_SUCCESS)
-        call->setState(Call::Active);
+        call->setState(Call::ACTIVE);
 }
 
 void
@@ -710,7 +731,7 @@ SIPVoIPLink::refuse(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
 
-    if (!call->isIncoming() or call->getConnectionState() == Call::Connected)
+    if (!call->isIncoming() or call->getConnectionState() == Call::CONNECTED)
         return;
 
     call->getAudioRtp().stop();
@@ -842,8 +863,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
         return false;
 
-    call->setConnectionState(Call::Progressing);
-    call->setState(Call::Active);
+    call->setConnectionState(Call::PROGRESSING);
+    call->setState(Call::ACTIVE);
     addCall(call);
 
     return true;
@@ -874,9 +895,9 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
 void
 SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata UNUSED)
 {
-    if (call->getConnectionState() != Call::Connected) {
-        call->setConnectionState(Call::Connected);
-        call->setState(Call::Active);
+    if (call->getConnectionState() != Call::CONNECTED) {
+        call->setConnectionState(Call::CONNECTED);
+        call->setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(call->getCallId());
     }
 }
@@ -921,9 +942,9 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
     if (!account)
         return false;
 
-    SIPCall *call = new SIPCall(id, Call::Outgoing, cp_);
-    call->setCallConfiguration(Call::IPtoIP);
-    call->initRecFileName(to);
+    SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_);
+    call->setIPToIP(true);
+    call->initRecFilename(to);
 
     std::string localAddress(getInterfaceAddrFromName(account->getLocalInterface()));
 
@@ -1289,7 +1310,6 @@ void SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transpor
 namespace {
 std::string parseDisplayName(const char * buffer)
 {
-    // Parse the display name from "From" header
     const char* from_header = strstr(buffer, "From: ");
 
     if (!from_header)
@@ -1355,7 +1375,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
     }
 
     if (inv->state == PJSIP_INV_STATE_EARLY and e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
-        call->setConnectionState(Call::Ringing);
+        call->setConnectionState(Call::RINGING);
         Manager::instance().peerRingingCall(call->getCallId());
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
         // After we sent or received a ACK - The connection is established
@@ -1650,6 +1670,8 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);
+
+        account->setRegistrationExpire(param->expiration);
     }
 
     if (param->status != PJ_SUCCESS) {
@@ -1693,7 +1715,7 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         SIPVoIPLink::instance()->shutdownSipTransport(account);
 
     } else {
-        if (account->isRegister())
+        if (account->isRegistered())
             account->setRegistrationState(Registered);
         else {
             account->setRegistrationState(Unregistered);
@@ -1795,7 +1817,7 @@ static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         UrlHook::runAction(Manager::instance().hookPreference.getUrlCommand(), header_value);
     }
 
-    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::Incoming, cp_);
+    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
     Manager::instance().associateCallToAccount(call->getCallId(), account_id);
 
     // May use the published address as well
@@ -1817,10 +1839,10 @@ static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     std::string peerNumber(tmp, length);
     stripSipUriPrefix(peerNumber);
 
-    call->setConnectionState(Call::Progressing);
+    call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
     call->setDisplayName(displayName);
-    call->initRecFileName(peerNumber);
+    call->initRecFilename(peerNumber);
 
     setCallMediaLocal(call, addrToUse);
 
@@ -1905,7 +1927,7 @@ static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         PJ_ASSERT_RETURN(pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) == PJ_SUCCESS, 1);
         PJ_ASSERT_RETURN(pjsip_inv_send_msg(call->inv, tdata) == PJ_SUCCESS, 1);
 
-        call->setConnectionState(Call::Ringing);
+        call->setConnectionState(Call::RINGING);
 
         Manager::instance().incomingCall(call, account_id);
         Manager::instance().getAccountLink(account_id)->addCall(call);

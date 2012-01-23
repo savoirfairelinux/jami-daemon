@@ -1,12 +1,39 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
+
+//Parent
 #include "AccountView.h"
 
-#include <QDebug>
+
+//Qt
 #include <QtGui/QListWidgetItem>
+
+//KDE
+#include <KDebug>
+
+//SFLPhone library
 #include "lib/sflphone_const.h"
 #include "lib/configurationmanager_interface_singleton.h"
 
 ///Constructor
-AccountView::AccountView() : Account(), item2(0), itemWidget(0)
+AccountView::AccountView() : Account(), m_pItem(0), m_pWidget(0)
 {
 
 }
@@ -14,44 +41,51 @@ AccountView::AccountView() : Account(), item2(0), itemWidget(0)
 ///Init
 void AccountView::initItem()
 {
-   if(item2 != NULL)
-      delete item2;
-   item2 = new QListWidgetItem();
-   item2->setSizeHint(QSize(140,25));
-   item2->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
+   if(m_pItem != NULL)
+      delete m_pItem;
+   m_pItem = new QListWidgetItem();
+   m_pItem->setSizeHint(QSize(140,25));
+   m_pItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
    initItemWidget();
 }
 
 ///Init widget
 void AccountView::initItemWidget()
 {
-   if(itemWidget != NULL)
-      delete itemWidget;
+   if(m_pWidget != NULL)
+      delete m_pWidget;
         
    bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
-   itemWidget = new AccountItemWidget();
-   itemWidget->setEnabled(enabled);
-   itemWidget->setAccountText(getAccountDetail(ACCOUNT_ALIAS));
+   m_pWidget = new AccountItemWidget();
+   m_pWidget->setEnabled(enabled);
+   m_pWidget->setAccountText(getAccountDetail(ACCOUNT_ALIAS));
 
    if(isNew() || !enabled)
-      itemWidget->setState(AccountItemWidget::Unregistered);
+      m_pWidget->setState(AccountItemWidget::Unregistered);
    else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
-      itemWidget->setState(AccountItemWidget::Registered);
+      m_pWidget->setState(AccountItemWidget::Registered);
    else
-      itemWidget->setState(AccountItemWidget::NotWorking);
-   connect(itemWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
+      m_pWidget->setState(AccountItemWidget::NotWorking);
+   connect(m_pWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Get the current item
 QListWidgetItem* AccountView::getItem()
 {
-   return item2;
+   return m_pItem;
 }
 
 ///Get the current widget
 AccountItemWidget* AccountView::getItemWidget()
 {
-   return itemWidget;
+   return m_pWidget;
 }
 
 ///Return the state color
@@ -65,23 +99,33 @@ QColor AccountView::getStateColor()
 }
 
 ///Get the color name
-QString AccountView::getStateColorName()
+const QString& AccountView::getStateColorName()
 {
+   static const QString black    ( "black"     );
+   static const QString darkGreen( "darkGreen" );
+   static const QString red      ( "red"       );
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
-          return "black";
+          return black;
    if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
-          return "darkGreen";
-   return "red";
+          return darkGreen;
+   return red;
 }
 
 ///Is this item checked?
 bool AccountView::isChecked() const
 {
-   return itemWidget->getEnabled();
+   return m_pWidget->getEnabled();
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Build an item from an account id
-AccountView* AccountView::buildExistingAccountFromId(QString _accountId)
+AccountView* AccountView::buildExistingAccountFromId(const QString& _accountId)
 {
    //Account* a = Account::buildExistingAccountFromId( _accountId);
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -93,7 +137,7 @@ AccountView* AccountView::buildExistingAccountFromId(QString _accountId)
 }
 
 ///Build an item from an alias
-AccountView* AccountView::buildNewAccountFromAlias(QString alias)
+AccountView* AccountView::buildNewAccountFromAlias(const QString& alias)
 {
    //Account* a = Account::buildNewAccountFromAlias(alias);
    AccountView* a = new AccountView();
@@ -106,22 +150,21 @@ AccountView* AccountView::buildNewAccountFromAlias(QString alias)
 ///Change LED color
 void AccountView::updateState()
 {
-   qDebug() << "updateState";
    if(! isNew()) {
       Account::updateState();
       
-      AccountItemWidget * itemWidget = getItemWidget();
+      AccountItemWidget * m_pWidget = getItemWidget();
       if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE ) {
-         qDebug() << "itemWidget->setState(AccountItemWidget::Unregistered);";
-         itemWidget->setState(AccountItemWidget::Unregistered);
+         kDebug() << "Changing account state to Unregistered";
+         m_pWidget->setState(AccountItemWidget::Unregistered);
       }
       else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY) {
-         qDebug() << "itemWidget->setState(AccountItemWidget::Registered);";
-         itemWidget->setState(AccountItemWidget::Registered);
+         kDebug() << "Changing account state to  Registered";
+         m_pWidget->setState(AccountItemWidget::Registered);
       }
       else {
-         qDebug() << "itemWidget->setState(AccountItemWidget::NotWorking);";
-         itemWidget->setState(AccountItemWidget::NotWorking);
+         kDebug() << "Changing account state to NotWorking";
+         m_pWidget->setState(AccountItemWidget::NotWorking);
       }
    }
 }

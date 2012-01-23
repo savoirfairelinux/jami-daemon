@@ -47,15 +47,10 @@ class Call : public Recordable {
         static const char * const DEFAULT_ID;
 
         /**
-         * This determines if the call is a direct IP-to-IP call or a classic call, made with an existing account
+         * This determines if the call originated from the local user (OUTGOING)
+         * or from some remote peer (INCOMING, MISSED).
          */
-        enum CallConfiguration {Classic, IPtoIP};
-
-        /**
-         * This determines if the call originated from the local user (Outgoing)
-         * or from some remote peer (Incoming).
-         */
-        enum CallType {Incoming, Outgoing};
+        enum CallType {INCOMING, OUTGOING, MISSED};
 
         /**
          * Tell where we're at with the call. The call gets Connected when we know
@@ -65,12 +60,12 @@ class Call : public Recordable {
          * Audio should be transmitted when ConnectionState = Connected AND
          * CallState = Active.
          */
-        enum ConnectionState {Disconnected, Trying, Progressing, Ringing, Connected};
+        enum ConnectionState {DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED};
 
         /**
          * The Call State.
          */
-        enum CallState {Inactive, Active, Hold, Busy, Conferencing, Refused, Error};
+        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, CONFERENCING, REFUSED, ERROR};
 
         /**
          * Constructor of a call
@@ -123,24 +118,6 @@ class Call : public Recordable {
         }
 
         /**
-         * Set the peer name (caller in ingoing)
-         * not protected by mutex (when created)
-         * @param name The peer name
-         */
-        void setPeerName(const std::string& name) {
-            peerName_ = name;
-        }
-
-        /**
-         * Get the peer name (caller in ingoing)
-         * not protected by mutex (when created)
-         * @return std::string The peer name
-         */
-        std::string getPeerName() const {
-            return peerName_;
-        }
-
-        /**
              * Set the display name (caller in ingoing)
              * not protected by mutex (when created)
              * @return std::string The peer display name
@@ -163,8 +140,8 @@ class Call : public Recordable {
          * @return true if yes
          *	      false otherwise
          */
-        bool isIncoming() {
-            return type_ == Incoming;
+        bool isIncoming() const {
+            return type_ == INCOMING;
         }
 
         /**
@@ -193,12 +170,8 @@ class Call : public Recordable {
 
         std::string getStateStr();
 
-        void setCallConfiguration(Call::CallConfiguration callConfig) {
-            callConfig_ = callConfig;
-        }
-
-        Call::CallConfiguration getCallConfiguration() const {
-            return callConfig_;
+        void setIPToIP(bool IPToIP) {
+            isIPToIP_ = IPToIP;
         }
 
         /**
@@ -244,16 +217,15 @@ class Call : public Recordable {
         unsigned int getLocalVideoPort();
 
         std::string getRecFileId() const {
-            return getPeerName();
+            return getDisplayName();
         }
 
-        std::string getFileName() const {
-            return peerNumber_;
-        }
-
+        void time_stop();
+        std::map<std::string, std::string> createHistoryEntry() const;
         virtual bool setRecording();
 
     private:
+        std::string getTypeStr() const;
         /** Protect every attribute that can be changed by two threads */
         ost::Mutex callMutex_;
 
@@ -284,16 +256,16 @@ class Call : public Recordable {
         CallState callState_;
 
         /** Direct IP-to-IP or classic call */
-        CallConfiguration callConfig_;
-
-        /** Name of the peer */
-        std::string peerName_;
+        bool isIPToIP_;
 
         /** Number of the peer */
         std::string peerNumber_;
 
         /** Display Name */
         std::string displayName_;
+
+        time_t timestamp_start_;
+        time_t timestamp_stop_;
 };
 
 #endif // __CALL_H__

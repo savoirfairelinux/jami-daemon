@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -37,69 +37,69 @@ namespace KABC {
 
 #include "typedefs.h"
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-   @author Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
-*/
+///@class Contact Abstract version of a contact
 class LIB_EXPORT Contact : public QObject{
    Q_OBJECT
 public:
    class PhoneNumber {
    public:
       PhoneNumber(QString number, QString type)
-      : m_pNumber(number),m_pType(type){}
+      : m_Number(number),m_Type(type){}
       QString& getNumber() {
-         return m_pNumber ;
+         return m_Number ;
       }
       QString& getType() {
-         return m_pType   ;
+         return m_Type   ;
       }
+      
    private:
-      QString m_pNumber   ;
-      QString m_pType     ;
+      QString m_Number   ;
+      QString m_Type     ;
    };
+   
    typedef QList<Contact::PhoneNumber*> PhoneNumbers;
    
 private:
-   QString      m_pFirstName      ;
-   QString      m_pSecondName     ;
-   QString      m_pNickName       ;
-   QPixmap*     m_pPhoto          ;
-   QString      m_pType           ;
-   QString      m_pFormattedName  ;
-   QString      m_pPreferredEmail ;
-   QString      m_pOrganization   ;
-   QString      m_pUid            ;
-   bool         displayPhoto      ;
-   PhoneNumbers m_pNumbers        ;
+   QString      m_FirstName      ;
+   QString      m_SecondName     ;
+   QString      m_NickName       ;
+   QPixmap*     m_pPhoto         ;
+   QString      m_Type           ;
+   QString      m_FormattedName  ;
+   QString      m_PreferredEmail ;
+   QString      m_Organization   ;
+   QString      m_Uid            ;
+   bool         m_DisplayPhoto   ;
+   PhoneNumbers m_Numbers        ;
+   
 public:
    //Constructors & Destructors
    explicit Contact();
    virtual ~Contact();
+   virtual void initItem();
    
    //Getters
    virtual PhoneNumbers   getPhoneNumbers()    const;
-   virtual QString        getNickName()        const;
-   virtual QString        getFirstName()       const;
-   virtual QString        getSecondName()      const;
-   virtual QString        getFormattedName()   const;
-   virtual QString        getOrganization()    const;
-   virtual QString        getUid()             const;
-   virtual QString        getPreferredEmail()  const;
+   virtual const QString& getNickName()        const;
+   virtual const QString& getFirstName()       const;
+   virtual const QString& getSecondName()      const;
+   virtual const QString& getFormattedName()   const;
+   virtual const QString& getOrganization()    const;
+   virtual const QString& getUid()             const;
+   virtual const QString& getPreferredEmail()  const;
    virtual const QPixmap* getPhoto()           const;
-   virtual QString        getType()            const;
-   virtual void           initItem();
+   virtual const QString& getType()            const;
 
    //Setters
-   virtual void setPhoneNumbers   (PhoneNumbers   );
-   virtual void setFormattedName  (QString name   );
-   virtual void setNickName       (QString name   );
-   virtual void setFirstName      (QString name   );
-   virtual void setFamilyName     (QString name   );
-   virtual void setOrganization   (QString name   );
-   virtual void setPreferredEmail (QString name   );
-   virtual void setUid            (QString id     );
-   virtual void setPhoto          (QPixmap* photo );
+   virtual void setPhoneNumbers   (PhoneNumbers          );
+   virtual void setFormattedName  (const QString& name   );
+   virtual void setNickName       (const QString& name   );
+   virtual void setFirstName      (const QString& name   );
+   virtual void setFamilyName     (const QString& name   );
+   virtual void setOrganization   (const QString& name   );
+   virtual void setPreferredEmail (const QString& name   );
+   virtual void setUid            (const QString& id     );
+   virtual void setPhoto          (QPixmap* photo        );
    
 protected:
    virtual void initItemWidget();

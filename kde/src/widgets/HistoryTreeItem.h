@@ -29,9 +29,6 @@
 #define HISTORYTREE_ITEM_H
 
 #include <QtGui/QWidget>
-#include <QtCore/QList>
-#include <QtCore/QVariant>
-#include <QtCore/QVector>
 
 //SFLPhone
 class Call;
@@ -44,52 +41,58 @@ class QLabel;
 //KDE
 class KAction;
 
+///@class HistoryTreeItem Items for the history dock
 class HistoryTreeItem : public QWidget
 {
    Q_OBJECT
  public:
+    //Constructor
     HistoryTreeItem(QWidget* parent =0, QString phone = "");
     ~HistoryTreeItem();
     
-    Call* call() const;
-    void setCall(Call *call);
+    //Getters
+    Call*            call           () const;
+    uint             getTimeStamp   ();
+    uint             getDuration    ();
+    QString          getName        ();
+    QString          getPhoneNumber ();
+    QTreeWidgetItem* getItem        ();
+
+    //Setters
+    void setCall (Call*            call);
+    void setItem (QTreeWidgetItem* item);
+
+    //Const
     static const char * callStateIcons[12];
-
-    uint getTimeStamp();
-    uint getDuration();
-    QString getName();
-    QString getPhoneNumber();
-    QTreeWidgetItem* getItem();
-
-    void setItem(QTreeWidgetItem* item);
     
  private:
-    Call *itemCall;
+    //Attributes
+    Call*    m_pItemCall      ;
 
-    QLabel* labelIcon;
-    QLabel* labelPeerName;
-    QLabel* labelCallNumber2;
-    QLabel* m_pTimeL;
-    QLabel* m_pDurationL;
+    QLabel*  m_pIconL         ;
+    QLabel*  m_pPeerNameL     ;
+    QLabel*  m_pCallNumberL   ;
+    QLabel*  m_pTimeL         ;
+    QLabel*  m_pDurationL     ;
 
-    KAction* m_pCallAgain;
-    KAction* m_pAddContact;
-    KAction* m_pAddToContact;
-    KAction* m_pCopy;
-    KAction* m_pEmail;
-    KAction* m_pBookmark;
-    QMenu*   m_pMenu;
+    KAction* m_pCallAgain     ;
+    KAction* m_pAddContact    ;
+    KAction* m_pAddToContact  ;
+    KAction* m_pCopy          ;
+    KAction* m_pEmail         ;
+    KAction* m_pBookmark      ;
+    QMenu*   m_pMenu          ;
 
-    uint m_pTimeStamp;
-    uint m_pDuration;
-    QString m_pName;
-    QString m_pPhoneNumber;
-    QTreeWidgetItem* m_pItem;
+    uint     m_TimeStamp      ;
+    uint     m_Duration       ;
+    QString  m_Name           ;
+    QString  m_PhoneNumber    ;
     
-    bool init;
+    QTreeWidgetItem* m_pItem;
 
 public slots:
    void updated();
+   
 private slots:
    void showContext(const QPoint& pos);
    void sendEmail();
@@ -99,6 +102,7 @@ private slots:
    void addToContact();
    void bookmark();
    bool getContactInfo(QString phone);
+   
 signals:
    void over(Call*);
 };

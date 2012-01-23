@@ -29,6 +29,7 @@
  */
 
 #include "calllist.h"
+#include <string.h>
 #include "calltab.h"
 #include "calltree.h"
 #include "unused.h"
@@ -121,6 +122,15 @@ calllist_add_call(calltab_t* tab, callable_obj_t * c)
 }
 
 void
+calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
+{
+    QueueElement *element = g_new0(QueueElement, 1);
+    element->type = HIST_CALL;
+    element->elem.call = c;
+    g_queue_push_head(tab->callQueue, (gpointer) element);
+}
+
+void
 calllist_clean_history(void)
 {
     guint size = calllist_get_size(history_tab);
@@ -150,7 +160,7 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
     if (c == NULL)
         return;
 
-    QueueElement *element = (QueueElement *)c->data;
+    QueueElement *element = (QueueElement *) c->data;
 
     if (element->type != HIST_CALL) {
         ERROR("CallList: Error: Element %s is not a call", callID);
@@ -159,8 +169,11 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
 
     g_queue_remove(tab->callQueue, element);
 
-    calllist_add_call(history_tab, element->elem.call);
-    calltree_add_history_entry(element->elem.call);
+    /* Don't save empty (i.e. started dialing, then deleted) calls */
+    if (element->elem.call->_peer_number && strlen(element->elem.call->_peer_number) > 0) {
+        calllist_add_call(history_tab, element->elem.call);
+        calltree_add_history_entry(element->elem.call);
+    }
 }
 
 
@@ -172,7 +185,7 @@ calllist_get_by_state(calltab_t* tab, call_state_t state)
 }
 
 guint
-calllist_get_size(calltab_t* tab)
+calllist_get_size(const calltab_t* tab)
 {
     return g_queue_get_length(tab->callQueue);
 }

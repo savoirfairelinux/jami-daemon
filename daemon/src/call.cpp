@@ -31,6 +31,7 @@
 #include "call.h"
 #include "manager.h"
 #include "audio/mainbuffer.h"
+#include "history/historyitem.h"
 
 const char * const Call::DEFAULT_ID = "audiolayer_id";
 
@@ -42,13 +43,16 @@ Call::Call(const std::string& id, Call::CallType type)
     , id_(id)
     , confID_()
     , type_(type)
-    , connectionState_(Call::Disconnected)
-    , callState_(Call::Inactive)
-    , callConfig_(Call::Classic)
-    , peerName_()
+    , connectionState_(Call::DISCONNECTED)
+    , callState_(Call::INACTIVE)
+    , isIPToIP_(false)
     , peerNumber_()
     , displayName_()
-{}
+    , timestamp_start_(0)
+    , timestamp_stop_(0)
+{
+    time(&timestamp_start_);
+}
 
 Call::~Call()
 {}
@@ -66,7 +70,6 @@ Call::getConnectionState()
     ost::MutexLock m(callMutex_);
     return connectionState_;
 }
-
 
 void
 Call::setState(CallState state)
@@ -86,32 +89,34 @@ std::string
 Call::getStateStr()
 {
     switch (getState()) {
-        case Active:
+        case ACTIVE:
             switch (getConnectionState()) {
-                case Ringing:
+                case RINGING:
                     return isIncoming() ? "INCOMING" : "RINGING";
-                case Connected:
+                case CONNECTED:
                 default:
                     return isRecording() ? "RECORD" : "CURRENT";
             }
-        case Hold:
+
+        case HOLD:
             return "HOLD";
-        case Busy:
+        case BUSY:
             return "BUSY";
-        case Inactive:
+        case INACTIVE:
 
             switch (getConnectionState()) {
-                case Ringing:
+                case RINGING:
                     return isIncoming() ? "INCOMING" : "RINGING";
-                case Connected:
+                case CONNECTED:
                     return "CURRENT";
                 default:
                     return "INACTIVE";
             }
-        case Conferencing:
+
+        case CONFERENCING:
             return "CONFERENCING";
-        case Refused:
-        case Error:
+        case REFUSED:
+        case ERROR:
         default:
             return "FAILURE";
     }
@@ -142,16 +147,17 @@ Call::getLocalVideoPort()
 bool
 Call::setRecording()
 {
-    bool recordStatus = Recordable::recAudio.isRecording();
+    bool recordStatus = Recordable::recAudio_.isRecording();
 
-    Recordable::recAudio.setRecording();
+    Recordable::recAudio_.setRecording();
     MainBuffer *mbuffer = Manager::instance().getMainBuffer();
-    std::string process_id = Recordable::recorder.getRecorderID();
+    std::string process_id = Recordable::recorder_.getRecorderID();
 
     if (!recordStatus) {
         mbuffer->bindHalfDuplexOut(process_id, id_);
         mbuffer->bindHalfDuplexOut(process_id);
-        Recordable::recorder.start();
+
+        Recordable::recorder_.start();
     } else {
         mbuffer->unBindHalfDuplexOut(process_id, id_);
         mbuffer->unBindHalfDuplexOut(process_id);
@@ -160,4 +166,45 @@ Call::setRecording()
     Manager::instance().getMainBuffer()->stateInfo();
 
     return recordStatus;
+}
+
+void Call::time_stop()
+{
+    time(&timestamp_stop_);
+}
+
+std::string Call::getTypeStr() const
+{
+    switch (type_) {
+        case INCOMING:
+            return "incoming";
+        case OUTGOING:
+            return "outgoing";
+        case MISSED:
+            return "missed";
+        default:
+            return "";
+    }
+}
+
+std::map<std::string, std::string> Call::createHistoryEntry() const
+{
+    std::map<std::string, std::string> result;
+    result[HistoryItem::ACCOUNT_ID_KEY] = Manager::instance().getAccountFromCall(id_);
+    result[HistoryItem::CONFID_KEY] = confID_;
+    result[HistoryItem::CALLID_KEY] = id_;
+    result[HistoryItem::DISPLAY_NAME_KEY] = displayName_;
+    result[HistoryItem::PEER_NUMBER_KEY] = peerNumber_;
+    result[HistoryItem::RECORDING_PATH_KEY] = recAudio_.fileExists() ? getFilename() : "";
+    std::stringstream time_str;
+    time_str << timestamp_start_;
+    result[HistoryItem::TIMESTAMP_START_KEY] = time_str.str();
+    time_str.str("");
+    time_str << timestamp_stop_;
+    result[HistoryItem::TIMESTAMP_STOP_KEY] = time_str.str();
+    if (connectionState_ == RINGING)
+        result[HistoryItem::STATE_KEY] = HistoryItem::MISSED_STRING;
+    else
+        result[HistoryItem::STATE_KEY] = getTypeStr();
+    return result;
 }

@@ -46,19 +46,6 @@ G_BEGIN_DECLS
 #define ADDRESSBOOK_DISPLAY_PHONE_BUSINESS   "ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"
 #define ADDRESSBOOK_DISPLAY_PHONE_HOME       "ADDRESSBOOK_DISPLAY_PHONE_HOME"
 #define ADDRESSBOOK_DISPLAY_PHONE_MOBILE     "ADDRESSBOOK_DISPLAY_PHONE_MOBILE"
-/*
-typedef struct _AddressBook_Config {
-    // gint64: a signed integer guaranteed to be 64 bits on all platforms
-    // To print or scan values of this type, use G_GINT64_MODIFIER and/or G_GINT64_FORMAT
-    gint enable;
-    gint max_results;
-    gint display_contact_photo;
-    gint search_phone_home;
-    gint search_phone_business;
-    gint search_phone_mobile;
-} AddressBook_Config;
-*/
-
 
 /**
  * Save the parameters through D-BUS

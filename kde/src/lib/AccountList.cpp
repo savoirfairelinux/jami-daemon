@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -19,10 +19,14 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
+//Parent
 #include "AccountList.h"
-#include "sflphone_const.h"
-#include "configurationmanager_interface_singleton.h"
 
+//SFLPhone
+#include "sflphone_const.h"
+
+//SFLPhone library
+#include "configurationmanager_interface_singleton.h"
 
 
 ///Constructors
@@ -35,6 +39,7 @@ AccountList::AccountList(QStringList & _accountIds)
 }
 
 ///Constructors
+///@param fill Whether to fill the list with accounts from configurationManager or not.
 AccountList::AccountList(bool fill)
 {
    m_pAccounts = new QVector<Account *>();
@@ -94,7 +99,7 @@ void AccountList::updateAccounts()
  ****************************************************************************/
 
 ///Get all accounts
-QVector<Account*> & AccountList::getAccounts()
+const QVector<Account*>& AccountList::getAccounts()
 {
    return *m_pAccounts;
 }
@@ -134,7 +139,7 @@ Account* AccountList::getAccountById(const QString & id) const
 }
 
 ///Get account with a specific state
-QVector<Account*> AccountList::getAccountsByState(QString & state)
+QVector<Account*> AccountList::getAccountsByState(const QString& state)
 {
    QVector<Account *> v;
    for (int i = 0; i < m_pAccounts->size(); ++i) {

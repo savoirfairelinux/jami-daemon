@@ -104,12 +104,12 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     encoderCtx_->max_b_frames = 0;
     encoderCtx_->rtp_payload_size = 0; // Target GOB length
     // resolution must be a multiple of two
-    if (args_["width"].empty())
+    if (args_["width"].empty() and inputDecoderCtx_)
         encoderCtx_->width = inputDecoderCtx_->width;
     else
         encoderCtx_->width = atoi(args_["width"].c_str());
 
-    if (args_["height"].empty())
+    if (args_["height"].empty() and inputDecoderCtx_)
         encoderCtx_->height = inputDecoderCtx_->height;
     else
         encoderCtx_->height = atoi(args_["height"].c_str());
@@ -174,6 +174,10 @@ void VideoSendThread::setup()
 
         // Get a pointer to the codec context for the video stream
         inputDecoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
+        if (inputDecoderCtx_ == NULL) {
+            ERROR("%s:Could not get input codec context!", __PRETTY_FUNCTION__);
+            ost::Thread::exit();
+        }
 
         // find the decoder for the video stream
         AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);

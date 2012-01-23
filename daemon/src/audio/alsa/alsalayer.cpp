@@ -78,7 +78,7 @@ AlsaLayer::AlsaLayer()
     , ringtoneHandle_(NULL)
     , captureHandle_(NULL)
     , audioPlugin_(audioPref.getPlugin())
-    , IDSoundCards_()
+    // , IDSoundCards_()
     , is_playback_prepared_(false)
     , is_capture_prepared_(false)
     , is_playback_running_(false)
@@ -160,7 +160,7 @@ AlsaLayer::startStream()
         if (not is_playback_open_)
             Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
 
-        if (getIndexOut() != getIndexRing())
+        if (getIndexPlayback() != getIndexRingtone())
             if (!openDevice(&ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK))
                 Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
     }
@@ -432,7 +432,23 @@ AlsaLayer::buildDeviceTopo(const std::string &plugin, int card)
 }
 
 std::vector<std::string>
-AlsaLayer::getSoundCardsInfo(int stream)
+AlsaLayer::getAudioDeviceList(AudioStreamDirection dir) const
+{
+    std::vector<HwIDPair> deviceMap;
+    std::vector<std::string> audioDeviceList;
+
+    deviceMap = getAudioDeviceIndexMap(dir);
+
+    for(std::vector<HwIDPair>::const_iterator iter = deviceMap.begin(); iter != deviceMap.end(); iter++) {
+         audioDeviceList.push_back(iter->second);
+    }
+
+    return audioDeviceList;
+}
+
+
+std::vector<HwIDPair>
+AlsaLayer::getAudioDeviceIndexMap(AudioStreamDirection dir) const
 {
     snd_ctl_t* handle;
     snd_ctl_card_info_t *info;
@@ -442,10 +458,10 @@ AlsaLayer::getSoundCardsInfo(int stream)
 
     int numCard = -1 ;
 
-    std::vector<std::string> cards_id;
+    std::vector<HwIDPair> audioDevice;
 
     if (snd_card_next(&numCard) < 0 || numCard < 0)
-        return cards_id;
+        return audioDevice;
 
     do {
         std::stringstream ss;
@@ -455,10 +471,11 @@ AlsaLayer::getSoundCardsInfo(int stream)
         if (snd_ctl_open(&handle, name.c_str(), 0) == 0) {
             if (snd_ctl_card_info(handle, info) == 0) {
                 snd_pcm_info_set_device(pcminfo , 0);
-                snd_pcm_info_set_stream(pcminfo, (stream == SFL_PCM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
+                snd_pcm_info_set_stream(pcminfo, (dir == AUDIO_STREAM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
 
-                if (snd_ctl_pcm_info(handle ,pcminfo) < 0)
+                if (snd_ctl_pcm_info(handle ,pcminfo) < 0) {
                     DEBUG(" Cannot get info");
+                }
                 else {
                     DEBUG("card %i : %s [%s]",
                            numCard,
@@ -467,9 +484,9 @@ AlsaLayer::getSoundCardsInfo(int stream)
                     std::string description = snd_ctl_card_info_get_name(info);
                     description.append(" - ");
                     description.append(snd_pcm_info_get_name(pcminfo));
-                    cards_id.push_back(description);
+                    
                     // The number of the sound card is associated with a string description
-                    IDSoundCards_.push_back(HwIDPair(numCard , description));
+                    audioDevice.push_back(HwIDPair(numCard , description));
                 }
             }
 
@@ -478,7 +495,7 @@ AlsaLayer::getSoundCardsInfo(int stream)
     } while (snd_card_next(&numCard) >= 0 && numCard >= 0);
 
 
-    return cards_id;
+    return audioDevice;
 }
 
 
@@ -503,9 +520,17 @@ AlsaLayer::soundCardIndexExists(int card, int stream)
 }
 
 int
-AlsaLayer::soundCardGetIndex(const std::string &description)
+AlsaLayer::getAudioDeviceIndex(const std::string &description) const
 {
-    for (std::vector<HwIDPair>::const_iterator iter = IDSoundCards_.begin(); iter != IDSoundCards_.end(); ++iter)
+    std::vector<HwIDPair> audioDeviceIndexMap; 
+    
+    std::vector<HwIDPair> captureDevice = getAudioDeviceIndexMap(AUDIO_STREAM_CAPTURE);
+    std::vector<HwIDPair> playbackDevice = getAudioDeviceIndexMap(AUDIO_STREAM_PLAYBACK);
+
+    audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), captureDevice.begin(), captureDevice.end());
+    audioDeviceIndexMap.insert(audioDeviceIndexMap.end(), playbackDevice.begin(), playbackDevice.end());
+
+    for (std::vector<HwIDPair>::const_iterator iter = audioDeviceIndexMap.begin(); iter != audioDeviceIndexMap.end(); ++iter)
         if (iter->second == description)
             return iter->first;
 

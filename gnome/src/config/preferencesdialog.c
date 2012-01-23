@@ -344,13 +344,18 @@ static GtkTreeModel* create_model(GtkWidget *widget)
         {"Shortcuts", "preferences-desktop-keyboard", 4},
         {"Address Book", GTK_STOCK_ADDRESSBOOK, 5},
     };
+    GdkPixbuf *pixbuf;
+    GtkTreeIter iter;
+
     GtkListStore *store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
     gint nb_entries = sizeof(browser_entries_full) / sizeof(browser_entries_full[0]);
+    /* Skip address book entry if that plugin is not installed */
+    if (!addrbook)
+        --nb_entries;
 
-    for (gint i = 0; i < nb_entries; i++) {
-        GtkTreeIter iter;
-        gtk_list_store_append(store, &iter);
-        GdkPixbuf *pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
+    for (gint i = 0; i < nb_entries; ++i) {
+        gtk_list_store_append (store, &iter);
+        pixbuf = get_icon(browser_entries_full[i].icon_name, widget);
         gtk_list_store_set(store, &iter,
                            PIXBUF_COL, pixbuf,
                            TEXT_COL, _(browser_entries_full[i].icon_descr),

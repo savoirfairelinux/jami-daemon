@@ -19,16 +19,14 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 #include "dlggeneral.h"
-#include <QDebug>
 #include <QToolButton>
 #include <QAction>
 
 DlgGeneral::DlgGeneral(QWidget *parent)
  : QWidget(parent)
 {
-	setupUi(this);
-	
-	connect(toolButton_historyClear, SIGNAL(clicked()), this, SIGNAL(clearCallHistoryAsked()));
+   setupUi(this);
+   connect(toolButton_historyClear, SIGNAL(clicked()), this, SIGNAL(clearCallHistoryAsked()));
 }
 
 

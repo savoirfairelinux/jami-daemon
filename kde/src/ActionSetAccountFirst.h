@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
  
 #ifndef ACTION_SET_ACCOUNT_FIRST_H
 #define ACTION_SET_ACCOUNT_FIRST_H
@@ -26,19 +26,15 @@
 
 #include "lib/Account.h"
 
-/**
-   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-*/
+///@class ActionSetAccountFirst Set an account to be the first
 class ActionSetAccountFirst : public QAction
 {
 Q_OBJECT
 
 private:
-   
-   Account * account;
+   Account* account;
 
 public:
-
    ActionSetAccountFirst(Account * account, QObject *parent = 0);
    ~ActionSetAccountFirst();
 

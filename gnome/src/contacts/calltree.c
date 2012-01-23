@@ -33,7 +33,7 @@
 #include "calllist.h"
 #include "calltree.h"
 #include <stdlib.h>
-#include <glib/gprintf.h>
+
 #include "eel-gconf-extensions.h"
 #include "unused.h"
 #include "dbus.h"
@@ -210,7 +210,7 @@ row_activated(GtkTreeView *tree_view UNUSED,
                 }
             } else {
                 // If history or contact: double click action places a new call
-                callable_obj_t* new_call = create_new_call(CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_peer_name, selectedCall->_peer_number);
+                callable_obj_t* new_call = create_new_call(CALL, CALL_STATE_DIALING, "", selectedCall->_accountID, selectedCall->_display_name, selectedCall->_peer_number);
 
                 calllist_add_call(current_calls_tab, new_call);
                 calltree_add_call(current_calls_tab, new_call, NULL);
@@ -331,6 +331,16 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     return TRUE;
 }
 
+static gchar *clean_display_number(gchar *name)
+{
+    const gchar SIP_PREFIX[] = "<sip:";
+    const gchar SIPS_PREFIX[] = "<sips:";
+    if (g_str_has_prefix(name, SIP_PREFIX))
+        name += (sizeof(SIP_PREFIX) - 1);
+    else if (g_str_has_prefix(name, SIPS_PREFIX))
+        name += (sizeof(SIPS_PREFIX) - 1);
+    return name;
+}
 
 static gchar *
 calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type,
@@ -339,7 +349,7 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type,
     gchar display_number[strlen(c->_peer_number) + 1];
     strcpy(display_number, c->_peer_number);
 
-    if (c->_type != CALL || c->_history_state != OUTGOING) {
+    if (c->_type != CALL || !call_was_outgoing(c)) {
         // Get the hostname for this call (NULL if not existent)
         gchar * hostname = g_strrstr(c->_peer_number, "@");
 
@@ -350,13 +360,14 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type,
 
     char *codec;
     // Different display depending on type
-    const gchar *name, *details = NULL;
+    gchar *name, *details = NULL;
 
-    if (*c->_peer_name) {
-        name = c->_peer_name;
+    if (*c->_display_name) {
+        name = c->_display_name;
         details = display_number;
     } else {
         name = display_number;
+        name = clean_display_number(name);
         details = "";
     }
 
@@ -569,6 +580,14 @@ calltree_remove_call(calltab_t* tab, callable_obj_t * c)
     calltree_remove_call_recursive(tab, c, NULL);
 }
 
+GdkPixbuf *history_state_to_pixbuf(const gchar *history_state)
+{
+    gchar *svg_filename = g_strconcat(ICONS_DIR, "/", history_state, ".svg", NULL);
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(svg_filename, NULL);
+    g_free(svg_filename);
+    return pixbuf;
+}
+
 static void
 calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
@@ -695,22 +714,10 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
                 }
 
             } else if (tab == history_tab) {
-                if (parent == NULL) {
-                    // parent is NULL this is not a conference participant
-                    switch (c->_history_state) {
-                        case INCOMING:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
-                            break;
-                        case OUTGOING:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
-                            break;
-                        case MISSED:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
-                            break;
-                        default:
-                            WARN("History - Should not happen!");
-                    }
-                } else // parent is not NULL this is a conference participant
+                // parent is NULL this is not a conference participant
+                if (parent == NULL)
+                    pixbuf = history_state_to_pixbuf(c->_history_state);
+                else // parent is not NULL this is a conference participant
                     pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
 
                 g_free(description);
@@ -748,7 +755,7 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
 
 void calltree_update_call(calltab_t* tab, callable_obj_t * c)
 {
-    return calltree_update_call_recursive(tab, c, NULL);
+    calltree_update_call_recursive(tab, c, NULL);
 }
 
 void calltree_add_call(calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
@@ -862,21 +869,7 @@ void calltree_add_history_entry(callable_obj_t *c)
     GtkTreeIter iter;
     gtk_tree_store_prepend(history_tab->store, &iter, NULL);
 
-    GdkPixbuf *pixbuf = NULL;
-
-    switch (c->_history_state) {
-        case INCOMING:
-            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
-            break;
-        case OUTGOING:
-            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
-            break;
-        case MISSED:
-            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
-            break;
-        default:
-            WARN("History - Should not happen!");
-    }
+    GdkPixbuf *pixbuf = history_state_to_pixbuf(c->_history_state);
 
     gchar *date = get_formatted_start_timestamp(c->_time_start);
     gchar *duration = get_call_duration(c);

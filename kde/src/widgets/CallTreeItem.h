@@ -29,46 +29,73 @@
 
 //Qt
 class QLabel;
+class QPushButton;
+class QMimeData;
 
 //KDE
 class KIcon;
 
 //SFLPhone
 class Call;
+class TranslucentButtons;
 
+///@class CallTreeItem Widget for the central call treeview
 class CallTreeItem : public QWidget
 {
    Q_OBJECT
  public:
+    //Constructor
     CallTreeItem(QWidget* parent =0);
     ~CallTreeItem();
-    
+
+    //Getters
     Call* call() const;
+
+    //Setters
     void setCall(Call *call);
-    static const char * callStateIcons[12];
+
+    //Const
+    static const char* callStateIcons[12];
     
  private:
-    Call *itemCall;
-
-    QLabel* labelIcon;
-    QLabel* labelPeerName;
-    QLabel* labelCallNumber2;
-    QLabel* labelTransferPrefix;
-    QLabel* labelTransferNumber;
-    QLabel* labelCodec;
-    QLabel* labelSecure;
+    //Attributes
+    Call*    m_pItemCall;
+    bool     m_Init;
+    bool     m_isHover;
+    QLabel*  m_pIconL;
+    QLabel*  m_pPeerL;
+    QLabel*  m_pCallNumberL;
+    QLabel*  m_pTransferPrefixL;
+    QLabel*  m_pTransferNumberL;
+    QLabel*  m_pCodecL;
+    QLabel*  m_pSecureL;
+    QLabel*  m_pHistoryPeerL;
+    TranslucentButtons* m_pBtnConf;
+    TranslucentButtons* m_pBtnTrans;
     
-    QWidget* historyItemWidget;
-    QLabel* labelHistoryIcon;
-    QLabel* labelHistoryPeerName;
-    QLabel* labelHistoryCallNumber;
-    QLabel* labelHistoryTime;
-    bool init;
+  protected:
+    //Reimplementation
+    virtual void dragEnterEvent ( QDragEnterEvent *e );
+    virtual void dragMoveEvent  ( QDragMoveEvent  *e );
+    virtual void dragLeaveEvent ( QDragLeaveEvent *e );
+    virtual void resizeEvent    ( QResizeEvent    *e );
+    virtual void dropEvent      ( QDropEvent      *e );
+
+private slots:
+   void transferEvent(QMimeData* data);
+   void conversationEvent(QMimeData* data);
+   void hide();
 
 public slots:
    void updated();
+   
 signals:
-   void over(Call*);  
+   void over(Call*);
+   void changed();
+   void showChilds(CallTreeItem*);
+   void askTransfer(Call*);
+   void transferDropEvent(Call*,QMimeData*);
+   void conversationDropEvent(Call*,QMimeData*);
  };
 
 #endif // CALLTREE_ITEM_H

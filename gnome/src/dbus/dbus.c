@@ -75,13 +75,13 @@ incoming_call_cb(DBusGProxy *proxy UNUSED, const gchar* accountID,
                  const gchar* callID, const gchar* from, void * foo  UNUSED)
 {
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
-    gchar *peer_name = call_get_peer_name(from);
+    gchar *display_name = call_get_display_name(from);
     gchar *peer_number = call_get_peer_number(from);
 
-    callable_obj_t *c = create_new_call(CALL, CALL_STATE_INCOMING, callID, accountID, peer_name, peer_number);
+    callable_obj_t *c = create_new_call(CALL, CALL_STATE_INCOMING, callID, accountID, display_name, peer_number);
 
     g_free(peer_number);
-    g_free(peer_name);
+    g_free(display_name);
 
     status_tray_icon_blink(TRUE);
     popup_main_window();
@@ -147,6 +147,99 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const 
     im_widget_add_message(IM_WIDGET(*widget), from, msg, 0);
 }
 
+/**
+ * Perform the right sflphone action based on the requested state
+ */
+static void process_existant_call_state_change(callable_obj_t *c, const gchar *state) 
+{
+    if(c == NULL) {
+        ERROR("Pointer to call is NULL in %s\n", __func__);
+        return;
+    }
+
+    if(state == NULL) {
+        ERROR("Pointer to state is NULL in %s\n", __func__);
+        return;
+    }
+
+    if (g_strcmp0(state, "HUNGUP") == 0) {
+        if (c->_state == CALL_STATE_CURRENT) {
+            time(&c->_time_stop);
+            calltree_update_call(history_tab, c);
+        }
+
+        calltree_update_call(history_tab, c);
+        status_bar_display_account();
+        sflphone_hung_up(c);
+    } else if (g_strcmp0(state, "UNHOLD_CURRENT") == 0) {
+        sflphone_current(c);
+    } else if (g_strcmp0(state, "UNHOLD_RECORD") == 0) {
+        sflphone_record(c);
+    } else if (g_strcmp0(state, "HOLD") == 0) {
+        sflphone_hold(c);
+    } else if (g_strcmp0(state, "RINGING") == 0) {
+        sflphone_ringing(c);
+    } else if (g_strcmp0(state, "CURRENT") == 0) {
+        sflphone_current(c);
+    } else if (g_strcmp0(state, "RECORD") == 0) {
+        sflphone_record(c);
+    } else if (g_strcmp0(state, "FAILURE") == 0) {
+        sflphone_fail(c);
+    } else if (g_strcmp0(state, "BUSY") == 0) {
+        sflphone_busy(c);
+    }
+
+    return;
+}
+
+
+/**
+ * This function process call state changes in case the call have not been created yet. 
+ * This mainly occurs when anotehr SFLphone client takes actions.
+ */
+static void process_inexistant_call_state_change(const gchar *callID, const gchar *state)
+{
+    if(callID == NULL) {
+        ERROR("Pointer to call id is NULL in %s\n", __func__);
+        return;
+    }
+
+    if(state == NULL) {
+        ERROR("Pointer to state is NULL in %s\n", __func__);
+        return;
+    }
+
+    // Could occur if a user picked up the phone and hung up without making a call 
+    if(g_strcmp0(state, "HUNGUP") == 0)
+        return;
+
+    // The callID is unknow, threat it like a new call
+    // If it were an incoming call, we won't be here
+    // It means that a new call has been initiated with an other client (cli for instance)
+    if ((g_strcmp0(state, "RINGING")) == 0 ||
+            (g_strcmp0(state, "CURRENT")) == 0 ||
+            (g_strcmp0(state, "RECORD"))) {
+
+        DEBUG("DBUS: New ringing call! accountID: %s", callID);
+
+        // We fetch the details associated to the specified call
+        GHashTable *call_details = dbus_get_call_details(callID);
+        callable_obj_t *new_call = create_new_call_from_details(callID, call_details);
+
+        new_call->_history_state = (g_strcasecmp(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING) == 0)
+                                       ? g_strdup(INCOMING_STRING) : g_strdup(OUTGOING_STRING);
+
+        calllist_add_call(current_calls_tab, new_call);
+        calltree_add_call(current_calls_tab, new_call, NULL);
+        update_actions();
+        calltree_display(current_calls_tab);
+    }
+
+}
+
+/**
+ * Callback called when a 
+ */
 static void
 call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
               void * foo  UNUSED)
@@ -154,56 +247,11 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
-        if (g_strcmp0(state, "HUNGUP") == 0) {
-            if (c->_state == CALL_STATE_CURRENT) {
-                time(&c->_time_stop);
-                calltree_update_call(history_tab, c);
-            }
-
-            calltree_update_call(history_tab, c);
-            status_bar_display_account();
-            sflphone_hung_up(c);
-        } else if (g_strcmp0(state, "UNHOLD_CURRENT") == 0) {
-            sflphone_current(c);
-        } else if (g_strcmp0(state, "UNHOLD_RECORD") == 0) {
-            sflphone_record(c);
-        } else if (g_strcmp0(state, "HOLD") == 0) {
-            sflphone_hold(c);
-        } else if (g_strcmp0(state, "RINGING") == 0) {
-            sflphone_ringing(c);
-        } else if (g_strcmp0(state, "CURRENT") == 0) {
-            sflphone_current(c);
-        } else if (g_strcmp0(state, "RECORD") == 0) {
-            sflphone_record(c);
-        } else if (g_strcmp0(state, "FAILURE") == 0) {
-            sflphone_fail(c);
-        } else if (g_strcmp0(state, "BUSY") == 0) {
-            sflphone_busy(c);
-        }
+        process_existant_call_state_change(c, state);
     } else {
-        ERROR("DBUS: Error: Call is NULL in %s", __func__);
-
-        // The callID is unknow, threat it like a new call
-        // If it were an incoming call, we won't be here
-        // It means that a new call has been initiated with an other client (cli for instance)
-        if ((g_strcmp0(state, "RINGING")) == 0 ||
-                (g_strcmp0(state, "CURRENT")) == 0 ||
-                (g_strcmp0(state, "RECORD"))) {
-
-            DEBUG("DBUS: New ringing call! accountID: %s", callID);
-
-            // We fetch the details associated to the specified call
-            GHashTable *call_details = dbus_get_call_details(callID);
-            callable_obj_t *new_call = create_new_call_from_details(callID, call_details);
-
-            new_call->_history_state = (g_strcasecmp(g_hash_table_lookup(call_details, "CALL_TYPE"), "0") == 0)
-                                       ? INCOMING : OUTGOING;
-
-            calllist_add_call(current_calls_tab, new_call);
-            calltree_add_call(current_calls_tab, new_call, NULL);
-            update_actions();
-            calltree_display(current_calls_tab);
-        }
+        WARN("DBUS: Call does not exist in %s", __func__);
+        
+        process_inexistant_call_state_change(callID, state);
     }
 }
 
@@ -276,9 +324,6 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
     // Add conference ID in in each calls
     for (gchar **part = participants; part && *part; ++part) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, *part);
-
-        /* set when this call has been added to the conference */
-        time(&call->_time_added);
 
         im_widget_update_state(IM_WIDGET(call->_im_widget), FALSE);
 
@@ -360,8 +405,9 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
             ERROR("DBUS: ERROR: Could not find %dth call", i);
             break;
         } else if (element->type == HIST_CALL &&
-                   g_strcmp0(element->elem.call->_recordfile, filepath) == 0)
+                   g_strcmp0(element->elem.call->_recordfile, filepath) == 0) {
             element->elem.call->_record_is_playing = FALSE;
+        }
     }
 
     update_actions();
@@ -1837,6 +1883,17 @@ dbus_get_history_limit(void)
     return (guint) days;
 }
 
+void 
+dbus_clear_history(void)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_clear_history(
+        configurationManagerProxy, &error);
+
+    if (error)
+        g_error_free(error);
+}
+
 void
 dbus_set_audio_manager(const gchar *api)
 {
@@ -2290,35 +2347,21 @@ dbus_set_accounts_order(const gchar* order)
     }
 }
 
-gchar **
+GPtrArray *
 dbus_get_history(void)
 {
     GError *error = NULL;
-    gchar **entries = NULL;
+    GPtrArray *entries = NULL;
 
     org_sflphone_SFLphone_ConfigurationManager_get_history(
         configurationManagerProxy, &entries, &error);
 
     if (error) {
-        ERROR("Error calling get history: %s", error->message);
+        ERROR("Error calling get history simple: %s", error->message);
         g_error_free(error);
     }
 
     return entries;
-}
-
-void
-dbus_set_history(gchar **entries)
-{
-    GError *error = NULL;
-
-    org_sflphone_SFLphone_ConfigurationManager_set_history(
-        configurationManagerProxy, (const char **)entries, &error);
-
-    if (error) {
-        ERROR("Error calling org_sflphone_SFLphone_CallManager_set_history");
-        g_error_free(error);
-    }
 }
 
 void

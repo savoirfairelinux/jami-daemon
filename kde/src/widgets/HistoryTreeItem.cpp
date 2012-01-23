@@ -18,35 +18,37 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
+//Parent
+#include "HistoryTreeItem.h"
+
+//Qt
 #include <QtCore/QStringList>
 #include <QtGui/QGridLayout>
 #include <QtGui/QMenu>
-
-#include <klocale.h>
-#include <kdebug.h>
-#include <unistd.h>
-#include <kaction.h>
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
-#include <KIcon>
-#include <QLabel>
 
+//KDE
+#include <KLocale>
+#include <KDebug>
+#include <KAction>
+#include <KIcon>
+
+//SFLPhone library
 #include "lib/sflphone_const.h"
-#include "HistoryTreeItem.h"
-#include "AkonadiBackend.h"
 #include "lib/Contact.h"
+#include "lib/Call.h"
+
+//SFLPhone
+#include "AkonadiBackend.h"
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
-#include "conf/ConfigurationSkeleton.h"
-#include "lib/Call.h"
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
 ///Constructor
 HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
-   : QWidget(parent), itemCall(0),m_pMenu(0), init(false)
+   : QWidget(parent), m_pItemCall(0),m_pMenu(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -92,20 +94,20 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    connect(m_pBookmark     , SIGNAL(triggered())                        , this , SLOT(bookmark()          ));
    connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this , SLOT(showContext(QPoint) ));
 
-   labelIcon        = new QLabel( this );
-   labelPeerName    = new QLabel( this );
-   labelCallNumber2 = new QLabel( this );
+   m_pIconL         = new QLabel( this );
+   m_pPeerNameL     = new QLabel( this );
+   m_pCallNumberL   = new QLabel( this );
    m_pDurationL     = new QLabel( this );
    m_pTimeL         = new QLabel( this );
    
-   labelIcon->setMinimumSize(70,48);
-   labelIcon->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+   m_pIconL->setMinimumSize(70,48);
+   m_pIconL->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
    QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    QGridLayout* mainLayout = new QGridLayout(this);
-   mainLayout->addWidget ( labelIcon,0,0,4,1    );
-   mainLayout->addWidget ( labelPeerName,0,1    );
-   mainLayout->addWidget ( labelCallNumber2,1,1 );
+   mainLayout->addWidget ( m_pIconL,0,0,4,1     );
+   mainLayout->addWidget ( m_pPeerNameL,0,1     );
+   mainLayout->addWidget ( m_pCallNumberL,1,1   );
    mainLayout->addWidget ( m_pTimeL,2,1         );
    mainLayout->addItem   ( verticalSpacer,3,1   );
    mainLayout->addWidget ( m_pDurationL,0,2,4,1 );
@@ -114,8 +116,8 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
 
    if (!phone.isEmpty()) {
       getContactInfo(phone);
-      labelCallNumber2->setText(phone);
-      m_pPhoneNumber = phone;
+      m_pCallNumberL->setText(phone);
+      m_PhoneNumber = phone;
    }
 }
 
@@ -125,116 +127,44 @@ HistoryTreeItem::~HistoryTreeItem()
    
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Return the call item
 Call* HistoryTreeItem::call() const
 {
-   return itemCall;
-}
-
-///Set the call to be handled by this item
-void HistoryTreeItem::setCall(Call *call)
-{
-   itemCall = call;
-   
-   if (itemCall->isConference()) {
-      labelIcon->setVisible(true);
-      return;
-   }
-   
-   labelCallNumber2->setText(itemCall->getPeerPhoneNumber()); 
-
-   m_pTimeL->setText(QDateTime::fromTime_t(itemCall->getStartTimeStamp().toUInt()).toString());
-
-   int dur = itemCall->getStopTimeStamp().toInt() - itemCall->getStartTimeStamp().toInt();
-   m_pDurationL->setText(QString("%1").arg(dur/3600,2)+":"+QString("%1").arg((dur%3600)/60,2)+":"+QString("%1").arg((dur%3600)%60,2)+" ");
-
-   connect(itemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
-   updated();
-
-   m_pTimeStamp = itemCall->getStartTimeStamp().toUInt();
-   m_pDuration = dur;
-   m_pName = itemCall->getPeerName();
-   m_pPhoneNumber = itemCall->getPeerPhoneNumber();
-}
-
-///Can a contact be associed with this call?
-bool HistoryTreeItem::getContactInfo(QString phoneNumber)
-{
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber);
-   if (contact) {
-      if (contact->getPhoto() != NULL)
-         labelIcon->setPixmap(*contact->getPhoto());
-      labelPeerName->setText("<b>"+contact->getFormattedName()+"</b>");
-   }
-   else {
-      labelIcon->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      labelPeerName->setText(i18n("<b>Unknow</b>"));
-      return false;
-   }
-   return true;
+   return m_pItemCall;
 }
 
 ///The item have to be updated
 void HistoryTreeItem::updated()
 {
-   if (!getContactInfo(itemCall->getPeerPhoneNumber())) {
-      if(! itemCall->getPeerName().trimmed().isEmpty()) {
-         labelPeerName->setText("<b>"+itemCall->getPeerName()+"</b>");
+   if (!getContactInfo(m_pItemCall->getPeerPhoneNumber())) {
+      if(! m_pItemCall->getPeerName().trimmed().isEmpty()) {
+         m_pPeerNameL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
       }
    }
-   call_state state = itemCall->getState();
-   bool recording = itemCall->getRecording();
+   call_state state = m_pItemCall->getState();
+   bool recording = m_pItemCall->getRecording();
    if(state != CALL_STATE_OVER) {
       if(state == CALL_STATE_CURRENT && recording) {
-         labelIcon->setPixmap(QPixmap(ICON_CURRENT_REC));
+         m_pIconL->setPixmap(QPixmap(ICON_CURRENT_REC));
       }
       else {
          QString str = QString(callStateIcons[state]);
-         labelIcon->setPixmap(QPixmap(str));
+         m_pIconL->setPixmap(QPixmap(str));
       }
-      labelCallNumber2->setText(itemCall->getPeerPhoneNumber());
+      m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
                 
       if(state == CALL_STATE_DIALING) {
-         labelCallNumber2->setText(itemCall->getCallNumber());
+         m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
    }
    
-}
-
-///Return the time stamp
-uint HistoryTreeItem::getTimeStamp()
-{
-   return m_pTimeStamp;
-}
-
-///Return the duration
-uint HistoryTreeItem::getDuration()
-{
-   return m_pDuration;
-}
-
-///Return the caller name
-QString HistoryTreeItem::getName()
-{
-   return m_pName;
-}
-
-///Return the caller peer number
-QString HistoryTreeItem::getPhoneNumber()
-{
-   return m_pPhoneNumber;
-}
-
-///Get the index item assiciated with this widget
-QTreeWidgetItem* HistoryTreeItem::getItem()
-{
-   return m_pItem;
-}
-
-///Set the index associed with this widget
-void HistoryTreeItem::setItem(QTreeWidgetItem* item)
-{
-   m_pItem = item;
 }
 
 ///Show the context menu
@@ -256,32 +186,32 @@ void HistoryTreeItem::showContext(const QPoint& pos)
 void HistoryTreeItem::sendEmail()
 {
    //TODO
-   qDebug() << "Sending email";
+   kDebug() << "Sending email";
 }
 
 ///Call the caller again
 void HistoryTreeItem::callAgain()
 {
-   if (itemCall) {
-      qDebug() << "Calling "<< itemCall->getPeerPhoneNumber();
+   if (m_pItemCall) {
+      kDebug() << "Calling "<< m_pItemCall->getPeerPhoneNumber();
    }
-   SFLPhone::model()->addDialingCall(m_pName, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_pPhoneNumber);
+   SFLPhone::model()->addDialingCall(m_Name, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_PhoneNumber);
 }
 
 ///Copy the call
 void HistoryTreeItem::copy()
 {
    //TODO
-   qDebug() << "Copying contact";
+   kDebug() << "Copying contact";
 }
 
 ///Create a contact from those informations
 void HistoryTreeItem::addContact()
 {
-   qDebug() << "Adding contact";
+   kDebug() << "Adding contact";
    Contact* aContact = new Contact();
-   aContact->setPhoneNumbers(PhoneNumbers() << new Contact::PhoneNumber(m_pPhoneNumber, "Home"));
-   aContact->setFormattedName(m_pName);
+   aContact->setPhoneNumbers(PhoneNumbers() << new Contact::PhoneNumber(m_PhoneNumber, "Home"));
+   aContact->setFormattedName(m_Name);
    AkonadiBackend::getInstance()->addNewContact(aContact);
 }
 
@@ -289,12 +219,104 @@ void HistoryTreeItem::addContact()
 void HistoryTreeItem::addToContact()
 {
    //TODO
-   qDebug() << "Adding to contact";
+   kDebug() << "Adding to contact";
 }
 
 ///Bookmark this contact
 void HistoryTreeItem::bookmark()
 {
-   qDebug() << "bookmark";
-   SFLPhone::app()->bookmarkDock()->addBookmark(m_pPhoneNumber);
+   SFLPhone::app()->bookmarkDock()->addBookmark(m_PhoneNumber);
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Set the call to be handled by this item
+void HistoryTreeItem::setCall(Call *call)
+{
+   m_pItemCall = call;
+   
+   if (m_pItemCall->isConference()) {
+      m_pIconL->setVisible(true);
+      return;
+   }
+   
+   m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
+
+   m_pTimeL->setText(QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toUInt()).toString());
+
+   int dur = m_pItemCall->getStopTimeStamp().toInt() - m_pItemCall->getStartTimeStamp().toInt();
+   m_pDurationL->setText(QString("%1").arg(dur/3600,2)+":"+QString("%1").arg((dur%3600)/60,2)+":"+QString("%1").arg((dur%3600)%60,2)+" ");
+
+   connect(m_pItemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
+   updated();
+
+   m_TimeStamp   = m_pItemCall->getStartTimeStamp().toUInt();
+   m_Duration    = dur;
+   m_Name        = m_pItemCall->getPeerName();
+   m_PhoneNumber = m_pItemCall->getPeerPhoneNumber();
+}
+
+///Set the index associed with this widget
+void HistoryTreeItem::setItem(QTreeWidgetItem* item)
+{
+   m_pItem = item;
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Can a contact be associed with this call?
+bool HistoryTreeItem::getContactInfo(QString phoneNumber)
+{
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber);
+   if (contact) {
+      if (contact->getPhoto() != NULL)
+         m_pIconL->setPixmap(*contact->getPhoto());
+      m_pPeerNameL->setText("<b>"+contact->getFormattedName()+"</b>");
+   }
+   else {
+      m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      m_pPeerNameL->setText(i18n("<b>Unknow</b>"));
+      return false;
+   }
+   return true;
+}
+
+///Return the time stamp
+uint HistoryTreeItem::getTimeStamp()
+{
+   return m_TimeStamp;
+}
+
+///Return the duration
+uint HistoryTreeItem::getDuration()
+{
+   return m_Duration;
+}
+
+///Return the caller name
+QString HistoryTreeItem::getName()
+{
+   return m_Name;
+}
+
+///Return the caller peer number
+QString HistoryTreeItem::getPhoneNumber()
+{
+   return m_PhoneNumber;
+}
+
+///Get the index item assiciated with this widget
+QTreeWidgetItem* HistoryTreeItem::getItem()
+{
+   return m_pItem;
 }

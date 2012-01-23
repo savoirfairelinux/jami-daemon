@@ -34,99 +34,41 @@
 #define HISTORY_ITEM_H_
 
 #include <string>
-#include <config/config.h>
-
-typedef enum CallType {
-    CALL_MISSED,
-    CALL_INCOMING,
-    CALL_OUTGOING
-} CallType;
+#include <map>
 
 class HistoryItem {
-
     public:
-        /*
-         * Constructor
-         *
-         * @param Timestamp start
-         * @param Call type
-         * @param Timestamp stop
-         * @param Call name
-         * @param Call number
-        	 * @param Call id
-         * @param Call account id
-        	 * @param Recording file name (if any recording were performed)
-        	 * @param Configuration ID
-        	 * @param time added
-         */
-        HistoryItem(const std::string&, CallType, const std::string&,
-                    const std::string&, const std::string&, const std::string&,
-                    const std::string&, const std::string&, const std::string&,
-                    const std::string&);
+        static const char * const ACCOUNT_ID_KEY;
+        static const char * const CONFID_KEY;
+        static const char * const CALLID_KEY;
+        static const char * const DISPLAY_NAME_KEY;
+        static const char * const PEER_NUMBER_KEY;
+        static const char * const RECORDING_PATH_KEY;
+        static const char * const TIMESTAMP_START_KEY;
+        static const char * const TIMESTAMP_STOP_KEY;
+        static const char * const STATE_KEY;
 
-        /*
-         * Constructor from a serialized form
-        	 * @string contaning serialized form
-         */
-        HistoryItem(std::string="");
+        static const char * const MISSED_STRING;
+        static const char * const INCOMING_STRING;
+        static const char * const OUTGOING_STRING;
+        HistoryItem(const std::map<std::string, std::string> &args);
+        HistoryItem(std::istream &stream);
 
-        std::string get_timestamp() const {
-            return timestamp_start_;
+        bool hasPeerNumber() const;
+
+        bool youngerThan(unsigned long otherTime) const;
+
+        std::map<std::string, std::string> toMap() const;
+        void print(std::ostream &o) const;
+        bool operator< (const HistoryItem &other) const {
+                return timestampStart_ > other.timestampStart_;
         }
 
-        bool save(Conf::ConfigTree **history);
-
-        std::string serialize() const;
-
     private:
-        /*
-         * @return true if the account ID corresponds to a loaded account
-         */
-        bool valid_account(const std::string &id) const;
-
-        /*
-         * Timestamp representing the date of the call
-         */
-        std::string timestamp_start_;
-        std::string timestamp_stop_;
-
-        /*
-         * Represents the type of call
-         * Has be either CALL_MISSED, CALL_INCOMING or CALL_OUTGOING
-         */
-        CallType call_type_;
-
-        /*
-         * The information about the callee/caller, depending on the type of call.
-         */
-        std::string name_;
-        std::string number_;
-
-        /**
-         * The identifier fo this item
-         */
-        std::string id_;
-
-        /*
-         * The account the call was made with
-         */
-        std::string account_id_;
-
-        /**
-         * Whether or not a recording exist for this call
-         */
-        std::string recording_file_;
-
-        /**
-         * The conference ID for this call (if any)
-         */
-        std::string confID_;
-
-        /**
-         * Time added to conference
-         */
-        std::string timeAdded_;
+        std::map<std::string, std::string> entryMap_;
+        unsigned long timestampStart_; // cached as we use this a lot, avoids string ops
 };
 
+std::ostream& operator << (std::ostream& o, const HistoryItem& item);
 
 #endif // HISTORY_ITEM

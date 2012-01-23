@@ -47,8 +47,7 @@ static const char * const TRUE_STR = "true";
 
 class ConfigTreeItem;
 typedef std::map<std::string, ConfigTreeItem> ItemMap;
-typedef std::map<std::string, ItemMap*> SectionMap;
-typedef std::list<std::string> TokenList;
+typedef std::map<std::string, ItemMap> SectionMap;
 
 class ConfigTreeItemException {
 };
@@ -58,25 +57,13 @@ class ConfigTree;
 class ConfigTreeIterator {
 
     public:
-        /**
-         * Parsing method
-         * @return TokenList
-         */
-        TokenList begin();
+        std::list<std::string> begin() const;
 
-        /**
-         * Parsing method
-         * @return TokenList
-         */
-        const TokenList& end() const {
+        const std::list<std::string> & end() const {
             return endToken_;
         }
 
-        /**
-         * Parsing method
-         * @return TokenList
-         */
-        TokenList next();
+        std::list<std::string> next();
 
     private:
         friend class ConfigTree;
@@ -85,15 +72,14 @@ class ConfigTreeIterator {
         NON_COPYABLE(ConfigTreeIterator);
 
         ConfigTree* tree_;
-        TokenList endToken_;
-        SectionMap::iterator iter_;
-        ItemMap::iterator iterItem_;
+        std::list<std::string> endToken_;
+        mutable SectionMap::iterator iter_;
+        mutable ItemMap::iterator iterItem_;
 };
 
 class ConfigTree {
     public:
         ConfigTree() : sections_(), defaultValueMap_() {}
-        ~ConfigTree();
         /**
          * Add a default value for a given key.
          * It looks in a map of default values when
@@ -118,7 +104,7 @@ class ConfigTree {
          *
          * @return array Strings of the sections
          */
-        TokenList getSections();
+        std::list<std::string> getSections() const;
 
         void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
         /**
@@ -128,7 +114,7 @@ class ConfigTree {
          * @param itemName The itemName= in the .ini file
          * @param value The value to assign to that itemName
          */
-        bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
+        void setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
 
         /**
          * Get a value.
@@ -149,14 +135,14 @@ class ConfigTree {
         /**
          * Flush data to .ini file
          */
-        bool saveConfigTree(const std::string& fileName);
+        bool saveConfigTree(const std::string& fileName) const;
 
         /**
          * Load data (and fill ConfigTree) from disk
          */
-        int  populateFromFile(const std::string& fileName);
+        bool populateFromFile(const std::string& fileName);
 
-        bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, TokenList& arg) const;
+        bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, std::list<std::string>& arg) const;
 
     private:
         std::string getDefaultValue(const std::string& key) const;
@@ -196,19 +182,19 @@ class ConfigTreeItem {
             value_ = value;
         }
 
-        const std::string getName() const {
+        std::string getName() const {
             return name_;
         }
 
-        const std::string getValue() const  {
+        std::string getValue() const  {
             return value_;
         }
 
-        const std::string getDefaultValue() const  {
+        std::string getDefaultValue() const  {
             return defaultValue_;
         }
 
-        const std::string getType() const  {
+        std::string getType() const  {
             return type_;
         }
 

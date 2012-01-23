@@ -54,6 +54,8 @@ namespace ost {
 class Time;
 }
 
+enum AudioStreamDirection { AUDIO_STREAM_CAPTURE, AUDIO_STREAM_PLAYBACK };
+
 class AudioLayer {
     private:
         NON_COPYABLE(AudioLayer);
@@ -61,6 +63,8 @@ class AudioLayer {
     public:
         AudioLayer();
         virtual ~AudioLayer();
+
+        virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -76,6 +80,9 @@ class AudioLayer {
          */
         virtual void stopStream() = 0;
 
+        /**
+         * Determine wether or not the audio layer is active (i.e. stream opened) 
+         */
         bool isStarted() const {
             return isStarted_;
         }
@@ -88,9 +95,16 @@ class AudioLayer {
          */
         void putUrgent(void* buffer, int toCopy);
 
+        /**
+         * Flush main buffer 
+         */
         void flushMain();
 
+        /**
+         * Flush urgent buffer
+         */
         void flushUrgent();
+
 
 
         /**
@@ -109,6 +123,9 @@ class AudioLayer {
             return &mutex_;
         }
 
+	/**
+         * Emit an audio notification on incoming calls
+         */
         void notifyincomingCall();
 
     protected:

@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef DLGDISPLAY_H
 #define DLGDISPLAY_H
 
@@ -32,9 +32,11 @@ class DlgDisplay : public QWidget, public Ui_DlgDisplayBase
 {
 Q_OBJECT
 public:
-    DlgDisplay(QWidget *parent = 0);
+   //Constructor
+   DlgDisplay(QWidget *parent = 0);
 
-    ~DlgDisplay();
+   //Destructor
+   ~DlgDisplay();
 
 };
 

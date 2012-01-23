@@ -100,6 +100,16 @@ class SIPVoIPLink : public VoIPLink {
         virtual void sendUnregister(Account *a);
 
         /**
+         * Register a new keepalive registration timer to this endpoint
+         */
+        void registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay);
+
+        /**
+         * Abort currently registered timer
+         */
+        void cancelKeepAliveTimer(pj_timer_entry& timer); 
+
+        /**
          * Place a new call
          * @param id  The call identifier
          * @param toUrl  The Sip address of the recipient of the call

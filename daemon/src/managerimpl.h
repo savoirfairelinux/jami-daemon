@@ -66,6 +66,7 @@ class YamlEmitter;
 class DTMF;
 class AudioFile;
 class AudioLayer;
+class History;
 class TelephoneTone;
 class VoIPLink;
 
@@ -73,7 +74,6 @@ class VoIPLink;
 class DNSService;
 #endif
 
-class HistoryManager;
 class Account;
 
 /** Define a type for a AccountMap container */
@@ -81,8 +81,6 @@ typedef std::map<std::string, Account*> AccountMap;
 
 /** Define a type for a std::string to std::string Map inside ManagerImpl */
 typedef std::map<std::string, std::string> CallAccountMap;
-
-typedef std::map<std::string, Call::CallConfiguration> CallConfigMap;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -420,7 +418,7 @@ class ManagerImpl {
          *		 0 for unregistration request
          *		 1 for registration request
          */
-        void sendRegister(const ::std::string& accountId , const int32_t& enable);
+        void sendRegister(const std::string& accountId , const int32_t& enable);
 
         /**
          * Get account list
@@ -838,7 +836,7 @@ class ManagerImpl {
          * @return bool	true on success
          *		      false otherwise
          */
-        bool setConfig(const std::string& section, const std::string& name, const std::string& value);
+        void setConfig(const std::string& section, const std::string& name, const std::string& value);
 
         /**
          * Change a specific value in the configuration tree.
@@ -849,7 +847,7 @@ class ManagerImpl {
          * @return bool	true on success
          *		      false otherwise
          */
-        bool setConfig(const std::string& section, const std::string& name, int value);
+        void setConfig(const std::string& section, const std::string& name, int value);
 
         /**
          * Get a int from the configuration tree
@@ -989,11 +987,11 @@ class ManagerImpl {
         void initAudioDriver();
 
         void audioLayerMutexLock() {
-            audiolayerMutex_.enterMutex();
+            audioLayerMutex_.enterMutex();
         }
 
         void audioLayerMutexUnlock() {
-            audiolayerMutex_.leaveMutex();
+            audioLayerMutex_.leaveMutex();
         }
 
         /**
@@ -1081,7 +1079,7 @@ class ManagerImpl {
         /**
          * Mutex used to protect audio layer
          */
-        ost::Mutex audiolayerMutex_;
+        ost::Mutex audioLayerMutex_;
 
         /**
          * Waiting Call Vectors
@@ -1140,13 +1138,11 @@ class ManagerImpl {
         /** Mutex to lock the call account map (main thread + voiplink thread) */
         ost::Mutex callAccountMapMutex_;
 
-        CallConfigMap callConfigMap_;
+        std::map<std::string, bool> IPToIPMap_;
 
-        bool associateConfigToCall(const std::string& callID, Call::CallConfiguration config);
+        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
-        Call::CallConfiguration getConfigFromCall(const std::string& callID) const;
-
-        bool removeCallConfig(const std::string& callID);
+        bool isIPToIP(const std::string& callID) const;
 
         /**
          *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
@@ -1225,17 +1221,9 @@ class ManagerImpl {
         */
         bool accountExists(const std::string& accountID);
 
-        /**
-         * Get a list of serialized history entries
-         * @return A list of serialized entry
-         */
-        std::vector<std::string> getHistorySerialized() const;
+        std::vector<std::map<std::string, std::string> > getHistory() const;
+        void clearHistory();
 
-        /**
-         * Set a list of serialized history entries
-         * @param Vector of history entries
-             */
-        void setHistorySerialized(std::vector<std::string> history);
         /**
          * Get an account pointer
          * @param accountID account ID to get
@@ -1275,14 +1263,16 @@ class ManagerImpl {
          * Send registration to all enabled accounts
          */
         void registerAccounts();
+        void saveHistory();
 
     private:
         NON_COPYABLE(ManagerImpl);
 
         /**
           * To handle the persistent history
+          * TODO: move this to ConfigurationManager
           */
-        HistoryManager * history_;
+        History *history_;
 
         /**
          * Instant messaging module, resposible to initiate, format, parse,

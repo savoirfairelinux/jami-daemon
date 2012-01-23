@@ -23,7 +23,7 @@
 DlgHooks::DlgHooks(QWidget *parent)
  : QWidget(parent)
 {
-	setupUi(this);
+   setupUi(this);
 }
 
 
