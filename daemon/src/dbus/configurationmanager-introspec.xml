@@ -73,26 +73,16 @@
             </tp:docstring>
             <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="s" name="accountID" direction="in">
-                <tp:docstring>
-                </tp:docstring>
             </arg>
             <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
-                <tp:docstring>
-                </tp:docstring>
             </arg>
         </method>
 
         <method name="setCredentials" tp:name-for-bindings="setCredentials">
-            <tp:docstring>
-            </tp:docstring>
             <arg type="s" name="accountID" direction="in">
-                <tp:docstring>
-                </tp:docstring>
             </arg>
             <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
-                <tp:docstring>
-                </tp:docstring>
             </arg>
         </method>
 
@@ -135,16 +125,10 @@
         </method>
 
        <method name="getCredentials" tp:name-for-bindings="getCredentials">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="accountID" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
            <arg type="aa{ss}" name="credentialInformation" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
@@ -224,56 +208,32 @@
        </method>
 
        <method name="getAudioManager" tp:name-for-bindings="getAudioManager">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="api" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setAudioManager" tp:name-for-bindings="setAudioManager">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="api" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getRecordPath" tp:name-for-bindings="getRecordPath">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="rec" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setRecordPath" tp:name-for-bindings="setRecordPath">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="rec" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getIsAlwaysRecording" tp:name-for-bindings="getIsAlwaysRecording">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="b" name="res" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setIsAlwaysRecording" tp:name-for-bindings="setIsAlwaysRecording">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="b" name="enabled" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
@@ -282,164 +242,96 @@
        <!-- Codecs-related methods -->
 
        <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
            <arg type="ai" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="payload" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="details" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorInt"/>
            <arg type="s" name="accountID" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="ai" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setActiveAudioCodecList" tp:name-for-bindings="setActiveAudioCodecList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
            <arg type="as" name="list" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="s" name="accountID" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <!-- Audio devices methods -->
 
        <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setAudioPlugin" tp:name-for-bindings="setAudioPlugin">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="audioPlugin" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getAudioOutputDeviceList" tp:name-for-bindings="getAudioOutputDeviceList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setAudioOutputDevice" tp:name-for-bindings="setAudioOutputDevice">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="index" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setAudioInputDevice" tp:name-for-bindings="setAudioInputDevice">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="index" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setAudioRingtoneDevice" tp:name-for-bindings="setAudioRingtoneDevice">
-               <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="index" direction="in">
-             <tp:docstring>
-             </tp:docstring>
            </arg>
        </method>
 
        <method name="getAudioInputDeviceList" tp:name-for-bindings="getAudioInputDeviceList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
 
        <method name="getCurrentAudioDevicesIndex" tp:name-for-bindings="getCurrentAudioDevicesIndex">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getAudioDeviceIndex" tp:name-for-bindings="getAudioDeviceIndex">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="name" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="i" name="index" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getCurrentAudioOutputPlugin" tp:name-for-bindings="getCurrentAudioOutputPlugin">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="plugin" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getEchoCancelState" tp:name-for-bindings="getNoiseSuppressState">
-               <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="state" direction="out">
-                   <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
@@ -449,44 +341,28 @@
        </method>
 
        <method name="setEchoCancelTailLength" tp:name-for-bindings="setEchoCancelTailLength">
-               <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="index" direction="in">
-             <tp:docstring>
-             </tp:docstring>
            </arg>
        </method>
 
        <method name="getEchoCancelTailLength" tp:name-for-bindings="getEchoCancelTailLength">
-               <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="index" direction="out">
-             <tp:docstring>
-             </tp:docstring>
            </arg>
        </method>
 
        <method name="setEchoCancelDelay" tp:name-for-bindings="setEchoCancelDelay">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="index" direction="in">
            </arg>
        </method>
 
        <method name="getEchoCancelDelay" tp:name-for-bindings="getEchoCancelDelay">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="index" direction="out">
            </arg>
        </method>
 
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
-               <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="state" direction="out">
-                   <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
@@ -498,106 +374,64 @@
        <!--    General Settings Panel         -->
 
        <method name="isIax2Enabled" tp:name-for-bindings="isIax2Enabled">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="res" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setMailNotify" tp:name-for-bindings="setMailNotify">
-           <tp:docstring>
-           </tp:docstring>
        </method>
 
        <method name="getMailNotify" tp:name-for-bindings="getMailNotify">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="level" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="days" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setHistoryLimit" tp:name-for-bindings="setHistoryLimit">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="i" name="days" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <!-- Addressbook configuration -->
        <method name="getAddressbookSettings" tp:name-for-bindings="getAddressbookSettings">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
            <arg type="a{si}" name="settings" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setAddressbookSettings" tp:name-for-bindings="setAddressbookSettings">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
            <arg type="a{si}" name="settings" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <!-- Addressbook list -->
        <method name="getAddressbookList" tp:name-for-bindings="getAddressbookList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="settings" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setAddressbookList" tp:name-for-bindings="setAddressbookList">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
            <arg type="as" name="settings" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <!-- Hook configuration -->
        <method name="getHookSettings" tp:name-for-bindings="getHookSettings">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="settings" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setHookSettings" tp:name-for-bindings="setHookSettings">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
            <arg type="a{ss}" name="settings" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
@@ -615,102 +449,62 @@
 
        <signal name="errorAlert" tp:name-for-bindings="errorAlert">
            <arg type="i" name="code">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </signal>
 
        <!-- TLS Methods -->
        <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
                    <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <tp:docstring>
-           </tp:docstring>
            <arg type="a{ss}" name="details" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getTlsSettings" tp:name-for-bindings="getTlsSettings">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
-           <tp:docstring>
-           </tp:docstring>
            <arg type="s" name="interface" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
            <arg type="s" name="address" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getAllIpInterface" tp:name-for-bindings="getAllIpInterface">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getAllIpInterfaceByName" tp:name-for-bindings="getAllIpInterfaceByName">
-           <tp:docstring>
-           </tp:docstring>
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="getShortcuts" tp:name-for-bindings="getShortcuts">
                    <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <tp:docstring>
-           </tp:docstring>
            <arg type="a{ss}" name="shortcutsMap" direction="out">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
 
        <method name="setShortcuts" tp:name-for-bindings="setShortcuts">
                    <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
-           <tp:docstring>
-           </tp:docstring>
            <arg type="a{ss}" name="shortcutsMap" direction="in">
-               <tp:docstring>
-               </tp:docstring>
            </arg>
        </method>
    </interface>

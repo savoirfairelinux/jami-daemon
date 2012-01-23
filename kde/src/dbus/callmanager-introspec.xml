@@ -212,7 +212,7 @@
             <arg type="s" name="drag_callID" direction="in"/>
         </method>
 
-                <method name="createConfFromParticipantList" tp:name-for-bindings="createConfFromParticipantList">
+        <method name="createConfFromParticipantList" tp:name-for-bindings="createConfFromParticipantList">
             <tp:added version="0.9.14"/>
             <tp:docstring>
                 <p>Create a conference from a list of participants</p>
