@@ -36,10 +36,9 @@
  */
 #include "tone.h"
 #include <cmath>
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
-
-static const double TWOPI = 2.0 * M_PI;
 
 Tone::Tone(const std::string& definition, unsigned int sampleRate) :
     sampleRate_(sampleRate), xhigher_(0.0), xlower_(0.0)
@@ -121,6 +120,7 @@ Tone::genBuffer(const std::string& definition)
         posStart = posEnd + 1;
     } while (posStart < deflen);
 
+    assert(!buffer_);
     buffer_ = new SFLDataFormat[size_];
 
     memcpy(buffer_, buffer, size_ * sizeof(SFLDataFormat)); // copy char, not SFLDataFormat.
@@ -131,26 +131,24 @@ Tone::genBuffer(const std::string& definition)
 void
 Tone::fillWavetable()
 {
-    double tableSize = (double) TABLE_LENGTH;
+    double tableSize = TABLE_LENGTH;
+    static const double TWO_PI = 2.0 * M_PI;
 
     for (int i = 0; i < TABLE_LENGTH; ++i)
-        wavetable_[i] = sin((static_cast<double>(i) / (tableSize - 1.0)) * TWOPI);
+        wavetable_[i] = sin(i / (tableSize - 1.0)) * TWO_PI;
 }
 
 double
 Tone::interpolate(double x)
 {
-    int xi_0, xi_1;
-    double yi_0, yi_1, A, B;
+    int xi_0 = x;
+    int xi_1 = xi_0 + 1;
 
-    xi_0 = (int) x;
-    xi_1 = xi_0 + 1;
+    double yi_0 = wavetable_[xi_0];
+    double yi_1 =  wavetable_[xi_1];
 
-    yi_0 = wavetable_[xi_0];
-    yi_1 =  wavetable_[xi_1];
-
-    A = (x - xi_0);
-    B = 1.0 - A;
+    double A = (x - xi_0);
+    double B = 1.0 - A;
 
     return (A * yi_0) + (B * yi_1);
 }
@@ -161,11 +159,11 @@ Tone::genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
     xhigher_ = 0.0;
     xlower_ = 0.0;
 
-    double sr = (double) sampleRate_;
-    double tableSize = (double) TABLE_LENGTH;
+    double sr = sampleRate_;
+    double tableSize = TABLE_LENGTH;
 
-    double N_h = sr / (double)(frequency1);
-    double N_l = sr / (double)(frequency2);
+    double N_h = sr / frequency1;
+    double N_l = sr / frequency2;
 
     double dx_h = tableSize / N_h;
     double dx_l = tableSize / N_l;
@@ -177,7 +175,7 @@ Tone::genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
     double amp =  DATA_AMPLITUDE;
 
     for (int t = 0; t < nb; t ++) {
-        buffer[t] = static_cast<SFLDataFormat>(amp * (interpolate(x_h) + interpolate(x_l)));
+        buffer[t] = amp * (interpolate(x_h) + interpolate(x_l));
         x_h += dx_h;
         x_l += dx_l;
 
