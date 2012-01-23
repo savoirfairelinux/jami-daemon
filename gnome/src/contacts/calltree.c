@@ -748,7 +748,7 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
 
 void calltree_update_call(calltab_t* tab, callable_obj_t * c)
 {
-    return calltree_update_call_recursive(tab, c, NULL);
+    calltree_update_call_recursive(tab, c, NULL);
 }
 
 void calltree_add_call(calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
