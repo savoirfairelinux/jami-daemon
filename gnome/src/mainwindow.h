@@ -92,7 +92,7 @@ void statusbar_pop_message (guint id);
  * Update selected call's clock in statusbar
  * @param id  The identifier of the message
  */
-void statusbar_update_clock (const gchar * const time);
+void statusbar_update_clock (const gchar * time);
 
 void main_window_zrtp_not_supported (callable_obj_t * c);
 

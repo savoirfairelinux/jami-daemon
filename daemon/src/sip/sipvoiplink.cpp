@@ -772,24 +772,29 @@ SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
     std::string accountID(Manager::instance().getAccountFromCall(id));
     SIPAccount *account = static_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
 
-    if (account) try {
+    if (account) {
+        try {
             dtmfSend(getSIPCall(id), code, account->getDtmfType());
-        } catch (VoipLinkException) {
+        } catch (const VoipLinkException &e) {
             // don't do anything if call doesn't exist
         }
+    }
 }
 
 void
-SIPVoIPLink::dtmfSend(SIPCall *call, char code, DtmfType dtmf)
+SIPVoIPLink::dtmfSend(SIPCall *call, char code, const std::string &dtmf)
 {
-    if (dtmf == OVERRTP) {
+    if (dtmf == SIPAccount::OVERRTP_STR) {
         call->getAudioRtp().sendDtmfDigit(code - '0');
         return;
     }
-
+    else if (dtmf != SIPAccount::SIPINFO_STR) {
+        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead", 
+             dtmf.c_str(), SIPAccount::SIPINFO_STR);
+    }
     // else : dtmf == SIPINFO
 
-    pj_str_t methodName = pj_str((char*)"INFO");
+    pj_str_t methodName = pj_str((char*) "INFO");
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
 
@@ -805,8 +810,8 @@ SIPVoIPLink::dtmfSend(SIPCall *call, char code, DtmfType dtmf)
 
     /* Create "application/dtmf-relay" message body. */
     pj_str_t content = pj_str(dtmf_body);
-    pj_str_t type = pj_str((char*)"application");
-    pj_str_t subtype = pj_str((char*)"dtmf-relay");
+    pj_str_t type = pj_str((char*) "application");
+    pj_str_t subtype = pj_str((char*) "dtmf-relay");
     tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &content);
 
     if (tdata->msg->body == NULL)

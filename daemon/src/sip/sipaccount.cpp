@@ -38,6 +38,8 @@
 #include <sstream>
 #include <cassert>
 
+const char * const SIPAccount::OVERRTP_STR = "overrtp";
+const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID, "SIP")
@@ -58,7 +60,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , tlsSetting_()
     , stunServerName_()
     , stunPort_(0)
-    , dtmfType_(OVERRTP)
+    , dtmfType_(OVERRTP_STR)
     , tlsEnable_("false")
     , tlsPort_(DEFAULT_SIP_TLS_PORT)
     , tlsCaListFile_()
@@ -90,83 +92,86 @@ SIPAccount::SIPAccount(const std::string& accountID)
 
 SIPAccount::~SIPAccount()
 {
-    delete[] cred_;
+    delete [] cred_;
 }
 
 void SIPAccount::serialize(Conf::YamlEmitter *emitter)
 {
-    Conf::MappingNode accountmap(NULL);
-    Conf::MappingNode srtpmap(NULL);
-    Conf::MappingNode zrtpmap(NULL);
-    Conf::MappingNode tlsmap(NULL);
+    using namespace Conf;
+    using std::vector;
+    using std::string;
+    MappingNode accountmap(NULL);
+    MappingNode srtpmap(NULL);
+    MappingNode zrtpmap(NULL);
+    MappingNode tlsmap(NULL);
 
-    Conf::ScalarNode id(Account::accountID_);
-    Conf::ScalarNode username(Account::username_);
-    Conf::ScalarNode alias(Account::alias_);
-    Conf::ScalarNode hostname(Account::hostname_);
-    Conf::ScalarNode enable(enabled_);
-    Conf::ScalarNode type(Account::type_);
+    ScalarNode id(Account::accountID_);
+    ScalarNode username(Account::username_);
+    ScalarNode alias(Account::alias_);
+    ScalarNode hostname(Account::hostname_);
+    ScalarNode enable(enabled_);
+    ScalarNode type(Account::type_);
     std::stringstream expirevalstr;
     expirevalstr << registrationExpire_;
-    Conf::ScalarNode expire(expirevalstr);
-    Conf::ScalarNode interface(interface_);
+    ScalarNode expire(expirevalstr);
+    ScalarNode interface(interface_);
     std::stringstream portstr;
     portstr << localPort_;
-    Conf::ScalarNode port(portstr.str());
-    Conf::ScalarNode serviceRoute(serviceRoute_);
+    ScalarNode port(portstr.str());
+    ScalarNode serviceRoute(serviceRoute_);
 
-    Conf::ScalarNode mailbox(mailBox_);
-    Conf::ScalarNode publishAddr(publishedIpAddress_);
+    ScalarNode mailbox(mailBox_);
+    ScalarNode publishAddr(publishedIpAddress_);
     std::stringstream publicportstr;
     publicportstr << publishedPort_;
 
-    Conf::ScalarNode publishPort(publicportstr.str());
+    ScalarNode publishPort(publicportstr.str());
 
-    Conf::ScalarNode sameasLocal(publishedSameasLocal_);
-    Conf::ScalarNode codecs(codecStr_);
-    for (std::vector<std::string>::const_iterator git = videoCodecOrder_.begin();
-            git != videoCodecOrder_.end(); ++git)
-        DEBUG("%s", (*git).c_str());
+    ScalarNode sameasLocal(publishedSameasLocal_);
+    ScalarNode codecs(codecStr_);
+    for (vector<string>::const_iterator i = videoCodecOrder_.begin();
+            i != videoCodecOrder_.end(); ++i)
+        DEBUG("%s", i->c_str());
     DEBUG("%s", Manager::instance().serialize(videoCodecOrder_).c_str());
 
-    Conf::ScalarNode vcodecs(Manager::instance().serialize(videoCodecOrder_));
+    ScalarNode vcodecs(Manager::instance().serialize(videoCodecOrder_));
 
-    Conf::ScalarNode ringtonePath(ringtonePath_);
-    Conf::ScalarNode ringtoneEnabled(ringtoneEnabled_);
-    Conf::ScalarNode stunServer(stunServer_);
-    Conf::ScalarNode stunEnabled(stunEnabled_);
-    Conf::ScalarNode displayName(displayName_);
-    Conf::ScalarNode dtmfType(dtmfType_==OVERRTP ? "overrtp" : "sipinfo");
+    ScalarNode ringtonePath(ringtonePath_);
+    ScalarNode ringtoneEnabled(ringtoneEnabled_);
+    ScalarNode stunServer(stunServer_);
+    ScalarNode stunEnabled(stunEnabled_);
+    ScalarNode displayName(displayName_);
+    ScalarNode dtmfType(dtmfType_);
 
     std::stringstream countstr;
     countstr << 0;
-    Conf::ScalarNode count(countstr.str());
+    ScalarNode count(countstr.str());
 
-    Conf::ScalarNode srtpenabled(srtpEnabled_);
-    Conf::ScalarNode keyExchange(srtpKeyExchange_);
-    Conf::ScalarNode rtpFallback(srtpFallback_);
+    ScalarNode srtpenabled(srtpEnabled_);
+    ScalarNode keyExchange(srtpKeyExchange_);
+    ScalarNode rtpFallback(srtpFallback_);
 
-    Conf::ScalarNode displaySas(zrtpDisplaySas_);
-    Conf::ScalarNode displaySasOnce(zrtpDisplaySasOnce_);
-    Conf::ScalarNode helloHashEnabled(zrtpHelloHash_);
-    Conf::ScalarNode notSuppWarning(zrtpNotSuppWarning_);
+    ScalarNode displaySas(zrtpDisplaySas_);
+    ScalarNode displaySasOnce(zrtpDisplaySasOnce_);
+    ScalarNode helloHashEnabled(zrtpHelloHash_);
+    ScalarNode notSuppWarning(zrtpNotSuppWarning_);
 
     portstr.str("");
     portstr << tlsPort_;
     
-    Conf::ScalarNode tlsport(portstr.str());
-    Conf::ScalarNode certificate(tlsCertificateFile_);
-    Conf::ScalarNode calist(tlsCaListFile_);
-    Conf::ScalarNode ciphers(tlsCiphers_);
-    Conf::ScalarNode tlsenabled(tlsEnable_);
-    Conf::ScalarNode tlsmethod(tlsMethod_);
-    Conf::ScalarNode timeout(tlsNegotiationTimeoutSec_);
-    Conf::ScalarNode tlspassword(tlsPassword_);
-    Conf::ScalarNode privatekey(tlsPrivateKeyFile_);
-    Conf::ScalarNode requirecertif(tlsRequireClientCertificate_);
-    Conf::ScalarNode server(tlsServerName_);
-    Conf::ScalarNode verifyclient(tlsVerifyServer_);
-    Conf::ScalarNode verifyserver(tlsVerifyClient_);
+    ScalarNode tlsport(portstr.str());
+    ScalarNode certificate(tlsCertificateFile_);
+    ScalarNode calist(tlsCaListFile_);
+    ScalarNode ciphers(tlsCiphers_);
+    ScalarNode tlsenabled(tlsEnable_);
+    ScalarNode tlsmethod(tlsMethod_);
+    ScalarNode timeout(tlsNegotiationTimeoutSec_);
+    ScalarNode tlspassword(tlsPassword_);
+    ScalarNode privatekey(tlsPrivateKeyFile_);
+    ScalarNode requirecertif(tlsRequireClientCertificate_);
+    ScalarNode server(tlsServerName_);
+    ScalarNode verifyclient(tlsVerifyServer_);
+    ScalarNode verifyserver(tlsVerifyClient_);
 
     accountmap.setKeyValue(aliasKey, &alias);
     accountmap.setKeyValue(typeKey, &type);
@@ -202,17 +207,17 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     zrtpmap.setKeyValue(helloHashEnabledKey, &helloHashEnabled);
     zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
 
-    Conf::SequenceNode credentialseq(NULL);
+    SequenceNode credentialseq(NULL);
     accountmap.setKeyValue(credKey, &credentialseq);
 
     std::vector<std::map<std::string, std::string> >::const_iterator it;
 
     for (it = credentials_.begin(); it != credentials_.end(); ++it) {
         std::map<std::string, std::string> cred = *it;
-        Conf::MappingNode *map = new Conf::MappingNode(NULL);
-        map->setKeyValue(USERNAME, new Conf::ScalarNode(cred[USERNAME]));
-        map->setKeyValue(PASSWORD, new Conf::ScalarNode(cred[PASSWORD]));
-        map->setKeyValue(REALM, new Conf::ScalarNode(cred[REALM]));
+        MappingNode *map = new MappingNode(NULL);
+        map->setKeyValue(USERNAME, new ScalarNode(cred[USERNAME]));
+        map->setKeyValue(PASSWORD, new ScalarNode(cred[PASSWORD]));
+        map->setKeyValue(REALM, new ScalarNode(cred[REALM]));
         credentialseq.addNode(map);
     }
 
@@ -233,29 +238,28 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
 
     try {
         emitter->serializeAccount(&accountmap);
-    } catch (const Conf::YamlEmitterException &e) {
+    } catch (const YamlEmitterException &e) {
         ERROR("ConfigTree: %s", e.what());
     }
 
-    Conf::Sequence *seq = credentialseq.getSequence();
-    Conf::Sequence::iterator seqit;
+    Sequence *seq = credentialseq.getSequence();
+    Sequence::iterator seqit;
 
     for (seqit = seq->begin(); seqit != seq->end(); ++seqit) {
-        Conf::MappingNode *node = (Conf::MappingNode*)*seqit;
+        MappingNode *node = (MappingNode*)*seqit;
         delete node->getValue(USERNAME);
         delete node->getValue(PASSWORD);
         delete node->getValue(REALM);
         delete node;
     }
-
-    
 }
 
 void SIPAccount::unserialize(Conf::MappingNode *map)
 {
-    Conf::MappingNode *srtpMap;
-    Conf::MappingNode *tlsMap;
-    Conf::MappingNode *zrtpMap;
+    using namespace Conf;
+    MappingNode *srtpMap;
+    MappingNode *tlsMap;
+    MappingNode *zrtpMap;
 
     assert(map);
 
@@ -288,7 +292,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
 
     std::string dtmfType;
     map->getValue(dtmfTypeKey, &dtmfType);
-    dtmfType_ = (dtmfType == "overrtp") ? OVERRTP : SIPINFO;
+    dtmfType_ = dtmfType;
 
     map->getValue(serviceRouteKey, &serviceRoute_);
     // stun enabled
@@ -302,19 +306,19 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
 
     std::vector<std::map<std::string, std::string> > creds;
 
-    Conf::YamlNode *credNode = map->getValue(credKey);
+    YamlNode *credNode = map->getValue(credKey);
 
     /* We check if the credential key is a sequence
      * because it was a mapping in a previous version of
      * the configuration file.
      */
-    if (credNode && credNode->getType() == Conf::SEQUENCE) {
-        Conf::SequenceNode *credSeq = (Conf::SequenceNode *) credNode;
-        Conf::Sequence::iterator it;
-        Conf::Sequence *seq = credSeq->getSequence();
+    if (credNode && credNode->getType() == SEQUENCE) {
+        SequenceNode *credSeq = (SequenceNode *) credNode;
+        Sequence::iterator it;
+        Sequence *seq = credSeq->getSequence();
 
         for (it = seq->begin(); it != seq->end(); ++it) {
-            Conf::MappingNode *cred = (Conf::MappingNode *)(*it);
+            MappingNode *cred = (MappingNode *)(*it);
             std::string user;
             std::string pass;
             std::string realm;
@@ -344,7 +348,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
     setCredentials(creds);
 
     // get srtp submap
-    srtpMap = (Conf::MappingNode *)(map->getValue(srtpKey));
+    srtpMap = (MappingNode *)(map->getValue(srtpKey));
 
     if (srtpMap) {
         srtpMap->getValue(srtpEnableKey, &srtpEnabled_);
@@ -353,7 +357,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
     }
 
     // get zrtp submap
-    zrtpMap = (Conf::MappingNode *)(map->getValue(zrtpKey));
+    zrtpMap = (MappingNode *)(map->getValue(zrtpKey));
 
     if (zrtpMap) {
         zrtpMap->getValue(displaySasKey, &zrtpDisplaySas_);
@@ -363,7 +367,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
     }
 
     // get tls submap
-    tlsMap = (Conf::MappingNode *)(map->getValue(tlsKey));
+    tlsMap = (MappingNode *)(map->getValue(tlsKey));
 
     if (tlsMap) {
         tlsMap->getValue(tlsEnableKey, &tlsEnable_);
@@ -409,7 +413,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     publishedPort_ = atoi(details[PUBLISHED_PORT].c_str());
     stunServer_ = details[STUN_SERVER];
     stunEnabled_ = details[STUN_ENABLE] == "true";
-    dtmfType_ = details[ACCOUNT_DTMF_TYPE] == "overrtp" ? OVERRTP : SIPINFO;
+    dtmfType_ = details[ACCOUNT_DTMF_TYPE];
 
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
 
@@ -509,7 +513,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[PUBLISHED_PORT] = publishedport.str();
     a[STUN_ENABLE] = stunEnabled_ ? "true" : "false";
     a[STUN_SERVER] = stunServer_;
-    a[ACCOUNT_DTMF_TYPE] = (dtmfType_ == OVERRTP) ? "overrtp" : "sipinfo";
+    a[ACCOUNT_DTMF_TYPE] = dtmfType_;
 
     a[SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
     a[SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";

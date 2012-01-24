@@ -42,7 +42,7 @@
 /*
  * Tone frequencies
  */
-const DTMFGenerator::DTMFTone DTMFGenerator::tones_[NUM_TONES] = {
+const DTMFGenerator::DTMFTone DTMFGenerator::tones_[] = {
     {'0', 941, 1336},
     {'1', 697, 1209},
     {'2', 697, 1336},
@@ -78,7 +78,7 @@ DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : state(), sampleRate_(sam
 DTMFGenerator::~DTMFGenerator()
 {
     for (int i = 0; i < NUM_TONES; i++)
-        delete[] toneBuffers_[i];
+        delete [] toneBuffers_[i];
 }
 
 /*
@@ -98,11 +98,11 @@ void DTMFGenerator::getSamples(SFLDataFormat* buffer, size_t n, unsigned char co
     else {
         switch (code) {
             case '*':
-                state.sample = toneBuffers_[14];
+                state.sample = toneBuffers_[NUM_TONES - 2];
                 break;
 
             case '#':
-                state.sample = toneBuffers_[15];
+                state.sample = toneBuffers_[NUM_TONES - 1];
                 break;
 
             default:
@@ -124,14 +124,13 @@ void DTMFGenerator::getSamples(SFLDataFormat* buffer, size_t n, unsigned char co
  */
 void DTMFGenerator::getNextSamples(SFLDataFormat* buffer, size_t n)
 {
-    size_t i;
-
     if (!buffer)
         throw DTMFException("Invalid parameter");
 
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
 
+    size_t i;
     for (i = 0; i < n; i++)
         buffer[i] = state.sample[(state.offset + i) % sampleRate_];
 
