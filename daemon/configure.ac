@@ -1,10 +1,9 @@
 dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
-dnl
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
 AC_INIT([sflphone],[1.0.1],[sflphoneteam@savoirfairelinux.com],[sflphone])
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012]])
 AC_REVISION([$Revision$])
 
 AC_CANONICAL_BUILD
@@ -17,21 +16,13 @@ AC_CONFIG_HEADERS([config.h])
 # Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-dnl Rewrite name of programs to be installed
-dnl AC_ARG_PROGRAM
-
-dnl Compute canonical system name
-dnl AC_CANONICAL_TARGET
-
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
 
 dnl Where to find configure files
-dnl AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 
 dnl What to generate
-dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
 		libs/utilspp/Makefile \
@@ -55,16 +46,14 @@ AC_CONFIG_FILES([src/Makefile \
 		src/hooks/Makefile \
 		src/history/Makefile])
 
-dnl Unitary test section
+dnl Unit tests section
 AC_CONFIG_FILES([test/Makefile])
 
 AC_CONFIG_FILES([ringtones/Makefile])
 
 AC_CONFIG_FILES([man/Makefile])
 
-AC_CONFIG_FILES([doc/Makefile \
-		doc/dbus-api/Makefile \
-		doc/doxygen/Makefile])
+AC_CONFIG_FILES([doc/Makefile doc/dbus-api/Makefile doc/doxygen/Makefile])
 
 dnl Check for programs
 AC_PROG_CC
@@ -83,9 +72,9 @@ AC_LANG(C++)
 dnl Check for header files
 AC_FUNC_ALLOCA
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h malloc.h \
-        memory.h netdb.h netinet/in.h stdlib.h string.h strings.h \
-        sys/ioctl.h sys/socket.h sys/time.h unistd.h utime.h ostream])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h malloc.h memory.h \
+                  netdb.h netinet/in.h stdlib.h string.h strings.h \
+                  sys/ioctl.h sys/socket.h sys/time.h unistd.h utime.h ostream])
 
 dnl Check for typedefs, structures, and compiler characteristics
 AC_HEADER_STAT
@@ -125,18 +114,11 @@ AC_FUNC_STAT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
-		inet_ntoa memset mkdir pathconf pow regcomp select setlocale socket \
-		strchr strdup strerror strrchr strstr strtol utime])
+                inet_ntoa memset mkdir pathconf pow regcomp select setlocale \
+                socket strchr strdup strerror strrchr strstr strtol utime])
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
-
-dnl Trying to set PJSIP using pkg-config
-dnl PKG_CHECK_MODULES(SIP, libpj-sfl, have_libpj=true, have_libpj=false)
-dnl if test "x${have_libpj}" = "xfalse" ; then
-dnl    AC_MSG_ERROR([PJSIP not found. http://www.pjsip.org/download.htm])
-dnl fi
-dnl AC_SUBST(SIP_CFLAGS)
 
 dnl Check for uuid development package - name: uuid-dev
 UUID_MIN_VERSION=1.0
@@ -202,8 +184,8 @@ PKG_CHECK_MODULES(UDEV, libudev >= 142)
 CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
 
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,
-		[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
-	have_expat=false)
+        [AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
+        have_expat=false)
 
 test "$have_expat" = false && AC_MSG_ERROR([libexpat development files missing])
 
@@ -214,8 +196,8 @@ AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([yaml], yaml_parser_initialize,
-	       [AC_CHECK_HEADERS(yaml.h, have_yaml=true, have_yaml=false)],
-	       have_yaml=false)
+        [AC_CHECK_HEADERS(yaml.h, have_yaml=true, have_yaml=false)],
+        have_yaml=false)
 
 test "$have_yaml" = "false" && AC_MSG_ERROR([libyaml development files missing])
 
@@ -229,7 +211,6 @@ AC_CHECK_LIB([pthread], pthread_create,
 		have_pthread=false)
 
 test "$have_pthread" = "false" && AC_MSG_ERROR([You need the POSIX Thread library (pthreads)])	
-
 
 AC_CHECK_LIB([pcre], pcre_free,
 		[AC_CHECK_HEADERS(pcre.h, have_pcre=true, have_pcre=false)],
@@ -248,11 +229,8 @@ PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUI
 
 # check for libgsm1 (doesn't use pkg-config)
 	dnl Check for libgsm
-AC_ARG_WITH([gsm],
-		[AS_HELP_STRING([--without-gsm],
-			[disable support for gsm codec])],
-		[],
-		[with_gsm=yes])
+AC_ARG_WITH([gsm], [AS_HELP_STRING([--without-gsm],
+			[disable support for gsm codec])], [], [with_gsm=yes])
 
 LIBGSM=
 AS_IF([test "x$with_gsm" != xno],
@@ -289,7 +267,6 @@ dnl check in case the libspeexdsp is not installed
 AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
 AC_CHECK_LIB(speexdsp, speex_preprocess_run, [], [], [])
 
-
 # check for libcelt
 AC_ARG_WITH([celt],
 		[AS_HELP_STRING([--without-celt],
@@ -313,28 +290,20 @@ AS_IF([test "x$with_celt" != xno],
     	])]
 )
 
-# AC_SUBST(BUILD_CELT)
-# AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
 AM_CONDITIONAL(BUILD_CELT_91, test "x$with_celt_91" = "xyes" )
 AM_CONDITIONAL(BUILD_CELT_71, test "x$with_celt_71" = "xyes" )
 
-
 dnl Check for IAX
-AC_ARG_WITH([iax2],
-		[AS_HELP_STRING([--without-iax2],
-			[disable support for the iax2 protocol])],
-		[],
-		[with_iax2=yes])
+AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
+            [disable support for the iax2 protocol])], [], [with_iax2=yes])
 
 AC_DEFINE_UNQUOTED([HAVE_IAX], `if test "x$with_iax2" = "xyes"; then echo 1; else echo 0;fi`, [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
 	dnl Check for network-manager
-AC_ARG_WITH([networkmanager],
-		[AS_HELP_STRING([--without-networkmanager],
-			[disable support for network-manager events])],
-		[],
-		[with_networkmanager=yes])
+AC_ARG_WITH([networkmanager], [AS_HELP_STRING([--without-networkmanager],
+			[disable support for network-manager events])], [],
+            [with_networkmanager=yes])
 
 AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
 
