@@ -260,7 +260,7 @@ class SIPVoIPLink : public VoIPLink {
          *
          * @return          	A pointer to the transport selector structure
          */
-        pjsip_tpselector *initTransportSelector(pjsip_transport *, pj_pool_t *);
+        pjsip_tpselector *initTransportSelector(pjsip_transport *, pj_pool_t *) const;
 
         /**
          * This function unset the transport for a given account.
@@ -281,6 +281,16 @@ class SIPVoIPLink : public VoIPLink {
          * Create the default UDP transport according ot Ip2Ip profile settings
          */
         void createDefaultSipUdpTransport();
+
+        /**
+         * Get the correct address to use (ie advertised) from
+         * a uri. The corresponding transport that should be used
+         * with that uri will be discovered.
+         *
+         * @param uri The uri from which we want to discover the address to use
+         * @param transport The transport to use to discover the address
+         */
+        void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
 
     private:
         /**
@@ -330,16 +340,6 @@ class SIPVoIPLink : public VoIPLink {
          * @param account The account for which a transport must be created.
          */
         void createStunTransport(SIPAccount *account);
-
-        /**
-         * Get the correct address to use (ie advertised) from
-         * a uri. The corresponding transport that should be used
-         * with that uri will be discovered.
-         *
-         * @param uri The uri from which we want to discover the address to use
-         * @param transport The transport to use to discover the address
-         */
-        void findLocalAddressFromUri(const std::string& uri, pjsip_transport *transport, std::string &address, std::string &port);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case

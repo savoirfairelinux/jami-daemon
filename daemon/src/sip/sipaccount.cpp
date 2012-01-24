@@ -56,6 +56,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
     , cred_(NULL)
     , tlsSetting_()
+    , contactHeader_()
     , stunServerName_()
     , stunPort_(0)
     , dtmfType_(OVERRTP)
@@ -755,10 +756,19 @@ std::string SIPAccount::getServerUri() const
     return "<" + scheme + hostname_ + transport + ">";
 }
 
-std::string SIPAccount::getContactHeader(const std::string& address, const std::string& port) const
+std::string SIPAccount::getContactHeader() const
 {
     std::string scheme;
     std::string transport;
+
+    // Use the CONTACT header provided by the registrar if any
+    if(!contactHeader_.empty())
+        return contactHeader_;
+
+    // Else we determine this infor based on transport information
+    std::string address, port;
+    SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(link_);
+    siplink->findLocalAddressFromTransport(transport_, transportType_, address, port);
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS) {

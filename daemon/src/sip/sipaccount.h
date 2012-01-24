@@ -117,15 +117,45 @@ class SIPAccount : public Account {
             registrationStateDetailed_ = details;
         }
 
+        /**
+         * Serialize internal state of this account for configuration
+         * @param YamlEmitter the configuration engine which generate the configuration file
+         */
         virtual void serialize(Conf::YamlEmitter *emitter);
 
+        /**
+         * Populate the internal state for this account based on info stored in the configuration file
+         * @param The configuration node for this account
+         */
         virtual void unserialize(Conf::MappingNode *map);
 
+        /**
+         * Set the internal state for this account, mainly used to manage account details from the client application.
+         * @param The map containing the account information.
+         */
         virtual void setAccountDetails(std::map<std::string, std::string> details);
 
+        /**
+         * Return an map containing the internal state of this account. Client application can use this method to manage
+         * account info.
+         * @return A map containing the account information.
+         */
         virtual std::map<std::string, std::string> getAccountDetails() const;
+
+        /**
+         * Return the information for the default IP to IP account
+         */
         std::map<std::string, std::string> getIp2IpDetails() const;
+
+        /**
+         * Return the TLS settings, mainly used to return security information to
+         * a client application
+         */
         std::map<std::string, std::string> getTlsSettings() const;
+
+        /**
+         * Manage the TLS settings from a client application
+         */
         void setTlsSettings(const std::map<std::string, std::string>& details);
 
         /**
@@ -189,7 +219,7 @@ class SIPAccount : public Account {
 
         /**
          * Set the expiration for this account as found in 
-         * the "Expire" sip header or the Contact "expire" param.
+         * the "Expire" sip header or the CONTACT's "expire" param.
          */
         void setRegistrationExpire(int expire) {
             if(expire > 0)
@@ -197,7 +227,7 @@ class SIPAccount : public Account {
         }
 
         /**
-         * Doubles the Expiration Interval of Contact Addresses.
+         * Doubles the Expiration Interval sepecified for registration.
          */
         void doubleRegistrationExpire() {
             registrationExpire_ *= 2;
@@ -228,7 +258,6 @@ class SIPAccount : public Account {
          * Get the registration stucture that is used
          * for PJSIP in the registration process.
          * Settings are loaded from configuration file.
-         * @param void
          * @return pjsip_regc* A pointer to the registration structure
          */
         pjsip_regc* getRegistrationInfo() {
@@ -330,11 +359,20 @@ class SIPAccount : public Account {
         std::string getServerUri() const;
 
         /**
+         * Set the contact header
          * @param port Optional port. Otherwise set to the port defined for that account.
          * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
+         */
+        void setContactHeader(std::string& contact)
+        {
+            contactHeader_ = contact;
+        }
+
+        /**
+         * Get the contact header for 
          * @return pj_str_t The contact header based on account information
          */
-        std::string getContactHeader(const std::string& address, const std::string& port) const;
+        std::string getContactHeader(void) const;
 
         /**
          * Get the local interface name on which this account is bound.
@@ -508,25 +546,60 @@ class SIPAccount : public Account {
          */
         pj_uint16_t tlsListenerPort_;
 
+        /**
+         * Transport type used for this sip account. Currently supported types: 
+         *    PJSIP_TRANSPORT_UNSPECIFIED
+         *    PJSIP_TRANSPORT_UDP
+         *    PJSIP_TRANSPORT_TLS
+         */ 
         pjsip_transport_type_e transportType_;
 
-        //Credential information
+        /**
+         * Credential information stored for further registration. 
+         */
         pjsip_cred_info *cred_;
 
-        // The TLS settings, if tls is chosen as
-        // a sip transport.
+        /**
+         * The TLS settings, used only if tls is chosen as a sip transport.
+         */
         pjsip_tls_setting tlsSetting_;
 
-        // The STUN server name, if applicable for internal use only
+        /**
+         * The CONTACT header used for registration as provided by the registrar, this value could differ  
+         * from the host name in case the registrar is inside a subnetwork (such as a VPN).
+         * The header will be stored 
+         */
+        std::string contactHeader_;
+
+        /**
+         * The STUN server name (hostname)
+         */
         pj_str_t stunServerName_;
 
-        // The STUN server port, if applicable
+        /**
+         * The STUN server port
+         */
         pj_uint16_t stunPort_;
 
+        /**
+         * DTMF type used for this account SIPINFO or RTP
+         */
         DtmfType dtmfType_;
 
+        /**
+         * Determine if TLS is enabled for this account. TLS provides a secured channel for
+         * SIP signalization. It is independant than the media encription provided by SRTP or ZRTP.
+         */
         std::string tlsEnable_;
+
+        /**
+         * Specify the TLS port
+         */
         int tlsPort_;
+
+        /**
+         * Certificate autority file
+         */
         std::string tlsCaListFile_;
         std::string tlsCertificateFile_;
         std::string tlsPrivateKeyFile_;
@@ -540,21 +613,56 @@ class SIPAccount : public Account {
         std::string tlsNegotiationTimeoutSec_;
         std::string tlsNegotiationTimeoutMsec_;
 
+        /**
+         * The stun server hostname (optional), used to provide the public IP address in case the softphone 
+         * stay behind a NAT.
+         */
         std::string stunServer_;
+
+        /**
+         * Determine if STUN public address resolution is required to register this account. In this case a
+         * STUN server hostname must be specified.
+         */
         bool stunEnabled_;
 
+        /**
+         * Determine if SRTP is enabled for this account, SRTP and ZRTP are mutually exclusive
+         * This only determine if the media channel is secured. One could only enable TLS 
+         * with no secured media channel.
+         */ 
         bool srtpEnabled_;
+
+        /**
+         * Specifies the type of key exchange usd for SRTP (sdes/zrtp)
+         */ 
         std::string srtpKeyExchange_;
+
+        /**
+         * Determine if the softphone should fallback on non secured media channel if SRTP negotiation fails.
+         * Make sure other SIP endpoints share the same behavior since it could result in encrypted data to be
+         * played through the audio device.
+         */
         bool srtpFallback_;
 
+        /**
+         * Determine if the SAS sould be displayed on client side. SAS is a 4-charcter string
+         * that end users should verbaly validate to ensure the channel is secured. Used especially
+         * to prevent man-in-the-middle attack.
+         */ 
         bool zrtpDisplaySas_;
+
+        /**
+         * Only display SAS 4-character string once at the begining of the call.
+         */
         bool zrtpDisplaySasOnce_;
+
         bool zrtpHelloHash_;
         bool zrtpNotSuppWarning_;
-        /*
-        * Details about the registration state.
-        * This is a protocol Code:Description pair.
-        */
+
+        /**
+         * Details about the registration state.
+         * This is a protocol Code:Description pair.
+         */
         std::pair<int, std::string> registrationStateDetailed_;
        
         /**
@@ -563,10 +671,6 @@ class SIPAccount : public Account {
          */ 
         pj_timer_entry keepAliveTimer_;
 
-        /**
-         * Delay coresponding to a registration interval
-         */
-        // pj_time_val keepAliveDelay_;
 };
 
 #endif
