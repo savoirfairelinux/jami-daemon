@@ -1,7 +1,5 @@
 # Global variables
 
-#CXXFLAGS=-Wall -Werror -Wextra
-
 src=$(abs_top_srcdir)
 sfllibdir=$(DESTDIR)$(libdir)/sflphone
 sflcodecdir=$(sfllibdir)/codecs

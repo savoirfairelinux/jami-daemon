@@ -271,87 +271,6 @@
            </arg>
        </method>
 
-
-       <!-- Video devices methods -->
-
-       <method name="getVideoInputDeviceList" tp:name-for-bindings="getVideoInputDeviceList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="as" name="list" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoInputDeviceChannelList" tp:name-for-bindings="getVideoInputDeviceChannelList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="s" name="device" direction="in">
-           </arg>
-           <arg type="as" name="list" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoInputDeviceSizeList" tp:name-for-bindings="getVideoInputDeviceSizeList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="s" name="device" direction="in">
-           </arg>
-           <arg type="s" name="channel" direction="in">
-           </arg>
-           <arg type="as" name="list" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoInputDeviceRateList" tp:name-for-bindings="getVideoInputDeviceRateList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="s" name="device" direction="in">
-           </arg>
-           <arg type="s" name="channel" direction="in">
-           </arg>
-           <arg type="s" name="size" direction="in">
-           </arg>
-           <arg type="as" name="list" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoInputDevice" tp:name-for-bindings="getVideoInputDevice">
-           <arg type="s" name="device" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoInputDeviceChannel" tp:name-for-bindings="getVideoInputDeviceChannel">
-           <arg type="s" name="channel" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoInputDeviceSize" tp:name-for-bindings="getVideoInputDeviceSize">
-           <arg type="s" name="size" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoInputDeviceRate" tp:name-for-bindings="getVideoInputDeviceRate">
-           <arg type="s" name="rate" direction="out">
-           </arg>
-       </method>
-
-       <method name="setVideoInputDevice" tp:name-for-bindings="setVideoInputDevice">
-           <arg type="s" name="device" direction="in">
-           </arg>
-       </method>
-
-       <method name="setVideoInputDeviceChannel" tp:name-for-bindings="setVideoInputDeviceChannel">
-           <arg type="s" name="channel" direction="in">
-           </arg>
-       </method>
-
-       <method name="setVideoInputDeviceSize" tp:name-for-bindings="setVideoInputDeviceSize">
-           <arg type="s" name="size" direction="in">
-           </arg>
-       </method>
-
-       <method name="setVideoInputDeviceRate" tp:name-for-bindings="setVideoInputDeviceRate">
-           <arg type="s" name="rate" direction="in">
-           </arg>
-       </method>
-
-       <!--      ///////////////////////               -->
-
        <!-- Audio devices methods -->
 
        <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">
@@ -441,44 +360,7 @@
            </arg>
        </method>
        
-       
-       <!--      ///////////////////////               -->
-
-       <!-- Video Codecs-related methods -->
-
-       <method name="getVideoCodecList" tp:name-for-bindings="getVideoCodecList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="as" name="list" direction="out">
-           </arg>
-       </method>
-
-       <method name="getVideoCodecDetails" tp:name-for-bindings="getVideoCodecDetails">
-           <arg type="s" name="codec" direction="in">
-           </arg>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="as" name="details" direction="out">
-           </arg>
-       </method>
-
-       <method name="getActiveVideoCodecList" tp:name-for-bindings="getActiveVideoCodecList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="s" name="accountID" direction="in">
-           </arg>
-           <arg type="as" name="list" direction="out">
-           </arg>
-       </method>
-
-       <method name="setActiveVideoCodecList" tp:name-for-bindings="setActiveVideoCodecList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
-           <arg type="as" name="list" direction="in">
-           </arg>
-           <arg type="s" name="accountID" direction="in">
-           </arg>
-       </method>
-
-
        <!--    General Settings Panel         -->
-
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
            <arg type="s" name="state" direction="out">
@@ -627,25 +509,5 @@
            <arg type="a{ss}" name="shortcutsMap" direction="in">
            </arg>
        </method>
-
-       <method name="startVideoPreview" tp:name-for-bindings="startVideoPreview">
-           <arg type="i" name="width" direction="out">
-           </arg>
-           <arg type="i" name="height" direction="out">
-           </arg>
-           <arg type="i" name="shmKey" direction="out">
-           </arg>
-           <arg type="i" name="semKey" direction="out">
-           </arg>
-           <arg type="i" name="videoBufferSize" direction="out">
-           </arg>
-       </method>
-
-       <method name="stopVideoPreview" tp:name-for-bindings="stopVideoPreview">
-       </method>
-
-       <signal name="videoDeviceEvent" tp:name-for-bindings="videoDeviceEvent">
-       </signal>
-
    </interface>
 </node>

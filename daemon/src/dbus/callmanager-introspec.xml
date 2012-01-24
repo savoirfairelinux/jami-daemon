@@ -392,11 +392,6 @@
             </arg>
         </method>
 
-        <method name="getCurrentVideoCodecName" tp:name-for-bindings="getCurrentVideoCodecName">
-            <arg type="s" name="callID" direction="in"/>
-            <arg type="s" name="codecName" direction="out"/>
-        </method>
-
         <method name="getCurrentAudioCodecName" tp:name-for-bindings="getCurrentAudioCodecName">
             <arg type="s" name="callID" direction="in"/>
             <arg type="s" name="codecName" direction="out"/>
@@ -786,25 +781,5 @@
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="yesNo" direction="in"/>
         </method>
-
-       <signal name="receivingVideoEvent" tp:name-for-bindings="receivingVideoEvent">
-           <arg type="i" name="shmKey">
-           </arg>
-           <arg type="i" name="semKey">
-           </arg>
-           <arg type="i" name="videoBufferSize">
-           </arg>
-           <arg type="i" name="destWidth">
-           </arg>
-           <arg type="i" name="destHeight">
-           </arg>
-       </signal>
-
-       <signal name="stoppedReceivingVideoEvent" tp:name-for-bindings="stoppedReceivingVideoEvent">
-           <arg type="i" name="shmKey">
-           </arg>
-           <arg type="i" name="semKey">
-           </arg>
-       </signal>
     </interface>
 </node>

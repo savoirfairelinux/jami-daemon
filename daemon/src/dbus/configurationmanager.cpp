@@ -39,14 +39,12 @@
 #include "sip/sipvoiplink.h"
 #include "account.h"
 #include "sip/sipaccount.h"
-#include "video/video_endpoint.h"
-#include "video/video_preview.h"
 
 const char* ConfigurationManager::SERVER_PATH =
     "/org/sflphone/SFLphone/ConfigurationManager";
 
 ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
-    DBus::ObjectAdaptor(connection, SERVER_PATH), preview_()
+    DBus::ObjectAdaptor(connection, SERVER_PATH)
 {}
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
@@ -167,15 +165,6 @@ std::vector<int32_t> ConfigurationManager::getAudioCodecList()
     return list;
 }
 
-/**
- * Send the list of all codecs loaded to the client through DBus.
- * Can stay global, as only the active codecs will be set per accounts
- */
-std::vector<std::string> ConfigurationManager::getVideoCodecList()
-{
-    return sfl_video::getVideoCodecList();
-}
-
 std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
 {
     std::vector<std::string> method;
@@ -194,11 +183,6 @@ std::vector<std::string> ConfigurationManager::getAudioCodecDetails(const int32_
         errorAlert(CODECS_NOT_LOADED);
 
     return result;
-}
-
-std::vector<std::string> ConfigurationManager::getVideoCodecDetails(const std::string& codec)
-{
-    return sfl_video::getCodecSpecifications(codec);
 }
 
 std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
@@ -223,33 +207,6 @@ void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string
     }
 }
 
-std::vector<std::string> ConfigurationManager::getActiveVideoCodecList (
-        const std::string& accountID)
-{
-    std::vector<std::string> v;
-    Account *acc = Manager::instance().getAccount (accountID);
-
-    if (acc != NULL) {
-        v = acc->getActiveVideoCodecs();
-    }
-
-    return v;
-
-}
-
-void ConfigurationManager::setActiveVideoCodecList (
-        const std::vector<std::string>& list, const std::string& accountID)
-{
-    Account *acc = Manager::instance().getAccount (accountID);
-
-    if (acc != NULL) {
-        acc->setActiveVideoCodecs (list);
-    }
-
-    Manager::instance().saveConfig();
-}
-
-
 std::vector<std::string> ConfigurationManager::getAudioPluginList()
 {
     std::vector<std::string> v;
@@ -259,7 +216,6 @@ std::vector<std::string> ConfigurationManager::getAudioPluginList()
 
     return v;
 }
-
 
 void ConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 {
@@ -346,66 +302,6 @@ int ConfigurationManager::getEchoCancelDelay()
 void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
 {
     Manager::instance().setEchoCancelDelay(delay);
-}
-
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceList()
-{
-    return Manager::instance().getVideoInputDeviceList();
-}
-
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceChannelList(const std::string &dev)
-{
-    return Manager::instance().getVideoInputDeviceChannelList(dev);
-}
-
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel)
-{
-    return Manager::instance().getVideoInputDeviceSizeList(dev, channel);
-}
-
-std::vector<std::string> ConfigurationManager::getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
-{
-    return Manager::instance().getVideoInputDeviceRateList(dev, channel, size);
-}
-
-std::string ConfigurationManager::getVideoInputDevice()
-{
-    return Manager::instance().getVideoInputDevice();
-}
-
-std::string ConfigurationManager::getVideoInputDeviceChannel()
-{
-    return Manager::instance().getVideoInputDeviceChannel();
-}
-
-std::string ConfigurationManager::getVideoInputDeviceSize()
-{
-    return Manager::instance().getVideoInputDeviceSize();
-}
-
-std::string ConfigurationManager::getVideoInputDeviceRate()
-{
-    return Manager::instance().getVideoInputDeviceRate();
-}
-
-void ConfigurationManager::setVideoInputDevice(const std::string& api)
-{
-    Manager::instance().setVideoInputDevice(api);
-}
-
-void ConfigurationManager::setVideoInputDeviceChannel(const std::string& api)
-{
-    Manager::instance().setVideoInputDeviceChannel(api);
-}
-
-void ConfigurationManager::setVideoInputDeviceSize(const std::string& api)
-{
-    Manager::instance().setVideoInputDeviceSize(api);
-}
-
-void ConfigurationManager::setVideoInputDeviceRate(const std::string& api)
-{
-    Manager::instance().setVideoInputDeviceRate(api);
 }
 
 int32_t ConfigurationManager::isIax2Enabled()
@@ -559,37 +455,4 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
         SIPAccount *sipaccount = static_cast<SIPAccount*>(account);
         sipaccount->setCredentials(details);
     }
-}
-
-void ConfigurationManager::startVideoPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
-{
-    if (preview_.get()) {
-        ERROR("Video preview was already started!");
-        shmKey = -1;
-        semKey = -1;
-        videoBufferSize = -1;
-        return;
-    }
-
-    using std::map;
-    using std::string;
-
-    map<string, string> args(Manager::instance().videoPreference.getVideoSettings());
-    preview_.reset(new sfl_video::VideoPreview(args));
-    preview_->start();
-	
-    width = atoi(args["width"].c_str());
-    height = atoi(args["height"].c_str());
-    shmKey = preview_->getShmKey();
-    semKey = preview_->getSemKey();
-    videoBufferSize = preview_->getVideoBufferSize();
-}
-
-void ConfigurationManager::stopVideoPreview()
-{
-	if (preview_.get()) {
-		DEBUG("Stopping video preview");
-		preview_->stop();
-		preview_.reset();
-	}
 }

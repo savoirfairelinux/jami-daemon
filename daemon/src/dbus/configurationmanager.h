@@ -52,20 +52,10 @@
 
 #include "dbus_cpp.h"
 
-#include <tr1/memory> // for shared_ptr
-
-namespace sfl_video {
-    class VideoPreview;
-}
-
 class ConfigurationManager
     : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
-    private:
-        // FIXME: this probably shouldn't live here
-        std::tr1::shared_ptr<sfl_video::VideoPreview> preview_;
-
     public:
 
         ConfigurationManager(DBus::Connection& connection);
@@ -82,15 +72,11 @@ class ConfigurationManager
         std::map< std::string, std::string > getTlsSettingsDefault();
 
         std::vector< int32_t > getAudioCodecList();
-        std::vector< std::string > getVideoCodecList();
         std::vector< std::string > getSupportedTlsMethod();
         std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
-        std::vector< std::string > getVideoCodecDetails(const std::string& payload);
         std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
 
         void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
-        std::vector<std::string> getActiveVideoCodecList(const std::string& accountID);
-        void setActiveVideoCodecList (const std::vector<std::string>& list, const std::string& accountID);
 
         std::vector< std::string > getAudioPluginList();
         void setAudioPlugin(const std::string& audioPlugin);
@@ -110,19 +96,6 @@ class ConfigurationManager
         int getEchoCancelTailLength();
         void setEchoCancelDelay(const int32_t& length);
         int getEchoCancelDelay();
-
-        std::vector<std::string> getVideoInputDeviceList();
-        std::vector<std::string> getVideoInputDeviceChannelList(const std::string &dev);
-        std::vector<std::string> getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel);
-        std::vector<std::string> getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
-        void setVideoInputDevice(const std::string& api);
-        void setVideoInputDeviceChannel(const std::string& api);
-        void setVideoInputDeviceSize(const std::string& api);
-        void setVideoInputDeviceRate(const std::string& api);
-        std::string getVideoInputDevice();
-        std::string getVideoInputDeviceChannel();
-        std::string getVideoInputDeviceSize();
-        std::string getVideoInputDeviceRate();
 
         std::string getAudioManager();
         void setAudioManager(const std::string& api);
@@ -167,10 +140,7 @@ class ConfigurationManager
 
         std::map<std::string, std::string> getShortcuts();
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
-
-        void startVideoPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize);
-        void stopVideoPreview();
 };
 
-#endif//CONFIGURATIONMANAGER_H
+#endif //CONFIGURATIONMANAGER_H
 

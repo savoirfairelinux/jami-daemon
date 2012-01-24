@@ -139,22 +139,31 @@ dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
 
-dnl The libav versions correspond to the last libav release: 0.7
-dnl Check for libavcodec development package - name: libavcodec-dev
-PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec package: libavcodec-dev]))
-LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
+dnl Video is default-enabled
+AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
-dnl Check for libavformat development package - name: libavformat-dev
-PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat package: libavformat-dev]))
+AS_IF([test "x$enable_video" != "xno"], [
+        echo "VIDEO ENABLED";
+        AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
 
-dnl Check for libswscale development package - name: libswcale-dev
-PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale package: libswscale-dev]))
+        dnl The libav versions correspond to the last libav release: 0.7
+        dnl Check for libavcodec development package - name: libavcodec-dev
+        PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec package: libavcodec-dev]))
+        LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
-dnl Check for libavdevice development package - name: libavdevice-dev
-PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
+        dnl Check for libavformat development package - name: libavformat-dev
+        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat package: libavformat-dev]))
 
-dnl Check for libavutil development package - name: libavutil-dev
-PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil package: libavutil-dev]))
+        dnl Check for libswscale development package - name: libswcale-dev
+        PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale package: libswscale-dev]))
+
+        dnl Check for libavdevice development package - name: libavdevice-dev
+        PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
+
+        dnl Check for libavutil development package - name: libavutil-dev
+        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil package: libavutil-dev]))
+    ]);
+AM_CONDITIONAL(SFL_VIDEO, test x"$enable_video" = xyes)
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))

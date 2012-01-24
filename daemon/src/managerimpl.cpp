@@ -58,8 +58,6 @@
 
 #include "conference.h"
 
-#include "video/libav_utils.h"
-
 #include <cerrno>
 #include <ctime>
 #include <cstdlib>
@@ -72,7 +70,7 @@
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
-    hookPreference(),  audioPreference(), videoPreference(), shortcutPreferences(),
+    hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(), currentCallId_(),
     currentCallMutex_(), audiodriver_(0), dtmfKey_(0), toneMutex_(),
     telephoneTone_(0), audiofile_(0), speakerVolume_(0), micVolume_(0),
@@ -84,9 +82,6 @@ ManagerImpl::ManagerImpl() :
 {
     // initialize random generator for call id
     srand(time(NULL));
-
-    // initialize libav libraries
-    libav_utils::sfl_avcodec_init();
 }
 
 // never call if we use only the singleton...
@@ -1875,22 +1870,6 @@ std::string ManagerImpl::serialize(const std::vector<std::string> &v)
     return os.str();
 }
 
-std::string ManagerImpl::getCurrentVideoCodecName(const std::string& id)
-{
-    std::string accountid(getAccountFromCall(id));
-    VoIPLink* link = getAccountLink (accountid);
-    Call* call = link->getCall (id);
-    std::string codecName;
-
-    if (call) {
-        Call::CallState state = call->getState();
-        if (state == Call::ACTIVE or state == Call::CONFERENCING)
-            codecName = link->getCurrentVideoCodecName(id);
-    }
-
-    return codecName;	
-}
-
 std::string ManagerImpl::getCurrentCodecName(const std::string& id)
 {
     std::string accountid = getAccountFromCall(id);
@@ -2029,66 +2008,6 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
     }
 
     return v;
-}
-
-std::vector<std::string> ManagerImpl::getVideoInputDeviceList()
-{
-    return videoPreference.getDeviceList();
-}
-
-std::vector<std::string> ManagerImpl::getVideoInputDeviceChannelList(const std::string &dev)
-{
-    return videoPreference.getChannelList(dev);
-}
-
-std::vector<std::string> ManagerImpl::getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel)
-{
-    return videoPreference.getSizeList(dev, channel);
-}
-
-std::vector<std::string> ManagerImpl::getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
-{
-    return videoPreference.getRateList(dev, channel, size);
-}
-
-std::string ManagerImpl::getVideoInputDevice()
-{
-    return videoPreference.getDevice();
-}
-
-std::string ManagerImpl::getVideoInputDeviceChannel()
-{
-    return videoPreference.getChannel();
-}
-
-std::string ManagerImpl::getVideoInputDeviceSize()
-{
-    return videoPreference.getSize();
-}
-
-std::string ManagerImpl::getVideoInputDeviceRate()
-{
-    return videoPreference.getRate();
-}
-
-void ManagerImpl::setVideoInputDevice(const std::string& api)
-{
-    videoPreference.setDevice(api);
-}
-
-void ManagerImpl::setVideoInputDeviceChannel(const std::string& api)
-{
-    videoPreference.setChannel(api);
-}
-
-void ManagerImpl::setVideoInputDeviceSize(const std::string& api)
-{
-    videoPreference.setSize(api);
-}
-
-void ManagerImpl::setVideoInputDeviceRate(const std::string& api)
-{
-    videoPreference.setRate(api);
 }
 
 int ManagerImpl::isRingtoneEnabled(const std::string& id)
@@ -2755,7 +2674,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
     addressbookPreference.unserialize(parser->getAddressbookNode());
     hookPreference.unserialize(parser->getHookNode());
     audioPreference.unserialize(parser->getAudioNode());
-    videoPreference.unserialize(parser->getVideoNode());
     shortcutPreferences.unserialize(parser->getShortcutNode());
 
     Conf::Sequence *seq = parser->getAccountSequence()->getSequence();
@@ -3025,11 +2943,6 @@ std::vector<std::string> ManagerImpl::getParticipantList(const std::string& conf
         WARN("Manager: Warning: Did not find conference %s", confID.c_str());
 
     return v;
-}
-
-void ManagerImpl::notifyVideoDeviceEvent()
-{
-	dbus_.getConfigurationManager()->videoDeviceEvent();
 }
 
 void ManagerImpl::saveHistory()

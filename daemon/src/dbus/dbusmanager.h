@@ -60,6 +60,9 @@ class DBusManager {
         ConfigurationManager* configurationManager_;
         Instance*             instanceManager_;
         DBus::BusDispatcher   dispatcher_;
+#ifdef SFL_VIDEO
+        VideoControls *videoControls_;
+#endif
 #if USE_NETWORKMANAGER
         NetworkManager* networkManager_;
 #endif

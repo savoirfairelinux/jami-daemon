@@ -5,7 +5,10 @@ libexec_PROGRAMS = sflphoned
 
 # all: indent
 
-SUBDIRS = dbus audio config hooks history sip iax im video
+SUBDIRS = dbus audio config hooks history sip iax im
+if SFL_VIDEO
+SUBDIRS += video
+endif
 
 sflphoned_SOURCES = main.cpp
 
@@ -57,11 +60,13 @@ libsflphone_la_LIBADD = \
 	./im/libim.la \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
-	./video/libvideo.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la
+if SFL_VIDEO
+libsflphone_la_LIBADD += ./video/libvideo.la
+endif
 
 libsflphone_la_LDFLAGS = \
 		@CCGNU2_LIBS@ \
