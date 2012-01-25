@@ -44,54 +44,52 @@
 #include "noncopyable.h"
 
 namespace Conf {
-class YamlEmitter;
-class MappingNode;
+    class YamlEmitter;
+    class MappingNode;
+    // SIP specific configuration keys
+    const char *const expireKey = "expire";
+    const char *const interfaceKey = "interface";
+    const char *const portKey = "port";
+    const char *const publishAddrKey = "publishAddr";
+    const char *const publishPortKey = "publishPort";
+    const char *const sameasLocalKey = "sameasLocal";
+    const char *const dtmfTypeKey = "dtmfType";
+    const char *const serviceRouteKey = "serviceRoute";
+
+    // TODO: write an object to store credential which implement serializable
+    const char *const srtpKey = "srtp";
+    const char *const srtpEnableKey = "enable";
+    const char *const keyExchangeKey = "keyExchange";
+    const char *const rtpFallbackKey = "rtpFallback";
+
+    // TODO: wirte an object to store zrtp params wich implement serializable
+    const char *const zrtpKey = "zrtp";
+    const char *const displaySasKey = "displaySas";
+    const char *const displaySasOnceKey = "displaySasOnce";
+    const char *const helloHashEnabledKey = "helloHashEnabled";
+    const char *const notSuppWarningKey = "notSuppWarning";
+
+    // TODO: write an object to store tls params which implement serializable
+    const char *const tlsKey = "tls";
+    const char *const tlsPortKey = "tlsPort";
+    const char *const certificateKey = "certificate";
+    const char *const calistKey = "calist";
+    const char *const ciphersKey = "ciphers";
+    const char *const tlsEnableKey = "enable";
+    const char *const methodKey = "method";
+    const char *const timeoutKey = "timeout";
+    const char *const tlsPasswordKey = "password";
+    const char *const privateKeyKey = "privateKey";
+    const char *const requireCertifKey = "requireCertif";
+    const char *const serverKey = "server";
+    const char *const verifyClientKey = "verifyClient";
+    const char *const verifyServerKey = "verifyServer";
+
+    const char *const stunEnabledKey = "stunEnabled";
+    const char *const stunServerKey = "stunServer";
+
+    const char *const credKey = "credential";
 }
-enum DtmfType { OVERRTP, SIPINFO};
-
-// SIP specific configuration keys
-static const char *const expireKey = "expire";
-static const char *const interfaceKey = "interface";
-static const char *const portKey = "port";
-static const char *const publishAddrKey = "publishAddr";
-static const char *const publishPortKey = "publishPort";
-static const char *const sameasLocalKey = "sameasLocal";
-static const char *const dtmfTypeKey = "dtmfType";
-static const char *const serviceRouteKey = "serviceRoute";
-
-// TODO: write an object to store credential which implement serializable
-static const char *const srtpKey = "srtp";
-static const char *const srtpEnableKey = "enable";
-static const char *const keyExchangeKey = "keyExchange";
-static const char *const rtpFallbackKey = "rtpFallback";
-
-// TODO: wirte an object to store zrtp params wich implement serializable
-static const char *const zrtpKey = "zrtp";
-static const char *const displaySasKey = "displaySas";
-static const char *const displaySasOnceKey = "displaySasOnce";
-static const char *const helloHashEnabledKey = "helloHashEnabled";
-static const char *const notSuppWarningKey = "notSuppWarning";
-
-// TODO: write an object to store tls params which implement serializable
-static const char *const tlsKey = "tls";
-static const char *const tlsPortKey = "tlsPort";
-static const char *const certificateKey = "certificate";
-static const char *const calistKey = "calist";
-static const char *const ciphersKey = "ciphers";
-static const char *const tlsEnableKey = "enable";
-static const char *const methodKey = "method";
-static const char *const timeoutKey = "timeout";
-static const char *const tlsPasswordKey = "password";
-static const char *const privateKeyKey = "privateKey";
-static const char *const requireCertifKey = "requireCertif";
-static const char *const serverKey = "server";
-static const char *const verifyClientKey = "verifyClient";
-static const char *const verifyServerKey = "verifyServer";
-
-static const char *const stunEnabledKey = "stunEnabled";
-static const char *const stunServerKey = "stunServer";
-
-static const char *const credKey = "credential";
 
 class SIPVoIPLink;
 
@@ -102,6 +100,9 @@ class SIPVoIPLink;
 
 class SIPAccount : public Account {
     public:
+        static const char * const OVERRTP_STR;
+        static const char * const SIPINFO_STR;
+
         /**
          * Constructor
          * @param accountID The account identifier
@@ -456,7 +457,7 @@ class SIPAccount : public Account {
             return serviceRoute_;
         }
 
-        DtmfType getDtmfType() const {
+        std::string getDtmfType() const {
             return dtmfType_;
         }
 
@@ -584,7 +585,7 @@ class SIPAccount : public Account {
         /**
          * DTMF type used for this account SIPINFO or RTP
          */
-        DtmfType dtmfType_;
+        std::string dtmfType_;
 
         /**
          * Determine if TLS is enabled for this account. TLS provides a secured channel for

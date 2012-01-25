@@ -300,7 +300,7 @@ class SIPVoIPLink : public VoIPLink {
          */
         bool SIPStartCall(SIPCall* call);
 
-        void dtmfSend(SIPCall *call, char code, DtmfType type);
+        void dtmfSend(SIPCall *call, char code, const std::string &type);
 
         NON_COPYABLE(SIPVoIPLink);
 
