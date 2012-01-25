@@ -155,7 +155,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
     if (envDir)
         dirToScan.push_back(std::string(envDir) + DIR_SEPARATOR_STR);
 
-    const char *progDir = get_program_dir();
+    const char *progDir = fileutils::get_program_dir();
 
     if (progDir)
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "audio/codecs/");
