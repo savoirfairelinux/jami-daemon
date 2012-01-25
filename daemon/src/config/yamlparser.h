@@ -82,9 +82,11 @@ class YamlParser {
             return audioNode_;
         }
 
+#ifdef SFL_VIDEO
         MappingNode *getVideoNode() {
             return videoNode_;
         }
+#endif
 
         MappingNode *getHookNode() {
             return hooksNode_;
@@ -151,7 +153,9 @@ class YamlParser {
         MappingNode *preferenceNode_;
         MappingNode *addressbookNode_;
         MappingNode *audioNode_;
+#ifdef SFL_VIDEO
         MappingNode *videoNode_;
+#endif
         MappingNode *hooksNode_;
         MappingNode *voiplinkNode_;
         MappingNode *shortcutNode_;

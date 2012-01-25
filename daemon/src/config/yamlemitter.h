@@ -71,8 +71,9 @@ class YamlEmitter {
 
         void serializeAudioPreference(MappingNode *map);
 
+#ifdef SFL_VIDEO
         void serializeVideoPreference(MappingNode *map);
-
+#endif
         void serializeShortcutPreference(MappingNode *map);
 
         void writeAudio();

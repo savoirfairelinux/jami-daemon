@@ -48,7 +48,9 @@ YamlParser::YamlParser(const char *file) : filename_(file)
     , preferenceNode_(NULL)
     , addressbookNode_(NULL)
     , audioNode_(NULL)
+#ifdef SFL_VIDEO
 	, videoNode_(NULL)
+#endif
     , hooksNode_(NULL)
     , voiplinkNode_(NULL)
     , shortcutNode_(NULL)
@@ -397,7 +399,9 @@ void YamlParser::mainNativeDataMapping(MappingNode *map)
 	accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
     addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];
 	audioNode_          = (MappingNode*)(*mapping)["audio"];
+#ifdef SFL_VIDEO
 	videoNode_          = (MappingNode*)(*mapping)["video"];
+#endif
 	hooksNode_          = (MappingNode*)(*mapping)["hooks"];
 	preferenceNode_     = (MappingNode*)(*mapping)["preferences"];
 	voiplinkNode_       = (MappingNode*)(*mapping)["voipPreferences"];

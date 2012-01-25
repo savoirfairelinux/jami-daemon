@@ -32,9 +32,11 @@
 
 #include "account.h"
 #include "manager.h"
+#ifdef SFL_VIDEO
 #include "video/video_endpoint.h"
+#endif
 
-Account::Account (const std::string& accountID, const std::string &type) :
+Account::Account(const std::string& accountID, const std::string &type) :
     accountID_(accountID)
     , username_()
     , hostname_()
@@ -43,8 +45,10 @@ Account::Account (const std::string& accountID, const std::string &type) :
     , enabled_(true)
     , type_(type)
     , registrationState_(Unregistered)
-    , codecOrder_()
-    , videoCodecOrder_()
+    , codecList_()
+#ifdef SFL_VIDEO
+    , videoCodecList_()
+#endif
     , codecStr_()
     , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
     , ringtoneEnabled_(true)
@@ -52,13 +56,12 @@ Account::Account (const std::string& accountID, const std::string &type) :
     , userAgent_("SFLphone")
     , mailBox_()
 {
-    // Initialize the codec order, used when creating a new account
+    // Initialize the codec list, used when creating a new account
     loadDefaultCodecs();
 }
 
 Account::~Account()
-{
-}
+{}
 
 void Account::setRegistrationState(const RegistrationState &state)
 {
@@ -73,7 +76,7 @@ void Account::setRegistrationState(const RegistrationState &state)
 void Account::loadDefaultCodecs()
 {
     // Initialize codec
-    std::vector <std::string> codecList;
+    std::vector<std::string> codecList;
     codecList.push_back("0");
     codecList.push_back("3");
     codecList.push_back("8");
@@ -83,25 +86,29 @@ void Account::loadDefaultCodecs()
     codecList.push_back("112");
 
     setActiveCodecs(codecList);
+#if SFL_VIDEO
     setActiveVideoCodecs(sfl_video::getVideoCodecList());
+#endif
 }
 
+#if SFL_VIDEO
 void Account::setActiveVideoCodecs (const std::vector <std::string> &list)
 {
-	videoCodecOrder_ = !list.empty() ? list : sfl_video::getVideoCodecList();
+	videoCodecList_ = !list.empty() ? list : sfl_video::getVideoCodecList();
 }
+#endif
 
 void Account::setActiveCodecs(const std::vector <std::string> &list)
 {
     // first clear the previously stored codecs
-    codecOrder_.clear();
+    codecList_.clear();
 
     // list contains the ordered payload of active codecs picked by the user for this account
-    // we used the CodecOrder vector to save the order.
+    // we used the CodecList vector to save the order.
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
             ++iter) {
         int payload = std::atoi(iter->c_str());
-        codecOrder_.push_back((int) payload);
+        codecList_.push_back(static_cast<int>(payload));
     }
 
     // update the codec string according to new codec selection

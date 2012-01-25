@@ -32,9 +32,6 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
-#include "video/video_v4l2_list.h"
-#include "video/video_v4l2.h"
-using namespace sfl_video;
 
 // general preferences
 static const char * const orderKey = "order";
@@ -92,12 +89,6 @@ static const char * const noiseReduceKey = "noiseReduce";
 static const char * const echoCancelKey = "echoCancel";
 static const char * const echoTailKey = "echoTailLength";
 static const char * const echoDelayKey = "echoDelayLength";
-
-// video preferences
-const std::string videoDeviceKey ("v4l2Dev");
-const std::string videoChannelKey ("v4l2Channel");
-const std::string videoSizeKey ("v4l2Size");
-const std::string videoRateKey ("v4l2Rate");
 
 // shortcut preferences
 static const char * const hangupShortKey = "hangUp";
@@ -571,80 +562,6 @@ class AudioPreference : public Serializable {
         bool echocancel_;
         int echoCancelTailLength_;
         int echoCancelDelay_;
-};
-
-class VideoPreference : public Serializable
-{
-    public:
-
-        VideoPreference();
-        ~VideoPreference();
-
-        virtual void serialize (Conf::YamlEmitter *emitter);
-
-        virtual void unserialize (Conf::MappingNode *map);
-
-        std::map<std::string, std::string> getVideoSettings();
-
-        std::string getDevice() const {
-            return device_;
-        }
-
-        void setDevice(const std::string &device) {
-            device_ = device;
-        }
-
-        std::string getChannel() const {
-            return channel_;
-        }
-
-        void setChannel(const std::string & input) {
-            channel_ = input;
-        }
-
-        std::string getSize() const {
-            return size_;
-        }
-
-        void setSize(const std::string & size) {
-            size_ = size;
-        }
-
-        const std::string & getRate() const {
-            return rate_;
-        }
-
-        void setRate(const std::string & rate) {
-            rate_ = rate;
-        }
-
-        std::vector<std::string> getDeviceList() const {
-        	return v4l2_list_->getDeviceList();
-        }
-
-        std::vector<std::string> getChannelList(const std::string &dev) const {
-        	return v4l2_list_->getChannelList(dev);
-        }
-
-        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel) const {
-        	return v4l2_list_->getSizeList(dev, channel);
-        }
-
-        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size) const {
-        	return v4l2_list_->getRateList(dev, channel, size);
-        }
-
-
-    private:
-        NON_COPYABLE(VideoPreference);
-
-        // V4L2 devices
-        sfl_video::VideoV4l2ListThread *v4l2_list_;
-
-        std::string device_;
-        std::string channel_;
-        std::string size_;
-        std::string rate_;
 };
 
 class ShortcutPreferences : public Serializable {

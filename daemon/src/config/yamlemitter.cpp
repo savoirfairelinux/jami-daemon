@@ -239,7 +239,7 @@ void YamlEmitter::serializeAudioPreference(MappingNode *map)
         addMappingItem(preferencemapping, iter->first, iter->second);
 }
 
-
+#ifdef SFL_VIDEO
 void YamlEmitter::serializeVideoPreference(MappingNode *map)
 {
     if (map->getType() != MAPPING)
@@ -262,6 +262,7 @@ void YamlEmitter::serializeVideoPreference(MappingNode *map)
     for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
         addMappingItem(preferencemapping, iter->first, iter->second);
 }
+#endif
 
 
 void YamlEmitter::serializeShortcutPreference(MappingNode *map)

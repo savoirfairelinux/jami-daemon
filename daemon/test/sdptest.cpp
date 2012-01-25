@@ -47,9 +47,12 @@ static const char *sdp_answer1 = "v=0\r\n"
                                  "t=0 0\r\n"
                                  "m=audio 49920 RTP/AVP 0\r\n"
                                  "a=rtpmap:0 PCMU/8000\r\n"
+#ifdef SFL_VIDEO
                                  "m=video 0 RTP/AVP 31\r\n"
                                  "m=video 53002 RTP/AVP 32\r\n"
-                                 "a=rtpmap:32 MPV/90000\r\n";
+                                 "a=rtpmap:32 MPV/90000\r\n"
+#endif
+                                 ;
 
 static const char *sdp_offer1 = "v=0\r\n"
                                 "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -58,9 +61,12 @@ static const char *sdp_offer1 = "v=0\r\n"
                                 "t=0 0\r\n"
                                 "m=audio 49920 RTP/AVP 0\r\n"
                                 "a=rtpmap:0 PCMU/8000\r\n"
+#ifdef SFL_VIDEO
                                 "m=video 0 RTP/AVP 31\r\n"
                                 "m=video 53002 RTP/AVP 32\r\n"
-                                "a=rtpmap:32 MPV/90000\r\n";
+                                "a=rtpmap:32 MPV/90000\r\n"
+#endif
+                                ;
 
 static const char *sdp_answer2 = "v=0\r\n"
                                  "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -71,9 +77,12 @@ static const char *sdp_answer2 = "v=0\r\n"
                                  "a=rtpmap:3 GSM/8000\r\n"
                                  "a=rtpmap:97 iLBC/8000\r\n"
                                  "a=rtpmap:9 G722/8000\r\n"
+#ifdef SFL_VIDEO
                                  "m=video 0 RTP/AVP 31\r\n"
                                  "m=video 53002 RTP/AVP 32\r\n"
-                                 "a=rtpmap:32 MPV/90000\r\n";
+                                 "a=rtpmap:32 MPV/90000\r\n"
+#endif
+                                 ;
 
 static const char *sdp_offer2 = "v=0\r\n"
                                 "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -84,9 +93,12 @@ static const char *sdp_offer2 = "v=0\r\n"
                                 "a=rtpmap:3 GSM/8000\r\n"
                                 "a=rtpmap:97 iLBC/8000\r\n"
                                 "a=rtpmap:9 G722/8000\r\n"
+#ifdef SFL_VIDEO
                                 "m=video 0 RTP/AVP 31\r\n"
                                 "m=video 53002 RTP/AVP 32\r\n"
-                                "a=rtpmap:32 MPV/90000\r\n";
+                                "a=rtpmap:32 MPV/90000\r\n"
+#endif
+                                ;
 
 static const char *sdp_reinvite = "v=0\r\n"
                                   "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -95,9 +107,12 @@ static const char *sdp_reinvite = "v=0\r\n"
                                   "t=0 0\r\n"
                                   "m=audio 42445 RTP/AVP 0\r\n"
                                   "a=rtpmap:0 PCMU/8000\r\n"
+#ifdef SFL_VIDEO
                                   "m=video 0 RTP/AVP 31\r\n"
                                   "m=video 53002 RTP/AVP 32\r\n"
-                                  "a=rtpmap:32 MPV/90000\r\n";
+                                  "a=rtpmap:32 MPV/90000\r\n"
+#endif
+                                  ;
 
 
 void SDPTest::setUp()
@@ -124,20 +139,26 @@ void SDPTest::testInitialOfferFirstCodec()
     CPPUNIT_ASSERT(session_->getLocalIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
-    CodecOrder codecSelection;
+    std::vector<int> codecSelection;
     pjmedia_sdp_session *remoteAnswer;
 
     codecSelection.push_back(PAYLOAD_CODEC_ULAW);
     codecSelection.push_back(PAYLOAD_CODEC_ALAW);
     codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+#ifdef SFL_VIDEO
     std::vector<std::string> videoCodecs;
     videoCodecs.push_back("H264");
     videoCodecs.push_back("H263");
+#endif
 
 	session_->setLocalIP("127.0.0.1");
 
+#ifdef SFL_VIDEO
     session_->createOffer(codecSelection, videoCodecs);
+#else
+    session_->createOffer(codecSelection);
+#endif
 
     // pjmedia_sdp_parse(testPool_, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(testPool_, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
@@ -158,22 +179,28 @@ void SDPTest::testInitialAnswerFirstCodec()
     CPPUNIT_ASSERT(session_->getLocalIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
-    CodecOrder codecSelection;
+    std::vector<int> codecSelection;
     pjmedia_sdp_session *remoteOffer;
 
     codecSelection.push_back(PAYLOAD_CODEC_ULAW);
     codecSelection.push_back(PAYLOAD_CODEC_ALAW);
     codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+#ifdef SFL_VIDEO
     std::vector<std::string> videoCodecs;
     videoCodecs.push_back("H264");
     videoCodecs.push_back("H263");
+#endif
 
     pjmedia_sdp_parse(testPool_, (char*)sdp_offer1, strlen(sdp_offer1), &remoteOffer);
 
     session_->setLocalIP("127.0.0.1");
 
+#ifdef SFL_VIDEO
     session_->receiveOffer(remoteOffer, codecSelection, videoCodecs);
+#else
+    session_->receiveOffer(remoteOffer, codecSelection);
+#endif
 
     session_->startNegotiation();
 
@@ -190,20 +217,26 @@ void SDPTest::testInitialOfferLastCodec()
     CPPUNIT_ASSERT(session_->getLocalIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
-    CodecOrder codecSelection;
+    std::vector<int> codecSelection;
     pjmedia_sdp_session *remoteAnswer;
 
     codecSelection.push_back(PAYLOAD_CODEC_ULAW);
     codecSelection.push_back(PAYLOAD_CODEC_ALAW);
     codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+#ifdef SFL_VIDEO
     std::vector<std::string> videoCodecs;
     videoCodecs.push_back("H264");
     videoCodecs.push_back("H263");
+#endif
 
 	session_->setLocalIP("127.0.0.1");
 
+#ifdef SFL_VIDEO
     session_->createOffer(codecSelection, videoCodecs);
+#else
+    session_->createOffer(codecSelection);
+#endif
 
     // pjmedia_sdp_parse(testPool_, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(testPool_, (char*)sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
@@ -224,22 +257,28 @@ void SDPTest::testInitialAnswerLastCodec()
     CPPUNIT_ASSERT(session_->getLocalIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
-    CodecOrder codecSelection;
+    std::vector<int> codecSelection;
     pjmedia_sdp_session *remoteOffer;
 
     codecSelection.push_back(PAYLOAD_CODEC_ULAW);
     codecSelection.push_back(PAYLOAD_CODEC_ALAW);
     codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+#ifdef SFL_VIDEO
     std::vector<std::string> videoCodecs;
     videoCodecs.push_back("H264");
     videoCodecs.push_back("H263");
+#endif
 
     pjmedia_sdp_parse(testPool_, (char*)sdp_offer2, strlen(sdp_offer2), &remoteOffer);
 
     session_->setLocalIP("127.0.0.1");
 
+#ifdef SFL_VIDEO
     session_->receiveOffer(remoteOffer, codecSelection, videoCodecs);
+#else
+    session_->receiveOffer(remoteOffer, codecSelection);
+#endif
 
     session_->startNegotiation();
 
@@ -257,7 +296,7 @@ void SDPTest::testReinvite()
     CPPUNIT_ASSERT(session_->getLocalIP().empty());
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
-    CodecOrder codecSelection;
+    std::vector<int> codecSelection;
     pjmedia_sdp_session *remoteAnswer;
     pjmedia_sdp_session *reinviteOffer;
 
@@ -265,13 +304,19 @@ void SDPTest::testReinvite()
 	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
 	codecSelection.push_back(PAYLOAD_CODEC_G722);
 
+#ifdef SFL_VIDEO
     std::vector<std::string> videoCodecs;
     videoCodecs.push_back("H264");
     videoCodecs.push_back("H263");
+#endif
 
 	session_->setLocalIP("127.0.0.1");
 
+#ifdef SFL_VIDEO
     session_->createOffer(codecSelection, videoCodecs);
+#else
+    session_->createOffer(codecSelection);
+#endif
 
     // pjmedia_sdp_parse(testPool_, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(testPool_, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
@@ -284,8 +329,12 @@ void SDPTest::testReinvite()
     CPPUNIT_ASSERT(session_->getLocalIP() == "127.0.0.1");
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
 
-    pjmedia_sdp_parse(testPool_, (char*)sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
+    pjmedia_sdp_parse(testPool_, (char*) sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
+#ifdef SFL_VIDEO
     session_->receiveOffer(reinviteOffer, codecSelection, videoCodecs);
+#else
+    session_->receiveOffer(reinviteOffer, codecSelection);
+#endif
 
     session_->startNegotiation();
     session_->setMediaTransportInfoFromRemoteSdp();

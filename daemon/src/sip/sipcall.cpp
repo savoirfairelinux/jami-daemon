@@ -33,9 +33,12 @@
 
 #include "sipcall.h"
 #include "logger.h" // for _debug
-#include "video/video_rtp_session.h"
 #include "audio/audiortp/audio_rtp_factory.h"
 #include "sdp.h"
+
+#ifdef SFL_VIDEO
+#include "video/video_rtp_session.h"
+#endif
 
 namespace {
     static const int INITIAL_SIZE = 16384;
@@ -45,7 +48,9 @@ namespace {
 SIPCall::SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call(id, type)
     , inv(NULL)
     , audiortp_(this)
+#ifdef SFL_VIDEO
     , videortp_(new sfl_video::VideoRtpSession)
+#endif
     , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))
 {}

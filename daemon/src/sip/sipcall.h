@@ -43,10 +43,12 @@ class pj_pool_t;
 class pjsip_inv_session;
 class Sdp;
 
+#ifdef SFL_VIDEO
 namespace sfl_video
 {
 class VideoRtpSession;
 }
+#endif
 
 /**
  * @file sipcall.h
@@ -82,12 +84,14 @@ class SIPCall : public Call {
             return audiortp_;
         }
 
+#ifdef SFL_VIDEO
         /**
          * Returns a pointer to the VideoRtp object
          */
         sfl_video::VideoRtpSession * getVideoRtp () {
             return videortp_.get();
         }
+#endif
 
         /**
          * Return the local memory pool for this call
@@ -110,10 +114,12 @@ class SIPCall : public Call {
          */
         sfl::AudioRtpFactory audiortp_;
 
+#ifdef SFL_VIDEO
         /**
          * Video Rtp Session factory
          */
         std::tr1::shared_ptr<sfl_video::VideoRtpSession> videortp_;
+#endif
 
         /**
          * The pool to allocate memory, released once call hang up

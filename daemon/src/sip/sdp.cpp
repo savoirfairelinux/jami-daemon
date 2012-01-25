@@ -30,6 +30,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sdp.h"
 #include "global.h"
 #include "manager.h"
@@ -44,15 +48,23 @@ Sdp::Sdp(pj_pool_t *pool)
     , activeLocalSession_(NULL)
     , activeRemoteSession_(NULL)
     , audio_codec_list_()
+#ifdef SFL_VIDEO
     , video_codec_list_()
+#endif
     , sessionAudioMedia_()
+#ifdef SFL_VIDEO
     , sessionVideoMedia_()
+#endif
     , localIpAddr_()
     , remoteIpAddr_()
     , localAudioPort_(1234)
+#ifdef SFL_VIDEO
 	, localVideoPort_(1235)
+#endif
     , remoteAudioPort_(1236)
+#ifdef SFL_VIDEO
 	, remoteVideoPort_(1237)
+#endif
     , zrtpHelloHash_()
     , srtpCrypto_()
     , telephoneEventPayload_(101) // same as asterisk
@@ -80,9 +92,12 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 			sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec((int) pj_strtoul (&rtpmap->pt));
 			if (codec)
 				sessionAudioMedia_.push_back(codec);
-	    } else if (type == "video") {
+	    }
+#ifdef SFL_VIDEO
+        else if (type == "video") {
 	    	sessionVideoMedia_.push_back(std::string(rtpmap->enc_name.ptr, rtpmap->enc_name.slen));
 	    }
+#endif
 	}
 }
 
@@ -115,12 +130,14 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
     ERROR("Sdp: Error: Could not found dtmf event from remote sdp");
 }
 
+#ifdef SFL_VIDEO
 std::string Sdp::getSessionVideoCodec() const
 {
-    if (sessionVideoMedia_.size() < 1)
+    if (sessionVideoMedia_.size().empty())
     	return "";
     return sessionVideoMedia_[0];
 }
+#endif
 
 std::string Sdp::getAudioCodecName() const
 {
@@ -141,20 +158,21 @@ sfl::AudioCodec* Sdp::getSessionAudioMedia() const
 }
 
 
+#ifdef SFL_VIDEO
 pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
 
-    med->desc.media = audio ? pj_str((char*)"audio") : pj_str((char*)"video");
+    med->desc.media = audio ? pj_str((char*) "audio") : pj_str((char*) "video");
     med->desc.port_count = 1;
     med->desc.port = audio ? localAudioPort_ : localVideoPort_;
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
-    med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*)"RTP/AVP" : (char*)"RTP/SAVP");
+    med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*) "RTP/AVP" : (char*) "RTP/SAVP");
 
     int dynamic_payload = 96;
 
     med->desc.fmt_count = audio ? audio_codec_list_.size() : video_codec_list_.size();
-    for (unsigned i=0; i<med->desc.fmt_count; i++) {
+    for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
     	unsigned clock_rate;
     	std::string enc_name;
     	int payload;
@@ -204,6 +222,62 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
 
     return med;
 }
+#else
+pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool /*audio*/)
+{
+    pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
+
+    med->desc.media = pj_str((char*) "audio");
+    med->desc.port_count = 1;
+    med->desc.port = localAudioPort_;
+    // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
+    med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*) "RTP/AVP" : (char*) "RTP/SAVP");
+
+    med->desc.fmt_count = audio_codec_list_.size();
+    for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
+    	unsigned clock_rate;
+    	std::string enc_name;
+    	int payload;
+
+        sfl::Codec *codec = audio_codec_list_[i];
+        payload = codec->getPayloadType();
+        enc_name = codec->getMimeSubtype();
+        clock_rate = codec->getClockRate();
+        // G722 require G722/8000 media description even if it is 16000 codec
+        if (codec->getPayloadType () == 9)
+            clock_rate = 8000;
+
+        std::ostringstream s;
+    	s << payload;
+    	pj_strdup2 (memPool_, &med->desc.fmt[i], s.str().c_str());
+
+        // Add a rtpmap field for each codec
+        // We could add one only for dynamic payloads because the codecs with static RTP payloads
+        // are entirely defined in the RFC 3351, but if we want to add other attributes like an asymmetric
+        // connection, the rtpmap attribute will be useful to specify for which codec it is applicable
+        pjmedia_sdp_rtpmap rtpmap;
+
+		rtpmap.pt = med->desc.fmt[i];
+        rtpmap.enc_name = pj_str ((char*) enc_name.c_str());
+        rtpmap.clock_rate = clock_rate;
+        rtpmap.param.ptr = ((char* const) "");
+        rtpmap.param.slen = 0;
+
+        pjmedia_sdp_attr *attr;
+        pjmedia_sdp_rtpmap_to_attr(memPool_, &rtpmap, &attr);
+
+        med->attr[med->attr_count++] = attr;
+    }
+
+    med->attr[ med->attr_count++] = pjmedia_sdp_attr_create(memPool_, "sendrecv", NULL);
+    if (!zrtpHelloHash_.empty())
+        addZrtpAttribute(med, zrtpHelloHash_);
+
+    setTelephoneEventRtpmap(med);
+
+    return med;
+}
+#endif
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
@@ -220,6 +294,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
     med->attr[med->attr_count++] = attr_fmtp;
 }
 
+#ifdef SFL_VIDEO
 void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::string> &videoCodecs)
 {
     if (videoCodecs.empty())
@@ -227,25 +302,26 @@ void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::string> &videoCo
 
     video_codec_list_.clear();
     const std::vector<std::string> &codecs_list = sfl_video::getVideoCodecList();
-    for (unsigned i=0; i<videoCodecs.size(); i++) {
+    for (unsigned i = 0; i < videoCodecs.size(); ++i) {
     	const std::string &codec = videoCodecs[i];
-        for (unsigned j=0; j<codecs_list.size(); j++) {
-			if (codecs_list[j] == codec) {
-	        	video_codec_list_.push_back(codec);
-	        	break;
+        for (unsigned j = 0; j < codecs_list.size(); ++j) {
+            if (codecs_list[j] == codec) {
+                video_codec_list_.push_back(codec);
+                break;
 			}
         }
     }
 }
+#endif
 
-void Sdp::setLocalMediaCapabilities(const CodecOrder &selectedCodecs)
+void Sdp::setLocalMediaCapabilities(const std::vector<int> &selectedCodecs)
 {
-    if (selectedCodecs.size() == 0)
+    if (selectedCodecs.empty())
         WARN("No selected codec while building local SDP offer");
 
     audio_codec_list_.clear();
-	for (CodecOrder::const_iterator iter = selectedCodecs.begin(); iter != selectedCodecs.end(); ++iter) {
-		sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(*iter);
+	for (std::vector<int>::const_iterator i = selectedCodecs.begin(); i != selectedCodecs.end(); ++i) {
+		sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(*i);
 		if (codec)
 			audio_codec_list_.push_back(codec);
 		else
@@ -263,7 +339,8 @@ namespace {
     }
 }
 
-int Sdp::createLocalSession(const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs)
+#ifdef SFL_VIDEO
+int Sdp::createLocalSession(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
     setLocalMediaCapabilities(selectedCodecs);
     setLocalMediaVideoCapabilities(videoCodecs);
@@ -279,11 +356,11 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs, const std::vector<
     localSession_->origin.user = pj_str(pj_gethostname()->ptr);
     // Use Network Time Protocol format timestamp to ensure uniqueness.
     localSession_->origin.id = tv.sec + 2208988800UL;
-    localSession_->origin.net_type = pj_str((char*)"IN");
-    localSession_->origin.addr_type = pj_str((char*)"IP4");
-    localSession_->origin.addr = pj_str((char*)localIpAddr_.c_str());
+    localSession_->origin.net_type = pj_str((char*) "IN");
+    localSession_->origin.addr_type = pj_str((char*) "IP4");
+    localSession_->origin.addr = pj_str((char*) localIpAddr_.c_str());
 
-    localSession_->name = pj_str((char*)"sflphone");
+    localSession_->name = pj_str((char*) PACKAGE);
 
     localSession_->conn->net_type = localSession_->origin.net_type;
     localSession_->conn->addr_type = localSession_->origin.addr_type;
@@ -297,8 +374,9 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs, const std::vector<
 
     // For DTMF RTP events
     localSession_->media_count = 2;
-    localSession_->media[0] = setMediaDescriptorLine(true);
-	localSession_->media[1] = setMediaDescriptorLine(false);
+    const bool audio = true;
+    localSession_->media[0] = setMediaDescriptorLine(audio);
+	localSession_->media[1] = setMediaDescriptorLine(!audio);
 
     if (!srtpCrypto_.empty())
         addSdesAttribute(srtpCrypto_);
@@ -308,17 +386,74 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs, const std::vector<
 
     return pjmedia_sdp_validate(localSession_);
 }
-
-void Sdp::createOffer (const CodecOrder &selectedCodecs, const std::vector<std::string> &videoCodecs)
+#else
+int Sdp::createLocalSession(const std::vector<int> &selectedCodecs)
 {
-    if (createLocalSession (selectedCodecs, videoCodecs) != PJ_SUCCESS)
+    setLocalMediaCapabilities(selectedCodecs);
+
+    localSession_ = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_session);
+    localSession_->conn = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_conn);
+
+    /* Initialize the fields of the struct */
+    localSession_->origin.version = 0;
+    pj_time_val tv;
+    pj_gettimeofday(&tv);
+
+    localSession_->origin.user = pj_str(pj_gethostname()->ptr);
+    // Use Network Time Protocol format timestamp to ensure uniqueness.
+    localSession_->origin.id = tv.sec + 2208988800UL;
+    localSession_->origin.net_type = pj_str((char*) "IN");
+    localSession_->origin.addr_type = pj_str((char*) "IP4");
+    localSession_->origin.addr = pj_str((char*) localIpAddr_.c_str());
+
+    localSession_->name = pj_str((char*) PACKAGE);
+
+    localSession_->conn->net_type = localSession_->origin.net_type;
+    localSession_->conn->addr_type = localSession_->origin.addr_type;
+    localSession_->conn->addr = localSession_->origin.addr;
+
+    // RFC 3264: An offer/answer model session description protocol
+    // As the session is created and destroyed through an external signaling mean (SIP), the line
+    // should have a value of "0 0".
+    localSession_->time.start = 0;
+    localSession_->time.stop = 0;
+
+    // For DTMF RTP events
+    localSession_->media_count = 1;
+    const bool audio = true;
+    localSession_->media[0] = setMediaDescriptorLine(audio);
+
+    if (!srtpCrypto_.empty())
+        addSdesAttribute(srtpCrypto_);
+
+    DEBUG("SDP: Local SDP Session:");
+    printSession(localSession_);
+
+    return pjmedia_sdp_validate(localSession_);
+}
+#endif
+
+#ifdef SFL_VIDEO
+void Sdp::createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs)
+{
+    if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS)
         ERROR("SDP: Error: Failed to create initial offer");
     else if (pjmedia_sdp_neg_create_w_local_offer (memPool_, localSession_, &negotiator_) != PJ_SUCCESS)
         ERROR("SDP: Error: Failed to create an initial SDP negotiator");
 }
+#else
+void Sdp::createOffer(const std::vector<int> &selectedCodecs)
+{
+    if (createLocalSession(selectedCodecs) != PJ_SUCCESS)
+        ERROR("SDP: Error: Failed to create initial offer");
+    else if (pjmedia_sdp_neg_create_w_local_offer (memPool_, localSession_, &negotiator_) != PJ_SUCCESS)
+        ERROR("SDP: Error: Failed to create an initial SDP negotiator");
+}
+#endif
 
-void Sdp::receiveOffer (const pjmedia_sdp_session* remote,
-                       const CodecOrder &selectedCodecs,
+#ifdef SFL_VIDEO
+void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
+                       const std::vector<int> &selectedCodecs,
                        const std::vector<std::string> &videoCodecs)
 {
     assert(remote);
@@ -326,7 +461,7 @@ void Sdp::receiveOffer (const pjmedia_sdp_session* remote,
     DEBUG("SDP: Remote SDP Session:");
     printSession(remote);
 
-    if(!localSession_ and createLocalSession (selectedCodecs, videoCodecs) != PJ_SUCCESS) {
+    if (!localSession_ and createLocalSession (selectedCodecs, videoCodecs) != PJ_SUCCESS) {
 		ERROR("SDP: Failed to create initial offer");
 		return;
 	}
@@ -338,6 +473,28 @@ void Sdp::receiveOffer (const pjmedia_sdp_session* remote,
 
     assert(status == PJ_SUCCESS);
 }
+#else
+void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
+                       const std::vector<int> &selectedCodecs)
+{
+    assert(remote);
+
+    DEBUG("SDP: Remote SDP Session:");
+    printSession(remote);
+
+    if (!localSession_ and createLocalSession(selectedCodecs) != PJ_SUCCESS) {
+		ERROR("SDP: Failed to create initial offer");
+		return;
+	}
+
+    remoteSession_ = pjmedia_sdp_session_clone(memPool_, remote);
+
+    pj_status_t status = pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
+                         remoteSession_, &negotiator_);
+
+    assert(status == PJ_SUCCESS);
+}
+#endif
 
 void Sdp::receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote)
 {
@@ -404,6 +561,7 @@ std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
     return "";
 }
 
+#ifdef SFL_VIDEO
 std::vector<std::string> Sdp::getActiveVideoDescription() const
 {
     std::stringstream ss;
@@ -464,16 +622,17 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
     v.push_back(ss.str());
     return v;
 }
+#endif
 
 void Sdp::addSdesAttribute(const std::vector<std::string>& crypto)
 {
-    for (std::vector<std::string>::const_iterator iter = crypto.begin();
-            iter != crypto.end(); ++iter) {
-        pj_str_t val = { (char*)(*iter).c_str(), (*iter).size() };
+    for (std::vector<std::string>::const_iterator i = crypto.begin();
+            i != crypto.end(); ++i) {
+        pj_str_t val = { (char*) i->c_str(), i->size() };
         pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "crypto", &val);
 
-        for (unsigned i = 0; i < localSession_->media_count; i++)
-            if (pjmedia_sdp_media_add_attr(localSession_->media[i], attr) != PJ_SUCCESS)
+        for (unsigned j = 0; j < localSession_->media_count; ++j)
+            if (pjmedia_sdp_media_add_attr(localSession_->media[j], attr) != PJ_SUCCESS)
                 throw SdpException("Could not add sdes attribute to media");
     }
 }
@@ -508,12 +667,13 @@ void Sdp::removeAttributeFromLocalAudioMedia(const char *attr)
     pjmedia_sdp_media_remove_all_attr (localSession_->media[i], attr);
 }
 
+#ifdef SFL_VIDEO
 void Sdp::removeAttributeFromLocalVideoMedia(const char *attr)
 {
     int i = 0;
     while (pj_stricmp2(&localSession_->media[i]->desc.media, "video") != 0)
         ++i;
-    pjmedia_sdp_media_remove_all_attr (localSession_->media[i], attr);
+    pjmedia_sdp_media_remove_all_attr(localSession_->media[i], attr);
 }
 
 void Sdp::addAttributeToLocalVideoMedia(const char *attr)
@@ -522,9 +682,10 @@ void Sdp::addAttributeToLocalVideoMedia(const char *attr)
     while (pj_stricmp2(&localSession_->media[i]->desc.media, "video") != 0)
         ++i;
 
-    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create (memPool_, attr, NULL);
+    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_, attr, NULL);
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
+#endif
 
 void Sdp::setMediaTransportInfoFromRemoteSdp()
 {
@@ -533,13 +694,15 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
         return;
     }
 
-    remoteIpAddr_ = std::string (activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
+    remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
 
     for (unsigned i = 0; i < activeRemoteSession_->media_count; ++i)
         if (pj_stricmp2 (&activeRemoteSession_->media[i]->desc.media, "audio") == 0)
             remoteAudioPort_ = activeRemoteSession_->media[i]->desc.port;
+#ifdef SFL_VIDEO
         else if (pj_stricmp2 (&activeRemoteSession_->media[i]->desc.media, "video") == 0)
             remoteVideoPort_ = activeRemoteSession_->media[i]->desc.port;
+#endif
 }
 
 void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)

@@ -408,69 +408,6 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
     }
 }
 
-VideoPreference::VideoPreference() :
-    v4l2_list_(0), device_(), channel_(), size_(), rate_()
-{
-	v4l2_list_ = new VideoV4l2ListThread();
-	v4l2_list_->start();
-}
-
-VideoPreference::~VideoPreference()
-{
-	delete v4l2_list_;
-}
-
-std::map<std::string, std::string> VideoPreference::getVideoSettings()
-{
-    std::map<std::string, std::string> map;
-    std::stringstream ss;
-    map["input"] = v4l2_list_->getDeviceNode(device_);
-    ss << v4l2_list_->getChannelNum(device_, channel_);
-    map["channel"] = ss.str();
-    map["video_size"] = size_;
-    size_t x_pos = size_.find("x");
-    map["width"] = size_.substr(0, x_pos);
-    map["height"] = size_.substr(x_pos + 1);
-    map["framerate"] = rate_;
-
-    return map;
-}
-
-void VideoPreference::serialize (Conf::YamlEmitter *emitter)
-{
-	if (emitter == NULL) {
-		ERROR("VideoPreference: Error: emitter is NULL while serializing");
-		return;
-	}
-
-    Conf::MappingNode preferencemap(NULL);
-
-    Conf::ScalarNode device(device_);
-    Conf::ScalarNode channel(channel_);
-    Conf::ScalarNode size(size_);
-    Conf::ScalarNode rate(rate_);
-
-    preferencemap.setKeyValue(videoDeviceKey, &device);
-    preferencemap.setKeyValue(videoChannelKey, &channel);
-    preferencemap.setKeyValue(videoSizeKey, &size);
-    preferencemap.setKeyValue(videoRateKey, &rate);
-
-    emitter->serializeVideoPreference(&preferencemap);
-}
-
-void VideoPreference::unserialize (Conf::MappingNode *map)
-{
-    if (map == NULL) {
-        ERROR("VideoPreference: Error: Preference map is NULL");
-        return;
-    }
-
-    map->getValue(videoDeviceKey, &device_);
-    map->getValue(videoChannelKey, &channel_);
-    map->getValue(videoSizeKey, &size_);
-    map->getValue(videoRateKey, &rate_);
-}
-
 ShortcutPreferences::ShortcutPreferences() : hangup_(), pickup_(), popup_(),
     toggleHold_(), togglePickupHangup_() {}
 
@@ -487,7 +424,6 @@ std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
     return shortcutsMap;
 }
 
-
 void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 {
     hangup_ = map[hangupShortKey];
@@ -496,7 +432,6 @@ void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
     toggleHold_ = map[toggleHoldShortKey];
     togglePickupHangup_ = map[togglePickupHangupShortKey];
 }
-
 
 void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
 {

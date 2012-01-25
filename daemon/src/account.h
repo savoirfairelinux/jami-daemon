@@ -140,7 +140,9 @@ static const char * const accountEnableKey = "enable";
 static const char * const mailboxKey = "mailbox";
 
 static const char * const codecsKey = "codecs";  // 0/9/110/111/112/
+#ifdef SFL_VIDEO
 static const char * const videocodecsKey = "videocodecs";
+#endif
 static const char * const ringtonePathKey = "ringtonePath";
 static const char * const ringtoneEnabledKey = "ringtoneEnabled";
 static const char * const displayNameKey = "displayName";
@@ -250,20 +252,22 @@ class Account : public Serializable {
             type_ = type;
         }
 
+#ifdef SFL_VIDEO
         /**
          * Accessor to data structures
          * @return std::vector<std::string>& The list that reflects the user's choice
          */
-        const std::vector<std::string>& getActiveVideoCodecs (void) const {
-            return videoCodecOrder_;
+        std::vector<std::string> getActiveVideoCodecs() const {
+            return videoCodecList_;
         }
+#endif
 
         /**
          * Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
-        const CodecOrder& getActiveCodecs() const {
-            return codecOrder_;
+        std::vector<int> getActiveCodecs() const {
+            return codecList_;
         }
 
         /**
@@ -271,7 +275,9 @@ class Account : public Serializable {
          * SDP offer and configuration respectively
          */
         void setActiveCodecs(const std::vector<std::string>& list);
+#ifdef SFL_VIDEO
         void setActiveVideoCodecs(const std::vector<std::string>& list);
+#endif
 
         std::string getRingtonePath() const {
             return ringtonePath_;
@@ -361,12 +367,14 @@ class Account : public Serializable {
         /**
          * Vector containing the order of the codecs
          */
-        CodecOrder codecOrder_;
+        std::vector<int> codecList_;
       
+#ifdef SFL_VIDEO
         /**
          * Vector containing the order of the video codecs
          */
-        std::vector<std::string> videoCodecOrder_;
+        std::vector<std::string> videoCodecList_;
+#endif
 
         /**
          * List of codec obtained when parsing configuration and used

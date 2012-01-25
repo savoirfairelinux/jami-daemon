@@ -38,7 +38,7 @@
 #include "fileutils.h"
 
 AudioCodecFactory::AudioCodecFactory() :
-    codecsMap_(), defaultCodecOrder_(), libCache_(), codecInMemory_()
+    codecsMap_(), defaultCodecList_(), libCache_(), codecInMemory_()
 {
     typedef std::vector<sfl::Codec*> CodecVector;
     CodecVector codecDynamicList(scanCodecDirectory());
@@ -46,21 +46,19 @@ AudioCodecFactory::AudioCodecFactory() :
     if (codecDynamicList.empty())
         ERROR("Error - No codecs available");
     else {
-        for (CodecVector::const_iterator iter = codecDynamicList.begin();
-                iter != codecDynamicList.end() ; ++iter) {
-            codecsMap_[(int)(*iter)->getPayloadType()] = *iter;
-            DEBUG("Loaded codec %s" , (*iter)->getMimeSubtype().c_str());
+        for (CodecVector::const_iterator i = codecDynamicList.begin();
+             i != codecDynamicList.end() ; ++i) {
+            codecsMap_[(int)(*i)->getPayloadType()] = *i;
+            DEBUG("Loaded codec %s" , (*i)->getMimeSubtype().c_str());
         }
     }
 }
 
 void AudioCodecFactory::setDefaultOrder()
 {
-    defaultCodecOrder_.clear();
-    CodecsMap::const_iterator iter;
-
-    for (iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
-        defaultCodecOrder_.push_back(iter->first);
+    defaultCodecList_.clear();
+    for (CodecsMap::const_iterator i = codecsMap_.begin(); i != codecsMap_.end(); ++i)
+        defaultCodecList_.push_back(i->first);
 }
 
 std::string
@@ -78,11 +76,11 @@ std::vector<int32_t >
 AudioCodecFactory::getAudioCodecList() const
 {
     std::vector<int32_t> list;
-int size = codecsMap_.size();
-printf("%d\n",size);
-    for (CodecsMap::const_iterator iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
-        if (iter->second)
-            list.push_back((int32_t)iter->first);
+    int size = codecsMap_.size();
+    printf("%d\n",size);
+    for (CodecsMap::const_iterator i = codecsMap_.begin(); i != codecsMap_.end(); ++i)
+        if (i->second)
+            list.push_back((int32_t)i->first);
 
     return list;
 }
@@ -121,24 +119,24 @@ int AudioCodecFactory::getSampleRate(int payload) const
 
 void AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
 {
-    defaultCodecOrder_.clear();
+    defaultCodecList_.clear();
     // list contains the ordered payload of active codecs picked by the user
-    // we used the CodecOrder vector to save the order.
+    // we used the CodecList vector to save the order.
 
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
         int payload = std::atoi(iter->c_str());
 
         if (isCodecLoaded(payload))
-            defaultCodecOrder_.push_back((int) payload);
+            defaultCodecList_.push_back(static_cast<int>(payload));
     }
 }
 
 
 AudioCodecFactory::~AudioCodecFactory()
 {
-    for (std::vector<CodecHandlePointer>::const_iterator iter =
-                codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter)
-        unloadCodec(*iter);
+    for (std::vector<CodecHandlePointer>::const_iterator i =
+         codecInMemory_.begin(); i != codecInMemory_.end(); ++i)
+        unloadCodec(*i);
 }
 
 std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
@@ -236,11 +234,9 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
 
 sfl::Codec* AudioCodecFactory::instantiateCodec(int payload) const
 {
-    std::vector< CodecHandlePointer >::const_iterator iter;
-
-    for (iter = codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter) {
-        if (iter->first->getPayloadType() == payload) {
-            create_t* createCodec = (create_t*) dlsym(iter->second , CODEC_ENTRY_SYMBOL);
+    for (std::vector<CodecHandlePointer>::const_iterator i = codecInMemory_.begin(); i != codecInMemory_.end(); ++i) {
+        if (i->first->getPayloadType() == payload) {
+            create_t* createCodec = (create_t*) dlsym(i->second , CODEC_ENTRY_SYMBOL);
 
             char *error = dlerror();
 
@@ -309,10 +305,8 @@ AudioCodecFactory::alreadyInCache(const std::string &lib)
 
 bool AudioCodecFactory::isCodecLoaded(int payload) const
 {
-    CodecsMap::const_iterator iter;
-
-    for (iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
-        if (iter->first == payload)
+    for (CodecsMap::const_iterator i = codecsMap_.begin(); i != codecsMap_.end(); ++i)
+        if (i->first == payload)
             return true;
 
     return false;
