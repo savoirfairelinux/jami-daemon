@@ -87,9 +87,8 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
     , keepAliveTimer_()
-{
-    link_ = SIPVoIPLink::instance();
-}
+    , link_(SIPVoIPLink::instance())
+{}
 
 SIPAccount::~SIPAccount()
 {
@@ -241,7 +240,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
         delete node;
     }
 
-    
+
 }
 
 void SIPAccount::unserialize(Conf::MappingNode *map)
@@ -575,28 +574,27 @@ void SIPAccount::unregisterVoIPLink()
 }
 
 void SIPAccount::startKeepAliveTimer() {
-    pj_time_val keepAliveDelay_;
 
     if (isTlsEnabled())
         return;
 
+    pj_time_val keepAliveDelay_;
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
-    keepAliveTimer_.user_data = (void *)this; 
+    keepAliveTimer_.user_data = this;
 
     // expiration may no be determined when during the first registration request
-    if(registrationExpire_ == 0) {
+    if(registrationExpire_ == 0)
         keepAliveDelay_.sec = 60;
-    }
-    else {
+    else
         keepAliveDelay_.sec = registrationExpire_;
-    }
+
     keepAliveDelay_.msec = 0;
  
-    reinterpret_cast<SIPVoIPLink *>(link_)->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_); 
+    link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer() {
-     reinterpret_cast<SIPVoIPLink *>(link_)->cancelKeepAliveTimer(keepAliveTimer_); 
+     link_->cancelKeepAliveTimer(keepAliveTimer_);
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
@@ -771,8 +769,7 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
-    SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(link_);
-    siplink->findLocalAddressFromTransport(transport_, transportType_, address, port);
+    link_->findLocalAddressFromTransport(transport_, transportType_, address, port);
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
@@ -798,7 +795,7 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
        // send a new register request
        sipAccount->registerVoIPLink();
 
-       // make sure the current timer is deactivated   
+       // make sure the current timer is deactivated
        sipAccount->stopKeepAliveTimer(); 
 
        // register a new timer
@@ -1012,4 +1009,9 @@ void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& detail
     set_opt(details, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
     set_opt(details, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
     set_opt(details, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
+}
+
+VoIPLink* SIPAccount::getVoIPLink()
+{
+    return link_;
 }

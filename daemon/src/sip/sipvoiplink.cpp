@@ -1669,8 +1669,6 @@ void registration_cb(struct pjsip_regc_cbparam *param)
 {
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
-    ERROR("SipVoipLink: REGISTRATION CALLBACK");
-
     if (account == NULL) {
         ERROR("SipVoipLink: account does'nt exist in registration callback");
         return;

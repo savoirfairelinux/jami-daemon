@@ -188,9 +188,7 @@ class Account : public Serializable {
          * Get the voiplink pointer
          * @return VoIPLink* the pointer or 0
          */
-        VoIPLink* getVoIPLink() {
-            return link_;
-        }
+        virtual VoIPLink* getVoIPLink() = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.
@@ -323,11 +321,6 @@ class Account : public Serializable {
          * Account login information: Alias
          */
         std::string alias_;
-
-        /**
-         * Voice over IP Link contains a listener thread and calls
-         */
-        VoIPLink* link_;
 
         /**
          * Tells if the link is enabled, active.
