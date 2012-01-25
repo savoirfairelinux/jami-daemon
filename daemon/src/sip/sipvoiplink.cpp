@@ -299,14 +299,18 @@ void SIPVoIPLink::sendRegister(Account *a)
 
     std::string srvUri(account->getServerUri());
 
-    std::string address, port;
-    findLocalAddressFromUri(srvUri, account->transport_, address, port);
+    // std::string address, port;
+    // findLocalAddressFromUri(srvUri, account->transport_, address, port);
+    pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
 
+    // Generate the FROM header
     std::string from(account->getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
-    std::string contact(account->getContactHeader(address, port));
+
+    // Store the CONTACT header for future usage
+    // account->setContactHeader(address, port);
+    std::string contact(account->getContactHeader());
     pj_str_t pjContact = pj_str((char*) contact.c_str());
-    pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
 
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
@@ -831,16 +835,20 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 
-    std::string address, port;
-    findLocalAddressFromUri(toUri, account->transport_, address, port);
+    // std::string address, port;
+    // findLocalAddressFromUri(toUri, account->transport_, address, port);
 
-    std::string from(account->getFromUri());
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
-    std::string contact(account->getContactHeader(address, port));
-    pj_str_t pjContact = pj_str((char*) contact.c_str());
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
-    pjsip_dialog *dialog;
+    // Create the from header
+    std::string from(account->getFromUri());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
+
+    // Get the contact header
+    std::string contact(account->getContactHeader());
+    pj_str_t pjContact = pj_str((char*) contact.c_str());
+
+    pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS)
         return false;
@@ -1181,7 +1189,7 @@ void SIPVoIPLink::createUdpTransport(SIPAccount *account)
         transportMap_[account->getLocalPort()] = account->transport_;
 }
 
-pjsip_tpselector *SIPVoIPLink::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool)
+pjsip_tpselector *SIPVoIPLink::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
 {
     assert(transport);
     pjsip_tpselector *tp = (pjsip_tpselector *) pj_pool_zalloc(tp_pool, sizeof(pjsip_tpselector));
@@ -1251,66 +1259,61 @@ void SIPVoIPLink::shutdownSipTransport(SIPAccount *account)
     }
 }
 
-
-void SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transport *transport, std::string& addr, std::string &port)
+void SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &addr, std::string &port) const
 {
+    // Initialize the sip port with the default SIP port
     std::stringstream ss;
     ss << DEFAULT_SIP_PORT;
     port = ss.str();
 
-    pjsip_uri *genericUri = pjsip_parse_uri(pool_, (char*)uri.data(), uri.size(), 0);
-
+    // Initialize the sip address with the hostname
     const pj_str_t *pjMachineName = pj_gethostname();
     addr = std::string(pjMachineName->ptr, pjMachineName->slen);
 
-    if (genericUri == NULL)
+    // Update address and port with active transport
+    if(!transport) {
+        ERROR("SIPVoIPLink: Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str()); 
         return;
-
-    pjsip_sip_uri *sip_uri = (pjsip_sip_uri*) pjsip_uri_get_uri(genericUri);
-
-    if (sip_uri == NULL)
-        return;
-
-    pjsip_transport_type_e transportType;
-
-    if (PJSIP_URI_SCHEME_IS_SIPS(sip_uri)) {
-        transportType = PJSIP_TRANSPORT_TLS;
-        ss.str("");
-        ss << DEFAULT_SIP_TLS_PORT;
-        port = ss.str();
-    } else {
-        if (transport == NULL)
-            transport = localUDPTransport_;
-
-        transportType = PJSIP_TRANSPORT_UDP;
     }
 
+    // get the transport manager associated with the SIP enpoint 
     pjsip_tpmgr *tpmgr = pjsip_endpt_get_tpmgr(endpt_);
-
-    if (!tpmgr)
+    if (!tpmgr) {
+        ERROR("SIPVoIPLink: Transport manager is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
         return;
+    }
 
-    pjsip_tpselector *tp_sel = NULL;
-
-    if (transportType == PJSIP_TRANSPORT_UDP and transport)
-        tp_sel = initTransportSelector(transport, pool_);
+    // initialize a transport selector
+    // TODO Need to determine why we exclude TLS here...
+    // if (transportType == PJSIP_TRANSPORT_UDP and transport_)
+    pjsip_tpselector *tp_sel = initTransportSelector(transport, pool_);
+    if(!tp_sel) {
+        ERROR("SIPVoIPLink: Could not initialize transport selector, using local address %s:%s", addr.c_str(), port.c_str());
+        return;
+    }
+    
 
     pj_str_t localAddress = {0,0};
     int i_port = 0;
 
-    if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS)
+    // Find the local address and port for this transport
+    if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS) {
+        WARN("SIPVoIPLink: Could not retreive local address and port from transport, using %s:%s", addr.c_str(), port.c_str());
         return;
+    }
 
+    // Update local address based on the transport type 
     addr = std::string(localAddress.ptr, localAddress.slen);
-
+ 
+    // Fallback on local ip provided by pj_gethostip()
     if (addr == "0.0.0.0")
         addr = getSIPLocalIP();
 
+    // Determine the local port based on transport information
     ss.str("");
     ss << i_port;
     port = ss.str();
 }
-
 
 namespace {
 std::string parseDisplayName(const char * buffer)
@@ -1660,13 +1663,77 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
     }
 }
 
+static void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account)
+{
+    pj_pool_t *pool = NULL; 
+    pjsip_contact_hdr *contact_hdr = NULL;
+    pjsip_sip_uri *uri = NULL;
+    std::string currentContactHeader = "";
+
+    // if(!account->updateContactAllowed())
+    //    return;
+
+    pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL); 
+    if(pool == NULL) {
+        ERROR("SIPVoIPLink: Could not create temporary memory pool in transport header");
+        return;
+    }
+
+    if(param->contact_cnt == 0) {
+        WARN("SIPVoIPLink: No contact header in registration callback");
+        pj_pool_release(pool);
+        return;
+    }
+
+    contact_hdr = param->contact[0];
+
+    uri = (pjsip_sip_uri*) contact_hdr->uri;
+    if(uri == NULL) {
+        ERROR("SIPVoIPLink: Could not find uri in contact header");
+        pj_pool_release(pool);
+        return;
+    }
+        
+    uri = (pjsip_sip_uri*) pjsip_uri_get_uri(uri);
+
+    if (uri->port == 0) {
+        // TODO: make this base on transport type    
+        uri->port = 5060; //pjsip_transport_get_default_port_for_type(tp_type);
+    }
+
+    std::string recvContactHost(uri->host.ptr, uri->host.slen);
+    std::stringstream ss;
+    ss << uri->port;
+    std::string recvContactPort = ss.str();
+    
+    DEBUG("SIPVoIPLink: Current contact header %s:%s", recvContactHost.c_str(), recvContactPort.c_str());
+
+    currentContactHeader = account->getContactHeader();
+    DEBUG("SIPVoIPLink: Current contact header %s", currentContactHeader.c_str());
+    // DEBUG("Received contact header %s", 
+
+    pj_pool_release(pool);
+}
+
 void registration_cb(struct pjsip_regc_cbparam *param)
 {
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
-    if (account == NULL)
-        return;
+    ERROR("SipVoipLink: REGISTRATION CALLBACK");
 
+    if (account == NULL) {
+        ERROR("SipVoipLink: account does'nt exist in registration callback");
+        return;
+    }
+
+    if (param == NULL) {
+        ERROR("SipVoipLink: regsitration callback param is NULL");
+        return;
+    }
+
+    DEBUG("SipVoipLink: Contact header from UAS, %d contact(s)", param->contact_cnt); 
+    update_contact_header(param, account);
+ 
     const pj_str_t *description = pjsip_get_status_text(param->code);
 
     if (param->code && description) {
