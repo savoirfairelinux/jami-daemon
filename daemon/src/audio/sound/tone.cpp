@@ -135,7 +135,7 @@ Tone::fillWavetable()
     static const double TWO_PI = 2.0 * M_PI;
 
     for (int i = 0; i < TABLE_LENGTH; ++i)
-        wavetable_[i] = sin(i / (tableSize - 1.0)) * TWO_PI;
+        wavetable_[i] = sin((i / (tableSize - 1.0)) * TWO_PI);
 }
 
 double
