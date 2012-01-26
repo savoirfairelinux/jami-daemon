@@ -32,6 +32,10 @@
 #ifndef __SIPCALL_H__
 #define __SIPCALL_H__
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "call.h"
 #include <tr1/memory>
 #include "audio/audiortp/audio_rtp_factory.h"

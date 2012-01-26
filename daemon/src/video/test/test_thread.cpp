@@ -1,10 +1,11 @@
 #include <cc++/thread.h>
 #include <memory>
 #include <iostream>
+#include "noncopyable.h"
 
 class CancellableBusyThread : public ost::Thread {
     public:
-        CancellableBusyThread()
+        CancellableBusyThread() : x_(0)
         {
             setCancel(cancelImmediate);
         }
@@ -37,11 +38,12 @@ class CancellableBusyThread : public ost::Thread {
 
     private:
         int *x_;
+        NON_COPYABLE(CancellableBusyThread);
 };
 
 class EventThread : public ost::Thread {
     public:
-        EventThread() : ost::Thread(), x_(0)
+        EventThread() : ost::Thread(), x_(0), event_()
         {}
 
         virtual void run()

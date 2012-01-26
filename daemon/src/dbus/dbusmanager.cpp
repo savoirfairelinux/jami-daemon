@@ -38,6 +38,10 @@
 #include "configurationmanager.h"
 #include "networkmanager.h"
 
+#ifdef SFL_VIDEO
+#include "dbus/video_controls.h"
+#endif
+
 DBusManager::DBusManager() : callManager_(0)
     , configurationManager_(0)
     , instanceManager_(0)

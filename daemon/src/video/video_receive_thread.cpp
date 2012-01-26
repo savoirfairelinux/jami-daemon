@@ -52,6 +52,7 @@ extern "C" {
 
 #include "manager.h"
 #include "dbus/callmanager.h"
+#include "dbus/video_controls.h"
 #include "fileutils.h"
 
 static const enum PixelFormat video_rgb_format = PIX_FMT_BGRA;
@@ -353,7 +354,7 @@ void VideoReceiveThread::setup()
                 videoBufferSize_);
         // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
         // from this thread may not be thread-safe
-        Manager::instance().getDbusManager()->getCallManager()->receivingVideoEvent(shmKey_,
+        Manager::instance().getDbusManager()->getVideoControls()->receivingEvent(shmKey_,
                 semKey_, videoBufferSize_, dstWidth_, dstHeight_);
     }
 }
@@ -475,7 +476,7 @@ void VideoReceiveThread::run()
 VideoReceiveThread::~VideoReceiveThread()
 {
     // free resources, exit thread
-	Manager::instance().getDbusManager()->getCallManager()->stoppedReceivingVideoEvent(shmKey_, semKey_);
+	Manager::instance().getDbusManager()->getVideoControls()->stoppedReceivingEvent(shmKey_, semKey_);
     ost::Thread::terminate();
 
     // make sure no one is waiting for the SHM event which will never come if we've error'd out

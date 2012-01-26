@@ -31,7 +31,7 @@
 #include <iostream>
 
 #include "echocanceltest.h"
-#include "config/config.h"
+#include "config/sfl_config.h"
 
 using namespace std;
 

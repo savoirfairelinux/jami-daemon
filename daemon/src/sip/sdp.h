@@ -29,8 +29,12 @@
  *  as that of the covered work.
  */
 
-#ifndef _SDP_H
-#define _SDP_H
+#ifndef SDP_H_
+#define SDP_H_
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -69,8 +73,6 @@ class Sdp {
          * @param memory pool
          */
         Sdp(pj_pool_t *pool);
-
-        ~Sdp();
 
         /**
          * Accessor for the internal memory pool

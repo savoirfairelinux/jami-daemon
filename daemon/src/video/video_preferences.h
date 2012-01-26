@@ -31,6 +31,7 @@
 #ifndef VIDEO_PREFERENCE_H__
 #define VIDEO_PREFERENCE_H__
 
+#include "config/serializable.h"
 #include "video/video_v4l2_list.h"
 #include "video/video_v4l2.h"
 
@@ -54,7 +55,7 @@ class VideoPreference : public Serializable
 
         virtual void unserialize(Conf::MappingNode *map);
 
-        std::map<std::string, std::string> getVideoSettings();
+        std::map<std::string, std::string> getSettings() const;
 
         std::string getDevice() const {
             return device_;

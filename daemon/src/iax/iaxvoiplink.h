@@ -32,6 +32,10 @@
 #ifndef IAXVOIPLINK_H
 #define IAXVOIPLINK_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "voiplink.h"
 #include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE

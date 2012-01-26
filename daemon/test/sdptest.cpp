@@ -28,6 +28,9 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "sdptest.h"
 #include <iostream>
 #include <cstring>
@@ -218,7 +221,6 @@ void SDPTest::testInitialOfferLastCodec()
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
     std::vector<int> codecSelection;
-    pjmedia_sdp_session *remoteAnswer;
 
     codecSelection.push_back(PAYLOAD_CODEC_ULAW);
     codecSelection.push_back(PAYLOAD_CODEC_ALAW);
@@ -238,8 +240,8 @@ void SDPTest::testInitialOfferLastCodec()
     session_->createOffer(codecSelection);
 #endif
 
-    // pjmedia_sdp_parse(testPool_, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
-    pjmedia_sdp_parse(testPool_, (char*)sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
+    pjmedia_sdp_session *remoteAnswer;
+    pjmedia_sdp_parse(testPool_, (char*) sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
 
     session_->receivingAnswerAfterInitialOffer(remoteAnswer);
     session_->startNegotiation();

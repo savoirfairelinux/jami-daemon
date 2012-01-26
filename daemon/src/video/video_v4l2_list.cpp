@@ -30,10 +30,6 @@
  *  as that of the covered work.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstdio>
 #include <stdexcept> // for std::runtime_error
 #include <sstream>
@@ -54,8 +50,8 @@ extern "C" {
 #include <cerrno>
 
 #include "video_v4l2_list.h"
-
 #include "manager.h"
+#include "dbus/video_controls.h"
 
 namespace sfl_video {
 
@@ -223,7 +219,7 @@ void VideoV4l2ListThread::run()
                     DEBUG("udev: adding %s", node);
                     try {
                         addDevice(node);
-                        Manager::instance().notifyVideoDeviceEvent();
+                        Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
                     } catch (const std::runtime_error &e) {
                         ERROR(e.what());
                     }
@@ -256,7 +252,7 @@ void VideoV4l2ListThread::delDevice(const std::string &node)
     for (size_t i = 0 ; i < n ; i++) {
         if (devices_[i].device == node) {
         	devices_.erase(devices_.begin() + i);
-			Manager::instance().notifyVideoDeviceEvent();
+            Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
         	return;
         }
     }

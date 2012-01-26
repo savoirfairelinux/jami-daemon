@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "config.h"
+#include "sfl_config.h"
 #include "../global.h"
 #include <fstream>
 #include <cstdlib>

@@ -57,17 +57,16 @@ class CallManagerException: public std::runtime_error {
 };
 
 namespace sfl {
-class AudioZrtpSession;
+    class AudioZrtpSession;
 }
 
-class CallManager
-    : public org::sflphone::SFLphone::CallManager_adaptor,
-  public DBus::IntrospectableAdaptor,
-      public DBus::ObjectAdaptor {
+class CallManager : public org::sflphone::SFLphone::CallManager_adaptor,
+    public DBus::IntrospectableAdaptor,
+    public DBus::ObjectAdaptor {
+        
     public:
 
         CallManager(DBus::Connection& connection);
-        static const char* SERVER_PATH;
 
         /* methods exported by this interface,
          * you will have to implement them in your ObjectAdaptor
@@ -83,13 +82,13 @@ class CallManager
         void hold(const std::string& callID);
         void unhold(const std::string& callID);
         void transfer(const std::string& callID, const std::string& to);
-        void attendedTransfer(const std::string& transferID, const std::string& targetID);
-        std::map< std::string, std::string > getCallDetails(const std::string& callID);
-        std::vector< std::string > getCallList();
+        void attendedTransfer(const std::string& transferID, const std::string &targetID);
+        std::map<std::string, std::string> getCallDetails(const std::string &callID);
+        std::vector<std::string> getCallList();
 
         /* Conference related methods */
-        void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
-        void createConfFromParticipantList(const std::vector< std::string >& participants);
+        void joinParticipant(const std::string& sel_callID, const std::string &drag_callID);
+        void createConfFromParticipantList(const std::vector<std::string> &participants);
         void addParticipant(const std::string& callID, const std::string& confID);
         void addMainParticipant(const std::string& confID);
         void detachParticipant(const std::string& callID);
@@ -97,9 +96,9 @@ class CallManager
         void hangUpConference(const std::string& confID);
         void holdConference(const std::string& confID);
         void unholdConference(const std::string& confID);
-        std::vector< std::string > getConferenceList();
-        std::vector< std::string > getParticipantList(const std::string& confID);
-        std::map< std::string, std::string > getConferenceDetails(const std::string& callID);
+        std::vector<std::string> getConferenceList();
+        std::vector<std::string> getParticipantList(const std::string& confID);
+        std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
         /* File Playback methods */
         bool startRecordedFilePlayback(const std::string& filepath);

@@ -29,12 +29,15 @@
  */
 
 #include "video_preferences.h"
+#include "video_v4l2_list.h"
+#include "logger.h"
 #include <sstream>
 
+using namespace sfl_video;
+
 VideoPreference::VideoPreference() :
-    v4l2_list_(0), device_(), channel_(), size_(), rate_()
+    v4l2_list_(new VideoV4l2ListThread), device_(), channel_(), size_(), rate_()
 {
-	v4l2_list_ = new VideoV4l2ListThread();
 	v4l2_list_->start();
 }
 
@@ -43,23 +46,23 @@ VideoPreference::~VideoPreference()
 	delete v4l2_list_;
 }
 
-std::map<std::string, std::string> VideoPreference::getVideoSettings()
+std::map<std::string, std::string> VideoPreference::getSettings() const
 {
-    std::map<std::string, std::string> map;
+    std::map<std::string, std::string> args;
     std::stringstream ss;
-    map["input"] = v4l2_list_->getDeviceNode(device_);
+    args["input"] = v4l2_list_->getDeviceNode(device_);
     ss << v4l2_list_->getChannelNum(device_, channel_);
-    map["channel"] = ss.str();
-    map["video_size"] = size_;
+    args["channel"] = ss.str();
+    args["video_size"] = size_;
     size_t x_pos = size_.find("x");
-    map["width"] = size_.substr(0, x_pos);
-    map["height"] = size_.substr(x_pos + 1);
-    map["framerate"] = rate_;
+    args["width"] = size_.substr(0, x_pos);
+    args["height"] = size_.substr(x_pos + 1);
+    args["framerate"] = rate_;
 
-    return map;
+    return args;
 }
 
-void VideoPreference::serialize (Conf::YamlEmitter *emitter)
+void VideoPreference::serialize(Conf::YamlEmitter *emitter)
 {
 	if (emitter == NULL) {
 		ERROR("VideoPreference: Error: emitter is NULL while serializing");
@@ -81,7 +84,7 @@ void VideoPreference::serialize (Conf::YamlEmitter *emitter)
     emitter->serializeVideoPreference(&preferencemap);
 }
 
-void VideoPreference::unserialize (Conf::MappingNode *map)
+void VideoPreference::unserialize(Conf::MappingNode *map)
 {
     if (map == NULL) {
         ERROR("VideoPreference: Error: Preference map is NULL");

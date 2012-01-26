@@ -35,9 +35,13 @@
 #include <string>
 #include <vector>
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "global.h"
 #include "noncopyable.h"
-#include "config/config.h"
+#include "config/sfl_config.h"
 #include "config/serializable.h"
 
 class VoIPLink;

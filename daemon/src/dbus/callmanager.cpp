@@ -40,8 +40,12 @@
 
 #include "manager.h"
 
+namespace {
+    const char* SERVER_PATH = "/org/sflphone/SFLphone/CallManager";
+}
+
 CallManager::CallManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/CallManager")
+    : DBus::ObjectAdaptor(connection, SERVER_PATH)
 {}
 
 void CallManager::placeCall(const std::string& accountID,
@@ -71,10 +75,10 @@ void CallManager::placeCallFirstAccount(const std::string& callID,
     if (accountList.empty())
         accountList = Manager::instance().getAccountList();
 
-    for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
-        if ((*iter != IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
-            Manager::instance().outgoingCall(*iter, callID, to);
-            return;
+    for (vector<string>::const_iterator i = accountList.begin(); i != accountList.end(); ++i) {
+        if ((*i != IP2IP_PROFILE) && Manager::instance().getAccount(*i)->isEnabled()) {
+            Manager::instance().outgoingCall(*i, callID, to);
+            break;
         }
     }
 }
@@ -129,9 +133,9 @@ void CallManager::attendedTransfer(const std::string& transferID, const std::str
 void CallManager::setVolume(const std::string& device, const double& value)
 {
     if (device == "speaker")
-        Manager::instance().setSpkrVolume((int)(value * 100.0));
+        Manager::instance().setSpkrVolume(value * 100.0);
     else if (device == "mic")
-        Manager::instance().setMicVolume((int)(value * 100.0));
+        Manager::instance().setMicVolume(value * 100.0);
 
     volumeChanged(device, value);
 }
@@ -195,19 +199,19 @@ CallManager::unholdConference(const std::string& confID)
     Manager::instance().unHoldConference(confID);
 }
 
-std::map< std::string, std::string >
+std::map<std::string, std::string>
 CallManager::getConferenceDetails(const std::string& callID)
 {
     return Manager::instance().getConferenceDetails(callID);
 }
 
-std::vector< std::string >
+std::vector<std::string>
 CallManager::getConferenceList()
 {
     return Manager::instance().getConferenceList();
 }
 
-std::vector< std::string >
+std::vector<std::string>
 CallManager::getParticipantList(const std::string& confID)
 {
     return Manager::instance().getParticipantList(confID);
@@ -239,7 +243,7 @@ CallManager::getIsRecording(const std::string& callID)
 
 std::string CallManager::getCurrentAudioCodecName(const std::string& callID)
 {
-    return Manager::instance().getCurrentCodecName(callID).c_str();
+    return Manager::instance().getCurrentCodecName(callID);
 }
 
 std::map<std::string, std::string>
@@ -307,27 +311,23 @@ CallManager::setSASVerified(const std::string& callID)
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->SASVerified();
-    } catch (...) {
-    }
+    } catch (...) {}
 }
 
 void
 CallManager::resetSASVerified(const std::string& callID)
 {
     try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
+        sfl::AudioZrtpSession * zSession = getAudioZrtpSession(callID);
         zSession->resetSASVerified();
-    } catch (...) {
-    }
+    } catch (...) {}
 }
 
 void
 CallManager::setConfirmGoClear(const std::string& callID)
 {
     try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
+        sfl::AudioZrtpSession * zSession = getAudioZrtpSession(callID);
         zSession->goClearOk();
     } catch (...) {}
 }
@@ -335,33 +335,27 @@ CallManager::setConfirmGoClear(const std::string& callID)
 void CallManager::requestGoClear(const std::string& callID)
 {
     try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
+        sfl::AudioZrtpSession * zSession = getAudioZrtpSession(callID);
         zSession->requestGoClear();
-    } catch (...) {
-    }
+    } catch (...) {}
 }
 
 void
 CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 {
     try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
+        sfl::AudioZrtpSession * zSession = getAudioZrtpSession(callID);
         zSession->acceptEnrollment(accepted);
-    } catch (...) {
-    }
+    } catch (...) {}
 }
 
 void
 CallManager::setPBXEnrollment(const std::string& callID, const bool& yesNo)
 {
     try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
+        sfl::AudioZrtpSession * zSession = getAudioZrtpSession(callID);
         zSession->setPBXEnrollment(yesNo);
-    } catch (...) {
-    }
+    } catch (...) {}
 }
 
 void

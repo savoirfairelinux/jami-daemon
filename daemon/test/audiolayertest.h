@@ -47,7 +47,7 @@
 // Application import
 #include "manager.h"
 
-#include "config/config.h"
+#include "config/sfl_config.h"
 
 #include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"

@@ -40,8 +40,9 @@
 #include "account.h"
 #include "sip/sipaccount.h"
 
-const char* ConfigurationManager::SERVER_PATH =
-    "/org/sflphone/SFLphone/ConfigurationManager";
+namespace {
+    const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
+}
 
 ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)

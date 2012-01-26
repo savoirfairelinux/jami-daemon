@@ -3,12 +3,11 @@ include ../globals.mak
 libexecdir=$(libdir)/sflphone
 libexec_PROGRAMS = sflphoned
 
-# all: indent
-
-SUBDIRS = dbus audio config hooks history sip iax im
 if SFL_VIDEO
-SUBDIRS += video
+SFL_VIDEO_SUBDIR = video
 endif
+
+SUBDIRS = dbus audio config hooks history sip iax im $(SFL_VIDEO_SUBDIR)
 
 sflphoned_SOURCES = main.cpp
 
@@ -53,6 +52,10 @@ noinst_HEADERS = \
 		fileutils.h \
 		noncopyable.h
 
+if SFL_VIDEO
+SFL_VIDEO_LIB=./video/libvideo.la
+endif
+
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/utilspp/libutilspp.la \
 	$(top_builddir)/libs/iax2/libiax2.la \
@@ -63,10 +66,7 @@ libsflphone_la_LIBADD = \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
-	./history/libhistory.la
-if SFL_VIDEO
-libsflphone_la_LIBADD += ./video/libvideo.la
-endif
+	./history/libhistory.la $(SFL_VIDEO_LIB)
 
 libsflphone_la_LDFLAGS = \
 		@CCGNU2_LIBS@ \

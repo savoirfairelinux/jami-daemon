@@ -31,47 +31,47 @@
 #define VIDEO_CONTROLS_H_
 
 #include "dbus_cpp.h"
+#include "video_controls-glue.h"
 
 #include <tr1/memory> // for shared_ptr
+#include "video/video_preferences.h"
 
 namespace sfl_video {
     class VideoPreview;
 }
 
-class VideoControls
-    : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
     private:
         std::tr1::shared_ptr<sfl_video::VideoPreview> preview_;
-        VideoPreference videoPreference;
+        VideoPreference videoPreference_;
 
     public:
 
         VideoControls(DBus::Connection& connection);
-        static const char* SERVER_PATH;
 
-        std::vector< std::string > getVideoCodecList();
-        std::vector< std::string > getVideoCodecDetails(const std::string& payload);
-        std::vector<std::string> getActiveVideoCodecList(const std::string& accountID);
-        void setActiveVideoCodecList(const std::vector<std::string>& list, const std::string& accountID);
+        std::vector<std::string> getCodecList();
+        std::vector<std::string> getCodecDetails(const std::string& payload);
+        std::vector<std::string> getActiveCodecList(const std::string& accountID);
+        void setActiveCodecList(const std::vector<std::string>& list, const std::string& accountID);
 
-        std::vector<std::string> getVideoInputDeviceList();
-        std::vector<std::string> getVideoInputDeviceChannelList(const std::string &dev);
-        std::vector<std::string> getVideoInputDeviceSizeList(const std::string &dev, const std::string &channel);
-        std::vector<std::string> getVideoInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
-        void setVideoInputDevice(const std::string& api);
-        void setVideoInputDeviceChannel(const std::string& api);
-        void setVideoInputDeviceSize(const std::string& api);
-        void setVideoInputDeviceRate(const std::string& api);
-        std::string getVideoInputDevice();
-        std::string getVideoInputDeviceChannel();
-        std::string getVideoInputDeviceSize();
-        std::string getVideoInputDeviceRate();
+        std::vector<std::string> getInputDeviceList();
+        std::vector<std::string> getInputDeviceChannelList(const std::string &dev);
+        std::vector<std::string> getInputDeviceSizeList(const std::string &dev, const std::string &channel);
+        std::vector<std::string> getInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
+        std::map<std::string, std::string> getSettings() const;
+        void setInputDevice(const std::string& api);
+        void setInputDeviceChannel(const std::string& api);
+        void setInputDeviceSize(const std::string& api);
+        void setInputDeviceRate(const std::string& api);
+        std::string getInputDevice();
+        std::string getInputDeviceChannel();
+        std::string getInputDeviceSize();
+        std::string getInputDeviceRate();
 
-        void startVideoPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize);
-        void stopVideoPreview();
-        std::string getCurrentVideoCodecName(const std::string& callID);
+        void startPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &bufferSize);
+        void stopPreview();
 };
 
 #endif // VIDEO_CONTROLS_H_

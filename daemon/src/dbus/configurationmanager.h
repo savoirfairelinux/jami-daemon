@@ -56,11 +56,9 @@ class ConfigurationManager
     : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
+
     public:
-
         ConfigurationManager(DBus::Connection& connection);
-        static const char* SERVER_PATH;
-
         std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
         std::string addAccount(const std::map< std::string, std::string >& details);

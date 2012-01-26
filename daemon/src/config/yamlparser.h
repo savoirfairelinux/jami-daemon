@@ -31,6 +31,10 @@
 #ifndef __YAMLPARSER_H__
 #define __YAMLPARSER_H__
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "yamlnode.h"
 #include <yaml.h>
 #include <cstdio>

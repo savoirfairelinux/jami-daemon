@@ -49,7 +49,7 @@ int getBitRate(const std::string & /*codec*/)
 }
 } // end anonymous namespace
 
-std::vector<std::string> getVideoCodecList()
+std::vector<std::string> getCodecList()
 {
 	return libav_utils::getVideoCodecList();
 }

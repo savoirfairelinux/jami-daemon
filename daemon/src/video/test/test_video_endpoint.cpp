@@ -40,7 +40,7 @@ void VideoEndpointTest::testListInstalledCodecs()
 {
     /* This would list codecs */
 	std::cout << "Installed codecs:" << std::endl;
-    std::vector<std::string> codecs = sfl_video::getVideoCodecList();
+    std::vector<std::string> codecs = sfl_video::getCodecList();
     std::vector<std::string>::iterator it;
 	for (it = codecs.begin(); it != codecs.end(); ++it)
 		std::cout << '\t' << *it << std::endl;

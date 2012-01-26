@@ -28,8 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef __YAMLEMITTER_H__
-#define __YAMLEMITTER_H__
+#ifndef YAMLEMITTER_H_
+#define YAMLEMITTER_H_
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <yaml.h>
 #include <stdexcept>
@@ -129,4 +133,4 @@ class YamlEmitter {
 };
 }
 
-#endif
+#endif // YAMLEMITTER_H_

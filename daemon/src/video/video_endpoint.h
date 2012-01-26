@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_ENDPOINT_H__
-#define __VIDEO_ENDPOINT_H__
+#ifndef VIDEO_ENDPOINT_H__
+#define VIDEO_ENDPOINT_H__
 
 #include <vector>
 #include <string>
@@ -38,9 +38,8 @@ namespace sfl_video {
 	/**
 	 * Returns the list of codecs installed at runtime and that we support
 	 */
-	std::vector<std::string> getVideoCodecList();
-
+	std::vector<std::string> getCodecList();
     std::vector<std::string> getCodecSpecifications(const std::string &codec);
 }
 
-#endif // __VIDEO_ENDPOINT_H__
+#endif // VIDEO_ENDPOINT_H__

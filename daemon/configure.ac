@@ -163,7 +163,8 @@ AS_IF([test "x$enable_video" != "xno"], [
         dnl Check for libavutil development package - name: libavutil-dev
         PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil package: libavutil-dev]))
     ]);
-AM_CONDITIONAL(SFL_VIDEO, test x"$enable_video" = xyes)
+        
+AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" != "xno")
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))

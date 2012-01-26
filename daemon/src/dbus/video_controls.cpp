@@ -34,11 +34,15 @@
 #include "video/libav_utils.h"
 #include "video/video_endpoint.h"
 #include "video/video_preview.h"
+#include "account.h"
+#include "manager.h"
 
-const char* VideoControls::SERVER_PATH = "/org/sflphone/SFLphone/VideoControls";
+namespace {
+const char * const SERVER_PATH = "/org/sflphone/SFLphone/VideoControls";
+}
 
 VideoControls::VideoControls(DBus::Connection& connection) :
-    DBus::ObjectAdaptor(connection, SERVER_PATH), preview_()
+    DBus::ObjectAdaptor(connection, SERVER_PATH), preview_(), videoPreference_()
 {
     // initialize libav libraries
     libav_utils::sfl_avcodec_init();
@@ -65,7 +69,7 @@ VideoControls::getActiveCodecList(const std::string& accountID)
     Account *acc = Manager::instance().getAccount(accountID);
 
     if (acc != NULL)
-        v = acc->getActiveCodecs();
+        v = acc->getActiveVideoCodecs();
 
     return v;
 
@@ -123,27 +127,32 @@ std::string VideoControls::getInputDeviceRate()
     return videoPreference_.getRate();
 }
 
-void VideoControls::setVideoInputDevice(const std::string& api)
+void VideoControls::setInputDevice(const std::string& api)
 {
     videoPreference_.setDevice(api);
 }
 
-void VideoControls::setVideoInputDeviceChannel(const std::string& api)
+void VideoControls::setInputDeviceChannel(const std::string& api)
 {
     videoPreference_.setChannel(api);
 }
 
-void VideoControls::setVideoInputDeviceSize(const std::string& api)
+void VideoControls::setInputDeviceSize(const std::string& api)
 {
     videoPreference_.setSize(api);
 }
 
-void VideoControls::setVideoInputDeviceRate(const std::string& api)
+void VideoControls::setInputDeviceRate(const std::string& api)
 {
     videoPreference_.setRate(api);
 }
 
-void VideoControls::startVideoPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
+std::map<std::string, std::string>
+VideoControls::getSettings() const {
+    return videoPreference_.getSettings();
+}
+
+void VideoControls::startPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
 {
     if (preview_.get()) {
         ERROR("Video preview was already started!");
@@ -156,7 +165,7 @@ void VideoControls::startVideoPreview(int32_t &width, int32_t &height, int32_t &
     using std::map;
     using std::string;
 
-    map<string, string> args(Manager::instance().videoPreference.getVideoSettings());
+    map<string, string> args(videoPreference_.getSettings());
     preview_.reset(new sfl_video::VideoPreview(args));
     preview_->start();
 	
@@ -167,7 +176,7 @@ void VideoControls::startVideoPreview(int32_t &width, int32_t &height, int32_t &
     videoBufferSize = preview_->getVideoBufferSize();
 }
 
-void VideoControls::stopVideoPreview()
+void VideoControls::stopPreview()
 {
 	if (preview_.get()) {
 		DEBUG("Stopping video preview");

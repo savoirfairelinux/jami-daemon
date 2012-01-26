@@ -9,6 +9,8 @@ BUILT_SOURCES=                      \
 
 if SFL_VIDEO
 BUILT_SOURCES+=video_controls-glue.h
+video_controls-glue.h: video_controls-introspec.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
 endif
 
 # Rule to generate the binding headers

@@ -2174,7 +2174,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 	call->setLocalIp(localIP);
 	call->setLocalAudioPort(callLocalAudioPort);
     call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
-#if SFL_VIDEO
+#ifdef SFL_VIDEO
     unsigned int callLocalVideoPort = ((rand() % 27250) + 5250) * 2;
     assert(callLocalAudioPort != callLocalVideoPort);
     call->setLocalVideoPort(callLocalVideoPort);

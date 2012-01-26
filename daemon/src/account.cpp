@@ -86,15 +86,15 @@ void Account::loadDefaultCodecs()
     codecList.push_back("112");
 
     setActiveCodecs(codecList);
-#if SFL_VIDEO
-    setActiveVideoCodecs(sfl_video::getVideoCodecList());
+#ifdef SFL_VIDEO
+    setActiveVideoCodecs(sfl_video::getCodecList());
 #endif
 }
 
-#if SFL_VIDEO
+#ifdef SFL_VIDEO
 void Account::setActiveVideoCodecs (const std::vector <std::string> &list)
 {
-	videoCodecList_ = !list.empty() ? list : sfl_video::getVideoCodecList();
+	videoCodecList_ = !list.empty() ? list : sfl_video::getCodecList();
 }
 #endif
 
@@ -105,9 +105,8 @@ void Account::setActiveCodecs(const std::vector <std::string> &list)
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecList vector to save the order.
-    for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
-            ++iter) {
-        int payload = std::atoi(iter->c_str());
+    for (std::vector<std::string>::const_iterator i = list.begin(); i != list.end(); ++i) {
+        int payload = std::atoi(i->c_str());
         codecList_.push_back(static_cast<int>(payload));
     }
 

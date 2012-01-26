@@ -37,8 +37,11 @@
 #include "sdp.h"
 #include "global.h"
 #include "manager.h"
-#include "video/video_endpoint.h"
 #include <cassert>
+
+#ifdef SFL_VIDEO
+#include "video/video_endpoint.h"
+#endif
 
 Sdp::Sdp(pj_pool_t *pool)
     : memPool_(pool)
@@ -112,7 +115,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
         return;
     }
 
-    for (unsigned i = 0; i < sdp->media_count; i++)
+    for (unsigned i = 0; i < sdp->media_count; i++) {
         if (pj_stricmp2(&sdp->media[i]->desc.media, "audio") == 0) {
             pjmedia_sdp_media *r_media = sdp->media[i];
             static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
@@ -126,6 +129,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 
             return;
         }
+    }
 
     ERROR("Sdp: Error: Could not found dtmf event from remote sdp");
 }
@@ -133,7 +137,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 #ifdef SFL_VIDEO
 std::string Sdp::getSessionVideoCodec() const
 {
-    if (sessionVideoMedia_.size().empty())
+    if (sessionVideoMedia_.empty())
     	return "";
     return sessionVideoMedia_[0];
 }
@@ -144,14 +148,14 @@ std::string Sdp::getAudioCodecName() const
 	try {
 		sfl::AudioCodec *codec = getSessionAudioMedia();
 		return codec ? codec->getMimeSubtype() : "";
-	} catch(...) {
+	} catch (...) {
 		return "";
 	}
 }
 
 sfl::AudioCodec* Sdp::getSessionAudioMedia() const
 {
-    if (sessionAudioMedia_.size() < 1)
+    if (sessionAudioMedia_.empty())
         throw SdpException("No codec description for this media");
 
     return dynamic_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
@@ -202,7 +206,7 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
         pjmedia_sdp_rtpmap rtpmap;
 
 		rtpmap.pt = med->desc.fmt[i];
-        rtpmap.enc_name = pj_str ((char*)enc_name.c_str());
+        rtpmap.enc_name = pj_str((char*) enc_name.c_str());
         rtpmap.clock_rate = clock_rate;
         rtpmap.param.ptr = ((char* const)"");
         rtpmap.param.slen = 0;
@@ -301,7 +305,7 @@ void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::string> &videoCo
         throw SdpException ("No selected video codec while building local SDP offer");
 
     video_codec_list_.clear();
-    const std::vector<std::string> &codecs_list = sfl_video::getVideoCodecList();
+    const std::vector<std::string> &codecs_list = sfl_video::getCodecList();
     for (unsigned i = 0; i < videoCodecs.size(); ++i) {
     	const std::string &codec = videoCodecs[i];
         for (unsigned j = 0; j < codecs_list.size(); ++j) {
@@ -544,10 +548,6 @@ namespace
     }
 } // end anonymous namespace
 
-Sdp::~Sdp()
-{
-}
-
 std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
 {
     assert(activeLocalSession_);
@@ -570,7 +570,6 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
     ss << "s=sflphone" << std::endl;
     ss << "c=IN IP4 " << remoteIpAddr_ << std::endl;
     ss << "t=0 0" << std::endl;
-    //ss << "b=AS:1000" << std::endl;
 
     std::string videoLine(getLineFromLocalSDP("m=video"));
     ss << videoLine << std::endl;
@@ -598,10 +597,10 @@ std::vector<std::string> Sdp::getActiveVideoDescription() const
 
     // get direction string
     static const pj_str_t DIRECTIONS[] = {
-		{(char*)"sendrecv", 8},
-		{(char*)"sendonly", 8},
-		{(char*)"recvonly", 8},
-		{(char*)"inactive", 8},
+		{(char*) "sendrecv", 8},
+		{(char*) "sendonly", 8},
+		{(char*) "recvonly", 8},
+		{(char*) "inactive", 8},
 		{NULL, 0}
     };
     pjmedia_sdp_attr *direction = NULL;

@@ -1,13 +1,13 @@
 noinst_LTLIBRARIES = libconfig.la
 
 libconfig_la_SOURCES = \
-	config.cpp \
+	sfl_config.cpp \
 	yamlemitter.cpp \
 	yamlparser.cpp \
 	yamlnode.cpp
 
 noinst_HEADERS = \
-	config.h \
+	sfl_config.h \
 	serializable.h \
 	yamlemitter.h \
 	yamlparser.h \
