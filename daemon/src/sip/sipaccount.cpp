@@ -41,13 +41,17 @@
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
+namespace {
+    const int MIN_REGISTRATION_TIME = 600;
+}
+
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID, "SIP")
     , transport_(NULL)
     , credentials_()
     , regc_(NULL)
     , bRegister_(false)
-    , registrationExpire_(600)
+    , registrationExpire_(MIN_REGISTRATION_TIME)
     , interface_("default")
     , publishedSameasLocal_(true)
     , publishedIpAddress_()
@@ -92,7 +96,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
 
 SIPAccount::~SIPAccount()
 {
-    delete[] cred_;
+    delete [] cred_;
 }
 
 void SIPAccount::serialize(Conf::YamlEmitter *emitter)
@@ -109,9 +113,9 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode hostname(Account::hostname_);
     ScalarNode enable(enabled_);
     ScalarNode type(Account::type_);
-    std::stringstream expirevalstr;
-    expirevalstr << registrationExpire_;
-    ScalarNode expire(expirevalstr);
+    std::stringstream registrationExpireStr;
+    registrationExpireStr << registrationExpire_;
+    ScalarNode expire(registrationExpireStr);
     ScalarNode interface(interface_);
     std::stringstream portstr;
     portstr << localPort_;
@@ -168,7 +172,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     accountmap.setKeyValue(hostnameKey, &hostname);
     accountmap.setKeyValue(accountEnableKey, &enable);
     accountmap.setKeyValue(mailboxKey, &mailbox);
-    accountmap.setKeyValue(expireKey, &expire);
+    accountmap.setKeyValue(registrationExpireKey, &expire);
     accountmap.setKeyValue(interfaceKey, &interface);
     accountmap.setKeyValue(portKey, &port);
     accountmap.setKeyValue(stunServerKey, &stunServer);
@@ -264,7 +268,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
 
     map->getValue(ringtonePathKey, &ringtonePath_);
     map->getValue(ringtoneEnabledKey, &ringtoneEnabled_);
-    map->getValue(expireKey, &registrationExpire_);
+    map->getValue(registrationExpireKey, &registrationExpire_);
     map->getValue(interfaceKey, &interface_);
     int port;
     map->getValue(portKey, &port);
@@ -398,7 +402,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     stunServer_ = details[STUN_SERVER];
     stunEnabled_ = details[STUN_ENABLE] == "true";
     dtmfType_ = details[ACCOUNT_DTMF_TYPE];
-
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
 
     userAgent_ = details[USERAGENT];
@@ -482,9 +485,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[ROUTESET] = serviceRoute_;
     a[USERAGENT] = userAgent_;
 
-    std::stringstream expireval;
-    expireval << registrationExpire_;
-    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = expireval.str();
+    std::stringstream registrationExpireStr;
+    registrationExpireStr << registrationExpire_;
+    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
     a[LOCAL_INTERFACE] = interface_;
     a[PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
     a[PUBLISHED_ADDRESS] = publishedIpAddress_;
@@ -582,8 +585,8 @@ void SIPAccount::startKeepAliveTimer() {
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
     keepAliveTimer_.user_data = this;
 
-    // expiration may no be determined when during the first registration request
-    if(registrationExpire_ == 0)
+    // expiration may be undetermined during the first registration request
+    if (registrationExpire_ == 0)
         keepAliveDelay_.sec = 60;
     else
         keepAliveDelay_.sec = registrationExpire_;
@@ -662,7 +665,7 @@ void SIPAccount::initStunConfiguration()
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
-        registrationExpire_ = 600; /** Default expire value for registration */
+        registrationExpire_ = MIN_REGISTRATION_TIME; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();

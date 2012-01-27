@@ -260,17 +260,15 @@ static void enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,  
     // Modify account state
     gchar * registrationState;
 
-    if (enable == TRUE) {
+    if (enable == TRUE)
         registrationState = g_strdup("true");
-    } else {
+    else
         registrationState = g_strdup("false");
-    }
 
     DEBUG("Replacing with %s", registrationState);
     g_hash_table_replace(acc->properties , g_strdup(ACCOUNT_ENABLED), registrationState);
 
     dbus_send_register(acc->accountID, enable);
-
 }
 
 /**

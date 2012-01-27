@@ -131,9 +131,9 @@ void ConfigurationManager::setAccountDetails(const std::string& accountID, const
     Manager::instance().setAccountDetails(accountID, details);
 }
 
-void ConfigurationManager::sendRegister(const std::string& accountID, const int32_t& expire)
+void ConfigurationManager::sendRegister(const std::string& accountID, const bool& enable)
 {
-    Manager::instance().sendRegister(accountID, expire);
+    Manager::instance().sendRegister(accountID, enable);
 }
 
 std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
