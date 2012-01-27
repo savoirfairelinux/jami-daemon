@@ -183,7 +183,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     accountmap.setKeyValue(hostnameKey, &hostname);
     accountmap.setKeyValue(accountEnableKey, &enable);
     accountmap.setKeyValue(mailboxKey, &mailbox);
-    accountmap.setKeyValue(expireKey, &expire);
+    accountmap.setKeyValue(registrationExpireKey, &expire);
     accountmap.setKeyValue(interfaceKey, &interface);
     accountmap.setKeyValue(portKey, &port);
     accountmap.setKeyValue(stunServerKey, &stunServer);
@@ -289,7 +289,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
 
     map->getValue(ringtonePathKey, &ringtonePath_);
     map->getValue(ringtoneEnabledKey, &ringtoneEnabled_);
-    map->getValue(expireKey, &registrationExpire_);
+    map->getValue(registrationExpireKey, &registrationExpire_);
     map->getValue(interfaceKey, &interface_);
     int port;
     map->getValue(portKey, &port);

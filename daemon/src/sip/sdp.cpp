@@ -695,13 +695,14 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
 
     remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
 
-    for (unsigned i = 0; i < activeRemoteSession_->media_count; ++i)
-        if (pj_stricmp2 (&activeRemoteSession_->media[i]->desc.media, "audio") == 0)
+    for (unsigned i = 0; i < activeRemoteSession_->media_count; ++i) {
+        if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "audio") == 0)
             remoteAudioPort_ = activeRemoteSession_->media[i]->desc.port;
 #ifdef SFL_VIDEO
-        else if (pj_stricmp2 (&activeRemoteSession_->media[i]->desc.media, "video") == 0)
+        else if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "video") == 0)
             remoteVideoPort_ = activeRemoteSession_->media[i]->desc.port;
 #endif
+    }
 }
 
 void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)

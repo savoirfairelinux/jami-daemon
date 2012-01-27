@@ -47,7 +47,6 @@ namespace Conf {
     class YamlEmitter;
     class MappingNode;
     // SIP specific configuration keys
-    const char *const expireKey = "expire";
     const char *const interfaceKey = "interface";
     const char *const portKey = "port";
     const char *const publishAddrKey = "publishAddr";
@@ -223,7 +222,7 @@ class SIPAccount : public Account {
          * the "Expire" sip header or the CONTACT's "expire" param.
          */
         void setRegistrationExpire(int expire) {
-            if(expire > 0)
+            if (expire > 0)
                 registrationExpire_ = expire;
         }
 
