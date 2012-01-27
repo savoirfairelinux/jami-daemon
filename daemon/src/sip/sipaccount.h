@@ -671,6 +671,12 @@ class SIPAccount : public Account {
          */ 
         pj_timer_entry keepAliveTimer_;
 
+
+        /**
+         * Voice over IP Link contains a listener thread and calls
+         */
+        SIPVoIPLink* link_;
+        virtual VoIPLink* getVoIPLink();
 };
 
 #endif

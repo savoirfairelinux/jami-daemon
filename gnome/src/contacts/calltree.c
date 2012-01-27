@@ -1525,7 +1525,7 @@ static void menuitem_response(gchar *string)
         dbus_join_participant(calltree_selected_call->_callID,
                               calltree_dragged_call->_callID);
     else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
-        DEBUG("Calltree: Transfering call %s, to %s",
+        DEBUG("Calltree: Transferring call %s, to %s",
               calltree_selected_call->_peer_number,
               calltree_dragged_call->_peer_number);
         dbus_attended_transfer(calltree_selected_call, calltree_dragged_call);

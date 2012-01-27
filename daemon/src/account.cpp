@@ -41,7 +41,6 @@ Account::Account(const std::string& accountID, const std::string &type) :
     , username_()
     , hostname_()
     , alias_()
-    , link_(NULL)
     , enabled_(true)
     , type_(type)
     , registrationState_(Unregistered)

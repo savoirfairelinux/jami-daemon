@@ -560,7 +560,7 @@ void Call::refuse()
 void Call::acceptTransf()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call and transfering it to number : " << m_TransferNumber << ". callId : " << m_CallId;
+   qDebug() << "Accepting call and transferring it to number : " << m_TransferNumber << ". callId : " << m_CallId;
    callManager.accept(m_CallId);
    callManager.transfer(m_CallId, m_TransferNumber);
 //   m_HistoryState = TRANSFERED;
@@ -634,7 +634,7 @@ void Call::call()
 void Call::transfer()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Transfering call to number : " << m_TransferNumber << ". callId : " << m_CallId;
+   qDebug() << "Transferring call to number : " << m_TransferNumber << ". callId : " << m_CallId;
    callManager.transfer(m_CallId, m_TransferNumber);
    this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
 }

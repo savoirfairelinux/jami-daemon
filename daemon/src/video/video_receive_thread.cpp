@@ -105,7 +105,7 @@ int createShm(unsigned numBytes, int *shmKey)
 
     srand(time(NULL));
     int proj_id = rand();
-    key = ftok(get_program_dir(), proj_id);
+    key = ftok(fileutils::get_program_dir(), proj_id);
     *shmKey = key;
     shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
@@ -188,7 +188,7 @@ int VideoReceiveThread::createSemSet(int shmKey, int *semKey)
     key_t key;
 
     do
-		key = ftok(get_program_dir(), rand());
+		key = ftok(fileutils::get_program_dir(), rand());
     while (key == shmKey);
 
     *semKey = key;

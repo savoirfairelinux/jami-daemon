@@ -1060,7 +1060,7 @@ dbus_get_ip2_ip_details(void)
 }
 
 void
-dbus_send_register(gchar* accountID, const guint enable)
+dbus_send_register(gchar* accountID, gboolean enable)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_send_register(
