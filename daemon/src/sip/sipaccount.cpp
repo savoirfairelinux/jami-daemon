@@ -59,6 +59,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , cred_(NULL)
     , tlsSetting_()
     , contactHeader_()
+    , contactUpdateEnabled_(false)
     , stunServerName_()
     , stunPort_(0)
     , dtmfType_(OVERRTP_STR)
@@ -759,6 +760,24 @@ std::string SIPAccount::getServerUri() const
 
     return "<" + scheme + hostname_ + transport + ">";
 }
+
+void SIPAccount::setContactHeader(std::string address, std::string port)
+{
+    std::string scheme;
+    std::string transport;
+
+    // UDP does not require the transport specification
+    if (transportType_ == PJSIP_TRANSPORT_TLS) {
+        scheme = "sips:";
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
+    } else
+        scheme = "sip:";
+    
+    contactHeader_ = displayName_ + (displayName_.empty() ? "" : " ") + "<" +
+                     scheme + username_ + (username_.empty() ? "":"@") +
+                     address + ":" + port + transport + ">";
+}
+    
 
 std::string SIPAccount::getContactHeader() const
 {

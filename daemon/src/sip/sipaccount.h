@@ -364,10 +364,7 @@ class SIPAccount : public Account {
          * @param port Optional port. Otherwise set to the port defined for that account.
          * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
          */
-        void setContactHeader(std::string& contact)
-        {
-            contactHeader_ = contact;
-        }
+        void setContactHeader(std::string address, std::string port);
 
         /**
          * Get the contact header for 
@@ -375,6 +372,24 @@ class SIPAccount : public Account {
          */
         std::string getContactHeader(void) const;
 
+        /**
+         * The contact header can be rewritten based on the contact provided by the registrar in 200 OK
+         */
+        void enableContactUpdate(void) {
+            contactUpdateEnabled_ = true;
+        }
+
+        /**
+         * The contact header is not updated even if the registrar 
+         */
+        void disableContactUpdate(void) {
+            contactUpdateEnabled_ = false;
+        }
+
+        bool isContactUpdateEnabled(void) {
+            return contactUpdateEnabled_;
+        }
+ 
         /**
          * Get the local interface name on which this account is bound.
          */
@@ -571,6 +586,11 @@ class SIPAccount : public Account {
          * The header will be stored 
          */
         std::string contactHeader_;
+
+        /**
+         * Enble the contact header based on the header received from the registrar in 200 OK
+         */
+        bool contactUpdateEnabled_;
 
         /**
          * The STUN server name (hostname)
