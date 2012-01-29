@@ -78,7 +78,7 @@ static bool check_dir(const char *path)
 int
 main(int argc, char **argv)
 {
-    set_program_dir(argv[0]);
+    fileutils::set_program_dir(argv[0]);
     // makeCommandOptionParse allocates the object with operator new, so
     // auto_ptr is fine in this context.
     // TODO: This should eventually be replaced with std::unique_ptr for C++0x

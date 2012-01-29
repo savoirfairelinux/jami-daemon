@@ -68,7 +68,7 @@ class ConfigurationManager :
         void removeAccount(const std::string& accoundID);
         void deleteAllCredential(const std::string& accountID);
         std::vector< std::string > getAccountList();
-        void sendRegister(const std::string& accoundID, const int32_t& expire);
+        void sendRegister(const std::string& accoundID, const bool& enable);
 
         std::map< std::string, std::string > getTlsSettingsDefault();
 

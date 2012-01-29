@@ -690,7 +690,7 @@ void SFLPhoneView::transfer()
 {
    Call* call = callTreeModel->getCurrentItem();
    if(!call) {
-      kDebug() << "Error : Transfering when no item selected. Should not happen.";
+      kDebug() << "Error : Transferring when no item selected. Should not happen.";
    }
    else {
       action(call, CALL_ACTION_TRANSFER);

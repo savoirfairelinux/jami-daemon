@@ -71,7 +71,7 @@ static const char *const CONFIG_ACCOUNT_TYPE                 = "Account.type";
 static const char *const CONFIG_ACCOUNT_ALIAS                = "Account.alias";
 static const char *const CONFIG_ACCOUNT_MAILBOX	             = "Account.mailbox";
 static const char *const CONFIG_ACCOUNT_ENABLE               = "Account.enable";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE  = "Account.expire";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE  = "Account.registrationExpire";
 static const char *const CONFIG_CREDENTIAL_NUMBER            = "Credential.count";
 static const char *const ACCOUNT_DTMF_TYPE                   = "Account.dtmfType";
 static const char *const CONFIG_RINGTONE_PATH                = "Account.ringtonePath";
@@ -188,9 +188,7 @@ class Account : public Serializable {
          * Get the voiplink pointer
          * @return VoIPLink* the pointer or 0
          */
-        VoIPLink* getVoIPLink() {
-            return link_;
-        }
+        virtual VoIPLink* getVoIPLink() = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.
@@ -323,11 +321,6 @@ class Account : public Serializable {
          * Account login information: Alias
          */
         std::string alias_;
-
-        /**
-         * Voice over IP Link contains a listener thread and calls
-         */
-        VoIPLink* link_;
 
         /**
          * Tells if the link is enabled, active.

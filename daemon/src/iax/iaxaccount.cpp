@@ -38,10 +38,9 @@
 #include "manager.h"
 
 IAXAccount::IAXAccount(const std::string& accountID)
-    : Account(accountID, "iax2"), password_()
-{
-    link_ = new IAXVoIPLink(accountID);
-}
+    : Account(accountID, "iax2"), password_(),
+    link_(new IAXVoIPLink(accountID))
+{}
 
 
 IAXAccount::~IAXAccount()
@@ -160,7 +159,7 @@ IAXAccount::unregisterVoIPLink()
 {
     try {
         link_->sendUnregister(this);
-        dynamic_cast<IAXVoIPLink*>(link_)->terminate();
+        link_->terminate();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
@@ -173,4 +172,9 @@ IAXAccount::loadConfig()
 #if !HAVE_IAX
     enabled_ = false;
 #endif
+}
+
+VoIPLink* IAXAccount::getVoIPLink()
+{
+    return link_;
 }

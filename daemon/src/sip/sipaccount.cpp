@@ -41,13 +41,17 @@
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
+namespace {
+    const int MIN_REGISTRATION_TIME = 600;
+}
+
 SIPAccount::SIPAccount(const std::string& accountID)
     : Account(accountID, "SIP")
     , transport_(NULL)
     , credentials_()
     , regc_(NULL)
     , bRegister_(false)
-    , registrationExpire_(600)
+    , registrationExpire_(MIN_REGISTRATION_TIME)
     , interface_("default")
     , publishedSameasLocal_(true)
     , publishedIpAddress_()
@@ -88,13 +92,12 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
     , keepAliveTimer_()
-{
-    link_ = SIPVoIPLink::instance();
-}
+    , link_(SIPVoIPLink::instance())
+{}
 
 SIPAccount::~SIPAccount()
 {
-    delete[] cred_;
+    delete [] cred_;
 }
 
 void SIPAccount::serialize(Conf::YamlEmitter *emitter)
@@ -111,9 +114,9 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode hostname(Account::hostname_);
     ScalarNode enable(enabled_);
     ScalarNode type(Account::type_);
-    std::stringstream expirevalstr;
-    expirevalstr << registrationExpire_;
-    ScalarNode expire(expirevalstr);
+    std::stringstream registrationExpireStr;
+    registrationExpireStr << registrationExpire_;
+    ScalarNode expire(registrationExpireStr);
     ScalarNode interface(interface_);
     std::stringstream portstr;
     portstr << localPort_;
@@ -171,7 +174,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     accountmap.setKeyValue(hostnameKey, &hostname);
     accountmap.setKeyValue(accountEnableKey, &enable);
     accountmap.setKeyValue(mailboxKey, &mailbox);
-    accountmap.setKeyValue(expireKey, &expire);
+    accountmap.setKeyValue(registrationExpireKey, &expire);
     accountmap.setKeyValue(interfaceKey, &interface);
     accountmap.setKeyValue(portKey, &port);
     accountmap.setKeyValue(stunServerKey, &stunServer);
@@ -244,7 +247,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
         delete node;
     }
 
-    
+
 }
 
 void SIPAccount::unserialize(Conf::MappingNode *map)
@@ -268,7 +271,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
 
     map->getValue(ringtonePathKey, &ringtonePath_);
     map->getValue(ringtoneEnabledKey, &ringtoneEnabled_);
-    map->getValue(expireKey, &registrationExpire_);
+    map->getValue(registrationExpireKey, &registrationExpire_);
     map->getValue(interfaceKey, &interface_);
     int port;
     map->getValue(portKey, &port);
@@ -404,7 +407,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     stunServer_ = details[STUN_SERVER];
     stunEnabled_ = details[STUN_ENABLE] == "true";
     dtmfType_ = details[ACCOUNT_DTMF_TYPE];
-
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
 
     userAgent_ = details[USERAGENT];
@@ -488,9 +490,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[ROUTESET] = serviceRoute_;
     a[USERAGENT] = userAgent_;
 
-    std::stringstream expireval;
-    expireval << registrationExpire_;
-    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = expireval.str();
+    std::stringstream registrationExpireStr;
+    registrationExpireStr << registrationExpire_;
+    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
     a[LOCAL_INTERFACE] = interface_;
     a[PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
     a[PUBLISHED_ADDRESS] = publishedIpAddress_;
@@ -580,28 +582,27 @@ void SIPAccount::unregisterVoIPLink()
 }
 
 void SIPAccount::startKeepAliveTimer() {
-    pj_time_val keepAliveDelay_;
 
     if (isTlsEnabled())
         return;
 
+    pj_time_val keepAliveDelay_;
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
-    keepAliveTimer_.user_data = (void *)this; 
+    keepAliveTimer_.user_data = this;
 
-    // expiration may no be determined when during the first registration request
-    if(registrationExpire_ == 0) {
+    // expiration may be undetermined during the first registration request
+    if (registrationExpire_ == 0)
         keepAliveDelay_.sec = 60;
-    }
-    else {
+    else
         keepAliveDelay_.sec = registrationExpire_;
-    }
+
     keepAliveDelay_.msec = 0;
  
-    reinterpret_cast<SIPVoIPLink *>(link_)->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_); 
+    link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer() {
-     reinterpret_cast<SIPVoIPLink *>(link_)->cancelKeepAliveTimer(keepAliveTimer_); 
+     link_->cancelKeepAliveTimer(keepAliveTimer_);
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
@@ -669,7 +670,7 @@ void SIPAccount::initStunConfiguration()
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
-        registrationExpire_ = 600; /** Default expire value for registration */
+        registrationExpire_ = MIN_REGISTRATION_TIME; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
@@ -794,8 +795,7 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
-    SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(link_);
-    siplink->findLocalAddressFromTransport(transport_, transportType_, address, port);
+    link_->findLocalAddressFromTransport(transport_, transportType_, address, port);
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
@@ -821,7 +821,7 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
        // send a new register request
        sipAccount->registerVoIPLink();
 
-       // make sure the current timer is deactivated   
+       // make sure the current timer is deactivated
        sipAccount->stopKeepAliveTimer(); 
 
        // register a new timer
@@ -1035,4 +1035,9 @@ void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& detail
     set_opt(details, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
     set_opt(details, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
     set_opt(details, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
+}
+
+VoIPLink* SIPAccount::getVoIPLink()
+{
+    return link_;
 }

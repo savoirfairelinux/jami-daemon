@@ -190,7 +190,7 @@
            <tp:docstring>
                 Send account registration (REGISTER) to the registrar.
            </tp:docstring>
-           the account if expire=1, unregister if expire=0.
+           Register the account if enable=true, unregister if enable=false.
 
            @param[in] input accountID
            -->
@@ -199,10 +199,10 @@
                     The account ID
                </tp:docstring>
            </arg>
-           <arg type="i" name="expire" direction="in">
+           <arg type="b" name="enable" direction="in">
                <tp:docstring>
-                    <p>To register, expire must be 1.</p>
-                    <p>To un-register, expire must be 0.</p>
+                    <p>To register, enable must be true.</p>
+                    <p>To un-register, enable must be false.</p>
                </tp:docstring>
            </arg>
        </method>

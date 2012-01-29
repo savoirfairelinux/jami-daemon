@@ -31,6 +31,7 @@
 #include <libgen.h>
 #include <cstdlib>
 
+namespace fileutils {
 static char *program_dir = NULL;
 
 void set_program_dir(char *program_path)
@@ -41,4 +42,6 @@ void set_program_dir(char *program_path)
 const char *get_program_dir()
 {
     return program_dir;
+}
+
 }

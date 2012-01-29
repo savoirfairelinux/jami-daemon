@@ -155,7 +155,7 @@ GHashTable * dbus_get_ip2_ip_details (void);
  *		 0 for unregistration request
  *		 1 for registration request
  */
-void dbus_send_register (gchar* accountID , const guint enable);
+void dbus_send_register (gchar* accountID, gboolean enable);
 
 /**
  * ConfigurationManager - Add an account to the list
