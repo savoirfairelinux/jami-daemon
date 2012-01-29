@@ -55,6 +55,7 @@ namespace Conf {
     const char *const sameasLocalKey = "sameasLocal";
     const char *const dtmfTypeKey = "dtmfType";
     const char *const serviceRouteKey = "serviceRoute";
+    const char *const updateContactHeaderKey = "updateContact";
 
     // TODO: write an object to store credential which implement serializable
     const char *const srtpKey = "srtp";

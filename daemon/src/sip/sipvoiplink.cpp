@@ -1657,29 +1657,25 @@ static void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *
     ss << uri->port;
     std::string recvContactPort = ss.str();
  
-    DEBUG("SIPVoIPLink: Current contact header %s:%s", recvContactHost.c_str(), recvContactPort.c_str());
 
     std::string currentAddress, currentPort;
     siplink->findLocalAddressFromTransport(account->transport_, PJSIP_TRANSPORT_UDP, currentAddress, currentPort);
-    DEBUG("SIPVoIPLink: Current contact header %s:%s\n", currentAddress.c_str(), currentPort.c_str()); 
-    // DEBUG("Received contact header %s", 
 
     bool updateContact = false;
     std::string currentContactHeader = account->getContactHeader();
 
     size_t foundHost = currentContactHeader.find(recvContactHost);
     if(foundHost == std::string::npos) {
-        DEBUG("SIPVoIPLink: Host %s not in current contact header\n", recvContactHost.c_str());
         updateContact = true;
     }
 
     size_t foundPort = currentContactHeader.find(recvContactPort); 
     if(foundPort == std::string::npos) {
-        DEBUG("SIPVoIPLink: Port %s not in current contact header\n", recvContactPort.c_str());
         updateContact = true;
     }
 
     if(updateContact) {
+        DEBUG("SIPVoIPLink: Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str()); 
         account->setContactHeader(recvContactHost, recvContactPort);     
         siplink->sendRegister(account);
     }
@@ -1691,8 +1687,6 @@ void registration_cb(struct pjsip_regc_cbparam *param)
 {
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
-    ERROR("SipVoipLink: REGISTRATION CALLBACK");
-
     if (account == NULL) {
         ERROR("SipVoipLink: account does'nt exist in registration callback");
         return;
@@ -1703,7 +1697,6 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         return;
     }
 
-    DEBUG("SipVoipLink: Contact header from UAS, %d contact(s)", param->contact_cnt); 
     if(account->isContactUpdateEnabled()) {
         update_contact_header(param, account);
     }

@@ -119,6 +119,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     portstr << localPort_;
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
+    ScalarNode contactUpdateEnabled(contactUpdateEnabled_); 
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -179,6 +180,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     accountmap.setKeyValue(publishPortKey, &publishPort);
     accountmap.setKeyValue(sameasLocalKey, &sameasLocal);
     accountmap.setKeyValue(serviceRouteKey, &serviceRoute);
+    accountmap.setKeyValue(updateContactHeaderKey, &contactUpdateEnabled);
     accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
     accountmap.setKeyValue(displayNameKey, &displayName);
     accountmap.setKeyValue(codecsKey, &codecs);
@@ -281,6 +283,8 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
     dtmfType_ = dtmfType;
 
     map->getValue(serviceRouteKey, &serviceRoute_);
+    map->getValue(updateContactHeaderKey, &contactUpdateEnabled_);
+
     // stun enabled
     map->getValue(stunEnabledKey, &stunEnabled_);
     map->getValue(stunServerKey, &stunServer_);
