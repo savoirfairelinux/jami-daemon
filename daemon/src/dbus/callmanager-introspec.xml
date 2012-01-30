@@ -671,7 +671,7 @@
             </arg>
         </signal>
 
-        <signal name="transferSucceded" tp:name-for-bindings="transferSucceded">
+        <signal name="transferSucceeded" tp:name-for-bindings="transferSucceeded">
             <tp:docstring>
               <p>Transfer has been successfully
               processed. Client should remove transfered
@@ -682,7 +682,7 @@
 
         <signal name="transferFailed" tp:name-for-bindings="transferFailed">
             <tp:docstring>
-              <p>Transfer operation failed. Corespondin
+              <p>Transfer operation failed. Corresponding
               call is no longer accessible in
               SFLphone-daemon.</p>
             </tp:docstring>

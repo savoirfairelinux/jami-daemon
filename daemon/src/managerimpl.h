@@ -213,7 +213,7 @@ class ManagerImpl {
         /**
          * Notify the client the transfer is successful
          */
-        void transferSucceded();
+        void transferSucceeded();
 
         /**
          * Notify the client that the transfer failed
