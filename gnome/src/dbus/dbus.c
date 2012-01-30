@@ -1523,7 +1523,7 @@ dbus_get_history_limit(void)
         configurationManagerProxy, &days, &error);
     check_error(error);
 
-    return (guint) days;
+    return days;
 }
 
 void
