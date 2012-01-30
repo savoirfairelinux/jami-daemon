@@ -54,6 +54,7 @@ namespace Conf {
     const char *const sameasLocalKey = "sameasLocal";
     const char *const dtmfTypeKey = "dtmfType";
     const char *const serviceRouteKey = "serviceRoute";
+    const char *const updateContactHeaderKey = "updateContact";
 
     // TODO: write an object to store credential which implement serializable
     const char *const srtpKey = "srtp";
@@ -112,6 +113,9 @@ class SIPAccount : public Account {
          * Virtual destructor
          */
         virtual ~SIPAccount();
+
+        virtual VoIPLink* getVoIPLink();
+
         std::string getUserAgentName() const;
         void setRegistrationStateDetailed(const std::pair<int, std::string> &details) {
             registrationStateDetailed_ = details;
@@ -363,10 +367,7 @@ class SIPAccount : public Account {
          * @param port Optional port. Otherwise set to the port defined for that account.
          * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
          */
-        void setContactHeader(std::string& contact)
-        {
-            contactHeader_ = contact;
-        }
+        void setContactHeader(std::string address, std::string port);
 
         /**
          * Get the contact header for 
@@ -374,6 +375,24 @@ class SIPAccount : public Account {
          */
         std::string getContactHeader(void) const;
 
+        /**
+         * The contact header can be rewritten based on the contact provided by the registrar in 200 OK
+         */
+        void enableContactUpdate(void) {
+            contactUpdateEnabled_ = true;
+        }
+
+        /**
+         * The contact header is not updated even if the registrar 
+         */
+        void disableContactUpdate(void) {
+            contactUpdateEnabled_ = false;
+        }
+
+        bool isContactUpdateEnabled(void) {
+            return contactUpdateEnabled_;
+        }
+ 
         /**
          * Get the local interface name on which this account is bound.
          */
@@ -572,6 +591,11 @@ class SIPAccount : public Account {
         std::string contactHeader_;
 
         /**
+         * Enble the contact header based on the header received from the registrar in 200 OK
+         */
+        bool contactUpdateEnabled_;
+
+        /**
          * The STUN server name (hostname)
          */
         pj_str_t stunServerName_;
@@ -676,7 +700,6 @@ class SIPAccount : public Account {
          * Voice over IP Link contains a listener thread and calls
          */
         SIPVoIPLink* link_;
-        virtual VoIPLink* getVoIPLink();
 };
 
 #endif

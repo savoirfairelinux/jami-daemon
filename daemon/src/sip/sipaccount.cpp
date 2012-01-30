@@ -63,6 +63,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , cred_(NULL)
     , tlsSetting_()
     , contactHeader_()
+    , contactUpdateEnabled_(false)
     , stunServerName_()
     , stunPort_(0)
     , dtmfType_(OVERRTP_STR)
@@ -123,6 +124,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     portstr << localPort_;
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
+    ScalarNode contactUpdateEnabled(contactUpdateEnabled_); 
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -195,6 +197,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     accountmap.setKeyValue(publishPortKey, &publishPort);
     accountmap.setKeyValue(sameasLocalKey, &sameasLocal);
     accountmap.setKeyValue(serviceRouteKey, &serviceRoute);
+    accountmap.setKeyValue(updateContactHeaderKey, &contactUpdateEnabled);
     accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
     accountmap.setKeyValue(displayNameKey, &displayName);
     accountmap.setKeyValue(codecsKey, &codecs);
@@ -307,6 +310,8 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
     dtmfType_ = dtmfType;
 
     map->getValue(serviceRouteKey, &serviceRoute_);
+    map->getValue(updateContactHeaderKey, &contactUpdateEnabled_);
+
     // stun enabled
     map->getValue(stunEnabledKey, &stunEnabled_);
     map->getValue(stunServerKey, &stunServer_);
@@ -784,6 +789,24 @@ std::string SIPAccount::getServerUri() const
 
     return "<" + scheme + hostname_ + transport + ">";
 }
+
+void SIPAccount::setContactHeader(std::string address, std::string port)
+{
+    std::string scheme;
+    std::string transport;
+
+    // UDP does not require the transport specification
+    if (transportType_ == PJSIP_TRANSPORT_TLS) {
+        scheme = "sips:";
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
+    } else
+        scheme = "sip:";
+    
+    contactHeader_ = displayName_ + (displayName_.empty() ? "" : " ") + "<" +
+                     scheme + username_ + (username_.empty() ? "":"@") +
+                     address + ":" + port + transport + ">";
+}
+    
 
 std::string SIPAccount::getContactHeader() const
 {
