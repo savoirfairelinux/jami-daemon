@@ -1497,7 +1497,7 @@ void dbus_set_is_always_recording(const gboolean alwaysRec)
 gboolean dbus_get_is_always_recording(void)
 {
     GError *error = NULL;
-    int alwaysRec;
+    gboolean alwaysRec;
     org_sflphone_SFLphone_ConfigurationManager_get_is_always_recording(
         configurationManagerProxy, &alwaysRec, &error);
     check_error(error);
