@@ -206,7 +206,7 @@
             <tp:added version="0.9.7"/>
             <tp:docstring>
               <p>Join two participants together to create a 3-way conference including the current client.</p>
-              <tp:rationale>The signal <tp:member-ref>conferenceCreated</tp:member-ref> is emitted on success.</tp:rationale> 
+              <tp:rationale>The signal <tp:member-ref>conferenceCreated</tp:member-ref> is emitted on success.</tp:rationale>
             </tp:docstring>
             <arg type="s" name="sel_callID" direction="in"/>
             <arg type="s" name="drag_callID" direction="in"/>
@@ -225,7 +225,7 @@
             <tp:added version="0.9.7"/>
             <tp:docstring>
               <p>Join a new particiant to an existing conference.</p>
-              <tp:rationale>The signal <tp:member-ref>conferenceChanged</tp:member-ref> is emitted on success.</tp:rationale> 
+              <tp:rationale>The signal <tp:member-ref>conferenceChanged</tp:member-ref> is emitted on success.</tp:rationale>
             </tp:docstring>
             <arg type="s" name="callID" direction="in">
               <tp:docstring>
@@ -304,7 +304,7 @@
               conferences.
               <tp:rationale>To update client status, one should
               use <tp:member-ref>getParticipantList</tp:member-ref>
-              with provided conference IDs.</tp:rationale> 
+              with provided conference IDs.</tp:rationale>
             </tp:docstring>
             <arg type="as" name="list" direction="out">
               <tp:docstring>
@@ -324,7 +324,7 @@
             </arg>
         </method>
 
-        <method name="getIsRecording" tp:name-for-bindings="getIsRecording"> 
+        <method name="getIsRecording" tp:name-for-bindings="getIsRecording">
             <tp:docstring>
               Tells whether or not a call is being recorded.
             </tp:docstring>
@@ -342,7 +342,7 @@
 
         <signal name="recordPlaybackFilepath" tp:name-for-bindings="recordPlaybackFilepath">
             <tp:docstring>
-              Once after starting recording for the first time, this signal is emited to 
+              Once after starting recording for the first time, this signal is emited to
               provide the recorded file path to client application.
             </tp:docstring>
             <arg type="s" name="callID" />
@@ -353,7 +353,7 @@
             <tp:docstring/>
             <arg type="s" name="filepath" />
         </signal>
-            
+
 
         <method name="getCallDetails" tp:name-for-bindings="getCallDetails">
             <tp:docstring>
@@ -375,7 +375,7 @@
                   <li>DISPLAY_NAME</li>
                   <li>CALL_STATE</li>
                   <li>CALL_TYPE</li>
-                </ul>  
+                </ul>
               </tp:docstring>
             </arg>
         </method>
@@ -383,18 +383,13 @@
         <method name="getCallList" tp:name-for-bindings="getCallList">
             <tp:docstring>
               Get the list of active calls.
-              <tp:rationale>To get the call details, iterate on the return value and call <tp:member-ref>getCallDetails</tp:member-ref> method.</tp:rationale> 
+              <tp:rationale>To get the call details, iterate on the return value and call <tp:member-ref>getCallDetails</tp:member-ref> method.</tp:rationale>
             </tp:docstring>
             <arg type="as" name="list" direction="out">
               <tp:docstring>
                 A list of call IDs.
               </tp:docstring>
             </arg>
-        </method>
-
-        <method name="getCurrentVideoCodecName" tp:name-for-bindings="getCurrentVideoCodecName">
-            <arg type="s" name="callID" direction="in"/>
-            <arg type="s" name="codecName" direction="out"/>
         </method>
 
         <method name="getCurrentAudioCodecName" tp:name-for-bindings="getCurrentAudioCodecName">
@@ -443,7 +438,7 @@
             </tp:docstring>
             <arg type="s" name="accountID">
               <tp:docstring>
-                The account ID of the callee. Clients must notify the right account when receiving this signal.    
+                The account ID of the callee. Clients must notify the right account when receiving this signal.
               </tp:docstring>
             </arg>
             <arg type="s" name="callID">
@@ -460,7 +455,7 @@
 
         <signal name="incomingMessage" tp:name-for-bindings="incomingMessage">
             <tp:docstring>
-                Notify clients that a new text message has been received. 
+                Notify clients that a new text message has been received.
             </tp:docstring>
             <arg type="s" name="callID" />
             <arg type="s" name="from" />
@@ -469,7 +464,7 @@
 
         <signal name="callStateChanged" tp:name-for-bindings="callStateChanged">
             <tp:docstring>
-              <p>Notify of a change in a call state.</p> 
+              <p>Notify of a change in a call state.</p>
               <p>The client must subscribe to this signal.</p>
             </tp:docstring>
             <arg type="s" name="callID">
@@ -479,7 +474,7 @@
             </arg>
             <arg type="s" name="state" >
               <tp:docstring>
-                The acceptable states are: 
+                The acceptable states are:
                 <ul>
                   <li>INCOMING: Initial state of incoming calls</li>
                   <li>RINGING: Initial state of received outgoing call</li>
@@ -507,7 +502,7 @@
             </arg>
             <arg type="s" name="state">
               <tp:docstring>
-                The acceptable states are: 
+                The acceptable states are:
                 <ul>
                   <li>ACTIVE_ATTACHED: SFLphone user is
                   participating to this conference</li>
@@ -547,7 +542,7 @@
             <tp:docstring>
               Emited when a new conference is created. SFLphone-client is reponsible to store the confID and call <tp:member-ref>getParticipantList</tp:member-ref> to update the display.
             </tp:docstring>
-            <arg type="s" name="confID">  
+            <arg type="s" name="confID">
               <tp:docstring>
                 A new conference ID.
               </tp:docstring>
@@ -589,7 +584,7 @@
               </tp:docstring>
             </arg>
         </method>
-             
+
                 <method name="startRecordedFilePlayback" tp:name-for-bindings="startRecordedFilePlayback">
             <tp:added version="0.9.14"/>
             <arg type="s" name="filepath" direction="in"/>
@@ -619,7 +614,7 @@
               <tp:docstring>
                 The SIP or IAX2 message code
               </tp:docstring>
-        </signal>    
+        </signal>
 
         <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
             <tp:docstring>
@@ -636,12 +631,12 @@
                 Description string
               </tp:docstring>
             </arg>
-            <arg type="i" name="code">            
+            <arg type="i" name="code">
               <tp:docstring>
                 The SIP or IAX2 message code
               </tp:docstring>
             </arg>
-        </signal> 
+        </signal>
 
         <signal name="voiceMailNotify" tp:name-for-bindings="voiceMailNotify">
             <tp:docstring>
@@ -662,24 +657,24 @@
         <signal name="volumeChanged" tp:name-for-bindings="volumeChanged">
                 <tp:docstring>
               <p>Notify clients of a volume level
-                change.</p> 
+                change.</p>
               <p>This signal occurs only if ALSA is
                 enabled since Pulseaudio streams are
                 managed externally. </p>
             </tp:docstring>
             <arg type="s" name="device">
               <tp:docstring>
-                The device: mic or speaker    
+                The device: mic or speaker
               </tp:docstring>
             </arg>
             <arg type="d" name="value">
               <tp:docstring>
-                The new volume value    
+                The new volume value
               </tp:docstring>
             </arg>
         </signal>
 
-        <signal name="transferSucceded" tp:name-for-bindings="transferSucceded">
+        <signal name="transferSucceeded" tp:name-for-bindings="transferSucceeded">
             <tp:docstring>
               <p>Transfer has been successfully
               processed. Client should remove transfered
@@ -701,7 +696,7 @@
             <tp:docstring>
               <p>Signal sent on SDES session success. Media transmission is encripted
               for this call only. It does not apply for a
-              conference.</p> 
+              conference.</p>
               <p>A conference can be considered to be secured if and only if each
               participant is secured.</p>
             </tp:docstring>
@@ -712,7 +707,7 @@
             <tp:added version="0.9.7"/>
             <tp:docstring>
               <p>Sinal sent to notify that SDES session
-              failed.</p> 
+              failed.</p>
               <p>Media transmission is not encrypted.</p>
             </tp:docstring>
             <arg type="s" name="callID" />
@@ -786,25 +781,5 @@
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="yesNo" direction="in"/>
         </method>
-
-       <signal name="receivingVideoEvent" tp:name-for-bindings="receivingVideoEvent">
-           <arg type="i" name="shmKey">
-           </arg>
-           <arg type="i" name="semKey">
-           </arg>
-           <arg type="i" name="videoBufferSize">
-           </arg>
-           <arg type="i" name="destWidth">
-           </arg>
-           <arg type="i" name="destHeight">
-           </arg>
-       </signal>
-
-       <signal name="stoppedReceivingVideoEvent" tp:name-for-bindings="stoppedReceivingVideoEvent">
-           <arg type="i" name="shmKey">
-           </arg>
-           <arg type="i" name="semKey">
-           </arg>
-       </signal>
     </interface>
 </node>

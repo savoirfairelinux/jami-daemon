@@ -226,7 +226,7 @@
            <arg type="s" name="rec" direction="in">
            </arg>
        </method>
-       
+
        <method name="getIsAlwaysRecording" tp:name-for-bindings="getIsAlwaysRecording">
            <arg type="b" name="res" direction="out">
            </arg>
@@ -344,22 +344,22 @@
            <arg type="i" name="index" direction="in">
            </arg>
        </method>
-       
+
        <method name="getEchoCancelTailLength" tp:name-for-bindings="getEchoCancelTailLength">
            <arg type="i" name="index" direction="out">
            </arg>
        </method>
-       
+
        <method name="setEchoCancelDelay" tp:name-for-bindings="setEchoCancelDelay">
            <arg type="i" name="index" direction="in">
            </arg>
-       </method> 
-       
+       </method>
+
        <method name="getEchoCancelDelay" tp:name-for-bindings="getEchoCancelDelay">
            <arg type="i" name="index" direction="out">
            </arg>
        </method>
-       
+
        <!--    General Settings Panel         -->
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
@@ -442,17 +442,17 @@
            <!-- Return a List of type Dict<string, string> >...a List of Dicts -->
            <arg type="aa{ss}" name="entries" direction="out"/>
        </method>
-       
+
        <method name="clearHistory" tp:name-for-bindings="clearHistory">
        </method>
 
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
-       </signal>  
+       </signal>
 
        <signal name="errorAlert" tp:name-for-bindings="errorAlert">
            <arg type="i" name="code">
            </arg>
-       </signal> 
+       </signal>
 
        <!-- TLS Methods -->
        <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">

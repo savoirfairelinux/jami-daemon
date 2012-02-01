@@ -1049,10 +1049,12 @@ std::string
 SIPVoIPLink::getCurrentVideoCodecName(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
-	if (call == NULL)
-        return "";
-
-    return call->getLocalSDP()->getSessionVideoCodec();
+    if (call) {
+        Call::CallState state = call->getState();
+        if (state == Call::ACTIVE or state == Call::CONFERENCING)
+            return call->getLocalSDP()->getSessionVideoCodec();
+    }
+    return "";
 }
 #endif
 

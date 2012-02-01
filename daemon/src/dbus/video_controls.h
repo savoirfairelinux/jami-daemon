@@ -31,7 +31,22 @@
 #define VIDEO_CONTROLS_H_
 
 #include "dbus_cpp.h"
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "video_controls-glue.h"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
+
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+/* This warning option only exists for gcc 4.6.0 and greater. */
+#pragma GCC diagnostic warning "-Wunused-but-set-variable"
+#endif
+
 
 #include <tr1/memory> // for shared_ptr
 #include "video/video_preferences.h"
@@ -69,6 +84,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         std::string getInputDeviceChannel();
         std::string getInputDeviceSize();
         std::string getInputDeviceRate();
+        std::string getCurrentCodecName(const std::string &callID);
 
         void startPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &bufferSize);
         void stopPreview();

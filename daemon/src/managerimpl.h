@@ -213,7 +213,7 @@ class ManagerImpl {
         /**
          * Notify the client the transfer is successful
          */
-        void transferSucceded();
+        void transferSucceeded();
 
         /**
          * Notify the client that the transfer failed
@@ -496,6 +496,9 @@ class ManagerImpl {
          * @return std::string The codec name
          */
         std::string getCurrentCodecName(const std::string& id);
+#ifdef SFL_VIDEO
+        std::string getCurrentVideoCodecName(const std::string& id);
+#endif
 
         /**
          * Set input audio plugin

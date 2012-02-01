@@ -168,7 +168,7 @@ void VideoControls::startPreview(int32_t &width, int32_t &height, int32_t &shmKe
     map<string, string> args(videoPreference_.getSettings());
     preview_.reset(new sfl_video::VideoPreview(args));
     preview_->start();
-	
+
     width = atoi(args["width"].c_str());
     height = atoi(args["height"].c_str());
     shmKey = preview_->getShmKey();
@@ -184,3 +184,10 @@ void VideoControls::stopPreview()
 		preview_.reset();
 	}
 }
+
+std::string
+VideoControls::getCurrentCodecName(const std::string& callID)
+{
+    return Manager::instance().getCurrentCodecName(callID);
+}
+

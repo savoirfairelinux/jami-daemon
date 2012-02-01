@@ -149,5 +149,10 @@
            <arg type="i" name="semKey">
            </arg>
        </signal>
+
+        <method name="getCurrentCodecName" tp:name-for-bindings="getCurrentCodecName">
+            <arg type="s" name="callID" direction="in"/>
+            <arg type="s" name="codecName" direction="out"/>
+        </method>
    </interface>
 </node>

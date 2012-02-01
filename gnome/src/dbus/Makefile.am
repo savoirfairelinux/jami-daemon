@@ -5,6 +5,7 @@ noinst_LTLIBRARIES=libdbus.la
 BUILT_SOURCES=                      \
     callmanager-glue.h              \
     configurationmanager-glue.h     \
+    video_controls-glue.h     		\
     instance-glue.h                 \
     marshaller.c                    \
     marshaller.h
