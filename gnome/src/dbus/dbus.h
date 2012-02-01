@@ -146,7 +146,7 @@ void dbus_get_credentials(account_t *a);
 /**
  * ConfigurationManager - Get the details for the ip2ip profile
  */
-GHashTable * dbus_get_ip2_ip_details(void);
+GHashTable *dbus_get_ip2_ip_details(void);
 
 /**
  * ConfigurationManager - Send registration request
@@ -205,21 +205,21 @@ gchar** dbus_video_codec_list();
  * @param payload The payload of the audio codec
  * @return gchar** The audio codec details
  */
-gchar** dbus_audio_codec_details(int payload);
+gchar **dbus_audio_codec_details(int payload);
 
 /**
  * ConfigurationManager - Get the video codec details
  * @param codec The name of the video codec
  * @return gchar** The video codec details
  */
-gchar** dbus_video_codec_details(const gchar *codec);
+gchar **dbus_video_codec_details(const gchar *codec);
 
 /**
  * ConfigurationManager - Get the default audio codec list
  * The default audio codec list are the audio codecs selected by the server if the user hasn't made any changes
  * @return gchar** The default audio codec list
  */
-gchar** dbus_default_audio_codec_list();
+gchar **dbus_default_audio_codec_list();
 
 /**
  * ConfigurationManager - Get the list of the audio codecs used for media negotiation
@@ -237,7 +237,7 @@ void dbus_set_active_audio_codec_list(const gchar **list, const gchar *);
  * ConfigurationManager - Get the list of the audio codecs used for media negotiation
  * @return gchar** The list of audio codecs
  */
-gchar** dbus_get_active_video_codec_list(const gchar *accountID);
+gchar **dbus_get_active_video_codec_list(const gchar *accountID);
 
 /**
  * ConfigurationManager - Set the list of audio codecs used for media negociation
@@ -249,19 +249,19 @@ void dbus_set_active_video_codec_list(const gchar **list, const gchar *);
  * CallManager - return the video codec name
  * @param callable_obj_t* current call
  */
-gchar* dbus_get_current_video_codec_name(const callable_obj_t *c);
+gchar *dbus_get_current_video_codec_name(const callable_obj_t *c);
 
 /**
  * CallManager - return the audio codec name
  * @param callable_obj_t* current call
  */
-gchar* dbus_get_current_audio_codec_name(const callable_obj_t *c);
+gchar *dbus_get_current_audio_codec_name(const callable_obj_t *c);
 
 /**
  * ConfigurationManager - Get the list of available output audio plugins
  * @return gchar** The list of plugins
  */
-gchar** dbus_get_audio_plugin_list();
+gchar **dbus_get_audio_plugin_list();
 
 
 /**
@@ -274,7 +274,7 @@ void dbus_set_audio_plugin(const gchar *audioPlugin);
  * ConfigurationManager - Get the list of available output audio devices
  * @return gchar** The list of devices
  */
-gchar** dbus_get_audio_output_device_list();
+gchar **dbus_get_audio_output_device_list();
 
 /**
  * ConfigurationManager - Select an output audio device
@@ -286,7 +286,7 @@ void dbus_set_audio_output_device(int index);
  * ConfigurationManager - Get the list of available input audio devices
  * @return gchar** The list of devices
  */
-gchar** dbus_get_audio_input_device_list();
+gchar **dbus_get_audio_input_device_list();
 
 /**
  * ConfigurationManager - Select an input audio device
@@ -298,7 +298,7 @@ void dbus_set_audio_input_device(int index);
  * ConfigurationManager - Get the current audio devices
  * @return gchar** The index of the current soundcard
  */
-gchar** dbus_get_current_audio_devices_index();
+gchar **dbus_get_current_audio_devices_index();
 
 /**
  * ConfigurationManager - Get the index of the specified audio device
@@ -314,7 +314,7 @@ int dbus_get_audio_device_index(const gchar *name);
  *		  plughw
  *		  dmix
  */
-gchar* dbus_get_current_audio_output_plugin();
+gchar *dbus_get_current_audio_output_plugin();
 
 /**
  * ConfigurationManager - Get the current noise suppressor state
@@ -430,7 +430,7 @@ void dbus_add_participant(const gchar *callID, const gchar *confID);
 /**
  * Return a list of participant for this conference (confID)
  */
-gchar** dbus_get_participant_list(const gchar *confID);
+gchar **dbus_get_participant_list(const gchar *confID);
 
 /**
  * Toggle recording for this instance, may be call or conference
@@ -445,7 +445,7 @@ void dbus_set_record_path(const gchar *path);
 /**
  * Get the path where the recorded audio files are stored
  */
-gchar* dbus_get_record_path(void);
+gchar *dbus_get_record_path(void);
 
 /**
  * Set the always recording functionality, once true all call
@@ -471,24 +471,24 @@ GHashTable* dbus_get_addressbook_settings(void);
  */
 void dbus_set_addressbook_settings(GHashTable *);
 
-gchar** dbus_get_addressbook_list(void);
+gchar **dbus_get_addressbook_list(void);
 
-void dbus_set_addressbook_list(const gchar** list);
+void dbus_set_addressbook_list(const gchar **list);
 
 /**
  * Resolve the local address given an interface name
  */
-gchar * dbus_get_address_from_interface_name(const gchar* interface);
+gchar * dbus_get_address_from_interface_name(const gchar *interface);
 
 /**
  * Query the daemon to return a list of network interface (described as there IP address)
  */
-gchar** dbus_get_all_ip_interface(void);
+gchar **dbus_get_all_ip_interface(void);
 
 /**
  * Query the daemon to return a list of network interface (described as there name)
  */
-gchar** dbus_get_all_ip_interface_by_name(void);
+gchar **dbus_get_all_ip_interface_by_name(void);
 
 /**
  * Encapsulate all the url hook-related configuration
@@ -505,13 +505,13 @@ void dbus_set_hook_settings(GHashTable *);
 
 gboolean dbus_get_is_recording(const callable_obj_t *);
 
-GHashTable* dbus_get_call_details(const gchar *callID);
+GHashTable *dbus_get_call_details(const gchar *callID);
 
-gchar** dbus_get_call_list(void);
+gchar **dbus_get_call_list(void);
 
 GHashTable* dbus_get_conference_details(const gchar *confID);
 
-gchar** dbus_get_conference_list(void);
+gchar **dbus_get_conference_list(void);
 
 void dbus_set_accounts_order(const gchar *order);
 
@@ -558,7 +558,7 @@ void dbus_set_confirm_go_clear(const callable_obj_t *c);
  * the server in textual form.
  * @return an array of string representing supported methods
  */
-gchar** dbus_get_supported_tls_method();
+gchar **dbus_get_supported_tls_method();
 
 GHashTable* dbus_get_shortcuts(void);
 
