@@ -143,7 +143,6 @@ dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
 AS_IF([test "x$enable_video" != "xno"], [
-        echo "VIDEO ENABLED";
         AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
 
         dnl The libav versions correspond to the last libav release: 0.7
