@@ -30,8 +30,8 @@
  *  as that of the covered work.
  */
 
-#ifndef DBUS_H__
-#define DBUS_H__
+#ifndef DBUS_H_
+#define DBUS_H_
 
 #include <dbus/dbus-glib.h>
 
