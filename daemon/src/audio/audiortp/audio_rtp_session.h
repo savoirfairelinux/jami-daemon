@@ -31,8 +31,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __SFL_AUDIO_RTP_SESSION_H__
-#define __SFL_AUDIO_RTP_SESSION_H__
+#ifndef SFL_AUDIO_RTP_SESSION_H_
+#define SFL_AUDIO_RTP_SESSION_H_
 
 #include "audio_rtp_record_handler.h"
 #include <audio/codecs/audiocodec.h>
@@ -153,5 +153,5 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 };
 
 }
-#endif // __AUDIO_RTP_SESSION_H__
+#endif // AUDIO_RTP_SESSION_H__
 

@@ -213,7 +213,7 @@ class ManagerImpl {
         /**
          * Notify the client the transfer is successful
          */
-        void transferSucceded();
+        void transferSucceeded();
 
         /**
          * Notify the client that the transfer failed
@@ -410,10 +410,10 @@ class ManagerImpl {
          * ConfigurationManager - Send registration request
          * @param accountId The account to register/unregister
          * @param enable The flag for the type of registration
-         *		 0 for unregistration request
-         *		 1 for registration request
+         *		 false for unregistration request
+         *		 true for registration request
          */
-        void sendRegister(const std::string& accountId , const int32_t& enable);
+        void sendRegister(const std::string& accountId, bool enable);
 
         /**
          * Get account list

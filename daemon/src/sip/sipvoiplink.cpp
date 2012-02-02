@@ -572,8 +572,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string from(account->getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
-    // Store the CONTACT header for future usage
-    // account->setContactHeader(address, port);
+    // Get the contact header for this account
     std::string contact(account->getContactHeader());
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
@@ -1847,8 +1846,15 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
 
 void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account)
 {
+
+    SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(account->getVoIPLink());
+    if(siplink == NULL) {
+        ERROR("SIPVoIPLink: Could not find voip link from account");
+        return;
+    } 
+
     pj_pool_t *pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL); 
-    if (pool == NULL) {
+    if(pool == NULL) {
         ERROR("SIPVoIPLink: Could not create temporary memory pool in transport header");
         return;
     }
@@ -1868,8 +1874,6 @@ void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account
         return;
     }
 
-    uri = (pjsip_sip_uri*) pjsip_uri_get_uri(uri);
-
     // TODO: make this based on transport type
     // with pjsip_transport_get_default_port_for_type(tp_type);
     if (uri->port == 0)
@@ -1880,11 +1884,27 @@ void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account
     ss << uri->port;
     std::string recvContactPort = ss.str();
 
-    DEBUG("SIPVoIPLink: Current contact header %s:%s", recvContactHost.c_str(), recvContactPort.c_str());
+    std::string currentAddress, currentPort;
+    siplink->findLocalAddressFromTransport(account->transport_, PJSIP_TRANSPORT_UDP, currentAddress, currentPort);
 
+    bool updateContact = false;
     std::string currentContactHeader = account->getContactHeader();
-    DEBUG("SIPVoIPLink: Current contact header %s", currentContactHeader.c_str());
 
+    size_t foundHost = currentContactHeader.find(recvContactHost);
+    if(foundHost == std::string::npos) {
+        updateContact = true;
+    }
+
+    size_t foundPort = currentContactHeader.find(recvContactPort); 
+    if(foundPort == std::string::npos) {
+        updateContact = true;
+    }
+
+    if(updateContact) {
+        DEBUG("SIPVoIPLink: Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str()); 
+        account->setContactHeader(recvContactHost, recvContactPort);     
+        siplink->sendRegister(account);
+    }
     pj_pool_release(pool);
 }
 
@@ -1902,8 +1922,9 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         return;
     }
 
-    DEBUG("SipVoipLink: Contact header from UAS, %d contact(s)", param->contact_cnt); 
-    update_contact_header(param, account);
+    if(account->isContactUpdateEnabled()) {
+        update_contact_header(param, account);
+    }
  
     const pj_str_t *description = pjsip_get_status_text(param->code);
 

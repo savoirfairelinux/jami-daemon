@@ -559,9 +559,9 @@ void ManagerImpl::transferFailed()
     dbus_.getCallManager()->transferFailed();
 }
 
-void ManagerImpl::transferSucceded()
+void ManagerImpl::transferSucceeded()
 {
-    dbus_.getCallManager()->transferSucceded();
+    dbus_.getCallManager()->transferSucceeded();
 }
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
