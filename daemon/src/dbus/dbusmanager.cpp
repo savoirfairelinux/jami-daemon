@@ -94,10 +94,26 @@ DBusManager::~DBusManager()
 
 void DBusManager::exec()
 {
-    dispatcher_.enter();
+    try {
+        dispatcher_.enter();
+    } catch (const DBus::Error &err) {
+        ERROR("%s: %s, exiting\n", err.name(), err.what());
+        ::exit(EXIT_FAILURE);
+    } catch (const std::exception &err) {
+        ERROR("%s: %s, exiting\n", err.what());
+        ::exit(EXIT_FAILURE);
+    }
 }
 
 void DBusManager::exit()
 {
-    dispatcher_.leave();
+    try {
+        dispatcher_.leave();
+    } catch (const DBus::Error &err) {
+        ERROR("%s: %s, exiting\n", err.name(), err.what());
+        ::exit(EXIT_FAILURE);
+    } catch (const std::exception &err) {
+        ERROR("%s: %s, exiting\n", err.what());
+        ::exit(EXIT_FAILURE);
+    }
 }
