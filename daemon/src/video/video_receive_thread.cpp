@@ -310,7 +310,7 @@ void VideoReceiveThread::setup()
             ost::Thread::exit();
         }
 
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
         if (avcodec_open(decoderCtx_, inputDecoder) < 0)
 #else
         if (avcodec_open2(decoderCtx_, inputDecoder, NULL) < 0)

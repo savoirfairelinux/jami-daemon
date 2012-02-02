@@ -188,7 +188,7 @@ void VideoSendThread::setup()
             ost::Thread::exit();
         }
 
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
         if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
 #else
         if (avcodec_open2(inputDecoderCtx_, inputDecoder, NULL) < 0)
@@ -231,7 +231,7 @@ void VideoSendThread::setup()
 
     // open encoder
     
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     if (avcodec_open(encoderCtx_, encoder) < 0)
 #else
     if (avcodec_open2(encoderCtx_, encoder, NULL) < 0)
