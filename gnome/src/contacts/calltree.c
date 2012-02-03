@@ -342,8 +342,9 @@ static gchar *clean_display_number(gchar *name)
     return name;
 }
 
+#ifdef SFL_VIDEO
 static gchar *
-calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type,
+calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type,
         const gchar * const audio_codec, const gchar * const video_codec)
 {
     gchar display_number[strlen(c->_peer_number) + 1];
@@ -409,6 +410,72 @@ calltree_display_call_info (callable_obj_t * c, CallDisplayType display_type,
     g_free(suffix);
     return msg;
 }
+#else
+static gchar *
+calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type,
+                           const gchar * const audio_codec, const gchar * const video_codec UNUSED)
+{
+    gchar display_number[strlen(c->_peer_number) + 1];
+    strcpy(display_number, c->_peer_number);
+
+    if (c->_type != CALL || !call_was_outgoing(c)) {
+        // Get the hostname for this call (NULL if not existent)
+        gchar * hostname = g_strrstr(c->_peer_number, "@");
+
+        // Test if we are dialing a new number
+        if (*c->_peer_number && hostname)
+            display_number[hostname - c->_peer_number] = '\0';
+    }
+
+    char *codec;
+    // Different display depending on type
+    gchar *name, *details = NULL;
+
+    if (*c->_display_name) {
+        name = c->_display_name;
+        details = display_number;
+    } else {
+        name = display_number;
+        name = clean_display_number(name);
+        details = "";
+    }
+
+    gchar *desc = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>   ", name, details);
+    gchar *suffix = NULL;
+
+    switch (display_type) {
+        case DISPLAY_TYPE_CALL:
+            if (c->_state_code)
+                suffix = g_markup_printf_escaped ("\n<i>%s (%d)</i>", c->_state_code_description, c->_state_code);
+            break;
+        case DISPLAY_TYPE_STATE_CODE :
+            codec = g_strdup(audio_codec);
+
+            if (c->_state_code)
+                suffix = g_markup_printf_escaped ("\n<i>%s (%d)</i>  <i>%s</i>",
+                        c->_state_code_description, c->_state_code,
+                        codec);
+            else
+                suffix = g_markup_printf_escaped ("\n<i>%s</i>", codec);
+            free(codec);
+            break;
+        case DISPLAY_TYPE_CALL_TRANSFER:
+            suffix = g_markup_printf_escaped ("\n<i>Transfer to:%s</i> ", c->_trsft_to);
+            break;
+        case DISPLAY_TYPE_SAS:
+            suffix = g_markup_printf_escaped ("\n<i>Confirm SAS <b>%s</b> ?</i>", c->_sas);
+            break;
+        case DISPLAY_TYPE_HISTORY :
+        default:
+            break;
+    }
+
+    gchar *msg = g_strconcat(desc, suffix, NULL);
+    g_free(desc);
+    g_free(suffix);
+    return msg;
+}
+#endif
 
 void
 calltree_create(calltab_t* tab, int searchbar_type)
@@ -641,7 +708,6 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
             /* Update text */
             gchar * description = NULL;
             gchar * audio_codec = call_get_audio_codec(c);
-            gchar * video_codec = call_get_video_codec(c);
 
             if (c->_state == CALL_STATE_TRANSFER)
                 description = calltree_display_call_info(c, DISPLAY_TYPE_CALL_TRANSFER, "", "");
@@ -649,10 +715,9 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
                 if (c->_sas && display_sas && c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !c->_zrtp_confirmed)
                     description = calltree_display_call_info(c, DISPLAY_TYPE_SAS, "", "");
                 else
-                    description = calltree_display_call_info(c, DISPLAY_TYPE_STATE_CODE, audio_codec, video_codec);
+                    description = calltree_display_call_info(c, DISPLAY_TYPE_STATE_CODE, audio_codec, "");
             }
             g_free(audio_codec);
-            g_free(video_codec);
 
             /* Update icons */
             if (tab == current_calls_tab) {

@@ -28,7 +28,6 @@
  *  as that of the covered work.
  */
 
-
 #include <string.h>
 #include "videoconf.h"
 #include "logger.h"

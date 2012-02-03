@@ -29,13 +29,18 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "logger.h"
 #include "calltab.h"
 #include "callmanager-glue.h"
 #include "configurationmanager-glue.h"
+#ifdef SFL_VIDEO
 #include "video_controls-glue.h"
+#endif
 #include "instance-glue.h"
 #include "preferencesdialog.h"
 #include "accountlistconfigdialog.h"
@@ -56,7 +61,9 @@
 #include "eel-gconf-extensions.h"
 #include "mainwindow.h"
 
+#ifdef SFL_VIDEO
 static DBusGProxy *video_proxy;
+#endif
 static DBusGProxy *call_proxy;
 static DBusGProxy *config_proxy;
 static DBusGProxy *instance_proxy;
@@ -752,6 +759,7 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(config_proxy, "errorAlert",
                                 G_CALLBACK(error_alert), NULL, NULL);
 
+#ifdef SFL_VIDEO
     video_proxy = dbus_g_proxy_new_for_name(connection,
             "org.sflphone.SFLphone", "/org/sflphone/SFLphone/VideoControls",
             "org.sflphone.SFLphone.VideoControls");
@@ -760,28 +768,34 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_add_signal(video_proxy, "deviceEvent", G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "deviceEvent",
                                 G_CALLBACK(video_device_event_cb), NULL, NULL);
+#endif
 
     /* Marshaller for INT INT INT INT INT */
     dbus_g_object_register_marshaller(
             g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
             G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
-    dbus_g_proxy_add_signal(video_proxy, "receivingEvent",
+#ifdef SFL_VIDEO
+    dbus_g_proxy_add_signal(video_proxy, "receivingEvent", G_TYPE_INT,
                             G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
-                            G_TYPE_INT, G_TYPE_INVALID);
+                            G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "receivingEvent",
-                                G_CALLBACK (receiving_video_event_cb), NULL, NULL);
+                                G_CALLBACK(receiving_video_event_cb), NULL,
+                                NULL);
+#endif
 
     /* Marshaller for INT INT */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
                                       G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT,
                                       G_TYPE_INVALID);
 
+#ifdef SFL_VIDEO
     dbus_g_proxy_add_signal(video_proxy, "stoppedReceivingEvent",
                             G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "stoppedReceivingEvent",
-                                G_CALLBACK (stopped_receiving_video_event_cb),
+                                G_CALLBACK(stopped_receiving_video_event_cb),
                                 NULL, NULL);
+#endif
 
     /* Defines a default timeout for the proxies */
 #if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT
@@ -789,7 +803,9 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_set_default_timeout(call_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(instance_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(config_proxy, DEFAULT_DBUS_TIMEOUT);
+#ifdef SFL_VIDEO
     dbus_g_proxy_set_default_timeout(video_proxy, DEFAULT_DBUS_TIMEOUT);
+#endif
 #endif
 
     return TRUE;
@@ -797,7 +813,9 @@ gboolean dbus_connect(GError **error)
 
 void dbus_clean()
 {
+#ifdef SFL_VIDEO
     g_object_unref(video_proxy);
+#endif
     g_object_unref(call_proxy);
     g_object_unref(config_proxy);
     g_object_unref(instance_proxy);
@@ -1098,6 +1116,7 @@ dbus_audio_codec_list()
     return array;
 }
 
+#ifdef SFL_VIDEO
 gchar **
 dbus_video_codec_list()
 {
@@ -1127,6 +1146,7 @@ dbus_set_active_video_codec_list(const gchar** list, const gchar *accountID)
     org_sflphone_SFLphone_VideoControls_set_active_codec_list(video_proxy, list, accountID, &error);
     check_error(error);
 }
+#endif
 
 
 gchar**
@@ -1140,6 +1160,7 @@ dbus_audio_codec_details(int payload)
     return array;
 }
 
+#ifdef SFL_VIDEO
 gchar**
 dbus_video_codec_details(const gchar *codec)
 {
@@ -1169,6 +1190,7 @@ dbus_get_current_video_codec_name(const callable_obj_t *c)
 
     return codecName;
 }
+#endif
 
 gchar *
 dbus_get_current_audio_codec_name(const callable_obj_t *c)
@@ -1588,6 +1610,7 @@ dbus_get_audio_manager(void)
     return api;
 }
 
+#ifdef SFL_VIDEO
 gchar *
 dbus_get_video_input_device_channel()
 {
@@ -1764,6 +1787,7 @@ dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, co
     } else
         return array;
 }
+#endif
 
 GHashTable *
 dbus_get_addressbook_settings(void)
@@ -2028,6 +2052,7 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
     check_error(error);
 }
 
+#ifdef SFL_VIDEO
 void
 dbus_start_video_preview()
 {
@@ -2052,3 +2077,4 @@ dbus_stop_video_preview()
                                                            &error);
     check_error(error);
 }
+#endif

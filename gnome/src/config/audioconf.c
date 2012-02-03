@@ -75,7 +75,7 @@ static void preferences_dialog_fill_codec_list(account_t *a)
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
 
-    GQueue *list = a ? a->codecs : get_audio_codecs_list ();
+    GQueue *list = a ? a->acodecs : get_audio_codecs_list ();
 
     // Insert codecs
     unsigned int i;
@@ -424,17 +424,17 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
                        -1);
 
     printf ("%s, %s\n", name, srate);
-    printf ("%i\n", g_queue_get_length(acc->codecs));
+    printf ("%i\n", g_queue_get_length(acc->acodecs));
 
     codec_t *codec;
     if ((g_strcasecmp(name,"speex") ==0) && (g_strcasecmp(srate, "8 kHz") == 0))
-        codec = codec_list_get_by_payload(110, acc->codecs);
+        codec = codec_list_get_by_payload(110, acc->acodecs);
     else if ((g_strcasecmp(name,"speex") == 0) && (g_strcasecmp(srate, "16 kHz") == 0))
-        codec = codec_list_get_by_payload (111, acc->codecs);
+        codec = codec_list_get_by_payload (111, acc->acodecs);
     else if ( (g_strcasecmp (name,"speex") ==0) && (g_strcasecmp(srate, "32 kHz") == 0))
-        codec = codec_list_get_by_payload (112, acc->codecs);
+        codec = codec_list_get_by_payload (112, acc->acodecs);
     else
-        codec = codec_list_get_by_name((gconstpointer) name, acc->codecs);
+        codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
 
     // Toggle active value
     active = !active;
@@ -496,7 +496,7 @@ static void codec_move(gboolean moveUp, gpointer data)
 
     /* propagate changes in codec queue */
     if (acc)
-        codec_list_move(indice, acc->codecs, moveUp);
+        codec_list_move(indice, acc->acodecs, moveUp);
 }
 
 /**

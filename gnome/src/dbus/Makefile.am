@@ -5,10 +5,15 @@ noinst_LTLIBRARIES=libdbus.la
 BUILT_SOURCES=                      \
     callmanager-glue.h              \
     configurationmanager-glue.h     \
-    video_controls-glue.h     		\
     instance-glue.h                 \
     marshaller.c                    \
     marshaller.h
+
+if SFL_VIDEO
+BUILT_SOURCES+=video_controls-glue.h
+video_controls-glue.h: video_controls-introspec.xml Makefile.am
+	dbus-binding-tool --mode=glib-client $< > $@
+endif
 
 # Rule to generate the binding headers
 %-glue.h: %-introspec.xml Makefile.am

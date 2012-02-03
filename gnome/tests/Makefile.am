@@ -34,8 +34,15 @@ check_dbus_SOURCES = check_dbus.c $(top_srcdir)/src/logger.c \
 					 $(top_srcdir)/src/uimanager.c \
 					 $(top_srcdir)/src/conference_obj.c \
 					 $(top_srcdir)/src/shortcuts.c \
-					 $(top_srcdir)/src/imwindow.c \
-					 $(top_srcdir)/src/video/video_renderer.c
+					 $(top_srcdir)/src/imwindow.c
 
-check_dbus_CFLAGS = @CHECK_CFLAGS@ @GTK_CFLAGS@ @DBUSGLIB_CFLAGS@ @GCONF_CFLAGS@ @WEBKIT_CFLAGS@ @CLUTTER_CFLAGS@ @CLUTTERGTK_CFLAGS@
+if SFL_VIDEO
+check_dbus_SOURCES+=$(top_srcdir)/src/video/video_renderer.c
+endif
+
+check_dbus_CFLAGS = @CHECK_CFLAGS@ @GTK_CFLAGS@ @DBUSGLIB_CFLAGS@ @GCONF_CFLAGS@ @WEBKIT_CFLAGS@
+if SFL_VIDEO
+check_dbus_CFLAGS+=@CLUTTER_CFLAGS@ @CLUTTERGTK_CFLAGS@
+endif
+
 check_dbus_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@ @GCONF_LIBS@ $(top_builddir)/src/widget/libwidget.la $(top_builddir)/src/icons/libicons.la

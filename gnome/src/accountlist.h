@@ -83,7 +83,7 @@ typedef struct  {
     GPtrArray * credential_information;
 
     /* The codec lists */
-    GQueue *codecs;
+    GQueue *acodecs;
     GQueue *vcodecs;
     guint _messages_number;
 } account_t;
@@ -92,20 +92,20 @@ typedef struct  {
 /**
  * This function initialize the account list.
  */
-void account_list_init ();
+void account_list_init();
 
 /**
  * This function append an account to list.
  * @param a The account you want to add
  */
-void account_list_add (account_t * a);
+void account_list_add(account_t * a);
 
 /**
  * Return the first account that corresponds to the state
  * @param state The state
  * @return account_t* An account or NULL
  */
-account_t * account_list_get_by_state (account_state_t state);
+account_t * account_list_get_by_state(account_state_t state);
 
 /**
  * @return guint The number of registered accounts in the list
@@ -116,14 +116,14 @@ guint account_list_get_registered_accounts();
  * Return the number of accounts in the list
  * @return guint The number of accounts in the list
  */
-guint account_list_get_size ();
+guint account_list_get_size();
 
 /**
  * Return the account at the nth position in the list
  * @param n The position of the account you want
  * @return An account or NULL
  */
-account_t * account_list_get_nth (guint n);
+account_t * account_list_get_nth(guint n);
 
 /**
  * Return the current account struct
@@ -135,53 +135,53 @@ account_t * account_list_get_current();
  * This function sets an account as the current one
  * @param current the account you want to set as current
  */
-void account_list_set_current (account_t *current);
+void account_list_set_current(account_t *current);
 
 /**
  * This function maps account_state_t enums to a description.
  * @param s The state
  * @return The full text description of the state
  */
-const gchar * account_state_name (account_state_t s);
+const gchar * account_state_name(account_state_t s);
 
 /**
  * This function frees the list
  */
-void account_list_free ();
+void account_list_free();
 
 /**
  * Return the account associated with an ID
  * @param accountID The ID of the account
  * @return An account or NULL
  */
-account_t * account_list_get_by_id (const gchar * const accountID);
+account_t * account_list_get_by_id(const gchar * const accountID);
 
 /**
  * Move the account from an unit up in the account_list
  * @param index The current index in the list
  */
-void account_list_move_up (guint index);
+void account_list_move_up(guint index);
 
 /**
  * Move the account from an unit down in the account_list
  * @param index The current index in the list
  */
-void account_list_move_down (guint index);
+void account_list_move_down(guint index);
 
 /**
  * Return the ID of the current default account
  * @return gchar* The id
  */
-gchar* account_list_get_current_id (void);
+gchar* account_list_get_current_id(void);
 
-gchar * account_list_get_ordered_list (void);
+gchar * account_list_get_ordered_list(void);
 
-gboolean current_account_has_mailbox (void);
+gboolean current_account_has_mailbox(void);
 
-guint current_account_get_message_number (void);
+guint current_account_get_message_number(void);
 
-void current_account_set_message_number (guint nb);
+void current_account_set_message_number(guint nb);
 
-gboolean current_account_has_new_message (void);
+gboolean current_account_has_new_message(void);
 
 #endif

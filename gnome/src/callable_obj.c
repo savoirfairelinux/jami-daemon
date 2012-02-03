@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "callable_obj.h"
 #include "codeclist.h"
 #include "sflphone_const.h"
@@ -63,10 +67,12 @@ gchar* call_get_peer_number(const gchar *format)
         return g_strdup(format);
 }
 
+#ifdef SFL_VIDEO
 gchar* call_get_video_codec (callable_obj_t *obj)
 {
     return dbus_get_current_video_codec_name(obj);
 }
+#endif
 
 gchar* call_get_audio_codec (callable_obj_t *obj)
 {
@@ -86,7 +92,7 @@ gchar* call_get_audio_codec (callable_obj_t *obj)
     if (!acc)
         goto out;
 
-    const codec_t *const codec = codec_list_get_by_name(audio_codec, acc->codecs);
+    const codec_t *const codec = codec_list_get_by_name(audio_codec, acc->acodecs);
 
     if (!codec)
         goto out;

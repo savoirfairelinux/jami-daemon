@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codeclist.h"
 #include "unused.h"
 #include "logger.h"
@@ -86,6 +90,7 @@ static gboolean codecs_audio_load(void)
     return g_queue_get_length(&audioCodecs) > 0;
 }
 
+#ifdef SFL_VIDEO
 static gboolean codecs_video_load(void)
 {
     gchar **codecs = dbus_video_codec_list();
@@ -112,6 +117,12 @@ gboolean codecs_load(void)
 {
     return codecs_audio_load() && codecs_video_load();
 }
+#else
+gboolean codecs_load(void)
+{
+    return codecs_audio_load();
+}
+#endif
 
 static void codec_free(gpointer data, gpointer user_data UNUSED)
 {
@@ -183,27 +194,52 @@ void codec_list_move(guint codec_index, GQueue *q, gboolean up)
     g_queue_push_nth(q, codec, new);
 }
 
-static void codec_list_update_to_daemon_cat(account_t *acc, gboolean is_audio)
+/* FIXME:tmatth: Clean this up, shouldn't have to do all the reallocs
+ * explicitly if we use a nicer data structure */
+static void
+codec_list_update_to_daemon_audio(account_t *acc)
 {
+    guint c = 0;
+
     gchar** codecList = NULL;
-
-    GQueue *q = is_audio ? acc->codecs : acc->vcodecs;
-    int length = q->length;
-
     // Get all codecs in queue
-    int i, c = 0;
-
-    for (i = 0; i < length; i++) {
-        codec_t* currentCodec = g_queue_peek_nth(q, i);
+    for (guint i = 0; i < acc->acodecs->length; i++) {
+        codec_t* currentCodec = g_queue_peek_nth(acc->acodecs, i);
 
         // Save only if active
         if (currentCodec && currentCodec->is_active) {
             codecList = (void *) g_realloc(codecList, (c + 1) * sizeof(void *));
+            *(codecList + c) = g_strdup_printf("%d", currentCodec->payload);
+            c++;
+        }
+    }
 
-            if (is_audio)
-                *(codecList + c) = g_strdup_printf("%d", currentCodec->payload);
-            else
-                *(codecList + c) = g_strdup(currentCodec->name);
+    // Allocate NULL array at the end for Dbus
+    codecList = (void *) g_realloc(codecList, (c + 1) * sizeof(void*));
+    *(codecList + c) = NULL;
+    c++;
+
+    // call dbus function with array of strings
+    dbus_set_active_audio_codec_list((const gchar**) codecList, acc->accountID);
+    // Delete memory
+    for (guint i = 0; i < c; i++)
+        g_free(*(codecList + i));
+    g_free(codecList);
+}
+
+#ifdef SFL_VIDEO
+static void codec_list_update_to_daemon_video(account_t *acc)
+{
+    gchar** codecList = NULL;
+    // Get all codecs in queue
+    guint c = 0;
+    for (guint i = 0; i < acc->vcodecs->length; i++) {
+        codec_t* currentCodec = g_queue_peek_nth(acc->vcodecs, i);
+
+        // Save only if active
+        if (currentCodec && currentCodec->is_active) {
+            codecList = (void *) g_realloc(codecList, (c + 1) * sizeof(void *));
+            *(codecList + c) = g_strdup(currentCodec->name);
             c++;
         }
     }
@@ -214,21 +250,21 @@ static void codec_list_update_to_daemon_cat(account_t *acc, gboolean is_audio)
     c++;
 
     // call dbus function with array of strings
-    if (is_audio)
-        dbus_set_active_audio_codec_list((const gchar**)codecList, acc->accountID);
-    else
-        dbus_set_active_video_codec_list((const gchar**)codecList, acc->accountID);
+    dbus_set_active_video_codec_list((const gchar**) codecList, acc->accountID);
 
     // Delete memory
-    for (i = 0; i < c; i++)
+    for (guint i = 0; i < c; i++)
         g_free(*(codecList + i));
     g_free(codecList);
 }
+#endif
 
 void codec_list_update_to_daemon(account_t *acc)
 {
-    codec_list_update_to_daemon_cat(acc, TRUE);
-    codec_list_update_to_daemon_cat(acc, FALSE);
+    codec_list_update_to_daemon_audio(acc);
+#ifdef SFL_VIDEO
+    codec_list_update_to_daemon_video(acc);
+#endif
 }
 
 GQueue* get_audio_codecs_list(void)

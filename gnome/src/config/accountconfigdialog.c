@@ -31,6 +31,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -1138,7 +1142,9 @@ static GtkWidget* create_audiocodecs_configuration(account_t *currentAccount)
     return vbox;
 }
 
-GtkWidget* create_videocodecs_configuration (account_t *a)
+#ifdef SFL_VIDEO
+GtkWidget *
+create_videocodecs_configuration (account_t *a)
 {
     // Main widget
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -1157,6 +1163,7 @@ GtkWidget* create_videocodecs_configuration (account_t *a)
 
     return vbox;
 }
+#endif
 
 GtkWidget* create_direct_ip_calls_tab(account_t *a)
 {
@@ -1229,10 +1236,12 @@ void show_account_window(account_t * currentAccount)
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new (_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
     
+#ifdef SFL_VIDEO
     /* Video Codecs */
     GtkWidget *videocodecs_tab = create_videocodecs_configuration(currentAccount);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), videocodecs_tab, gtk_label_new (_("Video")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), videocodecs_tab, gtk_label_new(_("Video")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), videocodecs_tab);
+#endif
 
     // Get current protocol for this account protocol
     gchar *currentProtocol;

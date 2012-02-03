@@ -32,6 +32,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -48,7 +52,9 @@
 #include "shortcuts-config.h"
 #include "hooks-config.h"
 #include "audioconf.h"
+#ifdef SFL_VIDEO
 #include "videoconf.h"
+#endif
 #include "uimanager.h"
 #include "unused.h"
 #include "mainwindow.h"
@@ -339,10 +345,16 @@ static GtkTreeModel* create_model(GtkWidget *widget)
     } browser_entries_full[] = {
         {"General", GTK_STOCK_PREFERENCES, 0},
         {"Audio", GTK_STOCK_AUDIO_CARD, 1},
+#ifdef SFL_VIDEO
         {"Video", "camera-web", 2},
         {"Hooks", "applications-development", 3},
         {"Shortcuts", "preferences-desktop-keyboard", 4},
         {"Address Book", GTK_STOCK_ADDRESSBOOK, 5},
+#else
+        {"Hooks", "applications-development", 2},
+        {"Shortcuts", "preferences-desktop-keyboard", 3},
+        {"Address Book", GTK_STOCK_ADDRESSBOOK, 4},
+#endif
     };
     GdkPixbuf *pixbuf;
     GtkTreeIter iter;
@@ -424,10 +436,12 @@ show_preferences_dialog()
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
+#ifdef SFL_VIDEO
     // Video tab
     tab = create_video_configuration();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Video")));
-    gtk_notebook_page_num (GTK_NOTEBOOK(notebook), tab);
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+#endif
 
     // Hooks tab
     tab = create_hooks_settings();
