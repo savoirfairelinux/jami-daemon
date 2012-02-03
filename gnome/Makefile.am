@@ -19,7 +19,7 @@ appsdir = $(datadir)/applications
 apps_in_files = sflphone.desktop.in
 apps_DATA = $(apps_in_files:.desktop.in=.desktop)
 
-DISTCLEANFILES= sflphone.desktop $(GNOME_DOC) 
+DISTCLEANFILES= sflphone.desktop $(GNOME_DOC)
 
 install-data-local:
 	GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) $(GCONFTOOL) --makefile-install-rule $(top_srcdir)/$(schema_DATA)

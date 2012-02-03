@@ -3,7 +3,7 @@
 #
 # Purpose :
 #
-# Author: Julien Bonjean (julien@bonjean.info) 
+# Author: Julien Bonjean (julien@bonjean.info)
 #
 # Creation Date: 2009-05-27
 # Last Modified: 2009-10-07
@@ -73,7 +73,7 @@ make DESTDIR=%{buildroot} install
 %if %{defined suse_version}
 %suse_update_desktop_file -n %{buildroot}/%{_prefix}/share/applications/sflphone.desktop
 %endif
-rm -rf $RPM_BUILD_ROOT/var/lib/scrollkeeper 
+rm -rf $RPM_BUILD_ROOT/var/lib/scrollkeeper
 
 %clean
 make clean

@@ -58,7 +58,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pEmail        = new KAction(this);
    m_pAddToContact = new KAction(this);
    m_pBookmark     = new KAction(this);
-   
+
    m_pCallAgain->setShortcut    ( Qt::CTRL + Qt::Key_Enter       );
    m_pCallAgain->setText        ( i18n("Call Again")             );
    m_pCallAgain->setIcon        ( KIcon(ICON_DIALING)            );
@@ -67,16 +67,16 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pAddToContact->setText     ( i18n("Add Number to Contact")  );
    m_pAddToContact->setIcon     ( KIcon("list-resource-add")     );
    m_pAddToContact->setDisabled ( true                           );
-   
+
    m_pAddContact->setShortcut   ( Qt::CTRL + Qt::Key_E           );
    m_pAddContact->setText       ( i18n("Add Contact")            );
    m_pAddContact->setIcon       ( KIcon("contact-new")           );
-   
+
    m_pCopy->setShortcut         ( Qt::CTRL + Qt::Key_C           );
    m_pCopy->setText             ( i18n("Copy")                   );
    m_pCopy->setIcon             ( KIcon("edit-copy")             );
    m_pCopy->setDisabled         ( true                           );
-   
+
    m_pEmail->setShortcut        ( Qt::CTRL + Qt::Key_M           );
    m_pEmail->setText            ( i18n("Send Email")             );
    m_pEmail->setIcon            ( KIcon("mail-message-new")      );
@@ -99,7 +99,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pCallNumberL   = new QLabel( this );
    m_pDurationL     = new QLabel( this );
    m_pTimeL         = new QLabel( this );
-   
+
    m_pIconL->setMinimumSize(70,48);
    m_pIconL->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
    QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -124,7 +124,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
 ///Destructor
 HistoryTreeItem::~HistoryTreeItem()
 {
-   
+
 }
 
 
@@ -159,12 +159,12 @@ void HistoryTreeItem::updated()
          m_pIconL->setPixmap(QPixmap(str));
       }
       m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
-                
+
       if(state == CALL_STATE_DIALING) {
          m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
    }
-   
+
 }
 
 ///Show the context menu
@@ -239,12 +239,12 @@ void HistoryTreeItem::bookmark()
 void HistoryTreeItem::setCall(Call *call)
 {
    m_pItemCall = call;
-   
+
    if (m_pItemCall->isConference()) {
       m_pIconL->setVisible(true);
       return;
    }
-   
+
    m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
 
    m_pTimeL->setText(QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toUInt()).toString());

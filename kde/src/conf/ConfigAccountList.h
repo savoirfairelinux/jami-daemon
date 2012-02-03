@@ -24,7 +24,7 @@ class ConfigAccountList : public QObject {
       AccountView*            getAccountByItem       ( QListWidgetItem* item )      ;
       QVector<AccountView*>   getAccountByState      ( QString & state       )      ;
       AccountView*            getAccountById         ( const QString & id    ) const;
-      
+
       ///Mutators
       virtual AccountView* addAccount     ( const QString & alias );
       void                 removeAccount  ( QListWidgetItem* item );
@@ -39,7 +39,7 @@ class ConfigAccountList : public QObject {
 
    private:
       QVector<AccountView*>*  accounts;
-      
+
    signals:
       void accountListUpdated();
 };

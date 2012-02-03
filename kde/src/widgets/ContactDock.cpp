@@ -130,7 +130,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 
    m_pSplitter->setChildrenCollapsible(true);
    m_pSplitter->setStretchFactor(0,7);
-   
+
    connect (AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                   this,        SLOT(reloadContact()                      ));
    connect (m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,        SLOT(loadContactHistory(QTreeWidgetItem*) ));
    connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
@@ -273,7 +273,7 @@ bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
  *                                                                           *
  ****************************************************************************/
 
-///Show or hide the history list 
+///Show or hide the history list
 void ContactDock::setHistoryVisible(bool visible)
 {
    kDebug() << "Toggling history visibility";

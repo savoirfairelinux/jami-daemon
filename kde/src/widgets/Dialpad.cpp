@@ -31,11 +31,11 @@ const char* Dialpad::m_pNumbers[] =
         "4", "5", "6",
         "7", "8", "9",
         "*", "0", "#"};
-   
+
 const char* Dialpad::m_pTexts[12] =
         { ""  ,  "abc",  "def" ,
-        "ghi" ,  "jkl",  "mno" , 
-        "pqrs",  "tuv",  "wxyz", 
+        "ghi" ,  "jkl",  "mno" ,
+        "pqrs",  "tuv",  "wxyz",
           ""  ,   ""  ,   ""   };
 
 ///Constructor

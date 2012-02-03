@@ -46,17 +46,17 @@
    ]]>
  </send>
 
- <!-- tag from From: header is required to build the To: header in 
-   -- Bye request. --> 
+ <!-- tag from From: header is required to build the To: header in
+   -- Bye request. -->
 
- <recv request="ACK">   
+ <recv request="ACK">
    <action>
     <ereg regexp="tag=.*" search_in="hdr" header="From:" check_it="true" assign_to="1" />
   </action>
  </recv>
 
  <pause milliseconds="500"/>
- 
+
  <send retrans="500">
     <![CDATA[
 
@@ -84,4 +84,4 @@
 
  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
 
-</scenario> 
+</scenario>

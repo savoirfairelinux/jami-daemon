@@ -209,7 +209,7 @@ void SIPTest::testTwoOutgoingIpCall()
     // The second call uses the default user agent scenario
     std::string secondCallCommand("sipp -sn uas -i 127.0.0.1 -p 5064 -m 1");
 
-    pthread_t firstCallThread; 
+    pthread_t firstCallThread;
     int rc = pthread_create(&firstCallThread, NULL, sippThread, &firstCallCommand);
 
     if (rc)

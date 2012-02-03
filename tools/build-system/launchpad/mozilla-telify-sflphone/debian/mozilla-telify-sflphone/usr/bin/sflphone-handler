@@ -19,7 +19,7 @@ if [ -f "$RESFILE" ]; then
 
 		# Use first account declared in sflphone config
 		ACCOUNTID="`grep -m 1 Account: $RESFILE | sed -e 's/\[//' -e 's/\]//'`"
-   	fi 
+    fi
 
 else
     echo Fatal: Cant find sflphonedrc config file.
@@ -32,11 +32,11 @@ if [ -z $1 ]; then
     exit 1
 fi
 
-# Cleanup destination, keeping numbers only 
+# Cleanup destination, keeping numbers only
 TO="`echo $1 | sed -e 's/[^0123456789]//g'`"
 
 # Generate call id.
-CALLID=${RANDOM}$$  
+CALLID=${RANDOM}$$
 
 dbus-send                                           \
     --type="method_call"                            \

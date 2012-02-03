@@ -36,7 +36,7 @@ Please report bugs at https://projects.savoirfairelinux.com/projects/sflphone/is
 
 =head1 AUTHORS
 
-B<sflphoned> is developed in Montreal by Savoir-Faire Linux Inc. The active developers are Tristan Matthews <tristan.matthews@savoirfairelinux.com> and Alexandre Savard <alexandre.savard@savoirfairelinux.com>. 
+B<sflphoned> is developed in Montreal by Savoir-Faire Linux Inc. The active developers are Tristan Matthews <tristan.matthews@savoirfairelinux.com> and Alexandre Savard <alexandre.savard@savoirfairelinux.com>.
 
 This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
 

@@ -64,7 +64,7 @@
   <recv response="200" rtd="true">
 	<action>
     		<ereg regexp="a=rtpmap:0 PCMU/8000" search_in="body" check_it="true" assign_to="1" />
-		<log message="Custom header is [$1]"/> 
+		<log message="Custom header is [$1]"/>
   	</action>
   </recv>
 

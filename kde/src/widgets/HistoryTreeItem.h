@@ -49,7 +49,7 @@ class HistoryTreeItem : public QWidget
     //Constructor
     HistoryTreeItem(QWidget* parent =0, QString phone = "");
     ~HistoryTreeItem();
-    
+
     //Getters
     Call*            call           () const;
     uint             getTimeStamp   ();
@@ -64,7 +64,7 @@ class HistoryTreeItem : public QWidget
 
     //Const
     static const char * callStateIcons[12];
-    
+
  private:
     //Attributes
     Call*    m_pItemCall      ;
@@ -87,12 +87,12 @@ class HistoryTreeItem : public QWidget
     uint     m_Duration       ;
     QString  m_Name           ;
     QString  m_PhoneNumber    ;
-    
+
     QTreeWidgetItem* m_pItem;
 
 public slots:
    void updated();
-   
+
 private slots:
    void showContext(const QPoint& pos);
    void sendEmail();
@@ -102,7 +102,7 @@ private slots:
    void addToContact();
    void bookmark();
    bool getContactInfo(QString phone);
-   
+
 signals:
    void over(Call*);
 };

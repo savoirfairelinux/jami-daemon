@@ -53,7 +53,7 @@ Usage:
                       - pingreply	Reply to ping requests
                       If a behavior is prefaced with a -, then it is turned
                       off.  Example: all,-bye
-                      
+
 
    -error_file      : Set the name of the error log file.
 
@@ -67,7 +67,7 @@ Usage:
 
    -i               : Set the local IP address for 'Contact:','Via:', and
                       'From:' headers. Default is primary host IP address.
-                      
+
 
    -inf             : Inject values from an external CSV file during calls into
                       the scenarios.
@@ -76,7 +76,7 @@ Usage:
                       (USER) order.
                       Each line corresponds to one call and has one or more
                       ';' delimited data fields. Those fields can be referred
-                      as [field0], [field1], ... in the xml scenario file. 
+                      as [field0], [field1], ... in the xml scenario file.
                       Several CSV files can be used simultaneously (syntax:
                       -inf f1.csv -inf f2.csv ...)
 
@@ -159,18 +159,18 @@ Usage:
                       - On unexpected PING send a 200 OK and continue the call
                       - On any other unexpected message, abort the call by
                         sending a BYE or a CANCEL
-                      
+
 
    -nr              : Disable retransmission in UDP mode.
 
    -nostdin         : Disable stdin.
-                      
+
 
    -p               : Set the local port number.  Default is a random free port
                       chosen by the system.
 
    -pause_msg_ign   : Ignore the messages received during a pause defined in
-                      the scenario 
+                      the scenario
 
    -periodic_rtd    : Reset response time partition counters each logging
                       interval.
@@ -265,7 +265,7 @@ Usage:
 
    -oocsn           : Load out-of-call scenario.
 
-   -skip_rlimit     : Do not perform rlimit tuning of file descriptor limits. 
+   -skip_rlimit     : Do not perform rlimit tuning of file descriptor limits.
                       Default: false.
 
    -slave           : 3pcc extended mode: indicates the slave number
@@ -277,7 +277,7 @@ Usage:
                       If this option is omitted, the Standard SipStone UAC
                       scenario is loaded.
                       Available values in this version:
-                      
+
                       - 'uac'      : Standard SipStone UAC (default).
                       - 'uas'      : Simple UAS responder.
                       - 'regexp'   : Standard SipStone UAC - with regexp and
@@ -286,15 +286,15 @@ Usage:
                         scenarios - client.
                       - 'branchs'  : Branching and conditional branching in
                         scenarios - server.
-                      
+
                       Default 3pcc scenarios (see -3pcc option):
-                      
+
                       - '3pcc-C-A' : Controller A side (must be started after
                         all other 3pcc scenarios)
                       - '3pcc-C-B' : Controller B side.
                       - '3pcc-A'   : A side.
                       - '3pcc-B'   : B side.
-                      
+
 
    -stat_delimiter  : Set the delimiter for the statistics file
 
@@ -313,7 +313,7 @@ Usage:
                         loaded),
                       - cn: un + compression (only if compression plugin
                         loaded).  This plugin is not provided with sipp.
-                      
+
 
    -timeout         : Global timeout. Default unit is seconds.  If this option
                       is set, SIPp quits after nb units (-timeout 20s quits
@@ -322,7 +322,7 @@ Usage:
    -timeout_error   : SIPp fails if the global timeout is reached is set
                       (-timeout option required).
 
-   -timer_resol     : Set the timer resolution. Default unit is milliseconds. 
+   -timer_resol     : Set the timer resolution. Default unit is milliseconds.
                       This option has an impact on timers precision.Small
                       values allow more precise scheduling but impacts CPU
                       usage.If the compression is on, the value is set to
@@ -366,7 +366,7 @@ Usage:
    -watchdog_interval: Set gap between watchdog timer firings.  Default is 400.
 
    -watchdog_reset  : If the watchdog timer has not fired in more than this
-                      time period, then reset the max triggers counters. 
+                      time period, then reset the max triggers counters.
                       Default is 10 minutes.
 
    -watchdog_minor_threshold: If it has been longer than this period between watchdog
@@ -422,7 +422,7 @@ Usage:
                       Set the start offset of dynamic_id varaiable
 
    -dynamicMax      : variable value
-                      Set the maximum of dynamic_id variable     
+                      Set the maximum of dynamic_id variable
 
    -dynamicStep     : variable value
                       Set the increment of dynamic_id variable
@@ -436,7 +436,7 @@ Signal handling:
          are finished before SIPp exits.
          Example: kill -SIGUSR1 732
    USR2: Triggers a dump of all statistics screens in
-         <scenario_name>_<pid>_screens.log file. Especially useful 
+         <scenario_name>_<pid>_screens.log file. Especially useful
          in background mode to know what the current status is.
          Example: kill -SIGUSR2 732
 

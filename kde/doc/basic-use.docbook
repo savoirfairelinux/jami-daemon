@@ -16,10 +16,10 @@
 
 <para>The main window is composed of three main parts : the &actions-p;, the &screen-p; and the &dialpad-p; (although you can hide the two last ones in the Settings menu). The screen part has three positions.
 The &current-w; : it is the one you are by default, it shows the current, dialing and incoming calls.
-The &history-w; : it shows the past calls and enables you to call someone you called earlier or from whom you missed a call. 
+The &history-w; : it shows the past calls and enables you to call someone you called earlier or from whom you missed a call.
 The &address-w; : it enables you to look in the address book of KDE and to call somebody if his number is available.
 
-To switch between those windows, click on the history and address book buttons. If none of these buttons is triggerred, you are currently in the &current-w;, if the history button is triggerred, you are in the &history-w;, and if the address book button is triggerred, you are in the &address-w;. 
+To switch between those windows, click on the history and address book buttons. If none of these buttons is triggerred, you are currently in the &current-w;, if the history button is triggerred, you are in the &history-w;, and if the address book button is triggerred, you are in the &address-w;.
 
 </para>
 
@@ -59,7 +59,7 @@ To switch between those windows, click on the history and address book buttons. 
 
 <para> If you have your KAddressBook configured and filled with some phone numbers, you can go to the &address-w;. The detailed use of this window and its features (search...) is described in this section. Once you are in it, find the name of the person you want to call with the right phone number (&pt-home;, &pt-work; or &pt-cell;), then select it and click on the Accept button in the &actions-p;'s toolbar or in the "actions" menu, or type enter on your keyboard, or double-click on the number.</para>
 
-<para>The screen will come back to the &current-w; with a new ringing call with the number you chose in the &address-w;.</para> 
+<para>The screen will come back to the &current-w; with a new ringing call with the number you chose in the &address-w;.</para>
 
 <para> Note that you can also right click and select Edit before call to modify the number in the address book before calling it.</para>
 

@@ -67,7 +67,7 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 ///Destructor
 AkonadiBackend::~AkonadiBackend()
 {
-   
+
 }
 
 
@@ -130,7 +130,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             KABC::Addressee tmp = item.payload<KABC::Addressee>();
             Contact* aContact   = new Contact();
             m_AddrHash[tmp.uid()] = tmp;
-            
+
             KABC::PhoneNumber::List numbers = tmp.phoneNumbers();
             PhoneNumbers newNumbers;
             foreach (KABC::PhoneNumber number, numbers) {
@@ -138,7 +138,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                m_ContactByPhone[number.number()] = aContact;
             }
             m_ContactByUid[tmp.uid()] = aContact;
-            
+
             aContact->setNickName       (tmp.nickName()       );
             aContact->setFormattedName  (tmp.formattedName()  );
             aContact->setFirstName      (tmp.givenName()      );
@@ -147,7 +147,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             aContact->setPreferredEmail (tmp.preferredEmail() );
             aContact->setUid            (tmp.uid()            );
             aContact->setPhoneNumbers   (newNumbers           );
-            
+
             if (!tmp.photo().data().isNull())
                aContact->setPhoto(new QPixmap(QPixmap::fromImage( tmp.photo().data()).scaled(QSize(48,48))));
             else
@@ -208,17 +208,17 @@ void AkonadiBackend::addNewContact(Contact* contact)
       newContact.insertPhoneNumber(pn);
    }
 
-            
+
    //aContact->setPhoneNumbers   (newNumbers           );//TODO
-   
+
     Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::CreateMode, SFLPhone::app()->view() );
 
    editor->setContactTemplate(newContact);
-   
+
    KDialog* dlg = new KDialog(SFLPhone::app()->view());
    dlg->setMainWidget(editor);
    dlg->exec();
-   
+
    if ( !editor->saveContact() ) {
       kDebug() << "Unable to save new contact to storage";
       return;

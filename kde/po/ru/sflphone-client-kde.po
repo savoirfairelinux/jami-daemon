@@ -484,7 +484,7 @@ msgid ""
 "to edit it using the form on the right."
 msgstr ""
 "Это кнопка позволит вам добавить новый аккаунт. После этого вы сможете "
-"его изменить при помощи экрана справа." 
+"его изменить при помощи экрана справа."
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:347
 msgid "Add"

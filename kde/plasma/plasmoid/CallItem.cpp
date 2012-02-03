@@ -10,7 +10,7 @@ CallItem::CallItem() : frmDate(0), parentItem(0)
 {
    setMinimumSize(QSizeF(24,64));
    setMaximumSize(QSizeF(10000000,64));
-   
+
    frmCallerName = new Plasma::Frame(this);
    frmCallerNumber = new Plasma::Frame(this);
    frmStateIcon = new Plasma::Frame(this);
@@ -33,7 +33,7 @@ CallItem::CallItem() : frmDate(0), parentItem(0)
    mainLayout->addItem(frmCallerName,0,1);
    mainLayout->addItem(frmCallerNumber,1,1);
 
-   
+
 }
 
 QString CallItem::getCallId()

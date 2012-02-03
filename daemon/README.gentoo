@@ -5,7 +5,7 @@ emerge libosip
 ACCEPT_KEYWORDS=~x86 emerge libeXosip
 emerge libsamplerate
 emerge cvs
-emerge =qt-3.3.6-r1 
+emerge =qt-3.3.6-r1
 
 cvs ...
 

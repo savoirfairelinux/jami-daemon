@@ -48,7 +48,7 @@ typedef QList<HistoryTreeItem*> HistoryList;
 ///@class HistoryDock Dock to see the previous SFLPhone calls
 class HistoryDock : public QDockWidget {
    Q_OBJECT
-   
+
 public:
    //Friends
    friend class KeyPressEater;
@@ -56,7 +56,7 @@ public:
    //Constructors
    HistoryDock(QWidget* parent);
    virtual ~HistoryDock();
-   
+
 private:
    //Enum
    enum SortBy {
@@ -86,7 +86,7 @@ private:
 
    //Mutator
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);
-   
+
 public slots:
    void enableDateRange(bool enable);
    virtual void keyPressEvent(QKeyEvent* event);

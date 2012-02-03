@@ -40,7 +40,7 @@ ConfigurationSkeleton * ConfigurationSkeleton::self()
 {
    if(instance == NULL)
    {   instance = new ConfigurationSkeleton();   }
-   return instance; 
+   return instance;
 }
 
 
@@ -57,17 +57,17 @@ void ConfigurationSkeleton::readConfig()
 {
    //ConfigurationSkeleton::readConfig();
    kDebug() << "Reading config";
-   
+
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   
+
    ////////////////////////
    ////General settings////
    ////////////////////////
-   
+
    //Call history settings
    //setEnableHistory(true);
    setHistoryMax(1000);//configurationManager.getHistoryLimit());
-    
+
    ////////////////////////
    ////Display settings////
    ////////////////////////
@@ -75,22 +75,22 @@ void ConfigurationSkeleton::readConfig()
    //Notification settings
    setNotifOnCalls(true);
    setNotifOnMessages(true);//configurationManager.getMailNotify());
-    
+
    //Window display settings
    setDisplayOnStart(true);
    setDisplayOnCalls(true);
-    
+
    /////////////////////////
    ////Accounts settings////
    /////////////////////////
-   
+
 //    loadAccountList();
 
-   
+
    //////////////////////
    ////Audio settings////
    //////////////////////
-   
+
    //Audio Interface settings
    QString audioManager = configurationManager.getAudioManager();
    kDebug() << "audioManager = " << audioManager;
@@ -118,23 +118,23 @@ void ConfigurationSkeleton::readConfig()
       kDebug() << "inputDevice = " << devices[1];
       inputDevice = devices[1].toInt(& ok);
    }
-   else 
+   else
       kDebug() << "Fatal: Too few audio devices";
 
-   if(!ok) 
+   if(!ok)
       kDebug() << "inputDevice is not a number";
-      
+
    setAlsaInputDevice(inputDevice);
-   
+
    //kDebug() << "outputDevice = " << devices[0];
    //int outputDevice = devices[0].toInt(& ok);
    //if(!ok) kDebug() << "outputDevice is not a number";
-   //setAlsaOutputDevice(outputDevice);          
-   
+   //setAlsaOutputDevice(outputDevice);
+
    ///////////////////////
    ////Record settings////
    ///////////////////////
-   
+
    QString recordPath = configurationManager.getRecordPath();
    if(! recordPath.isEmpty()) {
       setDestinationFolder(recordPath);
@@ -142,13 +142,13 @@ void ConfigurationSkeleton::readConfig()
    else {
       setDestinationFolder(QDir::home().path());
    }
-      
-   
-   
+
+
+
    /////////////////////////////
    ////Address book settings////
    /////////////////////////////
-   
+
    MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
    setEnableAddressBook(addressBookSettings[ADDRESSBOOK_ENABLE]);
    setMaxResults(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
@@ -156,11 +156,11 @@ void ConfigurationSkeleton::readConfig()
    setBusiness(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
    setMobile(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
    setHome(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
-   
+
    /////////////////////////////
    ///////Hooks settings////////
    /////////////////////////////
-   
+
    MapStringString hooksSettings = configurationManager.getHookSettings().value();
    setAddPrefix(hooksSettings[HOOKS_ENABLED]=="1");
    setPrepend(hooksSettings[HOOKS_ADD_PREFIX]);
@@ -168,7 +168,7 @@ void ConfigurationSkeleton::readConfig()
    setEnableHooksIAX(hooksSettings[HOOKS_IAX2_ENABLED]=="1");
    setHooksSIPHeader(hooksSettings[HOOKS_SIP_FIELD]);
    setHooksCommand(hooksSettings[HOOKS_COMMAND]);
-   
+
    kDebug() << "Finished to read config";
 }
 
@@ -177,14 +177,14 @@ void ConfigurationSkeleton::writeConfig()
    //ConfigurationSkeleton::writeConfig();
    kDebug() << "Writing config";
    /*ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   
-   
+
+
    ////////////////////////
    ////General settings////
    ////////////////////////
-   
+
    kDebug() << "Writing General settings";
-   
+
    //Call history settings
         //if(enableHistory() != QVariant(configurationManager.getHistoryEnabled()).toBool() ) {
             //configurationManager.setHistoryEnabled();
@@ -195,39 +195,39 @@ void ConfigurationSkeleton::writeConfig()
    ////////////////////////
    ////Display settings////
    ////////////////////////
-   
+
    kDebug() << "Writing Display settings";
-   
+
    //Notification settings
    //if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
    //if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
-   
+
    //Window display settings
    //WARNING états inversés
    //if(displayOnStart() == configurationManager.isStartHidden()) configurationManager.startHidden();
    //if(displayOnCalls() != configurationManager.popupMode()) configurationManager.switchPopupMode();
-   
+
    /////////////////////////
    ////Accounts settings////
    /////////////////////////
-   
+
    kDebug() << "Writing Accounts settings";
-   
+
 //    saveAccountList();
 
    //////////////////////
    ////Audio settings////
    //////////////////////
-   
+
    kDebug() << "Writing Audio settings";
-   
+
    //Audio Interface settings
    int prevManager = configurationManager.getAudioManager();
    int newManager = interface();
    if(prevManager != newManager) {
       configurationManager.setAudioManager(newManager);
    }
-   
+
    //ringtones settings
    if(enableRingtones() != configurationManager.isRingtoneEnabled()) configurationManager.ringtoneEnabled();
    configurationManager.setRingtoneChoice(ringtone());
@@ -235,7 +235,7 @@ void ConfigurationSkeleton::writeConfig()
    //codecs settings
    //kDebug() << "activeCodecList = " << activeCodecList();
    //configurationManager.setActiveCodecList(activeCodecList());
-   
+
 
    //alsa settings
    if(prevManager == CONST_ALSA && newManager == EnumInterface::ALSA) {
@@ -244,24 +244,24 @@ void ConfigurationSkeleton::writeConfig()
       configurationManager.setAudioInputDevice(alsaInputDevice());
       configurationManager.setAudioOutputDevice(alsaOutputDevice());
    }
-   
-   
+
+
    ///////////////////////
    ////Record settings////
    ///////////////////////
-   
+
    kDebug() << "Writing Record settings";
-   
+
    QString destination = destinationFolder();
    configurationManager.setRecordPath(destination);
-   
-   
+
+
    /////////////////////////////
    ////Address Book settings////
    /////////////////////////////
-   
+
    kDebug() << "Writing Address Book settings";
-   
+
    MapStringInt addressBookSettings = MapStringInt();
    addressBookSettings[ADDRESSBOOK_ENABLE] = enableAddressBook();
    addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = maxResults();
@@ -270,13 +270,13 @@ void ConfigurationSkeleton::writeConfig()
    addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = mobile();
    addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = home();
    configurationManager.setAddressbookSettings(addressBookSettings);
-   
+
    /////////////////////////////
    ///////Hooks settings////////
    /////////////////////////////
-   
+
    kDebug() << "Writing Hooks settings";
-   
+
    MapStringString hooksSettings = MapStringString();
    hooksSettings[HOOKS_ENABLED] = addPrefix() ? "1" : "0";
    hooksSettings[HOOKS_ADD_PREFIX] = prepend();
@@ -285,7 +285,7 @@ void ConfigurationSkeleton::writeConfig()
    hooksSettings[HOOKS_SIP_FIELD] = hooksSIPHeader();
    hooksSettings[HOOKS_COMMAND] = hooksCommand();
    configurationManager.setHookSettings(hooksSettings);
-   
+
    kDebug() << "Finished to write config\n";*/
    ConfigurationSkeletonBase::writeConfig();
 }
@@ -294,7 +294,7 @@ void ConfigurationSkeleton::writeConfig()
 // {
 //    return codecListModel->getActiveCodecList();
 // }
-// 
+//
 // void ConfigurationSkeleton::setActiveCodecList(const QStringList & v)
 // {
 //    codecListModel->setActiveCodecList(v);
@@ -302,6 +302,6 @@ void ConfigurationSkeleton::writeConfig()
 
 // void ConfigurationSkeleton::writeConfig()
 // {
-// 
+//
 //    ConfigurationSkeletonBase::writeConfig();
 // }

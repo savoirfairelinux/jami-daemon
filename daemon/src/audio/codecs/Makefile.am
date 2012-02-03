@@ -87,7 +87,7 @@ libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g722_so_LDADD = libcodecdescriptor.la
 libcodec_g722_so_LDFLAGS = --shared -lc
 
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_CELT_RULE) $(INSTALL_ILBC_RULE) 
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_CELT_RULE) $(INSTALL_ILBC_RULE)
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_celt_so
 
 

@@ -57,22 +57,22 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
    m_pCallAgain->setText       ( i18n("Call Again")         );
    m_pCallAgain->setIcon       ( KIcon(ICON_DIALING)        );
-   
+
    m_pEditContact = new KAction(this);
    m_pEditContact->setShortcut ( Qt::CTRL + Qt::Key_E       );
    m_pEditContact->setText     ( i18n("Edit contact")       );
    m_pEditContact->setIcon     ( KIcon("contact-new")       );
-   
+
    m_pCopy       = new KAction(this);
    m_pCopy->setShortcut        ( Qt::CTRL + Qt::Key_C       );
    m_pCopy->setText            ( i18n("Copy")               );
    m_pCopy->setIcon            ( KIcon("edit-copy")         );
-   
+
    m_pEmail      = new KAction(this);
    m_pEmail->setShortcut       ( Qt::CTRL + Qt::Key_M       );
    m_pEmail->setText           ( i18n("Send Email")         );
    m_pEmail->setIcon           ( KIcon("mail-message-new")  );
-   
+
    m_pAddPhone      = new KAction(this);
    m_pAddPhone->setShortcut    ( Qt::CTRL + Qt::Key_N       );
    m_pAddPhone->setText        ( i18n("Add Phone Number")   );
@@ -113,7 +113,7 @@ void ContactItemWidget::setContact(Contact* contact)
    m_pOrganizationL = new QLabel ( this );
    m_pEmailL        = new QLabel (      );
    m_pCallNumberL   = new QLabel ( this );
-   
+
    m_pIconL->setMinimumSize(70,48);
    m_pIconL->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
 
@@ -170,7 +170,7 @@ void ContactItemWidget::updated()
    else {
       m_pEmailL->setVisible(false);
    }
-   
+
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
    foreach (Contact::PhoneNumber* number, numbers) {
       kDebug() << "Phone:" << number->getNumber() << number->getType();

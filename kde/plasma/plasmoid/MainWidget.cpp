@@ -15,7 +15,7 @@ MainWidget::MainWidget() : Plasma::Frame(), m_mainLayout(0), frmCalls(0), frmCon
    frmHistory        = new Plasma::Frame         ( this         );
    historyLayout     = new QGraphicsLinearLayout ( Qt::Vertical );
    historyScrollArea = new Plasma::ScrollWidget  ( this         );
-   
+
    mainLayout()->addItem(mainTabs);
    //connect(mainTabs, SIGNAL(currentChanged(int)), this, SLOT(modeChanged(int)));
 
@@ -28,15 +28,15 @@ MainWidget::MainWidget() : Plasma::Frame(), m_mainLayout(0), frmCalls(0), frmCon
    frmContact->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    contactScrollArea->setWidget(frmContact);
-   
+
    frmHistory->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
    frmHistory->setLayout(historyLayout);
-   
+
    historyScrollArea->setWidget(frmHistory);
 
    dialPage = new DialPage();
    connect(dialPage, SIGNAL(call(QString)), this, SLOT(call(QString)));
-   
+
    QGraphicsLinearLayout* callTabLayout    = new QGraphicsLinearLayout( Qt::Vertical );
    QGraphicsLinearLayout* historyTabLayout = new QGraphicsLinearLayout( Qt::Vertical );
    QGraphicsLinearLayout* contactTabLayout = new QGraphicsLinearLayout( Qt::Vertical );
@@ -53,13 +53,13 @@ MainWidget::MainWidget() : Plasma::Frame(), m_mainLayout(0), frmCalls(0), frmCon
    mainTabs->addTab( KIcon("list-add") , "", addTabLayout );
 
    //mainLayout()->addItem(callTabLayout);
-   
+
    //mainLayout()->addItem(callScrollArea);
    //mainLayout()->addItem(historyScrollArea);
    //mainLayout()->addItem(contactScrollArea);
-   
+
    initPos = frmCalls->pos();
-   
+
    frmCalls->setPos  ( initPos );
    frmHistory->setPos( initPos );
    frmContact->setPos( initPos );
@@ -67,7 +67,7 @@ MainWidget::MainWidget() : Plasma::Frame(), m_mainLayout(0), frmCalls(0), frmCon
    setMinimumSize(285,390);
 }
 
-void MainWidget::dataUpdated(const QString& source, const Plasma::DataEngine::Data& data) 
+void MainWidget::dataUpdated(const QString& source, const Plasma::DataEngine::Data& data)
 {
    if ((source == "calls") && (frmCalls)) {
       QHash<QString, QVariant> value = data;

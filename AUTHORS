@@ -5,7 +5,7 @@ Emmanuel Milou <emmanuel dot milou at savoirfairelinux dot com>
 	- Dynamic loading of audio codecs ( shared libraries )
 	- Debian packages
 	- GTK client error handling
-	- Plus many portions of code in sflphoned and sflphone-gtk 
+	- Plus many portions of code in sflphoned and sflphone-gtk
 	- Test and debugging
 
 Alexandre Savard <alexandre dot savard at savoirfairelinux dot com>
@@ -14,14 +14,14 @@ Alexandre Bourget <alexandre dot bourget at savoirfairelinux dot com>
 	- IAX implementation
 
 Guillaume Carmel-Archambault <guillaume.carmel-archambault at savoirfairelinux dot com>
-	- Presence 
+	- Presence
 	- Contacts
 Yun Liu <yun.liu at savoirfairelinux dot com>
 	- Change sip library to pjsip
         - Support multiple accounts registration
         - Add chinese translation
         - Many portions of test and debugging
- 
+
 Polytechnic School of Montreal:
   - Jean-Francois Blanchard-Dionne <jean-francois.blanchard-dionne at polymtl dot ca>
   - Ala Eddine Limame <ala-eddine.limame at polymtl dot ca>
@@ -49,7 +49,7 @@ Jerome Oufella <jerome dot oufella at savoirfairelinux dot com>
 Julien Plissonneau Duquene <... at savoirfairelinux dot com>
 	- autotools cleanups
 
-Jean-Philippe Barrette-LaPierre 
+Jean-Philippe Barrette-LaPierre
 	- Autotools support and portions of code
 
 Laurielle Lea

@@ -81,7 +81,7 @@ class AudioLayer {
         virtual void stopStream() = 0;
 
         /**
-         * Determine wether or not the audio layer is active (i.e. stream opened) 
+         * Determine wether or not the audio layer is active (i.e. stream opened)
          */
         bool isStarted() const {
             return isStarted_;
@@ -96,7 +96,7 @@ class AudioLayer {
         void putUrgent(void* buffer, int toCopy);
 
         /**
-         * Flush main buffer 
+         * Flush main buffer
          */
         void flushMain();
 

@@ -2,7 +2,7 @@
 #define SFLPHONE_PLASMOID_HEADER
 
 #include <KIcon>
- 
+
 #include <Plasma/PopupApplet>
 #include <Plasma/Svg>
 #include <QGraphicsLinearLayout>
@@ -11,7 +11,7 @@
 #include <plasma/widgets/tabbar.h>
 //#include <plasma/animations/animation.h>
 //#include <plasma/animator.h>
-#include <Plasma/DataEngine> 
+#include <Plasma/DataEngine>
 #include <Plasma/ScrollWidget>
 #include <Plasma/SvgWidget>
 #include <Plasma/Extender>
@@ -20,10 +20,10 @@
 #include "ConferenceItem.h"
 #include "DialPage.h"
 #include "MainWidget.h"
- 
+
 class QSizeF;
 
-enum FormFactor { Panel, Desktop }; 
+enum FormFactor { Panel, Desktop };
 
 class SFLPhonePlasmoid : public Plasma::PopupApplet
 {
@@ -32,12 +32,12 @@ class SFLPhonePlasmoid : public Plasma::PopupApplet
       SFLPhonePlasmoid(QObject* parent, const QVariantList &args);
       ~SFLPhonePlasmoid();
       void init();
- 
+
    private:
       Plasma::Svg panel_icon;
       //Plasma::SvgWidget* panelFrame;
       Plasma::PushButton* panelFrame;
-      
+
       Qt::Orientation m_orientation;
       void constraintsEvent(Plasma::Constraints constraints);
       Plasma::ExtenderItem* extenderItem;
@@ -56,8 +56,8 @@ class SFLPhonePlasmoid : public Plasma::PopupApplet
    public slots:
       void dataUpdated(const QString& source, const Plasma::DataEngine::Data &data);
 };
- 
+
 // This is the command that links your applet to the .desktop file
 
- 
+
 #endif

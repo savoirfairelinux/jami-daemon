@@ -4,7 +4,7 @@
 #
 # Purpose :
 #
-# Author: Julien Bonjean (julien@bonjean.info) 
+# Author: Julien Bonjean (julien@bonjean.info)
 #
 # Creation Date: 2009-11-02
 # Last Modified: 2010-05-27 17:39:58 -0400
@@ -39,7 +39,7 @@ do
         echo Copy package in current directory ${OSC_DIR}/${LAUNCHPAD_PACKAGE}*
         cp ${OSC_DIR}/${LAUNCHPAD_PACKAGE}* .
 
-        echo 
+        echo
         sed -i -e "s/VERSION_INDEX/${VERSION_INDEX}/g" -e "s/VERSION/${SOFTWARE_VERSION}/g" ${LAUNCHPAD_PACKAGE}.spec
 
         echo Create tar ball ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz
@@ -52,7 +52,7 @@ do
         osc add ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz
         osc add *.patch
 
-        echo OSC Commit 
+        echo OSC Commit
         yes | osc commit --force -m "Version ${SOFTWARE_VERSION}"
 done
 

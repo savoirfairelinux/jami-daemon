@@ -18,7 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
- 
+
 #ifndef ACTION_SET_ACCOUNT_FIRST_H
 #define ACTION_SET_ACCOUNT_FIRST_H
 
@@ -40,7 +40,7 @@ public:
 
 private slots:
    void emitSetFirst();
-   
+
 signals:
    void setFirst(Account * account);
 

@@ -115,7 +115,7 @@ void killem(void)
 {
 	waveInStop(win);
 	waveInReset(win);
-	waveInClose(win); 
+	waveInClose(win);
 	waveOutReset(wout);
 	waveOutClose(wout);
 	WSACleanup(); /* dont forget socket stuff too */
@@ -294,7 +294,7 @@ main(int argc, char *argv[])
 				service_network(netfd,f); /* service network here for better performance */
 				/* if last one was removed from queue, zot it here */
 				if (i && wh1)
-				{ 
+				{
 					free(wh1);
 					wh1 = wh2;
 				}
@@ -303,14 +303,14 @@ main(int argc, char *argv[])
 				{
 					/* prepare audio header */
 					if ((c = waveOutUnprepareHeader(wout,&wh->w,sizeof(WAVEHDR))) != MMSYSERR_NOERROR)
-					{ 
+					{
 						fprintf(stderr,"Cannot unprepare audio out header, error %d\n",c);
 						exit(255);
 					}
 					if (wh1 != NULL) /* if there was a last one */
 					{
 						wh1->next = wh->next;
-					} 
+					}
 					if (outqueue == wh) /* is first one, so set outqueue to next one */
 					{
 						outqueue = wh->next;
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
 						gsm_encode(most_recent_answer->gsmout, (short *) ((char *) whin[i].lpData), fo);
 						if(iax_send_voice(most_recent_answer->session,
 							AST_FORMAT_GSM, (char *)fo, sizeof(gsm_frame)) == -1)
-									puts("Failed to send voice!"); 
+									puts("Failed to send voice!");
 						lastouttick = GetTickCount(); /* save time of last output */
 
 						/* unprepare (free) the header */
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 						/* exit the loop so that we can start at lowest buffer again */
 						break;
 					}
-				} 
+				}
 				if (i >= NWHIN) break; /* if all found, get out of loop */
 			}
 		}
@@ -433,7 +433,7 @@ do_iax_event(FILE *f) {
 
 
 			if(e->event.connect.callerid && e->event.connect.dnid)
-				fprintf(f, "Call from '%s' for '%s'", e->event.connect.callerid, 
+				fprintf(f, "Call from '%s' for '%s'", e->event.connect.callerid,
 				e->event.connect.dnid);
 			else if(e->event.connect.dnid) {
 				fprintf(f, "Call from '%s'", e->event.connect.dnid);
@@ -583,8 +583,8 @@ handle_event(FILE *f, struct iax_event *e, struct peer *p)
 						} else {  /* its an audio packet to be output to user */
 
 							/* get count of pending items in audio output queue */
-							n = 0; 
-							if (outqueue) 
+							n = 0;
+							if (outqueue)
 							{	/* determine number of pending out queue items */
 								for(wh = outqueue; wh != NULL; wh = wh->next)
 								{
@@ -615,7 +615,7 @@ handle_event(FILE *f, struct iax_event *e, struct peer *p)
 									fprintf(stderr,"Cannot prepare header for audio out\n");
 									exit(255);
 								}
-								/* if not currently transmitting, hold off a couple of packets for 
+								/* if not currently transmitting, hold off a couple of packets for
 									smooth sounding output */
 								if ((!n) && (!paused_xmit))
 								{
@@ -647,7 +647,7 @@ handle_event(FILE *f, struct iax_event *e, struct peer *p)
 									while(wh1->next) wh1 = wh1->next; /* find last entry in queue */
 									wh1->next = wh; /* point it to new entry */
 								}
-							} 
+							}
 #ifdef	PRINTCHUCK
 							else printf("Chucking packet!!\n");
 #endif

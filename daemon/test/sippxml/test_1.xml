@@ -20,7 +20,7 @@
 <!--                                                                    -->
 
 <scenario name="UAS responder put on hold then hungup">
-  
+
   <!-- This scenario implies a second call made by the uac which implies -->
   <!-- This call to be put on hold automatically                         -->
 

@@ -11,7 +11,7 @@ doc/index.cache.bz2
 src/sflphone-client-kde
 src/sflphone-client-kde.shell
 #po/
-#po/* 
+#po/*
 #doc/
 #man/
 #data/

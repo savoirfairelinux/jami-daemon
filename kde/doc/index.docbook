@@ -16,7 +16,7 @@
   <!ENTITY sflphone "SFLphone">
   <!ENTITY % addindex "IGNORE">
   <!ENTITY % English "INCLUDE" >
-  
+
   <!-- chapters in separate docbook files -->
   <!ENTITY introduction SYSTEM "introduction.docbook">
   <!ENTITY getting-started SYSTEM "getting-started.docbook">
@@ -28,10 +28,10 @@
 
 <book lang="&language;">
 <bookinfo>
-  <title>&sflphone-client-kde; User Manual</title> 
+  <title>&sflphone-client-kde; User Manual</title>
   <date>2009-05-10</date>
   <releaseinfo>&sflphonerelease;</releaseinfo>
-  
+
   <authorgroup>
     <author>
       <firstname>J&eacute;r&eacute;my</firstname>
@@ -46,7 +46,7 @@
     <year>2009</year>
     <holder>Savoir faire linux</holder>
   </copyright>
-  
+
   <legalnotice>&FDLNotice;</legalnotice>
 
   <abstract>
@@ -60,12 +60,12 @@
     <keyword>phone</keyword>
     <keyword>enterprise</keyword>
   </keywordset>
-  
+
 </bookinfo>
 
 
 &introduction;
-&getting-started; 
+&getting-started;
 &basic-use;
 &common-use;
 &advanced-use;

@@ -2,7 +2,7 @@
  * libIAX
  *
  * Implementation of Inter-IAXerisk eXchange
- * 
+ *
  * Copyright (C) 1999, Mark Spencer
  *
  * Mark Spencer <markster@linux-support.net>
@@ -10,7 +10,7 @@
  * This program is free software, distributed under the terms of
  * the GNU Lesser (Library) General Public License
  */
- 
+
 #ifndef _IAX_H
 #define _IAX_H
 

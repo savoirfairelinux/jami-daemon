@@ -34,8 +34,8 @@ def acceptOnIncomingCall(sflphone):
 # Define function callback to emulate UA behavior on
 # receiving a call and hanging up
 def acceptOnIncomingCallHangup(sflphone):
-    
-    sflphone.Accept(sflphone.currentCallId)    
+
+    sflphone.Accept(sflphone.currentCallId)
     sflphone.HangUp(sflphone.currentCallId)
 
 
@@ -56,7 +56,7 @@ class SflPhoneTests():
 
         for account in self.getAllAccounts():
             print "  " + account
-        
+
         for account in self.getAllRegisteredAccounts():
             print "  " + account
 
@@ -69,7 +69,7 @@ class SflPhoneTests():
     def test_create_account(self):
         """Create a new sip account"""
 
-        CONFIG_ACCOUNT_TYPE = "Account.type"  
+        CONFIG_ACCOUNT_TYPE = "Account.type"
 	CONFIG_ACCOUNT_ALIAS = "Account.alias"
 	HOSTNAME = "hostname"
 	USERNAME = "username"
@@ -101,8 +101,8 @@ class SflPhoneTests():
 
             callid = self.sflphone.Call("sip:test@" + REMOTEADDR_lo)
             time.sleep(0.5)
-            
-            self.sflphone.HangUp(callid)            
+
+            self.sflphone.HangUp(callid)
             time.sleep(0.5)
 
             i = i+1
@@ -124,7 +124,7 @@ class SflPhoneTests():
 
         del self.sflphone
 
-    
+
     # SCENARIO 1 Test 3
     def test_ip2ip_recv_hangup(self):
         """Wait for calls, answer then hangup"""
@@ -135,7 +135,7 @@ class SflPhoneTests():
         # Start Glib mainloop
         self.sflphone.start()
 
-        
+
 
 
     # SCENARIO 1 Test 4
@@ -158,8 +158,8 @@ class SflPhoneTests():
 
             callid = self.sflphone.Call(PHONE1)
             time.sleep(0.2)
-            
-            self.sflphone.HangUp(callid)            
+
+            self.sflphone.HangUp(callid)
             time.sleep(0.2)
 
             i = i+1
@@ -182,7 +182,7 @@ class SflPhoneTests():
         del self.sflphone
 
 
-    # SCENARIO 2 Test 3 
+    # SCENARIO 2 Test 3
     def test_account_recv_hangup(self):
         """Register an account and wait for incoming calls"""
 
@@ -193,7 +193,7 @@ class SflPhoneTests():
         self.sflphone.start()
 
 
-    # SCENARIO 2 Test 4 
+    # SCENARIO 2 Test 4
     def test_account_recv_peer_hungup(self):
         """Register an account and wait for incoming calls"""
 
@@ -218,8 +218,8 @@ class SflPhoneTests():
 
             self.sflphone.UnHold(callid)
             time.sleep(0.5)
-            
-            self.sflphone.HangUp(callid)            
+
+            self.sflphone.HangUp(callid)
             time.sleep(0.5)
 
             i = i+1
@@ -236,15 +236,15 @@ class SflPhoneTests():
 
             callid = self.sflphone.Call(PHONE1)
             time.sleep(1.0)
-            
+
             self.sflphone.Transfer(callid,PHONE3)
-            # self.sflphone.HangUp(callid)            
+            # self.sflphone.HangUp(callid)
             # time.sleep(1.0)
 
             i = i+1
 
 
-    # SCENARIO 5 Test 1 
+    # SCENARIO 5 Test 1
     def test_ip2ip_recv_refuse(self):
         """Receive an incoming IP2IP call, refuse it"""
 
@@ -269,14 +269,14 @@ class SflPhoneTests():
 
             callid3 = self.sflphone.Call("sip:test@" + REMOTEADDR_lo3)
             time.sleep(0.1)
-            
-            self.sflphone.HangUp(callid1)            
+
+            self.sflphone.HangUp(callid1)
             time.sleep(0.1)
 
-            self.sflphone.HangUp(callid2)            
+            self.sflphone.HangUp(callid2)
             time.sleep(0.1)
 
-            self.sflphone.HangUp(callid3)            
+            self.sflphone.HangUp(callid3)
             time.sleep(0.1)
 
             i = i+1
@@ -301,7 +301,7 @@ class SflPhoneTests():
 # Open sflphone and connect to sflphoned through dbus
 sflphone = SflPhoneCtrlSimple(True)
 
-# Init test suite 
+# Init test suite
 testsuite = SflPhoneTests(sflphone)
 
 # Register the first account available, should be the test account

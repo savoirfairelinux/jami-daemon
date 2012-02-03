@@ -2,7 +2,7 @@
  * libiax: An implementation of the Inter-Asterisk eXchange protocol
  *
  * Asterisk internal frame definitions.
- * 
+ *
  * Copyright (C) 1999, Mark Spencer
  *
  * Mark Spencer <markster@linux-support.net>

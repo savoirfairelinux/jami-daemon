@@ -16,5 +16,5 @@ libaudiortp_la_SOURCES = \
 		audio_symmetric_rtp_session.h \
 		audio_zrtp_session.h \
 		zrtp_session_callback.h \
-		audio_srtp_session.h 
+		audio_srtp_session.h
 

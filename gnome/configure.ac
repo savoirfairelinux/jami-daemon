@@ -40,7 +40,7 @@ PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
 AC_CONFIG_FILES([
-Makefile 
+Makefile
 src/Makefile
 src/config/Makefile
 src/dbus/Makefile

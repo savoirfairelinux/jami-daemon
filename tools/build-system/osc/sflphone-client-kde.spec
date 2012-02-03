@@ -3,7 +3,7 @@
 #
 # Purpose :
 #
-# Author: Julien Bonjean (julien@bonjean.info) 
+# Author: Julien Bonjean (julien@bonjean.info)
 #
 # Creation Date: 2009-05-27
 # Last Modified: 2009-10-07
@@ -81,7 +81,7 @@ make clean
 %files
 %defattr(-, root, root)
 %dir %{_prefix}/share/doc/kde/HTML/en/sflphone-client-kde
-%dir %{_prefix}/share/kde4/apps/sflphone-client-kde 
+%dir %{_prefix}/share/kde4/apps/sflphone-client-kde
 %lang(fr) %{_prefix}/share/locale/fr/LC_MESSAGES/*.mo
 %lang(es) %{_prefix}/share/locale/es/LC_MESSAGES/*.mo
 %lang(de) %{_prefix}/share/locale/de/LC_MESSAGES/*.mo

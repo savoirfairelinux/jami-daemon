@@ -44,11 +44,11 @@ class CallTreeItemDelegate : public QItemDelegate
 {
    public:
       CallTreeItemDelegate() { }
-      QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index ) const 
-      {  
+      QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index ) const
+      {
          Q_UNUSED(option)
          Q_UNUSED(index)
-         return QSize(0,60); 
+         return QSize(0,60);
       }
 };
 
@@ -62,18 +62,18 @@ public:
    //Setters
    void setCornerWidget(QWidget* wdg);
    void setVisible(bool enabled);
-   
+
 protected:
    virtual void paintEvent  (QPaintEvent*  event );
    virtual void resizeEvent (QResizeEvent* e     );
-   
+
 private:
    QWidget* m_pIcon  ;
    uint     m_step   ;
    QTimer*  m_pTimer ;
    bool     m_enabled;
    QColor   m_black  ;
-   
+
 private slots:
    void changeVisibility();
 };
@@ -91,7 +91,7 @@ class CallView : public QTreeWidget {
       bool dropMimeData           ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
       virtual QMimeData* mimeData ( const QList<QTreeWidgetItem *> items                                              ) const;
       bool haveOverlay();
-      
+
    private:
       QTreeWidgetItem* extractItem ( const QString& callId                             );
       QTreeWidgetItem* extractItem ( QTreeWidgetItem* item                             );
@@ -113,7 +113,7 @@ class CallView : public QTreeWidget {
       bool callToCall        ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
       bool phoneNumberToCall ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
       bool contactToCall     ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
-      
+
    public slots:
       void destroyCall        ( Call* toDestroy);
       void itemDoubleClicked  ( QTreeWidgetItem* item, int column    );
@@ -135,6 +135,6 @@ class CallView : public QTreeWidget {
 
    signals:
       void itemChanged(Call*);
-      
+
 };
 #endif

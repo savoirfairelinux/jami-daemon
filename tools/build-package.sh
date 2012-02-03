@@ -3,17 +3,17 @@
 # @author: Yun Liu <yun.liu@savoirfairelinux.com>
 #
 # Build sflphone rpm packages for Fedora 10 and openSUSE 11
-# 1 - The SFLphone package must be build with a specific GnuPG key. Please contact us to have more information about that (<sflphoneteam@savoirfairelinux.com>) 
+# 1 - The SFLphone package must be build with a specific GnuPG key. Please contact us to have more information about that (<sflphoneteam@savoirfairelinux.com>)
 # 2. The source code can be teched through anonymous http access. So no need of special access.
 # 3. After having all the prerequisites, you can run  "build-rpm-package.sh" to build rpm packages for sflphone.
-#  
+#
 # Refer to http://www.sflphone.org for futher information
 
 # Analyze parameters
 if [ "$1" == "--help" ] || [ "$1" == "" ];then
         echo -e '\E[34mThis script is used to build sflphone rpm packages on ubuntu series(8.04,8,10,9), Fedora 10 and SUSE 11 platform.'
         echo -e '\E[34mYou can add --fedora, --suse or --ubuntu to start packaging.'
-	echo 
+	echo
 	echo "The SFLphone package must be build with a specific GnuPG key. Please contact us to have more information about that (<sflphoneteam@savoirfairelinux.com>)"
 	echo
 	echo "For fedora and SUSE, you also need to add the following lines to $HOME/.rpmmacros:"

@@ -4,7 +4,7 @@
 #include <Plasma/Frame>
 #include <Plasma/PushButton>
 
-class DialButton : public Plasma::PushButton 
+class DialButton : public Plasma::PushButton
 {
    Q_OBJECT
 
@@ -25,7 +25,7 @@ class DialButton : public Plasma::PushButton
       QString letter;
 };
 
-class DialPage : public Plasma::Frame 
+class DialPage : public Plasma::Frame
 {
    Q_OBJECT
    public:
@@ -35,15 +35,15 @@ class DialPage : public Plasma::Frame
       void charTyped(QString value);
       void call();
       void cancel();
-      
+
    private:
       Plasma::Frame* currentNumber;
       QString currentNumber2;
-      
+
    signals:
       void typed(QString);
       void call(QString);
-      
+
 };
 
 #endif

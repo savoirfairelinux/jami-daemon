@@ -49,7 +49,7 @@ public:
    void setBitrate   ( const QString& bitrate   );
    void setBandwidth ( const QString& bandwidth );
    void setEnabled   ( bool enabled      );
-   
+
 private:
    //Attributes
    QString m_Payload   ;
@@ -58,7 +58,7 @@ private:
    QString m_Bitrate   ;
    QString m_Bandwidth ;
    bool    m_Enabled   ;
-   
+
    //Operators
    Codec& operator=(const Codec&);
 };

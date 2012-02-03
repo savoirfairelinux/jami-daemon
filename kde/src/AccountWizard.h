@@ -37,9 +37,9 @@ class AccountWizard : public QWizard
 Q_OBJECT
 
 public:
-   
+
    enum { Page_Intro, Page_AutoMan, Page_Type, Page_Email, Page_SIPForm, Page_IAXForm, Page_Stun, Page_Conclusion };
-   
+
    AccountWizard(QWidget * parent = 0);
    ~AccountWizard();
    void accept();
@@ -134,7 +134,7 @@ class WizardAccountSIPFormPage : public QWizardPage
    Q_OBJECT
 
 public:
-   
+
    WizardAccountSIPFormPage(QWidget *parent = 0);
    ~WizardAccountSIPFormPage();
    int nextId() const;
@@ -167,7 +167,7 @@ class WizardAccountIAXFormPage : public QWizardPage
    Q_OBJECT
 
 public:
-   
+
    WizardAccountIAXFormPage(QWidget *parent = 0);
    ~WizardAccountIAXFormPage();
    int nextId() const;

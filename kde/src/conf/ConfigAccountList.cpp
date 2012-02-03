@@ -39,7 +39,7 @@ AccountView* ConfigAccountList::addAccount(const QString& alias)
 
 void ConfigAccountList::removeAccount(QListWidgetItem* item)
 {
-   if(!item) 
+   if(!item)
       kDebug() << "Attempting to remove an account from a NULL item."; return;
 
    AccountView* a = (AccountView*) getAccountByItem(item);

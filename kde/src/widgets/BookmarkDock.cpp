@@ -62,7 +62,7 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    setObjectName("bookmarkDock");
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
    setMinimumSize(250,0);
-   
+
    m_pFilterLE   = new KLineEdit(this);
    m_pSplitter   = new QSplitter(Qt::Vertical,this);
    m_pItemView   = new QTreeWidget(this);
@@ -75,10 +75,10 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    mainLayout->addWidget(m_pSplitter);
    m_pSplitter->addWidget(m_pItemView);
    mainLayout->addWidget(m_pFilterLE);
-   
+
    m_pSplitter->setChildrenCollapsible(true);
    m_pSplitter->setStretchFactor(0,7);
-   
+
    setWindowTitle(i18n("Bookmark"));
    m_pItemView->headerItem()->setText(0,i18n("Bookmark") );
 
@@ -92,7 +92,7 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
 ///Destructor
 BookmarkDock::~BookmarkDock()
 {
-   
+
 }
 
 

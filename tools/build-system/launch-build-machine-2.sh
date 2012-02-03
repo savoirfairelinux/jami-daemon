@@ -4,7 +4,7 @@
 #
 # Purpose :
 #
-# Author: Julien Bonjean (julien@bonjean.info) 
+# Author: Julien Bonjean (julien@bonjean.info)
 #
 # Creation Date: 2009-10-20
 # Last Modified: 2010-04-22 16:42:57 -0400
@@ -187,7 +187,7 @@ do
 	DEBIAN_DIR="${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian"
 
 	echo "  --> Clean debian directory"
-	git checkout ${DEBIAN_DIR} 
+	git checkout ${DEBIAN_DIR}
 
 	echo "  --> Retrieve new sources"
     DIRNAME=`get_dir_name ${LAUNCHPAD_PACKAGE}`

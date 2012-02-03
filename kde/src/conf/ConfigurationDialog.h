@@ -48,7 +48,7 @@ class SFLPhoneView;
    A few complicated settings are handled directly by its pages.
    Some custom behaviors have been added to handle specific cases,
    as this config dialog is not the usual kind.
-   A few things might be done a cleaner way by passing the handling 
+   A few things might be done a cleaner way by passing the handling
    to the skeleton like it has been done with codecs.
 */
 class ConfigurationDialog : public KConfigDialog
@@ -56,7 +56,7 @@ class ConfigurationDialog : public KConfigDialog
 Q_OBJECT
 private:
 
-   
+
    DlgGeneral     * dlgGeneral;
    DlgDisplay     * dlgDisplay;
    DlgAccounts    * dlgAccounts;
@@ -68,8 +68,8 @@ public:
    ConfigurationDialog(SFLPhoneView *parent = 0);
 
    ~ConfigurationDialog();
-   
-    
+
+
 public slots:
    /**
     *   Reimplements KConfigDialog
@@ -93,12 +93,12 @@ public slots:
     * @return whether any custom widget has changed in the dialog.
     */
    bool hasChanged();
-   
+
    /**
     * reloads the informations before showing it.
     */
    void reload();
-   
+
 private slots:
    /**
     *   Apply settings not managed by kconfig (accounts)
@@ -110,7 +110,7 @@ private slots:
 signals:
    void clearCallHistoryAsked();
    void changesApplied();
-   
+
 };
 
 #endif

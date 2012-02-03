@@ -11,7 +11,7 @@
 	</chapterinfo>
 
 	<title>Advanced use of &sflphone-client-kde;</title>
- 
+
 	<sect1 id="advanced-use-hooks">
 		<title>Hooks</title>
 
@@ -33,7 +33,7 @@
 			<title> Phone number formatting </title>
 			<para>
 				This feature permits you to add the chosen prefix at the beginning of the phone number you are calling.
-			</para> 
+			</para>
 		</sect2>
 
 	</sect1>

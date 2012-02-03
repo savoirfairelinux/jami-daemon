@@ -1,4 +1,4 @@
-SUBDIRS = 
+SUBDIRS =
 
 noinst_LTLIBRARIES = libhooks.la
 

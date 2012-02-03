@@ -3,7 +3,7 @@
 #            http://astyle.sourceforge.net/astyle.html
 # Author:  Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 #           Savoir-faire Linux Inc
-#          http://www.sflphone.org 
+#          http://www.sflphone.org
 
 style=stroustrup    # stroustrup style http://astyle.sourceforge.net/astyle.html#_style=stroustrup
 indent=spaces=4     # Use spaces instead of tabs for indentation
