@@ -37,28 +37,28 @@ class AccountWizard;
 class CallView;
 
 
-/**                                                                             
- * This is the main view class for sflphone-client-kde.  Most of the non-menu,  
- * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go          
- * here.                                                                        
- * As the state of the view has effects on the window,                          
- * it emits some signals to ask for changes that the window has                 
- * to treat.                                                                    
- *                                                                              
- * @short Main view                                                             
- * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                 
- * @version 0.9.6                                                               
+/**
+ * This is the main view class for sflphone-client-kde.  Most of the non-menu,
+ * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go
+ * here.
+ * As the state of the view has effects on the window,
+ * it emits some signals to ask for changes that the window has
+ * to treat.
+ *
+ * @short Main view
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+ * @version 0.9.6
  */
 class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
 {
    Q_OBJECT
-    
+
 private:
    AccountWizard * wizard;
    QErrorMessage * errorWindow;
 
 protected:
-   
+
    /**
     * override context menu handling
     * @param event
@@ -74,21 +74,21 @@ public:
     *   You should call the loadWindow() method once
     *   you have constructed the object and connected the
     *   expected signals.
-    * @param parent 
+    * @param parent
     */
    SFLPhoneView(QWidget *parent);
    virtual ~SFLPhoneView();
-   
+
    //Getters
-   
-   
+
+
    QErrorMessage * getErrorWindow();
-   
-   
+
+
    //Daemon getters
    /**
    * Used to sort contacts according to their types with Kabc.
-   * @return the integer resulting to the flags of the types 
+   * @return the integer resulting to the flags of the types
    * chosen to be displayed in SFLphone configuration.
    */
    int phoneNumberTypesDisplayed();
@@ -102,16 +102,16 @@ private slots:
     * @param action the code of the action to perform
     */
    void action(Call * call, call_action action);
-   
+
    /**
     *   Sets the account account to be the prior account.
     *   That means it's gonna be used when the user places a call
-    *   if it's defined and registered, else the first registered of 
+    *   if it's defined and registered, else the first registered of
     *   accountList will be used.
     * @param account the account to use prior
     */
    void setAccountFirst(Account * account);
-   
+
    /**
     *   Handles the behaviour when the user types something with
     *   the dialpad widget or his keyboard (normally it's a one char
@@ -152,7 +152,7 @@ private slots:
 
    /**
     * Updates the history's search bar's display according to the current
-    * text searched. 
+    * text searched.
     * If empty, hide the search bar.
     */
    void updateRecordButton   ();
@@ -161,7 +161,7 @@ private slots:
    void updateVolumeBar      (double _value = -1);
    void updateVolumeControls ();
    void updateDialpad        ();
-   
+
 
 public slots:
    /**
@@ -169,17 +169,17 @@ public slots:
     * according to the settings.
     */
    void loadWindow();
-   
+
    /**
-    *   Updates the toolbar's actions' display according to the selected 
+    *   Updates the toolbar's actions' display according to the selected
     *   item's state.
     */
    void updateWindowCallState();
-   
-   
+
+
    void updateStatusMessage();
-   
-   
+
+
    virtual void keyPressEvent(QKeyEvent *event)
    {
       int key = event->key();
@@ -209,19 +209,19 @@ public slots:
    void transfer ();
    void record   ();
    void mailBox  ();
-   
+
    void on_widget_dialpad_typed(QString text);
-   
+
    void on_slider_recVol_valueChanged ( int value    );
    void on_slider_sndVol_valueChanged ( int value    );
    void on_toolButton_recVol_clicked  ( bool checked );
    void on_toolButton_sndVol_clicked  ( bool checked );
-   
+
    void on1_error(MapStringString details);
    void on1_incomingCall(Call* call);
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
-   
+
 signals:
    void statusMessageChangeAsked      ( const QString&  message            );
    void windowTitleChangeAsked        ( const QString&  title              );
@@ -233,7 +233,7 @@ signals:
    void addressBookEnableAsked        ( bool            enableAddressBook  );
    void screenChanged(int screen);
    void incomingCall(const Call * call);
-   
+
 
 };
 

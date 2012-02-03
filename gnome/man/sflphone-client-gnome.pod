@@ -4,7 +4,7 @@ sflphone-client-gnome - SIP and IAX2 compatible voice over IP softphone GTK+ cli
 
 =head1 SYNOPSIS
 
-sflphone-client-gnome 
+sflphone-client-gnome
 
 =head1 DESCRIPTION
 

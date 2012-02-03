@@ -20,7 +20,7 @@ TranslucentButtons::TranslucentButtons(QWidget* parent):QPushButton(parent),m_en
 ///Destructor
 TranslucentButtons::~TranslucentButtons()
 {
-   
+
 }
 
 ///How to paint

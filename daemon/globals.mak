@@ -22,7 +22,7 @@ PJSIP_LIBS= \
 			-lpjsip-simple-$(target) \
 			-lpjsip-ua-$(target) \
 			-lpjlib-util-$(target) \
-			-lpj-$(target) 
+			-lpj-$(target)
 
 SIP_CFLAGS=-I$(src)/libs/pjproject/pjsip/include \
 		   -I$(src)/libs/pjproject/pjlib/include \
@@ -33,13 +33,13 @@ SIP_CFLAGS=-I$(src)/libs/pjproject/pjsip/include \
 if BUILD_SPEEX
 SPEEXCODEC=-DHAVE_SPEEX_CODEC
 else
-SPEEXCODEC= 
+SPEEXCODEC=
 endif
 
 if BUILD_GSM
 GSMCODEC=-DHAVE_GSM_CODEC
 else
-GSMCODEC= 
+GSMCODEC=
 endif
 
 # Preprocessor flags

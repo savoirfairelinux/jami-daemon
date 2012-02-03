@@ -2,7 +2,7 @@
 Name=Extender Tutorial
 Type=Service
 X-KDE-ServiceTypes=Plasma/Applet
- 
+
 X-KDE-Library=plasma_applet_extendertutorial
 X-KDE-PluginInfo-Author=The Plasma Team
 X-KDE-PluginInfo-Email=plasma-devel@kde.org

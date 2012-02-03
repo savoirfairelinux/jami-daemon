@@ -164,7 +164,7 @@ select_active_output_audio_device()
 
     // Select active output device on server
     gchar **devices = dbus_get_current_audio_devices_index();
-    
+
 
     int currentDeviceIndex = atoi(devices[0]);
     DEBUG("audio device index for output = %d", currentDeviceIndex);

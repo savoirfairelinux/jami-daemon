@@ -195,14 +195,14 @@ static int send_sound(int soundfd)
 			return -1;
 		}
 		/* Calculate how many samples we can send, max */
-		if (total > (abi.fragments * abi.fragsize / 2)) 
+		if (total > (abi.fragments * abi.fragsize / 2))
 			total = abi.fragments * abi.fragsize / 2;
 		res = total;
 		if (sampsent < sounds[cursound].samplen) {
 			myoff=0;
 			while(total) {
 				amt = total;
-				if (amt > (sounds[cursound].datalen - offset)) 
+				if (amt > (sounds[cursound].datalen - offset))
 					amt = sounds[cursound].datalen - offset;
 				memcpy(myframe + myoff, sounds[cursound].data + offset, amt * 2);
 				total -= amt;
@@ -213,7 +213,7 @@ static int send_sound(int soundfd)
 					offset = 0;
 			}
 			/* Set it up for silence */
-			if (sampsent >= sounds[cursound].samplen) 
+			if (sampsent >= sounds[cursound].samplen)
 				silencelen = sounds[cursound].silencelen;
 			frame = myframe;
 		} else {
@@ -463,7 +463,7 @@ main(int argc, char *argv[])
 				timerptr = &timer;
 				timer.tv_sec = m /1000;
 				timer.tv_usec = (m % 1000) * 1000;
-			} else 
+			} else
 				timerptr = 0;
 			regm = check_iax_timeout();
 			if (!timerptr || (m > regm)) {
@@ -512,7 +512,7 @@ do_iax_event(FILE *f) {
 
 
 			if(e->event.connect.callerid && e->event.connect.dnid)
-				fprintf(f, "Call from '%s' for '%s'", e->event.connect.callerid, 
+				fprintf(f, "Call from '%s' for '%s'", e->event.connect.callerid,
 				e->event.connect.dnid);
 			else if(e->event.connect.dnid) {
 				fprintf(f, "Call from '%s'", e->event.connect.dnid);
@@ -664,7 +664,7 @@ handle_event(FILE *f, struct iax_event *e, struct peer *p)
 							int res;
 
 							res = write(audiofd, fr, sizeof(fr));
-							if (res < 0) 
+							if (res < 0)
 								fprintf(f, "Write failed: %s\n", strerror(errno));
 						}
 						len += 33;
@@ -696,7 +696,7 @@ dump_call(void)
 		offhook = 0;
 		ringing = 0;
 		gentone(TONE_NONE, 0);
-}                                                                               
+}
 
 void
 parse_cmd(FILE *f, int argc, char **argv)

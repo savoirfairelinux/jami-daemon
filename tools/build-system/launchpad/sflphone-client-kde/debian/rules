@@ -24,18 +24,18 @@ configure-stamp:
 	touch configure-stamp
 
 
-#Architecture 
+#Architecture
 build: build-arch build-indep
 
 build-arch: build-arch-stamp
-build-arch-stamp: configure-stamp 
+build-arch-stamp: configure-stamp
 
     # Add here commands to compile the arch part of the package.
 	$(MAKE)
 	touch $@
 
 build-indep: build-indep-stamp
-build-indep-stamp: configure-stamp 
+build-indep-stamp: configure-stamp
 
        # Add here commands to compile the indep part of the package.
        #$(MAKE) doc
@@ -54,22 +54,22 @@ endif
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
-	dh_clean 
+	dh_clean
 
 install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i 
+	dh_clean -k -i
 	dh_installdirs -i
 	# Add here commands to install the package into debian/sflphone.
 
 install-arch:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -s 
+	dh_clean -k -s
 	dh_installdirs -s
-	# Add here commands to install the arch part of the package into 
+	# Add here commands to install the arch part of the package into
 	# debian/tmp.
 	$(MAKE) DESTDIR=$(CURDIR)/debian/$(package) install
 	dh_install -s
@@ -97,7 +97,7 @@ binary-common:
 #	dh_installman
 	dh_link
 	dh_strip
-	dh_compress 
+	dh_compress
 	dh_fixperms
 #	dh_perl
 	dh_makeshlibs

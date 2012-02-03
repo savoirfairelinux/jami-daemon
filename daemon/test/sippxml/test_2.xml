@@ -84,7 +84,7 @@
 
   <!-- Here is where the call is put on hold -->
   <recv request="INVITE" crlf="true">
-  </recv> 
+  </recv>
 
   <send>
     <![CDATA[

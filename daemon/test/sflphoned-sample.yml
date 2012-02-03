@@ -1,26 +1,26 @@
 ---
 accounts:
-- alias: 
+- alias:
   codecs: 0/
   credential:
-  - password: 
+  - password:
     realm: '*'
-    username: 
-  displayName: 
+    username:
+  displayName:
   dtmfType: true
   enable: true
-  hostname: 
+  hostname:
   id: IP2IP
   interface: default
-  mailbox: 
+  mailbox:
   port: 5060
-  publishAddr: 
+  publishAddr:
   publishPort: 5060
   registrationExpire: true
   ringtoneEnabled: true
   ringtonePath: /usr/share/sflphone/ringtones/konga.ul
   sameasLocal: true
-  serviceRoute: 
+  serviceRoute:
   srtp:
     enable: false
     keyExchange: sdes
@@ -28,22 +28,22 @@ accounts:
   stunEnabled: false
   stunServer: stun.sflphone.org
   tls:
-    calist: 
-    certificate: 
-    ciphers: 
+    calist:
+    certificate:
+    ciphers:
     enable: false
     method: TLSv1
-    password: 
-    privateKey: 
+    password:
+    privateKey:
     requireCertif: true
-    server: 
+    server:
     timeout: 2
     tlsPort: 5061
     verifyClient: true
     verifyServer: true
   type: SIP
   updateContact: false
-  username: 
+  username:
   zrtp:
     displaySas: true
     displaySasOnce: false
@@ -70,13 +70,13 @@ addressbook:
   business: true
   enabled: true
   home: true
-  list: 
+  list:
   maxResults: 25
   mobile: true
   photo: true
 hooks:
   iax2Enabled: false
-  numberAddPrefix: 
+  numberAddPrefix:
   numberEnabled: false
   sipEnabled: false
   urlCommand: x-www-browser
@@ -98,13 +98,13 @@ audio:
     devicePlayback: alsa_output.pci-0000_00_1b.0.analog-stereo
     deviceRecord: alsa_input.pci-0000_00_1b.0.analog-stereo
     deviceRingtone: alsa_output.pci-0000_00_1b.0.analog-stereo
-  recordPath: 
+  recordPath:
   volumeMic: 100
   volumeSpkr: 100
 shortcuts:
-  hangUp: 
-  pickUp: 
-  popupWindow: 
-  toggleHold: 
-  togglePickupHangup: 
+  hangUp:
+  pickUp:
+  popupWindow:
+  toggleHold:
+  togglePickupHangup:
 ...

@@ -51,7 +51,7 @@ class AccountView : public Account, public Item<AccountItemWidget> {
       static AccountView* buildExistingAccountFromId (const QString& _accountId );
       static AccountView* buildNewAccountFromAlias   (const QString& alias      );
       virtual void updateState();
-      
+
    private:
       //Attributes
       QListWidgetItem*   m_pItem;

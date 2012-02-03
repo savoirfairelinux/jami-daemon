@@ -6,7 +6,7 @@ SUBDIRS = config contacts dbus widget icons
 if SFL_VIDEO
 SUBDIRS += video
 endif
-  
+
 NOFIFY_LIBS = -lnotify
 X11_LIBS = -lX11
 LD_LIBS = -ldl
@@ -52,7 +52,7 @@ sflphone_client_gnome_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) $(NOTIFY_C
 # add symbolic link
 install-exec-local:
 	echo $(prefix); echo $(bindir); echo $(datadir); echo $(libdir)
-	cd $(DESTDIR)$(bindir); ln -sf sflphone-client-gnome sflphone 
+	cd $(DESTDIR)$(bindir); ln -sf sflphone-client-gnome sflphone
 
 uninstall-local:
 	-test -h $(DESTDIR)$(bindir)/sflphone && rm $(DESTDIR)$(bindir)/sflphone

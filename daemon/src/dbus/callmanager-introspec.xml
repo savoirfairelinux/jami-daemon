@@ -656,11 +656,8 @@
 
         <signal name="volumeChanged" tp:name-for-bindings="volumeChanged">
                 <tp:docstring>
-              <p>Notify clients of a volume level
-                change.</p>
-              <p>This signal occurs only if ALSA is
-                enabled since Pulseaudio streams are
-                managed externally. </p>
+              <p>Notify clients of a volume level change.</p>
+              <p>This signal occurs only if ALSA is enabled since Pulseaudio streams are managed externally. </p>
             </tp:docstring>
             <arg type="s" name="device">
               <tp:docstring>
@@ -695,8 +692,7 @@
             <tp:added version="0.9.7"/>
             <tp:docstring>
               <p>Signal sent on SDES session success. Media transmission is encripted
-              for this call only. It does not apply for a
-              conference.</p>
+              for this call only. It does not apply for a conference.</p>
               <p>A conference can be considered to be secured if and only if each
               participant is secured.</p>
             </tp:docstring>
@@ -706,8 +702,7 @@
         <signal name="secureSdesOff" tp:name-for-bindings="secureSdesOff">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              <p>Sinal sent to notify that SDES session
-              failed.</p>
+              <p>Sinal sent to notify that SDES session failed.</p>
               <p>Media transmission is not encrypted.</p>
             </tp:docstring>
             <arg type="s" name="callID" />

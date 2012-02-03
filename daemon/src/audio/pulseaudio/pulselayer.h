@@ -109,7 +109,7 @@ class PulseLayer : public AudioLayer {
         AudioStream* ringtone_;
 
         /**
-         * Contain the list of playback devices 
+         * Contain the list of playback devices
          */
         std::vector<std::string> sinkList_;
 

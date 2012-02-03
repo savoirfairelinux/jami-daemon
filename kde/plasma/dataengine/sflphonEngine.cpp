@@ -1,5 +1,5 @@
 #include "sflphonEngine.h"
- 
+
 #include <Plasma/DataContainer>
 
 #include "../../src/lib/Call.h"
@@ -8,7 +8,7 @@
 #include "../../src/lib/configurationmanager_interface_singleton.h"
 #include "../../src/lib/callmanager_interface_singleton.h"
 #include "../../src/lib/sflphone_const.h"
- 
+
 SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
     : Plasma::DataEngine(parent, args)
 {
@@ -16,7 +16,7 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
    m_pModel = new CallModelConvenience(CallModelConvenience::ActiveCall);
    m_pModel->initCall();
    m_pModel->initHistory();
-   
+
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
 
    connect(m_pModel              , SIGNAL( callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)  ));
@@ -24,7 +24,7 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
    connect(&callManager          , SIGNAL( conferenceCreated(Call*)) , this , SLOT(conferenceCreatedSignal(Call*) ));
    connect(&callManager          , SIGNAL( conferenceChanged(Call*)) , this , SLOT(conferenceChangedSignal(Call*) ));
 }
- 
+
 bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
 {
    if      ( name == "history"     ) {
@@ -54,7 +54,7 @@ QStringList SFLPhoneEngine::sources() const {
    return toReturn;
 }
 
-QString SFLPhoneEngine::getCallStateName(call_state state) 
+QString SFLPhoneEngine::getCallStateName(call_state state)
 {
    if (state == CALL_STATE_INCOMING) {
       return I18N_NOOP("Ringing (in)");
@@ -118,10 +118,10 @@ void SFLPhoneEngine::updateConferenceList()
 
 void SFLPhoneEngine::updateContacts()
 {
-   
+
 }
 
-void SFLPhoneEngine::updateInfo() 
+void SFLPhoneEngine::updateInfo()
 {
    qDebug() << "Currentaccount: " << m_pModel->getCurrentAccountId();
    setData("info", I18N_NOOP("Account"), m_pModel->getCurrentAccountId());
@@ -165,9 +165,9 @@ void SFLPhoneEngine::voiceMailNotifySignal(const QString& accountId, int count)
    //TODO
 }
 
-void SFLPhoneEngine::accountChanged() 
+void SFLPhoneEngine::accountChanged()
 {
-   
+
 }
 
 K_EXPORT_PLASMA_DATAENGINE(sflphone, SFLPhoneEngine)

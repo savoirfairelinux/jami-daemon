@@ -484,7 +484,7 @@ AlsaLayer::getAudioDeviceIndexMap(AudioStreamDirection dir) const
                     std::string description = snd_ctl_card_info_get_name(info);
                     description.append(" - ");
                     description.append(snd_pcm_info_get_name(pcminfo));
-                    
+
                     // The number of the sound card is associated with a string description
                     audioDevice.push_back(HwIDPair(numCard , description));
                 }
@@ -522,8 +522,8 @@ AlsaLayer::soundCardIndexExists(int card, int stream)
 int
 AlsaLayer::getAudioDeviceIndex(const std::string &description) const
 {
-    std::vector<HwIDPair> audioDeviceIndexMap; 
-    
+    std::vector<HwIDPair> audioDeviceIndexMap;
+
     std::vector<HwIDPair> captureDevice = getAudioDeviceIndexMap(AUDIO_STREAM_CAPTURE);
     std::vector<HwIDPair> playbackDevice = getAudioDeviceIndexMap(AUDIO_STREAM_PLAYBACK);
 

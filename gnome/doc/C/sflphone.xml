@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"  [
-	<!ENTITY app "SFLphone">
-	<!ENTITY appversion "0.9.8~rc1">
-	<!ENTITY docversion "1.0">
+    <!ENTITY app "SFLphone">
+    <!ENTITY appversion "0.9.8~rc1">
+    <!ENTITY docversion "1.0">
 ]>
 
 <!-- =============Document Header ============================= -->
@@ -26,8 +26,8 @@
    -->
     <abstract role="description">
       <para>
-	SFLphone is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, published under the GPLv3 license.
-		</para>
+    SFLphone is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, published under the GPLv3 license.
+        </para>
     </abstract>
 
     <publisher>
@@ -35,12 +35,12 @@
     </publisher>
 
     <legalnotice id="legalnotice">
-	 <para>Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation Licence (GFDL), Version 1.1 or any later version published by the Free Software Foundation with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. You can find a copy of the GFDL at this <ulink type="help" url="ghelp:fdl">link</ulink> or in the file COPYING-DOCS distributed with this manual.</para>
+     <para>Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation Licence (GFDL), Version 1.1 or any later version published by the Free Software Foundation with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. You can find a copy of the GFDL at this <ulink type="help" url="ghelp:fdl">link</ulink> or in the file COPYING-DOCS distributed with this manual.</para>
          <para>This manual is part of a collection of GNOME manuals distributed under the GFDL. If you want to distribute this manual separately from the collection, you can do so by adding a copy of the licence to the manual, as described in section 6 of the licence.</para>
-	</legalnotice>
+    </legalnotice>
 
   <authorgroup>
-	<author>
+    <author>
       <firstname>Pierre-Luc</firstname>
       <surname>Bacon</surname>
       <affiliation>
@@ -48,7 +48,7 @@
       </affiliation>
     </author>
 
-	<author role="maintainer">
+    <author role="maintainer">
       <firstname>Emmanuel</firstname>
       <surname>Milou</surname>
       <affiliation>
@@ -64,7 +64,7 @@
       </affiliation>
     </author>
 
-	<author>
+    <author>
       <firstname>Alexandre</firstname>
       <surname>Savard</surname>
       <affiliation>
@@ -74,13 +74,13 @@
 </authorgroup>
 
 <revhistory>
-		<revision>
+        <revision>
             <revnumber>SFLphone Manual v1.0.1</revnumber>
             <date>March 2010</date>
             <revdescription>
                 <para role="author">SFLphone team</para>
                 <para role="publisher">Savoir-faire Linux</para>
-				<para>Minor changes</para>
+                <para>Minor changes</para>
             </revdescription>
       </revision>
 
@@ -104,137 +104,137 @@
 
 <sect1 id="introduction">
     <title>Introduction</title>
-	<para>
-		<application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
-	</para>
-	<para>
-		<application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
-	</para>
-	<para>
-		Among the many features we developed for you, we could
-		highlight the high definition sound (wide-band audio
-		codecs - speex, G722, Celt), multiple conference call,
-		audio recording, voicemail notification, and call history.
-		More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer, and on/off hold option.
-	</para>
-	<para>
-		This release also provides advanced security features (secure RTP and TLS).
-	</para>
+    <para>
+        <application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
+    </para>
+    <para>
+        <application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
+    </para>
+    <para>
+        Among the many features we developed for you, we could
+        highlight the high definition sound (wide-band audio
+        codecs - speex, G722, Celt), multiple conference call,
+        audio recording, voicemail notification, and call history.
+        More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer, and on/off hold option.
+    </para>
+    <para>
+        This release also provides advanced security features (secure RTP and TLS).
+    </para>
 
-	<para>
-		Besides the native ALSA interface, <application>SFLphone</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
-	</para>
+    <para>
+        Besides the native ALSA interface, <application>SFLphone</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
+    </para>
 </sect1>
 
 <sect1 id="getting-started">
-	<title>Getting started</title>
-	<para>
-		The first time you start up SFLphone, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities:
-		<itemizedlist>
-			<listitem>
-				<para><guilabel>Create a free SIP/IAX2 account on sflphone.org</guilabel></para>			
-				<para>Savoir-faire Linux provides free SIP/IAX2 accounts on an Asterisk server. 
-				By clicking this option, you will be created an account to make test calls. The echo service is available, you may also call other accounts registered to the same server.</para>			
-				<para>By filling out your email address information, you will receive voicemail notifications by email. This information is not mandatory to get your free account.</para>
-			</listitem>
-			<listitem>
-				<para><guilabel>Register an existing SIP or IAX2 account</guilabel></para>			
-				<para>Click there if you already have an account and you want to use it with SFLphone. 
-				You will be prompted to select the account type (SIP or IAX2) and to fill out your account information. <application>SFLphone</application> will then try to register it so you could start using it.</para>
-			</listitem>
-		</itemizedlist>
-	</para>
-	<para>
-		You can always access the account creation manager: <menuchoice><guimenu>Edit</guimenu> <guimenuitem>Account creation assistant</guimenuitem></menuchoice>. 
-	</para>
+    <title>Getting started</title>
+    <para>
+        The first time you start up SFLphone, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities:
+        <itemizedlist>
+            <listitem>
+                <para><guilabel>Create a free SIP/IAX2 account on sflphone.org</guilabel></para>
+                <para>Savoir-faire Linux provides free SIP/IAX2 accounts on an Asterisk server.
+                By clicking this option, you will be created an account to make test calls. The echo service is available, you may also call other accounts registered to the same server.</para>
+                <para>By filling out your email address information, you will receive voicemail notifications by email. This information is not mandatory to get your free account.</para>
+            </listitem>
+            <listitem>
+                <para><guilabel>Register an existing SIP or IAX2 account</guilabel></para>
+                <para>Click there if you already have an account and you want to use it with SFLphone.
+                You will be prompted to select the account type (SIP or IAX2) and to fill out your account information. <application>SFLphone</application> will then try to register it so you could start using it.</para>
+            </listitem>
+        </itemizedlist>
+    </para>
+    <para>
+        You can always access the account creation manager: <menuchoice><guimenu>Edit</guimenu> <guimenuitem>Account creation assistant</guimenuitem></menuchoice>.
+    </para>
 </sect1>
 
 <sect1 id="accounts">
-	<title>Managing your accounts</title>
-	<para>
-		<application>SFLphone</application> supports both IAX2
-		and SIP accounts.
-	</para>
+    <title>Managing your accounts</title>
+    <para>
+        <application>SFLphone</application> supports both IAX2
+        and SIP accounts.
+    </para>
 
-	<sect2 id="accounts_basic">
-	<title>Basic features</title>
-	<sect3 id="account_creation">
-		<title>Creating a new account</title>
-		<para>To create a new account, perform the following steps:</para>
-  		<orderedlist>
-			<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
-			<listitem><para>Click on the <guilabel>Add</guilabel> button. Fill out the following information:</para>
-            	<itemizedlist>
-                 	<listitem>
-                    	<para><guilabel>Alias</guilabel></para>
-						<para>The name to identify your account in the list. It is not used for the communications</para>
-                  	</listitem>
-                  	<listitem>
-                    	<para><guilabel>Protocol</guilabel></para>
-						<para>Select SIP or IAX2. The most commonly used protocol is SIP.</para>
-                  	</listitem>
-                  	<listitem>
-                    	<para><guilabel>Host name</guilabel></para>
-						<para>The name or the IP address of the server you want to register on.</para>
-                  	</listitem>
-                  	<listitem>
-                    	<para><guilabel>User name</guilabel></para>
-						<para>The name or the extension for your account.</para>
-                  	</listitem>
-                  	<listitem>
-                    	<para><guilabel>Password</guilabel></para>
-						<para>The password for your account.</para>
-                  	</listitem>
-                  	<listitem>
-                    	<para><guilabel>Voicemail number</guilabel></para>
-						<para>The number to dial to reach your voicemail. Example: 888, or *97. It will be used as a quick dial button on the main interface.</para>
-                  	</listitem>
+    <sect2 id="accounts_basic">
+    <title>Basic features</title>
+    <sect3 id="account_creation">
+        <title>Creating a new account</title>
+        <para>To create a new account, perform the following steps:</para>
+          <orderedlist>
+            <listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
+            <listitem><para>Click on the <guilabel>Add</guilabel> button. Fill out the following information:</para>
+                <itemizedlist>
+                     <listitem>
+                        <para><guilabel>Alias</guilabel></para>
+                        <para>The name to identify your account in the list. It is not used for the communications</para>
+                      </listitem>
+                      <listitem>
+                        <para><guilabel>Protocol</guilabel></para>
+                        <para>Select SIP or IAX2. The most commonly used protocol is SIP.</para>
+                      </listitem>
+                      <listitem>
+                        <para><guilabel>Host name</guilabel></para>
+                        <para>The name or the IP address of the server you want to register on.</para>
+                      </listitem>
+                      <listitem>
+                        <para><guilabel>User name</guilabel></para>
+                        <para>The name or the extension for your account.</para>
+                      </listitem>
+                      <listitem>
+                        <para><guilabel>Password</guilabel></para>
+                        <para>The password for your account.</para>
+                      </listitem>
+                      <listitem>
+                        <para><guilabel>Voicemail number</guilabel></para>
+                        <para>The number to dial to reach your voicemail. Example: 888, or *97. It will be used as a quick dial button on the main interface.</para>
+                      </listitem>
                 </itemizedlist>
-			</listitem>
-    		<listitem><para>Click the <menuchoice><guimenu>Apply</guimenu></menuchoice> button.</para></listitem>
-		</orderedlist>
-		<para>You may now check the state of your account(s). If it is registered, you may now use it to make calls.</para>
-		<note><para>You can setup as many accounts as you wish.</para></note>
-	</sect3>
+            </listitem>
+            <listitem><para>Click the <menuchoice><guimenu>Apply</guimenu></menuchoice> button.</para></listitem>
+        </orderedlist>
+        <para>You may now check the state of your account(s). If it is registered, you may now use it to make calls.</para>
+        <note><para>You can setup as many accounts as you wish.</para></note>
+    </sect3>
 
-	<sect3 id="account_edit">
-		<title>Editing a configured account</title>
-		<para>To edit an existing account, perform the following steps:</para>
-  		<orderedlist>
-			<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
-			<listitem><para>Select in the list the account you would like to edit, then click on the <guilabel>Edit</guilabel> button.</para></listitem>
-			<listitem><para>Make your modifications, then click on the <guilabel>Apply</guilabel> button.</para></listitem>
-     	</orderedlist>
-	</sect3>
-	
-	<sect3 id="account_delete">
-		<title>Deleting an account</title>
-		<para>To delete an existing account, perform the following steps:</para>
-  		<orderedlist>
-			<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
-			<listitem><para>Select in the list the account you would like to delete, then click on the <guibutton>Delete</guibutton> button.</para></listitem>
-     	</orderedlist>
-	</sect3>
-	
-	<sect3 id="account_selection">
-		<title>Selecting a default account</title>
-		<para>Since it is possible to have an unlimited number of registered accounts at the same time, which account will be used when making a call ? You can not only set up a default account to be used every time you are making a call, but an entire priority list. To do that, perform the following steps:</para>
-			<orderedlist>
-				<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice> to access the accounts list.</para></listitem>
-				<listitem>
-					<para>The first account in the account in list will be used as the default account to make calls with. If it is not registered, SFLphone will try to use the second in the list, if still not registered, the third, and so one ...</para>
-					<para>To reorder the accounts as you wish, select an account and click on the <menuchoice><guimenu>Up</guimenu></menuchoice> or  <menuchoice><guimenu>Down</guimenu></menuchoice> button.</para>
-				</listitem>
-     		</orderedlist>
-		<para>Note that you also can select an account to make a call with when dialing by right-clicking on it.</para>
-	</sect3>
+    <sect3 id="account_edit">
+        <title>Editing a configured account</title>
+        <para>To edit an existing account, perform the following steps:</para>
+          <orderedlist>
+            <listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
+            <listitem><para>Select in the list the account you would like to edit, then click on the <guilabel>Edit</guilabel> button.</para></listitem>
+            <listitem><para>Make your modifications, then click on the <guilabel>Apply</guilabel> button.</para></listitem>
+         </orderedlist>
+    </sect3>
+
+    <sect3 id="account_delete">
+        <title>Deleting an account</title>
+        <para>To delete an existing account, perform the following steps:</para>
+          <orderedlist>
+            <listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
+            <listitem><para>Select in the list the account you would like to delete, then click on the <guibutton>Delete</guibutton> button.</para></listitem>
+         </orderedlist>
+    </sect3>
+
+    <sect3 id="account_selection">
+        <title>Selecting a default account</title>
+        <para>Since it is possible to have an unlimited number of registered accounts at the same time, which account will be used when making a call ? You can not only set up a default account to be used every time you are making a call, but an entire priority list. To do that, perform the following steps:</para>
+            <orderedlist>
+                <listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice> to access the accounts list.</para></listitem>
+                <listitem>
+                    <para>The first account in the account in list will be used as the default account to make calls with. If it is not registered, SFLphone will try to use the second in the list, if still not registered, the third, and so one ...</para>
+                    <para>To reorder the accounts as you wish, select an account and click on the <menuchoice><guimenu>Up</guimenu></menuchoice> or  <menuchoice><guimenu>Down</guimenu></menuchoice> button.</para>
+                </listitem>
+             </orderedlist>
+        <para>Note that you also can select an account to make a call with when dialing by right-clicking on it.</para>
+    </sect3>
 </sect2>
 
-	<sect2 id="account_advanced">
-		<title>Advanced features</title>
-		<para>These features are only available with SIP.</para>
-		<para>Follow the indications to <link linkend='account_edit'>edit an account</link> and choose the <guimenu>Advanced</guimenu> tab.</para>
-		<!-- ==== Figure ==== -->
+    <sect2 id="account_advanced">
+        <title>Advanced features</title>
+        <para>These features are only available with SIP.</para>
+        <para>Follow the indications to <link linkend='account_edit'>edit an account</link> and choose the <guimenu>Advanced</guimenu> tab.</para>
+        <!-- ==== Figure ==== -->
         <figure id="account-advanced-fig">
             <title>Advanced features configuration panel</title>
             <screenshot>
@@ -246,45 +246,45 @@
             </screenshot>
         </figure>
         <!-- ==== End of Figure ==== -->
-		<sect3 id="accounts_registration">
-			<title>Registration</title>
-				<para>You may set the expires header for a contact.</para>
-				<para>It basically represents the duration your registration will remain active. If you don't register again within that time, calls will no longer be routed to you. It should not be used as a keepalive mechanism though. The default value is 600 seconds (ten minutes).</para>
-				<note><para>Some VoIP services requires that you set this value at at least 1600 seconds (e.g. the French VoIP server freephonie.net).</para>
-				</note>
-		</sect3>
-		<sect3 id="accounts_stun">
-			<title>Network</title>
-			<para>This section enables you to set advanced network parameters.</para>
-				<variablelist>
-					<varlistentry>
-						<term><guilabel>Local address</guilabel></term>
-						<listitem><para>it is initialized to your private/local IP address. Calls will be routed to this address by default.</para></listitem>
-					</varlistentry>
-					<varlistentry>
-						<term><guilabel>Local port</guilabel></term>
-						<listitem><para>It is initialized to the default SIP port, 5060.</para></listitem>
-					</varlistentry>
-					<varlistentry>
-						<term><guilabel>Set published address and port</guilabel></term>
-						<listitem>
-						<itemizedlist>
-							<listitem><para>Using STUN</para>
-							<para>If enabled, the core will try to initialize an UDP transport on the mapped address/port number that the NAT (Network Address Translator) has allocated to <application>SFLphone</application>.</para></listitem>
-							<listitem><para>Same as local parameters</para>
-							</listitem>
-							<listitem><para>Manually</para>
-							</listitem>
-						</itemizedlist>
-						</listitem>
-					</varlistentry>
-				</variablelist>
-		</sect3>
-	</sect2>
-	<sect2 id="account_security">
-		<title>Security features</title>
-        	<para>These features are only available with SIP.</para>
-			<para>Follow the indications to <link linkend='account_edit'>edit an account</link> and choose the <guimenu>Security</guimenu> tab.</para>
+        <sect3 id="accounts_registration">
+            <title>Registration</title>
+                <para>You may set the expires header for a contact.</para>
+                <para>It basically represents the duration your registration will remain active. If you don't register again within that time, calls will no longer be routed to you. It should not be used as a keepalive mechanism though. The default value is 600 seconds (ten minutes).</para>
+                <note><para>Some VoIP services requires that you set this value at at least 1600 seconds (e.g. the French VoIP server freephonie.net).</para>
+                </note>
+        </sect3>
+        <sect3 id="accounts_stun">
+            <title>Network</title>
+            <para>This section enables you to set advanced network parameters.</para>
+                <variablelist>
+                    <varlistentry>
+                        <term><guilabel>Local address</guilabel></term>
+                        <listitem><para>it is initialized to your private/local IP address. Calls will be routed to this address by default.</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><guilabel>Local port</guilabel></term>
+                        <listitem><para>It is initialized to the default SIP port, 5060.</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><guilabel>Set published address and port</guilabel></term>
+                        <listitem>
+                        <itemizedlist>
+                            <listitem><para>Using STUN</para>
+                            <para>If enabled, the core will try to initialize an UDP transport on the mapped address/port number that the NAT (Network Address Translator) has allocated to <application>SFLphone</application>.</para></listitem>
+                            <listitem><para>Same as local parameters</para>
+                            </listitem>
+                            <listitem><para>Manually</para>
+                            </listitem>
+                        </itemizedlist>
+                        </listitem>
+                    </varlistentry>
+                </variablelist>
+        </sect3>
+    </sect2>
+    <sect2 id="account_security">
+        <title>Security features</title>
+            <para>These features are only available with SIP.</para>
+            <para>Follow the indications to <link linkend='account_edit'>edit an account</link> and choose the <guimenu>Security</guimenu> tab.</para>
         <!-- ==== Figure ==== -->
         <figure id="account-security-fig">
             <title>Security features configuration panel</title>
@@ -298,25 +298,25 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<sect3 id="realms">
-			<title>Credentials</title>
-			<para>SFLphone supports multiple realms.</para> 
-		</sect3>
+        <sect3 id="realms">
+            <title>Credentials</title>
+            <para>SFLphone supports multiple realms.</para>
+        </sect3>
 
-		<sect3 id="security_frame">
-			<title>Security </title>
-			<para>Please refer to the section <link linkend="detailed_security_features">Security features</link> for detailed information about security features.</para>
-		</sect3>
-	</sect2>
+        <sect3 id="security_frame">
+            <title>Security </title>
+            <para>Please refer to the section <link linkend="detailed_security_features">Security features</link> for detailed information about security features.</para>
+        </sect3>
+    </sect2>
 </sect1>
 
 <sect1 id="call_features">
-	<title>Call features</title>
+    <title>Call features</title>
 
-	<para>The following features are available with both SIP and IAX2 accounts.</para>
+    <para>The following features are available with both SIP and IAX2 accounts.</para>
 
-	<sect2><title>Dialing a number</title>
-	<!-- ==== Figure ==== -->
+    <sect2><title>Dialing a number</title>
+    <!-- ==== Figure ==== -->
         <figure id="dial-fig">
             <title>Dial button</title>
             <screenshot>
@@ -329,9 +329,9 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>You may have an unlimited number of calls at the same time, even with different accounts.</para>
-		<para>To create a new call when you already have a current call, just click on the <guilabel>Dial</guilabel> button. The current call will automatically be put on hold.</para>
-		<!-- ==== Figure ==== -->
+        <para>You may have an unlimited number of calls at the same time, even with different accounts.</para>
+        <para>To create a new call when you already have a current call, just click on the <guilabel>Dial</guilabel> button. The current call will automatically be put on hold.</para>
+        <!-- ==== Figure ==== -->
         <figure id="call-second-fig">
             <title>Make an other call</title>
             <screenshot>
@@ -344,13 +344,13 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>NUMPAD</accel></guimenuitem> or almost any keys.</para>	
+        <para>Keyboard shortcut to perform this action: <guimenuitem><accel>NUMPAD</accel></guimenuitem> or almost any keys.</para>
 
-	</sect2>
-	
-	<sect2><title>Calling a number</title>
+    </sect2>
 
-	<!-- ==== Figure ==== -->
+    <sect2><title>Calling a number</title>
+
+    <!-- ==== Figure ==== -->
         <figure id="call-fig">
             <title>Call button</title>
             <screenshot>
@@ -363,12 +363,12 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>Enter</accel></guimenuitem>.</para>	
+        <para>Keyboard shortcut to perform this action: <guimenuitem><accel>Enter</accel></guimenuitem>.</para>
 
-	</sect2>
+    </sect2>
 
-	<sect2><title>Answering a call</title>
-	<!-- ==== Figure ==== -->
+    <sect2><title>Answering a call</title>
+    <!-- ==== Figure ==== -->
         <figure id="answer-fig">
             <title>Answer button</title>
             <screenshot>
@@ -381,11 +381,11 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>Enter</accel></guimenuitem>.</para>	
-	</sect2>
+        <para>Keyboard shortcut to perform this action: <guimenuitem><accel>Enter</accel></guimenuitem>.</para>
+    </sect2>
 
-	<sect2><title>Hanging up a call</title>
-	<!-- ==== Figure ==== -->
+    <sect2><title>Hanging up a call</title>
+    <!-- ==== Figure ==== -->
         <figure id="hangup-fig">
             <title>Hangup button</title>
             <screenshot>
@@ -398,12 +398,12 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>ESC</accel></guimenuitem>.</para>	
-	</sect2>
+        <para>Keyboard shortcut to perform this action: <guimenuitem><accel>ESC</accel></guimenuitem>.</para>
+    </sect2>
 
-	<sect2><title>Refusing a call</title>
+    <sect2><title>Refusing a call</title>
 
-	<para>When you refuse a call, your caller is automatically redirected to your voicemail box, if applicable.</para>
+    <para>When you refuse a call, your caller is automatically redirected to your voicemail box, if applicable.</para>
 
     <!-- ==== Figure ==== -->
         <figure id="refuse-fig">
@@ -418,12 +418,12 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>ESC</accel></guimenuitem>.</para>	
+        <para>Keyboard shortcut to perform this action: <guimenuitem><accel>ESC</accel></guimenuitem>.</para>
     </sect2>
 
 
-	<sect2><title>Holding on/off a call</title>
-		<!-- ==== Figure ==== -->
+    <sect2><title>Holding on/off a call</title>
+        <!-- ==== Figure ==== -->
         <figure id="holdon-fig">
             <title>Hold on button</title>
             <screenshot>
@@ -435,7 +435,7 @@
             </screenshot>
         </figure>
         <!-- ==== End of Figure ==== -->
-		<!-- ==== Figure ==== -->
+        <!-- ==== Figure ==== -->
         <figure id="holdoff-fig">
             <title>Hold off button</title>
             <screenshot>
@@ -447,10 +447,10 @@
             </screenshot>
         </figure>
         <!-- ==== End of Figure ==== -->
-	</sect2>
+    </sect2>
 
-	<sect2><title>Transferring a call</title>
-	<!-- ==== Figure ==== -->
+    <sect2><title>Transferring a call</title>
+    <!-- ==== Figure ==== -->
         <figure id="transfer-fig">
             <title>Transfer button</title>
             <screenshot>
@@ -463,8 +463,8 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Then type the number you want to transfer the current call to.</para>
-		<!-- ==== Figure ==== -->
+        <para>Then type the number you want to transfer the current call to.</para>
+        <!-- ==== Figure ==== -->
         <figure id="transfer-go-fig">
             <title>Validate the transfer</title>
             <screenshot>
@@ -477,15 +477,15 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-	<para>And press <guimenuitem><accel>Enter</accel></guimenuitem>. Clicking again on the transfer button cancels the transfer.</para>
+    <para>And press <guimenuitem><accel>Enter</accel></guimenuitem>. Clicking again on the transfer button cancels the transfer.</para>
 
-	</sect2>
+    </sect2>
 
-	<sect2><title>Record a call</title>
-	
-	<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Audio</guimenuitem></menuchoice> to configure the recordings destination folder.</para>
+    <sect2><title>Record a call</title>
 
-	<!-- ==== Figure ==== -->
+    <para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Audio</guimenuitem></menuchoice> to configure the recordings destination folder.</para>
+
+    <!-- ==== Figure ==== -->
         <figure id="rec-settings-fig">
             <title>Record settings</title>
             <screenshot>
@@ -512,9 +512,9 @@
         <!-- ==== End of Figure ==== -->
     </sect2>
 
-	<sect2><title>Voicemail quick dial</title>
-	
-	<caution><para>This feature is available only if you fill out the voicemail number information for your default account.</para></caution>
+    <sect2><title>Voicemail quick dial</title>
+
+    <caution><para>This feature is available only if you fill out the voicemail number information for your default account.</para></caution>
 
     <!-- ==== Figure ==== -->
         <figure id="voicemail-fig">
@@ -531,88 +531,88 @@
     </sect2>
 
 
-	<sect2 id="directip"><title>Direct IP calls</title>
-		<para>A direct IP call is a call established between two peers without any accounts. When dialing, such a call must prefixed with <guilabel>sip:</guilabel>.</para>
+    <sect2 id="directip"><title>Direct IP calls</title>
+        <para>A direct IP call is a call established between two peers without any accounts. When dialing, such a call must prefixed with <guilabel>sip:</guilabel>.</para>
 
-		<para>Direct IP calls use SIP protocol to establish communication and RTP to transport data. It is right now not available with IAX2.</para>
+        <para>Direct IP calls use SIP protocol to establish communication and RTP to transport data. It is right now not available with IAX2.</para>
 
-		<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Direct IP calls</guimenuitem></menuchoice> to configure the advanced security features for this kind of calls.</para>
-	</sect2>
+        <para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Direct IP calls</guimenuitem></menuchoice> to configure the advanced security features for this kind of calls.</para>
+    </sect2>
 
-	<sect2 id="conferencecall"><title>Conference calls</title>
-	<para>SFLphone now supports conference call hosting
+    <sect2 id="conferencecall"><title>Conference calls</title>
+    <para>SFLphone now supports conference call hosting
         integrating server like features in a simple GUI.
         </para>
         <para>
           <itemizedlist>
             <listitem>
-	      <para><guilabel>Create a conference</guilabel></para>
+          <para><guilabel>Create a conference</guilabel></para>
               <para>To host a conference, simply drag and drop one call
             on another. Additional participants are
             added the same way, dragging a call on the
             conference icon.
               </para>
-	       <!-- ==== Figure ==== -->
+           <!-- ==== Figure ==== -->
                <figure id="drag_n_frop-fig">
-		 <title>Creating a new conference</title>
-		 <screenshot>
+         <title>Creating a new conference</title>
+         <screenshot>
                    <mediaobject>
                      <imageobject>
                        <imagedata fileref="figures/drag_n_drop.png" format="PNG"/>
                      </imageobject>
                    </mediaobject>
-		 </screenshot>
+         </screenshot>
                </figure>
                <!-- ==== End of Figure ==== -->
-	       <!-- ==== Figure ==== -->
+           <!-- ==== Figure ==== -->
                <figure id="conference-fig">
-		 <title>Conference call</title>
-		 <screenshot>
+         <title>Conference call</title>
+         <screenshot>
                    <mediaobject>
                      <imageobject>
                        <imagedata fileref="figures/conference.png" format="PNG"/>
                      </imageobject>
                    </mediaobject>
-		 </screenshot>
+         </screenshot>
                </figure>
                <!-- ==== End of Figure ==== -->
             </listitem>
             <listitem>
-	      <para><guilabel>Leave a conference</guilabel></para>
+          <para><guilabel>Leave a conference</guilabel></para>
               <para>
             SFLphone conference model let you leave a conference that
             you are currently hosting to answer any other incoming
             communication or even initiate new ones. The conference is
             not interrupted, double clicking the conference icon
             let you reintroduce it at any moment.
-	      </para>
-	    <!-- ==== Figure ==== -->
+          </para>
+        <!-- ==== Figure ==== -->
                <figure id="conference_detached-fig">
-		 <title>Conference detached</title>
-		 <screenshot>
+         <title>Conference detached</title>
+         <screenshot>
                    <mediaobject>
                      <imageobject>
                        <imagedata fileref="figures/conference_detached.png" format="PNG"/>
                      </imageobject>
                    </mediaobject>
-		 </screenshot>
+         </screenshot>
                </figure>
                <!-- ==== End of Figure ==== -->
-	       <!-- ==== Figure ==== -->
+           <!-- ==== Figure ==== -->
                <figure id="conference_attached-fig">
-		 <title>Conference attached</title>
-		 <screenshot>
+         <title>Conference attached</title>
+         <screenshot>
                    <mediaobject>
                      <imageobject>
                        <imagedata fileref="figures/conference_attached.png" format="PNG"/>
                      </imageobject>
                    </mediaobject>
-		 </screenshot>
+         </screenshot>
                </figure>
                <!-- ==== End of Figure ==== -->
             </listitem>
             <listitem>
-	      <para><guilabel>Multiple conference</guilabel></para>
+          <para><guilabel>Multiple conference</guilabel></para>
               <para>
             SFLphone supports multiple conferences running
             simultaneously. Two conferences can be joined the same way
@@ -630,64 +630,64 @@
             </listitem>
           </itemizedlist>
         </para>
-	</sect2>
+    </sect2>
 
 
 </sect1>
 
 
 <sect1 id="detailed_security_features">
-	<title>Security features</title>
+    <title>Security features</title>
              <sect2 id="zrtp_srtp">
-				<title>SRTP/ZRTP</title>
-				<sect3 id="zrtp_srtp_definition">
-             	<title>SRTP and ZRTP, the big picture</title>
+                <title>SRTP/ZRTP</title>
+                <sect3 id="zrtp_srtp_definition">
+                 <title>SRTP and ZRTP, the big picture</title>
                        <para>RTP is the underlying protocol that is used in pair with the widely used SIP protocol to carry voice data. RTP alone does not provide any security features.</para>
                         <para>Details for implementing Secure RTP (SRTP) were described independently in a separate document (RFC). However, in this paper, one aspect was deliberately left unspecified: how should the encryption keys be exchanged between the two parties involved in a secure RTP session ?</para>
-                        
-                        <para>Multiple solutions were proposed to fill in that blank. Among them, are SDES (RFC4568) and ZRTP which are probably the most popular today. For the 0.9.7 release, SFLphone integrates support for Secure RTP through the ZRTP protocol, and SDES is expected to be implemented in the very few next releases.</para>
-                        
-                        <para>As of today, blueprints for ZRTP are still laid out and are recognized under the name "zrtp-draftzimmerman" in the RFC machine. The author of ZRTP is Phil Zimmermann, that same person who brought us PGP. Therefore, it is not surprising that he designed ZRTP as an anti-PKI solution for key exchange.</para>
-                        
-                        <para>ZRTP makes possible for two parties to automatically establish a shared secret in a very simple way from the user's point of view. Indeed under SFLphone no special configuration is needed, apart from  enabling the option itself.</para>
-                        
-                        <para>If you want to use ZRTP, please take note that if you are connecting to a PBX, this one must have been configured to support ZRTP. Unfortunately, security for VoIP communications is still young and chances are that your PBX software won't support it.</para>
-                        
-                        <para>This does not mean that you want be able to benefit from ZRTP ! In fact, it turns out that you will be able to use it, as long as the server does not need to decode the RTP stream. This is often the case when the person you are calling to uses a codec that you don't support. In that case, the server will need to transcode the RTP packets and obviously need to be able to handle the ZRTP stream.</para>
-                        
-                        <para>Obviously, if you are calling another user (for example by prefixing the number with "sip:") directly, then this one will have to support ZRTP as well if you want to use it.</para>
-					</sect3>
-					
-					<sect3 id="enabling_srtp">
-						<title>Enabling SRTP/ZRTP</title>
-							<para>To enable ZRTP per account basis, perform the following steps:</para>
-  								<orderedlist>
-									<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
-									<listitem><para>Select in the list the account you would like to edit, then click on the <guilabel>Edit</guilabel> button.</para></listitem>
-									<listitem><para>Select the <guilabel>Security</guilabel> tab.</para></listitem>
-									<listitem><para>Select <guilabel>ZRTP</guilabel> from the select box named <guilabel>SRTP Key Exchange</guilabel>.</para></listitem>
-     							</orderedlist>
-		<!-- ==== Figure ==== -->
-        							<figure id="srtp-enabled-fig">
-            							<title>Enabling SRTP</title>
-            							<screenshot>
-                							<mediaobject>
-                    							<imageobject>
-                        							<imagedata fileref="figures/srtp_enabled.png" format="PNG"/>
-                    							</imageobject>
-                							</mediaobject>
-            							</screenshot>
-        							</figure>
-        							<!-- ==== End of Figure ==== -->
-					</sect3>
 
-					<sect3 id="account_zrtp">
+                        <para>Multiple solutions were proposed to fill in that blank. Among them, are SDES (RFC4568) and ZRTP which are probably the most popular today. For the 0.9.7 release, SFLphone integrates support for Secure RTP through the ZRTP protocol, and SDES is expected to be implemented in the very few next releases.</para>
+
+                        <para>As of today, blueprints for ZRTP are still laid out and are recognized under the name "zrtp-draftzimmerman" in the RFC machine. The author of ZRTP is Phil Zimmermann, that same person who brought us PGP. Therefore, it is not surprising that he designed ZRTP as an anti-PKI solution for key exchange.</para>
+
+                        <para>ZRTP makes possible for two parties to automatically establish a shared secret in a very simple way from the user's point of view. Indeed under SFLphone no special configuration is needed, apart from  enabling the option itself.</para>
+
+                        <para>If you want to use ZRTP, please take note that if you are connecting to a PBX, this one must have been configured to support ZRTP. Unfortunately, security for VoIP communications is still young and chances are that your PBX software won't support it.</para>
+
+                        <para>This does not mean that you want be able to benefit from ZRTP ! In fact, it turns out that you will be able to use it, as long as the server does not need to decode the RTP stream. This is often the case when the person you are calling to uses a codec that you don't support. In that case, the server will need to transcode the RTP packets and obviously need to be able to handle the ZRTP stream.</para>
+
+                        <para>Obviously, if you are calling another user (for example by prefixing the number with "sip:") directly, then this one will have to support ZRTP as well if you want to use it.</para>
+                    </sect3>
+
+                    <sect3 id="enabling_srtp">
+                        <title>Enabling SRTP/ZRTP</title>
+                            <para>To enable ZRTP per account basis, perform the following steps:</para>
+                                  <orderedlist>
+                                    <listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
+                                    <listitem><para>Select in the list the account you would like to edit, then click on the <guilabel>Edit</guilabel> button.</para></listitem>
+                                    <listitem><para>Select the <guilabel>Security</guilabel> tab.</para></listitem>
+                                    <listitem><para>Select <guilabel>ZRTP</guilabel> from the select box named <guilabel>SRTP Key Exchange</guilabel>.</para></listitem>
+                                 </orderedlist>
+        <!-- ==== Figure ==== -->
+                                    <figure id="srtp-enabled-fig">
+                                        <title>Enabling SRTP</title>
+                                        <screenshot>
+                                            <mediaobject>
+                                                <imageobject>
+                                                    <imagedata fileref="figures/srtp_enabled.png" format="PNG"/>
+                                                </imageobject>
+                                            </mediaobject>
+                                        </screenshot>
+                                    </figure>
+                                    <!-- ==== End of Figure ==== -->
+                    </sect3>
+
+                    <sect3 id="account_zrtp">
                         <title>Configuration options</title>
-                        
+
                         <para>After enabling SRTP, click the <guilabel>Preferences</guilabel> button.</para>
-						<para>For basic usage, one don't have to worry about that.</para>
-                        
-						<!-- ==== Figure ==== -->
+                        <para>For basic usage, one don't have to worry about that.</para>
+
+                        <!-- ==== Figure ==== -->
                                     <figure id="zrtp-options-fig">
                                         <title>ZRTP configuration panel</title>
                                         <screenshot>
@@ -701,50 +701,50 @@
                                     <!-- ==== End of Figure ==== -->
 
 
-							<variablelist>
-                    			<varlistentry>
-                        			<term><guilabel>Send Hello Hash in SDP</guilabel></term>
-                        				<listitem><para>Selecting this option will cause the program to compute an hash function over the "Hello" packet and send it as an SDP field "zrtp-hash:". The remote end might be interested in getting this value to add an additional layer of protection based on another communication channel. Upon receiving this value, the remote point can compute the hash function on the received hello packet and compare it.</para>
-                        				<para>Take note that for 0.9.7, SFLphone does not perform the comparison on its side.</para></listitem>
-								</varlistentry>
-                        
-                        		<varlistentry>
-									<term><guilabel>Ask user to confirm SAS</guilabel></term>
-                        			<listitem><para>The short authentication mechanism is at the heart of the ZRTP protocol. Not requiring the user to manually check the SAS value presents a security risk over Man in the Middle type of attacks.</para>
-                        
-                        			<para>Disabling this option will stop the program from prompting the user with the SAS.</para>
-                        
-                        			<para>Such an option was motivated to be developed at that time by the the state of the libzrtpcpp library that SFLphone was making use of. It is only from version x.x that this library can cache results of SAS computation between two peers.</para>
-									</listitem>
-								</varlistentry>
-                        
-								<varlistentry>
-                        		<term><guilabel>Display SAS once for hold event</guilabel></term>
-                        			<listitem><para>When call is put on hold, the RTP stream is stopped and reinitiated later. From the ZRTP point of view, this appears as a "new call".  Therefore, the SAS will be redisplayed unless this option is selected.</para></listitem>
-                       			</varlistentry> 
-								<varlistentry>
-                        			<term><guilabel>ZRTP for direct peer-to-peer calls</guilabel></term>
-                        			<listitem><para>If you want to use ZRTP for calls that are placed directly to a user (without an intervening PBX), you must enable the option under the "Direct IP Calls" tab in the "configuration" window, available from the "edit" menu.</para>
-                        
+                            <variablelist>
+                                <varlistentry>
+                                    <term><guilabel>Send Hello Hash in SDP</guilabel></term>
+                                        <listitem><para>Selecting this option will cause the program to compute an hash function over the "Hello" packet and send it as an SDP field "zrtp-hash:". The remote end might be interested in getting this value to add an additional layer of protection based on another communication channel. Upon receiving this value, the remote point can compute the hash function on the received hello packet and compare it.</para>
+                                        <para>Take note that for 0.9.7, SFLphone does not perform the comparison on its side.</para></listitem>
+                                </varlistentry>
+
+                                <varlistentry>
+                                    <term><guilabel>Ask user to confirm SAS</guilabel></term>
+                                    <listitem><para>The short authentication mechanism is at the heart of the ZRTP protocol. Not requiring the user to manually check the SAS value presents a security risk over Man in the Middle type of attacks.</para>
+
+                                    <para>Disabling this option will stop the program from prompting the user with the SAS.</para>
+
+                                    <para>Such an option was motivated to be developed at that time by the the state of the libzrtpcpp library that SFLphone was making use of. It is only from version x.x that this library can cache results of SAS computation between two peers.</para>
+                                    </listitem>
+                                </varlistentry>
+
+                                <varlistentry>
+                                <term><guilabel>Display SAS once for hold event</guilabel></term>
+                                    <listitem><para>When call is put on hold, the RTP stream is stopped and reinitiated later. From the ZRTP point of view, this appears as a "new call".  Therefore, the SAS will be redisplayed unless this option is selected.</para></listitem>
+                                   </varlistentry>
+                                <varlistentry>
+                                    <term><guilabel>ZRTP for direct peer-to-peer calls</guilabel></term>
+                                    <listitem><para>If you want to use ZRTP for calls that are placed directly to a user (without an intervening PBX), you must enable the option under the "Direct IP Calls" tab in the "configuration" window, available from the "edit" menu.</para>
+
                         <para>Configuration instruction from that point are the same as for configured accounts.</para>
-									</listitem>
-								</varlistentry>
-							</variablelist>
+                                    </listitem>
+                                </varlistentry>
+                            </variablelist>
                 </sect3>
-		</sect2>
-		<sect2 id="accounts_tls">
+        </sect2>
+        <sect2 id="accounts_tls">
                         <title>TLS</title>
-			<para>TODO</para>
-		</sect2>
+            <para>TODO</para>
+        </sect2>
 </sect1>
 
 
 
 <sect1 id="audio_interfaces">
-	<title>Audio configuration</title>
-	<para>
-		ALSA and PulseAudio native interfaces are available.
-	</para> 
+    <title>Audio configuration</title>
+    <para>
+        ALSA and PulseAudio native interfaces are available.
+    </para>
 
     <sect2><title>Pulseaudio</title>
         <para>
@@ -758,44 +758,44 @@
 </sect1>
 
 <sect1 id="codecs_overview">
-	<title>Codecs overview</title>
-	<para>SFLphone supports several widely used audio codecs:</para>
+    <title>Codecs overview</title>
+    <para>SFLphone supports several widely used audio codecs:</para>
         <para>
           <itemizedlist>
             <listitem>
               <para><guilabel>PCMU/PCMA</guilabel></para>
                 <para>
-		  ITU-T telephony standard PCM formats, 8kHz, 64
-		  kbit/s, using logarithmic byte compression algorithm.
+          ITU-T telephony standard PCM formats, 8kHz, 64
+          kbit/s, using logarithmic byte compression algorithm.
                 </para>
             </listitem>
             <listitem>
               <para><guilabel>GSM</guilabel></para>
               <para>
-		Global System for Mobile communications (GSM)
-		narrowband 8kHz standard based on linear prediction encoding.
+        Global System for Mobile communications (GSM)
+        narrowband 8kHz standard based on linear prediction encoding.
               </para>
             </listitem>
             <listitem>
               <para><guilabel>G722</guilabel></para>
               <para>
-		ITU-T standard wideband 16kHz standard based on linear prediction.
+        ITU-T standard wideband 16kHz standard based on linear prediction.
               </para>
             </listitem>
             <listitem>
               <para><guilabel>SPEEX</guilabel></para>
               <para>
-		High quality voice encoding/decoding available
-		in narrowband 8kHz, wideband 16kHz (HD Voice), 
-		and ultra-wideband 32 kHz. 
-		Integrate additional features such as Variable Bit
-		Rate (VBR) and noise reduction. 
+        High quality voice encoding/decoding available
+        in narrowband 8kHz, wideband 16kHz (HD Voice),
+        and ultra-wideband 32 kHz.
+        Integrate additional features such as Variable Bit
+        Rate (VBR) and noise reduction.
               </para>
             </listitem>
             <listitem>
               <para><guilabel>CELT</guilabel></para>
               <para>
-		
+
               </para>
             </listitem>
           </itemizedlist>
@@ -804,92 +804,92 @@
 </sect1>
 
 <sect1 id="addressbook">
-	<title>Address books</title>
-	<sect2 id="adressbook_enable">
-	<title>Enable the address book support</title>
-	<para>To enable the address book, perform the following steps:</para>
+    <title>Address books</title>
+    <sect2 id="adressbook_enable">
+    <title>Enable the address book support</title>
+    <para>To enable the address book, perform the following steps:</para>
     <orderedlist>
-		<listitem>
-			<para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice>.
-			</para>
-		</listitem>
-		<listitem>
-			<para>Select the <menuchoice><guimenu>Address book</guimenu></menuchoice> tab.
-			</para>
-		</listitem>
-		<listitem>
-			<para>Check the <guilabel>Use Evolution address books</guilabel> box.</para>
-		</listitem>
+        <listitem>
+            <para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice>.
+            </para>
+        </listitem>
+        <listitem>
+            <para>Select the <menuchoice><guimenu>Address book</guimenu></menuchoice> tab.
+            </para>
+        </listitem>
+        <listitem>
+            <para>Check the <guilabel>Use Evolution address books</guilabel> box.</para>
+        </listitem>
     </orderedlist>
-	<para>Every address books you configured in Evolution will be now available in <application>SFLphone</application>. Please be sure you selected at least one address book.</para>
-	</sect2>
+    <para>Every address books you configured in Evolution will be now available in <application>SFLphone</application>. Please be sure you selected at least one address book.</para>
+    </sect2>
 
-	<sect2 id="adressbook_options">
-		<title>Available options</title>
-			<para>In <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem><guimenuitem>Address book</guimenuitem></menuchoice>, you may select one or all of the following options:</para>
-		<variablelist>
-			<varlistentry>
-				<term><guilabel>Display contact photo if available</guilabel></term>
-				<listitem><para>
-					The contact photo will be displayed as a thumbnail beside the phone number.
-				</para></listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><guilabel>Fields from Evolution's address book</guilabel></term>
-				<listitem><para>
-					You may use one or all of these following information from your contact.</para>
-					<itemizedlist>
-						<listitem><para>Work phone number</para></listitem>
-						<listitem><para>Home phone number</para></listitem>
-						<listitem><para>Mobile phone number</para></listitem>
-					</itemizedlist>
-				</listitem>
-			</varlistentry>
-		</variablelist>
-	</sect2>
-	
-	<sect2 id="addressbook_use">
-		<title>Using the address book</title>
-		<orderedlist>
-		<listitem>
-		<para>On the toolbar, click on the following button to display the address book window:</para>
+    <sect2 id="adressbook_options">
+        <title>Available options</title>
+            <para>In <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem><guimenuitem>Address book</guimenuitem></menuchoice>, you may select one or all of the following options:</para>
+        <variablelist>
+            <varlistentry>
+                <term><guilabel>Display contact photo if available</guilabel></term>
+                <listitem><para>
+                    The contact photo will be displayed as a thumbnail beside the phone number.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><guilabel>Fields from Evolution's address book</guilabel></term>
+                <listitem><para>
+                    You may use one or all of these following information from your contact.</para>
+                    <itemizedlist>
+                        <listitem><para>Work phone number</para></listitem>
+                        <listitem><para>Home phone number</para></listitem>
+                        <listitem><para>Mobile phone number</para></listitem>
+                    </itemizedlist>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+    </sect2>
 
-		<!-- ==== Figure ==== -->
-      	<figure id="addressbook-fig">
-    		<title>Address book toolbar button</title>
-    		<screenshot>
-      			<mediaobject>
-        			<imageobject>
-        				<imagedata fileref="figures/addressbook-button.png" format="PNG"/>
-        			</imageobject>
-      			</mediaobject>
-    		</screenshot>
-		</figure>
-    	<!-- ==== End of Figure ==== -->
-		</listitem>
+    <sect2 id="addressbook_use">
+        <title>Using the address book</title>
+        <orderedlist>
+        <listitem>
+        <para>On the toolbar, click on the following button to display the address book window:</para>
 
-		<listitem>
-		<para>Search for a contact</para>
-		</listitem>
+        <!-- ==== Figure ==== -->
+          <figure id="addressbook-fig">
+            <title>Address book toolbar button</title>
+            <screenshot>
+                  <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/addressbook-button.png" format="PNG"/>
+                    </imageobject>
+                  </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+        </listitem>
 
-		<listitem>
-		<para>New entries should have appeared in the window. Double click on it to call the contact. You may also <menuchoice><guimenu>Right click</guimenu><guimenuitem>Edit before calling</guimenuitem></menuchoice> to modify the entry before calling.</para>
-		</listitem>
-	</orderedlist>
-	</sect2>
+        <listitem>
+        <para>Search for a contact</para>
+        </listitem>
+
+        <listitem>
+        <para>New entries should have appeared in the window. Double click on it to call the contact. You may also <menuchoice><guimenu>Right click</guimenu><guimenuitem>Edit before calling</guimenuitem></menuchoice> to modify the entry before calling.</para>
+        </listitem>
+    </orderedlist>
+    </sect2>
 </sect1>
 
 <sect1 id="preferences">
-	<title>Preferences</title>
+    <title>Preferences</title>
 
-	<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice> to access the configuration panel.</para>
-	<para>Each section is detailed below.</para>
+    <para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice> to access the configuration panel.</para>
+    <para>Each section is detailed below.</para>
 
-	<sect2>
-		<title>General</title>
-		<para>This section provides the user general settings regarding the application.</para>
-		<sect3><title>Desktop Notifications</title>
-			<!-- ==== Figure ==== -->
+    <sect2>
+        <title>General</title>
+        <para>This section provides the user general settings regarding the application.</para>
+        <sect3><title>Desktop Notifications</title>
+            <!-- ==== Figure ==== -->
         <figure id="desktop-notif-settings-fig">
             <title>Desktop notifications options</title>
             <screenshot>
@@ -903,13 +903,13 @@
         <!-- ==== End of Figure ==== -->
 
 
-			<variablelist>
+            <variablelist>
             <varlistentry>
                 <term><guilabel>Enable notifications</guilabel></term>
                 <listitem><para>
-					Both clients use their desktop environment notification system. If checked, you will receive desktop notifications for events such as incoming calls and system messages.
-				</para>	
-			<figure id="notif-example-fig">
+                    Both clients use their desktop environment notification system. If checked, you will receive desktop notifications for events such as incoming calls and system messages.
+                </para>
+            <figure id="notif-example-fig">
             <title>Example of an incoming call notification</title>
             <screenshot>
                 <mediaobject>
@@ -921,12 +921,12 @@
         </figure>
                </listitem>
             </varlistentry>
-			<varlistentry>
+            <varlistentry>
                 <term><guilabel>Enable voicemail notifications</guilabel></term>
                 <listitem><para>
-					The voicemail notifications are handled separately. If checked, you will be notified with the number of unread voicemails for your accounts.
-				</para>
-				<figure id="voicemail-notif-fig">
+                    The voicemail notifications are handled separately. If checked, you will be notified with the number of unread voicemails for your accounts.
+                </para>
+                <figure id="voicemail-notif-fig">
             <title>Example of a voicemail notification</title>
             <screenshot>
                 <mediaobject>
@@ -940,11 +940,11 @@
 
                 </listitem>
             </varlistentry>
-			</variablelist>
-		</sect3>
+            </variablelist>
+        </sect3>
 
-		<sect3><title>System Tray Icon</title>
-			<!-- ==== Figure ==== -->
+        <sect3><title>System Tray Icon</title>
+            <!-- ==== Figure ==== -->
         <figure id="systemtray-settings-fig">
             <title>System tray options</title>
             <screenshot>
@@ -958,57 +958,57 @@
         <!-- ==== End of Figure ==== -->
 
 
-			<variablelist>
+            <variablelist>
             <varlistentry>
                 <term><guilabel>Popup main window on incoming call</guilabel></term>
                 <listitem><para>
-				If SFLphone is closed on the system tray, pops the main window up on foreground when receiving an incoming call.
+                If SFLphone is closed on the system tray, pops the main window up on foreground when receiving an incoming call.
                 </para></listitem>
             </varlistentry>
-			<varlistentry>
+            <varlistentry>
                 <term><guilabel>Never popup main window</guilabel></term>
                 <listitem><para>
-				If SFLphone is closed on the system tray, never pops the main window up on foreground when receiving an incoming call.
+                If SFLphone is closed on the system tray, never pops the main window up on foreground when receiving an incoming call.
                 </para></listitem>
             </varlistentry>
-			<varlistentry>
+            <varlistentry>
                 <term><guilabel>Hide SFLphone window on startup</guilabel></term>
                 <listitem><para>
-				On startup, SFLphone will go directly on the system tray.
+                On startup, SFLphone will go directly on the system tray.
                 </para></listitem>
             </varlistentry>
 
-			</variablelist>
+            </variablelist>
 
-		</sect3>
+        </sect3>
 
 
-		<sect3><title>Calls history</title>
-			    <!-- ==== Figure ==== -->
-        	<figure id="callshistory-settings-fig">
-            	<title>Calls history options</title>
-            		<screenshot>
-                		<mediaobject>
-                    		<imageobject>
-                        		<imagedata fileref="figures/callshistory-settings.png" format="PNG"/>
-                    		</imageobject>
-                			</mediaobject>
-            		</screenshot>
-        	</figure>
-        	<!-- ==== End of Figure ==== -->
+        <sect3><title>Calls history</title>
+                <!-- ==== Figure ==== -->
+            <figure id="callshistory-settings-fig">
+                <title>Calls history options</title>
+                    <screenshot>
+                        <mediaobject>
+                            <imageobject>
+                                <imagedata fileref="figures/callshistory-settings.png" format="PNG"/>
+                            </imageobject>
+                            </mediaobject>
+                    </screenshot>
+            </figure>
+            <!-- ==== End of Figure ==== -->
 
-			<variablelist>
+            <variablelist>
             <varlistentry>
                 <term><guilabel>Keep my history for at least n days</guilabel></term>
                 <listitem><para>
-					If checked, calls will be kept up to N days in the history. You may select a custom number of days. Do not check it if you don't want to use this feature.
+                    If checked, calls will be kept up to N days in the history. You may select a custom number of days. Do not check it if you don't want to use this feature.
                 </para></listitem>
             </varlistentry>
-			</variablelist>
-		</sect3>
+            </variablelist>
+        </sect3>
 
-		<sect3><title>Configuration File</title>
-			   <!-- ==== Figure ==== -->
+        <sect3><title>Configuration File</title>
+               <!-- ==== Figure ==== -->
             <figure id="configfile-settings-fig">
                 <title>Configuration file options</title>
                     <screenshot>
@@ -1021,44 +1021,44 @@
             </figure>
             <!-- ==== End of Figure ==== -->
 
-			<variablelist>
+            <variablelist>
             <varlistentry>
                 <term><guilabel>Store SIP credentials as MD5 hash</guilabel></term>
                 <listitem><para>
-				If checked, your password information will be encrypted in the configuration file, instead of plain text.
+                If checked, your password information will be encrypted in the configuration file, instead of plain text.
                 </para></listitem>
             </varlistentry>
             </variablelist>
 
-		
-		</sect3>
-	</sect2>
 
-	<sect2>
-		<title>Audio</title>
-		<para>TODO</para>
-	</sect2>
+        </sect3>
+    </sect2>
 
-	<sect2>
-		<title>Address book</title>	
+    <sect2>
+        <title>Audio</title>
+        <para>TODO</para>
+    </sect2>
 
-		<para>Refer to the <link linkend='addressbook'>Address books</link> section for more information.</para>
-	</sect2>
+    <sect2>
+        <title>Address book</title>
 
-	<sect2>
-		<title>Hooks</title>	
-		<para>TODO</para>
-	</sect2>
+        <para>Refer to the <link linkend='addressbook'>Address books</link> section for more information.</para>
+    </sect2>
 
-	<sect2>
-		<title>Network</title>	
-		<para>TODO</para>
-	</sect2>
+    <sect2>
+        <title>Hooks</title>
+        <para>TODO</para>
+    </sect2>
 
-	<sect2>
-		<title>Direct IP calls</title>	
-		<para>Refer to the <link linkend='directip'>Direct IP calls</link> section for more information.</para>
-	</sect2>
+    <sect2>
+        <title>Network</title>
+        <para>TODO</para>
+    </sect2>
+
+    <sect2>
+        <title>Direct IP calls</title>
+        <para>Refer to the <link linkend='directip'>Direct IP calls</link> section for more information.</para>
+    </sect2>
 </sect1>
 
 

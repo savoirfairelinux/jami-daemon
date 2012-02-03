@@ -56,7 +56,7 @@ class CallTreeItem : public QWidget
 
     //Const
     static const char* callStateIcons[12];
-    
+
  private:
     //Attributes
     Call*    m_pItemCall;
@@ -72,7 +72,7 @@ class CallTreeItem : public QWidget
     QLabel*  m_pHistoryPeerL;
     TranslucentButtons* m_pBtnConf;
     TranslucentButtons* m_pBtnTrans;
-    
+
   protected:
     //Reimplementation
     virtual void dragEnterEvent ( QDragEnterEvent *e );
@@ -88,7 +88,7 @@ private slots:
 
 public slots:
    void updated();
-   
+
 signals:
    void over(Call*);
    void changed();

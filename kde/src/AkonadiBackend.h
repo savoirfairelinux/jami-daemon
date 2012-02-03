@@ -52,24 +52,24 @@ public:
    Contact* getContactByUid   ( const QString& uid         );
    void     editContact       ( Contact*       contact     );
    void     addNewContact     ( Contact*       contact     );
-   
+
 private:
    AkonadiBackend(QObject* parent);
    virtual ~AkonadiBackend();
-   
+
    //Attributes
    static AkonadiBackend*         m_pInstance  ;
    Akonadi::Session*              m_pSession   ;
    Akonadi::Collection            m_Collection ;
    QHash<QString,KABC::Addressee> m_AddrHash   ;
-   
+
 protected:
    ContactList update_slot();
-   
+
 public slots:
    ContactList update(Akonadi::Collection collection);
    void collectionsReceived( const Akonadi::Collection::List& );
-   
+
 signals:
    void collectionChanged();
 };

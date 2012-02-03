@@ -56,11 +56,11 @@ static const char version[] = "1.0.2";
 
 int main(int argc, char **argv)
 {
-   
+
    try
    {
       KLocale::setMainCatalog("sflphone-client-kde");
-      
+
       KAboutData about(
          "sflphone-client-kde"                      ,
          "sflphone-client-kde"                      ,
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
       KCmdLineArgs::init(argc, argv, &about);
       KCmdLineOptions options;
       KCmdLineArgs::addCmdLineOptions(options);
-      
+
       //configuration dbus
       TreeWidgetCallModel::init();
 
@@ -91,9 +91,9 @@ int main(int argc, char **argv)
          return 1;
       };
       sflphoneWindow_->show();
-      
+
       int retVal = app.exec();
-      
+
       ConfigurationSkeleton* conf = ConfigurationSkeleton::self();
       conf->writeConfig();
       delete sflphoneWindow_;
@@ -107,4 +107,4 @@ int main(int argc, char **argv)
    {
       kDebug() << msg;
    }
-} 
+}

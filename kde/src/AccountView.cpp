@@ -54,7 +54,7 @@ void AccountView::initItemWidget()
 {
    if(m_pWidget != NULL)
       delete m_pWidget;
-        
+
    bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
    m_pWidget = new AccountItemWidget();
    m_pWidget->setEnabled(enabled);
@@ -152,7 +152,7 @@ void AccountView::updateState()
 {
    if(! isNew()) {
       Account::updateState();
-      
+
       AccountItemWidget * m_pWidget = getItemWidget();
       if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE ) {
          kDebug() << "Changing account state to Unregistered";

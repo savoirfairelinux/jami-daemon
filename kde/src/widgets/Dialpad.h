@@ -59,7 +59,7 @@ private:
    static const int m_Spacing    = 5  ;
    static const int m_NumberSize = 14 ;
    static const int m_TextSize   = 8  ;
-   
+
 public:
     Dialpad(QWidget *parent = 0);
 

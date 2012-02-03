@@ -58,12 +58,12 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
      wizard(0), errorWindow(0)
 {
    setupUi(this);
-   
+
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   
-   
+
+
    callTreeModel->setTitle(i18n("Calls"));
-   
+
    QPalette pal = QPalette(palette());
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
    setPalette(pal);
@@ -127,7 +127,7 @@ QErrorMessage * SFLPhoneView::getErrorWindow()
 void SFLPhoneView::typeString(QString str)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   
+
    Call* call = callTreeModel->getCurrentItem();
    callManager.playDTMF(str);
    Call *currentCall = 0;
@@ -254,9 +254,9 @@ void SFLPhoneView::updateWindowCallState()
    bool enabledActions[6]= {true,true,true,true,true,true};
    QString buttonIconFiles[6] = {ICON_CALL, ICON_HANGUP, ICON_HOLD, ICON_TRANSFER, ICON_REC_DEL_OFF, ICON_MAILBOX};
    QString actionTexts[6] = {ACTION_LABEL_CALL, ACTION_LABEL_HANG_UP, ACTION_LABEL_HOLD, ACTION_LABEL_TRANSFER, ACTION_LABEL_RECORD, ACTION_LABEL_MAILBOX};
-   
+
    Call* call = 0;
-   
+
    bool transfer = false;
    bool recordActivated = false;    //tells whether the call is in recording position
 
@@ -337,9 +337,9 @@ void SFLPhoneView::updateWindowCallState()
             break;
       }
    }
-   
+
    kDebug() << "Updating Window.";
-   
+
    emit enabledActionsChangeAsked     ( enabledActions  );
    emit actionIconsChangeAsked        ( buttonIconFiles );
    emit actionTextsChangeAsked        ( actionTexts     );
@@ -358,15 +358,15 @@ int SFLPhoneView::phoneNumberTypesDisplayed()
    if(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]) {
       typesDisplayed = typesDisplayed | KABC::PhoneNumber::Work;
    }
-   
+
    if(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]) {
       typesDisplayed = typesDisplayed | KABC::PhoneNumber::Cell;
    }
-   
+
    if(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]) {
       typesDisplayed = typesDisplayed | KABC::PhoneNumber::Home;
    }
-   
+
    return typesDisplayed;
 }
 
@@ -388,8 +388,8 @@ void SFLPhoneView::updateRecordButton()
    else {
       toolButton_recVol->setIcon(QIcon(ICON_REC_VOL_3));
    }
-   
-   if(recVol > 0) {   
+
+   if(recVol > 0) {
       toolButton_recVol->setChecked(false);
    }
 }
@@ -400,7 +400,7 @@ void SFLPhoneView::updateVolumeButton()
    kDebug() << "updateVolumeButton";
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    double sndVol = callManager.getVolume(SOUND_DEVICE);
-        
+
    if(sndVol == 0.00) {
       toolButton_sndVol->setIcon(QIcon(ICON_SND_VOL_0));
    }
@@ -413,7 +413,7 @@ void SFLPhoneView::updateVolumeButton()
    else {
       toolButton_sndVol->setIcon(QIcon(ICON_SND_VOL_3));
    }
-   
+
    if(sndVol > 0) {
       toolButton_sndVol->setChecked(false);
    }
@@ -447,7 +447,7 @@ void SFLPhoneView::updateVolumeControls()
    toolButton_sndVol->setVisible ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
    slider_recVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
    slider_sndVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
-   
+
 }
 
 ///Hide or show the dialpad
@@ -465,8 +465,8 @@ void SFLPhoneView::updateStatusMessage()
       emit statusMessageChangeAsked(i18n("No registered accounts"));
    }
    else {
-      emit statusMessageChangeAsked(i18n("Using account") 
-                     + " \'" + account->getAlias() 
+      emit statusMessageChangeAsked(i18n("Using account")
+                     + " \'" + account->getAlias()
                      + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
    }
 }
@@ -497,8 +497,8 @@ void SFLPhoneView::displayDialpad(bool checked)
 
 ///Input grabber
 void SFLPhoneView::on_widget_dialpad_typed(QString text)
-{ 
-   typeString(text); 
+{
+   typeString(text);
 }
 
 ///The value on the slider changed
@@ -552,7 +552,7 @@ void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
       slider_sndVol->setEnabled(false);
       callManager.setVolume(SOUND_DEVICE, 0.0);
    }
-   
+
    updateVolumeButton();
 }
 
@@ -560,22 +560,22 @@ void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
 void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 {
    KMenu menu(this);
-   
+
    SFLPhone * window = SFLPhone::app();
    QList<QAction *> callActions = window->getCallActions();
-   
+
    menu.addAction ( callActions.at((int) SFLPhone::Accept) );
    menu.addAction ( callActions[ SFLPhone::Refuse   ]      );
    menu.addAction ( callActions[ SFLPhone::Hold     ]      );
    menu.addAction ( callActions[ SFLPhone::Transfer ]      );
    menu.addAction ( callActions[ SFLPhone::Record   ]      );
    menu.addSeparator();
-   
+
    QAction* action = new ActionSetAccountFirst(NULL, &menu);
    action->setChecked(SFLPhone::model()->getPriorAccoundId().isEmpty());
    connect(action,  SIGNAL(setFirst(Account *)), this  ,  SLOT(setAccountFirst(Account *)));
    menu.addAction(action);
-   
+
    QVector<Account *> accounts = SFLPhone::model()->getAccountList()->registeredAccounts();
    for (int i = 0 ; i < accounts.size() ; i++) {
       Account* account = accounts.at(i);
@@ -592,7 +592,7 @@ void SFLPhoneView::editBeforeCall()
 {
    QString name;
    QString number;
-        
+
    bool ok;
    QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number, &ok);
    if(ok) {
@@ -622,10 +622,10 @@ void SFLPhoneView::configureSflPhone()
 {
    ConfigurationDialog* configDialog = new ConfigurationDialog(this);
    configDialog->setModal(true);
-   
+
    connect(configDialog, SIGNAL(changesApplied()),
            this,         SLOT(loadWindow()));
-           
+
    //configDialog->reload();
    configDialog->show();
 }
@@ -729,7 +729,7 @@ void SFLPhoneView::on1_error(MapStringString details)
 void SFLPhoneView::on1_incomingCall(Call* call)
 {
    kDebug() << "Signal : Incoming Call ! ID = " << call->getCallId();
-   
+
    updateWindowCallState();
 
    SFLPhone::app()->activateWindow  (      );

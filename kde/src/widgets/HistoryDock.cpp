@@ -96,7 +96,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pToDW       = new KDateWidget();
    m_pAllTimeCB  = new QCheckBox(i18n("Display all"));
    m_pLinkPB     = new QPushButton(this);
-   
+
    m_pAllTimeCB->setChecked(ConfigurationSkeleton::displayDataRange());
    enableDateRange(ConfigurationSkeleton::displayDataRange());
 
@@ -105,7 +105,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pLinkPB->setMaximumSize(20,9999999);
    m_pLinkPB->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Expanding);
    m_pLinkPB->setCheckable(true);
-   
+
    m_pItemView->headerItem()->setText(0,i18n("Calls")   );
    m_pItemView->header    ()->setClickable(true          );
    m_pItemView->header    ()->setSortIndicatorShown(true );
@@ -117,7 +117,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
-   
+
    QStringList sortBy;
    sortBy << "Date" << "Name" << "Popularity" << "Duration";
    m_pSortByCBB->addItems(sortBy);
@@ -137,12 +137,12 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    mainLayout->addWidget(m_pToDW      ,5,0,1,2 );
    mainLayout->addWidget(m_pItemView  ,6,0,1,3 );
    mainLayout->addWidget(m_pFilterLE  ,7,0,1,3 );
-   
+
    setWindowTitle(i18n("History"));
 
    QDate date(2000,1,1);
    m_pFromDW->setDate(date);
-   
+
    reload();
    m_CurrentFromDate = m_pFromDW->date();
    m_CurrentToDate   = m_pToDW->date();
@@ -269,7 +269,7 @@ void HistoryDock::enableDateRange(bool enable)
    m_pFromDW->setVisible(enable);
    m_pToDW->setVisible(enable);
    m_pLinkPB->setVisible(enable);
-   
+
    ConfigurationSkeleton::setDisplayDataRange(enable);
 }
 
@@ -329,7 +329,7 @@ void HistoryDock::updateLinkedToDate(QDate date)
  *                                                                           *
  ****************************************************************************/
 
-///Generate serializerd version of the content 
+///Generate serializerd version of the content
 QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
    kDebug() << "An history call is being dragged";

@@ -18,7 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
- 
+
 #ifndef ACCOUNTITEMWIDGET_H
 #define ACCOUNTITEMWIDGET_H
 
@@ -43,17 +43,17 @@ public:
    //Getters
    int  getState  ();
    bool getEnabled();
-   
+
    //Setters
    void setState       (int        state    );
    void setEnabled     (bool        enabled );
    void setAccountText (const QString& text );
-   
+
    //Updates
    void updateStateDisplay   ();
    void updateEnabledDisplay ();
    void updateDisplay        ();
-   
+
 private:
    //Attributes
    int        m_State     ;
@@ -61,10 +61,10 @@ private:
    QLabel*    m_pLed      ;
    QCheckBox* m_pCheckBox ;
    QLabel*    m_pTextLabel;
-   
-private slots:   
+
+private slots:
    void on_m_pCheckBox_stateChanged(int state);
-   
+
 signals:
    void checkStateChanged(bool checked);
 

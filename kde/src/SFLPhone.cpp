@@ -88,14 +88,14 @@ bool SFLPhone::initialize()
    //Keep these template paramater or the static attribute wont be share between this and the call view, they need to be
    CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
    histoModel->initHistory();
-   
+
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
   // accept dnd
   setAcceptDrops(true);
 
    m_pContactCD = new ContactDock(this);
    addDockWidget(Qt::TopDockWidgetArea,m_pContactCD);
-   
+
   // tell the KXmlGuiWindow that this is indeed the main widget
   m_pCentralDW = new QDockWidget(this);
   m_pCentralDW->setObjectName  ( "callDock"                                    );
@@ -113,11 +113,11 @@ bool SFLPhone::initialize()
       }\
       \
   ");
-  
+
   m_pCentralDW->setTitleBarWidget(new QWidget());
   m_pCentralDW->setContentsMargins(0,0,0,0);
   m_pView->setContentsMargins(0,0,0,0);
-  
+
   addDockWidget(Qt::TopDockWidgetArea,m_pCentralDW);
 
   m_pHistoryDW  = new HistoryDock(this);
@@ -160,7 +160,7 @@ bool SFLPhone::initialize()
 void SFLPhone::setupActions()
 {
    kDebug() << "setupActions";
-   
+
    action_accept   = new KAction(this);
    action_refuse   = new KAction(this);
    action_hold     = new KAction(this);
@@ -177,21 +177,21 @@ void SFLPhone::setupActions()
 
    action_screen = new QActionGroup(this);
    action_screen->setExclusive(true);
-   
+
    action_close = KStandardAction::close(this, SLOT(close()), this);
    action_quit  = KStandardAction::quit(this, SLOT(quitButton()), this);
-   
+
    action_configureSflPhone = KStandardAction::preferences(m_pView, SLOT(configureSflPhone()), this);
    action_configureSflPhone->setText(i18n("Configure SFLphone"));
-   
+
    action_displayDialpad = new KAction(KIcon(QIcon(ICON_DISPLAY_DIALPAD)), i18n("Display dialpad"), this);
    action_displayDialpad->setCheckable( true );
    action_displayDialpad->setChecked  ( ConfigurationSkeleton::displayDialpad() );
 
-   action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);   
+   action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);
    action_displayVolumeControls->setCheckable( true );
    action_displayVolumeControls->setChecked  ( ConfigurationSkeleton::displayVolume() );
-   
+
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
 
 
@@ -209,7 +209,7 @@ void SFLPhone::setupActions()
    /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
    /*                                                                                                                   */
 
-   
+
    actionCollection()->addAction("action_accept"                , action_accept                );
    actionCollection()->addAction("action_refuse"                , action_refuse                );
    actionCollection()->addAction("action_hold"                  , action_hold                  );
@@ -223,7 +223,7 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_configureSflPhone"     , action_configureSflPhone     );
    actionCollection()->addAction("action_accountCreationWizard" , action_accountCreationWizard );
    actionCollection()->addAction("action_configureShortcut"     , action_configureShortcut     );
-   
+
    setAutoSaveSettings();
    createGUI();
 }

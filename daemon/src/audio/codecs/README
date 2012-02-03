@@ -2,8 +2,8 @@ How to build the codec shared libraries
 ---------------------------------------
 
 CODEC_ALAW:
-  gcc -fPIC -g -c -Wall ulaw.cpp         
--------> gives you the object file ulaw.o. 
+  gcc -fPIC -g -c -Wall ulaw.cpp
+-------> gives you the object file ulaw.o.
 -------> option -g to include debug information
 -------> option -Wall to generate warnings
 -------> option -fPIC to enable position independant code generation
@@ -11,7 +11,7 @@ CODEC_ALAW:
   gcc -shared -o libcodec_ulaw.so ulaw.o -lc
 -------> creates the shared library
 
-CODEC ALAW: 
+CODEC ALAW:
   idem
 
 CODEC_GSM:

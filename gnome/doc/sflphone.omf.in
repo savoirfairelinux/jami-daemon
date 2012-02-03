@@ -2,7 +2,7 @@
 <omf>
   <resource>
     <creator>
-      sflphoneteam@savoirfairelinux.com    
+      sflphoneteam@savoirfairelinux.com
 	</creator>
     <maintainer>
       emmanuel.milou@savoirfairelinux.com
@@ -26,5 +26,5 @@
     <language code="C"/>
 	<relation seriesid="00e1b4a0-74d3-6e38-acf3-04cbb6e855c540"/>
     <rights type="GNU FDL" license.version="1.1" holder="Savoir-faire Linux Inc"/>
-  </resource>        
+  </resource>
 </omf>

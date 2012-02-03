@@ -45,19 +45,19 @@ class CallTreeItem;
 
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
-/**                                                                  
- * This class represents the SFLphone main window                    
- * It implements the methods relative to windowing                   
- * (status, menus, toolbars, notifications...).                      
- * It uses a view which implements the real functionning             
- * and features of the phone.                                        
- * The display of the window is according to the state of the view,  
- * so the view sends some signals to ask for changes on the window   
- * that the window has to take into account.                         
- *                                                                   
- * @short Main window                                                
- * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>      
- * @version 0.9.6                                                    
+/**
+ * This class represents the SFLphone main window
+ * It implements the methods relative to windowing
+ * (status, menus, toolbars, notifications...).
+ * It uses a view which implements the real functionning
+ * and features of the phone.
+ * The display of the window is according to the state of the view,
+ * so the view sends some signals to ask for changes on the window
+ * that the window has to take into account.
+ *
+ * @short Main window
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+ * @version 0.9.6
 **/
 class SFLPhone : public KXmlGuiWindow
 {
@@ -100,7 +100,7 @@ private:
    QDockWidget*   m_pCentralDW       ;
    HistoryDock*   m_pHistoryDW       ;
    BookmarkDock*  m_pBookmarkDW      ;
-   
+
    static SFLPhone* m_sApp;
    static TreeWidgetCallModel* m_pModel;
 
@@ -110,7 +110,7 @@ private:
 protected:
    virtual bool queryClose();
    virtual void changeEvent(QEvent * event);
-   
+
 
 public:
    SFLPhone(QWidget *parent = 0);
@@ -121,7 +121,7 @@ public:
    QList<QAction *> getCallActions ();
 
    friend class SFLPhoneView;
-   
+
    static SFLPhone*            app   ();
    static TreeWidgetCallModel* model ();
    SFLPhoneView*               view  ();
@@ -129,7 +129,7 @@ public:
    ContactDock*  contactDock();
    HistoryDock*  historyDock();
    BookmarkDock* bookmarkDock();
-   
+
 private slots:
    void on_m_pView_statusMessageChangeAsked      ( const QString& message        );
    void on_m_pView_windowTitleChangeAsked        ( const QString& message        );
@@ -146,4 +146,4 @@ private slots:
 };
 
 #endif
- 
+

@@ -37,11 +37,11 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
 {
    m_pCheckBox = new QCheckBox(this);
    m_pCheckBox->setObjectName("m_pCheckBox");
-   
+
    m_pLed = new QLabel();
    m_pLed->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
    m_pTextLabel = new QLabel();
-   
+
    QSpacerItem* horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
    QHBoxLayout* hlayout = new QHBoxLayout();
    hlayout->setContentsMargins( 0,0,0,0          );
@@ -49,12 +49,12 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
    hlayout->addWidget         ( m_pTextLabel     );
    hlayout->addItem           ( horizontalSpacer );
    hlayout->addWidget         ( m_pLed           );
-   
+
    this->setLayout(hlayout);
    m_State = Unregistered;
    m_Enabled = false;
    updateDisplay();
-   
+
    QMetaObject::connectSlotsByName(this);
 }
 

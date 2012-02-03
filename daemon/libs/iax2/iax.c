@@ -2179,7 +2179,7 @@ static int forward_match(struct sockaddr_in *sin, short callno, short dcallno, s
 			if (cur->peercallno == 0) {
 				cur->peercallno = callno;
 			}
-			else if ( cur->peercallno != callno ) 
+			else if ( cur->peercallno != callno )
 			{
 				// print a warning when the callno's don't match
 				fprintf( stderr, "WARNING: peercallno does not match callno"
@@ -2551,7 +2551,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 			DEBU(G "Packet arrived out of order (expecting %d, got %d) (frametype = %d, subclass = %d)\n",
 				session->iseqno, fh->oseqno, fh->type, subclass);
 			
-			/* 
+			/*
 			 * Check if session->iseqno > fh->oseqno, accounting for possible wrap around
 			 * This is correct if the two values are not equal (which, in this case, is guaranteed)
 			 */

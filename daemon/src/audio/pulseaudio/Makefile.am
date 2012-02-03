@@ -9,5 +9,5 @@ libpulselayer_la_SOURCES = \
 
 noinst_HEADERS = \
 		audiostream.h \
-		pulselayer.h 
+		pulselayer.h
 

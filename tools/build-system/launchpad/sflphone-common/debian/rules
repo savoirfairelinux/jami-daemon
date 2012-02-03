@@ -89,5 +89,5 @@ binary-arch: build-arch install-arch
 override_dh_strip:
 	dh_strip --dbg-package=sflphone-common-dbg
 
-binary: binary-arch 
+binary: binary-arch
 .PHONY: build clean binary-arch binary install install-arch configure override_dh_strip

@@ -53,7 +53,7 @@ public:
    bool accountDown   ( int index            );
    bool removeAccount ( int index            );
    bool addAccount    ( const QString& alias );
-   
+
    QString getOrderedList() const;
 };
 

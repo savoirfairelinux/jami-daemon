@@ -124,7 +124,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     portstr << localPort_;
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
-    ScalarNode contactUpdateEnabled(contactUpdateEnabled_); 
+    ScalarNode contactUpdateEnabled(contactUpdateEnabled_);
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -621,7 +621,7 @@ void SIPAccount::startKeepAliveTimer() {
         keepAliveDelay_.sec = registrationExpire_;
 
     keepAliveDelay_.msec = 0;
- 
+
     link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
@@ -801,12 +801,12 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
     } else
         scheme = "sip:";
-    
+
     contactHeader_ = displayName_ + (displayName_.empty() ? "" : " ") + "<" +
                      scheme + username_ + (username_.empty() ? "":"@") +
                      address + ":" + port + transport + ">";
 }
-    
+
 
 std::string SIPAccount::getContactHeader() const
 {
@@ -833,7 +833,7 @@ std::string SIPAccount::getContactHeader() const
            address + ":" + port + transport + ">";
 }
 
-void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te) 
+void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
    SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
 
@@ -846,10 +846,10 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
        sipAccount->registerVoIPLink();
 
        // make sure the current timer is deactivated
-       sipAccount->stopKeepAliveTimer(); 
+       sipAccount->stopKeepAliveTimer();
 
        // register a new timer
-       sipAccount->startKeepAliveTimer(); 
+       sipAccount->startKeepAliveTimer();
    }
 }
 

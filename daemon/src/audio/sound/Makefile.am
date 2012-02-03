@@ -14,5 +14,5 @@ noinst_HEADERS = \
 	tone.h \
 	tonelist.h \
 	dtmfgenerator.h \
-	dtmf.h 
+	dtmf.h
 

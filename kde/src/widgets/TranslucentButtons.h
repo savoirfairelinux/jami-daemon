@@ -19,7 +19,7 @@ public:
    //Setters
    void setHoverState(bool hover);
    void setPixmap(QImage* img);
-   
+
 protected:
    //Reimplementation
    virtual void paintEvent(QPaintEvent* event);
@@ -27,7 +27,7 @@ protected:
    virtual void dragMoveEvent  ( QDragMoveEvent  *e );
    virtual void dragLeaveEvent ( QDragLeaveEvent *e );
    virtual void dropEvent      ( QDropEvent      *e );
-   
+
 private:
    //Attributes
    bool    m_enabled     ;
@@ -37,7 +37,7 @@ private:
    QPen    m_Pen         ;
    bool    m_CurrentState;
    QImage* m_pImg        ;
-   
+
 public slots:
    void setVisible(bool enabled);
 private slots:

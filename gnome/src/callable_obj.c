@@ -229,7 +229,7 @@ gchar* get_call_duration(callable_obj_t *obj)
     return g_strdup_printf("<small>Duration:</small> %.2ld:%.2ld" , duration/60 , duration%60);
 }
 
-static 
+static
 void add_to_hashtable(GHashTable *hashtable, const gchar *key, const gchar *value)
 {
     g_hash_table_insert(hashtable, g_strdup(key), g_strdup(value));

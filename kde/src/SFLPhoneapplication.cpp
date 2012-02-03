@@ -95,7 +95,7 @@ void SFLPhoneApplication::initializeMainWindow()
 //       if( KMainWindow::classNameOfToplevel( n ) != QLatin1String( "SFLPhone" ) ) {
 //         continue;
 //       }
-// 
+//
 //       restoredWindow = n;
 //       break;
 //     }
@@ -128,7 +128,7 @@ void SFLPhoneApplication::initializePaths()
 
 Q_NOREPLY void SFLPhoneApplication::quit2()
 {
-   
+
 }
 
 #include "SFLPhoneapplication.moc"

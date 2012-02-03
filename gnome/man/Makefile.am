@@ -16,7 +16,7 @@ all:    $(MANPAGES)
 SUFFIXES=.pod .1
 
 .pod.1:
-	$(POD2MAN) --section=$(SECTION) --release=@VERSION@ --center "" $< > $@ 
+	$(POD2MAN) --section=$(SECTION) --release=@VERSION@ --center "" $< > $@
 
 clean-local:
 	rm -rf *.1

@@ -65,7 +65,7 @@ CallTreeItem::CallTreeItem(QWidget *parent)
 ///Destructor
 CallTreeItem::~CallTreeItem()
 {
-   
+
 }
 
 
@@ -93,7 +93,7 @@ void CallTreeItem::setCall(Call *call)
 {
    m_pItemCall = call;
    setAcceptDrops(true);
-   
+
    if (m_pItemCall->isConference()) {
       if (!m_Init) {
          m_pHistoryPeerL = new QLabel(i18n("Conference"),this);
@@ -116,11 +116,11 @@ void CallTreeItem::setCall(Call *call)
    m_pTransferNumberL  = new QLabel();
    m_pPeerL            = new QLabel();
    QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
-   
+
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
 
-   
+
    m_pBtnConf = new TranslucentButtons(this);
    m_pBtnConf->setVisible(false);
    m_pBtnConf->setParent(this);
@@ -133,12 +133,12 @@ void CallTreeItem::setCall(Call *call)
    m_pBtnTrans->setVisible(false);
    m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
    connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
-   
+
    m_pCodecL = new QLabel(this);
    //m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
 
    m_pSecureL = new QLabel(this);
-   
+
    mainLayout->setSpacing(4);
    QVBoxLayout* descr = new QVBoxLayout();
    descr->setMargin(1);
@@ -147,7 +147,7 @@ void CallTreeItem::setCall(Call *call)
    transfer->setMargin(0);
    transfer->setSpacing(0);
    mainLayout->addWidget(m_pIconL);
-   
+
    if(! m_pItemCall->getPeerName().isEmpty()) {
       m_pPeerL->setText(m_pItemCall->getPeerName());
       descr->addWidget(m_pPeerL);
@@ -161,7 +161,7 @@ void CallTreeItem::setCall(Call *call)
    descr->addLayout(transfer);
    descr->addItem(verticalSpacer);
    mainLayout->addLayout(descr);
-   
+
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
 
@@ -190,7 +190,7 @@ void CallTreeItem::updated()
          m_pPeerL->setText(i18n("<b>Unknow</b>"));
       }
    }
-      
+
    call_state state = m_pItemCall->getState();
    bool recording = m_pItemCall->getRecording();
    if(state != CALL_STATE_OVER) {
@@ -210,7 +210,7 @@ void CallTreeItem::updated()
       }
       m_pTransferNumberL->setText(m_pItemCall->getTransferNumber());
       m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
-                
+
       if(state == CALL_STATE_DIALING) {
          m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
@@ -309,7 +309,7 @@ void CallTreeItem::resizeEvent ( QResizeEvent *e )
       m_pBtnTrans->move(width()/2+10,m_pBtnTrans->y()+2);
       m_pBtnConf->move(10,m_pBtnConf->y()+2);
    }
-   
+
    e->accept();
 }
 

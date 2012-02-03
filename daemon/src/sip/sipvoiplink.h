@@ -111,7 +111,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Abort currently registered timer
          */
-        void cancelKeepAliveTimer(pj_timer_entry& timer); 
+        void cancelKeepAliveTimer(pj_timer_entry& timer);
 
         /**
          * Place a new call

@@ -1,19 +1,19 @@
 # Project Needs a name ofcourse
 project(sflphone-plasmoid)
- 
+
 # Find the required Libaries
 find_package(KDE4 REQUIRED)
 include(KDE4Defaults)
- 
+
 add_definitions (${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 include_directories(
    ${CMAKE_SOURCE_DIR}
    ${CMAKE_BINARY_DIR}
    ${KDE4_INCLUDES}
    )
- 
+
 # We add our source code here
-set(tutorial1_SRCS 
+set(tutorial1_SRCS
    SFLPhonePlasmoid.cpp
    CallItem.cpp
    ConferenceItem.cpp
@@ -44,18 +44,18 @@ kde4_add_plugin(plasma_applet_sflphone ${tutorial1_SRCS})
 target_link_libraries(plasma_applet_sflphone
                       qtsflphone
                       ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS})
- 
+
 install(TARGETS plasma_applet_sflphone
         DESTINATION ${PLUGIN_INSTALL_DIR})
- 
+
 install(FILES plasma-applet-sflphone.desktop
         DESTINATION ${SERVICES_INSTALL_DIR})
 
 #set(sflphone-plasmoid_SRCS
 #    SFLPhonePlasmoid.cpp)
-# 
+#
 #kde4_add_plugin(plasma_applet_sflphone ${sflphone-plasmoid_SRCS})
 #target_link_libraries(plasma_applet_sflphone ${KDE4_PLASMA_LIBS} ${KDE4_KIO_LIBS} ${KDE4_KDEUI_LIBS})
-# 
+#
 #install(TARGETS plasma_applet_sflphone DESTINATION ${PLUGIN_INSTALL_DIR})
 #install(FILES plasma-applet-sflphone.desktop DESTINATION ${SERVICES_INSTALL_DIR})

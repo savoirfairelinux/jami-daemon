@@ -127,7 +127,7 @@ void ManagerImpl::init(std::string config_file)
             telephoneTone_ = new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate());
             dtmfKey_ = new DTMF(8000);
         }
-    } 
+    }
 
     history_->load(preferences.getHistoryLimit());
     registerAccounts();
@@ -2105,7 +2105,7 @@ bool ManagerImpl::isRecording(const std::string& id)
 bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 {
     DEBUG("Manager: Start recorded file playback %s", filepath.c_str());
-    
+
     int sampleRate;
     {
         ost::MutexLock lock(audioLayerMutex_);

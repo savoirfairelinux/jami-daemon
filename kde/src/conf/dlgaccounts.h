@@ -51,20 +51,20 @@ class Private_AddCodecDialog : public KDialog {
   Q_OBJECT
   public:
     Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent = 0);
-    
+
   private:
     QTableWidget* codecTable;
-    
+
   private slots:
     void emitNewCodec();
-    
+
   signals:
     void addCodec(QString alias);
 };
 
-/**                                                                    
- *  @author Jérémy Quentin <jeremy.quentin@gmail.com>                  
- *                                                                     
+/**
+ *  @author Jérémy Quentin <jeremy.quentin@gmail.com>
+ *
  *  \note see ticket #1309 for advices about how to improve this class.
  */
 class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
@@ -74,23 +74,23 @@ public:
    DlgAccounts(KConfigDialog *parent = 0);
 
    void saveAccount(QListWidgetItem * item);
-   
+
    /**
-    *   Fills the settings form in the right side with the              
-    *   settings of @p item.                                            
-    *                                                                   
-    *   \note When the user creates a new account, its accountDetails   
-    *   map is empty, so the form is filled with blank strings,         
-    *   zeros... And when the user clicks \e Apply , these settings are 
-    *   saved just after the account is created. So be careful the form 
-    *   is filled with the right default settings if blank (as 600 for  
-    *   registration expire).                                           
-    *                                                                   
-    * @param item the item with which to fill the settings form         
-    *                                                                   
+    *   Fills the settings form in the right side with the
+    *   settings of @p item.
+    *
+    *   \note When the user creates a new account, its accountDetails
+    *   map is empty, so the form is filled with blank strings,
+    *   zeros... And when the user clicks \e Apply , these settings are
+    *   saved just after the account is created. So be careful the form
+    *   is filled with the right default settings if blank (as 600 for
+    *   registration expire).
+    *
+    * @param item the item with which to fill the settings form
+    *
     */
    void loadAccount(QListWidgetItem * item);
-   
+
 private:
    ///Attributes
    ConfigAccountList*  accountList           ;
@@ -108,7 +108,7 @@ public slots:
    bool hasChanged      ();
    void updateSettings  ();
    void updateWidgets   ();
-   
+
 private slots:
    void changedAccountList              ();
    void connectAccountsChangedSignal    ();
@@ -123,7 +123,7 @@ private slots:
    void enablePublished                 ();
    void updateAccountStates             ();
    void updateAccountListCommands       ();
-   
+
    void codecClicked                                 ( const QModelIndex& model                                 );
    void updateStatusLabel                            ( QListWidgetItem* item                                    );
    void on_listWidget_accountList_currentItemChanged ( QListWidgetItem* current , QListWidgetItem * previous    );
@@ -135,8 +135,8 @@ private slots:
    void loadCredentails                              ( QString        accountId                                 );
    void saveCredential                               ( QString        accountId                                 );
    void on_edit1_alias_textChanged                   ( const QString& text                                      );
-   
-   
+
+
 signals:
    void updateButtons();
 

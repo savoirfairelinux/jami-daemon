@@ -20,7 +20,7 @@ class CallItem : public Plasma::Frame, public ViewItem
       void setDate(int date);
       ViewItem* parent();
       void setParent(ViewItem* parent);
-      bool isConference() 
+      bool isConference()
       {
          return false;
       }
@@ -33,7 +33,7 @@ class CallItem : public Plasma::Frame, public ViewItem
       QString callId;
       ViewItem* parentItem;
       QGraphicsGridLayout* mainLayout;
-      
+
 };
 
 #endif

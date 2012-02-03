@@ -87,7 +87,7 @@ class ContactItemWidget : public QWidget
 
 public slots:
    void updated();
-   
+
 private slots:
    void showContext(const QPoint& pos);
    void sendEmail   ();

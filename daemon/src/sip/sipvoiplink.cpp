@@ -665,14 +665,14 @@ void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& del
 {
     pj_status_t status;
 
-    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay); 
+    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay);
     if (status != PJ_SUCCESS)
         ERROR("Could not schedule new timer in pjsip endpoint");
 }
 
 void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 {
-    pjsip_endpt_cancel_timer(endpt_, &timer); 
+    pjsip_endpt_cancel_timer(endpt_, &timer);
 }
 
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
@@ -1087,7 +1087,7 @@ SIPVoIPLink::dtmfSend(SIPCall *call, char code, const std::string &dtmf)
         return;
     }
     else if (dtmf != SIPAccount::SIPINFO_STR) {
-        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead", 
+        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead",
              dtmf.c_str(), SIPAccount::SIPINFO_STR);
     }
     // else : dtmf == SIPINFO
@@ -1572,11 +1572,11 @@ void SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport *transport, pjsi
 
     // Update address and port with active transport
     if (!transport) {
-        ERROR("SIPVoIPLink: Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str()); 
+        ERROR("SIPVoIPLink: Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
         return;
     }
 
-    // get the transport manager associated with the SIP enpoint 
+    // get the transport manager associated with the SIP enpoint
     pjsip_tpmgr *tpmgr = pjsip_endpt_get_tpmgr(endpt_);
     if (!tpmgr) {
         ERROR("SIPVoIPLink: Transport manager is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
@@ -1601,9 +1601,9 @@ void SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport *transport, pjsi
         return;
     }
 
-    // Update local address based on the transport type 
+    // Update local address based on the transport type
     addr = std::string(localAddress.ptr, localAddress.slen);
- 
+
     // Fallback on local ip provided by pj_gethostip()
     if (addr == "0.0.0.0")
         addr = getSIPLocalIP();
@@ -1945,9 +1945,9 @@ void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account
     if(siplink == NULL) {
         ERROR("SIPVoIPLink: Could not find voip link from account");
         return;
-    } 
+    }
 
-    pj_pool_t *pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL); 
+    pj_pool_t *pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL);
     if(pool == NULL) {
         ERROR("SIPVoIPLink: Could not create temporary memory pool in transport header");
         return;
@@ -1989,14 +1989,14 @@ void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account
         updateContact = true;
     }
 
-    size_t foundPort = currentContactHeader.find(recvContactPort); 
+    size_t foundPort = currentContactHeader.find(recvContactPort);
     if(foundPort == std::string::npos) {
         updateContact = true;
     }
 
     if(updateContact) {
-        DEBUG("SIPVoIPLink: Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str()); 
-        account->setContactHeader(recvContactHost, recvContactPort);     
+        DEBUG("SIPVoIPLink: Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str());
+        account->setContactHeader(recvContactHost, recvContactPort);
         siplink->sendRegister(account);
     }
     pj_pool_release(pool);
@@ -2019,7 +2019,7 @@ void registration_cb(struct pjsip_regc_cbparam *param)
     if(account->isContactUpdateEnabled()) {
         update_contact_header(param, account);
     }
- 
+
     const pj_str_t *description = pjsip_get_status_text(param->code);
 
     if (param->code && description) {

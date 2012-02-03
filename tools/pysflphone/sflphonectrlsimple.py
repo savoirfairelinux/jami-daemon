@@ -50,9 +50,9 @@ except ImportError, e:
 class SflPhoneCtrlSimple(Thread):
     """ Simple class for controlling SflPhoned through DBUS
 
-        If option testSuite (ts) is put to true, 
+        If option testSuite (ts) is put to true,
 	simple actions are implemented on incoming call.
-    """ 
+    """
 
     # list of active calls (known by the client)
     activeCalls = {}
@@ -105,7 +105,7 @@ class SflPhoneCtrlSimple(Thread):
             raise SPdbusError("Unable to connect DBUS session bus")
 
         dbus_objects = dbus.Interface(self.bus.get_object(
-              'org.freedesktop.DBus', '/org/freedesktop/DBus'), 
+              'org.freedesktop.DBus', '/org/freedesktop/DBus'),
                       'org.freedesktop.DBus').ListNames()
 
         if not "org.sflphone.SFLphone" in dbus_objects:
@@ -116,8 +116,8 @@ class SflPhoneCtrlSimple(Thread):
 		 "/org/sflphone/SFLphone/Instance", introspect=False)
             proxy_callmgr = self.bus.get_object("org.sflphone.SFLphone",
 		 "/org/sflphone/SFLphone/CallManager", introspect=False)
-            proxy_confmgr = self.bus.get_object("org.sflphone.SFLphone", 
-                 "/org/sflphone/SFLphone/ConfigurationManager", 
+            proxy_confmgr = self.bus.get_object("org.sflphone.SFLphone",
+                 "/org/sflphone/SFLphone/ConfigurationManager",
                         introspect=False)
 
             self.instance = dbus.Interface(proxy_instance,
@@ -128,7 +128,7 @@ class SflPhoneCtrlSimple(Thread):
 			  "org.sflphone.SFLphone.ConfigurationManager")
 
         except dbus.DBusException, e:
-            
+
             raise SPdbusError("Unable to bind to sflphoned api, ask core-dev team to implement getVersion method and start to pray.")
 
         try:
@@ -197,7 +197,7 @@ class SflPhoneCtrlSimple(Thread):
 	
 
 
-    # On call state changed event, set the values for new calls, 
+    # On call state changed event, set the values for new calls,
     # or delete the call from the list of active calls
     def onCallStateChanged(self, callid, state):
         print "Call state changed: " + callid + ", " + state
@@ -209,11 +209,11 @@ class SflPhoneCtrlSimple(Thread):
 
         elif state in [ "RINGING", "CURRENT", "INCOMING", "HOLD" ]:
             try:
-                self.activeCalls[callid]['State'] = state 
+                self.activeCalls[callid]['State'] = state
             except KeyError, e:
                 print "This call didn't exist!: " + callid + ". Adding it to the list."
                 callDetails = self.getCallDetails(callid)
-                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 
+                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'],
 					    'To': callDetails['PEER_NUMBER'], 'State': state }
         elif state in [ "BUSY", "FAILURE" ]:
             try:
@@ -231,7 +231,7 @@ class SflPhoneCtrlSimple(Thread):
     def addAccount(self, details=None):
         """Add a new account account
 
-	Add a new account to the SFLphone-daemon. Default parameters are \ 
+	Add a new account to the SFLphone-daemon. Default parameters are \
 	used for missing account configuration field.
 
 	Required parameters are type, alias, hostname, username and password
@@ -289,7 +289,7 @@ class SflPhoneCtrlSimple(Thread):
 
         for testedaccount in self.getAllAccounts():
             details = self.getAccountDetails(testedaccount)
-            if ( details['Account.enable'] == "TRUE" and 
+            if ( details['Account.enable'] == "TRUE" and
                               details['Account.alias'] == alias ):
                 self.account = testedaccount
                 return
@@ -405,7 +405,7 @@ class SflPhoneCtrlSimple(Thread):
     def getAllSipAccounts(self):
         """Return a list of SIP accounts"""
         sipAccountsList = []
-        for accountName in self.getAllAccounts(): 
+        for accountName in self.getAllAccounts():
             if  self.getAccountDetails(accountName)['Account.type'] == "SIP":
                 sipAccountsList.append(accountName)
 
@@ -442,7 +442,7 @@ class SflPhoneCtrlSimple(Thread):
     #
     # Codec manager
     #
-                        
+
     def getCodecList(self):
         """ Return the codec list """
         return self.configurationmanager.getCodecList()
@@ -630,5 +630,5 @@ class SflPhoneCtrlSimple(Thread):
 	while True:
             context.iteration(True)
 
-	    if self.isStop: 
+	    if self.isStop:
 	        return

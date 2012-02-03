@@ -188,7 +188,7 @@ class SIPAccount : public Account {
          * Stop the keep alive timer. Once canceled, no further registration will be scheduled
          */
         void stopKeepAliveTimer();
-          
+
 
         pjsip_cred_info *getCredInfo() const {
             return cred_;
@@ -222,7 +222,7 @@ class SIPAccount : public Account {
         }
 
         /**
-         * Set the expiration for this account as found in 
+         * Set the expiration for this account as found in
          * the "Expire" sip header or the CONTACT's "expire" param.
          */
         void setRegistrationExpire(int expire) {
@@ -244,8 +244,8 @@ class SIPAccount : public Account {
         bool userMatch(const std::string& username) const;
         bool hostnameMatch(const std::string& hostname) const;
 
-        /** 
-         * Registration flag 
+        /**
+         * Registration flag
 	 */
         bool isRegistered() const {
             return bRegister_;
@@ -370,7 +370,7 @@ class SIPAccount : public Account {
         void setContactHeader(std::string address, std::string port);
 
         /**
-         * Get the contact header for 
+         * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
         std::string getContactHeader(void) const;
@@ -383,7 +383,7 @@ class SIPAccount : public Account {
         }
 
         /**
-         * The contact header is not updated even if the registrar 
+         * The contact header is not updated even if the registrar
          */
         void disableContactUpdate(void) {
             contactUpdateEnabled_ = false;
@@ -392,7 +392,7 @@ class SIPAccount : public Account {
         bool isContactUpdateEnabled(void) {
             return contactUpdateEnabled_;
         }
- 
+
         /**
          * Get the local interface name on which this account is bound.
          */
@@ -566,15 +566,15 @@ class SIPAccount : public Account {
         pj_uint16_t tlsListenerPort_;
 
         /**
-         * Transport type used for this sip account. Currently supported types: 
+         * Transport type used for this sip account. Currently supported types:
          *    PJSIP_TRANSPORT_UNSPECIFIED
          *    PJSIP_TRANSPORT_UDP
          *    PJSIP_TRANSPORT_TLS
-         */ 
+         */
         pjsip_transport_type_e transportType_;
 
         /**
-         * Credential information stored for further registration. 
+         * Credential information stored for further registration.
          */
         pjsip_cred_info *cred_;
 
@@ -584,9 +584,9 @@ class SIPAccount : public Account {
         pjsip_tls_setting tlsSetting_;
 
         /**
-         * The CONTACT header used for registration as provided by the registrar, this value could differ  
+         * The CONTACT header used for registration as provided by the registrar, this value could differ
          * from the host name in case the registrar is inside a subnetwork (such as a VPN).
-         * The header will be stored 
+         * The header will be stored
          */
         std::string contactHeader_;
 
@@ -638,7 +638,7 @@ class SIPAccount : public Account {
         std::string tlsNegotiationTimeoutMsec_;
 
         /**
-         * The stun server hostname (optional), used to provide the public IP address in case the softphone 
+         * The stun server hostname (optional), used to provide the public IP address in case the softphone
          * stay behind a NAT.
          */
         std::string stunServer_;
@@ -651,14 +651,14 @@ class SIPAccount : public Account {
 
         /**
          * Determine if SRTP is enabled for this account, SRTP and ZRTP are mutually exclusive
-         * This only determine if the media channel is secured. One could only enable TLS 
+         * This only determine if the media channel is secured. One could only enable TLS
          * with no secured media channel.
-         */ 
+         */
         bool srtpEnabled_;
 
         /**
          * Specifies the type of key exchange usd for SRTP (sdes/zrtp)
-         */ 
+         */
         std::string srtpKeyExchange_;
 
         /**
@@ -672,7 +672,7 @@ class SIPAccount : public Account {
          * Determine if the SAS sould be displayed on client side. SAS is a 4-charcter string
          * that end users should verbaly validate to ensure the channel is secured. Used especially
          * to prevent man-in-the-middle attack.
-         */ 
+         */
         bool zrtpDisplaySas_;
 
         /**
@@ -688,11 +688,11 @@ class SIPAccount : public Account {
          * This is a protocol Code:Description pair.
          */
         std::pair<int, std::string> registrationStateDetailed_;
-       
+
         /**
          * Timer used to regularrly send re-register request based
          * on the "Expire" sip header (or the "expire" Contact parameter)
-         */ 
+         */
         pj_timer_entry keepAliveTimer_;
 
 

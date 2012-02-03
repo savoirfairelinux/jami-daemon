@@ -29,7 +29,7 @@ VM=Ubuntu-10.04-i386-on-KVM
 
 VIRSH="virsh -c qemu:///system"
 
-# Get the full path to vm's 
+# Get the full path to vm's
 DISK_IMG=$($VIRSH dumpxml "${VM}"|grep source.file|cut -d"'" -f2)
 echo "Disk Image: $DISK_IMG"
 # Get MAC address for this vm

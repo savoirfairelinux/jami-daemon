@@ -187,7 +187,7 @@ bool PulseLayer::inSourceList(const std::string &deviceName) const
     return std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
 }
 
-std::vector<std::string> PulseLayer::getAudioDeviceList(AudioStreamDirection dir) const 
+std::vector<std::string> PulseLayer::getAudioDeviceList(AudioStreamDirection dir) const
 {
     if(AUDIO_STREAM_CAPTURE == dir) {
         return sinkList_;

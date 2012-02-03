@@ -135,7 +135,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
 
 
    connect(list_credential,                SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this,SLOT( selectCredential(QListWidgetItem*, QListWidgetItem*)));
-   
+
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
    connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
@@ -206,15 +206,15 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
 {
    QString protocolsTab[] = ACCOUNT_TYPES_TAB;
 
-   if(! item) { 
+   if(! item) {
       kDebug() << "Attempting to save details of an account from a NULL item";
-      return; 
+      return;
    }
-   
+
    AccountView* account = accountList->getAccountByItem(item);
    if(!account) {
       kDebug() << "Attempting to save details of an unexisting account : " << item->text();
-      return;  
+      return;
    }
    //ACCOUNT DETAILS
    //                                     FIELD                                             WIDGET VALUE                                     /
@@ -255,7 +255,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountDetail( LOCAL_PORT                     , QString::number(spinBox_pa_published_port->value())                      );
    /**/account->setAccountDetail( LOCAL_INTERFACE                , comboBox_ni_local_address->currentText()                                 );
    //                                                                                                                                        /
-   
+
    QStringList _codecList;
    foreach (QString aCodec, keditlistbox_codec->items()) {
       foreach (StringHash _aCodec, codecList) {
@@ -268,31 +268,31 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    configurationManager.setActiveAudioCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
    kDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
-   
+
    saveCredential(account->getAccountDetail(ACCOUNT_ID));
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
 {
-   if(! item ) { 
+   if(! item ) {
       kDebug() << "Attempting to load details of an account from a NULL item";
-      return;  
+      return;
    }
 
    AccountView* account = accountList->getAccountByItem(item);
-   if(! account ) {  
+   if(! account ) {
       kDebug() << "Attempting to load details of an unexisting account";
-      return;  
+      return;
    }
 
    edit1_alias->setText( account->getAccountDetail(ACCOUNT_ALIAS));
-   
+
    QString protocolsTab[] = ACCOUNT_TYPES_TAB;
    QList<QString> * protocolsList = new QList<QString>();
-   for(int i = 0 ; i < (int) (sizeof(protocolsTab) / sizeof(QString)) ; i++) { 
+   for(int i = 0 ; i < (int) (sizeof(protocolsTab) / sizeof(QString)) ; i++) {
       protocolsList->append(protocolsTab[i]);
    }
-   
+
    QString accountName = account->getAccountDetail(ACCOUNT_TYPE);
    int protocolIndex = protocolsList->indexOf(accountName);
    delete protocolsList;
@@ -300,7 +300,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
 
    loadCredentails(account->getAccountDetail(ACCOUNT_ID));
-   
+
    bool ok;
    int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
    spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
@@ -309,8 +309,8 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       edit5_password->setText( credentialList[0].password );
 
 
-   
-   
+
+
    switch (account->getAccountDetail(TLS_METHOD ).toInt()) {
       case 0: //KEY_EXCHANGE_NONE
          checkbox_SDES_fallback_rtp->setVisible   ( false );
@@ -367,14 +367,14 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/group_security_tls->setChecked           ( (account->getAccountDetail(  TLS_ENABLE                    )  == "true")?1:0 );
    /**/combo_security_STRP->setCurrentIndex     ( account->getAccountDetail(   TLS_METHOD                    ).toInt()         );
    /*                                                                                                                          */
-   
+
    combo_tls_method->setCurrentIndex        ( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
    comboBox_ni_local_address->clear();
    QStringList interfaceList = configurationManager.getAllIpInterfaceByName();
    comboBox_ni_local_address->addItems(interfaceList);
-   
+
    spinBox_ni_local_port->setValue(account->getAccountDetail(LOCAL_PORT).toInt());
    comboBox_ni_local_address->setCurrentIndex(comboBox_ni_local_address->findText(account->getAccountDetail(LOCAL_INTERFACE))); //TODO need to load the list first
 
@@ -386,8 +386,8 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
             keditlistbox_codec->insertItem(_aCodec["alias"]);
       }
    }
-        
-        
+
+
 
    if(protocolIndex == 0) { // if sip selected
       checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == ACCOUNT_ENABLED_TRUE);
@@ -419,9 +419,9 @@ void DlgAccounts::loadAccountList()
    for (int i = 0; i < accountList->size(); ++i) {
       addAccountToAccountList((*accountList)[i]);
    }
-   if (listWidget_accountList->count() > 0 && listWidget_accountList->currentItem() == NULL) 
+   if (listWidget_accountList->count() > 0 && listWidget_accountList->currentItem() == NULL)
       listWidget_accountList->setCurrentRow(0);
-   else 
+   else
       frame2_editAccounts->setEnabled(false);
 }
 
@@ -527,7 +527,7 @@ void DlgAccounts::updateAccountListCommands()
    if(listWidget_accountList->currentRow() == listWidget_accountList->count() - 1) {
       buttonsEnabled[1] = false;
    }
-   
+
    button_accountUp->setEnabled     ( buttonsEnabled[0] );
    button_accountDown->setEnabled   ( buttonsEnabled[1] );
    button_accountAdd->setEnabled    ( buttonsEnabled[2] );
@@ -546,8 +546,8 @@ void DlgAccounts::updateAccountStates()
 
 void DlgAccounts::updateStatusLabel(QListWidgetItem * item)
 {
-   if(! item ) {  
-          return;  
+   if(! item ) {
+          return;
         }
    AccountView* account = accountList->getAccountByItem(item);
    updateStatusLabel(account);
@@ -555,8 +555,8 @@ void DlgAccounts::updateStatusLabel(QListWidgetItem * item)
 
 void DlgAccounts::updateStatusLabel(AccountView* account)
 {
-   if(! account ) {  
-          return;  
+   if(! account ) {
+          return;
         }
    QString status = account->getAccountDetail(ACCOUNT_STATUS);
    edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
@@ -585,12 +585,12 @@ void DlgAccounts::updateWidgets()
    accountListHasChanged = false;
 }
 
-void DlgAccounts::loadCodecList() 
+void DlgAccounts::loadCodecList()
 {
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
   QVector<int> codecIdList = configurationManager.getAudioCodecList();
   QStringList tmpNameList;
-  
+
   foreach (int aCodec, codecIdList) {
     QStringList codec = configurationManager.getAudioCodecDetails(aCodec);
     QHash<QString, QString> _codec;
@@ -598,12 +598,12 @@ void DlgAccounts::loadCodecList()
     _codec[ "frequency" ] = codec[1];
     _codec[ "bitrate"   ] = codec[2];
     _codec[ "id"        ] = QString::number(aCodec);
-    
+
     tmpNameList << _codec["name"];
-    
+
     codecList.push_back(_codec);
   }
-  
+
   //Generate a relative alias for each codec
   for (int i =0; i < codecList.size();i++) {
     if (tmpNameList.indexOf(codecList[i]["name"]) == tmpNameList.lastIndexOf(codecList[i]["name"])) {
@@ -616,7 +616,7 @@ void DlgAccounts::loadCodecList()
 }
 
 
-void DlgAccounts::codecClicked(const QModelIndex& model) 
+void DlgAccounts::codecClicked(const QModelIndex& model)
 {
    Q_UNUSED(model)
    foreach (StringHash aCodec, codecList) {
@@ -631,7 +631,7 @@ void DlgAccounts::codecClicked(const QModelIndex& model)
       keditlistbox_codec->addButton()->setEnabled(true);
 }
 
-void DlgAccounts::addCodec(QString name) 
+void DlgAccounts::addCodec(QString name)
 {
   if (name.isEmpty()) {
     Private_AddCodecDialog* aDialog = new Private_AddCodecDialog(codecList, keditlistbox_codec->items(), this);
@@ -645,18 +645,18 @@ void DlgAccounts::addCodec(QString name)
   }
 }
 
-void DlgAccounts::codecChanged() 
+void DlgAccounts::codecChanged()
 {
    if (keditlistbox_codec->items().size() == codecList.size())
       keditlistbox_codec->addButton()->setEnabled(false);
    else
       keditlistbox_codec->addButton()->setEnabled(true);
-  
+
    accountListHasChanged = true;
    emit updateButtons();
 }
 
-void DlgAccounts::updateCombo(int value) 
+void DlgAccounts::updateCombo(int value)
 {
    Q_UNUSED(value)
    switch (combo_security_STRP->currentIndex()) {
@@ -708,7 +708,7 @@ void DlgAccounts::saveCredential(QString accountId) {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    //configurationManager.setNumberOfCredential(accountId, list_credential->count()); //TODO
    VectorMapStringString toReturn;
-   
+
    for (int i=0; i < list_credential->count();i++) {
       QListWidgetItem* currentItem = list_credential->item(i);
       MapStringString credentialData;

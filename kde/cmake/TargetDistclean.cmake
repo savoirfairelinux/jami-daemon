@@ -1,4 +1,4 @@
- 
+
 # add custom target distclean
 # cleans and removes cmake generated files etc.
 # Jan Woetzel 04/2003
@@ -70,13 +70,13 @@ IF (UNIX)
    po/Makefile
    po/CMakeFiles
   )
-  
+
   SET(DISTCLEANED_REC
-   *.cmake 
+   *.cmake
    Makefile
    CMakeFiles
   )
-  
+
   ADD_CUSTOM_COMMAND(
     DEPENDS clean
     COMMENT "distribution clean"
@@ -84,7 +84,7 @@ IF (UNIX)
     ARGS    -Rf CMakeTmp CMakeFiles ${DISTCLEANED} `find ./po  -maxdepth 2  -name 'Makefile'` `find ./po  -maxdepth 2  -name 'CMakeFiles'` `find ./po  -maxdepth 2  -name '*.gmo'` `find ./po  -maxdepth 2  -name '*.cmake'`
 #     COMMAND find
 #     ARGS "./po ( -name 'Makefile' -o -name 'CMakeFiles' -o -name '*.gmo' -o -name '*.cmake' ) -maxdepth 2 -exec rm -rf {} \;"
-#     COMMAND rm 
+#     COMMAND rm
 #     ARGS -Rf `find ./po  -maxdepth 2  -name 'Makefile'`
 #     COMMAND find
 #     ARGS ./po  -maxdepth 2  -name 'CMakeFiles' -exec rm -rf {} \;

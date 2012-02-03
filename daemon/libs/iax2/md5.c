@@ -136,7 +136,7 @@ void IAX_MD5Update(struct IAX_MD5Context *ctx, uint8_t const *buf, unsigned int 
 }
 
 /*
- * Final wrapup - pad to 64-byte boundary with the bit pattern 
+ * Final wrapup - pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void IAX_MD5Final(uint8_t digest[16], struct IAX_MD5Context *ctx)

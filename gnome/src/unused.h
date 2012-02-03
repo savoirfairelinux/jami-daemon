@@ -30,6 +30,6 @@
 
 #ifndef UNUSED_H_
 
-#define UNUSED  __attribute__((__unused__)) 
+#define UNUSED  __attribute__((__unused__))
 
 #endif /* UNUSED_H_ */

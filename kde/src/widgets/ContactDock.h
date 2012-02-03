@@ -58,7 +58,7 @@ public:
    //Constructor
    ContactDock(QWidget* parent);
    virtual ~ContactDock();
-   
+
 private:
    //Attributes
    KLineEdit*                   m_pFilterLE;
@@ -68,10 +68,10 @@ private:
    QComboBox*                   m_pSortByCBB;
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_Contacts;
-   
+
 public slots:
    virtual void keyPressEvent(QKeyEvent* event);
-   
+
 private slots:
    void reloadContact();
    void loadContactHistory(QTreeWidgetItem* item);
@@ -96,13 +96,13 @@ public:
    KeyPressEaterC(ContactDock* parent) : QObject(parent) {
       m_pDock =  parent;
    }
-   
+
 protected:
    bool eventFilter(QObject *obj, QEvent *event);
-   
+
 private:
    ContactDock* m_pDock;
-   
+
 };
 
 #endif

@@ -30,7 +30,7 @@ sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG) $(NETWORKMANAGER) \
 		-DVERSION=\"$(VERSION)\"
 
-# libsflphone 
+# libsflphone
 
 sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto
 noinst_LTLIBRARIES = libsflphone.la

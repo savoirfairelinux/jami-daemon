@@ -17,10 +17,10 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
- 
+
 #ifndef SFLPHONEENGINE_H
 #define SFLPHONEENGINE_H
- 
+
 #include <Plasma/DataEngine>
 #include <QHash>
 
@@ -40,7 +40,7 @@ class SFLPhoneEngine : public Plasma::DataEngine
    protected:
       bool sourceRequestEvent(const QString& name);
       bool updateSourceEvent(const QString& source);
-       
+
    private:
       QHash<QString, HashStringString > historyCall  ;
       QHash<QString, HashStringString > currentCall  ;
@@ -62,5 +62,5 @@ class SFLPhoneEngine : public Plasma::DataEngine
       void voiceMailNotifySignal( const QString& accountId, int count              );
       void accountChanged();
 };
- 
+
 #endif // SFLPHONEENGINE_H
