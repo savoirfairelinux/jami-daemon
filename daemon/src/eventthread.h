@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __EVENT_THREAD_H__
-#define __EVENT_THREAD_H__
+#ifndef EVENT_THREAD_H_
+#define EVENT_THREAD_H_
 
 #include <cc++/thread.h>
 #include "noncopyable.h"
@@ -38,24 +38,19 @@ class VoIPLink;
 
 /**
  * @file eventthread.h
- * @brief General thread to listen events continuously
+ * @brief Thread which listens to VoIP events continuously
  */
 
 class EventThread : public ost::Thread {
     public:
         EventThread(VoIPLink* link);
-
-        ~EventThread() {
-            terminate();
-        }
-
-        virtual void run() ;
+        ~EventThread();
+        virtual void run();
 
     private:
         NON_COPYABLE(EventThread);
-
         // VoIPLink is the object being called by getEvents() method
-        VoIPLink*	link_;
+        VoIPLink* link_;
 };
 
-#endif // __EVENT_THREAD_H__
+#endif // EVENT_THREAD_H__

@@ -1,3 +1,9 @@
+SFLphoned (1.0.2) / 2012-07-02
+	* Stable version
+	* Update Contact header from 200 OK
+	* Keep alive for account regstration
+	* Call history now managed by client
+
 SFLphoned (0.9.12) / 2011-11-12
 	* Refactoring of the RTP session allowing dynamic update of audio codecs
 	* Updated synchronization between transport layer and audio layer
@@ -43,7 +49,7 @@ SFLphoned (0.6.1) / 2005-11-26
 	* add speex codec (experimental)
 	* fix for codec handling in sdp and audiortp
 	* new codec class
-	* add portaudio missing file 
+	* add portaudio missing file
 	  (thanks to Pierre POMES)
 	* add samplerate and inChannel/outChannel in AudioLayer
 	  we could use microphone in mono and speaker in stereo
@@ -66,7 +72,7 @@ SFLphoned/SFLphone (0.5a) / 2005-10-17
 SFLphone (0.4.1-pre2) / 2005-09-30
 	* rearranged utilspp use
 	* Bug fix when trying to use more than 6 lines.
-	* Now, we send a final response to reINVITEs 
+	* Now, we send a final response to reINVITEs
 	  (thanks to Mikael Magnusson)
 	* We can build in different build directories.
 	  (thanks to Mikael Magnusson)
@@ -85,7 +91,7 @@ SFLphone (0.4) / 2005-07-06
 	* Handle CANCEL method
 	* PortAudio replace OSS and ALSA devices choice
 	* Add PortAudioCpp to make easy use of RingBuffer object for
-	  audio callback 
+	  audio callback
 	* Add PortAudio library to make easy sound portability
 	* Fix a few memory leak
 	* Reorganisation of SFLphone architecture
@@ -95,7 +101,7 @@ SFLphone (0.4) / 2005-07-06
 	* Call management updated
 
 SFLphone (0.3) / 2005-04-05
-	* ALSA driver support added 
+	* ALSA driver support added
 	* GSM audio codec support added
 	* Ringtones support (just ulaw format) added
 	* Notification incoming call added

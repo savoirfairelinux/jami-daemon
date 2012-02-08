@@ -59,8 +59,8 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
         return sipaccount->getIp2IpDetails();
 
     std::map<std::string, std::string> tlsSettings = getTlsSettings();
-    std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
-                  ip2ipAccountDetails, ip2ipAccountDetails.end()));
+    std::copy(tlsSettings.begin(), tlsSettings.end(),
+              std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
     return ip2ipAccountDetails;
 }
@@ -131,9 +131,9 @@ void ConfigurationManager::setAccountDetails(const std::string& accountID, const
     Manager::instance().setAccountDetails(accountID, details);
 }
 
-void ConfigurationManager::sendRegister(const std::string& accountID, const int32_t& expire)
+void ConfigurationManager::sendRegister(const std::string& accountID, const bool& enable)
 {
-    Manager::instance().sendRegister(accountID, expire);
+    Manager::instance().sendRegister(accountID, enable);
 }
 
 std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
@@ -155,7 +155,7 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<int32_t > ConfigurationManager::getAudioCodecList()
+std::vector<int32_t> ConfigurationManager::getAudioCodecList()
 {
     std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
 
@@ -336,6 +336,11 @@ int32_t ConfigurationManager::getHistoryLimit()
     return Manager::instance().getHistoryLimit();
 }
 
+void ConfigurationManager::clearHistory()
+{
+    return Manager::instance().clearHistory();
+}
+
 void ConfigurationManager::setHistoryLimit(const int32_t& days)
 {
     Manager::instance().setHistoryLimit(days);
@@ -398,18 +403,13 @@ void ConfigurationManager::setAccountsOrder(const std::string& order)
     Manager::instance().setAccountsOrder(order);
 }
 
-std::vector<std::string> ConfigurationManager::getHistory()
+std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistory()
 {
-    return Manager::instance().getHistorySerialized();
+    return Manager::instance().getHistory();
 }
 
-void ConfigurationManager::setHistory(const std::vector<std::string>& entries)
-{
-    Manager::instance().setHistorySerialized(entries);
-}
-
-std::string ConfigurationManager::getAddrFromInterfaceName(
-    const std::string& interface)
+std::string
+ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
     return SIPVoIPLink::getInterfaceAddrFromName(interface);
 }

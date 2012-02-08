@@ -62,9 +62,11 @@ class PulseLayer : public AudioLayer {
 
         bool inSourceList(const std::string &deviceName) const;
 
-        void startStream();
+        virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const;
 
-        void stopStream();
+        virtual void startStream();
+
+        virtual void stopStream();
 
     private:
         static void context_state_callback(pa_context* c, void* user_data);
@@ -106,8 +108,15 @@ class PulseLayer : public AudioLayer {
          */
         AudioStream* ringtone_;
 
-        std::list<std::string> sinkList_;
-        std::list<std::string> sourceList_;
+        /**
+         * Contain the list of playback devices
+         */
+        std::vector<std::string> sinkList_;
+
+        /**
+         * Contain the list of capture devices
+         */
+        std::vector<std::string> sourceList_;
 
         /*
          * Buffers used to avoid doing malloc/free in the audio thread

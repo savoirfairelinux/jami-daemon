@@ -196,8 +196,6 @@ void AudioRtpSession::setSessionTimeouts()
 
 void AudioRtpSession::setDestinationIpAddress()
 {
-    INFO("AudioRtpSession: Setting IP address for the RTP session");
-
     // Store remote ip in case we would need to forget current destination
     remote_ip_ = ost::InetHostAddress(ca_->getLocalSDP()->getRemoteIP().c_str());
 
@@ -210,7 +208,7 @@ void AudioRtpSession::setDestinationIpAddress()
     // Store remote port in case we would need to forget current destination
     remote_port_ = (unsigned short) ca_->getLocalSDP()->getRemoteAudioPort();
 
-    INFO("AudioRtpSession: New remote address for session: %s:%d",
+    DEBUG("AudioRtpSession: New remote address for session: %s:%d",
           ca_->getLocalSDP()->getRemoteIP().data(), remote_port_);
 
     if (!queue_->addDestination(remote_ip_, remote_port_)) {

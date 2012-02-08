@@ -2,8 +2,8 @@ if ENABLE_DOXYGEN
 
 docdir = ${prefix}/share/doc/wifidog-@VERSION@
 html_parent_dir = .
-HTML_HEADER = 
-HTML_FOOTER = 
+HTML_HEADER =
+HTML_FOOTER =
 
 all: doxygen-trac
 	
@@ -19,7 +19,7 @@ doc: clean core-doc gtk-gui-doc
 %-doc : %-doc.cfg
 	rm -rf $@/ refman.pdf
 	$(DOXYGEN) $<
-#	$(MAKE) -C latex/ 
+#	$(MAKE) -C latex/
 #	mv latex/refman.pdf ./refman.pdf
 
 

@@ -32,6 +32,9 @@
 #define IAXACCOUNT_H
 
 #include "account.h"
+#include "noncopyable.h"
+
+class IAXVoIPLink;
 
 /**
  * @file: iaxaccount.h
@@ -64,8 +67,11 @@ class IAXAccount : public Account {
         }
 
     private:
+        NON_COPYABLE(IAXAccount);
          // Account login information: password
         std::string password_;
+        IAXVoIPLink *link_;
+        virtual VoIPLink* getVoIPLink();
 };
 
 #endif

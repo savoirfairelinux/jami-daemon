@@ -1,24 +1,51 @@
+/***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ **************************************************************************/
+
+//Parent
 #include "HistoryDock.h"
 
-#include <QtGui/QVBoxLayout>
-#include <kicon.h>
-#include <klineedit.h>
+//Qt
+#include <QtCore/QString>
+#include <QtCore/QDate>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QComboBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QLabel>
-#include <QDebug>
-#include <QDate>
 #include <QtGui/QTreeWidgetItem>
-#include <QtCore/QString>
-#include <kdatewidget.h>
-#include <QHeaderView>
 #include <QtGui/QCheckBox>
-#include <QDate>
+#include <QtGui/QGridLayout>
+#include <QtGui/QHeaderView>
+
+//KDE
+#include <KDebug>
+#include <KIcon>
+#include <KLineEdit>
+#include <KDateWidget>
+
+//SFLPhone
 #include "SFLPhone.h"
 #include "widgets/HistoryTreeItem.h"
-#include "conf/ConfigurationSkeleton.h"
 #include "AkonadiBackend.h"
+#include "conf/ConfigurationSkeleton.h"
+
+//SFLPhone library
 #include "lib/sflphone_const.h"
 
 ///Qt lack official functional sorting algo, so this hack around it
@@ -69,7 +96,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pToDW       = new KDateWidget();
    m_pAllTimeCB  = new QCheckBox(i18n("Display all"));
    m_pLinkPB     = new QPushButton(this);
-   
+
    m_pAllTimeCB->setChecked(ConfigurationSkeleton::displayDataRange());
    enableDateRange(ConfigurationSkeleton::displayDataRange());
 
@@ -78,7 +105,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pLinkPB->setMaximumSize(20,9999999);
    m_pLinkPB->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Expanding);
    m_pLinkPB->setCheckable(true);
-   
+
    m_pItemView->headerItem()->setText(0,i18n("Calls")   );
    m_pItemView->header    ()->setClickable(true          );
    m_pItemView->header    ()->setSortIndicatorShown(true );
@@ -90,7 +117,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
-   
+
    QStringList sortBy;
    sortBy << "Date" << "Name" << "Popularity" << "Duration";
    m_pSortByCBB->addItems(sortBy);
@@ -110,15 +137,15 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    mainLayout->addWidget(m_pToDW      ,5,0,1,2 );
    mainLayout->addWidget(m_pItemView  ,6,0,1,3 );
    mainLayout->addWidget(m_pFilterLE  ,7,0,1,3 );
-   
+
    setWindowTitle(i18n("History"));
 
    QDate date(2000,1,1);
    m_pFromDW->setDate(date);
-   
+
    reload();
-   m_pCurrentFromDate = m_pFromDW->date();
-   m_pCurrentToDate   = m_pToDW->date();
+   m_CurrentFromDate = m_pFromDW->date();
+   m_CurrentToDate   = m_pToDW->date();
 
    connect(m_pAllTimeCB,                  SIGNAL(toggled(bool)),            this, SLOT(enableDateRange(bool)       ));
    connect(m_pFilterLE,                   SIGNAL(textChanged(QString)),     this, SLOT(filter(QString)             ));
@@ -133,6 +160,13 @@ HistoryDock::~HistoryDock()
 {
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Return the identity of the call caller
 QString HistoryDock::getIdentity(HistoryTreeItem* item)
 {
@@ -142,10 +176,17 @@ QString HistoryDock::getIdentity(HistoryTreeItem* item)
       return item->getName();
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
 ///Update informations
 void HistoryDock::updateContactInfo()
 {
-   foreach(HistoryTreeItem* hitem, m_pHistory) {
+   foreach(HistoryTreeItem* hitem, m_History) {
       hitem->updated();
    }
 }
@@ -154,20 +195,20 @@ void HistoryDock::updateContactInfo()
 void HistoryDock::reload()
 {
    m_pItemView->clear();
-   foreach(HistoryTreeItem* hitem, m_pHistory) {
+   foreach(HistoryTreeItem* hitem, m_History) {
       delete hitem;
    }
-   m_pHistory.clear();
+   m_History.clear();
    foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
       if (!m_pAllTimeCB->isChecked() || (QDateTime(m_pFromDW->date()).toTime_t() < call->getStartTimeStamp().toUInt() && QDateTime(m_pToDW->date().addDays(1)).toTime_t() > call->getStartTimeStamp().toUInt() )) {
          HistoryTreeItem* callItem = new HistoryTreeItem(m_pItemView);
          callItem->setCall(call);
-         m_pHistory << callItem;
+         m_History << callItem;
       }
    }
    switch (m_pSortByCBB->currentIndex()) {
       case Date:
-         foreach(HistoryTreeItem* hitem, m_pHistory) {
+         foreach(HistoryTreeItem* hitem, m_History) {
             QNumericTreeWidgetItem* item = new QNumericTreeWidgetItem(m_pItemView);
             item->widget = hitem;
             hitem->setItem(item);
@@ -177,7 +218,7 @@ void HistoryDock::reload()
          break;
       case Name: {
          QHash<QString,QTreeWidgetItem*> group;
-         foreach(HistoryTreeItem* item, m_pHistory) {
+         foreach(HistoryTreeItem* item, m_History) {
             if (!group[getIdentity(item)]) {
                group[getIdentity(item)] = new QTreeWidgetItem(m_pItemView);
                group[getIdentity(item)]->setText(0,getIdentity(item));
@@ -192,7 +233,7 @@ void HistoryDock::reload()
       }
       case Popularity: {
          QHash<QString,QNumericTreeWidgetItem*> group;
-         foreach(HistoryTreeItem* item, m_pHistory) {
+         foreach(HistoryTreeItem* item, m_History) {
             if (!group[getIdentity(item)]) {
                group[getIdentity(item)] = new QNumericTreeWidgetItem(m_pItemView);
                group[getIdentity(item)]->weight = 0;
@@ -208,7 +249,7 @@ void HistoryDock::reload()
          break;
       }
       case Duration:
-         foreach(HistoryTreeItem* hitem, m_pHistory) {
+         foreach(HistoryTreeItem* hitem, m_History) {
             QNumericTreeWidgetItem* item = new QNumericTreeWidgetItem(m_pItemView);
             item->weight = hitem->getDuration();
             hitem->setItem(item);
@@ -228,14 +269,14 @@ void HistoryDock::enableDateRange(bool enable)
    m_pFromDW->setVisible(enable);
    m_pToDW->setVisible(enable);
    m_pLinkPB->setVisible(enable);
-   
+
    ConfigurationSkeleton::setDisplayDataRange(enable);
 }
 
 ///Filter the history
 void HistoryDock::filter(QString text)
 {
-   foreach(HistoryTreeItem* item, m_pHistory) {
+   foreach(HistoryTreeItem* item, m_History) {
       bool visible = (item->getName().toLower().indexOf(text) != -1) || (item->getPhoneNumber().toLower().indexOf(text) != -1);
       item->getItem()-> setHidden(!visible);
    }
@@ -269,7 +310,7 @@ void HistoryDock::updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& ne
 void HistoryDock::updateLinkedFromDate(QDate date)
 {
    disconnect (m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
-   updateLinkedDate(m_pToDW,m_pCurrentFromDate,date);
+   updateLinkedDate(m_pToDW,m_CurrentFromDate,date);
    connect    (m_pToDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedToDate(QDate)));
 }
 
@@ -277,14 +318,21 @@ void HistoryDock::updateLinkedFromDate(QDate date)
 void HistoryDock::updateLinkedToDate(QDate date)
 {
    disconnect(m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
-   updateLinkedDate(m_pFromDW,m_pCurrentToDate,date);
+   updateLinkedDate(m_pFromDW,m_CurrentToDate,date);
    connect   (m_pFromDW  ,  SIGNAL(changed(QDate)),       this, SLOT(updateLinkedFromDate(QDate)));
 }
 
-///Generate serializerd version of the content 
+
+/*****************************************************************************
+ *                                                                           *
+ *                             Drag and drop                                 *
+ *                                                                           *
+ ****************************************************************************/
+
+///Generate serializerd version of the content
 QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
-   qDebug() << "An history call is being dragged";
+   kDebug() << "An history call is being dragged";
    if (items.size() < 1) {
       return NULL;
    }
@@ -299,7 +347,7 @@ QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
       }
    }
    else {
-      qDebug() << "the item is not a call";
+      kDebug() << "the item is not a call";
    }
    return mimeData;
 }
@@ -313,10 +361,17 @@ bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeDa
 
    QByteArray encodedData = data->data(MIME_CALLID);
 
-   qDebug() << "In history import"<< QString(encodedData);
+   kDebug() << "In history import"<< QString(encodedData);
 
    return false;
 }
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                              Keyboard handling                            *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Handle keyboard input and redirect them to the filterbox
 void HistoryDock::keyPressEvent(QKeyEvent* event) {

@@ -31,11 +31,9 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-#define YES_STR "1"
-#define NO_STR "0"
 #define HISTORY_SAMPLE  "history-sample.tpl"
 #define HISTORY_SAMPLE_SIZE     3
 #define CONFIG_SAMPLE   "sflphoned-sample.yml"
-#define HUGE_HISTORY_LIMIT      999999999
+#define HISTORY_LIMIT 30
 
 #endif /* CONSTANTS_H_ */

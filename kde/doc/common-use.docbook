@@ -11,7 +11,7 @@
 </chapterinfo>
 
 <title>Common use of &sflphone-client-kde;</title>
- 
+
 <sect1 id="common-use-current">
 <title>Handling a call</title>
 
@@ -84,7 +84,7 @@
 <sect2 id="common-use-address-config">
 <title>Configuring &sflphone-client-kde;</title>
 
-<para> You can now go to the Configuration Dialog to choose how &sflphone; will handle your searches in the address book. This step is optionnal though, because the default settings enable you to use the feature without more setup. 
+<para> You can now go to the Configuration Dialog to choose how &sflphone; will handle your searches in the address book. This step is optionnal though, because the default settings enable you to use the feature without more setup.
 </para>
 
 <para> The maximum results setting enables you to choose how many phone numbers can be displayed when you look for a contact. KDE address book can contain lots of contacts, especially if connected to LDAP directories, and you don't want to see thousands of contacts displayed as soon as you type a letter to search for.</para>
@@ -98,7 +98,7 @@
 <sect2 id="common-use-address-use">
 <title>Search in Address Book</title>
 
-<para> Now that everything is set up, you can go to the &address-w;, then type some letters of the name you want to phone. You will see all the phone numbers that match your request and their type. When the resulting list's size is greater than the maximum chosen in configuration, it will only display the beginning of the list with the max size, and will display a warning message to let you know that your wanted number may be in the rest of the list and so not displayed. In that case you should type some more letters to improve precision of the search. Once you found the right number, double click on the item to call it. 
+<para> Now that everything is set up, you can go to the &address-w;, then type some letters of the name you want to phone. You will see all the phone numbers that match your request and their type. When the resulting list's size is greater than the maximum chosen in configuration, it will only display the beginning of the list with the max size, and will display a warning message to let you know that your wanted number may be in the rest of the list and so not displayed. In that case you should type some more letters to improve precision of the search. Once you found the right number, double click on the item to call it.
 </para>
 
 </sect2>
@@ -116,7 +116,7 @@
 <sect2 id="common-use-config-address">
 <title>General settings</title>
 
-<para> Here you can choose the capacity of the call history. 
+<para> Here you can choose the capacity of the call history.
 </para>
 
 </sect2>

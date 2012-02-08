@@ -44,54 +44,52 @@
 #include "noncopyable.h"
 
 namespace Conf {
-class YamlEmitter;
-class MappingNode;
+    class YamlEmitter;
+    class MappingNode;
+    // SIP specific configuration keys
+    const char *const interfaceKey = "interface";
+    const char *const portKey = "port";
+    const char *const publishAddrKey = "publishAddr";
+    const char *const publishPortKey = "publishPort";
+    const char *const sameasLocalKey = "sameasLocal";
+    const char *const dtmfTypeKey = "dtmfType";
+    const char *const serviceRouteKey = "serviceRoute";
+    const char *const updateContactHeaderKey = "updateContact";
+
+    // TODO: write an object to store credential which implement serializable
+    const char *const srtpKey = "srtp";
+    const char *const srtpEnableKey = "enable";
+    const char *const keyExchangeKey = "keyExchange";
+    const char *const rtpFallbackKey = "rtpFallback";
+
+    // TODO: wirte an object to store zrtp params wich implement serializable
+    const char *const zrtpKey = "zrtp";
+    const char *const displaySasKey = "displaySas";
+    const char *const displaySasOnceKey = "displaySasOnce";
+    const char *const helloHashEnabledKey = "helloHashEnabled";
+    const char *const notSuppWarningKey = "notSuppWarning";
+
+    // TODO: write an object to store tls params which implement serializable
+    const char *const tlsKey = "tls";
+    const char *const tlsPortKey = "tlsPort";
+    const char *const certificateKey = "certificate";
+    const char *const calistKey = "calist";
+    const char *const ciphersKey = "ciphers";
+    const char *const tlsEnableKey = "enable";
+    const char *const methodKey = "method";
+    const char *const timeoutKey = "timeout";
+    const char *const tlsPasswordKey = "password";
+    const char *const privateKeyKey = "privateKey";
+    const char *const requireCertifKey = "requireCertif";
+    const char *const serverKey = "server";
+    const char *const verifyClientKey = "verifyClient";
+    const char *const verifyServerKey = "verifyServer";
+
+    const char *const stunEnabledKey = "stunEnabled";
+    const char *const stunServerKey = "stunServer";
+
+    const char *const credKey = "credential";
 }
-enum DtmfType { OVERRTP, SIPINFO};
-
-// SIP specific configuration keys
-static const char *const expireKey = "expire";
-static const char *const interfaceKey = "interface";
-static const char *const portKey = "port";
-static const char *const publishAddrKey = "publishAddr";
-static const char *const publishPortKey = "publishPort";
-static const char *const sameasLocalKey = "sameasLocal";
-static const char *const dtmfTypeKey = "dtmfType";
-static const char *const serviceRouteKey = "serviceRoute";
-
-// TODO: write an object to store credential which implement serializable
-static const char *const srtpKey = "srtp";
-static const char *const srtpEnableKey = "enable";
-static const char *const keyExchangeKey = "keyExchange";
-static const char *const rtpFallbackKey = "rtpFallback";
-
-// TODO: wirte an object to store zrtp params wich implement serializable
-static const char *const zrtpKey = "zrtp";
-static const char *const displaySasKey = "displaySas";
-static const char *const displaySasOnceKey = "displaySasOnce";
-static const char *const helloHashEnabledKey = "helloHashEnabled";
-static const char *const notSuppWarningKey = "notSuppWarning";
-
-// TODO: write an object to store tls params which implement serializable
-static const char *const tlsKey = "tls";
-static const char *const tlsPortKey = "tlsPort";
-static const char *const certificateKey = "certificate";
-static const char *const calistKey = "calist";
-static const char *const ciphersKey = "ciphers";
-static const char *const tlsEnableKey = "enable";
-static const char *const methodKey = "method";
-static const char *const timeoutKey = "timeout";
-static const char *const tlsPasswordKey = "password";
-static const char *const privateKeyKey = "privateKey";
-static const char *const requireCertifKey = "requireCertif";
-static const char *const serverKey = "server";
-static const char *const verifyClientKey = "verifyClient";
-static const char *const verifyServerKey = "verifyServer";
-
-static const char *const stunEnabledKey = "stunEnabled";
-static const char *const stunServerKey = "stunServer";
-
-static const char *const credKey = "credential";
 
 class SIPVoIPLink;
 
@@ -102,6 +100,9 @@ class SIPVoIPLink;
 
 class SIPAccount : public Account {
     public:
+        static const char * const OVERRTP_STR;
+        static const char * const SIPINFO_STR;
+
         /**
          * Constructor
          * @param accountID The account identifier
@@ -112,20 +113,53 @@ class SIPAccount : public Account {
          * Virtual destructor
          */
         virtual ~SIPAccount();
+
+        virtual VoIPLink* getVoIPLink();
+
         std::string getUserAgentName() const;
         void setRegistrationStateDetailed(const std::pair<int, std::string> &details) {
             registrationStateDetailed_ = details;
         }
 
+        /**
+         * Serialize internal state of this account for configuration
+         * @param YamlEmitter the configuration engine which generate the configuration file
+         */
         virtual void serialize(Conf::YamlEmitter *emitter);
 
+        /**
+         * Populate the internal state for this account based on info stored in the configuration file
+         * @param The configuration node for this account
+         */
         virtual void unserialize(Conf::MappingNode *map);
 
+        /**
+         * Set the internal state for this account, mainly used to manage account details from the client application.
+         * @param The map containing the account information.
+         */
         virtual void setAccountDetails(std::map<std::string, std::string> details);
 
+        /**
+         * Return an map containing the internal state of this account. Client application can use this method to manage
+         * account info.
+         * @return A map containing the account information.
+         */
         virtual std::map<std::string, std::string> getAccountDetails() const;
+
+        /**
+         * Return the information for the default IP to IP account
+         */
         std::map<std::string, std::string> getIp2IpDetails() const;
+
+        /**
+         * Return the TLS settings, mainly used to return security information to
+         * a client application
+         */
         std::map<std::string, std::string> getTlsSettings() const;
+
+        /**
+         * Manage the TLS settings from a client application
+         */
         void setTlsSettings(const std::map<std::string, std::string>& details);
 
         /**
@@ -142,6 +176,19 @@ class SIPAccount : public Account {
          * Send unregistration and clean all related stuff ( calls , thread )
          */
         void unregisterVoIPLink();
+
+        /**
+         * Start the keep alive function, once started, the account will be registered periodically
+         * a new REGISTER request is sent bey the client application. The account must be initially
+         * registered for this call to be effective.
+         */
+        void startKeepAliveTimer();
+
+        /**
+         * Stop the keep alive timer. Once canceled, no further registration will be scheduled
+         */
+        void stopKeepAliveTimer();
+
 
         pjsip_cred_info *getCredInfo() const {
             return cred_;
@@ -175,7 +222,16 @@ class SIPAccount : public Account {
         }
 
         /**
-         * Doubles the Expiration Interval of Contact Addresses.
+         * Set the expiration for this account as found in
+         * the "Expire" sip header or the CONTACT's "expire" param.
+         */
+        void setRegistrationExpire(int expire) {
+            if (expire > 0)
+                registrationExpire_ = expire;
+        }
+
+        /**
+         * Doubles the Expiration Interval sepecified for registration.
          */
         void doubleRegistrationExpire() {
             registrationExpire_ *= 2;
@@ -188,10 +244,16 @@ class SIPAccount : public Account {
         bool userMatch(const std::string& username) const;
         bool hostnameMatch(const std::string& hostname) const;
 
-        /* Registration flag */
-        bool isRegister() const {
+        /**
+         * Registration flag
+	 */
+        bool isRegistered() const {
             return bRegister_;
         }
+
+	/**
+         * Set registration flag
+         */
         void setRegister(bool result) {
             bRegister_ = result;
         }
@@ -200,7 +262,6 @@ class SIPAccount : public Account {
          * Get the registration stucture that is used
          * for PJSIP in the registration process.
          * Settings are loaded from configuration file.
-         * @param void
          * @return pjsip_regc* A pointer to the registration structure
          */
         pjsip_regc* getRegistrationInfo() {
@@ -302,11 +363,35 @@ class SIPAccount : public Account {
         std::string getServerUri() const;
 
         /**
+         * Set the contact header
          * @param port Optional port. Otherwise set to the port defined for that account.
          * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
+         */
+        void setContactHeader(std::string address, std::string port);
+
+        /**
+         * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
-        std::string getContactHeader(const std::string& address, const std::string& port) const;
+        std::string getContactHeader(void) const;
+
+        /**
+         * The contact header can be rewritten based on the contact provided by the registrar in 200 OK
+         */
+        void enableContactUpdate(void) {
+            contactUpdateEnabled_ = true;
+        }
+
+        /**
+         * The contact header is not updated even if the registrar
+         */
+        void disableContactUpdate(void) {
+            contactUpdateEnabled_ = false;
+        }
+
+        bool isContactUpdateEnabled(void) {
+            return contactUpdateEnabled_;
+        }
 
         /**
          * Get the local interface name on which this account is bound.
@@ -390,7 +475,7 @@ class SIPAccount : public Account {
             return serviceRoute_;
         }
 
-        DtmfType getDtmfType() const {
+        std::string getDtmfType() const {
             return dtmfType_;
         }
 
@@ -409,6 +494,12 @@ class SIPAccount : public Account {
         bool getZrtpHelloHash() const {
             return zrtpHelloHash_;
         }
+
+        /**
+         * Timer used to periodically send re-register request based
+         * on the "Expire" sip header (or the "expire" Contact parameter)
+         */
+        static void keepAliveRegistrationCb(pj_timer_heap_t *th, pj_timer_entry *te);
 
         pjsip_transport* transport_;
     private:
@@ -442,9 +533,14 @@ class SIPAccount : public Account {
          */
         static std::string getLoginName();
 
-        // The pjsip client registration information
+        /**
+         * The pjsip client registration information
+	 */
         pjsip_regc *regc_;
-        // To check if the account is registered
+
+        /**
+	 * To check if the account is registered
+         */
         bool bRegister_;
 
         // Network settings
@@ -469,25 +565,65 @@ class SIPAccount : public Account {
          */
         pj_uint16_t tlsListenerPort_;
 
+        /**
+         * Transport type used for this sip account. Currently supported types:
+         *    PJSIP_TRANSPORT_UNSPECIFIED
+         *    PJSIP_TRANSPORT_UDP
+         *    PJSIP_TRANSPORT_TLS
+         */
         pjsip_transport_type_e transportType_;
 
-        //Credential information
+        /**
+         * Credential information stored for further registration.
+         */
         pjsip_cred_info *cred_;
 
-        // The TLS settings, if tls is chosen as
-        // a sip transport.
+        /**
+         * The TLS settings, used only if tls is chosen as a sip transport.
+         */
         pjsip_tls_setting tlsSetting_;
 
-        // The STUN server name, if applicable for internal use only
+        /**
+         * The CONTACT header used for registration as provided by the registrar, this value could differ
+         * from the host name in case the registrar is inside a subnetwork (such as a VPN).
+         * The header will be stored
+         */
+        std::string contactHeader_;
+
+        /**
+         * Enble the contact header based on the header received from the registrar in 200 OK
+         */
+        bool contactUpdateEnabled_;
+
+        /**
+         * The STUN server name (hostname)
+         */
         pj_str_t stunServerName_;
 
-        // The STUN server port, if applicable
+        /**
+         * The STUN server port
+         */
         pj_uint16_t stunPort_;
 
-        DtmfType dtmfType_;
+        /**
+         * DTMF type used for this account SIPINFO or RTP
+         */
+        std::string dtmfType_;
 
+        /**
+         * Determine if TLS is enabled for this account. TLS provides a secured channel for
+         * SIP signalization. It is independant than the media encription provided by SRTP or ZRTP.
+         */
         std::string tlsEnable_;
+
+        /**
+         * Specify the TLS port
+         */
         int tlsPort_;
+
+        /**
+         * Certificate autority file
+         */
         std::string tlsCaListFile_;
         std::string tlsCertificateFile_;
         std::string tlsPrivateKeyFile_;
@@ -501,22 +637,69 @@ class SIPAccount : public Account {
         std::string tlsNegotiationTimeoutSec_;
         std::string tlsNegotiationTimeoutMsec_;
 
+        /**
+         * The stun server hostname (optional), used to provide the public IP address in case the softphone
+         * stay behind a NAT.
+         */
         std::string stunServer_;
+
+        /**
+         * Determine if STUN public address resolution is required to register this account. In this case a
+         * STUN server hostname must be specified.
+         */
         bool stunEnabled_;
 
+        /**
+         * Determine if SRTP is enabled for this account, SRTP and ZRTP are mutually exclusive
+         * This only determine if the media channel is secured. One could only enable TLS
+         * with no secured media channel.
+         */
         bool srtpEnabled_;
+
+        /**
+         * Specifies the type of key exchange usd for SRTP (sdes/zrtp)
+         */
         std::string srtpKeyExchange_;
+
+        /**
+         * Determine if the softphone should fallback on non secured media channel if SRTP negotiation fails.
+         * Make sure other SIP endpoints share the same behavior since it could result in encrypted data to be
+         * played through the audio device.
+         */
         bool srtpFallback_;
 
+        /**
+         * Determine if the SAS sould be displayed on client side. SAS is a 4-charcter string
+         * that end users should verbaly validate to ensure the channel is secured. Used especially
+         * to prevent man-in-the-middle attack.
+         */
         bool zrtpDisplaySas_;
+
+        /**
+         * Only display SAS 4-character string once at the begining of the call.
+         */
         bool zrtpDisplaySasOnce_;
+
         bool zrtpHelloHash_;
         bool zrtpNotSuppWarning_;
-        /*
-        * Details about the registration state.
-        * This is a protocol Code:Description pair.
-        */
+
+        /**
+         * Details about the registration state.
+         * This is a protocol Code:Description pair.
+         */
         std::pair<int, std::string> registrationStateDetailed_;
+
+        /**
+         * Timer used to regularrly send re-register request based
+         * on the "Expire" sip header (or the "expire" Contact parameter)
+         */
+        pj_timer_entry keepAliveTimer_;
+
+
+        /**
+         * Voice over IP Link contains a listener thread and calls
+         */
+        SIPVoIPLink* link_;
 };
 
 #endif

@@ -68,7 +68,7 @@ class ConfigurationManager :
         void removeAccount(const std::string& accoundID);
         void deleteAllCredential(const std::string& accountID);
         std::vector< std::string > getAccountList();
-        void sendRegister(const std::string& accoundID , const int32_t& expire);
+        void sendRegister(const std::string& accoundID, const bool& enable);
 
         std::map< std::string, std::string > getTlsSettingsDefault();
 
@@ -108,6 +108,7 @@ class ConfigurationManager :
 
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
+        void clearHistory();
 
         int32_t getMailNotify();
         void setMailNotify();
@@ -123,8 +124,7 @@ class ConfigurationManager :
         std::map<std::string, std::string> getHookSettings();
         void setHookSettings(const std::map<std::string, std::string>& settings);
 
-        std::vector<std::string> getHistory();
-        void setHistory(const std::vector<std::string> &entries);
+        std::vector<std::map<std::string, std::string> > getHistory();
 
         std::map<std::string, std::string> getTlsSettings();
         void setTlsSettings(const std::map< std::string, std::string >& details);

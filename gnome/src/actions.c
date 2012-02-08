@@ -41,7 +41,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <assert.h>
 
 #include <arpa/nameser.h>
 #include <netinet/in.h>
@@ -61,56 +60,10 @@
 #include "icons/icon_factory.h"
 #include "imwindow.h"
 #include "statusicon.h"
+#include "unused.h"
 #include "widget/imwidget.h"
 
-
 static GHashTable * ip2ip_profile;
-
-static gchar ** sflphone_order_history_hash_table(GHashTable *result)
-{
-    GHashTableIter iter;
-    gint size = 0;
-    gchar **ordered_list = NULL;
-
-    assert(result);
-
-    while (g_hash_table_size(result)) {
-        gpointer key, value;
-        gpointer key_to_min = NULL;
-
-        // find lowest timestamp in map
-        g_hash_table_iter_init(&iter, result);
-
-        gint min_timestamp = G_MAXINT;
-
-        while (g_hash_table_iter_next(&iter, &key, &value))  {
-            gint timestamp = atoi((gchar*) key);
-
-            if (timestamp < min_timestamp) {
-                min_timestamp = timestamp;
-                key_to_min = key;
-            }
-        }
-
-        if (g_hash_table_lookup_extended(result, key_to_min, &key, &value)) {
-            GSList *llist = (GSList *)value;
-
-            while (llist) {
-                ordered_list = (gchar **) g_realloc(ordered_list, (size + 1) * sizeof(gchar *));
-                *(ordered_list + size) = g_strdup((gchar *)llist->data);
-                size++;
-                llist = g_slist_next(llist);
-            }
-
-            g_hash_table_remove(result, key_to_min);
-        }
-    }
-
-    ordered_list = (gchar **) g_realloc(ordered_list, (size + 1) * sizeof(gchar *));
-    ordered_list[size] = NULL;
-
-    return ordered_list;
-}
 
 void
 sflphone_notify_voice_mail(const gchar* accountID , guint count)
@@ -144,7 +97,7 @@ sflphone_notify_voice_mail(const gchar* accountID , guint count)
  * Else, check if it an IP call. if not, popup an error message
  */
 
-static gboolean _is_direct_call(callable_obj_t * c)
+static gboolean is_direct_call(callable_obj_t * c)
 {
     if (g_strcasecmp(c->_accountID, "empty") == 0) {
         if (!g_str_has_prefix(c->_peer_number, "sip:")) {
@@ -174,8 +127,8 @@ status_bar_display_account()
     if (acc) {
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                                       _("Using account"),
-                                      (gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS),
-                                      (gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_TYPE));
+                                      (gchar*) g_hash_table_lookup(acc->properties, ACCOUNT_ALIAS),
+                                      (gchar*) g_hash_table_lookup(acc->properties, ACCOUNT_TYPE));
     } else {
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
@@ -189,9 +142,6 @@ void
 sflphone_quit()
 {
     if (calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
-        // Save the history
-        sflphone_save_history();
-
         dbus_unregister(getpid());
         dbus_clean();
         account_list_free();
@@ -237,7 +187,7 @@ sflphone_hung_up(callable_obj_t * c)
         c->_confID = NULL;
     }
 
-    // test wether the widget contain text, if not remove it
+    // test whether the widget contains text, if not remove it
     if ((im_window_get_nb_tabs() > 1) && c->_im_widget && !(IM_WIDGET(c->_im_widget)->containText))
         im_window_remove_tab(c->_im_widget);
     else
@@ -260,7 +210,7 @@ void sflphone_fill_account_list(void)
 
     if (array) {
         for (gchar **accountID = array; accountID && *accountID; accountID++) {
-            account_t * a = g_new0(account_t,1);
+            account_t * a = g_new0(account_t, 1);
             a->accountID = g_strdup(*accountID);
             a->credential_information = NULL;
             account_list_add(a);
@@ -451,7 +401,7 @@ sflphone_pick_up()
 
             break;
         case CALL_STATE_INCOMING:
-            selectedCall->_history_state = INCOMING;
+            selectedCall->_history_state = g_strdup(INCOMING_STRING);
             calltree_update_call(history_tab, selectedCall);
 
             // if instant messaging window is visible, create new tab (deleted automatically if not used)
@@ -597,7 +547,7 @@ sflphone_display_transfer_status(const gchar* message)
 void
 sflphone_incoming_call(callable_obj_t * c)
 {
-    c->_history_state = MISSED;
+    c->_history_state = g_strdup(MISSED_STRING);
     calllist_add_call(current_calls_tab, c);
     calltree_add_call(current_calls_tab, c, NULL);
 
@@ -605,7 +555,7 @@ sflphone_incoming_call(callable_obj_t * c)
     calltree_display(current_calls_tab);
 
     // Change the status bar if we are dealing with a direct SIP call
-    if (_is_direct_call(c)) {
+    if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);
@@ -688,7 +638,7 @@ sflphone_new_call()
 
     callable_obj_t *c = create_new_call(CALL, CALL_STATE_DIALING, "", "", "", "");
 
-    c->_history_state = OUTGOING;
+    c->_history_state = g_strdup(OUTGOING_STRING);
 
     calllist_add_call(current_calls_tab, c);
     calltree_add_call(current_calls_tab, c, NULL);
@@ -741,7 +691,7 @@ sflphone_keypad(guint keyval, gchar * key)
                 switch (keyval) {
                     case GDK_Return:
                     case GDK_KP_Enter:
-                        c->_history_state = INCOMING;
+                        c->_history_state = g_strdup(INCOMING_STRING);
                         calltree_update_call(history_tab, c);
                         dbus_accept(c);
                         break;
@@ -867,7 +817,7 @@ static int place_registered_call(callable_obj_t * c)
         notify_current_account(current);
     }
 
-    c->_history_state = OUTGOING;
+    c->_history_state = g_strdup(OUTGOING_STRING);
 
     return 0;
 }
@@ -875,9 +825,9 @@ static int place_registered_call(callable_obj_t * c)
 void
 sflphone_place_call(callable_obj_t * c)
 {
-    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
+    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
 
-    if (_is_direct_call(c)) {
+    if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);
@@ -923,8 +873,6 @@ sflphone_add_participant(const gchar* callID, const gchar* confID)
         ERROR("SFLphone: Error: Could not find call");
         return;
     }
-
-    time(&call->_time_added);
 
     dbus_add_participant(callID, confID);
 }
@@ -1075,27 +1023,21 @@ void sflphone_fill_conference_list(void)
     g_strfreev(conferences);
 }
 
-void sflphone_fill_history(void)
+static void
+create_callable_from_entry(gpointer data, gpointer user_data UNUSED)
 {
-    gchar **entries, **entries_orig;
-    entries = entries_orig = dbus_get_history();
+    GHashTable *entry = (GHashTable *) data;
+    callable_obj_t *history_call = create_history_entry_from_hashtable(entry);
 
-    while (entries && *entries) {
-        gchar *current_entry = *entries;
-        /* do something with key and value */
-        callable_obj_t *history_call = create_history_entry_from_serialized_form(current_entry);
+    /* Add it and update the GUI */
+    calllist_add_call_to_front(history_tab, history_call);
+}
 
-        /* Add it and update the GUI */
-        calllist_add_call(history_tab, history_call);
-        entries++;
-    }
-
-    g_strfreev(entries_orig);
-
-    // fill the treeview with calls
+static void fill_treeview_with_calls(void)
+{
     guint n = calllist_get_size(history_tab);
 
-    for (guint i = 0; i < n; i++) {
+    for (guint i = 0; i < n; ++i) {
         QueueElement *element = calllist_get_nth(history_tab, i);
 
         if (element->type == HIST_CALL)
@@ -1103,53 +1045,13 @@ void sflphone_fill_history(void)
     }
 }
 
-#if ! (GLIB_CHECK_VERSION(2,28,0))
-static void
-g_slist_free_full(GSList         *list,
-                  GDestroyNotify  free_func)
+void sflphone_fill_history(void)
 {
-    g_slist_foreach(list, (GFunc) free_func, NULL);
-    g_slist_free(list);
-}
-#endif
+    GPtrArray *entries = dbus_get_history();
+    if (entries)
+        g_ptr_array_foreach(entries, create_callable_from_entry, NULL);
 
-
-static void hist_free_elt(gpointer list)
-{
-    g_slist_free_full((GSList *)list, g_free);
-}
-
-void sflphone_save_history(void)
-{
-    GHashTable *result = g_hash_table_new_full(NULL, g_str_equal, g_free, hist_free_elt);
-
-    gint size = calllist_get_size(history_tab);
-
-    for (gint i = 0; i < size; ++i) {
-        QueueElement *current = calllist_get_nth(history_tab, i);
-
-        if (!current) {
-            WARN("SFLphone: Warning: %dth element is null", i);
-            break;
-        }
-
-        gchar *value;
-
-        if (current->type == HIST_CALL) {
-            value = serialize_history_call_entry(current->elem.call);
-            gchar *key = g_strdup_printf("%i", (int) current->elem.call->_time_start);
-
-            g_hash_table_replace(result, (gpointer) key,
-                    g_slist_append(g_hash_table_lookup(result, key),(gpointer) value));
-        }
-        else
-            ERROR("SFLphone: Error: Unknown type for serialization");
-    }
-
-    gchar **ordered_result = sflphone_order_history_hash_table(result);
-    dbus_set_history(ordered_result);
-    g_strfreev(ordered_result);
-    g_hash_table_unref(result);
+    fill_treeview_with_calls();
 }
 
 void

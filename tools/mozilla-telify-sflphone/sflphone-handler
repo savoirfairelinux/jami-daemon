@@ -19,14 +19,14 @@ if [ -z $1 ]; then
     exit 1
 fi
 
-# Cleanup destination, keeping numbers only 
+# Cleanup destination, keeping numbers only
 TO="`echo $1 | sed -e 's/[^0123456789]//g'`"
 
 # Generate call id.
-CALLID=${RANDOM}$$  
+CALLID=${RANDOM}$$
 
 # Dbus placeCallFirstAccount method does not reach sflphoned if starting
-# Should find another way to do this 
+# Should find another way to do this
 sleep 1
 
 dbus-send                                                       \

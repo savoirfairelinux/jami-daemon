@@ -16,7 +16,7 @@ fi
 cd build
 
 # prefix=`echo $@ | grep -q "--prefix="`
-# 
+#
 # if $prefix
 # then options=$@" -DCMAKE_INSTALL_PREFIX="$prefix_env
 
@@ -37,7 +37,7 @@ autocmd cmake $options ..
 
 
 echo "**********************************************"
-echo "Configuration done!" 
+echo "Configuration done!"
 echo "Run \`cd build' to go to the build directory."
 echo "Then run \`make'to build the software."
 echo "**********************************************"

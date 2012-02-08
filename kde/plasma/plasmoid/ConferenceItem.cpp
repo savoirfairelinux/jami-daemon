@@ -12,7 +12,7 @@ ConferenceItem::ConferenceItem() : Plasma::Frame()
    conferenceLayout = new QGraphicsLinearLayout(Qt::Vertical);
 
    conferenceLayout->addItem(header);
-   
+
    setLayout(conferenceLayout);
 }
 

@@ -1,2 +1,2 @@
 version=3
-http://www.codepad.de/en/telify.html /download/telify-(.*)-fx.xpi
+http://www.codepad.de/en/download/firefox-add-ons/telify.html /download/Telify-(.*)-fx-tb.xpi

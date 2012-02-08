@@ -34,7 +34,7 @@ SFLPhone is a Voice-over-IP software phone. We want it to be:
 - user friendly (fast, sleek, easy to learn interface)
 - corporate grade (transfers, holds, perfect audio quality)
 - fully compatible with Asterisk (SIP and IAX protocols)
-- customizable 
+- customizable
 
 As the SIP/audio daemon and the user interface are separate processes,
 it is easy to provide different user interfaces. SFLPhone0.8 comes with
@@ -46,7 +46,7 @@ SFLPhone is actually used by the support team of Savoir-Faire Linux Inc.
 More information is available on the project homepage:
   http://www.sflphone.org/
 
- 
+
 Short description of content of source tree
 -------------------------------------------
 
@@ -56,7 +56,7 @@ Short description of content of source tree
 - src/ is the core of SFLphone. It contains the main.cpp, managerimpl.cpp
   files, audio and gui directories, and files about signalisation SIP. Later,
   it should be better, when IAX will be implemented, that a directory groups
-  these protocols. 
+  these protocols.
   The ManagerImpl class is the intermediaire between all the layer in the tree.
 - src/audio/ is the audio layer. It contains all about tones, dtmf,
   audiodriver, rtp layer, audio codec ulaw, alaw and gsm.
@@ -79,7 +79,7 @@ cd libs/pjproject
 ./configure --disable-ilbc-codec && make clean && make dep && make
 sudo make install
 
-If you already have installed a different version of 
+If you already have installed a different version of
 pjsip on your system, you will most likely have some errors
 such as :
 

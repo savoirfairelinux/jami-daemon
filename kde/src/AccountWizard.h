@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef ACCOUNTWIZARD_H
 #define ACCOUNTWIZARD_H
 
@@ -37,9 +37,9 @@ class AccountWizard : public QWizard
 Q_OBJECT
 
 public:
-   
+
    enum { Page_Intro, Page_AutoMan, Page_Type, Page_Email, Page_SIPForm, Page_IAXForm, Page_Stun, Page_Conclusion };
-   
+
    AccountWizard(QWidget * parent = 0);
    ~AccountWizard();
    void accept();
@@ -134,7 +134,7 @@ class WizardAccountSIPFormPage : public QWizardPage
    Q_OBJECT
 
 public:
-   
+
    WizardAccountSIPFormPage(QWidget *parent = 0);
    ~WizardAccountSIPFormPage();
    int nextId() const;
@@ -167,7 +167,7 @@ class WizardAccountIAXFormPage : public QWizardPage
    Q_OBJECT
 
 public:
-   
+
    WizardAccountIAXFormPage(QWidget *parent = 0);
    ~WizardAccountIAXFormPage();
    int nextId() const;

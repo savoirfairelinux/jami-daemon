@@ -10,5 +10,5 @@ It provides functions like call transfer, call hold, multiple lines, multiple ac
 It is SIP and IAX2 compatible.
 &sflphone; audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
 </para>
-  
+
 </chapter>

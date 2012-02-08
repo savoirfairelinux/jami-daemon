@@ -1,4 +1,4 @@
- 
+
 File=sflphone-client-kde.kcfg
 ClassName=ConfigurationSkeletonBase
 Singleton=true

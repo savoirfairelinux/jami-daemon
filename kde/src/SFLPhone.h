@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -23,7 +23,6 @@
 #define SFLPHONE_H
 
 #include <KXmlGuiWindow>
-#include <QtCore/QVector>
 #include <lib/CallModel.h>
 
 //Qt
@@ -46,19 +45,19 @@ class CallTreeItem;
 
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
-/**                                                                  
- * This class represents the SFLphone main window                    
- * It implements the methods relative to windowing                   
- * (status, menus, toolbars, notifications...).                      
- * It uses a view which implements the real functionning             
- * and features of the phone.                                        
- * The display of the window is according to the state of the view,  
- * so the view sends some signals to ask for changes on the window   
- * that the window has to take into account.                         
- *                                                                   
- * @short Main window                                                
- * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>      
- * @version 0.9.6                                                    
+/**
+ * This class represents the SFLphone main window
+ * It implements the methods relative to windowing
+ * (status, menus, toolbars, notifications...).
+ * It uses a view which implements the real functionning
+ * and features of the phone.
+ * The display of the window is according to the state of the view,
+ * so the view sends some signals to ask for changes on the window
+ * that the window has to take into account.
+ *
+ * @short Main window
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+ * @version 0.9.6
 **/
 class SFLPhone : public KXmlGuiWindow
 {
@@ -76,14 +75,13 @@ enum CallAction {
 };
 
 private:
-   // Whether or not the object has been initialized
+   //Attributes
    bool   m_pInitialized;
    KAction* action_accept                ;
    KAction* action_refuse                ;
    KAction* action_hold                  ;
    KAction* action_transfer              ;
    KAction* action_record                ;
-   KAction* action_main                  ;
    KAction* action_mailBox               ;
    KAction* action_close                 ;
    KAction* action_quit                  ;
@@ -92,8 +90,7 @@ private:
    KAction* action_configureSflPhone     ;
    KAction* action_configureShortcut     ;
    KAction* action_accountCreationWizard ;
-   
-   QActionGroup * action_screen;
+   QActionGroup* action_screen           ;
 
    SFLPhoneView*  m_pView            ;
    bool           m_pIconChanged     ;
@@ -103,16 +100,17 @@ private:
    QDockWidget*   m_pCentralDW       ;
    HistoryDock*   m_pHistoryDW       ;
    BookmarkDock*  m_pBookmarkDW      ;
-   
+
    static SFLPhone* m_sApp;
    static TreeWidgetCallModel* m_pModel;
-private:
+
+   //Setters
    void setObjectNames();
 
 protected:
    virtual bool queryClose();
    virtual void changeEvent(QEvent * event);
-   
+
 
 public:
    SFLPhone(QWidget *parent = 0);
@@ -123,7 +121,7 @@ public:
    QList<QAction *> getCallActions ();
 
    friend class SFLPhoneView;
-   
+
    static SFLPhone*            app   ();
    static TreeWidgetCallModel* model ();
    SFLPhoneView*               view  ();
@@ -131,7 +129,7 @@ public:
    ContactDock*  contactDock();
    HistoryDock*  historyDock();
    BookmarkDock* bookmarkDock();
-   
+
 private slots:
    void on_m_pView_statusMessageChangeAsked      ( const QString& message        );
    void on_m_pView_windowTitleChangeAsked        ( const QString& message        );
@@ -140,14 +138,12 @@ private slots:
    void on_m_pView_actionTextsChangeAsked        ( const QString* actionTexts    );
    void on_m_pView_transferCheckStateChangeAsked ( bool  transferCheckState      );
    void on_m_pView_recordCheckStateChangeAsked   ( bool  recordCheckState        );
-   void on_m_pView_screenChanged                 ( int screen                    );
    void on_m_pView_incomingCall                  ( const Call * call             );
    void showShortCutEditor                       (                               );
-   void updateScreen(QAction * action);
 
    void quitButton();
 
 };
 
 #endif
- 
+

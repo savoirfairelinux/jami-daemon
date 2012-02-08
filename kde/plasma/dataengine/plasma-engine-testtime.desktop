@@ -2,7 +2,7 @@
 Name=sflphone
 Comment=An SFLPhone IP soft-phone frontend
 Type=Service
- 
+
 X-KDE-ServiceTypes=Plasma/DataEngine
 X-KDE-Library=plasma_engine_sflphone
 X-Plasma-EngineName=sflphone

@@ -6,19 +6,19 @@
 #include <KPushButton>
 
 #include "../../src/lib/CallModel.h"
- 
+
 SFLPhonePlasmoid::SFLPhonePlasmoid(QObject* parent, const QVariantList& args)
     : Plasma::PopupApplet(parent, args), extenderItem(0), callInit(false), requierAttention(false)
 {
    //m_svg.setImagePath("widgets/background");
    setBackgroundHints(DefaultBackground);
-   
+
    CallModelConvenience::init();
-   
+
    setMinimumSize(24,24);
 }
 
-void SFLPhonePlasmoid::dataUpdated(const QString& source, const Plasma::DataEngine::Data& data) 
+void SFLPhonePlasmoid::dataUpdated(const QString& source, const Plasma::DataEngine::Data& data)
 {
    mainWidget->dataUpdated(source, data);
 
@@ -28,12 +28,12 @@ void SFLPhonePlasmoid::dataUpdated(const QString& source, const Plasma::DataEngi
       callInit = true;
    }
 }
- 
+
 SFLPhonePlasmoid::~SFLPhonePlasmoid()
 {
 
 }
- 
+
 void SFLPhonePlasmoid::init()
 {
    //contactEngine = dataEngine("akonadi");
@@ -41,7 +41,7 @@ void SFLPhonePlasmoid::init()
    sflphoneEngine->connectSource("calls", this,0/*Update only if something happen*/);
    sflphoneEngine->connectSource("info", this,0/*Update only if something happen*/);
    sflphoneEngine->connectSource("history", this,0/*Update only if something happen*/);
-   
+
    mainWidget = new MainWidget();
    connect(mainWidget,SIGNAL(requierAttention()),this,SLOT(notify()));
 
@@ -52,7 +52,7 @@ void SFLPhonePlasmoid::init()
 
    //panel_icon.setImagePath("/usr/share/kde4/apps/sflphone-plasmoid/icons/sflphone.svg");
    panelFrame->setImage("/usr/share/kde4/apps/sflphone-plasmoid/icons/sflphone.svg");
-   
+
    mainLayout->addItem(panelFrame);
 
    setLayout(mainLayout);
@@ -61,7 +61,7 @@ void SFLPhonePlasmoid::init()
    connect(panelFrame->nativeWidget(), SIGNAL(clicked()), this, SLOT(showCallPopup()));
 
    extender()->setEmptyExtenderMessage(i18n("no running jobs..."));
-} 
+}
 
 void SFLPhonePlasmoid::constraintsEvent(Plasma::Constraints constraints)
 {
@@ -81,12 +81,12 @@ void SFLPhonePlasmoid::constraintsEvent(Plasma::Constraints constraints)
             formFaction = Panel;
             m_orientation = Qt::Vertical;
             break;
-      } 
+      }
 
           //if (previous != m_mode)
              //connectToEngine();
-   } 
-} 
+   }
+}
 
 
 
@@ -115,7 +115,7 @@ void SFLPhonePlasmoid::constraintsEvent(Plasma::Constraints constraints)
    //currentMode = index;
 //}
 
-//void SFLPhonePlasmoid::switchPage(Plasma::ScrollWidget* oldFrame, Plasma::ScrollWidget* newFrame, Plasma::ScrollWidget* toHide, bool direction) 
+//void SFLPhonePlasmoid::switchPage(Plasma::ScrollWidget* oldFrame, Plasma::ScrollWidget* newFrame, Plasma::ScrollWidget* toHide, bool direction)
 //{
 //   QPointF targetPos = oldFrame->pos();
 //   newFrame->setPos(QPoint(targetPos.x() - newFrame->size().width() ,targetPos.y()));
@@ -137,12 +137,12 @@ void SFLPhonePlasmoid::constraintsEvent(Plasma::Constraints constraints)
 //   oldFrame->setVisible(true);
 //   newFrame->setVisible(true);
 //   toHide->setVisible(false);
-   
+
 //   slideAnim->start(QAbstractAnimation::DeleteWhenStopped);
 //   slideAnimOut->start(QAbstractAnimation::DeleteWhenStopped);
 //}
 
-void SFLPhonePlasmoid::showCallPopup(/*Qt::MouseButton button*/) 
+void SFLPhonePlasmoid::showCallPopup(/*Qt::MouseButton button*/)
 {
    //Q_UNUSED(button)
    if (!extenderItem) {
@@ -161,7 +161,7 @@ void SFLPhonePlasmoid::showCallPopup(/*Qt::MouseButton button*/)
    }
 }
 
-void SFLPhonePlasmoid::notify() 
+void SFLPhonePlasmoid::notify()
 {
    //panel_icon.setImagePath("/usr/share/kde4/apps/sflphone-plasmoid/icons/sflphone_notif.svg");
    panelFrame->setImage("/usr/share/kde4/apps/sflphone-plasmoid/icons/sflphone_notif.svg");

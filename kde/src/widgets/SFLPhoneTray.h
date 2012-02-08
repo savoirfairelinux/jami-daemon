@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 #ifndef SFLPHONETRAY_H
 #define SFLPHONETRAY_H
@@ -31,20 +31,24 @@ class KAction;
 class QMenu;
 class QIcon;
 
+///@class SFLPhoneTray The old system try, should be totally replaced by a plasmoid some day
 class SFLPhoneTray : public KSystemTrayIcon
 {
 Q_OBJECT
 
 public:
+   //Constructor
    SFLPhoneTray(QIcon icon, QWidget *parent = 0);
    ~SFLPhoneTray();
    bool initialize();
-   void setupActions();
+
+   //Mutators
    void addAction(KAction *action);
 
 private:
-   QMenu *trayIconMenu;
-   bool initialized_;
+   //Attributes
+   QMenu* m_pTrayIconMenu;
+   bool   m_Init;
 };
 
 #endif // SFLPHONETRAY_H

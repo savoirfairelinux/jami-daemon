@@ -67,7 +67,6 @@ static GtkWidget *mic_control;
 static GtkWidget *statusBar;
 
 static gchar *status_current_message;
-static GMutex *gmutex;
 
 static gboolean focus_is_on_searchbar;
 
@@ -109,10 +108,8 @@ on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
     if (eel_gconf_get_integer(SHOW_STATUSICON)) {
         gtk_widget_hide(get_main_window());
         set_minimized(TRUE);
-    } else {
-        g_mutex_free(gmutex);
+    } else
         sflphone_quit();
-    }
 
     return TRUE;
 }
@@ -280,8 +277,6 @@ create_main_window()
     /* don't show waiting layer */
     gtk_widget_hide(waitingLayer);
 
-    gmutex = g_mutex_new();
-
     g_timeout_add_seconds(1, calltree_update_clock, NULL);
 
     // Configuration wizard
@@ -337,8 +332,6 @@ main_window_volume_controls(gboolean state)
 void
 statusbar_push_message(const gchar * const left_hand_message, const gchar * const right_hand_message, guint id)
 {
-    g_mutex_lock(gmutex);
-
     g_free(status_current_message);
     // store the left hand message so that it can be reused in case of clock update
     status_current_message = g_strdup(left_hand_message);
@@ -356,8 +349,6 @@ statusbar_push_message(const gchar * const left_hand_message, const gchar * cons
     gtk_statusbar_push(GTK_STATUSBAR(statusBar), id, message_to_display);
 
     g_free(message_to_display);
-
-    g_mutex_unlock(gmutex);
 }
 
 void
@@ -367,11 +358,9 @@ statusbar_pop_message(guint id)
 }
 
 void
-statusbar_update_clock(const gchar * const msg)
+statusbar_update_clock(const gchar * msg)
 {
-    g_mutex_lock(gmutex);
     gchar *message = g_strdup(status_current_message);
-    g_mutex_unlock(gmutex);
 
     if (message) {
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);

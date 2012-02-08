@@ -142,7 +142,7 @@ IAXVoIPLink::sendAudioFromMic()
     for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end() ; ++iter) {
         IAXCall *currentCall = dynamic_cast<IAXCall*>(iter->second);
 
-        if (!currentCall or currentCall->getState() != Call::Active)
+        if (!currentCall or currentCall->getState() != Call::ACTIVE)
             continue;
 
         int codecType = currentCall->getAudioCodec();
@@ -240,14 +240,14 @@ IAXVoIPLink::sendUnregister(Account *a)
 Call*
 IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
-    IAXCall* call = new IAXCall(id, Call::Outgoing);
+    IAXCall* call = new IAXCall(id, Call::OUTGOING);
 
     call->setPeerNumber(toUrl);
-    call->initRecFileName(toUrl);
+    call->initRecFilename(toUrl);
 
     iaxOutgoingInvite(call);
-    call->setConnectionState(Call::Progressing);
-    call->setState(Call::Active);
+    call->setConnectionState(Call::PROGRESSING);
+    call->setState(Call::ACTIVE);
     addCall(call);
 
     return call;
@@ -265,8 +265,8 @@ IAXVoIPLink::answer(Call *c)
     iax_answer(call->session);
     mutexIAX_.leave();
 
-    call->setState(Call::Active);
-    call->setConnectionState(Call::Connected);
+    call->setState(Call::ACTIVE);
+    call->setConnectionState(Call::CONNECTED);
 
     Manager::instance().getMainBuffer()->flushAllBuffers();
 }
@@ -326,7 +326,7 @@ IAXVoIPLink::onhold(const std::string& id)
     iax_quelch_moh(call->session, true);
     mutexIAX_.leave();
 
-    call->setState(Call::Hold);
+    call->setState(Call::HOLD);
 }
 
 void
@@ -343,7 +343,7 @@ IAXVoIPLink::offhold(const std::string& id)
     iax_unquelch(call->session);
     mutexIAX_.leave();
     Manager::instance().getAudioDriver()->startStream();
-    call->setState(Call::Active);
+    call->setState(Call::ACTIVE);
 }
 
 void
@@ -468,8 +468,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_REJECT:
-            call->setConnectionState(Call::Connected);
-            call->setState(Call::Error);
+            call->setConnectionState(Call::CONNECTED);
+            call->setState(Call::ERROR);
             Manager::instance().callFailure(id);
             removeCall(id);
             break;
@@ -484,13 +484,13 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
         case IAX_EVENT_ANSWER:
         case IAX_EVENT_TRANSFER:
 
-            if (call->getConnectionState() == Call::Connected)
+            if (call->getConnectionState() == Call::CONNECTED)
                 break;
 
             Manager::instance().addStream(call->getCallId());
 
-            call->setConnectionState(Call::Connected);
-            call->setState(Call::Active);
+            call->setConnectionState(Call::CONNECTED);
+            call->setState(Call::ACTIVE);
 
             if (event->ies.format)
                 call->format = event->ies.format;
@@ -503,8 +503,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_BUSY:
-            call->setConnectionState(Call::Connected);
-            call->setState(Call::Busy);
+            call->setConnectionState(Call::CONNECTED);
+            call->setState(Call::BUSY);
             Manager::instance().callBusy(id);
             removeCall(id);
             break;
@@ -518,7 +518,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_RINGA:
-            call->setConnectionState(Call::Ringing);
+            call->setConnectionState(Call::RINGING);
             Manager::instance().peerRingingCall(call->getCallId());
             break;
 
@@ -608,18 +608,18 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         case IAX_EVENT_CONNECT:
             id = Manager::instance().getNewCallID();
 
-            call = new IAXCall(id, Call::Incoming);
+            call = new IAXCall(id, Call::INCOMING);
             call->session = event->session;
-            call->setConnectionState(Call::Progressing);
+            call->setConnectionState(Call::PROGRESSING);
 
             if (event->ies.calling_number)
                 call->setPeerNumber(event->ies.calling_number);
 
             if (event->ies.calling_name)
-                call->setPeerName(std::string(event->ies.calling_name));
+                call->setDisplayName(std::string(event->ies.calling_name));
 
             // if peerNumber exist append it to the name string
-            call->initRecFileName(std::string(event->ies.calling_number));
+            call->initRecFilename(std::string(event->ies.calling_number));
             Manager::instance().incomingCall(call, accountID_);
 
             format = call->getFirstMatchingFormat(event->ies.format, accountID_);

@@ -12,13 +12,13 @@ class ConferenceItem : public Plasma::Frame, public ViewItem
 {
    public:
       ConferenceItem();
-      bool isConference() 
+      bool isConference()
       {
          return true;
       }
       void setCallList(QList<CallItem*> list);
       void setConfId(QString value);
-      
+
    private:
       QString confId;
       QGraphicsLinearLayout* conferenceLayout;

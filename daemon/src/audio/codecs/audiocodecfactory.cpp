@@ -78,7 +78,8 @@ std::vector<int32_t >
 AudioCodecFactory::getAudioCodecList() const
 {
     std::vector<int32_t> list;
-
+int size = codecsMap_.size();
+printf("%d\n",size);
     for (CodecsMap::const_iterator iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
         if (iter->second)
             list.push_back((int32_t)iter->first);
@@ -154,7 +155,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
     if (envDir)
         dirToScan.push_back(std::string(envDir) + DIR_SEPARATOR_STR);
 
-    const char *progDir = get_program_dir();
+    const char *progDir = fileutils::get_program_dir();
 
     if (progDir)
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "audio/codecs/");

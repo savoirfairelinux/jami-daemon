@@ -1,7 +1,7 @@
 accounts:
  - id:			1234
    alias:   		sfl-181
-   username:		181   
+   username:		181
    password:  		sfl-181pw
    hostname:  		sflphone.org
    enable:		true
@@ -9,7 +9,7 @@ accounts:
 
  - id:			2345
    alias:		sfl-431
-   username:		431     
+   username:		431
    password:  		alexandre
    hostname:		192.168.50.3
    enable:		true
@@ -21,7 +21,7 @@ accounts:
    publishaddr:		127.0.0.1
    publishport:		5065
    sameaslocal:		true
-   resolveonce:		false      
+   resolveonce:		false
    codecs:		0/9/110/111/112/
    credential:
      count:		0

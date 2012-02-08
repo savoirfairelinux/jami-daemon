@@ -94,7 +94,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP);
 /**
  * Helper function to parser header from incoming sip messages
  */
-std::string fetchHeaderValue(pjsip_msg *msg, std::string field);
+std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
 
 static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
@@ -102,17 +102,17 @@ static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
 static pj_thread_t *thread;
 
-static void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
-static void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
-static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
-static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
-static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
-static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
-static void registration_cb(pjsip_regc_cbparam *param);
-static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
-static pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
+void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
+void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
+void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
+void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
+void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
+void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+void registration_cb(pjsip_regc_cbparam *param);
+pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
+pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
 
-static void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
+void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
  * Send a reINVITE inside an active dialog to modify its state
@@ -163,6 +163,274 @@ pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     return route_set;
 }
 
+void handleIncomingOptions(pjsip_rx_data *rdata)
+{
+    pjsip_tx_data *tdata;
+
+    if (pjsip_endpt_create_response(endpt_, rdata, PJSIP_SC_OK, NULL, &tdata) != PJ_SUCCESS)
+        return;
+
+#define ADD_HDR(hdr) do { \
+    const pjsip_hdr *cap_hdr = hdr; \
+    if (cap_hdr) \
+    pjsip_msg_add_hdr (tdata->msg, (pjsip_hdr*) pjsip_hdr_clone (tdata->pool, cap_hdr)); \
+} while(0)
+#define ADD_CAP(cap) ADD_HDR(pjsip_endpt_get_capability(endpt_, cap, NULL));
+
+    ADD_CAP(PJSIP_H_ALLOW);
+    ADD_CAP(PJSIP_H_ACCEPT);
+    ADD_CAP(PJSIP_H_SUPPORTED);
+    ADD_HDR(pjsip_evsub_get_allow_events_hdr(NULL));
+
+    pjsip_response_addr res_addr;
+    pjsip_get_response_addr(tdata->pool, rdata, &res_addr);
+
+    if (pjsip_endpt_send_response(endpt_, &res_addr, tdata, NULL, NULL) != PJ_SUCCESS)
+        pjsip_tx_data_dec_ref(tdata);
+}
+
+pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
+{
+    pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
+
+    if (!dlg)
+        return PJ_SUCCESS;
+
+    pjsip_transaction *tsx = pjsip_rdata_get_tsx(rdata);
+
+    if (!tsx or tsx->method.id != PJSIP_INVITE_METHOD)
+        return PJ_SUCCESS;
+
+    if (tsx->status_code / 100 == 2) {
+        /**
+         * Send an ACK message inside a transaction. PJSIP send automatically, non-2xx ACK response.
+         * ACK for a 2xx response must be send using this method.
+         */
+        pjsip_tx_data *tdata;
+        pjsip_dlg_create_request(dlg, &pjsip_ack_method, rdata->msg_info.cseq->cseq, &tdata);
+        pjsip_dlg_send_request(dlg, tdata, -1, NULL);
+    }
+
+    return PJ_SUCCESS;
+}
+
+std::string parseDisplayName(const char * buffer)
+{
+    const char* from_header = strstr(buffer, "From: ");
+
+    if (!from_header)
+        return "";
+
+    std::string temp(from_header);
+    size_t begin_displayName = temp.find("\"") + 1;
+    size_t end_displayName = temp.rfind("\"");
+    std::string displayName(temp.substr(begin_displayName, end_displayName - begin_displayName));
+
+    static const size_t MAX_DISPLAY_NAME_SIZE = 25;
+    if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
+        return "";
+
+    return displayName;
+}
+
+void stripSipUriPrefix(std::string& sipUri)
+{
+    // Remove sip: prefix
+    static const char SIP_PREFIX[] = "sip:";
+    size_t found = sipUri.find(SIP_PREFIX);
+
+    if (found != std::string::npos)
+        sipUri.erase(found, found + (sizeof SIP_PREFIX) - 1);
+
+    found = sipUri.find("@");
+
+    if (found != std::string::npos)
+        sipUri.erase(found);
+}
+
+pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
+{
+    pjsip_method *method = &rdata->msg_info.msg->line.req.method;
+
+    if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
+        return true;
+
+    pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
+    pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
+    std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
+    std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
+    std::string account_id(Manager::instance().getAccountIdFromNameAndServer(userName, server));
+
+    std::string displayName(parseDisplayName(rdata->msg_info.msg_buf));
+
+    if (method->id == PJSIP_OTHER_METHOD) {
+        pj_str_t *str = &method->name;
+        std::string request(str->ptr, str->slen);
+
+        if (request.find("NOTIFY") != (size_t)-1) {
+            int voicemail;
+
+            if (sscanf((const char*)rdata->msg_info.msg->body->data, "Voice-Message: %d/", &voicemail) == 1 && voicemail != 0)
+                Manager::instance().startVoiceMessageNotification(account_id, voicemail);
+        }
+
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
+
+        return true;
+    } else if (method->id == PJSIP_OPTIONS_METHOD) {
+        handleIncomingOptions(rdata);
+        return true;
+    } else if (method->id != PJSIP_INVITE_METHOD && method->id != PJSIP_ACK_METHOD) {
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
+        return true;
+    }
+
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+
+    pjmedia_sdp_session *r_sdp;
+    pjsip_msg_body *body = rdata->msg_info.msg->body;
+
+    if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
+        r_sdp = NULL;
+
+    if (account->getActiveCodecs().empty()) {
+        pjsip_endpt_respond_stateless(endpt_, rdata,
+                                      PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
+                                      NULL);
+        return false;
+    }
+
+    // Verify that we can handle the request
+    unsigned options = 0;
+
+    if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
+        return true;
+    }
+
+    if (Manager::instance().hookPreference.getSipEnabled()) {
+        std::string header_value(fetchHeaderValue(rdata->msg_info.msg, Manager::instance().hookPreference.getUrlSipField()));
+        UrlHook::runAction(Manager::instance().hookPreference.getUrlCommand(), header_value);
+    }
+
+    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
+    Manager::instance().associateCallToAccount(call->getCallId(), account_id);
+
+    // May use the published address as well
+    std::string addrToUse = SIPVoIPLink::instance()->getInterfaceAddrFromName(account->getLocalInterface());
+    std::string addrSdp = account->isStunEnabled()
+                          ? account->getPublishedAddress()
+                          : addrToUse;
+
+    pjsip_tpselector *tp = SIPVoIPLink::instance()->initTransportSelector(account->transport_, call->getMemoryPool());
+
+    if (addrToUse == "0.0.0.0")
+        addrToUse = getSIPLocalIP();
+
+    if (addrSdp == "0.0.0.0")
+        addrSdp = addrToUse;
+
+    char tmp[PJSIP_MAX_URL_SIZE];
+    int length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+    std::string peerNumber(tmp, length);
+    stripSipUriPrefix(peerNumber);
+
+    call->setConnectionState(Call::PROGRESSING);
+    call->setPeerNumber(peerNumber);
+    call->setDisplayName(displayName);
+    call->initRecFilename(peerNumber);
+
+    setCallMediaLocal(call, addrToUse);
+
+    call->getLocalSDP()->setLocalIP(addrSdp);
+
+    call->getAudioRtp().initAudioRtpConfig();
+    call->getAudioRtp().initAudioSymmetricRtpSession();
+
+    if (rdata->msg_info.msg->body) {
+        char sdpbuffer[1000];
+        int len = rdata->msg_info.msg->body->print_body(rdata->msg_info.msg->body, sdpbuffer, sizeof sdpbuffer);
+
+        if (len == -1) // error
+            len = 0;
+
+        std::string sdpoffer(sdpbuffer, len);
+        size_t start = sdpoffer.find("a=crypto:");
+
+        // Found crypto header in SDP
+        if (start != std::string::npos) {
+            CryptoOffer crypto_offer;
+            crypto_offer.push_back(std::string(sdpoffer.substr(start, (sdpoffer.size() - start) - 1)));
+
+            std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+
+            for (int i = 0; i < 3; i++)
+                localCapabilities.push_back(sfl::CryptoSuites[i]);
+
+            sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+
+            if (sdesnego.negotiate()) {
+                call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
+                call->getAudioRtp().initLocalCryptoInfo();
+            }
+        }
+    }
+
+    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveCodecs());
+
+    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
+
+    pjsip_dialog* dialog;
+
+    if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS) {
+        delete call;
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
+        return false;
+    }
+
+    pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
+
+    PJ_ASSERT_RETURN(pjsip_dlg_set_transport(dialog, tp) == PJ_SUCCESS, 1);
+
+    call->inv->mod_data[mod_ua_.id] = call;
+
+    // Check whether Replaces header is present in the request and process accordingly.
+    pjsip_dialog *replaced_dlg;
+    pjsip_tx_data *response;
+
+    if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
+        ERROR("Something wrong with Replaces request.");
+        pjsip_endpt_respond_stateless(endpt_, rdata, 500 /* internal server error */, NULL, NULL, NULL);
+    }
+
+    // Check if call has been transfered
+    pjsip_tx_data *tdata;
+
+    if (replaced_dlg) { // If Replace header present
+        // Always answer the new INVITE with 200, regardless whether
+        // the replaced call is in early or confirmed state.
+        if (pjsip_inv_answer(call->inv, 200, NULL, NULL, &response) == PJ_SUCCESS)
+            pjsip_inv_send_msg(call->inv, response);
+
+        // Get the INVITE session associated with the replaced dialog.
+        pjsip_inv_session *replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
+
+        // Disconnect the "replaced" INVITE session.
+        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
+            pjsip_inv_send_msg(replaced_inv, tdata);
+    } else { // Prooceed with normal call flow
+        PJ_ASSERT_RETURN(pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) == PJ_SUCCESS, 1);
+        PJ_ASSERT_RETURN(pjsip_inv_send_msg(call->inv, tdata) == PJ_SUCCESS, 1);
+
+        call->setConnectionState(Call::RINGING);
+
+        Manager::instance().incomingCall(call, account_id);
+        Manager::instance().getAccountLink(account_id)->addCall(call);
+    }
+
+    return true;
+}
 } // end anonymous namespace
 
 /*************************************************************************************************/
@@ -170,15 +438,16 @@ pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 SIPVoIPLink::SIPVoIPLink() : transportMap_(), evThread_(new EventThread(this))
 {
 #define TRY(ret) do { \
-		if (ret != PJ_SUCCESS) \
-			throw VoipLinkException(#ret " failed"); \
-		} while(0)
+    if (ret != PJ_SUCCESS) \
+    throw VoipLinkException(#ret " failed"); \
+} while(0)
 
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
     TRY(pj_init());
     TRY(pjlib_util_init());
-    pj_log_set_level(6);    // From 0 (min) to 6 (max)
+    // From 0 (min) to 6 (max)
+    pj_log_set_level(Logger::getDebugMode() ? 6 : 0);
     TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
@@ -295,14 +564,17 @@ void SIPVoIPLink::sendRegister(Account *a)
 
     std::string srvUri(account->getServerUri());
 
-    std::string address, port;
-    findLocalAddressFromUri(srvUri, account->transport_, address, port);
+    // std::string address, port;
+    // findLocalAddressFromUri(srvUri, account->transport_, address, port);
+    pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
 
+    // Generate the FROM header
     std::string from(account->getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
-    std::string contact(account->getContactHeader(address, port));
+
+    // Get the contact header for this account
+    std::string contact(account->getContactHeader());
     pj_str_t pjContact = pj_str((char*) contact.c_str());
-    pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
 
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
@@ -345,6 +617,10 @@ void SIPVoIPLink::sendRegister(Account *a)
     pjsip_transport_dec_ref(account->transport_);
 
     account->setRegistrationInfo(regc);
+
+    // start the periodic registration request based on Expire header
+    // account determines itself if a keep alive is required
+    account->startKeepAliveTimer();
 }
 
 void SIPVoIPLink::sendUnregister(Account *a)
@@ -352,10 +628,13 @@ void SIPVoIPLink::sendUnregister(Account *a)
     SIPAccount *account = dynamic_cast<SIPAccount *>(a);
 
     // This may occurs if account failed to register and is in state INVALID
-    if (!account->isRegister()) {
+    if (!account->isRegistered()) {
         account->setRegistrationState(Unregistered);
         return;
     }
+
+    // Make sure to cancel any ongoing timers before unregister
+    account->stopKeepAliveTimer();
 
     pjsip_regc *regc = account->getRegistrationInfo();
 
@@ -373,6 +652,20 @@ void SIPVoIPLink::sendUnregister(Account *a)
     account->setRegister(false);
 }
 
+void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
+{
+    pj_status_t status;
+
+    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay);
+    if (status != PJ_SUCCESS)
+        ERROR("Could not schedule new timer in pjsip endpoint");
+}
+
+void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
+{
+    pjsip_endpt_cancel_timer(endpt_, &timer);
+}
+
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
@@ -380,7 +673,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     if (account == NULL) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
         throw VoipLinkException("Could not get account for this call");
 
-    SIPCall* call = new SIPCall(id, Call::Outgoing, cp_);
+    SIPCall* call = new SIPCall(id, Call::OUTGOING, cp_);
 
     // If toUri is not a well formated sip URI, use account information to process it
     std::string toUri;
@@ -427,7 +720,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
         throw VoipLinkException("Could not start rtp session for early media");
     }
 
-    call->initRecFileName(toUrl);
+    call->initRecFilename(toUrl);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
     call->getLocalSDP()->createOffer(account->getActiveCodecs());
@@ -456,8 +749,8 @@ SIPVoIPLink::answer(Call *c)
     if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
         throw VoipLinkException("Could not send invite request answer (200 OK)");
 
-    call->setConnectionState(Call::Connected);
-    call->setState(Call::Active);
+    call->setConnectionState(Call::CONNECTED);
+    call->setState(Call::ACTIVE);
 }
 
 void
@@ -527,7 +820,7 @@ void
 SIPVoIPLink::onhold(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
-    call->setState(Call::Hold);
+    call->setState(Call::HOLD);
     call->getAudioRtp().stop();
 
     Sdp *sdpSession = call->getLocalSDP();
@@ -579,7 +872,7 @@ SIPVoIPLink::offhold(const std::string& id)
     sdpSession->addAttributeToLocalAudioMedia("sendrecv");
 
     if (SIPSessionReinvite(call) == PJ_SUCCESS)
-        call->setState(Call::Active);
+        call->setState(Call::ACTIVE);
 }
 
 void
@@ -695,7 +988,7 @@ SIPVoIPLink::refuse(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
 
-    if (!call->isIncoming() or call->getConnectionState() == Call::Connected)
+    if (!call->isIncoming() or call->getConnectionState() == Call::CONNECTED)
         return;
 
     call->getAudioRtp().stop();
@@ -726,24 +1019,29 @@ SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
     std::string accountID(Manager::instance().getAccountFromCall(id));
     SIPAccount *account = static_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
 
-    if (account) try {
+    if (account) {
+        try {
             dtmfSend(getSIPCall(id), code, account->getDtmfType());
-        } catch (VoipLinkException) {
+        } catch (const VoipLinkException &e) {
             // don't do anything if call doesn't exist
         }
+    }
 }
 
 void
-SIPVoIPLink::dtmfSend(SIPCall *call, char code, DtmfType dtmf)
+SIPVoIPLink::dtmfSend(SIPCall *call, char code, const std::string &dtmf)
 {
-    if (dtmf == OVERRTP) {
+    if (dtmf == SIPAccount::OVERRTP_STR) {
         call->getAudioRtp().sendDtmfDigit(code - '0');
         return;
     }
-
+    else if (dtmf != SIPAccount::SIPINFO_STR) {
+        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead",
+             dtmf.c_str(), SIPAccount::SIPINFO_STR);
+    }
     // else : dtmf == SIPINFO
 
-    pj_str_t methodName = pj_str((char*)"INFO");
+    pj_str_t methodName = pj_str((char*) "INFO");
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
 
@@ -759,8 +1057,8 @@ SIPVoIPLink::dtmfSend(SIPCall *call, char code, DtmfType dtmf)
 
     /* Create "application/dtmf-relay" message body. */
     pj_str_t content = pj_str(dtmf_body);
-    pj_str_t type = pj_str((char*)"application");
-    pj_str_t subtype = pj_str((char*)"dtmf-relay");
+    pj_str_t type = pj_str((char*) "application");
+    pj_str_t subtype = pj_str((char*) "dtmf-relay");
     tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &content);
 
     if (tdata->msg->body == NULL)
@@ -780,16 +1078,20 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 
-    std::string address, port;
-    findLocalAddressFromUri(toUri, account->transport_, address, port);
+    // std::string address, port;
+    // findLocalAddressFromUri(toUri, account->transport_, address, port);
 
-    std::string from(account->getFromUri());
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
-    std::string contact(account->getContactHeader(address, port));
-    pj_str_t pjContact = pj_str((char*) contact.c_str());
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
-    pjsip_dialog *dialog;
+    // Create the from header
+    std::string from(account->getFromUri());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
+
+    // Get the contact header
+    std::string contact(account->getContactHeader());
+    pj_str_t pjContact = pj_str((char*) contact.c_str());
+
+    pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS)
         return false;
@@ -817,8 +1119,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
         return false;
 
-    call->setConnectionState(Call::Progressing);
-    call->setState(Call::Active);
+    call->setConnectionState(Call::PROGRESSING);
+    call->setState(Call::ACTIVE);
     addCall(call);
 
     return true;
@@ -847,9 +1149,9 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
 void
 SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata UNUSED)
 {
-    if (call->getConnectionState() != Call::Connected) {
-        call->setConnectionState(Call::Connected);
-        call->setState(Call::Active);
+    if (call->getConnectionState() != Call::CONNECTED) {
+        call->setConnectionState(Call::CONNECTED);
+        call->setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(call->getCallId());
     }
 }
@@ -873,9 +1175,9 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
     if (!account)
         return false;
 
-    SIPCall *call = new SIPCall(id, Call::Outgoing, cp_);
-    call->setCallConfiguration(Call::IPtoIP);
-    call->initRecFileName(to);
+    SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_);
+    call->setIPToIP(true);
+    call->initRecFilename(to);
 
     std::string localAddress(getInterfaceAddrFromName(account->getLocalInterface()));
 
@@ -940,12 +1242,12 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
-static pj_bool_t stun_sock_on_status_cb(pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op op UNUSED, pj_status_t status)
+pj_bool_t stun_sock_on_status_cb(pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op op UNUSED, pj_status_t status)
 {
     return status == PJ_SUCCESS;
 }
 
-static pj_bool_t stun_sock_on_rx_data_cb(pj_stun_sock *stun_sock UNUSED, void *pkt UNUSED, unsigned pkt_len UNUSED, const pj_sockaddr_t *src_addr UNUSED, unsigned addr_len UNUSED)
+pj_bool_t stun_sock_on_rx_data_cb(pj_stun_sock *stun_sock UNUSED, void *pkt UNUSED, unsigned pkt_len UNUSED, const pj_sockaddr_t *src_addr UNUSED, unsigned addr_len UNUSED)
 {
     return PJ_TRUE;
 }
@@ -1107,7 +1409,7 @@ void SIPVoIPLink::createUdpTransport(SIPAccount *account)
         transportMap_[account->getLocalPort()] = account->transport_;
 }
 
-pjsip_tpselector *SIPVoIPLink::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool)
+pjsip_tpselector *SIPVoIPLink::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
 {
     assert(transport);
     pjsip_tpselector *tp = (pjsip_tpselector *) pj_pool_zalloc(tp_pool, sizeof(pjsip_tpselector));
@@ -1176,103 +1478,62 @@ void SIPVoIPLink::shutdownSipTransport(SIPAccount *account)
     }
 }
 
-
-void SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transport *transport, std::string& addr, std::string &port)
+void SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &addr, std::string &port) const
 {
+    // Initialize the sip port with the default SIP port
     std::stringstream ss;
     ss << DEFAULT_SIP_PORT;
     port = ss.str();
 
-    pjsip_uri *genericUri = pjsip_parse_uri(pool_, (char*)uri.data(), uri.size(), 0);
-
+    // Initialize the sip address with the hostname
     const pj_str_t *pjMachineName = pj_gethostname();
     addr = std::string(pjMachineName->ptr, pjMachineName->slen);
 
-    if (genericUri == NULL)
+    // Update address and port with active transport
+    if (!transport) {
+        ERROR("SIPVoIPLink: Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
         return;
-
-    pjsip_sip_uri *sip_uri = (pjsip_sip_uri*) pjsip_uri_get_uri(genericUri);
-
-    if (sip_uri == NULL)
-        return;
-
-    pjsip_transport_type_e transportType;
-
-    if (PJSIP_URI_SCHEME_IS_SIPS(sip_uri)) {
-        transportType = PJSIP_TRANSPORT_TLS;
-        ss.str("");
-        ss << DEFAULT_SIP_TLS_PORT;
-        port = ss.str();
-    } else {
-        if (transport == NULL)
-            transport = localUDPTransport_;
-
-        transportType = PJSIP_TRANSPORT_UDP;
     }
 
+    // get the transport manager associated with the SIP enpoint
     pjsip_tpmgr *tpmgr = pjsip_endpt_get_tpmgr(endpt_);
-
-    if (!tpmgr)
+    if (!tpmgr) {
+        ERROR("SIPVoIPLink: Transport manager is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
         return;
+    }
 
-    pjsip_tpselector *tp_sel = NULL;
-
-    if (transportType == PJSIP_TRANSPORT_UDP and transport)
-        tp_sel = initTransportSelector(transport, pool_);
+    // initialize a transport selector
+    // TODO Need to determine why we exclude TLS here...
+    // if (transportType == PJSIP_TRANSPORT_UDP and transport_)
+    pjsip_tpselector *tp_sel = initTransportSelector(transport, pool_);
+    if (!tp_sel) {
+        ERROR("SIPVoIPLink: Could not initialize transport selector, using local address %s:%s", addr.c_str(), port.c_str());
+        return;
+    }
 
     pj_str_t localAddress = {0,0};
     int i_port = 0;
 
-    if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS)
+    // Find the local address and port for this transport
+    if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS) {
+        WARN("SIPVoIPLink: Could not retreive local address and port from transport, using %s:%s", addr.c_str(), port.c_str());
         return;
+    }
 
+    // Update local address based on the transport type
     addr = std::string(localAddress.ptr, localAddress.slen);
 
+    // Fallback on local ip provided by pj_gethostip()
     if (addr == "0.0.0.0")
         addr = getSIPLocalIP();
 
+    // Determine the local port based on transport information
     ss.str("");
     ss << i_port;
     port = ss.str();
 }
 
-
 namespace {
-std::string parseDisplayName(const char * buffer)
-{
-    // Parse the display name from "From" header
-    const char* from_header = strstr(buffer, "From: ");
-
-    if (!from_header)
-        return "";
-
-    std::string temp(from_header);
-    size_t begin_displayName = temp.find("\"") + 1;
-    size_t end_displayName = temp.rfind("\"");
-    std::string displayName(temp.substr(begin_displayName, end_displayName - begin_displayName));
-
-    static const size_t MAX_DISPLAY_NAME_SIZE = 25;
-    if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
-        return "";
-
-    return displayName;
-}
-
-void stripSipUriPrefix(std::string& sipUri)
-{
-    // Remove sip: prefix
-    static const char SIP_PREFIX[] = "sip:";
-    size_t found = sipUri.find(SIP_PREFIX);
-
-    if (found != std::string::npos)
-        sipUri.erase(found, found + (sizeof SIP_PREFIX) - 1);
-
-    found = sipUri.find("@");
-
-    if (found != std::string::npos)
-        sipUri.erase(found);
-}
-
 int SIPSessionReinvite(SIPCall *call)
 {
     pjsip_tx_data *tdata;
@@ -1287,7 +1548,7 @@ int SIPSessionReinvite(SIPCall *call)
 
 void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
 {
-    SIPCall *call = reinterpret_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL)
         return;
@@ -1306,7 +1567,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
     }
 
     if (inv->state == PJSIP_INV_STATE_EARLY and e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
-        call->setConnectionState(Call::Ringing);
+        call->setConnectionState(Call::RINGING);
         Manager::instance().peerRingingCall(call->getCallId());
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
         // After we sent or received a ACK - The connection is established
@@ -1357,9 +1618,9 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
     pjsip_inv_set_sdp_answer(call->inv, call->getLocalSDP()->getLocalSdpSession());
 }
 
-static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
+void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
-    SIPCall *call = reinterpret_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
     std::string accountid(Manager::instance().getAccountFromCall(call->getCallId()));
 
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountid));
@@ -1387,7 +1648,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     const pjmedia_sdp_session *remote_sdp;
     const pjmedia_sdp_session *local_sdp;
 
-    SIPCall *call = reinterpret_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL) {
         DEBUG("UserAgent: Call declined by peer, SDP negotiation stopped");
@@ -1544,7 +1805,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
     std::string formatedMessage = (char*) r_data->msg_info.msg->body->data;
 
     // Try to determine who is the recipient of the message
-    SIPCall *call = reinterpret_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (!call)
         return;
@@ -1583,12 +1844,87 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
     }
 }
 
-void registration_cb(struct pjsip_regc_cbparam *param)
+void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
+{
+
+    SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(account->getVoIPLink());
+    if(siplink == NULL) {
+        ERROR("SIPVoIPLink: Could not find voip link from account");
+        return;
+    }
+
+    pj_pool_t *pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL);
+    if(pool == NULL) {
+        ERROR("SIPVoIPLink: Could not create temporary memory pool in transport header");
+        return;
+    }
+
+    if (param->contact_cnt == 0) {
+        WARN("SIPVoIPLink: No contact header in registration callback");
+        pj_pool_release(pool);
+        return;
+    }
+
+    pjsip_contact_hdr *contact_hdr = param->contact[0];
+
+    pjsip_sip_uri *uri = (pjsip_sip_uri*) contact_hdr->uri;
+    if (uri == NULL) {
+        ERROR("SIPVoIPLink: Could not find uri in contact header");
+        pj_pool_release(pool);
+        return;
+    }
+
+    // TODO: make this based on transport type
+    // with pjsip_transport_get_default_port_for_type(tp_type);
+    if (uri->port == 0)
+        uri->port = DEFAULT_SIP_PORT;
+
+    std::string recvContactHost(uri->host.ptr, uri->host.slen);
+    std::stringstream ss;
+    ss << uri->port;
+    std::string recvContactPort = ss.str();
+
+    std::string currentAddress, currentPort;
+    siplink->findLocalAddressFromTransport(account->transport_, PJSIP_TRANSPORT_UDP, currentAddress, currentPort);
+
+    bool updateContact = false;
+    std::string currentContactHeader = account->getContactHeader();
+
+    size_t foundHost = currentContactHeader.find(recvContactHost);
+    if(foundHost == std::string::npos) {
+        updateContact = true;
+    }
+
+    size_t foundPort = currentContactHeader.find(recvContactPort);
+    if(foundPort == std::string::npos) {
+        updateContact = true;
+    }
+
+    if(updateContact) {
+        DEBUG("SIPVoIPLink: Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str());
+        account->setContactHeader(recvContactHost, recvContactPort);
+        siplink->sendRegister(account);
+    }
+    pj_pool_release(pool);
+}
+
+void registration_cb(pjsip_regc_cbparam *param)
 {
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
-    if (account == NULL)
+    if (account == NULL) {
+        ERROR("SipVoipLink: account does'nt exist in registration callback");
         return;
+    }
+
+    if (param == NULL) {
+        ERROR("SipVoipLink: regsitration callback param is NULL");
+        return;
+    }
+
+    if(account->isContactUpdateEnabled()) {
+        update_contact_header(param, account);
+    }
 
     const pj_str_t *description = pjsip_get_status_text(param->code);
 
@@ -1598,6 +1934,8 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);
+
+        account->setRegistrationExpire(param->expiration);
     }
 
     if (param->status != PJ_SUCCESS) {
@@ -1641,7 +1979,7 @@ void registration_cb(struct pjsip_regc_cbparam *param)
         SIPVoIPLink::instance()->shutdownSipTransport(account);
 
     } else {
-        if (account->isRegister())
+        if (account->isRegistered())
             account->setRegistrationState(Registered);
         else {
             account->setRegistrationState(Unregistered);
@@ -1650,246 +1988,9 @@ void registration_cb(struct pjsip_regc_cbparam *param)
     }
 }
 
-
-static void handleIncomingOptions(pjsip_rx_data *rdata)
-{
-    pjsip_tx_data *tdata;
-
-    if (pjsip_endpt_create_response(endpt_, rdata, PJSIP_SC_OK, NULL, &tdata) != PJ_SUCCESS)
-        return;
-
-#define ADD_HDR(hdr) do { \
-   	    const pjsip_hdr *cap_hdr = hdr; \
-   	    if (cap_hdr) \
-   	        pjsip_msg_add_hdr (tdata->msg, (pjsip_hdr*) pjsip_hdr_clone (tdata->pool, cap_hdr)); \
-   	} while(0)
-#define ADD_CAP(cap) ADD_HDR(pjsip_endpt_get_capability(endpt_, cap, NULL));
-
-    ADD_CAP(PJSIP_H_ALLOW);
-    ADD_CAP(PJSIP_H_ACCEPT);
-    ADD_CAP(PJSIP_H_SUPPORTED);
-    ADD_HDR(pjsip_evsub_get_allow_events_hdr(NULL));
-
-    pjsip_response_addr res_addr;
-    pjsip_get_response_addr(tdata->pool, rdata, &res_addr);
-
-    if (pjsip_endpt_send_response(endpt_, &res_addr, tdata, NULL, NULL) != PJ_SUCCESS)
-        pjsip_tx_data_dec_ref(tdata);
-}
-
-
-static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
-{
-    pjsip_method *method = &rdata->msg_info.msg->line.req.method;
-
-    if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
-        return true;
-
-    pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
-    pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
-    std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
-    std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    std::string account_id(Manager::instance().getAccountIdFromNameAndServer(userName, server));
-
-    std::string displayName(parseDisplayName(rdata->msg_info.msg_buf));
-
-    if (method->id == PJSIP_OTHER_METHOD) {
-        pj_str_t *str = &method->name;
-        std::string request(str->ptr, str->slen);
-
-        if (request.find("NOTIFY") != (size_t)-1) {
-            int voicemail;
-
-            if (sscanf((const char*)rdata->msg_info.msg->body->data, "Voice-Message: %d/", &voicemail) == 1 && voicemail != 0)
-                Manager::instance().startVoiceMessageNotification(account_id, voicemail);
-        }
-
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
-
-        return true;
-    } else if (method->id == PJSIP_OPTIONS_METHOD) {
-        handleIncomingOptions(rdata);
-        return true;
-    } else if (method->id != PJSIP_INVITE_METHOD && method->id != PJSIP_ACK_METHOD) {
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return true;
-    }
-
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
-
-    pjmedia_sdp_session *r_sdp;
-    pjsip_msg_body *body = rdata->msg_info.msg->body;
-
-    if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
-        r_sdp = NULL;
-
-    if (account->getActiveCodecs().empty()) {
-        pjsip_endpt_respond_stateless(endpt_, rdata,
-                                      PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
-                                      NULL);
-        return false;
-    }
-
-    // Verify that we can handle the request
-    unsigned options = 0;
-
-    if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return true;
-    }
-
-    if (Manager::instance().hookPreference.getSipEnabled()) {
-        std::string header_value(fetchHeaderValue(rdata->msg_info.msg, Manager::instance().hookPreference.getUrlSipField()));
-        UrlHook::runAction(Manager::instance().hookPreference.getUrlCommand(), header_value);
-    }
-
-    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::Incoming, cp_);
-    Manager::instance().associateCallToAccount(call->getCallId(), account_id);
-
-    // May use the published address as well
-    std::string addrToUse = SIPVoIPLink::instance()->getInterfaceAddrFromName(account->getLocalInterface());
-    std::string addrSdp = account->isStunEnabled()
-                          ? account->getPublishedAddress()
-                          : addrToUse;
-
-    pjsip_tpselector *tp = SIPVoIPLink::instance()->initTransportSelector(account->transport_, call->getMemoryPool());
-
-    if (addrToUse == "0.0.0.0")
-        addrToUse = getSIPLocalIP();
-
-    if (addrSdp == "0.0.0.0")
-        addrSdp = addrToUse;
-
-    char tmp[PJSIP_MAX_URL_SIZE];
-    int length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, length);
-    stripSipUriPrefix(peerNumber);
-
-    call->setConnectionState(Call::Progressing);
-    call->setPeerNumber(peerNumber);
-    call->setDisplayName(displayName);
-    call->initRecFileName(peerNumber);
-
-    setCallMediaLocal(call, addrToUse);
-
-    call->getLocalSDP()->setLocalIP(addrSdp);
-
-    call->getAudioRtp().initAudioRtpConfig();
-    call->getAudioRtp().initAudioSymmetricRtpSession();
-
-    if (rdata->msg_info.msg->body) {
-        char sdpbuffer[1000];
-        int len = rdata->msg_info.msg->body->print_body(rdata->msg_info.msg->body, sdpbuffer, sizeof sdpbuffer);
-
-        if (len == -1) // error
-            len = 0;
-
-        std::string sdpoffer(sdpbuffer, len);
-        size_t start = sdpoffer.find("a=crypto:");
-
-        // Found crypto header in SDP
-        if (start != std::string::npos) {
-            CryptoOffer crypto_offer;
-            crypto_offer.push_back(std::string(sdpoffer.substr(start, (sdpoffer.size() - start) - 1)));
-
-            std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
-
-            for (int i = 0; i < 3; i++)
-                localCapabilities.push_back(sfl::CryptoSuites[i]);
-
-            sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
-
-            if (sdesnego.negotiate()) {
-                call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
-                call->getAudioRtp().initLocalCryptoInfo();
-            }
-        }
-    }
-
-    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveCodecs());
-
-    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
-    call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
-
-    pjsip_dialog* dialog;
-
-    if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS) {
-        delete call;
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
-        return false;
-    }
-
-    pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
-
-    PJ_ASSERT_RETURN(pjsip_dlg_set_transport(dialog, tp) == PJ_SUCCESS, 1);
-
-    call->inv->mod_data[mod_ua_.id] = call;
-
-    // Check whether Replaces header is present in the request and process accordingly.
-    pjsip_dialog *replaced_dlg;
-    pjsip_tx_data *response;
-
-    if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
-        ERROR("Something wrong with Replaces request.");
-        pjsip_endpt_respond_stateless(endpt_, rdata, 500 /* internal server error */, NULL, NULL, NULL);
-    }
-
-    // Check if call has been transfered
-    pjsip_tx_data *tdata;
-
-    if (replaced_dlg) { // If Replace header present
-        // Always answer the new INVITE with 200, regardless whether
-        // the replaced call is in early or confirmed state.
-        if (pjsip_inv_answer(call->inv, 200, NULL, NULL, &response) == PJ_SUCCESS)
-            pjsip_inv_send_msg(call->inv, response);
-
-        // Get the INVITE session associated with the replaced dialog.
-        pjsip_inv_session *replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
-
-        // Disconnect the "replaced" INVITE session.
-        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
-            pjsip_inv_send_msg(replaced_inv, tdata);
-    } else { // Prooceed with normal call flow
-        PJ_ASSERT_RETURN(pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) == PJ_SUCCESS, 1);
-        PJ_ASSERT_RETURN(pjsip_inv_send_msg(call->inv, tdata) == PJ_SUCCESS, 1);
-
-        call->setConnectionState(Call::Ringing);
-
-        Manager::instance().incomingCall(call, account_id);
-        Manager::instance().getAccountLink(account_id)->addCall(call);
-    }
-
-    return true;
-}
-
-static pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
-{
-    pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
-
-    if (!dlg)
-        return PJ_SUCCESS;
-
-    pjsip_transaction *tsx = pjsip_rdata_get_tsx(rdata);
-
-    if (!tsx or tsx->method.id != PJSIP_INVITE_METHOD)
-        return PJ_SUCCESS;
-
-    if (tsx->status_code / 100 == 2) {
-        /**
-         * Send an ACK message inside a transaction. PJSIP send automatically, non-2xx ACK response.
-         * ACK for a 2xx response must be send using this method.
-         */
-        pjsip_tx_data *tdata;
-        pjsip_dlg_create_request(dlg, &pjsip_ack_method, rdata->msg_info.cseq->cseq, &tdata);
-        pjsip_dlg_send_request(dlg, tdata, -1, NULL);
-    }
-
-    return PJ_SUCCESS;
-}
-
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
-    SIPCall *currentCall = reinterpret_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
+    SIPCall *currentCall = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (currentCall == NULL)
         return;
@@ -1919,8 +2020,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             break;
 
         case PJSIP_EVSUB_STATE_ACTIVE: {
-
-            SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *>(pjsip_evsub_get_mod_data(sub, mod_ua_.id));
+            SIPVoIPLink *link = static_cast<SIPVoIPLink *>(pjsip_evsub_get_mod_data(sub, mod_ua_.id));
 
             if (!link or !event)
                 return;
@@ -1935,7 +2035,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             pjsip_status_line status_line = { 500, *pjsip_get_status_text(500) };
 
             if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD and
-                    request.find("NOTIFY") != std::string::npos) {
+                request.find("NOTIFY") != std::string::npos) {
                 pjsip_msg_body *body = r_data->msg_info.msg->body;
 
                 if (!body)
@@ -1988,11 +2088,11 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
 }
 
-std::string fetchHeaderValue(pjsip_msg *msg, std::string field)
+std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 {
     pj_str_t name = pj_str((char*) field.c_str());
 
-    pjsip_generic_string_hdr *hdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(msg, &name, NULL);
+    pjsip_generic_string_hdr *hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
 
     if (!hdr)
         return "";
@@ -2006,7 +2106,6 @@ std::string fetchHeaderValue(pjsip_msg *msg, std::string field)
 
     return value.substr(0, pos);
 }
-
 } // end anonymous namespace
 
 std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName()
@@ -2017,14 +2116,14 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName()
     std::vector<std::string> ifaceList;
     ifaceList.push_back("default");
 
-    ifconf.ifc_buf = (char*)(ifreqs);
+    ifconf.ifc_buf = (char*) (ifreqs);
     ifconf.ifc_len = sizeof(ifreqs);
 
     int sock = socket(AF_INET,SOCK_STREAM,0);
 
     if (sock >= 0) {
         if (ioctl(sock, SIOCGIFCONF, &ifconf) >= 0)
-            for (unsigned i = 0; i < ifconf.ifc_len/sizeof(struct ifreq); i++)
+            for (unsigned i = 0; i < ifconf.ifc_len / sizeof(ifreq); ++i)
                 ifaceList.push_back(std::string(ifreqs[i].ifr_name));
 
         close(sock);
@@ -2050,7 +2149,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(const std::string &ifaceName)
     ioctl(fd, SIOCGIFADDR, &ifr);
     close(fd);
 
-    sockaddr_in *saddr_in = (struct sockaddr_in *) &ifr.ifr_addr;
+    sockaddr_in *saddr_in = (sockaddr_in *) &ifr.ifr_addr;
     return inet_ntoa(saddr_in->sin_addr);
 }
 

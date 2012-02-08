@@ -31,7 +31,7 @@
 #include <audiostream.h>
 #include "pulselayer.h"
 
-AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string *deviceName)
+AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string& deviceName)
     : audiostream_(0), mainloop_(m)
 {
     static const pa_channel_map channel_map = {
@@ -62,14 +62,14 @@ AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *des
     attributes.fragsize = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
     attributes.minreq = (uint32_t) -1;
 
-    const char *name = deviceName ? deviceName->c_str() : NULL;
-
     pa_threaded_mainloop_lock(mainloop_);
 
     if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM)
-        pa_stream_connect_playback(audiostream_, name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+        pa_stream_connect_playback(audiostream_, deviceName == "" ? NULL : deviceName.c_str(), &attributes,
+		(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
     else if (type == CAPTURE_STREAM)
-        pa_stream_connect_record(audiostream_, name, &attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+        pa_stream_connect_record(audiostream_, deviceName == "" ? NULL : deviceName.c_str(), &attributes,
+		(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
 
     pa_threaded_mainloop_unlock(mainloop_);
 
@@ -100,15 +100,15 @@ AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
 
     switch (pa_stream_get_state(s)) {
         case PA_STREAM_CREATING:
-            INFO("Pulse: Stream is creating...");
+            DEBUG("Pulse: Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
-            INFO("Pulse: Stream is terminating...");
+            DEBUG("Pulse: Stream is terminating...");
             break;
 
         case PA_STREAM_READY:
-            INFO("Pulse: Stream successfully created, connected to %s", pa_stream_get_device_name(s));
+            DEBUG("Pulse: Stream successfully created, connected to %s", pa_stream_get_device_name(s));
             DEBUG("Pulse: maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
             DEBUG("Pulse: tlength %u", pa_stream_get_buffer_attr(s)->tlength);
             DEBUG("Pulse: prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
@@ -118,7 +118,7 @@ AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
             break;
 
         case PA_STREAM_UNCONNECTED:
-            INFO("Pulse: Stream unconnected");
+            DEBUG("Pulse: Stream unconnected");
             break;
 
         case PA_STREAM_FAILED:

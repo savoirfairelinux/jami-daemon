@@ -36,6 +36,7 @@ noinst_HEADERS =            \
     dbusmanager.h           \
     networkmanager_proxy.h  \
     networkmanager.h        \
+    dbus_cpp.h        		\
     $(BUILT_SOURCES)
 
 # Dbus service file

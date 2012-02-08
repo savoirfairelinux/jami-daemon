@@ -4,7 +4,7 @@ sflphone-client-kde - SIP and IAX2 compatible voice over IP softphone KDE client
 
 =head1 SYNOPSIS
 
-sflphone-client-kde 
+sflphone-client-kde
 
 =head1 DESCRIPTION
 

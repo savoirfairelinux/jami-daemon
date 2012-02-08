@@ -73,7 +73,7 @@ VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
 
 
 void
-ManagerImpl::sendRegister(const std::string& accountID , const int32_t& enable)
+ManagerImpl::sendRegister(const std::string& accountID, bool enable)
 {
     Account* acc = getAccount(accountID);
 

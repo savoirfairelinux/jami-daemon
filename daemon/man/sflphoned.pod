@@ -12,13 +12,31 @@ SFLphone is meant to be a robust enterprise-class desktop phone. It provides fun
 SFLphone audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
 B<sflphoned> is the core of SFLphone; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<sflphone-client-gnome>.
 
+=head1 OPTIONS
+
+=over 8
+
+=item B<-c, --console>
+
+Output the log to the console instead of syslog.
+
+=item B<-d, --debug>
+
+Debug mode (more verbose output).
+
+=item B<-h, --help>
+
+Print short list of command-line options.
+
+=back
+
 =head1 BUGS
 
 Please report bugs at https://projects.savoirfairelinux.com/projects/sflphone/issues/new.
 
 =head1 AUTHORS
 
-B<sflphoned> is developed in Montreal by Savoir-Faire Linux Inc. The active developers are Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> and Yun Liu <yun.liu@savoirfairelinux.com>.
+B<sflphoned> is developed in Montreal by Savoir-Faire Linux Inc. The active developers are Tristan Matthews <tristan.matthews@savoirfairelinux.com> and Alexandre Savard <alexandre.savard@savoirfairelinux.com>.
 
 This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
 

@@ -11,7 +11,7 @@ BUILT_SOURCES=                      \
 
 # Rule to generate the binding headers
 %-glue.h: %-introspec.xml Makefile.am
-	dbus-binding-tool --mode=glib-client $<  > $@
+	dbus-binding-tool --mode=glib-client $< > $@
 
 # Create the necessary marshallers for the signals implemented by the library
 marshaller.c: marshaller.list

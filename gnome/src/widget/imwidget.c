@@ -238,7 +238,7 @@ im_widget_init(IMWidget *im)
     im->info_bar = gtk_info_bar_new();
 
     /* A bar with the entry text and the button to send the message */
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(im->textarea), TRUE);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(textscrollwin), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(webscrollwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -269,6 +269,7 @@ im_widget_init(IMWidget *im)
      */
     gtk_orientable_set_orientation (GTK_ORIENTABLE (im),
                                     GTK_ORIENTATION_VERTICAL);
+
 }
 
 GType
@@ -344,7 +345,7 @@ im_widget_infobar(IMWidget *im)
     gchar *msg1;
 
     if (im_widget_call)
-        msg1 = g_strdup_printf("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
+        msg1 = g_strdup_printf("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_display_name);
     else if (im_widget_conf)
         msg1 = g_strdup_printf("Conferencing");
     else

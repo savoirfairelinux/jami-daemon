@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -18,10 +18,14 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-  
-#include "ActionSetAccountFirst.h"
-#include <klocale.h>
 
+//Parent
+#include "ActionSetAccountFirst.h"
+
+//KDE
+#include <KLocale>
+
+///Constrctor
 ActionSetAccountFirst::ActionSetAccountFirst(Account* account, QObject *parent)
  : QAction((account == NULL) ? i18n("Default account") : account->getAlias(), parent)
 {
@@ -31,10 +35,12 @@ ActionSetAccountFirst::ActionSetAccountFirst(Account* account, QObject *parent)
            this,    SLOT(emitSetFirst()));
 }
 
+///Destructor
 ActionSetAccountFirst::~ActionSetAccountFirst()
 {
 }
 
+///
 void ActionSetAccountFirst::emitSetFirst()
 {
    emit setFirst(account);

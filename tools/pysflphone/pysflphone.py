@@ -84,11 +84,11 @@ def printHelp():
 
 # Option definition
 try:
-    opts, args =  getopt.getopt(sys.argv[1:],"", 
-				[  "help", "gaa", "gal", "gara", "gaea", "gasa", "gaia", 
-				   "gacl", "gac", "gcc", "hangup=", "refuse=", "hold", 
-				   "unhold=", "transfer=","dtmf=", "accept=", "gcd=", 
-				   "gad=", "register=", "unregister=", "enable=", "disable=", 
+    opts, args =  getopt.getopt(sys.argv[1:],"",
+				[  "help", "gaa", "gal", "gara", "gaea", "gasa", "gaia",
+				   "gacl", "gac", "gcc", "hangup=", "refuse=", "hold",
+				   "unhold=", "transfer=","dtmf=", "accept=", "gcd=",
+				   "gad=", "register=", "unregister=", "enable=", "disable=",
 				   "call=", "sac=" ])
 except getopt.GetoptError,err:
     print str(err)
@@ -96,7 +96,7 @@ except getopt.GetoptError,err:
 
 
 # SFLPhone instance.
-sflphone = SflPhoneCtrlSimple() 
+sflphone = SflPhoneCtrlSimple()
 
 # If no arguments, run the d-bus event loop.
 if len(sys.argv) == 1:
@@ -107,7 +107,7 @@ if len(sys.argv) == 1:
 else:
 	for opt, arg in opts:	
 
-		if opt == "--help": 
+		if opt == "--help":
 			printHelp()
 
 		#
@@ -115,32 +115,32 @@ else:
 		#
 
 		# Get all accounts
-		elif opt == "--gaa": 
+		elif opt == "--gaa":
 			for account in sflphone.getAllAccounts():
 				print account
 
 		# Get all registered accounts
-		elif opt == "--gara": 
+		elif opt == "--gara":
 			for account in sflphone.getAllRegisteredAccounts():
 				print account
 
 		# Get all enabled accounts
-		elif opt == "--gaea": 
+		elif opt == "--gaea":
 			for account in sflphone.getAllEnabledAccounts():
 				print account
 
 		# Get all SIP accounts
-		elif opt == "--gasa": 
+		elif opt == "--gasa":
 			for account in sflphone.getAllSipAccounts():
 				print account
 
 		# Get all IAX accounts
-		elif opt == "--gaia": 
+		elif opt == "--gaia":
 			for account in sflphone.getAllIaxAccounts():
 				print account
 
 		# Get current call
-		elif opt == "--gcc": 
+		elif opt == "--gcc":
 			call = sflphone.getCurrentCallID()
 			if call:
 				print call
@@ -148,7 +148,7 @@ else:
 				print "No current call."
 
 		# Get account details
-		elif opt == "--gad": 
+		elif opt == "--gad":
 			if sflphone.checkAccountExists(arg):
 				details = sflphone.getAccountDetails(arg)
 				for var in details:
@@ -157,11 +157,11 @@ else:
 				print "No such account: " + arg
 
 		# Get active codec list
-		elif opt == "--gacl": 
+		elif opt == "--gacl":
 			print "Not implemented."
 
 		# Get call details
-		elif opt == "--gcd": 
+		elif opt == "--gcd":
 			if arg == "current": arg = sflphone.getCurrentCallID()
 
 			details = sflphone.getCallDetails(arg)
@@ -173,7 +173,7 @@ else:
 		elif opt == "--sac":
 			if arg is "":
 			    print "Must specifies the accout to be set"
-			else: 
+			else:
                             sflphone.setAccount(arg)
 
 
@@ -182,43 +182,43 @@ else:
 		#
 
 		# Make a call
-		elif opt == "--call": 
+		elif opt == "--call":
 			sflphone.Call(arg)
 
 		# Hangup a call
-		elif opt == "--hangup": 
-			if arg == "current": 
+		elif opt == "--hangup":
+			if arg == "current":
 				arg = sflphone.getCurrentCallID()
 
-			if arg: 
+			if arg:
 				sflphone.HangUp(arg)
 
 		# Refuse a call
-		elif opt == "--refuse": 
+		elif opt == "--refuse":
 			if arg == "current": arg = sflphone.getCurrentCallID()
 			sflphone.Refuse(arg)
 
 		# Hold a call
-		elif opt == "--hold": 
+		elif opt == "--hold":
 			if arg == "current": arg = sflphone.getCurrentCallID()
 			sflphone.Hold(arg)
 
 		# Unhold a call
-		elif opt == "--unhold": 
+		elif opt == "--unhold":
 			if arg == "current": arg = sflphone.getCurrentCallID()
 			sflphone.UnHold(arg)
 
 		# Transfer the current call
-		elif opt == "--transfer": 
+		elif opt == "--transfer":
 			call = sflphone.callmanager.getCurrentCallID()
 			sflphone.Transfert(call, arg)
 
-		# Send DTMF 
-		elif opt == "--dtmf": 
+		# Send DTMF
+		elif opt == "--dtmf":
 			sflphone.Dtmf(arg)
 
 		# Accept a call
-		elif opt == "--accept": 
+		elif opt == "--accept":
 			if arg == "current": arg = sflphone.getCurrentCallID()
 			sflphone.Accept(arg)
 
@@ -228,7 +228,7 @@ else:
 		#
 
 		# Register an account
-		elif opt == "--register": 
+		elif opt == "--register":
 			if not sflphone.checkAccountExists(arg):
 				print "Account " + arg + ": no such account."
 
@@ -240,7 +240,7 @@ else:
 				print arg + ": Sent register request."
 
 		# Unregister an account
-		elif opt == "--unregister": 
+		elif opt == "--unregister":
 			if not sflphone.checkAccountExists(arg):
 				print "Account " + arg + ": no such account."
 

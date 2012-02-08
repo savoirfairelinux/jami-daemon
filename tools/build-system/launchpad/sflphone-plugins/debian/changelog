@@ -2687,7 +2687,7 @@ sflphone-plugins (0.9.4-0ubuntu2) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * Fix bug #1090
- 
+
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 8 Apr 2009 11:29:15 -0500
 
 sflphone (0.9.4-0ubuntu1) SYSTEM; urgency=low
@@ -2699,7 +2699,7 @@ sflphone (0.9.4-0ubuntu1) SYSTEM; urgency=low
   * Protect case when no codecs are active
   * Fix some return values
   * Add unitary tests for the hook manager (premisces)
-  
+
   [Yun Liu]
   * Update chinese translation
 
@@ -2832,7 +2832,7 @@ sflphone (0.9.3-0ubuntu2) SYSTEM; urgency=low
   * Update spanish translation
 
   [Yun Liu ]
-  * Update chinese translation 
+  * Update chinese translation
 
   [ Hussein Abdallah ]
   * Update russian translation
@@ -3000,10 +3000,10 @@ sflphone (0.9.2-2ubuntu4) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * add german translation
-  
+
   [ Yun Liu ]
   * Fix GUI crash in Ubuntu8.10 64bit system
-  
+
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Thu, 08 Jan 2009 13:08:51 -0500
 
 sflphone (0.9.2-2ubuntu3) SYSTEM; urgency=low
@@ -3012,16 +3012,16 @@ sflphone (0.9.2-2ubuntu3) SYSTEM; urgency=low
   * The main thread synchronizes the ringtone thread
   * disable custom ringtone for the ALSA layer
   * Fix the Makefile.am in man directory, add a SEE ALSO section
-  
+
   [ Yun Liu ]
   * Fix daemon crash caused by the previous patch ( for bug ticket #129)
-  
+
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Tue, 06 Jan 2009 16:18:38 -0500
 
 sflphone (0.9.2-2ubuntu2) SYSTEM; urgency=low
-  
+
   * Fix bug ticket #129
-  
+
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 5 Jan 2009 15:54:53 -0500
 
 sflphone (0.9.2-2ubuntu1) SYSTEM; urgency=low
@@ -3069,7 +3069,7 @@ sflphone (0.9-2008-05-06) unstable; urgency=low
   * GTK+ warnings removal
   * libnotify warnings removal
   * Remove aliasing on the SFLphone logo
-  
+
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Mon, 05 May 2008 16:58:25 -0500
 
 sflphone (0.9) unstable; urgency=low
@@ -3077,7 +3077,7 @@ sflphone (0.9) unstable; urgency=low
   * Several GTK improvement and updates
     -account window
     -configuration window
-  * Migrate from GtkCheckMenuItem to GtkImageMenuItem  
+  * Migrate from GtkCheckMenuItem to GtkImageMenuItem
   * ALSA standard I/O transfers: MMAP instead of R/W
   * Fix speex audio quality
   * IAX2 protocol

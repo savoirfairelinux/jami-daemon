@@ -3,7 +3,7 @@ AM_CFLAGS += -g -Wall -Wstrict-prototypes -I $(top_srcdir)/libs/iax2/
 AM_CFLAGS += -DLIBIAX
 AM_CFLAGS += -fsigned-char
 # -DDEBUG_SUPPORT (doesn't compile with it)
-# -DDEBUG_DEFAULT 
+# -DDEBUG_DEFAULT
 AM_CFLAGS += $(UCFLAGS)
 
 noinst_LTLIBRARIES = libiax2.la

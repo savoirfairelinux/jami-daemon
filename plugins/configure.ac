@@ -1,4 +1,4 @@
-AC_INIT([sflphone],[1.0.1],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([sflphone],[1.0.2],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE
@@ -43,7 +43,7 @@ PKG_CHECK_MODULES([LIBEDATASERVER], [libedataserver-1.2 >= 2.32],
         )
 
 AC_CONFIG_FILES([
-Makefile 
+Makefile
 addressbook/evolution/Makefile
 addressbook/Makefile
 ])

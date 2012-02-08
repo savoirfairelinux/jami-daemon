@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -17,25 +17,38 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
+
+//Parent
 #include "AccountListModel.h"
 
+//SFLPhone library
 #include "lib/sflphone_const.h"
-#include "conf/ConfigAccountList.h"
-#include <QDebug>
 
+//SFLPhone
+#include "conf/ConfigAccountList.h"
+
+///Constructor
 AccountListModel::AccountListModel(QObject *parent)
  : QAbstractListModel(parent)
 {
    this->accounts = new ConfigAccountList();
 }
 
-
+///Destructor
 AccountListModel::~AccountListModel()
 {
 }
 
-QVariant AccountListModel::data ( const QModelIndex & index, int role) const
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Get data from the model
+QVariant AccountListModel::data ( const QModelIndex& index, int role) const
 {
    if (!index.isValid() || index.row() < 0 || index.row() >= rowCount())
       return QVariant();
@@ -56,6 +69,7 @@ QVariant AccountListModel::data ( const QModelIndex & index, int role) const
    return QVariant();
 }
 
+///Flags for "index"
 Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const
 {
    if (index.column() == 0)
@@ -63,9 +77,22 @@ Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const
    return QAbstractItemModel::flags(index);
 }
 
+///Get the account list
+QString AccountListModel::getOrderedList() const
+{
+   return accounts->getOrderedList();
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Set model data
 bool AccountListModel::setData(const QModelIndex & index, const QVariant &value, int role)
 {
-   qDebug() << "setData";
    if (index.isValid() && index.column() == 0 && role == Qt::CheckStateRole) {
       (*accounts)[index.row()]->setEnabled(value.toBool());
       emit dataChanged(index, index);
@@ -74,6 +101,14 @@ bool AccountListModel::setData(const QModelIndex & index, const QVariant &value,
    return false;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Move account up
 bool AccountListModel::accountUp( int index )
 {
    if(index > 0 && index <= rowCount()) {
@@ -84,6 +119,7 @@ bool AccountListModel::accountUp( int index )
    return false;
 }
 
+///Move account down
 bool AccountListModel::accountDown( int index )
 {
    if(index >= 0 && index < rowCount()) {
@@ -94,7 +130,7 @@ bool AccountListModel::accountDown( int index )
    return false;
 }
 
-
+///Remove an account
 bool AccountListModel::removeAccount( int index )
 {
    if(index >= 0 && index < rowCount()) {
@@ -105,20 +141,16 @@ bool AccountListModel::removeAccount( int index )
    return false;
 }
 
-bool AccountListModel::addAccount( QString alias )
+///Add an account
+bool AccountListModel::addAccount(const QString& alias )
 {
    accounts->addAccount(alias);
    emit dataChanged(this->index(0, 0, QModelIndex()), this->index(rowCount(), 0, QModelIndex()));
    return true;
 }
 
+///Number of account
 int AccountListModel::rowCount(const QModelIndex & /*parent*/) const
 {
    return accounts->size();
 }
-
-QString AccountListModel::getOrderedList() const
-{
-   return accounts->getOrderedList();
-}
-

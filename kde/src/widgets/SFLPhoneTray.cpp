@@ -1,5 +1,5 @@
-/************************************** *************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+/***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -17,49 +17,57 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
-#include <QDebug>
-#include <KAction>
-#include <QMenu>
-#include <QIcon>
-
+//Parent
 #include "SFLPhoneTray.h"
 
+//Qt
+#include <QtGui/QMenu>
+#include <QtGui/QIcon>
+
+//KDE
+#include <KDebug>
+#include <KAction>
+
+///Constructor
 SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)
       : KSystemTrayIcon(icon, parent),
-         trayIconMenu(0),
-         initialized_(false)
+         m_pTrayIconMenu(0),
+         m_Init(false)
 {
 }
 
+///Destructor
 SFLPhoneTray::~SFLPhoneTray()
 {
 }
 
+///Initializer
 bool SFLPhoneTray::initialize()
 {
-   if ( initialized_ ) {
-      qDebug() << "Already initialized.";
+   if ( m_Init ) {
+      kDebug() << "Already initialized.";
       return false;
    }
 
-   trayIconMenu = new QMenu(parentWidget());
-   setContextMenu(trayIconMenu);
+   m_pTrayIconMenu = new QMenu(parentWidget());
+   setContextMenu(m_pTrayIconMenu);
 
-   setupActions();
-
-   initialized_ = true;
+   m_Init = true;
 
    return true;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Mutator                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Add a new action
 void SFLPhoneTray::addAction(KAction *action)
 {
-   trayIconMenu->addAction(action);
-}
-
-void SFLPhoneTray::setupActions()
-{
-   qDebug() << "setupActions";
+   m_pTrayIconMenu->addAction(action);
 }

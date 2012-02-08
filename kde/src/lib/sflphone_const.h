@@ -305,6 +305,9 @@ typedef enum
    CALL_STATE_ERROR       = 10
 } call_state;
 
+static const QString empty("");
+#define EMPTY_STRING empty
+
 /** MIME API */
 #define MIME_CALLID           "text/sflphone.call.id"
 #define MIME_CONTACT          "text/sflphone.contact"

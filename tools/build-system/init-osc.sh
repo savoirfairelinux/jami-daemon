@@ -4,7 +4,7 @@
 #
 # Purpose :
 #
-# Author: Julien Bonjean (julien@bonjean.info) 
+# Author: Julien Bonjean (julien@bonjean.info)
 #
 # Creation Date: 2009-11-02
 # Last Modified:

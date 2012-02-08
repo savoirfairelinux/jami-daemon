@@ -12,7 +12,7 @@ REMOTEADDR_ast=192.168.50.79
 function test_ip2ip_send_hangup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # start sipp server to receive calls from sflphone
     sipp -sf ip2ip_uas_recv_peer_hungup.xml ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT}
@@ -31,7 +31,7 @@ function test_ip2ip_send_hangup {
 function test_ip2ip_send_peer_hungup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # start sipp server to receive calls from sflphone and then hangup
     sipp -sf ip2ip_uas_recv_hangup.xml ${REMOTEADDR_lo} -s ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT}
@@ -43,7 +43,7 @@ function test_ip2ip_send_peer_hungup {
     # python ../tools/pysflphone/pysflphone_testdbus.py &
 
     # kill every one
-    bashtrap 
+    bashtrap
 }
 
 
@@ -51,7 +51,7 @@ function test_ip2ip_send_peer_hungup {
 function test_ip2ip_recv_hangup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -61,11 +61,11 @@ function test_ip2ip_recv_hangup {
     # wait some time to make sure client is bound
     # sleep 1;
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf ip2ip_uac_send_peer_hungup.xml ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT} -l 1 -m 10
 
     # kill every one
-    # bashtrap 
+    # bashtrap
 }
 
 
@@ -73,7 +73,7 @@ function test_ip2ip_recv_hangup {
 function test_ip2ip_recv_peer_hungup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -83,11 +83,11 @@ function test_ip2ip_recv_peer_hungup {
     # wait some time to make sure client is bound
     # sleep 1;
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf ip2ip_uac_send_hangup.xml ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT} -l 1 -m 10
 
     # kill every one
-    # bashtrap 
+    # bashtrap
 }
 
 
@@ -95,7 +95,7 @@ function test_ip2ip_recv_peer_hungup {
 function test_account_send_hangup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -108,7 +108,7 @@ function test_account_send_hangup {
     # process only one registration
     sipp -sf account_uas_register.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1 -m 1
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf account_uas_recv_peer_hungup.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1
 
     # kill every one
@@ -119,7 +119,7 @@ function test_account_send_hangup {
 function test_account_send_peer_hungup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -132,7 +132,7 @@ function test_account_send_peer_hungup {
     # process only one registration
     sipp -sf account_uas_register.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1 -m 1
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf account_uas_recv_hangup.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1
 
     # kill every one
@@ -143,7 +143,7 @@ function test_account_send_peer_hungup {
 function test_account_recv_hangup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -156,7 +156,7 @@ function test_account_recv_hangup {
     # process only one registration
     sipp -sf account_uas_register.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1 -m 1
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf account_uac_send_peer_hungup.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1 -m 10
     # kill every one
     # bashtrap
@@ -166,7 +166,7 @@ function test_account_recv_hangup {
 function test_account_recv_peer_hungup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -179,7 +179,7 @@ function test_account_recv_peer_hungup {
     # process only one registration
     sipp -sf account_uas_register.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1 -m 1
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf account_uac_send_hangup.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1 -m 10
 
     # kill every one
@@ -190,7 +190,7 @@ function test_account_recv_peer_hungup {
 function test_ip2ip_send_hold_offhold {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -200,7 +200,7 @@ function test_ip2ip_send_hold_offhold {
     # wait some time to make sure client is bound
     # sleep 1;
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf ip2ip_uas_recv_hold_offhold.xml ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT}
     # kill every one
     # bashtrap
@@ -210,7 +210,7 @@ function test_ip2ip_send_hold_offhold {
 function test_account_send_transfer {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # wait some time to make sure sflphoned is started
     # sleep 1;
@@ -223,7 +223,7 @@ function test_account_send_transfer {
     # process only one registration
     sipp -sf account_uas_register.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1 -m 1
 
-    # start sipp client and send calls 
+    # start sipp client and send calls
     sipp -sf account_uas_recv_transfered.xml ${REMOTEADDR_ast} -i ${LOCALIP_eth0} -p ${LOCALPORT} -l 1
 
     # kill every one
@@ -235,7 +235,7 @@ function test_account_send_transfer {
 function test_ip2ip_send_refused {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # start sipp server to receive calls from sflphone and then hangup
     sipp -sf ip2ip_uac_send_refused.xml ${REMOTEADDR_lo} -s ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT} -l 1
@@ -247,7 +247,7 @@ function test_ip2ip_send_refused {
     # python ../tools/pysflphone/pysflphone_testdbus.py &
 
     # kill every one
-    bashtrap 
+    bashtrap
 }
 
 
@@ -255,10 +255,10 @@ function test_ip2ip_send_refused {
 function test_mult_ip2ip_send_hangup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # start sipp server to receive calls from sflphone
-    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1:5060 -i 127.0.0.1 -p 5062 -l 1 -m 10 
+    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1:5060 -i 127.0.0.1 -p 5062 -l 1 -m 10
     sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1:5060 -i 127.0.0.1 -p 5064 -l 1 -m 10
     sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1:5060 -i 127.0.0.1 -p 5066 -l 1 -m 10
     # sipp -sf ip2ip_uac_send_hangup.xml ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT} -l 1 -m 10
@@ -278,7 +278,7 @@ function test_mult_ip2ip_send_hangup {
 function test_mult_ip2ip_recv_peer_hangup {
 
     # start sflphoned
-    # /usr/lib/sflphone/sflphoned& 
+    # /usr/lib/sflphone/sflphoned&
 
     # start sipp server to receive calls from sflphone
     sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1 -i 127.0.0.1:5060 -p 5062
@@ -297,7 +297,7 @@ function test_mult_ip2ip_recv_peer_hangup {
 }
 
 
-# function called if CTRL-C detected 
+# function called if CTRL-C detected
 bashtrap()
 {
     killall sipp

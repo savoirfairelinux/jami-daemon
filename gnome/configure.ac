@@ -1,4 +1,4 @@
-AC_INIT([sflphone],[1.0.1],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
+AC_INIT([sflphone],[1.0.2],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 
@@ -40,7 +40,7 @@ PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
 AC_CONFIG_FILES([
-Makefile 
+Makefile
 src/Makefile
 src/config/Makefile
 src/dbus/Makefile

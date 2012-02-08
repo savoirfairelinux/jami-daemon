@@ -7,7 +7,7 @@
 
  <recv request="INVITE" crlf="true">
    <action>
-    <ereg regexp="sendrecv" search_in="body" check_it="true" assign_to="1"/> 
+    <ereg regexp="sendrecv" search_in="body" check_it="true" assign_to="1"/>
     <log message="Media is [$1]"/>
    </action>
  </recv>
@@ -184,4 +184,4 @@
 
  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
 
-</scenario> 
+</scenario>

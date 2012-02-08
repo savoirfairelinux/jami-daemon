@@ -62,18 +62,17 @@ SamplerateConverter::Short2FloatArray(const short *in, float *out, int len)
         out[len] = (float) in[len] * .000030517578125f;
 }
 
-void SamplerateConverter::resample(SFLDataFormat* dataIn , SFLDataFormat* dataOut , int inputFreq , int outputFreq , int nbSamples)
+void SamplerateConverter::resample(SFLDataFormat *dataIn,
+                                   SFLDataFormat *dataOut, int inputFreq,
+                                   int outputFreq, int nbSamples)
 {
     double sampleFactor = (double) outputFreq / inputFreq;
 
     if (sampleFactor == 1.0)
         return;
 
-    unsigned int outSamples = nbSamples * sampleFactor;
-    unsigned int maxSamples = outSamples;
-
-    if (maxSamples < (unsigned int)nbSamples)
-        maxSamples = nbSamples;
+    const int outSamples = nbSamples * sampleFactor;
+    const unsigned int maxSamples = std::max(outSamples, nbSamples);
 
     if (maxSamples > samples_) {
         /* grow buffer if needed */

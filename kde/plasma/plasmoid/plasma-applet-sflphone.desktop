@@ -3,7 +3,7 @@ Name=sflphone
 Comment=Plasma frontend for the SFLPhone VoIP software
 Type=Service
 ServiceTypes=Plasma/Applet
- 
+
 X-KDE-Library=plasma_applet_sflphone
 X-KDE-PluginInfo-Author=Emmanuel Lepage Vallee
 X-KDE-PluginInfo-Email=emmanuel.lepage@savoirfairelinux.com

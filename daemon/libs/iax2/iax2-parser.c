@@ -2,7 +2,7 @@
  * Asterisk -- A telephony toolkit for Linux.
  *
  * Implementation of Inter-Asterisk eXchange
- * 
+ *
  * Copyright (C) 2003-2004, Digium
  *
  * Mark Spencer <markster@digium.com>
@@ -218,7 +218,7 @@ static void dump_prov_ies(char *output, int maxlen, unsigned char *iedata, int l
 	char tmp[256];
 	if (len < 2)
 		return;
-	strcpy(output, "\n"); 
+	strcpy(output, "\n");
 	maxlen -= (int)strlen(output); output += strlen(output);
 	while(len > 2) {
 		ie = iedata[0];
@@ -396,12 +396,12 @@ void iax_showframe(struct iax_frame *f, struct ast_iax2_full_hdr *fhi, int rx, s
 		snprintf(subclass2, (int)sizeof(subclass2), "%d", fh->csub);
 		subclass = subclass2;
 	}
-snprintf(tmp, (int)sizeof(tmp), 
+snprintf(tmp, (int)sizeof(tmp),
 "%s-Frame Retry[%s] -- OSeqno: %3.3d ISeqno: %3.3d Type: %s Subclass: %s\n",
 	(rx ? "Rx" : "Tx"),
 	retries, fh->oseqno, fh->iseqno, clas, subclass);
 	outputf(tmp);
-snprintf(tmp, (int)sizeof(tmp), 
+snprintf(tmp, (int)sizeof(tmp),
 "   Timestamp: %05lums  SCall: %5.5d  DCall: %5.5d [%s:%d]\n",
 	(unsigned long)ntohl(fh->ts),
 	ntohs(fh->scallno) & ~IAX_FLAG_FULL, ntohs(fh->dcallno) & ~IAX_FLAG_RETRANS,
@@ -431,14 +431,14 @@ int iax_ie_append_addr(struct iax_ie_data *ied, unsigned char ie, struct sockadd
 	return iax_ie_append_raw(ied, ie, sin, (int)sizeof(struct sockaddr_in));
 }
 
-int iax_ie_append_int(struct iax_ie_data *ied, unsigned char ie, unsigned int value) 
+int iax_ie_append_int(struct iax_ie_data *ied, unsigned char ie, unsigned int value)
 {
 	unsigned int newval;
 	newval = htonl(value);
 	return iax_ie_append_raw(ied, ie, &newval, (int)sizeof(newval));
 }
 
-int iax_ie_append_short(struct iax_ie_data *ied, unsigned char ie, unsigned short value) 
+int iax_ie_append_short(struct iax_ie_data *ied, unsigned char ie, unsigned short value)
 {
 	unsigned short newval;
 	newval = htons(value);
@@ -455,7 +455,7 @@ int iax_ie_append_byte(struct iax_ie_data *ied, unsigned char ie, unsigned char 
 	return iax_ie_append_raw(ied, ie, &dat, 1);
 }
 
-int iax_ie_append(struct iax_ie_data *ied, unsigned char ie) 
+int iax_ie_append(struct iax_ie_data *ied, unsigned char ie)
 {
 	return iax_ie_append_raw(ied, ie, NULL, 0);
 }
@@ -777,7 +777,7 @@ void iax_frame_wrap(struct iax_frame *fr, struct ast_frame *f)
 	fr->af.offset = AST_FRIENDLY_OFFSET;
 	fr->af.src = f->src;
 	fr->af.data = fr->afdata;
-	if (fr->af.datalen) 
+	if (fr->af.datalen)
 		memcpy(fr->af.data, f->data, fr->af.datalen);
 }
 

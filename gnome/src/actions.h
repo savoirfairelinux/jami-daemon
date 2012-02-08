@@ -201,8 +201,6 @@ void status_bar_display_account ();
 
 void sflphone_fill_history (void);
 
-void sflphone_save_history (void);
-
 /**
  * Action called when a new participant is dragged in
  */

@@ -2,7 +2,7 @@
  * Asterisk -- A telephony toolkit for Linux.
  *
  * Implementation of Inter-Asterisk eXchange
- * 
+ *
  * Copyright (C) 2003, Digium
  *
  * Mark Spencer <markster@linux-support.net>
@@ -10,7 +10,7 @@
  * This program is free software, distributed under the terms of
  * the GNU Lesser (Library) General Public License
  */
- 
+
 #ifndef _IAX2_H
 #define _IAX2_H
 

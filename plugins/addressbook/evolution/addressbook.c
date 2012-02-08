@@ -39,7 +39,7 @@
 void
 addressbook_search (void (*search_cb)(GList *, gpointer), GtkEntry* entry, AddressBook_Config *addressbook_config)
 {
-    search_async_by_contacts (gtk_entry_get_text(entry), 
+    search_async_by_contacts (gtk_entry_get_text(entry),
         addressbook_config->max_results,
         search_cb,
         addressbook_config);
@@ -89,9 +89,9 @@ addressbook_get_books_data(gchar **book_list)
 }
 
 book_data_t *
-addressbook_get_book_data_by_uid(gchar *uid) 
+addressbook_get_book_data_by_uid(gchar *uid)
 {
-    return books_get_book_data_by_uid (uid); 
+    return books_get_book_data_by_uid (uid);
 }
 
 /**

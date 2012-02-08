@@ -31,8 +31,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __AUDIO_SYMMETRIC_RTP_SESSION_H__
-#define __AUDIO_SYMMETRIC_RTP_SESSION_H__
+#ifndef AUDIO_SYMMETRIC_RTP_SESSION_H_
+#define AUDIO_SYMMETRIC_RTP_SESSION_H_
 
 #include <exception>
 #include <cassert>
@@ -43,6 +43,8 @@
 
 using std::ptrdiff_t;
 
+
+#pragma GCC diagnostic ignored "-Weffc++"
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
 #include <cc++/numbers.h> // ost::Time
@@ -93,5 +95,6 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
 };
 
 }
-#endif // __AUDIO_SYMMETRIC_RTP_SESSION_H__
+#pragma GCC diagnostic warning "-Weffc++"
+#endif // AUDIO_SYMMETRIC_RTP_SESSION_H__
 

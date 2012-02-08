@@ -1,37 +1,35 @@
 #ifndef SFLPHONEAPPLICATION_H
 #define SFLPHONEAPPLICATION_H
 
-
 #include <KApplication>
 #include <QDBusAbstractAdaptor>
 
+//SFLPhone
 class SFLPhone;
 
-
+///@class SFLPhoneApplication Main application
 class SFLPhoneApplication : public KApplication
 {
   Q_OBJECT
 
-  public:
+public:
    // Constructor
    SFLPhoneApplication();
 
    // Destructor
    virtual    ~SFLPhoneApplication();
 
-   // Return the contact list window
-   //SFLPhone*       getSFLPhoneWindow() const;
+private:
+   //Constructor
+   void         initializeMainWindow();
+   void         initializePaths();
 
-  private:  // private methods
-    void         initializeMainWindow();
-    void         initializePaths();
+private:
+   // Reference to the sflphone window
+   //SFLPhone       *sflphoneWindow_;
 
-  private:
-    // Reference to the sflphone window
-    //SFLPhone       *sflphoneWindow_;
-
-  private slots:
-     Q_NOREPLY void quit2();
+private slots:
+   Q_NOREPLY void quit2();
 };
 
 #endif // SFLPHONEAPPLICATION_H

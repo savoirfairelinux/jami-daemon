@@ -106,57 +106,57 @@ void ConfigurationTest::testYamlParser()
 
 void ConfigurationTest::testYamlEmitter()
 {
-    Conf::MappingNode accountmap(NULL);
-    Conf::MappingNode credentialmap(NULL);
-    Conf::MappingNode srtpmap(NULL);
-    Conf::MappingNode zrtpmap(NULL);
-    Conf::MappingNode tlsmap(NULL);
+    using namespace Conf;
+    MappingNode accountmap(NULL);
+    MappingNode credentialmap(NULL);
+    MappingNode srtpmap(NULL);
+    MappingNode zrtpmap(NULL);
+    MappingNode tlsmap(NULL);
 
+    ScalarNode id("Account:1278432417");
+    ScalarNode username("181");
+    ScalarNode password("pass181");
+    ScalarNode alias("sfl-181");
+    ScalarNode hostname("192.168.50.3");
+    ScalarNode enable(true);
+    ScalarNode type("SIP");
+    ScalarNode expire("3600");
+    ScalarNode interface("default");
+    ScalarNode port("5060");
+    ScalarNode mailbox("97");
+    ScalarNode publishAddr("192.168.50.182");
+    ScalarNode publishPort("5060");
+    ScalarNode sameasLocal(true);
+    ScalarNode codecs("0/9/110/111/112/");
+    ScalarNode stunServer("stun.sflphone.org");
+    ScalarNode stunEnabled(false);
+    ScalarNode displayName("Alexandre Savard");
+    ScalarNode dtmfType("sipinfo");
 
-    Conf::ScalarNode id("Account:1278432417");
-    Conf::ScalarNode username("181");
-    Conf::ScalarNode password("pass181");
-    Conf::ScalarNode alias("sfl-181");
-    Conf::ScalarNode hostname("192.168.50.3");
-    Conf::ScalarNode enable(true);
-    Conf::ScalarNode type("SIP");
-    Conf::ScalarNode expire("3600");
-    Conf::ScalarNode interface("default");
-    Conf::ScalarNode port("5060");
-    Conf::ScalarNode mailbox("97");
-    Conf::ScalarNode publishAddr("192.168.50.182");
-    Conf::ScalarNode publishPort("5060");
-    Conf::ScalarNode sameasLocal(true);
-    Conf::ScalarNode codecs("0/9/110/111/112/");
-    Conf::ScalarNode stunServer("stun.sflphone.org");
-    Conf::ScalarNode stunEnabled(false);
-    Conf::ScalarNode displayName("Alexandre Savard");
-    Conf::ScalarNode dtmfType("sipinfo");
+    ScalarNode count("0");
 
-    Conf::ScalarNode count("0");
+    ScalarNode srtpenabled(false);
+    ScalarNode keyExchange("sdes");
+    ScalarNode rtpFallback(false);
 
-    Conf::ScalarNode srtpenabled(false);
-    Conf::ScalarNode keyExchange("sdes");
-    Conf::ScalarNode rtpFallback(false);
+    ScalarNode displaySas(false);
+    ScalarNode displaySasOnce(false);
+    ScalarNode helloHashEnabled(false);
+    ScalarNode notSuppWarning(false);
 
-    Conf::ScalarNode displaySas(false);
-    Conf::ScalarNode displaySasOnce(false);
-    Conf::ScalarNode helloHashEnabled(false);
-    Conf::ScalarNode notSuppWarning(false);
-
-    Conf::ScalarNode tlsport("");
-    Conf::ScalarNode certificate("");
-    Conf::ScalarNode calist("");
-    Conf::ScalarNode ciphers("");
-    Conf::ScalarNode tlsenabled(false);
-    Conf::ScalarNode tlsmethod("TLSV1");
-    Conf::ScalarNode timeout("0");
-    Conf::ScalarNode tlspassword("");
-    Conf::ScalarNode privatekey("");
-    Conf::ScalarNode requirecertif(true);
-    Conf::ScalarNode server("");
-    Conf::ScalarNode verifyclient(true);
-    Conf::ScalarNode verifyserver(true);
+    ScalarNode tlsport("");
+    ScalarNode certificate("");
+    ScalarNode calist("");
+    ScalarNode ciphers("");
+    ScalarNode tlsenabled(false);
+    ScalarNode tlsmethod("TLSV1");
+    ScalarNode timeout("0");
+    ScalarNode tlspassword("");
+    ScalarNode privatekey("");
+    ScalarNode requirecertif(true);
+    ScalarNode server("");
+    ScalarNode verifyclient(true);
+    ScalarNode verifyserver(true);
 
     accountmap.setKeyValue(aliasKey, &alias);
     accountmap.setKeyValue(typeKey, &type);
@@ -166,7 +166,7 @@ void ConfigurationTest::testYamlEmitter()
     accountmap.setKeyValue(hostnameKey, &hostname);
     accountmap.setKeyValue(accountEnableKey, &enable);
     accountmap.setKeyValue(mailboxKey, &mailbox);
-    accountmap.setKeyValue(expireKey, &expire);
+    accountmap.setKeyValue(registrationExpireKey, &expire);
     accountmap.setKeyValue(interfaceKey, &interface);
     accountmap.setKeyValue(portKey, &port);
     accountmap.setKeyValue(publishAddrKey, &publishAddr);
@@ -187,17 +187,17 @@ void ConfigurationTest::testYamlEmitter()
     zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
 
     accountmap.setKeyValue(credKey, &credentialmap);
-    Conf::SequenceNode credentialseq(NULL);
+    SequenceNode credentialseq(NULL);
     accountmap.setKeyValue(credKey, &credentialseq);
 
-    Conf::MappingNode credmap1(NULL);
-    Conf::MappingNode credmap2(NULL);
-    Conf::ScalarNode user1("user");
-    Conf::ScalarNode pass1("pass");
-    Conf::ScalarNode realm1("*");
-    Conf::ScalarNode user2("john");
-    Conf::ScalarNode pass2("doe");
-    Conf::ScalarNode realm2("fbi");
+    MappingNode credmap1(NULL);
+    MappingNode credmap2(NULL);
+    ScalarNode user1("user");
+    ScalarNode pass1("pass");
+    ScalarNode realm1("*");
+    ScalarNode user2("john");
+    ScalarNode pass2("doe");
+    ScalarNode realm2("fbi");
     credmap1.setKeyValue(USERNAME, &user1);
     credmap1.setKeyValue(PASSWORD, &pass1);
     credmap1.setKeyValue(REALM, &realm1);
@@ -223,14 +223,14 @@ void ConfigurationTest::testYamlEmitter()
     tlsmap.setKeyValue(verifyServerKey, &verifyserver);
 
     try {
-        Conf::YamlEmitter *emitter = new Conf::YamlEmitter("/tmp/ymlEmiter.txt");
+        YamlEmitter *emitter = new YamlEmitter("/tmp/ymlEmiter.txt");
 
         emitter->serializeAccount(&accountmap);
         emitter->serializeAccount(&accountmap);
         emitter->serializeData();
 
         delete emitter;
-    } catch (Conf::YamlEmitterException &e) {
+    } catch (const YamlEmitterException &e) {
        ERROR("ConfigTree: %s", e.what());
     }
 }

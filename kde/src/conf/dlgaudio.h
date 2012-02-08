@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 #ifndef DLGAUDIO_H
 #define DLGAUDIO_H
 
@@ -34,12 +34,11 @@ class DlgAudio : public QWidget, public Ui_DlgAudioBase
 {
 Q_OBJECT
 public:
-    DlgAudio(KConfigDialog *parent = 0);
+   //Constructor
+   DlgAudio(KConfigDialog *parent = 0);
 
-    ~DlgAudio();
-
-private:
-   //bool codecTableHasChanged;
+   //Destructor
+   ~DlgAudio();
 
 public slots:
    void updateWidgets();
@@ -54,10 +53,10 @@ public slots:
     *   ALSA.
     */
    void loadAlsaSettings();
-   
+
 private slots:
    //void codecTableChanged();
-   
+
 signals:
    void updateButtons();
 };
