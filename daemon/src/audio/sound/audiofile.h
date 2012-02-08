@@ -83,7 +83,7 @@ class WaveFile : public AudioFile {
          * @param filename  The absolute path to the file
          * @param sampleRate	The sample rate to read it
          */
-        WaveFile(const std::string&, unsigned int);
+        WaveFile(const std::string&, int);
 };
 
 #endif // __AUDIOFILE_H__

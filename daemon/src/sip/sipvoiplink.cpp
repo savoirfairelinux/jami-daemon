@@ -1548,7 +1548,7 @@ int SIPSessionReinvite(SIPCall *call)
 
 void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
 {
-    SIPCall *call = reinterpret_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL)
         return;
@@ -1620,7 +1620,7 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
 
 void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
-    SIPCall *call = reinterpret_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
     std::string accountid(Manager::instance().getAccountFromCall(call->getCallId()));
 
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountid));
@@ -1648,7 +1648,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     const pjmedia_sdp_session *remote_sdp;
     const pjmedia_sdp_session *local_sdp;
 
-    SIPCall *call = reinterpret_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL) {
         DEBUG("UserAgent: Call declined by peer, SDP negotiation stopped");
@@ -1805,7 +1805,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
     std::string formatedMessage = (char*) r_data->msg_info.msg->body->data;
 
     // Try to determine who is the recipient of the message
-    SIPCall *call = reinterpret_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
+    SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (!call)
         return;
@@ -1844,7 +1844,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
     }
 }
 
-void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account)
+void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 {
 
     SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(account->getVoIPLink());
@@ -1908,7 +1908,7 @@ void update_contact_header(struct pjsip_regc_cbparam *param, SIPAccount *account
     pj_pool_release(pool);
 }
 
-void registration_cb(struct pjsip_regc_cbparam *param)
+void registration_cb(pjsip_regc_cbparam *param)
 {
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
@@ -1990,7 +1990,7 @@ void registration_cb(struct pjsip_regc_cbparam *param)
 
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
-    SIPCall *currentCall = reinterpret_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
+    SIPCall *currentCall = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (currentCall == NULL)
         return;
@@ -2020,8 +2020,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             break;
 
         case PJSIP_EVSUB_STATE_ACTIVE: {
-
-            SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *>(pjsip_evsub_get_mod_data(sub, mod_ua_.id));
+            SIPVoIPLink *link = static_cast<SIPVoIPLink *>(pjsip_evsub_get_mod_data(sub, mod_ua_.id));
 
             if (!link or !event)
                 return;
@@ -2036,7 +2035,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             pjsip_status_line status_line = { 500, *pjsip_get_status_text(500) };
 
             if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD and
-                    request.find("NOTIFY") != std::string::npos) {
+                request.find("NOTIFY") != std::string::npos) {
                 pjsip_msg_body *body = r_data->msg_info.msg->body;
 
                 if (!body)
@@ -2093,7 +2092,7 @@ std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 {
     pj_str_t name = pj_str((char*) field.c_str());
 
-    pjsip_generic_string_hdr *hdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(msg, &name, NULL);
+    pjsip_generic_string_hdr *hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
 
     if (!hdr)
         return "";
@@ -2117,14 +2116,14 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName()
     std::vector<std::string> ifaceList;
     ifaceList.push_back("default");
 
-    ifconf.ifc_buf = (char*)(ifreqs);
+    ifconf.ifc_buf = (char*) (ifreqs);
     ifconf.ifc_len = sizeof(ifreqs);
 
     int sock = socket(AF_INET,SOCK_STREAM,0);
 
     if (sock >= 0) {
         if (ioctl(sock, SIOCGIFCONF, &ifconf) >= 0)
-            for (unsigned i = 0; i < ifconf.ifc_len/sizeof(struct ifreq); i++)
+            for (unsigned i = 0; i < ifconf.ifc_len / sizeof(ifreq); ++i)
                 ifaceList.push_back(std::string(ifreqs[i].ifr_name));
 
         close(sock);
@@ -2150,7 +2149,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(const std::string &ifaceName)
     ioctl(fd, SIOCGIFADDR, &ifr);
     close(fd);
 
-    sockaddr_in *saddr_in = (struct sockaddr_in *) &ifr.ifr_addr;
+    sockaddr_in *saddr_in = (sockaddr_in *) &ifr.ifr_addr;
     return inet_ntoa(saddr_in->sin_addr);
 }
 

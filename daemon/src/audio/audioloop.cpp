@@ -33,13 +33,13 @@
  */
 
 #include "audioloop.h"
-#include <math.h>
+#include <cmath>
+#include <numeric>
 #include <cstring>
 #include <cassert>
 
 AudioLoop::AudioLoop() : buffer_(0),  size_(0), pos_(0), sampleRate_(0)
-{
-}
+{}
 
 AudioLoop::~AudioLoop()
 {
@@ -54,9 +54,12 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
     if (size_ == 0) {
         ERROR("AudioLoop: Error: Audio loop size is 0");
         return;
+    } else if (pos >= size_) {
+        ERROR("AudioLoop: Error: Invalid loop position %d", pos);
+        return;
     }
 
-    while (total_samples) {
+    while (total_samples > 0) {
         size_t samples = total_samples;
 
         if (samples > (size_ - pos))
@@ -65,13 +68,12 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
         // short->char conversion
         memcpy(output, buffer_ + pos, samples * sizeof(SFLDataFormat));
 
+        // Scaling needed
         if (volume != 100) {
-            double gain = volume * 0.01;
+            const double gain = volume * 0.01;
 
-            for (size_t i = 0; i < samples; i++) {
+            for (size_t i = 0; i < samples; ++i, ++output)
                 *output *= gain;
-                output++;
-            }
         } else
             output += samples; // this is the destination...
 
