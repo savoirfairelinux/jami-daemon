@@ -1,3 +1,9 @@
+SFLphoned (1.0.2) / 2012-07-02
+	* Stable version
+	* Update Contact header from 200 OK
+	* Keep alive for account regstration
+	* Call history now managed by client
+
 SFLphoned (0.9.12) / 2011-11-12
 	* Refactoring of the RTP session allowing dynamic update of audio codecs
 	* Updated synchronization between transport layer and audio layer
