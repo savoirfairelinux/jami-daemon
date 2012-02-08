@@ -454,7 +454,7 @@ void PulseLayer::ringtoneToSpeaker()
     AudioLoop *fileToPlay = Manager::instance().getTelephoneFile();
 
     if (fileToPlay)
-        fileToPlay->getNext((SFLDataFormat*)data, bytes / sizeof(SFLDataFormat), 100);
+        fileToPlay->getNext((SFLDataFormat *) data, bytes / sizeof(SFLDataFormat), 100);
     else
         memset(data, 0, bytes);
 
