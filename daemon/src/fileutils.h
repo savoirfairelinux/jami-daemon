@@ -34,6 +34,7 @@
 namespace fileutils {
     void set_program_dir(char *program_path);
     const char *get_program_dir();
+    bool create_pidfile();
 }
 
 #endif	// __FILEUTILS_H__
