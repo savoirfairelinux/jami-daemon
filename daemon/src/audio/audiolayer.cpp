@@ -78,6 +78,13 @@ void AudioLayer::putUrgent(void* buffer, int toCopy)
     urgentRingBuffer_.Put(buffer, toCopy);
 }
 
+void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
+{
+    if (gain != 100)
+        for (int i = 0 ; i < samples; i++)
+            src[i] = src[i] * gain* 0.01;
+}
+
 // Notify (with a beep) an incoming call when there is already a call in progress
 void AudioLayer::notifyincomingCall()
 {

@@ -106,6 +106,11 @@ class AudioLayer {
         void flushUrgent();
 
         /**
+         * Apply gain to audio frame
+         */
+        static void applyGain(SFLDataFormat *src , int samples, int gain);
+        
+        /**
          * Set capture stream gain (microphone)
          */
         void setCaptureGain(unsigned int gain) {

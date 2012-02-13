@@ -331,6 +331,7 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
         urgentRingBuffer_.Get(data, urgentBytes);
+        applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());  
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
         Manager::instance().getMainBuffer()->discard(urgentBytes);
@@ -343,6 +344,7 @@ void PulseLayer::writeToSpeaker()
         if (playback_->isReady()) {
             pa_stream_begin_write(s, &data, &bytes);
             toneToPlay->getNext((SFLDataFormat*)data, bytes / sizeof(SFLDataFormat), 100);
+            applyGain(static_cast<SFLDataFormat *>(data), bytes / sizeof(SFLDataFormat), getPlaybackGain());
             pa_stream_write(s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
         }
 
@@ -388,10 +390,13 @@ void PulseLayer::writeToSpeaker()
     if (resample) {
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc(outBytes);
         converter_->resample((SFLDataFormat*)data, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
+        applyGain(rsmpl_out, outBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, rsmpl_out, outBytes, NULL, 0, PA_SEEK_RELATIVE);
         pa_xfree(rsmpl_out);
-    } else
+    } else {
+        applyGain(static_cast<SFLDataFormat *>(data), inBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, data, inBytes, NULL, 0, PA_SEEK_RELATIVE);
+    }
 }
 
 void PulseLayer::readFromMic()
@@ -455,8 +460,10 @@ void PulseLayer::ringtoneToSpeaker()
     pa_stream_begin_write(s, &data, &bytes);
     AudioLoop *fileToPlay = Manager::instance().getTelephoneFile();
 
-    if (fileToPlay)
+    if (fileToPlay) {
         fileToPlay->getNext((SFLDataFormat *) data, bytes / sizeof(SFLDataFormat), 100);
+        applyGain(static_cast<SFLDataFormat *>(data), bytes / sizeof(SFLDataFormat), getPlaybackGain());
+    }
     else
         memset(data, 0, bytes);
 

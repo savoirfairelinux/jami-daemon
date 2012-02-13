@@ -540,15 +540,6 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description) const
     return 0;
 }
 
-namespace {
-void adjustVolume(SFLDataFormat *src , int samples, int volumePercentage)
-{
-    if (volumePercentage != 100)
-        for (int i = 0 ; i < samples; i++)
-            src[i] = src[i] * volumePercentage * 0.01;
-}
-}
-
 void AlsaLayer::capture()
 {
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
@@ -575,7 +566,7 @@ void AlsaLayer::capture()
         goto end;
     }
 
-    adjustVolume(in, toGetSamples, getCaptureGain());
+    AudioLayer::applyGain(in, toGetSamples, getCaptureGain());
 
     if (resample) {
         int outSamples = toGetSamples * ((double) audioSampleRate_ / mainBufferSampleRate);
@@ -639,7 +630,7 @@ void AlsaLayer::playback(int maxSamples)
 
     SFLDataFormat *out = (SFLDataFormat*) malloc(toGet);
     Manager::instance().getMainBuffer()->getData(out, toGet);
-    adjustVolume(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
+    AudioLayer::applyGain(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
 
     if (resample) {
         int inSamples = toGet / sizeof(SFLDataFormat);
@@ -676,7 +667,7 @@ void AlsaLayer::audioCallback()
 
         SFLDataFormat *out = (SFLDataFormat*) malloc(toGet);
         urgentRingBuffer_.Get(out, toGet);
-        adjustVolume(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
+        AudioLayer::applyGain(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
 
         write(out, toGet, playbackHandle_);
         free(out);
