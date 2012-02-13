@@ -109,7 +109,21 @@ class AudioLayer {
          * Apply gain to audio frame
          */
         static void applyGain(SFLDataFormat *src , int samples, int gain);
-        
+
+        /**
+         * Convert audio amplitude value from linear value to dB
+         */
+        static double amplitudeLinearToDB(double value) {
+            return 20.0 * log10(value);
+        }
+
+        /**
+         * Convert audio amplitude from dB to Linear value
+         */
+        static double ampluitudeDBToLinear(double value) {
+            return pow(10.0, value / 20.0);
+        }
+ 
         /**
          * Set capture stream gain (microphone)
          */
