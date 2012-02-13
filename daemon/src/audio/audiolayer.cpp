@@ -34,6 +34,9 @@
 #include "audio/dcblocker.h"
 #include "manager.h"
 
+unsigned int AudioLayer::captureGain_ = 100;
+unsigned int AudioLayer::playbackGain_ = 100;
+
 AudioLayer::AudioLayer()
     : isStarted_(false)
     , urgentRingBuffer_(SIZEBUF, Call::DEFAULT_ID)
@@ -50,7 +53,10 @@ AudioLayer::AudioLayer()
 
 AudioLayer::~AudioLayer()
 {
-    delete converter_;
+    if(converter_) {
+        delete converter_;
+        converter_ = NULL;
+    }
 }
 
 void AudioLayer::flushMain()

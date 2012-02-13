@@ -35,6 +35,7 @@
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
+#include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h"
 #include "audio/audiortp/audio_zrtp_session.h"
 
@@ -128,10 +129,20 @@ void CallManager::attendedTransfer(const std::string& transferID, const std::str
 
 void CallManager::setVolume(const std::string& device, const double& value)
 {
-    if (device == "speaker")
-        Manager::instance().setSpkrVolume((int)(value * 100.0));
-    else if (device == "mic")
-        Manager::instance().setMicVolume((int)(value * 100.0));
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if(!audiolayer) {
+        ERROR("CallManager: Audio layer not valid while updating volume");
+        return;
+    }
+
+    DEBUG("DBUS set volume for %s: %f", device.c_str(), value);
+
+    if (device == "speaker") { 
+        audiolayer->setPlaybackGain((int)(value * 100.0));
+    } else if (device == "mic") {
+        audiolayer->setCaptureGain((int)(value * 100.0));
+    }
 
     volumeChanged(device, value);
 }
@@ -139,10 +150,17 @@ void CallManager::setVolume(const std::string& device, const double& value)
 double
 CallManager::getVolume(const std::string& device)
 {
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if(!audiolayer) {
+        ERROR("CallManager: Audio layer not valid while updating volume");
+        return 0.0;
+    }
+
     if (device == "speaker")
-        return Manager::instance().getSpkrVolume() / 100.0;
+        return audiolayer->getPlaybackGain() / 100.0;
     else if (device == "mic")
-        return Manager::instance().getMicVolume() / 100.0;
+        return audiolayer->getCaptureGain() / 100.0;
 
     return 0;
 }

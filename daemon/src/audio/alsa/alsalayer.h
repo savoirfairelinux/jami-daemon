@@ -115,7 +115,7 @@ class AlsaLayer : public AudioLayer {
          * @return	int	  Its index
          */
         int getAudioDeviceIndex(const std::string &description) const;
-
+        
         void playback(int maxSamples);
         void capture();
 

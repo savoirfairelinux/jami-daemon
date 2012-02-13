@@ -602,13 +602,13 @@ select_audio_manager(void)
         gtk_container_remove(GTK_CONTAINER(alsa_conf) , alsabox);
         gtk_widget_hide(alsa_conf);
 
-        if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
-            main_window_volume_controls(FALSE);
-            eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
-            gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
-        }
-
         gtk_action_set_sensitive(volumeToggle_, FALSE);
+    }
+
+    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
+        main_window_volume_controls(FALSE);
+        eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
+        gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
     }
 }
 

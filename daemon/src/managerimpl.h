@@ -849,42 +849,6 @@ class ManagerImpl {
          */
         bool incomingCallWaiting() const;
 
-        /*
-         * Inline functions to manage speaker volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @return unsigned short	The volume value
-         */
-        unsigned short getSpkrVolume() const {
-            return speakerVolume_;
-        }
-
-        /*
-         * Inline functions to manage speaker volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @param spkr_vol	The volume value
-         */
-        void setSpkrVolume(unsigned short spkr_vol);
-
-        /*
-         * Inline functions to manage mic volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @return unsigned short	The volume value
-         */
-        unsigned short getMicVolume() const {
-            return micVolume_;
-        }
-
-        /*
-         * Inline functions to manage mic volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @param mic_vol	The volume value
-         */
-        void setMicVolume(unsigned short mic_vol);
-
         /**
          * Return a new random callid that is not present in the list
          * @return std::string A brand new callid
@@ -949,11 +913,6 @@ class ManagerImpl {
          */
         void initZeroconf();
 
-        /*
-         * Init the volume for speakers/micro from 0 to 100 value
-         */
-        void initVolume();
-
         /**
          * Switch of current call id
          * @param id The new callid
@@ -992,8 +951,8 @@ class ManagerImpl {
         AudioFile *audiofile_;
 
         // To handle volume control
-        short speakerVolume_;
-        short micVolume_;
+        // short speakerVolume_;
+        // short micVolume_;
         // End of sound variable
 
         /**

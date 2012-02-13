@@ -87,6 +87,8 @@ AlsaLayer::AlsaLayer()
     , is_capture_open_(false)
     , audioThread_(NULL)
 {
+    setCaptureGain(Manager::instance().audioPreference.getVolumemic());
+    setPlaybackGain(Manager::instance().audioPreference.getVolumespkr());
 }
 
 // Destructor
@@ -573,7 +575,7 @@ void AlsaLayer::capture()
         goto end;
     }
 
-    adjustVolume(in, toGetSamples, Manager::instance().getSpkrVolume());
+    adjustVolume(in, toGetSamples, getCaptureGain());
 
     if (resample) {
         int outSamples = toGetSamples * ((double) audioSampleRate_ / mainBufferSampleRate);
@@ -594,7 +596,6 @@ end:
 
 void AlsaLayer::playback(int maxSamples)
 {
-    unsigned short spkrVolume = Manager::instance().getSpkrVolume();
 
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
     bool resample = audioSampleRate_ != mainBufferSampleRate;
@@ -608,10 +609,12 @@ void AlsaLayer::playback(int maxSamples)
 
         SFLDataFormat *out = (SFLDataFormat *) malloc(toPut);
 
-        if (tone)
-            tone->getNext(out, maxSamples, spkrVolume);
-        else if (file_tone && !ringtoneHandle_)
-            file_tone->getNext(out, maxSamples, spkrVolume);
+        if (tone) {
+            tone->getNext(out, maxSamples, getPlaybackGain());
+        }
+        else if (file_tone && !ringtoneHandle_) {
+            file_tone->getNext(out, maxSamples, getPlaybackGain());
+        }
         else
             memset(out, 0, toPut);
 
@@ -636,7 +639,7 @@ void AlsaLayer::playback(int maxSamples)
 
     SFLDataFormat *out = (SFLDataFormat*) malloc(toGet);
     Manager::instance().getMainBuffer()->getData(out, toGet);
-    adjustVolume(out, toGet / sizeof(SFLDataFormat), spkrVolume);
+    adjustVolume(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
 
     if (resample) {
         int inSamples = toGet / sizeof(SFLDataFormat);
@@ -659,8 +662,6 @@ void AlsaLayer::audioCallback()
 
     notifyincomingCall();
 
-    unsigned short spkrVolume = Manager::instance().getSpkrVolume();
-
     snd_pcm_wait(playbackHandle_, 20);
 
     int playbackAvailSmpl = snd_pcm_avail_update(playbackHandle_);
@@ -675,7 +676,7 @@ void AlsaLayer::audioCallback()
 
         SFLDataFormat *out = (SFLDataFormat*) malloc(toGet);
         urgentRingBuffer_.Get(out, toGet);
-        adjustVolume(out, toGet / sizeof(SFLDataFormat), spkrVolume);
+        adjustVolume(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
 
         write(out, toGet, playbackHandle_);
         free(out);
@@ -693,8 +694,10 @@ void AlsaLayer::audioCallback()
 
         SFLDataFormat *out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
 
-        if (file_tone)
-            file_tone->getNext(out, ringtoneAvailSmpl, spkrVolume);
+        if (file_tone) {
+            DEBUG("playback gain %d", getPlaybackGain());
+            file_tone->getNext(out, ringtoneAvailSmpl, getPlaybackGain());
+        }
         else
             memset(out, 0, ringtoneAvailBytes);
 

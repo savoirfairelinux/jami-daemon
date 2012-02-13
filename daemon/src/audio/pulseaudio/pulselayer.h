@@ -68,6 +68,7 @@ class PulseLayer : public AudioLayer {
 
         virtual void stopStream();
 
+
     private:
         static void context_state_callback(pa_context* c, void* user_data);
         static void context_changed_callback(pa_context* c,

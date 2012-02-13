@@ -37,6 +37,7 @@
 #include "managerimpl.h"
 
 namespace {
+
 void playback_callback(pa_stream* s, size_t bytes, void* userdata)
 {
     assert(s && bytes);
@@ -306,6 +307,7 @@ void PulseLayer::writeToSpeaker()
         return;
 
     pa_stream *s = playback_->pulseStream();
+
 
     // available bytes to be written in pulseaudio internal buffer
     int writable = pa_stream_writable_size(s);

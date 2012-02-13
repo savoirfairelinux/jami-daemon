@@ -105,7 +105,33 @@ class AudioLayer {
          */
         void flushUrgent();
 
+        /**
+         * Set capture stream gain (microphone)
+         */
+        void setCaptureGain(unsigned int gain) {
+            captureGain_ = gain;
+        }
 
+        /**
+         * Set capture stream gain (microphone) 
+         */
+       unsigned int getCaptureGain(void) {
+            return captureGain_;
+        }
+
+        /**
+         * Set playback stream gain (speaker)
+         */
+        void setPlaybackGain(unsigned int gain) {
+            playbackGain_ = gain;
+        }
+
+        /**
+         * Get playback stream gain (speaker) 
+         */
+        unsigned int getPlaybackGain(void) {
+            return playbackGain_;
+        }
 
         /**
          * Get the sample rate of the audio layer
@@ -127,6 +153,16 @@ class AudioLayer {
          * Emit an audio notification on incoming calls
          */
         void notifyincomingCall();
+
+        /**
+         * Gain applied to mic signal
+         */
+        static unsigned int captureGain_;
+
+        /**
+         * Gain applied to playback signal
+         */
+        static unsigned int playbackGain_;
 
     protected:
 
@@ -150,8 +186,20 @@ class AudioLayer {
          * Lock for the entire audio layer
          */
         ost::Mutex mutex_;
+
+        /**
+         * Remove audio offset that can be introduced by certain cheap audio device
+         */
         DcBlocker dcblocker_;
+
+        /**
+         * Configuration file for this 
+         */
         AudioPreference &audioPref;
+
+        /**
+         * Manage sampling rate conversion
+         */
         SamplerateConverter *converter_;
 
     private:
