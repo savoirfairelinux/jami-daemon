@@ -8,6 +8,7 @@
       <menuitem name="OnHoldMenu" action="OnHold"/>
       <menuitem action="InstantMessaging"/>
       <menuitem action="Record"/>
+      <menuitem action="MuteCall"/>
       <separator/>
       <menuitem action="AccountAssistant"/>
       <separator/>
@@ -49,6 +50,7 @@
     <toolitem name="TransferToolbar" action="Transfer"/>
     <toolitem name="InstantMessagingToolbar" action="InstantMessaging"/>
     <toolitem name="RecordToolbar" action="Record"/>
+    <toolitem name="MuteCallToolbar" action="MuteCall"/>
     <!-- FIXME: commented out because it is responsible for #7495 -->
     <!-- separator/-->
     <toolitem name="VoicemailToolbar" action="Voicemail"/>
