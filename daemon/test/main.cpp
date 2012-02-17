@@ -31,6 +31,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "constants.h"
+#include "fileutils.h"
 
 #include <cstdlib>
 
@@ -57,6 +58,8 @@ int main(int argc, char* argv[])
     printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
     Logger::setConsoleLog(true);
     Logger::setDebugMode(true);
+    if (!fileutils::create_pidfile())
+        return 1;
 
     int argvIndex = 1;
     bool xmlOutput = false;
