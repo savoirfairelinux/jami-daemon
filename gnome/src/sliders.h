@@ -68,7 +68,7 @@ void set_slider_no_update (const gchar * device, gdouble value);
 /**
  * Mute the audio device setting the sliders to 0
  */
-void toggle_slider_mute(void);
+void toggle_slider_mute_microphone(void);
 
 /**
  * Returns the mute/unmute state

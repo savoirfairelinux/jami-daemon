@@ -168,20 +168,17 @@ void set_slider_no_update (const gchar * device, gdouble newval)
     update_icons(dev);
 }
 
-void toggle_slider_mute(void)
+void toggle_slider_mute_microphone(void)
 {
     DEBUG("Slider: Mute/Unmute toggle");
 
     switch(device_state) {
     case DEVICE_STATE_ACTIVE:
-        // value[DEVICE_SPEAKER] = gtk_range_get_value(GTK_RANGE(slider[DEVICE_SPEAKER]));
         value[DEVICE_MIC] = gtk_range_get_value(GTK_RANGE(slider[DEVICE_MIC]));
-        // dbus_set_volume("speaker", 0.0);
         dbus_set_volume("mic", 0.0);
         device_state = DEVICE_STATE_MUTED;
         break;
     case DEVICE_STATE_MUTED:
-        // dbus_set_volume("speaker", value[DEVICE_SPEAKER]);
         dbus_set_volume("mic", value[DEVICE_MIC]);
         device_state = DEVICE_STATE_ACTIVE;
         break;

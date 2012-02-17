@@ -432,6 +432,7 @@ void PulseLayer::readFromMic()
         converter_->resample((SFLDataFormat*)data, mic_buffer_, mainBufferSampleRate, audioSampleRate_, samples);
 
     dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
+    applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());
     Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes);
 
     if (pa_stream_drop(record_->pulseStream()) < 0)

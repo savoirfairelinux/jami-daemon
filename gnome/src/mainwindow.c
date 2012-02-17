@@ -242,15 +242,21 @@ create_main_window()
     gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE /*expand*/,
                        FALSE /*fill*/, 0 /*padding*/);
 
+    speaker_control = create_slider("speaker");
+    mic_control = create_slider("mic");
+    g_object_ref(speaker_control);
+    g_object_ref(mic_control);
+
     if (SHOW_VOLUME) {
-        speaker_control = create_slider("speaker");
         gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE /*expand*/,
-                         TRUE /*fill*/, 0 /*padding*/);
-        gtk_widget_show_all(speaker_control);
-        mic_control = create_slider("mic");
+                          TRUE /*fill*/, 0 /*padding*/);
         gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
+        gtk_widget_show_all(speaker_control);
         gtk_widget_show_all(mic_control);
+    } else {
+        gtk_widget_hide(speaker_control);
+        gtk_widget_hide(mic_control);
     }
 
     if (eel_gconf_get_boolean(CONF_SHOW_DIALPAD)) {
@@ -315,11 +321,11 @@ void
 main_window_volume_controls(gboolean state)
 {
     if (state) {
-        speaker_control = create_slider("speaker");
+        // speaker_control = create_slider("speaker");
         gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all(speaker_control);
-        mic_control = create_slider("mic");
+        // mic_control = create_slider("mic");
         gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all(mic_control);

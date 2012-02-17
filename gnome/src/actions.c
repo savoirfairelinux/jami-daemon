@@ -942,7 +942,7 @@ sflphone_mute_call()
 {
     DEBUG("Actions: Mute call");
 
-    toggle_slider_mute();
+    toggle_slider_mute_microphone();
 }
 
 void sflphone_fill_codec_list()
