@@ -197,6 +197,8 @@ void sflphone_record (callable_obj_t *c);
 
 void sflphone_rec_call (void);
 
+void sflphone_mute_call (void);
+
 void status_bar_display_account ();
 
 void sflphone_fill_history (void);

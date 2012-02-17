@@ -36,6 +36,12 @@
   * @brief Volume sliders at the bottom of the main window.
   */
 
+enum device_state_t {
+    DEVICE_STATE_MUTED = 0,
+    DEVICE_STATE_ACTIVE,
+    DEVICE_STATE_COUNT
+};
+
 /**
  * Build the sliders widget
  * @param device  Mic or speaker
@@ -43,6 +49,12 @@
  */
 GtkWidget * create_slider (const gchar * device);
 
+/**
+ * Update the sliders sending the value to the server
+ * @param device The device slider to update
+ * @param value The value to set [0, 1.0]
+ */
+void set_slider_value(const gchar *device, gdouble value);
 
 /**
  * This function updates the sliders without sending the value to the server.
@@ -51,6 +63,16 @@ GtkWidget * create_slider (const gchar * device);
  * @param device The device slider to update {speaker, mic}
  * @param value The value to set [0, 1.0]
  */
-void set_slider (const gchar * device, gdouble value);
+void set_slider_no_update (const gchar * device, gdouble value);
+
+/**
+ * Mute the audio device setting the sliders to 0
+ */
+void toggle_slider_mute(void);
+
+/**
+ * Returns the mute/unmute state
+ */
+guint get_mute_unmute_state(void);
 
 #endif

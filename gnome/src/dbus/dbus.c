@@ -119,7 +119,7 @@ static void
 volume_changed_cb(DBusGProxy *proxy UNUSED, const gchar *device, gdouble value,
                   void *foo UNUSED)
 {
-    set_slider(device, value);
+    set_slider_no_update(device, value);
 }
 
 static void

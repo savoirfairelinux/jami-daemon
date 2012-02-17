@@ -937,6 +937,14 @@ sflphone_rec_call()
     update_actions();
 }
 
+void
+sflphone_mute_call()
+{
+    DEBUG("Actions: Mute call");
+
+    toggle_slider_mute();
+}
+
 void sflphone_fill_codec_list()
 {
     guint account_list_size = account_list_get_size();
