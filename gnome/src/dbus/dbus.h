@@ -561,4 +561,14 @@ gboolean dbus_start_recorded_file_playback(const gchar *);
  */
 void dbus_stop_recorded_file_playback(const gchar *);
 
+/**
+ * Prevent Gnome Session Manager from entering in screen-saver mode 
+ */
+void dbus_screensaver_inhibit(void);
+
+/**
+ * Allow Gnome Session Manager to enter in screen-saver mode
+ */
+void dbus_screensaver_uninhibit(void);
+
 #endif
