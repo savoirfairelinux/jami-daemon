@@ -1090,10 +1090,65 @@ static const GtkActionEntry menu_entries[] = {
       N_("About this application"), G_CALLBACK(help_about) }
 };
 
+static void register_custom_stock_icon(void) {
+
+    static gboolean registered = FALSE;
+
+    if (!registered) {
+        GdkPixbuf *pixbuf;
+        GtkIconFactory *factory;
+
+        static GtkStockItem items[] = {
+            { "SFLPHONE_MUTE_CALL",
+              "_GTK!",
+              0, 0, NULL }
+        };
+
+        registered = TRUE;
+
+        /* Register our stock items */
+        gtk_stock_add (items, G_N_ELEMENTS (items));
+
+        /* Add our custom icon factory to the list of defaults */
+        factory = gtk_icon_factory_new ();
+        gtk_icon_factory_add_default (factory);
+
+        /* demo_find_file() looks in the current directory first,
+         * so you can run gtk-demo without installing GTK, then looks
+         * in the location where the file is installed.
+         */
+        pixbuf = NULL;
+        pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/mic.svg", NULL);
+        if(pixbuf == NULL) {
+            DEBUG("Error could not create mic.svg pixbuf");
+        }
+
+        /* Register icon to accompany stock item */
+        if (pixbuf != NULL) {
+            GtkIconSet *icon_set;
+            GdkPixbuf *transparent;
+
+            /* The gtk-logo-rgb icon has a white background, make it transparent */
+            transparent = gdk_pixbuf_add_alpha (pixbuf, TRUE, 0xff, 0xff, 0xff);
+
+            icon_set = gtk_icon_set_new_from_pixbuf (transparent);
+            gtk_icon_factory_add (factory, "SFLPHONE_MUTE_CALL", icon_set);
+            gtk_icon_set_unref (icon_set);
+            g_object_unref (pixbuf);
+            g_object_unref (transparent);
+        }
+        else
+            g_warning ("failed to load GTK logo for toolbar");
+
+        /* Drop our reference to the factory, GTK will hold a reference. */
+        g_object_unref (factory);
+    }
+}
+
 static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
     { "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
-    { "Mute", GTK_STOCK_CANCEL, N_("_Mute"), "<control>M", N_("Mute microphone for this call"), G_CALLBACK(call_mute), FALSE },
+    { "Mute", "SFLPHONE_MUTE_CALL", N_("_Mute"), "<control>M", N_("Mute microphone for this call"), G_CALLBACK(call_mute), FALSE },
     { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
     { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK(dialpad_bar_cb), TRUE },
     { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },
@@ -1107,6 +1162,9 @@ GtkUIManager *uimanager_new(void)
 
     GtkWidget *window = get_main_window();
     GtkUIManager *ui_manager = gtk_ui_manager_new();
+
+    /* Register new icons as GTK_STOCK_ITEMS */
+    register_custom_stock_icon();
 
     /* Create an accel group for window's shortcuts */
     gchar *path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, "./ui.xml", NULL);
