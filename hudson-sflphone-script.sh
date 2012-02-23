@@ -35,11 +35,11 @@ make check
 popd
 
 # Run the unit tests for the daemon
-pushd daemon/test
+# pushd daemon/test
 # Remove the previous XML test file
-rm -rf $XML_RESULTS
-./run_tests.sh || exit 1
-popd
+# rm -rf $XML_RESULTS
+# ./run_tests.sh || exit 1
+# popd
 
 # Compile the client
 pushd gnome
