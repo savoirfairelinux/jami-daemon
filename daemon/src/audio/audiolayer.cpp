@@ -34,6 +34,9 @@
 #include "audio/dcblocker.h"
 #include "manager.h"
 
+unsigned int AudioLayer::captureGain_ = 100;
+unsigned int AudioLayer::playbackGain_ = 100;
+
 AudioLayer::AudioLayer()
     : isStarted_(false)
     , urgentRingBuffer_(SIZEBUF, Call::DEFAULT_ID)
@@ -50,7 +53,10 @@ AudioLayer::AudioLayer()
 
 AudioLayer::~AudioLayer()
 {
-    delete converter_;
+    if(converter_) {
+        delete converter_;
+        converter_ = NULL;
+    }
 }
 
 void AudioLayer::flushMain()
@@ -70,6 +76,13 @@ void AudioLayer::putUrgent(void* buffer, int toCopy)
 {
     ost::MutexLock guard(mutex_);
     urgentRingBuffer_.Put(buffer, toCopy);
+}
+
+void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
+{
+    if (gain != 100)
+        for (int i = 0 ; i < samples; i++)
+            src[i] = src[i] * gain* 0.01;
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress

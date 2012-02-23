@@ -41,21 +41,24 @@ static GtkWidget * button[2];
 
 // icons
 static GtkWidget * images[2][4];
+
 enum device_t {
-    SPEAKER = 0,
-    MIKE,
+    DEVICE_SPEAKER = 0,
+    DEVICE_MIC,
     DEVICE_COUNT
-} ;
+};
 
 enum volume_t {
     MUTED = 0,
     VOL25,
     VOL50,
     VOL75
-} ;
+};
 
 static guint toggledConnId[2]; // The button toggled signal connection ID
 static guint movedConnId[2];   // The slider_moved signal connection ID
+
+static guint device_state = DEVICE_STATE_ACTIVE;
 
 void
 update_icons(int dev)
@@ -86,20 +89,20 @@ slider_moved(GtkRange* range, gchar* device)
     dbus_set_volume(device, slider_value);
 
     if (g_strcmp0(device, "speaker") == 0)
-        update_icons(SPEAKER);
+        update_icons(DEVICE_SPEAKER);
     else
-        update_icons(MIKE);
+        update_icons(DEVICE_MIC);
 }
 
-static void
+void
 mute_cb(GtkWidget *widget, gchar*  device)
 {
     int dev;
 
     if (g_strcmp0(device, "speaker") == 0)
-        dev = SPEAKER;
+        dev = DEVICE_SPEAKER;
     else
-        dev = MIKE;
+        dev = DEVICE_MIC;
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {   // Save value
         DEBUG("Save");
@@ -113,15 +116,46 @@ mute_cb(GtkWidget *widget, gchar*  device)
     update_icons(dev);
 }
 
-void
-set_slider(const gchar * device, gdouble newval)
+void set_slider_value(const gchar *device, gdouble newval)
 {
-    int dev;
+    int dev = 0;
 
-    if (g_strcmp0(device, "speaker") == 0)
-        dev = SPEAKER;
-    else
-        dev = MIKE;
+    if (g_strcmp0(device, "speaker") == 0) {
+        dev = DEVICE_SPEAKER;
+        DEBUG("Slider: Set value for speaker: %f\n", newval);
+    }
+    else if (g_strcmp0(device, "mic") == 0) {
+        dev = DEVICE_MIC;
+        DEBUG("Slider: Set value for mic: %f\n", newval);
+    }
+    else {
+        ERROR("Slider: Unknown device: %s", device);
+        return;
+    }
+
+    gtk_range_set_value(GTK_RANGE(slider[dev]), newval);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button[dev]), (newval == 0 ? TRUE: FALSE));
+
+    update_icons(dev);
+}
+
+void set_slider_no_update (const gchar * device, gdouble newval)
+{
+    int dev = 0;
+
+    if (g_strcmp0(device, "speaker") == 0) {
+        dev = DEVICE_SPEAKER;
+        DEBUG("Slider: Set value no update for speaker: %f\n", newval);
+    }
+    else if (g_strcmp0(device, "mic") == 0) {
+        dev = DEVICE_MIC;
+        DEBUG("Slider: Set value no update for mic: %f\n", newval);
+    }
+    else {
+        ERROR("Slider: Unknown device: %s", device);
+        return;
+    }
 
     g_signal_handler_block(G_OBJECT(slider[dev]), movedConnId[dev]);
     gtk_range_set_value(GTK_RANGE(slider[dev]), newval);
@@ -132,6 +166,31 @@ set_slider(const gchar * device, gdouble newval)
     g_signal_handler_unblock(button[dev], toggledConnId[dev]);
 
     update_icons(dev);
+}
+
+void toggle_slider_mute_microphone(void)
+{
+    DEBUG("Slider: Mute/Unmute toggle");
+
+    switch(device_state) {
+    case DEVICE_STATE_ACTIVE:
+        value[DEVICE_MIC] = gtk_range_get_value(GTK_RANGE(slider[DEVICE_MIC]));
+        dbus_set_volume("mic", 0.0);
+        device_state = DEVICE_STATE_MUTED;
+        break;
+    case DEVICE_STATE_MUTED:
+        dbus_set_volume("mic", value[DEVICE_MIC]);
+        device_state = DEVICE_STATE_ACTIVE;
+        break;
+    default:
+        ERROR("Slider: Unknown state");
+        break;
+    }
+}
+
+guint get_mute_unmute_audio_state(void)
+{
+    return device_state; 
 }
 
 /** Generates the speaker slider and mute button */
@@ -146,25 +205,25 @@ create_slider(const gchar * device)
     int dev=0;
 
     if (g_strcmp0(device, "speaker") == 0) {
-        dev = SPEAKER;
-        images[SPEAKER][MUTED] = gtk_image_new_from_file(ICONS_DIR "/speaker.svg");
-        images[SPEAKER][VOL25] = gtk_image_new_from_file(ICONS_DIR "/speaker_25.svg");
-        images[SPEAKER][VOL50] = gtk_image_new_from_file(ICONS_DIR "/speaker_50.svg");
-        images[SPEAKER][VOL75] = gtk_image_new_from_file(ICONS_DIR "/speaker_75.svg");
-        g_object_ref(images[SPEAKER][MUTED]);
-        g_object_ref(images[SPEAKER][VOL25]);
-        g_object_ref(images[SPEAKER][VOL50]);
-        g_object_ref(images[SPEAKER][VOL75]);
+        dev = DEVICE_SPEAKER;
+        images[DEVICE_SPEAKER][MUTED] = gtk_image_new_from_file(ICONS_DIR "/speaker.svg");
+        images[DEVICE_SPEAKER][VOL25] = gtk_image_new_from_file(ICONS_DIR "/speaker_25.svg");
+        images[DEVICE_SPEAKER][VOL50] = gtk_image_new_from_file(ICONS_DIR "/speaker_50.svg");
+        images[DEVICE_SPEAKER][VOL75] = gtk_image_new_from_file(ICONS_DIR "/speaker_75.svg");
+        g_object_ref(images[DEVICE_SPEAKER][MUTED]);
+        g_object_ref(images[DEVICE_SPEAKER][VOL25]);
+        g_object_ref(images[DEVICE_SPEAKER][VOL50]);
+        g_object_ref(images[DEVICE_SPEAKER][VOL75]);
     } else if (g_strcmp0(device, "mic") == 0) {
-        dev = MIKE;
-        images[MIKE][MUTED] = gtk_image_new_from_file(ICONS_DIR "/mic.svg");
-        images[MIKE][VOL25] = gtk_image_new_from_file(ICONS_DIR "/mic_25.svg");
-        images[MIKE][VOL50] = gtk_image_new_from_file(ICONS_DIR "/mic_50.svg");
-        images[MIKE][VOL75] = gtk_image_new_from_file(ICONS_DIR "/mic_75.svg");
-        g_object_ref(images[MIKE][MUTED]);
-        g_object_ref(images[MIKE][VOL25]);
-        g_object_ref(images[MIKE][VOL50]);
-        g_object_ref(images[MIKE][VOL75]);
+        dev = DEVICE_MIC;
+        images[DEVICE_MIC][MUTED] = gtk_image_new_from_file(ICONS_DIR "/mic.svg");
+        images[DEVICE_MIC][VOL25] = gtk_image_new_from_file(ICONS_DIR "/mic_25.svg");
+        images[DEVICE_MIC][VOL50] = gtk_image_new_from_file(ICONS_DIR "/mic_50.svg");
+        images[DEVICE_MIC][VOL75] = gtk_image_new_from_file(ICONS_DIR "/mic_75.svg");
+        g_object_ref(images[DEVICE_MIC][MUTED]);
+        g_object_ref(images[DEVICE_MIC][VOL25]);
+        g_object_ref(images[DEVICE_MIC][VOL50]);
+        g_object_ref(images[DEVICE_MIC][VOL75]);
     }
 
     ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5 /*spacing*/);
@@ -185,7 +244,7 @@ create_slider(const gchar * device)
                                         G_CALLBACK(slider_moved), (gpointer) device);
     gtk_box_pack_start(GTK_BOX(ret), slider[dev], TRUE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
-    set_slider(device, dbus_get_volume(device));
+    set_slider_no_update(device, dbus_get_volume(device));
 
     return ret;
 }

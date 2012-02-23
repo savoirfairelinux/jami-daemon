@@ -56,6 +56,8 @@
 static DBusGProxy *call_proxy;
 static DBusGProxy *config_proxy;
 static DBusGProxy *instance_proxy;
+// static DBusGProxy *session_manager_proxy;
+static GDBusProxy *session_manager_proxy;
 
 /* Returns TRUE if there was an error, FALSE otherwise */
 static gboolean check_error(GError *error)
@@ -119,7 +121,7 @@ static void
 volume_changed_cb(DBusGProxy *proxy UNUSED, const gchar *device, gdouble value,
                   void *foo UNUSED)
 {
-    set_slider(device, value);
+    set_slider_no_update(device, value);
 }
 
 static void
@@ -567,14 +569,56 @@ error_alert(DBusGProxy *proxy UNUSED, int err, void *foo UNUSED)
     gtk_widget_show(dialog);
 }
 
+static void
+screensaver_dbus_proxy_new_cb (GObject * source UNUSED, GAsyncResult *result, gpointer user_data UNUSED)
+{
+    DEBUG("DBUS: Session manager connection callback");
+
+    session_manager_proxy = g_dbus_proxy_new_for_bus_finish (result, NULL);
+    if (session_manager_proxy == NULL)
+        ERROR("DBUS: Error, could not initialize gnome session manager");
+}
+
+#define GS_SERVICE   "org.gnome.SessionManager"
+#define GS_PATH      "/org/gnome/SessionManager"
+#define GS_INTERFACE "org.gnome.SessionManager"
+
+gboolean dbus_connect_session_manager(DBusGConnection *connection)
+{
+
+    if(connection == NULL) {
+        ERROR("DBUS: Error connection is NULL");
+        return FALSE;
+    }
+/*
+    session_manager_proxy = dbus_g_proxy_new_for_name(connection,
+                            "org.gnome.SessionManager", "/org/gnome/SessionManager/Inhibitor",
+                            "org.gnome.SessionManager.Inhibitor");
+
+    if(session_manager_proxy == NULL) {
+        ERROR("DBUS: Error, could not create session manager proxy");
+        return FALSE;
+    }
+*/
+
+    g_dbus_proxy_new_for_bus(G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+                             NULL, GS_SERVICE, GS_PATH, GS_INTERFACE, NULL, screensaver_dbus_proxy_new_cb, NULL);
+
+    DEBUG("DBUS: Connected to gnome session manager");
+
+    return TRUE;
+}
+
 gboolean dbus_connect(GError **error)
 {
     g_type_init();
 
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
 
-    if (connection == NULL)
+    if (connection == NULL) {
+        ERROR("DBUS: Error, could not establish connection with session bus");
         return FALSE;
+    }
 
     /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
 
@@ -757,6 +801,12 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_set_default_timeout(instance_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(config_proxy, DEFAULT_DBUS_TIMEOUT);
 #endif
+
+    gboolean status = dbus_connect_session_manager(connection);
+    if(status == FALSE) {
+        ERROR("DBUS: Error, could not connect to gnome session manager");
+        return FALSE;
+    }
 
     return TRUE;
 }
@@ -1766,4 +1816,91 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_send_text_message(call_proxy, callID, message, &error);
     check_error(error);
+}
+
+static guint cookie;
+#define GNOME_SESSION_NO_IDLE_FLAG 8
+
+static void screensaver_inhibit_cb (GObject * source_object, GAsyncResult * res, gpointer user_data UNUSED)
+{
+    DEBUG("Screensaver: Inhibit callback");
+
+    GDBusProxy *proxy = G_DBUS_PROXY (source_object);
+    // ScreenSaver *screensaver = (ScreenSaver *) user_data;
+    GVariant *value;
+    GError *error = NULL;
+
+    value = g_dbus_proxy_call_finish (proxy, res, &error);
+    if (!value) {
+        ERROR ("Screensaver: Error: inhibiting the screensaver: %s", error->message);
+        g_error_free (error);
+        return;
+    }
+
+    /* save the cookie */
+    if (g_variant_is_of_type (value, G_VARIANT_TYPE ("(u)")))
+        g_variant_get (value, "(u)", &cookie);
+    else
+        cookie = 0;
+
+    g_variant_unref (value);
+}
+
+static void screensaver_uninhibit_cb (GObject * source_object, GAsyncResult * res, gpointer user_data UNUSED)
+{
+    DEBUG("Screensaver: Uninhibit callback");
+
+    GDBusProxy *proxy = G_DBUS_PROXY (source_object);
+    // ScreenSaver *screensaver = (ScreenSaver *) user_data;
+    GVariant *value;
+    GError *error = NULL;
+
+    value = g_dbus_proxy_call_finish (proxy, res, &error);
+    if (!value) {
+        ERROR ("Screensaver: Error uninhibiting the screensaver: %s", error->message);
+        g_error_free (error);
+        return;
+    }
+
+    /* clear the cookie */
+    cookie = 0;
+    g_variant_unref (value);
+   
+}
+
+void dbus_screensaver_inhibit(void)
+{
+    guint xid = 0;
+
+    DEBUG("Screensaver: inhibit");
+    
+    const gchar *appname = g_get_application_name();
+    if(appname == NULL) {
+        ERROR("Screensaver: Could not retreive application name");
+        return;
+    }
+
+    GVariant *parameters = g_variant_new ("(susu)", appname, xid, "Phone call ongoing", GNOME_SESSION_NO_IDLE_FLAG);
+    if(parameters == NULL) {
+        ERROR("Screensaver: Could not create session manager inhibit parameters");
+        return;
+    }
+
+    g_dbus_proxy_call (session_manager_proxy, "Inhibit", parameters, 
+        G_DBUS_CALL_FLAGS_NO_AUTO_START, -1, NULL, screensaver_inhibit_cb, NULL);
+}
+
+void
+dbus_screensaver_uninhibit(void)
+{
+    DEBUG("Screensaver: uninhibit");
+
+    GVariant *parameters = g_variant_new("(u)", cookie);
+    if(parameters == NULL) {
+        ERROR("Screensaver: Could not create session manager uninhibit parameters");
+        return;
+    }; 
+
+    g_dbus_proxy_call (session_manager_proxy, "Uninhibit", g_variant_new ("(u)", cookie),
+        G_DBUS_CALL_FLAGS_NO_AUTO_START, -1, NULL, screensaver_uninhibit_cb, NULL);
 }

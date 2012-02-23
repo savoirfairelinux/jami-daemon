@@ -37,6 +37,7 @@
 #include "managerimpl.h"
 
 namespace {
+
 void playback_callback(pa_stream* s, size_t bytes, void* userdata)
 {
     assert(s && bytes);
@@ -307,6 +308,7 @@ void PulseLayer::writeToSpeaker()
 
     pa_stream *s = playback_->pulseStream();
 
+
     // available bytes to be written in pulseaudio internal buffer
     int writable = pa_stream_writable_size(s);
 
@@ -329,6 +331,7 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
         urgentRingBuffer_.Get(data, urgentBytes);
+        applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());  
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
         Manager::instance().getMainBuffer()->discard(urgentBytes);
@@ -341,6 +344,7 @@ void PulseLayer::writeToSpeaker()
         if (playback_->isReady()) {
             pa_stream_begin_write(s, &data, &bytes);
             toneToPlay->getNext((SFLDataFormat*)data, bytes / sizeof(SFLDataFormat), 100);
+            applyGain(static_cast<SFLDataFormat *>(data), bytes / sizeof(SFLDataFormat), getPlaybackGain());
             pa_stream_write(s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
         }
 
@@ -386,10 +390,13 @@ void PulseLayer::writeToSpeaker()
     if (resample) {
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc(outBytes);
         converter_->resample((SFLDataFormat*)data, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
+        applyGain(rsmpl_out, outBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, rsmpl_out, outBytes, NULL, 0, PA_SEEK_RELATIVE);
         pa_xfree(rsmpl_out);
-    } else
+    } else {
+        applyGain(static_cast<SFLDataFormat *>(data), inBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, data, inBytes, NULL, 0, PA_SEEK_RELATIVE);
+    }
 }
 
 void PulseLayer::readFromMic()
@@ -425,6 +432,7 @@ void PulseLayer::readFromMic()
         converter_->resample((SFLDataFormat*)data, mic_buffer_, mainBufferSampleRate, audioSampleRate_, samples);
 
     dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
+    applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());
     Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes);
 
     if (pa_stream_drop(record_->pulseStream()) < 0)
@@ -453,8 +461,10 @@ void PulseLayer::ringtoneToSpeaker()
     pa_stream_begin_write(s, &data, &bytes);
     AudioLoop *fileToPlay = Manager::instance().getTelephoneFile();
 
-    if (fileToPlay)
+    if (fileToPlay) {
         fileToPlay->getNext((SFLDataFormat *) data, bytes / sizeof(SFLDataFormat), 100);
+        applyGain(static_cast<SFLDataFormat *>(data), bytes / sizeof(SFLDataFormat), getPlaybackGain());
+    }
     else
         memset(data, 0, bytes);
 

@@ -62,6 +62,7 @@
 #include "statusicon.h"
 #include "unused.h"
 #include "widget/imwidget.h"
+#include "sliders.h"
 
 static GHashTable * ip2ip_profile;
 
@@ -378,12 +379,22 @@ sflphone_hang_up()
     calltree_update_call(history_tab, selectedCall);
 
     statusbar_update_clock("");
+
+    // Allow screen saver to start
+    guint nbcall = calllist_get_size(current_calls_tab);
+    if(nbcall == 1)
+        dbus_screensaver_uninhibit();
 }
 
 void
 sflphone_pick_up()
 {
     callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
+
+    // Disable screensaver if the list is empty call
+    guint nbcall = calllist_get_size(current_calls_tab);
+    if(nbcall == 0)
+        dbus_screensaver_inhibit();
 
     if (!selectedCall) {
         sflphone_new_call();
@@ -627,6 +638,11 @@ process_dialing(callable_obj_t *c, guint keyval, gchar *key)
 callable_obj_t *
 sflphone_new_call()
 {
+    // Disable screensaver if the list is empty call
+    guint nbcall = calllist_get_size(current_calls_tab);
+    if(nbcall == 0)
+        dbus_screensaver_inhibit();
+
     callable_obj_t *current_selected_call = calltab_get_selected_call(current_calls_tab);
 
     if ((current_selected_call != NULL) && (current_selected_call->_confID == NULL))
@@ -935,6 +951,14 @@ sflphone_rec_call()
     }
 
     update_actions();
+}
+
+void
+sflphone_mute_call()
+{
+    DEBUG("Actions: Mute call");
+
+    toggle_slider_mute_microphone();
 }
 
 void sflphone_fill_codec_list()

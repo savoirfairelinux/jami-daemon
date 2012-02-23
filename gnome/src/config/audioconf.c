@@ -601,7 +601,7 @@ select_audio_manager(void)
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
         gtk_container_remove(GTK_CONTAINER(alsa_conf) , alsabox);
         gtk_widget_hide(alsa_conf);
-
+    
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
             main_window_volume_controls(FALSE);
             eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
@@ -610,6 +610,7 @@ select_audio_manager(void)
 
         gtk_action_set_sensitive(volumeToggle_, FALSE);
     }
+
 }
 
 void

@@ -73,8 +73,7 @@ ManagerImpl::ManagerImpl() :
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(), currentCallId_(),
     currentCallMutex_(), audiodriver_(0), dtmfKey_(0), toneMutex_(),
-    telephoneTone_(0), audiofile_(0), speakerVolume_(0), micVolume_(0),
-    audioLayerMutex_(), waitingCall_(), waitingCallMutex_(),
+    telephoneTone_(0), audiofile_(0), audioLayerMutex_(), waitingCall_(), waitingCallMutex_(),
     nbIncomingWaitingCall_(0), path_(), callAccountMap_(),
     callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
     mainBuffer_(), conferenceMap_(), history_(new History),
@@ -118,7 +117,6 @@ void ManagerImpl::init(std::string config_file)
     loadAccountMap(parser);
     delete parser;
 
-    initVolume();
     initAudioDriver();
 
     {
@@ -1248,8 +1246,11 @@ void ManagerImpl::removeStream(const std::string& call_id)
 void ManagerImpl::saveConfig()
 {
     DEBUG("Manager: Saving Configuration to XDG directory %s", path_.c_str());
-    audioPreference.setVolumemic(getMicVolume());
-    audioPreference.setVolumespkr(getSpkrVolume());
+    AudioLayer *audiolayer = getAudioDriver();
+    if(audiolayer != NULL) {
+        audioPreference.setVolumemic(audiolayer->getCaptureGain());
+        audioPreference.setVolumespkr(audiolayer->getPlaybackGain());
+    }
 
     try {
         Conf::YamlEmitter emitter(path_.c_str());
@@ -2318,26 +2319,6 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     if (wasActive)
         audiodriver_->startStream();
-}
-
-/**
- * Init the volume for speakers/micro from 0 to 100 value
- * Initialization: Main Thread
- */
-void ManagerImpl::initVolume()
-{
-    setSpkrVolume(audioPreference.getVolumespkr());
-    setMicVolume(audioPreference.getVolumemic());
-}
-
-void ManagerImpl::setSpkrVolume(unsigned short spkr_vol)
-{
-    speakerVolume_ = spkr_vol;
-}
-
-void ManagerImpl::setMicVolume(unsigned short mic_vol)
-{
-    micVolume_ = mic_vol;
 }
 
 int ManagerImpl::getLocalIp2IpPort() const
