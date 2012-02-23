@@ -7,49 +7,59 @@
 git clean -f -d -x
 XML_RESULTS="cppunitresults.xml"
 
-set -x
+if [ $# != 1 ]; then
+	echo "ERROR: Exactly one argument has to be passed. Must be in {daemon, gnome}"
+	exit 1
+fi
 
-# Compile the plugins
-pushd plugins
-make distclean
-./autogen.sh
-./configure --prefix=/usr
-make -j
-popd
+if [ $1 == "daemon" ]; then
+	# Compile the daemon
+	pushd daemon
+	make distclean
+	./autogen.sh
+	# Compile pjproject first
+	pushd libs/pjproject
+	./autogen.sh
+	./configure
+	make && make dep
+	popd
+	./configure --prefix=/usr
+	make clean
+	make -j
+	make doc
+	make check
+	popd
 
-# Compile the daemon
-pushd daemon
-make distclean
-./autogen.sh
-# Compile pjproject first
-pushd libs/pjproject
-./autogen.sh
-./configure
-make && make dep
-popd
-./configure --prefix=/usr
-make clean
-make -j
-make doc
-make check
-popd
+	# Run the unit tests for the daemon
+	# pushd daemon/test
+	# Remove the previous XML test file
+	# rm -rf $XML_RESULTS
+	# ./run_tests.sh || exit 1
+	# popd
 
-# Run the unit tests for the daemon
-# pushd daemon/test
-# Remove the previous XML test file
-# rm -rf $XML_RESULTS
-# ./run_tests.sh || exit 1
-# popd
+elif [ $1 == "gnome" ]; then
+	# Compile the plugins
+	pushd plugins
+	make distclean
+	./autogen.sh
+	./configure --prefix=/usr
+	make -j
+	popd
 
-# Compile the client
-# pushd gnome
-# make distclean
-# ./autogen.sh
-# ./configure --prefix=/usr
-# make clean
-# make -j 1
-# make check
-# popd
+	# Compile the client
+	pushd gnome
+	make distclean
+	./autogen.sh
+	./configure --prefix=/usr
+	make clean
+	make -j 1
+	make check
+	popd
+
+else
+	echo "ERROR: Bad argument. Must be in {daemon, gnome}"
+	exit 1
+fi
 
 # SUCCESS
 exit 0
