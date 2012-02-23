@@ -4,15 +4,8 @@
 #
 # Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 
-git clean -f -d -x
-XML_RESULTS="cppunitresults.xml"
+function build_daemon {
 
-if [ $# != 1 ]; then
-	echo "ERROR: Exactly one argument has to be passed. Must be in {daemon, gnome}"
-	exit 1
-fi
-
-if [ $1 == "daemon" ]; then
 	# Compile the daemon
 	pushd daemon
 	make distclean
@@ -30,14 +23,18 @@ if [ $1 == "daemon" ]; then
 	make check
 	popd
 
-	# Run the unit tests for the daemon
-	# pushd daemon/test
-	# Remove the previous XML test file
-	# rm -rf $XML_RESULTS
-	# ./run_tests.sh || exit 1
-	# popd
+	if [ $1 == 1 ]; then
+		# Run the unit tests for the daemon
+		pushd daemon/test
+		# Remove the previous XML test file
+		rm -rf $XML_RESULTS
+		./run_tests.sh || exit 1
+		popd
+	fi
+}
 
-elif [ $1 == "gnome" ]; then
+function build_gnome {
+
 	# Compile the plugins
 	pushd plugins
 	make distclean
@@ -55,11 +52,44 @@ elif [ $1 == "gnome" ]; then
 	make -j 1
 	make check
 	popd
+}
 
-else
-	echo "ERROR: Bad argument. Must be in {daemon, gnome}"
-	exit 1
+
+if [ "$#" -eq 0 ]; then   # Script needs at least one command-line argument.
+	echo "Usage $0 -b select which one to build: daemon or gnome
+				  -t enable unit tests after build"
+	exit $E_OPTERR
 fi
+
+
+git clean -f -d -x
+XML_RESULTS="cppunitresults.xml"
+TEST=0
+BUILD=
+
+while getopts ":b: t" opt; do
+	case $opt in
+		b)
+			echo "-b was triggered. Parameter: $OPTARG" >&2
+			BUILD=$OPTARG
+			;;
+		t)
+			echo "-t was triggered. Tests will be run" >&2
+			TEST=1
+			;;
+		\?)
+			echo "Invalid option: -$OPTARG" >&2
+			exit 1
+			;;
+		:)
+			echo "Option -$OPTARG requires an argument." >&2
+			exit 1
+			;;
+		esac
+done
+
+# Call appropriate build function, with parameters if needed
+build_$BUILD $TEST
 
 # SUCCESS
 exit 0
