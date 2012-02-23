@@ -42,14 +42,14 @@ popd
 # popd
 
 # Compile the client
-pushd gnome
-make distclean
-./autogen.sh
-./configure --prefix=/usr
-make clean
-make -j 1
-make check
-popd
+# pushd gnome
+# make distclean
+# ./autogen.sh
+# ./configure --prefix=/usr
+# make clean
+# make -j 1
+# make check
+# popd
 
 # SUCCESS
 exit 0
