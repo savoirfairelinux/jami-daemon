@@ -29,7 +29,30 @@
  */
 
 #include <libgen.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <cstdio>
 #include <cstdlib>
+#include <signal.h>
+#include "global.h"
+
+namespace {
+// returns true if directory exists
+bool check_dir(const char *path)
+{
+    DIR *dir = opendir(path);
+
+    if (!dir) {	// doesn't exist
+        if (mkdir(path, 0755) != 0) {   // couldn't create the dir
+            perror(path);
+            return false;
+        }
+    } else
+        closedir(dir);
+
+    return true;
+}
+}
 
 namespace fileutils {
 static char *program_dir = NULL;
@@ -44,4 +67,52 @@ const char *get_program_dir()
     return program_dir;
 }
 
+bool create_pidfile()
+{
+    const char * const xdg_env = XDG_CACHE_HOME;
+    std::string path = xdg_env ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
+
+    if (!check_dir(path.c_str()))
+        return false;
+
+    path += "sflphone";
+
+    if (!check_dir(path.c_str()))
+        return false;
+
+    std::string pidfile = path + "/" PIDFILE;
+    FILE *fp = fopen(pidfile.c_str(),"r");
+
+    if (fp) { // PID file exists. Check the former process still alive or not. If alive, give user a hint.
+        int oldPid;
+
+        if (fscanf(fp, "%d", &oldPid) != 1) {
+            ERROR("Couldn't read pidfile %s", pidfile.c_str());
+            return false;
+        }
+
+        fclose(fp);
+
+        if (kill(oldPid, 0) == 0) {
+            ERROR("There is already a sflphoned daemon running in the system. Starting Failed.");
+            return false;
+        }
+    }
+
+    // write pid file
+    fp = fopen(pidfile.c_str(),"w");
+
+    if (!fp) {
+        perror(pidfile.c_str());
+        return false;
+    } else {
+        std::ostringstream pidstr;
+        pidstr << getpid();
+
+        fputs(pidstr.str().c_str(), fp);
+        fclose(fp);
+    }
+
+    return true;
+}
 }

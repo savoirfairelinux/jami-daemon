@@ -892,7 +892,7 @@ SIPVoIPLink::offhold(const std::string& id)
     }
     catch (const SdpException &e) {
     	ERROR("UserAgent: Exception: %s", e.what());
-    } 
+    }
     catch (...) {
     	throw VoipLinkException("Could not create audio rtp session");
     }
@@ -1368,13 +1368,34 @@ pj_status_t SIPVoIPLink::stunServerResolve(SIPAccount *account)
     return status;
 }
 
+#define DEFAULT_TRANSPORT_ATTEMPT 5
 
 void SIPVoIPLink::createDefaultSipUdpTransport()
 {
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
-    createUdpTransport(account);
-    assert(account->transport_);
+    pjsip_transport *transport = NULL;
+    pj_uint16_t port = 0;
+    int counter = 0;
 
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+
+    while((transport == NULL) and (counter < DEFAULT_TRANSPORT_ATTEMPT)) {
+        // if default udp transport fails to init on 5060, try other ports with 2 step size increment (i.e. 5062, 5064, ...)
+        port = account->getLocalPort() + (counter * 2);
+        transport = createUdpTransport(account->getLocalInterface(), port);
+        counter++;
+    }
+
+    if (transport == NULL) {
+        ERROR("UserAgent: Create UDP transport ");
+        return;
+    }
+
+    DEBUG("UserAgent: Created defautl sip transport on %d", port);
+
+    // set transport for this account
+    account->transport_ = transport;
+
+    // set local udp transport
     localUDPTransport_ = account->transport_;
 }
 
@@ -1420,6 +1441,11 @@ void SIPVoIPLink::createSipTransport(SIPAccount *account)
 {
     shutdownSipTransport(account);
 
+    if (account == NULL) {
+        ERROR("Acccount is NULL while creating sip transport");
+        return;
+    }
+
     if (account->isTlsEnabled()) {
         std::string remoteSipUri(account->getServerUri());
         static const char SIPS_PREFIX[] = "<sips:";
@@ -1430,8 +1456,10 @@ void SIPVoIPLink::createSipTransport(SIPAccount *account)
         createTlsTransport(account, remoteAddr);
     } else if (account->isStunEnabled())
         createStunTransport(account);
-    else
-        createUdpTransport(account);
+    else {
+        pjsip_transport *transport = createUdpTransport(account->getLocalInterface(), account->getLocalPort());
+        account->transport_ = transport;
+    }
 
     if (!account->transport_) {
         // Could not create new transport, this transport may already exists
@@ -1446,47 +1474,70 @@ void SIPVoIPLink::createSipTransport(SIPAccount *account)
     }
 }
 
-void SIPVoIPLink::createUdpTransport(SIPAccount *account)
-{
-    std::string listeningAddress;
-    pj_uint16_t listeningPort = account->getLocalPort();
+#define DEFAULT_INTERFACE "default"
 
+pjsip_transport *SIPVoIPLink::createUdpTransport(std::string interface, unsigned int port)
+{
+    pjsip_transport *transport = NULL;
+    std::string listeningAddress;
+    pj_uint16_t listeningPort = (pj_uint16_t)port;
+    pj_status_t status = PJ_SUCCESS;
+
+    // init socket to bind this transport to
     pj_sockaddr_in bound_addr;
     pj_bzero(&bound_addr, sizeof(bound_addr));
     bound_addr.sin_port = pj_htons(listeningPort);
     bound_addr.sin_family = PJ_AF_INET;
 
-    if (account->getLocalInterface() == "default") {
+    // determine the ip address for this transport
+    if (interface == DEFAULT_INTERFACE) {
         listeningAddress = getSIPLocalIP();
         bound_addr.sin_addr.s_addr = pj_htonl(PJ_INADDR_ANY);
     } else {
-        listeningAddress = getInterfaceAddrFromName(account->getLocalInterface());
+        listeningAddress = getInterfaceAddrFromName(interface);
         bound_addr.sin_addr = pj_inet_addr2(listeningAddress.c_str());
     }
 
+    /*
     if (!account->getPublishedSameasLocal()) {
         listeningAddress = account->getPublishedAddress();
         listeningPort = account->getPublishedPort();
     }
+    */
 
     // We must specify this here to avoid the IP2IP_PROFILE creating a
     // transport with the name 0.0.0.0 appearing in the via header
-    if (account->getAccountID() == IP2IP_PROFILE)
-        listeningAddress = getSIPLocalIP();
+    // if (account->getAccountID() == IP2IP_PROFILE)
+    //     listeningAddress = getSIPLocalIP();
 
-    if (listeningAddress.empty() or listeningPort == 0)
-        return;
+    if (listeningAddress.empty()) {
+        ERROR("SIP: Could not determine ip address for this transport");
+        return NULL;
+    }
 
+    if (listeningPort == 0) {
+        ERROR("SIP: Could not determine port for this transport");
+        return NULL;
+    }
+
+    // The published address for this transport
     const pjsip_host_port a_name = {
         pj_str((char*) listeningAddress.c_str()),
         listeningPort
     };
 
-    pjsip_udp_transport_start(endpt_, &bound_addr, &a_name, 1, &account->transport_);
-    pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_)); // dump debug information to stdout
+    status = pjsip_udp_transport_start(endpt_, &bound_addr, &a_name, 1, &transport);
+    if (status != PJ_SUCCESS) {
+        ERROR("SIP: Could not create udp transport");
+        return NULL;
+    }
 
-    if (account->transport_)
-        transportMap_[account->getLocalPort()] = account->transport_;
+    // dump debug information to stdout
+    pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
+
+    transportMap_[listeningPort] = transport;
+
+    return transport;
 }
 
 pjsip_tpselector *SIPVoIPLink::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
@@ -1942,13 +1993,13 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 {
 
     SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(account->getVoIPLink());
-    if(siplink == NULL) {
+    if (siplink == NULL) {
         ERROR("SIPVoIPLink: Could not find voip link from account");
         return;
     }
 
     pj_pool_t *pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL);
-    if(pool == NULL) {
+    if (pool == NULL) {
         ERROR("SIPVoIPLink: Could not create temporary memory pool in transport header");
         return;
     }
@@ -1985,16 +2036,16 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     std::string currentContactHeader = account->getContactHeader();
 
     size_t foundHost = currentContactHeader.find(recvContactHost);
-    if(foundHost == std::string::npos) {
+    if (foundHost == std::string::npos) {
         updateContact = true;
     }
 
     size_t foundPort = currentContactHeader.find(recvContactPort);
-    if(foundPort == std::string::npos) {
+    if (foundPort == std::string::npos) {
         updateContact = true;
     }
 
-    if(updateContact) {
+    if (updateContact) {
         DEBUG("SIPVoIPLink: Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str());
         account->setContactHeader(recvContactHost, recvContactPort);
         siplink->sendRegister(account);
@@ -2016,7 +2067,7 @@ void registration_cb(pjsip_regc_cbparam *param)
         return;
     }
 
-    if(account->isContactUpdateEnabled()) {
+    if (account->isContactUpdateEnabled()) {
         update_contact_header(param, account);
     }
 

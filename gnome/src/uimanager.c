@@ -59,12 +59,15 @@
 
 #include <sys/stat.h>
 
+#include <sliders.h>
+
 void show_edit_number(callable_obj_t *call);
 
 static GtkWidget *toolbar_;
 
 static guint transferButtonConnId_; //The button toggled signal connection ID
 static guint recordButtonConnId_; //The button toggled signal connection ID
+static guint muteCallButtonId_; //The button toggled signal connection ID
 
 static GtkAction * pickUpAction_;
 static GtkWidget * pickUpWidget_;
@@ -79,7 +82,9 @@ static GtkWidget * transferToolbar_;
 static GtkAction * copyAction_;
 static GtkAction * pasteAction_;
 static GtkAction * recordAction_;
+static GtkAction * muteAction_;
 static GtkWidget * recordWidget_;
+static GtkWidget * muteWidget_;
 static GtkAction * voicemailAction_;
 static GtkWidget * voicemailToolbar_;
 static GtkWidget * imToolbar_;
@@ -117,9 +122,18 @@ static void add_to_toolbar(GtkWidget *toolbar, GtkWidget *item, int pos)
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item), pos);
 }
 
+static void
+call_mute(void)
+{
+    DEBUG("UIManager: Mute call button pressed");
+    sflphone_mute_call();
+}
+
 void
 update_actions()
 {
+    int pos = 0;
+
     gtk_action_set_sensitive(newCallAction_, TRUE);
     gtk_action_set_sensitive(pickUpAction_, FALSE);
     gtk_action_set_sensitive(hangUpAction_, FALSE);
@@ -127,6 +141,7 @@ update_actions()
 
     g_object_ref(hangUpWidget_);
     g_object_ref(recordWidget_);
+    g_object_ref(muteWidget_);
     g_object_ref(holdToolbar_);
     g_object_ref(offHoldToolbar_);
 
@@ -140,6 +155,7 @@ update_actions()
 
     remove_from_toolbar(hangUpWidget_);
     remove_from_toolbar(recordWidget_);
+    remove_from_toolbar(muteWidget_);
     remove_from_toolbar(transferToolbar_);
     remove_from_toolbar(historyButton_);
 
@@ -153,7 +169,9 @@ update_actions()
     gtk_widget_set_sensitive(holdToolbar_, FALSE);
     gtk_widget_set_sensitive(offHoldToolbar_, FALSE);
     gtk_action_set_sensitive(recordAction_, FALSE);
+    gtk_action_set_sensitive(muteAction_, FALSE);
     gtk_widget_set_sensitive(recordWidget_, FALSE);
+    gtk_widget_set_sensitive(muteWidget_, FALSE);
     gtk_action_set_sensitive(copyAction_, FALSE);
 
     if (addrbook)
@@ -178,6 +196,12 @@ update_actions()
         add_to_toolbar(toolbar_, historyButton_, -1);
         gtk_widget_set_sensitive(historyButton_, TRUE);
     }
+
+    GtkToolItem *separator = gtk_separator_tool_item_new();
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), separator, -1);
+    // add mute button
+    add_to_toolbar(toolbar_, muteWidget_, -1);
+    gtk_action_set_sensitive(muteAction_, TRUE);
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
     if (addrbook && addrbook->is_ready() && addressbook_config_load_parameters()->enable) {
@@ -216,9 +240,9 @@ update_actions()
                     // Replace the dial button with the hangup button
                     g_object_ref(newCallWidget_);
                     remove_from_toolbar(newCallWidget_);
-                    int pos = 0;
+                    pos = 0;
                     add_to_toolbar(toolbar_, pickUpWidget_, pos++);
-                    add_to_toolbar(toolbar_, hangUpWidget_, pos);
+                    add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     break;
                 }
             case CALL_STATE_HOLD:
@@ -230,13 +254,13 @@ update_actions()
                     gtk_widget_set_sensitive(newCallWidget_, TRUE);
 
                     // Replace the hold button with the off-hold button
-                    int pos = 1;
+                    pos = 1;
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     add_to_toolbar(toolbar_, offHoldToolbar_, pos++);
 
                     if (instant_messaging_enabled) {
                         gtk_action_set_sensitive(imAction_, TRUE);
-                        add_to_toolbar(toolbar_, imToolbar_, pos);
+                        add_to_toolbar(toolbar_, imToolbar_, pos++);
                     }
 
                     break;
@@ -246,8 +270,8 @@ update_actions()
                     DEBUG("UIManager: Call State Ringing");
                     gtk_action_set_sensitive(pickUpAction_, TRUE);
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
-                    int pos = 1;
-                    add_to_toolbar(toolbar_, hangUpWidget_, pos);
+                    pos = 1;
+                    add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     break;
                 }
             case CALL_STATE_DIALING:
@@ -260,7 +284,7 @@ update_actions()
 
                     g_object_ref(newCallWidget_);
                     remove_from_toolbar(newCallWidget_);
-                    int pos = 0;
+                    pos = 0;
                     add_to_toolbar(toolbar_, pickUpWidget_, pos++);
 
                     if (active_calltree_tab == current_calls_tab)
@@ -268,9 +292,9 @@ update_actions()
                     else if (active_calltree_tab == history_tab) {
                         if (is_non_empty(selectedCall->_recordfile)) {
                             if (selectedCall->_record_is_playing)
-                                add_to_toolbar(toolbar_, stopRecordWidget_, pos);
+                                add_to_toolbar(toolbar_, stopRecordWidget_, pos++);
                             else
-                                add_to_toolbar(toolbar_, playRecordWidget_, pos);
+                                add_to_toolbar(toolbar_, playRecordWidget_, pos++);
                         }
                     }
                     break;
@@ -279,7 +303,7 @@ update_actions()
                 {
                     DEBUG("UIManager: Call State Current");
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
-                    int pos = 1;
+                    pos = 1;
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     gtk_widget_set_sensitive(holdMenu_, TRUE);
                     gtk_widget_set_sensitive(holdToolbar_, TRUE);
@@ -297,7 +321,7 @@ update_actions()
 
                     if (instant_messaging_enabled) {
                         gtk_action_set_sensitive(imAction_, TRUE);
-                        add_to_toolbar(toolbar_, imToolbar_, pos);
+                        add_to_toolbar(toolbar_, imToolbar_, pos++);
                     }
 
                     break;
@@ -306,7 +330,7 @@ update_actions()
             case CALL_STATE_RECORD:
                 {
                     DEBUG("UIManager: Call State Record");
-                    int pos = 1;
+                    pos = 1;
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     gtk_widget_set_sensitive(holdMenu_, TRUE);
@@ -325,7 +349,7 @@ update_actions()
 
                     if (instant_messaging_enabled) {
                         gtk_action_set_sensitive(imAction_, TRUE);
-                        add_to_toolbar(toolbar_, imToolbar_, pos);
+                        add_to_toolbar(toolbar_, imToolbar_, pos++);
                     }
 
                     break;
@@ -333,17 +357,17 @@ update_actions()
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:
                 {
-                    int pos = 1;
+                    pos = 1;
                     DEBUG("UIManager: Call State Busy/Failure");
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
-                    add_to_toolbar(toolbar_, hangUpWidget_, pos);
+                    add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     break;
                 }
             case CALL_STATE_TRANSFER:
                 {
-                    int pos = 1;
+                    pos = 1;
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
-                    add_to_toolbar(toolbar_, transferToolbar_, pos);
+                    add_to_toolbar(toolbar_, transferToolbar_, pos++);
                     g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                     gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), TRUE);
                     g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
@@ -357,6 +381,7 @@ update_actions()
                 ERROR("UIMAnager: Error: Unknown state in action update!");
                 break;
         }
+
     } else if (selectedConf) {
 
         DEBUG("UIManager: Update actions for conference");
@@ -374,7 +399,7 @@ update_actions()
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
                     gtk_widget_set_sensitive(holdToolbar_, TRUE);
                     gtk_action_set_sensitive(recordAction_, TRUE);
-                    int pos = 1;
+                    pos = 1;
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     add_to_toolbar(toolbar_, holdToolbar_, pos++);
                     add_to_toolbar(toolbar_, recordWidget_, pos++);
@@ -385,7 +410,7 @@ update_actions()
                     }
                 } else if (active_calltree_tab == history_tab) {
                     if (is_non_empty(selectedConf->_recordfile)) {
-                        int pos = 2;
+                        pos = 2;
                         if (selectedConf->_record_is_playing)
                             add_to_toolbar(toolbar_, stopRecordWidget_, pos);
                         else
@@ -396,7 +421,7 @@ update_actions()
                 break;
             case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
             case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD: {
-                int pos = 1;
+                pos = 1;
                 DEBUG("UIManager: Conference State Record");
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_widget_set_sensitive(holdToolbar_, TRUE);
@@ -415,7 +440,7 @@ update_actions()
             case CONFERENCE_STATE_HOLD:
             case CONFERENCE_STATE_HOLD_RECORD: {
                 DEBUG("UIManager: Conference State Hold");
-                int pos = 1;
+                pos = 1;
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_widget_set_sensitive(offHoldToolbar_, TRUE);
                 gtk_action_set_sensitive(recordAction_, TRUE);
@@ -1065,22 +1090,81 @@ static const GtkActionEntry menu_entries[] = {
       N_("About this application"), G_CALLBACK(help_about) }
 };
 
+static void register_custom_stock_icon(void) {
+
+    static gboolean registered = FALSE;
+
+    if (!registered) {
+        GdkPixbuf *pixbuf;
+        GtkIconFactory *factory;
+
+        static GtkStockItem items[] = {
+            { "SFLPHONE_MUTE_CALL",
+              "_GTK!",
+              0, 0, NULL }
+        };
+
+        registered = TRUE;
+
+        /* Register our stock items */
+        gtk_stock_add (items, G_N_ELEMENTS (items));
+
+        /* Add our custom icon factory to the list of defaults */
+        factory = gtk_icon_factory_new ();
+        gtk_icon_factory_add_default (factory);
+
+        /* demo_find_file() looks in the current directory first,
+         * so you can run gtk-demo without installing GTK, then looks
+         * in the location where the file is installed.
+         */
+        pixbuf = NULL;
+        pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/mic.svg", NULL);
+        if(pixbuf == NULL) {
+            DEBUG("Error could not create mic.svg pixbuf");
+        }
+
+        /* Register icon to accompany stock item */
+        if (pixbuf != NULL) {
+            GtkIconSet *icon_set;
+            GdkPixbuf *transparent;
+
+            /* The gtk-logo-rgb icon has a white background, make it transparent */
+            transparent = gdk_pixbuf_add_alpha (pixbuf, TRUE, 0xff, 0xff, 0xff);
+
+            icon_set = gtk_icon_set_new_from_pixbuf (transparent);
+            gtk_icon_factory_add (factory, "SFLPHONE_MUTE_CALL", icon_set);
+            gtk_icon_set_unref (icon_set);
+            g_object_unref (pixbuf);
+            g_object_unref (transparent);
+        }
+        else
+            g_warning ("failed to load GTK logo for toolbar");
+
+        /* Drop our reference to the factory, GTK will hold a reference. */
+        g_object_unref (factory);
+    }
+}
+
 static const GtkToggleActionEntry toggle_menu_entries[] = {
     { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
     { "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
+    { "Mute", "SFLPHONE_MUTE_CALL", N_("_Mute"), "<control>M", N_("Mute microphone for this call"), G_CALLBACK(call_mute), FALSE },
     { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
     { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK(dialpad_bar_cb), TRUE },
     { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK(volume_bar_cb), TRUE },
     { "History", "appointment-soon", N_("_History"), NULL, N_("Calls history"), G_CALLBACK(toggle_history_cb), FALSE },
-    { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE }
+    { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK(toggle_addressbook_cb), FALSE },
 };
 
 GtkUIManager *uimanager_new(void)
 {
-    gint nb_entries = addrbook ? 7 : 6;
+    gint nb_entries = addrbook ? 8 : 7;
 
     GtkWidget *window = get_main_window();
     GtkUIManager *ui_manager = gtk_ui_manager_new();
+
+    /* Register new icons as GTK_STOCK_ITEMS */
+    register_custom_stock_icon();
 
     /* Create an accel group for window's shortcuts */
     gchar *path = g_build_filename(SFLPHONE_UIDIR_UNINSTALLED, "./ui.xml", NULL);
@@ -1193,7 +1277,7 @@ void
 show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
 {
     // TODO update the selection to make sure the call under the mouse is the call selected
-    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE, im = FALSE;
+    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE, im = FALSE, mute = FALSE;
     gboolean accounts = FALSE;
 
     // conference type boolean
@@ -1232,6 +1316,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
                     hold = TRUE;
                     record = TRUE;
                     im = TRUE;
+                    mute = TRUE;
                     break;
                 case CALL_STATE_BUSY:
                 case CALL_STATE_FAILURE:
@@ -1339,6 +1424,20 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
                              NULL);
             gtk_widget_show(menu_items);
         }
+
+        if (mute) {
+            GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Mute"));
+            GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_MEDIA_RECORD,
+                               GTK_ICON_SIZE_MENU);
+            gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
+            g_signal_connect(G_OBJECT(menu_items), "activate",
+                             G_CALLBACK(call_mute),
+                             NULL);
+            gtk_widget_show(menu_items);
+        }
+
+
 
         if (im) {
             // do not display message if instant messaging is disabled
@@ -1564,15 +1663,59 @@ GtkWidget *
 create_menus(GtkUIManager *ui_manager)
 {
     GtkWidget *menu_bar = gtk_ui_manager_get_widget(ui_manager, "/MenuBar");
+    if(menu_bar == NULL) {
+        ERROR("Could not create menu bar");
+    }
+
     pickUpAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/PickUp");
+    if(pickUpAction_ == NULL) {
+        ERROR("Could not create pick up action");
+    }
+
     newCallAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/NewCall");
+    if(newCallAction_ == NULL) {
+        ERROR("Could not create new call action");
+    }
+
     hangUpAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/HangUp");
+    if(hangUpAction_ == NULL) {
+        ERROR("Could not create hangup action");
+    }
+
     holdMenu_ = gtk_ui_manager_get_widget(ui_manager, "/MenuBar/CallMenu/OnHoldMenu");
+    if(holdMenu_ == NULL) {
+        ERROR("Could not create hold menu widget");
+    }
+
     recordAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/Record");
+    if(recordAction_ == NULL) {
+        ERROR("Could not create record action");
+    }
+
+    muteAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/Mute");
+    if(muteAction_ == NULL) {
+        ERROR("Could not create mute call action");
+    }
+
     imAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/InstantMessaging");
+    if(imAction_ == NULL) {
+        ERROR("Could not create instant messaging action");
+    }
+
     copyAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Copy");
+    if(copyAction_ == NULL) {
+        ERROR("Could not create copy action");
+    }
+
     pasteAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Paste");
+    if(pasteAction_ == NULL) {
+        ERROR("Could not create paste action");
+    }
+
     volumeToggle_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/VolumeControls");
+    if(volumeToggle_ == NULL) {
+        ERROR("Could not create volume toggle action");
+    }
 
     // Set the toggle buttons
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean(CONF_SHOW_DIALPAD));
@@ -1592,32 +1735,75 @@ create_toolbar_actions(GtkUIManager *ui_manager)
 {
     toolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions");
 
-    holdToolbar_ = gtk_ui_manager_get_widget(ui_manager,
-                   "/ToolbarActions/OnHoldToolbar");
-    offHoldToolbar_ = gtk_ui_manager_get_widget(ui_manager,
-                      "/ToolbarActions/OffHoldToolbar");
-    transferToolbar_ = gtk_ui_manager_get_widget(ui_manager,
-                       "/ToolbarActions/TransferToolbar");
-    voicemailAction_ = gtk_ui_manager_get_action(ui_manager,
-                       "/ToolbarActions/Voicemail");
-    voicemailToolbar_ = gtk_ui_manager_get_widget(ui_manager,
-                        "/ToolbarActions/VoicemailToolbar");
-    newCallWidget_ = gtk_ui_manager_get_widget(ui_manager,
-                     "/ToolbarActions/NewCallToolbar");
-    pickUpWidget_ = gtk_ui_manager_get_widget(ui_manager,
-                    "/ToolbarActions/PickUpToolbar");
-    hangUpWidget_ = gtk_ui_manager_get_widget(ui_manager,
-                    "/ToolbarActions/HangUpToolbar");
-    recordWidget_ = gtk_ui_manager_get_widget(ui_manager,
-                    "/ToolbarActions/RecordToolbar");
-    imToolbar_ = gtk_ui_manager_get_widget(ui_manager,
-                                           "/ToolbarActions/InstantMessagingToolbar");
-    historyButton_ = gtk_ui_manager_get_widget(ui_manager,
-                     "/ToolbarActions/HistoryToolbar");
-    playRecordWidget_ = gtk_ui_manager_get_widget(ui_manager,
-                        "/ToolbarActions/StartPlaybackRecordToolbar");
-    stopRecordWidget_ = gtk_ui_manager_get_widget(ui_manager,
-                        "/ToolbarActions/StopPlaybackRecordToolbar");
+    holdToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/OnHoldToolbar");
+    if(holdToolbar_ == NULL) {
+        ERROR("Could not create on hold toolbar widget");
+    }
+
+    offHoldToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/OffHoldToolbar");
+    if(offHoldToolbar_ == NULL) {
+        ERROR("Could not create off hold toolbar widget");
+    }
+
+    transferToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/TransferToolbar");
+    if(transferToolbar_ == NULL) {
+        ERROR("Could not create transfer toolbar widget");
+    }
+
+    voicemailAction_ = gtk_ui_manager_get_action(ui_manager, "/ToolbarActions/Voicemail");
+    if(voicemailAction_ == NULL) {
+        ERROR("Could not create voicemail action");
+    }
+
+    voicemailToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/VoicemailToolbar");
+    if(voicemailToolbar_ == NULL) {
+        ERROR("Could not create voicemail toolbar widget");
+    }
+
+    newCallWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/NewCallToolbar");
+    if(newCallWidget_ == NULL) {
+        ERROR("Could not create new call widget");
+    }
+
+    pickUpWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/PickUpToolbar");
+    if(pickUpWidget_ == NULL) {
+        ERROR("Could not create pick up toolbar widget");
+    }
+
+    hangUpWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/HangUpToolbar");
+    if(hangUpWidget_ == NULL) {
+        ERROR("Could not create hang up toolbar widget");
+    }
+
+    recordWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/RecordToolbar");
+    if(recordWidget_ == NULL) {
+        ERROR("Could not create record toolbar widget");
+    }
+
+    muteWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/MuteToolbar");
+    if(muteWidget_ == NULL) {
+        ERROR("Could not create mute call widget");
+    }
+
+    imToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/InstantMessagingToolbar");
+    if(imToolbar_ == NULL) {
+        ERROR("Could not create instant messaging widget");
+    }
+
+    historyButton_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/HistoryToolbar");
+    if(historyButton_ == NULL) {
+        ERROR("Could not create history button widget");
+    }
+
+    playRecordWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/StartPlaybackRecordToolbar");
+    if(playRecordWidget_ == NULL) {
+        ERROR("Could not create play record widget");
+    }
+
+    stopRecordWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/StopPlaybackRecordToolbar");
+    if(stopRecordWidget_ == NULL) {
+        ERROR("Could not create stop record widget");
+    }
 
     if (addrbook)
         contactButton_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/AddressbookToolbar");
@@ -1625,6 +1811,7 @@ create_toolbar_actions(GtkUIManager *ui_manager)
     // Set the handler ID for the transfer
     transferButtonConnId_ = g_signal_connect(G_OBJECT(transferToolbar_), "toggled", G_CALLBACK(call_transfer_cb), NULL);
     recordButtonConnId_ = g_signal_connect(G_OBJECT(recordWidget_), "toggled", G_CALLBACK(call_record), NULL);
+    // muteCallButtonId_ = g_signal_connect(G_OBJECT(muteWidget_), "toggled", G_CALLBACK(call_mute), NULL);
     active_calltree_tab = current_calls_tab;
 
     return toolbar_;

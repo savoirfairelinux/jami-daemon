@@ -600,7 +600,7 @@ select_audio_manager(void)
         gtk_action_set_sensitive(volumeToggle_, TRUE);
     } else if (must_show_alsa_conf() && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pulse))) {
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
-        gtk_container_remove(GTK_CONTAINER(alsa_conf) , alsabox);
+        gtk_container_remove(GTK_CONTAINER(alsa_conf), alsabox);
         gtk_widget_hide(alsa_conf);
 
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
@@ -611,6 +611,7 @@ select_audio_manager(void)
 
         gtk_action_set_sensitive(volumeToggle_, FALSE);
     }
+
 }
 
 void

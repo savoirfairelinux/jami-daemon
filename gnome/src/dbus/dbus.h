@@ -196,7 +196,7 @@ GArray *dbus_audio_codec_list();
 
 /**
  * ConfigurationManager - Get the video codecs list
- * @return gchar** The list of video codecs 
+ * @return gchar** The list of video codecs
  */
 gchar** dbus_video_codec_list();
 
@@ -609,6 +609,18 @@ gboolean dbus_start_recorded_file_playback(const gchar *);
  * @param The recorded file to pause
  */
 void dbus_stop_recorded_file_playback(const gchar *);
+
 void dbus_start_video_preview();
 void dbus_stop_video_preview();
+
+/**
+ * Prevent Gnome Session Manager from entering in screen-saver mode
+ */
+void dbus_screensaver_inhibit(void);
+
+/**
+ * Allow Gnome Session Manager to enter in screen-saver mode
+ */
+void dbus_screensaver_uninhibit(void);
+
 #endif

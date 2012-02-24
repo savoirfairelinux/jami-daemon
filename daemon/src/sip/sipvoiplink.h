@@ -334,7 +334,7 @@ class SIPVoIPLink : public VoIPLink {
         * Create SIP UDP transport from account's setting
         * @param account The account for which a transport must be created.
         */
-        void createUdpTransport(SIPAccount *account);
+        pjsip_transport *createUdpTransport(std::string interface, unsigned int port);
 
         /**
          * Create a TLS transport from the default TLS listener from
