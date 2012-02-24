@@ -1160,7 +1160,7 @@ GtkUIManager *uimanager_new(void)
     gint nb_entries = addrbook ? 8 : 7;
 
     GtkWidget *window = get_main_window();
-    GtkUIManager *ui_manager = gtk_ui_manager_new();
+    GtkUIManager *ui = gtk_ui_manager_new();
 
     /* Register new icons as GTK_STOCK_ITEMS */
     register_custom_stock_icon();
@@ -1171,7 +1171,7 @@ GtkUIManager *uimanager_new(void)
     GError *error = NULL;
 
     if (g_file_test(path, G_FILE_TEST_EXISTS))
-        manager_id = gtk_ui_manager_add_ui_from_file(ui_manager, path, &error);
+        manager_id = gtk_ui_manager_add_ui_from_file(ui, path, &error);
     else {
         g_free(path);
         path = g_build_filename(SFLPHONE_UIDIR, "./ui.xml", NULL);
@@ -1179,7 +1179,7 @@ GtkUIManager *uimanager_new(void)
         if (!g_file_test(path, G_FILE_TEST_EXISTS))
             goto fail;
 
-        manager_id = gtk_ui_manager_add_ui_from_file(ui_manager, path, &error);
+        manager_id = gtk_ui_manager_add_ui_from_file(ui, path, &error);
     }
 
     if (error)
@@ -1189,11 +1189,11 @@ GtkUIManager *uimanager_new(void)
 
     if (addrbook) {
         // These actions must be loaded dynamically and is not specified in the xml description
-        gtk_ui_manager_add_ui(ui_manager, manager_id, "/ViewMenu",
+        gtk_ui_manager_add_ui(ui, manager_id, "/ViewMenu",
                               "Addressbook",
                               "Addressbook",
                               GTK_UI_MANAGER_MENUITEM, FALSE);
-        gtk_ui_manager_add_ui(ui_manager, manager_id,  "/ToolbarActions",
+        gtk_ui_manager_add_ui(ui, manager_id,  "/ToolbarActions",
                               "AddressbookToolbar",
                               "Addressbook",
                               GTK_UI_MANAGER_TOOLITEM, FALSE);
@@ -1205,9 +1205,9 @@ GtkUIManager *uimanager_new(void)
     gtk_action_group_add_actions(action_group, menu_entries, G_N_ELEMENTS(menu_entries), window);
     gtk_action_group_add_toggle_actions(action_group, toggle_menu_entries, nb_entries, window);
     //gtk_action_group_add_radio_actions(action_group, radio_menu_entries, G_N_ELEMENTS(radio_menu_entries), CALLTREE_CALLS, G_CALLBACK(calltree_switch_cb), window);
-    gtk_ui_manager_insert_action_group(ui_manager, action_group, 0);
+    gtk_ui_manager_insert_action_group(ui, action_group, 0);
 
-    return ui_manager;
+    return ui;
 
 fail:
 
@@ -1658,69 +1658,43 @@ create_waiting_icon()
     return waiting_icon;
 }
 
-GtkWidget *
-create_menus(GtkUIManager *ui_manager)
+static GtkWidget *
+get_widget(GtkUIManager *ui, const gchar *ui_path)
 {
-    GtkWidget *menu_bar = gtk_ui_manager_get_widget(ui_manager, "/MenuBar");
-    if (menu_bar == NULL) {
-        ERROR("Could not create menu bar");
-    }
+    GtkWidget *result = gtk_ui_manager_get_widget(ui, ui_path);
+    if (result == NULL)
+        ERROR("Could not get %s widget", ui_path);
+    return result;
+}
 
-    pickUpAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/PickUp");
-    if (pickUpAction_ == NULL) {
-        ERROR("Could not create pick up action");
-    }
+static GtkAction*
+get_action(GtkUIManager *ui, const gchar *ui_path)
+{
+    GtkAction *result = gtk_ui_manager_get_action(ui, ui_path);
+    if (result == NULL)
+        ERROR("Could not get %s action", ui_path);
+    return result;
+}
 
-    newCallAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/NewCall");
-    if (newCallAction_ == NULL) {
-        ERROR("Could not create new call action");
-    }
-
-    hangUpAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/HangUp");
-    if (hangUpAction_ == NULL) {
-        ERROR("Could not create hangup action");
-    }
-
-    holdMenu_ = gtk_ui_manager_get_widget(ui_manager, "/MenuBar/CallMenu/OnHoldMenu");
-    if (holdMenu_ == NULL) {
-        ERROR("Could not create hold menu widget");
-    }
-
-    recordAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/Record");
-    if (recordAction_ == NULL) {
-        ERROR("Could not create record action");
-    }
-
-    muteAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/Mute");
-    if (muteAction_ == NULL) {
-        ERROR("Could not create mute call action");
-    }
-
-    imAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/CallMenu/InstantMessaging");
-    if (imAction_ == NULL) {
-        ERROR("Could not create instant messaging action");
-    }
-
-    copyAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Copy");
-    if (copyAction_ == NULL) {
-        ERROR("Could not create copy action");
-    }
-
-    pasteAction_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Paste");
-    if (pasteAction_ == NULL) {
-        ERROR("Could not create paste action");
-    }
-
-    volumeToggle_ = gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/VolumeControls");
-    if (volumeToggle_ == NULL) {
-        ERROR("Could not create volume toggle action");
-    }
-
+GtkWidget *
+create_menus(GtkUIManager *ui)
+{
+    GtkWidget *menu_bar = get_widget(ui, "/MenuBar");
+    pickUpAction_ = get_action(ui, "/MenuBar/CallMenu/PickUp");
+    newCallAction_ = get_action(ui, "/MenuBar/CallMenu/NewCall");
+    hangUpAction_ = get_action(ui, "/MenuBar/CallMenu/HangUp");
+    holdMenu_ = get_widget(ui, "/MenuBar/CallMenu/OnHoldMenu");
+    recordAction_ = get_action(ui, "/MenuBar/CallMenu/Record");
+    muteAction_ = get_action(ui, "/MenuBar/CallMenu/Mute");
+    imAction_ = get_action(ui, "/MenuBar/CallMenu/InstantMessaging");
+    copyAction_ = get_action(ui, "/MenuBar/EditMenu/Copy");
+    pasteAction_ = get_action(ui, "/MenuBar/EditMenu/Paste");
+    volumeToggle_ = get_action(ui, "/MenuBar/ViewMenu/VolumeControls");
     // Set the toggle buttons
-    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean(CONF_SHOW_DIALPAD));
+    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_ui_manager_get_action(ui, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean(CONF_SHOW_DIALPAD));
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_),(gboolean) SHOW_VOLUME);
     gtk_action_set_sensitive(volumeToggle_, must_show_alsa_conf());
-    gtk_action_set_sensitive(gtk_ui_manager_get_action(ui_manager, "/MenuBar/ViewMenu/Toolbar"), FALSE);
+    gtk_action_set_sensitive(gtk_ui_manager_get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
     waitingLayer = create_waiting_icon();
@@ -1730,85 +1704,30 @@ create_menus(GtkUIManager *ui_manager)
 }
 
 GtkWidget *
-create_toolbar_actions(GtkUIManager *ui_manager)
+create_toolbar_actions(GtkUIManager *ui)
 {
-    toolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions");
-
-    holdToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/OnHoldToolbar");
-    if (holdToolbar_ == NULL) {
-        ERROR("Could not create on hold toolbar widget");
-    }
-
-    offHoldToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/OffHoldToolbar");
-    if (offHoldToolbar_ == NULL) {
-        ERROR("Could not create off hold toolbar widget");
-    }
-
-    transferToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/TransferToolbar");
-    if (transferToolbar_ == NULL) {
-        ERROR("Could not create transfer toolbar widget");
-    }
-
-    voicemailAction_ = gtk_ui_manager_get_action(ui_manager, "/ToolbarActions/Voicemail");
-    if (voicemailAction_ == NULL) {
-        ERROR("Could not create voicemail action");
-    }
-
-    voicemailToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/VoicemailToolbar");
-    if (voicemailToolbar_ == NULL) {
-        ERROR("Could not create voicemail toolbar widget");
-    }
-
-    newCallWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/NewCallToolbar");
-    if (newCallWidget_ == NULL) {
-        ERROR("Could not create new call widget");
-    }
-
-    pickUpWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/PickUpToolbar");
-    if (pickUpWidget_ == NULL) {
-        ERROR("Could not create pick up toolbar widget");
-    }
-
-    hangUpWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/HangUpToolbar");
-    if (hangUpWidget_ == NULL) {
-        ERROR("Could not create hang up toolbar widget");
-    }
-
-    recordWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/RecordToolbar");
-    if (recordWidget_ == NULL) {
-        ERROR("Could not create record toolbar widget");
-    }
-
-    muteWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/MuteToolbar");
-    if (muteWidget_ == NULL) {
-        ERROR("Could not create mute call widget");
-    }
-
-    imToolbar_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/InstantMessagingToolbar");
-    if (imToolbar_ == NULL) {
-        ERROR("Could not create instant messaging widget");
-    }
-
-    historyButton_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/HistoryToolbar");
-    if (historyButton_ == NULL) {
-        ERROR("Could not create history button widget");
-    }
-
-    playRecordWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/StartPlaybackRecordToolbar");
-    if (playRecordWidget_ == NULL) {
-        ERROR("Could not create play record widget");
-    }
-
-    stopRecordWidget_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/StopPlaybackRecordToolbar");
-    if (stopRecordWidget_ == NULL) {
-        ERROR("Could not create stop record widget");
-    }
-
+    toolbar_ = get_widget(ui, "/ToolbarActions");
+    holdToolbar_ = get_widget(ui, "/ToolbarActions/OnHoldToolbar");
+    offHoldToolbar_ = get_widget(ui, "/ToolbarActions/OffHoldToolbar");
+    transferToolbar_ = get_widget(ui, "/ToolbarActions/TransferToolbar");
+    voicemailAction_ = get_action(ui, "/ToolbarActions/Voicemail");
+    voicemailToolbar_ = get_widget(ui, "/ToolbarActions/VoicemailToolbar");
+    newCallWidget_ = get_widget(ui, "/ToolbarActions/NewCallToolbar");
+    pickUpWidget_ = get_widget(ui, "/ToolbarActions/PickUpToolbar");
+    hangUpWidget_ = get_widget(ui, "/ToolbarActions/HangUpToolbar");
+    recordWidget_ = get_widget(ui, "/ToolbarActions/RecordToolbar");
+    muteWidget_ = get_widget(ui, "/ToolbarActions/MuteToolbar");
+    imToolbar_ = get_widget(ui, "/ToolbarActions/InstantMessagingToolbar");
+    historyButton_ = get_widget(ui, "/ToolbarActions/HistoryToolbar");
+    playRecordWidget_ = get_widget(ui, "/ToolbarActions/StartPlaybackRecordToolbar");
+    stopRecordWidget_ = get_widget(ui, "/ToolbarActions/StopPlaybackRecordToolbar");
     if (addrbook)
-        contactButton_ = gtk_ui_manager_get_widget(ui_manager, "/ToolbarActions/AddressbookToolbar");
+        contactButton_ = get_widget(ui, "/ToolbarActions/AddressbookToolbar");
 
     // Set the handler ID for the transfer
+    g_assert(transferToolbar_);
     transferButtonConnId_ = g_signal_connect(G_OBJECT(transferToolbar_), "toggled", G_CALLBACK(call_transfer_cb), NULL);
+    g_assert(recordWidget_);
     recordButtonConnId_ = g_signal_connect(G_OBJECT(recordWidget_), "toggled", G_CALLBACK(call_record), NULL);
     active_calltree_tab = current_calls_tab;
 
