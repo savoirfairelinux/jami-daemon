@@ -29,6 +29,7 @@
  */
 
 #include "video_send_thread.h"
+#include "packet_handle.h"
 
 // libav includes
 extern "C" {
@@ -125,69 +126,67 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 
 void VideoSendThread::setup()
 {
-    if (!test_source_) {
-        AVInputFormat *file_iformat = 0;
-        // it's a v4l device if starting with /dev/video
-        static const char * const V4L_PATH = "/dev/video";
-        if (args_["input"].substr(0, sizeof(V4L_PATH) - 1) == V4L_PATH) {
-            DEBUG("%s:Using v4l2 format", __PRETTY_FUNCTION__);
-            file_iformat = av_find_input_format("video4linux2");
-            if (!file_iformat) {
-                ERROR("Could not find format video4linux2");
-                ost::Thread::exit();
-            }
-        }
-
-        AVDictionary *options = NULL;
-        if (!args_["framerate"].empty())
-            av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
-        if (!args_["video_size"].empty())
-            av_dict_set(&options, "video_size", args_["video_size"].c_str(), 0);
-        if (!args_["channel"].empty())
-            av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
-
-        // Open video file
-        if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0) {
-            ERROR("Could not open input file %s", args_["input"].c_str());
+    AVInputFormat *file_iformat = 0;
+    // it's a v4l device if starting with /dev/video
+    static const char * const V4L_PATH = "/dev/video";
+    if (args_["input"].substr(0, sizeof(V4L_PATH) - 1) == V4L_PATH) {
+        DEBUG("%s:Using v4l2 format", __PRETTY_FUNCTION__);
+        file_iformat = av_find_input_format("video4linux2");
+        if (!file_iformat) {
+            ERROR("Could not find format video4linux2");
             ost::Thread::exit();
         }
+    }
 
-        // find the first video stream from the input
-        for (unsigned i = 0; i < inputCtx_->nb_streams; ++i) {
-            if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-                videoStreamIndex_ = i;
-                break;
-            }
-        }
-        if (videoStreamIndex_ == -1) {
-            ERROR("%s:Could not find video stream!", __PRETTY_FUNCTION__);
-            ost::Thread::exit();
-        }
+    AVDictionary *options = NULL;
+    if (!args_["framerate"].empty())
+        av_dict_set(&options, "framerate", args_["framerate"].c_str(), 0);
+    if (!args_["video_size"].empty())
+        av_dict_set(&options, "video_size", args_["video_size"].c_str(), 0);
+    if (!args_["channel"].empty())
+        av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
-        // Get a pointer to the codec context for the video stream
-        inputDecoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
-        if (inputDecoderCtx_ == NULL) {
-            ERROR("%s:Could not get input codec context!", __PRETTY_FUNCTION__);
-            ost::Thread::exit();
-        }
+    // Open video file
+    if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat, &options) != 0) {
+        ERROR("Could not open input file %s", args_["input"].c_str());
+        ost::Thread::exit();
+    }
 
-        // find the decoder for the video stream
-        AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
-        if (inputDecoder == NULL) {
-            ERROR("%s:Unsupported codec!", __PRETTY_FUNCTION__);
-            ost::Thread::exit();
+    // find the first video stream from the input
+    for (unsigned i = 0; i < inputCtx_->nb_streams; ++i) {
+        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+            videoStreamIndex_ = i;
+            break;
         }
+    }
+    if (videoStreamIndex_ == -1) {
+        ERROR("%s:Could not find video stream!", __PRETTY_FUNCTION__);
+        ost::Thread::exit();
+    }
+
+    // Get a pointer to the codec context for the video stream
+    inputDecoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
+    if (inputDecoderCtx_ == NULL) {
+        ERROR("%s:Could not get input codec context!", __PRETTY_FUNCTION__);
+        ost::Thread::exit();
+    }
+
+    // find the decoder for the video stream
+    AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
+    if (inputDecoder == NULL) {
+        ERROR("%s:Unsupported codec!", __PRETTY_FUNCTION__);
+        ost::Thread::exit();
+    }
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-        if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
+    if (avcodec_open(inputDecoderCtx_, inputDecoder) < 0)
 #else
-        if (avcodec_open2(inputDecoderCtx_, inputDecoder, NULL) < 0)
+    if (avcodec_open2(inputDecoderCtx_, inputDecoder, NULL) < 0)
 #endif
-        {
-            ERROR("%s:Could not open codec!", __PRETTY_FUNCTION__);
-            ost::Thread::exit();
-        }
-    } // end if ! test_source_
+    {
+        ERROR("%s:Could not open codec!", __PRETTY_FUNCTION__);
+        ost::Thread::exit();
+    }
 
     outputCtx_ = avformat_alloc_context();
 
@@ -243,12 +242,11 @@ void VideoSendThread::setup()
             ERROR("%s:Could not open \"%s\"!", outputCtx_->filename);
             ost::Thread::exit();
         }
-    }
-    else
+    } else
         DEBUG("No need to open \"%s\"", outputCtx_->filename);
 
     // write the stream header, if any
-    AVDictionary *options = NULL;
+    options = NULL;
     if (!args_["payload_type"].empty())
         av_dict_set(&options, "payload_type", args_["payload_type"].c_str(), 0);
     if (avformat_write_header(outputCtx_, &options) < 0) {
@@ -295,7 +293,6 @@ void VideoSendThread::createScalingContext()
 }
 
 VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
-    test_source_(false),
     sdpReady_(),
     args_(args),
     scaledPictureBuf_(0),
@@ -312,7 +309,6 @@ VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args)
     imgConvertCtx_(0),
     sdp_()
 {
-    test_source_ = (args_["input"] == "SFLTEST");
     setCancel(cancelDeferred);
 }
 
@@ -320,61 +316,44 @@ void VideoSendThread::run()
 {
     // We don't want setup() called in the main thread in case it exits or blocks
     setup();
-    if (!test_source_)
-        createScalingContext();
+    createScalingContext();
 
     int frameNumber = 0;
     while (not testCancel()) {
         AVPacket inpacket;
-        int frameFinished;
-        int encodedSize;
-        int ret;
-        if (not test_source_) {
-            if (av_read_frame(inputCtx_, &inpacket) < 0)
-                break;
+        if (av_read_frame(inputCtx_, &inpacket) < 0)
+            break;
 
-            // is this a packet from the video stream?
-            if (inpacket.stream_index != videoStreamIndex_)
-                goto next_packet;
+        /* Guarantees that we free the packet allocated by av_read_frame */
+        PacketHandle inpacket_handle(inpacket);
 
-            // decode video frame from camera
-            avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished, &inpacket);
-            if (!frameFinished)
-                goto next_packet;
+        // is this a packet from the video stream?
+        if (inpacket.stream_index != videoStreamIndex_)
+            continue;
 
-            sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
-                      0, inputDecoderCtx_->height, scaledPicture_->data,
-                      scaledPicture_->linesize);
+        // decode video frame from camera
+        int frameFinished = 0;
+        avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished,
+                              &inpacket);
+        if (!frameFinished)
+            continue;
 
-        } else {
-            // TODO:tmatth:replace with floating SFLPhone logo
-            const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[encoderCtx_->pix_fmt];
-            int components = pixdesc->nb_components;
-            int planes = 0;
-            for (int i = 0; i < components; i++)
-                if (pixdesc->comp[i].plane > planes)
-                    planes = pixdesc->comp[i].plane;
-            planes++;
-
-            int i = frameNumber;
-            const unsigned pitch = scaledPicture_->linesize[0];
-
-            for(int y = 0; y < encoderCtx_->height; y++)
-                for(unsigned x = 0; x < pitch; x++)
-                    scaledPicture_->data[0][y * pitch + x] = x + y + i * planes;
-        }
+        sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
+                  0, inputDecoderCtx_->height, scaledPicture_->data,
+                  scaledPicture_->linesize);
 
         // Set presentation timestamp on our scaled frame before encoding it
         scaledPicture_->pts = frameNumber++;
 
-        encodedSize = avcodec_encode_video(encoderCtx_, outbuf_, outbufSize_,
-                                               scaledPicture_);
+        const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
+                                                     outbufSize_, scaledPicture_);
 
         if (encodedSize <= 0)
-            goto next_packet;
+            continue;
 
         AVPacket opkt;
         av_init_packet(&opkt);
+        PacketHandle opkt_handle(opkt);
 
         opkt.data = outbuf_;
         opkt.size = encodedSize;
@@ -395,17 +374,11 @@ void VideoSendThread::run()
         opkt.stream_index = videoStream_->index;
 
         // write the compressed frame in the media file
-        ret = av_interleaved_write_frame(outputCtx_, &opkt);
+        int ret = av_interleaved_write_frame(outputCtx_, &opkt);
         if (ret < 0) {
             print_error("av_interleaved_write_frame() error", ret);
             ost::Thread::exit();
         }
-        av_free_packet(&opkt);
-
-next_packet:
-        // free the packet allocated by av_read_frame() unless using test source
-        if (not test_source_)
-            av_free_packet(&inpacket);
     }
 }
 

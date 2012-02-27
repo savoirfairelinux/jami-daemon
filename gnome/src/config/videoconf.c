@@ -131,13 +131,12 @@ video_preview_started_cb(DBusGProxy *proxy, gint OUT_width, gint OUT_height,
                          gint OUT_videoBufferSize, GError *error,
                          gpointer userdata)
 {
-    (void)proxy;
-    (void)error;
-    (void)userdata;
+    (void) proxy;
+    (void) error;
+    (void) userdata;
 
-    if (OUT_shmId == -1 || OUT_semId == -1 || OUT_videoBufferSize == -1) {
+    if (OUT_shmId == -1 || OUT_semId == -1 || OUT_videoBufferSize == -1)
         return;
-    }
 
     DEBUG("Preview started width:%d height:%d shm:%d sem:%d size:%d",
           OUT_width, OUT_height, OUT_shmId, OUT_semId, OUT_videoBufferSize);
@@ -158,7 +157,8 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
     preview_button = GTK_WIDGET(button);
     if (g_strcmp0(gtk_button_get_label(button), _("_Start")) == 0)
         dbus_start_video_preview();
-    else { /* user clicked stop */
+    else {
+        /* user clicked stop */
         if (!preview) /* preview was not created yet on the server */
             return ;
         video_renderer_stop(preview);
@@ -190,63 +190,56 @@ static void preferences_dialog_fill_codec_list(account_t *a)
             gtk_list_store_append(codecStore, &iter);
             gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
 
-            gtk_list_store_set(codecStore, &iter,
-                               COLUMN_CODEC_ACTIVE,  c->is_active,
-                               COLUMN_CODEC_NAME,    c->name,
-                               COLUMN_CODEC_BITRATE, bitrate,
-                               -1);
+            gtk_list_store_set(codecStore, &iter, COLUMN_CODEC_ACTIVE,
+                               c->is_active, COLUMN_CODEC_NAME, c->name,
+                               COLUMN_CODEC_BITRATE, bitrate, -1);
             g_free(bitrate);
         }
     }
 }
 
-
 /**
  * Toggle active value of codec on click and update changes to the deamon
  * and in configuration files
  */
-static void
-codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data)
-{
-    GtkTreeIter iter;
-    GtkTreePath *treePath;
-    GtkTreeModel *model;
-    gboolean active;
-    char* name;
-    codec_t* codec;
-    account_t *acc;
 
+static void
+codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
+                     gpointer data)
+{
     // Get path of clicked codec active toggle box
-    treePath = gtk_tree_path_new_from_string (path);
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView));
-    gtk_tree_model_get_iter (model, &iter, treePath);
+    GtkTreePath *treePath = gtk_tree_path_new_from_string(path);
+    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW (codecTreeView));
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter(model, &iter, treePath);
 
     // Retrieve userdata
-    acc = (account_t*) data;
+    account_t *acc = (account_t*) data;
 
-    if (!acc)
-        ERROR ("Aie, no account selected");
+    if (!acc) {
+        ERROR("No account selected");
+        return;
+    }
 
     // Get active value and name at iteration
-    gtk_tree_model_get (model, &iter,
-            COLUMN_CODEC_ACTIVE, &active,
-            COLUMN_CODEC_NAME, &name,
-            -1);
+    gboolean active = FALSE;
+    gchar *name = NULL;
+    gtk_tree_model_get(model, &iter, COLUMN_CODEC_ACTIVE, &active,
+                       COLUMN_CODEC_NAME, &name, -1);
 
-    printf ("%s\n", name);
-    printf ("%i\n", g_queue_get_length (acc->vcodecs));
+    g_print("%s\n", name);
+    g_print("%i\n", g_queue_get_length (acc->vcodecs));
 
-    codec = codec_list_get_by_name ( (gconstpointer) name, acc->vcodecs);
+    codec_t *codec = codec_list_get_by_name((gconstpointer) name, acc->vcodecs);
 
     // Toggle active value
     active = !active;
 
     // Store value
-    gtk_list_store_set (GTK_LIST_STORE (model), &iter,
-            COLUMN_CODEC_ACTIVE, active,
-            -1);
+    gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_ACTIVE,
+                       active, -1);
 
-    gtk_tree_path_free (treePath);
+    gtk_tree_path_free(treePath);
 
     // Modify codec queue to represent change
     codec->is_active = active;
@@ -413,7 +406,7 @@ static int set_combo_index_from_str(GtkComboBox *box, const char *str, size_t ma
     do {
         char *boxstr;
         gtk_tree_model_get(model, &iter, 0, &boxstr, -1);
-        if (boxstr && !strcmp(boxstr, str))
+        if (boxstr && !g_strcmp0(boxstr, str))
             break;
     } while (idx++ < max && gtk_tree_model_iter_next(model, &iter));
 
@@ -637,9 +630,11 @@ static void fill_devices(void)
     if (!preferences_dialog_fill_video_input_device_list()) {
         gtk_widget_show_all(v4l2_hbox);
         gtk_widget_hide(v4l2_nodev);
+        gtk_widget_set_sensitive(preview_button, TRUE);
     } else {
         gtk_widget_hide(v4l2_hbox);
         gtk_widget_show(v4l2_nodev);
+        gtk_widget_set_sensitive(preview_button, FALSE);
     }
 }
 

@@ -53,7 +53,6 @@ class VideoSendThread : public ost::Thread {
         void setup();
         void prepareEncoderContext(AVCodec *encoder);
         void createScalingContext();
-        bool test_source_;
         ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;

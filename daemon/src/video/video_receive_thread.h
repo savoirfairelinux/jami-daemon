@@ -48,7 +48,6 @@ class VideoReceiveThread : public ost::Thread {
     private:
         NON_COPYABLE(VideoReceiveThread);
         std::map<std::string, std::string> args_;
-        bool test_source_;
         unsigned frameNumber_;
 
         /*-------------------------------------------------------------*/
@@ -70,15 +69,13 @@ class VideoReceiveThread : public ost::Thread {
 
         int dstWidth_;
         int dstHeight_;
+        ost::Event shmReady_;
+        std::string sdpFilename_;
 
         void setup();
         void createScalingContext();
         int createSemSet(int shmKey, int *semKey);
-        ost::Event shmReady_;
-        std::string sdpFilename_;
-
         void loadSDP();
-        void runAsTestSource();
 
     public:
         explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
