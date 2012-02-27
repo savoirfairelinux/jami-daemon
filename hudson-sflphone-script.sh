@@ -4,10 +4,37 @@
 #
 # Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 
-function build_daemon {
+XML_RESULTS="cppunitresults.xml"
+TEST=0
+BUILD=
+CODE_ANALYSIS=0
+DOXYGEN=0
 
+function run_code_analysis {
+	# Check if cppcheck is installed on the system
+	if [ `which cppcheck &>/dev/null ; echo $?` -ne 1 ] ; then
+		pushd src
+		cppcheck . --enable=all --xml 2> cppcheck-report.xml
+		popd
+	fi
+}
+
+function gen_doxygen {
+	# Check if doxygen is installed on the system
+	if [ `which doxygen &>/dev/null ; echo $?` -ne 1 ] ; then
+		pushd doc/doxygen
+		doxygen core-doc.cfg.in
+		popd
+	fi
+}
+
+function build_daemon {
 	# Compile the daemon
 	pushd daemon
+	# Run static analysis code tool
+	if [ $CODE_ANALYSIS == 1 ]; then
+		run_code_analysis
+	fi
 	make distclean
 	./autogen.sh
 	# Compile pjproject first
@@ -18,12 +45,18 @@ function build_daemon {
 	popd
 	./configure --prefix=/usr
 	make clean
+	# Compile src code
 	make -j
+	# Generate documentation
 	make doc
+	if [ $DOXYGEN == 1 ]; then
+		gen_doxygen
+	fi
+	# Compile unit tests
 	make check
 	popd
 
-	if [ $1 == 1 ]; then
+	if [ $TEST == 1 ]; then
 		# Run the unit tests for the daemon
 		pushd daemon/test
 		# Remove the previous XML test file
@@ -34,7 +67,6 @@ function build_daemon {
 }
 
 function build_gnome {
-
 	# Compile the plugins
 	pushd plugins
 	make distclean
@@ -63,11 +95,8 @@ fi
 
 
 git clean -f -d -x
-XML_RESULTS="cppunitresults.xml"
-TEST=0
-BUILD=
 
-while getopts ":b: t" opt; do
+while getopts ":b: t a d" opt; do
 	case $opt in
 		b)
 			echo "-b was triggered. Parameter: $OPTARG" >&2
@@ -76,6 +105,14 @@ while getopts ":b: t" opt; do
 		t)
 			echo "-t was triggered. Tests will be run" >&2
 			TEST=1
+			;;
+		a)
+			echo "-a was triggered. Static code analysis will be run" >&2
+			CODE_ANALYSIS=1
+			;;
+		d)
+			echo "-d was triggered. Doxygen documentation will be generated" >&2
+			DOXYGEN=1
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
@@ -89,7 +126,7 @@ while getopts ":b: t" opt; do
 done
 
 # Call appropriate build function, with parameters if needed
-build_$BUILD $TEST
+build_$BUILD
 
 # SUCCESS
 exit 0
