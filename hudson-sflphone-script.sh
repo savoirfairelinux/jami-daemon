@@ -8,11 +8,19 @@ XML_RESULTS="cppunitresults.xml"
 TEST=0
 BUILD=
 CODE_ANALYSIS=0
+DOXYGEN=0
 
 function run_code_analysis {
 	# Check if cppcheck is installed on the system
 	if [ `which cppcheck &>/dev/null ; echo $?` -ne 1 ] ; then
 		cppcheck . --enable=all --xml 2> cppcheck-report.xml
+	fi
+}
+
+function gen_doxygen {
+	# Check if doxygen is installed on the system
+	if [ `which doxygen &>/dev/null ; echo $?` -ne 1 ] ; then
+		doxygen core-doc.cfg.in
 	fi
 }
 
@@ -38,6 +46,9 @@ function build_daemon {
 	make -j
 	# Generate documentation
 	make doc
+	if [ $DOXYGEN == 1 ]; then
+		gen_doxygen
+	fi
 	# Compile unit tests
 	make check
 	popd
@@ -83,7 +94,7 @@ fi
 
 git clean -f -d -x
 
-while getopts ":b: t a" opt; do
+while getopts ":b: t a d" opt; do
 	case $opt in
 		b)
 			echo "-b was triggered. Parameter: $OPTARG" >&2
@@ -96,6 +107,10 @@ while getopts ":b: t a" opt; do
 		a)
 			echo "-a was triggered. Static code analysis will be run" >&2
 			CODE_ANALYSIS=1
+			;;
+		d)
+			echo "-d was triggered. Doxygen documentation will be generated" >&2
+			DOXYGEN=1
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
