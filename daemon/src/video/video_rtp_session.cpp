@@ -30,16 +30,12 @@
 
 #include "video_rtp_session.h"
 #include <cassert>
-#include <iostream>
 #include <sstream>
 #include <map>
 #include <string>
-#include "../manager.h"
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
 #include "sip/sdp.h"
-#include "dbus/dbusmanager.h"
-#include "dbus/callmanager.h"
 #include "libav_utils.h"
 
 namespace sfl_video {
@@ -99,8 +95,9 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     if (codec.empty()) {
     	DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
     	sending_ = false;
-    } else
+    } else {
     	txArgs_["codec"] = codec;
+    }
 
     txArgs_["payload_type"] = v[2];
 }
@@ -117,7 +114,7 @@ void VideoRtpSession::updateDestination(const string &destination,
         assert(sendThread_.get() == 0);
         txArgs_["destination"] = tmp.str();
         DEBUG("%s updated dest to %s",  __PRETTY_FUNCTION__,
-               txArgs_["destination"].c_str());
+              txArgs_["destination"].c_str());
     }
 
     if (port == 0) {

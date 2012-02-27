@@ -338,8 +338,8 @@ void VideoSendThread::run()
         if (!frameFinished)
             continue;
 
-        sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
-                  0, inputDecoderCtx_->height, scaledPicture_->data,
+        sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
+                  inputDecoderCtx_->height, scaledPicture_->data,
                   scaledPicture_->linesize);
 
         // Set presentation timestamp on our scaled frame before encoding it
