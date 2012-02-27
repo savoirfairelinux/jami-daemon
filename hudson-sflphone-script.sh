@@ -20,7 +20,9 @@ function run_code_analysis {
 function gen_doxygen {
 	# Check if doxygen is installed on the system
 	if [ `which doxygen &>/dev/null ; echo $?` -ne 1 ] ; then
+		pushd doc/doxygen
 		doxygen core-doc.cfg.in
+		popd
 	fi
 }
 
