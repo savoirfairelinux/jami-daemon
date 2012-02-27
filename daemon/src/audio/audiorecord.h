@@ -33,6 +33,7 @@
 
 #include <string>
 #include <cstdlib>
+#include <memory>
 
 #include "global.h"
 #include "noncopyable.h"
@@ -43,8 +44,6 @@ class AudioRecord {
         enum FILE_TYPE { FILE_RAW, FILE_WAV, FILE_INVALID };
 
         AudioRecord();
-
-        ~AudioRecord();
 
         void setSndSamplingRate(int smplRate);
         /**
@@ -206,7 +205,7 @@ class AudioRecord {
         /**
          * Maximum number of samples
          */
-        int nbSamplesMax_;
+        static const int NB_SAMPLES_MAX = 3000;
 
         /**
          * Recording flage
@@ -216,17 +215,17 @@ class AudioRecord {
         /**
          * Buffer used for mixing two channels
          */
-        SFLDataFormat* mixBuffer_;
+        SFLDataFormat mixBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Buffer used to copy mic info
          */
-        SFLDataFormat* micBuffer_;
+        SFLDataFormat micBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Buffer used to copy spkr info
          */
-        SFLDataFormat* spkBuffer_;
+        SFLDataFormat spkBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Filename for this recording

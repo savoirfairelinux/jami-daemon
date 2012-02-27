@@ -57,22 +57,14 @@ AudioRecord::AudioRecord() : fileHandle_(NULL)
     , sndSmplRate_(8000)
     , nbSamplesMic_(0)
     , nbSamplesSpk_(0)
-    , nbSamplesMax_(3000)
     , recordingEnabled_(false)
-    , mixBuffer_(new SFLDataFormat[nbSamplesMax_])
-    , micBuffer_(new SFLDataFormat[nbSamplesMax_])
-    , spkBuffer_(new SFLDataFormat[nbSamplesMax_])
+    , mixBuffer_()
+    , micBuffer_()
+    , spkBuffer_()
     , filename_()
     , savePath_()
 {
     createFilename();
-}
-
-AudioRecord::~AudioRecord()
-{
-    delete [] mixBuffer_;
-    delete [] micBuffer_;
-    delete [] spkBuffer_;
 }
 
 void AudioRecord::setSndSamplingRate(int smplRate)
