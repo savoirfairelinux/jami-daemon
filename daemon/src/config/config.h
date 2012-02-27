@@ -106,7 +106,7 @@ class ConfigTree {
          */
         std::list<std::string> getSections() const;
 
-        void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
+        void addConfigTreeItem(const std::string& section, const ConfigTreeItem &item);
         /**
          * Set a configuration value.
          *

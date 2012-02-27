@@ -102,7 +102,7 @@ ConfigTree::getSections() const
  * If the section doesn't exists, create it
  */
 void
-ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem item)
+ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem &item)
 {
     // if we doesn't find the item, create it
     SectionMap::iterator iter = sections_.find(section);
