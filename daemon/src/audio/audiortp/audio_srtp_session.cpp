@@ -50,9 +50,13 @@ AudioSrtpSession::AudioSrtpSession(SIPCall * sipcall) :
     localCryptoCtx_(NULL),
     localCryptoSuite_(0),
     remoteCryptoSuite_(0),
+    localMasterKey_(),
     localMasterKeyLength_(0),
+    localMasterSalt_(),
     localMasterSaltLength_(0),
+    remoteMasterKey_(),
     remoteMasterKeyLength_(0),
+    remoteMasterSalt_(),
     remoteMasterSaltLength_(0),
     remoteOfferIsSet_(false)
 {
