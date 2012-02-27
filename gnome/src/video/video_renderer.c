@@ -394,6 +394,7 @@ video_renderer_stop(VideoRenderer *renderer)
 {
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
     g_assert(priv);
+    gtk_widget_hide(GTK_WIDGET(priv->drawarea));
 
     priv->is_running = FALSE;
 
@@ -498,6 +499,7 @@ video_renderer_run(VideoRenderer *renderer)
 #else
     g_object_notify(G_OBJECT(data), "running");
 #endif
+    gtk_widget_show_all(GTK_WIDGET(priv->drawarea));
 
     return 0;
 }
@@ -562,8 +564,8 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
     if (shmKey == -1 || semKey == -1 || videoBufferSize == -1)
         return;
 
-    gtk_widget_set_size_request (receivingVideoArea, destWidth, destHeight);
-    gtk_container_add (GTK_CONTAINER(receivingVideoWindow), vbox);
+    gtk_widget_set_size_request(receivingVideoArea, destWidth, destHeight);
+    gtk_container_add(GTK_CONTAINER(receivingVideoWindow), vbox);
     gtk_widget_show_all(receivingVideoWindow);
 
     DEBUG("Video started for shm:%d sem:%d bufferSz:%d width:%d height:%d",
