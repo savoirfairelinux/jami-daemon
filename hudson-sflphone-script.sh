@@ -13,7 +13,7 @@ DOXYGEN=0
 function run_code_analysis {
 	# Check if cppcheck is installed on the system
 	if [ `which cppcheck &>/dev/null ; echo $?` -ne 1 ] ; then
-		cppcheck . --enable=all --xml 2> cppcheck-report.xml
+		cppcheck . -ilibs/ --enable=all --xml 2> cppcheck-report.xml
 	fi
 }
 
@@ -27,7 +27,6 @@ function gen_doxygen {
 }
 
 function build_daemon {
-
 	# Compile the daemon
 	pushd daemon
 	# Run static analysis code tool
@@ -66,7 +65,6 @@ function build_daemon {
 }
 
 function build_gnome {
-
 	# Compile the plugins
 	pushd plugins
 	make distclean
