@@ -107,7 +107,7 @@ void ManagerImpl::init(std::string config_file)
         parser->serializeEvents();
         parser->composeEvents();
         parser->constructNativeData();
-    } catch (Conf::YamlParserException &e) {
+    } catch (const Conf::YamlParserException &e) {
         ERROR("Manager: %s", e.what());
         fflush(stderr);
         delete parser;

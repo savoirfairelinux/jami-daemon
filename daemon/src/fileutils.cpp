@@ -83,7 +83,9 @@ bool create_pidfile()
     std::string pidfile = path + "/" PIDFILE;
     FILE *fp = fopen(pidfile.c_str(),"r");
 
-    if (fp) { // PID file exists. Check the former process still alive or not. If alive, give user a hint.
+    if (fp) {
+        // PID file exists. Check if the former process is still alive or
+        // not. If alive, give user a hint.
         int oldPid;
 
         if (fscanf(fp, "%d", &oldPid) != 1) {
