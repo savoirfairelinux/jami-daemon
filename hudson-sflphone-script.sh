@@ -13,7 +13,7 @@ DOXYGEN=0
 function run_code_analysis {
 	# Check if cppcheck is installed on the system
 	if [ `which cppcheck &>/dev/null ; echo $?` -ne 1 ] ; then
-		cppcheck . -ilibs/ --enable=all --xml 2> cppcheck-report.xml
+		cppcheck -I src/ . --enable=all --xml 2> cppcheck-report.xml
 	fi
 }
 
