@@ -132,16 +132,6 @@ ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string
     return getDefaultValue(itemName);
 }
 
-// throw a ConfigTreeItemException if not found
-int
-ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) const
-{
-    std::string configItem = getConfigTreeItemValue(section, itemName);
-    int retval = atoi(configItem.data());
-
-    return retval;
-}
-
 /**
  * Return a ConfigTreeItem or NULL if not found
  */

@@ -129,7 +129,6 @@ class ConfigTree {
          *         but the item doesn't.
          */
         std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName) const;
-        int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) const;
 
         /**
          * Load data (and fill ConfigTree) from disk
