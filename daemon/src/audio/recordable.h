@@ -76,11 +76,6 @@ class Recordable {
         void setRecordingSmplRate(int smplRate);
 
         /**
-         * Return the recording sampling rate
-             */
-        int getRecordingSmplRate() const;
-
-        /**
          * Virtual method to be implemented in order to the main
          * buffer to retrieve the recorded id.
          */

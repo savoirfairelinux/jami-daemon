@@ -55,8 +55,3 @@ void Recordable::setRecordingSmplRate(int smplRate)
 {
     recAudio_.setSndSamplingRate(smplRate);
 }
-
-int Recordable::getRecordingSmplRate() const
-{
-    return recAudio_.getSndSamplingRate();
-}
