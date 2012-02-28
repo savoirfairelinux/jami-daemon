@@ -2320,13 +2320,6 @@ int ManagerImpl::getLocalIp2IpPort() const
 }
 
 //THREAD=Main
-bool ManagerImpl::getConfig(const std::string& section,
-                            const std::string& name, TokenList& arg) const
-{
-    return config_.getConfigTreeItemToken(section, name, arg);
-}
-
-//THREAD=Main
 int ManagerImpl::getConfigInt(const std::string& section,
                               const std::string& name) const
 {
@@ -2341,7 +2334,7 @@ bool ManagerImpl::getConfigBool(const std::string& section,
 
 //THREAD=Main
 std::string ManagerImpl::getConfigString(const std::string& section,
-        const std::string& name) const
+                                         const std::string& name) const
 {
     return config_.getConfigTreeItemValue(section, name);
 }

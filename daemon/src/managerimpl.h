@@ -739,16 +739,6 @@ class ManagerImpl {
         std::vector<std::string> getActiveCodecList() const;
 
         /**
-         * Retrieve in the configuration tree the value of a parameter in a specific section
-         * @param section	The section to look in
-         * @param name	The name of the parameter you want to get
-         * @param arg	Undocumented
-         * @return bool	true on success
-         *			false otherwise
-         */
-        bool getConfig(const std::string& section, const std::string& name, TokenList& arg) const;
-
-        /**
          * Change a specific value in the configuration tree.
          * This value will then be saved in the user config file sflphonedrc
          * @param section	The section name
