@@ -223,43 +223,6 @@ void ConfigTree::setConfigTreeItem(const std::string& section,
     return;
 }
 
-// Save config to a file (ini format)
-// return false if empty, no config, or enable to open
-// return true if everything is ok
-bool
-ConfigTree::saveConfigTree(const std::string& fileName) const
-{
-    DEBUG("ConfigTree: Save %s", fileName.c_str());
-
-    if (fileName.empty() and sections_.begin() == sections_.end())
-        return false;
-
-    std::fstream file;
-
-    file.open(fileName.data(), std::fstream::out);
-
-    if (!file.is_open()) {
-        ERROR("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
-        return false;
-    }
-
-    // for each section, for each item...
-    for (SectionMap::const_iterator iter = sections_.begin(); iter != sections_.end(); ++iter) {
-        file << "[" << iter->first << "]" << std::endl;
-        for (ItemMap::const_iterator iterItem = iter->second.begin(); iterItem != iter->second.end(); ++iterItem)
-            file << iterItem->first << "=" << iterItem->second.getValue() << std::endl;
-
-        file << std::endl;
-    }
-
-    file.close();
-
-    if (chmod(fileName.c_str(), S_IRUSR | S_IWUSR))
-        ERROR("ConfigTree: Error: Failed to set permission on configuration: %m");
-
-    return true;
-}
-
 // Create the tree from an existing ini file
 // false = error
 // true = OK

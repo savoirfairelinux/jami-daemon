@@ -133,11 +133,6 @@ class ConfigTree {
         bool getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName) const;
 
         /**
-         * Flush data to .ini file
-         */
-        bool saveConfigTree(const std::string& fileName) const;
-
-        /**
          * Load data (and fill ConfigTree) from disk
          */
         bool populateFromFile(const std::string& fileName);
