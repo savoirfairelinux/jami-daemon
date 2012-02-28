@@ -33,6 +33,7 @@
 #include "history.h"
 #include <cerrno>
 #include <algorithm>
+#include <fstream>
 #include <sys/stat.h> // for mkdir
 #include <ctime>
 #include "global.h"
