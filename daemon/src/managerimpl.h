@@ -132,7 +132,7 @@ class ManagerImpl {
          * Initialisation of thread (sound) and map.
          * Init a new VoIPLink, audio codec and audio driver
          */
-        void init(std::string config_file="");
+        void init(std::string config_file = "");
 
         /**
          * Terminate all thread (sound, link) and unload AccountMap
@@ -761,26 +761,6 @@ class ManagerImpl {
         void setConfig(const std::string& section, const std::string& name, int value);
 
         /**
-         * Get a int from the configuration tree
-         * Throw an Conf::ConfigTreeItemException if not found
-         * @param section The section name to look in
-         * @param name    The parameter name
-         * @return int    The int value
-         */
-
-        int getConfigInt(const std::string& section, const std::string& name) const;
-
-        /**
-           * Get a bool from the configuration tree
-           * Throw an Conf::ConfigTreeItemException if not found
-           * @param section The section name to look in
-           * @param name    The parameter name
-           * @return bool    The bool value
-           */
-
-        bool getConfigBool(const std::string& section, const std::string& name) const;
-
-        /**
          * Get a string from the configuration tree
          * Throw an Conf::ConfigTreeItemException if not found
          * @param section The section name to look in
@@ -896,8 +876,7 @@ class ManagerImpl {
         /**
          * Create config directory in home user and return configuration file path
          */
-        std::string getConfigFile() const;
-
+        std::string createConfigFile() const;
 
         /*
          * Initialize zeroconf module and scanning

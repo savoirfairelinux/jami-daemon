@@ -92,15 +92,10 @@ ManagerImpl::~ManagerImpl()
 
 void ManagerImpl::init(std::string config_file)
 {
-    if (config_file.empty())
-        config_file = getConfigFile();
-
-    path_ = config_file;
-
+    path_ = config_file.empty() ? createConfigFile() : config_file;
     DEBUG("Manager: configuration file path: %s", path_.c_str());
 
     Conf::YamlParser *parser = NULL;
-
     try {
         parser = new Conf::YamlParser(path_.c_str());
         parser->serializeEvents();
@@ -1782,14 +1777,14 @@ void ManagerImpl::ringtone(const std::string& accountID)
             else {
                 sfl::Codec *codec;
 
-            if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
-                codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
-            else
-                throw AudioFileException("Couldn't guess an appropriate decoder");
+                if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
+                    codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
+                else
+                    throw AudioFileException("Couldn't guess an appropriate decoder");
 
-            audiofile_ = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);
+                audiofile_ = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);
             }
-        } catch (AudioFileException &e) {
+        } catch (const AudioFileException &e) {
             ERROR("Manager: Exception: %s", e.what());
         }
     } // leave mutex
@@ -1799,8 +1794,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
     audiodriver_->startStream();
 }
 
-AudioLoop*
-ManagerImpl::getTelephoneTone()
+AudioLoop* ManagerImpl::getTelephoneTone()
 {
     if (telephoneTone_.get()) {
         ost::MutexLock m(toneMutex_);
@@ -1823,14 +1817,13 @@ ManagerImpl::getTelephoneFile()
 /**
  * Initialization: Main Thread
  */
-std::string ManagerImpl::getConfigFile() const
+std::string ManagerImpl::createConfigFile() const
 {
-    std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".config"
-                            + DIR_SEPARATOR_STR + PACKAGE;
+    std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
+                            ".config" + DIR_SEPARATOR_STR + PACKAGE;
 
     if (XDG_CONFIG_HOME != NULL) {
-        std::string xdg_env = std::string(XDG_CONFIG_HOME);
-
+        std::string xdg_env(XDG_CONFIG_HOME);
         if (not xdg_env.empty())
             configdir = xdg_env;
     }
@@ -2317,19 +2310,6 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 int ManagerImpl::getLocalIp2IpPort() const
 {
     return preferences.getPortNum();
-}
-
-//THREAD=Main
-int ManagerImpl::getConfigInt(const std::string& section,
-                              const std::string& name) const
-{
-    return config_.getConfigTreeItemIntValue(section, name);
-}
-
-bool ManagerImpl::getConfigBool(const std::string& section,
-                                const std::string& name) const
-{
-    return config_.getConfigTreeItemValue(section, name) == Conf::TRUE_STR;
 }
 
 //THREAD=Main
