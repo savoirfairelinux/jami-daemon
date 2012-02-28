@@ -70,7 +70,7 @@ class YamlNode {
 };
 
 
-class YamlDocument : YamlNode {
+class YamlDocument : public YamlNode {
     public:
         YamlDocument(YamlNode* top=NULL) : YamlNode(DOCUMENT, top), doc() {}
 

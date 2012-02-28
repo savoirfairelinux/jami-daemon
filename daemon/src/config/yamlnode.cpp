@@ -123,7 +123,7 @@ YamlNode *MappingNode::getValue(const std::string &key)
 
 void MappingNode::getValue(const std::string &key, bool *b)
 {
-    ScalarNode *node = (ScalarNode*)getValue(key);
+    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
 
     if (!node)
         return;
@@ -134,18 +134,16 @@ void MappingNode::getValue(const std::string &key, bool *b)
 
 void MappingNode::getValue(const std::string &key, int *i)
 {
-    ScalarNode *node = (ScalarNode*)getValue(key);
-
+    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
     if (!node)
         return;
 
-    const std::string &v = node->getValue();
-    *i = atoi(v.c_str());
+    *i = atoi(node->getValue().c_str());
 }
 
 void MappingNode::getValue(const std::string &key, std::string *v)
 {
-    ScalarNode *node = (ScalarNode*)getValue(key);
+    ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
 
     if (!node)
         return;
