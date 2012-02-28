@@ -228,25 +228,19 @@ void MainBuffer::unBindAll(const std::string & call_id)
 {
     CallIDSet* callid_set = getCallIDSet(call_id);
 
-    if (callid_set == NULL)
+    if (callid_set == NULL or callid_set->empty())
         return;
 
-    if (callid_set->empty())
-        return;
+    CallIDSet temp_set(*callid_set);
 
-    CallIDSet temp_set = *callid_set;
-
-    CallIDSet::iterator iter_set = temp_set.begin();
-
-    while (iter_set != temp_set.end()) {
-        std::string call_id_in_set = *iter_set;
+    for (CallIDSet::iterator iter_set = temp_set.begin();
+         iter_set != temp_set.end(); ++iter_set) {
+        std::string call_id_in_set(*iter_set);
         unBindCallID(call_id, call_id_in_set);
-
-        iter_set++;
     }
 }
 
-void MainBuffer::putData(void *buffer, int toCopy, const std::string & call_id)
+void MainBuffer::putData(void *buffer, int toCopy, const std::string &call_id)
 {
     ost::MutexLock guard(mutex_);
 
@@ -256,7 +250,7 @@ void MainBuffer::putData(void *buffer, int toCopy, const std::string & call_id)
         ring_buffer->Put(buffer, toCopy);
 }
 
-int MainBuffer::getData(void *buffer, int toCopy, const std::string & call_id)
+int MainBuffer::getData(void *buffer, int toCopy, const std::string &call_id)
 {
     ost::MutexLock guard(mutex_);
 
@@ -278,20 +272,17 @@ int MainBuffer::getData(void *buffer, int toCopy, const std::string & call_id)
 
         int size = 0;
 
-        CallIDSet::iterator iter_id = callid_set->begin();
-
-        while (iter_id != callid_set->end()) {
+        for (CallIDSet::iterator iter_id = callid_set->begin();
+             iter_id != callid_set->end(); ++iter_id) {
             int nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
             SFLDataFormat mixBuffer[nbSmplToCopy];
             memset(mixBuffer, 0, toCopy);
             size = getDataByID(mixBuffer, toCopy, *iter_id, call_id);
 
             if (size > 0) {
-                for (int k = 0; k < nbSmplToCopy; k++)
+                for (int k = 0; k < nbSmplToCopy; ++k)
                     ((SFLDataFormat*)(buffer))[k] += mixBuffer[k];
             }
-
-            iter_id++;
         }
 
         return size;
@@ -332,7 +323,7 @@ int MainBuffer::availForGet(const std::string & call_id)
 
         syncBuffers(call_id);
 
-        for (iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++) {
+        for (iter_id = callid_set->begin(); iter_id != callid_set->end(); ++iter_id) {
             nb_bytes = availForGetByID(*iter_id, call_id);
 
             if ((nb_bytes != 0) && (nb_bytes < avail_bytes))
@@ -343,10 +334,11 @@ int MainBuffer::availForGet(const std::string & call_id)
     }
 }
 
-int MainBuffer::availForGetByID(const std::string & call_id, const std::string & reader_id)
+int MainBuffer::availForGetByID(const std::string &call_id,
+                                const std::string &reader_id)
 {
     if ((call_id != Call::DEFAULT_ID) and (reader_id == call_id))
-        ERROR("MainBuffer: Error: RingBuffer has a readpointer on tiself");
+        ERROR("MainBuffer: Error: RingBuffer has a readpointer on itself");
 
     RingBuffer* ringbuffer = getRingBuffer(call_id);
 
@@ -358,7 +350,7 @@ int MainBuffer::availForGetByID(const std::string & call_id, const std::string &
 
 }
 
-int MainBuffer::discard(int toDiscard, const std::string & call_id)
+int MainBuffer::discard(int toDiscard, const std::string &call_id)
 {
     ost::MutexLock guard(mutex_);
 
@@ -367,7 +359,7 @@ int MainBuffer::discard(int toDiscard, const std::string & call_id)
     if (!callid_set or callid_set->empty())
         return 0;
 
-    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); iter++)
+    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); ++iter)
         discardByID(toDiscard, *iter, call_id);
 
     return toDiscard;
@@ -390,7 +382,7 @@ void MainBuffer::flush(const std::string & call_id)
     if (callid_set == NULL)
         return;
 
-    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); iter++)
+    for (CallIDSet::iterator iter = callid_set->begin(); iter != callid_set->end(); ++iter)
         flushByID(*iter, call_id);
 
 }
@@ -422,16 +414,17 @@ void MainBuffer::syncBuffers(const std::string & call_id)
 
     float mean_nbBytes = 0.0;
 
-    CallIDSet::iterator iter;
-
     // compute mean nb byte in buffers
-    for (iter = callid_set->begin(); iter != callid_set->end(); iter++)
+
+    for (CallIDSet::iterator iter = callid_set->begin();
+         iter != callid_set->end(); ++iter)
         mean_nbBytes += availForGetByID(*iter, call_id);
 
-    mean_nbBytes /= (float) callid_set->size();
+    mean_nbBytes /= static_cast<float>(callid_set->size());
 
     // resync buffers in this conference according to the computed mean
-    for (iter = callid_set->begin(); iter != callid_set->end(); iter++)
+    for (CallIDSet::iterator iter = callid_set->begin();
+         iter != callid_set->end(); ++iter)
         if (availForGetByID(*iter, call_id) > (mean_nbBytes + 640))
             discardByID(640, *iter, call_id);
 }
