@@ -37,8 +37,7 @@ Pattern::Pattern(const std::string& pattern, const std::string& options) :
     pattern_(pattern),
     subject_(),
     re_(NULL),
-    ovector_(NULL),
-    ovectorSize_(0),
+    ovector_(),
     count_(0),
     options_(0),
     optionsDescription_(options)
@@ -74,8 +73,6 @@ Pattern::~Pattern()
 {
     if (re_ != NULL)
         pcre_free(re_);
-
-    delete[] ovector_;
 }
 
 void Pattern::compile()
@@ -100,14 +97,10 @@ void Pattern::compile()
     // Allocate an appropriate amount
     // of memory for the output vector.
     int captureCount;
-
     pcre_fullinfo(re_, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
 
-    delete[] ovector_;
-
-    ovector_ = new int[(captureCount + 1) * 3];
-
-    ovectorSize_ = (captureCount + 1) * 3;
+    ovector_.clear();
+    ovector_.resize((captureCount + 1) * 3);
 }
 
 unsigned int Pattern::getCaptureGroupCount()
@@ -121,11 +114,7 @@ std::vector<std::string> Pattern::groups()
 {
     const char ** stringList;
 
-    pcre_get_substring_list(subject_.c_str(),
-                            ovector_,
-                            count_,
-                            &stringList);
-
+    pcre_get_substring_list(subject_.c_str(), &ovector_[0], count_, &stringList);
     std::vector<std::string> matchedSubstrings;
 
     for (int i = 1; stringList[i] != NULL; i++)
@@ -140,7 +129,7 @@ std::string Pattern::group(int groupNumber)
 {
     const char * stringPtr;
 
-    int rc = pcre_get_substring(subject_.substr(offset_[0]).c_str(), ovector_,
+    int rc = pcre_get_substring(subject_.substr(offset_[0]).c_str(), &ovector_[0],
                                 count_, groupNumber, &stringPtr);
 
     if (rc < 0) {
@@ -167,7 +156,7 @@ std::string Pattern::group(const std::string& groupName)
 {
     const char * stringPtr = NULL;
     int rc = pcre_get_named_substring(re_, subject_.substr(offset_[0]).c_str(),
-                                      ovector_, count_, groupName.c_str(),
+                                      &ovector_[0], count_, groupName.c_str(),
                                       &stringPtr);
 
     if (rc < 0) {
@@ -240,8 +229,8 @@ bool Pattern::matches(const std::string& subject)
 {
     // Try to find a match for this pattern
     int rc = pcre_exec(re_, NULL, subject.substr(offset_[1]).c_str(),
-                       subject.length() - offset_[1], 0, options_, ovector_,
-                       ovectorSize_);
+                       subject.length() - offset_[1], 0, options_, &ovector_[0],
+                       ovector_.size());
 
     // Matching failed.
     if (rc < 0) {

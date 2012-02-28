@@ -311,10 +311,7 @@ class Pattern {
         pcre * re_;
 
         // The internal output vector used by PCRE.
-        int * ovector_;
-
-        // The size of the ovector_
-        int ovectorSize_;
+        std::vector<int> ovector_;
 
         // Current offset in the ovector_;
         int offset_[2];
