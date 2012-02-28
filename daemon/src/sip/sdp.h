@@ -252,7 +252,7 @@ class Sdp {
          * Set the SRTP master_key
          * @param mk The Master Key of a srtp session.
          */
-        void setLocalSdpCrypto(const std::vector<std::string> lc) {
+        void setLocalSdpCrypto(const std::vector<std::string> &lc) {
             srtpCrypto_ = lc;
         }
 
