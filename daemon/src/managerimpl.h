@@ -1095,8 +1095,6 @@ class ManagerImpl {
 
         std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
 
-        int getLocalIp2IpPort() const;
-
         std::string getStunServer() const;
         void setStunServer(const std::string &server);
 

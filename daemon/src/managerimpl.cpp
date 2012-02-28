@@ -2307,11 +2307,6 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
         audiodriver_->startStream();
 }
 
-int ManagerImpl::getLocalIp2IpPort() const
-{
-    return preferences.getPortNum();
-}
-
 //THREAD=Main
 std::string ManagerImpl::getConfigString(const std::string& section,
                                          const std::string& name) const
