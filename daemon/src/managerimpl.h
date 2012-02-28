@@ -40,6 +40,7 @@
 #include <set>
 #include <map>
 #include <cc++/thread.h>
+#include <memory>
 #include "dbus/dbusmanager.h"
 
 #include "config/config.h"
@@ -940,8 +941,7 @@ class ManagerImpl {
         AudioLayer* audiodriver_;
 
         // Main thread
-
-        DTMF* dtmfKey_;
+        std::auto_ptr<DTMF> dtmfKey_;
 
         /////////////////////
         // Protected by Mutex

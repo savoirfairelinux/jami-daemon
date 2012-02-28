@@ -123,7 +123,7 @@ void ManagerImpl::init(std::string config_file)
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
             telephoneTone_ = new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate());
-            dtmfKey_ = new DTMF(8000);
+            dtmfKey_.reset(new DTMF(8000));
         }
     }
 
@@ -142,7 +142,6 @@ void ManagerImpl::terminate()
     unloadAccountMap();
 
     delete SIPVoIPLink::instance();
-    delete dtmfKey_;
     delete telephoneTone_;
     telephoneTone_ = NULL;
 
@@ -1308,7 +1307,7 @@ void ManagerImpl::playDtmf(char code)
     //                = number of seconds * SAMPLING_RATE by SECONDS
 
     // fast return, no sound, so no dtmf
-    if (audiodriver_ == NULL || dtmfKey_ == NULL) {
+    if (audiodriver_ == NULL || dtmfKey_.get() == 0) {
         DEBUG("Manager: playDtmf: Error no audio layer...");
         return;
     }
@@ -2314,8 +2313,7 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
     delete telephoneTone_;
     telephoneTone_ = new TelephoneTone(preferences.getZoneToneChoice(), sampleRate);
 
-    delete dtmfKey_;
-    dtmfKey_ = new DTMF(sampleRate);
+    dtmfKey_.reset(new DTMF(sampleRate));
 
     if (wasActive)
         audiodriver_->startStream();
