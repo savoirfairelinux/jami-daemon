@@ -568,30 +568,30 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
         return;
 
     DEBUG("Sink %u\n"
-           "    Name: %s\n"
-           "    Driver: %s\n"
-           "    Description: %s\n"
-           "    Sample Specification: %s\n"
-           "    Channel Map: %s\n"
-           "    Owner Module: %u\n"
-           "    Volume: %s\n"
-           "    Monitor Source: %u\n"
-           "    Latency: %0.0f usec\n"
-           "    Flags: %s%s%s\n",
-           i->index,
-           i->name,
-           i->driver,
-           i->description,
-           pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
-           pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
-           i->owner_module,
-           i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
-           i->monitor_source,
-           (double) i->latency,
-           i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-           i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
-           i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
+          "    Name: %s\n"
+          "    Driver: %s\n"
+          "    Description: %s\n"
+          "    Sample Specification: %s\n"
+          "    Channel Map: %s\n"
+          "    Owner Module: %u\n"
+          "    Volume: %s\n"
+          "    Monitor Source: %u\n"
+          "    Latency: %0.0f usec\n"
+          "    Flags: %s%s%s\n",
+          i->index,
+          i->name,
+          i->driver,
+          i->description,
+          pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+          pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+          i->owner_module,
+          i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+          i->monitor_source,
+          static_cast<double>(i->latency),
+          i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+          i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
+          i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-    ((PulseLayer *)userdata)->sinkList_.push_back(i->name);
+    static_cast<PulseLayer *>(userdata)->sinkList_.push_back(i->name);
 }
 
