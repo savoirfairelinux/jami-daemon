@@ -130,14 +130,11 @@ class ConfigTree {
          */
         std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName) const;
         int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) const;
-        bool getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName) const;
 
         /**
          * Load data (and fill ConfigTree) from disk
          */
         bool populateFromFile(const std::string& fileName);
-
-        bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, std::list<std::string>& arg) const;
 
     private:
         std::string getDefaultValue(const std::string& key) const;

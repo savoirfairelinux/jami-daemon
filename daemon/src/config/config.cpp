@@ -142,30 +142,6 @@ ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::str
     return retval;
 }
 
-bool
-ConfigTree::getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName) const
-{
-    return getConfigTreeItemValue(section, itemName) == "true";
-}
-
-bool
-ConfigTree::getConfigTreeItemToken(const std::string& section, const std::string& itemName, std::list<std::string>& arg) const
-{
-    const ConfigTreeItem *item = getConfigTreeItem(section, itemName);
-
-    if (item) {
-        arg.clear();
-        arg.push_back(section);
-        arg.push_back(itemName);
-        arg.push_back(item->getType());
-        arg.push_back(item->getValue());
-        arg.push_back(item->getDefaultValue());
-        return true;
-    }
-    else
-        return false;
-}
-
 /**
  * Return a ConfigTreeItem or NULL if not found
  */
