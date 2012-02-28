@@ -44,14 +44,11 @@
 
 #include "manager.h"
 
-RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate)
-    : audioCodec_(codec)
+RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
+    : AudioFile(name), audioCodec_(codec)
 {
-    filepath_ = name;
-
     if (filepath_.empty())
         throw AudioFileException("Unable to open audio file: filename is empty");
-
 
     std::fstream file;
     file.open(filepath_.c_str(), std::fstream::in);
@@ -114,14 +111,13 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
 }
 
 
-WaveFile::WaveFile(const std::string& fileName, int newRate)
+WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileName)
 {
     const std::fstream fs(fileName.c_str(), std::ios_base::in);
 
     if (!fs)
         throw AudioFileException("File " + fileName + " doesn't exist");
 
-    filepath_ = fileName;
     std::fstream fileStream;
     fileStream.open(fileName.c_str(), std::ios::in | std::ios::binary);
 
