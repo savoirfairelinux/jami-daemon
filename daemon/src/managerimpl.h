@@ -947,7 +947,7 @@ class ManagerImpl {
         // Protected by Mutex
         /////////////////////
         ost::Mutex toneMutex_;
-        TelephoneTone* telephoneTone_;
+        std::auto_ptr<TelephoneTone> telephoneTone_;
         AudioFile *audiofile_;
 
         // To handle volume control

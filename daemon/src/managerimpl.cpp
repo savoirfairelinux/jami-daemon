@@ -71,11 +71,11 @@
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(), currentCallId_(),
-    currentCallMutex_(), audiodriver_(0), dtmfKey_(0), toneMutex_(),
-    telephoneTone_(0), audiofile_(0), audioLayerMutex_(), waitingCall_(), waitingCallMutex_(),
-    nbIncomingWaitingCall_(0), path_(), callAccountMap_(),
-    callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
+    hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(),
+    currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(0),
+    toneMutex_(), telephoneTone_(0), audiofile_(0), audioLayerMutex_(),
+    waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
+    callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
     mainBuffer_(), conferenceMap_(), history_(new History),
     imModule_(new sfl::InstantMessaging)
 {
@@ -121,7 +121,7 @@ void ManagerImpl::init(std::string config_file)
     {
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
-            telephoneTone_ = new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate());
+            telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
             dtmfKey_.reset(new DTMF(8000));
         }
     }
@@ -141,8 +141,6 @@ void ManagerImpl::terminate()
     unloadAccountMap();
 
     delete SIPVoIPLink::instance();
-    delete telephoneTone_;
-    telephoneTone_ = NULL;
 
     ost::MutexLock lock(audioLayerMutex_);
 
@@ -1672,7 +1670,7 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
         audiodriver_->startStream();
     }
 
-    if (telephoneTone_ != 0) {
+    if (telephoneTone_.get() != 0) {
         ost::MutexLock lock(toneMutex_);
         telephoneTone_->setCurrentTone(toneId);
     }
@@ -1688,7 +1686,7 @@ void ManagerImpl::stopTone()
 
     ost::MutexLock lock(toneMutex_);
 
-    if (telephoneTone_ != NULL)
+    if (telephoneTone_.get() != NULL)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
 
     if (audiofile_) {
@@ -1804,7 +1802,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
 AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
-    if (telephoneTone_) {
+    if (telephoneTone_.get()) {
         ost::MutexLock m(toneMutex_);
         return telephoneTone_->getCurrentTone();
     } else
@@ -2309,9 +2307,7 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     unsigned int sampleRate = audiodriver_->getSampleRate();
 
-    delete telephoneTone_;
-    telephoneTone_ = new TelephoneTone(preferences.getZoneToneChoice(), sampleRate);
-
+    telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
     dtmfKey_.reset(new DTMF(sampleRate));
 
     if (wasActive)
