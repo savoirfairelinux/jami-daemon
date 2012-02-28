@@ -87,7 +87,6 @@ ManagerImpl::ManagerImpl() :
 ManagerImpl::~ManagerImpl()
 {
     delete imModule_;
-    delete history_;
     delete audiofile_;
 }
 

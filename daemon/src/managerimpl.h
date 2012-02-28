@@ -1150,7 +1150,7 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        History *history_;
+        std::auto_ptr<History> history_;
 
         /**
          * Instant messaging module, resposible to initiate, format, parse,
