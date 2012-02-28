@@ -275,7 +275,10 @@ class SIPVoIPLink : public VoIPLink {
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
-        void sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        void sendTextMessage(sfl::InstantMessaging &module,
+                             const std::string& callID,
+                             const std::string& message,
+                             const std::string& from);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings

@@ -50,7 +50,7 @@ typedef std::map<std::string, Call*> CallMap;
 
 class VoipLinkException : public std::runtime_error {
     public:
-        VoipLinkException(const std::string& str = "") :
+        VoipLinkException(const std::string &str = "") :
             std::runtime_error("UserAgent: VoipLinkException occured: " + str) {}
 };
 
@@ -93,7 +93,8 @@ class VoIPLink {
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl) = 0;
+        virtual Call* newOutgoingCall(const std::string &id,
+                                      const std::string &toUrl) = 0;
 
         /**
          * Answer the call
@@ -105,34 +106,34 @@ class VoIPLink {
          * Hang up a call
          * @param id The call identifier
          */
-        virtual void hangup(const std::string& id) = 0;
+        virtual void hangup(const std::string &id) = 0;
 
         /**
         * Peer Hung up a call
         * @param id The call identifier
         */
-        virtual void peerHungup(const std::string& id) = 0;
+        virtual void peerHungup(const std::string &id) = 0;
 
         /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual void onhold(const std::string& id) = 0;
+        virtual void onhold(const std::string &id) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual void offhold(const std::string& id) = 0;
+        virtual void offhold(const std::string &id) = 0;
 
         /**
          * Transfer a call to specified URI
          * @param id The call identifier
          * @param to The recipient of the call
          */
-        virtual void transfer(const std::string& id, const std::string& to) = 0;
+        virtual void transfer(const std::string &id, const std::string &to) = 0;
 
         /**
          * Attended transfer
@@ -146,14 +147,14 @@ class VoIPLink {
          * Refuse incoming call
          * @param id The call identifier
          */
-        virtual void refuse(const std::string& id) = 0;
+        virtual void refuse(const std::string &id) = 0;
 
         /**
          * Send DTMF
          * @param id The call identifier
          * @param code  The char code
          */
-        virtual void carryingDTMFdigits(const std::string& id, char code) = 0;
+        virtual void carryingDTMFdigits(const std::string &id, char code) = 0;
 
         /**
          * Return the codec protocol used for this call
@@ -169,7 +170,10 @@ class VoIPLink {
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
-        virtual void sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from) = 0;
+        virtual void sendTextMessage(sfl::InstantMessaging &module,
+                                     const std::string &callID,
+                                     const std::string &message,
+                                     const std::string &from) = 0;
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer
@@ -182,7 +186,7 @@ class VoIPLink {
          * @param id A Call ID
          * @return Call*  Call pointer or 0
          */
-        Call* getCall(const std::string& id);
+        Call* getCall(const std::string &id);
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */
@@ -194,7 +198,7 @@ class VoIPLink {
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID
          */
-        void removeCall(const std::string& id);
+        void removeCall(const std::string &id);
 };
 
 #endif // __VOIP_LINK_H__

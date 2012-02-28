@@ -85,10 +85,7 @@ ManagerImpl::ManagerImpl() :
 
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl()
-{
-    delete imModule_;
-    delete audiofile_;
-}
+{}
 
 void ManagerImpl::init(std::string config_file)
 {
@@ -1424,7 +1421,7 @@ void ManagerImpl::incomingMessage(const std::string& callID,
                 return;
             }
 
-            account->getVoIPLink()->sendTextMessage(imModule_, callID, message, from);
+            account->getVoIPLink()->sendTextMessage(*imModule_, callID, message, from);
         }
 
         // in case of a conference we must notify client using conference id
@@ -1464,7 +1461,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(imModule_, *iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(*imModule_, *iter_p, message, from);
         }
 
         return true;
@@ -1491,7 +1488,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(imModule_, *iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(*imModule_, *iter_p, message, from);
         }
     } else {
         Account *account = getAccount(getAccountFromCall(callID));
@@ -1501,7 +1498,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
             return false;
         }
 
-        account->getVoIPLink()->sendTextMessage(imModule_, callID, message, from);
+        account->getVoIPLink()->sendTextMessage(*imModule_, callID, message, from);
     }
 
     return true;
@@ -1684,11 +1681,10 @@ void ManagerImpl::stopTone()
     if (telephoneTone_.get() != NULL)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
 
-    if (audiofile_) {
+    if (audiofile_.get()) {
         std::string filepath(audiofile_->getFilePath());
         dbus_.getCallManager()->recordPlaybackStopped(filepath);
-        delete audiofile_;
-        audiofile_ = NULL;
+        audiofile_.reset(0);
     }
 }
 
@@ -1765,24 +1761,22 @@ void ManagerImpl::ringtone(const std::string& accountID)
     {
         ost::MutexLock m(toneMutex_);
 
-        if (audiofile_) {
+        if (audiofile_.get()) {
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
-            delete audiofile_;
-            audiofile_ = NULL;
+            audiofile_.reset(0);
         }
 
         try {
             if (ringchoice.find(".wav") != std::string::npos)
-                audiofile_ = new WaveFile(ringchoice, samplerate);
+                audiofile_.reset(new WaveFile(ringchoice, samplerate));
             else {
                 sfl::Codec *codec;
-
                 if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
                     codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
                 else
                     throw AudioFileException("Couldn't guess an appropriate decoder");
 
-                audiofile_ = new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate);
+                audiofile_.reset(new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate));
             }
         } catch (const AudioFileException &e) {
             ERROR("Manager: Exception: %s", e.what());
@@ -1807,8 +1801,7 @@ AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
     ost::MutexLock m(toneMutex_);
-
-    return audiofile_;
+    return audiofile_.get();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2102,14 +2095,13 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     {
         ost::MutexLock m(toneMutex_);
 
-        if (audiofile_) {
+        if (audiofile_.get()) {
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
-            delete audiofile_;
-            audiofile_ = NULL;
+            audiofile_.reset(0);
         }
 
         try {
-            audiofile_ = new WaveFile(filepath, sampleRate);
+            audiofile_.reset(new WaveFile(filepath, sampleRate));
         } catch (const AudioFileException &e) {
             ERROR("Manager: Exception: %s", e.what());
         }
@@ -2133,8 +2125,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 
     {
         ost::MutexLock m(toneMutex_);
-        delete audiofile_;
-        audiofile_ = NULL;
+        audiofile_.reset(0);
     }
 }
 

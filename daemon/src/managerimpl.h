@@ -97,7 +97,6 @@ class ManagerImpl {
         ManagerImpl();
         ~ManagerImpl();
 
-
         /**
          * General preferences configuration
          */
@@ -917,7 +916,7 @@ class ManagerImpl {
         /////////////////////
         ost::Mutex toneMutex_;
         std::auto_ptr<TelephoneTone> telephoneTone_;
-        AudioFile *audiofile_;
+        std::auto_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
@@ -1043,8 +1042,8 @@ class ManagerImpl {
         /**
          * Return a pointer to the instance of InstantMessaging
          */
-        sfl::InstantMessaging *getInstantMessageModule() {
-            return imModule_;
+        sfl::InstantMessaging &getInstantMessageModule() {
+            return *imModule_;
         }
 
         /**
@@ -1123,7 +1122,7 @@ class ManagerImpl {
          * Instant messaging module, resposible to initiate, format, parse,
          * send, and receive instant messages.
          */
-        sfl::InstantMessaging *imModule_;
+        std::auto_ptr<sfl::InstantMessaging> imModule_;
 };
 
 #endif // __MANAGER_H__

@@ -396,7 +396,7 @@ IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 }
 
 void
-IAXVoIPLink::sendTextMessage(sfl::InstantMessaging *module,
+IAXVoIPLink::sendTextMessage(sfl::InstantMessaging &module,
                              const std::string& callID,
                              const std::string& message,
                              const std::string& /*from*/)
@@ -404,9 +404,8 @@ IAXVoIPLink::sendTextMessage(sfl::InstantMessaging *module,
     IAXCall* call = getIAXCall(callID);
 
     if (call) {
-        mutexIAX_.enter();
-        module->send_iax_message(call->session, callID, message.c_str());
-        mutexIAX_.leave();
+        ost::MutexLock lock(mutexIAX_);
+        module.send_iax_message(call->session, callID, message.c_str());
     }
 }
 

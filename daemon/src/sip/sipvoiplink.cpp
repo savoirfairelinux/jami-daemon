@@ -37,7 +37,6 @@
 #endif
 
 #include "sipvoiplink.h"
-
 #include "manager.h"
 
 #include "sip/sdp.h"
@@ -675,7 +674,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
     SIPCall* call = new SIPCall(id, Call::OUTGOING, cp_);
 
-    // If toUri is not a well formated sip URI, use account information to process it
+    // If toUri is not a well formatted sip URI, use account information to process it
     std::string toUri;
 
     if (toUrl.find("sip:") != std::string::npos or
@@ -875,8 +874,10 @@ SIPVoIPLink::offhold(const std::string& id)
         call->setState(Call::ACTIVE);
 }
 
-void
-SIPVoIPLink::sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from)
+void SIPVoIPLink::sendTextMessage(sfl::InstantMessaging &module,
+                                  const std::string &callID,
+                                  const std::string &message,
+                                  const std::string &from)
 {
     SIPCall *call;
 
@@ -890,10 +891,8 @@ SIPVoIPLink::sendTextMessage(sfl::InstantMessaging *module, const std::string& c
     sfl::InstantMessaging::UriList list;
     sfl::InstantMessaging::UriEntry entry;
     entry[sfl::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
-
     list.push_front(entry);
-
-    module->send_sip_message(call->inv, callID, module->appendUriList(message, list));
+    module.send_sip_message(call->inv, callID, module.appendUriList(message, list));
 }
 
 bool
@@ -1833,7 +1832,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
 
     // Get the message inside the transaction
     pjsip_rx_data *r_data = e->body.tsx_state.src.rdata;
-    std::string formatedMessage = (char*) r_data->msg_info.msg->body->data;
+    std::string formattedMessage(static_cast<char*>(r_data->msg_info.msg->body->data));
 
     // Try to determine who is the recipient of the message
     SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
@@ -1845,12 +1844,12 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
     pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
     pjsip_dlg_send_response(inv->dlg, tsx, t_data);
 
-    sfl::InstantMessaging *module = Manager::instance().getInstantMessageModule();
+    sfl::InstantMessaging &module = Manager::instance().getInstantMessageModule();
 
     try {
         // retreive the recipient-list of this message
-        std::string urilist = module->findTextUriList(formatedMessage);
-        sfl::InstantMessaging::UriList list = module->parseXmlUriList(urilist);
+        std::string urilist = module.findTextUriList(formattedMessage);
+        sfl::InstantMessaging::UriList list = module.parseXmlUriList(urilist);
 
         // If no item present in the list, peer is considered as the sender
         std::string from;
@@ -1868,7 +1867,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
         if (from[0] == '<' && from[from.size()-1] == '>')
             from = from.substr(1, from.size()-2);
 
-        Manager::instance().incomingMessage(call->getCallId(), from, module->findTextMessage(formatedMessage));
+        Manager::instance().incomingMessage(call->getCallId(), from, module.findTextMessage(formattedMessage));
 
     } catch (const sfl::InstantMessageException &except) {
         ERROR("SipVoipLink: %s", except.what());
