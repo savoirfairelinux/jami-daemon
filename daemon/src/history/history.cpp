@@ -40,23 +40,11 @@
 #include "logger.h"
 #include "call.h"
 
-namespace {
-    int oldestAllowed(int days)
-    {
-        time_t currentTimestamp;
-        time(&currentTimestamp);
-        // Number of seconds in one day: 60 sec/min x 60 min/hr x 24hr/day
-        static const int DAY_UNIX_TIMESTAMP = 60 * 60 * 24;
-        return static_cast<int>(currentTimestamp) - (days * DAY_UNIX_TIMESTAMP);
-    }
+using std::map;
+using std::string;
+using std::vector;
 
-    using std::map;
-    using std::string;
-    using std::vector;
-}
-
-History::History() :
-    items_(), path_("")
+History::History() : items_(), path_("")
 {}
 
 bool History::load(int limit)
