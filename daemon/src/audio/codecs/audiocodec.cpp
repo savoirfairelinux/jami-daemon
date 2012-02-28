@@ -62,11 +62,6 @@ void AudioCodec::init(uint8 payloadType, uint32 clockRate)
     hasDynamicPayload_ = ((payload_ >= 96 and payload_ <= 127) or payload_ == 9);
 }
 
-std::string AudioCodec::getMimeType() const
-{
-    return "audio";
-}
-
 std::string AudioCodec::getMimeSubtype() const
 {
     return codecName_;

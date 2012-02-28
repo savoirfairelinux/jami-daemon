@@ -63,11 +63,6 @@ class AudioCodec : public Codec {
         /**
          * @Override
          */
-        std::string getMimeType() const;
-
-        /**
-         * @Override
-         */
         std::string getMimeSubtype() const;
 
         /**
