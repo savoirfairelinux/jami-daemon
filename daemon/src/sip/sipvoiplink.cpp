@@ -1635,7 +1635,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
 
 void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 {
-    SIPCall *call = (SIPCall*) inv->mod_data[mod_ua_.id ];
+    SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id ]);
 
     if (!call)
         return;
@@ -1761,7 +1761,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
         std::string accountID = Manager::instance().getAccountFromCall(call->getCallId());
 
-        if (((SIPAccount *) Manager::instance().getAccount(accountID))->getSrtpFallback())
+        if (dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID))->getSrtpFallback())
             call->getAudioRtp().initAudioSymmetricRtpSession();
     }
 
