@@ -97,11 +97,6 @@ unsigned AudioCodec::getFrameSize() const
     return frameSize_;
 }
 
-uint8 AudioCodec::getChannel() const
-{
-    return channel_;
-}
-
 double AudioCodec::getBitRate() const
 {
     return bitrate_;

@@ -124,11 +124,6 @@ class AudioCodec : public Codec {
         uint32 getClockRate() const;
 
         /**
-         * @return the number of audio channels.
-         */
-        uint8 getChannel() const;
-
-        /**
          * @Override
          */
         double getBitRate() const;
