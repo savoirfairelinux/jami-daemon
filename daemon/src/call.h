@@ -202,10 +202,6 @@ class Call : public Recordable {
          */
         unsigned int getLocalAudioPort();
 
-        std::string getRecFileId() const {
-            return getDisplayName();
-        }
-
         void time_stop();
         std::map<std::string, std::string> createHistoryEntry() const;
         virtual bool setRecording();

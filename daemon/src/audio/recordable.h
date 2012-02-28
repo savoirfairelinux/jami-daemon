@@ -75,12 +75,6 @@ class Recordable {
          */
         void setRecordingSmplRate(int smplRate);
 
-        /**
-         * Virtual method to be implemented in order to the main
-         * buffer to retrieve the recorded id.
-         */
-        virtual std::string getRecFileId() const = 0;
-
     protected:
         AudioRecord recAudio_;
         AudioRecorder recorder_;

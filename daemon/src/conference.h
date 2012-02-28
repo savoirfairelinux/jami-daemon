@@ -87,11 +87,6 @@ class Conference : public Recordable {
         ParticipantSet getParticipantList() const;
 
         /**
-         * Get recording file ID
-         */
-        std::string getRecFileId() const;
-
-        /**
          * Start/stop recording toggle
          */
         virtual bool setRecording();
