@@ -72,11 +72,6 @@ void AudioRecord::setSndSamplingRate(int smplRate)
     sndSmplRate_ = smplRate;
 }
 
-int AudioRecord::getSndSamplingRate() const
-{
-    return sndSmplRate_;
-}
-
 void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path)
 {
     fileType_ = type;

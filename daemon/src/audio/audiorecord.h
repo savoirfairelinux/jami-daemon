@@ -46,11 +46,6 @@ class AudioRecord {
         AudioRecord();
 
         void setSndSamplingRate(int smplRate);
-        /**
-         * Get the recrding sampling rate
-         */
-        int getSndSamplingRate() const;
-
         void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
 
         /**
