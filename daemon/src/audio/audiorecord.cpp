@@ -256,34 +256,26 @@ bool AudioRecord::setWavFile()
         return false;
     }
 
-    struct wavhdr hdr = {"RIF", 44, "WAV", "fmt", 16, 1, 1,
-        sndSmplRate_, 0, 2, 16, "dat", 0
-    };
-
-    hdr.riff[3] = 'F';
-
-    hdr.wave[3] = 'E';
-
-    hdr.fmt[3]  = ' ';
-
-    hdr.data[3] = 'a';
+    /* The text fields are NOT supposed to be null terminated, so we have to
+     * write them as arrays since strings enclosed in quotes include a
+     * null character */
+    wavhdr hdr = {{'R', 'I', 'F', 'F'}, 44, {'W', 'A', 'V', 'E'},
+                  {'f','m', 't', ' '}, 16, 1, 1, sndSmplRate_, 0, 2, 16,
+                  {'d', 'a', 't', 'a'}, 0};
 
     hdr.num_chans = channels_;
-
     hdr.bits_per_samp = 16;
-
-    hdr.bytes_per_samp = (SINT16)(channels_ * hdr.bits_per_samp / 8);
-
-    hdr.bytes_per_sec = (SINT32)(hdr.sample_rate * hdr.bytes_per_samp);
-
+    hdr.bytes_per_samp = static_cast<SINT16>(channels_ * hdr.bits_per_samp / 8);
+    hdr.bytes_per_sec = static_cast<SINT32>(hdr.sample_rate * hdr.bytes_per_samp);
 
     if (fwrite(&hdr, 4, 11, fileHandle_) != 11) {
         WARN("AudioRecord: Error: could not write WAV header for file. ");
         return false;
     }
 
-    DEBUG("AudioRecord: created WAV file successfully.");
-
+    DEBUG("AudioRecord: created WAV file successfully, file size=%d,"
+          "chunk size=%d, fmt=%d, data length=%d", hdr.file_size,
+          hdr.chunk_size, hdr.format_tag, hdr.data_length);
     return true;
 }
 
