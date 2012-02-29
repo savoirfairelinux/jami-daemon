@@ -198,12 +198,12 @@ void ConfigurationTest::testYamlEmitter()
     ScalarNode user2("john");
     ScalarNode pass2("doe");
     ScalarNode realm2("fbi");
-    credmap1.setKeyValue(USERNAME, &user1);
-    credmap1.setKeyValue(PASSWORD, &pass1);
-    credmap1.setKeyValue(REALM, &realm1);
-    credmap2.setKeyValue(USERNAME, &user2);
-    credmap2.setKeyValue(PASSWORD, &pass2);
-    credmap2.setKeyValue(REALM, &realm2);
+    credmap1.setKeyValue(CONFIG_ACCOUNT_USERNAME, &user1);
+    credmap1.setKeyValue(CONFIG_ACCOUNT_PASSWORD, &pass1);
+    credmap1.setKeyValue(CONFIG_ACCOUNT_REALM, &realm1);
+    credmap2.setKeyValue(CONFIG_ACCOUNT_USERNAME, &user2);
+    credmap2.setKeyValue(CONFIG_ACCOUNT_PASSWORD, &pass2);
+    credmap2.setKeyValue(CONFIG_ACCOUNT_REALM, &realm2);
     credentialseq.addNode(&credmap1);
     credentialseq.addNode(&credmap2);
 
