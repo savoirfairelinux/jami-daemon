@@ -396,8 +396,7 @@ IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 }
 
 void
-IAXVoIPLink::sendTextMessage(sfl::InstantMessaging &module,
-                             const std::string& callID,
+IAXVoIPLink::sendTextMessage(const std::string& callID,
                              const std::string& message,
                              const std::string& /*from*/)
 {
@@ -405,10 +404,9 @@ IAXVoIPLink::sendTextMessage(sfl::InstantMessaging &module,
 
     if (call) {
         ost::MutexLock lock(mutexIAX_);
-        module.send_iax_message(call->session, callID, message.c_str());
+        sfl::InstantMessaging::send_iax_message(call->session, callID, message.c_str());
     }
 }
-
 
 std::string
 IAXVoIPLink::getCurrentCodecName(Call *c) const
@@ -417,7 +415,6 @@ IAXVoIPLink::getCurrentCodecName(Call *c) const
     sfl::Codec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
     return audioCodec ? audioCodec->getMimeSubtype() : "";
 }
-
 
 void
 IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)

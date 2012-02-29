@@ -55,13 +55,9 @@
 #include "preferences.h"
 #include "noncopyable.h"
 
-namespace sfl {
-class InstantMessaging;
-}
-
 namespace Conf {
-class YamlParser;
-class YamlEmitter;
+    class YamlParser;
+    class YamlEmitter;
 }
 
 class DTMF;
@@ -1037,13 +1033,6 @@ class ManagerImpl {
         }
 
         /**
-         * Return a pointer to the instance of InstantMessaging
-         */
-        sfl::InstantMessaging &getInstantMessageModule() {
-            return *imModule_;
-        }
-
-        /**
          * Tell if there is a current call processed
          * @return bool True if there is a current call
          */
@@ -1114,12 +1103,5 @@ class ManagerImpl {
           * TODO: move this to ConfigurationManager
           */
         std::auto_ptr<History> history_;
-
-        /**
-         * Instant messaging module, resposible to initiate, format, parse,
-         * send, and receive instant messages.
-         */
-        std::auto_ptr<sfl::InstantMessaging> imModule_;
 };
-
 #endif // __MANAGER_H__

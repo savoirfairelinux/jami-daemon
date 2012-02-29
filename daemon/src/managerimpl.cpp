@@ -81,8 +81,7 @@ ManagerImpl::ManagerImpl() :
     toneMutex_(), telephoneTone_(0), audiofile_(0), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
     callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
-    mainBuffer_(), conferenceMap_(), history_(new History),
-    imModule_(new sfl::InstantMessaging)
+    mainBuffer_(), conferenceMap_(), history_(new History)
 {
     // initialize random generator for call id
     srand(time(NULL));
@@ -1419,7 +1418,7 @@ void ManagerImpl::incomingMessage(const std::string& callID,
                 return;
             }
 
-            account->getVoIPLink()->sendTextMessage(*imModule_, callID, message, from);
+            account->getVoIPLink()->sendTextMessage(callID, message, from);
         }
 
         // in case of a conference we must notify client using conference id
@@ -1459,7 +1458,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(*imModule_, *iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(*iter_p, message, from);
         }
 
         return true;
@@ -1486,7 +1485,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
                 return false;
             }
 
-            account->getVoIPLink()->sendTextMessage(*imModule_, *iter_p, message, from);
+            account->getVoIPLink()->sendTextMessage(*iter_p, message, from);
         }
     } else {
         Account *account = getAccount(getAccountFromCall(callID));
@@ -1496,7 +1495,7 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
             return false;
         }
 
-        account->getVoIPLink()->sendTextMessage(*imModule_, callID, message, from);
+        account->getVoIPLink()->sendTextMessage(callID, message, from);
     }
 
     return true;

@@ -41,10 +41,6 @@
 class Call;
 class Account;
 
-namespace sfl {
-class InstantMessaging;
-};
-
 /** Define a map that associate a Call object to a call identifier */
 typedef std::map<std::string, Call*> CallMap;
 
@@ -165,13 +161,11 @@ class VoIPLink {
         /**
          * Send a message to a call identified by its callid
          *
-         * @param The InstantMessaging module which contains formating, parsing and sending method
          * @param The Id of the call to send the message to
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
-        virtual void sendTextMessage(sfl::InstantMessaging &module,
-                                     const std::string &callID,
+        virtual void sendTextMessage(const std::string &callID,
                                      const std::string &message,
                                      const std::string &from) = 0;
 
