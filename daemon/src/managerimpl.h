@@ -996,9 +996,13 @@ class ManagerImpl {
         AccountMap accountMap_;
 
         /**
-         * Load the account from configuration
+         * Load the account map from configuration
          */
-        void loadAccountMap(Conf::YamlParser *parser);
+        void loadAccountMap(Conf::YamlParser &parser);
+        /**
+         * Load default account map (no configuration)
+         */
+        void loadDefaultAccountMap();
 
         /**
          * Unload the account (delete them)

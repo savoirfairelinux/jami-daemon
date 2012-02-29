@@ -62,6 +62,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
+#include <algorithm>
 #include <iterator>
 #include <fstream>
 #include <sstream>
@@ -92,21 +93,17 @@ void ManagerImpl::init(std::string config_file)
     path_ = config_file.empty() ? createConfigFile() : config_file;
     DEBUG("Manager: configuration file path: %s", path_.c_str());
 
-    Conf::YamlParser *parser = NULL;
     try {
-        parser = new Conf::YamlParser(path_.c_str());
-        parser->serializeEvents();
-        parser->composeEvents();
-        parser->constructNativeData();
+        Conf::YamlParser parser(path_.c_str());
+        parser.serializeEvents();
+        parser.composeEvents();
+        parser.constructNativeData();
+        loadAccountMap(parser);
     } catch (const Conf::YamlParserException &e) {
         ERROR("Manager: %s", e.what());
         fflush(stderr);
-        delete parser;
-        parser = NULL;
+        loadDefaultAccountMap();
     }
-
-    loadAccountMap(parser);
-    delete parser;
 
     initAudioDriver();
 
@@ -2568,26 +2565,35 @@ std::vector<std::string> ManagerImpl::loadAccountOrder() const
     return unserialize(preferences.getAccountOrder());
 }
 
-void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
+void ManagerImpl::loadDefaultAccountMap()
 {
     // build a default IP2IP account with default parameters
-    Account *ip2ip = new SIPAccount(IP2IP_PROFILE);
-    accountMap_[IP2IP_PROFILE] = ip2ip;
+    accountMap_[IP2IP_PROFILE] = new SIPAccount(IP2IP_PROFILE);
+    SIPVoIPLink::instance()->createDefaultSipUdpTransport();
+    accountMap_[IP2IP_PROFILE]->registerVoIPLink();
+}
 
-    // If configuration file parsed, load saved preferences
-    if (parser) {
-        Conf::Sequence *seq = parser->getAccountSequence()->getSequence();
+namespace {
+    bool hasIP2IPAccountID(Conf::YamlNode *node)
+    {
+        std::string id;
+        dynamic_cast<Conf::MappingNode *>(node)->getValue("id", &id);
+        return id == "IP2IP";
+    }
+}
 
-        for (Conf::Sequence::const_iterator iter = seq->begin(); iter != seq->end(); ++iter) {
-            Conf::MappingNode *map = (Conf::MappingNode *)(*iter);
-            std::string accountid;
-            map->getValue("id", &accountid);
+void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
+{
+    using namespace Conf;
+    // build a default IP2IP account with default parameters
+    accountMap_[IP2IP_PROFILE] = new SIPAccount(IP2IP_PROFILE);
 
-            if (accountid == "IP2IP") {
-                ip2ip->unserialize(map);
-                break;
-            }
-        }
+    // load saved preferences for IP2IP account from configuration file
+    Sequence *seq = parser.getAccountSequence()->getSequence();
+    Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), hasIP2IPAccountID);
+    if (ip2ip != seq->end()) {
+        MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
+        accountMap_[IP2IP_PROFILE]->unserialize(node);
     }
 
     // Initialize default UDP transport according to
@@ -2596,39 +2602,32 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
 
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
-    ip2ip->registerVoIPLink();
-
-    if (!parser)
-        return;
+    accountMap_[IP2IP_PROFILE]->registerVoIPLink();
 
     // build preferences
-    preferences.unserialize(parser->getPreferenceNode());
-    voipPreferences.unserialize(parser->getVoipPreferenceNode());
-    addressbookPreference.unserialize(parser->getAddressbookNode());
-    hookPreference.unserialize(parser->getHookNode());
-    audioPreference.unserialize(parser->getAudioNode());
-    shortcutPreferences.unserialize(parser->getShortcutNode());
-
-    Conf::Sequence *seq = parser->getAccountSequence()->getSequence();
+    preferences.unserialize(parser.getPreferenceNode());
+    voipPreferences.unserialize(parser.getVoipPreferenceNode());
+    addressbookPreference.unserialize(parser.getAddressbookNode());
+    hookPreference.unserialize(parser.getHookNode());
+    audioPreference.unserialize(parser.getAudioNode());
+    shortcutPreferences.unserialize(parser.getShortcutNode());
 
     // Each element in sequence is a new account to create
-    for (Conf::Sequence::const_iterator iter = seq->begin(); iter != seq->end(); ++iter) {
-        Conf::MappingNode *map = (Conf::MappingNode *)(*iter);
-
+    for (Sequence::const_iterator iter = seq->begin(); iter != seq->end(); ++iter) {
+        MappingNode *node = dynamic_cast<MappingNode *>(*iter);
         std::string accountType;
-        map->getValue("type", &accountType);
+        node->getValue("type", &accountType);
 
         std::string accountid;
-        map->getValue("id", &accountid);
+        node->getValue("id", &accountid);
 
         std::string accountAlias;
-        map->getValue("alias", &accountAlias);
+        node->getValue("alias", &accountAlias);
 
         if (accountid.empty() or accountAlias.empty() or accountid == IP2IP_PROFILE)
             continue;
 
         Account *a;
-
 #if HAVE_IAX
         if (accountType == "IAX")
             a = new IAXAccount(accountid);
@@ -2637,8 +2636,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser *parser)
             a = new SIPAccount(accountid);
 
         accountMap_[accountid] = a;
-
-        a->unserialize(map);
+        a->unserialize(node);
     }
 }
 
