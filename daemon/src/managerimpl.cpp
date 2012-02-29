@@ -131,6 +131,8 @@ void ManagerImpl::terminate()
     for (std::vector<std::string>::iterator iter = callList.begin(); iter != callList.end(); ++iter)
         hangupCall(*iter);
 
+    saveConfig();
+
     unloadAccountMap();
 
     delete SIPVoIPLink::instance();
