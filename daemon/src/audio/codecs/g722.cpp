@@ -810,11 +810,13 @@ class G722 : public sfl::AudioCodec {
 };
 
 // the class factories
+// cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* create()
 {
     return new G722(9);
 }
 
+// cppcheck-suppress unusedFunction
 extern "C" void destroy(sfl::Codec* a)
 {
     delete a;

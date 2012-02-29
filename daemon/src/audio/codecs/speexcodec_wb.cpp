@@ -32,11 +32,13 @@
 #include "audiocodec.h"
 #include "speexcodec.h"
 
+// cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* create()
 {
     return new Speex(111);
 }
 
+// cppcheck-suppress unusedFunction
 extern "C" void destroy(sfl::Codec* a)
 {
     delete a;

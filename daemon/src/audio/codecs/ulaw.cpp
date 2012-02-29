@@ -125,11 +125,13 @@ class Ulaw : public sfl::AudioCodec {
 };
 
 // the class factories
+// cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* create()
 {
     return new Ulaw(0);
 }
 
+// cppcheck-suppress unusedFunction
 extern "C" void destroy(sfl::Codec* a)
 {
     delete a;

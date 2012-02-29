@@ -39,6 +39,7 @@
 
 class NetworkManager : public org::freedesktop::NetworkManager_proxy,
                        public DBus::IntrospectableProxy,
+                       // cppcheck-suppress unusedFunction
                        public DBus::ObjectProxy {
     public:
         NetworkManager(DBus::Connection &, const DBus::Path &, const char*);
