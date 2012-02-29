@@ -834,11 +834,19 @@ static GtkWidget* create_registration_expire(account_t *a)
     GtkWidget *table, *frame, *label;
 
     gchar *resolve_once=NULL, *account_expire=NULL;
-
+    gchar *orig_key = NULL;
     if (a) {
-        resolve_once = g_hash_table_lookup(a->properties, ACCOUNT_RESOLVE_ONCE);
-        account_expire = g_hash_table_lookup(a->properties, ACCOUNT_REGISTRATION_EXPIRE);
+        gboolean gotkey = FALSE;
+        gotkey = g_hash_table_lookup_extended(a->properties, ACCOUNT_RESOLVE_ONCE, (gpointer)&orig_key, (gpointer)&resolve_once);
+        if(gotkey == FALSE) {
+            ERROR("could not retreive resolve_once from account properties");
+        } 
+        gotkey = g_hash_table_lookup_extended(a->properties, ACCOUNT_REGISTRATION_EXPIRE, (gpointer)&orig_key, (gpointer)&account_expire);
+        if(gotkey == FALSE) {
+            ERROR("could not retreive %s from account properties", ACCOUNT_REGISTRATION_EXPIRE);
+        }
     }
+    
 
     gnome_main_section_new_with_table(_("Registration"), &frame, &table, 2, 3);
     gtk_container_set_border_width(GTK_CONTAINER(table), 10);
@@ -851,7 +859,6 @@ static GtkWidget* create_registration_expire(account_t *a)
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), expireSpinBox);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(expireSpinBox), g_ascii_strtod(account_expire, NULL));
     gtk_table_attach_defaults(GTK_TABLE(table), expireSpinBox, 1, 2, 0, 1);
-
 
     entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Comply with RFC 3263"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),

@@ -655,6 +655,8 @@ void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& del
 {
     pj_status_t status;
 
+    DEBUG("UserAgent: Registering keep alive timer");
+
     status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay);
     if (status != PJ_SUCCESS)
         ERROR("Could not schedule new timer in pjsip endpoint");

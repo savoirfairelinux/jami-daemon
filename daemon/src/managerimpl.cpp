@@ -2386,7 +2386,7 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails(
     }
 
     AccountMap::const_iterator iter = accountMap_.find(accountID);
-    Account * account = 0;
+    Account * account = NULL;
 
     if (iter != accountMap_.end())
         account = iter->second;
