@@ -53,6 +53,7 @@
 
 #include "audio/mainbuffer.h"
 #include "preferences.h"
+#include "history/history.h"
 #include "noncopyable.h"
 
 namespace Conf {
@@ -1102,6 +1103,6 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        std::auto_ptr<History> history_;
+        History history_;
 };
 #endif // __MANAGER_H__

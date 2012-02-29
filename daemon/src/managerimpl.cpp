@@ -52,7 +52,6 @@
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
-#include "history/history.h"
 #include "sip/sipvoiplink.h"
 #include "iax/iaxvoiplink.h"
 #include "manager.h"
@@ -81,7 +80,7 @@ ManagerImpl::ManagerImpl() :
     toneMutex_(), telephoneTone_(0), audiofile_(0), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
     callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
-    mainBuffer_(), conferenceMap_(), history_(new History)
+    mainBuffer_(), conferenceMap_(), history_()
 {
     // initialize random generator for call id
     srand(time(NULL));
@@ -118,7 +117,7 @@ void ManagerImpl::init(std::string config_file)
         }
     }
 
-    history_->load(preferences.getHistoryLimit());
+    history_.load(preferences.getHistoryLimit());
     registerAccounts();
 }
 
@@ -364,7 +363,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         /* Direct IP to IP call */
         try {
             Call * call = SIPVoIPLink::instance()->getCall(callId);
-            history_->addCall(call, preferences.getHistoryLimit());
+            history_.addCall(call, preferences.getHistoryLimit());
             SIPVoIPLink::instance()->hangup(callId);
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
@@ -373,7 +372,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         std::string accountId(getAccountFromCall(callId));
         VoIPLink *link = getAccountLink(accountId);
         Call * call = link->getCall(callId);
-        history_->addCall(call, preferences.getHistoryLimit());
+        history_.addCall(call, preferences.getHistoryLimit());
         link->hangup(callId);
         removeCallAccount(callId);
     }
@@ -1559,14 +1558,14 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     /* Direct IP to IP call */
     if (isIPToIP(call_id)) {
         Call * call = SIPVoIPLink::instance()->getCall(call_id);
-        history_->addCall(call, preferences.getHistoryLimit());
+        history_.addCall(call, preferences.getHistoryLimit());
         SIPVoIPLink::instance()->hangup(call_id);
     }
     else {
         const std::string account_id(getAccountFromCall(call_id));
         VoIPLink *link = getAccountLink(account_id);
         Call * call = link->getCall(call_id);
-        history_->addCall(call, preferences.getHistoryLimit());
+        history_.addCall(call, preferences.getHistoryLimit());
         link->peerHungup(call_id);
     }
 
@@ -2828,7 +2827,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
 
 std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory() const
 {
-    return history_->getSerialized();
+    return history_.getSerialized();
 }
 
 namespace {
@@ -2884,11 +2883,11 @@ std::vector<std::string> ManagerImpl::getParticipantList(const std::string& conf
 
 void ManagerImpl::saveHistory()
 {
-    if (!history_->save())
+    if (!history_.save())
         ERROR("Manager: could not save history!");
 }
 
 void ManagerImpl::clearHistory()
 {
-    history_->clear();
+    history_.clear();
 }
