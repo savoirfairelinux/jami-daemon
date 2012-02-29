@@ -31,6 +31,8 @@
 #include "preferences.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
+#include "config/yamlemitter.h"
+#include "config/yamlnode.h"
 #include <sstream>
 #include "global.h"
 #include <cassert>
@@ -94,7 +96,7 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
     emiter->serializePreference(&preferencemap);
 }
 
-void Preferences::unserialize(Conf::MappingNode *map)
+void Preferences::unserialize(const Conf::MappingNode *map)
 {
     if (map == NULL) {
         ERROR("Preference: Error: Preference map is NULL");
@@ -141,7 +143,7 @@ void VoipPreference::serialize(Conf::YamlEmitter *emitter)
     emitter->serializeVoipPreference(&preferencemap);
 }
 
-void VoipPreference::unserialize(Conf::MappingNode *map)
+void VoipPreference::unserialize(const Conf::MappingNode *map)
 {
     if (!map) {
         ERROR("VoipPreference: Error: Preference map is NULL");
@@ -190,7 +192,7 @@ void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
 
 }
 
-void AddressbookPreference::unserialize(Conf::MappingNode *map)
+void AddressbookPreference::unserialize(const Conf::MappingNode *map)
 {
     if (!map) {
         ERROR("Addressbook: Error: Preference map is NULL");
@@ -235,7 +237,7 @@ void HookPreference::serialize(Conf::YamlEmitter *emitter)
     emitter->serializeHooksPreference(&preferencemap);
 }
 
-void HookPreference::unserialize(Conf::MappingNode *map)
+void HookPreference::unserialize(const Conf::MappingNode *map)
 {
     if (!map) {
         ERROR("Hook: Error: Preference map is NULL");
@@ -377,7 +379,7 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
     emitter->serializeAudioPreference(&preferencemap);
 }
 
-void AudioPreference::unserialize(Conf::MappingNode *map)
+void AudioPreference::unserialize(const Conf::MappingNode *map)
 {
     assert(map);
 
@@ -452,7 +454,7 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
     emitter->serializeShortcutPreference(&preferencemap);
 }
 
-void ShortcutPreferences::unserialize(Conf::MappingNode *map)
+void ShortcutPreferences::unserialize(const Conf::MappingNode *map)
 {
     if (map == NULL) {
         ERROR("ShortcutPreference: Error: Preference map is NULL");

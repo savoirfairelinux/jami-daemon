@@ -40,6 +40,7 @@
 #include <set>
 #include <map>
 #include <cc++/thread.h>
+#include <memory>
 #include "dbus/dbusmanager.h"
 
 #include "config/sfl_config.h"
@@ -52,15 +53,12 @@
 
 #include "audio/mainbuffer.h"
 #include "preferences.h"
+#include "history/history.h"
 #include "noncopyable.h"
 
-namespace sfl {
-class InstantMessaging;
-}
-
 namespace Conf {
-class YamlParser;
-class YamlEmitter;
+    class YamlParser;
+    class YamlEmitter;
 }
 
 class DTMF;
@@ -96,7 +94,6 @@ class ManagerImpl {
         ManagerImpl();
         ~ManagerImpl();
 
-
         /**
          * General preferences configuration
          */
@@ -131,7 +128,7 @@ class ManagerImpl {
          * Initialisation of thread (sound) and map.
          * Init a new VoIPLink, audio codec and audio driver
          */
-        void init(std::string config_file="");
+        void init(std::string config_file = "");
 
         /**
          * Terminate all thread (sound, link) and unload AccountMap
@@ -741,16 +738,6 @@ class ManagerImpl {
         std::vector<std::string> getActiveCodecList() const;
 
         /**
-         * Retrieve in the configuration tree the value of a parameter in a specific section
-         * @param section	The section to look in
-         * @param name	The name of the parameter you want to get
-         * @param arg	Undocumented
-         * @return bool	true on success
-         *			false otherwise
-         */
-        bool getConfig(const std::string& section, const std::string& name, TokenList& arg) const;
-
-        /**
          * Change a specific value in the configuration tree.
          * This value will then be saved in the user config file sflphonedrc
          * @param section	The section name
@@ -771,26 +758,6 @@ class ManagerImpl {
          *		      false otherwise
          */
         void setConfig(const std::string& section, const std::string& name, int value);
-
-        /**
-         * Get a int from the configuration tree
-         * Throw an Conf::ConfigTreeItemException if not found
-         * @param section The section name to look in
-         * @param name    The parameter name
-         * @return int    The int value
-         */
-
-        int getConfigInt(const std::string& section, const std::string& name) const;
-
-        /**
-           * Get a bool from the configuration tree
-           * Throw an Conf::ConfigTreeItemException if not found
-           * @param section The section name to look in
-           * @param name    The parameter name
-           * @return bool    The bool value
-           */
-
-        bool getConfigBool(const std::string& section, const std::string& name) const;
 
         /**
          * Get a string from the configuration tree
@@ -908,8 +875,7 @@ class ManagerImpl {
         /**
          * Create config directory in home user and return configuration file path
          */
-        std::string getConfigFile() const;
-
+        std::string createConfigFile() const;
 
         /*
          * Initialize zeroconf module and scanning
@@ -943,15 +909,14 @@ class ManagerImpl {
         AudioLayer* audiodriver_;
 
         // Main thread
-
-        DTMF* dtmfKey_;
+        std::auto_ptr<DTMF> dtmfKey_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         ost::Mutex toneMutex_;
-        TelephoneTone* telephoneTone_;
-        AudioFile *audiofile_;
+        std::auto_ptr<TelephoneTone> telephoneTone_;
+        std::auto_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
@@ -990,13 +955,6 @@ class ManagerImpl {
          */
         void removeWaitingCall(const std::string& id);
 
-        /**
-         * Tell if a call is waiting and should be remove
-         * @param id std::string to test
-         * @return bool True if the call is waiting
-         */
-        bool isWaitingCall(const std::string& id) const;
-
         /** Remove a CallID/std::string association
          * Protected by mutex
          * @param callID the CallID to remove
@@ -1031,9 +989,13 @@ class ManagerImpl {
         AccountMap accountMap_;
 
         /**
-         * Load the account from configuration
+         * Load the account map from configuration
          */
-        void loadAccountMap(Conf::YamlParser *parser);
+        void loadAccountMap(Conf::YamlParser &parser);
+        /**
+         * Load default account map (no configuration)
+         */
+        void loadDefaultAccountMap();
 
         /**
          * Unload the account (delete them)
@@ -1072,13 +1034,6 @@ class ManagerImpl {
          */
         MainBuffer *getMainBuffer() {
             return &mainBuffer_;
-        }
-
-        /**
-         * Return a pointer to the instance of InstantMessaging
-         */
-        sfl::InstantMessaging *getInstantMessageModule() {
-            return imModule_;
         }
 
         /**
@@ -1129,8 +1084,6 @@ class ManagerImpl {
 
         std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
 
-        int getLocalIp2IpPort() const;
-
         std::string getStunServer() const;
         void setStunServer(const std::string &server);
 
@@ -1153,13 +1106,6 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        History *history_;
-
-        /**
-         * Instant messaging module, resposible to initiate, format, parse,
-         * send, and receive instant messages.
-         */
-        sfl::InstantMessaging *imModule_;
+        History history_;
 };
-
 #endif // __MANAGER_H__

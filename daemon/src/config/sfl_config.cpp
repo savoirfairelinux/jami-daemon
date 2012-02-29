@@ -102,7 +102,7 @@ ConfigTree::getSections() const
  * If the section doesn't exists, create it
  */
 void
-ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem item)
+ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem &item)
 {
     // if we doesn't find the item, create it
     SectionMap::iterator iter = sections_.find(section);
@@ -130,40 +130,6 @@ ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string
         return item->getValue();
 
     return getDefaultValue(itemName);
-}
-
-// throw a ConfigTreeItemException if not found
-int
-ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) const
-{
-    std::string configItem = getConfigTreeItemValue(section, itemName);
-    int retval = atoi(configItem.data());
-
-    return retval;
-}
-
-bool
-ConfigTree::getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName) const
-{
-    return getConfigTreeItemValue(section, itemName) == "true";
-}
-
-bool
-ConfigTree::getConfigTreeItemToken(const std::string& section, const std::string& itemName, std::list<std::string>& arg) const
-{
-    const ConfigTreeItem *item = getConfigTreeItem(section, itemName);
-
-    if (item) {
-        arg.clear();
-        arg.push_back(section);
-        arg.push_back(itemName);
-        arg.push_back(item->getType());
-        arg.push_back(item->getValue());
-        arg.push_back(item->getDefaultValue());
-        return true;
-    }
-    else
-        return false;
 }
 
 /**
@@ -221,43 +187,6 @@ void ConfigTree::setConfigTreeItem(const std::string& section,
 
     iterItem->second.setValue(value);
     return;
-}
-
-// Save config to a file (ini format)
-// return false if empty, no config, or enable to open
-// return true if everything is ok
-bool
-ConfigTree::saveConfigTree(const std::string& fileName) const
-{
-    DEBUG("ConfigTree: Save %s", fileName.c_str());
-
-    if (fileName.empty() and sections_.begin() == sections_.end())
-        return false;
-
-    std::fstream file;
-
-    file.open(fileName.data(), std::fstream::out);
-
-    if (!file.is_open()) {
-        ERROR("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
-        return false;
-    }
-
-    // for each section, for each item...
-    for (SectionMap::const_iterator iter = sections_.begin(); iter != sections_.end(); ++iter) {
-        file << "[" << iter->first << "]" << std::endl;
-        for (ItemMap::const_iterator iterItem = iter->second.begin(); iterItem != iter->second.end(); ++iterItem)
-            file << iterItem->first << "=" << iterItem->second.getValue() << std::endl;
-
-        file << std::endl;
-    }
-
-    file.close();
-
-    if (chmod(fileName.c_str(), S_IRUSR | S_IWUSR))
-        ERROR("ConfigTree: Error: Failed to set permission on configuration: %m");
-
-    return true;
 }
 
 // Create the tree from an existing ini file

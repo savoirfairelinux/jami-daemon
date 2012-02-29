@@ -43,7 +43,7 @@ class AudioCodec;
 
 class AudioFileException : public std::runtime_error {
     public:
-        AudioFileException(const std::string& str = "") :
+        AudioFileException(const std::string &str) :
             std::runtime_error("AudioFile: AudioFileException occured: " + str) {}
 };
 
@@ -52,7 +52,7 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
-        AudioFile() : filepath_() {}
+        AudioFile(const std::string &filepath) : filepath_(filepath) {}
         std::string getFilePath() const {
             return filepath_;
         }

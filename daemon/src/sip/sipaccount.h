@@ -131,7 +131,7 @@ class SIPAccount : public Account {
          * Populate the internal state for this account based on info stored in the configuration file
          * @param The configuration node for this account
          */
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.

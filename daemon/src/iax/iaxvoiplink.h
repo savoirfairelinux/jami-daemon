@@ -43,10 +43,6 @@
 #include "noncopyable.h"
 #include "audio/samplerateconverter.h"
 
-namespace sfl {
-class InstantMessaging;
-}
-
 class EventThread;
 class IAXCall;
 
@@ -171,7 +167,7 @@ class IAXVoIPLink : public VoIPLink {
         virtual void carryingDTMFdigits(const std::string& id, char code);
 
 
-        virtual void sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 
         /**
          * Return the codec protocol used for this call

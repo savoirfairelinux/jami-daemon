@@ -67,11 +67,6 @@ class AudioCodec : public Codec {
         /**
          * @Override
          */
-        std::string getMimeType() const;
-
-        /**
-         * @Override
-         */
         std::string getMimeSubtype() const;
 
         /**
@@ -126,11 +121,6 @@ class AudioCodec : public Codec {
          * @Override
          */
         uint32 getClockRate() const;
-
-        /**
-         * @return the number of audio channels.
-         */
-        uint8 getChannel() const;
 
         /**
          * @Override

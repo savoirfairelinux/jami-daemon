@@ -36,6 +36,8 @@
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
 #include "manager.h"
+#include "config/yamlnode.h"
+#include "config/yamlemitter.h"
 
 IAXAccount::IAXAccount(const std::string& accountID)
     : Account(accountID, "iax2"), password_(),
@@ -88,7 +90,7 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
     }
 }
 
-void IAXAccount::unserialize(Conf::MappingNode *map)
+void IAXAccount::unserialize(const Conf::MappingNode *map)
 {
     if (map == NULL) {
         ERROR("IAXAccount: Error: Map is NULL in unserialize");
@@ -114,32 +116,32 @@ void IAXAccount::setAccountDetails(std::map<std::string, std::string> details)
     // Account setting common to SIP and IAX
     alias_ = details[CONFIG_ACCOUNT_ALIAS];
     type_ = details[CONFIG_ACCOUNT_TYPE];
-    username_ = details[USERNAME];
-    hostname_ = details[HOSTNAME];
-    password_ = details[PASSWORD];
+    username_ = details[CONFIG_ACCOUNT_USERNAME];
+    hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
+    password_ = details[CONFIG_ACCOUNT_PASSWORD];
     enabled_ = details[CONFIG_ACCOUNT_ENABLE] == "true";
     mailBox_ = details[CONFIG_ACCOUNT_MAILBOX];
-    displayName_ = details[DISPLAY_NAME];
-    userAgent_ = details[USERAGENT];
+    displayName_ = details[CONFIG_DISPLAY_NAME];
+    userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
 }
 
 std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a[ACCOUNT_ID] = accountID_;
+    a[CONFIG_ACCOUNT_ID] = accountID_;
     a[CONFIG_ACCOUNT_ALIAS] = alias_;
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_TYPE] = type_;
-    a[HOSTNAME] = hostname_;
-    a[USERNAME] = username_;
-    a[PASSWORD] = password_;
+    a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
+    a[CONFIG_ACCOUNT_USERNAME] = username_;
+    a[CONFIG_ACCOUNT_PASSWORD] = password_;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
     RegistrationState state(registrationState_);
 
-    a[REGISTRATION_STATUS] = mapStateNumberToString(state);
-    a[USERAGENT] = userAgent_;
+    a[CONFIG_REGISTRATION_STATUS] = mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
 
     return a;
 }

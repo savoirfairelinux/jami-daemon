@@ -106,7 +106,7 @@ class ConfigTree {
          */
         std::list<std::string> getSections() const;
 
-        void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
+        void addConfigTreeItem(const std::string& section, const ConfigTreeItem &item);
         /**
          * Set a configuration value.
          *
@@ -129,20 +129,11 @@ class ConfigTree {
          *         but the item doesn't.
          */
         std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName) const;
-        int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) const;
-        bool getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName) const;
-
-        /**
-         * Flush data to .ini file
-         */
-        bool saveConfigTree(const std::string& fileName) const;
 
         /**
          * Load data (and fill ConfigTree) from disk
          */
         bool populateFromFile(const std::string& fileName);
-
-        bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, std::list<std::string>& arg) const;
 
     private:
         std::string getDefaultValue(const std::string& key) const;

@@ -31,6 +31,8 @@
 #include "video_preferences.h"
 #include "video_v4l2_list.h"
 #include "logger.h"
+#include "config/yamlnode.h"
+#include "config/yamlemitter.h"
 #include <sstream>
 
 using namespace sfl_video;
@@ -84,7 +86,7 @@ void VideoPreference::serialize(Conf::YamlEmitter *emitter)
     emitter->serializeVideoPreference(&preferencemap);
 }
 
-void VideoPreference::unserialize(Conf::MappingNode *map)
+void VideoPreference::unserialize(const Conf::MappingNode *map)
 {
     if (map == NULL) {
         ERROR("VideoPreference: Error: Preference map is NULL");

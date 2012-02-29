@@ -80,19 +80,19 @@ ConfigurationManager::getTlsSettingsDefault()
     portstr << DEFAULT_SIP_TLS_PORT;
 
     std::map<std::string, std::string> tlsSettingsDefault;
-    tlsSettingsDefault[TLS_LISTENER_PORT] = portstr.str();
-    tlsSettingsDefault[TLS_CA_LIST_FILE] = "";
-    tlsSettingsDefault[TLS_CERTIFICATE_FILE] = "";
-    tlsSettingsDefault[TLS_PRIVATE_KEY_FILE] = "";
-    tlsSettingsDefault[TLS_PASSWORD] = "";
-    tlsSettingsDefault[TLS_METHOD] = "TLSv1";
-    tlsSettingsDefault[TLS_CIPHERS] = "";
-    tlsSettingsDefault[TLS_SERVER_NAME] = "";
-    tlsSettingsDefault[TLS_VERIFY_SERVER] = "true";
-    tlsSettingsDefault[TLS_VERIFY_CLIENT] = "true";
-    tlsSettingsDefault[TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
-    tlsSettingsDefault[TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
-    tlsSettingsDefault[TLS_NEGOTIATION_TIMEOUT_MSEC] = "0";
+    tlsSettingsDefault[CONFIG_TLS_LISTENER_PORT] = portstr.str();
+    tlsSettingsDefault[CONFIG_TLS_CA_LIST_FILE] = "";
+    tlsSettingsDefault[CONFIG_TLS_CERTIFICATE_FILE] = "";
+    tlsSettingsDefault[CONFIG_TLS_PRIVATE_KEY_FILE] = "";
+    tlsSettingsDefault[CONFIG_TLS_PASSWORD] = "";
+    tlsSettingsDefault[CONFIG_TLS_METHOD] = "TLSv1";
+    tlsSettingsDefault[CONFIG_TLS_CIPHERS] = "";
+    tlsSettingsDefault[CONFIG_TLS_SERVER_NAME] = "";
+    tlsSettingsDefault[CONFIG_TLS_VERIFY_SERVER] = "true";
+    tlsSettingsDefault[CONFIG_TLS_VERIFY_CLIENT] = "true";
+    tlsSettingsDefault[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
+    tlsSettingsDefault[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
+    tlsSettingsDefault[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = "0";
 
     return tlsSettingsDefault;
 }

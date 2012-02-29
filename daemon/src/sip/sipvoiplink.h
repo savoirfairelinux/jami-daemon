@@ -53,10 +53,6 @@
 #include "sipaccount.h"
 #include "voiplink.h"
 
-namespace sfl {
-class InstantMessaging;
-}
-
 class EventThread;
 class SIPCall;
 class SIPAccount;
@@ -277,12 +273,13 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Send a SIP message to a call identified by its callid
          *
-         * @param The InstantMessaging module which contains formating, parsing and sending method
          * @param The Id of the call to send the message to
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
-        void sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        void sendTextMessage(const std::string& callID,
+                             const std::string& message,
+                             const std::string& from);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings

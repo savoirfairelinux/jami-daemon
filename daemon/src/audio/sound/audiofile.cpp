@@ -34,7 +34,8 @@
 #include <math.h>
 #include <samplerate.h>
 #include <cstring>
-#include <limits.h>
+#include <vector>
+#include <climits>
 
 #include "audiofile.h"
 #include "audio/codecs/audiocodecfactory.h"
@@ -43,14 +44,11 @@
 
 #include "manager.h"
 
-RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate)
-    : audioCodec_(codec)
+RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
+    : AudioFile(name), audioCodec_(codec)
 {
-    filepath_ = name;
-
     if (filepath_.empty())
         throw AudioFileException("Unable to open audio file: filename is empty");
-
 
     std::fstream file;
     file.open(filepath_.c_str(), std::fstream::in);
@@ -62,8 +60,8 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
     size_t length = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    char *fileBuffer = new char[length];
-    file.read(fileBuffer,length);
+    std::vector<char> fileBuffer(length);
+    file.read(&fileBuffer[0], length);
     file.close();
 
     const unsigned int frameSize = audioCodec_->getFrameSize();
@@ -74,7 +72,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
 
     SFLDataFormat *monoBuffer = new SFLDataFormat[decodedSize];
     SFLDataFormat *bufpos = monoBuffer;
-    unsigned char *filepos = reinterpret_cast<unsigned char *>(fileBuffer);
+    unsigned char *filepos = reinterpret_cast<unsigned char *>(&fileBuffer[0]);
     size_ = decodedSize;
 
     while (length >= encFrameSize) {
@@ -82,8 +80,6 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
         filepos += encFrameSize;
         length -= encFrameSize;
     }
-
-    delete [] fileBuffer;
 
     if (sampleRate == audioRate)
         buffer_ = monoBuffer;
@@ -115,14 +111,13 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
 }
 
 
-WaveFile::WaveFile(const std::string& fileName, int newRate)
+WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileName)
 {
     const std::fstream fs(fileName.c_str(), std::ios_base::in);
 
     if (!fs)
         throw AudioFileException("File " + fileName + " doesn't exist");
 
-    filepath_ = fileName;
     std::fstream fileStream;
     fileStream.open(fileName.c_str(), std::ios::in | std::ios::binary);
 

@@ -35,6 +35,9 @@
 #include "video/video_v4l2_list.h"
 #include "video/video_v4l2.h"
 
+#include <map>
+#include <string>
+
 namespace sflvideo {
     class VideoV4l2ListThread;
 }
@@ -53,7 +56,7 @@ class VideoPreference : public Serializable
 
         virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         std::map<std::string, std::string> getSettings() const;
 

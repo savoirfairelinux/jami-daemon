@@ -436,14 +436,12 @@ AlsaLayer::buildDeviceTopo(const std::string &plugin, int card)
 std::vector<std::string>
 AlsaLayer::getAudioDeviceList(AudioStreamDirection dir) const
 {
-    std::vector<HwIDPair> deviceMap;
+    std::vector<HwIDPair> deviceMap(getAudioDeviceIndexMap(dir));
+
     std::vector<std::string> audioDeviceList;
-
-    deviceMap = getAudioDeviceIndexMap(dir);
-
-    for(std::vector<HwIDPair>::const_iterator iter = deviceMap.begin(); iter != deviceMap.end(); iter++) {
+    for (std::vector<HwIDPair>::const_iterator iter = deviceMap.begin();
+         iter != deviceMap.end(); ++iter)
          audioDeviceList.push_back(iter->second);
-    }
 
     return audioDeviceList;
 }

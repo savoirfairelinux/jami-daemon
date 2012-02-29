@@ -126,17 +126,15 @@ PulseLayer::~PulseLayer()
     delete[] mic_buffer_;
 }
 
-void PulseLayer::context_state_callback(pa_context* c, void* user_data)
+void PulseLayer::context_state_callback(pa_context* c, void *user_data)
 {
-    PulseLayer* pulse = (PulseLayer*) user_data;
+    PulseLayer *pulse = static_cast<PulseLayer*>(user_data);
     assert(c && pulse->mainloop_);
 
     switch (pa_context_get_state(c)) {
 
         case PA_CONTEXT_CONNECTING:
-
         case PA_CONTEXT_AUTHORIZING:
-
         case PA_CONTEXT_SETTING_NAME:
             DEBUG("Audio: Waiting....");
             break;
@@ -155,7 +153,6 @@ void PulseLayer::context_state_callback(pa_context* c, void* user_data)
             break;
 
         case PA_CONTEXT_FAILED:
-
         default:
             ERROR("Pulse: %s" , pa_strerror(pa_context_errno(c)));
             pa_threaded_mainloop_signal(pulse->mainloop_, 0);
@@ -471,19 +468,19 @@ void PulseLayer::ringtoneToSpeaker()
     pa_stream_write(s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
 }
 
-void PulseLayer::context_changed_callback(pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void* userdata)
+void PulseLayer::context_changed_callback(pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void *userdata)
 {
-
+    PulseLayer *context = static_cast<PulseLayer*>(userdata);
     switch (t) {
         case PA_SUBSCRIPTION_EVENT_SINK:
             DEBUG("Audio: PA_SUBSCRIPTION_EVENT_SINK");
-            ((PulseLayer *) userdata)->sinkList_.clear();
+            context->sinkList_.clear();
             pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
             break;
         case PA_SUBSCRIPTION_EVENT_SOURCE:
             DEBUG("Audio: PA_SUBSCRIPTION_EVENT_SOURCE");
-            ((PulseLayer *) userdata)->sourceList_.clear();
-            pa_context_get_source_info_list(c, source_input_info_callback,  userdata);
+            context->sourceList_.clear();
+            pa_context_get_source_info_list(c, source_input_info_callback, userdata);
             break;
         case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
             DEBUG("Audio: PA_SUBSCRIPTION_EVENT_SINK_INPUT");
@@ -514,10 +511,10 @@ void PulseLayer::context_changed_callback(pa_context* c, pa_subscription_event_t
             break;
         case PA_SUBSCRIPTION_EVENT_REMOVE:
             DEBUG("Audio: PA_SUBSCRIPTION_EVENT_REMOVE");
-            ((PulseLayer *) userdata)->sinkList_.clear();
-            ((PulseLayer *) userdata)->sourceList_.clear();
-            pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
-            pa_context_get_source_info_list(c, source_input_info_callback,  userdata);
+            context->sinkList_.clear();
+            context->sourceList_.clear();
+            pa_context_get_sink_info_list(c, sink_input_info_callback, userdata);
+            pa_context_get_source_info_list(c, source_input_info_callback, userdata);
             break;
         case PA_SUBSCRIPTION_EVENT_TYPE_MASK:
             DEBUG("Audio: PA_SUBSCRIPTION_EVENT_TYPE_MASK");
@@ -560,7 +557,7 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
            i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
            i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
-    ((PulseLayer *)userdata)->sourceList_.push_back(i->name);
+    static_cast<PulseLayer *>(userdata)->sourceList_.push_back(i->name);
 }
 
 void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
@@ -571,30 +568,30 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
         return;
 
     DEBUG("Sink %u\n"
-           "    Name: %s\n"
-           "    Driver: %s\n"
-           "    Description: %s\n"
-           "    Sample Specification: %s\n"
-           "    Channel Map: %s\n"
-           "    Owner Module: %u\n"
-           "    Volume: %s\n"
-           "    Monitor Source: %u\n"
-           "    Latency: %0.0f usec\n"
-           "    Flags: %s%s%s\n",
-           i->index,
-           i->name,
-           i->driver,
-           i->description,
-           pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
-           pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
-           i->owner_module,
-           i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
-           i->monitor_source,
-           (double) i->latency,
-           i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-           i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
-           i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
+          "    Name: %s\n"
+          "    Driver: %s\n"
+          "    Description: %s\n"
+          "    Sample Specification: %s\n"
+          "    Channel Map: %s\n"
+          "    Owner Module: %u\n"
+          "    Volume: %s\n"
+          "    Monitor Source: %u\n"
+          "    Latency: %0.0f usec\n"
+          "    Flags: %s%s%s\n",
+          i->index,
+          i->name,
+          i->driver,
+          i->description,
+          pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+          pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+          i->owner_module,
+          i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+          i->monitor_source,
+          static_cast<double>(i->latency),
+          i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+          i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
+          i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-    ((PulseLayer *)userdata)->sinkList_.push_back(i->name);
+    static_cast<PulseLayer *>(userdata)->sinkList_.push_back(i->name);
 }
 

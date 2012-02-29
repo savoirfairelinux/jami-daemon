@@ -291,7 +291,7 @@ void YamlEmitter::serializeShortcutPreference(MappingNode *map)
 void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
 {
     if (node->getType() == SCALAR) {
-        ScalarNode *sclr = (ScalarNode *) node;
+        ScalarNode *sclr = static_cast<ScalarNode *>(node);
 
         int temp1;
         if ((temp1 = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
@@ -305,7 +305,7 @@ void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
             throw YamlEmitterException("Could not append mapping pair to mapping");
 
     } else if (node->getType() == MAPPING) {
-        MappingNode *map = (MappingNode *) node;
+        MappingNode *map = static_cast<MappingNode *>(node);
 
         int temp1;
         if ((temp1 = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)

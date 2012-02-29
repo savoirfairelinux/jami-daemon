@@ -40,11 +40,6 @@ class Codec {
     public:
         virtual ~Codec() {}
         /**
-         * @return The mimesubtype for this codec. Eg. : "video"
-         */
-        virtual std::string getMimeType() const = 0;
-
-        /**
          * @return The mimesubtype for this codec. Eg. : "theora"
          */
         virtual std::string getMimeSubtype() const = 0;

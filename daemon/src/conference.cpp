@@ -126,10 +126,6 @@ bool Conference::setRecording()
     return recordStatus;
 }
 
-std::string Conference::getRecFileId() const {
-    return getConfID();
-}
-
 std::string Conference::getConfID() const {
     return id_;
 }
