@@ -955,13 +955,6 @@ class ManagerImpl {
          */
         void removeWaitingCall(const std::string& id);
 
-        /**
-         * Tell if a call is waiting and should be remove
-         * @param id std::string to test
-         * @return bool True if the call is waiting
-         */
-        bool isWaitingCall(const std::string& id) const;
-
         /** Remove a CallID/std::string association
          * Protected by mutex
          * @param callID the CallID to remove

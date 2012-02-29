@@ -1353,11 +1353,6 @@ void ManagerImpl::removeWaitingCall(const std::string& id)
         nbIncomingWaitingCall_--;
 }
 
-bool ManagerImpl::isWaitingCall(const std::string &id) const
-{
-    return waitingCall_.find(id) != waitingCall_.end();
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Management of event peer IP-phone
 ////////////////////////////////////////////////////////////////////////////////
