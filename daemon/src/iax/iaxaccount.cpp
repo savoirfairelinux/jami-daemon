@@ -88,7 +88,7 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
     }
 }
 
-void IAXAccount::unserialize(Conf::MappingNode *map)
+void IAXAccount::unserialize(const Conf::MappingNode *map)
 {
     if (map == NULL) {
         ERROR("IAXAccount: Error: Map is NULL in unserialize");

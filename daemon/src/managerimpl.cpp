@@ -59,10 +59,11 @@
 #include "conference.h"
 
 #include <cerrno>
+#include <algorithm>
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
-#include <algorithm>
+#include <tr1/functional>
 #include <iterator>
 #include <fstream>
 #include <sstream>
@@ -2574,13 +2575,48 @@ void ManagerImpl::loadDefaultAccountMap()
 }
 
 namespace {
-    bool hasIP2IPAccountID(Conf::YamlNode *node)
+    bool isIP2IP(const Conf::YamlNode *node)
     {
         std::string id;
-        dynamic_cast<Conf::MappingNode *>(node)->getValue("id", &id);
+        dynamic_cast<const Conf::MappingNode *>(node)->getValue("id", &id);
         return id == "IP2IP";
     }
-}
+
+    void loadAccount(const Conf::YamlNode *item, AccountMap &accountMap)
+    {
+        const Conf::MappingNode *node = dynamic_cast<const Conf::MappingNode *>(item);
+        std::string accountType;
+        node->getValue("type", &accountType);
+
+        std::string accountid;
+        node->getValue("id", &accountid);
+
+        std::string accountAlias;
+        node->getValue("alias", &accountAlias);
+
+        if (!accountid.empty() and !accountAlias.empty() and accountid != IP2IP_PROFILE) {
+            Account *a;
+#if HAVE_IAX
+            if (accountType == "IAX")
+                a = new IAXAccount(accountid);
+            else // assume SIP
+#endif
+                a = new SIPAccount(accountid);
+
+            accountMap[accountid] = a;
+            a->unserialize(node);
+        }
+    }
+
+    void unloadAccount(std::pair<const std::string, Account*> &item)
+    {
+        // avoid deleting IP2IP account twice
+        if (not item.first.empty()) {
+            delete item.second;
+            item.second = 0;
+        }
+    }
+} // end anonymous namespace
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
@@ -2590,7 +2626,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     // load saved preferences for IP2IP account from configuration file
     Sequence *seq = parser.getAccountSequence()->getSequence();
-    Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), hasIP2IPAccountID);
+    Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
     if (ip2ip != seq->end()) {
         MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
         accountMap_[IP2IP_PROFILE]->unserialize(node);
@@ -2612,48 +2648,19 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     audioPreference.unserialize(parser.getAudioNode());
     shortcutPreferences.unserialize(parser.getShortcutNode());
 
-    // Each element in sequence is a new account to create
-    for (Sequence::const_iterator iter = seq->begin(); iter != seq->end(); ++iter) {
-        MappingNode *node = dynamic_cast<MappingNode *>(*iter);
-        std::string accountType;
-        node->getValue("type", &accountType);
-
-        std::string accountid;
-        node->getValue("id", &accountid);
-
-        std::string accountAlias;
-        node->getValue("alias", &accountAlias);
-
-        if (accountid.empty() or accountAlias.empty() or accountid == IP2IP_PROFILE)
-            continue;
-
-        Account *a;
-#if HAVE_IAX
-        if (accountType == "IAX")
-            a = new IAXAccount(accountid);
-        else // assume SIP
-#endif
-            a = new SIPAccount(accountid);
-
-        accountMap_[accountid] = a;
-        a->unserialize(node);
-    }
+    using namespace std::tr1; // for std::tr1::bind and std::tr1::ref
+    using namespace std::tr1::placeholders;
+    // Each valid account element in sequence is a new account to load
+    std::for_each(seq->begin(), seq->end(), bind(loadAccount, _1, ref(accountMap_)));
 }
 
 void ManagerImpl::unloadAccountMap()
 {
-    for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        // Avoid removing the IP2IP account twice
-        if (not iter->first.empty()) {
-            delete iter->second;
-            iter->second = 0;
-        }
-    }
-
+    std::for_each(accountMap_.begin(), accountMap_.end(), unloadAccount);
     accountMap_.clear();
 }
 
-bool ManagerImpl::accountExists(const std::string& accountID)
+bool ManagerImpl::accountExists(const std::string &accountID)
 {
     return accountMap_.find(accountID) != accountMap_.end();
 }
@@ -2778,7 +2785,7 @@ bool ManagerImpl::isIPToIP(const std::string& callID) const
     return iter != IPToIPMap_.end() and iter->second;
 }
 
-std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string& callID)
+std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string &callID)
 {
     // We need here to retrieve the call information attached to the call ID
     // To achieve that, we need to get the voip link attached to the call

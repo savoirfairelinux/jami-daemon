@@ -155,18 +155,6 @@ class Account : public Serializable {
          */
         virtual ~Account();
 
-        /**
-         * Method called by the configuration engine to serialize instance's information
-         * into configuration file.
-         */
-        virtual void serialize(Conf::YamlEmitter *emitter) = 0;
-
-        /**
-         * Method called by the configuration engine to restore instance internal state
-         * from configuration file.
-         */
-        virtual void unserialize(Conf::MappingNode *map) = 0;
-
         virtual void setAccountDetails(std::map<std::string, std::string> details) = 0;
 
         virtual std::map<std::string, std::string> getAccountDetails() const = 0;

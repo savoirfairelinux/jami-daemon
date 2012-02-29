@@ -123,10 +123,10 @@ class MappingNode : public YamlNode {
 
         void removeKeyValue(const std::string &key);
 
-        YamlNode *getValue(const std::string &key);
-        void getValue(const std::string &key, bool *b);
-        void getValue(const std::string &key, int *i);
-        void getValue(const std::string &key, std::string *s);
+        YamlNode *getValue(const std::string &key) const;
+        void getValue(const std::string &key, bool *b) const;
+        void getValue(const std::string &key, int *i) const;
+        void getValue(const std::string &key, std::string *s) const;
 
         virtual void deleteChildNodes();
 

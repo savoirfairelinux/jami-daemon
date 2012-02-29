@@ -250,7 +250,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
 
 }
 
-void SIPAccount::unserialize(Conf::MappingNode *map)
+void SIPAccount::unserialize(const Conf::MappingNode *map)
 {
     using namespace Conf;
     MappingNode *srtpMap;
