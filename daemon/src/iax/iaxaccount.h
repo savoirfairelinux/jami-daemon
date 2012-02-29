@@ -46,8 +46,7 @@ class IAXAccount : public Account {
         ~IAXAccount();
 
         virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         void setAccountDetails(std::map<std::string, std::string> details);
 

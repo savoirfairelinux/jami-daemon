@@ -32,6 +32,8 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
+#include <string>
+#include <map>
 
 // general preferences
 static const char * const orderKey = "order";
@@ -107,7 +109,7 @@ class Preferences : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         std::string getAccountOrder() const {
             return accountOrder_;
@@ -206,7 +208,7 @@ class VoipPreference : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         bool getPlayDtmf() const {
             return playDtmf_;
@@ -261,7 +263,7 @@ class AddressbookPreference : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         bool getPhoto() const {
             return photo_;
@@ -336,7 +338,7 @@ class HookPreference : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         bool getIax2Enabled() const {
             return iax2Enabled_;
@@ -410,7 +412,7 @@ class AudioPreference : public Serializable {
 
         virtual void serialize(Conf::YamlEmitter *emitter);
 
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         // alsa preference
         int getCardin() const {
@@ -568,7 +570,7 @@ class ShortcutPreferences : public Serializable {
     public:
         ShortcutPreferences();
         virtual void serialize(Conf::YamlEmitter *emitter);
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode *map);
 
         void setShortcuts(std::map<std::string, std::string> shortcuts);
         std::map<std::string, std::string> getShortcuts() const;

@@ -876,11 +876,11 @@ SIPVoIPLink::offhold(const std::string& id)
         call->setState(Call::ACTIVE);
 }
 
-void SIPVoIPLink::sendTextMessage(sfl::InstantMessaging &module,
-                                  const std::string &callID,
+void SIPVoIPLink::sendTextMessage(const std::string &callID,
                                   const std::string &message,
                                   const std::string &from)
 {
+    using namespace sfl::InstantMessaging;
     SIPCall *call;
 
     try {
@@ -890,11 +890,11 @@ void SIPVoIPLink::sendTextMessage(sfl::InstantMessaging &module,
     }
 
     /* Send IM message */
-    sfl::InstantMessaging::UriList list;
-    sfl::InstantMessaging::UriEntry entry;
+    UriList list;
+    UriEntry entry;
     entry[sfl::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
     list.push_front(entry);
-    module.send_sip_message(call->inv, callID, module.appendUriList(message, list));
+    send_sip_message(call->inv, callID, appendUriList(message, list));
 }
 
 bool
@@ -1846,12 +1846,12 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
     pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
     pjsip_dlg_send_response(inv->dlg, tsx, t_data);
 
-    sfl::InstantMessaging &module = Manager::instance().getInstantMessageModule();
+    using namespace sfl::InstantMessaging;
 
     try {
         // retreive the recipient-list of this message
-        std::string urilist = module.findTextUriList(formattedMessage);
-        sfl::InstantMessaging::UriList list = module.parseXmlUriList(urilist);
+        std::string urilist = findTextUriList(formattedMessage);
+        UriList list = parseXmlUriList(urilist);
 
         // If no item present in the list, peer is considered as the sender
         std::string from;
@@ -1869,7 +1869,7 @@ void transaction_state_changed_cb(pjsip_inv_session *inv UNUSED, pjsip_transacti
         if (from[0] == '<' && from[from.size()-1] == '>')
             from = from.substr(1, from.size()-2);
 
-        Manager::instance().incomingMessage(call->getCallId(), from, module.findTextMessage(formattedMessage));
+        Manager::instance().incomingMessage(call->getCallId(), from, findTextMessage(formattedMessage));
 
     } catch (const sfl::InstantMessageException &except) {
         ERROR("SipVoipLink: %s", except.what());

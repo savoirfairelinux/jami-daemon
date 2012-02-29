@@ -36,6 +36,8 @@
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
 #include "manager.h"
+#include "config/yamlnode.h"
+#include "config/yamlemitter.h"
 
 IAXAccount::IAXAccount(const std::string& accountID)
     : Account(accountID, "iax2"), password_(),
@@ -88,7 +90,7 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
     }
 }
 
-void IAXAccount::unserialize(Conf::MappingNode *map)
+void IAXAccount::unserialize(const Conf::MappingNode *map)
 {
     if (map == NULL) {
         ERROR("IAXAccount: Error: Map is NULL in unserialize");

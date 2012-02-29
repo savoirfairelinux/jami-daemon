@@ -31,18 +31,17 @@
 #ifndef __SERIALIZABLE_H__
 #define __SERIALIZABLE_H__
 
-
-#include "yamlparser.h"
-#include "yamlemitter.h"
-#include "yamlnode.h"
+namespace Conf {
+    class YamlEmitter;
+    class MappingNode;
+}
 
 class Serializable {
 
     public:
         virtual ~Serializable() {};
         virtual void serialize(Conf::YamlEmitter *emitter) = 0;
-
-        virtual void unserialize(Conf::MappingNode *map) = 0;
+        virtual void unserialize(const Conf::MappingNode *map) = 0;
 };
 
 #endif

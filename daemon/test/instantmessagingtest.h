@@ -34,25 +34,15 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <cassert>
-
-// Application import
-#include "im/instant_messaging.h"
-#include "noncopyable.h"
-
 /*
  * @file instantmessagingtest.h
- * @brief       Regroups unitary tests related to the instant messagin module
+ * @brief Unit tests related to the instant messaging module
  */
 
-#ifndef _INSTANTMANAGER_TEST_
-#define _INSTANTMANAGER_TEST_
+#ifndef INSTANTMANAGER_TEST_
+#define INSTANTMANAGER_TEST_
 
 class InstantMessagingTest : public CppUnit::TestCase {
-
-        /**
-          * Use cppunit library macros to add unit test the factory
-          */
         CPPUNIT_TEST_SUITE(InstantMessagingTest);
         CPPUNIT_TEST(testSaveSingleMessage);
         CPPUNIT_TEST(testSaveMultipleMessage);
@@ -64,37 +54,15 @@ class InstantMessagingTest : public CppUnit::TestCase {
         CPPUNIT_TEST_SUITE_END();
 
     public:
-        InstantMessagingTest() : CppUnit::TestCase("Instant messaging module Tests"), im_(0) {}
-
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
-
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        void tearDown();
+        InstantMessagingTest() : CppUnit::TestCase("Instant messaging module Tests") {}
 
         void testSaveSingleMessage();
-
         void testSaveMultipleMessage();
-
         void testGenerateXmlUriList();
-
         void testXmlUriListParsing();
-
         void testGetTextArea();
-
         void testGetUriListArea();
-
         void testIllFormatedMessage();
-
-    private:
-        NON_COPYABLE(InstantMessagingTest);
-        sfl::InstantMessaging *im_;
 };
 
 /* Register our test module */

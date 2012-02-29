@@ -108,10 +108,9 @@ void MappingNode::removeKeyValue(const std::string &key)
 }
 
 
-YamlNode *MappingNode::getValue(const std::string &key)
+YamlNode *MappingNode::getValue(const std::string &key) const
 {
-
-    Mapping::iterator it = map.find(key);
+    Mapping::const_iterator it = map.find(key);
 
     if (it != map.end()) {
         return it->second;
@@ -121,7 +120,7 @@ YamlNode *MappingNode::getValue(const std::string &key)
     }
 }
 
-void MappingNode::getValue(const std::string &key, bool *b)
+void MappingNode::getValue(const std::string &key, bool *b) const
 {
     ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
 
@@ -132,7 +131,7 @@ void MappingNode::getValue(const std::string &key, bool *b)
     *b = v == "true";
 }
 
-void MappingNode::getValue(const std::string &key, int *i)
+void MappingNode::getValue(const std::string &key, int *i) const
 {
     ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
     if (!node)
@@ -141,7 +140,7 @@ void MappingNode::getValue(const std::string &key, int *i)
     *i = atoi(node->getValue().c_str());
 }
 
-void MappingNode::getValue(const std::string &key, std::string *v)
+void MappingNode::getValue(const std::string &key, std::string *v) const
 {
     ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
 

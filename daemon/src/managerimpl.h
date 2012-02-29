@@ -53,15 +53,12 @@
 
 #include "audio/mainbuffer.h"
 #include "preferences.h"
+#include "history/history.h"
 #include "noncopyable.h"
 
-namespace sfl {
-class InstantMessaging;
-}
-
 namespace Conf {
-class YamlParser;
-class YamlEmitter;
+    class YamlParser;
+    class YamlEmitter;
 }
 
 class DTMF;
@@ -955,13 +952,6 @@ class ManagerImpl {
          */
         void removeWaitingCall(const std::string& id);
 
-        /**
-         * Tell if a call is waiting and should be remove
-         * @param id std::string to test
-         * @return bool True if the call is waiting
-         */
-        bool isWaitingCall(const std::string& id) const;
-
         /** Remove a CallID/std::string association
          * Protected by mutex
          * @param callID the CallID to remove
@@ -996,9 +986,13 @@ class ManagerImpl {
         AccountMap accountMap_;
 
         /**
-         * Load the account from configuration
+         * Load the account map from configuration
          */
-        void loadAccountMap(Conf::YamlParser *parser);
+        void loadAccountMap(Conf::YamlParser &parser);
+        /**
+         * Load default account map (no configuration)
+         */
+        void loadDefaultAccountMap();
 
         /**
          * Unload the account (delete them)
@@ -1037,13 +1031,6 @@ class ManagerImpl {
          */
         MainBuffer *getMainBuffer() {
             return &mainBuffer_;
-        }
-
-        /**
-         * Return a pointer to the instance of InstantMessaging
-         */
-        sfl::InstantMessaging &getInstantMessageModule() {
-            return *imModule_;
         }
 
         /**
@@ -1116,13 +1103,6 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        std::auto_ptr<History> history_;
-
-        /**
-         * Instant messaging module, resposible to initiate, format, parse,
-         * send, and receive instant messages.
-         */
-        std::auto_ptr<sfl::InstantMessaging> imModule_;
+        History history_;
 };
-
 #endif // __MANAGER_H__
