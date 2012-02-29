@@ -245,6 +245,27 @@ bool AudioRecord::setRawFile()
     return true;
 }
 
+namespace {
+    std::string header_to_string(const wavhdr &hdr)
+    {
+        std::stringstream ss;
+        ss << hdr.riff << "\0 "
+           << hdr.file_size << " "
+           << hdr.wave << "\0 "
+           << hdr.fmt << "\0 "
+           << hdr.chunk_size << " "
+           << hdr.format_tag << " "
+           << hdr.num_chans << " "
+           << hdr.sample_rate << " "
+           << hdr.bytes_per_sec << " "
+           << hdr.bytes_per_samp << " "
+           << hdr.bits_per_samp << " "
+           << hdr.data << "\0 "
+           << hdr.data_length;
+        return ss.str();
+    }
+}
+
 bool AudioRecord::setWavFile()
 {
     DEBUG("AudioRecord: Create new wave file %s, sampling rate: %d", savePath_.c_str(), sndSmplRate_);
@@ -259,23 +280,29 @@ bool AudioRecord::setWavFile()
     /* The text fields are NOT supposed to be null terminated, so we have to
      * write them as arrays since strings enclosed in quotes include a
      * null character */
-    wavhdr hdr = {{'R', 'I', 'F', 'F'}, 44, {'W', 'A', 'V', 'E'},
-                  {'f','m', 't', ' '}, 16, 1, 1, sndSmplRate_, 0, 2, 16,
-                  {'d', 'a', 't', 'a'}, 0};
+    wavhdr hdr = {{'R', 'I', 'F', 'F'},
+                  44,
+                  {'W', 'A', 'V', 'E'},
+                  {'f','m', 't', ' '},
+                  16,
+                  1,
+                  channels_,
+                  sndSmplRate_,
+                  -1, /* initialized below */
+                  -1, /* initialized below */
+                  16,
+                  {'d', 'a', 't', 'a'},
+                  0};
 
-    hdr.num_chans = channels_;
-    hdr.bits_per_samp = 16;
-    hdr.bytes_per_samp = static_cast<SINT16>(channels_ * hdr.bits_per_samp / 8);
-    hdr.bytes_per_sec = static_cast<SINT32>(hdr.sample_rate * hdr.bytes_per_samp);
+    hdr.bytes_per_samp = channels_ * hdr.bits_per_samp / 8;
+    hdr.bytes_per_sec = hdr.sample_rate * hdr.bytes_per_samp;
 
     if (fwrite(&hdr, 4, 11, fileHandle_) != 11) {
         WARN("AudioRecord: Error: could not write WAV header for file. ");
         return false;
     }
 
-    DEBUG("AudioRecord: created WAV file successfully, file size=%d,"
-          "chunk size=%d, fmt=%d, data length=%d", hdr.file_size,
-          hdr.chunk_size, hdr.format_tag, hdr.data_length);
+    DEBUG("AudioRecord: Wrote wave header \"%s\"", header_to_string(hdr).c_str());
     return true;
 }
 
