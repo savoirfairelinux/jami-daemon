@@ -36,6 +36,8 @@
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
 #include "manager.h"
+#include "config/yamlnode.h"
+#include "config/yamlemitter.h"
 
 IAXAccount::IAXAccount(const std::string& accountID)
     : Account(accountID, "iax2"), password_(),

@@ -32,6 +32,8 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
+#include <string>
+#include <map>
 
 // general preferences
 static const char * const orderKey = "order";

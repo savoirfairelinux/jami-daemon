@@ -48,8 +48,7 @@ enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
 
 class YamlNode {
     public:
-
-        YamlNode(NodeType t, YamlNode *top=NULL) : type(t), topNode(top) {}
+        YamlNode(NodeType t, YamlNode *top = NULL) : type(t), topNode(top) {}
 
         virtual ~YamlNode() {}
 

@@ -32,7 +32,9 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "managerimpl.h"
 
@@ -43,7 +45,8 @@
 #include "im/instant_messaging.h"
 #include "iax/iaxaccount.h"
 #include "numbercleaner.h"
-
+#include "config/yamlparser.h"
+#include "config/yamlemitter.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"

@@ -31,9 +31,10 @@
 #ifndef __SERIALIZABLE_H__
 #define __SERIALIZABLE_H__
 
-#include "yamlparser.h"
-#include "yamlemitter.h"
-#include "yamlnode.h"
+namespace Conf {
+    class YamlEmitter;
+    class MappingNode;
+}
 
 class Serializable {
 

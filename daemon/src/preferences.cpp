@@ -31,6 +31,8 @@
 #include "preferences.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
+#include "config/yamlemitter.h"
+#include "config/yamlnode.h"
 #include <sstream>
 #include "global.h"
 #include <cassert>

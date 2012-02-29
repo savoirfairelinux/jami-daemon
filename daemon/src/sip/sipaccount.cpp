@@ -30,10 +30,15 @@
  *  as that of the covered work.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sipaccount.h"
 #include "sipvoiplink.h"
+#include "config/yamlnode.h"
+#include "config/yamlemitter.h"
 #include "manager.h"
-#include "config.h"
 #include <pwd.h>
 #include <sstream>
 #include <cassert>
