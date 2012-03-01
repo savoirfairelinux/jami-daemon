@@ -63,7 +63,7 @@ namespace sfl_video {
 using std::map;
 using std::string;
 
-namespace { // anonymouse namespace
+namespace { // anonymous namespace
 
 #if _SEM_SEMUN_UNDEFINED
 union semun {
@@ -101,16 +101,14 @@ sem_signal(int sem_set_id)
 /* join and/or create a shared memory segment */
 int createShm(unsigned numBytes, int *shmKey)
 {
-    key_t key;
-    int shm_id;
     /* connect to and possibly create a segment with 644 permissions
        (rw-r--r--) */
 
     srand(time(NULL));
     int proj_id = rand();
-    key = ftok(fileutils::get_program_dir(), proj_id);
+    key_t key = ftok(fileutils::get_program_dir(), proj_id);
     *shmKey = key;
-    shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
+    int shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
     if (shm_id == -1)
         ERROR("%s:shmget:%m", __PRETTY_FUNCTION__);
@@ -189,8 +187,7 @@ int VideoReceiveThread::createSemSet(int shmKey, int *semKey)
     /* first we create a semaphore set with a single semaphore,
        whose counter is initialized to '0'. */
     int sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
-    if (sem_set_id == -1)
-    {
+    if (sem_set_id == -1) {
         ERROR("%s:semget:%m", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
@@ -262,11 +259,10 @@ void VideoReceiveThread::setup()
 
     // retrieve stream information
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-    if (av_find_stream_info(inputCtx_) < 0)
+    if (av_find_stream_info(inputCtx_) < 0) {
 #else
-    if (avformat_find_stream_info(inputCtx_, NULL) < 0)
+    if (avformat_find_stream_info(inputCtx_, NULL) < 0) {
 #endif
-    {
         ERROR("%s:Could not find stream info!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
@@ -295,11 +291,10 @@ void VideoReceiveThread::setup()
     }
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-    if (avcodec_open(decoderCtx_, inputDecoder) < 0)
+    if (avcodec_open(decoderCtx_, inputDecoder) < 0) {
 #else
-    if (avcodec_open2(decoderCtx_, inputDecoder, NULL) < 0)
+    if (avcodec_open2(decoderCtx_, inputDecoder, NULL) < 0) {
 #endif
-    {
         ERROR("%s:Could not open codec!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
@@ -331,7 +326,7 @@ void VideoReceiveThread::setup()
     if (args_["input"] == sdpFilename_) {
         // publish our new video stream's existence
         DEBUG("Publishing shm: %d sem: %d size: %d", shmKey_, semKey_,
-                videoBufferSize_);
+              videoBufferSize_);
         // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
         // from this thread may not be thread-safe
         Manager::instance().getDbusManager()->getVideoControls()->receivingEvent(shmKey_,
@@ -359,7 +354,8 @@ void VideoReceiveThread::createScalingContext()
     }
 }
 
-VideoReceiveThread::VideoReceiveThread(const map<string, string> &args) : args_(args),
+VideoReceiveThread::VideoReceiveThread(const map<string, string> &args) :
+    args_(args),
     frameNumber_(0),
     shmBuffer_(0),
     shmID_(-1),
