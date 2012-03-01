@@ -1185,7 +1185,7 @@ SIPVoIPLink::getSIPCall(const std::string& id)
 
 bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(SIPAccount::IP2IP_PROFILE));
 
     if (!account)
         return false;
@@ -1308,7 +1308,7 @@ void SIPVoIPLink::createDefaultSipUdpTransport()
     pj_uint16_t port = 0;
     int counter = 0;
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(SIPAccount::IP2IP_PROFILE));
 
     pjsip_transport *transport = NULL;
     static const int DEFAULT_TRANSPORT_ATTEMPTS = 5;

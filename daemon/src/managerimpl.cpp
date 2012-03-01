@@ -2335,7 +2335,7 @@ std::vector<std::string> ManagerImpl::getAccountList() const
 
     // The IP2IP profile is always available, and first in the list
 
-    AccountMap::const_iterator ip2ip_iter = accountMap_.find(IP2IP_PROFILE);
+    AccountMap::const_iterator ip2ip_iter = accountMap_.find(SIPAccount::IP2IP_PROFILE);
 
     vector<string> v;
     if (ip2ip_iter->second)
@@ -2346,7 +2346,7 @@ std::vector<std::string> ManagerImpl::getAccountList() const
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
         for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-            if (iter->first == IP2IP_PROFILE || iter->first.empty())
+            if (iter->first == SIPAccount::IP2IP_PROFILE || iter->first.empty())
                 continue;
 
             if (iter->second)
@@ -2355,7 +2355,7 @@ std::vector<std::string> ManagerImpl::getAccountList() const
     }
     else {
         for (vector<string>::const_iterator iter = account_order.begin(); iter != account_order.end(); ++iter) {
-            if (*iter == IP2IP_PROFILE or iter->empty())
+            if (*iter == SIPAccount::IP2IP_PROFILE or iter->empty())
                 continue;
 
             AccountMap::const_iterator account_iter = accountMap_.find(*iter);
@@ -2567,9 +2567,9 @@ std::vector<std::string> ManagerImpl::loadAccountOrder() const
 void ManagerImpl::loadDefaultAccountMap()
 {
     // build a default IP2IP account with default parameters
-    accountMap_[IP2IP_PROFILE] = new SIPAccount(IP2IP_PROFILE);
+    accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
     SIPVoIPLink::instance()->createDefaultSipUdpTransport();
-    accountMap_[IP2IP_PROFILE]->registerVoIPLink();
+    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 }
 
 namespace {
@@ -2592,7 +2592,7 @@ namespace {
         std::string accountAlias;
         node->getValue("alias", &accountAlias);
 
-        if (!accountid.empty() and !accountAlias.empty() and accountid != IP2IP_PROFILE) {
+        if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
             Account *a;
 #if HAVE_IAX
             if (accountType == "IAX")
@@ -2620,14 +2620,14 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
     // build a default IP2IP account with default parameters
-    accountMap_[IP2IP_PROFILE] = new SIPAccount(IP2IP_PROFILE);
+    accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
 
     // load saved preferences for IP2IP account from configuration file
     Sequence *seq = parser.getAccountSequence()->getSequence();
     Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
     if (ip2ip != seq->end()) {
         MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
-        accountMap_[IP2IP_PROFILE]->unserialize(node);
+        accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(node);
     }
 
     // Initialize default UDP transport according to
@@ -2636,7 +2636,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
-    accountMap_[IP2IP_PROFILE]->registerVoIPLink();
+    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
     // build preferences
     preferences.unserialize(parser.getPreferenceNode());
@@ -2670,7 +2670,7 @@ ManagerImpl::getAccount(const std::string& accountID)
     if (iter != accountMap_.end())
         return iter->second;
 
-    return getAccount(IP2IP_PROFILE);
+    return getAccount(SIPAccount::IP2IP_PROFILE);
 }
 
 std::string ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const

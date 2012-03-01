@@ -73,7 +73,7 @@ void CallManager::placeCallFirstAccount(const std::string& callID,
         accountList = Manager::instance().getAccountList();
 
     for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
-        if ((*iter != IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
+        if ((*iter != SIPAccount::IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
             Manager::instance().outgoingCall(*iter, callID, to);
             return;
         }

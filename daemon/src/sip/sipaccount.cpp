@@ -43,6 +43,7 @@
 #include <sstream>
 #include <cassert>
 
+const char * const SIPAccount::IP2IP_PROFILE  = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
