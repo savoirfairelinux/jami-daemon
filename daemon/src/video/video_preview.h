@@ -42,19 +42,11 @@ class VideoReceiveThread;
 class VideoPreview {
     public:
         VideoPreview(const std::map<std::string, std::string> &args);
-        bool start();
-        bool stop();
-
-        int getShmKey(void) const { return shmKey_; }
-        int getSemKey(void) const { return semKey_; }
-        int getVideoBufferSize(void) const { return videoBufferSize_; }
+        void getShmInfo(int &shmKey, int &semaphoreKey, int &bufferSize);
 
     private:
-        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
         std::map<std::string, std::string> args_;
-        int shmKey_;
-        int semKey_;
-        int videoBufferSize_;
+        std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
 };
 }
 

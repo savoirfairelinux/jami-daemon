@@ -42,13 +42,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
-// shm includes
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>     /* semaphore functions and structs.    */
-#include <sys/shm.h>
-
-#include <time.h>
+#include <ctime>
 #include <cstdlib>
 
 #include "manager.h"
@@ -65,89 +59,6 @@ using std::string;
 
 namespace { // anonymous namespace
 
-#if _SEM_SEMUN_UNDEFINED
-union semun {
- int val;				    /* value for SETVAL */
- struct semid_ds *buf;		/* buffer for IPC_STAT & IPC_SET */
- unsigned short int *array;	/* array for GETALL & SETALL */
- struct seminfo *__buf;		/* buffer for IPC_INFO */
-};
-#endif
-
-void
-cleanupSemaphore(int sem_set_id)
-{
-    semctl(sem_set_id, 0, IPC_RMID);
-}
-
-/*
- * function: sem_signal. signals the process that a frame is ready.
- * input:    semaphore set ID.
- * output:   none.
- */
-void
-sem_signal(int sem_set_id)
-{
-    /* structure for semaphore operations.   */
-    struct sembuf sem_op;
-
-    /* signal the semaphore - increase its value by one. */
-    sem_op.sem_num = 0;
-    sem_op.sem_op = 1;
-    sem_op.sem_flg = 0;
-    semop(sem_set_id, &sem_op, 1);
-}
-
-/* join and/or create a shared memory segment */
-int createShm(unsigned numBytes, int *shmKey)
-{
-    /* connect to and possibly create a segment with 644 permissions
-       (rw-r--r--) */
-
-    srand(time(NULL));
-    int proj_id = rand();
-    key_t key = ftok(fileutils::get_program_dir(), proj_id);
-    *shmKey = key;
-    int shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
-
-    if (shm_id == -1)
-        ERROR("%s:shmget:%m", __PRETTY_FUNCTION__);
-
-    return shm_id;
-}
-
-/* attach a shared memory segment */
-uint8_t *attachShm(int shm_id)
-{
-    /* attach to the segment and get a pointer to it */
-    uint8_t *data = reinterpret_cast<uint8_t*>(shmat(shm_id, (void *) 0, 0));
-    if (data == reinterpret_cast<uint8_t *>(-1)) {
-        ERROR("%s:shmat:%m", __PRETTY_FUNCTION__);
-        data = NULL;
-    }
-
-    return data;
-}
-
-void detachShm(uint8_t *data)
-{
-    /* detach from the segment: */
-    if (data and shmdt(data) == -1)
-        ERROR("%s:shmdt:%m", __PRETTY_FUNCTION__);
-}
-
-void destroyShm(int shm_id)
-{
-    /* destroy it */
-    shmctl(shm_id, IPC_RMID, NULL);
-}
-
-void cleanupShm(int shm_id, uint8_t *data)
-{
-    detachShm(data);
-    destroyShm(shm_id);
-}
-
 int bufferSize(int width, int height, int format)
 {
 	enum PixelFormat fmt = (enum PixelFormat) format;
@@ -155,50 +66,7 @@ int bufferSize(int width, int height, int format)
     return sizeof(uint8_t) * avpicture_get_size(fmt, width, height);
 }
 
-
-string openTemp(string path, std::ofstream& f)
-{
-    path += "/XXXXXX";
-    std::vector<char> dst_path(path.begin(), path.end());
-    dst_path.push_back('\0');
-
-    int fd = -1;
-    while (fd == -1) {
-        fd = mkstemp(&dst_path[0]);
-        if (fd != -1) {
-            path.assign(dst_path.begin(), dst_path.end() - 1);
-            f.open(path.c_str(), std::ios_base::trunc | std::ios_base::out);
-            close(fd);
-        }
-    }
-    return path;
-}
 } // end anonymous namespace
-
-int VideoReceiveThread::createSemSet(int shmKey, int *semKey)
-{
-    key_t key;
-    do
-		key = ftok(fileutils::get_program_dir(), rand());
-    while (key == shmKey);
-
-    *semKey = key;
-
-    /* first we create a semaphore set with a single semaphore,
-       whose counter is initialized to '0'. */
-    int sem_set_id = semget(key, 1, 0600 | IPC_CREAT);
-    if (sem_set_id == -1) {
-        ERROR("%s:semget:%m", __PRETTY_FUNCTION__);
-        ost::Thread::exit();
-    }
-
-    /* semaphore value, for semctl(). */
-    union semun sem_val;
-    sem_val.val = 0;
-    semctl(sem_set_id, 0, SETVAL, sem_val);
-    return sem_set_id;
-}
-
 
 void VideoReceiveThread::loadSDP()
 {
@@ -313,31 +181,8 @@ void VideoReceiveThread::setup()
     // determine required buffer size and allocate buffer
     videoBufferSize_ = bufferSize(dstWidth_, dstHeight_, video_rgb_format);
 
-    // create shared memory segment and attach to it
-    shmID_ = createShm(videoBufferSize_, &shmKey_);
-    shmBuffer_  = attachShm(shmID_);
-    semSetID_ = createSemSet(shmKey_, &semKey_);
-    shmReady_.signal();
-
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
-
-    // we're receiving RTP
-    if (args_["input"] == sdpFilename_) {
-        // publish our new video stream's existence
-        DEBUG("Publishing shm: %d sem: %d size: %d", shmKey_, semKey_,
-              videoBufferSize_);
-        // Fri Jul 15 12:15:59 EDT 2011:tmatth:FIXME: access to call manager
-        // from this thread may not be thread-safe
-        Manager::instance().getDbusManager()->getVideoControls()->receivingEvent(shmKey_,
-                semKey_, videoBufferSize_, dstWidth_, dstHeight_);
-    }
-}
-
-// NOT called from this (the run() ) thread
-void VideoReceiveThread::waitForShm()
-{
-    shmReady_.wait();
 }
 
 void VideoReceiveThread::createScalingContext()
@@ -357,12 +202,6 @@ void VideoReceiveThread::createScalingContext()
 VideoReceiveThread::VideoReceiveThread(const map<string, string> &args) :
     args_(args),
     frameNumber_(0),
-    shmBuffer_(0),
-    shmID_(-1),
-    semSetID_(-1),
-    shmKey_(-1),
-    semKey_(-1),
-    videoBufferSize_(0),
     decoderCtx_(0),
     rawFrame_(0),
     scaledPicture_(0),
@@ -371,7 +210,6 @@ VideoReceiveThread::VideoReceiveThread(const map<string, string> &args) :
     imgConvertCtx_(0),
     dstWidth_(-1),
     dstHeight_(-1),
-    shmReady_(),
     sdpFilename_()
 {
     setCancel(cancelDeferred);
@@ -384,9 +222,10 @@ void VideoReceiveThread::run()
     createScalingContext();
     while (not testCancel()) {
         AVPacket inpacket;
-        errno = av_read_frame(inputCtx_, &inpacket);
-        if (errno < 0) {
-            ERROR("Couldn't read frame : %m\n");
+
+        int ret = 0;
+        if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
+            ERROR("Couldn't read frame : %s\n", perror(ret));
             break;
         }
         PacketHandle inpacket_handle(inpacket);
@@ -397,15 +236,14 @@ void VideoReceiveThread::run()
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
             if (frameFinished) {
                 avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                               shmBuffer_, video_rgb_format, dstWidth_,
+                               targetBuffer_, video_rgb_format, dstWidth_,
                                dstHeight_);
 
                 sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
                           0, decoderCtx_->height, scaledPicture_->data,
                           scaledPicture_->linesize);
 
-                // signal the semaphore that a new frame is ready
-                sem_signal(semSetID_);
+                sharedMemory_.frameUpdatedCallback();
             }
         }
     }
@@ -413,15 +251,8 @@ void VideoReceiveThread::run()
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    // free resources, exit thread
-	Manager::instance().getDbusManager()->getVideoControls()->stoppedReceivingEvent(shmKey_, semKey_);
     ost::Thread::terminate();
-
-    // make sure no one is waiting for the SHM event which will never come if we've error'd out
-    shmReady_.signal();
-
-    cleanupSemaphore(semSetID_);
-    cleanupShm(shmID_, shmBuffer_);
+    sharedMemory_.unsubscribe(this);
 
     if (imgConvertCtx_)
         sws_freeContext(imgConvertCtx_);

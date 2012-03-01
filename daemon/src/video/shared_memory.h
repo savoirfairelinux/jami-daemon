@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011, 2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,23 +28,40 @@
  *  as that of the covered work.
  */
 
-#include "video_preview.h"
-#include <map>
-#include <string>
-#include "video_receive_thread.h"
+#ifndef SHARED_MEMORY_H_
+#define SHARED_MEMORY_H_
+
+#include <cc++/thread.h>
+#include "noncopyable.h"
 
 namespace sfl_video {
+class SharedMemory {
+    private:
+        NON_COPYABLE(SharedMemory);
 
-VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) : args_(args), receiveThread_(new VideoReceiveThread(args_))
-{
-    receiveThread_->start();
-    receiveThread_->waitForShm();
+        /*-------------------------------------------------------------*/
+        /* These variables should be used in thread (i.e. run()) only! */
+        /*-------------------------------------------------------------*/
+        int bufferSize_;
+        int shmKey_;
+        int shmID_;
+        uint8_t *shmBuffer_;
+        int semaphoreSetID_;
+        int semaphoreKey_;
+
+        int dstWidth_;
+        int dstHeight_;
+        ost::Event shmReady_;
+
+    public:
+        void frameUpdatedCallback();
+        void waitForShm();
+        // Returns a pointer to the memory where frames should be copied
+        void *getTargetBuffer();
+        int getShmKey() const { return shmKey_; }
+        int getSemaphoreKey() const { return sempahoreKey_; }
+        int getBufferSize() const { return bufferSize_; }
+};
 }
 
-void VideoPreview::getShmInfo(int &shmKey, int &semaphoreKey, int &bufferSize)
-{
-    shmKey = receiveThread_->getShmKey();
-    semaphoreKey = receiveThread_->getSemKey();
-    bufferSize = receiveThread_->getVideoBufferSize();
-}
-} // end namspace sfl_video
+#endif // SHARED_MEMORY_H_

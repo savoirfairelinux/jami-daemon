@@ -53,11 +53,6 @@ class VideoReceiveThread : public ost::Thread {
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
-        uint8_t *shmBuffer_;
-        int shmID_;
-        int semSetID_;
-        int shmKey_;
-        int semKey_;
         int videoBufferSize_;
 
         AVCodecContext *decoderCtx_;
@@ -71,10 +66,8 @@ class VideoReceiveThread : public ost::Thread {
         int dstHeight_;
         ost::Event shmReady_;
         std::string sdpFilename_;
-
         void setup();
         void createScalingContext();
-        int createSemSet(int shmKey, int *semKey);
         void loadSDP();
 
     public:
@@ -82,10 +75,6 @@ class VideoReceiveThread : public ost::Thread {
         virtual ~VideoReceiveThread();
         virtual void run();
         void waitForShm();
-
-        int getShmKey() const { return shmKey_; }
-        int getSemKey() const { return semKey_; }
-        int getVideoBufferSize() const { return videoBufferSize_; }
 };
 }
 

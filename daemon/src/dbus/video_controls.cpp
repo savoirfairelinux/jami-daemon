@@ -167,20 +167,16 @@ void VideoControls::startPreview(int32_t &width, int32_t &height, int32_t &shmKe
 
     map<string, string> args(videoPreference_.getSettings());
     preview_.reset(new sfl_video::VideoPreview(args));
-    preview_->start();
 
     width = atoi(args["width"].c_str());
     height = atoi(args["height"].c_str());
-    shmKey = preview_->getShmKey();
-    semKey = preview_->getSemKey();
-    videoBufferSize = preview_->getVideoBufferSize();
+    preview_->getShmInfo(shmKey, semKey, videoBufferSize);
 }
 
 void VideoControls::stopPreview()
 {
 	if (preview_.get()) {
 		DEBUG("Stopping video preview");
-		preview_->stop();
 		preview_.reset();
 	}
 }
