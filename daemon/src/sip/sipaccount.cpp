@@ -497,7 +497,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
-    DEBUG("Registration expire %s, %s, %s", accountID_.c_str(), registrationExpireStr.str().c_str(), CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
     a[CONFIG_LOCAL_INTERFACE] = interface_;
     a[CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
@@ -593,6 +592,9 @@ void SIPAccount::startKeepAliveTimer() {
         return;
 
     DEBUG("SIP ACCOUNT: start keep alive timer");
+
+    // make sure here we have an entirely new timer
+    memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
 
     pj_time_val keepAliveDelay_;
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
@@ -824,22 +826,31 @@ std::string SIPAccount::getContactHeader() const
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
-   SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
+    SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
 
-   if (sipAccount->isTlsEnabled())
-       return;
+    if(sipAccount == NULL) {
+        ERROR("Sip account is NULL while registering a new keep alive timer");
+    }
 
-   if(sipAccount->isRegistered()) {
+    // IP2IP default does not require keep-alive
+    if(sipAccount->getAccountID() == IP2IP_PROFILE)
+        return; 
 
-       // send a new register request
-       sipAccount->registerVoIPLink();
+    // TLS is connection oriented and does not require keep-alive 
+    if (sipAccount->isTlsEnabled())
+        return;
 
-       // make sure the current timer is deactivated
-       sipAccount->stopKeepAliveTimer();
+    if(sipAccount->isRegistered()) {
 
-       // register a new timer
-       sipAccount->startKeepAliveTimer();
-   }
+        // send a new register request
+        sipAccount->registerVoIPLink();
+
+        // make sure the current timer is deactivated
+        sipAccount->stopKeepAliveTimer();
+
+        // register a new timer
+        sipAccount->startKeepAliveTimer();
+    }
 }
 
 namespace {

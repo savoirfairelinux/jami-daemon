@@ -657,9 +657,23 @@ void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& del
 
     DEBUG("UserAgent: Registering keep alive timer");
 
+    if(timer.id == -1) {
+        WARN("UserAgent: Timer already scheduled");
+    }
+
     status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay);
-    if (status != PJ_SUCCESS)
-        ERROR("Could not schedule new timer in pjsip endpoint");
+    if (status != PJ_SUCCESS) {
+        ERROR("UserAgent: Could not schedule new timer in pjsip endpoint");
+    }
+
+    if(status == PJ_EINVAL) {
+        ERROR("UserAgent: Invalid timer or delay entry");
+    }
+
+    if(status == PJ_EINVALIDOP) {
+        ERROR("Invalid timer entry, maybe already scheduled");
+    }
+
 }
 
 void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
