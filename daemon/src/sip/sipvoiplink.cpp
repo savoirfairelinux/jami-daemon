@@ -1287,7 +1287,7 @@ pj_status_t SIPVoIPLink::stunServerResolve(SIPAccount *account)
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        DEBUG("Error creating STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
+        ERROR("Error creating STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
         return status;
     }
 
