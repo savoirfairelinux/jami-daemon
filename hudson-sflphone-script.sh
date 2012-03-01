@@ -14,7 +14,7 @@ function run_code_analysis {
 	# Check if cppcheck is installed on the system
 	if [ `which cppcheck &>/dev/null ; echo $?` -ne 1 ] ; then
 		pushd src
-		cppcheck . --enable=all --xml 2> cppcheck-report.xml
+		cppcheck . --enable=all --xml --inline-suppr 2> cppcheck-report.xml
 		popd
 	fi
 }
