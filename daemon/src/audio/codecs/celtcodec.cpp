@@ -126,11 +126,13 @@ class Celt : public sfl::AudioCodec {
 };
 
 // the class factories
+// cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* CODEC_ENTRY()
 {
     return new Celt(115);
 }
 
+// cppcheck-suppress unusedFunction
 extern "C" void destroy(sfl::Codec* a)
 {
     delete a;

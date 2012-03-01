@@ -133,11 +133,13 @@ class Alaw : public sfl::AudioCodec {
 };
 
 // the class factories
+// cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* CODEC_ENTRY()
 {
     return new Alaw(8);
 }
 
+// cppcheck-suppress unusedFunction
 extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
