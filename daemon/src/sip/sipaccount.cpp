@@ -804,6 +804,16 @@ std::string SIPAccount::getContactHeader() const
 {
     std::string scheme;
     std::string transport;
+    pjsip_transport_type_e transportType = transportType_;
+    
+    if(transport_ == NULL) {
+        ERROR("Transport not created yet");
+    }
+
+    // The transport type must be specified, in our case START_OTHER refers to stun transport
+    if(transportType == PJSIP_TRANSPORT_START_OTHER) {
+        transportType = PJSIP_TRANSPORT_UDP;
+    }
 
     // Use the CONTACT header provided by the registrar if any
     if(!contactHeader_.empty())
@@ -811,12 +821,12 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
-    link_->findLocalAddressFromTransport(transport_, transportType_, address, port);
+    link_->findLocalAddressFromTransport(transport_, transportType, address, port);
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType));
     } else
         scheme = "sip:";
 

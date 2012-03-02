@@ -88,7 +88,7 @@ static std::map<std::string, std::string> transferCallID;
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
-void setCallMediaLocal(SIPCall* call, const std::string &localIP);
+static void setCallMediaLocal(SIPCall* call, const std::string &localIP);
 
 /**
  * Helper function to parser header from incoming sip messages
@@ -101,17 +101,17 @@ static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
 static pj_thread_t *thread;
 
-void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
-void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
-void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
-void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
-void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
-void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
-void registration_cb(pjsip_regc_cbparam *param);
-pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
-pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
+static void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
+static void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
+static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
+static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
+static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
+static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+static void registration_cb(pjsip_regc_cbparam *param);
+static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
+static pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
 
-void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
+static void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
  * Send a reINVITE inside an active dialog to modify its state
@@ -1470,7 +1470,9 @@ pjsip_tpselector *SIPVoIPLink::initTransportSelector(pjsip_transport *transport,
 void SIPVoIPLink::createStunTransport(SIPAccount *account)
 {
     pj_str_t stunServer = account->getStunServerName();
-    pj_uint16_t stunPort = account->getStunPort();
+    pj_uint16_t stunPort = PJ_STUN_PORT; // account->getStunPort();
+
+    DEBUG("UserAgent: Create stun transport  server name: %s, port: %d", account->getStunServerName(), stunPort);// account->getStunPort());
 
     if (stunServerResolve(account) != PJ_SUCCESS) {
         ERROR("Can't resolve STUN server");
@@ -1561,6 +1563,7 @@ void SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport *transport, pjsi
     int i_port = 0;
 
     // Find the local address and port for this transport
+    DEBUG("transportType: %d\n", transportType);
     if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS) {
         WARN("SIPVoIPLink: Could not retreive local address and port from transport, using %s:%s", addr.c_str(), port.c_str());
         return;
