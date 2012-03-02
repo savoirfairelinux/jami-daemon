@@ -802,21 +802,16 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
 
 std::string SIPAccount::getContactHeader() const
 {
-    std::string scheme;
-    std::string transport;
-    pjsip_transport_type_e transportType = transportType_;
-    
-    if(transport_ == NULL) {
+    if (transport_ == NULL)
         ERROR("Transport not created yet");
-    }
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
-    if(transportType == PJSIP_TRANSPORT_START_OTHER) {
+    pjsip_transport_type_e transportType = transportType_;
+    if (transportType == PJSIP_TRANSPORT_START_OTHER)
         transportType = PJSIP_TRANSPORT_UDP;
-    }
 
     // Use the CONTACT header provided by the registrar if any
-    if(!contactHeader_.empty())
+    if (!contactHeader_.empty())
         return contactHeader_;
 
     // Else we determine this infor based on transport information
@@ -824,6 +819,8 @@ std::string SIPAccount::getContactHeader() const
     link_->findLocalAddressFromTransport(transport_, transportType, address, port);
 
     // UDP does not require the transport specification
+    std::string scheme;
+    std::string transport;
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType));
@@ -831,7 +828,7 @@ std::string SIPAccount::getContactHeader() const
         scheme = "sip:";
 
     return displayName_ + (displayName_.empty() ? "" : " ") + "<" +
-           scheme + username_ + (username_.empty() ? "":"@") +
+           scheme + username_ + (username_.empty() ? "" : "@") +
            address + ":" + port + transport + ">";
 }
 
@@ -839,20 +836,18 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 {
     SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
 
-    if(sipAccount == NULL) {
+    if (sipAccount == NULL)
         ERROR("Sip account is NULL while registering a new keep alive timer");
-    }
 
     // IP2IP default does not require keep-alive
-    if(sipAccount->getAccountID() == IP2IP_PROFILE)
+    if (sipAccount->getAccountID() == IP2IP_PROFILE)
         return; 
 
     // TLS is connection oriented and does not require keep-alive 
     if (sipAccount->isTlsEnabled())
         return;
 
-    if(sipAccount->isRegistered()) {
-
+    if (sipAccount->isRegistered()) {
         // send a new register request
         sipAccount->registerVoIPLink();
 
@@ -865,9 +860,9 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 }
 
 namespace {
-std::string computeMd5HashFromCredential(
-    const std::string& username, const std::string& password,
-    const std::string& realm)
+std::string computeMd5HashFromCredential(const std::string& username,
+                                         const std::string& password,
+                                         const std::string& realm)
 {
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
@@ -891,8 +886,6 @@ std::string computeMd5HashFromCredential(
 
     return std::string(hash, 32);
 }
-
-
 } // anon namespace
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
