@@ -834,10 +834,12 @@ std::string SIPAccount::getContactHeader() const
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
-    SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
+    SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
-    if (sipAccount == NULL)
+    if (sipAccount == NULL) {
         ERROR("Sip account is NULL while registering a new keep alive timer");
+        return;
+    }
 
     // IP2IP default does not require keep-alive
     if (sipAccount->getAccountID() == IP2IP_PROFILE)
