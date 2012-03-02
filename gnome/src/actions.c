@@ -815,7 +815,8 @@ static int place_registered_call(callable_obj_t * c)
         return -1;
     }
 
-    if (g_strcasecmp(g_hash_table_lookup(current->properties, "Status"), "REGISTERED") ==0) {
+    gpointer status = g_hash_table_lookup(current->properties, "Status");
+    if (status && g_strcasecmp(status, "REGISTERED") == 0) {
         /* The call is made with the current account */
         // free memory for previous account id and get a new one
         g_free(c->_accountID);
