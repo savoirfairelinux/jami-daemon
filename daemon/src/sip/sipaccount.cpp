@@ -428,7 +428,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 
     // TLS settings
     // The TLS listener is unique and globally defined through IP2IP_PROFILE
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
 
     tlsEnable_ = details[CONFIG_TLS_ENABLE];
@@ -462,7 +462,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     a[CONFIG_ACCOUNT_ID] = accountID_;
     // The IP profile does not allow to set an alias
-    a[CONFIG_ACCOUNT_ALIAS] = (accountID_ == IP2IP_PROFILE) ? IP2IP_PROFILE : alias_;
+    a[CONFIG_ACCOUNT_ALIAS] = isIP2IP() ? IP2IP_PROFILE : alias_;
 
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_TYPE] = type_;
@@ -477,7 +477,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         registrationStateDescription = "Direct IP call";
     else {
         state = registrationState_;
@@ -488,7 +488,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[CONFIG_REGISTRATION_STATUS] = (accountID_ == IP2IP_PROFILE) ? "READY": mapStateNumberToString(state);
+    a[CONFIG_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
     a[CONFIG_REGISTRATION_STATE_CODE] = registrationStateCode;
     a[CONFIG_REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
 
@@ -565,7 +565,7 @@ void SIPAccount::registerVoIPLink()
 
     // In our definition of the ip2ip profile (aka Direct IP Calls),
     // no registration should be performed
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         return;
 
     try {
@@ -577,7 +577,7 @@ void SIPAccount::registerVoIPLink()
 
 void SIPAccount::unregisterVoIPLink()
 {
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         return;
 
     try {
@@ -842,7 +842,7 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
     }
 
     // IP2IP default does not require keep-alive
-    if (sipAccount->getAccountID() == IP2IP_PROFILE)
+    if (sipAccount->isIP2IP())
         return; 
 
     // TLS is connection oriented and does not require keep-alive 
@@ -975,7 +975,7 @@ std::string SIPAccount::getUserAgentName() const
 
 std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
-    assert(accountID_ == IP2IP_PROFILE);
+    assert(isIP2IP());
     std::map<std::string, std::string> ip2ipAccountDetails;
     ip2ipAccountDetails[CONFIG_ACCOUNT_ID] = IP2IP_PROFILE;
     ip2ipAccountDetails[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
@@ -1001,7 +1001,7 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 {
     std::map<std::string, std::string> tlsSettings;
-    assert(accountID_ == IP2IP_PROFILE);
+    assert(isIP2IP());
 
     std::stringstream portstr;
     portstr << tlsListenerPort_;
@@ -1051,7 +1051,7 @@ void set_opt(const std::map<std::string, std::string> &details, const char *key,
 
 void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    assert(accountID_ == IP2IP_PROFILE);
+    assert(isIP2IP());
     set_opt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     set_opt(details, CONFIG_TLS_ENABLE, tlsEnable_);
     set_opt(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
@@ -1070,4 +1070,9 @@ void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& detail
 VoIPLink* SIPAccount::getVoIPLink()
 {
     return link_;
+}
+
+bool SIPAccount::isIP2IP() const
+{
+    return accountID_ == IP2IP_PROFILE;
 }
