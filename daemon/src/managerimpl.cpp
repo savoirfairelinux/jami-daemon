@@ -292,7 +292,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     try {
         getAccountLink(account_id)->answer(call);
-    } catch (const VoipLinkException &e) {
+    } catch (const std::runtime_error &e) {
         ERROR("Manager: Error: %s", e.what());
     }
 

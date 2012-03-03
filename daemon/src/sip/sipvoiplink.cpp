@@ -651,29 +651,24 @@ void SIPVoIPLink::sendUnregister(Account *a)
     account->setRegister(false);
 }
 
-void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
+void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
-    pj_status_t status;
-
-    DEBUG("UserAgent: Registering keep alive timer");
-
-    if(timer.id == -1) {
+    if (timer.id == -1)
         WARN("UserAgent: Timer already scheduled");
-    }
 
-    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay);
-    if (status != PJ_SUCCESS) {
-        ERROR("UserAgent: Could not schedule new timer in pjsip endpoint");
+    switch (pjsip_endpt_schedule_timer(endpt_, &timer, &delay)) {
+        case PJ_SUCCESS:
+            break;
+        default:
+            ERROR("UserAgent: Could not schedule new timer in pjsip endpoint");
+            /* fallthrough */
+        case PJ_EINVAL:
+            ERROR("UserAgent: Invalid timer or delay entry");
+            break;
+        case PJ_EINVALIDOP:
+            ERROR("Invalid timer entry, maybe already scheduled");
+            break;
     }
-
-    if(status == PJ_EINVAL) {
-        ERROR("UserAgent: Invalid timer or delay entry");
-    }
-
-    if(status == PJ_EINVALIDOP) {
-        ERROR("Invalid timer entry, maybe already scheduled");
-    }
-
 }
 
 void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
@@ -749,23 +744,11 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 }
 
 void
-SIPVoIPLink::answer(Call *c)
+SIPVoIPLink::answer(Call *call)
 {
-    SIPCall *call = dynamic_cast<SIPCall*>(c);
-
     if (!call)
         return;
-
-    pjsip_tx_data *tdata;
-
-    if (pjsip_inv_answer(call->inv, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not init invite request answer (200 OK)");
-
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not send invite request answer (200 OK)");
-
-    call->setConnectionState(Call::CONNECTED);
-    call->setState(Call::ACTIVE);
+    call->answer();
 }
 
 void
