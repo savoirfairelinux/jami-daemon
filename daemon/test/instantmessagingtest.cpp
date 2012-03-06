@@ -53,12 +53,12 @@ void InstantMessagingTest::testSaveSingleMessage()
     std::string filename = "im:";
 
     // Open a file stream and try to write in it
-    CPPUNIT_ASSERT(saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+    CPPUNIT_ASSERT(saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out));
 
     filename.append(callID);
     // Read it to check it has been successfully written
     std::ifstream testfile(filename.c_str(), std::ios::in);
-    CPPUNIT_ASSERT(testfile.is_open() == true);
+    CPPUNIT_ASSERT(testfile.is_open());
 
     while (!testfile.eof()) {
         std::getline(testfile, tmp);
@@ -78,13 +78,13 @@ void InstantMessagingTest::testSaveMultipleMessage()
     std::string filename = "im:";
 
     // Open a file stream and try to write in it
-    CPPUNIT_ASSERT(saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
-    CPPUNIT_ASSERT(saveMessage("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
+    CPPUNIT_ASSERT(saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out));
+    CPPUNIT_ASSERT(saveMessage("Cool", "Alex", callID, std::ios::out || std::ios::app));
 
     filename.append(callID);
     // Read it to check it has been successfully written
     std::ifstream testfile(filename.c_str(), std::ios::in);
-    CPPUNIT_ASSERT(testfile.is_open() == true);
+    CPPUNIT_ASSERT(testfile.is_open());
 
     while (!testfile.eof()) {
         std::getline(testfile, tmp);
