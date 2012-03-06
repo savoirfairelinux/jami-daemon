@@ -231,7 +231,7 @@ void InstantMessagingTest::testGetTextArea()
     formatedText.append("</resource-lists>");
     formatedText.append("--boundary--");
 
-    std::string message = findTextMessage(formatedText);
+    std::string message(findTextMessage(formatedText));
 
     std::cout << "message " << message << std::endl;
 
