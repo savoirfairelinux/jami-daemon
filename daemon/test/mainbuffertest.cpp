@@ -73,7 +73,7 @@ void MainBufferTest::testRingBufferCreation()
     RingBufferMap::iterator iter;
 
     // test mainbuffer ringbuffer map size
-    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.size() == 0);
+    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.empty());
     test_ring_buffer = mainbuffer_.createRingBuffer(test_id);
     CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.size() == 1);
 
@@ -97,10 +97,10 @@ void MainBufferTest::testRingBufferCreation()
     CPPUNIT_ASSERT(mainbuffer_.getRingBuffer(test_id) == test_ring_buffer);
 
     // test remove ring buffer
-    CPPUNIT_ASSERT(mainbuffer_.removeRingBuffer(null_id) == true);
+    CPPUNIT_ASSERT(mainbuffer_.removeRingBuffer(null_id));
     CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.size() == 1);
-    CPPUNIT_ASSERT(mainbuffer_.removeRingBuffer(test_id) == true);
-    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.size() == 0);
+    CPPUNIT_ASSERT(mainbuffer_.removeRingBuffer(test_id));
+    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.empty());
     CPPUNIT_ASSERT(mainbuffer_.getRingBuffer(test_id) == NULL);
 
     iter = mainbuffer_.ringBufferMap_.find(test_id);
@@ -171,8 +171,8 @@ void MainBufferTest::testCallIDSet()
     std::string call_id_2 = "call id 2";
 
     // test initial settings
-    CPPUNIT_ASSERT(mainbuffer_.callIDMap_.size() == 0);
-    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.size() == 0);
+    CPPUNIT_ASSERT(mainbuffer_.callIDMap_.empty());
+    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.empty());
     iter_map = mainbuffer_.callIDMap_.find(test_id);
     CPPUNIT_ASSERT(iter_map ==mainbuffer_.callIDMap_.end());
 
@@ -227,15 +227,13 @@ void MainBufferTest::testCallIDSet()
     CPPUNIT_ASSERT(iter_set == iter_map->second->end());
 
     // Test removeCallIDSet
-    CPPUNIT_ASSERT(mainbuffer_.removeCallIDSet(false_id) == false);
+    CPPUNIT_ASSERT(!mainbuffer_.removeCallIDSet(false_id));
     CPPUNIT_ASSERT(mainbuffer_.callIDMap_.size() == 1);
-    CPPUNIT_ASSERT(mainbuffer_.removeCallIDSet(test_id) == true);
-    CPPUNIT_ASSERT(mainbuffer_.callIDMap_.size() == 0);
+    CPPUNIT_ASSERT(mainbuffer_.removeCallIDSet(test_id));
+    CPPUNIT_ASSERT(mainbuffer_.callIDMap_.empty());
 
     iter_map = mainbuffer_.callIDMap_.find(test_id);
-    CPPUNIT_ASSERT(iter_map ==mainbuffer_.callIDMap_.end());
-
-
+    CPPUNIT_ASSERT(iter_map == mainbuffer_.callIDMap_.end());
 }
 
 
@@ -247,14 +245,12 @@ void MainBufferTest::testRingBufferInt()
 
     int testint1 = 12;
     int testint2 = 13;
-    int init_put_size;
-
 
     // test with default ring buffer
     RingBuffer* test_ring_buffer = mainbuffer_.createRingBuffer(default_id);
 
     // initial state
-    init_put_size = test_ring_buffer->AvailForPut();
+    int init_put_size = test_ring_buffer->AvailForPut();
     CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 0);
 
@@ -1764,6 +1760,6 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT(mainbuffer_.callIDMap_.size() == 2);
 
     mainbuffer_.unBindCallID(test_id2);
-    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.size() == 0);
-    CPPUNIT_ASSERT(mainbuffer_.callIDMap_.size() == 0);
+    CPPUNIT_ASSERT(mainbuffer_.ringBufferMap_.empty());
+    CPPUNIT_ASSERT(mainbuffer_.callIDMap_.empty());
 }
