@@ -38,7 +38,7 @@
 #ifndef __EDS_H__
 #define __EDS_H__
 
-#include <glib/gtypes.h>
+#include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libebook/e-book.h>
 
