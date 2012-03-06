@@ -36,7 +36,7 @@
 #else
 #include <gdk/gdkkeysyms.h>
 #endif
-#include <glib/gprintf.h>
+#include <glib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>

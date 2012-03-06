@@ -29,7 +29,7 @@
 #include <gconf/gconf-client.h>
 #include <gconf/gconf.h>
 #include <gtk/gtk.h>
-#include <glib/gi18n.h>
+#include <glib.h>
 
 static GConfClient *global_gconf_client = NULL;
 

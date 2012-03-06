@@ -36,7 +36,7 @@
 #include "assistant.h"
 #include <gtk/gtk.h>
 #include <string.h>
-#include <glib/gprintf.h>
+#include <glib.h>
 
 #include "uimanager.h"
 #include "statusicon.h"
