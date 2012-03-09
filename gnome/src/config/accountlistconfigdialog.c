@@ -581,6 +581,7 @@ show_account_list_config_dialog(void)
     accountListDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Accounts"),
                                    GTK_WINDOW(get_main_window()),
                                    GTK_DIALOG_DESTROY_WITH_PARENT,
+                                   NULL,
                                    NULL));
 
     /* Set window properties */
