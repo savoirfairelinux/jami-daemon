@@ -31,6 +31,7 @@
  */
 
 #include "config.h"
+#include "str_utils.h"
 #include "actions.h"
 #include "dbus.h"
 #include "calltree.h"
@@ -47,6 +48,7 @@
 #include "uimanager.h"
 #include "unused.h"
 #include "config/audioconf.h"
+#include "str_utils.h"
 
 #include "eel-gconf-extensions.h"
 
@@ -415,7 +417,7 @@ main_window_zrtp_not_supported(callable_obj_t * c)
                                                    ACCOUNT_ZRTP_NOT_SUPP_WARNING);
     }
 
-    if (g_strcasecmp(warning_enabled, "true") == 0) {
+    if (utf8_case_cmp(warning_enabled, "true") == 0) {
         PidginMiniDialog *mini_dialog;
         gchar *desc = g_markup_printf_escaped(
                           _("ZRTP is not supported by peer %s\n"), c->_peer_number);

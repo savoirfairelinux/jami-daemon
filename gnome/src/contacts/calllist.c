@@ -29,6 +29,7 @@
  */
 
 #include "calllist.h"
+#include "str_utils.h"
 #include <string.h>
 #include "calltab.h"
 #include "calltree.h"
@@ -44,7 +45,7 @@ gint is_callID_callstruct(gconstpointer a, gconstpointer b)
     if (c == NULL || c->type != HIST_CALL)
         return 1;
 
-    return g_strcasecmp(c->elem.call->_callID, (const gchar *) b);
+    return utf8_case_cmp(c->elem.call->_callID, (const gchar *) b);
 }
 
 // TODO : try to do this more generically

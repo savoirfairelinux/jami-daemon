@@ -31,6 +31,7 @@
 
 
 #include "accountlistconfigdialog.h"
+#include "str_utils.h"
 #include "dbus/dbus.h"
 #include "accountconfigdialog.h"
 #include "actions.h"
@@ -129,7 +130,7 @@ void account_list_config_dialog_fill()
                        COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
                        COLUMN_ACCOUNT_TYPE, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
                        COLUMN_ACCOUNT_STATUS, account_state_name(a->state),      // Status
-                       COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"true") == 0) ? TRUE:FALSE,    // Enable/Disable
+                       COLUMN_ACCOUNT_ACTIVE, (utf8_case_cmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"true") == 0) ? TRUE:FALSE,    // Enable/Disable
                        COLUMN_ACCOUNT_DATA, a,   // Pointer
                        -1);
 
@@ -151,7 +152,7 @@ void account_list_config_dialog_fill()
                                COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
                                COLUMN_ACCOUNT_TYPE, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
                                COLUMN_ACCOUNT_STATUS, account_state_name(a->state),      // Status
-                               COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"true") == 0) ? TRUE:FALSE,    // Enable/Disable
+                               COLUMN_ACCOUNT_ACTIVE, (utf8_case_cmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"true") == 0) ? TRUE:FALSE,    // Enable/Disable
                                COLUMN_ACCOUNT_DATA, a,   // Pointer
                                -1);
         }
@@ -188,7 +189,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
     if (selectedAccount != NULL) {
         gtk_widget_set_sensitive(GTK_WIDGET(editButton), TRUE);
 
-        if (g_strcasecmp(selectedAccount->accountID, IP2IP) != 0) {
+        if (utf8_case_cmp(selectedAccount->accountID, IP2IP) != 0) {
             gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), TRUE);
             gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), TRUE);
             gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), TRUE);
@@ -238,7 +239,7 @@ static void enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,  
     account_t* acc ;
 
     // The IP2IP profile can't be disabled
-    if (g_strcasecmp(path, "0") == 0)
+    if (utf8_case_cmp(path, "0") == 0)
         return;
 
     // Get pointer on object
@@ -300,7 +301,7 @@ static void account_move(gboolean moveUp, gpointer data)
 
     // The first real account in the list can't move up because of the IP2IP account
     // It can still move down though
-    if (g_strcasecmp(path, "1") == 0 && moveUp)
+    if (utf8_case_cmp(path, "1") == 0 && moveUp)
         return;
 
     treePath = gtk_tree_path_new_from_string(path);
@@ -395,7 +396,7 @@ void highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend, 
     if (current != NULL) {
 
         // Make the first line appear differently
-        (g_strcasecmp(current->accountID, IP2IP) == 0) ? g_object_set(G_OBJECT(rend), "weight", PANGO_WEIGHT_THIN,
+        (utf8_case_cmp(current->accountID, IP2IP) == 0) ? g_object_set(G_OBJECT(rend), "weight", PANGO_WEIGHT_THIN,
                 "style", PANGO_STYLE_ITALIC,
                 "stretch", PANGO_STRETCH_ULTRA_EXPANDED,
                 "scale", 0.95,
@@ -421,7 +422,7 @@ void highlight_registration(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend
     g_value_unset(&val);
 
     if (current != NULL) {
-        if (g_strcasecmp(current->accountID, IP2IP) != 0) {
+        if (utf8_case_cmp(current->accountID, IP2IP) != 0) {
             // Color the account state: green -> registered, otherwise red
             (current->state == ACCOUNT_STATE_REGISTERED) ? g_object_set(G_OBJECT(rend), "foreground", "Dark Green", NULL) :
             g_object_set(G_OBJECT(rend), "foreground", "Dark Red", NULL);

@@ -29,6 +29,7 @@
  */
 
 #include <glib/gi18n.h>
+#include "str_utils.h"
 #include "hooks-config.h"
 #include "dbus.h"
 
@@ -156,7 +157,7 @@ GtkWidget* create_hooks_settings()
     gtk_table_attach(GTK_TABLE(table), info_bar, 0, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 10, 10);
 
     widg = gtk_check_button_new_with_mnemonic(_("Trigger on specific _SIP header"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), (g_strcasecmp(_urlhook_config->sip_enabled, "true") ==0) ?TRUE:FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), (utf8_case_cmp(_urlhook_config->sip_enabled, "true") ==0) ?TRUE:FALSE);
     g_signal_connect(G_OBJECT(widg) , "clicked" , G_CALLBACK(sip_enabled_cb), NULL);
     gtk_table_attach(GTK_TABLE(table), widg, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -165,7 +166,7 @@ GtkWidget* create_hooks_settings()
     gtk_table_attach(GTK_TABLE(table), field, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     widg = gtk_check_button_new_with_mnemonic(_("Trigger on _IAX2 URL"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), (g_strcasecmp(_urlhook_config->iax2_enabled, "true") ==0) ?TRUE:FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), (utf8_case_cmp(_urlhook_config->iax2_enabled, "true") ==0) ?TRUE:FALSE);
     g_signal_connect(G_OBJECT(widg) , "clicked" , G_CALLBACK(iax2_enabled_cb), NULL);
     gtk_table_attach(GTK_TABLE(table), widg, 0, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -177,14 +178,12 @@ GtkWidget* create_hooks_settings()
     gtk_entry_set_text(GTK_ENTRY(command), _urlhook_config->command);
     gtk_table_attach(GTK_TABLE(table), command, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
-
-
     gnome_main_section_new_with_table(_("Phone number rewriting"), &frame, &table, 4, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show(frame);
 
     widg = gtk_check_button_new_with_mnemonic(_("_Prefix dialed numbers with"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), (g_strcasecmp(_urlhook_config->phone_number_enabled, "true") ==0) ?TRUE:FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), (utf8_case_cmp(_urlhook_config->phone_number_enabled, "true") ==0) ?TRUE:FALSE);
     g_signal_connect(G_OBJECT(widg) , "clicked" , G_CALLBACK(phone_number_enabled_cb), NULL);
     gtk_table_attach(GTK_TABLE(table), widg, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 

@@ -29,6 +29,7 @@
  */
 
 #include "addressbook-config.h"
+#include "str_utils.h"
 #include "dbus.h"
 #include "unused.h"
 #include "logger.h"
@@ -443,13 +444,13 @@ addressbook_display(AddressBook_Config *settings, const gchar *field)
 {
     gboolean display;
 
-    if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO) == 0)
+    if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO) == 0)
         display = (settings->display_contact_photo == 1) ? TRUE : FALSE;
-    else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS) == 0)
+    else if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS) == 0)
         display = (settings->search_phone_business == 1) ? TRUE : FALSE;
-    else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_HOME) == 0)
+    else if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_PHONE_HOME) == 0)
         display = (settings->search_phone_home == 1) ? TRUE : FALSE;
-    else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE) == 0)
+    else if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE) == 0)
         display = (settings->search_phone_mobile == 1) ? TRUE : FALSE;
     else
         display = FALSE;

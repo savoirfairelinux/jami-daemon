@@ -30,6 +30,7 @@
  */
 
 #include <glib/gi18n.h>
+#include "str_utils.h"
 #include "accountlist.h"
 #include "actions.h"
 #include "unused.h"
@@ -43,7 +44,7 @@ static guint account_list_get_position(account_t *account)
     for (guint i = 0; i < size; i++) {
         account_t *tmp = account_list_get_nth(i);
 
-        if (g_strcasecmp(tmp->accountID, account->accountID) == 0)
+        if (utf8_case_cmp(tmp->accountID, account->accountID) == 0)
             return i;
     }
 
@@ -266,7 +267,7 @@ gboolean current_account_has_mailbox(void)
     if (current) {
         gchar * account_mailbox = g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX);
 
-        if (account_mailbox && g_strcasecmp(account_mailbox, "") != 0)
+        if (account_mailbox && utf8_case_cmp(account_mailbox, "") != 0)
             return TRUE;
     }
 
