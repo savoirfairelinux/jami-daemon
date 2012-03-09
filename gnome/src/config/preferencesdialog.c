@@ -363,7 +363,7 @@ static GtkTreeModel* create_model(GtkWidget *widget)
                            PAGE_NUMBER, browser_entries_full[i].page_number,
                            -1);
         if (pixbuf)
-            gdk_pixbuf_unref(pixbuf);
+            g_object_unref(pixbuf);
     }
 
     return GTK_TREE_MODEL(store);
