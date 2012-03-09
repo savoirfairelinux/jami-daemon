@@ -30,7 +30,7 @@
  *  as that of the covered work.
  */
 #include "config.h"
-
+#include <glib/gi18n.h>
 #include "logger.h"
 #include "calltab.h"
 #include "callmanager-glue.h"

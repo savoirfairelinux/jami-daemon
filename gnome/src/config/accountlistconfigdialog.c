@@ -38,6 +38,7 @@
 #include "utils.h"
 #include "unused.h"
 #include "logger.h"
+#include <glib/gi18n.h>
 #include <string.h>
 
 static const int CONTEXT_ID_REGISTRATION = 0;

@@ -31,6 +31,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>

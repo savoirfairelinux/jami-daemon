@@ -50,6 +50,7 @@
 
 #include "eel-gconf-extensions.h"
 
+#include <glib/gi18n.h>
 #include <sys/stat.h>
 #include <gtk/gtk.h>
 

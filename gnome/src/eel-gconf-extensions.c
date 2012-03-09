@@ -22,8 +22,9 @@
    Authors: Ramiro Estrugo <ramiro@eazel.com>
 */
 
-#include <stdlib.h>
 #include "config.h"
+#include <glib/gi18n.h>
+#include <stdlib.h>
 #include "eel-gconf-extensions.h"
 
 #include <gconf/gconf-client.h>

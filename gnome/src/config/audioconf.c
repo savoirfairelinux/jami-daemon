@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-
+#include <glib/gi18n.h>
 #include "audioconf.h"
 #include "utils.h"
 #include "logger.h"

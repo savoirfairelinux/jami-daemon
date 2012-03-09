@@ -29,6 +29,8 @@
  */
 
 #include "config.h"
+#include <glib.h>
+#include <glib/gi18n.h>
 #include "eel-gconf-extensions.h"
 #include "sflnotify.h"
 #include "logger.h"

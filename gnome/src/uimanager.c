@@ -34,9 +34,10 @@
 #include "dbus/dbus.h"
 #include "mainwindow.h"
 #include "assistant.h"
+#include <glib.h>
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <string.h>
-#include <glib.h>
 
 #include "uimanager.h"
 #include "statusicon.h"

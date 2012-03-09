@@ -28,11 +28,11 @@
  *  as that of the covered work.
  */
 
-#include <zrtpadvanceddialog.h>
-#include <sflphone_const.h>
-#include <utils.h>
-
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <zrtpadvanceddialog.h>
+#include "sflphone_const.h"
+#include "utils.h"
 
 void show_advanced_zrtp_options(GHashTable * properties)
 {

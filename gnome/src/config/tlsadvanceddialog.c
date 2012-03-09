@@ -32,7 +32,7 @@
 #include <sflphone_const.h>
 #include <utils.h>
 #include <dbus.h>
-
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <math.h>
 

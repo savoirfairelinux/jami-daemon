@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include <gdk/gdk.h>
 #include "shortcuts-config.h"
 #include "shortcuts.h"

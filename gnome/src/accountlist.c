@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include "accountlist.h"
 #include "actions.h"
 #include "unused.h"

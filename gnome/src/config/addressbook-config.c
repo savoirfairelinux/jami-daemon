@@ -34,6 +34,7 @@
 #include "logger.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
+#include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
 

@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 /* Backward compatibility for gtk < 2.22.0 */
 #if GTK_CHECK_VERSION(2,22,0)

@@ -36,6 +36,7 @@
 #include "mainwindow.h"
 #include "statusicon.h"
 #include "eel-gconf-extensions.h"
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
