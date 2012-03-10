@@ -35,6 +35,7 @@
 #include "icons/icon_factory.h"
 #include "contacts/calltab.h"
 #include "contacts/conferencelist.h"
+#include <string.h>
 #include <JavaScriptCore/JavaScript.h>
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>

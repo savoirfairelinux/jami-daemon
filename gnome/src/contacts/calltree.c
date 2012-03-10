@@ -33,6 +33,7 @@
 #include "calllist.h"
 #include "calltree.h"
 #include "str_utils.h"
+#include <string.h>
 #include <stdlib.h>
 
 #include "eel-gconf-extensions.h"
