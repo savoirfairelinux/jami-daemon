@@ -129,6 +129,7 @@ main(int argc, char *argv[])
 
     shortcuts_destroy_bindings();
 
+    eel_gconf_global_client_free();
 OUT:
 #if !GTK_CHECK_VERSION(2,32,0)
     gdk_threads_leave();
