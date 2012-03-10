@@ -30,6 +30,7 @@
 
 #include <glib/gi18n.h>
 #include <gdk/gdk.h>
+#include <X11/XKBlib.h>
 #include "shortcuts-config.h"
 #include "shortcuts.h"
 #include "unused.h"
@@ -130,7 +131,7 @@ create_shortcuts_settings()
         gtk_list_store_append(store, &iter);
         gtk_list_store_set(store, &iter, ACTION, _(list[i].action), MASK,
                            (gint) list[i].mask, VALUE,
-                           XKeycodeToKeysym(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), list[i].key, 0), -1);
+                           XkbKeycodeToKeysym(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), list[i].key, 0, 0), -1);
     }
 
     gtk_tree_view_set_model(GTK_TREE_VIEW(treeview), GTK_TREE_MODEL(store));
