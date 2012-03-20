@@ -47,6 +47,9 @@ check_dbus_SOURCES = check_dbus.c $(top_srcdir)/src/logger.c \
 
 
 check_dbus_CFLAGS = @CHECK_CFLAGS@ @GTK_CFLAGS@ @DBUSGLIB_CFLAGS@ @GCONF_CFLAGS@ @WEBKIT_CFLAGS@
-check_dbus_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@ @GCONF_LIBS@ $(top_builddir)/src/widget/libwidget.la $(top_builddir)/src/icons/libicons.la
+check_dbus_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@ @GCONF_LIBS@ \
+				   $(top_builddir)/src/widget/libwidget.la \
+				   $(top_builddir)/src/icons/libicons.la @X11_LIBS@ \
+				   @JAVASCRIPT_CORE_GTK_LIBS@ -ldl
 
 ###########################################################

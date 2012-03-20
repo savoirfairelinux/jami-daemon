@@ -5,7 +5,6 @@ bin_PROGRAMS = sflphone-client-gnome
 SUBDIRS = config contacts dbus widget icons
 
 NOFIFY_LIBS = -lnotify
-X11_LIBS = -lX11
 LD_LIBS = -ldl
 
 SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
