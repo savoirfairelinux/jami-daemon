@@ -36,6 +36,8 @@ PKG_CHECK_MODULES(GTK, gtk+-3.0)
 PKG_CHECK_MODULES(GCONF, gconf-2.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
 PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)
+PKG_CHECK_MODULES(JAVASCRIPT_CORE_GTK, javascriptcoregtk-3.0, ,
+		  AC_MSG_RESULT(javascriptcoregtk not installed))
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
