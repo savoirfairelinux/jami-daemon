@@ -22,28 +22,6 @@ AC_PROG_MAKE_SET
 dnl Where to find configure files
 AC_CONFIG_MACRO_DIR([m4])
 
-dnl What to generate
-AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([libs/Makefile \
-                 libs/utilspp/Makefile \
-                 libs/utilspp/singleton/Makefile \
-                 libs/iax2/Makefile])
-
-AC_CONFIG_FILES([src/Makefile \
-        src/sip/Makefile \
-        src/im/Makefile \
-        src/iax/Makefile \
-        src/audio/Makefile \
-        src/audio/audiortp/Makefile \
-        src/audio/pulseaudio/Makefile \
-        src/audio/alsa/Makefile \
-        src/audio/sound/Makefile \
-        src/audio/codecs/Makefile \
-        src/config/Makefile \
-        src/dbus/Makefile \
-        src/hooks/Makefile \
-        src/history/Makefile])
-
 dnl Unit tests section
 AC_CONFIG_FILES([test/Makefile])
 
@@ -163,8 +141,6 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
-
 AX_LIB_EXPAT
 
 AX_PTHREAD
@@ -229,13 +205,21 @@ AS_IF([test "x$with_celt" != xno],
                 with_celt_71=yes; AC_MSG_NOTICE([Using celt 0.7.1])
             ],
             [
-                AC_MSG_FAILURE([libcelt link test failed.   You may use --without-celt to compile without celt codec support.])
-            ])
-        ])]
+dnl celt071 is how certain distros package celt
+        PKG_CHECK_MODULES(CELT, celt071 >= 0.7.1,
+        [
+            with_celt_071=yes; AC_MSG_NOTICE([Using celt071])
+        ],
+        [
+                     AC_MSG_FAILURE([libcelt link test failed. You may use --without-celt to compile without celt codec support.])
+        ])
+        ])
+    ])]
 )
 
 AM_CONDITIONAL(BUILD_CELT_91, test "x$with_celt_91" = "xyes" )
 AM_CONDITIONAL(BUILD_CELT_71, test "x$with_celt_71" = "xyes" )
+AM_CONDITIONAL(BUILD_CELT_071, test "x$with_celt_071" = "xyes" )
 
 dnl Check for IAX
 AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
@@ -267,6 +251,31 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 ])
 # Acutally perform the doxygen check
 BB_ENABLE_DOXYGEN
+
+CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
+
+dnl What to generate
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([libs/Makefile \
+                 libs/utilspp/Makefile \
+                 libs/utilspp/singleton/Makefile \
+                 libs/iax2/Makefile])
+
+AC_CONFIG_FILES([src/Makefile \
+        src/sip/Makefile \
+        src/im/Makefile \
+        src/iax/Makefile \
+        src/audio/Makefile \
+        src/audio/audiortp/Makefile \
+        src/audio/pulseaudio/Makefile \
+        src/audio/alsa/Makefile \
+        src/audio/sound/Makefile \
+        src/audio/codecs/Makefile \
+        src/config/Makefile \
+        src/dbus/Makefile \
+        src/hooks/Makefile \
+        src/history/Makefile])
+
 
 # Go!
 AC_OUTPUT
