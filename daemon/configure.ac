@@ -100,8 +100,8 @@ dnl Check for uuid development package - name: uuid-dev
 UUID_MIN_VERSION=1.0
 PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
 
-YAML_MIN_VERSION=0.1.0
-PKG_CHECK_MODULES(YAML, yaml-0.1 >= ${YAML_MIN_VERSION}, ,AC_MSG_ERROR([Missing yaml development files]));
+AC_SEARCH_LIBS([yaml_parser_initialize], [yaml], [], [
+       AC_MSG_ERROR([Unable to find yaml development files])])
 
 LIBCRYPTO_MIN_VERSION=1.0
 PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYPTO=true, HAVE_LIBCRYPTO=false);
