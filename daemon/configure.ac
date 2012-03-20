@@ -162,11 +162,9 @@ PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 
 CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
 
-AC_CHECK_LIB([expat], XML_ParserCreate_MM,
-        [AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
-        have_expat=false)
-
-test "$have_expat" = false && AC_MSG_ERROR([libexpat development files missing])
+AC_SEARCH_LIBS([XML_ParserCreate_MM], [expat], [], [
+        AC_MSG_ERROR([Unable to find libexpat development files])
+])
 
 xml_CFLAGS=
 xml_LIBS=-lexpat
