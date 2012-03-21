@@ -44,6 +44,8 @@ class AVFormatContext;
 class AVFrame;
 
 namespace sfl_video {
+class SharedMemory;
+
 class VideoReceiveThread : public ost::Thread {
     private:
         NON_COPYABLE(VideoReceiveThread);
@@ -53,7 +55,6 @@ class VideoReceiveThread : public ost::Thread {
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
-        int videoBufferSize_;
 
         AVCodecContext *decoderCtx_;
         AVFrame *rawFrame_;
@@ -64,17 +65,17 @@ class VideoReceiveThread : public ost::Thread {
 
         int dstWidth_;
         int dstHeight_;
-        ost::Event shmReady_;
-        std::string sdpFilename_;
+
+        SharedMemory &sharedMemory_;
         void setup();
         void createScalingContext();
         void loadSDP();
 
     public:
-        explicit VideoReceiveThread(const std::map<std::string, std::string> &args);
+        VideoReceiveThread(const std::map<std::string, std::string> &args,
+                           SharedMemory &handle);
         virtual ~VideoReceiveThread();
         virtual void run();
-        void waitForShm();
 };
 }
 

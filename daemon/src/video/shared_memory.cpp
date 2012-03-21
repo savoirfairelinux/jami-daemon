@@ -40,7 +40,6 @@
 #include <cstdlib>
 
 #include "manager.h"
-#include "dbus/callmanager.h"
 #include "dbus/video_controls.h"
 #include "fileutils.h"
 
@@ -80,7 +79,7 @@ void sem_signal(int semaphoreSetID)
 }
 
 /* join and/or create a shared memory segment */
-int createShm(unsigned numBytes)
+int createShmKey()
 {
     /* connect to and possibly create a segment with 644 permissions
        (rw-r--r--) */
@@ -89,7 +88,8 @@ int createShm(unsigned numBytes)
     return ftok(fileutils::get_program_dir(), proj_id);
 }
 
-int createShmID(int key) {
+int createShmID(int key, int numBytes)
+{
     int shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
     if (shm_id == -1)
@@ -129,24 +129,6 @@ void cleanupShm(int shm_id, uint8_t *data)
     destroyShm(shm_id);
 }
 
-string openTemp(string path, std::ofstream& f)
-{
-    path += "/XXXXXX";
-    std::vector<char> dst_path(path.begin(), path.end());
-    dst_path.push_back('\0');
-
-    int fd = -1;
-    while (fd == -1) {
-        fd = mkstemp(&dst_path[0]);
-        if (fd != -1) {
-            path.assign(dst_path.begin(), dst_path.end() - 1);
-            f.open(path.c_str(), std::ios_base::trunc | std::ios_base::out);
-            close(fd);
-        }
-    }
-    return path;
-}
-
 int createSemaphoreKey(int shmKey)
 {
     key_t key;
@@ -160,10 +142,10 @@ int createSemaphoreSetID(int semaphoreKey)
 {
     /* first we create a semaphore set with a single semaphore,
        whose counter is initialized to '0'. */
-    int sempahoreSetID = semget(semaphoreKey, 1, 0600 | IPC_CREAT);
+    int semaphoreSetID = semget(semaphoreKey, 1, 0600 | IPC_CREAT);
     if (semaphoreSetID == -1) {
         ERROR("%s:semget:%m", __PRETTY_FUNCTION__);
-        ost::Thread::exit();
+        throw std::runtime_error("Could not create semaphore set");
     }
 
     /* semaphore value, for semctl(). */
@@ -174,19 +156,34 @@ int createSemaphoreSetID(int semaphoreKey)
 }
 } // end anonymous namespace
 
-SharedMemory(int bufferSize) :
-    bufferSize_(bufferSize),
-    shmKey_(createShmKey(bufferSize_)),
-    shmID_(createShmID(shmKey_)),
-    shmBuffer_(attachShm(shmID_)),
-    semaphoreKey_(createSemaphoreKey(shmKey_)),
-    semaphoreSetID_(createSemaphoreSet(semaphoreKey_))
+SharedMemory::SharedMemory(VideoControls &controls) :
+    videoControls_(controls),
+    shmKey_(0),
+    shmID_(0),
+    shmBuffer_(0),
+    semaphoreSetID_(0),
+    semaphoreKey_(0),
+    dstWidth_(0),
+    dstHeight_(0),
+    bufferSize_(0),
+    shmReady_()
+{}
+
+void SharedMemory::allocateBuffer(int width, int height, int size)
 {
+    dstWidth_ = width;
+    dstHeight_ = height;
+    bufferSize_ = size;
+    shmKey_ = createShmKey();
+    shmID_ = createShmID(shmKey_, bufferSize_);
+    shmBuffer_ = attachShm(shmID_);
+    semaphoreKey_ = createSemaphoreKey(shmKey_);
+    semaphoreSetID_ = createSemaphoreSetID(semaphoreKey_);
     shmReady_.signal();
     DEBUG("Publishing shm: %d sem: %d size: %d", shmKey_, semaphoreKey_,
           bufferSize_);
-    Manager::instance().getDbusManager()->getVideoControls()->receivingEvent(shmKey_,
-                semaphoreKey_, bufferSize_, dstWidth_, dstHeight_);
+    videoControls_.receivingEvent(shmKey_, semaphoreKey_, bufferSize_,
+                                  dstWidth_, dstHeight_);
 }
 
 void SharedMemory::waitForShm()
@@ -203,7 +200,7 @@ void SharedMemory::frameUpdatedCallback()
 SharedMemory::~SharedMemory()
 {
     // free shared memory resources
-	Manager::instance().getDbusManager()->getVideoControls()->stoppedReceivingEvent(shmKey_, semaphoreKey_);
+	videoControls_.stoppedReceivingEvent(shmKey_, semaphoreKey_);
 
     // make sure no one is waiting for the SHM event which will never come if we've error'd out
     shmReady_.signal();

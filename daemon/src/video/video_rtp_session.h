@@ -39,6 +39,7 @@ class Sdp;
 
 namespace sfl_video {
 
+class SharedMemory;
 class VideoSendThread;
 class VideoReceiveThread;
 
@@ -57,6 +58,7 @@ class VideoRtpSession {
         void updateSDP(const Sdp &sdp);
 
     private:
+        std::tr1::shared_ptr<SharedMemory> sharedMemory_;
         std::tr1::shared_ptr<VideoSendThread> sendThread_;
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
         std::map<std::string, std::string> txArgs_;

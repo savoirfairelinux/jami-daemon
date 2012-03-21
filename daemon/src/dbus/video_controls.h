@@ -68,13 +68,24 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
 
         std::vector<std::string> getCodecList();
         std::vector<std::string> getCodecDetails(const std::string& payload);
-        std::vector<std::string> getActiveCodecList(const std::string& accountID);
-        void setActiveCodecList(const std::vector<std::string>& list, const std::string& accountID);
+        std::vector<std::string>
+        getActiveCodecList(const std::string& accountID);
+        void setActiveCodecList(const std::vector<std::string>& list,
+                                const std::string& accountID);
 
         std::vector<std::string> getInputDeviceList();
-        std::vector<std::string> getInputDeviceChannelList(const std::string &dev);
-        std::vector<std::string> getInputDeviceSizeList(const std::string &dev, const std::string &channel);
-        std::vector<std::string> getInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
+
+        std::vector<std::string>
+        getInputDeviceChannelList(const std::string &dev);
+
+        std::vector<std::string>
+        getInputDeviceSizeList(const std::string &dev,
+                               const std::string &channel);
+
+        std::vector<std::string>
+        getInputDeviceRateList(const std::string &dev,
+                               const std::string &channel,
+                               const std::string &size);
         std::map<std::string, std::string> getSettings() const;
         void setInputDevice(const std::string& api);
         void setInputDeviceChannel(const std::string& api);
@@ -86,7 +97,8 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         std::string getInputDeviceRate();
         std::string getCurrentCodecName(const std::string &callID);
 
-        void startPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &bufferSize);
+        void startPreview(int32_t &width, int32_t &height, int32_t &shmKey,
+                          int32_t &semKey, int32_t &bufferSize);
         void stopPreview();
 };
 

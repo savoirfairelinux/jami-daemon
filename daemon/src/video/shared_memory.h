@@ -34,6 +34,8 @@
 #include <cc++/thread.h>
 #include "noncopyable.h"
 
+class VideoControls;
+
 namespace sfl_video {
 class SharedMemory {
     private:
@@ -42,7 +44,7 @@ class SharedMemory {
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
-        int bufferSize_;
+        VideoControls &videoControls_;
         int shmKey_;
         int shmID_;
         uint8_t *shmBuffer_;
@@ -51,16 +53,20 @@ class SharedMemory {
 
         int dstWidth_;
         int dstHeight_;
+        int bufferSize_;
         ost::Event shmReady_;
 
     public:
+        SharedMemory(VideoControls &controls);
+        ~SharedMemory();
         void frameUpdatedCallback();
         void waitForShm();
         // Returns a pointer to the memory where frames should be copied
-        void *getTargetBuffer();
+        uint8_t *getTargetBuffer() { return shmBuffer_; }
         int getShmKey() const { return shmKey_; }
-        int getSemaphoreKey() const { return sempahoreKey_; }
+        int getSemaphoreKey() const { return semaphoreKey_; }
         int getBufferSize() const { return bufferSize_; }
+        void allocateBuffer(int width, int height, int size);
 };
 }
 

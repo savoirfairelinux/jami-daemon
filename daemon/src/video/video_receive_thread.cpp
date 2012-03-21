@@ -46,11 +46,10 @@ extern "C" {
 #include <cstdlib>
 
 #include "manager.h"
-#include "dbus/callmanager.h"
 #include "dbus/video_controls.h"
-#include "fileutils.h"
+#include "shared_memory.h"
 
-static const enum PixelFormat video_rgb_format = PIX_FMT_BGRA;
+static const enum PixelFormat VIDEO_RGB_FORMAT = PIX_FMT_BGRA;
 
 namespace sfl_video {
 
@@ -59,7 +58,7 @@ using std::string;
 
 namespace { // anonymous namespace
 
-int bufferSize(int width, int height, int format)
+int getBufferSize(int width, int height, int format)
 {
 	enum PixelFormat fmt = (enum PixelFormat) format;
     // determine required buffer size and allocate buffer
@@ -71,10 +70,8 @@ int bufferSize(int width, int height, int format)
 void VideoReceiveThread::loadSDP()
 {
     assert(not args_["receiving_sdp"].empty());
-    // this memory will be released on next call to tmpnam
-    std::ofstream os;
-    sdpFilename_ = openTemp("/tmp", os);
 
+    std::ofstream os;
     os << args_["receiving_sdp"];
     DEBUG("%s:loaded SDP %s", __PRETTY_FUNCTION__,
           args_["receiving_sdp"].c_str());
@@ -82,6 +79,8 @@ void VideoReceiveThread::loadSDP()
     os.close();
 }
 
+// We do this setup here instead of the constructor because we don't want the
+// main thread to block while this executes, so it happens in the video thread.
 void VideoReceiveThread::setup()
 {
     dstWidth_ = atoi(args_["width"].c_str());
@@ -91,7 +90,6 @@ void VideoReceiveThread::setup()
 
     if (args_["input"].empty()) {
         loadSDP();
-        args_["input"] = sdpFilename_;
         file_iformat = av_find_input_format("sdp");
         if (!file_iformat) {
             ERROR("%s:Could not find format \"sdp\"", __PRETTY_FUNCTION__);
@@ -136,7 +134,7 @@ void VideoReceiveThread::setup()
     }
 
     // find the first video stream from the input
-    for (unsigned i = 0; i < inputCtx_->nb_streams; i++) {
+    for (size_t i = 0; i < inputCtx_->nb_streams; i++) {
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             videoStreamIndex_ = i;
             break;
@@ -179,7 +177,13 @@ void VideoReceiveThread::setup()
     }
 
     // determine required buffer size and allocate buffer
-    videoBufferSize_ = bufferSize(dstWidth_, dstHeight_, video_rgb_format);
+    const int bufferSize = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
+    try {
+        sharedMemory_.allocateBuffer(dstWidth_, dstHeight_, bufferSize);
+    } catch (const std::runtime_error &e) {
+        ERROR("%s:%s", __PRETTY_FUNCTION__, e.what());
+        ost::Thread::exit();
+    }
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
@@ -191,7 +195,7 @@ void VideoReceiveThread::createScalingContext()
     imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_, decoderCtx_->width,
                                           decoderCtx_->height,
                                           decoderCtx_->pix_fmt, dstWidth_,
-                                          dstHeight_, video_rgb_format,
+                                          dstHeight_, VIDEO_RGB_FORMAT,
                                           SWS_BICUBIC, NULL, NULL, NULL);
     if (imgConvertCtx_ == 0) {
         ERROR("Cannot init the conversion context!");
@@ -199,7 +203,8 @@ void VideoReceiveThread::createScalingContext()
     }
 }
 
-VideoReceiveThread::VideoReceiveThread(const map<string, string> &args) :
+VideoReceiveThread::VideoReceiveThread(const map<string, string> &args,
+                                       sfl_video::SharedMemory &handle) :
     args_(args),
     frameNumber_(0),
     decoderCtx_(0),
@@ -210,7 +215,7 @@ VideoReceiveThread::VideoReceiveThread(const map<string, string> &args) :
     imgConvertCtx_(0),
     dstWidth_(-1),
     dstHeight_(-1),
-    sdpFilename_()
+    sharedMemory_(handle)
 {
     setCancel(cancelDeferred);
 }
@@ -225,7 +230,7 @@ void VideoReceiveThread::run()
 
         int ret = 0;
         if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
-            ERROR("Couldn't read frame : %s\n", perror(ret));
+            ERROR("Couldn't read frame : %s\n", strerror(ret));
             break;
         }
         PacketHandle inpacket_handle(inpacket);
@@ -236,8 +241,8 @@ void VideoReceiveThread::run()
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
             if (frameFinished) {
                 avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                               targetBuffer_, video_rgb_format, dstWidth_,
-                               dstHeight_);
+                               sharedMemory_.getTargetBuffer(),
+                               VIDEO_RGB_FORMAT, dstWidth_, dstHeight_);
 
                 sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
                           0, decoderCtx_->height, scaledPicture_->data,
@@ -252,7 +257,6 @@ void VideoReceiveThread::run()
 VideoReceiveThread::~VideoReceiveThread()
 {
     ost::Thread::terminate();
-    sharedMemory_.unsubscribe(this);
 
     if (imgConvertCtx_)
         sws_freeContext(imgConvertCtx_);

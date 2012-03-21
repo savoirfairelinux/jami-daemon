@@ -33,10 +33,12 @@
 #include <sstream>
 #include <map>
 #include <string>
+#include "shared_memory.h"
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
 #include "sip/sdp.h"
 #include "libav_utils.h"
+#include "manager.h"
 
 namespace sfl_video {
 
@@ -44,16 +46,17 @@ using std::map;
 using std::string;
 
 VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs) :
-    sendThread_(), receiveThread_(), txArgs_(txArgs), rxArgs_(),
-    sending_(true), receiving_(true)
+    sharedMemory_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
+    rxArgs_(), sending_(true), receiving_(true)
 {
+    // FIXME: bitrate must be configurable
     txArgs_["bitrate"] = "500000";
 }
 
 VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs,
                                  const map<string, string> &rxArgs) :
-    sendThread_(), receiveThread_(), txArgs_(txArgs), rxArgs_(rxArgs),
-    sending_(true), receiving_(true)
+    sharedMemory_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
+    rxArgs_(rxArgs), sending_(true), receiving_(true)
 {}
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
@@ -144,8 +147,9 @@ void VideoRtpSession::test_loopback()
 
     sendThread_->waitForSDP();
     rxArgs_["input"] = "test.sdp";
-
-    receiveThread_.reset(new VideoReceiveThread(rxArgs_));
+    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
+    sharedMemory_.reset(new SharedMemory(*controls));
+    receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
     receiveThread_->start();
 }
 
@@ -163,7 +167,9 @@ void VideoRtpSession::start()
     if (receiving_) {
         if (receiveThread_.get())
             WARN("Restarting video receiver");
-        receiveThread_.reset(new VideoReceiveThread(rxArgs_));
+        VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
+        sharedMemory_.reset(new SharedMemory(*controls));
+        receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
         receiveThread_->start();
     }
     else

@@ -37,6 +37,7 @@
 
 namespace sfl_video {
 
+class SharedMemory;
 class VideoReceiveThread;
 
 class VideoPreview {
@@ -46,6 +47,7 @@ class VideoPreview {
 
     private:
         std::map<std::string, std::string> args_;
+        std::tr1::shared_ptr<SharedMemory> sharedMemory_;
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
 };
 }
