@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,16 +28,14 @@
  *  as that of the covered work.
  */
 
-#include "ringtonetest.h"
+#include "str_utils.h"
 
-void RingtoneTest::testLoadWavefile()
+gint utf8_case_cmp(const gchar *a, const gchar *b)
 {
-    WavFile wav;
-
-    // Test initial values
-    CPPUNIT_ASSERT(not wav.isStarted());
-    CPPUNIT_ASSERT(wav.getSize() == 0);
-
-    // Test protection against wrong file name
-    CPPUNIT_ASSERT(not wav.loadFile(std::string("wrongfilename.wav"), NULL, 44100));
+    gchar *l = g_utf8_casefold(a, -1);
+    gchar *r = g_utf8_casefold(b, -1);
+    gint result = g_utf8_collate(l, r);
+    g_free(l);
+    g_free(r);
+    return result;
 }

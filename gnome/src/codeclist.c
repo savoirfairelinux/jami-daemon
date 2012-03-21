@@ -171,7 +171,7 @@ is_payload_codecstruct(gconstpointer a, gconstpointer b)
 
 codec_t* codec_list_get_by_payload(int payload, GQueue *q)
 {
-    GList * c = g_queue_find_custom(q, (gconstpointer)(uintptr_t)payload, is_payload_codecstruct);
+    GList * c = g_queue_find_custom(q, (gconstpointer)(uintptr_t) payload, is_payload_codecstruct);
     return c ? c->data : NULL;
 }
 

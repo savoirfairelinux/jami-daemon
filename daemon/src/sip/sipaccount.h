@@ -100,6 +100,7 @@ class SIPVoIPLink;
 
 class SIPAccount : public Account {
     public:
+        static const char * const IP2IP_PROFILE;
         static const char * const OVERRTP_STR;
         static const char * const SIPINFO_STR;
 
@@ -120,6 +121,11 @@ class SIPAccount : public Account {
         void setRegistrationStateDetailed(const std::pair<int, std::string> &details) {
             registrationStateDetailed_ = details;
         }
+
+        /**
+         * Returns true if this is the IP2IP account
+         */
+        bool isIP2IP() const;
 
         /**
          * Serialize internal state of this account for configuration
@@ -505,22 +511,25 @@ class SIPAccount : public Account {
     private:
         NON_COPYABLE(SIPAccount);
 
+        /**
+         * Map of credential for this account
+         */
         std::vector< std::map<std::string, std::string > > credentials_;
 
-        /* Maps a string description of the SSL method
+        /**
+         * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation
          * @return pjsip_ssl_method The corresponding value in the enum
          */
         static pjsip_ssl_method sslMethodStringToPjEnum(const std::string& method);
 
-        /*
+        /**
          * Initializes tls settings from configuration file.
-         *
          */
         void initTlsConfiguration();
 
-        /*
+        /**
          * Initializes STUN config from the config file
          */
         void initStunConfiguration();
@@ -543,21 +552,41 @@ class SIPAccount : public Account {
          */
         bool bRegister_;
 
-        // Network settings
+        /**
+         * Network settings
+         */
         int registrationExpire_;
 
-        // interface name on which this account is bound
+        /**
+         * interface name on which this account is bound
+         */
         std::string interface_;
 
-        // Flag which determine if localIpAddress_ or publishedIpAddress_ is used in
-        // sip headers
+        /**
+         * Flag which determine if localIpAddress_ or publishedIpAddress_ is used in
+         * sip headers
+         */
         bool publishedSameasLocal_;
 
+        /**
+         * Published IP address, ued only if defined by the user in account
+         * configuration
+         */
         std::string publishedIpAddress_;
 
+        /**
+         * Local port to whih this account is bound
+         */
         pj_uint16_t localPort_;
+
+        /**
+         * Published port, used only if defined by the user
+         */
         pj_uint16_t publishedPort_;
 
+        /**
+         * Optional list of SIP service this
+         */
         std::string serviceRoute_;
 
         /**

@@ -71,13 +71,13 @@ void codecs_unload (void);
  * @param name The string description of the codec
  * @return codec_t* A codec or NULL
  */
-codec_t * codec_list_get_by_name (gconstpointer name, GQueue *q);
+codec_t * codec_list_get_by_name(gconstpointer name, GQueue *q);
 
 /**
  * Set the prefered codec first in the codec list
  * @param index The position in the list of the prefered codec
  */
-void codec_set_prefered_order (guint index, GQueue *q);
+void codec_set_prefered_order(guint index, GQueue *q);
 
 /**
  * Move the codec from an unit up in the codec_list
@@ -85,18 +85,18 @@ void codec_set_prefered_order (guint index, GQueue *q);
  * @param q
  * @param up true if moving upwards
  */
-void codec_list_move (guint index, GQueue *q, gboolean up);
+void codec_list_move(guint index, GQueue *q, gboolean up);
 
 /**
  * Notify modifications on codecs to the server
  */
-void codec_list_update_to_daemon (account_t *acc);
+void codec_list_update_to_daemon(account_t *acc);
 
-codec_t* codec_list_get_by_payload (int payload, GQueue *q);
+codec_t* codec_list_get_by_payload(gint payload, GQueue *q);
 
-GQueue* get_video_codecs_list (void);
+GQueue* get_video_codecs_list(void);
 
-GQueue* get_audio_codecs_list (void);
+GQueue* get_audio_codecs_list(void);
 
 /*
  * Instanciate a new codec with the given specification
@@ -106,14 +106,14 @@ GQueue* get_audio_codecs_list (void);
  * @param active	Whether or not this codec should active (checked)
  * @param c			A pointer to receive the new codec instance
  */
-void codec_create_new (gint payload, gchar **specs, gboolean active, codec_t **c);
+void codec_create_new(gint payload, gchar **specs, gboolean active, codec_t **c);
 
 /*
  * Attach a codec list to a specific account
  *
  * @param acc		A pointer on the account to modify
  */
-void account_create_codec_list (account_t **acc);
+void account_create_codec_list(account_t **acc);
 
-codec_t *codec_create_new_from_caps (codec_t *original);
+codec_t *codec_create_new_from_caps(codec_t *original);
 #endif

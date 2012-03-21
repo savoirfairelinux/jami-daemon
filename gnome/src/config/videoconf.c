@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include <string.h>
 #include "videoconf.h"
 #include "logger.h"

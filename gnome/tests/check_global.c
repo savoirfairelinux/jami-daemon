@@ -34,6 +34,7 @@
 
 #include "../src/accountlist.h"
 #include "../src/sflphone_const.h"
+#include "../src/str_utils.h"
 
 account_t* create_test_account(gchar *alias)
 {
@@ -78,7 +79,7 @@ START_TEST(test_ordered_list)
     account_list_init();
     account_list_add(test);
     account_list_add(test);
-    fail_unless(g_strcasecmp(account_list_get_ordered_list(), list) == 0, "ERROR - BAD ACCOUNT LIST SERIALIZING");
+    fail_unless(utf8_case_cmp(account_list_get_ordered_list(), list) == 0, "ERROR - BAD ACCOUNT LIST SERIALIZING");
     g_free(list);
 }
 END_TEST
@@ -91,7 +92,7 @@ START_TEST(test_get_by_id)
     account_list_init();
     account_list_add(test);
     tmp = account_list_get_by_id(test->accountID);
-    fail_unless(g_strcasecmp(tmp->accountID, test->accountID) == 0, "ERROR - ACCOUNTLIST_GET_BY_ID");
+    fail_unless(utf8_case_cmp(tmp->accountID, test->accountID) == 0, "ERROR - ACCOUNTLIST_GET_BY_ID");
 }
 END_TEST
 
@@ -109,7 +110,7 @@ START_TEST(test_get_current_account)
 
     // The current account must be the first we add
     if (current) {
-        fail_unless(g_strcasecmp(g_hash_table_lookup(current->properties, ACCOUNT_ALIAS) ,
+        fail_unless(utf8_case_cmp(g_hash_table_lookup(current->properties, ACCOUNT_ALIAS) ,
                                  g_hash_table_lookup(test->properties, ACCOUNT_ALIAS)) == 0,
                     "ERROR - BAD CURRENT ACCOUNT");
     }
@@ -121,7 +122,7 @@ START_TEST(test_get_current_account)
 
     // The current account must be the first we add
     if (current) {
-        fail_unless(g_strcasecmp(g_hash_table_lookup(current->properties, ACCOUNT_ALIAS) ,
+        fail_unless(utf8_case_cmp(g_hash_table_lookup(current->properties, ACCOUNT_ALIAS) ,
                                  g_hash_table_lookup(test2->properties, ACCOUNT_ALIAS)) == 0,
                     "ERROR - BAD CURRENT ACCOUNT");
     }

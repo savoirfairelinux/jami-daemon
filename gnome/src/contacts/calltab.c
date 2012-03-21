@@ -31,6 +31,7 @@
 #include "calltab.h"
 #include <gtk/gtk.h>
 #include <stdlib.h>
+#include "str_utils.h"
 #include "calltree.h"
 #include "contacts/searchbar.h"
 #include "logger.h"
@@ -97,9 +98,9 @@ calltab_create_searchbar(calltab_t* tab)
 {
     g_assert(tab);
 
-    if (g_strcasecmp(tab->_name, HISTORY) == 0)
+    if (utf8_case_cmp(tab->_name, HISTORY) == 0)
         tab->searchbar = history_searchbar_new();
-    else if (g_strcasecmp(tab->_name, CONTACTS) == 0)
+    else if (utf8_case_cmp(tab->_name, CONTACTS) == 0)
         tab->searchbar = contacts_searchbar_new();
     else
         ERROR("Current calls tab does not need a searchbar\n");

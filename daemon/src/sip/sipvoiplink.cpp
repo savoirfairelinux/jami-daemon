@@ -93,7 +93,7 @@ static std::map<std::string, std::string> transferCallID;
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
-void setCallMediaLocal(SIPCall* call, const std::string &localIP);
+static void setCallMediaLocal(SIPCall* call, const std::string &localIP);
 
 /**
  * Helper function to parser header from incoming sip messages
@@ -106,17 +106,17 @@ static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
 static pj_thread_t *thread;
 
-void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
-void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
-void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
-void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
-void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
-void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
-void registration_cb(pjsip_regc_cbparam *param);
-pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
-pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
+static void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
+static void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
+static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
+static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
+static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
+static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+static void registration_cb(pjsip_regc_cbparam *param);
+static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
+static pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
 
-void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
+static void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
  * Send a reINVITE inside an active dialog to modify its state
@@ -660,15 +660,24 @@ void SIPVoIPLink::sendUnregister(Account *a)
     account->setRegister(false);
 }
 
-void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
+void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
-    pj_status_t status;
+    if (timer.id == -1)
+        WARN("UserAgent: Timer already scheduled");
 
-    DEBUG("UserAgent: Registering keep alive timer");
-
-    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay);
-    if (status != PJ_SUCCESS)
-        ERROR("Could not schedule new timer in pjsip endpoint");
+    switch (pjsip_endpt_schedule_timer(endpt_, &timer, &delay)) {
+        case PJ_SUCCESS:
+            break;
+        default:
+            ERROR("UserAgent: Could not schedule new timer in pjsip endpoint");
+            /* fallthrough */
+        case PJ_EINVAL:
+            ERROR("UserAgent: Invalid timer or delay entry");
+            break;
+        case PJ_EINVALIDOP:
+            ERROR("Invalid timer entry, maybe already scheduled");
+            break;
+    }
 }
 
 void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
@@ -748,23 +757,11 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 }
 
 void
-SIPVoIPLink::answer(Call *c)
+SIPVoIPLink::answer(Call *call)
 {
-    SIPCall *call = dynamic_cast<SIPCall*>(c);
-
     if (!call)
         return;
-
-    pjsip_tx_data *tdata;
-
-    if (pjsip_inv_answer(call->inv, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not init invite request answer (200 OK)");
-
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not send invite request answer (200 OK)");
-
-    call->setConnectionState(Call::CONNECTED);
-    call->setState(Call::ACTIVE);
+    call->answer();
 }
 
 void
@@ -1247,7 +1244,7 @@ namespace
 
 bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+    SIPAccount *account = Manager::instance().getIP2IPAccount();
 
     if (!account)
         return false;
@@ -1353,7 +1350,7 @@ pj_status_t SIPVoIPLink::stunServerResolve(SIPAccount *account)
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        DEBUG("Error creating STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
+        ERROR("Error creating STUN socket for %.*s: %s", (int) stunServer.slen, stunServer.ptr, errmsg);
         return status;
     }
 
@@ -1374,7 +1371,7 @@ void SIPVoIPLink::createDefaultSipUdpTransport()
     pj_uint16_t port = 0;
     int counter = 0;
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+    SIPAccount *account = Manager::instance().getIP2IPAccount();
 
     pjsip_transport *transport = NULL;
     static const int DEFAULT_TRANSPORT_ATTEMPTS = 5;
@@ -1537,7 +1534,9 @@ pjsip_tpselector *SIPVoIPLink::initTransportSelector(pjsip_transport *transport,
 void SIPVoIPLink::createStunTransport(SIPAccount *account)
 {
     pj_str_t stunServer = account->getStunServerName();
-    pj_uint16_t stunPort = account->getStunPort();
+    pj_uint16_t stunPort = PJ_STUN_PORT; // account->getStunPort();
+
+    DEBUG("UserAgent: Create stun transport  server name: %s, port: %d", account->getStunServerName(), stunPort);// account->getStunPort());
 
     if (stunServerResolve(account) != PJ_SUCCESS) {
         ERROR("Can't resolve STUN server");
@@ -1629,6 +1628,7 @@ void SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport *transport, pjsi
     int i_port = 0;
 
     // Find the local address and port for this transport
+    DEBUG("transportType: %d\n", transportType);
     if (pjsip_tpmgr_find_local_addr(tpmgr, pool_, transportType, tp_sel, &localAddress, &i_port) != PJ_SUCCESS) {
         WARN("SIPVoIPLink: Could not retreive local address and port from transport, using %s:%s", addr.c_str(), port.c_str());
         return;

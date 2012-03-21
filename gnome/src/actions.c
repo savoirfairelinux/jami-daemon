@@ -33,6 +33,7 @@
 #include "config.h"
 #endif
 
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 /* Backward compatibility for gtk < 2.22.0 */
 #if GTK_CHECK_VERSION(2,22,0)
@@ -40,7 +41,9 @@
 #else
 #include <gdk/gdkkeysyms.h>
 #endif
-#include <glib/gprintf.h>
+
+#include "str_utils.h"
+#include <glib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -104,7 +107,7 @@ sflphone_notify_voice_mail(const gchar* accountID , guint count)
 
 static gboolean is_direct_call(callable_obj_t * c)
 {
-    if (g_strcasecmp(c->_accountID, "empty") == 0) {
+    if (utf8_case_cmp(c->_accountID, "empty") == 0) {
         if (!g_str_has_prefix(c->_peer_number, "sip:")) {
             gchar * new_number = g_strconcat("sip:", c->_peer_number, NULL);
             g_free(c->_peer_number);
@@ -184,7 +187,6 @@ sflphone_hung_up(callable_obj_t * c)
     calllist_remove_call(current_calls_tab, c->_callID);
     calltree_remove_call(current_calls_tab, c);
     c->_state = CALL_STATE_DIALING;
-
     update_actions();
 
     if (c->_confID) {
@@ -348,6 +350,7 @@ sflphone_hang_up()
             case CALL_STATE_RINGING:
                 dbus_hang_up(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
+                //selectedCall->_stop = 0;
                 break;
             case CALL_STATE_CURRENT:
             case CALL_STATE_HOLD:
@@ -817,7 +820,8 @@ static int place_registered_call(callable_obj_t * c)
         return -1;
     }
 
-    if (g_strcasecmp(g_hash_table_lookup(current->properties, "Status"), "REGISTERED") ==0) {
+    gpointer status = g_hash_table_lookup(current->properties, "Status");
+    if (status && utf8_case_cmp(status, "REGISTERED") == 0) {
         /* The call is made with the current account */
         // free memory for previous account id and get a new one
         g_free(c->_accountID);

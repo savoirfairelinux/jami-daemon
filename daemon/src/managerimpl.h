@@ -73,6 +73,7 @@ class DNSService;
 #endif
 
 class Account;
+class SIPAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<std::string, Account*> AccountMap;
@@ -1067,6 +1068,7 @@ class ManagerImpl {
          * @return Account*	 The account pointer or 0
          */
         Account* getAccount(const std::string& accountID);
+        SIPAccount* getIP2IPAccount();
 
         /** Return the std::string from a CallID
          * Protected by mutex

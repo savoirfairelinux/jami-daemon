@@ -22,23 +22,22 @@
    Authors: Ramiro Estrugo <ramiro@eazel.com>
 */
 
-#include <stdlib.h>
 #include "config.h"
+#include <glib/gi18n.h>
+#include <stdlib.h>
 #include "eel-gconf-extensions.h"
 
 #include <gconf/gconf-client.h>
 #include <gconf/gconf.h>
 #include <gtk/gtk.h>
-#include <glib/gi18n.h>
+#include <glib.h>
 
 static GConfClient *global_gconf_client = NULL;
 
-static void
-global_client_free(void)
+void eel_gconf_global_client_free(void)
 {
-    if (global_gconf_client == NULL) {
+    if (global_gconf_client == NULL)
         return;
-    }
 
     g_object_unref(G_OBJECT(global_gconf_client));
     global_gconf_client = NULL;
@@ -79,10 +78,8 @@ eel_gconf_client_get_global(void)
             g_free(teststr);
     }
 
-    if (global_gconf_client == NULL) {
+    if (global_gconf_client == NULL)
         global_gconf_client = gconf_client_get_default();
-        g_atexit(global_client_free);
-    }
 
     return global_gconf_client;
 }
