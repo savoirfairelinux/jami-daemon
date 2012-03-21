@@ -46,6 +46,9 @@ bool getDebugMode();
 #define INFO(...)	Logger::log(LOG_INFO, __VA_ARGS__)
 #define DEBUG(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
 
+// If condition A is false, print the error message in M and exit thread
+#define CHECK(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); ost::Thread::exit(); }
+
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"
 #define GREEN "\033[22;32m"

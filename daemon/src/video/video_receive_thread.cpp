@@ -88,24 +88,20 @@ void VideoReceiveThread::setup()
 
     AVInputFormat *file_iformat = 0;
 
+    std::string format_str;
     if (args_["input"].empty()) {
         loadSDP();
-        file_iformat = av_find_input_format("sdp");
-        if (!file_iformat) {
-            ERROR("%s:Could not find format \"sdp\"", __PRETTY_FUNCTION__);
-            ost::Thread::exit();
-        }
+        format_str = "sdp";
     } else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
-        // FIXME: This is not the most robust way of checking if we mean to use a
-        // v4l device
-        DEBUG("Using v4l2 format");
-        file_iformat = av_find_input_format("video4linux2");
-        if (!file_iformat) {
-            ERROR("%s:Could not find format!", __PRETTY_FUNCTION__);
-            ost::Thread::exit();
-        }
+        // FIXME: This is not a robust way of checking if we mean to use a
+        // v4l2 device
+        format_str = "video4linux2";
     }
+
+    DEBUG("Using %s format", format_str.c_str());
+    file_iformat = av_find_input_format(format_str.c_str());
+    CHECK(file_iformat, "Could not find format \"%s\"", format_str.c_str());
 
     AVDictionary *options = NULL;
     if (!args_["framerate"].empty())
@@ -116,60 +112,41 @@ void VideoReceiveThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
-    if (avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat,
-                            &options) != 0) {
-        ERROR("%s:Could not open input file \"%s\"", __PRETTY_FUNCTION__,
-              args_["input"].c_str());
-        ost::Thread::exit();
-    }
+    int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat,
+                            &options);
+    CHECK(ret == 0, "Could not open input \"%s\"", args_["input"].c_str());
 
-    // retrieve stream information
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-    if (av_find_stream_info(inputCtx_) < 0) {
+    ret = av_find_stream_info(inputCtx_);
 #else
-    if (avformat_find_stream_info(inputCtx_, NULL) < 0) {
+    ret = avformat_find_stream_info(inputCtx_, NULL);
 #endif
-        ERROR("%s:Could not find stream info!", __PRETTY_FUNCTION__);
-        ost::Thread::exit();
-    }
+    CHECK(ret >= 0, "Could not find stream info!");
 
     // find the first video stream from the input
-    for (size_t i = 0; i < inputCtx_->nb_streams; i++) {
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+    streamIndex_ = -1;
+    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
+        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
-            break;
-        }
-    }
 
-    if (streamIndex_ == -1) {
-        ERROR("%s:Could not find video stream!", __PRETTY_FUNCTION__);
-        ost::Thread::exit();
-    }
+    CHECK(streamIndex_ != -1, "Could not find video stream");
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
 
     // find the decoder for the video stream
     AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
-    if (inputDecoder == NULL) {
-        ERROR("%s:Unsupported codec!", __PRETTY_FUNCTION__);
-        ost::Thread::exit();
-    }
+    CHECK(inputDecoder, "Unsupported codec");
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-    if (avcodec_open(decoderCtx_, inputDecoder) < 0) {
+    ret = avcodec_open(decoderCtx_, inputDecoder);
 #else
-    if (avcodec_open2(decoderCtx_, inputDecoder, NULL) < 0) {
+    ret = avcodec_open2(decoderCtx_, inputDecoder, NULL);
 #endif
-        ERROR("%s:Could not open codec!", __PRETTY_FUNCTION__);
-        ost::Thread::exit();
-    }
+    CHECK(ret >= 0, "Could not open codec");
 
     scaledPicture_ = avcodec_alloc_frame();
-    if (scaledPicture_ == 0) {
-        ERROR("%s:Could not allocated output frame!", __PRETTY_FUNCTION__);
-        ost::Thread::exit();
-    }
+    CHECK(scaledPicture_, "Could not allocate output frame");
 
     if (dstWidth_ == 0 and dstHeight_ == 0) {
         dstWidth_ = decoderCtx_->width;
@@ -181,8 +158,7 @@ void VideoReceiveThread::setup()
     try {
         sharedMemory_.allocateBuffer(dstWidth_, dstHeight_, bufferSize);
     } catch (const std::runtime_error &e) {
-        ERROR("%s:%s", __PRETTY_FUNCTION__, e.what());
-        ost::Thread::exit();
+        CHECK(false, "%s", e.what());
     }
 
     // allocate video frame
@@ -197,10 +173,7 @@ void VideoReceiveThread::createScalingContext()
                                           decoderCtx_->pix_fmt, dstWidth_,
                                           dstHeight_, VIDEO_RGB_FORMAT,
                                           SWS_BICUBIC, NULL, NULL, NULL);
-    if (imgConvertCtx_ == 0) {
-        ERROR("Cannot init the conversion context!");
-        ost::Thread::exit();
-    }
+    CHECK(imgConvertCtx_, "Cannot init the conversion context!");
 }
 
 VideoReceiveThread::VideoReceiveThread(const map<string, string> &args,
