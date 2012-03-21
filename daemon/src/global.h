@@ -118,7 +118,9 @@ enum {
     PAYLOAD_CODEC_SPEEX_32000 = 112
 };
 
-#define IP2IP_PROFILE "IP2IP"
+/** The struct to reflect the order the user wants to use the codecs */
+typedef std::vector<int> CodecOrder;
+
 #define DIR_SEPARATOR_STR "/" // Directory separator char
 #define DIR_SEPARATOR_CH = '/' /** Directory separator string */
 

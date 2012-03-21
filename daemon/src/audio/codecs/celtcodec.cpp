@@ -30,7 +30,12 @@
 
 #include "audiocodec.h"
 #include <cstdio>
+#ifdef BUILD_CELT_071
+// FIXME: Hack to workaround celt's insufficient pkg-config file
+#include <celt071/celt.h>
+#else
 #include <celt/celt.h>
+#endif
 #include <stdexcept>
 #include "noncopyable.h"
 

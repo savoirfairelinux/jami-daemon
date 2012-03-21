@@ -28,7 +28,8 @@
  *  as that of the covered work.
  */
 
-
+#include <glib/gi18n.h>
+#include "str_utils.h"
 #include "audioconf.h"
 #include "utils.h"
 #include "logger.h"
@@ -75,12 +76,10 @@ static void preferences_dialog_fill_codec_list(account_t *a)
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
 
-    GQueue *list = a ? a->acodecs : get_audio_codecs_list ();
+    GQueue *list = a ? a->acodecs : get_audio_codecs_list();
 
     // Insert codecs
-    unsigned int i;
-
-    for (i = 0; i < list->length; i++) {
+    for (size_t i = 0; i < list->length; ++i) {
         codec_t *c = g_queue_peek_nth (list, i);
 
         if (c) {
@@ -276,7 +275,7 @@ select_active_input_audio_device()
 void
 update_device_widget(gchar *pluginName)
 {
-    if (g_strcasecmp(pluginName, "default") == 0) {
+    if (utf8_case_cmp(pluginName, "default") == 0) {
         gtk_widget_set_sensitive(output, FALSE);
         gtk_widget_set_sensitive(input, FALSE);
         gtk_widget_set_sensitive(ringtone, FALSE);
@@ -319,7 +318,7 @@ select_active_output_audio_plugin()
     do {
         gtk_tree_model_get(model, &iter, 0, &pluginname, -1);
 
-        if (g_strcasecmp(tmp, pluginname) == 0) {
+        if (utf8_case_cmp(tmp, pluginname) == 0) {
             // Set current iteration the active one
             gtk_combo_box_set_active_iter(GTK_COMBO_BOX(plugin), &iter);
             return;
@@ -414,25 +413,23 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     }
 
     gboolean active;
-    gchar *name;
-    gchar *srate;
-    // Get active value and name at iteration
-    gtk_tree_model_get(model, &iter,
-                       COLUMN_CODEC_ACTIVE, &active,
-                       COLUMN_CODEC_NAME, &name,
-                       COLUMN_CODEC_FREQUENCY, &srate,
-                       -1);
+    gchar* name;
+    gchar* srate;
+    gtk_tree_model_get(model, &iter, COLUMN_CODEC_ACTIVE, &active,
+                       COLUMN_CODEC_NAME, &name, COLUMN_CODEC_FREQUENCY,
+                       &srate, -1);
 
-    printf ("%s, %s\n", name, srate);
-    printf ("%i\n", g_queue_get_length(acc->acodecs));
+    DEBUG("%s, %s\n", name, srate);
+    DEBUG("%i\n", g_queue_get_length(acc->acodecs));
 
-    codec_t *codec;
-    if ((g_strcasecmp(name,"speex") ==0) && (g_strcasecmp(srate, "8 kHz") == 0))
+    codec_t* codec;
+
+    if ((utf8_case_cmp(name,"speex") == 0) && (utf8_case_cmp(srate,"8 kHz") == 0))
         codec = codec_list_get_by_payload(110, acc->acodecs);
-    else if ((g_strcasecmp(name,"speex") == 0) && (g_strcasecmp(srate, "16 kHz") == 0))
-        codec = codec_list_get_by_payload (111, acc->acodecs);
-    else if ( (g_strcasecmp (name,"speex") ==0) && (g_strcasecmp(srate, "32 kHz") == 0))
-        codec = codec_list_get_by_payload (112, acc->acodecs);
+    else if ((utf8_case_cmp(name,"speex") ==0) && (utf8_case_cmp(srate,"16 kHz") ==0))
+        codec = codec_list_get_by_payload(111, acc->acodecs);
+    else if ((utf8_case_cmp(name,"speex") ==0) && (utf8_case_cmp(srate,"32 kHz") ==0))
+        codec = codec_list_get_by_payload(112, acc->acodecs);
     else
         codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
 

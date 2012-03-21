@@ -37,6 +37,7 @@
 #include "statusicon.h"
 
 #include "eel-gconf-extensions.h"
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
@@ -130,6 +131,7 @@ main(int argc, char *argv[])
     codecs_unload();
     shortcuts_destroy_bindings();
 
+    eel_gconf_global_client_free();
 OUT:
 #if !GTK_CHECK_VERSION(2,32,0)
     gdk_threads_leave();

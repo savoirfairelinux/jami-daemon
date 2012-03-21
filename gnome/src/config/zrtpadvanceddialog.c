@@ -28,11 +28,12 @@
  *  as that of the covered work.
  */
 
-#include <zrtpadvanceddialog.h>
-#include <sflphone_const.h>
-#include <utils.h>
-
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include "str_utils.h"
+#include <zrtpadvanceddialog.h>
+#include "sflphone_const.h"
+#include "utils.h"
 
 void show_advanced_zrtp_options(GHashTable * properties)
 {
@@ -42,10 +43,10 @@ void show_advanced_zrtp_options(GHashTable * properties)
     gboolean curDisplaySasOnce = FALSE;
 
     if (properties != NULL) {
-        curHelloEnabled = !g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_HELLO_HASH), "true");
-        curSasConfirm = !g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
-        curZrtpNotSuppOther = !g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING), "true");
-        curDisplaySasOnce = !g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_DISPLAY_SAS_ONCE), "true");
+        curHelloEnabled = !utf8_case_cmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_HELLO_HASH), "true");
+        curSasConfirm = !utf8_case_cmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+        curZrtpNotSuppOther = !utf8_case_cmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING), "true");
+        curDisplaySasOnce = !utf8_case_cmp(g_hash_table_lookup(properties, ACCOUNT_DISPLAY_SAS_ONCE), "true");
     }
 
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("ZRTP Options"),
@@ -118,7 +119,7 @@ void show_advanced_sdes_options(GHashTable * properties)
     gboolean rtpFallback = FALSE;
 
     if (properties != NULL) {
-        rtpFallback = !g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_SRTP_RTP_FALLBACK), "true");
+        rtpFallback = !utf8_case_cmp(g_hash_table_lookup(properties, ACCOUNT_SRTP_RTP_FALLBACK), "true");
     }
 
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("SDES Options"),

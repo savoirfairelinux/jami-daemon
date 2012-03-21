@@ -51,7 +51,7 @@ ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
     std::map<std::string, std::string> ip2ipAccountDetails;
-    SIPAccount *sipaccount = static_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
         ERROR("ConfigurationManager: could not find account");
@@ -101,7 +101,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 {
     std::map<std::string, std::string> tlsSettings;
 
-    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount(IP2IP_PROFILE);
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount)
         return tlsSettings;
@@ -111,7 +111,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
 void ConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount(IP2IP_PROFILE);
+    SIPAccount * sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
         DEBUG("ConfigurationManager: Error: No valid account in set TLS settings");

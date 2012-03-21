@@ -33,9 +33,11 @@
 #endif
 
 #include "callable_obj.h"
+#include "str_utils.h"
 #include "codeclist.h"
 #include "sflphone_const.h"
 #include <time.h>
+#include <glib/gi18n.h>
 #include "contacts/calltab.h"
 #include "contacts/calltree.h"
 #include "dbus.h"
@@ -140,15 +142,15 @@ callable_obj_t *create_new_call_from_details(const gchar *call_id, GHashTable *d
     const gchar * const display_name = g_hash_table_lookup(details, "DISPLAY_NAME");
     const gchar * const state_str = g_hash_table_lookup(details, "CALL_STATE");
 
-    if (g_strcasecmp(state_str, "CURRENT") == 0)
+    if (utf8_case_cmp(state_str, "CURRENT") == 0)
         state = CALL_STATE_CURRENT;
-    else if (g_strcasecmp(state_str, "RINGING") == 0)
+    else if (utf8_case_cmp(state_str, "RINGING") == 0)
         state = CALL_STATE_RINGING;
-    else if (g_strcasecmp(state_str, "INCOMING") == 0)
+    else if (utf8_case_cmp(state_str, "INCOMING") == 0)
         state = CALL_STATE_INCOMING;
-    else if (g_strcasecmp(state_str, "HOLD") == 0)
+    else if (utf8_case_cmp(state_str, "HOLD") == 0)
         state = CALL_STATE_HOLD;
-    else if (g_strcasecmp(state_str, "BUSY") == 0)
+    else if (utf8_case_cmp(state_str, "BUSY") == 0)
         state = CALL_STATE_BUSY;
     else
         state = CALL_STATE_FAILURE;

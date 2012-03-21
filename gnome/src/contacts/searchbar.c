@@ -31,6 +31,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include "searchbar.h"
 #include "calltree.h"
 #include "calltab.h"

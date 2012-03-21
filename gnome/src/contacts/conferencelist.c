@@ -29,6 +29,7 @@
  */
 
 #include "calltab.h"
+#include "str_utils.h"
 #include "callable_obj.h"
 #include "calltree.h"
 #include "conferencelist.h"
@@ -37,7 +38,7 @@
 static gint is_confID_confstruct(gconstpointer a, gconstpointer b)
 {
     conference_obj_t * c = (conference_obj_t*) a;
-    return g_strcasecmp(c->_confID, (const gchar*) b);
+    return utf8_case_cmp(c->_confID, (const gchar*) b);
 }
 
 void conferencelist_init(calltab_t *tab)

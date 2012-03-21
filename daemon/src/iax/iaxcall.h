@@ -74,6 +74,7 @@ class IAXCall : public Call {
         int format;
         iax_session* session;
     private:
+        virtual void answer();
         NON_COPYABLE(IAXCall);
 };
 

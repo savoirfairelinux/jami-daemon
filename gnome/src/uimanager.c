@@ -29,14 +29,16 @@
  */
 
 #include "config.h"
+#include "str_utils.h"
 #include "preferencesdialog.h"
 #include "logger.h"
 #include "dbus/dbus.h"
 #include "mainwindow.h"
 #include "assistant.h"
+#include <glib.h>
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <string.h>
-#include <glib/gprintf.h>
 
 #include "uimanager.h"
 #include "statusicon.h"
@@ -1235,7 +1237,7 @@ add_registered_accounts_to_menu(GtkWidget *menu)
         account_t *acc = account_list_get_nth(i);
 
         // Display only the registered accounts
-        if (g_strcasecmp(account_state_name(acc->state), account_state_name(
+        if (utf8_case_cmp(account_state_name(acc->state), account_state_name(
                              ACCOUNT_STATE_REGISTERED)) == 0) {
             gchar *alias = g_strconcat(g_hash_table_lookup(acc->properties, ACCOUNT_ALIAS),
                                        " - ",
@@ -1249,7 +1251,7 @@ add_registered_accounts_to_menu(GtkWidget *menu)
 
             if (current) {
                 gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
-                                               g_strcasecmp(acc->accountID, current->accountID) == 0);
+                                               utf8_case_cmp(acc->accountID, current->accountID) == 0);
             }
 
             g_signal_connect(G_OBJECT(menu_items), "activate",

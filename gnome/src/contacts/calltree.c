@@ -32,6 +32,8 @@
 
 #include "calllist.h"
 #include "calltree.h"
+#include "str_utils.h"
+#include <string.h>
 #include <stdlib.h>
 
 #include "eel-gconf-extensions.h"
@@ -290,7 +292,7 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
                     case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
                         selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
 
-                        if (g_strcasecmp(displaySasOnce, "true") == 0)
+                        if (utf8_case_cmp(displaySasOnce, "true") == 0)
                             selectedCall->_zrtp_confirmed = TRUE;
 
                         dbus_confirm_sas(selectedCall);
@@ -676,14 +678,14 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
         if (account_details != NULL) {
             srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
 
-            if (g_strcasecmp(g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0)
+            if (utf8_case_cmp(g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0)
                 display_sas = FALSE;
         } else {
             GHashTable * properties = sflphone_get_ip2ip_properties();
             if (properties != NULL) {
                 srtp_enabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
 
-                if (g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0)
+                if (utf8_case_cmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0)
                     display_sas = FALSE;
             }
         }
@@ -769,12 +771,12 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
                         pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
                         break;
                     case SRTP_STATE_UNLOCKED:
-                        if (g_strcasecmp(srtp_enabled,"true") == 0)
+                        if (utf8_case_cmp(srtp_enabled,"true") == 0)
                             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
                         break;
                     default:
                         WARN("Update calltree srtp state #%d- Should not happen!", c->_srtp_state);
-                        if (g_strcasecmp(srtp_enabled, "true") == 0)
+                        if (utf8_case_cmp(srtp_enabled, "true") == 0)
                             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
                 }
 
@@ -882,7 +884,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                 WARN("Update calltree add - Should not happen!");
         }
 
-        if (srtp_enabled && g_strcasecmp(srtp_enabled, "true") == 0)
+        if (srtp_enabled && utf8_case_cmp(srtp_enabled, "true") == 0)
             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/secure_off.svg", NULL);
 
     } else if (tab == contacts_tab)
@@ -1043,7 +1045,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
                 else
                     srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
 
-                if (g_strcasecmp(srtp_enabled, "true") == 0) {
+                if (utf8_case_cmp(srtp_enabled, "true") == 0) {
                     DEBUG("Calltree: SRTP enabled for participant %s", call_id);
                     conf->_conf_srtp_enabled = TRUE;
                     break;
