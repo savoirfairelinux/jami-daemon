@@ -324,73 +324,77 @@ sem_wait(int sem_set_id)
     return semop(sem_set_id, &sem_op, 1);
 }
 
+static void render_clutter(ClutterActor *texture, gpointer data, int width,
+                           int height, int parent_width, int parent_height)
+{
+    clutter_actor_set_size(texture, parent_width, parent_height);
+
+    const int ROW_STRIDE = 4 * width;
+    const int BPP = 4;
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture), data, TRUE,
+                                      width, height, ROW_STRIDE, BPP,
+                                      CLUTTER_TEXTURE_RGB_FLAG_BGR, NULL);
+}
+
+static void render_cairo(GtkWidget *widget, gpointer data, int width,
+                         int height, int parent_width, int parent_height)
+{
+    const cairo_format_t format = CAIRO_FORMAT_RGB24;
+    int stride = cairo_format_stride_for_width(format, width);
+    cairo_surface_t *surface = cairo_image_surface_create_for_data(data,
+                                                                   format,
+                                                                   width,
+                                                                   height,
+                                                                   stride);
+    if (surface) {
+        GdkWindow * window = gtk_widget_get_window(widget);
+        cairo_t *cairo = gdk_cairo_create(window);
+        cairo_scale(cairo, (double) parent_width / width,
+                    (double) parent_height / height);
+        cairo_set_source_surface(cairo, surface, 0, 0);
+
+        cairo_status_t status = cairo_surface_status(surface);
+        if (status != CAIRO_STATUS_SURFACE_FINISHED)
+            cairo_paint(cairo);
+
+        cairo_surface_destroy(surface);
+        cairo_destroy(cairo);
+    }
+}
+
 static gboolean
 readFrameFromShm(VideoRendererPrivate *priv)
 {
-    int width = priv->width;
-    int height = priv->height;
-    void *data = priv->shm_buffer;
     int sem_set_id = priv->sem_set_id;
-    ClutterActor *texture = priv->texture;
 
     if (sem_set_id == -1)
         return FALSE;
 
     if (sem_wait(sem_set_id) == -1) {
-      if (errno != EAGAIN) {
-          g_print("Could not read from shared memory!\n");
-          perror("shm: ");
-          return FALSE;
-      }
-      else
-          return TRUE; /* No new frame, so we'll try later */
+        if (errno != EAGAIN) {
+            ERROR("Could not read from shared memory!\n");
+            perror("shm: ");
+            return FALSE;
+        } else {
+            return TRUE; /* No new frame, so we'll try later */
+        }
     }
 
     GtkWidget *parent = gtk_widget_get_parent(priv->drawarea);
-    gint parent_width = gtk_widget_get_allocated_width(parent);
-    gint parent_height = gtk_widget_get_allocated_height(parent);
+    const gint p_width = gtk_widget_get_allocated_width(parent);
+    const gint p_height = gtk_widget_get_allocated_height(parent);
 
-    if (priv->using_clutter) {
-        clutter_actor_set_size(texture, parent_width, parent_height);
-
-        clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture),
-                (void*) data,
-                TRUE,
-                width,
-                height,
-                4 /* bytes per pixel */ * width, // stride
-                4,
-                CLUTTER_TEXTURE_RGB_FLAG_BGR,
-                NULL);
-    } else {
-        const cairo_format_t format = CAIRO_FORMAT_RGB24;
-        int stride = cairo_format_stride_for_width (format, width);
-        cairo_surface_t *surface = cairo_image_surface_create_for_data (data,
-                                                                 format,
-                                                                 width,
-                                                                 height,
-                                                                 stride);
-
-        if (surface) {
-            cairo_t *cairo = gdk_cairo_create(gtk_widget_get_window(priv->drawarea));
-            cairo_scale(cairo, (double) parent_width / width,
-                        (double) parent_height / height);
-            cairo_set_source_surface(cairo, surface, 0, 0);
-
-            cairo_status_t status = cairo_surface_status(surface);
-            if (status != CAIRO_STATUS_SURFACE_FINISHED)
-                cairo_paint(cairo);
-
-            cairo_surface_destroy(surface);
-            cairo_destroy(cairo);
-        }
-    }
+    if (priv->using_clutter)
+        render_clutter(priv->texture, priv->shm_buffer, priv->width,
+                       priv->height, p_width, p_height);
+    else
+        render_cairo(priv->drawarea, priv->shm_buffer, priv->width,
+                     priv->height, p_width, p_height);
 
     return TRUE;
 }
 
-void
-video_renderer_stop(VideoRenderer *renderer)
+void video_renderer_stop(VideoRenderer *renderer)
 {
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
     g_assert(priv);
@@ -436,18 +440,12 @@ updateTexture(gpointer data)
  * Create a new #VideoRenderer instance.
  */
 VideoRenderer *
-video_renderer_new (GtkWidget *drawarea, int width, int height, int shmkey, int semkey, int vbsize)
+video_renderer_new(GtkWidget *drawarea, int width, int height, int shmkey,
+                    int semkey, int vbsize)
 {
-    VideoRenderer *result;
-
-    result = g_object_new(VIDEO_RENDERER_TYPE, "drawarea", (gpointer)drawarea,
-                                               "width", width,
-                                               "height", height,
-                                               "shmkey", shmkey,
-                                               "semkey", semkey,
-                                               "vbsize", vbsize,
-                                               NULL);
-    return result;
+    return g_object_new(VIDEO_RENDERER_TYPE, "drawarea", (gpointer) drawarea,
+                        "width", width, "height", height, "shmkey", shmkey,
+                        "semkey", semkey, "vbsize", vbsize, NULL);
 }
 
 int
@@ -476,9 +474,9 @@ video_renderer_run(VideoRenderer *renderer)
     gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 
     priv->using_clutter = GTK_CLUTTER_IS_EMBED(priv->drawarea);
-    g_print("renderer: using %s render\n", priv->using_clutter ? "clutter" : "cairo");
 
     if (priv->using_clutter) {
+        DEBUG("video_renderer: using clutter\n");
         ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
         g_assert(stage);
         priv->texture = clutter_texture_new();
@@ -486,16 +484,19 @@ video_renderer_run(VideoRenderer *renderer)
         /* Add ClutterTexture to the stage */
         clutter_container_add(CLUTTER_CONTAINER(stage), priv->texture, NULL);
         clutter_actor_show_all(stage);
+    } else {
+        DEBUG("video_renderer: using cairo\n");
     }
 
     /* frames are read and saved here */
     g_object_ref(renderer);
-    g_timeout_add(1000 / 25.0, updateTexture, renderer);
+    const gdouble FPS = 25.0;
+    g_timeout_add(1000 / FPS, updateTexture, renderer);
 
     priv->is_running = TRUE;
     /* emit the notify signal for this property */
 #if GLIB_CHECK_VERSION(2, 26, 0)
-    g_object_notify_by_pspec (G_OBJECT(renderer), properties[PROP_RUNNING]);
+    g_object_notify_by_pspec(G_OBJECT(renderer), properties[PROP_RUNNING]);
 #else
     g_object_notify(G_OBJECT(data), "running");
 #endif
@@ -504,12 +505,16 @@ video_renderer_run(VideoRenderer *renderer)
     return 0;
 }
 
-static void receiving_video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+static void
+receiving_video_window_deleted_cb(GtkWidget *widget UNUSED,
+                                  gpointer data UNUSED)
 {
     sflphone_hang_up();
 }
 
-static void receiving_video_window_button_cb(GtkWindow *win, GdkEventButton *event, gpointer fullscreen)
+static void
+receiving_video_window_button_cb(GtkWindow *win, GdkEventButton *event,
+                                 gpointer fullscreen)
 {
     int *fs = fullscreen;
     if (event->type == GDK_2BUTTON_PRESS) {
@@ -521,14 +526,11 @@ static void receiving_video_window_button_cb(GtkWindow *win, GdkEventButton *eve
     }
 }
 
-void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
-                              gint videoBufferSize, gint destWidth,
-                              gint destHeight, GError *error, gpointer userdata)
+void receiving_video_event_cb(DBusGProxy *proxy UNUSED, gint shmKey,
+                              gint semKey, gint videoBufferSize,
+                              gint destWidth, gint destHeight,
+                              GError *error UNUSED, gpointer userdata UNUSED)
 {
-
-    (void)proxy;
-    (void)error;
-    (void)userdata;
     if (!receivingVideoWindow) {
         receivingVideoWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         receivingWindowFullscreen = FALSE;
@@ -578,24 +580,20 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey,
     if (video_renderer_run(video_renderer)) {
         g_object_unref(video_renderer);
         video_renderer = NULL;
-        DEBUG("Could not run video renderer");
+        ERROR("Could not run video renderer");
     }
-    else
-        DEBUG("Running video renderer");
 }
 
-void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmKey, gint semKey, GError *error, gpointer userdata)
+void stopped_receiving_video_event_cb(DBusGProxy *proxy UNUSED, gint shmKey,
+                                      gint semKey, GError *error UNUSED,
+                                      gpointer userdata UNUSED)
 {
-    (void)proxy;
-    (void)error;
-    (void)userdata;
-
     DEBUG("Video stopped for shm:%d sem:%d", shmKey, semKey);
 
     if (video_renderer) {
         if (receivingVideoWindow) {
             if (GTK_IS_WIDGET(receivingVideoWindow))
-                    gtk_widget_destroy(receivingVideoWindow);
+                gtk_widget_destroy(receivingVideoWindow);
             receivingVideoArea = receivingVideoWindow = NULL;
         }
         video_renderer = NULL;
