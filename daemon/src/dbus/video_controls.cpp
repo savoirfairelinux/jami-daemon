@@ -152,7 +152,9 @@ VideoControls::getSettings() const {
     return videoPreference_.getSettings();
 }
 
-void VideoControls::startPreview(int32_t &width, int32_t &height, int32_t &shmKey, int32_t &semKey, int32_t &videoBufferSize)
+void VideoControls::startPreview(int32_t &width, int32_t &height,
+                                 int32_t &shmKey, int32_t &semKey,
+                                 int32_t &videoBufferSize)
 {
     if (preview_.get()) {
         ERROR("Video preview was already started!");

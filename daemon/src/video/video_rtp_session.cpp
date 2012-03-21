@@ -171,6 +171,7 @@ void VideoRtpSession::start()
         sharedMemory_.reset(new SharedMemory(*controls));
         receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
         receiveThread_->start();
+        sharedMemory_->publishShm();
     }
     else
         DEBUG("Video receiving disabled");

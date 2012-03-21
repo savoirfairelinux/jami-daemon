@@ -67,6 +67,7 @@ class SharedMemory {
         int getSemaphoreKey() const { return semaphoreKey_; }
         int getBufferSize() const { return bufferSize_; }
         void allocateBuffer(int width, int height, int size);
+        void publishShm();
 };
 }
 

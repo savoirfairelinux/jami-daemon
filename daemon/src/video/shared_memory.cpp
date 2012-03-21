@@ -180,6 +180,10 @@ void SharedMemory::allocateBuffer(int width, int height, int size)
     semaphoreKey_ = createSemaphoreKey(shmKey_);
     semaphoreSetID_ = createSemaphoreSetID(semaphoreKey_);
     shmReady_.signal();
+}
+
+void SharedMemory::publishShm()
+{
     DEBUG("Publishing shm: %d sem: %d size: %d", shmKey_, semaphoreKey_,
           bufferSize_);
     videoControls_.receivingEvent(shmKey_, semaphoreKey_, bufferSize_,
