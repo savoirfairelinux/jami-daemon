@@ -30,7 +30,7 @@ sflphoned_CXXFLAGS = \
 
 # libsflphone
 
-sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto
+sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto $(YAML_LIBS)
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \

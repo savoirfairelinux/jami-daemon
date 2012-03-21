@@ -14,4 +14,3 @@ noinst_HEADERS = \
 	yamlnode.h
 
 libconfig_la_CXXFLAGS = -I $(top_srcdir)/src
-libconfig_la_LDFLAGS = @YAML_LIBS@
