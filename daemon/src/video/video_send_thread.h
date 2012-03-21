@@ -64,10 +64,10 @@ class VideoSendThread : public ost::Thread {
         AVCodecContext *inputDecoderCtx_;
         AVFrame *rawFrame_;
         AVFrame *scaledPicture_;
-        int videoStreamIndex_;
+        int streamIndex_;
         int outbufSize_;
         AVCodecContext *encoderCtx_;
-        AVStream *videoStream_;
+        AVStream *stream_;
         AVFormatContext *inputCtx_;
         AVFormatContext *outputCtx_;
         SwsContext *imgConvertCtx_;

@@ -155,17 +155,17 @@ void VideoSendThread::setup()
     // find the first video stream from the input
     for (unsigned i = 0; i < inputCtx_->nb_streams; ++i) {
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-            videoStreamIndex_ = i;
+            streamIndex_ = i;
             break;
         }
     }
-    if (videoStreamIndex_ == -1) {
+    if (streamIndex_ == -1) {
         ERROR("%s:Could not find video stream!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
 
     // Get a pointer to the codec context for the video stream
-    inputDecoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
+    inputDecoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
     if (inputDecoderCtx_ == NULL) {
         ERROR("%s:Could not get input codec context!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
@@ -229,12 +229,12 @@ void VideoSendThread::setup()
     }
 
     // add video stream to outputformat context
-    videoStream_ = av_new_stream(outputCtx_, 0);
-    if (videoStream_ == 0) {
+    stream_ = av_new_stream(outputCtx_, 0);
+    if (stream_ == 0) {
         ERROR("%s:Could not alloc stream!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
-    videoStream_->codec = encoderCtx_;
+    stream_->codec = encoderCtx_;
 
     // open the output file, if needed
     if (!(file_oformat->flags & AVFMT_NOFILE)) {
@@ -293,21 +293,10 @@ void VideoSendThread::createScalingContext()
 }
 
 VideoSendThread::VideoSendThread(const std::map<std::string, std::string> &args) :
-    sdpReady_(),
-    args_(args),
-    scaledPictureBuf_(0),
-    outbuf_(0),
-    inputDecoderCtx_(0),
-    rawFrame_(0),
-    scaledPicture_(0),
-    videoStreamIndex_(-1),
-    outbufSize_(0),
-    encoderCtx_(0),
-    videoStream_(0),
-    inputCtx_(0),
-    outputCtx_(0),
-    imgConvertCtx_(0),
-    sdp_()
+    sdpReady_(), args_(args), scaledPictureBuf_(0), outbuf_(0),
+    inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
+    streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
+    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_()
 {
     setCancel(cancelDeferred);
 }
@@ -328,7 +317,7 @@ void VideoSendThread::run()
         PacketHandle inpacket_handle(inpacket);
 
         // is this a packet from the video stream?
-        if (inpacket.stream_index != videoStreamIndex_)
+        if (inpacket.stream_index != streamIndex_)
             continue;
 
         // decode video frame from camera
@@ -363,7 +352,7 @@ void VideoSendThread::run()
         if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE)) {
             opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
                                     encoderCtx_->time_base,
-                                    videoStream_->time_base);
+                                    stream_->time_base);
         } else {
             opkt.pts = 0;
         }
@@ -371,7 +360,7 @@ void VideoSendThread::run()
         // is it a key frame?
         if (encoderCtx_->coded_frame->key_frame)
             opkt.flags |= AV_PKT_FLAG_KEY;
-        opkt.stream_index = videoStream_->index;
+        opkt.stream_index = stream_->index;
 
         // write the compressed frame in the media file
         int ret = av_interleaved_write_frame(outputCtx_, &opkt);

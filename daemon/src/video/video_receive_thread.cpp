@@ -136,18 +136,18 @@ void VideoReceiveThread::setup()
     // find the first video stream from the input
     for (size_t i = 0; i < inputCtx_->nb_streams; i++) {
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-            videoStreamIndex_ = i;
+            streamIndex_ = i;
             break;
         }
     }
 
-    if (videoStreamIndex_ == -1) {
+    if (streamIndex_ == -1) {
         ERROR("%s:Could not find video stream!", __PRETTY_FUNCTION__);
         ost::Thread::exit();
     }
 
     // Get a pointer to the codec context for the video stream
-    decoderCtx_ = inputCtx_->streams[videoStreamIndex_]->codec;
+    decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
 
     // find the decoder for the video stream
     AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
@@ -205,17 +205,9 @@ void VideoReceiveThread::createScalingContext()
 
 VideoReceiveThread::VideoReceiveThread(const map<string, string> &args,
                                        sfl_video::SharedMemory &handle) :
-    args_(args),
-    frameNumber_(0),
-    decoderCtx_(0),
-    rawFrame_(0),
-    scaledPicture_(0),
-    videoStreamIndex_(-1),
-    inputCtx_(0),
-    imgConvertCtx_(0),
-    dstWidth_(-1),
-    dstHeight_(-1),
-    sharedMemory_(handle)
+    args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
+    scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
+    dstWidth_(-1), dstHeight_(-1), sharedMemory_(handle)
 {
     setCancel(cancelDeferred);
 }
@@ -236,9 +228,10 @@ void VideoReceiveThread::run()
         PacketHandle inpacket_handle(inpacket);
 
         // is this a packet from the video stream?
-        if (inpacket.stream_index == videoStreamIndex_) {
+        if (inpacket.stream_index == streamIndex_) {
             int frameFinished;
-            avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished, &inpacket);
+            avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
+                                  &inpacket);
             if (frameFinished) {
                 avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                                sharedMemory_.getTargetBuffer(),

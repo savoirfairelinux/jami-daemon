@@ -59,7 +59,7 @@ class VideoReceiveThread : public ost::Thread {
         AVCodecContext *decoderCtx_;
         AVFrame *rawFrame_;
         AVFrame *scaledPicture_;
-        int videoStreamIndex_;
+        int streamIndex_;
         AVFormatContext *inputCtx_;
         SwsContext *imgConvertCtx_;
 
