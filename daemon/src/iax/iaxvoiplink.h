@@ -72,7 +72,7 @@ class IAXVoIPLink : public VoIPLink {
         /**
          * Terminate a voip link by clearing the call list
          */
-        virtual void terminate();
+        void terminate();
 
         /**
          * Send out registration
