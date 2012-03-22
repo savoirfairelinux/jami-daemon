@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,41 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef __LOGGER_H__
-#define __LOGGER_H__
+#ifndef CHECK_H_
+#define CHECK_H_
 
-#include <syslog.h>
+#include "logger.h"
 
-namespace Logger {
-void log(const int, const char*, ...);
+// If condition A is false, print the error message in M and exit thread
+#define CHECK(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); ost::Thread::exit(); }
 
-void setConsoleLog(bool);
-void setDebugMode(bool);
-bool getDebugMode();
-};
-
-#define ERROR(...)	Logger::log(LOG_ERR, __VA_ARGS__)
-#define WARN(...)	Logger::log(LOG_WARNING, __VA_ARGS__)
-#define INFO(...)	Logger::log(LOG_INFO, __VA_ARGS__)
-#define DEBUG(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
-
-#define BLACK "\033[22;30m"
-#define RED "\033[22;31m"
-#define GREEN "\033[22;32m"
-#define BROWN "\033[22;33m"
-#define BLUE "\033[22;34m"
-#define MAGENTA "\033[22;35m"
-#define CYAN "\033[22;36m"
-#define GREY "\033[22;37m"
-#define DARK_GREY "\033[01;30m"
-#define LIGHT_RED "\033[01;31m"
-#define LIGHT_SCREEN "\033[01;32m"
-#define YELLOW "\033[01;33m"
-#define LIGHT_BLUE "\033[01;34m"
-#define LIGHT_MAGENTA "\033[01;35m"
-#define LIGHT_CYAN "\033[01;36m"
-#define WHITE "\033[01;37m"
-#define END_COLOR "\033[0m"
-
-#endif
-
+#endif // CHECK_H_

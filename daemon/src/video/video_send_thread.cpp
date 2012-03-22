@@ -30,6 +30,7 @@
 
 #include "video_send_thread.h"
 #include "packet_handle.h"
+#include "check.h"
 
 // libav includes
 extern "C" {
