@@ -171,7 +171,7 @@ void account_list_move_down (guint index);
  * Return the ID of the current default account
  * @return gchar* The id
  */
-gchar* account_list_get_current_id (void);
+const gchar* account_list_get_current_id (void);
 
 gchar * account_list_get_ordered_list (void);
 
@@ -182,5 +182,9 @@ guint current_account_get_message_number (void);
 void current_account_set_message_number (guint nb);
 
 gboolean current_account_has_new_message (void);
+
+gboolean is_IP2IP(account_t *account);
+
+account_t *create_default_account();
 
 #endif

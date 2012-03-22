@@ -41,6 +41,6 @@
  * Display the main account widget
  * @param a The account you want to edit or null for a new account
  */
-void show_account_window (account_t *a);
+void show_account_window(account_t *a);
 
 #endif

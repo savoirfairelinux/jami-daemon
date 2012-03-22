@@ -44,4 +44,7 @@ void set_log_level (const int level);
 #define INFO(...)      internal_log(LOG_INFO, __VA_ARGS__)
 #define DEBUG(...)     internal_log(LOG_DEBUG, __VA_ARGS__)
 
+#define RETURN_IF_NULL(A, M, ...) \
+    if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }
+
 #endif

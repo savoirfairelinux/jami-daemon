@@ -1048,8 +1048,10 @@ void
 dbus_add_account(account_t *a)
 {
     g_assert(a);
+    g_assert(a->properties);
     GError *error = NULL;
     g_free(a->accountID);
+    a->accountID = NULL;
     org_sflphone_SFLphone_ConfigurationManager_add_account(config_proxy, a->properties, &a->accountID,
                        &error);
     check_error(error);

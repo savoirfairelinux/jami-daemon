@@ -31,6 +31,7 @@
 
 #include <glib/gi18n.h>
 #include "str_utils.h"
+#include "dbus.h"
 #include "accountlist.h"
 #include "actions.h"
 #include "unused.h"
@@ -51,7 +52,6 @@ static guint account_list_get_position(account_t *account)
     // Not found
     return -1;
 }
-
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 static gint is_accountID_struct(gconstpointer a, gconstpointer b)
@@ -230,14 +230,14 @@ account_list_get_registered_accounts(void)
     return res;
 }
 
-gchar* account_list_get_current_id(void)
+const gchar* account_list_get_current_id(void)
 {
     account_t *current = account_list_get_current();
 
     if (current)
         return current->accountID;
     else
-        return "";
+        return NULL;
 }
 
 gchar * account_list_get_ordered_list(void)
@@ -245,10 +245,8 @@ gchar * account_list_get_ordered_list(void)
     gchar *order = strdup("");
 
     for (guint i = 0; i < account_list_get_size(); i++) {
-        account_t * account = NULL;
-        account = account_list_get_nth(i);
-
-        if (account != NULL) {
+        account_t * account = account_list_get_nth(i);
+        if (account) {
             gchar *new_order = g_strconcat(order, account->accountID, "/", NULL);
             g_free(order);
             order = new_order;
@@ -277,7 +275,6 @@ gboolean current_account_has_mailbox(void)
 void current_account_set_message_number(guint nb)
 {
     account_t *current = account_list_get_current();
-
     if (current)
         current->_messages_number = nb;
 }
@@ -285,7 +282,6 @@ void current_account_set_message_number(guint nb)
 guint current_account_get_message_number(void)
 {
     account_t *current = account_list_get_current();
-
     if (current)
         return current->_messages_number;
     else
@@ -295,9 +291,20 @@ guint current_account_get_message_number(void)
 gboolean current_account_has_new_message(void)
 {
     account_t *current = account_list_get_current();
+    return current && current->_messages_number > 0;
+}
 
-    if (current)
-        return (current->_messages_number > 0);
+gboolean is_IP2IP(account_t *account)
+{
+    return utf8_case_cmp(account->accountID, IP2IP) == 0;
+}
 
-    return FALSE;
+account_t *create_default_account()
+{
+    account_t *account = g_new0(account_t, 1);
+    account->properties = dbus_get_account_details(NULL);
+    account->accountID = g_strdup("new"); //FIXME : replace with NULL for new accounts
+    account->credential_information = NULL;
+    sflphone_fill_codec_list_per_account(account);
+    return account;
 }
