@@ -76,11 +76,6 @@ class SIPVoIPLink : public VoIPLink {
         virtual void init();
 
         /**
-         * Shut the library and clean up
-         */
-        virtual void terminate();
-
-        /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
         virtual void getEvent();

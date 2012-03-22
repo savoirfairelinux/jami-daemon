@@ -88,7 +88,7 @@ static std::map<std::string, std::string> transferCallID;
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
-static void setCallMediaLocal(SIPCall* call, const std::string &localIP);
+void setCallMediaLocal(SIPCall* call, const std::string &localIP);
 
 /**
  * Helper function to parser header from incoming sip messages
@@ -101,17 +101,17 @@ static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
 static pj_thread_t *thread;
 
-static void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
-static void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
-static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
-static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
-static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
-static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
-static void registration_cb(pjsip_regc_cbparam *param);
-static pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
-static pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
+void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status UNUSED);
+void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
+void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer);
+void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
+void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
+void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+void registration_cb(pjsip_regc_cbparam *param);
+pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
+pj_bool_t transaction_response_cb(pjsip_rx_data *rdata UNUSED) ;
 
-static void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
+void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
 /**
  * Send a reINVITE inside an active dialog to modify its state
@@ -532,8 +532,6 @@ SIPVoIPLink* SIPVoIPLink::instance()
 }
 
 void SIPVoIPLink::init() {}
-
-void SIPVoIPLink::terminate() {}
 
 void
 SIPVoIPLink::getEvent()
