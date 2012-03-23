@@ -34,14 +34,13 @@
   * @brief Display the advanced options window for zrtp
   */
 
-#include <glib.h>
-#include <mainwindow.h>
+#include "accountlist.h"
 /**
  * Display the advanced options window for zrtp
  */
 
-void show_advanced_zrtp_options (GHashTable * properties);
+void show_advanced_zrtp_options (account_t *account);
 
-void show_advanced_sdes_options (GHashTable * properties);
+void show_advanced_sdes_options (account_t *account);
 
 #endif

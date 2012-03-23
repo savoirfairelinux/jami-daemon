@@ -459,12 +459,13 @@ editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * editable,
 
 static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
 {
+    account_t *account = (account_t *) data;
     gchar *proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
 
     if (utf8_case_cmp(proto, "ZRTP") == 0)
-        show_advanced_zrtp_options((GHashTable *) data);
+        show_advanced_zrtp_options(account);
     else
-        show_advanced_sdes_options((GHashTable *) data);
+        show_advanced_sdes_options(account);
 
     g_free(proto);
 }
@@ -473,7 +474,8 @@ static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer dat
 static void
 show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data)
 {
-    show_advanced_tls_options((GHashTable *) data);
+    account_t *account = (account_t *) data;
+    show_advanced_tls_options(account);
 }
 
 static void
@@ -752,7 +754,7 @@ create_security_widget(const account_t *account)
     gtk_widget_set_sensitive(sip_tls_advanced_button, FALSE);
     g_signal_connect(G_OBJECT(sip_tls_advanced_button), "clicked",
                      G_CALLBACK(show_advanced_tls_options_cb),
-                     (gpointer) account->properties);
+                     (gpointer) account);
 
     use_sip_tls_check_box = gtk_check_button_new_with_mnemonic(_("Use TLS transport(sips)"));
     g_signal_connect(use_sip_tls_check_box, "toggled", G_CALLBACK(use_sip_tls_cb), sip_tls_advanced_button);
@@ -772,7 +774,7 @@ create_security_widget(const account_t *account)
     zrtp_button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(zrtp_button), "clicked",
                      G_CALLBACK(show_advanced_zrtp_options_cb),
-                     account->properties);
+                     (gpointer) account);
 
     if (g_strcmp0(curSRTPEnabled, "false") == 0) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(key_exchange_combo), 2);
@@ -1134,9 +1136,105 @@ static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
     return vbox;
 }
 
-static gchar *bool_to_string(gboolean v)
+static const gchar *bool_to_string(gboolean v)
 {
-    return v ? g_strdup("true") : g_strdup("false");
+    return v ? "true" : "false";
+}
+
+static void update_account_from_basic_tab(account_t *account)
+{
+    // Update protocol in case it changed
+    gchar *proto;
+    if (protocol_combo)
+        proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
+    else
+        proto = g_strdup("SIP");
+
+    if (g_strcmp0(proto, "SIP") == 0) {
+        if (!account_is_IP2IP(account)) {
+            account_replace(account, ACCOUNT_REGISTRATION_EXPIRE,
+                            gtk_entry_get_text(GTK_ENTRY(expire_spin_box)));
+
+            account_replace(account, ACCOUNT_ROUTE,
+                            gtk_entry_get_text(GTK_ENTRY(entry_route_set)));
+
+            account_replace(account, ACCOUNT_USERAGENT,
+                            gtk_entry_get_text(GTK_ENTRY(entry_user_agent)));
+
+            gboolean v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_stun_check_box));
+            account_replace(account, ACCOUNT_SIP_STUN_ENABLED,
+                            bool_to_string(v));
+
+            account_replace(account, ACCOUNT_SIP_STUN_SERVER,
+                            gtk_entry_get_text(GTK_ENTRY(stun_server_entry)));
+
+            v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button));
+            account_replace(account, PUBLISHED_SAMEAS_LOCAL, bool_to_string(v));
+
+            if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
+                account_replace(account, PUBLISHED_PORT,
+                                gtk_entry_get_text(GTK_ENTRY(published_port_spin_box)));
+
+                account_replace(account, PUBLISHED_ADDRESS,
+                                gtk_entry_get_text(GTK_ENTRY(published_address_entry)));
+            } else {
+                account_replace(account, PUBLISHED_PORT,
+                                gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
+                gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
+
+                gchar *published_address = dbus_get_address_from_interface_name(local_interface);
+                g_free(local_interface);
+
+                account_replace(account, PUBLISHED_ADDRESS, published_address);
+            }
+        }
+
+        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
+            DEBUG("Config: Set dtmf over rtp");
+            account_replace(account, ACCOUNT_DTMF_TYPE, OVERRTP);
+        } else {
+            DEBUG("Config: Set dtmf over sip");
+            account_replace(account, ACCOUNT_DTMF_TYPE, SIPINFO);
+        }
+
+        gchar* key_exchange = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
+
+        if (utf8_case_cmp(key_exchange, "ZRTP") == 0) {
+            account_replace(account, ACCOUNT_SRTP_ENABLED, "true");
+            account_replace(account, ACCOUNT_KEY_EXCHANGE, ZRTP);
+        } else if (utf8_case_cmp(key_exchange, "SDES") == 0) {
+            account_replace(account, ACCOUNT_SRTP_ENABLED, "true");
+            account_replace(account, ACCOUNT_KEY_EXCHANGE, SDES);
+        } else {
+            account_replace(account, ACCOUNT_SRTP_ENABLED, "false");
+            account_replace(account, ACCOUNT_KEY_EXCHANGE, "");
+        }
+
+        g_free(key_exchange);
+        const gboolean tls_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_sip_tls_check_box));
+        account_replace(account, TLS_ENABLE, bool_to_string(tls_enabled));
+
+        const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
+        account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
+
+        account_replace(account, CONFIG_RINGTONE_PATH,
+                        gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser)));
+
+        gchar *address_combo_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
+        account_replace(account, LOCAL_INTERFACE, address_combo_text);
+        g_free(address_combo_text);
+
+        account_replace(account, LOCAL_PORT,
+                        gtk_entry_get_text(GTK_ENTRY(local_port_spin_box)));
+    }
+
+    account_replace(account, ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(entry_alias)));
+    account_replace(account, ACCOUNT_TYPE, proto);
+    account_replace(account, ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(entry_hostname)));
+    account_replace(account, ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(entry_username)));
+    account_replace(account, ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entry_password)));
+    account_replace(account, ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(entry_mailbox)));
+    g_free(proto);
 }
 
 void show_account_window(account_t *account)
@@ -1173,9 +1271,8 @@ void show_account_window(account_t *account)
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
 
-    // Get current protocol for this account protocol
+    // Get current protocol for this account
     gchar *current_protocol;
-
     if (protocol_combo)
         current_protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
     else
@@ -1209,133 +1306,14 @@ void show_account_window(account_t *account)
     /* Run dialog */
     gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 
-    // Update protocol in case it changed
-    gchar *proto;
-    if (protocol_combo)
-        proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
-    else
-        proto = g_strdup("SIP");
-
     // If cancel button is pressed
     if (response == GTK_RESPONSE_CANCEL) {
         gtk_widget_destroy(dialog);
-        g_free(proto);
         return;
     }
 
-    if (!account_is_IP2IP(account)) {
-        g_hash_table_replace(account->properties,
-                             g_strdup(ACCOUNT_ALIAS),
-                             g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_alias))));
-        g_hash_table_replace(account->properties,
-                             g_strdup(ACCOUNT_TYPE),
-                             g_strdup(proto));
-        g_hash_table_replace(account->properties,
-                             g_strdup(ACCOUNT_HOSTNAME),
-                             g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_hostname))));
-        g_hash_table_replace(account->properties,
-                             g_strdup(ACCOUNT_USERNAME),
-                             g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_username))));
-        g_hash_table_replace(account->properties,
-                             g_strdup(ACCOUNT_PASSWORD),
-                             g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_password))));
-        g_hash_table_replace(account->properties,
-                             g_strdup(ACCOUNT_MAILBOX),
-                             g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_mailbox))));
-    }
-
-    if (g_strcmp0(proto, "SIP") == 0) {
-        if (!account_is_IP2IP(account)) {
-
-            g_hash_table_replace(account->properties,
-                                 g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
-                                 g_strdup(gtk_entry_get_text(GTK_ENTRY(expire_spin_box))));
-
-            g_hash_table_replace(account->properties,
-                                 g_strdup(ACCOUNT_ROUTE),
-                                 g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_route_set))));
-
-            g_hash_table_replace(account->properties,
-                                 g_strdup(ACCOUNT_USERAGENT),
-                                 g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_user_agent))));
-
-            gboolean v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_stun_check_box));
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED),
-                                 bool_to_string(v));
-
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER),
-                                 g_strdup(gtk_entry_get_text(GTK_ENTRY(stun_server_entry))));
-
-            v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button));
-            g_hash_table_replace(account->properties, g_strdup(PUBLISHED_SAMEAS_LOCAL),
-                                 bool_to_string(v));
-
-            if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
-                g_hash_table_replace(account->properties,
-                                     g_strdup(PUBLISHED_PORT),
-                                     g_strdup(gtk_entry_get_text(GTK_ENTRY(published_port_spin_box))));
-
-                g_hash_table_replace(account->properties,
-                                     g_strdup(PUBLISHED_ADDRESS),
-                                     g_strdup(gtk_entry_get_text(GTK_ENTRY(published_address_entry))));
-            } else {
-                g_hash_table_replace(account->properties,
-                                     g_strdup(PUBLISHED_PORT),
-                                     g_strdup(gtk_entry_get_text(GTK_ENTRY(local_port_spin_box))));
-                gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
-
-                gchar *published_address = dbus_get_address_from_interface_name(local_interface);
-                g_free(local_interface);
-
-                g_hash_table_replace(account->properties,
-                                     g_strdup(PUBLISHED_ADDRESS),
-                                     published_address);
-            }
-        }
-
-        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
-            DEBUG("Config: Set dtmf over rtp");
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_DTMF_TYPE), g_strdup(OVERRTP));
-        } else {
-            DEBUG("Config: Set dtmf over sip");
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_DTMF_TYPE), g_strdup(SIPINFO));
-        }
-
-        gchar* key_exchange = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
-
-        if (utf8_case_cmp(key_exchange, "ZRTP") == 0) {
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
-        } else if (utf8_case_cmp(key_exchange, "SDES") == 0) {
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(SDES));
-        } else {
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
-            g_hash_table_replace(account->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(""));
-        }
-
-        g_free(key_exchange);
-        const gboolean tls_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(use_sip_tls_check_box));
-        g_hash_table_replace(account->properties, g_strdup(TLS_ENABLE),
-                             bool_to_string(tls_enabled));
-
-        const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
-        g_hash_table_replace(account->properties,
-                             g_strdup(CONFIG_RINGTONE_ENABLED),
-                             bool_to_string(tone_enabled));
-
-        g_hash_table_replace(account->properties,
-                             g_strdup(CONFIG_RINGTONE_PATH),
-                             g_strdup(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser))));
-
-        g_hash_table_replace(account->properties,
-                             g_strdup(LOCAL_INTERFACE),
-                             gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo)));
-
-        g_hash_table_replace(account->properties,
-                             g_strdup(LOCAL_PORT),
-                             g_strdup(gtk_entry_get_text(GTK_ENTRY(local_port_spin_box))));
-    }
+    if (!account_is_IP2IP(account))
+        update_account_from_basic_tab(account);
 
     /** @todo Verify if it's the best condition to check */
     if (utf8_case_cmp(account->accountID, "new") == 0)
@@ -1361,6 +1339,5 @@ void show_account_window(account_t *account)
 
     gtk_widget_destroy(dialog);
     g_free(current_protocol);
-    g_free(proto);
 }
 

@@ -28,19 +28,16 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_TLS_ADVANCED_DIALOG__
-#define __SFL_TLS_ADVANCED_DIALOG__
+#ifndef TLS_ADVANCED_DIALOG_
+#define TLS_ADVANCED_DIALOG_
 /** @file tlsadvanceddialog.h
   * @brief Display the advanced options window for tls
   */
 
-#include <glib.h>
-#include <mainwindow.h>
-
+#include "accountlist.h"
 /**
  * Display the advanced options window for zrtp
  */
-
-void show_advanced_tls_options (GHashTable * properties);
+void show_advanced_tls_options(account_t *account);
 
 #endif
