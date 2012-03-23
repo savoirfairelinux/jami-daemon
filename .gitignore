@@ -6,7 +6,6 @@
 *.Po
 *.Plo
 *.loT
-*.m4
 *.Tpo
 Makefile.in
 Makefile

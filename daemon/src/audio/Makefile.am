@@ -43,6 +43,3 @@ libaudio_la_LIBADD = \
 	./alsa/libalsalayer.la \
 	./pulseaudio/libpulselayer.la \
 	./sound/libsound.la
-
-
-

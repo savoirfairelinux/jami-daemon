@@ -30,7 +30,7 @@ sflphoned_CXXFLAGS = \
 
 # libsflphone
 
-sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto
+sflphoned_LDADD = ./libsflphone.la $(libssl_LIBS) -lcrypto $(YAML_LIBS)
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
@@ -73,8 +73,6 @@ libsflphone_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@libssl_LIBS@ \
 		@UUID_LIBS@ \
-		@yaml_LIBS@ \
-		@xml_LIBS@ \
 		@DBUSCPP_LIBS@
 
 libsflphone_la_CFLAGS = \
@@ -87,9 +85,7 @@ libsflphone_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		@libssl_CFLAGS@ \
-		@UUID_CFLAGS@ \
-		@yaml_CFLAGS@ \
-	 	@xml_CFLAGS@
+		@UUID_CFLAGS@
 
 libsflphone_la_SOURCES = conference.cpp \
 		voiplink.cpp \

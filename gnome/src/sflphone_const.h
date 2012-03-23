@@ -32,7 +32,7 @@
 #define __SFLPHONE_CONST_H
 
 #include <libintl.h>
-#include <glib/gi18n.h>
+#include <glib.h>
 
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code

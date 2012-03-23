@@ -32,7 +32,7 @@
 #define _ADDRESS_BOOK_CONFIG
 
 #include <gtk/gtk.h>
-#include <glib/gtypes.h>
+#include <glib.h>
 
 #include "addressbook.h"
 #include "actions.h"

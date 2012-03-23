@@ -32,6 +32,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -362,7 +363,7 @@ static GtkTreeModel* create_model(GtkWidget *widget)
                            PAGE_NUMBER, browser_entries_full[i].page_number,
                            -1);
         if (pixbuf)
-            gdk_pixbuf_unref(pixbuf);
+            g_object_unref(pixbuf);
     }
 
     return GTK_TREE_MODEL(store);

@@ -335,56 +335,23 @@ class AddressbookPreference : public Serializable {
 class HookPreference : public Serializable {
     public:
         HookPreference();
+        HookPreference(const std::map<std::string, std::string> &settings);
 
         virtual void serialize(Conf::YamlEmitter *emitter);
 
         virtual void unserialize(const Conf::MappingNode *map);
 
-        bool getIax2Enabled() const {
-            return iax2Enabled_;
-        }
-
-        void setIax2Enabled(bool i) {
-            iax2Enabled_ = i;
-        }
-
         std::string getNumberAddPrefix() const {
-            return numberAddPrefix_;
+            if (numberEnabled_)
+                return numberAddPrefix_;
+            else
+                return "";
         }
 
-        void setNumberAddPrefix(const std::string &n) {
-            numberAddPrefix_ = n;
-        }
-
-        bool getNumberEnabled() const {
-            return numberEnabled_;
-        }
-
-        void setNumberEnabled(bool n) {
-            numberEnabled_ = n;
-        }
-
-        bool getSipEnabled() const {
-            return sipEnabled_;
-        }
-
-        void setSipEnabled(bool s) {
-            sipEnabled_ = s;
-        }
-
-        std::string getUrlCommand() const {
-            return urlCommand_;
-        }
-        void setUrlCommand(const std::string &u) {
-            urlCommand_ = u;
-        }
-
-        std::string getUrlSipField() const {
-            return urlSipField_;
-        }
-        void setUrlSipField(const std::string &u) {
-            urlSipField_ = u;
-        }
+        std::map<std::string, std::string> toMap() const;
+        bool getSipEnabled() const { return sipEnabled_; }
+        std::string getUrlSipField() const { return urlSipField_; }
+        void run(const std::string &header);
 
     private:
         bool iax2Enabled_;
@@ -393,7 +360,6 @@ class HookPreference : public Serializable {
         bool sipEnabled_;
         std::string urlCommand_;
         std::string urlSipField_;
-
 };
 
 class AudioPreference : public Serializable {

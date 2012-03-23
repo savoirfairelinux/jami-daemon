@@ -29,7 +29,7 @@
  */
 
 #include <string.h>
-
+#include <glib/gi18n.h>
 #include "unused.h"
 #include "assistant.h"
 #include "logger.h"

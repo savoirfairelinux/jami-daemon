@@ -36,6 +36,7 @@
 #include "mainwindow.h"
 #include "statusicon.h"
 #include "eel-gconf-extensions.h"
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
@@ -64,7 +65,7 @@ main(int argc, char *argv[])
     gtk_init(&argc, &argv);
 
     g_print("%s %s\n", PACKAGE, VERSION);
-    g_print("\nCopyright (c) 2005 - 2011 Savoir-faire Linux Inc.\n\n");
+    g_print("\nCopyright (c) 2005 - 2012 Savoir-faire Linux Inc.\n\n");
     g_print("This is free software.  You may redistribute copies of it under the terms of\n" \
             "the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n" \
             "There is NO WARRANTY, to the extent permitted by law.\n\n" \
@@ -128,6 +129,7 @@ main(int argc, char *argv[])
 
     shortcuts_destroy_bindings();
 
+    eel_gconf_global_client_free();
 OUT:
 #if !GTK_CHECK_VERSION(2,32,0)
     gdk_threads_leave();

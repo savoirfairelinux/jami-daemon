@@ -13,6 +13,4 @@ noinst_HEADERS = \
 	yamlparser.h \
 	yamlnode.h
 
-libconfig_la_LDFLAGS = @yaml_LIBS@
-
-libconfig_la_CXXFLAGS = @yaml_CFLAGS@ -I $(top_srcdir)/src
+libconfig_la_CXXFLAGS = -I $(top_srcdir)/src

@@ -48,7 +48,6 @@
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
-#include "hooks/urlhook.h"
 #include "im/instant_messaging.h"
 
 #include "audio/audiolayer.h"
@@ -309,7 +308,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (Manager::instance().hookPreference.getSipEnabled()) {
         std::string header_value(fetchHeaderValue(rdata->msg_info.msg, Manager::instance().hookPreference.getUrlSipField()));
-        UrlHook::runAction(Manager::instance().hookPreference.getUrlCommand(), header_value);
+        Manager::instance().hookPreference.run(header_value);
     }
 
     SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
@@ -651,29 +650,24 @@ void SIPVoIPLink::sendUnregister(Account *a)
     account->setRegister(false);
 }
 
-void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
+void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
-    pj_status_t status;
-
-    DEBUG("UserAgent: Registering keep alive timer");
-
-    if(timer.id == -1) {
+    if (timer.id == -1)
         WARN("UserAgent: Timer already scheduled");
-    }
 
-    status = pjsip_endpt_schedule_timer(endpt_, &timer, &delay);
-    if (status != PJ_SUCCESS) {
-        ERROR("UserAgent: Could not schedule new timer in pjsip endpoint");
+    switch (pjsip_endpt_schedule_timer(endpt_, &timer, &delay)) {
+        case PJ_SUCCESS:
+            break;
+        default:
+            ERROR("UserAgent: Could not schedule new timer in pjsip endpoint");
+            /* fallthrough */
+        case PJ_EINVAL:
+            ERROR("UserAgent: Invalid timer or delay entry");
+            break;
+        case PJ_EINVALIDOP:
+            ERROR("Invalid timer entry, maybe already scheduled");
+            break;
     }
-
-    if(status == PJ_EINVAL) {
-        ERROR("UserAgent: Invalid timer or delay entry");
-    }
-
-    if(status == PJ_EINVALIDOP) {
-        ERROR("Invalid timer entry, maybe already scheduled");
-    }
-
 }
 
 void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
@@ -749,23 +743,11 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 }
 
 void
-SIPVoIPLink::answer(Call *c)
+SIPVoIPLink::answer(Call *call)
 {
-    SIPCall *call = dynamic_cast<SIPCall*>(c);
-
     if (!call)
         return;
-
-    pjsip_tx_data *tdata;
-
-    if (pjsip_inv_answer(call->inv, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not init invite request answer (200 OK)");
-
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Could not send invite request answer (200 OK)");
-
-    call->setConnectionState(Call::CONNECTED);
-    call->setState(Call::ACTIVE);
+    call->answer();
 }
 
 void
@@ -1185,7 +1167,7 @@ SIPVoIPLink::getSIPCall(const std::string& id)
 
 bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(SIPAccount::IP2IP_PROFILE));
+    SIPAccount *account = Manager::instance().getIP2IPAccount();
 
     if (!account)
         return false;
@@ -1331,7 +1313,7 @@ void SIPVoIPLink::createDefaultSipUdpTransport()
     pj_uint16_t port = 0;
     int counter = 0;
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(SIPAccount::IP2IP_PROFILE));
+    SIPAccount *account = Manager::instance().getIP2IPAccount();
 
     pjsip_transport *transport = NULL;
     static const int DEFAULT_TRANSPORT_ATTEMPTS = 5;
@@ -2173,14 +2155,14 @@ std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field)
     if (!hdr)
         return "";
 
-    std::string value(std::string(hdr->hvalue.ptr, hdr->hvalue.slen));
+    std::string value(hdr->hvalue.ptr, hdr->hvalue.slen);
 
     size_t pos = value.find("\n");
 
-    if (pos == std::string::npos)
+    if (pos != std::string::npos)
+        return value.substr(0, pos);
+    else
         return "";
-
-    return value.substr(0, pos);
 }
 } // end anonymous namespace
 

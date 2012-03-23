@@ -80,8 +80,6 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
         CPPUNIT_TEST_SUITE_END();
 
     public:
-
-        SdesNegotiatorTest();
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
@@ -103,14 +101,6 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
         void testMostSimpleCase();
 
         void test32ByteKeyLength();
-
-    private:
-        NON_COPYABLE(SdesNegotiatorTest);
-
-        sfl::Pattern *pattern;
-        sfl::SdesNegotiator *sdesnego;
-        std::vector<std::string> *remoteOffer;
-        std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
 };
 
 /* Register our test module */

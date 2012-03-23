@@ -428,7 +428,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 
     // TLS settings
     // The TLS listener is unique and globally defined through IP2IP_PROFILE
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
 
     tlsEnable_ = details[CONFIG_TLS_ENABLE];
@@ -462,7 +462,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     a[CONFIG_ACCOUNT_ID] = accountID_;
     // The IP profile does not allow to set an alias
-    a[CONFIG_ACCOUNT_ALIAS] = (accountID_ == IP2IP_PROFILE) ? IP2IP_PROFILE : alias_;
+    a[CONFIG_ACCOUNT_ALIAS] = isIP2IP() ? IP2IP_PROFILE : alias_;
 
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_TYPE] = type_;
@@ -477,7 +477,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         registrationStateDescription = "Direct IP call";
     else {
         state = registrationState_;
@@ -488,7 +488,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[CONFIG_REGISTRATION_STATUS] = (accountID_ == IP2IP_PROFILE) ? "READY": mapStateNumberToString(state);
+    a[CONFIG_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
     a[CONFIG_REGISTRATION_STATE_CODE] = registrationStateCode;
     a[CONFIG_REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
 
@@ -565,7 +565,7 @@ void SIPAccount::registerVoIPLink()
 
     // In our definition of the ip2ip profile (aka Direct IP Calls),
     // no registration should be performed
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         return;
 
     try {
@@ -577,7 +577,7 @@ void SIPAccount::registerVoIPLink()
 
 void SIPAccount::unregisterVoIPLink()
 {
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         return;
 
     try {
@@ -802,21 +802,16 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
 
 std::string SIPAccount::getContactHeader() const
 {
-    std::string scheme;
-    std::string transport;
-    pjsip_transport_type_e transportType = transportType_;
-    
-    if(transport_ == NULL) {
+    if (transport_ == NULL)
         ERROR("Transport not created yet");
-    }
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
-    if(transportType == PJSIP_TRANSPORT_START_OTHER) {
+    pjsip_transport_type_e transportType = transportType_;
+    if (transportType == PJSIP_TRANSPORT_START_OTHER)
         transportType = PJSIP_TRANSPORT_UDP;
-    }
 
     // Use the CONTACT header provided by the registrar if any
-    if(!contactHeader_.empty())
+    if (!contactHeader_.empty())
         return contactHeader_;
 
     // Else we determine this infor based on transport information
@@ -824,6 +819,8 @@ std::string SIPAccount::getContactHeader() const
     link_->findLocalAddressFromTransport(transport_, transportType, address, port);
 
     // UDP does not require the transport specification
+    std::string scheme;
+    std::string transport;
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
         transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType));
@@ -831,28 +828,28 @@ std::string SIPAccount::getContactHeader() const
         scheme = "sip:";
 
     return displayName_ + (displayName_.empty() ? "" : " ") + "<" +
-           scheme + username_ + (username_.empty() ? "":"@") +
+           scheme + username_ + (username_.empty() ? "" : "@") +
            address + ":" + port + transport + ">";
 }
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
-    SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
+    SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
-    if(sipAccount == NULL) {
+    if (sipAccount == NULL) {
         ERROR("Sip account is NULL while registering a new keep alive timer");
+        return;
     }
 
     // IP2IP default does not require keep-alive
-    if(sipAccount->getAccountID() == IP2IP_PROFILE)
+    if (sipAccount->isIP2IP())
         return; 
 
     // TLS is connection oriented and does not require keep-alive 
     if (sipAccount->isTlsEnabled())
         return;
 
-    if(sipAccount->isRegistered()) {
-
+    if (sipAccount->isRegistered()) {
         // send a new register request
         sipAccount->registerVoIPLink();
 
@@ -865,9 +862,9 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 }
 
 namespace {
-std::string computeMd5HashFromCredential(
-    const std::string& username, const std::string& password,
-    const std::string& realm)
+std::string computeMd5HashFromCredential(const std::string& username,
+                                         const std::string& password,
+                                         const std::string& realm)
 {
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
@@ -891,8 +888,6 @@ std::string computeMd5HashFromCredential(
 
     return std::string(hash, 32);
 }
-
-
 } // anon namespace
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
@@ -980,7 +975,7 @@ std::string SIPAccount::getUserAgentName() const
 
 std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
-    assert(accountID_ == IP2IP_PROFILE);
+    assert(isIP2IP());
     std::map<std::string, std::string> ip2ipAccountDetails;
     ip2ipAccountDetails[CONFIG_ACCOUNT_ID] = IP2IP_PROFILE;
     ip2ipAccountDetails[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
@@ -1006,7 +1001,7 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 {
     std::map<std::string, std::string> tlsSettings;
-    assert(accountID_ == IP2IP_PROFILE);
+    assert(isIP2IP());
 
     std::stringstream portstr;
     portstr << tlsListenerPort_;
@@ -1056,7 +1051,7 @@ void set_opt(const std::map<std::string, std::string> &details, const char *key,
 
 void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    assert(accountID_ == IP2IP_PROFILE);
+    assert(isIP2IP());
     set_opt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     set_opt(details, CONFIG_TLS_ENABLE, tlsEnable_);
     set_opt(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
@@ -1075,4 +1070,9 @@ void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& detail
 VoIPLink* SIPAccount::getVoIPLink()
 {
     return link_;
+}
+
+bool SIPAccount::isIP2IP() const
+{
+    return accountID_ == IP2IP_PROFILE;
 }

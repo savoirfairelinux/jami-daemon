@@ -31,6 +31,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -39,6 +40,7 @@
 #include <gtk/gtk.h>
 
 #include "config.h"
+#include "str_utils.h"
 #include "logger.h"
 #include "actions.h"
 #include "mainwindow.h"
@@ -133,7 +135,7 @@ void change_protocol_cb(account_t *currentAccount UNUSED)
 
     // Only if tabs are not NULL
     if (security_tab && advanced_tab) {
-        if (g_strcasecmp(protocol, "IAX") == 0) {
+        if (utf8_case_cmp(protocol, "IAX") == 0) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
         } else {
@@ -439,8 +441,8 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
     gint column = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(renderer), "column"));
     DEBUG("path desc in cell_edited_cb: %s\n", text);
 
-    if ((g_strcasecmp(path_desc, "0") == 0) &&
-            g_strcasecmp(text, gtk_entry_get_text(GTK_ENTRY(entryUsername))) != 0)
+    if ((utf8_case_cmp(path_desc, "0") == 0) &&
+            utf8_case_cmp(text, gtk_entry_get_text(GTK_ENTRY(entryUsername))) != 0)
         g_signal_handlers_disconnect_by_func(G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
 
     GtkTreeIter iter;
@@ -455,7 +457,7 @@ static void editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * e
     DEBUG("path desc in editing_started_cb: %s\n", path);
 
     // If we are dealing the first row
-    if (g_strcasecmp(path, "0") == 0)
+    if (utf8_case_cmp(path, "0") == 0)
         gtk_entry_set_text(GTK_ENTRY(editable), gtk_entry_get_text(GTK_ENTRY(entryPassword)));
 }
 
@@ -463,7 +465,7 @@ static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer dat
 {
     gchar *proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo));
 
-    if (g_strcasecmp(proto, "ZRTP") == 0)
+    if (utf8_case_cmp(proto, "ZRTP") == 0)
         show_advanced_zrtp_options((GHashTable *) data);
     else
         show_advanced_sdes_options((GHashTable *) data);
@@ -483,8 +485,8 @@ static void key_exchange_changed_cb(GtkWidget *widget UNUSED, gpointer data UNUS
     DEBUG("Key exchange changed %s", active_text);
 
     gboolean set_sensitive = FALSE;
-    set_sensitive |= g_strcasecmp(active_text, "SDES") == 0;
-    set_sensitive |= g_strcasecmp(active_text, "ZRTP") == 0;
+    set_sensitive |= utf8_case_cmp(active_text, "SDES") == 0;
+    set_sensitive |= utf8_case_cmp(active_text, "ZRTP") == 0;
     g_free(active_text);
 
     if (set_sensitive)
@@ -862,7 +864,7 @@ static GtkWidget* create_registration_expire(account_t *a)
 
     entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Comply with RFC 3263"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
-                                 g_strcasecmp(resolve_once,"false") == 0 ? TRUE: FALSE);
+                                 utf8_case_cmp(resolve_once,"false") == 0 ? TRUE: FALSE);
     gtk_table_attach_defaults(GTK_TABLE(table), entryResolveNameOnlyOnce, 0, 2, 1, 2);
     gtk_widget_set_sensitive(entryResolveNameOnlyOnce , TRUE);
 
@@ -951,7 +953,7 @@ GtkWidget* create_published_address(account_t *a)
         use_tls = g_hash_table_lookup(a->properties, TLS_ENABLE);
         published_sameas_local = g_hash_table_lookup(a->properties, PUBLISHED_SAMEAS_LOCAL);
 
-        if (g_strcasecmp(published_sameas_local, "true") == 0) {
+        if (utf8_case_cmp(published_sameas_local, "true") == 0) {
             published_address = dbus_get_address_from_interface_name(g_hash_table_lookup(a->properties, LOCAL_INTERFACE));
             published_port = g_hash_table_lookup(a->properties, LOCAL_PORT);
         } else {
@@ -972,9 +974,9 @@ GtkWidget* create_published_address(account_t *a)
     gtk_table_attach_defaults(GTK_TABLE(table), useStunCheckBox, 0, 1, 0, 1);
     g_signal_connect(useStunCheckBox, "toggled", G_CALLBACK(use_stun_cb), a);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useStunCheckBox),
-                                 g_strcasecmp(stun_enable, "true") == 0 ? TRUE: FALSE);
+                                 utf8_case_cmp(stun_enable, "true") == 0 ? TRUE: FALSE);
     gtk_widget_set_sensitive(useStunCheckBox,
-                             g_strcasecmp(use_tls, "true") == 0 ? FALSE: TRUE);
+                             utf8_case_cmp(use_tls, "true") == 0 ? FALSE: TRUE);
 
     stunServerLabel = gtk_label_new_with_mnemonic(_("STUN server URL"));
     gtk_table_attach_defaults(GTK_TABLE(table), stunServerLabel, 0, 1, 1, 2);
@@ -990,7 +992,7 @@ GtkWidget* create_published_address(account_t *a)
     publishedAddrRadioButton = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(sameAsLocalRadioButton), _("Set published address and port:"));
     gtk_table_attach_defaults(GTK_TABLE(table), publishedAddrRadioButton, 0, 2, 4, 5);
 
-    if (g_strcasecmp(published_sameas_local, "true") == 0) {
+    if (utf8_case_cmp(published_sameas_local, "true") == 0) {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton), TRUE);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), FALSE);
     } else {
@@ -1096,7 +1098,7 @@ static GtkWidget* create_audiocodecs_configuration(account_t *currentAccount)
 
         gboolean dtmf_are_rtp = TRUE;
 
-        if (g_strcasecmp(currentDtmfType, OVERRTP) != 0)
+        if (utf8_case_cmp(currentDtmfType, OVERRTP) != 0)
             dtmf_are_rtp = FALSE;
 
         overrtp = gtk_radio_button_new_with_label(NULL, _("RTP"));
@@ -1203,7 +1205,7 @@ void show_account_window(account_t * currentAccount)
     gtk_widget_show(notebook);
 
     // We do not need the global settings for the IP2IP account
-    if (g_strcasecmp(currentAccount->accountID, IP2IP) != 0) {
+    if (utf8_case_cmp(currentAccount->accountID, IP2IP) != 0) {
         /* General Settings */
         GtkWidget *basic_tab = create_basic_tab(currentAccount);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), basic_tab, gtk_label_new(_("Basic")));
@@ -1224,7 +1226,7 @@ void show_account_window(account_t * currentAccount)
         currentProtocol = g_strdup("SIP");
 
     // Do not need advanced or security one for the IP2IP account
-    if (g_strcasecmp(currentAccount->accountID, IP2IP) != 0) {
+    if (utf8_case_cmp(currentAccount->accountID, IP2IP) != 0) {
 
         /* Advanced */
         advanced_tab = create_advanced_tab(currentAccount);
@@ -1270,7 +1272,7 @@ void show_account_window(account_t * currentAccount)
     }
 
     // If accept button is
-    if (g_strcasecmp(currentAccount->accountID, IP2IP) != 0) {
+    if (utf8_case_cmp(currentAccount->accountID, IP2IP) != 0) {
 
         g_hash_table_replace(currentAccount->properties,
                              g_strdup(ACCOUNT_ALIAS),
@@ -1293,7 +1295,7 @@ void show_account_window(account_t * currentAccount)
     }
 
     if (g_strcmp0(proto, "SIP") == 0) {
-        if (g_strcasecmp(currentAccount->accountID, IP2IP) != 0) {
+        if (utf8_case_cmp(currentAccount->accountID, IP2IP) != 0) {
 
             g_hash_table_replace(currentAccount->properties,
                                  g_strdup(ACCOUNT_RESOLVE_ONCE),
@@ -1355,10 +1357,10 @@ void show_account_window(account_t * currentAccount)
 
         gchar* keyExchange = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(keyExchangeCombo));
 
-        if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
+        if (utf8_case_cmp(keyExchange, "ZRTP") == 0) {
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
-        } else if (g_strcasecmp(keyExchange, "SDES") == 0) {
+        } else if (utf8_case_cmp(keyExchange, "SDES") == 0) {
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
             g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(SDES));
         } else {
@@ -1391,7 +1393,7 @@ void show_account_window(account_t * currentAccount)
     }
 
     /** @todo Verify if it's the best condition to check */
-    if (g_strcasecmp(currentAccount->accountID, "new") == 0)
+    if (utf8_case_cmp(currentAccount->accountID, "new") == 0)
         dbus_add_account(currentAccount);
     else
         dbus_set_account_details(currentAccount);
@@ -1400,7 +1402,7 @@ void show_account_window(account_t * currentAccount)
         /* Set new credentials if any */
         DEBUG("Config: Setting credentials");
 
-        if (g_strcasecmp(currentAccount->accountID, IP2IP) != 0) {
+        if (utf8_case_cmp(currentAccount->accountID, IP2IP) != 0) {
             DEBUG("Config: Get new credentials");
             currentAccount->credential_information = getNewCredential();
 

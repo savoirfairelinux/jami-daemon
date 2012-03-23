@@ -191,9 +191,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 
     std::string current_call_id(getCurrentCallId());
 
-    std::string prefix;
-    if (hookPreference.getNumberEnabled())
-        prefix = hookPreference.getNumberAddPrefix();
+    std::string prefix(hookPreference.getNumberAddPrefix());
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
@@ -292,7 +290,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     try {
         getAccountLink(account_id)->answer(call);
-    } catch (const VoipLinkException &e) {
+    } catch (const std::runtime_error &e) {
         ERROR("Manager: Error: %s", e.what());
     }
 
@@ -1236,7 +1234,7 @@ void ManagerImpl::saveConfig()
 {
     DEBUG("Manager: Saving Configuration to XDG directory %s", path_.c_str());
     AudioLayer *audiolayer = getAudioDriver();
-    if(audiolayer != NULL) {
+    if (audiolayer != NULL) {
         audioPreference.setVolumemic(audiolayer->getCaptureGain());
         audioPreference.setVolumespkr(audiolayer->getPlaybackGain());
     }
@@ -1244,13 +1242,8 @@ void ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-            // Skip the "" account ID (which refer to the IP2IP account)
-            if (iter->first.empty())
-                continue;
-            else
-                iter->second->serialize(&emitter);
-        }
+        for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter)
+            iter->second->serialize(&emitter);
 
         preferences.serialize(&emitter);
         voipPreferences.serialize(&emitter);
@@ -2663,14 +2656,20 @@ bool ManagerImpl::accountExists(const std::string &accountID)
     return accountMap_.find(accountID) != accountMap_.end();
 }
 
+SIPAccount*
+ManagerImpl::getIP2IPAccount()
+{
+    return static_cast<SIPAccount*>(accountMap_[SIPAccount::IP2IP_PROFILE]);
+}
+
 Account*
 ManagerImpl::getAccount(const std::string& accountID)
 {
     AccountMap::const_iterator iter = accountMap_.find(accountID);
     if (iter != accountMap_.end())
         return iter->second;
-
-    return getAccount(SIPAccount::IP2IP_PROFILE);
+    else
+        return accountMap_[SIPAccount::IP2IP_PROFILE];
 }
 
 std::string ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
@@ -2745,30 +2744,6 @@ void ManagerImpl::setAddressbookList(const std::vector<std::string>& list)
 std::vector<std::string> ManagerImpl::getAddressbookList() const
 {
     return unserialize(addressbookPreference.getList());
-}
-
-std::map<std::string, std::string> ManagerImpl::getHookSettings() const
-{
-    std::map<std::string, std::string> settings;
-
-    settings["URLHOOK_IAX2_ENABLED"] = hookPreference.getIax2Enabled() ? "true" : "false";
-    settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = hookPreference.getNumberAddPrefix();
-    settings["PHONE_NUMBER_HOOK_ENABLED"] = hookPreference.getNumberEnabled() ? "true" : "false";
-    settings["URLHOOK_SIP_ENABLED"] = hookPreference.getSipEnabled() ? "true" : "false";
-    settings["URLHOOK_COMMAND"] = hookPreference.getUrlCommand();
-    settings["URLHOOK_SIP_FIELD"] = hookPreference.getUrlSipField();
-
-    return settings;
-}
-
-void ManagerImpl::setHookSettings(const std::map<std::string, std::string>& settings)
-{
-    hookPreference.setIax2Enabled(settings.find("URLHOOK_IAX2_ENABLED")->second == "true");
-    hookPreference.setNumberAddPrefix(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
-    hookPreference.setNumberEnabled(settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true");
-    hookPreference.setSipEnabled(settings.find("URLHOOK_SIP_ENABLED")->second == "true");
-    hookPreference.setUrlCommand(settings.find("URLHOOK_COMMAND")->second);
-    hookPreference.setUrlSipField(settings.find("URLHOOK_SIP_FIELD")->second);
 }
 
 void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)

@@ -73,6 +73,7 @@ class DNSService;
 #endif
 
 class Account;
+class SIPAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<std::string, Account*> AccountMap;
@@ -691,17 +692,6 @@ class ManagerImpl {
         std::vector <std::string> getAddressbookList() const;
 
         /**
-         * Hook configuration
-         */
-        std::map<std::string, std::string> getHookSettings() const;
-
-        /**
-         * Hook configuration
-         */
-        void setHookSettings(const std::map<std::string, std::string>& settings);
-
-
-        /**
          * Get the audio manager
          * @return int The audio manager
          *		    "alsa"
@@ -1064,6 +1054,7 @@ class ManagerImpl {
          * @return Account*	 The account pointer or 0
          */
         Account* getAccount(const std::string& accountID);
+        SIPAccount* getIP2IPAccount();
 
         /** Return the std::string from a CallID
          * Protected by mutex

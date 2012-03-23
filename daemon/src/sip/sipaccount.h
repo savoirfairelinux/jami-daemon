@@ -123,6 +123,11 @@ class SIPAccount : public Account {
         }
 
         /**
+         * Returns true if this is the IP2IP account
+         */
+        bool isIP2IP() const;
+
+        /**
          * Serialize internal state of this account for configuration
          * @param YamlEmitter the configuration engine which generate the configuration file
          */

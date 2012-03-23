@@ -255,14 +255,12 @@ IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
 
 void
-IAXVoIPLink::answer(Call *c)
+IAXVoIPLink::answer(Call *call)
 {
-    IAXCall* call = dynamic_cast<IAXCall*>(c);
-
     Manager::instance().addStream(call->getCallId());
 
     mutexIAX_.enter();
-    iax_answer(call->session);
+    call->answer();
     mutexIAX_.leave();
 
     call->setState(Call::ACTIVE);

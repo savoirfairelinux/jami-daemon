@@ -62,9 +62,9 @@ void ConfigurationTest::testDefaultValueSignalisation()
 {
     DEBUG("-------------------- ConfigurationTest::testDefaultValueSignalisation --------------------\n");
 
-    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getSymmetricRtp() == true);
-    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayDtmf() == true);
-    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayTones() == true);
+    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getSymmetricRtp());
+    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayDtmf());
+    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayTones());
     CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPulseLength() == 250);
 }
 
@@ -93,13 +93,11 @@ void ConfigurationTest::testInitAudioDriver()
 void ConfigurationTest::testYamlParser()
 {
     try {
-        Conf::YamlParser *parser = new Conf::YamlParser("ymlParser.yml");
-        parser->serializeEvents();
-        parser->composeEvents();
-        parser->constructNativeData();
-
-        delete parser;
-    } catch (Conf::YamlParserException &e) {
+        Conf::YamlParser parser("ymlParser.yml");
+        parser.serializeEvents();
+        parser.composeEvents();
+        parser.constructNativeData();
+    } catch (const Conf::YamlParserException &e) {
        ERROR("ConfigTree: %s", e.what());
     }
 }
@@ -223,13 +221,12 @@ void ConfigurationTest::testYamlEmitter()
     tlsmap.setKeyValue(verifyServerKey, &verifyserver);
 
     try {
-        YamlEmitter *emitter = new YamlEmitter("/tmp/ymlEmiter.txt");
+        YamlEmitter emitter("/tmp/ymlEmiter.txt");
 
-        emitter->serializeAccount(&accountmap);
-        emitter->serializeAccount(&accountmap);
-        emitter->serializeData();
+        emitter.serializeAccount(&accountmap);
+        emitter.serializeAccount(&accountmap);
+        emitter.serializeData();
 
-        delete emitter;
     } catch (const YamlEmitterException &e) {
        ERROR("ConfigTree: %s", e.what());
     }

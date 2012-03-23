@@ -8,7 +8,6 @@ libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 if BUILD_GSM
 GSM_LIB = libcodec_gsm.so
 libcodec_gsm_so_SOURCES = gsmcodec.cpp
-libcodec_gsm_so_CFLAGS = -fPIC -g -Wall
 libcodec_gsm_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_gsm_so_LDFLAGS = --shared -lc -lgsm
 libcodec_gsm_so_LDADD = libcodecdescriptor.la
@@ -18,9 +17,8 @@ endif
 if BUILD_SPEEX
 SPEEX_NB_LIB = libcodec_speex_nb.so
 libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp
-libcodec_speex_nb_so_CFLAGS = -fPIC -g -Wall
 libcodec_speex_nb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
-libcodec_speex_nb_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_NIMP)
+libcodec_speex_nb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_nb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_NB_RULE = install-libcodec_speex_nb_so
 endif
@@ -28,9 +26,8 @@ endif
 if BUILD_SPEEX
 SPEEX_WB_LIB = libcodec_speex_wb.so
 libcodec_speex_wb_so_SOURCES = speexcodec_wb.cpp
-libcodec_speex_wb_so_CFLAGS = -fPIC -g -Wall
 libcodec_speex_wb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
-libcodec_speex_wb_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_NIMP)
+libcodec_speex_wb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_wb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_WB_RULE = install-libcodec_speex_wb_so
 endif
@@ -38,9 +35,8 @@ endif
 if BUILD_SPEEX
 SPEEX_UB_LIB = libcodec_speex_ub.so
 libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp
-libcodec_speex_ub_so_CFLAGS = -fPIC -g -Wall
 libcodec_speex_ub_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
-libcodec_speex_ub_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_NIMP)
+libcodec_speex_ub_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_ub_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
 endif
@@ -48,9 +44,8 @@ endif
 if BUILD_CELT_91
 CELT_LIB = libcodec_celt.so
 libcodec_celt_so_SOURCES = celtcodec.cpp
-libcodec_celt_so_CFLAGS = -fPIC -g -Wall -DBUILD_CELT_91
 libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall -DBUILD_CELT_91
-libcodec_celt_so_LDFLAGS = --shared -lc -lcelt0 $(CELT_NIMP)
+libcodec_celt_so_LDFLAGS = --shared -lc ${CELT_LIBS}
 libcodec_celt_so_LDADD = libcodecdescriptor.la
 INSTALL_CELT_RULE = install-libcodec_celt_so
 endif
@@ -58,9 +53,17 @@ endif
 if BUILD_CELT_71
 CELT_LIB = libcodec_celt.so
 libcodec_celt_so_SOURCES = celtcodec.cpp
-libcodec_celt_so_CFLAGS = -fPIC -g -Wall -DBUILD_CELT_71
 libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall -DBUILD_CELT_71
-libcodec_celt_so_LDFLAGS = --shared -lc -lcelt0 $(CELT_NIMP)
+libcodec_celt_so_LDFLAGS = --shared -lc ${CELT_LIBS}
+libcodec_celt_so_LDADD = libcodecdescriptor.la
+INSTALL_CELT_RULE = install-libcodec_celt_so
+endif
+
+if BUILD_CELT_071
+CELT_LIB = libcodec_celt.so
+libcodec_celt_so_SOURCES = celtcodec.cpp
+libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall -DBUILD_CELT_071 -I${top_srcdir}/src
+libcodec_celt_so_LDFLAGS = --shared -lc ${CELT_LIBS}
 libcodec_celt_so_LDADD = libcodecdescriptor.la
 INSTALL_CELT_RULE = install-libcodec_celt_so
 endif
@@ -70,19 +73,16 @@ noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) 
 noinst_HEADERS = audiocodec.h audiocodecfactory.h speexcodec.h g722.h
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp
-libcodec_ulaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_ulaw_so_LDADD = libcodecdescriptor.la
 libcodec_ulaw_so_LDFLAGS = --shared -lc
 
 libcodec_alaw_so_SOURCES = alaw.cpp
-libcodec_alaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDADD = libcodecdescriptor.la
 libcodec_alaw_so_LDFLAGS = --shared -lc
 
 libcodec_g722_so_SOURCES = g722.cpp
-libcodec_g722_so_CFLAGS = -fPIC -g -Wall
 libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g722_so_LDADD = libcodecdescriptor.la
 libcodec_g722_so_LDFLAGS = --shared -lc
