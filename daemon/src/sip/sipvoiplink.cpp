@@ -36,6 +36,7 @@
 #include "config.h"
 #endif
 
+
 #include "sipvoiplink.h"
 #include "manager.h"
 
@@ -1231,7 +1232,14 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 
 pj_bool_t stun_sock_on_status_cb(pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op op UNUSED, pj_status_t status)
 {
-    return status == PJ_SUCCESS;
+    // What ever is the status, we want the keep-alive timer to be rescheduled
+    status = PJ_TRUE;
+
+    if(status != PJ_SUCCESS) {
+        ERROR("Error STUN session failed because %s failed", pj_stun_sock_op_name(op));
+    }
+
+    return status;
 }
 
 pj_bool_t stun_sock_on_rx_data_cb(pj_stun_sock *stun_sock UNUSED, void *pkt UNUSED, unsigned pkt_len UNUSED, const pj_sockaddr_t *src_addr UNUSED, unsigned addr_len UNUSED)
