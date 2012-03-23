@@ -34,6 +34,7 @@
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "hooks/urlhook.h"
+#include "sip/sip_utils.h"
 #include <sstream>
 #include "global.h"
 #include <cassert>
@@ -275,9 +276,12 @@ void HookPreference::unserialize(const Conf::MappingNode *map)
     map->getValue(urlSipFieldKey, &urlSipField_);
 }
 
-void HookPreference::run(const std::string &header)
+void HookPreference::runHook(pjsip_msg *msg)
 {
-    UrlHook::runAction(urlCommand_, header);
+    if (sipEnabled_) {
+        std::string header(sip_utils::fetchHeaderValue(msg, urlSipField_));
+        UrlHook::runAction(urlCommand_, header);
+    }
 }
 
 AudioPreference::AudioPreference() :

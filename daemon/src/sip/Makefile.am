@@ -14,7 +14,9 @@ libsiplink_la_SOURCES = \
 		sdp.h \
 		sipaccount.h \
 		sipcall.h \
-		sipvoiplink.h
+		sipvoiplink.h \
+		sip_utils.cpp \
+		sip_utils.h
 
 libsiplink_la_CXXFLAGS = \
 		@PCRE_LIBS@

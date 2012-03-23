@@ -89,11 +89,6 @@ static std::map<std::string, std::string> transferCallID;
  */
 void setCallMediaLocal(SIPCall* call, const std::string &localIP);
 
-/**
- * Helper function to parser header from incoming sip messages
- */
-std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
-
 static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
 static pjsip_endpoint *endpt_;
@@ -306,10 +301,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         return true;
     }
 
-    if (Manager::instance().hookPreference.getSipEnabled()) {
-        std::string header_value(fetchHeaderValue(rdata->msg_info.msg, Manager::instance().hookPreference.getUrlSipField()));
-        Manager::instance().hookPreference.run(header_value);
-    }
+    Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
     SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
     Manager::instance().associateCallToAccount(call->getCallId(), account_id);
@@ -2112,25 +2104,6 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     call->setLocalIp(localIP);
     call->setLocalAudioPort(callLocalAudioPort);
     call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
-}
-
-std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field)
-{
-    pj_str_t name = pj_str((char*) field.c_str());
-
-    pjsip_generic_string_hdr *hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
-
-    if (!hdr)
-        return "";
-
-    std::string value(hdr->hvalue.ptr, hdr->hvalue.slen);
-
-    size_t pos = value.find("\n");
-
-    if (pos != std::string::npos)
-        return value.substr(0, pos);
-    else
-        return "";
 }
 } // end anonymous namespace
 

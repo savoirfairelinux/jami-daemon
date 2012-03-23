@@ -328,9 +328,10 @@ class AddressbookPreference : public Serializable {
         bool business_;
         bool home_;
         bool mobile_;
-
 };
 
+
+class pjsip_msg;
 
 class HookPreference : public Serializable {
     public:
@@ -349,9 +350,7 @@ class HookPreference : public Serializable {
         }
 
         std::map<std::string, std::string> toMap() const;
-        bool getSipEnabled() const { return sipEnabled_; }
-        std::string getUrlSipField() const { return urlSipField_; }
-        void run(const std::string &header);
+        void runHook(pjsip_msg *msg);
 
     private:
         bool iax2Enabled_;
