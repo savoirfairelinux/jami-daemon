@@ -33,6 +33,7 @@
 #include "audio/pulseaudio/pulselayer.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
+#include "hooks/urlhook.h"
 #include <sstream>
 #include "global.h"
 #include <cassert>
@@ -216,6 +217,28 @@ HookPreference::HookPreference() : iax2Enabled_(false)
     , urlSipField_("X-sflphone-url")
 {}
 
+HookPreference::HookPreference(const std::map<std::string, std::string> &settings) :
+    iax2Enabled_(settings.find("URLHOOK_IAX2_ENABLED")->second == "true")
+    , numberAddPrefix_(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second)
+    , numberEnabled_(settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true")
+    , sipEnabled_(settings.find("URLHOOK_SIP_ENABLED")->second == "true")
+    , urlCommand_(settings.find("URLHOOK_COMMAND")->second)
+    , urlSipField_(settings.find("URLHOOK_SIP_FIELD")->second)
+{}
+
+std::map<std::string, std::string> HookPreference::toMap() const
+{
+    std::map<std::string, std::string> settings;
+    settings["URLHOOK_IAX2_ENABLED"] = iax2Enabled_ ? "true" : "false";
+    settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = numberAddPrefix_;
+    settings["PHONE_NUMBER_HOOK_ENABLED"] = numberEnabled_ ? "true" : "false";
+    settings["URLHOOK_SIP_ENABLED"] = sipEnabled_ ? "true" : "false";
+    settings["URLHOOK_COMMAND"] = urlCommand_;
+    settings["URLHOOK_SIP_FIELD"] = urlSipField_;
+
+    return settings;
+}
+
 void HookPreference::serialize(Conf::YamlEmitter *emitter)
 {
     Conf::MappingNode preferencemap(NULL);
@@ -250,6 +273,11 @@ void HookPreference::unserialize(const Conf::MappingNode *map)
     map->getValue(sipEnabledKey, &sipEnabled_);
     map->getValue(urlCommandKey, &urlCommand_);
     map->getValue(urlSipFieldKey, &urlSipField_);
+}
+
+void HookPreference::run(const std::string &header)
+{
+    UrlHook::runAction(urlCommand_, header);
 }
 
 AudioPreference::AudioPreference() :

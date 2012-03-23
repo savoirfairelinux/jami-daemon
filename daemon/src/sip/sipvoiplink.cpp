@@ -48,7 +48,6 @@
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
-#include "hooks/urlhook.h"
 #include "im/instant_messaging.h"
 
 #include "audio/audiolayer.h"
@@ -309,7 +308,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (Manager::instance().hookPreference.getSipEnabled()) {
         std::string header_value(fetchHeaderValue(rdata->msg_info.msg, Manager::instance().hookPreference.getUrlSipField()));
-        UrlHook::runAction(Manager::instance().hookPreference.getUrlCommand(), header_value);
+        Manager::instance().hookPreference.run(header_value);
     }
 
     SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
@@ -2124,14 +2123,14 @@ std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field)
     if (!hdr)
         return "";
 
-    std::string value(std::string(hdr->hvalue.ptr, hdr->hvalue.slen));
+    std::string value(hdr->hvalue.ptr, hdr->hvalue.slen);
 
     size_t pos = value.find("\n");
 
-    if (pos == std::string::npos)
+    if (pos != std::string::npos)
+        return value.substr(0, pos);
+    else
         return "";
-
-    return value.substr(0, pos);
 }
 } // end anonymous namespace
 

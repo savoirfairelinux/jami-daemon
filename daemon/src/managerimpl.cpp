@@ -191,9 +191,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 
     std::string current_call_id(getCurrentCallId());
 
-    std::string prefix;
-    if (hookPreference.getNumberEnabled())
-        prefix = hookPreference.getNumberAddPrefix();
+    std::string prefix(hookPreference.getNumberAddPrefix());
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
@@ -2746,30 +2744,6 @@ void ManagerImpl::setAddressbookList(const std::vector<std::string>& list)
 std::vector<std::string> ManagerImpl::getAddressbookList() const
 {
     return unserialize(addressbookPreference.getList());
-}
-
-std::map<std::string, std::string> ManagerImpl::getHookSettings() const
-{
-    std::map<std::string, std::string> settings;
-
-    settings["URLHOOK_IAX2_ENABLED"] = hookPreference.getIax2Enabled() ? "true" : "false";
-    settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = hookPreference.getNumberAddPrefix();
-    settings["PHONE_NUMBER_HOOK_ENABLED"] = hookPreference.getNumberEnabled() ? "true" : "false";
-    settings["URLHOOK_SIP_ENABLED"] = hookPreference.getSipEnabled() ? "true" : "false";
-    settings["URLHOOK_COMMAND"] = hookPreference.getUrlCommand();
-    settings["URLHOOK_SIP_FIELD"] = hookPreference.getUrlSipField();
-
-    return settings;
-}
-
-void ManagerImpl::setHookSettings(const std::map<std::string, std::string>& settings)
-{
-    hookPreference.setIax2Enabled(settings.find("URLHOOK_IAX2_ENABLED")->second == "true");
-    hookPreference.setNumberAddPrefix(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
-    hookPreference.setNumberEnabled(settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true");
-    hookPreference.setSipEnabled(settings.find("URLHOOK_SIP_ENABLED")->second == "true");
-    hookPreference.setUrlCommand(settings.find("URLHOOK_COMMAND")->second);
-    hookPreference.setUrlSipField(settings.find("URLHOOK_SIP_FIELD")->second);
 }
 
 void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)

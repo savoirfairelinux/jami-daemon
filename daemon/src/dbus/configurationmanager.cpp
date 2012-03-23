@@ -389,13 +389,13 @@ void ConfigurationManager::setAddressbookList(
 
 std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
-    return Manager::instance().getHookSettings();
+    return Manager::instance().hookPreference.toMap();
 }
 
 void ConfigurationManager::setHookSettings(const std::map<std::string,
         std::string>& settings)
 {
-    Manager::instance().setHookSettings(settings);
+    Manager::instance().hookPreference = HookPreference(settings);
 }
 
 void ConfigurationManager::setAccountsOrder(const std::string& order)
