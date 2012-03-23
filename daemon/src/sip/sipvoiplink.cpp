@@ -48,6 +48,7 @@
 
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
+#include "dbus/configurationmanager.h"
 
 #include "im/instant_messaging.h"
 
@@ -1236,8 +1237,15 @@ pj_bool_t stun_sock_on_status_cb(pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op
     pj_bool_t reschedule = PJ_TRUE;
 
     if(status != PJ_SUCCESS) {
+        // Signal the client on failure
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(pj_stun_sock_op_name(op));
         ERROR("Error STUN session failed because %s failed", pj_stun_sock_op_name(op));
     }
+    else {
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusSuccess("");
+    }
+
+    // Signal the client on success or failure
 
     return reschedule;
 }

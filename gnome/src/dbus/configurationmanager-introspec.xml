@@ -446,6 +446,16 @@
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 
+       <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
+           <arg type="s" name="reason">
+           </arg>
+       </signal>
+
+       <signal name="stunStatusSuccess" tp:name-for_bindings="stunStatusSuccess">
+           <arg type="s" name="message">
+           </arg>
+       </signal>
+
        <signal name="errorAlert" tp:name-for-bindings="errorAlert">
            <arg type="i" name="code">
            </arg>
