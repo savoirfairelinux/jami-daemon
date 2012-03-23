@@ -48,24 +48,21 @@
 #define CONTACTS            "contacts"
 
 /** Locale */
-//#define _(STRING)             gettext( STRING )
-//#define N_(STRING)			  (STRING)
 #define c_(COMMENT,STRING)    gettext(STRING)
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
-#define IP2IP	"IP2IP"
+#define IP2IP    "IP2IP"
 
 #define IP2IP_PROFILE                      "IP2IP"
 
 #define ACCOUNT_ID                         "Account.id"
 #define ACCOUNT_TYPE                       "Account.type"
-#define ACCOUNT_ALIAS		           "Account.alias"
-#define ACCOUNT_ENABLED		           "Account.enable"
-#define ACCOUNT_MAILBOX		           "Account.mailbox"
-#define ACCOUNT_USERAGENT	           "Account.useragent"
-#define ACCOUNT_RESOLVE_ONCE               "Account.resolveOnce"
+#define ACCOUNT_ALIAS                      "Account.alias"
+#define ACCOUNT_ENABLED                    "Account.enable"
+#define ACCOUNT_MAILBOX                    "Account.mailbox"
+#define ACCOUNT_USERAGENT                  "Account.useragent"
 #define ACCOUNT_REGISTRATION_EXPIRE        "Account.registrationExpire"
-#define ACCOUNT_SIP_STUN_SERVER	           "STUN.server"
+#define ACCOUNT_SIP_STUN_SERVER            "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
 #define ACCOUNT_DTMF_TYPE                  "Account.dtmfType"
 #define ACCOUNT_HOSTNAME                   "Account.hostname"
@@ -84,45 +81,45 @@
 #define ZRTP                               "zrtp"
 #define SDES                               "sdes"
 
-#define CONFIG_RINGTONE_PATH                "Account.ringtonePath"
-#define CONFIG_RINGTONE_ENABLED             "Account.ringtoneEnabled"
+#define CONFIG_RINGTONE_PATH               "Account.ringtonePath"
+#define CONFIG_RINGTONE_ENABLED            "Account.ringtoneEnabled"
 
-#define TLS_LISTENER_PORT                   "TLS.listenerPort"
-#define TLS_ENABLE                          "TLS.enable"
-#define TLS_PORT                            "TLS.port"
-#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
-#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
-#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
-#define TLS_PASSWORD                        "TLS.password"
-#define TLS_METHOD                          "TLS.method"
-#define TLS_CIPHERS                         "TLS.ciphers"
-#define TLS_SERVER_NAME                     "TLS.serverName"
-#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
-#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
-#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"
-#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
-#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+#define TLS_LISTENER_PORT                  "TLS.listenerPort"
+#define TLS_ENABLE                         "TLS.enable"
+#define TLS_PORT                           "TLS.port"
+#define TLS_CA_LIST_FILE                   "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE               "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE               "TLS.privateKeyFile"
+#define TLS_PASSWORD                       "TLS.password"
+#define TLS_METHOD                         "TLS.method"
+#define TLS_CIPHERS                        "TLS.ciphers"
+#define TLS_SERVER_NAME                    "TLS.serverName"
+#define TLS_VERIFY_SERVER                  "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                  "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE     "TLS.requireClientCertificate"
+#define TLS_NEGOTIATION_TIMEOUT_SEC        "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC       "TLS.negotiationTimemoutMsec"
 
-#define LOCAL_INTERFACE                     "Account.localInterface"
-#define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
-#define LOCAL_PORT                          "Account.localPort"
-#define PUBLISHED_PORT                      "Account.publishedPort"
-#define PUBLISHED_ADDRESS                   "Account.publishedAddress"
+#define LOCAL_INTERFACE                    "Account.localInterface"
+#define PUBLISHED_SAMEAS_LOCAL             "Account.publishedSameAsLocal"
+#define LOCAL_PORT                         "Account.localPort"
+#define PUBLISHED_PORT                     "Account.publishedPort"
+#define PUBLISHED_ADDRESS                  "Account.publishedAddress"
 
-#define REGISTRATION_STATUS                 "Registration.Status"
-#define REGISTRATION_STATE_CODE             "Registration.code"
-#define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
+#define REGISTRATION_STATUS                "Registration.Status"
+#define REGISTRATION_STATE_CODE            "Registration.code"
+#define REGISTRATION_STATE_DESCRIPTION     "Registration.description"
 
-#define SHORTCUT_PICKUP                     "pickUp"
-#define SHORTCUT_HANGUP                     "hangUp"
-#define SHORTCUT_POPUP                      "popupWindow"
-#define SHORTCUT_TOGGLEPICKUPHANGUP         "togglePickupHangup"
-#define SHORTCUT_TOGGLEHOLD                 "toggleHold"
+#define SHORTCUT_PICKUP                    "pickUp"
+#define SHORTCUT_HANGUP                    "hangUp"
+#define SHORTCUT_POPUP                     "popupWindow"
+#define SHORTCUT_TOGGLEPICKUPHANGUP        "togglePickupHangup"
+#define SHORTCUT_TOGGLEHOLD                "toggleHold"
 
 /** Error while opening capture device */
-#define ALSA_CAPTURE_DEVICE	        0x0001
+#define ALSA_CAPTURE_DEVICE         0x0001
 /** Error while opening playback device */
-#define ALSA_PLAYBACK_DEVICE	    0x0010
+#define ALSA_PLAYBACK_DEVICE        0x0010
 /** Error pulseaudio */
 #define PULSEAUDIO_NOT_RUNNING      0x0100
 /** Error codecs not loaded */
@@ -136,11 +133,11 @@
 /** Tone to play when voice mails */
 #define TONE_WITH_MESSAGE     1
 /** Tells if the main window is reduced to the system tray or not */
-#define MINIMIZED	      TRUE
+#define MINIMIZED          TRUE
 /** Behaviour of the main window on incoming calls */
 #define __POPUP_WINDOW  (eel_gconf_get_integer (POPUP_ON_CALL))
 /** Show/Hide the volume controls */
-#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && must_show_alsa_conf())
+#define SHOW_VOLUME    (eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && must_show_alsa_conf())
 
 /** DTMF type */
 #define OVERRTP "overrtp"
@@ -154,7 +151,7 @@
 /** Messages ID for the status bar - Incoming calls */
 #define __MSG_INCOMING_CALL  0
 /** Messages ID for the status bar - Calling */
-#define __MSG_CALLING	     1
+#define __MSG_CALLING         1
 /** Messages ID for the status bar - Voice mails  notification */
 #define __MSG_VOICE_MAILS    2
 /** Messages ID for the status bar - Current account */

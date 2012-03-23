@@ -294,8 +294,9 @@ gboolean current_account_has_new_message(void)
     return current && current->_messages_number > 0;
 }
 
-gboolean is_IP2IP(account_t *account)
+gboolean is_IP2IP(const account_t *account)
 {
+    g_assert(account);
     return utf8_case_cmp(account->accountID, IP2IP) == 0;
 }
 
@@ -307,4 +308,16 @@ account_t *create_default_account()
     account->credential_information = NULL;
     sflphone_fill_codec_list_per_account(account);
     return account;
+}
+
+void initialize_credential_information(account_t *account)
+{
+    if (!account->credential_information) {
+        account->credential_information = g_ptr_array_sized_new(1);
+        GHashTable * new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), g_strdup("*"));
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), g_strdup(""));
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), g_strdup(""));
+        g_ptr_array_add(account->credential_information, new_table);
+    }
 }

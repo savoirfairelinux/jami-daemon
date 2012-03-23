@@ -21,7 +21,6 @@
                     The available keys / parameters are:
                     <ul>
                         <li>CONFIG_ACCOUNT_ENABLE:    True or False (Default: True)</li>
-                        <li>CONFIG_ACCOUNT_RESOLVE_ONCE</li>
                         <li>CONFIG_ACCOUNT_TYPE: SIP or IAX2 (Default: SIP)</li>
                         <li>HOSTNAME: The IP adress or hostname of the registrar</li>
                         <li>USERNAME: The username (or extension) of the account</li>

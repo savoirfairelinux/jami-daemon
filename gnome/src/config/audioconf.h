@@ -38,7 +38,7 @@ GtkWidget* create_audio_configuration (void);
 GtkWidget* api_box();
 GtkWidget* alsa_box();
 GtkWidget* pulse_box();
-GtkWidget* audiocodecs_box();
+GtkWidget* audiocodecs_box(const account_t *a);
 GtkWidget* ringtone_box();
 
 gboolean get_api();
