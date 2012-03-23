@@ -168,7 +168,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 
     gtk_widget_set_sensitive(edit_button, TRUE);
 
-    if (!is_IP2IP(selected_account)) {
+    if (!account_is_IP2IP(selected_account)) {
         gtk_widget_set_sensitive(move_up_button, TRUE);
         gtk_widget_set_sensitive(move_down_button, TRUE);
         gtk_widget_set_sensitive(delete_button, TRUE);
@@ -350,7 +350,7 @@ highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
 
     if (current != NULL) {
         // Make the first line appear differently
-        if (is_IP2IP(current)) {
+        if (account_is_IP2IP(current)) {
             g_object_set(G_OBJECT(rend), "weight", PANGO_WEIGHT_THIN, "style",
                          PANGO_STYLE_ITALIC, "stretch",
                          PANGO_STRETCH_ULTRA_EXPANDED, "scale", 0.95, NULL);
@@ -365,7 +365,7 @@ highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
 static const gchar*
 state_color(account_t *a)
 {
-    if (!is_IP2IP(a))
+    if (!account_is_IP2IP(a))
         if (a->state == ACCOUNT_STATE_REGISTERED)
             return "Dark Green";
         else

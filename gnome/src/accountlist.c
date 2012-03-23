@@ -294,10 +294,27 @@ gboolean current_account_has_new_message(void)
     return current && current->_messages_number > 0;
 }
 
-gboolean is_IP2IP(const account_t *account)
+gboolean account_is_IP2IP(const account_t *account)
 {
     g_assert(account);
     return utf8_case_cmp(account->accountID, IP2IP) == 0;
+}
+
+static gboolean is_type(const account_t *account, const gchar *type)
+{
+    const gchar *account_type = g_hash_table_lookup(account->properties,
+                                                    ACCOUNT_TYPE);
+    return g_strcmp0(account_type, type) == 0;
+}
+
+gboolean account_is_SIP(const account_t *account)
+{
+    return is_type(account, "SIP");
+}
+
+gboolean account_is_IAX(const account_t *account)
+{
+    return is_type(account, "IAX");
 }
 
 account_t *create_default_account()

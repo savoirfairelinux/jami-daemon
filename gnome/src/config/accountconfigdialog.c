@@ -198,11 +198,8 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
 static GtkWidget* create_basic_tab(const account_t *account)
 {
     g_assert(account);
-
-    const gchar *account_type = g_hash_table_lookup(account->properties,
-                                                    ACCOUNT_TYPE);
     gchar *password = NULL;
-    if (g_strcmp0(account_type, "SIP") == 0) {
+    if (account_is_SIP(account)) {
         /* get password from credentials list */
         if (account->credential_information) {
             GHashTable * element = g_ptr_array_index(account->credential_information, 0);
@@ -216,12 +213,12 @@ static GtkWidget* create_basic_tab(const account_t *account)
 
     GtkWidget *table = NULL;
 
-    if (g_strcmp0(account_type, "SIP") == 0)
+    if (account_is_SIP(account))
         table = gtk_table_new(9, 2,  FALSE/* homogeneous */);
-    else if (g_strcmp0(account_type, "IAX") == 0)
+    else if (account_is_IAX(account))
         table = gtk_table_new(8, 2, FALSE);
     else {
-        ERROR("Unknown account type \"%s\"", account_type);
+        ERROR("Unknown account type");
         return NULL;
     }
 
@@ -254,9 +251,9 @@ static GtkWidget* create_basic_tab(const account_t *account)
     if (dbus_is_iax2_enabled())
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), "IAX");
 
-    if (g_strcmp0(account_type, "SIP") == 0)
+    if (account_is_SIP(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 0);
-    else if (g_strcmp0(account_type, "IAX") == 0)
+    else if (account_is_IAX(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 1);
     else {
         DEBUG("Config: Error: Account protocol not valid");
@@ -301,7 +298,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gtk_table_attach(GTK_TABLE(table), entry_username, 1, 2, row, row + 1,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (g_strcmp0(account_type, "SIP") == 0) {
+    if (account_is_SIP(account)) {
         g_signal_connect(G_OBJECT(entry_username), "changed",
                          G_CALLBACK(update_credential_cb), NULL);
         g_object_set_data(G_OBJECT(entry_username), "column",
@@ -324,7 +321,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gtk_table_attach(GTK_TABLE(table), entry_password, 1, 2, row, row + 1,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (g_strcmp0(account_type, "SIP") == 0) {
+    if (account_is_SIP(account)) {
         g_signal_connect(G_OBJECT(entry_password), "changed", G_CALLBACK(update_credential_cb), NULL);
         g_object_set_data(G_OBJECT(entry_password), "column", GINT_TO_POINTER(COLUMN_CREDENTIAL_PASSWORD));
     }
@@ -1053,11 +1050,9 @@ create_audiocodecs_configuration(const account_t *account)
     gtk_container_add(GTK_CONTAINER(audiocodecs), box);
 
     // Add DTMF type selection for SIP account only
-    gpointer p = g_hash_table_lookup(account->properties, ACCOUNT_TYPE);
-
     GtkWidget *table;
 
-    if (g_strcmp0(p, "SIP") == 0) {
+    if (account_is_SIP(account)) {
         // Box for dtmf
         GtkWidget *dtmf;
         gnome_main_section_new_with_table(_("DTMF"), &dtmf, &table, 1, 2);
@@ -1083,17 +1078,17 @@ create_audiocodecs_configuration(const account_t *account)
 
     file_chooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
 
-    p = g_hash_table_lookup(account->properties, CONFIG_RINGTONE_ENABLED);
+    gpointer ptr = g_hash_table_lookup(account->properties, CONFIG_RINGTONE_ENABLED);
     enable_tone = gtk_check_button_new_with_mnemonic(_("_Enable ringtones"));
-    const gboolean ringtone_enabled = g_strcmp0(p, "true") == 0;
+    const gboolean ringtone_enabled = g_strcmp0(ptr, "true") == 0;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_tone), ringtone_enabled);
     g_signal_connect(G_OBJECT(enable_tone) , "clicked", G_CALLBACK(ringtone_enabled_cb), file_chooser);
     gtk_table_attach(GTK_TABLE(table), enable_tone, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     // file chooser button
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(file_chooser) , g_get_home_dir());
-    p = g_hash_table_lookup(account->properties, CONFIG_RINGTONE_PATH);
-    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_chooser) , p);
+    ptr = g_hash_table_lookup(account->properties, CONFIG_RINGTONE_PATH);
+    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_chooser) , ptr);
     gtk_widget_set_sensitive(file_chooser, ringtone_enabled);
 
     GtkFileFilter *filter = gtk_file_filter_new();
@@ -1166,7 +1161,7 @@ void show_account_window(account_t *account)
     gtk_widget_show(notebook);
 
     // We do not need the global settings for the IP2IP account
-    if (!is_IP2IP(account)) {
+    if (!account_is_IP2IP(account)) {
         /* General Settings */
         GtkWidget *basic_tab = create_basic_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), basic_tab, gtk_label_new(_("Basic")));
@@ -1187,7 +1182,7 @@ void show_account_window(account_t *account)
         current_protocol = g_strdup("SIP");
 
     // Do not need advanced or security one for the IP2IP account
-    if (!is_IP2IP(account)) {
+    if (!account_is_IP2IP(account)) {
         /* Advanced */
         advanced_tab = create_advanced_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
@@ -1228,7 +1223,7 @@ void show_account_window(account_t *account)
         return;
     }
 
-    if (!is_IP2IP(account)) {
+    if (!account_is_IP2IP(account)) {
         g_hash_table_replace(account->properties,
                              g_strdup(ACCOUNT_ALIAS),
                              g_strdup(gtk_entry_get_text(GTK_ENTRY(entry_alias))));
@@ -1250,7 +1245,7 @@ void show_account_window(account_t *account)
     }
 
     if (g_strcmp0(proto, "SIP") == 0) {
-        if (!is_IP2IP(account)) {
+        if (!account_is_IP2IP(account)) {
 
             g_hash_table_replace(account->properties,
                                  g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
@@ -1352,7 +1347,7 @@ void show_account_window(account_t *account)
         /* Set new credentials if any */
         DEBUG("Config: Setting credentials");
 
-        if (!is_IP2IP(account)) {
+        if (!account_is_IP2IP(account)) {
             DEBUG("Config: Get new credentials");
             account->credential_information = get_new_credential();
 
