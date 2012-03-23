@@ -273,7 +273,7 @@ select_active_input_audio_device()
 void
 update_device_widget(gchar *pluginName)
 {
-    if (utf8_case_cmp(pluginName, "default") == 0) {
+    if (utf8_case_equal(pluginName, "default")) {
         gtk_widget_set_sensitive(output, FALSE);
         gtk_widget_set_sensitive(input, FALSE);
         gtk_widget_set_sensitive(ringtone, FALSE);
@@ -316,7 +316,7 @@ select_active_output_audio_plugin()
     do {
         gtk_tree_model_get(model, &iter, 0, &pluginname, -1);
 
-        if (utf8_case_cmp(tmp, pluginname) == 0) {
+        if (utf8_case_equal(tmp, pluginname)) {
             // Set current iteration the active one
             gtk_combo_box_set_active_iter(GTK_COMBO_BOX(plugin), &iter);
             return;
@@ -423,11 +423,11 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
 
     codec_t* codec;
 
-    if ((utf8_case_cmp(name,"speex") == 0) && (utf8_case_cmp(srate,"8 kHz") == 0))
+    if (utf8_case_equal(name,"speex") && utf8_case_equal(srate,"8 kHz"))
         codec = codec_list_get_by_payload((gconstpointer) 110, acc->codecs);
-    else if ((utf8_case_cmp(name,"speex") ==0) && (utf8_case_cmp(srate,"16 kHz") ==0))
+    else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate,"16 kHz"))
         codec = codec_list_get_by_payload((gconstpointer) 111, acc->codecs);
-    else if ((utf8_case_cmp(name,"speex") ==0) && (utf8_case_cmp(srate,"32 kHz") ==0))
+    else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate, "32 kHz"))
         codec = codec_list_get_by_payload((gconstpointer) 112, acc->codecs);
     else
         codec = codec_list_get_by_name((gconstpointer) name, acc->codecs);

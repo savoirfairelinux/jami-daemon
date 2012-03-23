@@ -45,7 +45,7 @@ static guint account_list_get_position(account_t *account)
     for (guint i = 0; i < size; i++) {
         account_t *tmp = account_list_get_nth(i);
 
-        if (utf8_case_cmp(tmp->accountID, account->accountID) == 0)
+        if (utf8_case_equal(tmp->accountID, account->accountID))
             return i;
     }
 
@@ -263,9 +263,9 @@ gboolean current_account_has_mailbox(void)
     account_t *current = account_list_get_current();
 
     if (current) {
-        gchar * account_mailbox = g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX);
+        gchar * account_mailbox = account_lookup(current, ACCOUNT_MAILBOX);
 
-        if (account_mailbox && utf8_case_cmp(account_mailbox, "") != 0)
+        if (account_mailbox && !utf8_case_equal(account_mailbox, ""))
             return TRUE;
     }
 
@@ -294,10 +294,26 @@ gboolean current_account_has_new_message(void)
     return current && current->_messages_number > 0;
 }
 
-gboolean is_IP2IP(const account_t *account)
+gboolean account_is_IP2IP(const account_t *account)
 {
     g_assert(account);
-    return utf8_case_cmp(account->accountID, IP2IP) == 0;
+    return utf8_case_equal(account->accountID, IP2IP_PROFILE);
+}
+
+static gboolean is_type(const account_t *account, const gchar *type)
+{
+    const gchar *account_type = account_lookup(account, ACCOUNT_TYPE);
+    return g_strcmp0(account_type, type) == 0;
+}
+
+gboolean account_is_SIP(const account_t *account)
+{
+    return is_type(account, "SIP");
+}
+
+gboolean account_is_IAX(const account_t *account)
+{
+    return is_type(account, "IAX");
 }
 
 account_t *create_default_account()
@@ -320,4 +336,20 @@ void initialize_credential_information(account_t *account)
         g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), g_strdup(""));
         g_ptr_array_add(account->credential_information, new_table);
     }
+}
+
+void account_replace(account_t *account, const gchar *key, const gchar *value)
+{
+    g_hash_table_replace(account->properties, g_strdup(key), g_strdup(value));
+}
+
+void account_insert(account_t *account, const gchar *key, const gchar *value)
+{
+    g_hash_table_insert(account->properties, g_strdup(key), g_strdup(value));
+}
+
+gpointer account_lookup(const account_t *account, gconstpointer key)
+{
+    g_assert(account->properties);
+    return g_hash_table_lookup(account->properties, key);
 }

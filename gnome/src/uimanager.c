@@ -1237,8 +1237,8 @@ add_registered_accounts_to_menu(GtkWidget *menu)
         account_t *acc = account_list_get_nth(i);
 
         // Display only the registered accounts
-        if (utf8_case_cmp(account_state_name(acc->state), account_state_name(
-                             ACCOUNT_STATE_REGISTERED)) == 0) {
+        if (utf8_case_equal(account_state_name(acc->state),
+                            account_state_name(ACCOUNT_STATE_REGISTERED))) {
             gchar *alias = g_strconcat(g_hash_table_lookup(acc->properties, ACCOUNT_ALIAS),
                                        " - ",
                                        g_hash_table_lookup(acc->properties, ACCOUNT_TYPE),
@@ -1251,7 +1251,7 @@ add_registered_accounts_to_menu(GtkWidget *menu)
 
             if (current) {
                 gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
-                                               utf8_case_cmp(acc->accountID, current->accountID) == 0);
+                                               utf8_case_equal(acc->accountID, current->accountID));
             }
 
             g_signal_connect(G_OBJECT(menu_items), "activate",

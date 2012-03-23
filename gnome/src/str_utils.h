@@ -33,6 +33,10 @@
 
 #include <glib.h>
 
+/* Case independent, local independent string comparison test */
 gint utf8_case_cmp(const gchar *a, const gchar *b);
+
+/* Case independent, local independent string equality test, NULL-safe */
+gint utf8_case_equal(const gchar *a, const gchar *b);
 
 #endif /* STR_UTILS_H_ */

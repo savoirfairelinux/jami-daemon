@@ -51,8 +51,6 @@
 #define c_(COMMENT,STRING)    gettext(STRING)
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
-#define IP2IP    "IP2IP"
-
 #define IP2IP_PROFILE                      "IP2IP"
 
 #define ACCOUNT_ID                         "Account.id"

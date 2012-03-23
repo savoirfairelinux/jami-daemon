@@ -32,12 +32,21 @@
 
 gint utf8_case_cmp(const gchar *a, const gchar *b)
 {
-    g_assert(a);
-    g_assert(b);
     gchar *l = g_utf8_casefold(a, -1);
     gchar *r = g_utf8_casefold(b, -1);
     gint result = g_utf8_collate(l, r);
     g_free(l);
     g_free(r);
     return result;
+}
+
+gboolean utf8_case_equal(const gchar *a, const gchar *b)
+{
+    if (a == NULL) {
+        if (b == NULL)
+            return TRUE;
+        else
+            return FALSE;
+    } else
+        return utf8_case_cmp(a, b) == 0;
 }

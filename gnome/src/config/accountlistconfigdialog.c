@@ -104,7 +104,7 @@ static void account_store_fill(GtkTreeIter *iter, account_t *a)
                        g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),
                        COLUMN_ACCOUNT_TYPE, type,
                        COLUMN_ACCOUNT_STATUS, account_state_name(a->state),
-                       COLUMN_ACCOUNT_ACTIVE, !utf8_case_cmp(enabled, "true"),
+                       COLUMN_ACCOUNT_ACTIVE, utf8_case_equal(enabled, "true"),
                        COLUMN_ACCOUNT_DATA, a, -1);
 }
 
@@ -168,7 +168,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 
     gtk_widget_set_sensitive(edit_button, TRUE);
 
-    if (!is_IP2IP(selected_account)) {
+    if (!account_is_IP2IP(selected_account)) {
         gtk_widget_set_sensitive(move_up_button, TRUE);
         gtk_widget_set_sensitive(move_down_button, TRUE);
         gtk_widget_set_sensitive(delete_button, TRUE);
@@ -208,7 +208,7 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
                   gpointer data)
 {
     // The IP2IP profile can't be disabled
-    if (utf8_case_cmp(path, "0") == 0)
+    if (utf8_case_equal(path, "0"))
         return;
 
     // Get pointer on object
@@ -259,7 +259,7 @@ account_move(gboolean move_up, gpointer data)
 
     // The first real account in the list can't move up because of the IP2IP account
     // It can still move down though
-    if (utf8_case_cmp(path, "1") == 0 && move_up)
+    if (utf8_case_equal(path, "1") && move_up)
         return;
 
     GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
@@ -350,7 +350,7 @@ highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
 
     if (current != NULL) {
         // Make the first line appear differently
-        if (is_IP2IP(current)) {
+        if (account_is_IP2IP(current)) {
             g_object_set(G_OBJECT(rend), "weight", PANGO_WEIGHT_THIN, "style",
                          PANGO_STYLE_ITALIC, "stretch",
                          PANGO_STRETCH_ULTRA_EXPANDED, "scale", 0.95, NULL);
@@ -365,7 +365,7 @@ highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
 static const gchar*
 state_color(account_t *a)
 {
-    if (!is_IP2IP(a))
+    if (!account_is_IP2IP(a))
         if (a->state == ACCOUNT_STATE_REGISTERED)
             return "Dark Green";
         else
