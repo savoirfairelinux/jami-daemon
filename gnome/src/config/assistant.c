@@ -145,25 +145,24 @@ static void sip_apply_callback(void)
     }
 
     if (account_type == _SIP) {
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("true"));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("SIP"));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->sip_server))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->sip_password))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->sip_username))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true":"false")));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->addr))));
+        account_insert(current, ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
+        account_insert(current, ACCOUNT_ENABLED, "true");
+        account_insert(current, ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail)));
+        account_insert(current, ACCOUNT_TYPE, "SIP");
+        account_insert(current, ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)));
+        account_insert(current, ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->sip_password)));
+        account_insert(current, ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)));
+        account_insert(current, ACCOUNT_SIP_STUN_ENABLED, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true" : "false");
+        account_insert(current, ACCOUNT_SIP_STUN_SERVER, gtk_entry_get_text(GTK_ENTRY(wiz->addr)));
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
-            g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup((gchar *) "true"));
-            g_hash_table_insert(current->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup((gchar *) ZRTP));
-            g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_DISPLAY_SAS), g_strdup((gchar *) "true"));
-            g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_NOT_SUPP_WARNING), g_strdup((gchar *) "true"));
-            g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_HELLO_HASH), g_strdup((gchar *) "true"));
-            g_hash_table_insert(current->properties, g_strdup(ACCOUNT_DISPLAY_SAS_ONCE), g_strdup((gchar *) "false"));
+            account_insert(current, ACCOUNT_SRTP_ENABLED, "true");
+            account_insert(current, ACCOUNT_KEY_EXCHANGE, ZRTP);
+            account_insert(current, ACCOUNT_ZRTP_DISPLAY_SAS, "true");
+            account_insert(current, ACCOUNT_ZRTP_NOT_SUPP_WARNING, "true");
+            account_insert(current, ACCOUNT_ZRTP_HELLO_HASH, "true");
+            account_insert(current, ACCOUNT_DISPLAY_SAS_ONCE, "false");
         }
-
 
         // Add default interface info
         gchar ** iface_list = NULL;
@@ -174,9 +173,8 @@ static void sip_apply_callback(void)
         iface = iface_list;
         DEBUG("Selected interface %s", *iface);
 
-        g_hash_table_insert(current->properties, g_strdup(LOCAL_INTERFACE), g_strdup((gchar *) *iface));
-
-        g_hash_table_insert(current->properties, g_strdup(PUBLISHED_ADDRESS), g_strdup((gchar *) *iface));
+        account_insert(current, LOCAL_INTERFACE, *iface);
+        account_insert(current, PUBLISHED_ADDRESS, *iface);
 
         dbus_add_account(current);
         getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)),
@@ -196,20 +194,19 @@ static void sip_apply_callback(void)
 static void iax_apply_callback(void)
 {
     if (account_type == _IAX) {
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("true"));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("IAX"));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->iax_username))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
-        g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
+        account_insert(current, ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)));
+        account_insert(current, ACCOUNT_ENABLED, "true");
+        account_insert(current, ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail)));
+        account_insert(current, ACCOUNT_TYPE, "IAX");
+        account_insert(current, ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)));
+        account_insert(current, ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)));
+        account_insert(current, ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->iax_password)));
 
         dbus_add_account(current);
         getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)),
                           gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)),
                           gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)),
-                          FALSE
-                         ) ;
+                          FALSE);
 
         gtk_label_set_text(GTK_LABEL(wiz->label_summary), message);
     }
@@ -228,16 +225,12 @@ void build_wizard(void)
         return ;
 
     wiz = (struct _wizard*) g_malloc(sizeof(struct _wizard));
-    current = g_new0(account_t, 1);
-    current->properties = NULL;
-    current->properties = dbus_get_account_details(NULL);
+    current = create_default_account();
 
     if (current->properties == NULL) {
         DEBUG("Failed to get default values. Creating from scratch");
         current->properties = g_hash_table_new(NULL, g_str_equal);
     }
-
-    current->accountID = g_strdup("new");
 
     wiz->assistant = gtk_assistant_new();
 

@@ -238,7 +238,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
         GHashTable *call_details = dbus_get_call_details(callID);
         callable_obj_t *new_call = create_new_call_from_details(callID, call_details);
 
-        if (utf8_case_cmp(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING) == 0)
+        if (utf8_case_equal(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING))
             new_call->_history_state = g_strdup(INCOMING_STRING);
         else
             new_call->_history_state = g_strdup(OUTGOING_STRING);

@@ -45,7 +45,7 @@ static guint account_list_get_position(account_t *account)
     for (guint i = 0; i < size; i++) {
         account_t *tmp = account_list_get_nth(i);
 
-        if (utf8_case_cmp(tmp->accountID, account->accountID) == 0)
+        if (utf8_case_equal(tmp->accountID, account->accountID))
             return i;
     }
 
@@ -265,7 +265,7 @@ gboolean current_account_has_mailbox(void)
     if (current) {
         gchar * account_mailbox = account_lookup(current, ACCOUNT_MAILBOX);
 
-        if (account_mailbox && utf8_case_cmp(account_mailbox, "") != 0)
+        if (account_mailbox && !utf8_case_equal(account_mailbox, ""))
             return TRUE;
     }
 
@@ -297,7 +297,7 @@ gboolean current_account_has_new_message(void)
 gboolean account_is_IP2IP(const account_t *account)
 {
     g_assert(account);
-    return utf8_case_cmp(account->accountID, IP2IP_PROFILE) == 0;
+    return utf8_case_equal(account->accountID, IP2IP_PROFILE);
 }
 
 static gboolean is_type(const account_t *account, const gchar *type)
@@ -341,6 +341,11 @@ void initialize_credential_information(account_t *account)
 void account_replace(account_t *account, const gchar *key, const gchar *value)
 {
     g_hash_table_replace(account->properties, g_strdup(key), g_strdup(value));
+}
+
+void account_insert(account_t *account, const gchar *key, const gchar *value)
+{
+    g_hash_table_insert(account->properties, g_strdup(key), g_strdup(value));
 }
 
 gpointer account_lookup(const account_t *account, gconstpointer key)

@@ -44,10 +44,10 @@ void show_advanced_zrtp_options(account_t *account)
     gboolean curDisplaySasOnce = FALSE;
 
     if (account != NULL) {
-        curHelloEnabled = !utf8_case_cmp(account_lookup(account, ACCOUNT_ZRTP_HELLO_HASH), "true");
-        curSasConfirm = !utf8_case_cmp(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
-        curZrtpNotSuppOther = !utf8_case_cmp(account_lookup(account, ACCOUNT_ZRTP_NOT_SUPP_WARNING), "true");
-        curDisplaySasOnce = !utf8_case_cmp(account_lookup(account, ACCOUNT_DISPLAY_SAS_ONCE), "true");
+        curHelloEnabled = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_HELLO_HASH), "true");
+        curSasConfirm = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+        curZrtpNotSuppOther = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_NOT_SUPP_WARNING), "true");
+        curDisplaySasOnce = utf8_case_equal(account_lookup(account, ACCOUNT_DISPLAY_SAS_ONCE), "true");
     }
 
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("ZRTP Options"),
@@ -114,7 +114,7 @@ void show_advanced_sdes_options(account_t *account)
     gboolean rtpFallback = FALSE;
 
     if (account != NULL)
-        rtpFallback = !utf8_case_cmp(account_lookup(account, ACCOUNT_SRTP_RTP_FALLBACK), "true");
+        rtpFallback = utf8_case_equal(account_lookup(account, ACCOUNT_SRTP_RTP_FALLBACK), "true");
 
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("SDES Options"),
                                            GTK_WINDOW(get_main_window()),

@@ -192,6 +192,7 @@ account_t *create_default_account();
 void initialize_credential_information(account_t *account);
 
 void account_replace(account_t *account, const gchar *key, const gchar *value);
+void account_insert(account_t *account, const gchar *key, const gchar *value);
 gpointer account_lookup(const account_t *account, gconstpointer key);
 
 #endif

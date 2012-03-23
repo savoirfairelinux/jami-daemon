@@ -444,14 +444,14 @@ addressbook_display(AddressBook_Config *settings, const gchar *field)
 {
     gboolean display;
 
-    if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO) == 0)
-        display = (settings->display_contact_photo == 1) ? TRUE : FALSE;
-    else if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS) == 0)
-        display = (settings->search_phone_business == 1) ? TRUE : FALSE;
-    else if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_PHONE_HOME) == 0)
-        display = (settings->search_phone_home == 1) ? TRUE : FALSE;
-    else if (utf8_case_cmp(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE) == 0)
-        display = (settings->search_phone_mobile == 1) ? TRUE : FALSE;
+    if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+        display = settings->display_contact_photo == 1;
+    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+        display = settings->search_phone_business == 1;
+    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_HOME))
+        display = settings->search_phone_home == 1;
+    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+        display = settings->search_phone_mobile == 1;
     else
         display = FALSE;
 

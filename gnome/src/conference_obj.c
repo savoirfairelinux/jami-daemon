@@ -81,17 +81,17 @@ conference_obj_t *create_new_conference_from_details(const gchar *conf_id, GHash
 
     gchar *state_str = g_hash_table_lookup(details, "CONF_STATE");
 
-    if (utf8_case_cmp(state_str, "ACTIVE_ATTACHED") == 0)
+    if (utf8_case_equal(state_str, "ACTIVE_ATTACHED"))
         new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED;
-    else if (utf8_case_cmp(state_str, "ACTIVE_ATTACHED_REC") == 0)
+    else if (utf8_case_equal(state_str, "ACTIVE_ATTACHED_REC"))
         new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
-    else if (utf8_case_cmp(state_str, "ACTIVE_DETACHED") == 0)
+    else if (utf8_case_equal(state_str, "ACTIVE_DETACHED"))
         new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
-    else if (utf8_case_cmp(state_str, "ACTIVE_DETACHED_REC") == 0)
+    else if (utf8_case_equal(state_str, "ACTIVE_DETACHED_REC"))
         new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED_RECORD;
-    else if (utf8_case_cmp(state_str, "HOLD") == 0)
+    else if (utf8_case_equal(state_str, "HOLD"))
         new_conf->_state = CONFERENCE_STATE_HOLD;
-    else if (utf8_case_cmp(state_str, "HOLD_REC") == 0)
+    else if (utf8_case_equal(state_str, "HOLD_REC"))
         new_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
 
     return new_conf;

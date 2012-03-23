@@ -104,7 +104,7 @@ static void account_store_fill(GtkTreeIter *iter, account_t *a)
                        g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),
                        COLUMN_ACCOUNT_TYPE, type,
                        COLUMN_ACCOUNT_STATUS, account_state_name(a->state),
-                       COLUMN_ACCOUNT_ACTIVE, !utf8_case_cmp(enabled, "true"),
+                       COLUMN_ACCOUNT_ACTIVE, utf8_case_equal(enabled, "true"),
                        COLUMN_ACCOUNT_DATA, a, -1);
 }
 
@@ -208,7 +208,7 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
                   gpointer data)
 {
     // The IP2IP profile can't be disabled
-    if (utf8_case_cmp(path, "0") == 0)
+    if (utf8_case_equal(path, "0"))
         return;
 
     // Get pointer on object
@@ -259,7 +259,7 @@ account_move(gboolean move_up, gpointer data)
 
     // The first real account in the list can't move up because of the IP2IP account
     // It can still move down though
-    if (utf8_case_cmp(path, "1") == 0 && move_up)
+    if (utf8_case_equal(path, "1") && move_up)
         return;
 
     GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);

@@ -131,7 +131,7 @@ void change_protocol_cb()
 
     // Only if tabs are not NULL
     if (security_tab && advanced_tab) {
-        if (utf8_case_cmp(protocol, "IAX") == 0) {
+        if (utf8_case_equal(protocol, "IAX")) {
             gtk_widget_hide(security_tab);
             gtk_widget_hide(advanced_tab);
         } else {
@@ -433,8 +433,8 @@ cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gchar *text,
     gint column = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(renderer), "column"));
     DEBUG("path desc in cell_edited_cb: %s\n", text);
 
-    if ((utf8_case_cmp(path_desc, "0") == 0) &&
-        utf8_case_cmp(text, gtk_entry_get_text(GTK_ENTRY(entry_username))) != 0)
+    if ((utf8_case_equal(path_desc, "0")) &&
+        !utf8_case_equal(text, gtk_entry_get_text(GTK_ENTRY(entry_username))))
         g_signal_handlers_disconnect_by_func(G_OBJECT(entry_username),
                                              G_CALLBACK(update_credential_cb),
                                              NULL);
@@ -453,7 +453,7 @@ editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * editable,
     DEBUG("path desc in editing_started_cb: %s\n", path);
 
     // If we are dealing the first row
-    if (utf8_case_cmp(path, "0") == 0)
+    if (utf8_case_equal(path, "0"))
         gtk_entry_set_text(GTK_ENTRY(editable), gtk_entry_get_text(GTK_ENTRY(entry_password)));
 }
 
@@ -462,7 +462,7 @@ static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer dat
     account_t *account = (account_t *) data;
     gchar *proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
 
-    if (utf8_case_cmp(proto, "ZRTP") == 0)
+    if (utf8_case_equal(proto, "ZRTP"))
         show_advanced_zrtp_options(account);
     else
         show_advanced_sdes_options(account);
@@ -485,8 +485,8 @@ key_exchange_changed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
     DEBUG("Key exchange changed %s", active_text);
 
     gboolean sensitive = FALSE;
-    sensitive |= utf8_case_cmp(active_text, "SDES") == 0;
-    sensitive |= utf8_case_cmp(active_text, "ZRTP") == 0;
+    sensitive |= utf8_case_equal(active_text, "SDES");
+    sensitive |= utf8_case_equal(active_text, "ZRTP");
     g_free(active_text);
     gtk_widget_set_sensitive(zrtp_button, sensitive);
 }
@@ -922,11 +922,10 @@ GtkWidget* create_published_address(const account_t *account)
 
     // Get the user configuration
     if (account) {
-
         use_tls = g_hash_table_lookup(account->properties, TLS_ENABLE);
         published_sameas_local = g_hash_table_lookup(account->properties, PUBLISHED_SAMEAS_LOCAL);
 
-        if (utf8_case_cmp(published_sameas_local, "true") == 0) {
+        if (utf8_case_equal(published_sameas_local, "true")) {
             published_address = dbus_get_address_from_interface_name(g_hash_table_lookup(account->properties, LOCAL_INTERFACE));
             published_port = g_hash_table_lookup(account->properties, LOCAL_PORT);
         } else {
@@ -947,8 +946,8 @@ GtkWidget* create_published_address(const account_t *account)
     gtk_table_attach_defaults(GTK_TABLE(table), use_stun_check_box, 0, 1, 0, 1);
     g_signal_connect(use_stun_check_box, "toggled", G_CALLBACK(use_stun_cb), NULL);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_stun_check_box),
-                                 utf8_case_cmp(stun_enable, "true") == 0);
-    gtk_widget_set_sensitive(use_stun_check_box, utf8_case_cmp(use_tls, "true") != 0);
+                                 utf8_case_equal(stun_enable, "true"));
+    gtk_widget_set_sensitive(use_stun_check_box, !utf8_case_equal(use_tls, "true"));
 
     stun_server_label = gtk_label_new_with_mnemonic(_("STUN server URL"));
     gtk_table_attach_defaults(GTK_TABLE(table), stun_server_label, 0, 1, 1, 2);
@@ -964,7 +963,7 @@ GtkWidget* create_published_address(const account_t *account)
     published_addr_radio_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(same_as_local_radio_button), _("Set published address and port:"));
     gtk_table_attach_defaults(GTK_TABLE(table), published_addr_radio_button, 0, 2, 4, 5);
 
-    if (utf8_case_cmp(published_sameas_local, "true") == 0) {
+    if (utf8_case_equal(published_sameas_local, "true")) {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button), TRUE);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(published_addr_radio_button), FALSE);
     } else {
@@ -1063,7 +1062,7 @@ create_audiocodecs_configuration(const account_t *account)
 
         overrtp = gtk_radio_button_new_with_label(NULL, _("RTP"));
         const gchar * const dtmf_type = g_hash_table_lookup(account->properties, ACCOUNT_DTMF_TYPE);
-        const gboolean dtmf_are_rtp = !utf8_case_cmp(dtmf_type, OVERRTP);
+        const gboolean dtmf_are_rtp = utf8_case_equal(dtmf_type, OVERRTP);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(overrtp), dtmf_are_rtp);
         gtk_table_attach(GTK_TABLE(table), overrtp, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -1199,10 +1198,10 @@ static void update_account_from_basic_tab(account_t *account)
 
         gchar* key_exchange = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
 
-        if (utf8_case_cmp(key_exchange, "ZRTP") == 0) {
+        if (utf8_case_equal(key_exchange, "ZRTP")) {
             account_replace(account, ACCOUNT_SRTP_ENABLED, "true");
             account_replace(account, ACCOUNT_KEY_EXCHANGE, ZRTP);
-        } else if (utf8_case_cmp(key_exchange, "SDES") == 0) {
+        } else if (utf8_case_equal(key_exchange, "SDES")) {
             account_replace(account, ACCOUNT_SRTP_ENABLED, "true");
             account_replace(account, ACCOUNT_KEY_EXCHANGE, SDES);
         } else {
@@ -1316,7 +1315,7 @@ void show_account_window(account_t *account)
         update_account_from_basic_tab(account);
 
     /** @todo Verify if it's the best condition to check */
-    if (utf8_case_cmp(account->accountID, "new") == 0)
+    if (utf8_case_equal(account->accountID, "new"))
         dbus_add_account(account);
     else
         dbus_set_account_details(account);
