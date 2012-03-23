@@ -1035,7 +1035,7 @@ dbus_remove_account(const gchar *accountID)
 }
 
 void
-dbus_set_account_details(account_t *a)
+dbus_set_account_details(const account_t *a)
 {
     g_assert(a);
     GError *error = NULL;
@@ -1049,6 +1049,7 @@ dbus_add_account(account_t *a)
 {
     g_assert(a);
     g_assert(a->properties);
+    DEBUG("Adding %s account", a->accountID);
     GError *error = NULL;
     g_free(a->accountID);
     a->accountID = NULL;

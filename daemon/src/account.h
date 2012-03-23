@@ -71,7 +71,6 @@ static const char *const CONFIG_ACCOUNT_TYPE                 = "Account.type";
 static const char *const CONFIG_ACCOUNT_ALIAS                = "Account.alias";
 static const char *const CONFIG_ACCOUNT_MAILBOX	             = "Account.mailbox";
 static const char *const CONFIG_ACCOUNT_ENABLE               = "Account.enable";
-static const char *const CONFIG_ACCOUNT_RESOLVE_ONCE         = "Account.resolveOnce";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE  = "Account.registrationExpire";
 static const char *const CONFIG_CREDENTIAL_NUMBER            = "Credential.count";
 static const char *const CONFIG_ACCOUNT_DTMF_TYPE            = "Account.dtmfType";

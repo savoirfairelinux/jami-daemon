@@ -32,6 +32,8 @@
 
 gint utf8_case_cmp(const gchar *a, const gchar *b)
 {
+    g_assert(a);
+    g_assert(b);
     gchar *l = g_utf8_casefold(a, -1);
     gchar *r = g_utf8_casefold(b, -1);
     gint result = g_utf8_collate(l, r);

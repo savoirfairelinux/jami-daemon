@@ -183,8 +183,10 @@ void current_account_set_message_number (guint nb);
 
 gboolean current_account_has_new_message (void);
 
-gboolean is_IP2IP(account_t *account);
+gboolean is_IP2IP(const account_t *account);
 
 account_t *create_default_account();
+
+void initialize_credential_information(account_t *account);
 
 #endif

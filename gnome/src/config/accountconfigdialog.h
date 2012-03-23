@@ -39,7 +39,7 @@
 
 /**
  * Display the main account widget
- * @param a The account you want to edit or null for a new account
+ * @param a The account you want to display
  */
 void show_account_window(account_t *a);
 

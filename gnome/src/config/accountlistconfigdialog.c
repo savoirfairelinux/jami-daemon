@@ -71,15 +71,27 @@ static void delete_account_cb(void)
     selected_account = NULL;
 }
 
-static void edit_account_cb(void)
+static void row_activated_cb(GtkTreeView *view UNUSED,
+                             GtkTreePath *path UNUSED,
+                             GtkTreeViewColumn *col UNUSED,
+                             gpointer user_data UNUSED)
 {
     RETURN_IF_NULL(selected_account, "No selected account in edit action");
+    DEBUG("%s: accountID=%s\n", __PRETTY_FUNCTION__, selected_account->accountID);
+    show_account_window(selected_account);
+}
+
+static void edit_account_cb(GtkButton *button UNUSED, gpointer data UNUSED)
+{
+    RETURN_IF_NULL(selected_account, "No selected account in edit action");
+    DEBUG("%s: accountID=%s\n", __PRETTY_FUNCTION__, selected_account->accountID);
     show_account_window(selected_account);
 }
 
 static void add_account_cb(void)
 {
-    show_account_window(create_default_account());
+    account_t *new_account = create_default_account();
+    show_account_window(new_account);
 }
 
 static void account_store_fill(GtkTreeIter *iter, account_t *a)
@@ -152,6 +164,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
     g_value_unset(&val);
 
     RETURN_IF_NULL(selected_account, "Selected account is NULL");
+    DEBUG("Selected account has accountID %s", selected_account->accountID);
 
     gtk_widget_set_sensitive(edit_button, TRUE);
 
@@ -427,8 +440,7 @@ create_account_list()
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), tree_view_column);
 
     // A double click on the account line opens the window to edit the account
-    g_signal_connect(G_OBJECT(tree_view), "row-activated",
-                     G_CALLBACK(edit_account_cb), NULL);
+    g_signal_connect(G_OBJECT(tree_view), "row-activated", G_CALLBACK(row_activated_cb), NULL);
     gtk_tree_view_column_set_cell_data_func(tree_view_column, renderer,
                                             highlight_ip_profile, NULL, NULL);
 
@@ -486,8 +498,7 @@ create_account_list()
 
     edit_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_widget_set_sensitive(edit_button, FALSE);
-    g_signal_connect_swapped(G_OBJECT(edit_button), "clicked",
-                             G_CALLBACK(edit_account_cb), NULL);
+    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), NULL);
     gtk_box_pack_start(GTK_BOX(button_box), edit_button, FALSE, FALSE, 0);
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
