@@ -67,12 +67,6 @@ class VoIPLink {
 
         /**
          * Virtual method
-         * Try to initiate the communication layer and set config
-         */
-        virtual void init() = 0;
-
-        /**
-         * Virtual method
          * Build and send account registration request
          */
         virtual void sendRegister(Account *a) = 0;
