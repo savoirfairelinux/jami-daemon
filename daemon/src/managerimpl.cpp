@@ -131,9 +131,11 @@ void ManagerImpl::terminate()
 
     saveConfig();
 
-    unloadAccountMap();
-
     delete SIPVoIPLink::instance();
+
+    // Unload account map AFTER destroying
+    // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
+    unloadAccountMap();
 
     ost::MutexLock lock(audioLayerMutex_);
 
