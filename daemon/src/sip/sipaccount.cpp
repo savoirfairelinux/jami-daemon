@@ -66,7 +66,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , serviceRoute_()
     , tlsListenerPort_(DEFAULT_SIP_TLS_PORT)
     , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
-    , cred_(NULL)
+    , cred_()
     , tlsSetting_()
     , contactHeader_()
     , contactUpdateEnabled_(false)
@@ -100,11 +100,6 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveTimer_()
     , link_(SIPVoIPLink::instance())
 {}
-
-SIPAccount::~SIPAccount()
-{
-    delete [] cred_;
-}
 
 void SIPAccount::serialize(Conf::YamlEmitter *emitter)
 {
@@ -927,11 +922,9 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     }
 
     // Create the credential array
-    delete[] cred_;
-    cred_ = new pjsip_cred_info[credentials_.size()];
+    cred_.resize(credentials_.size());
 
     size_t i = 0;
-
     for (vector<map<string, string > >::const_iterator iter = credentials_.begin();
             iter != credentials_.end(); ++iter) {
         map<string, string>::const_iterator val = (*iter).find(CONFIG_ACCOUNT_PASSWORD);

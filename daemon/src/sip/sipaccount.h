@@ -110,11 +110,6 @@ class SIPAccount : public Account {
          */
         SIPAccount(const std::string& accountID);
 
-        /**
-         * Virtual destructor
-         */
-        virtual ~SIPAccount();
-
         virtual VoIPLink* getVoIPLink();
 
         std::string getUserAgentName() const;
@@ -196,8 +191,8 @@ class SIPAccount : public Account {
         void stopKeepAliveTimer();
 
 
-        pjsip_cred_info *getCredInfo() const {
-            return cred_;
+        const pjsip_cred_info* getCredInfo() const {
+            return &(*cred_.begin());
         }
 
         /**
@@ -605,7 +600,7 @@ class SIPAccount : public Account {
         /**
          * Credential information stored for further registration.
          */
-        pjsip_cred_info *cred_;
+        std::vector<pjsip_cred_info> cred_;
 
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.
