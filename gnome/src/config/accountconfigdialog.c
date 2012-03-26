@@ -913,7 +913,7 @@ create_network(const account_t *account)
 GtkWidget* create_published_address(const account_t *account)
 {
     GtkWidget *table, *frame;
-    gchar *use_tls =NULL;
+    gchar *use_tls = NULL;
     gchar *published_address = NULL;
     gchar *published_port = NULL;
     gchar *stun_enable = NULL;

@@ -204,7 +204,7 @@ void codec_list_move_codec_down(guint codec_index, GQueue **q)
 
 }
 
-void codec_list_update_to_daemon(account_t *acc)
+void codec_list_update_to_daemon(const account_t *acc)
 {
     // Length of the codec list
     int length = g_queue_get_length(acc->codecs);

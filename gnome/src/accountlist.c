@@ -191,6 +191,7 @@ void account_list_free_elm(gpointer elm, gpointer data UNUSED)
 {
     account_t *a = elm;
     g_free(a->accountID);
+    a->accountID = NULL;
     g_free(a);
 }
 
@@ -297,7 +298,7 @@ gboolean current_account_has_new_message(void)
 gboolean account_is_IP2IP(const account_t *account)
 {
     g_assert(account);
-    return utf8_case_equal(account->accountID, IP2IP_PROFILE);
+    return g_strcmp0(account->accountID, IP2IP_PROFILE);
 }
 
 static gboolean is_type(const account_t *account, const gchar *type)
