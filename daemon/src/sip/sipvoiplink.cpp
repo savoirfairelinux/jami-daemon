@@ -1807,23 +1807,23 @@ void outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/
 {}
 
 void transaction_state_changed_cb(pjsip_inv_session * inv,
-                                  pjsip_transaction *tsx, pjsip_event *e)
+                                  pjsip_transaction *tsx, pjsip_event *event)
 {
     assert(tsx);
-    assert(e);
+    assert(event);
 
     if (tsx->role != PJSIP_ROLE_UAS || tsx->state != PJSIP_TSX_STATE_TRYING)
         return;
 
     if (pjsip_method_cmp(&tsx->method, &pjsip_refer_method) ==0) {
-        onCallTransfered(inv, e->body.tsx_state.src.rdata);          /** Handle the refer method **/
+        onCallTransfered(inv, event->body.tsx_state.src.rdata);          /** Handle the refer method **/
         return;
     }
 
     pjsip_tx_data* t_data;
 
-    if (e->body.rx_msg.rdata) {
-        pjsip_rx_data *r_data = e->body.rx_msg.rdata;
+    if (event->body.rx_msg.rdata) {
+        pjsip_rx_data *r_data = event->body.rx_msg.rdata;
 
         if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
             std::string request =  pjsip_rx_data_get_info(r_data);
@@ -1837,13 +1837,13 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         }
     }
 
-    if (!e->body.tsx_state.src.rdata)
+    if (!event->body.tsx_state.src.rdata)
         return;
 
     // Incoming TEXT message
 
     // Get the message inside the transaction
-    pjsip_rx_data *r_data = e->body.tsx_state.src.rdata;
+    pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
     std::string formattedMessage(static_cast<char*>(r_data->msg_info.msg->body->data));
 
     // Try to determine who is the recipient of the message
