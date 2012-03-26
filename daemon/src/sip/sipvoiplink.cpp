@@ -1907,8 +1907,8 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 
         Manager::instance().incomingMessage(call->getCallId(), from, findTextMessage(formattedMessage));
 
-    } catch (const sfl::InstantMessageException &e) {
-        ERROR("SipVoipLink: %s", e.what());
+    } catch (const sfl::InstantMessageException &except) {
+        ERROR("SipVoipLink: %s", except.what());
     }
 }
 
