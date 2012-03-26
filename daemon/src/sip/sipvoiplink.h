@@ -43,6 +43,7 @@
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
+#include <pjnath.h>
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
@@ -279,6 +280,16 @@ class SIPVoIPLink : public VoIPLink {
          */
         void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
 
+        /**
+         * Create a new stun resolver. Store it inside the array. Resolve public address for this
+         * server name.
+         * @param serverName The name of the stun server
+         * @param port number
+         */
+        pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
+
+        pj_status_t destroyStunResolver(const std::string serverName);
+
     private:
         /**
          * Start a SIP Call
@@ -292,11 +303,6 @@ class SIPVoIPLink : public VoIPLink {
         NON_COPYABLE(SIPVoIPLink);
 
         SIPVoIPLink();
-
-        /**
-         * Resolve public address for this account
-         */
-        pj_status_t stunServerResolve(pj_str_t serverName, pj_uint16_t port);
 
         /**
          * General Sip transport creation method according to the
@@ -347,6 +353,12 @@ class SIPVoIPLink : public VoIPLink {
          * several accounts would share the same port number.
          */
         std::map<pj_uint16_t, pjsip_transport*> transportMap_;
+
+        /**
+         * Stun resolver array
+         */
+        std::map<std::string, pj_stun_sock *> stunSocketMap_;
+
 
         /**
          * Threading object

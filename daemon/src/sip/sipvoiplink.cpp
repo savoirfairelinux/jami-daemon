@@ -57,7 +57,7 @@
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_uri.h"
-#include <pjnath.h>
+#include "pjnath.h"
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -427,7 +427,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
 /*************************************************************************************************/
 
-SIPVoIPLink::SIPVoIPLink() : transportMap_(), evThread_(new EventThread(this))
+SIPVoIPLink::SIPVoIPLink() : transportMap_(), stunSocketMap_(), evThread_(new EventThread(this))
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -1273,10 +1273,12 @@ stun_sock_on_rx_data_cb(pj_stun_sock * /*stun_sock*/, void * /*pkt*/,
 }
 
 
-pj_status_t SIPVoIPLink::stunServerResolve(pj_str_t serverName, pj_uint16_t port)
+pj_status_t SIPVoIPLink::createStunResolver(pj_str_t serverName, pj_uint16_t port)
 {
     pj_stun_config stunCfg;
     pj_stun_config_init(&stunCfg, &cp_->factory, 0, pjsip_endpt_get_ioqueue(endpt_), pjsip_endpt_get_timer_heap(endpt_));
+
+    DEBUG("***************** Create Stun Resolver *********************");
 
     static const pj_stun_sock_cb stun_sock_cb = {
         stun_sock_on_rx_data_cb,
@@ -1285,7 +1287,12 @@ pj_status_t SIPVoIPLink::stunServerResolve(pj_str_t serverName, pj_uint16_t port
     };
 
     pj_stun_sock *stun_sock;
-    pj_status_t status = pj_stun_sock_create(&stunCfg, "stunresolve", pj_AF_INET(), &stun_sock_cb, NULL, NULL, &stun_sock);
+    std::string stunResolverName(serverName.ptr, serverName.slen);
+    pj_status_t status = pj_stun_sock_create(&stunCfg, stunResolverName.c_str(), pj_AF_INET(), &stun_sock_cb, NULL, NULL, &stun_sock);
+
+    // store socket inside list
+    DEBUG("     insert %s resolver in map", stunResolverName.c_str());
+    stunSocketMap_.insert(std::pair<std::string, pj_stun_sock *>(stunResolverName.c_str(), stun_sock));
 
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
@@ -1304,6 +1311,22 @@ pj_status_t SIPVoIPLink::stunServerResolve(pj_str_t serverName, pj_uint16_t port
     }
 
     return status;
+}
+
+pj_status_t SIPVoIPLink::destroyStunResolver(const std::string serverName)
+{
+    std::map<std::string, pj_stun_sock *>::iterator it;
+    it = stunSocketMap_.find(serverName);
+
+    DEBUG("***************** Destroy Stun Resolver *********************");
+
+    if(it != stunSocketMap_.end()) {
+        DEBUG("UserAgent: Deleting stun resolver %s", it->first.c_str());
+        pj_stun_sock_destroy(it->second);
+        stunSocketMap_.erase(it);
+    }
+
+    return PJ_SUCCESS;
 }
 
 void SIPVoIPLink::createDefaultSipUdpTransport()
@@ -1496,7 +1519,7 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
     pjsip_transport *transport;
 
     DEBUG("UserAgent: Create stun transport  server name: %s, port: %d", serverName, port);// account->getStunPort());
-    if (stunServerResolve(serverName, port) != PJ_SUCCESS) {
+    if (createStunResolver(serverName, port) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't resolve STUN server");
         Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
