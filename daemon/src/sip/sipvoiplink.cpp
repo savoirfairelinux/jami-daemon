@@ -1498,7 +1498,7 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
     DEBUG("UserAgent: Create stun transport  server name: %s, port: %d", serverName, port);// account->getStunPort());
     if (stunServerResolve(serverName, port) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't resolve STUN server");
-        // Signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
@@ -1508,13 +1508,13 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
 
     if (pj_sockaddr_in_init(&boundAddr, &serverName, 0) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't initialize IPv4 socket on %*s:%i", serverName.slen, serverName.ptr, port);
-        // Signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
     if (pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &sock) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't create or bind socket");
-        // Signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
@@ -1524,7 +1524,7 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't contact STUN server");
         pj_sock_close(sock);
-        // signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
