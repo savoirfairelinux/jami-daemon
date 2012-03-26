@@ -1155,8 +1155,10 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 {
     SIPAccount *account = Manager::instance().getIP2IPAccount();
 
-    if (!account)
+    if (!account) {
+        ERROR("Error could not retrieve default account for IP2IP call");
         return false;
+    }
 
     SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_);
     call->setIPToIP(true);
@@ -1204,12 +1206,16 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
         }
 
         shutdownSipTransport(account);
-        createTlsTransport(account, remoteAddr);
+        pjsip_transport *transport = createTlsTransport(remoteAddr, account->getTlsListenerPort(),
+                                                              account->getTlsSetting());
 
-        if (!account->transport_) {
+        if (transport == NULL) {
+            ERROR("Error could not create TLS transport for IP2IP call");
             delete call;
             return false;
         }
+
+        account->transport_ = transport;
     }
 
     if (!SIPStartCall(call)) {
@@ -1249,11 +1255,12 @@ stun_sock_on_status_cb(pj_stun_sock * /*stun_sock*/, pj_stun_sock_op op,
 
     if (status == PJ_SUCCESS) {
         DEBUG("UserAgent: Stun operation success");
-        return true;
     } else {
         ERROR("UserAgent: Stun operation failure");
-        return false;
     }
+
+    // Always return true so the stun transport registration retry even on failure
+    return true;
 }
 
 static pj_bool_t
@@ -1329,11 +1336,21 @@ void SIPVoIPLink::createDefaultSipUdpTransport()
     localUDPTransport_ = account->transport_;
 }
 
-void SIPVoIPLink::createTlsListener(SIPAccount *account, pjsip_tpfactory **listener)
+void SIPVoIPLink::createTlsListener(pj_uint16_t tlsListenerPort, pjsip_tls_setting *tlsSetting, pjsip_tpfactory **listener)
 {
     pj_sockaddr_in local_addr;
     pj_sockaddr_in_init(&local_addr, 0, 0);
-    local_addr.sin_port = pj_htons(account->getTlsListenerPort());
+    local_addr.sin_port = pj_htons(tlsListenerPort);
+
+    if(tlsSetting == NULL) {
+        ERROR("Error TLS settings not specified");
+        return;
+    }
+
+    if(listener == NULL) {
+        ERROR("Error no pointer to store new TLS listener");
+        return;
+    }
 
     pj_str_t pjAddress;
     pj_cstr(&pjAddress, PJ_INADDR_ANY);
@@ -1345,12 +1362,15 @@ void SIPVoIPLink::createTlsListener(SIPAccount *account, pjsip_tpfactory **liste
         local_addr.sin_port
     };
 
-    pjsip_tls_transport_start(endpt_, account->getTlsSetting(), &local_addr, &a_name, 1, listener);
+    pjsip_tls_transport_start(endpt_, tlsSetting, &local_addr, &a_name, 1, listener);
 }
 
 
-void SIPVoIPLink::createTlsTransport(SIPAccount *account, std::string remoteAddr)
+pjsip_transport *SIPVoIPLink::createTlsTransport(std::string remoteAddr, pj_uint16_t tlsListenerPort,
+                                                    pjsip_tls_setting *tlsSettings)
 {
+    pjsip_transport *transport = NULL;
+
     pj_str_t remote;
     pj_cstr(&remote, remoteAddr.c_str());
 
@@ -1360,12 +1380,17 @@ void SIPVoIPLink::createTlsTransport(SIPAccount *account, std::string remoteAddr
     static pjsip_tpfactory *localTlsListener = NULL; /** The local tls listener */
 
     if (localTlsListener == NULL)
-        createTlsListener(account, &localTlsListener);
+        createTlsListener(tlsListenerPort, tlsSettings, &localTlsListener);
 
     pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
-                                  sizeof rem_addr, NULL, &account->transport_);
-}
+                                  sizeof rem_addr, NULL, &transport);
 
+    if(transport == NULL) {
+        ERROR("Error: Could not create new TLS transport\n");
+    }
+
+    return transport;
+}
 
 void SIPVoIPLink::createSipTransport(SIPAccount *account)
 {
@@ -1383,7 +1408,8 @@ void SIPVoIPLink::createSipTransport(SIPAccount *account)
         size_t trns = remoteSipUri.find(";transport");
         std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
 
-        createTlsTransport(account, remoteAddr);
+        pjsip_transport *transport = createTlsTransport(remoteAddr, account->getTlsListenerPort(), account->getTlsSetting());
+        account->transport_ = transport;
     } else if (account->isStunEnabled()) {
         pjsip_transport *transport = createStunTransport(account->getStunServerName(), account->getStunPort());
         account->transport_ = transport;
