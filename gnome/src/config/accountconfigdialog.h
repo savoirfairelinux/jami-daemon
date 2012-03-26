@@ -43,4 +43,8 @@
  */
 void show_account_window(account_t *a);
 
+/**
+ * Resets local cache of account pointers */
+void reset_account_store();
+
 #endif

@@ -57,6 +57,7 @@
 #include "actions.h"
 #include "dbus/dbus.h"
 #include "logger.h"
+#include "config/accountlistconfigdialog.h"
 #include "contacts/calltab.h"
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
@@ -202,12 +203,8 @@ sflphone_hung_up(callable_obj_t * c)
     statusbar_update_clock("");
 }
 
-/** Internal to actions: Fill account list */
 void sflphone_fill_account_list(void)
 {
-    int count = current_account_get_message_number();
-
-    account_list_free();
     account_list_init();
 
     gchar **array = dbus_account_list();
@@ -224,7 +221,7 @@ void sflphone_fill_account_list(void)
     }
 
     for (unsigned i = 0; i < account_list_get_size(); i++) {
-        account_t  * a = account_list_get_nth(i);
+        account_t *a = account_list_get_nth(i);
 
         if (a == NULL) {
             ERROR("SFLphone: Error: Could not find account %d in list", i);
@@ -278,9 +275,10 @@ void sflphone_fill_account_list(void)
     }
 
     // Set the current account message number
-    current_account_set_message_number(count);
+    current_account_set_message_number(current_account_get_message_number());
 
     sflphone_fill_codec_list();
+    account_store_fill();
 }
 
 gboolean sflphone_init(GError **error)
@@ -297,7 +295,6 @@ gboolean sflphone_init(GError **error)
     contacts_tab = calltab_init(TRUE, CONTACTS);
     history_tab = calltab_init(TRUE, HISTORY);
 
-    account_list_init();
     codec_capabilities_load();
     conferencelist_init(current_calls_tab);
 

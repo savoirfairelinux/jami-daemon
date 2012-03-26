@@ -75,6 +75,8 @@ static gint get_state_struct(gconstpointer a, gconstpointer b)
 
 void account_list_init()
 {
+    if (accountQueue)
+        account_list_free();
     accountQueue = g_queue_new();
 }
 
@@ -199,6 +201,7 @@ void account_list_free()
 {
     g_queue_foreach(accountQueue, account_list_free_elm, NULL);
     g_queue_free(accountQueue);
+    accountQueue = NULL;
 }
 
 void
@@ -225,7 +228,7 @@ account_list_get_registered_accounts(void)
     guint res = 0;
 
     for (guint i = 0; i < account_list_get_size(); i++)
-        if (account_list_get_nth(i) -> state == (ACCOUNT_STATE_REGISTERED))
+        if (account_list_get_nth(i)->state == (ACCOUNT_STATE_REGISTERED))
             res++;
 
     return res;
@@ -321,7 +324,7 @@ account_t *create_default_account()
 {
     account_t *account = g_new0(account_t, 1);
     account->properties = dbus_get_account_details(NULL);
-    account->accountID = g_strdup("new"); //FIXME : replace with NULL for new accounts
+    account->accountID = g_strdup("new"); // FIXME: maybe replace with NULL?
     account->credential_information = NULL;
     sflphone_fill_codec_list_per_account(account);
     return account;
@@ -341,16 +344,18 @@ void initialize_credential_information(account_t *account)
 
 void account_replace(account_t *account, const gchar *key, const gchar *value)
 {
+    g_assert(account && account->properties);
     g_hash_table_replace(account->properties, g_strdup(key), g_strdup(value));
 }
 
 void account_insert(account_t *account, const gchar *key, const gchar *value)
 {
+    g_assert(account && account->properties);
     g_hash_table_insert(account->properties, g_strdup(key), g_strdup(value));
 }
 
 gpointer account_lookup(const account_t *account, gconstpointer key)
 {
-    g_assert(account->properties);
+    g_assert(account && account->properties);
     return g_hash_table_lookup(account->properties, key);
 }

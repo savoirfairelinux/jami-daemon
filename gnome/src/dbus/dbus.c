@@ -38,7 +38,6 @@
 #include "configurationmanager-glue.h"
 #include "instance-glue.h"
 #include "preferencesdialog.h"
-#include "accountlistconfigdialog.h"
 #include "mainwindow.h"
 #include "marshaller.h"
 #include "sliders.h"
@@ -427,7 +426,6 @@ accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 {
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
-    account_list_config_dialog_fill();
     status_bar_display_account();
     statusicon_set_tooltip();
 }
@@ -1096,7 +1094,8 @@ dbus_add_account(account_t *a)
     g_assert(a->properties);
     DEBUG("Adding %s account", a->accountID);
     GError *error = NULL;
-    g_free(a->accountID);
+    if (a->accountID)
+        g_free(a->accountID);
     a->accountID = NULL;
     org_sflphone_SFLphone_ConfigurationManager_add_account(config_proxy, a->properties, &a->accountID,
                        &error);

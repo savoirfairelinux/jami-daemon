@@ -32,9 +32,7 @@
 #ifndef __SFL_ACCOUNTLISTDIALOG_H__
 #define __SFL_ACCOUNTLISTDIALOG_H__
 
-#include <sflphone_const.h>
-
 void show_account_list_config_dialog(void);
-void account_list_config_dialog_fill(void);
+void account_store_fill(void);
 
 #endif
