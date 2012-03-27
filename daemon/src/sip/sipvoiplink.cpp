@@ -1566,6 +1566,12 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
 
 void SIPVoIPLink::shutdownSipTransport(SIPAccount *account)
 {
+    if (account->isStunEnabled()) {
+        pj_str_t stunServerName = account->getStunServerName();
+        std::string server(stunServerName.ptr, stunServerName.slen);
+        destroyStunResolver(server);
+    }
+
     if (account->transport_) {
         pjsip_transport_dec_ref(account->transport_);
         account->transport_ = NULL;
