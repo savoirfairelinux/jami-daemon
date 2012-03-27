@@ -1292,7 +1292,7 @@ pj_status_t SIPVoIPLink::createStunResolver(pj_str_t serverName, pj_uint16_t por
 
     // store socket inside list
     DEBUG("     insert %s resolver in map", stunResolverName.c_str());
-    stunSocketMap_.insert(std::pair<std::string, pj_stun_sock *>(stunResolverName.c_str(), stun_sock));
+    stunSocketMap_.insert(std::pair<std::string, pj_stun_sock *>(stunResolverName, stun_sock));
 
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
@@ -1320,7 +1320,7 @@ pj_status_t SIPVoIPLink::destroyStunResolver(const std::string serverName)
 
     DEBUG("***************** Destroy Stun Resolver *********************");
 
-    if(it != stunSocketMap_.end()) {
+    if (it != stunSocketMap_.end()) {
         DEBUG("UserAgent: Deleting stun resolver %s", it->first.c_str());
         pj_stun_sock_destroy(it->second);
         stunSocketMap_.erase(it);
@@ -1365,12 +1365,12 @@ void SIPVoIPLink::createTlsListener(pj_uint16_t tlsListenerPort, pjsip_tls_setti
     pj_sockaddr_in_init(&local_addr, 0, 0);
     local_addr.sin_port = pj_htons(tlsListenerPort);
 
-    if(tlsSetting == NULL) {
+    if (tlsSetting == NULL) {
         ERROR("Error TLS settings not specified");
         return;
     }
 
-    if(listener == NULL) {
+    if (listener == NULL) {
         ERROR("Error no pointer to store new TLS listener");
         return;
     }
@@ -1389,8 +1389,10 @@ void SIPVoIPLink::createTlsListener(pj_uint16_t tlsListenerPort, pjsip_tls_setti
 }
 
 
-pjsip_transport *SIPVoIPLink::createTlsTransport(std::string remoteAddr, pj_uint16_t tlsListenerPort,
-                                                    pjsip_tls_setting *tlsSettings)
+pjsip_transport *
+SIPVoIPLink::createTlsTransport(const std::string &remoteAddr,
+                                pj_uint16_t tlsListenerPort,
+                                pjsip_tls_setting *tlsSettings)
 {
     pjsip_transport *transport = NULL;
 
@@ -1400,7 +1402,8 @@ pjsip_transport *SIPVoIPLink::createTlsTransport(std::string remoteAddr, pj_uint
     pj_sockaddr_in rem_addr;
     pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) DEFAULT_SIP_TLS_PORT);
 
-    static pjsip_tpfactory *localTlsListener = NULL; /** The local tls listener */
+    // The local tls listener
+    static pjsip_tpfactory *localTlsListener = NULL;
 
     if (localTlsListener == NULL)
         createTlsListener(tlsListenerPort, tlsSettings, &localTlsListener);
@@ -1408,9 +1411,8 @@ pjsip_transport *SIPVoIPLink::createTlsTransport(std::string remoteAddr, pj_uint
     pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
 
-    if(transport == NULL) {
+    if (transport == NULL)
         ERROR("Error: Could not create new TLS transport\n");
-    }
 
     return transport;
 }
