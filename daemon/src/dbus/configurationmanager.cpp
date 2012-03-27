@@ -37,6 +37,7 @@
 #include "config.h"
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
+#include "sip/siptransport.h"
 #include "account.h"
 #include "sip/sipaccount.h"
 
@@ -411,17 +412,17 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistor
 std::string
 ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return SIPVoIPLink::getInterfaceAddrFromName(interface);
+    return SipTransport::getInterfaceAddrFromName(interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface()
 {
-    return SIPVoIPLink::getAllIpInterface();
+    return SipTransport::getAllIpInterface();
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName()
 {
-    return SIPVoIPLink::getAllIpInterfaceByName();
+    return SipTransport::getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string> ConfigurationManager::getShortcuts()

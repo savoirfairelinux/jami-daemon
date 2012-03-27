@@ -405,6 +405,11 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
+    if(stunServer_ != details[CONFIG_STUN_SERVER]) {
+        DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        link_->sipTransport.destroyStunResolver(stunServer_);
+        // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
+    }
     stunServer_ = details[CONFIG_STUN_SERVER];
     stunEnabled_ = details[CONFIG_STUN_ENABLE] == "true";
     dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
@@ -811,7 +816,7 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
-    link_->findLocalAddressFromTransport(transport_, transportType, address, port);
+    link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
     // UDP does not require the transport specification
     std::string scheme;
@@ -838,9 +843,9 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 
     // IP2IP default does not require keep-alive
     if (sipAccount->isIP2IP())
-        return; 
+        return;
 
-    // TLS is connection oriented and does not require keep-alive 
+    // TLS is connection oriented and does not require keep-alive
     if (sipAccount->isTlsEnabled())
         return;
 

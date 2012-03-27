@@ -43,11 +43,13 @@
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
+#include <pjnath.h>
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
 #include "sipaccount.h"
 #include "voiplink.h"
+#include "siptransport.h"
 
 class EventThread;
 class SIPCall;
@@ -211,49 +213,6 @@ class SIPVoIPLink : public VoIPLink {
         std::string getUseragentName(SIPAccount *) const;
 
         /**
-         * List all the interfaces on the system and return
-         * a vector list containing their IPV4 address.
-         * @param void
-         * @return std::vector<std::string> A std::string vector
-         * of IPV4 address available on all of the interfaces on
-         * the system.
-         */
-        static std::vector<std::string> getAllIpInterface();
-
-        /**
-        * List all the interfaces on the system and return
-        * a vector list containing their name (eth0, eth0:1 ...).
-        * @param void
-        * @return std::vector<std::string> A std::string vector
-        * of interface name available on all of the interfaces on
-        * the system.
-        */
-        static std::vector<std::string> getAllIpInterfaceByName();
-
-        /**
-         * List all the interfaces on the system and return
-         * a vector list containing their name (eth0, eth0:1 ...).
-         * @param void
-         * @return std::vector<std::string> A std::string vector
-         * of interface name available on all of the interfaces on
-         * the system.
-         */
-        static std::string getInterfaceAddrFromName(const std::string &ifaceName);
-
-        /**
-         * Initialize the transport selector
-         * @param transport		A transport associated with an account
-         *
-         * @return          	A pointer to the transport selector structure
-         */
-        pjsip_tpselector *initTransportSelector(pjsip_transport *, pj_pool_t *) const;
-
-        /**
-         * This function unset the transport for a given account.
-         */
-        void shutdownSipTransport(SIPAccount *account);
-
-        /**
          * Send a SIP message to a call identified by its callid
          *
          * @param The Id of the call to send the message to
@@ -269,16 +228,7 @@ class SIPVoIPLink : public VoIPLink {
          */
         void createDefaultSipUdpTransport();
 
-        /**
-         * Get the correct address to use (ie advertised) from
-         * a uri. The corresponding transport that should be used
-         * with that uri will be discovered.
-         *
-         * @param uri The uri from which we want to discover the address to use
-         * @param transport The transport to use to discover the address
-         */
-        void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
-
+        SipTransport sipTransport;
     private:
         /**
          * Start a SIP Call
@@ -292,47 +242,6 @@ class SIPVoIPLink : public VoIPLink {
         NON_COPYABLE(SIPVoIPLink);
 
         SIPVoIPLink();
-
-        /**
-         * Resolve public address for this account
-         */
-        pj_status_t stunServerResolve(pj_str_t serverName, pj_uint16_t port);
-
-        /**
-         * Create the default TLS listener.
-         */
-        void createTlsListener(SIPAccount*, pjsip_tpfactory **listener);
-
-        /**
-         * General Sip transport creation method according to the
-         * transport type specified in account settings
-         * @param account The account for which a transport must be created.
-         */
-        void createSipTransport(SIPAccount *account);
-
-        /**
-        * Create SIP UDP transport from account's setting
-        * @param account The account for which a transport must be created.
-        */
-        pjsip_transport *createUdpTransport(std::string interface, unsigned int port);
-
-        /**
-         * Create a TLS transport from the default TLS listener from
-         * @param account The account for which a transport must be created.
-         */
-        void createTlsTransport(SIPAccount *, std::string remoteAddr);
-
-        /**
-         * Create a UDP transport using stun server to resove public address
-         * @param account The account for which a transport must be created.
-         */
-        pjsip_transport *createStunTransport(pj_str_t serverName, pj_uint16_t port);
-
-        /**
-         * UDP Transports are stored in this map in order to retreive them in case
-         * several accounts would share the same port number.
-         */
-        std::map<pj_uint16_t, pjsip_transport*> transportMap_;
 
         /**
          * Threading object
