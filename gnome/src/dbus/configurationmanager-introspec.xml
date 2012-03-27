@@ -21,6 +21,7 @@
                     The available keys / parameters are:
                     <ul>
                         <li>CONFIG_ACCOUNT_ENABLE:    True or False (Default: True)</li>
+                        <li>CONFIG_ACCOUNT_RESOLVE_ONCE</li>
                         <li>CONFIG_ACCOUNT_TYPE: SIP or IAX2 (Default: SIP)</li>
                         <li>HOSTNAME: The IP adress or hostname of the registrar</li>
                         <li>USERNAME: The username (or extension) of the account</li>
@@ -444,6 +445,11 @@
        </method>
 
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
+       </signal>
+
+       <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="registration_state"/>
        </signal>
 
        <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">

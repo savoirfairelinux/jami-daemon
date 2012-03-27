@@ -127,9 +127,7 @@ account_list_get_current()
 
     // if we are here, it means that we have at least one registered account in the list
     // So we get the first one
-    account_t *current = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
-
-    return current;
+    return account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
 }
 
 void account_list_set_current(account_t *current)
@@ -148,45 +146,28 @@ void account_list_set_current(account_t *current)
 
 const gchar * account_state_name(account_state_t s)
 {
-    gchar * state;
-
     switch (s) {
         case ACCOUNT_STATE_REGISTERED:
-            state = _("Registered");
-            break;
+            return _("Registered");
         case ACCOUNT_STATE_UNREGISTERED:
-            state = _("Not Registered");
-            break;
+            return _("Not Registered");
         case ACCOUNT_STATE_TRYING:
-            state = _("Trying...");
-            break;
+            return _("Trying...");
         case ACCOUNT_STATE_ERROR:
-            state = _("Error");
-            break;
+            return _("Error");
         case ACCOUNT_STATE_ERROR_AUTH:
-            state = _("Authentication Failed");
-            break;
+            return _("Authentication Failed");
         case ACCOUNT_STATE_ERROR_NETWORK:
-            state = _("Network unreachable");
-            break;
+            return _("Network unreachable");
         case ACCOUNT_STATE_ERROR_HOST:
-            state = _("Host unreachable");
-            break;
+            return _("Host unreachable");
         case ACCOUNT_STATE_ERROR_CONF_STUN:
-            state = _("Stun configuration error");
-            break;
+            return _("Stun configuration error");
         case ACCOUNT_STATE_ERROR_EXIST_STUN:
-            state = _("Stun server invalid");
-            break;
-        case IP2IP_PROFILE_STATUS:
-            state = _("Ready");
-            break;
+            return _("Stun server invalid");
         default:
-            state = _("Invalid");
-            break;
+            return _("Invalid");
     }
-
-    return state;
 }
 
 void account_list_free_elm(gpointer elm, gpointer data UNUSED)

@@ -447,6 +447,11 @@
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 
+       <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="registration_state"/>
+       </signal>
+
        <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
            <arg type="s" name="reason">
            </arg>

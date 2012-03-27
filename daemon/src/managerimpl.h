@@ -400,11 +400,6 @@ class ManagerImpl {
         void startVoiceMessageNotification(const std::string& accountId, int nb_msg);
 
         /**
-         * Notify the client through DBus that registration state has been updated
-         */
-        void connectionStatusNotification();
-
-        /**
          * ConfigurationManager - Send registration request
          * @param accountId The account to register/unregister
          * @param enable The flag for the type of registration

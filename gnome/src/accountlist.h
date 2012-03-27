@@ -41,14 +41,12 @@
   * This enum have all the states an account can take.
   */
 typedef enum {
-    /** Invalid state */
-    ACCOUNT_STATE_INVALID = 0,
-    /** The account is registered  */
-    ACCOUNT_STATE_REGISTERED,
     /** The account is not registered */
     ACCOUNT_STATE_UNREGISTERED,
     /** The account is trying to register */
     ACCOUNT_STATE_TRYING,
+    /** The account is registered  */
+    ACCOUNT_STATE_REGISTERED,
     /** Error state. The account is not registered */
     ACCOUNT_STATE_ERROR,
     /** An authentification error occured. Wrong password or wrong username. The account is not registered */
@@ -57,12 +55,12 @@ typedef enum {
     ACCOUNT_STATE_ERROR_NETWORK,
     /** Host is unreachable. The account is not registered */
     ACCOUNT_STATE_ERROR_HOST,
-    /** Stun server configuration error. The account is not registered */
-    ACCOUNT_STATE_ERROR_CONF_STUN,
     /** Stun server is not existing. The account is not registered */
     ACCOUNT_STATE_ERROR_EXIST_STUN,
-    /** IP profile status **/
-    IP2IP_PROFILE_STATUS
+    /** Stun server configuration error. The account is not registered */
+    ACCOUNT_STATE_ERROR_CONF_STUN,
+    /** Invalid state */
+    ACCOUNT_STATE_INVALID
 } account_state_t;
 
 /** @struct account_t

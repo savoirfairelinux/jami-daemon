@@ -422,6 +422,17 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
 }
 
 static void
+registration_state_changed_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
+                              guint state, void *foo UNUSED)
+{
+    DEBUG("DBus: Registration state changed to %s for account %s",
+          account_state_name(state), accountID);
+    account_t *acc = account_list_get_by_id(accountID);
+    if (acc)
+        acc->state = state;
+}
+
+static void
 accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 {
     sflphone_fill_account_list();
@@ -732,6 +743,11 @@ gboolean dbus_connect(GError **error)
                             G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "voiceMailNotify",
                                 G_CALLBACK(voice_mail_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal(config_proxy, "registrationStateChanged", G_TYPE_STRING,
+                            G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(config_proxy, "registrationStateChanged",
+                                G_CALLBACK(registration_state_changed_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "incomingMessage", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
@@ -1091,11 +1107,10 @@ void
 dbus_add_account(account_t *a)
 {
     g_assert(a);
+    g_assert(a->accountID);
     g_assert(a->properties);
-    DEBUG("Adding %s account", a->accountID);
+    g_free(a->accountID);
     GError *error = NULL;
-    if (a->accountID)
-        g_free(a->accountID);
     a->accountID = NULL;
     org_sflphone_SFLphone_ConfigurationManager_add_account(config_proxy, a->properties, &a->accountID,
                        &error);

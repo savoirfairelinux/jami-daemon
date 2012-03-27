@@ -1250,23 +1250,19 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
     else
         current_protocol = g_strdup("SIP");
 
-    if (g_strcmp0(current_protocol, "SIP") == 0) {
-        if (!IS_IP2IP) {
-            DEBUG("Config: Get new credentials");
-            account->credential_information = get_new_credential();
-
-            if (account->credential_information)
-                dbus_set_credentials(account);
-        }
-    }
+    if (!IS_IP2IP && g_strcmp0(current_protocol, "SIP") == 0)
+        account->credential_information = get_new_credential();
 
     /** @todo Verify if it's the best condition to check */
     if (g_strcmp0(account->accountID, "new") == 0)
         dbus_add_account(account);
     else
         dbus_set_account_details(account);
+
     // propagate changes to the daemon
     codec_list_update_to_daemon(account);
+    if (account->credential_information)
+        dbus_set_credentials(account);
 
     g_free(current_protocol);
     gtk_widget_destroy(dialog);

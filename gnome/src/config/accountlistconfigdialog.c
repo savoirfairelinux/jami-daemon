@@ -94,9 +94,9 @@ static void delete_account_cb(gpointer data)
 static void
 run_account_dialog(const gchar *selected_accountID)
 {
-    account_t *selected_account = account_list_get_by_id(selected_accountID);
-    GtkWidget *dialog = show_account_window(selected_account);
-    update_account_from_dialog(dialog, selected_account);
+    account_t *account = account_list_get_by_id(selected_accountID);
+    GtkWidget *dialog = show_account_window(account);
+    update_account_from_dialog(dialog, account);
 }
 
 static void row_activated_cb(GtkTreeView *view,
@@ -189,7 +189,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
     memset(&val, 0, sizeof(val));
     gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_ID, &val);
 
-    gchar *selected_accountID = g_strdup(g_value_get_string(&val));
+    gchar *selected_accountID = g_value_dup_string(&val);
     g_value_unset(&val);
 
     DEBUG("Selected account has accountID %s", selected_accountID);
@@ -208,7 +208,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 
         const gchar *state_name = account_state_name(selected_account->state);
         if (selected_account->protocol_state_description != NULL
-                && selected_account->protocol_state_code != 0) {
+            && selected_account->protocol_state_code != 0) {
 
             gchar * response = g_strdup_printf(
                                    _("Server returned \"%s\" (%d)"),
@@ -260,10 +260,10 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
                        enable, -1);
 
     // Modify account state
-    const gchar * registration_state = enable ? "true" : "false";
-    DEBUG("Account is enabled: %s", registration_state);
+    const gchar * enabled_str = enable ? "true" : "false";
+    DEBUG("Account is enabled: %s", enabled_str);
 
-    account_replace(account, ACCOUNT_ENABLED, registration_state);
+    account_replace(account, ACCOUNT_ENABLED, enabled_str);
     dbus_send_register(account->accountID, enable);
 }
 
