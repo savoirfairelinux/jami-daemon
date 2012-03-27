@@ -1405,7 +1405,6 @@ SIPVoIPLink::createTlsTransport(const std::string &remoteAddr,
     // The local tls listener
     static pjsip_tpfactory *localTlsListener = NULL;
 
-    // FIXME: localTlsListener will always be NULL
     if (localTlsListener == NULL)
         createTlsListener(tlsListenerPort, tlsSettings, &localTlsListener);
 
