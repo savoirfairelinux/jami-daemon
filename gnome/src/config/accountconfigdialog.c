@@ -661,7 +661,7 @@ static GtkWidget* create_credential_widget(const account_t *account)
                                          G_TYPE_STRING,  // Username
                                          G_TYPE_STRING,  // Password
                                          G_TYPE_POINTER  // Pointer to the Objectc
-                                        );
+                                         );
 
     treeview_credential = gtk_tree_view_new_with_model(GTK_TREE_MODEL(credential_store));
     GtkTreeSelection * tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview_credential));
@@ -828,7 +828,7 @@ static GtkWidget* create_registration_expire(const account_t *account)
                                           &orig_key, (gpointer) &account_expire))
             ERROR("Could not retrieve %s from account properties",
                   ACCOUNT_REGISTRATION_EXPIRE);
-    
+
     GtkWidget *table, *frame;
     gnome_main_section_new_with_table(_("Registration"), &frame, &table, 2, 3);
     gtk_container_set_border_width(GTK_CONTAINER(table), 10);
@@ -1254,9 +1254,10 @@ void show_account_window(account_t *account)
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), notebook, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
     gtk_widget_show(notebook);
+    const gboolean IS_IP2IP = account_is_IP2IP(account);
 
     // We do not need the global settings for the IP2IP account
-    if (!account_is_IP2IP(account)) {
+    if (!IS_IP2IP) {
         /* General Settings */
         GtkWidget *basic_tab = create_basic_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), basic_tab, gtk_label_new(_("Basic")));
@@ -1276,7 +1277,7 @@ void show_account_window(account_t *account)
         current_protocol = g_strdup("SIP");
 
     // Do not need advanced or security one for the IP2IP account
-    if (!account_is_IP2IP(account)) {
+    if (!IS_IP2IP) {
         /* Advanced */
         advanced_tab = create_advanced_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
@@ -1300,29 +1301,26 @@ void show_account_window(account_t *account)
 
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
 
-    /* Run dialog */
+    /* Run dialog, this blocks */
     gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 
-    // If cancel button is pressed
-    if (response == GTK_RESPONSE_CANCEL) {
+    // If anything but "Apply" button is pressed
+    if (response != GTK_RESPONSE_ACCEPT) {
         gtk_widget_destroy(dialog);
         return;
     }
 
-    if (!account_is_IP2IP(account))
+    if (!IS_IP2IP)
         update_account_from_basic_tab(account);
 
     /** @todo Verify if it's the best condition to check */
-    if (g_strcmp0(account->accountID, "new"))
+    if (g_strcmp0(account->accountID, "new") == 0)
         dbus_add_account(account);
     else
         dbus_set_account_details(account);
 
     if (g_strcmp0(current_protocol, "SIP") == 0) {
-        /* Set new credentials if any */
-        DEBUG("Config: Setting credentials");
-
-        if (!account_is_IP2IP(account)) {
+        if (!IS_IP2IP) {
             DEBUG("Config: Get new credentials");
             account->credential_information = get_new_credential();
 
@@ -1334,7 +1332,7 @@ void show_account_window(account_t *account)
     // propagate changes to the daemon
     codec_list_update_to_daemon(account);
 
-    gtk_widget_destroy(dialog);
     g_free(current_protocol);
+    gtk_widget_destroy(dialog);
 }
 

@@ -52,7 +52,6 @@ static GtkWidget *move_up_button;
 static GtkWidget *status_bar;
 static GtkListStore *account_store;
 static GtkDialog *account_list_dialog;
-static gchar *selected_accountID;
 
 // Account properties
 enum {
@@ -64,34 +63,60 @@ enum {
     COLUMN_ACCOUNT_COUNT
 };
 
-static void delete_account_cb(void)
+/* Get selected account ID from treeview
+ * @return copied selected_accountID, must be freed by caller */
+static gchar *
+get_selected_accountID(GtkTreeView *tree_view)
 {
+    GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(tree_view);
+
+    // Find selected iteration and create a copy
+    GtkTreeIter iter;
+    gtk_tree_selection_get_selected(selection, &model, &iter);
+    // The Gvalue will be initialized in the following function
+    GValue val;
+    memset(&val, 0, sizeof(val));
+    gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_ID, &val);
+
+    gchar *selected_accountID = g_strdup(g_value_get_string(&val));
+    g_value_unset(&val);
+    return selected_accountID;
+}
+
+static void delete_account_cb(gpointer data)
+{
+    gchar *selected_accountID = get_selected_accountID(data);
     RETURN_IF_NULL(selected_accountID, "No selected account in delete action");
     dbus_remove_account(selected_accountID);
     g_free(selected_accountID);
-    selected_accountID = NULL;
 }
 
-static void row_activated_cb(GtkTreeView *view UNUSED,
+static void row_activated_cb(GtkTreeView *view,
                              GtkTreePath *path UNUSED,
                              GtkTreeViewColumn *col UNUSED,
                              gpointer user_data UNUSED)
 {
+    gchar *selected_accountID = get_selected_accountID(view);
     RETURN_IF_NULL(selected_accountID, "No selected account in edit action");
     DEBUG("%s: Selected accountID=%s\n", __PRETTY_FUNCTION__, selected_accountID);
     show_account_window(account_list_get_by_id(selected_accountID));
+    g_free(selected_accountID);
 }
 
-static void edit_account_cb(GtkButton *button UNUSED, gpointer data UNUSED)
+static void edit_account_cb(GtkButton *button UNUSED, gpointer data)
 {
+    gchar *selected_accountID = get_selected_accountID(data);
     RETURN_IF_NULL(selected_accountID, "No selected account in edit action");
     DEBUG("%s: Selected accountID=%s\n", __PRETTY_FUNCTION__, selected_accountID);
     show_account_window(account_list_get_by_id(selected_accountID));
+    g_free(selected_accountID);
 }
 
 static void add_account_cb(void)
 {
     account_t *new_account = create_default_account();
+    account_list_add(new_account);
     show_account_window(new_account);
 }
 
@@ -109,21 +134,12 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
                        COLUMN_ACCOUNT_ID, account->accountID, -1);
 }
 
-static void
-invalidate_selected_accountID()
-{
-    if (selected_accountID) {
-        g_free(selected_accountID);
-        selected_accountID = NULL;
-    }
-}
 
 /**
  * Fills the treelist with accounts
  */
 void account_store_fill()
 {
-    invalidate_selected_accountID();
     RETURN_IF_NULL(account_list_dialog, "No account dialog");
     gtk_list_store_clear(account_store);
 
@@ -156,7 +172,6 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 {
     GtkTreeIter iter;
     if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
-        invalidate_selected_accountID();
         gtk_widget_set_sensitive(move_up_button, FALSE);
         gtk_widget_set_sensitive(move_down_button, FALSE);
         gtk_widget_set_sensitive(edit_button, FALSE);
@@ -169,7 +184,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
     memset(&val, 0, sizeof(val));
     gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_ID, &val);
 
-    selected_accountID = g_strdup(g_value_get_string(&val));
+    gchar *selected_accountID = g_strdup(g_value_get_string(&val));
     g_value_unset(&val);
 
     DEBUG("Selected account has accountID %s", selected_accountID);
@@ -210,7 +225,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(move_down_button, FALSE);
         gtk_widget_set_sensitive(delete_button, FALSE);
     }
-    DEBUG("Selecting account in account window");
+    g_free(selected_accountID);
 }
 
 static void
@@ -253,7 +268,7 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
 static void
 account_move(gboolean move_up, gpointer data)
 {
-    // Get view, model and selection of codec store
+    // Get view, model and selection of account
     GtkTreeView *tree_view = GTK_TREE_VIEW(data);
     GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
     GtkTreeSelection *selection = gtk_tree_view_get_selection(tree_view);
@@ -416,6 +431,8 @@ create_account_list()
     gtk_table_attach(GTK_TABLE(table), scrolled_window, 0, 1, 0, 1,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+    if (account_store)
+        gtk_list_store_clear(account_store);
     account_store = gtk_list_store_new(COLUMN_ACCOUNT_COUNT,
                                        G_TYPE_STRING,  // Name
                                        G_TYPE_STRING,  // Protocol
@@ -437,7 +454,7 @@ create_account_list()
         gtk_tree_view_column_new_with_attributes("Enabled", renderer, "active",
                                                  COLUMN_ACCOUNT_ACTIVE , NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), tree_view_column);
-    g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(enable_account_cb), (gpointer) tree_view);
+    g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(enable_account_cb), tree_view);
 
     renderer = gtk_cell_renderer_text_new();
     tree_view_column = gtk_tree_view_column_new_with_attributes("Alias",
@@ -506,13 +523,13 @@ create_account_list()
 
     edit_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_widget_set_sensitive(edit_button, FALSE);
-    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), NULL);
+    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), tree_view);
     gtk_box_pack_start(GTK_BOX(button_box), edit_button, FALSE, FALSE, 0);
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
     gtk_widget_set_sensitive(delete_button, FALSE);
     g_signal_connect_swapped(G_OBJECT(delete_button), "clicked",
-                             G_CALLBACK(delete_account_cb), NULL);
+                             G_CALLBACK(delete_account_cb), tree_view);
     gtk_box_pack_start(GTK_BOX(button_box), delete_button, FALSE, FALSE, 0);
 
     /* help and close buttons */

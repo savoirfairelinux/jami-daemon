@@ -100,6 +100,7 @@ account_list_get_by_state(account_state_t state)
 account_t *
 account_list_get_by_id(const gchar * const accountID)
 {
+    g_assert(accountID);
     GList * c = g_queue_find_custom(accountQueue, accountID, is_accountID_struct);
 
     if (c)
@@ -301,7 +302,7 @@ gboolean current_account_has_new_message(void)
 gboolean account_is_IP2IP(const account_t *account)
 {
     g_assert(account);
-    return g_strcmp0(account->accountID, IP2IP_PROFILE);
+    return g_strcmp0(account->accountID, IP2IP_PROFILE) == 0;
 }
 
 static gboolean is_type(const account_t *account, const gchar *type)
@@ -323,9 +324,17 @@ gboolean account_is_IAX(const account_t *account)
 account_t *create_default_account()
 {
     account_t *account = g_new0(account_t, 1);
-    account->properties = dbus_get_account_details(NULL);
+    account->properties = dbus_get_account_details("");
     account->accountID = g_strdup("new"); // FIXME: maybe replace with NULL?
-    account->credential_information = NULL;
+    sflphone_fill_codec_list_per_account(account);
+    return account;
+}
+
+account_t *create_account_with_ID(const gchar *ID)
+{
+    account_t *account = g_new0(account_t, 1);
+    account->accountID = g_strdup(ID);
+    account->properties = dbus_get_account_details(ID);
     sflphone_fill_codec_list_per_account(account);
     return account;
 }

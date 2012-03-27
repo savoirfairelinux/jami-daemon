@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __ACCOUNTLIST_H__
-#define __ACCOUNTLIST_H__
+#ifndef ACCOUNTLIST_H__
+#define ACCOUNTLIST_H__
 
 #include <gtk/gtk.h>
 /** @file accountlist.h
@@ -188,6 +188,7 @@ gboolean account_is_SIP(const account_t *account);
 gboolean account_is_IAX(const account_t *account);
 
 account_t *create_default_account();
+account_t *create_account_with_ID(const gchar *ID);
 
 void initialize_credential_information(account_t *account);
 
