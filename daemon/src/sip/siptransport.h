@@ -33,6 +33,7 @@
 #define SIPTRANSPORT_H_
 
 #include <string>
+#include <vector>
 
 #include <pjsip.h>
 #include <pjlib.h>
@@ -40,16 +41,16 @@
 #include <pjlib-util.h>
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
+#include "noncopyable.h"
 
-#include "sipaccount.h"
+class SIPAccount;
 
 class SipTransport {
     public:
         SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool);
-
         ~SipTransport();
 
-        static std::string getSIPLocalIP(void);
+        static std::string getSIPLocalIP();
 
         /**
         * List all the interfaces on the system and return
@@ -59,7 +60,7 @@ class SipTransport {
         * of interface name available on all of the interfaces on
         * the system.
         */
-        static std::vector<std::string> getAllIpInterfaceByName(void);
+        static std::vector<std::string> getAllIpInterfaceByName();
 
         /**
          * List all the interfaces on the system and return
@@ -101,7 +102,7 @@ class SipTransport {
          */
         pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
 
-        pj_status_t destroyStunResolver(const std::string serverName);
+        pj_status_t destroyStunResolver(const std::string &serverName);
 
         /**
          * General Sip transport creation method according to the
@@ -110,7 +111,7 @@ class SipTransport {
          */
         void createSipTransport(SIPAccount *account);
 
-        void createDefaultSipUdpTransport(void);
+        void createDefaultSipUdpTransport();
 
         /**
         * Create SIP UDP transport from account's setting
@@ -176,6 +177,7 @@ class SipTransport {
         void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
 
     private:
+        NON_COPYABLE(SipTransport);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case

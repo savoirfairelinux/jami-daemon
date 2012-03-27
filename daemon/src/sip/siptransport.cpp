@@ -225,7 +225,7 @@ pj_status_t SipTransport::createStunResolver(pj_str_t serverName, pj_uint16_t po
     return status;
 }
 
-pj_status_t SipTransport::destroyStunResolver(const std::string serverName)
+pj_status_t SipTransport::destroyStunResolver(const std::string &serverName)
 {
     std::map<std::string, pj_stun_sock *>::iterator it;
     it = stunSocketMap_.find(serverName);
