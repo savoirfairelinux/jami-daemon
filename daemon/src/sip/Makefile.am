@@ -9,12 +9,14 @@ libsiplink_la_SOURCES = \
 		sipaccount.cpp \
 		sipcall.cpp \
 		sipvoiplink.cpp \
+		siptransport.cpp \
 		pattern.h \
 		sdes_negotiator.h \
 		sdp.h \
 		sipaccount.h \
 		sipcall.h \
 		sipvoiplink.h \
+		siptransport.h \
 		sip_utils.cpp \
 		sip_utils.h
 

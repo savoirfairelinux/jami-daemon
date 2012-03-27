@@ -407,7 +407,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
     if(stunServer_ != details[CONFIG_STUN_SERVER]) {
         DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        link_->destroyStunResolver(stunServer_);
+        link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
     }
     stunServer_ = details[CONFIG_STUN_SERVER];
@@ -816,7 +816,7 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
-    link_->findLocalAddressFromTransport(transport_, transportType, address, port);
+    link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
     // UDP does not require the transport specification
     std::string scheme;

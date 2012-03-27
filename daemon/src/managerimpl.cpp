@@ -2563,7 +2563,7 @@ void ManagerImpl::loadDefaultAccountMap()
 {
     // build a default IP2IP account with default parameters
     accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
-    SIPVoIPLink::instance()->createDefaultSipUdpTransport();
+    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
     accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 }
 
@@ -2627,7 +2627,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     // Initialize default UDP transport according to
     // IP to IP settings (most likely using port 5060)
-    SIPVoIPLink::instance()->createDefaultSipUdpTransport();
+    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
 
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
