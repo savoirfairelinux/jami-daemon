@@ -1234,7 +1234,45 @@ static void update_account_from_basic_tab(account_t *account)
     g_free(proto);
 }
 
-void show_account_window(account_t *account)
+void update_account_from_dialog(GtkWidget *dialog, account_t *account)
+{
+    if (!dialog)
+        return;
+
+    const gboolean IS_IP2IP = account_is_IP2IP(account);
+    if (!IS_IP2IP)
+        update_account_from_basic_tab(account);
+
+    // Get current protocol for this account
+    gchar *current_protocol;
+    if (protocol_combo)
+        current_protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
+    else
+        current_protocol = g_strdup("SIP");
+
+    if (g_strcmp0(current_protocol, "SIP") == 0) {
+        if (!IS_IP2IP) {
+            DEBUG("Config: Get new credentials");
+            account->credential_information = get_new_credential();
+
+            if (account->credential_information)
+                dbus_set_credentials(account);
+        }
+    }
+
+    /** @todo Verify if it's the best condition to check */
+    if (g_strcmp0(account->accountID, "new") == 0)
+        dbus_add_account(account);
+    else
+        dbus_set_account_details(account);
+    // propagate changes to the daemon
+    codec_list_update_to_daemon(account);
+
+    g_free(current_protocol);
+    gtk_widget_destroy(dialog);
+}
+
+GtkWidget *show_account_window(const account_t *account)
 {
     // First we reset
     reset();
@@ -1269,13 +1307,6 @@ void show_account_window(account_t *account)
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
 
-    // Get current protocol for this account
-    gchar *current_protocol;
-    if (protocol_combo)
-        current_protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
-    else
-        current_protocol = g_strdup("SIP");
-
     // Do not need advanced or security one for the IP2IP account
     if (!IS_IP2IP) {
         /* Advanced */
@@ -1284,7 +1315,6 @@ void show_account_window(account_t *account)
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), advanced_tab);
 
         /* Security */
-        initialize_credential_information(account);
         security_tab = create_security_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), security_tab);
@@ -1307,32 +1337,9 @@ void show_account_window(account_t *account)
     // If anything but "Apply" button is pressed
     if (response != GTK_RESPONSE_ACCEPT) {
         gtk_widget_destroy(dialog);
-        return;
+        return NULL;
+    } else {
+        return dialog;
     }
-
-    if (!IS_IP2IP)
-        update_account_from_basic_tab(account);
-
-    /** @todo Verify if it's the best condition to check */
-    if (g_strcmp0(account->accountID, "new") == 0)
-        dbus_add_account(account);
-    else
-        dbus_set_account_details(account);
-
-    if (g_strcmp0(current_protocol, "SIP") == 0) {
-        if (!IS_IP2IP) {
-            DEBUG("Config: Get new credentials");
-            account->credential_information = get_new_credential();
-
-            if (account->credential_information)
-                dbus_set_credentials(account);
-        }
-    }
-
-    // propagate changes to the daemon
-    codec_list_update_to_daemon(account);
-
-    g_free(current_protocol);
-    gtk_widget_destroy(dialog);
 }
 

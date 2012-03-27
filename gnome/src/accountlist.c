@@ -325,9 +325,10 @@ gboolean account_is_IAX(const account_t *account)
 account_t *create_default_account()
 {
     account_t *account = g_new0(account_t, 1);
-    account->properties = dbus_get_account_details("");
     account->accountID = g_strdup("new"); // FIXME: maybe replace with NULL?
+    account->properties = dbus_get_account_details("");
     sflphone_fill_codec_list_per_account(account);
+    initialize_credential_information(account);
     return account;
 }
 
@@ -337,6 +338,7 @@ account_t *create_account_with_ID(const gchar *ID)
     account->accountID = g_strdup(ID);
     account->properties = dbus_get_account_details(ID);
     sflphone_fill_codec_list_per_account(account);
+    initialize_credential_information(account);
     return account;
 }
 

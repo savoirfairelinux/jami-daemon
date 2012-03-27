@@ -91,24 +91,30 @@ static void delete_account_cb(gpointer data)
     g_free(selected_accountID);
 }
 
+static void
+run_account_dialog(const gchar *selected_accountID)
+{
+    account_t *selected_account = account_list_get_by_id(selected_accountID);
+    GtkWidget *dialog = show_account_window(selected_account);
+    update_account_from_dialog(dialog, selected_account);
+}
+
 static void row_activated_cb(GtkTreeView *view,
                              GtkTreePath *path UNUSED,
                              GtkTreeViewColumn *col UNUSED,
                              gpointer user_data UNUSED)
 {
     gchar *selected_accountID = get_selected_accountID(view);
-    RETURN_IF_NULL(selected_accountID, "No selected account in edit action");
-    DEBUG("%s: Selected accountID=%s\n", __PRETTY_FUNCTION__, selected_accountID);
-    show_account_window(account_list_get_by_id(selected_accountID));
+    RETURN_IF_NULL(selected_accountID, "No selected account ID");
+    run_account_dialog(selected_accountID);
     g_free(selected_accountID);
 }
 
 static void edit_account_cb(GtkButton *button UNUSED, gpointer data)
 {
     gchar *selected_accountID = get_selected_accountID(data);
-    RETURN_IF_NULL(selected_accountID, "No selected account in edit action");
-    DEBUG("%s: Selected accountID=%s\n", __PRETTY_FUNCTION__, selected_accountID);
-    show_account_window(account_list_get_by_id(selected_accountID));
+    RETURN_IF_NULL(selected_accountID, "No selected account ID");
+    run_account_dialog(selected_accountID);
     g_free(selected_accountID);
 }
 
@@ -116,7 +122,7 @@ static void add_account_cb(void)
 {
     account_t *new_account = create_default_account();
     account_list_add(new_account);
-    show_account_window(new_account);
+    run_account_dialog(new_account->accountID);
 }
 
 static void account_store_add(GtkTreeIter *iter, account_t *account)
@@ -241,22 +247,22 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
     GtkTreeIter iter;
     gtk_tree_model_get_iter(model, &iter, tree_path);
     gboolean enable;
-    gchar * id;
+    gchar *id;
     gtk_tree_model_get(model, &iter, COLUMN_ACCOUNT_ACTIVE, &enable,
                        COLUMN_ACCOUNT_ID, &id, -1);
+
     account_t *account = account_list_get_by_id(id);
     g_assert(account);
     enable = !enable;
 
-    DEBUG("Account is %d enabled", enable);
     // Store value
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_ACCOUNT_ACTIVE,
                        enable, -1);
 
     // Modify account state
     const gchar * registration_state = enable ? "true" : "false";
+    DEBUG("Account is enabled: %s", registration_state);
 
-    DEBUG("Replacing registration state with %s", registration_state);
     account_replace(account, ACCOUNT_ENABLED, registration_state);
     dbus_send_register(account->accountID, enable);
 }
@@ -445,8 +451,7 @@ create_account_list()
     GtkTreeView * tree_view = GTK_TREE_VIEW(gtk_tree_view_new_with_model(GTK_TREE_MODEL(account_store)));
     GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(tree_view);
     g_signal_connect(G_OBJECT(tree_selection), "changed",
-                     G_CALLBACK(select_account_cb),
-                     account_store);
+                     G_CALLBACK(select_account_cb), NULL);
 
     GtkCellRenderer *renderer = gtk_cell_renderer_toggle_new();
     GtkTreeViewColumn *tree_view_column =

@@ -78,7 +78,8 @@ sflphone_notify_voice_mail(const gchar* accountID , guint count)
 
     DEBUG("sflphone_notify_voice_mail begin");
 
-    if (g_ascii_strcasecmp(id, current_id) != 0 || account_list_get_size() == 0)
+    if (g_ascii_strcasecmp(id, current_id) != 0 ||
+        account_list_get_size() == 0)
         return;
 
     // Set the number of voice messages for the current account
