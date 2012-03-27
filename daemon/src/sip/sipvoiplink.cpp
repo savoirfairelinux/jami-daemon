@@ -57,7 +57,7 @@
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_uri.h"
-#include <pjnath.h>
+#include "pjnath.h"
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -427,7 +427,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
 /*************************************************************************************************/
 
-SIPVoIPLink::SIPVoIPLink() : transportMap_(), evThread_(new EventThread(this))
+SIPVoIPLink::SIPVoIPLink() : transportMap_(), stunSocketMap_(), evThread_(new EventThread(this))
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -1155,8 +1155,10 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 {
     SIPAccount *account = Manager::instance().getIP2IPAccount();
 
-    if (!account)
+    if (!account) {
+        ERROR("Error could not retrieve default account for IP2IP call");
         return false;
+    }
 
     SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_);
     call->setIPToIP(true);
@@ -1204,12 +1206,16 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
         }
 
         shutdownSipTransport(account);
-        createTlsTransport(account, remoteAddr);
+        pjsip_transport *transport = createTlsTransport(remoteAddr, account->getTlsListenerPort(),
+                                                              account->getTlsSetting());
 
-        if (!account->transport_) {
+        if (transport == NULL) {
+            ERROR("Error could not create TLS transport for IP2IP call");
             delete call;
             return false;
         }
+
+        account->transport_ = transport;
     }
 
     if (!SIPStartCall(call)) {
@@ -1249,11 +1255,12 @@ stun_sock_on_status_cb(pj_stun_sock * /*stun_sock*/, pj_stun_sock_op op,
 
     if (status == PJ_SUCCESS) {
         DEBUG("UserAgent: Stun operation success");
-        return true;
     } else {
         ERROR("UserAgent: Stun operation failure");
-        return false;
     }
+
+    // Always return true so the stun transport registration retry even on failure
+    return true;
 }
 
 static pj_bool_t
@@ -1266,10 +1273,12 @@ stun_sock_on_rx_data_cb(pj_stun_sock * /*stun_sock*/, void * /*pkt*/,
 }
 
 
-pj_status_t SIPVoIPLink::stunServerResolve(pj_str_t serverName, pj_uint16_t port)
+pj_status_t SIPVoIPLink::createStunResolver(pj_str_t serverName, pj_uint16_t port)
 {
     pj_stun_config stunCfg;
     pj_stun_config_init(&stunCfg, &cp_->factory, 0, pjsip_endpt_get_ioqueue(endpt_), pjsip_endpt_get_timer_heap(endpt_));
+
+    DEBUG("***************** Create Stun Resolver *********************");
 
     static const pj_stun_sock_cb stun_sock_cb = {
         stun_sock_on_rx_data_cb,
@@ -1278,7 +1287,12 @@ pj_status_t SIPVoIPLink::stunServerResolve(pj_str_t serverName, pj_uint16_t port
     };
 
     pj_stun_sock *stun_sock;
-    pj_status_t status = pj_stun_sock_create(&stunCfg, "stunresolve", pj_AF_INET(), &stun_sock_cb, NULL, NULL, &stun_sock);
+    std::string stunResolverName(serverName.ptr, serverName.slen);
+    pj_status_t status = pj_stun_sock_create(&stunCfg, stunResolverName.c_str(), pj_AF_INET(), &stun_sock_cb, NULL, NULL, &stun_sock);
+
+    // store socket inside list
+    DEBUG("     insert %s resolver in map", stunResolverName.c_str());
+    stunSocketMap_.insert(std::pair<std::string, pj_stun_sock *>(stunResolverName, stun_sock));
 
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
@@ -1297,6 +1311,22 @@ pj_status_t SIPVoIPLink::stunServerResolve(pj_str_t serverName, pj_uint16_t port
     }
 
     return status;
+}
+
+pj_status_t SIPVoIPLink::destroyStunResolver(const std::string serverName)
+{
+    std::map<std::string, pj_stun_sock *>::iterator it;
+    it = stunSocketMap_.find(serverName);
+
+    DEBUG("***************** Destroy Stun Resolver *********************");
+
+    if (it != stunSocketMap_.end()) {
+        DEBUG("UserAgent: Deleting stun resolver %s", it->first.c_str());
+        pj_stun_sock_destroy(it->second);
+        stunSocketMap_.erase(it);
+    }
+
+    return PJ_SUCCESS;
 }
 
 void SIPVoIPLink::createDefaultSipUdpTransport()
@@ -1329,11 +1359,21 @@ void SIPVoIPLink::createDefaultSipUdpTransport()
     localUDPTransport_ = account->transport_;
 }
 
-void SIPVoIPLink::createTlsListener(SIPAccount *account, pjsip_tpfactory **listener)
+void SIPVoIPLink::createTlsListener(pj_uint16_t tlsListenerPort, pjsip_tls_setting *tlsSetting, pjsip_tpfactory **listener)
 {
     pj_sockaddr_in local_addr;
     pj_sockaddr_in_init(&local_addr, 0, 0);
-    local_addr.sin_port = pj_htons(account->getTlsListenerPort());
+    local_addr.sin_port = pj_htons(tlsListenerPort);
+
+    if (tlsSetting == NULL) {
+        ERROR("Error TLS settings not specified");
+        return;
+    }
+
+    if (listener == NULL) {
+        ERROR("Error no pointer to store new TLS listener");
+        return;
+    }
 
     pj_str_t pjAddress;
     pj_cstr(&pjAddress, PJ_INADDR_ANY);
@@ -1345,27 +1385,37 @@ void SIPVoIPLink::createTlsListener(SIPAccount *account, pjsip_tpfactory **liste
         local_addr.sin_port
     };
 
-    pjsip_tls_transport_start(endpt_, account->getTlsSetting(), &local_addr, &a_name, 1, listener);
+    pjsip_tls_transport_start(endpt_, tlsSetting, &local_addr, &a_name, 1, listener);
 }
 
 
-void SIPVoIPLink::createTlsTransport(SIPAccount *account, std::string remoteAddr)
+pjsip_transport *
+SIPVoIPLink::createTlsTransport(const std::string &remoteAddr,
+                                pj_uint16_t tlsListenerPort,
+                                pjsip_tls_setting *tlsSettings)
 {
+    pjsip_transport *transport = NULL;
+
     pj_str_t remote;
     pj_cstr(&remote, remoteAddr.c_str());
 
     pj_sockaddr_in rem_addr;
     pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) DEFAULT_SIP_TLS_PORT);
 
-    static pjsip_tpfactory *localTlsListener = NULL; /** The local tls listener */
+    // The local tls listener
+    static pjsip_tpfactory *localTlsListener = NULL;
 
     if (localTlsListener == NULL)
-        createTlsListener(account, &localTlsListener);
+        createTlsListener(tlsListenerPort, tlsSettings, &localTlsListener);
 
     pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
-                                  sizeof rem_addr, NULL, &account->transport_);
-}
+                                  sizeof rem_addr, NULL, &transport);
 
+    if (transport == NULL)
+        ERROR("Error: Could not create new TLS transport\n");
+
+    return transport;
+}
 
 void SIPVoIPLink::createSipTransport(SIPAccount *account)
 {
@@ -1383,7 +1433,8 @@ void SIPVoIPLink::createSipTransport(SIPAccount *account)
         size_t trns = remoteSipUri.find(";transport");
         std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
 
-        createTlsTransport(account, remoteAddr);
+        pjsip_transport *transport = createTlsTransport(remoteAddr, account->getTlsListenerPort(), account->getTlsSetting());
+        account->transport_ = transport;
     } else if (account->isStunEnabled()) {
         pjsip_transport *transport = createStunTransport(account->getStunServerName(), account->getStunPort());
         account->transport_ = transport;
@@ -1470,9 +1521,9 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
     pjsip_transport *transport;
 
     DEBUG("UserAgent: Create stun transport  server name: %s, port: %d", serverName, port);// account->getStunPort());
-    if (stunServerResolve(serverName, port) != PJ_SUCCESS) {
+    if (createStunResolver(serverName, port) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't resolve STUN server");
-        // Signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
@@ -1482,13 +1533,13 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
 
     if (pj_sockaddr_in_init(&boundAddr, &serverName, 0) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't initialize IPv4 socket on %*s:%i", serverName.slen, serverName.ptr, port);
-        // Signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
     if (pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &sock) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't create or bind socket");
-        // Signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
@@ -1498,7 +1549,7 @@ pjsip_transport *SIPVoIPLink::createStunTransport(pj_str_t serverName, pj_uint16
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("UserAgent: Can't contact STUN server");
         pj_sock_close(sock);
-        // signal client
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
         return NULL;
     }
 
@@ -1881,8 +1932,8 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 
         Manager::instance().incomingMessage(call->getCallId(), from, findTextMessage(formattedMessage));
 
-    } catch (const sfl::InstantMessageException &e) {
-        ERROR("SipVoipLink: %s", e.what());
+    } catch (const sfl::InstantMessageException &except) {
+        ERROR("SipVoipLink: %s", except.what());
     }
 }
 

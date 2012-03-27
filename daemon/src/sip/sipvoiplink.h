@@ -43,6 +43,7 @@
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
+#include <pjnath.h>
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
@@ -279,6 +280,16 @@ class SIPVoIPLink : public VoIPLink {
          */
         void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
 
+        /**
+         * Create a new stun resolver. Store it inside the array. Resolve public address for this
+         * server name.
+         * @param serverName The name of the stun server
+         * @param port number
+         */
+        pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
+
+        pj_status_t destroyStunResolver(const std::string serverName);
+
     private:
         /**
          * Start a SIP Call
@@ -294,16 +305,6 @@ class SIPVoIPLink : public VoIPLink {
         SIPVoIPLink();
 
         /**
-         * Resolve public address for this account
-         */
-        pj_status_t stunServerResolve(pj_str_t serverName, pj_uint16_t port);
-
-        /**
-         * Create the default TLS listener.
-         */
-        void createTlsListener(SIPAccount*, pjsip_tpfactory **listener);
-
-        /**
          * General Sip transport creation method according to the
          * transport type specified in account settings
          * @param account The account for which a transport must be created.
@@ -317,10 +318,32 @@ class SIPVoIPLink : public VoIPLink {
         pjsip_transport *createUdpTransport(std::string interface, unsigned int port);
 
         /**
-         * Create a TLS transport from the default TLS listener from
-         * @param account The account for which a transport must be created.
+         * Create The default TLS listener which is global to the application. This means that
+         * only one TLS connection can be established for the momment.
+         * @param the port number to create the TCP socket
+         * @param pjsip's tls settings for the transport to be created which contains:
+         *      - path to ca certificate list file
+         *      - path to certertificate file
+         *      - path to private key file
+         *      - the password for the file
+         *      - the TLS method
+         * @param a pointer to store the listener created, in our case this is a static pointer
          */
-        void createTlsTransport(SIPAccount *, std::string remoteAddr);
+        void createTlsListener(pj_uint16_t, pjsip_tls_setting *, pjsip_tpfactory **);
+
+        /**
+         * Create a connection oriented TLS transport and register to the specified remote address.
+         * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
+         * is allowed to be created in the application. Any subsequent account attempting to
+         * register a new using this transport even if new settings are specified.
+         * @param the remote address for this transport to be connected
+         * @param the local port to initialize the TCP socket
+         * @param pjsip's tls transport parameters
+         */
+        pjsip_transport *
+        createTlsTransport(const std::string &remoteAddr,
+                           pj_uint16_t tlsListenerPort,
+                           pjsip_tls_setting *tlsSetting);
 
         /**
          * Create a UDP transport using stun server to resove public address
@@ -333,6 +356,12 @@ class SIPVoIPLink : public VoIPLink {
          * several accounts would share the same port number.
          */
         std::map<pj_uint16_t, pjsip_transport*> transportMap_;
+
+        /**
+         * Stun resolver array
+         */
+        std::map<std::string, pj_stun_sock *> stunSocketMap_;
+
 
         /**
          * Threading object
