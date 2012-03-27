@@ -201,7 +201,6 @@ update_actions()
     GtkToolItem *separator = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), separator, -1);
     // add mute button
-    add_to_toolbar(toolbar_, muteWidget_, -1);
     gtk_action_set_sensitive(muteAction_, TRUE);
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
@@ -244,6 +243,7 @@ update_actions()
                     pos = 0;
                     add_to_toolbar(toolbar_, pickUpWidget_, pos++);
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
+                    add_to_toolbar(toolbar_, muteWidget_, pos++);
                     break;
                 }
             case CALL_STATE_HOLD:
@@ -273,6 +273,7 @@ update_actions()
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
                     pos = 1;
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
+                    add_to_toolbar(toolbar_, muteWidget_, pos++);
                     break;
                 }
             case CALL_STATE_DIALING:
@@ -324,6 +325,7 @@ update_actions()
                         gtk_action_set_sensitive(imAction_, TRUE);
                         add_to_toolbar(toolbar_, imToolbar_, pos++);
                     }
+                    add_to_toolbar(toolbar_, muteWidget_, pos++);
 
                     break;
                 }
@@ -352,6 +354,7 @@ update_actions()
                         gtk_action_set_sensitive(imAction_, TRUE);
                         add_to_toolbar(toolbar_, imToolbar_, pos++);
                     }
+                    add_to_toolbar(toolbar_, muteWidget_, pos++);
 
                     break;
                 }
@@ -376,6 +379,7 @@ update_actions()
                     gtk_widget_set_sensitive(holdMenu_, TRUE);
                     gtk_widget_set_sensitive(holdToolbar_, TRUE);
                     gtk_widget_set_sensitive(transferToolbar_, TRUE);
+                    add_to_toolbar(toolbar_, muteWidget_, pos++);
                     break;
                 }
             default:
