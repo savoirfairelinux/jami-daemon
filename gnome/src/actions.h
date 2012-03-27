@@ -52,27 +52,27 @@
  * Initialize lists and configurations
  * @return TRUE if succeeded, FALSE otherwise
  */
-gboolean sflphone_init () ;
+gboolean sflphone_init();
 
 /**
  * Steps when closing the application.  Will ask for confirmation if a call is in progress.
  */
-void sflphone_quit () ;
+void sflphone_quit();
 
 /**
  * Hang up / refuse the current call
  */
-void sflphone_hang_up ();
+void sflphone_hang_up();
 
 /**
  * Put the selected call on hold
  */
-void sflphone_on_hold ();
+void sflphone_on_hold();
 
 /**
  * Put the selected call off hold
  */
-void sflphone_off_hold ();
+void sflphone_off_hold();
 
 /**
  * Open a new call
@@ -85,7 +85,7 @@ callable_obj_t * sflphone_new_call();
  * @param accountID The account the voice mails are for
  * @param count The number of voice mails
  */
-void sflphone_notify_voice_mail (const gchar* accountID , guint count);
+void sflphone_notify_voice_mail(const gchar* accountID, guint count);
 
 /**
  * Prepare SFLphone to transfer a call and wait for the user to dial the number to transfer to
@@ -101,49 +101,49 @@ void sflphone_unset_transfer();
 /**
  * Accept / dial the current call
  */
-void sflphone_pick_up ();
+void sflphone_pick_up();
 
 /**
  * Put the call on hold state
  * @param c The current call
  */
-void sflphone_hold (callable_obj_t * c);
+void sflphone_hold(callable_obj_t * c);
 
 /**
  * Put the call in Ringing state
  * @param c* The current call
  */
-void sflphone_ringing (callable_obj_t * c);
+void sflphone_ringing(callable_obj_t * c);
 
 /**
  * Put the call in Busy state
  * @param c* The current call
  */
-void sflphone_busy (callable_obj_t * c);
+void sflphone_busy(callable_obj_t * c);
 
 /**
  * Put the call in Failure state
  * @param c* The current call
  */
-void sflphone_fail (callable_obj_t * c);
+void sflphone_fail(callable_obj_t * c);
 
 /**
  * Put the call in Current state
  * @param c The current call
  */
-void sflphone_current (callable_obj_t * c);
+void sflphone_current(callable_obj_t * c);
 
 /**
  * The callee has hung up
  * @param c The current call
  */
-void sflphone_hung_up (callable_obj_t * c);
+void sflphone_hung_up(callable_obj_t * c);
 
 /**
  * Incoming call
  * @param c The incoming call
  */
-void sflphone_incoming_call (callable_obj_t * c);
+void sflphone_incoming_call(callable_obj_t * c);
 
 /**
  * Dial the number
@@ -151,19 +151,19 @@ void sflphone_incoming_call (callable_obj_t * c);
  * @param keyval The unique int representing the key
  * @param key The char value of the key
  */
-void sflphone_keypad (guint keyval, gchar * key);
+void sflphone_keypad(guint keyval, gchar * key);
 
 /**
  * Place a call with a filled callable_obj_t.to
  * @param c A call in CALL_STATE_DIALING state
  */
-void sflphone_place_call (callable_obj_t * c);
+void sflphone_place_call(callable_obj_t * c);
 
 /**
  * Fetch the ip2ip profile through dbus and fill
  * the internal hash table.
  */
-void sflphone_fill_ip2ip_profile (void);
+void sflphone_fill_ip2ip_profile(void);
 
 /**
  * @return The internal hash table representing
@@ -174,51 +174,49 @@ GHashTable *sflphone_get_ip2ip_properties(void);
 /**
  * Initialize the accounts data structure
  */
-void sflphone_fill_account_list ();
+void sflphone_fill_account_list();
 
-void sflphone_fill_call_list (void);
+void sflphone_fill_call_list(void);
 
 /**
  * Set an account as current. The current account is to one used to place calls with by default
- * The current account is the first in the account list ( index 0 )
+ * The current account is the first in the account list( index 0 )
  */
 void sflphone_set_current_account();
 
 /**
  * Initialialize the codecs data structure
  */
-void sflphone_fill_codec_list ();
-
-void sflphone_fill_codec_list_per_account (account_t *);
+void sflphone_fill_codec_list_per_account(account_t *);
 
 void sflphone_add_participant();
 
-void sflphone_record (callable_obj_t *c);
+void sflphone_record(callable_obj_t *c);
 
-void sflphone_rec_call (void);
+void sflphone_rec_call(void);
 
-void sflphone_mute_call (void);
+void sflphone_mute_call(void);
 
-void status_bar_display_account ();
+void status_bar_display_account();
 
-void sflphone_fill_history (void);
+void sflphone_fill_history(void);
 
 /**
  * Action called when a new participant is dragged in
  */
-void sflphone_add_participant (const gchar* callID, const gchar* confID);
+void sflphone_add_participant(const gchar* callID, const gchar* confID);
 
 /**
  * Action called when a conference participant is draged out
  */
-void sflphone_detach_participant (const gchar* callID);
+void sflphone_detach_participant(const gchar* callID);
 
 /**
  * Nofity that the communication is
  * now secured using SRTP/SDES.
  * @param c* The current call
  */
-void sflphone_srtp_sdes_on (callable_obj_t * c);
+void sflphone_srtp_sdes_on(callable_obj_t * c);
 
 /**
  * Notify that the SRTP/SDES session
@@ -230,14 +228,14 @@ void sflphone_srtp_sdes_on (callable_obj_t * c);
  * now secured using ZRTP.
  * @param c* The current call
  */
-void sflphone_srtp_zrtp_on (callable_obj_t * c);
+void sflphone_srtp_zrtp_on(callable_obj_t * c);
 
 /**
  * Called when the ZRTP session goes
  * unsecured.
  * @param c* The current call
  */
-void sflphone_srtp_zrtp_off (callable_obj_t * c);
+void sflphone_srtp_zrtp_off(callable_obj_t * c);
 
 /**
  * Called when the sas has been computed
@@ -246,13 +244,14 @@ void sflphone_srtp_zrtp_off (callable_obj_t * c);
  * @param sas* The Short Authentication String
  * @param verified* Weather the SAS was confirmed or not.
  */
-void sflphone_srtp_zrtp_show_sas (callable_obj_t * c, const gchar* sas, const gboolean verified);
+void sflphone_srtp_zrtp_show_sas(callable_obj_t * c, const gchar* sas, const gboolean verified);
 
 /**
  * Called when user wants to clear.
  * @param c* The call on which to go clear
  */
-void sflphone_request_go_clear (void);
+
+void sflphone_request_go_clear(void);
 
 /**
  * Called when the UI needs to be refreshed to
@@ -262,12 +261,12 @@ void sflphone_request_go_clear (void);
  * @param description A textual description of the code
  * @param code The status code as in SIP or IAX
  */
-void sflphone_call_state_changed (callable_obj_t * c, const gchar * description, const guint code);
+void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code);
 
-void sflphone_add_main_participant (const conference_obj_t * c);
+void sflphone_add_main_participant(const conference_obj_t * c);
 
-void sflphone_srtp_sdes_off (callable_obj_t * c);
+void sflphone_srtp_sdes_off(callable_obj_t * c);
 
-void sflphone_fill_conference_list (void);
+void sflphone_fill_conference_list(void);
 
 #endif
