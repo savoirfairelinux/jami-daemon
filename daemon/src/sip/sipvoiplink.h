@@ -340,7 +340,10 @@ class SIPVoIPLink : public VoIPLink {
          * @param the local port to initialize the TCP socket
          * @param pjsip's tls transport parameters
          */
-        pjsip_transport *createTlsTransport(std::string, pj_uint16_t tlsListenerPort, pjsip_tls_setting *tlsSetting);
+        pjsip_transport *
+        createTlsTransport(const std::string &remoteAddr,
+                           pj_uint16_t tlsListenerPort,
+                           pjsip_tls_setting *tlsSetting);
 
         /**
          * Create a UDP transport using stun server to resove public address
