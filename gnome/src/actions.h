@@ -172,7 +172,8 @@ void sflphone_fill_ip2ip_profile(void);
 GHashTable *sflphone_get_ip2ip_properties(void);
 
 /**
- * Initialize the accounts data structure
+ * Get a list of accounts from the daemon and load them into account_t
+ * structures.
  */
 void sflphone_fill_account_list();
 

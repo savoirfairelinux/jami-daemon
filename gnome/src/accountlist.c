@@ -75,8 +75,7 @@ static gint get_state_struct(gconstpointer a, gconstpointer b)
 
 void account_list_init()
 {
-    if (accountQueue)
-        account_list_free();
+    account_list_free();
     accountQueue = g_queue_new();
 }
 
@@ -200,9 +199,11 @@ void account_list_free_elm(gpointer elm, gpointer data UNUSED)
 
 void account_list_free()
 {
-    g_queue_foreach(accountQueue, account_list_free_elm, NULL);
-    g_queue_free(accountQueue);
-    accountQueue = NULL;
+    if (accountQueue) {
+        g_queue_foreach(accountQueue, account_list_free_elm, NULL);
+        g_queue_free(accountQueue);
+        accountQueue = NULL;
+    }
 }
 
 void

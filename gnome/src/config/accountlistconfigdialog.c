@@ -44,7 +44,6 @@
 
 static const int CONTEXT_ID_REGISTRATION = 0;
 
-static GtkWidget *add_button;
 static GtkWidget *edit_button;
 static GtkWidget *delete_button;
 static GtkWidget *move_down_button;
@@ -516,7 +515,7 @@ create_account_list()
     g_signal_connect(G_OBJECT(move_down_button), "clicked",
                      G_CALLBACK(move_down_cb), tree_view);
 
-    add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
+    GtkWidget *add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
     g_signal_connect_swapped(G_OBJECT(add_button), "clicked",
                              G_CALLBACK(add_account_cb), NULL);
     gtk_box_pack_start(GTK_BOX(button_box), add_button, FALSE, FALSE, 0);

@@ -57,7 +57,6 @@
 #include "actions.h"
 #include "dbus/dbus.h"
 #include "logger.h"
-#include "config/accountlistconfigdialog.h"
 #include "contacts/calltab.h"
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
@@ -122,13 +121,12 @@ static gboolean is_direct_call(callable_obj_t * c)
 void
 status_bar_display_account()
 {
-    gchar* msg;
-
     statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
 
     account_t *acc = account_list_get_current();
     status_tray_icon_online(acc != NULL);
 
+    gchar* msg;
     if (acc) {
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                                       _("Using account"),
@@ -253,7 +251,6 @@ void sflphone_fill_account_list(void)
 
     // Set the current account message number
     current_account_set_message_number(current_account_get_message_number());
-    account_store_fill();
 }
 
 gboolean sflphone_init(GError **error)
