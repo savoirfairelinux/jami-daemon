@@ -48,7 +48,7 @@ static GtkWidget *edit_button;
 static GtkWidget *delete_button;
 static GtkWidget *move_down_button;
 static GtkWidget *move_up_button;
-static GtkWidget *status_bar;
+static GtkWidget *account_list_status_bar;
 static GtkListStore *account_store;
 static GtkDialog *account_list_dialog;
 
@@ -204,7 +204,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(delete_button, TRUE);
 
         /* Update status bar about current registration state */
-        gtk_statusbar_pop(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION);
+        gtk_statusbar_pop(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION);
 
         const gchar *state_name = account_state_name(selected_account->state);
         if (selected_account->protocol_state_description != NULL
@@ -215,14 +215,14 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
                                    selected_account->protocol_state_description,
                                    selected_account->protocol_state_code);
             gchar * message = g_strconcat(state_name, ". ", response, NULL);
-            gtk_statusbar_push(GTK_STATUSBAR(status_bar),
+            gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
                                CONTEXT_ID_REGISTRATION, message);
 
             g_free(response);
             g_free(message);
 
         } else {
-            gtk_statusbar_push(GTK_STATUSBAR(status_bar),
+            gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
                                CONTEXT_ID_REGISTRATION, state_name);
         }
     } else {
@@ -436,8 +436,6 @@ create_account_list()
     gtk_table_attach(GTK_TABLE(table), scrolled_window, 0, 1, 0, 1,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    if (account_store)
-        gtk_list_store_clear(account_store);
     account_store = gtk_list_store_new(COLUMN_ACCOUNT_COUNT,
                                        G_TYPE_STRING,  // Name
                                        G_TYPE_STRING,  // Protocol
@@ -590,9 +588,9 @@ void show_account_list_config_dialog(void)
     gtk_container_add(GTK_CONTAINER(accountFrame), tab);
 
     /* Status bar for the account list */
-    status_bar = gtk_statusbar_new();
-    gtk_widget_show(status_bar);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(account_list_dialog)), status_bar, TRUE, TRUE, 0);
+    account_list_status_bar = gtk_statusbar_new();
+    gtk_widget_show(account_list_status_bar);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(account_list_dialog)), account_list_status_bar, TRUE, TRUE, 0);
 
     const gint num_accounts = account_list_get_registered_accounts();
 
@@ -600,11 +598,11 @@ void show_account_list_config_dialog(void)
         gchar * message = g_strdup_printf(n_("There is %d active account",
                                              "There are %d active accounts",
                                              num_accounts), num_accounts);
-        gtk_statusbar_push(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION,
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION,
                            message);
         g_free(message);
     } else {
-        gtk_statusbar_push(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION,
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION,
                            _("You have no active account"));
     }
 
