@@ -33,6 +33,7 @@
 #include "str_utils.h"
 #include "dbus.h"
 #include "accountlist.h"
+#include "logger.h"
 #include "actions.h"
 #include "unused.h"
 
@@ -227,6 +228,13 @@ const gchar* account_list_get_current_id(void)
         return current->accountID;
     else
         return NULL;
+}
+
+void account_list_remove(const gchar *accountID)
+{
+    account_t *target = account_list_get_by_id(accountID);
+    if (target && !g_queue_remove(accountQueue, target))
+        ERROR("Could not remove account with ID %s", accountID);
 }
 
 gchar * account_list_get_ordered_list(void)

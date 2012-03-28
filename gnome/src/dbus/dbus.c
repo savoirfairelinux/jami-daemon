@@ -1096,6 +1096,7 @@ dbus_remove_account(const gchar *accountID)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_remove_account(config_proxy, accountID, &error);
+    account_list_remove(accountID);
     check_error(error);
 }
 

@@ -417,7 +417,6 @@ delete_credential_cb(GtkWidget *button UNUSED, gpointer data)
         GtkTreePath *path;
         path = gtk_tree_model_get_path(model, &iter);
         gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
-
         gtk_tree_path_free(path);
     }
 }
@@ -1254,15 +1253,18 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
         account->credential_information = get_new_credential();
 
     /** @todo Verify if it's the best condition to check */
-    if (g_strcmp0(account->accountID, "new") == 0)
+    if (g_strcmp0(account->accountID, "new") == 0) {
         dbus_add_account(account);
-    else
+        if (account->credential_information)
+            dbus_set_credentials(account);
+    } else {
+        if (account->credential_information)
+            dbus_set_credentials(account);
         dbus_set_account_details(account);
+    }
 
     // propagate changes to the daemon
     codec_list_update_to_daemon(account);
-    if (account->credential_information)
-        dbus_set_credentials(account);
 
     g_free(current_protocol);
     gtk_widget_destroy(dialog);

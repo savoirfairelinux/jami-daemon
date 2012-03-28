@@ -83,10 +83,34 @@ get_selected_accountID(GtkTreeView *tree_view)
     return selected_accountID;
 }
 
-static void delete_account_cb(gpointer data)
+static gboolean
+find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
+                              GtkTreeIter *iter)
+{
+    gboolean valid = gtk_tree_model_get_iter_first(model, iter);
+    gboolean found = FALSE;
+    while (valid && !found) {
+        gchar *id;
+        gtk_tree_model_get(model, iter, COLUMN_ACCOUNT_ID, &id, -1);
+        if (g_strcmp0(id, accountID) == 0)
+            found = TRUE;
+        else
+            valid = gtk_tree_model_iter_next(model, iter);
+        g_free(id);
+    }
+    return found;
+}
+
+
+static void delete_account_cb(GtkButton *button UNUSED, gpointer data)
 {
     gchar *selected_accountID = get_selected_accountID(data);
     RETURN_IF_NULL(selected_accountID, "No selected account in delete action");
+    GtkTreeModel *model = GTK_TREE_MODEL(account_store);
+    GtkTreeIter iter;
+    if (find_account_in_account_store(selected_accountID, model, &iter))
+        gtk_list_store_remove(account_store, &iter);
+
     dbus_remove_account(selected_accountID);
     g_free(selected_accountID);
 }
@@ -511,8 +535,8 @@ create_account_list()
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
     gtk_widget_set_sensitive(delete_button, FALSE);
-    g_signal_connect_swapped(G_OBJECT(delete_button), "clicked",
-                             G_CALLBACK(delete_account_cb), tree_view);
+    g_signal_connect(G_OBJECT(delete_button), "clicked",
+                     G_CALLBACK(delete_account_cb), tree_view);
     gtk_box_pack_start(GTK_BOX(button_box), delete_button, FALSE, FALSE, 0);
 
     /* help and close buttons */
@@ -573,21 +597,11 @@ void update_account_list_status_bar(account_t *account)
         gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
                            CONTEXT_ID_REGISTRATION, state_name);
     }
+
     GtkTreeModel *model = GTK_TREE_MODEL(account_store);
     GtkTreeIter iter;
-    gboolean looking = gtk_tree_model_get_iter_first(model, &iter);
-    while (looking) {
-        gchar *id;
-        gtk_tree_model_get(model, &iter, COLUMN_ACCOUNT_ID, &id, -1);
-        if (g_strcmp0(id, account->accountID) == 0) {
-            gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS,
-                               state_name, -1);
-            looking = FALSE;
-        } else {
-            looking = gtk_tree_model_iter_next(model, &iter);
-        }
-        g_free(id);
-    }
+    if (find_account_in_account_store(account->accountID, model, &iter))
+        gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS, state_name, -1);
 }
 
 void show_account_list_config_dialog(void)
