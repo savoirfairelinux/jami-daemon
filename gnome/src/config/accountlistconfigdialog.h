@@ -29,10 +29,12 @@
  */
 
 
-#ifndef __SFL_ACCOUNTLISTDIALOG_H__
-#define __SFL_ACCOUNTLISTDIALOG_H__
+#ifndef ACCOUNTLISTDIALOG_H_
+#define ACCOUNTLISTDIALOG_H_
+
+#include "accountlist.h"
 
 void show_account_list_config_dialog(void);
-void account_store_fill(void);
+void update_account_list_status_bar(account_t *account);
 
-#endif
+#endif // ACCOUNTLISTDIALOG_H_

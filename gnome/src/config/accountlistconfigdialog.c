@@ -204,27 +204,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(delete_button, TRUE);
 
         /* Update status bar about current registration state */
-        gtk_statusbar_pop(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION);
-
-        const gchar *state_name = account_state_name(selected_account->state);
-        if (selected_account->protocol_state_description != NULL
-            && selected_account->protocol_state_code != 0) {
-
-            gchar * response = g_strdup_printf(
-                                   _("Server returned \"%s\" (%d)"),
-                                   selected_account->protocol_state_description,
-                                   selected_account->protocol_state_code);
-            gchar * message = g_strconcat(state_name, ". ", response, NULL);
-            gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
-                               CONTEXT_ID_REGISTRATION, message);
-
-            g_free(response);
-            g_free(message);
-
-        } else {
-            gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
-                               CONTEXT_ID_REGISTRATION, state_name);
-        }
+        update_account_list_status_bar(selected_account);
     } else {
         gtk_widget_set_sensitive(move_up_button, FALSE);
         gtk_widget_set_sensitive(move_down_button, FALSE);
@@ -484,8 +464,7 @@ create_account_list()
     renderer = gtk_cell_renderer_text_new();
     tree_view_column = gtk_tree_view_column_new_with_attributes(_("Status"),
                      renderer,
-                     "markup", COLUMN_ACCOUNT_STATUS,
-                     NULL);
+                     "markup", COLUMN_ACCOUNT_STATUS, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), tree_view_column);
     // Highlight IP profile
     gtk_tree_view_column_set_cell_data_func(tree_view_column, renderer,
@@ -566,6 +545,32 @@ create_account_list()
     return table;
 }
 
+void update_account_list_status_bar(account_t *account)
+{
+    if (!account || !account_list_status_bar)
+        return;
+
+    /* Update status bar about current registration state */
+    gtk_statusbar_pop(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION);
+
+    const gchar *state_name = account_state_name(account->state);
+    if (account->protocol_state_description != NULL && account->protocol_state_code != 0) {
+
+        gchar * response = g_strdup_printf(_("Server returned \"%s\" (%d)"),
+                                           account->protocol_state_description,
+                                           account->protocol_state_code);
+        gchar * message = g_strconcat(state_name, ". ", response, NULL);
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
+                           CONTEXT_ID_REGISTRATION, message);
+
+        g_free(response);
+        g_free(message);
+    } else {
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
+                           CONTEXT_ID_REGISTRATION, state_name);
+    }
+}
+
 void show_account_list_config_dialog(void)
 {
     account_list_dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Accounts"),
@@ -611,7 +616,17 @@ void show_account_list_config_dialog(void)
     status_bar_display_account();
 
     gtk_widget_destroy(GTK_WIDGET(account_list_dialog));
+
+    /* Invalidate static pointers */
     account_list_dialog = NULL;
+    account_list_status_bar = NULL;
+    edit_button = NULL;
+    delete_button = NULL;
+    move_down_button = NULL;
+    move_up_button = NULL;
+    gtk_list_store_clear(account_store);
+    account_store = NULL;
+
     update_actions();
 }
 

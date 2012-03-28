@@ -29,7 +29,10 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <glib/gi18n.h>
 #include "str_utils.h"
 #include "logger.h"
@@ -43,6 +46,7 @@
 #include "sliders.h"
 #include "statusicon.h"
 #include "assistant.h"
+#include "accountlistconfigdialog.h"
 
 #include "dbus.h"
 #include "actions.h"
@@ -428,8 +432,10 @@ registration_state_changed_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
     DEBUG("DBus: Registration state changed to %s for account %s",
           account_state_name(state), accountID);
     account_t *acc = account_list_get_by_id(accountID);
-    if (acc)
+    if (acc) {
         acc->state = state;
+        update_account_list_status_bar(acc);
+    }
 }
 
 static void
