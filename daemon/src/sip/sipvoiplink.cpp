@@ -65,10 +65,6 @@
 #include <istream>
 #include <utility> // for std::pair
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <linux/if.h>
 
 #include <map>
 

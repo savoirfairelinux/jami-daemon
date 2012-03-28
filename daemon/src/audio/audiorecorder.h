@@ -32,7 +32,7 @@
 #define __AUDIORECORDER_H_
 
 #include <string>
-#include <cc++/thread.h>
+#include <commoncpp/thread.h>
 #include "audiorecord.h"
 #include "noncopyable.h"
 

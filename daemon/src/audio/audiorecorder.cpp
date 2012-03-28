@@ -38,7 +38,6 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread(),
     recorderId_(), mbuffer_(mb), arecord_(arec)
 {
     assert(mb);
-    setCancel(cancelDeferred);
 
     ++count_;
 

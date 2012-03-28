@@ -47,7 +47,6 @@ using std::ptrdiff_t;
 #pragma GCC diagnostic ignored "-Weffc++"
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
-#include <cc++/numbers.h> // ost::Time
 
 class SIPCall;
 
@@ -69,7 +68,8 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
 
         int startSymmetricRtpThread() {
             assert(rtpThread_);
-            return rtpThread_->start();
+            rtpThread_->start();
+            return 0;
         }
 
     private:

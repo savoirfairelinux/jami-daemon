@@ -79,6 +79,7 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
         Thread::sleep(TimerPort::getTimer());
 
         TimerPort::incTimer(threadSleep);
+        DEBUG("Main Loop Running");
     }
 
     DEBUG("AudioRtpThread: Leaving audio rtp thread loop");

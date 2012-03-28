@@ -37,12 +37,12 @@
 #include <iostream>
 #include <memory> // for auto_ptr
 #include <string>
-#include <cc++/common.h>
+// #include <commoncpp/common.h>
 #include "fileutils.h"
 
 #include "dbus/dbusmanager.h"
 #include "manager.h"
-
+/*
 ost::CommandOptionNoArg	console(
     "console", "c", "Log in console (instead of syslog)"
 );
@@ -54,18 +54,18 @@ ost::CommandOptionNoArg	debug(
 ost::CommandOptionNoArg	help(
     "help", "h", "Print help"
 );
-
+*/
 int main(int argc, char **argv)
 {
     fileutils::set_program_dir(argv[0]);
     // makeCommandOptionParse allocates the object with operator new, so
     // auto_ptr is fine in this context.
     // TODO: This should eventually be replaced with std::unique_ptr for C++0x
-    std::auto_ptr<ost::CommandOptionParse> args(ost::makeCommandOptionParse(argc, argv, ""));
+    // std::auto_ptr<ost::CommandOptionParse> args(ost::makeCommandOptionParse(argc, argv, ""));
 
     printf("SFLphone Daemon " VERSION ", by Savoir-Faire Linux 2004-2012\n" \
            "http://www.sflphone.org/\n");
-
+/*
     if (help.numSet) {
         std::cerr << args->printUsage();
         return 0;
@@ -74,9 +74,11 @@ int main(int argc, char **argv)
         std::cerr << args->printUsage();
         return 1;
     }
-
-    Logger::setConsoleLog(console.numSet);
-    Logger::setDebugMode(debug.numSet);
+*/
+    // Logger::setConsoleLog(console.numSet);
+    // Logger::setDebugMode(debug.numSet);
+    Logger::setConsoleLog(1);
+    Logger::setDebugMode(1);
 
     if (!fileutils::create_pidfile())
         return 1;

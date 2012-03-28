@@ -55,7 +55,6 @@ class AlsaThread : public ost::Thread {
 AlsaThread::AlsaThread(AlsaLayer *alsa)
     : Thread(), alsa_(alsa)
 {
-    setCancel(cancelDeferred);
 }
 
 /**
@@ -63,7 +62,7 @@ AlsaThread::AlsaThread(AlsaLayer *alsa)
  */
 void AlsaThread::run()
 {
-    while (!testCancel()) {
+    while (1) {
         alsa_->audioCallback();
         Thread::sleep(20);
     }

@@ -247,8 +247,9 @@ int AudioRtpSession::startRtpThread(AudioCodec* audiocodec)
     initNoiseSuppress();
 
     queue_->enableStack();
-    int ret = thread_->start();
+    thread_->start();
 
+    int ret = 0;
     if (type_ == Zrtp)
         return ret;
 

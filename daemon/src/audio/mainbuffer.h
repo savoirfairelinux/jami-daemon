@@ -34,7 +34,7 @@
 
 #include <map>
 #include <set>
-#include <cc++/thread.h> // for ost::Mutex
+#include <commoncpp/thread.h> // for ost::Mutex
 #include <string>
 
 #include "global.h"

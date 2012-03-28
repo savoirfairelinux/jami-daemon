@@ -61,7 +61,6 @@ AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFile
     DEBUG("AudioZrtpSession initialized");
     initializeZid();
 
-    setCancel(cancelDefault);
 
     DEBUG("AudioZrtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
 }
@@ -135,10 +134,8 @@ void AudioZrtpSession::run()
         else
             sendMicData();
 
-        setCancel(cancelDeferred);
         controlReceptionService();
         controlTransmissionService();
-        setCancel(cancelImmediate);
         uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
         // make sure the scheduling timeout is
         // <= the check interval for RTCP
@@ -146,18 +143,12 @@ void AudioZrtpSession::run()
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
         if (timeout < 1000) {   // !(timeout/1000)
-            setCancel(cancelDeferred);
             // dispatchDataPacket();
-            setCancel(cancelImmediate);
             timerTick();
         } else {
             if (isPendingData(timeout/1000)) {
-                setCancel(cancelDeferred);
-
                 if (isActive())
                     takeInDataPacket();
-
-                setCancel(cancelImmediate);
             }
             timeout = 0;
         }

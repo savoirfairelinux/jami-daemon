@@ -43,7 +43,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <linux/if.h>
+// #include <linux/if.h>
+#include <arpa/inet.h>
 
 #include "siptransport.h"
 #include "manager.h"

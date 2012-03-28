@@ -33,7 +33,6 @@
 
 EventThread::EventThread(VoIPLink *link) : Thread(), link_(link)
 {
-    setCancel(cancelDeferred);
 }
 
 EventThread::~EventThread() {
@@ -42,7 +41,7 @@ EventThread::~EventThread() {
 
 void EventThread::run()
 {
-    while (!testCancel())
+    while (1)
         link_->getEvent();
 }
 

@@ -39,7 +39,7 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <cc++/thread.h>
+#include <commoncpp/thread.h>
 #include <memory>
 #include "dbus/dbusmanager.h"
 

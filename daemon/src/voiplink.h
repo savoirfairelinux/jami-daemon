@@ -36,7 +36,7 @@
 
 #include <stdexcept>
 #include <map>
-#include <cc++/thread.h> // for ost::Mutex
+#include <commoncpp/thread.h> // for ost::Mutex
 
 class Call;
 class Account;
