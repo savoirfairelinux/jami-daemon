@@ -165,6 +165,8 @@ const gchar * account_state_name(account_state_t s)
             return _("Stun configuration error");
         case ACCOUNT_STATE_ERROR_EXIST_STUN:
             return _("Stun server invalid");
+        case ACCOUNT_STATE_IP2IP_READY:
+            return _("Ready");
         default:
             return _("Invalid");
     }

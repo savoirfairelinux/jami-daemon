@@ -59,6 +59,8 @@ typedef enum {
     ACCOUNT_STATE_ERROR_EXIST_STUN,
     /** Stun server configuration error. The account is not registered */
     ACCOUNT_STATE_ERROR_CONF_STUN,
+    /** IP2IP Account is always ready */
+    ACCOUNT_STATE_IP2IP_READY,
     /** Invalid state */
     ACCOUNT_STATE_INVALID
 } account_state_t;

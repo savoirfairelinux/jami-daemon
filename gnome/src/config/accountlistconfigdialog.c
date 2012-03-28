@@ -130,11 +130,12 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
     const gchar *enabled = account_lookup(account, ACCOUNT_ENABLED);
     const gchar *type = account_lookup(account, ACCOUNT_TYPE);
     DEBUG("Config: Adding account: Account is enabled :%s", enabled);
+    const gchar *state_name = account_state_name(account->state);
 
-    gtk_list_store_set(account_store, iter, COLUMN_ACCOUNT_ALIAS,
-                       account_lookup(account, ACCOUNT_ALIAS),
+    gtk_list_store_set(account_store, iter,
+                       COLUMN_ACCOUNT_ALIAS, account_lookup(account, ACCOUNT_ALIAS),
                        COLUMN_ACCOUNT_TYPE, type,
-                       COLUMN_ACCOUNT_STATUS, account_state_name(account->state),
+                       COLUMN_ACCOUNT_STATUS, state_name,
                        COLUMN_ACCOUNT_ACTIVE, utf8_case_equal(enabled, "true"),
                        COLUMN_ACCOUNT_ID, account->accountID, -1);
 }
@@ -150,6 +151,7 @@ void account_store_fill()
 
     // IP2IP account must be first
     account_t *ip2ip = account_list_get_by_id(IP2IP_PROFILE);
+    ip2ip->state = ACCOUNT_STATE_IP2IP_READY;
     RETURN_IF_NULL(ip2ip, "Could not find IP2IP account");
 
     GtkTreeIter iter;
@@ -551,10 +553,12 @@ void update_account_list_status_bar(account_t *account)
         return;
 
     /* Update status bar about current registration state */
-    gtk_statusbar_pop(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION);
+    gtk_statusbar_pop(GTK_STATUSBAR(account_list_status_bar),
+                      CONTEXT_ID_REGISTRATION);
 
     const gchar *state_name = account_state_name(account->state);
-    if (account->protocol_state_description != NULL && account->protocol_state_code != 0) {
+    if (account->protocol_state_description != NULL &&
+        account->protocol_state_code != 0) {
 
         gchar * response = g_strdup_printf(_("Server returned \"%s\" (%d)"),
                                            account->protocol_state_description,
@@ -568,6 +572,21 @@ void update_account_list_status_bar(account_t *account)
     } else {
         gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
                            CONTEXT_ID_REGISTRATION, state_name);
+    }
+    GtkTreeModel *model = GTK_TREE_MODEL(account_store);
+    GtkTreeIter iter;
+    gboolean looking = gtk_tree_model_get_iter_first(model, &iter);
+    while (looking) {
+        gchar *id;
+        gtk_tree_model_get(model, &iter, COLUMN_ACCOUNT_ID, &id, -1);
+        if (g_strcmp0(id, account->accountID) == 0) {
+            gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS,
+                               state_name, -1);
+            looking = FALSE;
+        } else {
+            looking = gtk_tree_model_iter_next(model, &iter);
+        }
+        g_free(id);
     }
 }
 
