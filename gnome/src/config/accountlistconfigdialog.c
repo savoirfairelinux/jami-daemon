@@ -643,7 +643,6 @@ void show_account_list_config_dialog(void)
     delete_button = NULL;
     move_down_button = NULL;
     move_up_button = NULL;
-    gtk_list_store_clear(account_store);
     account_store = NULL;
 
     update_actions();
