@@ -142,13 +142,6 @@ static void edit_account_cb(GtkButton *button UNUSED, gpointer data)
     g_free(selected_accountID);
 }
 
-static void add_account_cb(void)
-{
-    account_t *new_account = create_default_account();
-    account_list_add(new_account);
-    run_account_dialog(new_account->accountID);
-}
-
 static void account_store_add(GtkTreeIter *iter, account_t *account)
 {
     const gchar *enabled = account_lookup(account, ACCOUNT_ENABLED);
@@ -165,10 +158,12 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
 }
 
 
+
 /**
- * Fills the treelist with accounts
+ * Fills the treelist with accounts, should be called whenever the account
+ * list is modified.
  */
-void account_store_fill()
+static void account_store_fill()
 {
     RETURN_IF_NULL(account_list_dialog, "No account dialog");
     gtk_list_store_clear(account_store);
@@ -193,6 +188,14 @@ void account_store_fill()
             account_store_add(&iter, a);
         }
     }
+}
+
+static void add_account_cb(void)
+{
+    account_t *new_account = create_default_account();
+    account_list_add(new_account);
+    run_account_dialog(new_account->accountID);
+    account_store_fill();
 }
 
 /**
