@@ -301,7 +301,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Resolve public address for this account
          */
-        pj_status_t stunServerResolve(SIPAccount *);
+        pj_status_t stunServerResolve(pj_str_t serverName, pj_uint16_t port);
 
         /**
          * Create the default TLS listener.
@@ -331,7 +331,7 @@ class SIPVoIPLink : public VoIPLink {
          * Create a UDP transport using stun server to resove public address
          * @param account The account for which a transport must be created.
          */
-        void createStunTransport(SIPAccount *account);
+        pjsip_transport *createStunTransport(pj_str_t serverName, pj_uint16_t port);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case

@@ -692,17 +692,6 @@ class ManagerImpl {
         std::vector <std::string> getAddressbookList() const;
 
         /**
-         * Hook configuration
-         */
-        std::map<std::string, std::string> getHookSettings() const;
-
-        /**
-         * Hook configuration
-         */
-        void setHookSettings(const std::map<std::string, std::string>& settings);
-
-
-        /**
          * Get the audio manager
          * @return int The audio manager
          *		    "alsa"
