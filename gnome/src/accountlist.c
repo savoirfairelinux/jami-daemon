@@ -233,8 +233,16 @@ const gchar* account_list_get_current_id(void)
 void account_list_remove(const gchar *accountID)
 {
     account_t *target = account_list_get_by_id(accountID);
-    if (target && !g_queue_remove(accountQueue, target))
-        ERROR("Could not remove account with ID %s", accountID);
+    if (target) {
+#if GLIB_CHECK_VERSION(2, 30, 0)
+        if (!g_queue_remove(accountQueue, target))
+            ERROR("Could not remove account with ID %s", accountID);
+#else
+        else
+            g_queue_remove(accountQueue, target);
+#endif
+    }
+
 }
 
 gchar * account_list_get_ordered_list(void)
