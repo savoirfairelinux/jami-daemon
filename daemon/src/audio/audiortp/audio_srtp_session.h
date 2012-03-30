@@ -143,16 +143,6 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         void unBase64ConcatenatedKeys(std::string base64keys);
 
-        /**
-         * Encode input data as base64
-         */
-        std::string encodeBase64(unsigned char *input, int length);
-
-        /**
-         * Decode base64 data
-         */
-        char* decodeBase64(unsigned char *input, int length);
-
         /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
         int localCryptoSuite_;
 

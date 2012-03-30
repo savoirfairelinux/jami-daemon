@@ -42,6 +42,78 @@
 
 namespace sfl {
 
+namespace {
+    std::string
+    encodeBase64(unsigned char *input, int length)
+    {
+        // init decoder
+        BIO *b64 = BIO_new(BIO_f_base64());
+        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+
+        // init internal buffer
+        BIO *bmem = BIO_new(BIO_s_mem());
+
+        // create decoder chain
+        b64 = BIO_push(b64, bmem);
+
+        BIO_write(b64, input, length);
+        // BIO_flush (b64);
+
+        // get pointer to data
+        BUF_MEM *bptr = 0;
+        BIO_get_mem_ptr(b64, &bptr);
+
+        std::string output(bptr->data, bptr->length);
+
+        BIO_free_all(bmem);
+
+        return output;
+    }
+
+    std::vector<char> decodeBase64(unsigned char *input, int length)
+    {
+        BIO *b64, *bmem;
+
+        // init decoder and read-only BIO buffer
+        b64 = BIO_new(BIO_f_base64());
+        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+
+        // init internal buffer
+        bmem = BIO_new_mem_buf(input, length);
+
+        // create encoder chain
+        bmem = BIO_push(b64, bmem);
+
+        std::vector<char> buffer(length, 0);
+        BIO_read(bmem, &(*buffer.begin()), length);
+
+        BIO_free_all(bmem);
+
+        return buffer;
+    }
+
+    // Fills the array dest with length random bytes
+    void buffer_fill(unsigned char dest [], size_t length)
+    {
+        DEBUG("AudioSrtp: Init local master key");
+
+        // @TODO key may have different length depending on cipher suite
+        // Allocate memory for key
+        std::vector<unsigned char> random_key(length);
+
+        // Generate ryptographically strong pseudo-random bytes
+        int err;
+
+        if ((err = RAND_bytes(&(*random_key.begin()), length)) != 1)
+            DEBUG("Error occured while generating cryptographically strong pseudo-random key");
+
+        assert((sizeof dest / sizeof dest[0]) <= length);
+        memcpy(dest, &(*random_key.begin()), length);
+    }
+}
+
+
+
 AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     AudioSymmetricRtpSession(call),
     remoteCryptoCtx_(NULL),
@@ -133,41 +205,18 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 void AudioSrtpSession::initializeLocalMasterKey()
 {
     DEBUG("AudioSrtp: Init local master key");
-
     // @TODO key may have different length depending on cipher suite
     localMasterKeyLength_ = sfl::CryptoSuites[localCryptoSuite_].masterKeyLength / 8;
-
     DEBUG("AudioSrtp: Local master key length %d", localMasterKeyLength_);
-
-    // Allocate memory for key
-    unsigned char *random_key = new unsigned char[localMasterKeyLength_];
-
-    // Generate ryptographically strong pseudo-random bytes
-    int err;
-
-    if ((err = RAND_bytes(random_key, localMasterKeyLength_)) != 1)
-        DEBUG("Error occured while generating cryptographically strong pseudo-random key");
-
-    memcpy(localMasterKey_, random_key, localMasterKeyLength_);
+    buffer_fill(localMasterKey_, localMasterKeyLength_);
 }
 
 void AudioSrtpSession::initializeLocalMasterSalt()
 {
     // @TODO key may have different length depending on cipher suite
     localMasterSaltLength_ = sfl::CryptoSuites[localCryptoSuite_].masterSaltLength / 8;
-
-    // Allocate memory for key
-    unsigned char *random_key = new unsigned char[localMasterSaltLength_];
-
     DEBUG("AudioSrtp: Local master salt length %d", localMasterSaltLength_);
-
-    // Generate ryptographically strong pseudo-random bytes
-    int err;
-
-    if ((err = RAND_bytes(random_key, localMasterSaltLength_)) != 1)
-        DEBUG("Error occured while generating cryptographically strong pseudo-random key");
-
-    memcpy(localMasterSalt_, random_key, localMasterSaltLength_);
+    buffer_fill(localMasterSalt_, localMasterSaltLength_);
 }
 
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
@@ -198,13 +247,11 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     char *dataptr = (char*) base64keys.data();
 
     // decode concatenated binary keys
-    char *output = decodeBase64((unsigned char*) dataptr, strlen(dataptr));
+    std::vector<char> output(decodeBase64((unsigned char*) dataptr, strlen(dataptr)));
 
     // copy master and slt respectively
-    memcpy((void*) remoteMasterKey_, (void*) output, remoteMasterKeyLength_);
-    memcpy((void*) remoteMasterSalt_, (void*)(output + remoteMasterKeyLength_), remoteMasterSaltLength_);
-
-    delete[] output;
+    memcpy((void*) remoteMasterKey_, &(*output.begin()), remoteMasterKeyLength_);
+    memcpy((void*) remoteMasterSalt_, &(*output.begin()) + remoteMasterKeyLength_, remoteMasterSaltLength_);
 }
 
 void AudioSrtpSession::initializeRemoteCryptoContext()
@@ -240,10 +287,8 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[localCryptoSuite_];
 
-    if (localCryptoCtx_) {
+    if (localCryptoCtx_)
         delete localCryptoCtx_;
-        localCryptoCtx_ = NULL;
-    }
 
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
             0,                               // roc,
@@ -264,58 +309,6 @@ void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext, os
 {
     setInQueueCryptoContext(remoteContext);
     setOutQueueCryptoContext(localContext);
-}
-
-std::string AudioSrtpSession::encodeBase64(unsigned char *input, int length)
-{
-    BIO *b64, *bmem;
-    BUF_MEM *bptr ;
-
-    // init decoder
-    b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-
-    // init internal buffer
-    bmem = BIO_new(BIO_s_mem());
-
-    // create decoder chain
-    b64 = BIO_push(b64, bmem);
-
-    BIO_write(b64, input, length);
-    // BIO_flush (b64);
-
-    // get pointer to data
-    BIO_get_mem_ptr(b64, &bptr);
-
-    std::string output(bptr->data, bptr->length);
-
-    BIO_free_all(bmem);
-
-    return output;
-}
-
-char* AudioSrtpSession::decodeBase64(unsigned char *input, int length)
-{
-    BIO *b64, *bmem;
-
-    // init decoder and read-only BIO buffer
-    b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-
-    // init internal buffer
-    bmem = BIO_new_mem_buf(input, length);
-
-    // create encoder chain
-    bmem = BIO_push(b64, bmem);
-
-    char *buffer = new char[length];
-    memset(buffer, 0, length);
-
-    BIO_read(bmem, buffer, length);
-
-    BIO_free_all(bmem);
-
-    return buffer;
 }
 
 }
