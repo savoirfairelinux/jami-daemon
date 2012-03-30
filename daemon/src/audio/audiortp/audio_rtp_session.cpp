@@ -43,17 +43,16 @@
 #include "manager.h"
 
 namespace sfl {
-AudioRtpSession::AudioRtpSession(SIPCall * sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread) :
+AudioRtpSession::AudioRtpSession(SIPCall * sipcall, ost::RTPDataQueue *queue, ost::Thread *thread) :
     AudioRtpRecordHandler(sipcall)
     , ca_(sipcall)
-    , type_(type)
-    , remote_ip_()
-    , remote_port_(0)
     , timestamp_(0)
     , timestampIncrement_(0)
-    , timestampCount_(0)
-    , isStarted_(false)
     , queue_(queue)
+    , isStarted_(false)
+    , remote_ip_()
+    , remote_port_(0)
+    , timestampCount_(0)
     , thread_(thread)
 {
     assert(ca_);
@@ -96,26 +95,28 @@ void AudioRtpSession::setSessionMedia(AudioCodec *audioCodec)
     else
         timestampIncrement_ = frameSize;
 
-    DEBUG("AudioRptSession: Codec payload: %d", payloadType);
-    DEBUG("AudioSymmetricRtpSession: Codec sampling rate: %d", smplRate);
-    DEBUG("AudioSymmetricRtpSession: Codec frame size: %d", frameSize);
-    DEBUG("AudioSymmetricRtpSession: RTP timestamp increment: %d", timestampIncrement_);
+    DEBUG("AudioRtpSession: Codec payload: %d", payloadType);
+    DEBUG("AudioRtpSession: Codec sampling rate: %d", smplRate);
+    DEBUG("AudioRtpSession: Codec frame size: %d", frameSize);
+    DEBUG("AudioRtpSession: RTP timestamp increment: %d", timestampIncrement_);
 
     if (payloadType == g722PayloadType) {
-        DEBUG("AudioSymmetricRtpSession: Setting G722 payload format");
+        DEBUG("AudioRtpSession: Setting G722 payload format");
         queue_->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, g722RtpClockRate));
     } else {
         if (dynamic) {
-            DEBUG("AudioSymmetricRtpSession: Setting dynamic payload format");
+            DEBUG("AudioRtpSession: Setting dynamic payload format");
             queue_->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, smplRate));
         } else {
-            DEBUG("AudioSymmetricRtpSession: Setting static payload format");
+            DEBUG("AudioRtpSession: Setting static payload format");
             queue_->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) payloadType));
         }
     }
+}
 
-    if (type_ != Zrtp)
-        ca_->setRecordingSmplRate(getCodecSampleRate());
+void AudioRtpSession::incrementTimestampForDTMF()
+{
+    timestamp_ += timestampIncrement_;
 }
 
 void AudioRtpSession::sendDtmfEvent()
@@ -131,7 +132,7 @@ void AudioRtpSession::sendDtmfEvent()
 
     DEBUG("AudioRtpSession: Send RTP Dtmf (%d)", payload.event);
 
-    timestamp_ += (type_ == Zrtp) ? 160 : timestampIncrement_;
+    incrementTimestampForDTMF();
 
     // discard equivalent size of audio
     processDataEncode();
@@ -166,22 +167,18 @@ void AudioRtpSession::receiveSpeakerData()
 }
 
 
-
 void AudioRtpSession::sendMicData()
 {
     int compSize = processDataEncode();
 
     // if no data return
-    if (!compSize)
+    if (compSize == 0)
         return;
 
     // Increment timestamp for outgoing packet
     timestamp_ += timestampIncrement_;
 
-    if (type_ == Zrtp)
-        queue_->putData(timestamp_, getMicDataEncoded(), compSize);
-
-    // putData put the data on RTP queue, sendImmediate bypass this queue
+    // putData puts the data on RTP queue, sendImmediate bypass this queue
     queue_->sendImmediate(timestamp_, getMicDataEncoded(), compSize);
 }
 
@@ -238,7 +235,7 @@ int AudioRtpSession::startRtpThread(AudioCodec* audiocodec)
     if (isStarted_)
         return 0;
 
-    DEBUG("AudioSymmetricRtpSession: Starting main thread");
+    DEBUG("AudioRtpSession: Starting main thread");
 
     isStarted_ = true;
     setSessionTimeouts();
@@ -247,14 +244,7 @@ int AudioRtpSession::startRtpThread(AudioCodec* audiocodec)
     initNoiseSuppress();
 
     queue_->enableStack();
-    int ret = thread_->start();
-
-    if (type_ == Zrtp)
-        return ret;
-
-    AudioSymmetricRtpSession *self = dynamic_cast<AudioSymmetricRtpSession*>(this);
-    assert(self);
-    return self->startSymmetricRtpThread();
+    return thread_->start();
 }
 
 

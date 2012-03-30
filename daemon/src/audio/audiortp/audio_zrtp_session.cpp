@@ -50,7 +50,7 @@
 namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFilename) :
-    AudioRtpSession(sipcall, Zrtp, this, this),
+    AudioRtpSession(sipcall, this, this),
     ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>(ost::InetHostAddress(sipcall->getLocalIp().c_str()),
             sipcall->getLocalAudioPort(),
             0,
@@ -117,6 +117,24 @@ void AudioZrtpSession::initializeZid()
     return;
 }
 
+void AudioZrtpSession::sendMicData()
+{
+    int compSize = processDataEncode();
+
+    // if no data return
+    if (compSize == 0)
+        return;
+
+    // Increment timestamp for outgoing packet
+    timestamp_ += timestampIncrement_;
+
+    // this step is only needed for ZRTP
+    queue_->putData(timestamp_, getMicDataEncoded(), compSize);
+
+    // putData puts the data on RTP queue, sendImmediate bypasses this queue
+    queue_->sendImmediate(timestamp_, getMicDataEncoded(), compSize);
+}
+
 void AudioZrtpSession::run()
 {
     // Set recording sampling rate
@@ -165,4 +183,17 @@ void AudioZrtpSession::run()
 
     DEBUG("AudioZrtpSession: Left main loop for call %s", ca_->getCallId().c_str());
 }
+
+
+void AudioZrtpSession::incrementTimestampForDTMF()
+{
+    timestamp_ += 160;
+}
+
+
+void AudioZrtpSession::setSessionMedia(AudioCodec *audioCodec)
+{
+    AudioRtpSession::setSessionMedia(audioCodec);
+}
+
 }

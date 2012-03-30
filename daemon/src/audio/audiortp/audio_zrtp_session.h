@@ -43,6 +43,7 @@ using std::ptrdiff_t;
 #include <cc++/numbers.h> // OST::Time
 
 class SIPCall;
+class AudioCodec;
 
 namespace sfl {
 
@@ -68,8 +69,11 @@ class AudioZrtpSession : public AudioRtpSession, protected ost::Thread, public o
         }
 
     private:
+        void sendMicData();
         void initializeZid();
         std::string zidFilename_;
+        void incrementTimestampForDTMF();
+        void setSessionMedia(AudioCodec *codec);
 };
 
 }

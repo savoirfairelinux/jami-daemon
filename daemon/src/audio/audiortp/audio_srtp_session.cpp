@@ -59,14 +59,7 @@ AudioSrtpSession::AudioSrtpSession(SIPCall * sipcall) :
     remoteMasterSalt_(),
     remoteMasterSaltLength_(0),
     remoteOfferIsSet_(false)
-{
-    type_ = Sdes;
-}
-
-AudioSrtpSession::~AudioSrtpSession()
-{
-    DEBUG("AudioSrtp: Destroy audio srtp session");
-}
+{}
 
 void AudioSrtpSession::initLocalCryptoInfo()
 {
@@ -326,4 +319,5 @@ char* AudioSrtpSession::decodeBase64(unsigned char *input, int length)
 
     return buffer;
 }
+
 }

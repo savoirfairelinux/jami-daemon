@@ -322,8 +322,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     call->getLocalSDP()->setLocalIP(addrSdp);
 
-    call->getAudioRtp().initAudioRtpConfig();
-    call->getAudioRtp().initAudioSymmetricRtpSession();
+    call->getAudioRtp().initConfig();
+    call->getAudioRtp().initSession();
 
     if (rdata->msg_info.msg->body) {
         char sdpbuffer[1000];
@@ -340,7 +340,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
             CryptoOffer crypto_offer;
             crypto_offer.push_back(std::string(sdpoffer.substr(start, (sdpoffer.size() - start) - 1)));
 
-            std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+            std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
 
             for (int i = 0; i < 3; i++)
                 localCapabilities.push_back(sfl::CryptoSuites[i]);
@@ -699,8 +699,8 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     }
 
     try {
-        call->getAudioRtp().initAudioRtpConfig();
-        call->getAudioRtp().initAudioSymmetricRtpSession();
+        call->getAudioRtp().initConfig();
+        call->getAudioRtp().initSession();
         call->getAudioRtp().initLocalCryptoInfo();
         call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
     } catch (...) {
@@ -834,8 +834,8 @@ SIPVoIPLink::offhold(const std::string& id)
         if (audiocodec == NULL)
             throw VoipLinkException("Could not instantiate codec");
 
-        call->getAudioRtp().initAudioRtpConfig();
-        call->getAudioRtp().initAudioSymmetricRtpSession();
+        call->getAudioRtp().initConfig();
+        call->getAudioRtp().initSession();
         call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
     } catch (const SdpException &e) {
         ERROR("UserAgent: Exception: %s", e.what());
@@ -1168,8 +1168,8 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
 
     // Audio Rtp Session must be initialized before creating initial offer in SDP session
     // since SDES require crypto attribute.
-    call->getAudioRtp().initAudioRtpConfig();
-    call->getAudioRtp().initAudioSymmetricRtpSession();
+    call->getAudioRtp().initConfig();
+    call->getAudioRtp().initSession();
     call->getAudioRtp().initLocalCryptoInfo();
     call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
 
@@ -1416,7 +1416,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         std::string accountID = Manager::instance().getAccountFromCall(call->getCallId());
 
         if (dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID))->getSrtpFallback())
-            call->getAudioRtp().initAudioSymmetricRtpSession();
+            call->getAudioRtp().initSession();
     }
 
     if (!sdpSession)

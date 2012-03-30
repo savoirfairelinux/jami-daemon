@@ -43,9 +43,9 @@
 namespace sfl {
 
 AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
-    audioRtpThreadMutex_(), srtpEnabled_(false),
-    keyExchangeProtocol_(Symmetric), helloHashEnabled_(false),
-    remoteContext_(NULL), localContext_(NULL), ca_(ca)
+    audioRtpThreadMutex_(), srtpEnabled_(false), helloHashEnabled_(false),
+    remoteContext_(NULL), localContext_(NULL), ca_(ca),
+    keyExchangeProtocol_(NONE)
 {}
 
 AudioRtpFactory::~AudioRtpFactory()
@@ -53,7 +53,7 @@ AudioRtpFactory::~AudioRtpFactory()
     delete rtpSession_;
 }
 
-void AudioRtpFactory::initAudioRtpConfig()
+void AudioRtpFactory::initConfig()
 {
     if (rtpSession_ != NULL)
         stop();
@@ -65,23 +65,23 @@ void AudioRtpFactory::initAudioRtpConfig()
     if (account) {
         srtpEnabled_ = account->getSrtpEnabled();
         std::string key(account->getSrtpKeyExchange());
-
-        if (key == "sdes")
-            keyExchangeProtocol_ = Sdes;
-        else if (key == "zrtp")
-            keyExchangeProtocol_ = Zrtp;
-        else
-            keyExchangeProtocol_ = Symmetric;
-
+        if (srtpEnabled_) {
+            if (key == "sdes")
+                keyExchangeProtocol_ = SDES;
+            else if (key == "zrtp")
+                keyExchangeProtocol_ = ZRTP;
+        } else {
+            keyExchangeProtocol_ = NONE;
+        }
         helloHashEnabled_ = account->getZrtpHelloHash();
     } else {
         srtpEnabled_ = false;
-        keyExchangeProtocol_ = Symmetric;
+        keyExchangeProtocol_ = NONE;
         helloHashEnabled_ = false;
     }
 }
 
-void AudioRtpFactory::initAudioSymmetricRtpSession()
+void AudioRtpFactory::initSession()
 {
     ost::MutexLock m(audioRtpThreadMutex_);
 
@@ -90,7 +90,7 @@ void AudioRtpFactory::initAudioSymmetricRtpSession()
 
         switch (keyExchangeProtocol_) {
 
-            case Zrtp:
+            case ZRTP:
                 rtpSession_ = new AudioZrtpSession(ca_, zidFilename);
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
@@ -98,7 +98,7 @@ void AudioRtpFactory::initAudioSymmetricRtpSession()
                     ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_)->getHelloHash());
                 break;
 
-            case Sdes:
+            case SDES:
                 rtpSession_ = new AudioSrtpSession(ca_);
                 break;
 
@@ -114,12 +114,11 @@ void AudioRtpFactory::start(AudioCodec* audiocodec)
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("AudioRtpFactory: Error: RTP session was null when trying to start audio thread");
 
-    if (rtpSession_->getAudioRtpType() == Sdes)
-        if (localContext_ and remoteContext_)
-            static_cast<AudioSrtpSession *>(rtpSession_)->restoreCryptoContext(localContext_, remoteContext_);
+    if (keyExchangeProtocol_ == SDES and localContext_ and remoteContext_)
+        static_cast<AudioSrtpSession *>(rtpSession_)->restoreCryptoContext(localContext_, remoteContext_);
 
     if (rtpSession_->startRtpThread(audiocodec) != 0)
-        throw AudioRtpFactoryException("AudioRtpFactory: Error: Failed to start AudioZrtpSession thread");
+        throw AudioRtpFactoryException("AudioRtpFactory: Error: Failed to start AudioRtpSession thread");
 }
 
 void AudioRtpFactory::stop()
@@ -129,7 +128,7 @@ void AudioRtpFactory::stop()
     if (rtpSession_ == NULL)
         return;
 
-    if (rtpSession_->getAudioRtpType() == Sdes) {
+    if (keyExchangeProtocol_ == SDES) {
         localContext_ = static_cast<AudioSrtpSession*>(rtpSession_)->localCryptoCtx_;
         remoteContext_ = static_cast<AudioSrtpSession*>(rtpSession_)->remoteCryptoCtx_;
     }
@@ -162,7 +161,7 @@ void AudioRtpFactory::updateDestinationIpAddress()
 
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
-    if (rtpSession_->getAudioRtpType() == Zrtp)
+    if (keyExchangeProtocol_ == ZRTP)
         return static_cast<AudioZrtpSession *>(rtpSession_);
     else
         throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in getAudioZrtpSession");
@@ -170,15 +169,16 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 
 void sfl::AudioRtpFactory::initLocalCryptoInfo()
 {
-    if (rtpSession_ && rtpSession_->getAudioRtpType() == Sdes) {
-        static_cast<AudioSrtpSession *>(rtpSession_)->initLocalCryptoInfo();
-        ca_->getLocalSDP()->setLocalSdpCrypto(static_cast<AudioSrtpSession *>(rtpSession_)->getLocalCryptoInfo());
+    if (rtpSession_ && keyExchangeProtocol_ == SDES) {
+        AudioSrtpSession *srtpSession = static_cast<AudioSrtpSession*>(rtpSession_);
+        srtpSession->initLocalCryptoInfo();
+        ca_->getLocalSDP()->setLocalSdpCrypto(srtpSession->getLocalCryptoInfo());
     }
 }
 
 void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
-    if (rtpSession_ && rtpSession_->getAudioRtpType() == Sdes)
+    if (rtpSession_ and keyExchangeProtocol_ == SDES)
         static_cast<AudioSrtpSession *>(rtpSession_)->setRemoteCryptoInfo(nego);
     else
         throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in setRemoteCryptoInfo");
