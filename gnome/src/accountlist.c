@@ -238,8 +238,7 @@ void account_list_remove(const gchar *accountID)
         if (!g_queue_remove(accountQueue, target))
             ERROR("Could not remove account with ID %s", accountID);
 #else
-        else
-            g_queue_remove(accountQueue, target);
+        g_queue_remove(accountQueue, target);
 #endif
     }
 
