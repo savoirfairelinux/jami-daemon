@@ -27,10 +27,9 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __AUDIO_SRTP_SESSION_H__
-#define __AUDIO_SRTP_SESSION_H__
+#ifndef AUDIO_SRTP_SESSION_H_
+#define AUDIO_SRTP_SESSION_H_
 
-#include "audio_rtp_session.h"
 #include "audio_symmetric_rtp_session.h"
 #include "sip/sdes_negotiator.h"
 #include "noncopyable.h"
@@ -73,7 +72,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         /**
          * Constructor for this rtp session
          */
-        AudioSrtpSession(SIPCall * sipcall);
+        AudioSrtpSession(SIPCall &call);
 
         /**
          * Used to get sdp crypto header to be included in sdp session. This
@@ -85,7 +84,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         /**
          * Set remote crypto header from incoming sdp offer
          */
-        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
+        void setRemoteCryptoInfo(sfl::SdesNegotiator &nego);
 
         /**
          * Init local crypto context for outgoing data

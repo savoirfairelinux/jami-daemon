@@ -29,8 +29,6 @@
  */
 #include "audio_srtp_session.h"
 
-#include "sip/sipcall.h"
-
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
@@ -44,8 +42,8 @@
 
 namespace sfl {
 
-AudioSrtpSession::AudioSrtpSession(SIPCall * sipcall) :
-    AudioSymmetricRtpSession(sipcall),
+AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
+    AudioSymmetricRtpSession(call),
     remoteCryptoCtx_(NULL),
     localCryptoCtx_(NULL),
     localCryptoSuite_(0),

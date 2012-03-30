@@ -56,9 +56,9 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
     public:
         /**
         * Constructor
-        * @param sipcall The pointer on the SIP call
+        * @param call The SIP call
         */
-        AudioSymmetricRtpSession(SIPCall* sipcall);
+        AudioSymmetricRtpSession(SIPCall &call);
         ~AudioSymmetricRtpSession();
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
@@ -66,7 +66,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         }
 
         int startSymmetricRtpThread() {
-            return rtpThread_->start();
+            return rtpThread_.start();
         }
 
     private:
@@ -74,7 +74,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
 
         class AudioRtpThread : public ost::Thread, public ost::TimerPort {
             public:
-                AudioRtpThread(AudioSymmetricRtpSession *session);
+                AudioRtpThread(AudioSymmetricRtpSession &session);
 
                 virtual void run();
 
@@ -82,12 +82,12 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
 
             private:
                 NON_COPYABLE(AudioRtpThread);
-                AudioSymmetricRtpSession *rtpSession_;
+                AudioSymmetricRtpSession &rtpSession_;
         };
-        void setSessionMedia(AudioCodec *codec);
-        int startRtpThread(AudioCodec* audiocodec);
+        void setSessionMedia(AudioCodec &codec);
+        int startRtpThread(AudioCodec &audiocodec);
 
-        AudioRtpThread *rtpThread_;
+        AudioRtpThread rtpThread_;
 };
 
 }

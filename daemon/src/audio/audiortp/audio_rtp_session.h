@@ -31,16 +31,18 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef SFL_AUDIO_RTP_SESSION_H_
-#define SFL_AUDIO_RTP_SESSION_H_
+#ifndef AUDIO_RTP_SESSION_H_
+#define AUDIO_RTP_SESSION_H_
 
 #include "audio_rtp_record_handler.h"
-#include <audio/codecs/audiocodec.h>
 #include <ccrtp/rtp.h>
 #include <ccrtp/formats.h>
 #include "noncopyable.h"
 
 class SIPCall;
+namespace ost {
+    class Thread;
+}
 
 namespace sfl {
 
@@ -52,12 +54,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioRtpSession(SIPCall* sipcall, ost::RTPDataQueue *queue, ost::Thread *thread);
+        AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue, ost::Thread &thread);
         virtual ~AudioRtpSession();
 
-        void updateSessionMedia(AudioCodec *audioCodec);
+        void updateSessionMedia(AudioCodec &audioCodec);
 
-        virtual int startRtpThread(AudioCodec*);
+        virtual int startRtpThread(AudioCodec&);
 
         /**
          * Used mostly when receiving a reinvite
@@ -68,7 +70,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         /**
          * Set the audio codec for this RTP session
          */
-        virtual void setSessionMedia(AudioCodec *codec) = 0;
+        virtual void setSessionMedia(AudioCodec &codec) = 0;
 
 
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
@@ -86,7 +88,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         virtual void sendMicData();
 
-        SIPCall *ca_;
+        SIPCall &call_;
 
         /**
          * Timestamp for this session
@@ -99,7 +101,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         int timestampIncrement_;
 
-        ost::RTPDataQueue *queue_;
+        ost::RTPDataQueue &queue_;
 
         bool isStarted_;
     private:
@@ -140,7 +142,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         short timestampCount_;
 
-        ost::Thread *thread_;
+        ost::Thread &thread_;
 };
 
 }

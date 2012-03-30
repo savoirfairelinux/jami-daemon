@@ -91,7 +91,7 @@ void AudioRtpFactory::initSession()
         switch (keyExchangeProtocol_) {
 
             case ZRTP:
-                rtpSession_ = new AudioZrtpSession(ca_, zidFilename);
+                rtpSession_ = new AudioZrtpSession(*ca_, zidFilename);
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                 // not even available at that point.
                 if (helloHashEnabled_)
@@ -99,14 +99,14 @@ void AudioRtpFactory::initSession()
                 break;
 
             case SDES:
-                rtpSession_ = new AudioSrtpSession(ca_);
+                rtpSession_ = new AudioSrtpSession(*ca_);
                 break;
 
             default:
                 throw UnsupportedRtpSessionType("Unsupported Rtp Session Exception Type!");
         }
     } else
-        rtpSession_ = new AudioSymmetricRtpSession(ca_);
+        rtpSession_ = new AudioSymmetricRtpSession(*ca_);
 }
 
 void AudioRtpFactory::start(AudioCodec* audiocodec)
@@ -117,7 +117,7 @@ void AudioRtpFactory::start(AudioCodec* audiocodec)
     if (keyExchangeProtocol_ == SDES and localContext_ and remoteContext_)
         static_cast<AudioSrtpSession *>(rtpSession_)->restoreCryptoContext(localContext_, remoteContext_);
 
-    if (rtpSession_->startRtpThread(audiocodec) != 0)
+    if (rtpSession_->startRtpThread(*audiocodec) != 0)
         throw AudioRtpFactoryException("AudioRtpFactory: Error: Failed to start AudioRtpSession thread");
 }
 
@@ -150,7 +150,7 @@ void AudioRtpFactory::updateSessionMedia(AudioCodec *audiocodec)
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("AudioRtpFactory: Error: rtpSession_ was null when trying to update IP address");
 
-    rtpSession_->updateSessionMedia(audiocodec);
+    rtpSession_->updateSessionMedia(*audiocodec);
 }
 
 void AudioRtpFactory::updateDestinationIpAddress()

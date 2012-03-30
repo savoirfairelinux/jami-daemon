@@ -67,13 +67,17 @@ AudioRtpRecord::~AudioRtpRecord()
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall *ca) : audioRtpRecord_(), id_(ca->getCallId()), echoCanceller(ca->getMemoryPool()), gainController(8000, -10.0)
+AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
+    audioRtpRecord_(),
+    id_(call.getCallId()),
+    echoCanceller(call.getMemoryPool()),
+    gainController(8000, -10.0)
 {}
 
 
 AudioRtpRecordHandler::~AudioRtpRecordHandler() {}
 
-void AudioRtpRecordHandler::setRtpMedia(AudioCodec* audioCodec)
+void AudioRtpRecordHandler::setRtpMedia(AudioCodec *audioCodec)
 {
     ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
 

@@ -47,16 +47,17 @@ class AudioCodec;
 
 namespace sfl {
 
-class ZrtpZidException: public std::runtime_error {
+class ZrtpZidException : public std::runtime_error {
     public:
         ZrtpZidException(const std::string& str = "") :
             std::runtime_error("ZRTP ZID initialization failed." + str) {}
 };
 
-// class AudioZrtpSession : public ost::TimerPort, public ost::SymmetricZRTPSession, public AudioRtpRecordHandler
-class AudioZrtpSession : public AudioRtpSession, protected ost::Thread, public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> {
+class AudioZrtpSession :
+    public AudioRtpSession, protected ost::Thread,
+    public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> {
     public:
-        AudioZrtpSession(SIPCall * sipcall, const std::string& zidFilename);
+        AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
         ~AudioZrtpSession();
 
         virtual void final();
@@ -64,7 +65,7 @@ class AudioZrtpSession : public AudioRtpSession, protected ost::Thread, public o
         // Thread associated method
         virtual void run();
 
-        virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
+        virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
 
@@ -73,7 +74,7 @@ class AudioZrtpSession : public AudioRtpSession, protected ost::Thread, public o
         void initializeZid();
         std::string zidFilename_;
         void incrementTimestampForDTMF();
-        void setSessionMedia(AudioCodec *codec);
+        void setSessionMedia(AudioCodec &codec);
 };
 
 }
