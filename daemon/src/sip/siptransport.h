@@ -117,7 +117,8 @@ class SipTransport {
         * Create SIP UDP transport from account's setting
         * @param account The account for which a transport must be created.
         */
-        pjsip_transport *createUdpTransport(std::string interface, unsigned int port);
+        pjsip_transport *createUdpTransport(const std::string &interface,
+                                            unsigned int port);
 
         /**
          * Initialize the transport selector
