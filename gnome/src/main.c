@@ -112,7 +112,6 @@ main(int argc, char *argv[])
         set_minimized(TRUE);
     }
 
-
     status_bar_display_account();
 
     sflphone_fill_history();

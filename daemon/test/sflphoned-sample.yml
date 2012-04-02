@@ -1,5 +1,54 @@
 ---
 accounts:
+- alias: SFL test
+  codecs: 0/3/8/9/110/111/112/
+  credential:
+  - Account.password: 1234
+    Account.realm:
+    Account.username: sfltest
+  displayName:
+  dtmfType: overrtp
+  enable: false
+  hostname: localhost
+  id: Account:1334389473
+  interface: default
+  mailbox:
+  port: 5060
+  publishAddr: 0.0.0.0
+  publishPort: 5060
+  registrationexpire: 600
+  ringtoneEnabled: true
+  ringtonePath: /usr/share/sflphone/ringtones/konga.ul
+  sameasLocal: true
+  serviceRoute:
+  srtp:
+    enable: false
+    keyExchange:
+    rtpFallback: false
+  stunEnabled: false
+  stunServer: stun.sflphone.org
+  tls:
+    calist:
+    certificate:
+    ciphers:
+    enable: false
+    method: TLSv1
+    password:
+    privateKey:
+    requireCertif: true
+    server:
+    timeout: 2
+    tlsPort: 5061
+    verifyClient: true
+    verifyServer: true
+  type: SIP
+  updateContact: false
+  username: sfltest
+  zrtp:
+    displaySas: true
+    displaySasOnce: false
+    helloHashEnabled: true
+    notSuppWarning: true
 - alias:
   codecs: 0/
   credential:

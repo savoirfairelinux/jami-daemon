@@ -32,16 +32,11 @@
 #include "voiplink.h"
 
 EventThread::EventThread(VoIPLink *link) : Thread(), link_(link)
-{
-}
-
-EventThread::~EventThread() {
-    ost::Thread::terminate();
-}
+{}
 
 void EventThread::run()
 {
-    while (1)
+    while (isRunning())
         link_->getEvent();
 }
 

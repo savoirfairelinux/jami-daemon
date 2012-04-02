@@ -44,15 +44,13 @@
 
 static const int CONTEXT_ID_REGISTRATION = 0;
 
-static GtkWidget *add_button;
 static GtkWidget *edit_button;
 static GtkWidget *delete_button;
 static GtkWidget *move_down_button;
 static GtkWidget *move_up_button;
-static GtkWidget *status_bar;
+static GtkWidget *account_list_status_bar;
 static GtkListStore *account_store;
 static GtkDialog *account_list_dialog;
-static account_t *selected_account;
 
 // Account properties
 enum {
@@ -60,72 +58,125 @@ enum {
     COLUMN_ACCOUNT_TYPE,
     COLUMN_ACCOUNT_STATUS,
     COLUMN_ACCOUNT_ACTIVE,
-    COLUMN_ACCOUNT_DATA,
+    COLUMN_ACCOUNT_ID,
     COLUMN_ACCOUNT_COUNT
 };
 
-static void delete_account_cb(void)
+/* Get selected account ID from treeview
+ * @return copied selected_accountID, must be freed by caller */
+static gchar *
+get_selected_accountID(GtkTreeView *tree_view)
 {
-    RETURN_IF_NULL(selected_account, "No selected account in delete action");
-    dbus_remove_account(selected_account->accountID);
-    selected_account = NULL;
+    GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(tree_view);
+
+    // Find selected iteration and create a copy
+    GtkTreeIter iter;
+    gtk_tree_selection_get_selected(selection, &model, &iter);
+    // The Gvalue will be initialized in the following function
+    GValue val;
+    memset(&val, 0, sizeof(val));
+    gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_ID, &val);
+
+    gchar *selected_accountID = g_strdup(g_value_get_string(&val));
+    g_value_unset(&val);
+    return selected_accountID;
 }
 
-static void row_activated_cb(GtkTreeView *view UNUSED,
+static gboolean
+find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
+                              GtkTreeIter *iter)
+{
+    gboolean valid = gtk_tree_model_get_iter_first(model, iter);
+    gboolean found = FALSE;
+    while (valid && !found) {
+        gchar *id;
+        gtk_tree_model_get(model, iter, COLUMN_ACCOUNT_ID, &id, -1);
+        if (g_strcmp0(id, accountID) == 0)
+            found = TRUE;
+        else
+            valid = gtk_tree_model_iter_next(model, iter);
+        g_free(id);
+    }
+    return found;
+}
+
+
+static void delete_account_cb(GtkButton *button UNUSED, gpointer data)
+{
+    gchar *selected_accountID = get_selected_accountID(data);
+    RETURN_IF_NULL(selected_accountID, "No selected account in delete action");
+    GtkTreeModel *model = GTK_TREE_MODEL(account_store);
+    GtkTreeIter iter;
+    if (find_account_in_account_store(selected_accountID, model, &iter))
+        gtk_list_store_remove(account_store, &iter);
+
+    dbus_remove_account(selected_accountID);
+    g_free(selected_accountID);
+}
+
+static void
+run_account_dialog(const gchar *selected_accountID)
+{
+    account_t *account = account_list_get_by_id(selected_accountID);
+    GtkWidget *dialog = show_account_window(account);
+    update_account_from_dialog(dialog, account);
+}
+
+static void row_activated_cb(GtkTreeView *view,
                              GtkTreePath *path UNUSED,
                              GtkTreeViewColumn *col UNUSED,
                              gpointer user_data UNUSED)
 {
-    RETURN_IF_NULL(selected_account, "No selected account in edit action");
-    DEBUG("%s: accountID=%s\n", __PRETTY_FUNCTION__, selected_account->accountID);
-    show_account_window(selected_account);
+    gchar *selected_accountID = get_selected_accountID(view);
+    RETURN_IF_NULL(selected_accountID, "No selected account ID");
+    run_account_dialog(selected_accountID);
+    g_free(selected_accountID);
 }
 
-static void edit_account_cb(GtkButton *button UNUSED, gpointer data UNUSED)
+static void edit_account_cb(GtkButton *button UNUSED, gpointer data)
 {
-    RETURN_IF_NULL(selected_account, "No selected account in edit action");
-    DEBUG("%s: accountID=%s\n", __PRETTY_FUNCTION__, selected_account->accountID);
-    show_account_window(selected_account);
+    gchar *selected_accountID = get_selected_accountID(data);
+    RETURN_IF_NULL(selected_accountID, "No selected account ID");
+    run_account_dialog(selected_accountID);
+    g_free(selected_accountID);
 }
 
-static void add_account_cb(void)
+static void account_store_add(GtkTreeIter *iter, account_t *account)
 {
-    account_t *new_account = create_default_account();
-    show_account_window(new_account);
-}
+    const gchar *enabled = account_lookup(account, ACCOUNT_ENABLED);
+    const gchar *type = account_lookup(account, ACCOUNT_TYPE);
+    DEBUG("Config: Adding account: Account is enabled :%s", enabled);
+    const gchar *state_name = account_state_name(account->state);
 
-static void account_store_fill(GtkTreeIter *iter, account_t *a)
-{
-    const gchar *enabled = g_hash_table_lookup(a->properties, ACCOUNT_ENABLED);
-    const gchar *type = g_hash_table_lookup(a->properties, ACCOUNT_TYPE);
-    DEBUG("Config: Filling accounts: Account is enabled :%s", enabled);
-
-    gtk_list_store_set(account_store, iter, COLUMN_ACCOUNT_ALIAS,
-                       g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),
+    gtk_list_store_set(account_store, iter,
+                       COLUMN_ACCOUNT_ALIAS, account_lookup(account, ACCOUNT_ALIAS),
                        COLUMN_ACCOUNT_TYPE, type,
-                       COLUMN_ACCOUNT_STATUS, account_state_name(a->state),
+                       COLUMN_ACCOUNT_STATUS, state_name,
                        COLUMN_ACCOUNT_ACTIVE, utf8_case_equal(enabled, "true"),
-                       COLUMN_ACCOUNT_DATA, a, -1);
+                       COLUMN_ACCOUNT_ID, account->accountID, -1);
 }
+
+
 
 /**
- * Fills the treelist with accounts
+ * Fills the treelist with accounts, should be called whenever the account
+ * list is modified.
  */
-void account_list_config_dialog_fill()
+static void account_store_fill()
 {
     RETURN_IF_NULL(account_list_dialog, "No account dialog");
-
     gtk_list_store_clear(account_store);
 
     // IP2IP account must be first
-    account_t *ip2ip = account_list_get_by_id("IP2IP");
-
+    account_t *ip2ip = account_list_get_by_id(IP2IP_PROFILE);
+    ip2ip->state = ACCOUNT_STATE_IP2IP_READY;
     RETURN_IF_NULL(ip2ip, "Could not find IP2IP account");
 
     GtkTreeIter iter;
     gtk_list_store_append(account_store, &iter);
 
-    account_store_fill(&iter, ip2ip);
+    account_store_add(&iter, ip2ip);
 
     for (size_t i = 0; i < account_list_get_size(); ++i) {
         account_t *a = account_list_get_nth(i);
@@ -134,9 +185,17 @@ void account_list_config_dialog_fill()
         // we don't want to process the IP2IP twice
         if (a != ip2ip) {
             gtk_list_store_append(account_store, &iter);
-            account_store_fill(&iter, a);
+            account_store_add(&iter, a);
         }
     }
+}
+
+static void add_account_cb(void)
+{
+    account_t *new_account = create_default_account();
+    account_list_add(new_account);
+    run_account_dialog(new_account->accountID);
+    account_store_fill();
 }
 
 /**
@@ -147,7 +206,6 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 {
     GtkTreeIter iter;
     if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
-        selected_account = NULL;
         gtk_widget_set_sensitive(move_up_button, FALSE);
         gtk_widget_set_sensitive(move_down_button, FALSE);
         gtk_widget_set_sensitive(edit_button, FALSE);
@@ -158,13 +216,14 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
     // The Gvalue will be initialized in the following function
     GValue val;
     memset(&val, 0, sizeof(val));
-    gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_DATA, &val);
+    gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_ID, &val);
 
-    selected_account = (account_t*) g_value_get_pointer(&val);
+    gchar *selected_accountID = g_value_dup_string(&val);
     g_value_unset(&val);
 
+    DEBUG("Selected account has accountID %s", selected_accountID);
+    account_t *selected_account = account_list_get_by_id(selected_accountID);
     RETURN_IF_NULL(selected_account, "Selected account is NULL");
-    DEBUG("Selected account has accountID %s", selected_account->accountID);
 
     gtk_widget_set_sensitive(edit_button, TRUE);
 
@@ -174,33 +233,13 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(delete_button, TRUE);
 
         /* Update status bar about current registration state */
-        gtk_statusbar_pop(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION);
-
-        const gchar *state_name = account_state_name(selected_account->state);
-        if (selected_account->protocol_state_description != NULL
-                && selected_account->protocol_state_code != 0) {
-
-            gchar * response = g_strdup_printf(
-                                   _("Server returned \"%s\" (%d)"),
-                                   selected_account->protocol_state_description,
-                                   selected_account->protocol_state_code);
-            gchar * message = g_strconcat(state_name, ". ", response, NULL);
-            gtk_statusbar_push(GTK_STATUSBAR(status_bar),
-                               CONTEXT_ID_REGISTRATION, message);
-
-            g_free(response);
-            g_free(message);
-
-        } else {
-            gtk_statusbar_push(GTK_STATUSBAR(status_bar),
-                               CONTEXT_ID_REGISTRATION, state_name);
-        }
+        update_account_list_status_bar(selected_account);
     } else {
         gtk_widget_set_sensitive(move_up_button, FALSE);
         gtk_widget_set_sensitive(move_down_button, FALSE);
         gtk_widget_set_sensitive(delete_button, FALSE);
     }
-    DEBUG("Selecting account in account window");
+    g_free(selected_accountID);
 }
 
 static void
@@ -208,7 +247,7 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
                   gpointer data)
 {
     // The IP2IP profile can't be disabled
-    if (utf8_case_equal(path, "0"))
+    if (g_strcmp0(path, "0") == 0)
         return;
 
     // Get pointer on object
@@ -217,24 +256,24 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
     GtkTreeIter iter;
     gtk_tree_model_get_iter(model, &iter, tree_path);
     gboolean enable;
-    account_t* acc;
+    gchar *id;
     gtk_tree_model_get(model, &iter, COLUMN_ACCOUNT_ACTIVE, &enable,
-                       COLUMN_ACCOUNT_DATA, &acc, -1);
+                       COLUMN_ACCOUNT_ID, &id, -1);
+
+    account_t *account = account_list_get_by_id(id);
+    g_assert(account);
     enable = !enable;
 
-    DEBUG("Account is %d enabled", enable);
     // Store value
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_ACCOUNT_ACTIVE,
                        enable, -1);
 
     // Modify account state
-    gchar * registration_state = enable ? g_strdup("true") : g_strdup("false");
+    const gchar * enabled_str = enable ? "true" : "false";
+    DEBUG("Account is enabled: %s", enabled_str);
 
-    DEBUG("Replacing registration state with %s", registration_state);
-    g_hash_table_replace(acc->properties, g_strdup(ACCOUNT_ENABLED),
-                         registration_state);
-
-    dbus_send_register(acc->accountID, enable);
+    account_replace(account, ACCOUNT_ENABLED, enabled_str);
+    dbus_send_register(account->accountID, enable);
 }
 
 /**
@@ -243,7 +282,7 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
 static void
 account_move(gboolean move_up, gpointer data)
 {
-    // Get view, model and selection of codec store
+    // Get view, model and selection of account
     GtkTreeView *tree_view = GTK_TREE_VIEW(data);
     GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
     GtkTreeSelection *selection = gtk_tree_view_get_selection(tree_view);
@@ -259,7 +298,7 @@ account_move(gboolean move_up, gpointer data)
 
     // The first real account in the list can't move up because of the IP2IP account
     // It can still move down though
-    if (utf8_case_equal(path, "1") && move_up)
+    if (g_strcmp0(path, "1") == 0 && move_up)
         return;
 
     GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
@@ -343,13 +382,12 @@ highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
 {
     GValue val;
     memset(&val, 0, sizeof(val));
-    gtk_tree_model_get_value(tree_model, iter, COLUMN_ACCOUNT_DATA, &val);
-    account_t *current = (account_t*) g_value_get_pointer(&val);
-
+    gtk_tree_model_get_value(tree_model, iter, COLUMN_ACCOUNT_ID, &val);
+    account_t *current = account_list_get_by_id(g_value_get_string(&val));
     g_value_unset(&val);
 
-    if (current != NULL) {
-        // Make the first line appear differently
+    // Make the IP2IP account  appear differently
+    if (current) {
         if (account_is_IP2IP(current)) {
             g_object_set(G_OBJECT(rend), "weight", PANGO_WEIGHT_THIN, "style",
                          PANGO_STYLE_ITALIC, "stretch",
@@ -381,8 +419,8 @@ highlight_registration(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
 {
     GValue val;
     memset(&val, 0, sizeof(val));
-    gtk_tree_model_get_value(tree_model, iter, COLUMN_ACCOUNT_DATA, &val);
-    account_t *current = (account_t*) g_value_get_pointer(&val);
+    gtk_tree_model_get_value(tree_model, iter, COLUMN_ACCOUNT_ID, &val);
+    account_t *current = account_list_get_by_id(g_value_get_string(&val));
     g_value_unset(&val);
 
     if (current)
@@ -395,7 +433,6 @@ highlight_registration(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
 static GtkWidget*
 create_account_list()
 {
-    selected_account = NULL;
     GtkWidget *table = gtk_table_new(1, 2, FALSE /* homogeneous */);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
     gtk_container_set_border_width(GTK_CONTAINER(table), 10);
@@ -413,23 +450,22 @@ create_account_list()
                                        G_TYPE_STRING,  // Protocol
                                        G_TYPE_STRING,  // Status
                                        G_TYPE_BOOLEAN, // Enabled / Disabled
-                                       G_TYPE_POINTER  // Pointer to the Object
+                                       G_TYPE_STRING   // AccountID
                                       );
 
-    account_list_config_dialog_fill();
+    account_store_fill();
 
     GtkTreeView * tree_view = GTK_TREE_VIEW(gtk_tree_view_new_with_model(GTK_TREE_MODEL(account_store)));
     GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(tree_view);
     g_signal_connect(G_OBJECT(tree_selection), "changed",
-                     G_CALLBACK(select_account_cb),
-                     account_store);
+                     G_CALLBACK(select_account_cb), NULL);
 
     GtkCellRenderer *renderer = gtk_cell_renderer_toggle_new();
     GtkTreeViewColumn *tree_view_column =
         gtk_tree_view_column_new_with_attributes("Enabled", renderer, "active",
                                                  COLUMN_ACCOUNT_ACTIVE , NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), tree_view_column);
-    g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(enable_account_cb), (gpointer) tree_view);
+    g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(enable_account_cb), tree_view);
 
     renderer = gtk_cell_renderer_text_new();
     tree_view_column = gtk_tree_view_column_new_with_attributes("Alias",
@@ -457,8 +493,7 @@ create_account_list()
     renderer = gtk_cell_renderer_text_new();
     tree_view_column = gtk_tree_view_column_new_with_attributes(_("Status"),
                      renderer,
-                     "markup", COLUMN_ACCOUNT_STATUS,
-                     NULL);
+                     "markup", COLUMN_ACCOUNT_STATUS, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), tree_view_column);
     // Highlight IP profile
     gtk_tree_view_column_set_cell_data_func(tree_view_column, renderer,
@@ -491,20 +526,20 @@ create_account_list()
     g_signal_connect(G_OBJECT(move_down_button), "clicked",
                      G_CALLBACK(move_down_cb), tree_view);
 
-    add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
+    GtkWidget *add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
     g_signal_connect_swapped(G_OBJECT(add_button), "clicked",
                              G_CALLBACK(add_account_cb), NULL);
     gtk_box_pack_start(GTK_BOX(button_box), add_button, FALSE, FALSE, 0);
 
     edit_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_widget_set_sensitive(edit_button, FALSE);
-    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), NULL);
+    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), tree_view);
     gtk_box_pack_start(GTK_BOX(button_box), edit_button, FALSE, FALSE, 0);
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
     gtk_widget_set_sensitive(delete_button, FALSE);
-    g_signal_connect_swapped(G_OBJECT(delete_button), "clicked",
-                             G_CALLBACK(delete_account_cb), NULL);
+    g_signal_connect(G_OBJECT(delete_button), "clicked",
+                     G_CALLBACK(delete_account_cb), tree_view);
     gtk_box_pack_start(GTK_BOX(button_box), delete_button, FALSE, FALSE, 0);
 
     /* help and close buttons */
@@ -539,6 +574,39 @@ create_account_list()
     return table;
 }
 
+void update_account_list_status_bar(account_t *account)
+{
+    if (!account || !account_list_status_bar)
+        return;
+
+    /* Update status bar about current registration state */
+    gtk_statusbar_pop(GTK_STATUSBAR(account_list_status_bar),
+                      CONTEXT_ID_REGISTRATION);
+
+    const gchar *state_name = account_state_name(account->state);
+    if (account->protocol_state_description != NULL &&
+        account->protocol_state_code != 0) {
+
+        gchar * response = g_strdup_printf(_("Server returned \"%s\" (%d)"),
+                                           account->protocol_state_description,
+                                           account->protocol_state_code);
+        gchar * message = g_strconcat(state_name, ". ", response, NULL);
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
+                           CONTEXT_ID_REGISTRATION, message);
+
+        g_free(response);
+        g_free(message);
+    } else {
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar),
+                           CONTEXT_ID_REGISTRATION, state_name);
+    }
+
+    GtkTreeModel *model = GTK_TREE_MODEL(account_store);
+    GtkTreeIter iter;
+    if (find_account_in_account_store(account->accountID, model, &iter))
+        gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS, state_name, -1);
+}
+
 void show_account_list_config_dialog(void)
 {
     account_list_dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Accounts"),
@@ -561,9 +629,9 @@ void show_account_list_config_dialog(void)
     gtk_container_add(GTK_CONTAINER(accountFrame), tab);
 
     /* Status bar for the account list */
-    status_bar = gtk_statusbar_new();
-    gtk_widget_show(status_bar);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(account_list_dialog)), status_bar, TRUE, TRUE, 0);
+    account_list_status_bar = gtk_statusbar_new();
+    gtk_widget_show(account_list_status_bar);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(account_list_dialog)), account_list_status_bar, TRUE, TRUE, 0);
 
     const gint num_accounts = account_list_get_registered_accounts();
 
@@ -571,11 +639,11 @@ void show_account_list_config_dialog(void)
         gchar * message = g_strdup_printf(n_("There is %d active account",
                                              "There are %d active accounts",
                                              num_accounts), num_accounts);
-        gtk_statusbar_push(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION,
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION,
                            message);
         g_free(message);
     } else {
-        gtk_statusbar_push(GTK_STATUSBAR(status_bar), CONTEXT_ID_REGISTRATION,
+        gtk_statusbar_push(GTK_STATUSBAR(account_list_status_bar), CONTEXT_ID_REGISTRATION,
                            _("You have no active account"));
     }
 
@@ -584,7 +652,16 @@ void show_account_list_config_dialog(void)
     status_bar_display_account();
 
     gtk_widget_destroy(GTK_WIDGET(account_list_dialog));
+
+    /* Invalidate static pointers */
     account_list_dialog = NULL;
+    account_list_status_bar = NULL;
+    edit_button = NULL;
+    delete_button = NULL;
+    move_down_button = NULL;
+    move_up_button = NULL;
+    account_store = NULL;
+
     update_actions();
 }
 

@@ -43,7 +43,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-// #include <linux/if.h>
+#include <unistd.h>
 #include <arpa/inet.h>
 
 #include "siptransport.h"
@@ -373,28 +373,21 @@ void SipTransport::createDefaultSipUdpTransport()
     localUDPTransport_ = account->transport_;
 }
 
-
-pjsip_transport *SipTransport::createUdpTransport(std::string interface, unsigned int port)
+pjsip_transport *
+SipTransport::createUdpTransport(const std::string &interface, unsigned int port)
 {
     // init socket to bind this transport to
-    pj_sockaddr_in bound_addr;
-    pj_bzero(&bound_addr, sizeof(bound_addr));
     pj_uint16_t listeningPort = (pj_uint16_t) port;
-    bound_addr.sin_port = pj_htons(listeningPort);
-    bound_addr.sin_family = PJ_AF_INET;
 
     DEBUG("SipTransport: Create UDP transport on %s:%d", interface.c_str(), port);
 
     // determine the ip address for this transport
     static const char * const DEFAULT_INTERFACE = "default";
     std::string listeningAddress;
-    if (interface == DEFAULT_INTERFACE) {
+    if (interface == DEFAULT_INTERFACE)
         listeningAddress = getSIPLocalIP();
-        bound_addr.sin_addr.s_addr = pj_htonl(PJ_INADDR_ANY);
-    } else {
+    else
         listeningAddress = getInterfaceAddrFromName(interface);
-        bound_addr.sin_addr = pj_inet_addr2(listeningAddress.c_str());
-    }
 
     if (listeningAddress.empty()) {
         ERROR("SipTransport: Could not determine ip address for this transport");
@@ -406,20 +399,27 @@ pjsip_transport *SipTransport::createUdpTransport(std::string interface, unsigne
         return NULL;
     }
 
-    DEBUG("SipTransport: Listening address %s, listening port %d", listeningAddress.c_str(), listeningPort);
-    // The published address for this transport
-    const pjsip_host_port a_name = {
-        pj_str((char*) listeningAddress.c_str()),
-        listeningPort
-    };
-
+    pj_sockaddr boundAddr;
+    pj_str_t udpString;
+    pj_cstr(&udpString, listeningAddress.c_str());
+    pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &udpString, &boundAddr);
+    pj_status_t status;
     pjsip_transport *transport = NULL;
-    pj_status_t status = pjsip_udp_transport_start(endpt_, &bound_addr, &a_name, 1, &transport);
-    if (status != PJ_SUCCESS) {
-        ERROR("SipTransport: Could not create UDP transport for port %u", port);
-        return NULL;
+    if (boundAddr.addr.sa_family == pj_AF_INET()) {
+        status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
+        if (status != PJ_SUCCESS) {
+            ERROR("Failed to create IPv4 UDP transport");
+            return NULL;
+        }
+    } else if (boundAddr.addr.sa_family == pj_AF_INET6()) {
+        status = pjsip_udp_transport_start6(endpt_, &boundAddr.ipv6, NULL, 1, &transport);
+        if (status != PJ_SUCCESS) {
+            ERROR("Failed to create IPv6 UDP transport");
+            return NULL;
+        }
     }
 
+    DEBUG("SipTransport: Listening address %s, listening port %d", listeningAddress.c_str(), listeningPort);
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
     transportMap_[listeningPort] = transport;

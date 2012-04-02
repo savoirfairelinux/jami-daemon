@@ -1628,11 +1628,6 @@ void ManagerImpl::startVoiceMessageNotification(const std::string& accountId,
     dbus_.getCallManager()->voiceMailNotify(accountId, nb_msg);
 }
 
-void ManagerImpl::connectionStatusNotification()
-{
-    dbus_.getConfigurationManager()->accountsChanged();
-}
-
 /**
  * Multi Thread
  */

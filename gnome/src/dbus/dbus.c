@@ -29,7 +29,10 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <glib/gi18n.h>
 #include "str_utils.h"
 #include "logger.h"
@@ -38,12 +41,12 @@
 #include "configurationmanager-glue.h"
 #include "instance-glue.h"
 #include "preferencesdialog.h"
-#include "accountlistconfigdialog.h"
 #include "mainwindow.h"
 #include "marshaller.h"
 #include "sliders.h"
 #include "statusicon.h"
 #include "assistant.h"
+#include "accountlistconfigdialog.h"
 
 #include "dbus.h"
 #include "actions.h"
@@ -423,11 +426,23 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
 }
 
 static void
+registration_state_changed_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
+                              guint state, void *foo UNUSED)
+{
+    DEBUG("DBus: Registration state changed to %s for account %s",
+          account_state_name(state), accountID);
+    account_t *acc = account_list_get_by_id(accountID);
+    if (acc) {
+        acc->state = state;
+        update_account_list_status_bar(acc);
+    }
+}
+
+static void
 accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 {
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
-    account_list_config_dialog_fill();
     status_bar_display_account();
     statusicon_set_tooltip();
 }
@@ -734,6 +749,11 @@ gboolean dbus_connect(GError **error)
                             G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "voiceMailNotify",
                                 G_CALLBACK(voice_mail_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal(config_proxy, "registrationStateChanged", G_TYPE_STRING,
+                            G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(config_proxy, "registrationStateChanged",
+                                G_CALLBACK(registration_state_changed_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "incomingMessage", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
@@ -1076,6 +1096,7 @@ dbus_remove_account(const gchar *accountID)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_remove_account(config_proxy, accountID, &error);
+    account_list_remove(accountID);
     check_error(error);
 }
 
@@ -1093,10 +1114,10 @@ void
 dbus_add_account(account_t *a)
 {
     g_assert(a);
+    g_assert(a->accountID);
     g_assert(a->properties);
-    DEBUG("Adding %s account", a->accountID);
-    GError *error = NULL;
     g_free(a->accountID);
+    GError *error = NULL;
     a->accountID = NULL;
     org_sflphone_SFLphone_ConfigurationManager_add_account(config_proxy, a->properties, &a->accountID,
                        &error);

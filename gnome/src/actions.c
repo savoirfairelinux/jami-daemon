@@ -78,7 +78,8 @@ sflphone_notify_voice_mail(const gchar* accountID , guint count)
 
     DEBUG("sflphone_notify_voice_mail begin");
 
-    if (g_ascii_strcasecmp(id, current_id) != 0 || account_list_get_size() == 0)
+    if (g_ascii_strcasecmp(id, current_id) != 0 ||
+        account_list_get_size() == 0)
         return;
 
     // Set the number of voice messages for the current account
@@ -121,18 +122,17 @@ static gboolean is_direct_call(callable_obj_t * c)
 void
 status_bar_display_account()
 {
-    gchar* msg;
-
     statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
 
     account_t *acc = account_list_get_current();
     status_tray_icon_online(acc != NULL);
 
+    gchar* msg;
     if (acc) {
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                                       _("Using account"),
-                                      (gchar*) g_hash_table_lookup(acc->properties, ACCOUNT_ALIAS),
-                                      (gchar*) g_hash_table_lookup(acc->properties, ACCOUNT_TYPE));
+                                      (gchar*) account_lookup(acc, ACCOUNT_ALIAS),
+                                      (gchar*) account_lookup(acc, ACCOUNT_TYPE));
     } else {
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
@@ -202,85 +202,56 @@ sflphone_hung_up(callable_obj_t * c)
     statusbar_update_clock("");
 }
 
-/** Internal to actions: Fill account list */
 void sflphone_fill_account_list(void)
 {
-    int count = current_account_get_message_number();
-
-    account_list_free();
     account_list_init();
-
     gchar **array = dbus_account_list();
 
-    if (array) {
-        for (gchar **accountID = array; accountID && *accountID; accountID++) {
-            account_t * a = g_new0(account_t, 1);
-            a->accountID = g_strdup(*accountID);
-            a->credential_information = NULL;
-            account_list_add(a);
-        }
-
-        g_strfreev(array);
-    }
-
-    for (unsigned i = 0; i < account_list_get_size(); i++) {
-        account_t  * a = account_list_get_nth(i);
-
-        if (a == NULL) {
-            ERROR("SFLphone: Error: Could not find account %d in list", i);
+    for (gchar **accountID = array; accountID && *accountID; ++accountID) {
+        account_t *acc = create_account_with_ID(*accountID);
+        if (acc->properties == NULL) {
+            ERROR("SFLphone: Error: Could not fetch details for account %s",
+                  accountID);
             break;
         }
-
-        GHashTable * details = (GHashTable *) dbus_get_account_details(a->accountID);
-
-        if (details == NULL) {
-            ERROR("SFLphone: Error: Could not fetch detais for account %s", a->accountID);
-            break;
-        }
-
-        a->properties = details;
-
+        account_list_add(acc);
         /* Fill the actual array of credentials */
-        dbus_get_credentials(a);
-
-        gchar * status = g_hash_table_lookup(details, REGISTRATION_STATUS);
+        dbus_get_credentials(acc);
+        gchar * status = account_lookup(acc, REGISTRATION_STATUS);
 
         if (g_strcmp0(status, "REGISTERED") == 0)
-            a->state = ACCOUNT_STATE_REGISTERED;
+            acc->state = ACCOUNT_STATE_REGISTERED;
         else if (g_strcmp0(status, "UNREGISTERED") == 0)
-            a->state = ACCOUNT_STATE_UNREGISTERED;
+            acc->state = ACCOUNT_STATE_UNREGISTERED;
         else if (g_strcmp0(status, "TRYING") == 0)
-            a->state = ACCOUNT_STATE_TRYING;
+            acc->state = ACCOUNT_STATE_TRYING;
         else if (g_strcmp0(status, "ERROR") == 0)
-            a->state = ACCOUNT_STATE_ERROR;
+            acc->state = ACCOUNT_STATE_ERROR;
         else if (g_strcmp0(status , "ERROR_AUTH") == 0)
-            a->state = ACCOUNT_STATE_ERROR_AUTH;
+            acc->state = ACCOUNT_STATE_ERROR_AUTH;
         else if (g_strcmp0(status , "ERROR_NETWORK") == 0)
-            a->state = ACCOUNT_STATE_ERROR_NETWORK;
+            acc->state = ACCOUNT_STATE_ERROR_NETWORK;
         else if (g_strcmp0(status , "ERROR_HOST") == 0)
-            a->state = ACCOUNT_STATE_ERROR_HOST;
+            acc->state = ACCOUNT_STATE_ERROR_HOST;
         else if (g_strcmp0(status , "ERROR_CONF_STUN") == 0)
-            a->state = ACCOUNT_STATE_ERROR_CONF_STUN;
+            acc->state = ACCOUNT_STATE_ERROR_CONF_STUN;
         else if (g_strcmp0(status , "ERROR_EXIST_STUN") == 0)
-            a->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-        else if (g_strcmp0(status, "READY") == 0)
-            a->state = IP2IP_PROFILE_STATUS;
+            acc->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
+        else if (g_strcmp0(status , "ACCOUNT_STATE_IP2IP_READY") == 0)
+            acc->state = ACCOUNT_STATE_IP2IP_READY;
         else
-            a->state = ACCOUNT_STATE_INVALID;
+            acc->state = ACCOUNT_STATE_INVALID;
 
-        gchar * code = g_hash_table_lookup(details, REGISTRATION_STATE_CODE);
-
+        gchar * code = account_lookup(acc, REGISTRATION_STATE_CODE);
         if (code != NULL)
-            a->protocol_state_code = atoi(code);
-
-        g_free(a->protocol_state_description);
-        a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
+            acc->protocol_state_code = atoi(code);
+        acc->protocol_state_description = account_lookup(acc, REGISTRATION_STATE_DESCRIPTION);
     }
 
-    // Set the current account message number
-    current_account_set_message_number(count);
+    g_strfreev(array);
 
-    sflphone_fill_codec_list();
+    // Set the current account message number
+    current_account_set_message_number(current_account_get_message_number());
 }
 
 gboolean sflphone_init(GError **error)
@@ -297,7 +268,6 @@ gboolean sflphone_init(GError **error)
     contacts_tab = calltab_init(TRUE, CONTACTS);
     history_tab = calltab_init(TRUE, HISTORY);
 
-    account_list_init();
     codec_capabilities_load();
     conferencelist_init(current_calls_tab);
 
@@ -965,22 +935,9 @@ sflphone_mute_call()
     toggle_slider_mute_microphone();
 }
 
-void sflphone_fill_codec_list()
-{
-    guint account_list_size = account_list_get_size();
-
-    for (guint i = 0; i < account_list_size; i++) {
-        account_t *current = account_list_get_nth(i);
-
-        if (current)
-            sflphone_fill_codec_list_per_account(current);
-    }
-}
-
 void sflphone_fill_codec_list_per_account(account_t *account)
 {
     GArray *order = dbus_get_active_audio_codec_list(account->accountID);
-
     GQueue *codeclist = account->codecs;
 
     // First clean the list

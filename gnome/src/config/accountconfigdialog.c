@@ -206,7 +206,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
             password = g_hash_table_lookup(element, ACCOUNT_PASSWORD);
         }
     } else
-        password = g_hash_table_lookup(account->properties, ACCOUNT_PASSWORD);
+        password = account_lookup(account, ACCOUNT_PASSWORD);
 
     GtkWidget *frame = gnome_main_section_new(_("Account Parameters"));
     gtk_widget_show(frame);
@@ -214,7 +214,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     GtkWidget *table = NULL;
 
     if (account_is_SIP(account))
-        table = gtk_table_new(9, 2,  FALSE/* homogeneous */);
+        table = gtk_table_new(9, 2,  FALSE /* homogeneous */);
     else if (account_is_IAX(account))
         table = gtk_table_new(8, 2, FALSE);
     else {
@@ -234,7 +234,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_alias = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_alias);
-    gchar *alias = g_hash_table_lookup(account->properties, ACCOUNT_ALIAS);
+    gchar *alias = account_lookup(account, ACCOUNT_ALIAS);
     gtk_entry_set_text(GTK_ENTRY(entry_alias), alias);
     gtk_table_attach(GTK_TABLE(table), entry_alias, 1, 2, row, row + 1,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -276,8 +276,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_hostname = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_hostname);
-    const gchar *hostname = g_hash_table_lookup(account->properties,
-                                                    ACCOUNT_HOSTNAME);
+    const gchar *hostname = account_lookup(account, ACCOUNT_HOSTNAME);
     gtk_entry_set_text(GTK_ENTRY(entry_hostname), hostname);
     gtk_table_attach(GTK_TABLE(table), entry_hostname, 1, 2, row, row + 1,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -293,7 +292,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
                                    GTK_ENTRY_ICON_PRIMARY,
                                    gdk_pixbuf_new_from_file(PERSON_IMG, NULL));
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_username);
-    gchar *username = g_hash_table_lookup(account->properties, ACCOUNT_USERNAME);
+    gchar *username = account_lookup(account, ACCOUNT_USERNAME);
     gtk_entry_set_text(GTK_ENTRY(entry_username), username);
     gtk_table_attach(GTK_TABLE(table), entry_username, 1, 2, row, row + 1,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -337,7 +336,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_route_set = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_route_set);
-    gchar *route_set = g_hash_table_lookup(account->properties, ACCOUNT_ROUTE);
+    gchar *route_set = account_lookup(account, ACCOUNT_ROUTE);
     gtk_entry_set_text(GTK_ENTRY(entry_route_set), route_set);
     gtk_table_attach(GTK_TABLE(table), entry_route_set, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -347,7 +346,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_mailbox = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_mailbox);
-    gchar *mailbox = g_hash_table_lookup(account->properties, ACCOUNT_MAILBOX);
+    gchar *mailbox = account_lookup(account, ACCOUNT_MAILBOX);
     mailbox = mailbox ? mailbox : "";
     gtk_entry_set_text(GTK_ENTRY(entry_mailbox), mailbox);
     gtk_table_attach(GTK_TABLE(table), entry_mailbox, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -358,7 +357,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entry_user_agent = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_user_agent);
-    gchar *user_agent = g_hash_table_lookup(account->properties, ACCOUNT_USERAGENT);
+    gchar *user_agent = account_lookup(account, ACCOUNT_USERAGENT);
     gtk_entry_set_text(GTK_ENTRY(entry_user_agent), user_agent);
     gtk_table_attach(GTK_TABLE(table), entry_user_agent, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -418,7 +417,6 @@ delete_credential_cb(GtkWidget *button UNUSED, gpointer data)
         GtkTreePath *path;
         path = gtk_tree_model_get_path(model, &iter);
         gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
-
         gtk_tree_path_free(path);
     }
 }
@@ -662,7 +660,7 @@ static GtkWidget* create_credential_widget(const account_t *account)
                                          G_TYPE_STRING,  // Username
                                          G_TYPE_STRING,  // Password
                                          G_TYPE_POINTER  // Pointer to the Objectc
-                                        );
+                                         );
 
     treeview_credential = gtk_tree_view_new_with_model(GTK_TREE_MODEL(credential_store));
     GtkTreeSelection * tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview_credential));
@@ -726,17 +724,16 @@ create_security_widget(const account_t *account)
 
     // Load from SIP/IAX/Unknown ?
     if (account && account->properties) {
-        curKeyExchange = g_hash_table_lookup(account->properties,
-                                             ACCOUNT_KEY_EXCHANGE);
+        curKeyExchange = account_lookup(account, ACCOUNT_KEY_EXCHANGE);
         if (curKeyExchange == NULL)
             curKeyExchange = "none";
 
-        curSRTPEnabled = g_hash_table_lookup(account->properties, ACCOUNT_SRTP_ENABLED);
+        curSRTPEnabled = account_lookup(account, ACCOUNT_SRTP_ENABLED);
 
         if (curSRTPEnabled == NULL)
             curSRTPEnabled = "false";
 
-        curTLSEnabled = g_hash_table_lookup(account->properties, TLS_ENABLE);
+        curTLSEnabled = account_lookup(account, TLS_ENABLE);
 
         if (curTLSEnabled == NULL)
             curTLSEnabled = "false";
@@ -830,7 +827,7 @@ static GtkWidget* create_registration_expire(const account_t *account)
                                           &orig_key, (gpointer) &account_expire))
             ERROR("Could not retrieve %s from account properties",
                   ACCOUNT_REGISTRATION_EXPIRE);
-    
+
     GtkWidget *table, *frame;
     gnome_main_section_new_with_table(_("Registration"), &frame, &table, 2, 3);
     gtk_container_set_border_width(GTK_CONTAINER(table), 10);
@@ -854,8 +851,8 @@ create_network(const account_t *account)
     gchar *local_port = NULL;
 
     if (account) {
-        local_interface = g_hash_table_lookup(account->properties, LOCAL_INTERFACE);
-        local_port = g_hash_table_lookup(account->properties, LOCAL_PORT);
+        local_interface = account_lookup(account, LOCAL_INTERFACE);
+        local_port = account_lookup(account, LOCAL_PORT);
     }
 
     GtkWidget *table, *frame;
@@ -922,20 +919,20 @@ GtkWidget* create_published_address(const account_t *account)
 
     // Get the user configuration
     if (account) {
-        use_tls = g_hash_table_lookup(account->properties, TLS_ENABLE);
-        published_sameas_local = g_hash_table_lookup(account->properties, PUBLISHED_SAMEAS_LOCAL);
+        use_tls = account_lookup(account, TLS_ENABLE);
+        published_sameas_local = account_lookup(account, PUBLISHED_SAMEAS_LOCAL);
 
         if (utf8_case_equal(published_sameas_local, "true")) {
-            published_address = dbus_get_address_from_interface_name(g_hash_table_lookup(account->properties, LOCAL_INTERFACE));
-            published_port = g_hash_table_lookup(account->properties, LOCAL_PORT);
+            published_address = dbus_get_address_from_interface_name(account_lookup(account, LOCAL_INTERFACE));
+            published_port = account_lookup(account, LOCAL_PORT);
         } else {
-            published_address = g_hash_table_lookup(account->properties, PUBLISHED_ADDRESS);
-            published_port = g_hash_table_lookup(account->properties, PUBLISHED_PORT);
+            published_address = account_lookup(account, PUBLISHED_ADDRESS);
+            published_port = account_lookup(account, PUBLISHED_PORT);
         }
 
-        stun_enable = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_ENABLED);
-        stun_server = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_SERVER);
-        published_sameas_local = g_hash_table_lookup(account->properties, PUBLISHED_SAMEAS_LOCAL);
+        stun_enable = account_lookup(account, ACCOUNT_SIP_STUN_ENABLED);
+        stun_server = account_lookup(account, ACCOUNT_SIP_STUN_SERVER);
+        published_sameas_local = account_lookup(account, PUBLISHED_SAMEAS_LOCAL);
     }
 
     gnome_main_section_new_with_table(_("Published address"), &frame, &table, 2, 3);
@@ -1061,7 +1058,7 @@ create_audiocodecs_configuration(const account_t *account)
         gtk_widget_show(dtmf);
 
         overrtp = gtk_radio_button_new_with_label(NULL, _("RTP"));
-        const gchar * const dtmf_type = g_hash_table_lookup(account->properties, ACCOUNT_DTMF_TYPE);
+        const gchar * const dtmf_type = account_lookup(account, ACCOUNT_DTMF_TYPE);
         const gboolean dtmf_are_rtp = utf8_case_equal(dtmf_type, OVERRTP);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(overrtp), dtmf_are_rtp);
         gtk_table_attach(GTK_TABLE(table), overrtp, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -1079,7 +1076,7 @@ create_audiocodecs_configuration(const account_t *account)
 
     file_chooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
 
-    gpointer ptr = g_hash_table_lookup(account->properties, CONFIG_RINGTONE_ENABLED);
+    gpointer ptr = account_lookup(account, CONFIG_RINGTONE_ENABLED);
     enable_tone = gtk_check_button_new_with_mnemonic(_("_Enable ringtones"));
     const gboolean ringtone_enabled = g_strcmp0(ptr, "true") == 0;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_tone), ringtone_enabled);
@@ -1088,7 +1085,7 @@ create_audiocodecs_configuration(const account_t *account)
 
     // file chooser button
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(file_chooser) , g_get_home_dir());
-    ptr = g_hash_table_lookup(account->properties, CONFIG_RINGTONE_PATH);
+    ptr = account_lookup(account, CONFIG_RINGTONE_PATH);
     gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_chooser) , ptr);
     gtk_widget_set_sensitive(file_chooser, ringtone_enabled);
 
@@ -1236,7 +1233,44 @@ static void update_account_from_basic_tab(account_t *account)
     g_free(proto);
 }
 
-void show_account_window(account_t *account)
+void update_account_from_dialog(GtkWidget *dialog, account_t *account)
+{
+    if (!dialog)
+        return;
+
+    const gboolean IS_IP2IP = account_is_IP2IP(account);
+    if (!IS_IP2IP)
+        update_account_from_basic_tab(account);
+
+    // Get current protocol for this account
+    gchar *current_protocol;
+    if (protocol_combo)
+        current_protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
+    else
+        current_protocol = g_strdup("SIP");
+
+    if (!IS_IP2IP && g_strcmp0(current_protocol, "SIP") == 0)
+        account->credential_information = get_new_credential();
+
+    /** @todo Verify if it's the best condition to check */
+    if (g_strcmp0(account->accountID, "new") == 0) {
+        dbus_add_account(account);
+        if (account->credential_information)
+            dbus_set_credentials(account);
+    } else {
+        if (account->credential_information)
+            dbus_set_credentials(account);
+        dbus_set_account_details(account);
+    }
+
+    // propagate changes to the daemon
+    codec_list_update_to_daemon(account);
+
+    g_free(current_protocol);
+    gtk_widget_destroy(dialog);
+}
+
+GtkWidget *show_account_window(const account_t *account)
 {
     // First we reset
     reset();
@@ -1256,9 +1290,10 @@ void show_account_window(account_t *account)
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), notebook, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
     gtk_widget_show(notebook);
+    const gboolean IS_IP2IP = account_is_IP2IP(account);
 
     // We do not need the global settings for the IP2IP account
-    if (!account_is_IP2IP(account)) {
+    if (!IS_IP2IP) {
         /* General Settings */
         GtkWidget *basic_tab = create_basic_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), basic_tab, gtk_label_new(_("Basic")));
@@ -1270,22 +1305,14 @@ void show_account_window(account_t *account)
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
 
-    // Get current protocol for this account
-    gchar *current_protocol;
-    if (protocol_combo)
-        current_protocol = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(protocol_combo));
-    else
-        current_protocol = g_strdup("SIP");
-
     // Do not need advanced or security one for the IP2IP account
-    if (!account_is_IP2IP(account)) {
+    if (!IS_IP2IP) {
         /* Advanced */
         advanced_tab = create_advanced_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), advanced_tab);
 
         /* Security */
-        initialize_credential_information(account);
         security_tab = create_security_tab(account);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), security_tab);
@@ -1302,41 +1329,15 @@ void show_account_window(account_t *account)
 
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
 
-    /* Run dialog */
+    /* Run dialog, this blocks */
     gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 
-    // If cancel button is pressed
-    if (response == GTK_RESPONSE_CANCEL) {
+    // If anything but "Apply" button is pressed
+    if (response != GTK_RESPONSE_ACCEPT) {
         gtk_widget_destroy(dialog);
-        return;
+        return NULL;
+    } else {
+        return dialog;
     }
-
-    if (!account_is_IP2IP(account))
-        update_account_from_basic_tab(account);
-
-    /** @todo Verify if it's the best condition to check */
-    if (utf8_case_equal(account->accountID, "new"))
-        dbus_add_account(account);
-    else
-        dbus_set_account_details(account);
-
-    if (g_strcmp0(current_protocol, "SIP") == 0) {
-        /* Set new credentials if any */
-        DEBUG("Config: Setting credentials");
-
-        if (!account_is_IP2IP(account)) {
-            DEBUG("Config: Get new credentials");
-            account->credential_information = get_new_credential();
-
-            if (account->credential_information)
-                dbus_set_credentials(account);
-        }
-    }
-
-    // propagate changes to the daemon
-    codec_list_update_to_daemon(account);
-
-    gtk_widget_destroy(dialog);
-    g_free(current_protocol);
 }
 

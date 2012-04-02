@@ -607,7 +607,7 @@ void SIPAccount::startKeepAliveTimer() {
         keepAliveDelay_.sec = 60;
     }
     else {
-        DEBUG("Regsitration Expire == %d", registrationExpire_);
+        DEBUG("Registration Expire == %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_;
     }
 

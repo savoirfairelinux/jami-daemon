@@ -103,7 +103,7 @@ class AudioRtpRecord {
 
 class AudioRtpRecordHandler {
     public:
-        AudioRtpRecordHandler(SIPCall *);
+        AudioRtpRecordHandler(SIPCall &);
         virtual ~AudioRtpRecordHandler();
 
         /**

@@ -46,7 +46,7 @@
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 ///////////////////////////////
-
+#include "eventthread.h"
 #include "sipaccount.h"
 #include "voiplink.h"
 #include "siptransport.h"
@@ -246,7 +246,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Threading object
          */
-        EventThread *evThread_;
+        EventThread evThread_;
 
         friend class SIPTest;
 };

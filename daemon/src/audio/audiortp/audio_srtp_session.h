@@ -27,10 +27,9 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef __AUDIO_SRTP_SESSION_H__
-#define __AUDIO_SRTP_SESSION_H__
+#ifndef AUDIO_SRTP_SESSION_H_
+#define AUDIO_SRTP_SESSION_H_
 
-#include "audio_rtp_session.h"
 #include "audio_symmetric_rtp_session.h"
 #include "sip/sdes_negotiator.h"
 #include "noncopyable.h"
@@ -73,9 +72,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         /**
          * Constructor for this rtp session
          */
-        AudioSrtpSession(SIPCall * sipcall);
-
-        ~AudioSrtpSession();
+        AudioSrtpSession(SIPCall &call);
 
         /**
          * Used to get sdp crypto header to be included in sdp session. This
@@ -86,15 +83,17 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
 
         /**
          * Set remote crypto header from incoming sdp offer
+         * @return The new remote crypto context, to be cached by the caller
          */
-        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
+        ost::CryptoContext* setRemoteCryptoInfo(sfl::SdesNegotiator &nego);
 
         /**
          * Init local crypto context for outgoing data
-        * this method must be called before sending first Invite request
-        * with SDP offer.
-        */
-        void initLocalCryptoInfo();
+         * this method must be called before sending first Invite request
+         * with SDP offer.
+         * @return The new local crypto context, to be cached by the caller
+         */
+        ost::CryptoContext* initLocalCryptoInfo();
 
         /**
          * Restore the cryptographic context. most likely useful to restore
@@ -102,15 +101,14 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         void restoreCryptoContext(ost::CryptoContext *, ost::CryptoContext *);
 
+    private:
+        NON_COPYABLE(AudioSrtpSession);
 
         /** Remote srtp crypto context to be set into incoming data queue. */
         ost::CryptoContext* remoteCryptoCtx_;
 
         /** Local srtp crypto context to be set into outgoing data queue. */
         ost::CryptoContext* localCryptoCtx_;
-
-    private:
-        NON_COPYABLE(AudioSrtpSession);
 
         /**
          * Init local master key according to current crypto context
@@ -145,16 +143,6 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * Used to retreive keys from base64 serialization
          */
         void unBase64ConcatenatedKeys(std::string base64keys);
-
-        /**
-         * Encode input data as base64
-         */
-        std::string encodeBase64(unsigned char *input, int length);
-
-        /**
-         * Decode base64 data
-         */
-        char* decodeBase64(unsigned char *input, int length);
 
         /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
         int localCryptoSuite_;
