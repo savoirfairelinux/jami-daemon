@@ -73,6 +73,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * Constructor for this rtp session
          */
         AudioSrtpSession(SIPCall &call);
+        ~AudioSrtpSession();
 
         /**
          * Used to get sdp crypto header to be included in sdp session. This

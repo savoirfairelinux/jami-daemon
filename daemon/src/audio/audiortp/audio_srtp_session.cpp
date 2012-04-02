@@ -116,8 +116,8 @@ namespace {
 
 AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     AudioSymmetricRtpSession(call),
-    remoteCryptoCtx_(NULL),
-    localCryptoCtx_(NULL),
+    remoteCryptoCtx_(0),
+    localCryptoCtx_(0),
     localCryptoSuite_(0),
     remoteCryptoSuite_(0),
     localMasterKey_(),
@@ -130,6 +130,12 @@ AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     remoteMasterSaltLength_(0),
     remoteOfferIsSet_(false)
 {}
+
+AudioSrtpSession::~AudioSrtpSession()
+{
+    delete localCryptoCtx_;
+    delete remoteCryptoCtx_;
+}
 
 void AudioSrtpSession::initLocalCryptoInfo()
 {
