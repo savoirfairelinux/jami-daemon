@@ -73,7 +73,6 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * Constructor for this rtp session
          */
         AudioSrtpSession(SIPCall &call);
-        ~AudioSrtpSession();
 
         /**
          * Used to get sdp crypto header to be included in sdp session. This
@@ -84,15 +83,17 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
 
         /**
          * Set remote crypto header from incoming sdp offer
+         * @return The new remote crypto context, to be cached by the caller
          */
-        void setRemoteCryptoInfo(sfl::SdesNegotiator &nego);
+        ost::CryptoContext* setRemoteCryptoInfo(sfl::SdesNegotiator &nego);
 
         /**
          * Init local crypto context for outgoing data
-        * this method must be called before sending first Invite request
-        * with SDP offer.
-        */
-        void initLocalCryptoInfo();
+         * this method must be called before sending first Invite request
+         * with SDP offer.
+         * @return The new local crypto context, to be cached by the caller
+         */
+        ost::CryptoContext* initLocalCryptoInfo();
 
         /**
          * Restore the cryptographic context. most likely useful to restore
@@ -100,15 +101,14 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         void restoreCryptoContext(ost::CryptoContext *, ost::CryptoContext *);
 
+    private:
+        NON_COPYABLE(AudioSrtpSession);
 
         /** Remote srtp crypto context to be set into incoming data queue. */
         ost::CryptoContext* remoteCryptoCtx_;
 
         /** Local srtp crypto context to be set into outgoing data queue. */
         ost::CryptoContext* localCryptoCtx_;
-
-    private:
-        NON_COPYABLE(AudioSrtpSession);
 
         /**
          * Init local master key according to current crypto context
