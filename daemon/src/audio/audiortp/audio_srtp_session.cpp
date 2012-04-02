@@ -131,13 +131,8 @@ AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     remoteOfferIsSet_(false)
 {}
 
-AudioSrtpSession::~AudioSrtpSession()
-{
-    delete localCryptoCtx_;
-    delete remoteCryptoCtx_;
-}
 
-void AudioSrtpSession::initLocalCryptoInfo()
+ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfo()
 {
     DEBUG("AudioSrtp: Set cryptographic info for this rtp session");
 
@@ -150,6 +145,7 @@ void AudioSrtpSession::initLocalCryptoInfo()
     localCryptoCtx_->deriveSrtpKeys(0);
 
     setOutQueueCryptoContext(localCryptoCtx_);
+    return localCryptoCtx_;
 }
 
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
@@ -184,7 +180,8 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     return crypto_vector;
 }
 
-void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
+ost::CryptoContext*
+AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
     if (not remoteOfferIsSet_) {
         DEBUG("%s", nego.getKeyInfo().c_str());
@@ -203,9 +200,9 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
         initializeRemoteCryptoContext();
         setInQueueCryptoContext(remoteCryptoCtx_);
 
-        // initLocalCryptoInfo();
         remoteOfferIsSet_ = true;
     }
+    return remoteCryptoCtx_;
 }
 
 void AudioSrtpSession::initializeLocalMasterKey()
@@ -266,24 +263,20 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
-    if (remoteCryptoCtx_) {
-        delete remoteCryptoCtx_;
-        remoteCryptoCtx_ = NULL;
-    }
-
+    delete remoteCryptoCtx_;
     remoteCryptoCtx_ = new ost::CryptoContext(0x0,
-            0,                               // roc,
-            0L,                              // keydr,
-            SrtpEncryptionAESCM,             // encryption algo
-            SrtpAuthenticationSha1Hmac,      // authtication algo
-            remoteMasterKey_,
-            remoteMasterKeyLength_,
-            remoteMasterSalt_,
-            remoteMasterSaltLength_,
-            crypto.encryptionKeyLength / 8,
-            crypto.srtpAuthKeyLength / 8,
-            crypto.masterSaltLength / 8,                         // session salt len
-            crypto.srtpAuthTagLength / 8);
+                                              0,    // roc,
+                                              0L,   // keydr,
+                                              SrtpEncryptionAESCM,
+                                              SrtpAuthenticationSha1Hmac,
+                                              remoteMasterKey_,
+                                              remoteMasterKeyLength_,
+                                              remoteMasterSalt_,
+                                              remoteMasterSaltLength_,
+                                              crypto.encryptionKeyLength / 8,
+                                              crypto.srtpAuthKeyLength / 8,
+                                              crypto.masterSaltLength / 8,
+                                              crypto.srtpAuthTagLength / 8);
 
 }
 
@@ -293,28 +286,31 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[localCryptoSuite_];
 
-    if (localCryptoCtx_)
-        delete localCryptoCtx_;
-
+    delete localCryptoCtx_;
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
-            0,                               // roc,
-            0L,                              // keydr,
-            SrtpEncryptionAESCM,             // encryption algo
-            SrtpAuthenticationSha1Hmac,      // authtication algo
-            localMasterKey_,
-            localMasterKeyLength_,
-            localMasterSalt_,
-            localMasterSaltLength_,
-            crypto.encryptionKeyLength / 8,
-            crypto.srtpAuthKeyLength / 8,
-            crypto.masterSaltLength / 8,                         // session salt len
-            crypto.srtpAuthTagLength / 8);
+                                             0,     // roc,
+                                             0L,    // keydr,
+                                             SrtpEncryptionAESCM,
+                                             SrtpAuthenticationSha1Hmac,
+                                             localMasterKey_,
+                                             localMasterKeyLength_,
+                                             localMasterSalt_,
+                                             localMasterSaltLength_,
+                                             crypto.encryptionKeyLength / 8,
+                                             crypto.srtpAuthKeyLength / 8,
+                                             crypto.masterSaltLength / 8,
+                                             crypto.srtpAuthTagLength / 8);
 }
 
-void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext, ost::CryptoContext *remoteContext)
+void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
+                                            ost::CryptoContext *remoteContext)
 {
-    setInQueueCryptoContext(remoteContext);
-    setOutQueueCryptoContext(localContext);
+    delete remoteCryptoCtx_;
+    remoteCryptoCtx_ = remoteContext;
+    delete localCryptoCtx_;
+    localCryptoCtx_ = localContext;
+    setInQueueCryptoContext(remoteCryptoCtx_);
+    setOutQueueCryptoContext(localCryptoCtx_);
 }
 
 }

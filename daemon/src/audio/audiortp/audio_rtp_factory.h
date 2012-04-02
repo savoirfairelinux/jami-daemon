@@ -153,10 +153,10 @@ class AudioRtpFactory {
         bool helloHashEnabled_;
 
         /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext *remoteContext_;
+        ost::CryptoContext *cachedRemoteContext_;
 
         /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext *localContext_;
+        ost::CryptoContext *cachedLocalContext_;
 
         SIPCall *ca_;
         KeyExchangeProtocol keyExchangeProtocol_;
