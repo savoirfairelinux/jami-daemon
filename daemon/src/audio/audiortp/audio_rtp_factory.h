@@ -62,15 +62,15 @@ class AudioRtpFactory {
         AudioRtpFactory(SIPCall *ca);
         ~AudioRtpFactory();
 
-        void initAudioRtpConfig();
+        void initConfig();
 
         /**
          * 	Lazy instantiation method. Create a new RTP session of a given
          * type according to the content of the configuration file.
          * @param ca A pointer on a SIP call
-         * @return A new AudioSymmetricRtpSession object
+         * @return A new AudioRtpSession object
          */
-        void initAudioSymmetricRtpSession();
+        void initSession();
 
         /**
          * Start the audio rtp thread of the type specified in the configuration
@@ -103,7 +103,7 @@ class AudioRtpFactory {
         void updateDestinationIpAddress();
 
         bool isSdesEnabled() const {
-            return srtpEnabled_ and keyExchangeProtocol_ == sfl::Sdes;
+            return srtpEnabled_ and keyExchangeProtocol_ == SDES;
         }
 
         /**
@@ -140,28 +140,26 @@ class AudioRtpFactory {
 
     private:
         NON_COPYABLE(AudioRtpFactory);
+        enum KeyExchangeProtocol { NONE, SDES, ZRTP };
         AudioRtpSession *rtpSession_;
         ost::Mutex audioRtpThreadMutex_;
 
-        // Field used when initializinga udio rtp session
+        // Field used when initializing audio rtp session
         // May be set manually or from config using initAudioRtpConfig
         bool srtpEnabled_;
-
-        // Field used when initializinga udio rtp session
-        // May be set manually or from config using initAudioRtpConfig
-        RtpMethod keyExchangeProtocol_;
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
         bool helloHashEnabled_;
 
         /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext *remoteContext_;
+        ost::CryptoContext *cachedRemoteContext_;
 
         /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext *localContext_;
+        ost::CryptoContext *cachedLocalContext_;
 
         SIPCall *ca_;
+        KeyExchangeProtocol keyExchangeProtocol_;
 };
 }
 #endif // __AUDIO_RTP_FACTORY_H__

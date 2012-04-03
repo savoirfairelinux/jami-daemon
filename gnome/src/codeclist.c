@@ -197,7 +197,7 @@ void codec_list_move(guint codec_index, GQueue *q, gboolean up)
 /* FIXME:tmatth: Clean this up, shouldn't have to do all the reallocs
  * explicitly if we use a nicer data structure */
 static void
-codec_list_update_to_daemon_audio(account_t *acc)
+codec_list_update_to_daemon_audio(const account_t *acc)
 {
     guint c = 0;
 
@@ -228,7 +228,7 @@ codec_list_update_to_daemon_audio(account_t *acc)
 }
 
 #ifdef SFL_VIDEO
-static void codec_list_update_to_daemon_video(account_t *acc)
+static void codec_list_update_to_daemon_video(const account_t *acc)
 {
     gchar** codecList = NULL;
     // Get all codecs in queue
@@ -259,7 +259,7 @@ static void codec_list_update_to_daemon_video(account_t *acc)
 }
 #endif
 
-void codec_list_update_to_daemon(account_t *acc)
+void codec_list_update_to_daemon(const account_t *acc)
 {
     codec_list_update_to_daemon_audio(acc);
 #ifdef SFL_VIDEO

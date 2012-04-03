@@ -400,11 +400,6 @@ class ManagerImpl {
         void startVoiceMessageNotification(const std::string& accountId, int nb_msg);
 
         /**
-         * Notify the client through DBus that registration state has been updated
-         */
-        void connectionStatusNotification();
-
-        /**
          * ConfigurationManager - Send registration request
          * @param accountId The account to register/unregister
          * @param enable The flag for the type of registration
@@ -693,17 +688,6 @@ class ManagerImpl {
          * Addressbook list
          */
         std::vector <std::string> getAddressbookList() const;
-
-        /**
-         * Hook configuration
-         */
-        std::map<std::string, std::string> getHookSettings() const;
-
-        /**
-         * Hook configuration
-         */
-        void setHookSettings(const std::map<std::string, std::string>& settings);
-
 
         /**
          * Get the audio manager

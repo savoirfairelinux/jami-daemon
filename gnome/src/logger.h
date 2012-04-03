@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __LOGGER_H
-#define __LOGGER_H
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
 void internal_log (const int level, const char* format, ...);
 void set_log_level (const int level);
@@ -44,4 +44,8 @@ void set_log_level (const int level);
 #define INFO(...)      internal_log(LOG_INFO, __VA_ARGS__)
 #define DEBUG(...)     internal_log(LOG_DEBUG, __VA_ARGS__)
 
-#endif
+/* Prints an error message and returns if the pointer A is NULL */
+#define RETURN_IF_NULL(A, M, ...) \
+    if (!(A)) { ERROR(M, ##__VA_ARGS__); return; }
+
+#endif // LOGGER_H_

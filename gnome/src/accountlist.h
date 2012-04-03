@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __ACCOUNTLIST_H__
-#define __ACCOUNTLIST_H__
+#ifndef ACCOUNTLIST_H__
+#define ACCOUNTLIST_H__
 
 #include <gtk/gtk.h>
 /** @file accountlist.h
@@ -41,14 +41,12 @@
   * This enum have all the states an account can take.
   */
 typedef enum {
-    /** Invalid state */
-    ACCOUNT_STATE_INVALID = 0,
-    /** The account is registered  */
-    ACCOUNT_STATE_REGISTERED,
     /** The account is not registered */
     ACCOUNT_STATE_UNREGISTERED,
     /** The account is trying to register */
     ACCOUNT_STATE_TRYING,
+    /** The account is registered  */
+    ACCOUNT_STATE_REGISTERED,
     /** Error state. The account is not registered */
     ACCOUNT_STATE_ERROR,
     /** An authentification error occured. Wrong password or wrong username. The account is not registered */
@@ -57,12 +55,14 @@ typedef enum {
     ACCOUNT_STATE_ERROR_NETWORK,
     /** Host is unreachable. The account is not registered */
     ACCOUNT_STATE_ERROR_HOST,
-    /** Stun server configuration error. The account is not registered */
-    ACCOUNT_STATE_ERROR_CONF_STUN,
     /** Stun server is not existing. The account is not registered */
     ACCOUNT_STATE_ERROR_EXIST_STUN,
-    /** IP profile status **/
-    IP2IP_PROFILE_STATUS
+    /** Stun server configuration error. The account is not registered */
+    ACCOUNT_STATE_ERROR_CONF_STUN,
+    /** IP2IP Account is always ready */
+    ACCOUNT_STATE_IP2IP_READY,
+    /** Invalid state */
+    ACCOUNT_STATE_INVALID
 } account_state_t;
 
 /** @struct account_t
@@ -172,7 +172,7 @@ void account_list_move_down(guint index);
  * Return the ID of the current default account
  * @return gchar* The id
  */
-gchar* account_list_get_current_id(void);
+const gchar* account_list_get_current_id (void);
 
 gchar * account_list_get_ordered_list(void);
 
@@ -183,5 +183,19 @@ guint current_account_get_message_number(void);
 void current_account_set_message_number(guint nb);
 
 gboolean current_account_has_new_message(void);
+
+gboolean account_is_IP2IP(const account_t *account);
+gboolean account_is_SIP(const account_t *account);
+gboolean account_is_IAX(const account_t *account);
+
+account_t *create_default_account();
+account_t *create_account_with_ID(const gchar *ID);
+
+void initialize_credential_information(account_t *account);
+
+void account_replace(account_t *account, const gchar *key, const gchar *value);
+void account_insert(account_t *account, const gchar *key, const gchar *value);
+gpointer account_lookup(const account_t *account, gconstpointer key);
+void account_list_remove(const gchar *accountID);
 
 #endif

@@ -32,11 +32,12 @@
 
 #include "account.h"
 #include "manager.h"
+#include "dbus/configurationmanager.h"
 #ifdef SFL_VIDEO
 #include "video/video_endpoint.h"
 #endif
 
-Account::Account(const std::string& accountID, const std::string &type) :
+Account::Account(const std::string &accountID, const std::string &type) :
     accountID_(accountID)
     , username_()
     , hostname_()
@@ -68,7 +69,8 @@ void Account::setRegistrationState(const RegistrationState &state)
         registrationState_ = state;
 
         // Notify the client
-        Manager::instance().connectionStatusNotification();
+        ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
+        c->registrationStateChanged(accountID_, registrationState_);
     }
 }
 

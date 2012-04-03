@@ -70,13 +70,14 @@ static void active_is_always_recording(void);
 /**
  * Fills the tree list with supported codecs
  */
-static void preferences_dialog_fill_codec_list(account_t *a)
+static void
+preferences_dialog_fill_codec_list(const account_t *account)
 {
     // Get model of view and clear it
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
 
-    GQueue *list = a ? a->acodecs : get_audio_codecs_list();
+    GQueue *list = account ? account->acodecs : get_audio_codecs_list();
 
     // Insert codecs
     for (size_t i = 0; i < list->length; ++i) {
@@ -275,7 +276,7 @@ select_active_input_audio_device()
 void
 update_device_widget(gchar *pluginName)
 {
-    if (utf8_case_cmp(pluginName, "default") == 0) {
+    if (utf8_case_equal(pluginName, "default")) {
         gtk_widget_set_sensitive(output, FALSE);
         gtk_widget_set_sensitive(input, FALSE);
         gtk_widget_set_sensitive(ringtone, FALSE);
@@ -318,7 +319,7 @@ select_active_output_audio_plugin()
     do {
         gtk_tree_model_get(model, &iter, 0, &pluginname, -1);
 
-        if (utf8_case_cmp(tmp, pluginname) == 0) {
+        if (utf8_case_equal(tmp, pluginname)) {
             // Set current iteration the active one
             gtk_combo_box_set_active_iter(GTK_COMBO_BOX(plugin), &iter);
             return;
@@ -514,7 +515,7 @@ static void codec_move_down(GtkButton *button UNUSED, gpointer data)
     codec_move(FALSE, data);
 }
 
-GtkWidget* audiocodecs_box(account_t *a)
+GtkWidget* audiocodecs_box(const account_t *account)
 {
     GtkWidget *audiocodecs_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(audiocodecs_hbox), 10);
@@ -545,7 +546,8 @@ GtkWidget* audiocodecs_box(account_t *a)
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
     // Toggle codec active property on clicked
-    g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(codec_active_toggled),(gpointer) a);
+    g_signal_connect(G_OBJECT(renderer), "toggled",
+                     G_CALLBACK(codec_active_toggled), (gpointer) account);
 
     // Name column
     renderer = gtk_cell_renderer_text_new();
@@ -573,14 +575,16 @@ GtkWidget* audiocodecs_box(account_t *a)
     codecMoveUpButton = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveUpButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveUpButton, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(codecMoveUpButton), "clicked", G_CALLBACK(codec_move_up), a);
+    g_signal_connect(G_OBJECT(codecMoveUpButton), "clicked",
+                     G_CALLBACK(codec_move_up), (gpointer) account);
 
     codecMoveDownButton = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveDownButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveDownButton, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked", G_CALLBACK(codec_move_down), a);
+    g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked",
+                     G_CALLBACK(codec_move_down), (gpointer) account);
 
-    preferences_dialog_fill_codec_list(a);
+    preferences_dialog_fill_codec_list(account);
 
     return audiocodecs_hbox;
 }

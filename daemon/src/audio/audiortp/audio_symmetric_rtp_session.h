@@ -47,7 +47,6 @@ using std::ptrdiff_t;
 #pragma GCC diagnostic ignored "-Weffc++"
 #include <ccrtp/rtp.h>
 #include <ccrtp/iqueue.h>
-#include <cc++/numbers.h> // ost::Time
 
 class SIPCall;
 
@@ -57,10 +56,9 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
     public:
         /**
         * Constructor
-        * @param sipcall The pointer on the SIP call
+        * @param call The SIP call
         */
-        AudioSymmetricRtpSession(SIPCall* sipcall);
-
+        AudioSymmetricRtpSession(SIPCall &call);
         ~AudioSymmetricRtpSession();
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
@@ -68,8 +66,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         }
 
         int startSymmetricRtpThread() {
-            assert(rtpThread_);
-            return rtpThread_->start();
+            return rtpThread_.start();
         }
 
     private:
@@ -77,21 +74,20 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
 
         class AudioRtpThread : public ost::Thread, public ost::TimerPort {
             public:
-                AudioRtpThread(AudioSymmetricRtpSession *session);
-                ~AudioRtpThread(){}
+                AudioRtpThread(AudioSymmetricRtpSession &session);
 
                 virtual void run();
 
-                bool running;
+                bool running_;
 
             private:
                 NON_COPYABLE(AudioRtpThread);
-                AudioSymmetricRtpSession *rtpSession;
+                AudioSymmetricRtpSession &rtpSession_;
         };
-        SpeexEchoCancel echoCanceller;
+        void setSessionMedia(AudioCodec &codec);
+        int startRtpThread(AudioCodec &audiocodec);
 
-    private:
-        AudioRtpThread *rtpThread_;
+        AudioRtpThread rtpThread_;
 };
 
 }

@@ -49,13 +49,13 @@
 
 namespace sfl {
 
-AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFilename) :
-    AudioRtpSession(sipcall, Zrtp, this, this),
-    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>(ost::InetHostAddress(sipcall->getLocalIp().c_str()),
-            sipcall->getLocalAudioPort(),
-            0,
-            ost::MembershipBookkeeping::defaultMembersHashSize,
-            ost::defaultApplication()),
+AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string& zidFilename) :
+    AudioRtpSession(call, *this, *this),
+    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>(ost::InetHostAddress(call_.getLocalIp().c_str()),
+    call_.getLocalAudioPort(),
+    0,
+    ost::MembershipBookkeeping::defaultMembersHashSize,
+    ost::defaultApplication()),
     zidFilename_(zidFilename)
 {
     DEBUG("AudioZrtpSession initialized");
@@ -63,13 +63,14 @@ AudioZrtpSession::AudioZrtpSession(SIPCall * sipcall, const std::string& zidFile
 
     setCancel(cancelDefault);
 
-    DEBUG("AudioZrtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
+    DEBUG("AudioZrtpSession: Setting new RTP session with destination %s:%d",
+          call_.getLocalIp().c_str(), call_.getLocalAudioPort());
 }
 
 AudioZrtpSession::~AudioZrtpSession()
 {
     ost::Thread::terminate();
-    Manager::instance().getMainBuffer()->unBindAll(ca_->getCallId());
+    Manager::instance().getMainBuffer()->unBindAll(call_.getCallId());
 }
 
 void AudioZrtpSession::final()
@@ -102,7 +103,7 @@ void AudioZrtpSession::initializeZid()
     if (initialize(zidCompleteFilename.c_str()) >= 0) {
         DEBUG("Register callbacks");
         setEnableZrtp(true);
-        setUserCallback(new ZrtpSessionCallback(ca_));
+        setUserCallback(new ZrtpSessionCallback(call_));
         return;
     }
 
@@ -117,11 +118,29 @@ void AudioZrtpSession::initializeZid()
     return;
 }
 
+void AudioZrtpSession::sendMicData()
+{
+    int compSize = processDataEncode();
+
+    // if no data return
+    if (compSize == 0)
+        return;
+
+    // Increment timestamp for outgoing packet
+    timestamp_ += timestampIncrement_;
+
+    // this step is only needed for ZRTP
+    queue_.putData(timestamp_, getMicDataEncoded(), compSize);
+
+    // putData puts the data on RTP queue, sendImmediate bypasses this queue
+    queue_.sendImmediate(timestamp_, getMicDataEncoded(), compSize);
+}
+
 void AudioZrtpSession::run()
 {
     // Set recording sampling rate
-    ca_->setRecordingSmplRate(getCodecSampleRate());
-    DEBUG("AudioZrtpSession: Entering mainloop for call %s", ca_->getCallId().c_str());
+    call_.setRecordingSmplRate(getCodecSampleRate());
+    DEBUG("AudioZrtpSession: Entering mainloop for call %s", call_.getCallId().c_str());
 
     uint32 timeout = 0;
 
@@ -151,7 +170,7 @@ void AudioZrtpSession::run()
             setCancel(cancelImmediate);
             timerTick();
         } else {
-            if (isPendingData(timeout/1000)) {
+            if (isPendingData(timeout / 1000)) {
                 setCancel(cancelDeferred);
 
                 if (isActive())
@@ -163,6 +182,17 @@ void AudioZrtpSession::run()
         }
     }
 
-    DEBUG("AudioZrtpSession: Left main loop for call %s", ca_->getCallId().c_str());
+    DEBUG("AudioZrtpSession: Left main loop for call %s", call_.getCallId().c_str());
 }
+
+void AudioZrtpSession::incrementTimestampForDTMF()
+{
+    timestamp_ += 160;
+}
+
+void AudioZrtpSession::setSessionMedia(AudioCodec &audioCodec)
+{
+    AudioRtpSession::setSessionMedia(audioCodec);
+}
+
 }

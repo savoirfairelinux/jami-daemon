@@ -402,22 +402,22 @@ main_window_zrtp_not_supported(callable_obj_t * c)
 {
     gchar* warning_enabled = "";
 
-    account_t *account_details = account_list_get_by_id(c->_accountID);
+    account_t *account = account_list_get_by_id(c->_accountID);
 
-    if (account_details != NULL) {
-        warning_enabled = g_hash_table_lookup(account_details->properties,
-                                              ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+    if (account != NULL) {
+        warning_enabled = account_lookup(account,
+                                         ACCOUNT_ZRTP_NOT_SUPP_WARNING);
         DEBUG("Warning Enabled %s", warning_enabled);
     } else {
         DEBUG("Account is null callID %s", c->_callID);
         GHashTable * properties = sflphone_get_ip2ip_properties();
 
         if (properties)
-            warning_enabled = g_hash_table_lookup (properties,
-                                                   ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+            warning_enabled = g_hash_table_lookup(properties,
+                                                  ACCOUNT_ZRTP_NOT_SUPP_WARNING);
     }
 
-    if (utf8_case_cmp(warning_enabled, "true") == 0) {
+    if (utf8_case_equal(warning_enabled, "true")) {
         PidginMiniDialog *mini_dialog;
         gchar *desc = g_markup_printf_escaped(
                           _("ZRTP is not supported by peer %s\n"), c->_peer_number);

@@ -123,7 +123,7 @@ GHashTable *dbus_get_account_details(const gchar *accountID);
  * ConfigurationManager - Set the details of a specific account
  * @param a The account to update
  */
-void dbus_set_account_details(account_t *a);
+void dbus_set_account_details(const account_t *a);
 
 /**
  * ConfigurationManager - Set the additional credential information

@@ -131,9 +131,11 @@ void ManagerImpl::terminate()
 
     saveConfig();
 
-    unloadAccountMap();
-
     delete SIPVoIPLink::instance();
+
+    // Unload account map AFTER destroying
+    // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
+    unloadAccountMap();
 
     ost::MutexLock lock(audioLayerMutex_);
 
@@ -191,9 +193,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 
     std::string current_call_id(getCurrentCallId());
 
-    std::string prefix;
-    if (hookPreference.getNumberEnabled())
-        prefix = hookPreference.getNumberAddPrefix();
+    std::string prefix(hookPreference.getNumberAddPrefix());
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
@@ -1628,11 +1628,6 @@ void ManagerImpl::startVoiceMessageNotification(const std::string& accountId,
     dbus_.getCallManager()->voiceMailNotify(accountId, nb_msg);
 }
 
-void ManagerImpl::connectionStatusNotification()
-{
-    dbus_.getConfigurationManager()->accountsChanged();
-}
-
 /**
  * Multi Thread
  */
@@ -2572,7 +2567,7 @@ void ManagerImpl::loadDefaultAccountMap()
 {
     // build a default IP2IP account with default parameters
     accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
-    SIPVoIPLink::instance()->createDefaultSipUdpTransport();
+    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
     accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 }
 
@@ -2636,7 +2631,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     // Initialize default UDP transport according to
     // IP to IP settings (most likely using port 5060)
-    SIPVoIPLink::instance()->createDefaultSipUdpTransport();
+    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
 
     // Force IP2IP settings to be loaded to be loaded
     // No registration in the sense of the REGISTER method is performed.
@@ -2755,30 +2750,6 @@ void ManagerImpl::setAddressbookList(const std::vector<std::string>& list)
 std::vector<std::string> ManagerImpl::getAddressbookList() const
 {
     return unserialize(addressbookPreference.getList());
-}
-
-std::map<std::string, std::string> ManagerImpl::getHookSettings() const
-{
-    std::map<std::string, std::string> settings;
-
-    settings["URLHOOK_IAX2_ENABLED"] = hookPreference.getIax2Enabled() ? "true" : "false";
-    settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = hookPreference.getNumberAddPrefix();
-    settings["PHONE_NUMBER_HOOK_ENABLED"] = hookPreference.getNumberEnabled() ? "true" : "false";
-    settings["URLHOOK_SIP_ENABLED"] = hookPreference.getSipEnabled() ? "true" : "false";
-    settings["URLHOOK_COMMAND"] = hookPreference.getUrlCommand();
-    settings["URLHOOK_SIP_FIELD"] = hookPreference.getUrlSipField();
-
-    return settings;
-}
-
-void ManagerImpl::setHookSettings(const std::map<std::string, std::string>& settings)
-{
-    hookPreference.setIax2Enabled(settings.find("URLHOOK_IAX2_ENABLED")->second == "true");
-    hookPreference.setNumberAddPrefix(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
-    hookPreference.setNumberEnabled(settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true");
-    hookPreference.setSipEnabled(settings.find("URLHOOK_SIP_ENABLED")->second == "true");
-    hookPreference.setUrlCommand(settings.find("URLHOOK_COMMAND")->second);
-    hookPreference.setUrlSipField(settings.find("URLHOOK_SIP_FIELD")->second);
 }
 
 void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)

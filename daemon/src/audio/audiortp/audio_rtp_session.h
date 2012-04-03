@@ -31,28 +31,22 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef SFL_AUDIO_RTP_SESSION_H_
-#define SFL_AUDIO_RTP_SESSION_H_
+#ifndef AUDIO_RTP_SESSION_H_
+#define AUDIO_RTP_SESSION_H_
 
 #include "audio_rtp_record_handler.h"
-#include <audio/codecs/audiocodec.h>
 #include <ccrtp/rtp.h>
 #include <ccrtp/formats.h>
 #include "noncopyable.h"
 
 class SIPCall;
+namespace ost {
+    class Thread;
+}
 
 namespace sfl {
 
 class AudioCodec;
-
-// Possible kind of rtp session
-typedef enum RtpMethod {
-    Symmetric,
-    Zrtp,
-    Sdes
-} RtpMethod;
-
 
 class AudioRtpSession : public AudioRtpRecordHandler {
     public:
@@ -60,15 +54,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioRtpSession(SIPCall* sipcall, RtpMethod type, ost::RTPDataQueue *queue, ost::Thread *thread);
+        AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue, ost::Thread &thread);
         virtual ~AudioRtpSession();
 
-        RtpMethod getAudioRtpType() {
-            return type_;
-        }
-        void updateSessionMedia(AudioCodec *audioCodec);
+        void updateSessionMedia(AudioCodec &audioCodec);
 
-        int startRtpThread(AudioCodec*);
+        virtual int startRtpThread(AudioCodec&);
 
         /**
          * Used mostly when receiving a reinvite
@@ -76,6 +67,11 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         void updateDestinationIpAddress();
 
     protected:
+        /**
+         * Set the audio codec for this RTP session
+         */
+        virtual void setSessionMedia(AudioCodec &codec) = 0;
+
 
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
 
@@ -90,19 +86,26 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         /**
          * Send encoded data to peer
          */
-        void sendMicData();
+        virtual void sendMicData();
 
-        SIPCall *ca_;
-
-        RtpMethod type_;
-
-    private:
-        NON_COPYABLE(AudioRtpSession);
+        SIPCall &call_;
 
         /**
-         * Set the audio codec for this RTP session
+         * Timestamp for this session
          */
-        void setSessionMedia(AudioCodec*);
+        int timestamp_;
+
+        /**
+         * Timestamp incrementation value based on codec period length (framesize)
+         * except for G722 which require a 8 kHz incrementation.
+         */
+        int timestampIncrement_;
+
+        ost::RTPDataQueue &queue_;
+
+        bool isStarted_;
+    private:
+        NON_COPYABLE(AudioRtpSession);
 
         /**
          * Set RTP Sockets send/receive timeouts
@@ -119,6 +122,11 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         void receiveSpeakerData();
 
+        /**
+         * Increment timestamp for DTMF event
+         */
+        virtual void incrementTimestampForDTMF();
+
         // Main destination address for this rtp session.
         // Stored in case or reINVITE, which may require to forget
         // this destination and update a new one.
@@ -130,25 +138,11 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         unsigned short remote_port_;
 
         /**
-         * Timestamp for this session
-         */
-        int timestamp_;
-
-        /**
-         * Timestamp incrementation value based on codec period length (framesize)
-         * except for G722 which require a 8 kHz incrementation.
-         */
-        int timestampIncrement_;
-
-        /**
          * Timestamp reset frequency specified in number of packet sent
          */
         short timestampCount_;
-        bool isStarted_;
 
-        ost::RTPDataQueue *queue_;
-
-        ost::Thread *thread_;
+        ost::Thread &thread_;
 };
 
 }

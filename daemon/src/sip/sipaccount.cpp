@@ -66,7 +66,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , serviceRoute_()
     , tlsListenerPort_(DEFAULT_SIP_TLS_PORT)
     , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
-    , cred_(NULL)
+    , cred_()
     , tlsSetting_()
     , contactHeader_()
     , contactUpdateEnabled_(false)
@@ -100,11 +100,6 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveTimer_()
     , link_(SIPVoIPLink::instance())
 {}
-
-SIPAccount::~SIPAccount()
-{
-    delete [] cred_;
-}
 
 void SIPAccount::serialize(Conf::YamlEmitter *emitter)
 {
@@ -434,6 +429,11 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
+    if(stunServer_ != details[CONFIG_STUN_SERVER]) {
+        DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        link_->sipTransport.destroyStunResolver(stunServer_);
+        // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
+    }
     stunServer_ = details[CONFIG_STUN_SERVER];
     stunEnabled_ = details[CONFIG_STUN_ENABLE] == "true";
     dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
@@ -631,7 +631,7 @@ void SIPAccount::startKeepAliveTimer() {
         keepAliveDelay_.sec = 60;
     }
     else {
-        DEBUG("Regsitration Expire == %d", registrationExpire_);
+        DEBUG("Registration Expire == %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_;
     }
 
@@ -840,7 +840,7 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
-    link_->findLocalAddressFromTransport(transport_, transportType, address, port);
+    link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
 
     // UDP does not require the transport specification
     std::string scheme;
@@ -951,11 +951,9 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     }
 
     // Create the credential array
-    delete[] cred_;
-    cred_ = new pjsip_cred_info[credentials_.size()];
+    cred_.resize(credentials_.size());
 
     size_t i = 0;
-
     for (vector<map<string, string > >::const_iterator iter = credentials_.begin();
             iter != credentials_.end(); ++iter) {
         map<string, string>::const_iterator val = (*iter).find(CONFIG_ACCOUNT_PASSWORD);

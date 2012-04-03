@@ -37,6 +37,7 @@
 #include "config.h"
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
+#include "sip/siptransport.h"
 #include "account.h"
 #include "sip/sipaccount.h"
 
@@ -387,13 +388,13 @@ void ConfigurationManager::setAddressbookList(const std::vector<std::string>& li
 
 std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
-    return Manager::instance().getHookSettings();
+    return Manager::instance().hookPreference.toMap();
 }
 
 void ConfigurationManager::setHookSettings(const std::map<std::string,
         std::string>& settings)
 {
-    Manager::instance().setHookSettings(settings);
+    Manager::instance().hookPreference = HookPreference(settings);
 }
 
 void ConfigurationManager::setAccountsOrder(const std::string& order)
@@ -409,17 +410,17 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistor
 std::string
 ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return SIPVoIPLink::getInterfaceAddrFromName(interface);
+    return SipTransport::getInterfaceAddrFromName(interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface()
 {
-    return SIPVoIPLink::getAllIpInterface();
+    return SipTransport::getAllIpInterface();
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName()
 {
-    return SIPVoIPLink::getAllIpInterfaceByName();
+    return SipTransport::getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string> ConfigurationManager::getShortcuts()

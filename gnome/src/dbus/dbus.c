@@ -45,12 +45,12 @@
 #endif
 #include "instance-glue.h"
 #include "preferencesdialog.h"
-#include "accountlistconfigdialog.h"
 #include "mainwindow.h"
 #include "marshaller.h"
 #include "sliders.h"
 #include "statusicon.h"
 #include "assistant.h"
+#include "accountlistconfigdialog.h"
 
 #include "dbus.h"
 #include "actions.h"
@@ -251,7 +251,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
         GHashTable *call_details = dbus_get_call_details(callID);
         callable_obj_t *new_call = create_new_call_from_details(callID, call_details);
 
-        if (utf8_case_cmp(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING) == 0)
+        if (utf8_case_equal(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING))
             new_call->_history_state = g_strdup(INCOMING_STRING);
         else
             new_call->_history_state = g_strdup(OUTGOING_STRING);
@@ -432,13 +432,36 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
 }
 
 static void
+registration_state_changed_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
+                              guint state, void *foo UNUSED)
+{
+    DEBUG("DBus: Registration state changed to %s for account %s",
+          account_state_name(state), accountID);
+    account_t *acc = account_list_get_by_id(accountID);
+    if (acc) {
+        acc->state = state;
+        update_account_list_status_bar(acc);
+    }
+}
+
+static void
 accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 {
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
-    account_list_config_dialog_fill();
     status_bar_display_account();
     statusicon_set_tooltip();
+}
+
+static void
+stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *reason, void *foo UNUSED)
+{
+    ERROR("Error: Stun status failure: %s failed", reason);
+}
+
+static void
+stun_status_success_cb(DBusGProxy *proxy UNUSED, const gchar *message UNUSED, void *foo UNUSED)
+{
 }
 
 static void
@@ -622,43 +645,98 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
 
 gboolean dbus_connect(GError **error)
 {
+    const char *dbus_message_bus_name = "org.sflphone.SFLphone";
+    const char *dbus_object_instance = "/org/sflphone/SFLphone/Instance";
+    const char *dbus_interface = "org.sflphone.SFLphone.Instance";
+    const char *callmanager_object_instance = "/org/sflphone/SFLphone/CallManager";
+    const char *callmanager_interface = "org.sflphone.SFLphone.CallManager";
+    const char *configurationmanager_object_instance = "/org/sflphone/SFLphone/ConfigurationManager";
+    const char *configurationmanager_interface = "org.sflphone.SFLphone.ConfigurationManager";
+
     g_type_init();
 
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
-
     if (connection == NULL) {
         ERROR("DBUS: Error, could not establish connection with session bus");
         return FALSE;
     }
 
     /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
+    DEBUG("Connect to message bus:     %s", dbus_message_bus_name);
+    DEBUG("           object instance: %s", dbus_object_instance);
+    DEBUG("           dbus interface:  %s", dbus_interface);
 
-    instance_proxy = dbus_g_proxy_new_for_name(connection,
-                    "org.sflphone.SFLphone", "/org/sflphone/SFLphone/Instance",
-                    "org.sflphone.SFLphone.Instance");
-
+    instance_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, dbus_object_instance, dbus_interface);
     if (instance_proxy == NULL) {
-        ERROR("Failed to get proxy to Instance");
+        ERROR("Error: Failed to connect to %s", dbus_message_bus_name);
         return FALSE;
     }
 
-    DEBUG("DBus connected to Instance");
+    DEBUG("Connect to object instance: %s", callmanager_object_instance);
+    DEBUG("           dbus interface:  %s", callmanager_interface);
 
-    call_proxy = dbus_g_proxy_new_for_name(connection, "org.sflphone.SFLphone",
-                                           "/org/sflphone/SFLphone/CallManager",
-                                           "org.sflphone.SFLphone.CallManager");
-    g_assert(call_proxy != NULL);
+    call_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, callmanager_object_instance, callmanager_interface);
+    if (call_proxy == NULL) {
+        ERROR("Error: Failed to connect to %s", callmanager_object_instance);
+        return FALSE;
+    }
 
-    DEBUG("DBus connected to CallManager");
-    /* STRING STRING STRING Marshaller */
-    /* Incoming call */
+    config_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, configurationmanager_object_instance, configurationmanager_interface);
+    if (config_proxy == NULL) {
+        ERROR("Error: Failed to connect to %s", configurationmanager_object_instance);
+        return FALSE;
+    }
+
+    /* Register INT Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT,
+                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INVALID);
+
+    /* Register STRING STRING STRING Marshaller */
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+
+    /* Register STRING STRING INT Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_INT, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+
+    /* Register STRING STRING Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING, G_TYPE_NONE, G_TYPE_STRING,
+        G_TYPE_STRING, G_TYPE_INVALID);
+
+    /* Register STRING INT Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_INT,
+                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+
+    /* Register STRING DOUBLE Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_DOUBLE, G_TYPE_NONE, G_TYPE_STRING,
+        G_TYPE_DOUBLE, G_TYPE_INVALID);
+
+    /* Register STRING Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+
+    /* Register STRING STRING BOOL Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_BOOL, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+
+    /* Register STRING Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+
+
+    DEBUG("Adding callmanager Dbus signals");
+
+    /* Incoming call */
     dbus_g_proxy_add_signal(call_proxy, "newCallCreated", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "newCallCreated",
                                 G_CALLBACK(new_call_created_cb), NULL, NULL);
+
     dbus_g_proxy_add_signal(call_proxy, "incomingCall", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "incomingCall",
@@ -669,30 +747,26 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(call_proxy, "zrtpNegotiationFailed",
                                 G_CALLBACK(zrtp_negotiation_failed_cb), NULL, NULL);
 
-    /* Register a marshaller for STRING,STRING */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING, G_TYPE_NONE, G_TYPE_STRING,
-        G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal(call_proxy, "callStateChanged", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "callStateChanged",
                                 G_CALLBACK(call_state_cb), NULL, NULL);
 
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_INT,
-                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_add_signal(call_proxy, "voiceMailNotify", G_TYPE_STRING,
                             G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "voiceMailNotify",
                                 G_CALLBACK(voice_mail_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal(config_proxy, "registrationStateChanged", G_TYPE_STRING,
+                            G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(config_proxy, "registrationStateChanged",
+                                G_CALLBACK(registration_state_changed_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "incomingMessage", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "incomingMessage",
                                 G_CALLBACK(incoming_message_cb), NULL, NULL);
 
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_DOUBLE, G_TYPE_NONE, G_TYPE_STRING,
-        G_TYPE_DOUBLE, G_TYPE_INVALID);
     dbus_g_proxy_add_signal(call_proxy, "volumeChanged", G_TYPE_STRING,
                             G_TYPE_DOUBLE, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "volumeChanged",
@@ -707,9 +781,6 @@ gboolean dbus_connect(GError **error)
                                 G_CALLBACK(transfer_failed_cb), NULL, NULL);
 
     /* Conference related callback */
-
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
-                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal(call_proxy, "conferenceChanged", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "conferenceChanged",
@@ -730,12 +801,12 @@ gboolean dbus_connect(GError **error)
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "recordPlaybackFilepath",
                                 G_CALLBACK(record_playback_filepath_cb), NULL, NULL);
+
     dbus_g_proxy_add_signal(call_proxy, "recordPlaybackStopped", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "recordPlaybackStopped",
                                 G_CALLBACK(record_playback_stopped_cb), NULL, NULL);
 
     /* Security related callbacks */
-
     dbus_g_proxy_add_signal(call_proxy, "secureSdesOn", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "secureSdesOn",
@@ -746,10 +817,6 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(call_proxy, "secureSdesOff",
                                 G_CALLBACK(secure_sdes_off_cb), NULL, NULL);
 
-    /* Register a marshaller for STRING,STRING,BOOL */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_BOOL, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
     dbus_g_proxy_add_signal(call_proxy, "showSAS", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "showSAS",
@@ -760,26 +827,20 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(call_proxy, "secureZrtpOn",
                                 G_CALLBACK(secure_zrtp_on_cb), NULL, NULL);
 
-    /* Register a marshaller for STRING*/
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
-                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal(call_proxy, "secureZrtpOff", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "secureZrtpOff",
                                 G_CALLBACK(secure_zrtp_off_cb), NULL, NULL);
+
     dbus_g_proxy_add_signal(call_proxy, "zrtpNotSuppOther", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "zrtpNotSuppOther",
                                 G_CALLBACK(zrtp_not_supported_cb), NULL, NULL);
+
     dbus_g_proxy_add_signal(call_proxy, "confirmGoClear", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "confirmGoClear",
                                 G_CALLBACK(confirm_go_clear_cb), NULL, NULL);
-
-    /* VOID STRING STRING INT */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_INT, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
 
     dbus_g_proxy_add_signal(call_proxy, "sipCallStateChanged",
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT,
@@ -787,21 +848,22 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(call_proxy, "sipCallStateChanged",
                                 G_CALLBACK(sip_call_state_cb), NULL, NULL);
 
-    config_proxy = dbus_g_proxy_new_for_name(connection,
-                                "org.sflphone.SFLphone",
-                                "/org/sflphone/SFLphone/ConfigurationManager",
-                                "org.sflphone.SFLphone.ConfigurationManager");
-    g_assert(config_proxy != NULL);
 
-    DEBUG("DBus connected to ConfigurationManager");
+    DEBUG("Adding configurationmanager Dbus signals");
+
     dbus_g_proxy_add_signal(config_proxy, "accountsChanged", G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(config_proxy, "accountsChanged",
                                 G_CALLBACK(accounts_changed_cb), NULL, NULL);
 
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT,
-                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INVALID);
-    dbus_g_proxy_add_signal(config_proxy, "errorAlert", G_TYPE_INT,
-                            G_TYPE_INVALID);
+    dbus_g_proxy_add_signal(config_proxy, "stunStatusFailure", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(config_proxy, "stunStatusFailure",
+                                G_CALLBACK(stun_status_failure_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal(config_proxy, "stunStatusSuccess", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(config_proxy, "stunStatusSuccess",
+                                G_CALLBACK(stun_status_success_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal(config_proxy, "errorAlert", G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(config_proxy, "errorAlert",
                                 G_CALLBACK(error_alert), NULL, NULL);
 
@@ -1084,11 +1146,12 @@ dbus_remove_account(const gchar *accountID)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_remove_account(config_proxy, accountID, &error);
+    account_list_remove(accountID);
     check_error(error);
 }
 
 void
-dbus_set_account_details(account_t *a)
+dbus_set_account_details(const account_t *a)
 {
     g_assert(a);
     GError *error = NULL;
@@ -1101,8 +1164,11 @@ void
 dbus_add_account(account_t *a)
 {
     g_assert(a);
-    GError *error = NULL;
+    g_assert(a->accountID);
+    g_assert(a->properties);
     g_free(a->accountID);
+    GError *error = NULL;
+    a->accountID = NULL;
     org_sflphone_SFLphone_ConfigurationManager_add_account(config_proxy, a->properties, &a->accountID,
                        &error);
     check_error(error);

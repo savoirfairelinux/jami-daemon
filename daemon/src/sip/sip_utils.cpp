@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,25 +29,25 @@
  *  as that of the covered work.
  */
 
-#include "str_utils.h"
+#include "sip_utils.h"
+#include "pj/string.h"
+#include "pjsip/sip_msg.h"
 
-gint utf8_case_cmp(const gchar *a, const gchar *b)
+std::string
+sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 {
-    gchar *l = g_utf8_casefold(a, -1);
-    gchar *r = g_utf8_casefold(b, -1);
-    gint result = g_utf8_collate(l, r);
-    g_free(l);
-    g_free(r);
-    return result;
-}
+    pj_str_t name = pj_str((char*) field.c_str());
+    pjsip_generic_string_hdr *hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
 
-gboolean utf8_case_equal(const gchar *a, const gchar *b)
-{
-    if (a == NULL) {
-        if (b == NULL)
-            return TRUE;
-        else
-            return FALSE;
-    } else
-        return utf8_case_cmp(a, b) == 0;
+    if (!hdr)
+        return "";
+
+    std::string value(hdr->hvalue.ptr, hdr->hvalue.slen);
+
+    size_t pos = value.find("\n");
+
+    if (pos != std::string::npos)
+        return value.substr(0, pos);
+    else
+        return "";
 }

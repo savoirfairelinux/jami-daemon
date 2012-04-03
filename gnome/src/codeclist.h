@@ -90,7 +90,7 @@ void codec_list_move(guint index, GQueue *q, gboolean up);
 /**
  * Notify modifications on codecs to the server
  */
-void codec_list_update_to_daemon(account_t *acc);
+void codec_list_update_to_daemon(const account_t *acc);
 
 codec_t* codec_list_get_by_payload(gint payload, GQueue *q);
 

@@ -3,9 +3,11 @@ include ../globals.mak
 TESTS = check_global check_contacts check_config check_dbus
 check_PROGRAMS = check_global check_contacts check_config check_dbus
 
-SFLPHONE_LIBS = $(top_builddir)/src/contacts/libcontacts.la \
-				$(top_builddir)/src/dbus/libdbus.la \
-				$(top_builddir)/src/config/libconfig.la
+SFLPHONE_LIBS= $(top_builddir)/src/contacts/libcontacts.la \
+			   $(top_builddir)/src/config/libconfig.la \
+               $(top_builddir)/src/dbus/libdbus.la \
+			   $(top_builddir)/src/widget/libwidget.la \
+			   $(top_builddir)/src/icons/libicons.la
 
 check_global_SOURCES = check_global.c $(top_srcdir)/src/accountlist.c $(top_srcdir)/src/logger.c $(top_srcdir)/src/str_utils.c
 check_global_CFLAGS = @CHECK_CFLAGS@ @GTK_CFLAGS@ @GLIB_CFLAGS@ @DBUSGLIB_CFLAGS@ @GCONF_CFLAGS@
