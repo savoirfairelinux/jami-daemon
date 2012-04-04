@@ -90,7 +90,7 @@ ManagerImpl::ManagerImpl() :
 ManagerImpl::~ManagerImpl()
 {}
 
-void ManagerImpl::init(std::string config_file)
+void ManagerImpl::init(const std::string &config_file)
 {
     path_ = config_file.empty() ? createConfigFile() : config_file;
     DEBUG("Manager: configuration file path: %s", path_.c_str());

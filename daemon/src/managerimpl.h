@@ -129,7 +129,7 @@ class ManagerImpl {
          * Initialisation of thread (sound) and map.
          * Init a new VoIPLink, audio codec and audio driver
          */
-        void init(std::string config_file = "");
+        void init(const std::string &config_file);
 
         /**
          * Terminate all thread (sound, link) and unload AccountMap
