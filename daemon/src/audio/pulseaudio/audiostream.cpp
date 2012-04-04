@@ -28,8 +28,9 @@
  *  as that of the covered work.
  */
 
-#include <audiostream.h>
+#include "audiostream.h"
 #include "pulselayer.h"
+#include <stdexcept>
 
 AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string& deviceName)
     : audiostream_(0), mainloop_(m)

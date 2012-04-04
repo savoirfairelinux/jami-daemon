@@ -33,7 +33,7 @@
 #include "audio/dcblocker.h"
 #include "eventthread.h"
 #include "audio/samplerateconverter.h"
-#include "managerimpl.h"
+#include "manager.h"
 #include "noncopyable.h"
 #include "dbus/configurationmanager.h"
 

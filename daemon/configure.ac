@@ -257,8 +257,6 @@ CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weff
 dnl What to generate
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
-                 libs/utilspp/Makefile \
-                 libs/utilspp/singleton/Makefile \
                  libs/iax2/Makefile])
 
 AC_CONFIG_FILES([src/Makefile \

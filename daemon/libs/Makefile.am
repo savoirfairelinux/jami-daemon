@@ -1,3 +1,3 @@
-SUBDIRS = utilspp iax2
+SUBDIRS = iax2
 
 EXTRA_DIST=pjproject

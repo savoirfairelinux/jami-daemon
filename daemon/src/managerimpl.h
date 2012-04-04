@@ -32,8 +32,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_MANAGER_H__
-#define __SFL_MANAGER_H__
+#ifndef MANAGER_IMPL_H_
+#define MANAGER_IMPL_H_
 
 #include <string>
 #include <vector>
@@ -1091,4 +1091,4 @@ class ManagerImpl {
           */
         History history_;
 };
-#endif // __MANAGER_H__
+#endif // MANAGER_IMPL_H_

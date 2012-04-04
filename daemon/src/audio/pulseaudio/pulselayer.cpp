@@ -30,11 +30,12 @@
  */
 
 #include <algorithm> // for std::find
+#include <stdexcept>
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/samplerateconverter.h"
 #include "audio/dcblocker.h"
-#include "managerimpl.h"
+#include "manager.h"
 
 namespace {
 
