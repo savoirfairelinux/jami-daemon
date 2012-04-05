@@ -519,7 +519,7 @@ bool SIPVoIPLink::getEvent()
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
         DEBUG("%s: Registering thread", __PRETTY_FUNCTION__);
-        pj_thread_register(NULL, desc, &thread);
+        pj_thread_register(NULL, desc, &thread_);
     }
 
     static const pj_time_val timeout = {0, 10};
