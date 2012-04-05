@@ -60,8 +60,6 @@ class AudioZrtpSession :
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
         ~AudioZrtpSession();
 
-        virtual void final();
-
         // Thread associated method
         virtual void run();
 

@@ -93,7 +93,6 @@ static const char * const default_conf = "conf";
 class ManagerImpl {
     public:
         ManagerImpl();
-        ~ManagerImpl();
 
         /**
          * General preferences configuration

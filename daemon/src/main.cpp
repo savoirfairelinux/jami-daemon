@@ -55,7 +55,7 @@ ost::CommandOptionNoArg	help(
     "help", "h", "Print help"
 );
 */
-int main(int argc, char **argv)
+int main(int /*argc*/, char **argv)
 {
     fileutils::set_program_dir(argv[0]);
     // makeCommandOptionParse allocates the object with operator new, so

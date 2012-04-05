@@ -62,7 +62,7 @@ class IAXVoIPLink : public VoIPLink {
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        void getEvent();
+        bool getEvent();
 
         /**
          * Init the voip link

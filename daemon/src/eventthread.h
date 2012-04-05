@@ -44,7 +44,7 @@ class VoIPLink;
 class EventThread : public ost::Thread {
     public:
         EventThread(VoIPLink* link);
-        virtual void run();
+        void run();
 
     private:
         NON_COPYABLE(EventThread);

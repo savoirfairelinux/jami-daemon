@@ -60,8 +60,6 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string& zidFilename
 {
     DEBUG("AudioZrtpSession initialized");
     initializeZid();
-
-
     DEBUG("AudioZrtpSession: Setting new RTP session with destination %s:%d",
           call_.getLocalIp().c_str(), call_.getLocalAudioPort());
 }
@@ -70,14 +68,6 @@ AudioZrtpSession::~AudioZrtpSession()
 {
     ost::Thread::terminate();
     Manager::instance().getMainBuffer()->unBindAll(call_.getCallId());
-}
-
-void AudioZrtpSession::final()
-{
-// tmatth:Oct 25 2011:FIXME:
-// This was crashing...seems like it's not necessary. Double check
-// with valgrind/helgrind
-// delete this;
 }
 
 void AudioZrtpSession::initializeZid()

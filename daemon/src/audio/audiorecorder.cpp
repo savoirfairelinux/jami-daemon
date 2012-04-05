@@ -34,7 +34,7 @@
 
 int AudioRecorder::count_ = 0;
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread(),
+AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread(),
     recorderId_(), mbuffer_(mb), arecord_(arec)
 {
     assert(mb);
@@ -60,7 +60,7 @@ void AudioRecorder::run()
     int bufferLength = 10000;
     SFLDataFormat buffer[bufferLength];
 
-    while (true) {
+    while (isRunning()) {
         int availBytes = mbuffer_->availForGet(recorderId_);
         int toGet = (availBytes < bufferLength) ? availBytes : bufferLength;
 

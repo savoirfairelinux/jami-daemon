@@ -86,10 +86,6 @@ ManagerImpl::ManagerImpl() :
     srand(time(NULL));
 }
 
-// never call if we use only the singleton...
-ManagerImpl::~ManagerImpl()
-{}
-
 void ManagerImpl::init(const std::string &config_file)
 {
     path_ = config_file.empty() ? createConfigFile() : config_file;
@@ -126,12 +122,11 @@ void ManagerImpl::terminate()
     std::vector<std::string> callList(getCallList());
     DEBUG("Manager: Hangup %zu remaining call", callList.size());
 
-    for (std::vector<std::string>::iterator iter = callList.begin(); iter != callList.end(); ++iter)
+    for (std::vector<std::string>::iterator iter = callList.begin();
+         iter != callList.end(); ++iter)
         hangupCall(*iter);
 
     saveConfig();
-
-    delete SIPVoIPLink::instance();
 
     // Unload account map AFTER destroying
     // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup

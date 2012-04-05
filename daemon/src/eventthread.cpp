@@ -31,12 +31,13 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
-EventThread::EventThread(VoIPLink *link) : Thread(), link_(link)
+EventThread::EventThread(VoIPLink *link) : ost::Thread(), link_(link)
 {}
 
 void EventThread::run()
 {
-    while (isRunning())
-        link_->getEvent();
+    while (link_->getEvent())
+        ;  // noop
+    ost::Thread::exit();
 }
 

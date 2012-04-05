@@ -89,7 +89,7 @@ static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
 static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
-static pj_thread_t *thread;
+static pj_thread_t *thread_;
 
 void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status);
 void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
@@ -481,15 +481,19 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
 
-    evThread_.detach();
+    handlingEvents_ = true;
+    evThread_.start();
 }
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    if (evThread_.isRunning())
-        evThread_.join();
-    pj_thread_join(thread);
-    pj_thread_destroy(thread);
+    handlingEvents_ = false;
+    if (thread_) {
+        pj_thread_join(thread_);
+        pj_thread_destroy(thread_);
+        DEBUG("PJ thread destroy finished");
+        thread_ = 0;
+    }
 
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
@@ -503,25 +507,24 @@ SIPVoIPLink::~SIPVoIPLink()
 
 SIPVoIPLink* SIPVoIPLink::instance()
 {
-    static SIPVoIPLink* instance = NULL;
-
-    if (!instance)
-        instance = new SIPVoIPLink;
-
-    return instance;
+    static SIPVoIPLink instance_;
+    return &instance_;
 }
 
-void
-SIPVoIPLink::getEvent()
+// Called from EventThread::run (not main thread)
+bool SIPVoIPLink::getEvent()
 {
     static pj_thread_desc desc;
 
     // We have to register the external thread so it could access the pjsip frameworks
-    if (!pj_thread_is_registered())
+    if (!pj_thread_is_registered()) {
+        DEBUG("%s: Registering thread", __PRETTY_FUNCTION__);
         pj_thread_register(NULL, desc, &thread);
+    }
 
     static const pj_time_val timeout = {0, 10};
     pjsip_endpt_handle_events(endpt_, &timeout);
+    return handlingEvents_;
 }
 
 void SIPVoIPLink::sendRegister(Account *a)

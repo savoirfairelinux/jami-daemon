@@ -124,7 +124,7 @@ PulseLayer::~PulseLayer()
     if (mainloop_)
         pa_threaded_mainloop_free(mainloop_);
 
-    delete[] mic_buffer_;
+    delete [] mic_buffer_;
 }
 
 void PulseLayer::context_state_callback(pa_context* c, void *user_data)
@@ -422,7 +422,7 @@ void PulseLayer::readFromMic()
 
     if (bytes > mic_buf_size_) {
         mic_buf_size_ = bytes;
-        delete[] mic_buffer_;
+        delete [] mic_buffer_;
         mic_buffer_ = new SFLDataFormat[samples];
     }
 

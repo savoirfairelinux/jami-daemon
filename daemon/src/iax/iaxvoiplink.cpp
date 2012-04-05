@@ -56,6 +56,7 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
 
 IAXVoIPLink::~IAXVoIPLink()
 {
+    handlingEvents_ = false;
     delete evThread_;
 
     regSession_ = NULL; // shall not delete it // XXX: but why?
@@ -70,6 +71,7 @@ IAXVoIPLink::init()
 
     for (int port = IAX_DEFAULT_PORTNO, nbTry = 0; nbTry < 3 ; port = rand() % 64000 + 1024, nbTry++) {
         if (iax_init(port) >= 0) {
+            handlingEvents_ = false;
             evThread_->start();
             initDone_ = true;
             break;
@@ -100,7 +102,7 @@ IAXVoIPLink::terminate()
     initDone_ = false;
 }
 
-void
+bool
 IAXVoIPLink::getEvent()
 {
     mutexIAX_.enter();
@@ -133,7 +135,8 @@ IAXVoIPLink::getEvent()
     sendAudioFromMic();
 
     // thread wait 3 millisecond
-    evThread_->sleep(3);
+    ost::Thread::sleep(3);
+    return handlingEvents_;
 }
 
 void
