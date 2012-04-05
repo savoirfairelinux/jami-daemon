@@ -84,7 +84,7 @@ int main(int argc, char **argv)
         return 1;
 
     try {
-        Manager::instance().init();
+        Manager::instance().init("");
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;

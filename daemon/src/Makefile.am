@@ -51,7 +51,6 @@ noinst_HEADERS = \
 		noncopyable.h
 
 libsflphone_la_LIBADD = \
-	$(top_builddir)/libs/utilspp/libutilspp.la \
 	$(top_builddir)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \
 	./im/libim.la \
@@ -91,6 +90,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		voiplink.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
+		manager.cpp \
 		managerimpl_registration.cpp \
 		eventthread.cpp \
 		call.cpp \

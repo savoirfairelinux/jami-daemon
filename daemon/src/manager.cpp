@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author : Jean-Philippe Barrette-LaPierre
- *              <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Author : Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,16 +28,11 @@
  *  as that of the covered work.
  */
 
-#ifndef MANAGER_H_
-#define MANAGER_H_
+#include "manager.h"
 
-// we could forward declare ManagerImpl BUT anyone who will call instance
-// will need this include.
-#include "managerimpl.h"
-
-namespace Manager {
-    ManagerImpl& instance();
+ManagerImpl& Manager::instance()
+{
+    // Meyers singleton
+    static ManagerImpl instance_;
+    return instance_;
 }
-
-#endif // MANAGER_H_
-

@@ -30,6 +30,7 @@
 
 #include "networkmanager.h"
 #include "../manager.h"
+#include "logger.h"
 
 const std::string NetworkManager::statesString[5] = {"unknown", "asleep",
                                                      "connecting", "connected",

@@ -37,7 +37,6 @@
 #include <commoncpp/thread.h> // for ost::Mutex
 #include <sys/time.h>
 
-#include "manager.h"
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "samplerateconverter.h"
@@ -49,6 +48,7 @@
  */
 
 class MainBuffer;
+class AudioPreference;
 
 namespace ost {
 class Time;
