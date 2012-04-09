@@ -30,20 +30,7 @@
 
 
 #include "delaydetectiontest.h"
-
-// Returns the number of elements in a, calculated at compile-time
-#define ARRAYSIZE(a) \
-      ((sizeof(a) / sizeof(*(a))) / \
-         static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
-#endif
-
-#include <iostream>
-#include <math.h>
-#include <string.h>
-
-void DelayDetectionTest::setUp() {}
-
-void DelayDetectionTest::tearDown() {}
+#include <cstring>
 
 void DelayDetectionTest::testCrossCorrelation()
 {
@@ -80,7 +67,6 @@ void DelayDetectionTest::testCrossCorrelationDelay()
     delaydetect_.crossCorrelate(ref, signal, result, 3, 10);
 
     float expected[10] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
-
 }
 
 void DelayDetectionTest::testFirFilter()
@@ -94,7 +80,7 @@ void DelayDetectionTest::testFirFilter()
         -0.02437806, -0.02602213, -0.02373243, -0.01873722, -0.01120109, -0.00266367,
         0.00610982, 0.01463477, 0.02244098, 0.02944626, 0.03630817, 0.04448337,
         0.05616626,  0.07473655, -0.09870257};
-    std::vector<double> ird(decimationCoefs, decimationCoefs + sizeof(decimationCoefs) / sizeof(float));
+    const std::vector<double> ird(decimationCoefs, decimationCoefs + ARRAYSIZE(decimationCoefs));
 
     const float bandpassCoefs[] = {0.06278034, -0.0758545, -0.02274943, -0.0084497, 0.0702427, 0.05986113,
         0.06436469, -0.02412049, -0.03433526, -0.07568665, -0.03214543, -0.07236507,
@@ -102,7 +88,7 @@ void DelayDetectionTest::testFirFilter()
         0.15294699, 0.00947243, -0.05530828, -0.12446371, -0.06979052, -0.07236507,
         -0.03214543, -0.07568665, -0.03433526, -0.02412049,  0.06436469, 0.05986113,
         0.0702427, -0.0084497, -0.02274943, -0.0758545, 0.06278034};
-    std::vector<double> irb(bandpassCoefs, bandpassCoefs + sizeof(bandpassCoefs) / sizeof(float));
+    const std::vector<double> irb(bandpassCoefs, bandpassCoefs + ARRAYSIZE(bandpassCoefs));
 
     float impulse[100];
     memset(impulse, 0, sizeof(impulse))

@@ -42,8 +42,6 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <cassert>
-
 #include "audio/speexechocancel.h"
 
 class EchoCancelTest: public CppUnit::TestFixture {

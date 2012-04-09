@@ -35,33 +35,10 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
-
-#include <stdio.h>
-#include <sstream>
-#include <ccrtp/rtp.h>
-
-
-// pjsip import
-#include <pjsip.h>
-#include <pjlib.h>
-#include <pjsip_ua.h>
-#include <pjlib-util.h>
-#include <pjnath/stun_config.h>
-
-// Application import
-#include "manager.h"
-#include "audio/mainbuffer.h"
-#include "audio/ringbuffer.h"
-#include "call.h"
-// #include "config/config.h"
-// #include "user_cfg.h"
-
-
 #include "audio/delaydetection.h"
 
-#ifndef _DELAYDETECTION_TEST_
-#define _DELAYDETECTION_TEST_
+#ifndef DELAYDETECTION_TEST_
+#define DELAYDETECTION_TEST_
 
 /*
  * @file delaydetection.cpp
@@ -82,10 +59,6 @@ class DelayDetectionTest : public CppUnit::TestCase {
     public:
 
         DelayDetectionTest() : CppUnit::TestCase("Delay Detection Tests") {}
-
-        void setUp();
-
-        void tearDown();
 
         void testCrossCorrelation();
 
@@ -109,4 +82,4 @@ class DelayDetectionTest : public CppUnit::TestCase {
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(DelayDetectionTest, "DelayDetectionTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(DelayDetectionTest);
 
-#endif
+#endif // DELAYDETECTION_TEST_
