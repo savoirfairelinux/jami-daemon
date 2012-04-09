@@ -31,6 +31,7 @@
 
 #include <algorithm> // for std::find
 #include <stdexcept>
+#include <cassert>
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/samplerateconverter.h"
@@ -39,24 +40,18 @@
 
 namespace {
 
-void playback_callback(pa_stream* s, size_t bytes, void* userdata)
+void playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
-    assert(s && bytes);
-    assert(bytes > 0);
     static_cast<PulseLayer*>(userdata)->writeToSpeaker();
 }
 
-void capture_callback(pa_stream* s, size_t bytes, void* userdata)
+void capture_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
-    assert(s && bytes);
-    assert(bytes > 0);
     static_cast<PulseLayer*>(userdata)->readFromMic();
 }
 
-void ringtone_callback(pa_stream* s, size_t bytes, void* userdata)
+void ringtone_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
-    assert(s && bytes);
-    assert(bytes > 0);
     static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
 }
 

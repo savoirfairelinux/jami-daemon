@@ -51,4 +51,5 @@ test_SOURCES = \
 	sdesnegotiatortest.h \
 	sdptest.h \
 	siptest.h \
-	validator.h
+	validator.h \
+	test_utils.h

@@ -34,6 +34,7 @@
 #include "manager.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
+#include "test_utils.h"
 #include <unistd.h>
 
 AudioLayerTest::AudioLayerTest() : manager_(0), pulselayer_(0), layer_(0)
@@ -41,7 +42,7 @@ AudioLayerTest::AudioLayerTest() : manager_(0), pulselayer_(0), layer_(0)
 
 void AudioLayerTest::testAudioLayerConfig()
 {
-    DEBUG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
+    TITLE();
 
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
 
@@ -65,7 +66,7 @@ void AudioLayerTest::testAudioLayerConfig()
 
 void AudioLayerTest::testAudioLayerSwitch()
 {
-    DEBUG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
+    TITLE();
 
     bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
 
@@ -85,7 +86,7 @@ void AudioLayerTest::testAudioLayerSwitch()
 
 void AudioLayerTest::testPulseConnect()
 {
-    DEBUG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
+    TITLE();
 
     if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver())) {
         Manager::instance().switchAudioManager();

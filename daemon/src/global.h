@@ -57,9 +57,9 @@ typedef signed int SINT32;
 
 typedef short SFLDataFormat;
 
-#define SIZEBUF 		 400000 /** About 12 sec of buffering at 8000 Hz*/
+#define SIZEBUF 		 400000     /** About 12 sec of buffering at 8000 Hz*/
 
-#define ALSA_DFT_CARD_ID     0			/** Index of the default soundcard */
+#define ALSA_DFT_CARD_ID 0          /** Index of the default soundcard */
 
 #define PCM_PLUGHW	"plughw"		/** Alsa plugin */
 #define PCM_DEFAULT	"default"		/** Default ALSA plugin */
