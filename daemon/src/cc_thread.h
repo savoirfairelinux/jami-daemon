@@ -37,8 +37,10 @@
 
 #ifdef CCPP_PREFIX
 #include <cc++/thread.h> // for mutex
-#else
+#elif defined COMMONCPP_PREFIX
 #include <commoncpp/thread.h> // for mutex
+#else
+#error No CCGNU2 include directory found.
 #endif
 
 #endif	// CC_THREAD_H_

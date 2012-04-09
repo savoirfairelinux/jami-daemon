@@ -37,8 +37,10 @@
 
 #ifdef CCPP_PREFIX
 #include <cc++/config.h>
-#else
+#elif defined COMMONCPP_PREFIX
 #include <commoncpp/config.h>
+#else
+#error No CCGNU2 include directory found.
 #endif
 
 #endif // CC_CONFIG_H_
