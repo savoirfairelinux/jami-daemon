@@ -39,8 +39,8 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <commoncpp/thread.h>
 #include <memory>
+#include "cc_thread.h"
 #include "dbus/dbusmanager.h"
 
 #include "config/config.h"

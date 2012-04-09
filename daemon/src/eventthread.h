@@ -31,7 +31,7 @@
 #ifndef EVENT_THREAD_H_
 #define EVENT_THREAD_H_
 
-#include <commoncpp/thread.h>
+#include "cc_thread.h"
 #include "noncopyable.h"
 
 class VoIPLink;

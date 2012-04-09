@@ -28,11 +28,11 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIORECORDER_H_
-#define __AUDIORECORDER_H_
+#ifndef AUDIORECORDER_H_
+#define AUDIORECORDER_H_
 
 #include <string>
-#include <commoncpp/thread.h>
+#include "cc_thread.h"
 #include "audiorecord.h"
 #include "noncopyable.h"
 

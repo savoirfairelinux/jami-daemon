@@ -119,10 +119,15 @@ LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
 
 LIBCCGNU2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(CCGNU2, commoncpp >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))
+PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([COMMONCPP_PREFIX], [1], [Use commoncpp include prefix]), [
+        PKG_CHECK_MODULES([CCGNU2], [libccgnu2] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([CCPP_PREFIX], [1], [Use cc++ include prefix]),
+            AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))
+        ])
 
-LIBCCRT_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES(CCRTP, libccrtp >= ${LIBCCRT_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
+LIBCCRTP_MIN_VERSION=1.3.0
+PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
+        PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
+        ])
 
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
 PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))

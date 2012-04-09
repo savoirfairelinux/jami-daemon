@@ -32,8 +32,8 @@
 #define __AUDIO_RTP_FACTORY_H__
 
 #include <stdexcept>
-#include <commoncpp/thread.h>
 #include <ccrtp/CryptoContext.h>
+#include "cc_thread.h"
 #include "audio_rtp_session.h"
 #include "noncopyable.h"
 

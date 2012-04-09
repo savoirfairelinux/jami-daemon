@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 #include "siptransport.h"
 #include "manager.h"

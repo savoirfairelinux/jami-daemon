@@ -34,9 +34,9 @@
 
 #include <map>
 #include <set>
-#include <commoncpp/thread.h> // for ost::Mutex
 #include <string>
 
+#include "cc_thread.h" // for ost::Mutex
 #include "global.h"
 #include "call.h"
 #include "ringbuffer.h"
