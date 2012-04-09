@@ -29,9 +29,6 @@
  */
 
 #include <string>
-#include <cstring>
-#include <iostream>
-
 #include "mainbuffertest.h"
 
 void MainBufferTest::testRingBufferCreation()
