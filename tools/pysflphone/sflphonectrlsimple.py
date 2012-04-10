@@ -348,7 +348,7 @@ class SflPhoneCtrlSimple(Thread):
                 if self.account is None:
                         raise SflPhoneError("No provided or current account !")
                 account = self.account
-        return self.getAccountDetails(account)['Status'] == "REGISTERED"
+        return self.getAccountDetails(account)['Registration.Status'] == "REGISTERED"
 
 
     def isAccountEnable(self, account=None):
@@ -369,11 +369,11 @@ class SflPhoneCtrlSimple(Thread):
 
        	if enable == True:
 	       	details = self.getAccountDetails(account)
-                details['Account.enable'] = "TRUE"
+                details['Account.enable'] = "true"
                 self.configurationmanager.setAccountDetails(account, details)
         else:
 	       	details = self.getAccountDetails(account)
-                details['Account.enable'] = "FALSE"
+                details['Account.enable'] = "false"
                 self.configurationmanager.setAccountDetails(account, details)
 
     def checkAccountExists(self, account=None):
