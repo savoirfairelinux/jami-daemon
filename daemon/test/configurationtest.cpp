@@ -28,24 +28,23 @@
  *  as that of the covered work.
  */
 
-#include <stdio.h>
-#include <sstream>
-
 #include "configurationtest.h"
-#include "constants.h"
+#include "manager.h"
+#include "config/yamlemitter.h"
+#include "config/yamlparser.h"
+#include "account.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
-
-using std::cout;
-using std::endl;
+#include "sip/sipaccount.h"
+#include "test_utils.h"
 
 void ConfigurationTest::testDefaultValueAudio()
 {
-    DEBUG("-------------------- ConfigurationTest::testDefaultValueAudio() --------------------\n");
+    TITLE();
 
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardin() == 0);  // ALSA_DFT_CARD);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardout() == 0);  // ALSA_DFT_CARD);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);  // DFT_SAMPLE_RATE);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardin() == ALSA_DFT_CARD_ID);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardout() == ALSA_DFT_CARD_ID);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getPlugin() == PCM_DEFAULT);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 100);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 100);
@@ -53,15 +52,13 @@ void ConfigurationTest::testDefaultValueAudio()
 
 void ConfigurationTest::testDefaultValuePreferences()
 {
-    DEBUG("-------------------- ConfigurationTest::testDefaultValuePreferences --------------------\n");
-
+    TITLE();
     CPPUNIT_ASSERT(Manager::instance().preferences.getZoneToneChoice() == Preferences::DFT_ZONE);
 }
 
 void ConfigurationTest::testDefaultValueSignalisation()
 {
-    DEBUG("-------------------- ConfigurationTest::testDefaultValueSignalisation --------------------\n");
-
+    TITLE();
     CPPUNIT_ASSERT(Manager::instance().voipPreferences.getSymmetricRtp());
     CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayDtmf());
     CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayTones());
@@ -70,8 +67,7 @@ void ConfigurationTest::testDefaultValueSignalisation()
 
 void ConfigurationTest::testInitAudioDriver()
 {
-    DEBUG("-------------------- ConfigurationTest::testInitAudioDriver --------------------\n");
-
+    TITLE();
     // Load the audio driver
     Manager::instance().initAudioDriver();
 
@@ -156,37 +152,37 @@ void ConfigurationTest::testYamlEmitter()
     ScalarNode verifyclient(true);
     ScalarNode verifyserver(true);
 
-    accountmap.setKeyValue(aliasKey, &alias);
-    accountmap.setKeyValue(typeKey, &type);
-    accountmap.setKeyValue(idKey, &id);
-    accountmap.setKeyValue(usernameKey, &username);
-    accountmap.setKeyValue(passwordKey, &password);
-    accountmap.setKeyValue(hostnameKey, &hostname);
-    accountmap.setKeyValue(accountEnableKey, &enable);
-    accountmap.setKeyValue(mailboxKey, &mailbox);
-    accountmap.setKeyValue(registrationExpireKey, &expire);
-    accountmap.setKeyValue(interfaceKey, &interface);
-    accountmap.setKeyValue(portKey, &port);
-    accountmap.setKeyValue(publishAddrKey, &publishAddr);
-    accountmap.setKeyValue(publishPortKey, &publishPort);
-    accountmap.setKeyValue(sameasLocalKey, &sameasLocal);
-    accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
-    accountmap.setKeyValue(displayNameKey, &displayName);
+    accountmap.setKeyValue(ALIAS_KEY, &alias);
+    accountmap.setKeyValue(TYPE_KEY, &type);
+    accountmap.setKeyValue(ID_KEY, &id);
+    accountmap.setKeyValue(USERNAME_KEY, &username);
+    accountmap.setKeyValue(PASSWORD_KEY, &password);
+    accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
+    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
+    accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
+    accountmap.setKeyValue(REGISTRATION_EXPIRE_KEY, &expire);
+    accountmap.setKeyValue(INTERFACE_KEY, &interface);
+    accountmap.setKeyValue(PORT_KEY, &port);
+    accountmap.setKeyValue(PUBLISH_ADDR_KEY, &publishAddr);
+    accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
+    accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
+    accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
+    accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
 
-    accountmap.setKeyValue(srtpKey, &srtpmap);
-    srtpmap.setKeyValue(srtpEnableKey, &srtpenabled);
-    srtpmap.setKeyValue(keyExchangeKey, &keyExchange);
-    srtpmap.setKeyValue(rtpFallbackKey, &rtpFallback);
+    accountmap.setKeyValue(SRTP_KEY, &srtpmap);
+    srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
+    srtpmap.setKeyValue(KEY_EXCHANGE_KEY, &keyExchange);
+    srtpmap.setKeyValue(RTP_FALLBACK_KEY, &rtpFallback);
 
-    accountmap.setKeyValue(zrtpKey, &zrtpmap);
-    zrtpmap.setKeyValue(displaySasKey, &displaySas);
-    zrtpmap.setKeyValue(displaySasOnceKey, &displaySasOnce);
-    zrtpmap.setKeyValue(helloHashEnabledKey, &helloHashEnabled);
-    zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
+    accountmap.setKeyValue(ZRTP_KEY, &zrtpmap);
+    zrtpmap.setKeyValue(DISPLAY_SAS_KEY, &displaySas);
+    zrtpmap.setKeyValue(DISPLAY_SAS_ONCE_KEY, &displaySasOnce);
+    zrtpmap.setKeyValue(HELLO_HASH_ENABLED_KEY, &helloHashEnabled);
+    zrtpmap.setKeyValue(NOT_SUPP_WARNING_KEY, &notSuppWarning);
 
-    accountmap.setKeyValue(credKey, &credentialmap);
+    accountmap.setKeyValue(CRED_KEY, &credentialmap);
     SequenceNode credentialseq(NULL);
-    accountmap.setKeyValue(credKey, &credentialseq);
+    accountmap.setKeyValue(CRED_KEY, &credentialseq);
 
     MappingNode credmap1(NULL);
     MappingNode credmap2(NULL);
@@ -205,20 +201,20 @@ void ConfigurationTest::testYamlEmitter()
     credentialseq.addNode(&credmap1);
     credentialseq.addNode(&credmap2);
 
-    accountmap.setKeyValue(tlsKey, &tlsmap);
-    tlsmap.setKeyValue(tlsPortKey, &tlsport);
-    tlsmap.setKeyValue(certificateKey, &certificate);
-    tlsmap.setKeyValue(calistKey, &calist);
-    tlsmap.setKeyValue(ciphersKey, &ciphers);
-    tlsmap.setKeyValue(tlsEnableKey, &tlsenabled);
-    tlsmap.setKeyValue(methodKey, &tlsmethod);
-    tlsmap.setKeyValue(timeoutKey, &timeout);
-    tlsmap.setKeyValue(tlsPasswordKey, &tlspassword);
-    tlsmap.setKeyValue(privateKeyKey, &privatekey);
-    tlsmap.setKeyValue(requireCertifKey, &requirecertif);
-    tlsmap.setKeyValue(serverKey, &server);
-    tlsmap.setKeyValue(verifyClientKey, &verifyclient);
-    tlsmap.setKeyValue(verifyServerKey, &verifyserver);
+    accountmap.setKeyValue(TLS_KEY, &tlsmap);
+    tlsmap.setKeyValue(TLS_PORT_KEY, &tlsport);
+    tlsmap.setKeyValue(CERTIFICATE_KEY, &certificate);
+    tlsmap.setKeyValue(CALIST_KEY, &calist);
+    tlsmap.setKeyValue(CIPHERS_KEY, &ciphers);
+    tlsmap.setKeyValue(TLS_ENABLE_KEY, &tlsenabled);
+    tlsmap.setKeyValue(METHOD_KEY, &tlsmethod);
+    tlsmap.setKeyValue(TIMEOUT_KEY, &timeout);
+    tlsmap.setKeyValue(TLS_PASSWORD_KEY, &tlspassword);
+    tlsmap.setKeyValue(PRIVATE_KEY_KEY, &privatekey);
+    tlsmap.setKeyValue(REQUIRE_CERTIF_KEY, &requirecertif);
+    tlsmap.setKeyValue(SERVER_KEY, &server);
+    tlsmap.setKeyValue(VERIFY_CLIENT_KEY, &verifyclient);
+    tlsmap.setKeyValue(VERIFY_SERVER_KEY, &verifyserver);
 
     try {
         YamlEmitter emitter("/tmp/ymlEmiter.txt");

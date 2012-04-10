@@ -36,68 +36,68 @@
 #include <map>
 
 // general preferences
-static const char * const orderKey = "order";
-static const char * const audioApiKey = "audioApi";
-static const char * const historyLimitKey = "historyLimit";
-static const char * const historyMaxCallsKey = "historyMaxCalls";
-static const char * const  notifyMailsKey = "notifyMails";
-static const char * const zoneToneChoiceKey = "zoneToneChoice";
-static const char * const registrationExpireKey = "registrationexpire";
-static const char * const portNumKey = "portNum";
-static const char * const searchBarDisplayKey = "searchBarDisplay";
-static const char * const zeroConfenableKey = "zeroConfenable";
-static const char * const md5HashKey = "md5Hash";
+static const char * const ORDER_KEY = "order";
+static const char * const AUDIO_API_KEY = "audioApi";
+static const char * const HISTORY_LIMIT_KEY = "historyLimit";
+static const char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
+static const char * const NOTIFY_MAILS_KEY = "notifyMails";
+static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
+static const char * const REGISTRATION_EXPIRE_KEY = "registrationexpire";
+static const char * const PORT_NUM_KEY = "portNum";
+static const char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
+static const char * const ZEROCONF_ENABLE_KEY = "zeroConfenable";
+static const char * const MD5_HASH_KEY = "md5Hash";
 
 // voip preferences
-static const char * const playDtmfKey = "playDtmf";
-static const char * const playTonesKey = "playTones";
-static const char * const pulseLengthKey = "pulseLength";
-static const char * const symmetricRtpKey = "symmetric";
-static const char * const zidFileKey = "zidFile";
+static const char * const PLAY_DTMF_KEY = "playDtmf";
+static const char * const PLAY_TONES_KEY = "playTones";
+static const char * const PULSE_LENGTH_KEY = "pulseLength";
+static const char * const SYMMETRIC_RTP_KEY = "symmetric";
+static const char * const ZID_FILE_KEY = "zidFile";
 
 // addressbook preferences
-static const char * const photoKey = "photo";
-static const char * const enabledKey = "enabled";
-static const char * const listKey = "list";
-static const char * const maxResultsKey = "maxResults";
-static const char * const businessKey = "business";
-static const char * const homeKey = "home";
-static const char * const mobileKey = "mobile";
+static const char * const PHOTO_KEY = "photo";
+static const char * const ENABLED_KEY = "enabled";
+static const char * const LIST_KEY = "list";
+static const char * const MAX_RESULTS_KEY = "maxResults";
+static const char * const BUSINESS_KEY = "business";
+static const char * const HOME_KEY = "home";
+static const char * const MOBILE_KEY = "mobile";
 
 // hooks preferences
-static const char * const iax2EnabledKey = "iax2Enabled";
-static const char * const numberAddPrefixKey = "numberAddPrefix";
-static const char * const numberEnabledKey = "numberEnabled";
-static const char * const sipEnabledKey = "sipEnabled";
-static const char * const urlCommandKey = "urlCommand";
-static const char * const urlSipFieldKey = "urlSipField";
+static const char * const IAX2_ENABLED_KEY = "iax2Enabled";
+static const char * const NUMBER_ADD_PREFIX_KEY = "numberAddPrefix";
+static const char * const NUMBER_ENABLED_KEY = "numberEnabled";
+static const char * const SIP_ENABLED_KEY = "sipEnabled";
+static const char * const URL_COMMAND_KEY = "urlCommand";
+static const char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
-static const char * const alsamapKey = "alsa";
-static const char * const pulsemapKey = "pulse";
-static const char * const cardinKey = "cardIn";
-static const char * const cardoutKey = "cardOut";
-static const char * const cardringKey = "cardRing";
-static const char * const pluginKey = "plugin";
-static const char * const smplrateKey = "smplRate";
-static const char * const devicePlaybackKey = "devicePlayback";
-static const char * const deviceRecordKey = "deviceRecord";
-static const char * const deviceRingtoneKey = "deviceRingtone";
-static const char * const recordpathKey = "recordPath";
-static const char * const alwaysRecordingKey = "alwaysRecording";
-static const char * const volumemicKey = "volumeMic";
-static const char * const volumespkrKey = "volumeSpkr";
-static const char * const noiseReduceKey = "noiseReduce";
-static const char * const echoCancelKey = "echoCancel";
-static const char * const echoTailKey = "echoTailLength";
-static const char * const echoDelayKey = "echoDelayLength";
+static const char * const ALSAMAP_KEY = "alsa";
+static const char * const PULSEMAP_KEY = "pulse";
+static const char * const CARDIN_KEY = "cardIn";
+static const char * const CARDOUT_KEY = "cardOut";
+static const char * const CARDRING_KEY = "cardRing";
+static const char * const PLUGIN_KEY = "plugin";
+static const char * const SMPLRATE_KEY = "smplRate";
+static const char * const DEVICE_PLAYBACK_KEY = "devicePlayback";
+static const char * const DEVICE_RECORD_KEY = "deviceRecord";
+static const char * const DEVICE_RINGTONE_KEY = "deviceRingtone";
+static const char * const RECORDPATH_KEY = "recordPath";
+static const char * const ALWAYS_RECORDING_KEY = "alwaysRecording";
+static const char * const VOLUMEMIC_KEY = "volumeMic";
+static const char * const VOLUMESPKR_KEY = "volumeSpkr";
+static const char * const NOISE_REDUCE_KEY = "noiseReduce";
+static const char * const ECHO_CANCEL_KEY = "echoCancel";
+static const char * const ECHO_TAIL_KEY = "echoTailLength";
+static const char * const ECHO_DELAY_KEY = "echoDelayLength";
 
 // shortcut preferences
-static const char * const hangupShortKey = "hangUp";
-static const char * const pickupShortKey = "pickUp";
-static const char * const popupShortKey = "popupWindow";
-static const char * const toggleHoldShortKey = "toggleHold";
-static const char * const togglePickupHangupShortKey = "togglePickupHangup";
+static const char * const HANGUP_SHORT_KEY = "hangUp";
+static const char * const PICKUP_SHORT_KEY = "pickUp";
+static const char * const POPUP_SHORT_KEY = "popupWindow";
+static const char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
+static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 
 class AudioLayer;
 

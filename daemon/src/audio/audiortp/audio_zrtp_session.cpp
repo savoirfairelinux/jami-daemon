@@ -60,9 +60,6 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string& zidFilename
 {
     DEBUG("AudioZrtpSession initialized");
     initializeZid();
-
-    setCancel(cancelDefault);
-
     DEBUG("AudioZrtpSession: Setting new RTP session with destination %s:%d",
           call_.getLocalIp().c_str(), call_.getLocalAudioPort());
 }
@@ -71,14 +68,6 @@ AudioZrtpSession::~AudioZrtpSession()
 {
     ost::Thread::terminate();
     Manager::instance().getMainBuffer()->unBindAll(call_.getCallId());
-}
-
-void AudioZrtpSession::final()
-{
-// tmatth:Oct 25 2011:FIXME:
-// This was crashing...seems like it's not necessary. Double check
-// with valgrind/helgrind
-// delete this;
 }
 
 void AudioZrtpSession::initializeZid()
@@ -154,10 +143,8 @@ void AudioZrtpSession::run()
         else
             sendMicData();
 
-        setCancel(cancelDeferred);
         controlReceptionService();
         controlTransmissionService();
-        setCancel(cancelImmediate);
         uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
         // make sure the scheduling timeout is
         // <= the check interval for RTCP
@@ -165,18 +152,13 @@ void AudioZrtpSession::run()
         timeout = (timeout > maxWait) ? maxWait : timeout;
 
         if (timeout < 1000) {   // !(timeout/1000)
-            setCancel(cancelDeferred);
             // dispatchDataPacket();
-            setCancel(cancelImmediate);
             timerTick();
         } else {
             if (isPendingData(timeout / 1000)) {
-                setCancel(cancelDeferred);
 
                 if (isActive())
                     takeInDataPacket();
-
-                setCancel(cancelImmediate);
             }
             timeout = 0;
         }

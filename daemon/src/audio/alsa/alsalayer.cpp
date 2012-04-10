@@ -41,9 +41,7 @@ class AlsaThread : public ost::Thread {
     public:
         AlsaThread(AlsaLayer *alsa);
 
-        ~AlsaThread() {
-            terminate();
-        }
+        ~AlsaThread() { terminate(); }
 
         virtual void run();
 
@@ -53,17 +51,15 @@ class AlsaThread : public ost::Thread {
 };
 
 AlsaThread::AlsaThread(AlsaLayer *alsa)
-    : Thread(), alsa_(alsa)
-{
-    setCancel(cancelDeferred);
-}
+    : ost::Thread(), alsa_(alsa)
+{}
 
 /**
  * Reimplementation of run()
  */
 void AlsaThread::run()
 {
-    while (!testCancel()) {
+    while (alsa_->isStarted_) {
         alsa_->audioCallback();
         Thread::sleep(20);
     }
@@ -94,6 +90,7 @@ AlsaLayer::AlsaLayer()
 // Destructor
 AlsaLayer::~AlsaLayer()
 {
+    isStarted_ = false;
     delete audioThread_;
 
     /* Then close the audio devices */
@@ -679,19 +676,17 @@ void AlsaLayer::audioCallback()
     if (ringtoneHandle_) {
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
         int ringtoneAvailSmpl = snd_pcm_avail_update(ringtoneHandle_);
-        int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
+        int ringtoneAvailBytes = ringtoneAvailSmpl * sizeof(SFLDataFormat);
 
-        SFLDataFormat *out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
+        std::vector<SFLDataFormat> out(ringtoneAvailSmpl, 0);
 
         if (file_tone) {
             DEBUG("playback gain %d", getPlaybackGain());
-            file_tone->getNext(out, ringtoneAvailSmpl, getPlaybackGain());
+            file_tone->getNext(&(*out.begin()), ringtoneAvailSmpl,
+                               getPlaybackGain());
         }
-        else
-            memset(out, 0, ringtoneAvailBytes);
 
-        write(out, ringtoneAvailBytes, ringtoneHandle_);
-        free(out);
+        write(&(*out.begin()), ringtoneAvailBytes, ringtoneHandle_);
     }
 
     // Additionally handle the mic's audio stream

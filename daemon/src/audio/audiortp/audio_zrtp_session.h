@@ -40,7 +40,7 @@ using std::ptrdiff_t;
 #include <libzrtpcpp/ZrtpUserCallback.h>
 
 #include "audio_rtp_session.h"
-#include <cc++/numbers.h> // OST::Time
+// #include <commoncpp/numbers.h> // OST::Time
 
 class SIPCall;
 class AudioCodec;
@@ -59,8 +59,6 @@ class AudioZrtpSession :
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
         ~AudioZrtpSession();
-
-        virtual void final();
 
         // Thread associated method
         virtual void run();

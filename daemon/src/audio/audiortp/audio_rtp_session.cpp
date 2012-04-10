@@ -243,7 +243,8 @@ int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
     initNoiseSuppress();
 
     queue_.enableStack();
-    return thread_.start();
+    thread_.start();
+    return 0;
 }
 
 

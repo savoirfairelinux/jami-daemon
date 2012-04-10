@@ -38,8 +38,8 @@
 
 // Application import
 #include "noncopyable.h"
-#include "history/history.h"
 
+class History;
 /*
  * @file historyTest.h
  * @brief       Regroups unitary tests related to the phone number cleanup function.

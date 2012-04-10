@@ -28,17 +28,12 @@
  *  as that of the covered work.
  */
 
-#include <cstdio>
-#include <sstream>
 #include <cstdlib>
 
 #include "historytest.h"
+#include "history/history.h"
 #include "logger.h"
 #include "constants.h"
-#include "validator.h"
-
-using std::cout;
-using std::endl;
 
 namespace {
 void restore()

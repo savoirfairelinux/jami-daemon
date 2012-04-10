@@ -34,39 +34,14 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
-
-#include <stdio.h>
-#include <sstream>
-#include <ccrtp/rtp.h>
-
-
-// pjsip import
-#include <pjsip.h>
-#include <pjlib.h>
-#include <pjsip_ua.h>
-#include <pjlib-util.h>
-#include <pjnath/stun_config.h>
-
-// Application import
-#include "manager.h"
 #include "audio/mainbuffer.h"
-#include "audio/ringbuffer.h"
-#include "call.h"
-// #include "config/config.h"
-// #include "user_cfg.h"
-
-
-
 /*
  * @file audiorecorderTest.cpp
- * @brief       Regroups unitary tests related to the plugin manager.
+ * @brief       Regroups unit tests related to the main buffer.
  */
 
-#ifndef _MAINBUFFER_TEST_
-#define _MAINBUFFER_TEST_
-
-
+#ifndef MAINBUFFER_TEST_
+#define MAINBUFFER_TEST_
 
 class MainBufferTest : public CppUnit::TestCase {
 
@@ -93,18 +68,6 @@ class MainBufferTest : public CppUnit::TestCase {
     public:
 
         MainBufferTest() : CppUnit::TestCase("Audio Layer Tests") {}
-
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
-
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        void tearDown();
 
         void testRingBufferCreation();
 

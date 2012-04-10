@@ -46,12 +46,11 @@
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 ///////////////////////////////
-
 #include "sipaccount.h"
 #include "voiplink.h"
 #include "siptransport.h"
+#include "eventthread.h"
 
-class EventThread;
 class SIPCall;
 class SIPAccount;
 
@@ -75,7 +74,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual void getEvent();
+        virtual bool getEvent();
 
         /**
          * Build and send SIP registration request
@@ -246,7 +245,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Threading object
          */
-        EventThread *evThread_;
+        EventThread evThread_;
 
         friend class SIPTest;
 };

@@ -31,6 +31,7 @@
 
 #include <algorithm> // for std::find
 #include <stdexcept>
+#include <cassert>
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/samplerateconverter.h"
@@ -39,24 +40,18 @@
 
 namespace {
 
-void playback_callback(pa_stream* s, size_t bytes, void* userdata)
+void playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
-    assert(s && bytes);
-    assert(bytes > 0);
     static_cast<PulseLayer*>(userdata)->writeToSpeaker();
 }
 
-void capture_callback(pa_stream* s, size_t bytes, void* userdata)
+void capture_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
-    assert(s && bytes);
-    assert(bytes > 0);
     static_cast<PulseLayer*>(userdata)->readFromMic();
 }
 
-void ringtone_callback(pa_stream* s, size_t bytes, void* userdata)
+void ringtone_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
 {
-    assert(s && bytes);
-    assert(bytes > 0);
     static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
 }
 
@@ -124,7 +119,7 @@ PulseLayer::~PulseLayer()
     if (mainloop_)
         pa_threaded_mainloop_free(mainloop_);
 
-    delete[] mic_buffer_;
+    delete [] mic_buffer_;
 }
 
 void PulseLayer::context_state_callback(pa_context* c, void *user_data)
@@ -422,7 +417,7 @@ void PulseLayer::readFromMic()
 
     if (bytes > mic_buf_size_) {
         mic_buf_size_ = bytes;
-        delete[] mic_buffer_;
+        delete [] mic_buffer_;
         mic_buffer_ = new SFLDataFormat[samples];
     }
 

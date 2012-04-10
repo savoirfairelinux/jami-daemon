@@ -28,44 +28,12 @@
  *  as that of the covered work.
  */
 
-#include <stdio.h>
-#include <sstream>
-#include <ccrtp/rtp.h>
-#include <assert.h>
 #include <string>
-#include <cstring>
-#include <math.h>
-#include <dlfcn.h>
-#include <iostream>
-#include <sstream>
-
-
 #include "mainbuffertest.h"
-
-#include <unistd.h>
-
-
-using std::cout;
-using std::endl;
-
-
-void MainBufferTest::setUp()
-{
-
-
-}
-
-
-void MainBufferTest::tearDown()
-{
-
-}
-
 
 void MainBufferTest::testRingBufferCreation()
 {
-    DEBUG("-------------------- MainBufferTest::testRingBufferCreation --------------------\n");
-
+    TITLE();
     std::string test_id = "1234";
     std::string null_id = "null id";
 
@@ -111,8 +79,7 @@ void MainBufferTest::testRingBufferCreation()
 
 void MainBufferTest::testRingBufferReadPointer()
 {
-    DEBUG("-------------------- MainBufferTest::testRingBufferReadPointer --------------------\n");
-
+    TITLE();
     std::string call_id = "call id";
     std::string read_id = "read id";
     std::string null_id = "null id";
@@ -158,7 +125,7 @@ void MainBufferTest::testRingBufferReadPointer()
 
 void MainBufferTest::testCallIDSet()
 {
-    DEBUG("-------------------- MainBufferTest::testCallIDSet --------------------\n");
+    TITLE();
 
     std::string test_id = "set id";
     std::string false_id = "false set id";
@@ -239,7 +206,7 @@ void MainBufferTest::testCallIDSet()
 
 void MainBufferTest::testRingBufferInt()
 {
-    DEBUG("-------------------- MainBufferTest::testRingBufferInt --------------------\n");
+    TITLE();
 
     // CallID test_id = "test_int";
 
@@ -353,7 +320,7 @@ void MainBufferTest::testRingBufferInt()
 
 void MainBufferTest::testRingBufferNonDefaultID()
 {
-    DEBUG("-------------------- MainBufferTest::testRingBufferNonDefaultID --------------------\n");
+    TITLE();
 
     std::string test_id = "test_int";
 
@@ -440,8 +407,7 @@ void MainBufferTest::testRingBufferNonDefaultID()
 
 void MainBufferTest::testRingBufferFloat()
 {
-    DEBUG("-------------------- MainBufferTest::testRingBufferFloat --------------------\n");
-
+    TITLE();
     float testfloat1 = 12.5;
     float testfloat2 = 13.4;
 
@@ -474,8 +440,7 @@ void MainBufferTest::testRingBufferFloat()
 
 void MainBufferTest::testTwoPointer()
 {
-    DEBUG("-------------------- MainBufferTest::testTwoPointer --------------------\n");
-
+    TITLE();
     RingBuffer* input_buffer = mainbuffer_.createRingBuffer(default_id);
     input_buffer->createReadPointer(default_id);
     RingBuffer* output_buffer = mainbuffer_.getRingBuffer(default_id);
@@ -491,7 +456,7 @@ void MainBufferTest::testTwoPointer()
 
 void MainBufferTest::testBindUnbindBuffer()
 {
-    DEBUG("-------------------- MainBufferTest::testBindUnbindBuffer --------------------\n");
+    TITLE();
 
     std::string test_id1 = "bind unbind 1";
     std::string test_id2 = "bind unbind 2";
@@ -890,8 +855,7 @@ void MainBufferTest::testBindUnbindBuffer()
 
 void MainBufferTest::testGetPutDataByID()
 {
-    DEBUG("-------------------- MainBufferTest::testGetPutDataByID --------------------\n");
-
+    TITLE();
     std::string test_id = "getData putData";
     std::string false_id = "false id";
 
@@ -942,10 +906,9 @@ void MainBufferTest::testGetPutDataByID()
 }
 
 
-
 void MainBufferTest::testGetPutData()
 {
-    DEBUG("-------------------- MainBufferTest::testGetPutData --------------------\n");
+    TITLE();
 
     std::string test_id = "incoming rtp session";
 
@@ -993,8 +956,7 @@ void MainBufferTest::testGetPutData()
 
 void MainBufferTest::testDiscardFlush()
 {
-    DEBUG("-------------------- MainBufferTest::testDiscardFlush --------------------\n");
-
+    TITLE();
     std::string test_id = "flush discard";
     // mainbuffer_.createRingBuffer(test_id);
     mainbuffer_.bindCallID(test_id);
@@ -1035,8 +997,7 @@ void MainBufferTest::testDiscardFlush()
 
 void MainBufferTest::testReadPointerInit()
 {
-    DEBUG("-------------------- MainBufferTest::testReadPointerInit --------------------\n");
-
+    TITLE();
     std::string test_id = "test read pointer init";
     // RingBuffer* test_ring_buffer = mainbuffer_.createRingBuffer(test_id);
 
@@ -1063,7 +1024,7 @@ void MainBufferTest::testReadPointerInit()
 
 void MainBufferTest::testRingBufferSeveralPointers()
 {
-    DEBUG("-------------------- MainBufferTest::testRingBufferSeveralPointers --------------------\n");
+    TITLE();
 
     std::string test_id = "test multiple read pointer";
     RingBuffer* test_ring_buffer = mainbuffer_.createRingBuffer(test_id);
@@ -1176,7 +1137,7 @@ void MainBufferTest::testRingBufferSeveralPointers()
 
 void MainBufferTest::testConference()
 {
-    DEBUG("-------------------- MainBufferTest::testConference --------------------\n");
+    TITLE();
 
     std::string test_id1 = "participant A";
     std::string test_id2 = "participant B";

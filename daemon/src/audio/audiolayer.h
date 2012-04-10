@@ -34,7 +34,7 @@
 #ifndef __AUDIO_LAYER_H__
 #define __AUDIO_LAYER_H__
 
-#include <cc++/thread.h> // for ost::Mutex
+#include "cc_thread.h" // for ost::Mutex
 #include <sys/time.h>
 
 #include "ringbuffer.h"

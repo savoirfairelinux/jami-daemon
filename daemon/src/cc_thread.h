@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,16 +28,19 @@
  *  as that of the covered work.
  */
 
-#include "eventthread.h"
-#include "voiplink.h"
+#ifndef CC_THREAD_H_
+#define CC_THREAD_H_
 
-EventThread::EventThread(VoIPLink *link) : ost::Thread(), link_(link)
-{}
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-void EventThread::run()
-{
-    while (link_->getEvent())
-        ;  // noop
-    ost::Thread::exit();
-}
+#ifdef CCPP_PREFIX
+#include <cc++/thread.h> // for mutex
+#elif defined COMMONCPP_PREFIX
+#include <commoncpp/thread.h> // for mutex
+#else
+#error No CCGNU2 include directory found.
+#endif
 
+#endif	// CC_THREAD_H_

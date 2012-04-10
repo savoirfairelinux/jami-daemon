@@ -44,7 +44,8 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <linux/if.h>
+#include <arpa/inet.h>
+#include <net/if.h>
 
 #include "siptransport.h"
 #include "manager.h"

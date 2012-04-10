@@ -27,10 +27,10 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_CODEC_H__
-#define __SFL_CODEC_H__
+#ifndef CODEC_H_
+#define CODEC_H_
 
-#include <cc++/config.h> // for types
+#include "cc_config.h" // for types
 
 /**
  * Interface for both audio codecs as well as video codecs.
@@ -65,4 +65,4 @@ typedef sfl::Codec* create_t();
 
 typedef void destroy_t (sfl::Codec*);
 
-#endif
+#endif // CODEC_H_

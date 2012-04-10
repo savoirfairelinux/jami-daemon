@@ -48,7 +48,9 @@ noinst_HEADERS = \
 		logger.h \
 		numbercleaner.h \
 		fileutils.h \
-		noncopyable.h
+		noncopyable.h \
+		cc_thread.h \
+		cc_config.h
 
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/iax2/libiax2.la \
