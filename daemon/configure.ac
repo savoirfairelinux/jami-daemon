@@ -90,9 +90,6 @@ AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type 
 AC_FUNC_STAT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
-                inet_ntoa memset mkdir pathconf pow regcomp select setlocale \
-                socket strchr strdup strerror strrchr strstr strtol utime])
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
