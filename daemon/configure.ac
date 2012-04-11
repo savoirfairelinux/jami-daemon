@@ -193,37 +193,6 @@ AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [
        AC_MSG_ERROR([Unable to find speexdsp development files])
 ])
 
-# check for libcelt
-AC_ARG_WITH([celt], [AS_HELP_STRING([--without-celt],
-            [disable support for celt codec])], [], [with_celt=yes])
-
-AS_IF([test "x$with_celt" != xno],
-    [PKG_CHECK_MODULES(CELT, celt >= 0.9.1,
-        [
-            with_celt_91=yes; AC_MSG_NOTICE([Using celt 0.9.1])
-        ],
-        [
-            PKG_CHECK_MODULES(CELT, celt >= 0.7.1,
-            [
-                with_celt_71=yes; AC_MSG_NOTICE([Using celt 0.7.1])
-            ],
-            [
-dnl celt071 is how certain distros package celt
-        PKG_CHECK_MODULES(CELT, celt071 >= 0.7.1,
-        [
-            with_celt_071=yes; AC_MSG_NOTICE([Using celt071])
-        ],
-        [
-                     AC_MSG_FAILURE([libcelt link test failed. You may use --without-celt to compile without celt codec support.])
-        ])
-        ])
-    ])]
-)
-
-AM_CONDITIONAL(BUILD_CELT_91, test "x$with_celt_91" = "xyes" )
-AM_CONDITIONAL(BUILD_CELT_71, test "x$with_celt_71" = "xyes" )
-AM_CONDITIONAL(BUILD_CELT_071, test "x$with_celt_071" = "xyes" )
-
 dnl Check for IAX
 AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
             [disable support for the iax2 protocol])], [], [with_iax2=yes])
