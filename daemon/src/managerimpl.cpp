@@ -130,6 +130,7 @@ void ManagerImpl::terminate()
 
     saveConfig();
 
+    SIPVoIPLink::destroy();
     // Unload account map AFTER destroying
     // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
     unloadAccountMap();

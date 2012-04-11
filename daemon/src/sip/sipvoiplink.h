@@ -72,6 +72,11 @@ class SIPVoIPLink : public VoIPLink {
         static SIPVoIPLink* instance();
 
         /**
+         * Destroy the singleton instance
+         */
+        static void destroy();
+
+        /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
         virtual bool getEvent();
@@ -248,6 +253,8 @@ class SIPVoIPLink : public VoIPLink {
         EventThread evThread_;
 
         friend class SIPTest;
+        static bool destroyed_;
+        static SIPVoIPLink *instance_;
 };
 
 #endif // SIPVOIPLINK_H_

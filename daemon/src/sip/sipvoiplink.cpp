@@ -1,6 +1,5 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -65,10 +64,12 @@
 #include <istream>
 #include <utility> // for std::pair
 
-
 #include <map>
 
 using namespace sfl;
+
+SIPVoIPLink *SIPVoIPLink::instance_ = 0;
+bool SIPVoIPLink::destroyed_ = false;
 
 namespace {
 
@@ -507,8 +508,17 @@ SIPVoIPLink::~SIPVoIPLink()
 
 SIPVoIPLink* SIPVoIPLink::instance()
 {
-    static SIPVoIPLink instance_;
-    return &instance_;
+    assert(!destroyed_);
+    if (!instance_)
+        instance_ = new SIPVoIPLink;
+    return instance_;
+}
+
+void SIPVoIPLink::destroy()
+{
+    delete instance_;
+    destroyed_ = true;
+    instance_ = 0;
 }
 
 // Called from EventThread::run (not main thread)
