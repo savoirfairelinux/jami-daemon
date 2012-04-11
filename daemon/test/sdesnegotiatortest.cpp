@@ -45,15 +45,15 @@
 #include "sip/sdes_negotiator.h"
 
 #include <unistd.h>
-#include "global.h"
+#include "test_utils.h"
+#include "logger.h"
 
 using std::cout;
 using std::endl;
 
 void SdesNegotiatorTest::testTagPattern()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::testTagPattern --------------------\n");
-
+    TITLE();
     std::string subject = "a=crypto:4";
 
     sfl::Pattern pattern("^a=crypto:(?P<tag>[0-9]{1,9})");
@@ -66,8 +66,7 @@ void SdesNegotiatorTest::testTagPattern()
 
 void SdesNegotiatorTest::testCryptoSuitePattern()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::testCryptoSuitePattern --------------------\n");
-
+    TITLE();
     std::string subject = "AES_CM_128_HMAC_SHA1_80";
 
     sfl::Pattern pattern("(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
@@ -83,7 +82,7 @@ void SdesNegotiatorTest::testCryptoSuitePattern()
 
 void SdesNegotiatorTest::testKeyParamsPattern()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::testKeyParamsPattern --------------------\n");
+    TITLE();
 
     std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32";
 
@@ -107,7 +106,7 @@ void SdesNegotiatorTest::testKeyParamsPattern()
 
 void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::testKeyParamsPatternWithoutMKI --------------------\n");
+    TITLE();
 
     std::string subject("inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj");
 
@@ -131,7 +130,7 @@ void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
  */
 void SdesNegotiatorTest::testNegotiation()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::testNegotiation --------------------\n");
+    TITLE();
 
     // Add a new SDES crypto line to be processed.
     std::vector<std::string> remoteOffer;
@@ -154,7 +153,7 @@ void SdesNegotiatorTest::testNegotiation()
  */
 void SdesNegotiatorTest::testComponent()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::testComponent --------------------\n");
+    TITLE();
 
     // Register the local capabilities.
     std::vector<sfl::CryptoSuiteDefinition> capabilities;
@@ -177,7 +176,7 @@ void SdesNegotiatorTest::testComponent()
  */
 void SdesNegotiatorTest::testMostSimpleCase()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::testMostSimpleCase --------------------\n");
+    TITLE();
 
     // Register the local capabilities.
     std::vector<sfl::CryptoSuiteDefinition> capabilities;
@@ -207,7 +206,7 @@ void SdesNegotiatorTest::testMostSimpleCase()
 
 void SdesNegotiatorTest::test32ByteKeyLength()
 {
-    DEBUG("-------------------- SdesNegotiatorTest::test32ByteKeyLength --------------------\n");
+    TITLE();
 
     // Register the local capabilities.
     std::vector<sfl::CryptoSuiteDefinition> capabilities;

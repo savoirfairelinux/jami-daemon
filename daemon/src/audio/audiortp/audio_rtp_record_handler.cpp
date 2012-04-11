@@ -30,6 +30,7 @@
 #include "audio_rtp_record_handler.h"
 #include <fstream>
 
+#include "logger.h"
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "manager.h"

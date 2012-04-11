@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 #include "zrtp_session_callback.h"
-#include "global.h"
+#include "logger.h"
 #include "sip/sipcall.h"
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"

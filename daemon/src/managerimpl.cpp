@@ -36,11 +36,13 @@
 #include "config.h"
 #endif
 
+#include "logger.h"
 #include "managerimpl.h"
 
 #include "account.h"
 #include "dbus/callmanager.h"
 #include "global.h"
+#include "fileutils.h"
 #include "sip/sipaccount.h"
 #include "im/instant_messaging.h"
 #include "iax/iaxaccount.h"

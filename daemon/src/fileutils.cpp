@@ -34,7 +34,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <signal.h>
-#include "global.h"
+#include <string>
+#include <sstream>
+#include "fileutils.h"
+#include "logger.h"
 
 namespace {
 // returns true if directory exists

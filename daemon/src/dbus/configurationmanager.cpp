@@ -30,15 +30,17 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "configurationmanager.h"
 #include <sstream>
-#include "config.h"
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/siptransport.h"
 #include "account.h"
+#include "logger.h"
 #include "sip/sipaccount.h"
 
 const char* ConfigurationManager::SERVER_PATH =

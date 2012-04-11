@@ -33,31 +33,16 @@
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
-#include <stdio.h>
+#include <cstdio>
 #include <libintl.h>
 #include <locale.h>
 #include <string>
-#include <stdlib.h>
+#include <cstdlib>
 #include <sstream>
 #include <map>
 #include <vector>
-#include "logger.h"
 
-#define HOMEDIR					(getenv ("HOME"))				/** Home directory */
-#define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
-#define XDG_CONFIG_HOME			(getenv ("XDG_CONFIG_HOME"))
-#define XDG_CACHE_HOME			(getenv ("XDG_CACHE_HOME"))
 const char * const ZRTP_ZID_FILENAME = "sfl.zid";
-
-//useful typedefs.
-typedef signed short SINT16;
-typedef signed int SINT32;
-
-#define PIDFILE "sfl.pid"
-
-typedef short SFLDataFormat;
-
-#define SIZEBUF 		 400000     /** About 12 sec of buffering at 8000 Hz*/
 
 #define ALSA_DFT_CARD_ID 0          /** Index of the default soundcard */
 
@@ -120,8 +105,5 @@ enum {
 
 /** The struct to reflect the order the user wants to use the codecs */
 typedef std::vector<int> CodecOrder;
-
-#define DIR_SEPARATOR_STR "/" // Directory separator char
-#define DIR_SEPARATOR_CH = '/' /** Directory separator string */
 
 #endif	// __GLOBAL_H__

@@ -32,6 +32,7 @@
 #include "dbusmanager.h"
 #include "global.h"
 #include "manager.h"
+#include "logger.h"
 #include "instance.h"
 
 #include "callmanager.h"
@@ -86,7 +87,7 @@ void DBusManager::exec()
         ERROR("%s: %s, exiting\n", err.name(), err.what());
         ::exit(EXIT_FAILURE);
     } catch (const std::exception &err) {
-        ERROR("%s: %s, exiting\n", err.what());
+        ERROR("%s: exiting\n", err.what());
         ::exit(EXIT_FAILURE);
     }
 }
@@ -100,7 +101,7 @@ DBusManager::exit()
         ERROR("%s: %s, exiting\n", err.name(), err.what());
         ::exit(EXIT_FAILURE);
     } catch (const std::exception &err) {
-        ERROR("%s: %s, exiting\n", err.what());
+        ERROR("%s: exiting\n", err.what());
         ::exit(EXIT_FAILURE);
     }
 }

@@ -31,10 +31,13 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
+#include "logger.h"
 #include "manager.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"

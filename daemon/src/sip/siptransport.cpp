@@ -47,6 +47,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 
+#include "logger.h"
 #include "siptransport.h"
 #include "manager.h"
 

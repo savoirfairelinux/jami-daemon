@@ -31,7 +31,7 @@
  */
 
 #include "sdp.h"
-#include "global.h"
+#include "logger.h"
 #include "manager.h"
 #include <cassert>
 

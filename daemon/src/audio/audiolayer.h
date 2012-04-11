@@ -31,12 +31,12 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIO_LAYER_H__
-#define __AUDIO_LAYER_H__
+#ifndef AUDIO_LAYER_H_
+#define AUDIO_LAYER_H_
 
 #include "cc_thread.h" // for ost::Mutex
 #include <sys/time.h>
-
+#include <vector>
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "samplerateconverter.h"

@@ -31,6 +31,8 @@
 #include "audiorecord.h"
 #include <unistd.h>
 #include <sstream> // for stringstream
+#include <cstdio>
+#include "logger.h"
 
 // structure for the wave header
 

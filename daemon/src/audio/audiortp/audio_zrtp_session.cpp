@@ -28,13 +28,17 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include "audio_zrtp_session.h"
 #include "zrtp_session_callback.h"
-
+#include "fileutils.h"
 #include "sip/sipcall.h"
 #include "sip/sdp.h"
 #include "audio/audiolayer.h"
+#include "logger.h"
 #include "manager.h"
 
 #include <libzrtpcpp/zrtpccrtp.h>

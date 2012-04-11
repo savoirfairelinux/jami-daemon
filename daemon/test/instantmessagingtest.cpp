@@ -30,13 +30,12 @@
 
 #include <iostream>
 #include <fstream>
+#include <expat.h>
 #include "test_utils.h"
 
 #include "instantmessagingtest.h"
 #include "im/instant_messaging.h"
-
-#include "expat.h"
-
+#include "logger.h"
 
 #define MAXIMUM_SIZE	10
 #define DELIMITER_CHAR	"\n\n"

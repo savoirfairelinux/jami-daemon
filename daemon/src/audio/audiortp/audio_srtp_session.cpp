@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 #include "audio_srtp_session.h"
+#include "logger.h"
 
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
