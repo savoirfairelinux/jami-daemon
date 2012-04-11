@@ -29,7 +29,8 @@
  */
 
 #include "yamlnode.h"
-#include "global.h"
+#include <cstdlib>
+#include "logger.h"
 
 namespace Conf {
 
@@ -137,7 +138,7 @@ void MappingNode::getValue(const std::string &key, int *i) const
     if (!node)
         return;
 
-    *i = atoi(node->getValue().c_str());
+    *i = std::atoi(node->getValue().c_str());
 }
 
 void MappingNode::getValue(const std::string &key, std::string *v) const

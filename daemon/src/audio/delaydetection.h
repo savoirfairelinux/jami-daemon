@@ -32,7 +32,7 @@
 #ifndef DELAYDETECTION_H
 #define DELAYDETECTION_H
 
-#include "global.h"
+#include "sfl_data_format.h"
 #include <vector>
 
 // Template size in samples for correlation

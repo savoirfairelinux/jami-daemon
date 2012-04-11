@@ -32,6 +32,7 @@
  */
 
 #include "call.h"
+#include "logger.h"
 #include "voiplink.h"
 
 VoIPLink::VoIPLink() : callMap_(), callMapMutex_(), handlingEvents_(false) {}

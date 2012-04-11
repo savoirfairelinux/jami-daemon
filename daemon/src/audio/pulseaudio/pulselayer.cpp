@@ -36,6 +36,7 @@
 #include "pulselayer.h"
 #include "audio/samplerateconverter.h"
 #include "audio/dcblocker.h"
+#include "logger.h"
 #include "manager.h"
 
 namespace {

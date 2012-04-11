@@ -33,8 +33,9 @@
 
 #include <samplerate.h>
 #include <cmath>
+#include <cstring>
 
-#include "global.h"
+#include "sfl_data_format.h"
 #include "noncopyable.h"
 
 class SamplerateConverter {

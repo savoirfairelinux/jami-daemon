@@ -36,9 +36,9 @@
 #include "config.h"
 #endif
 
-
 #include "sipvoiplink.h"
 #include "manager.h"
+#include "logger.h"
 
 #include "sip/sdp.h"
 #include "sipcall.h"

@@ -33,7 +33,8 @@
 #ifndef __AUDIOLOOP_H__
 #define __AUDIOLOOP_H__
 
-#include "global.h" // for SFLDataFormat
+#include "sfl_data_format.h"
+#include <cstring>
 #include "noncopyable.h"
 
 /**

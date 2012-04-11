@@ -29,8 +29,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "../global.h"
+#endif
+#include "logger.h"
 #include <fstream>
 #include <cstdlib>
 #include <sys/types.h>

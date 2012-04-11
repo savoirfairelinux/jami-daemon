@@ -30,6 +30,7 @@
  */
 
 #include "numbercleaner.h"
+#include "logger.h"
 #include <algorithm>
 
 namespace {

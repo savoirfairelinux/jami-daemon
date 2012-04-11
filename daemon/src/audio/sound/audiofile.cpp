@@ -31,7 +31,7 @@
  *  as that of the covered work.
  */
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <samplerate.h>
 #include <cstring>
 #include <vector>
@@ -41,6 +41,7 @@
 #include "audio/codecs/audiocodecfactory.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
+#include "logger.h"
 
 #include "manager.h"
 

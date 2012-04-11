@@ -32,6 +32,7 @@
 #include "dbusmanager.h"
 #include "global.h"
 #include "manager.h"
+#include "logger.h"
 #include "instance.h"
 
 #include "callmanager.h"

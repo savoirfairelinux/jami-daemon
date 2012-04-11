@@ -38,6 +38,7 @@
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
+#include "logger.h"
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>

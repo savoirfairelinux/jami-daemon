@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,33 +28,14 @@
  *  as that of the covered work.
  */
 
-/*
- * @file audiorecorderTest.cpp
- * @brief       Regroups unitary tests related to the plugin manager.
- */
+#ifndef SFL_DATA_FORMAT_H_
+#define SFL_DATA_FORMAT_H_
 
-#ifndef GAINCONTROL_TEST_
-#define GAINCONTROL_TEST_
+typedef short SFLDataFormat;
+typedef signed short SINT16;
+typedef signed int SINT32;
 
-// Cppunit import
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
+#define SIZEBUF 		 400000     /** About 12 sec of buffering at 8000 Hz*/
 
-#include "sfl_data_format.h"
 
-class GainControlTest: public CppUnit::TestFixture {
-
-        CPPUNIT_TEST_SUITE(GainControlTest);
-        CPPUNIT_TEST(testGainProcessing);
-        CPPUNIT_TEST_SUITE_END();
-
-    public:
-
-        void testGainProcessing();
-};
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(GainControlTest, "GainControlTest");
-CPPUNIT_TEST_SUITE_REGISTRATION(GainControlTest);
-
-#endif // GAINCONTROL_TEST_
+#endif	// SFL_DATA_FORMAT_H_

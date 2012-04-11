@@ -2,7 +2,8 @@
 #include <climits>
 #include <fstream>
 
-#include "global.h"
+#include "sfl_data_format.h"
+#include "logger.h"
 #include "gaincontrol.h"
 
 #define SFL_GAIN_ATTACK_TIME 10

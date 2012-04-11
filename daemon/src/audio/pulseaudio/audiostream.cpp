@@ -30,6 +30,7 @@
 
 #include "audiostream.h"
 #include "pulselayer.h"
+#include "logger.h"
 #include <stdexcept>
 
 AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string& deviceName)
@@ -95,7 +96,7 @@ AudioStream::~AudioStream()
 }
 
 void
-AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
+AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 {
     char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 

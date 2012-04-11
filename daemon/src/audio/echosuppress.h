@@ -9,7 +9,7 @@
 #define ECHOSUPPRESS_H_
 
 #include "pjmedia/echo.h"
-#include "global.h"
+#include "sfl_data_format.h"
 #include "noncopyable.h"
 
 class EchoSuppress {

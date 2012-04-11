@@ -29,6 +29,7 @@
  */
 
 #include "preferences.h"
+#include "logger.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
 #include "config/yamlemitter.h"

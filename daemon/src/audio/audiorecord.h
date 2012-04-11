@@ -35,7 +35,7 @@
 #include <cstdlib>
 #include <memory>
 
-#include "global.h"
+#include "sfl_data_format.h"
 #include "noncopyable.h"
 
 class AudioRecord {

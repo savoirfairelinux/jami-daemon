@@ -29,8 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "global.h"
-#include "../common.h"
+#include "sfl_data_format.h"
 #include "audiocodec.h"
 #include <cassert>
 

@@ -33,6 +33,7 @@
 #include "eventthread.h"
 #include "im/instant_messaging.h"
 #include "iaxaccount.h"
+#include "logger.h"
 #include "manager.h"
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"

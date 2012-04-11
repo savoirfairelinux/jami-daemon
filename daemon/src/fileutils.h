@@ -28,8 +28,18 @@
  *  as that of the covered work.
  */
 
-#ifndef __FILEUTILS_H__
-#define __FILEUTILS_H__
+#ifndef FILEUTILS_H_
+#define FILEUTILS_H_
+
+#define HOMEDIR					(getenv ("HOME"))				/** Home directory */
+#define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
+#define XDG_CONFIG_HOME			(getenv ("XDG_CONFIG_HOME"))
+#define XDG_CACHE_HOME			(getenv ("XDG_CACHE_HOME"))
+#define PIDFILE "sfl.pid"
+
+
+#define DIR_SEPARATOR_STR "/"   // Directory separator char
+#define DIR_SEPARATOR_CH = '/'  // Directory separator string
 
 namespace fileutils {
     void set_program_dir(char *program_path);
@@ -37,4 +47,4 @@ namespace fileutils {
     bool create_pidfile();
 }
 
-#endif	// __FILEUTILS_H__
+#endif	// FILEUTILS_H_

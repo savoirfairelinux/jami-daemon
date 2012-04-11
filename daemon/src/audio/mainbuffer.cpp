@@ -31,6 +31,7 @@
 
 #include "mainbuffer.h"
 #include <utility> // for std::pair
+#include "logger.h"
 #include "manager.h"
 
 MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)

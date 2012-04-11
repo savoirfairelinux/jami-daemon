@@ -38,6 +38,7 @@
 #include <getopt.h>
 #include "fileutils.h"
 #include "dbus/dbusmanager.h"
+#include "logger.h"
 #include "manager.h"
 
 namespace {

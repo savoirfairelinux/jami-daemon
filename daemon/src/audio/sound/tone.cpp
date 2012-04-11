@@ -35,10 +35,13 @@
  * YM: 2006-11-15: changes unsigned int to std::string::size_type, thanks to Pierre Pomes (AMD64 compilation)
  */
 #include "tone.h"
+#include "logger.h"
+#include "sfl_data_format.h"
 #include <cmath>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 Tone::Tone(const std::string& definition, unsigned int sampleRate) :
     sampleRate_(sampleRate), xhigher_(0.0), xlower_(0.0)
@@ -55,8 +58,8 @@ Tone::genBuffer(const std::string& definition)
 
     size_ = 0;
 
-    SFLDataFormat* buffer = new SFLDataFormat[SIZEBUF]; //1kb
-    SFLDataFormat* bufferPos = buffer;
+    std::vector<SFLDataFormat> buffer(SIZEBUF); // 1kb
+    SFLDataFormat* bufferPos = &(*buffer.begin());
 
     // Number of format sections
     std::string::size_type posStart = 0; // position of precedent comma
@@ -123,9 +126,7 @@ Tone::genBuffer(const std::string& definition)
     assert(!buffer_);
     buffer_ = new SFLDataFormat[size_];
 
-    memcpy(buffer_, buffer, size_ * sizeof(SFLDataFormat)); // copy char, not SFLDataFormat.
-
-    delete [] buffer;
+    memcpy(buffer_, &(*buffer.begin()), size_ * sizeof(SFLDataFormat)); // copy char, not SFLDataFormat.
 }
 
 void

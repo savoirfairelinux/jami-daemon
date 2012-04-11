@@ -29,8 +29,8 @@
  */
 
 #include "yamlemitter.h"
-#include <stdio.h>
-#include "../global.h"
+#include <cstdio>
+#include "logger.h"
 
 namespace Conf {
 

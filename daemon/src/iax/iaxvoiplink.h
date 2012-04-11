@@ -35,7 +35,7 @@
 #include "voiplink.h"
 #include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
-#include "global.h"
+#include "sfl_data_format.h"
 #include "noncopyable.h"
 #include "audio/samplerateconverter.h"
 
@@ -116,7 +116,7 @@ class IAXVoIPLink : public VoIPLink {
          * Cancel a call
          * @param id The ID of the call
          */
-        virtual void cancel(const std::string& id UNUSED) {}
+        virtual void cancel(const std::string& /*id*/) {}
 
         /**
          * Put a call on hold

@@ -33,6 +33,7 @@
 #include "config/yamlemitter.h"
 #include "config/yamlparser.h"
 #include "account.h"
+#include "logger.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
 #include "sip/sipaccount.h"
