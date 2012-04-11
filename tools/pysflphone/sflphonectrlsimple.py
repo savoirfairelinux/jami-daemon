@@ -75,10 +75,13 @@ class SflPhoneCtrlSimple(Thread):
 
 	self.test = test
 	self.onIncomingCall_cb = None
+        self.onCallRinging_cb = None
+        self.onCallCurrent_cb = None
+        self.onCallFailure_cb = None
 	self.event = Event()
 
 	gobject.threads_init()
-	
+
 
 
     def __del__(self):
@@ -90,7 +93,7 @@ class SflPhoneCtrlSimple(Thread):
     def stopThread(self):
         print "Stop PySFLphone"
         self.isStop = True
-	
+
 
 
     def register(self):
@@ -192,31 +195,46 @@ class SflPhoneCtrlSimple(Thread):
 	if(self.test):
             # TODO fix this bug in daemon, cannot answer too fast
             time.sleep(0.5)
-	    if self.onIncomingCall_cb(self) is not None:
+	    if self.onIncomingCall_cb(self):
                 self.onIncomingCall_cb(self)
-	
+
 
 
     # On call state changed event, set the values for new calls,
     # or delete the call from the list of active calls
     def onCallStateChanged(self, callid, state):
         print "Call state changed: " + callid + ", " + state
-        if state == "HUNGUP":
+        self.currentCallId = callid
+        if state is "HUNGUP":
             try:
                 del self.activeCalls[callid]
             except KeyError:
                 print "Call " + callid + " didn't exist. Cannot delete."
 
-        elif state in [ "RINGING", "CURRENT", "INCOMING", "HOLD" ]:
+        elif state is "RINGING":
             try:
                 self.activeCalls[callid]['State'] = state
+                if self.onCallRinging_cb:
+                    self.onCallRinging_cb(self)
             except KeyError, e:
                 print "This call didn't exist!: " + callid + ". Adding it to the list."
                 callDetails = self.getCallDetails(callid)
                 self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'],
 					    'To': callDetails['PEER_NUMBER'], 'State': state }
+        elif state in [ "CURRENT", "INCOMING", "HOLD" ]:
+            try:
+                self.activeCalls[callid]['State'] = state
+                if self.onCallCurrent_cb:
+                    self.onCallCurrent_cb(self)
+                callDetails = self.getCallDetails(callid)
+                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'],
+					    'To': callDetails['PEER_NUMBER'], 'State': state }
+            except KeyError, e:
+                print "This call didn't exist!: " + callid + ". Adding it to the list."
         elif state in [ "BUSY", "FAILURE" ]:
             try:
+	        if self.onCallFailure_cb:
+                    self.onCallFailure_cb(self)
                 del self.activeCalls[callid]
             except KeyError, e:
                 print "This call didn't exist!: " + callid
@@ -237,7 +255,7 @@ class SflPhoneCtrlSimple(Thread):
 	Required parameters are type, alias, hostname, username and password
 
 	input details
-	
+
 	"""
 
 	if details is None:
@@ -381,7 +399,7 @@ class SflPhoneCtrlSimple(Thread):
         if account is None:
             raise SflPhoneError("No provided or current account !")
         return account in self.getAllAccounts()
-			
+
     def getAllRegisteredAccounts(self):
         """Return a list of registered accounts"""
 
@@ -496,7 +514,7 @@ class SflPhoneCtrlSimple(Thread):
 
 	if dest is None or dest == "":
             raise SflPhoneError("Invalid call destination")
-	
+
         # Set the account to be used for this call
 	if dest.find('sip:') is 0 or dest.find('sips:') is 0:
             print "Ip 2 IP call"
@@ -508,7 +526,7 @@ class SflPhoneCtrlSimple(Thread):
             raise SflPhoneError("Can't place a call without a registered account")
 
         # Generate a call ID for this call
-        callid = self.GenerateCallID()	
+        callid = self.GenerateCallID()
 
         # Add the call to the list of active calls and set status to SENT
         self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }
@@ -576,7 +594,7 @@ class SflPhoneCtrlSimple(Thread):
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
-	
+
         self.callmanager.accept(callid)
 
 

@@ -16,8 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+import os
 import time
 import logging
+from sippwrap import SippWrapper
+from sippwrap import SippScreenStatParser
 from sflphonectrlsimple import SflPhoneCtrlSimple
 
 from nose.tools import nottest
@@ -26,14 +29,42 @@ from nose.tools import nottest
 ### function starting with 'test' are executed.
 ###
 
-# Open sflphone and connect to sflphoned through dbus
-sflphone = SflPhoneCtrlSimple(True)
-
 accountList = ["IP2IP", "Account:1332798167"]
 
+SCENARIO_PATH = "../sippxml/"
+
+def callHangup(sflphone):
+    """ On incoming call, answer the callm, then hangup """
+
+    print "Hangup Call with id " + sflphone.currentCallId
+    sflphone.HangUp(sflphone.currentCallId)
+
+    time.sleep(3)
+
+    print "Stopping Thread"
+    sflphone.stopThread()
+
+
+def callIsRinging(sflphone):
+    """ Display messages when call is ringing """
+
+    print "The call is ringing"
+
+
+def leaveThreadOnFailure(sflphone):
+    """ If a failure occurs duing the call, just leave the running thread """
+
+    print "Stopping Thread"
+    sflphone.stopThread()
+
+
+
 class TestSFLPhoneAccountConfig:
+    """ The test suite for account configuration """
 
     def __init__(self):
+        self.sflphone = SflPhoneCtrlSimple(True)
+
         self.logger = logging.getLogger("TestSFLPhoneAccountConfig")
         filehdlr = logging.FileHandler("/tmp/sflphonedbustest.log")
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -44,28 +75,28 @@ class TestSFLPhoneAccountConfig:
     @nottest
     def test_get_account_list(self):
         self.logger.info("Test get account list")
-        accList = sflphone.getAllAccounts()
+        accList = self.sflphone.getAllAccounts()
         listIntersection = set(accList) & set(accountList)
         assert len(listIntersection) == len(accountList)
 
     @nottest
     def test_account_registration(self):
         self.logger.info("Test account registration")
-        accList = [x for x in sflphone.getAllAccounts() if x != "IP2IP"]
+        accList = [x for x in self.sflphone.getAllAccounts() if x != "IP2IP"]
         for acc in accList:
 	    self.logger.info("Registering account " + acc)
 
-            if sflphone.isAccountEnable(acc):
-               sflphone.setAccountEnable(acc, False)
+            if self.sflphone.isAccountEnable(acc):
+               self.sflphone.setAccountEnable(acc, False)
                time.sleep(2)
 
             # Account should not be registered
-            assert sflphone.isAccountRegistered(acc)
+            assert self.sflphone.isAccountRegistered(acc)
 
-            sflphone.setAccountEnable(acc, True)
+            self.sflphone.setAccountEnable(acc, True)
             time.sleep(2)
 
-            assert sflphone.isAccountRegistered(acc)
+            assert self.sflphone.isAccountRegistered(acc)
 
     @nottest
     def test_add_remove_account(self):
@@ -74,20 +105,123 @@ class TestSFLPhoneAccountConfig:
         newAccList = []
 
         # consider only true accounts
-        accList = [x for x in sflphone.getAllAccounts() if x != "IP2IP"]
+        accList = [x for x in self.sflphone.getAllAccounts() if x != "IP2IP"]
 
         # Store the account details localy
         for acc in accList:
-            accountDetails[acc] = sflphone.getAccountDetails(acc)
+            accountDetails[acc] = self.sflphone.getAccountDetails(acc)
 
         # Remove all accounts from sflphone
         for acc in accountDetails:
-            sflphone.removeAccount(acc)
+            self.sflphone.removeAccount(acc)
 
         # Recreate all accounts
         for acc in accountDetails:
-            newAccList.append(sflphone.addAccount(accountDetails[acc]))
+            newAccList.append(self.sflphone.addAccount(accountDetails[acc]))
 
         # New accounts should be automatically registered
         for acc in newAccList:
-            assert sflphone.isAccountRegistered(acc)
+            assert self.sflphone.isAccountRegistered(acc)
+
+
+
+class TestSFLPhoneRegisteredCalls:
+    """ The test suite for call interaction """
+
+    def __init__(self):
+        self.sflphone = SflPhoneCtrlSimple(True)
+
+        self.logger = logging.getLogger("TestSFLPhoneRegisteredCalls")
+        filehdlr = logging.FileHandler("/tmp/sfltestregisteredcall.log")
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        filehdlr.setFormatter(formatter)
+        self.logger.addHandler(filehdlr)
+        self.logger.setLevel(logging.INFO)
+        self.sippRegistrationInstance = SippWrapper()
+        self.sippCallInstance = SippWrapper()
+        self.localInterface = "127.0.0.1"
+        self.localPort = str(5064)
+        self.sflphone.onCallRinging_cb = callIsRinging
+        self.sflphone.onCallCurrent_cb = callHangup
+        self.sflphone.onCallFailure_cb = leaveThreadOnFailure
+
+        # Make sure the test directory is populated with most recent log files
+        self.clean_log_directory()
+
+    def clean_log_directory(self):
+        dirlist = os.listdir("./")
+        files = [x for x in dirlist if "screen.log" in x]
+        for f in files:
+	    os.remove(f)
+
+    def find_sipp_pid(self):
+        # Retreive the PID of the last
+        # The /proc/PID/cmdline contain the command line from
+        pids = [int(x) for x in os.listdir("/proc") if x.isdigit()]
+        sippPid = [pid for pid in pids if "sipp" in open("/proc/" + str(pid) + "/cmdline").readline()]
+
+        return sippPid[0]
+
+    def parse_results(self):
+        dirlist = os.listdir("./")
+        logfile = [x for x in dirlist if "screen.log" in x]
+        print logfile
+
+        fullpath = os.path.dirname(os.path.realpath(__file__)) + "/"
+
+        # there should be only one screen.log file (see clean_log_directory)
+        resultParser = SippScreenStatParser(fullpath + logfile[0])
+
+        assert(not resultParser.isAnyFailedCall())
+        assert(resultParser.isAnySuccessfulCall())
+
+    def test_registered_call(self):
+        self.logger.info("Test Registered Call")
+
+        # launch the sipp instance in background
+        # sipp 127.0.0.1:5060 -sf uac_register_no_cvs.xml -i 127.0.0.1 -p 5062
+        self.sippRegistrationInstance.remoteServer = "127.0.0.1"
+        self.sippRegistrationInstance.remotePort = str(5062)
+        self.sippRegistrationInstance.localInterface = self.localInterface
+        self.sippRegistrationInstance.localPort = self.localPort
+        self.sippRegistrationInstance.customScenarioFile = SCENARIO_PATH + "uac_register_no_cvs.xml"
+        self.sippRegistrationInstance.launchInBackground = True
+        self.sippRegistrationInstance.numberOfCall = 1
+        self.sippRegistrationInstance.numberOfSimultaneousCall = 1
+
+        self.sippRegistrationInstance.launch()
+
+        # wait for this instance of sipp to complete registration
+        sippPid = self.find_sipp_pid()
+        while os.path.exists("/proc/" + str(sippPid)):
+            time.sleep(1)
+
+        # sipp -sn uas -p 5062 -i 127.0.0.1
+        self.sippCallInstance.localInterface = self.localInterface
+        self.sippCallInstance.localPort = self.localPort
+        self.sippCallInstance.launchInBackground = True
+        self.sippCallInstance.numberOfCall = 1
+        self.sippCallInstance.numberOfSimultaneousCall = 1
+        self.sippCallInstance.enableTraceScreen = True
+
+        self.sippCallInstance.launch()
+
+        sippPid = self.find_sipp_pid()
+
+        # make sure every account are enabled
+        accList = [x for x in self.sflphone.getAllAccounts() if x != "IP2IP"]
+        for acc in accList:
+            if not self.sflphone.isAccountRegistered(acc):
+                self.sflphone.setAccountEnable(acc, True)
+
+        # Make a call to the SIPP instance
+        self.sflphone.Call("300")
+
+        # Start Glib mainloop to process callbacks
+        self.sflphone.start()
+
+        # Wait the sipp instance to dump log files
+        while os.path.exists("/proc/" + str(sippPid)):
+            time.sleep(1)
+
+        self.parse_results()
