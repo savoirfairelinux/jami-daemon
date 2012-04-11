@@ -31,7 +31,7 @@
 #ifndef DCBLOCKER_H
 #define DCBLOCKER_H
 
-#include "sfl_data_format.h"
+#include "sfl_types.h"
 
 class DcBlocker {
     public:

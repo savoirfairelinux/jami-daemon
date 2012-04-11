@@ -31,7 +31,7 @@
  */
 
 #include "audiocodec.h"
-#include "sfl_data_format.h"
+#include "sfl_types.h"
 #include "g722.h"
 #include "noncopyable.h"
 

@@ -42,7 +42,7 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include "sfl_data_format.h"
+#include "sfl_types.h"
 
 class GainControlTest: public CppUnit::TestFixture {
 

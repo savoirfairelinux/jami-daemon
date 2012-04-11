@@ -30,7 +30,7 @@
  */
 
 #include "audiocodec.h"
-#include "sfl_data_format.h"
+#include "sfl_types.h"
 #include <cassert>
 
 class Ulaw : public sfl::AudioCodec {

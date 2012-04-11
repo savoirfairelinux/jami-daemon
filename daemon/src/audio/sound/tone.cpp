@@ -36,7 +36,7 @@
  */
 #include "tone.h"
 #include "logger.h"
-#include "sfl_data_format.h"
+#include "sfl_types.h"
 #include <cmath>
 #include <cassert>
 #include <cstdlib>

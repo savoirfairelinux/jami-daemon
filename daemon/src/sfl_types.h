@@ -28,14 +28,15 @@
  *  as that of the covered work.
  */
 
-#ifndef SFL_DATA_FORMAT_H_
-#define SFL_DATA_FORMAT_H_
+#ifndef SFL_TYPES_H_
+#define SFL_TYPES_H_
+
+#include <cstring> // for size_t
 
 typedef short SFLDataFormat;
 typedef signed short SINT16;
 typedef signed int SINT32;
 
-#define SIZEBUF 		 400000     /** About 12 sec of buffering at 8000 Hz*/
+static const size_t SIZEBUF = 400000; /** About 12 sec of buffering at 8000 Hz*/
 
-
-#endif	// SFL_DATA_FORMAT_H_
+#endif // SFL_TYPES_H_

@@ -35,7 +35,7 @@
 #include "voiplink.h"
 #include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
-#include "sfl_data_format.h"
+#include "sfl_types.h"
 #include "noncopyable.h"
 #include "audio/samplerateconverter.h"
 

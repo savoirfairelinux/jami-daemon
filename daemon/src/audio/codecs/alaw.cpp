@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "sfl_data_format.h"
+#include "sfl_types.h"
 #include "audiocodec.h"
 #include <cassert>
 

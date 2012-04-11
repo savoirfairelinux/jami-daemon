@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include "logger.h"
 #include "echosuppress.h"
+#include "pjmedia/echo.h"
 #include "pj/pool.h"
 #include "pj/os.h"
 
