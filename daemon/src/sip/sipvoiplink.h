@@ -63,7 +63,6 @@ class SIPAccount;
 
 class SIPVoIPLink : public VoIPLink {
     public:
-        ~SIPVoIPLink();
 
         /**
          * Singleton method. Enable to retrieve the unique static instance
@@ -233,7 +232,13 @@ class SIPVoIPLink : public VoIPLink {
         void createDefaultSipUdpTransport();
 
         SipTransport sipTransport;
+
     private:
+
+        NON_COPYABLE(SIPVoIPLink);
+
+        SIPVoIPLink();
+        ~SIPVoIPLink();
         /**
          * Start a SIP Call
          * @param call  The current call
@@ -242,10 +247,6 @@ class SIPVoIPLink : public VoIPLink {
         bool SIPStartCall(SIPCall* call);
 
         void dtmfSend(SIPCall *call, char code, const std::string &type);
-
-        NON_COPYABLE(SIPVoIPLink);
-
-        SIPVoIPLink();
 
         /**
          * Threading object
