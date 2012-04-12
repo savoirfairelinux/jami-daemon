@@ -31,13 +31,13 @@
 #include <libgen.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <cstdio>
+#include <fstream>
 #include <cstdlib>
 #include <signal.h>
 #include <string>
 #include <sstream>
+#include <iostream>
 #include "fileutils.h"
-#include "logger.h"
 
 namespace {
 // returns true if directory exists
@@ -84,38 +84,30 @@ bool create_pidfile()
         return false;
 
     std::string pidfile = path + "/" PIDFILE;
-    FILE *fp = fopen(pidfile.c_str(),"r");
+    std::ifstream is(pidfile.c_str());
 
-    if (fp) {
+    if (is) {
         // PID file exists. Check if the former process is still alive or
         // not. If alive, give user a hint.
         int oldPid;
-
-        if (fscanf(fp, "%d", &oldPid) != 1) {
-            ERROR("Couldn't read pidfile %s", pidfile.c_str());
-            return false;
-        }
-
-        fclose(fp);
+        is >> oldPid;
 
         if (kill(oldPid, 0) == 0) {
-            ERROR("There is already a sflphoned daemon running in the system. Starting Failed.");
+            // Use cerr because logging has not been initialized
+            std::cerr << "There is already a sflphoned daemon running in " <<
+                "the system. Starting Failed." << std::endl;
             return false;
         }
     }
 
     // write pid file
-    fp = fopen(pidfile.c_str(),"w");
+    std::ofstream os(pidfile.c_str());
 
-    if (!fp) {
+    if (!os) {
         perror(pidfile.c_str());
         return false;
     } else {
-        std::ostringstream pidstr;
-        pidstr << getpid();
-
-        fputs(pidstr.str().c_str(), fp);
-        fclose(fp);
+        os << getpid();
     }
 
     return true;
