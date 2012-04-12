@@ -31,6 +31,7 @@
 
 #include "delaydetectiontest.h"
 #include <cstring>
+#include "array_size.h"
 
 void DelayDetectionTest::testCrossCorrelation()
 {

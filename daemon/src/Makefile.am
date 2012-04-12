@@ -51,7 +51,8 @@ noinst_HEADERS = \
 		noncopyable.h \
 		cc_thread.h \
 		cc_config.h \
-		sfl_types.h
+		sfl_types.h \
+		array_size.h
 
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/iax2/libiax2.la \
