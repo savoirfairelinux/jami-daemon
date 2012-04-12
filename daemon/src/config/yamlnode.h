@@ -52,7 +52,7 @@ class YamlNode {
 
         virtual ~YamlNode() {}
 
-        NodeType getType() {
+        NodeType getType() const {
             return type;
         }
 
@@ -139,7 +139,7 @@ class ScalarNode : public YamlNode {
         ScalarNode(std::string s="", YamlNode *top=NULL) : YamlNode(SCALAR, top), str(s) {}
         ScalarNode(bool b, YamlNode *top=NULL) : YamlNode(SCALAR, top), str(b ? "true" : "false") {}
 
-        const std::string &getValue() {
+        const std::string &getValue() const {
             return str;
         }
 
