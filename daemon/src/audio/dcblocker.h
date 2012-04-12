@@ -35,6 +35,7 @@
 
 class DcBlocker {
     public:
+        DcBlocker();
         void reset();
         void process(SFLDataFormat *out, SFLDataFormat *in, int samples);
 
