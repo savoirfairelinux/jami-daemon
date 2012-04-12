@@ -140,7 +140,7 @@ Tone::fillWavetable()
 }
 
 double
-Tone::interpolate(double x)
+Tone::interpolate(double x) const
 {
     int xi_0 = x;
     int xi_1 = xi_0 + 1;
