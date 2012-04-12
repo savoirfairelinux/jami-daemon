@@ -84,7 +84,7 @@ class YamlEmitter {
     private:
 
         NON_COPYABLE(YamlEmitter);
-        void addMappingItem(int mappingid, std::string key, YamlNode *node);
+        void addMappingItem(int mappingid, const std::string &key, YamlNode *node);
 
         std::string filename_;
 
