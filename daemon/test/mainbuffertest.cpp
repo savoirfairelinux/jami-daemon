@@ -865,7 +865,6 @@ void MainBufferTest::testGetPutDataByID()
     int test_input2 = 13;
     int test_output;
 
-    int avail_for_put_testid;
     int avail_for_put_defaultid;
 
     // put by default_id get by test_id without preleminary put
@@ -883,7 +882,7 @@ void MainBufferTest::testGetPutDataByID()
     CPPUNIT_ASSERT(test_input1 == test_output);
 
     // get by default_id without preliminary input
-    avail_for_put_testid = mainbuffer_.availForPut(test_id);
+    mainbuffer_.availForPut(test_id);
     CPPUNIT_ASSERT(mainbuffer_.availForGetByID(test_id, default_id) == 0);
     CPPUNIT_ASSERT(mainbuffer_.getDataByID(&test_output, sizeof(int), 100, test_id, default_id) == 0);
 

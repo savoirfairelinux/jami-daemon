@@ -67,7 +67,7 @@ void DelayDetectionTest::testCrossCorrelationDelay()
 
     delaydetect_.crossCorrelate(ref, signal, result, 3, 10);
 
-    float expected[10] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
+//    float expected[10] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
 }
 
 void DelayDetectionTest::testFirFilter()
