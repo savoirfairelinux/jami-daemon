@@ -47,6 +47,9 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     , regSession_(NULL)
     , nextRefreshStamp_(0)
     , mutexIAX_()
+    , decData_()
+    , resampledData_()
+    , encodedData_()
     , converter_(44100)
     , initDone_(false)
     , accountID_(accountID)
@@ -167,7 +170,7 @@ IAXVoIPLink::sendAudioFromMic()
             continue;
 
         // Get bytes from micRingBuffer to data_from_mic
-        int bytes = Manager::instance().getMainBuffer()->getData(decData, bytesNeeded, currentCall->getCallId());
+        int bytes = Manager::instance().getMainBuffer()->getData(decData_, bytesNeeded, currentCall->getCallId());
         int samples = bytes / sizeof(SFLDataFormat);
 
         int compSize;
@@ -176,20 +179,20 @@ IAXVoIPLink::sendAudioFromMic()
         SFLDataFormat *in;
 
         if (audioRate != mainBufferSampleRate) {
-            converter_.resample(decData, resampledData, audioRate, mainBufferSampleRate, samples);
-            in = resampledData;
+            converter_.resample(decData_, resampledData_, audioRate, mainBufferSampleRate, samples);
+            in = resampledData_;
             outSamples = 0;
         } else {
             outSamples = samples;
-            in = decData;
+            in = decData_;
         }
 
-        compSize = audioCodec->encode(encodedData, in, DEC_BUFFER_SIZE);
+        compSize = audioCodec->encode(encodedData_, in, DEC_BUFFER_SIZE);
 
         if (currentCall->session and bytes > 0) {
             ost::MutexLock m(mutexIAX_);
 
-            if (iax_send_voice(currentCall->session, currentCall->format, encodedData, compSize, outSamples) == -1)
+            if (iax_send_voice(currentCall->session, currentCall->format, encodedData_, compSize, outSamples) == -1)
                 ERROR("IAX: Error sending voice data.");
         }
     }
@@ -562,15 +565,15 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     if (size > max)
         size = max;
 
-    int samples = audioCodec->decode(decData, data , size);
+    int samples = audioCodec->decode(decData_, data , size);
     int outSize = samples * sizeof(SFLDataFormat);
-    SFLDataFormat *out = decData;
+    SFLDataFormat *out = decData_;
     unsigned int audioRate = audioCodec->getClockRate();
 
     if (audioRate != mainBufferSampleRate) {
         outSize = (double)outSize * (mainBufferSampleRate / audioRate);
-        converter_.resample(decData, resampledData, mainBufferSampleRate, audioRate, samples);
-        out = resampledData;
+        converter_.resample(decData_, resampledData_, mainBufferSampleRate, audioRate, samples);
+        out = resampledData_;
     }
 
     Manager::instance().getMainBuffer()->putData(out, outSize, call->getCallId());

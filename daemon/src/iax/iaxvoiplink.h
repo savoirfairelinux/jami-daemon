@@ -250,9 +250,9 @@ class IAXVoIPLink : public VoIPLink {
         ost::Mutex mutexIAX_;
 
         /** encoder/decoder/resampler buffers */
-        SFLDataFormat decData[DEC_BUFFER_SIZE];
-        SFLDataFormat resampledData[DEC_BUFFER_SIZE];
-        unsigned char encodedData[DEC_BUFFER_SIZE];
+        SFLDataFormat decData_[DEC_BUFFER_SIZE];
+        SFLDataFormat resampledData_[DEC_BUFFER_SIZE];
+        unsigned char encodedData_[DEC_BUFFER_SIZE];
 
         /** Sample rate converter object */
         SamplerateConverter converter_;
