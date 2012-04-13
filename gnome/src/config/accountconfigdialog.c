@@ -40,6 +40,7 @@
 #include <gtk/gtk.h>
 
 #include "config.h"
+#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "logger.h"
 #include "actions.h"

@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "gtk2_wrappers.h"
 #include "eel-gconf-extensions.h"
 #include "unused.h"
 #include "dbus.h"

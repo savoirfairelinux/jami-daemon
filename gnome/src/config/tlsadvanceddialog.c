@@ -29,6 +29,7 @@
  */
 
 #include "tlsadvanceddialog.h"
+#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "sflphone_const.h"
 #include "mainwindow.h"

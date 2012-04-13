@@ -15,9 +15,7 @@ AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT
 
-dnl Only need these for moving to gtk3
-MIGRATION_CFLAGS="-DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGTK_DISABLE_SINGLE_INCLUDES"
-CFLAGS="$CFLAGS -Wall -Wextra -Wshadow $MIGRATION_CFLAGS"
+CFLAGS="$CFLAGS -Wall -Wextra -Wshadow"
 
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
@@ -32,10 +30,10 @@ if echo "$LIBNOTIFY_LIBS" | grep -q gtk+-x11-2.0; then
     AC_MSG_ERROR([Your libnotify is linked with GTK+2 ! Install libnotify4-dev])
     exit 1
 fi
-PKG_CHECK_MODULES(GTK, gtk+-3.0)
+PKG_CHECK_MODULES(GTK, gtk+-3.0, , [PKG_CHECK_MODULES(GTK, gtk+-2.0)])
 PKG_CHECK_MODULES(GCONF, gconf-2.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
-PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)
+PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0,, [PKG_CHECK_MODULES(WEBKIT, webkit-1.0)])
 PKG_CHECK_MODULES(X11, x11)
 PKG_CHECK_MODULES(JAVASCRIPT_CORE_GTK, javascriptcoregtk-3.0, ,
 		  AC_MSG_RESULT(javascriptcoregtk not installed))
