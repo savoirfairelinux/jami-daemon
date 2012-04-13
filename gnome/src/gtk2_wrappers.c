@@ -49,12 +49,9 @@ GtkWidget* gtk_button_box_new(GtkOrientation orientation)
 }
 
 void
-gtk_widget_get_preferred_size(GtkWidget* widget, GtkRequisition *min_size, GtkRequisition *max_size)
+gtk_widget_get_preferred_size(GtkWidget* widget, GtkRequisition *min_size UNUSED, GtkRequisition *natural_size)
 {
-    if (max_size)
-        gtk_widget_size_request(widget, max_size);
-    else if (min_size)
-        gtk_widget_size_request(widget, min_size);
+    gtk_widget_size_request(widget, natural_size);
 }
 
 GdkPixbuf *
@@ -74,9 +71,8 @@ gtk_scale_new_with_range(GtkOrientation orientation, gdouble min, gdouble max,
 }
 
 void
-gtk_combo_box_text_append(GtkComboBoxText *combo_box, const gchar *id, const gchar *text)
+gtk_combo_box_text_append(GtkComboBoxText *combo_box, const gchar *id UNUSED, const gchar *text)
 {
-    g_assert(!id);
     gtk_combo_box_append_text(GTK_COMBO_BOX(combo_box), text);
 }
 

@@ -42,7 +42,7 @@ GtkWidget*
 gtk_button_box_new(GtkOrientation orientation);
 
 void
-gtk_widget_get_preferred_size(GtkWidget* widget, GtkRequisition *min_size, GtkRequisition *max_size);
+gtk_widget_get_preferred_size(GtkWidget* widget, GtkRequisition *min_size, GtkRequisition *natural_size);
 
 GdkPixbuf *
 gtk_widget_render_icon_pixbuf(GtkWidget *widget, const gchar *stock_id, GtkIconSize size);
