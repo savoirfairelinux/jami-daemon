@@ -37,6 +37,7 @@
 #include "manager.h"
 #include "noncopyable.h"
 #include "dbus/configurationmanager.h"
+#include <ctime>
 
 class AlsaThread : public ost::Thread {
     public:
@@ -107,7 +108,8 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 
     // Retry if busy, since dmix plugin may not have released the device yet
     for (int tries = 0; tries < MAX_RETRIES and err == -EBUSY; ++tries) {
-        usleep(10000);
+        const struct timespec req = {0, 10000000};
+        nanosleep(&req, 0);
         err = snd_pcm_open(pcm, dev.c_str(), stream, 0);
     }
 

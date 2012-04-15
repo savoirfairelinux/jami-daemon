@@ -39,7 +39,7 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <memory>
+#include <tr1/memory>
 #include "cc_thread.h"
 #include "dbus/dbusmanager.h"
 
@@ -890,14 +890,14 @@ class ManagerImpl {
         AudioLayer* audiodriver_;
 
         // Main thread
-        std::auto_ptr<DTMF> dtmfKey_;
+        std::tr1::shared_ptr<DTMF> dtmfKey_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         ost::Mutex toneMutex_;
-        std::auto_ptr<TelephoneTone> telephoneTone_;
-        std::auto_ptr<AudioFile> audiofile_;
+        std::tr1::shared_ptr<TelephoneTone> telephoneTone_;
+        std::tr1::shared_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;

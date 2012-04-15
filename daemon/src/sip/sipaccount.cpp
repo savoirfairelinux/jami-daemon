@@ -899,7 +899,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 
     bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
 
-    assert(creds.size() > 0); // we can not authenticate without credentials
+    assert(not creds.empty()); // we can not authenticate without credentials
 
     credentials_ = creds;
 

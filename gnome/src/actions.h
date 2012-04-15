@@ -52,7 +52,7 @@
  * Initialize lists and configurations
  * @return TRUE if succeeded, FALSE otherwise
  */
-gboolean sflphone_init();
+gboolean sflphone_init(GError **error);
 
 /**
  * Steps when closing the application.  Will ask for confirmation if a call is in progress.

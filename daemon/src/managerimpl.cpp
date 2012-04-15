@@ -78,8 +78,8 @@ ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(),
-    currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(0),
-    toneMutex_(), telephoneTone_(0), audiofile_(0), audioLayerMutex_(),
+    currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
+    toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
     callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
     mainBuffer_(), conferenceMap_(), history_()
@@ -130,6 +130,7 @@ void ManagerImpl::terminate()
 
     saveConfig();
 
+    SIPVoIPLink::destroy();
     // Unload account map AFTER destroying
     // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
     unloadAccountMap();
@@ -1667,7 +1668,7 @@ void ManagerImpl::stopTone()
     if (audiofile_.get()) {
         std::string filepath(audiofile_->getFilePath());
         dbus_.getCallManager()->recordPlaybackStopped(filepath);
-        audiofile_.reset(0);
+        audiofile_.reset();
     }
 }
 
@@ -1746,7 +1747,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
 
         if (audiofile_.get()) {
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
-            audiofile_.reset(0);
+            audiofile_.reset();
         }
 
         try {
@@ -2080,7 +2081,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
         if (audiofile_.get()) {
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
-            audiofile_.reset(0);
+            audiofile_.reset();
         }
 
         try {
@@ -2108,7 +2109,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 
     {
         ost::MutexLock m(toneMutex_);
-        audiofile_.reset(0);
+        audiofile_.reset();
     }
 }
 

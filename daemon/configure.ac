@@ -6,10 +6,6 @@ AC_INIT([sflphone],[1.0.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012]])
 AC_REVISION([$Revision$])
 
-AC_CANONICAL_BUILD
-AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
-
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
@@ -90,9 +86,6 @@ AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type 
 AC_FUNC_STAT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
-                inet_ntoa memset mkdir pathconf pow regcomp select setlocale \
-                socket strchr strdup strerror strrchr strstr strtol utime])
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG

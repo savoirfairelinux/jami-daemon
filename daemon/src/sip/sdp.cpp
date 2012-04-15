@@ -207,7 +207,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 
 void Sdp::setLocalMediaCapabilities(const CodecOrder &selectedCodecs)
 {
-    if (selectedCodecs.size() == 0)
+    if (selectedCodecs.empty())
         WARN("No selected codec while building local SDP offer");
 
     codec_list_.clear();

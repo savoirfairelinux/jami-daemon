@@ -63,13 +63,17 @@ class SIPAccount;
 
 class SIPVoIPLink : public VoIPLink {
     public:
-        ~SIPVoIPLink();
 
         /**
          * Singleton method. Enable to retrieve the unique static instance
          * @return SIPVoIPLink* A pointer on the object
          */
         static SIPVoIPLink* instance();
+
+        /**
+         * Destroy the singleton instance
+         */
+        static void destroy();
 
         /**
          * Event listener. Each event send by the call manager is received and handled from here
@@ -228,7 +232,13 @@ class SIPVoIPLink : public VoIPLink {
         void createDefaultSipUdpTransport();
 
         SipTransport sipTransport;
+
     private:
+
+        NON_COPYABLE(SIPVoIPLink);
+
+        SIPVoIPLink();
+        ~SIPVoIPLink();
         /**
          * Start a SIP Call
          * @param call  The current call
@@ -238,16 +248,14 @@ class SIPVoIPLink : public VoIPLink {
 
         void dtmfSend(SIPCall *call, char code, const std::string &type);
 
-        NON_COPYABLE(SIPVoIPLink);
-
-        SIPVoIPLink();
-
         /**
          * Threading object
          */
         EventThread evThread_;
 
         friend class SIPTest;
+        static bool destroyed_;
+        static SIPVoIPLink *instance_;
 };
 
 #endif // SIPVOIPLINK_H_

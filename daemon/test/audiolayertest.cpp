@@ -80,7 +80,8 @@ void AudioLayerTest::testAudioLayerSwitch()
             CPPUNIT_ASSERT(dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
 
         wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
-        usleep(100000);
+        const struct timespec req = {0, 100000000};
+        nanosleep(&req, 0);
     }
 }
 
@@ -90,7 +91,8 @@ void AudioLayerTest::testPulseConnect()
 
     if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver())) {
         Manager::instance().switchAudioManager();
-        usleep(100000);
+        const struct timespec req = {0, 100000000};
+        nanosleep(&req, 0);
     }
 
     pulselayer_ = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());

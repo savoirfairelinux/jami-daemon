@@ -133,19 +133,16 @@ void MainBuffer::bindCallID(const std::string & call_id1, const std::string & ca
 {
     ost::MutexLock guard(mutex_);
 
-    RingBuffer* ring_buffer;
-    CallIDSet* callid_set;
-
-    if ((ring_buffer = getRingBuffer(call_id1)) == NULL)
+    if (getRingBuffer(call_id1) == NULL)
         createRingBuffer(call_id1);
 
-    if ((callid_set = getCallIDSet(call_id1)) == NULL)
+    if (getCallIDSet(call_id1) == NULL)
         createCallIDSet(call_id1);
 
-    if ((ring_buffer = getRingBuffer(call_id2)) == NULL)
+    if (getRingBuffer(call_id2) == NULL)
         createRingBuffer(call_id2);
 
-    if ((callid_set = getCallIDSet(call_id2)) == NULL)
+    if (getCallIDSet(call_id2) == NULL)
         createCallIDSet(call_id2);
 
     getRingBuffer(call_id1)->createReadPointer(call_id2);

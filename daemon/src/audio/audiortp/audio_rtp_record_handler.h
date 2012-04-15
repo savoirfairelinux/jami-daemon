@@ -132,7 +132,7 @@ class AudioRtpRecordHandler {
         }
 
         int DtmfPending() const {
-            return audioRtpRecord_.dtmfQueue_.size() > 0;
+            return not audioRtpRecord_.dtmfQueue_.empty();
         }
 
         const unsigned char *getMicDataEncoded() const {

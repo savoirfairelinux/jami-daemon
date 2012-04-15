@@ -43,10 +43,14 @@ SpeexEchoCancel::SpeexEchoCancel() :
     preState_(speex_preprocess_state_init(EC_FRAME_SIZE, SPEEX_SAMPLE_RATE)),
     micData_(RINGBUFFER_SIZE),
     spkrData_(RINGBUFFER_SIZE),
-    spkrStopped_(true)
+    spkrStopped_(true),
+    tmpSpkr_(),
+    tmpMic_(),
+    tmpOut_()
 {
-    DEBUG("EchoCancel: Initializing echo canceller with delay: %d, filter length: %d, frame size: %d and samplerate %d",
-          echoDelay_, echoTailLength_, EC_FRAME_SIZE, SPEEX_SAMPLE_RATE);
+    DEBUG("EchoCancel: Initializing echo canceller with delay: %d, filter "
+          "length: %d, frame size: %d and samplerate %d", echoDelay_,
+          echoTailLength_, EC_FRAME_SIZE, SPEEX_SAMPLE_RATE);
 
     int rate = SPEEX_SAMPLE_RATE;
     speex_echo_ctl(echoState_, SPEEX_ECHO_SET_SAMPLING_RATE, &rate);

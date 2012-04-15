@@ -51,7 +51,7 @@ DBusManager::DBusManager() : callManager_(0)
         DBus::_init_threading();
         DBus::default_dispatcher = &dispatcher_;
 
-        DBus::Connection sessionConnection = DBus::Connection::SessionBus();
+        DBus::Connection sessionConnection(DBus::Connection::SessionBus());
         sessionConnection.request_name("org.sflphone.SFLphone");
 
         callManager_ = new CallManager(sessionConnection);
@@ -59,7 +59,7 @@ DBusManager::DBusManager() : callManager_(0)
         instanceManager_ = new Instance(sessionConnection);
 
 #ifdef USE_NETWORKMANAGER
-        DBus::Connection systemConnection = DBus::Connection::SystemBus();
+        DBus::Connection systemConnection(DBus::Connection::SystemBus());
         networkManager_ = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 

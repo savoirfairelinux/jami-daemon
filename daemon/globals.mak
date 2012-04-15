@@ -11,20 +11,8 @@ ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
 
 # for pjsip
-PJSIP_LIBS= \
-			-L$(src)/libs/pjproject/pjnath/lib/ \
-			-L$(src)/libs/pjproject/pjsip/lib/ \
-			-L$(src)/libs/pjproject/pjlib/lib/ \
-			-L$(src)/libs/pjproject/pjlib-util/lib/ \
-			-L$(src)/libs/pjproject/pjmedia/lib/ \
-			-lpjnath-$(target) \
-			-lpjsua-$(target) \
-			-lpjsip-$(target) \
-			-lpjmedia-$(target) \
-			-lpjsip-simple-$(target) \
-			-lpjsip-ua-$(target) \
-			-lpjlib-util-$(target) \
-			-lpj-$(target)
+include $(src)/libs/pjproject/build.mak
+PJSIP_LIBS=$(APP_LDFLAGS) $(APP_LDLIBS)
 
 SIP_CFLAGS=-I$(src)/libs/pjproject/pjsip/include \
 		   -I$(src)/libs/pjproject/pjlib/include \

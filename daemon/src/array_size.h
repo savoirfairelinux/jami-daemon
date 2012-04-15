@@ -28,10 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef TEST_UTILS_H_
-#define TEST_UTILS_H_
+#ifndef ARRAY_SIZE_H_
+#define ARRAY_SIZE_H_
 
-#define TITLE() DEBUG("-------------------- %s --------------------\n", \
-        __PRETTY_FUNCTION__)
+// Returns the number of elements in a, calculated at compile-time
+#define ARRAYSIZE(a) \
+      ((sizeof(a) / sizeof(*(a))) / \
+         static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
 
-#endif // TEST_UTILS_H_
+#endif // ARRAY_SIZE_H_

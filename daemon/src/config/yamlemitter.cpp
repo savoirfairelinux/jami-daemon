@@ -118,8 +118,8 @@ void YamlEmitter::serializeAccount(MappingNode *map)
         throw YamlEmitterException("Could not append account mapping to sequence");
 
     Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(accountmapping, iter->first, iter->second);
+    for (Mapping::const_iterator i = internalmap->begin(); i != internalmap->end(); ++i)
+        addMappingItem(accountmapping, i->first, i->second);
 }
 
 void YamlEmitter::serializePreference(MappingNode *map)
@@ -141,8 +141,8 @@ void YamlEmitter::serializePreference(MappingNode *map)
         throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
+    for (Mapping::const_iterator i = internalmap->begin(); i != internalmap->end(); ++i)
+        addMappingItem(preferencemapping, i->first, i->second);
 }
 
 void YamlEmitter::serializeVoipPreference(MappingNode *map)
@@ -164,12 +164,8 @@ void YamlEmitter::serializeVoipPreference(MappingNode *map)
         throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
-    Mapping::iterator iter = internalmap->begin();
-
-    while (iter != internalmap->end()) {
-        addMappingItem(preferencemapping, iter->first, iter->second);
-        iter++;
-    }
+    for (Mapping::const_iterator i = internalmap->begin(); i != internalmap->end(); ++i)
+        addMappingItem(preferencemapping, i->first, i->second);
 }
 
 void YamlEmitter::serializeAddressbookPreference(MappingNode *map)
@@ -189,8 +185,8 @@ void YamlEmitter::serializeAddressbookPreference(MappingNode *map)
         throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
+    for (Mapping::const_iterator i = internalmap->begin(); i != internalmap->end(); ++i)
+        addMappingItem(preferencemapping, i->first, i->second);
 }
 
 void YamlEmitter::serializeHooksPreference(MappingNode *map)
@@ -211,8 +207,8 @@ void YamlEmitter::serializeHooksPreference(MappingNode *map)
         throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
+    for (Mapping::const_iterator i = internalmap->begin(); i != internalmap->end(); ++i)
+        addMappingItem(preferencemapping, i->first, i->second);
 }
 
 
@@ -235,8 +231,8 @@ void YamlEmitter::serializeAudioPreference(MappingNode *map)
         throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
     Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
+    for (Mapping::const_iterator i = internalmap->begin(); i != internalmap->end(); ++i)
+        addMappingItem(preferencemapping, i->first, i->second);
 }
 
 
@@ -257,13 +253,13 @@ void YamlEmitter::serializeShortcutPreference(MappingNode *map)
     if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
         throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
+    Mapping *mapping = map->getMapping();
+    for (Mapping::const_iterator i = mapping->begin(); i != mapping->end(); ++i)
+        addMappingItem(preferencemapping, i->first, i->second);
 }
 
 
-void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
+void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode *node)
 {
     if (node->getType() == SCALAR) {
         ScalarNode *sclr = static_cast<ScalarNode *>(node);
@@ -294,8 +290,8 @@ void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
             throw YamlEmitterException("Could not add mapping pair to mapping");
 
         Mapping *internalmap = map->getMapping();
-        for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-            addMappingItem(temp2, iter->first, iter->second);
+        for (Mapping::const_iterator i = internalmap->begin(); i != internalmap->end(); ++i)
+            addMappingItem(temp2, i->first, i->second);
 
     } else if (node->getType() == SEQUENCE) {
         SequenceNode *seqnode = static_cast<SequenceNode *>(node);
@@ -323,10 +319,8 @@ void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
 
             MappingNode *mapnode = static_cast<MappingNode*>(yamlNode);
             Mapping *map = mapnode->getMapping();
-            Mapping::iterator mapit;
-
-            for (mapit = map->begin(); mapit != map->end() ; ++mapit)
-                addMappingItem(id, mapit->first, mapit->second);
+            for (Mapping::const_iterator i = map->begin(); i != map->end(); ++i)
+                addMappingItem(id, i->first, i->second);
         }
     } else
         throw YamlEmitterException("Unknown node type while adding mapping node");
