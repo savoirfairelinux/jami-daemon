@@ -59,10 +59,14 @@ class SflPhoneCtrl(Thread):
         onCallCurrent_cb
         onCallBusy_cb
         onCallFailure_cb
+        onConferenceCreated_cb
     """
 
     # list of active calls (known by the client)
     activeCalls = {}
+
+    # list of active conferences
+    activeConferences = {}
 
     def __init__(self, name=sys.argv[0]):
         Thread.__init__(self)
@@ -74,6 +78,7 @@ class SflPhoneCtrl(Thread):
         self.name = name
 
 	self.currentCallId = ""
+        self.currentConfId = ""
 
 	self.isStop = False
 
@@ -145,6 +150,7 @@ class SflPhoneCtrl(Thread):
             print "Adding Incoming call method"
             proxy_callmgr.connect_to_signal('incomingCall', self.onIncomingCall)
             proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
+            proxy_callmgr.connect_to_signal('conferenceCreated', self.onConferenceCreated)
         except dbus.DBusException, e:
             print e
 
@@ -171,7 +177,7 @@ class SflPhoneCtrl(Thread):
     def onIncomingCall_cb(self):
         pass
 
-    def onCallHangup_cb(self):
+    def onCallHangup_cb(self, callId):
         pass
 
     def onCallRinging_cb(self):
@@ -202,7 +208,7 @@ class SflPhoneCtrl(Thread):
     def onCallHangUp(self, callid):
         """ Remove callid from call list """
 
-        self.onCallHangup_cb()
+        self.onCallHangup_cb(callid)
 	self.currentCallId = ""
         del self.activeCalls[callid]
 
@@ -274,6 +280,12 @@ class SflPhoneCtrl(Thread):
         else:
             print "unknown state"
 
+    def onConferenceCreated_cb(self):
+        pass
+
+    def onConferenceCreated(self, confId):
+        self.currentConfId = confId
+        self.onConferenceCreated_cb()
 
     #
     # Account management
@@ -545,9 +557,6 @@ class SflPhoneCtrl(Thread):
         for call in self.activeCalls:
             print "\t" + call
 
-    #
-    # Action
-    #
     def Call(self, dest):
         """Start a call and return a CallID
 
@@ -636,12 +645,6 @@ class SflPhoneCtrl(Thread):
     def Hold(self, callid):
         """Hold a call identified by a CallID"""
 
-        # if not self.account:
-        #    self.setFirstRegisteredAccount()
-
-        # if not self.isAccountRegistered():
-        #    raise SflPhoneError("Can't hold a call without a registered account")
-
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
 
@@ -650,12 +653,6 @@ class SflPhoneCtrl(Thread):
 
     def UnHold(self, callid):
         """Unhold an incoming call identified by a CallID"""
-
-        # if not self.account:
-        #    self.setFirstRegisteredAccount()
-
-        # if not self.isAccountRegistered():
-        #    raise SflPhoneError("Can't unhold a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -679,13 +676,30 @@ class SflPhoneCtrl(Thread):
         callid = m.hexdigest()
 	return callid
 
+
+    def createConference(self, call1Id, call2Id):
+        """ Create a conference given the two call ids """
+
+        self.callmanager.joinParticipant(call1Id, call2Id)
+
+
+    def hangupConference(self, confId):
+        """ Hang up each call for this conference """
+
+        self.callmanager.hangUpConference(confId)
+
+
     def run(self):
         """Processing method for this thread"""
 
-	context = self.loop.get_context()
+        context = self.loop.get_context()
 
 	while True:
             context.iteration(True)
 
 	    if self.isStop:
+                print "++++++++++++++++++++++++++++++++++++++++"
+                print "++++++++++++++++++++++++++++++++++++++++"
+                print "++++++++++++++++++++++++++++++++++++++++"
+                print "++++++++++++++++++++++++++++++++++++++++"
                 return
