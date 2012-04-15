@@ -29,6 +29,7 @@
  */
 
 #include "gtk2_wrappers.h"
+#include "unused.h"
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
 
@@ -68,12 +69,6 @@ gtk_scale_new_with_range(GtkOrientation orientation, gdouble min, gdouble max,
         return gtk_hscale_new_with_range(min, max, step);
     else
         return gtk_vscale_new_with_range(min, max, step);
-}
-
-void
-gtk_combo_box_text_append(GtkComboBoxText *combo_box, const gchar *id UNUSED, const gchar *text)
-{
-    gtk_combo_box_append_text(GTK_COMBO_BOX(combo_box), text);
 }
 
 #endif
