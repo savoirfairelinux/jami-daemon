@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2009 by the Free Software Foundation, Inc.
+# Copyright (C) 2012 by the Free Software Foundation, Inc.
+#
+# Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,7 +24,7 @@ class SippWrapper:
     """ Wrapper taht allow for managing sipp command line easily """
 
     def __init__(self):
-        self.commandLine = "sipp"
+        self.commandLine = "./sipp"
         self.remoteServer = ""
         self.remotePort = ""
         self.localInterface = ""
@@ -41,8 +43,10 @@ class SippWrapper:
         self.enableTraceRtt = False
         self.enableTraceLogs = False
 
-    def buildCommandLine(self):
+    def buildCommandLine(self, port):
 	""" Fill the command line arguments based on specified parameters """
+
+        self.localPort = str(port)
 
         if not self.remotePort and not self.remoteServer:
             self.isUserAgentClient = False
@@ -106,9 +110,8 @@ class SippWrapper:
     def launch(self):
         """ Launch the sipp instance using the specified arguments """
 
-        self.buildCommandLine()
         print self.commandLine
-        return os.system(self.commandLine)
+        return os.system(self.commandLine + " 2>&1 > /dev/null")
 
 
 class SippScreenStatParser:
