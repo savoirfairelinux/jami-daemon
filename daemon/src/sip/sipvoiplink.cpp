@@ -35,6 +35,8 @@
 #include "config.h"
 #endif
 
+#include "sip_utils.h"
+
 #include "sipvoiplink.h"
 #include "manager.h"
 #include "logger.h"
@@ -115,7 +117,7 @@ int SIPSessionReinvite(SIPCall *);
  * Helper function to process refer function on call transfer
  */
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
-
+/*
 pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 {
     int port = 0;
@@ -140,6 +142,7 @@ pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 
     return route_set;
 }
+*/
 
 void handleIncomingOptions(pjsip_rx_data *rdata)
 {
@@ -192,6 +195,7 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_SUCCESS;
 }
 
+/*
 std::string parseDisplayName(const char * buffer)
 {
     const char* from_header = strstr(buffer, "From: ");
@@ -225,6 +229,7 @@ void stripSipUriPrefix(std::string& sipUri)
     if (found != std::string::npos)
         sipUri.erase(found);
 }
+*/
 
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
@@ -239,7 +244,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
     std::string account_id(Manager::instance().getAccountIdFromNameAndServer(userName, server));
 
-    std::string displayName(parseDisplayName(rdata->msg_info.msg_buf));
+    std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
 
     if (method->id == PJSIP_OTHER_METHOD) {
         pj_str_t *str = &method->name;
@@ -308,7 +313,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     char tmp[PJSIP_MAX_URL_SIZE];
     int length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, length);
-    stripSipUriPrefix(peerNumber);
+    sip_utils::stripSipUriPrefix(peerNumber);
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -568,7 +573,7 @@ void SIPVoIPLink::sendRegister(Account *a)
         throw VoipLinkException("Unable to initialize account registration structure");
 
     if (!account->getServiceRoute().empty())
-        pjsip_regc_set_route_set(regc, createRouteSet(account->getServiceRoute(), pool_));
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(account->getServiceRoute(), pool_));
 
     pjsip_regc_set_credentials(regc, account->getCredentialCount(), account->getCredInfo());
 
@@ -757,7 +762,7 @@ SIPVoIPLink::hangup(const std::string& id)
 
     // Looks for sip routes
     if (not account->getServiceRoute().empty()) {
-        pjsip_route_hdr *route_set = createRouteSet(account->getServiceRoute(), inv->pool);
+        pjsip_route_hdr *route_set = sip_utils::createRouteSet(account->getServiceRoute(), inv->pool);
         pjsip_dlg_set_route_set(inv->dlg, route_set);
     }
 
@@ -1083,7 +1088,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
 
     if (not account->getServiceRoute().empty())
-        pjsip_dlg_set_route_set(dialog, createRouteSet(account->getServiceRoute(), call->inv->pool));
+        pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 
     pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo());
 
