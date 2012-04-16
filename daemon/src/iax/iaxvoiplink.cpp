@@ -43,8 +43,7 @@
 #include <dlfcn.h>
 
 IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
-    evThread_(new EventThread(this))
-    , regSession_(NULL)
+    regSession_(NULL)
     , nextRefreshStamp_(0)
     , mutexIAX_()
     , decData_()
@@ -53,6 +52,7 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     , converter_(44100)
     , initDone_(false)
     , accountID_(accountID)
+    , evThread_(this)
 {
     srand(time(NULL));    // to get random number for RANDOM_PORT
 }
@@ -61,8 +61,6 @@ IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
 IAXVoIPLink::~IAXVoIPLink()
 {
     handlingEvents_ = false;
-    delete evThread_;
-
     regSession_ = NULL; // shall not delete it // XXX: but why?
     terminate();
 }
@@ -75,8 +73,8 @@ IAXVoIPLink::init()
 
     for (int port = IAX_DEFAULT_PORTNO, nbTry = 0; nbTry < 3 ; port = rand() % 64000 + 1024, nbTry++) {
         if (iax_init(port) >= 0) {
-            handlingEvents_ = false;
-            evThread_->start();
+            handlingEvents_ = true;
+            evThread_.start();
             initDone_ = true;
             break;
         }
@@ -113,6 +111,7 @@ IAXVoIPLink::getEvent()
     iax_event *event;
 
     while ((event = iax_get_event(0)) != NULL) {
+
         // If we received an 'ACK', libiax2 tells apps to ignore them.
         if (event->etype == IAX_EVENT_NULL) {
             iax_event_free(event);
@@ -121,10 +120,12 @@ IAXVoIPLink::getEvent()
 
         IAXCall *call = iaxFindCallBySession(event->session);
 
-        if (call)
+        if (call) {
             iaxHandleCallEvent(event, call);
-        else if (event->session && event->session == regSession_)
+        }
+        else if (event->session && event->session == regSession_) {
             iaxHandleRegReply(event);   // This is a registration session, deal with it
+        }
         else // We've got an event before it's associated with any call
             iaxHandlePrecallEvent(event);
 
@@ -208,6 +209,8 @@ IAXVoIPLink::getIAXCall(const std::string& id)
 void
 IAXVoIPLink::sendRegister(Account *a)
 {
+    DEBUG("========================================= Send register");
+
     IAXAccount *account = dynamic_cast<IAXAccount*>(a);
 
     if (account->getHostname().empty())
@@ -584,6 +587,8 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
  */
 void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
+    DEBUG("================== IAX REG REPLY");
+
     IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_));
 
     if (event->etype != IAX_EVENT_REGREJ && event->etype != IAX_EVENT_REGACK)
@@ -604,6 +609,8 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
     IAXCall *call;
     std::string id;
     int format;
+
+    DEBUG("================ HANDLE IAX PRECALL EVENT");
 
     switch (event->etype) {
         case IAX_EVENT_CONNECT:
