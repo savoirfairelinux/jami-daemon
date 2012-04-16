@@ -30,8 +30,11 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "str_utils.h"
+#endif
+
+#include "gtk2_wrappers.h"
 #include "actions.h"
 #include "dbus.h"
 #include "calltree.h"

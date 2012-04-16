@@ -28,13 +28,14 @@ sflphone_client_gnome_SOURCES = \
   reqaccount.c \
   eel-gconf-extensions.c \
   shortcuts.c \
-  str_utils.c
+  str_utils.c \
+  gtk2_wrappers.c
 
 noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   reqaccount.h sflphone_const.h uimanager.h accountlist.h \
 				  sliders.h statusicon.h callable_obj.h conference_obj.h \
                   shortcuts.h eel-gconf-extensions.h logger.h imwindow.h \
-				  unused.h str_utils.h
+				  unused.h str_utils.h gtk2_wrappers.h
 
 sflphone_client_gnome_LDADD = $(DBUSGLIB_LIBS) $(LIBNOTIFY_LIBS) \
                               $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(X11_LIBS) \

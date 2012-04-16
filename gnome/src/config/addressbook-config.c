@@ -29,6 +29,7 @@
  */
 
 #include "addressbook-config.h"
+#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "dbus.h"
 #include "unused.h"

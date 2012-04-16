@@ -40,6 +40,7 @@
 #include <gtk/gtk.h>
 
 #include "config.h"
+#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "logger.h"
 #include "actions.h"
@@ -874,7 +875,7 @@ create_network(const account_t *account)
 
     int idx = 0;
     for (gchar **iface = iface_list; iface && *iface; iface++, idx++) {
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_address_combo), NULL, *iface);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(local_address_combo), *iface);
         if (g_strcmp0(*iface, local_interface) == 0)
             gtk_combo_box_set_active(GTK_COMBO_BOX(local_address_combo), idx);
     }

@@ -26,6 +26,7 @@
 #include <gtk/gtk.h>
 #include "unused.h"
 #include "sflphone_const.h"
+#include "gtk2_wrappers.h"
 #include "minidialog.h"
 
 #define HIG_BOX_SPACE 6
