@@ -51,9 +51,6 @@ GtkWidget *
 gtk_scale_new_with_range(GtkOrientation orientation, gdouble min, gdouble max,
                          gdouble step);
 
-void
-gtk_combo_box_text_append(GtkComboBoxText *combo_box, const gchar *id, const gchar *text);
-
 #endif
 
 #endif // BOX_H_
