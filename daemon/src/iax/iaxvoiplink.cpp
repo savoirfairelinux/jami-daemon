@@ -209,7 +209,7 @@ IAXVoIPLink::getIAXCall(const std::string& id)
 void
 IAXVoIPLink::sendRegister(Account *a)
 {
-    DEBUG("========================================= Send register");
+    DEBUG("Send register");
 
     IAXAccount *account = dynamic_cast<IAXAccount*>(a);
 
@@ -587,8 +587,6 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
  */
 void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
-    DEBUG("================== IAX REG REPLY");
-
     IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_));
 
     if (event->etype != IAX_EVENT_REGREJ && event->etype != IAX_EVENT_REGACK)
@@ -609,8 +607,6 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
     IAXCall *call;
     std::string id;
     int format;
-
-    DEBUG("================ HANDLE IAX PRECALL EVENT");
 
     switch (event->etype) {
         case IAX_EVENT_CONNECT:
