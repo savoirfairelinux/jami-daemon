@@ -33,19 +33,19 @@
 #define IAXVOIPLINK_H
 
 #include "voiplink.h"
-#include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "sfl_types.h"
 #include "noncopyable.h"
 #include "audio/samplerateconverter.h"
+#include "eventthread.h"
 
-class EventThread;
+#include <iax-client.h>
+
 class IAXCall;
+class IAXAccount;
 
 class AudioCodec;
 class AudioLayer;
-
-class IAXAccount;
 
 /**
  * @file iaxvoiplink.h
@@ -234,9 +234,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         void iaxOutgoingInvite(IAXCall* call);
 
-        /** Threading object */
-        EventThread* evThread_;
-
         /** registration session : 0 if not register */
         iax_session* regSession_;
 
@@ -264,6 +261,11 @@ class IAXVoIPLink : public VoIPLink {
         bool initDone_;
 
         const std::string accountID_;
+
+        /**
+         * Threading object
+         */
+        EventThread evThread_;
 };
 
 #endif

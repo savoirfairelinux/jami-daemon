@@ -38,15 +38,13 @@
 
 #include <map>
 
-//////////////////////////////
-/* PJSIP imports */
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
-///////////////////////////////
+
 #include "sipaccount.h"
 #include "voiplink.h"
 #include "siptransport.h"
