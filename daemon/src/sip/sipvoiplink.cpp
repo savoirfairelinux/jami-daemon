@@ -195,42 +195,6 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_SUCCESS;
 }
 
-/*
-std::string parseDisplayName(const char * buffer)
-{
-    const char* from_header = strstr(buffer, "From: ");
-
-    if (!from_header)
-        return "";
-
-    std::string temp(from_header);
-    size_t begin_displayName = temp.find("\"") + 1;
-    size_t end_displayName = temp.rfind("\"");
-    std::string displayName(temp.substr(begin_displayName, end_displayName - begin_displayName));
-
-    static const size_t MAX_DISPLAY_NAME_SIZE = 25;
-    if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
-        return "";
-
-    return displayName;
-}
-
-void stripSipUriPrefix(std::string& sipUri)
-{
-    // Remove sip: prefix
-    static const char SIP_PREFIX[] = "sip:";
-    size_t found = sipUri.find(SIP_PREFIX);
-
-    if (found != std::string::npos)
-        sipUri.erase(found, found + (sizeof SIP_PREFIX) - 1);
-
-    found = sipUri.find("@");
-
-    if (found != std::string::npos)
-        sipUri.erase(found);
-}
-*/
-
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;

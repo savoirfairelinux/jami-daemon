@@ -330,7 +330,11 @@ void SipTransport::createSipTransport(SIPAccount *account)
         account->transport_ = transport;
     }
 
+
+
     if (!account->transport_) {
+        DEBUG("SipTransport: Looking into previously created transport map for %s:%d",
+                              account->getLocalInterface().c_str(), account->getLocalPort());
         // Could not create new transport, this transport may already exists
         account->transport_ = transportMap_[account->getLocalPort()];
 
@@ -341,6 +345,10 @@ void SipTransport::createSipTransport(SIPAccount *account)
             account->setLocalPort(localUDPTransport_->local_name.port);
         }
     }
+
+    if(account->transport_ == NULL)
+        ERROR("SipTransport: Could not create transport on %s:%d",
+                              account->getLocalInterface().c_str(), account->getLocalPort());
 }
 
 void SipTransport::createDefaultSipUdpTransport()
@@ -408,15 +416,15 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     pj_status_t status;
     pjsip_transport *transport = NULL;
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
+        boundAddr.ipv4.sin_port = listeningPort;
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
         if (status != PJ_SUCCESS) {
-            ERROR("Failed to create IPv4 UDP transport");
             return NULL;
         }
     } else if (boundAddr.addr.sa_family == pj_AF_INET6()) {
+        boundAddr.ipv6.sin6_port = listeningPort;
         status = pjsip_udp_transport_start6(endpt_, &boundAddr.ipv6, NULL, 1, &transport);
         if (status != PJ_SUCCESS) {
-            ERROR("Failed to create IPv6 UDP transport");
             return NULL;
         }
     }
