@@ -43,12 +43,12 @@
 namespace {
     void restore()
     {
-        if (system("mv " CONFIG_SAMPLE ".bak " CONFIG_SAMPLE) < 0)
+        if (system("mv " CONFIG_SAMPLE_BAK " " CONFIG_SAMPLE) < 0)
             ERROR("Restoration of %s failed", CONFIG_SAMPLE);
     }
     void backup()
     {
-        if (system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE ".bak") < 0)
+        if (system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE_BAK) < 0)
             ERROR("Backup of %s failed", CONFIG_SAMPLE);
     }
 }

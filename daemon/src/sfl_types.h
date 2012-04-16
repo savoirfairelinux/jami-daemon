@@ -31,7 +31,7 @@
 #ifndef SFL_TYPES_H_
 #define SFL_TYPES_H_
 
-#include <cstring> // for size_t
+#include <cstddef> // for size_t
 
 typedef short SFLDataFormat;
 typedef signed short SINT16;

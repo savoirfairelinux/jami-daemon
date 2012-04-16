@@ -34,14 +34,12 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 #include <fstream>
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
-
-#include "call.h"
-#include "sip/sipcall.h"
 
 #include <map>
 #include <list>

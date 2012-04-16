@@ -41,8 +41,8 @@ SpeexEchoCancel::SpeexEchoCancel() :
     echoTailLength_(Manager::instance().getEchoCancelTailLength() * SPEEX_SAMPLE_RATE / 1000),
     echoState_(speex_echo_state_init(EC_FRAME_SIZE, echoTailLength_)),
     preState_(speex_preprocess_state_init(EC_FRAME_SIZE, SPEEX_SAMPLE_RATE)),
-    micData_(RINGBUFFER_SIZE),
-    spkrData_(RINGBUFFER_SIZE),
+    micData_(RINGBUFFER_SIZE, MainBuffer::DEFAULT_ID),
+    spkrData_(RINGBUFFER_SIZE, MainBuffer::DEFAULT_ID),
     spkrStopped_(true),
     tmpSpkr_(),
     tmpMic_(),
@@ -56,8 +56,8 @@ SpeexEchoCancel::SpeexEchoCancel() :
     speex_echo_ctl(echoState_, SPEEX_ECHO_SET_SAMPLING_RATE, &rate);
     speex_preprocess_ctl(preState_, SPEEX_PREPROCESS_SET_ECHO_STATE, echoState_);
 
-    micData_.createReadPointer();
-    spkrData_.createReadPointer();
+    micData_.createReadPointer(MainBuffer::DEFAULT_ID);
+    spkrData_.createReadPointer(MainBuffer::DEFAULT_ID);
 }
 
 SpeexEchoCancel::~SpeexEchoCancel()
@@ -93,16 +93,16 @@ int SpeexEchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData
     micData_.Put(inputData, samples * sizeof(SFLDataFormat));
 
     // Store data for synchronization
-    int spkrAvail = spkrData_.AvailForGet();
-    int micAvail = micData_.AvailForGet();
+    int spkrAvail = spkrData_.AvailForGet(MainBuffer::DEFAULT_ID);
+    int micAvail = micData_.AvailForGet(MainBuffer::DEFAULT_ID);
 
-    if (spkrAvail < (echoDelay_+byteSize) || micAvail < byteSize) {
-        micData_.Discard(byteSize);
+    if ((spkrAvail < (echoDelay_ + byteSize)) or micAvail < byteSize) {
+        micData_.Discard(byteSize, MainBuffer::DEFAULT_ID);
         return 0;
     }
 
-    spkrData_.Get(tmpSpkr_, byteSize);
-    micData_.Get(tmpMic_, byteSize);
+    spkrData_.Get(tmpSpkr_, byteSize, MainBuffer::DEFAULT_ID);
+    micData_.Get(tmpMic_, byteSize, MainBuffer::DEFAULT_ID);
 
     for (int i = 0; i < EC_FRAME_SIZE; i++) {
         int32_t tmp = tmpSpkr_[i] * 3;
@@ -123,8 +123,8 @@ int SpeexEchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData
 
     memcpy(outputData, tmpOut_, byteSize);
 
-    spkrAvail = spkrData_.AvailForGet();
-    micAvail = micData_.AvailForGet();
+    spkrAvail = spkrData_.AvailForGet(MainBuffer::DEFAULT_ID);
+    micAvail = micData_.AvailForGet(MainBuffer::DEFAULT_ID);
 
     return EC_FRAME_SIZE;
 }

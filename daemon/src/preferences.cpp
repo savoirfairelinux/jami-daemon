@@ -41,8 +41,72 @@
 #include <cassert>
 
 const char * const Preferences::DFT_ZONE = "North America";
+const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
 
 namespace {
+// general preferences
+static const char * const ORDER_KEY = "order";
+static const char * const AUDIO_API_KEY = "audioApi";
+static const char * const HISTORY_LIMIT_KEY = "historyLimit";
+static const char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
+static const char * const NOTIFY_MAILS_KEY = "notifyMails";
+static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
+static const char * const PORT_NUM_KEY = "portNum";
+static const char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
+static const char * const ZEROCONF_ENABLE_KEY = "zeroConfenable";
+static const char * const MD5_HASH_KEY = "md5Hash";
+
+// voip preferences
+static const char * const PLAY_DTMF_KEY = "playDtmf";
+static const char * const PLAY_TONES_KEY = "playTones";
+static const char * const PULSE_LENGTH_KEY = "pulseLength";
+static const char * const SYMMETRIC_RTP_KEY = "symmetric";
+static const char * const ZID_FILE_KEY = "zidFile";
+
+// addressbook preferences
+static const char * const PHOTO_KEY = "photo";
+static const char * const ENABLED_KEY = "enabled";
+static const char * const LIST_KEY = "list";
+static const char * const MAX_RESULTS_KEY = "maxResults";
+static const char * const BUSINESS_KEY = "business";
+static const char * const HOME_KEY = "home";
+static const char * const MOBILE_KEY = "mobile";
+
+// hooks preferences
+static const char * const IAX2_ENABLED_KEY = "iax2Enabled";
+static const char * const NUMBER_ADD_PREFIX_KEY = "numberAddPrefix";
+static const char * const NUMBER_ENABLED_KEY = "numberEnabled";
+static const char * const SIP_ENABLED_KEY = "sipEnabled";
+static const char * const URL_COMMAND_KEY = "urlCommand";
+static const char * const URL_SIP_FIELD_KEY = "urlSipField";
+
+// audio preferences
+static const char * const ALSAMAP_KEY = "alsa";
+static const char * const PULSEMAP_KEY = "pulse";
+static const char * const CARDIN_KEY = "cardIn";
+static const char * const CARDOUT_KEY = "cardOut";
+static const char * const CARDRING_KEY = "cardRing";
+static const char * const PLUGIN_KEY = "plugin";
+static const char * const SMPLRATE_KEY = "smplRate";
+static const char * const DEVICE_PLAYBACK_KEY = "devicePlayback";
+static const char * const DEVICE_RECORD_KEY = "deviceRecord";
+static const char * const DEVICE_RINGTONE_KEY = "deviceRingtone";
+static const char * const RECORDPATH_KEY = "recordPath";
+static const char * const ALWAYS_RECORDING_KEY = "alwaysRecording";
+static const char * const VOLUMEMIC_KEY = "volumeMic";
+static const char * const VOLUMESPKR_KEY = "volumeSpkr";
+static const char * const NOISE_REDUCE_KEY = "noiseReduce";
+static const char * const ECHO_CANCEL_KEY = "echoCancel";
+static const char * const ECHO_TAIL_KEY = "echoTailLength";
+static const char * const ECHO_DELAY_KEY = "echoDelayLength";
+
+// shortcut preferences
+static const char * const HANGUP_SHORT_KEY = "hangUp";
+static const char * const PICKUP_SHORT_KEY = "pickUp";
+static const char * const POPUP_SHORT_KEY = "popupWindow";
+static const char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
+static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
+
 static const char * const DFT_PULSE_LENGTH_STR ="250";  /** Default DTMF lenght */
 static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
 static const char * const ALSA_DFT_CARD	= "0";          /** Default sound card index */

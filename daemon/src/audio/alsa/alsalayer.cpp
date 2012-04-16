@@ -556,6 +556,7 @@ void AlsaLayer::capture()
     if (toGetSamples > framesPerBufferAlsa)
         toGetSamples = framesPerBufferAlsa;
 
+#warning FIXME: there's no reason that in should be malloc'd
     int toGetBytes = toGetSamples * sizeof(SFLDataFormat);
     SFLDataFormat* in = (SFLDataFormat*) malloc(toGetBytes);
 
@@ -572,11 +573,11 @@ void AlsaLayer::capture()
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc(outBytes);
         converter_->resample((SFLDataFormat*) in, rsmpl_out, mainBufferSampleRate, audioSampleRate_, toGetSamples);
         dcblocker_.process(rsmpl_out, rsmpl_out, outSamples);
-        Manager::instance().getMainBuffer()->putData(rsmpl_out, outBytes);
+        Manager::instance().getMainBuffer()->putData(rsmpl_out, outBytes, MainBuffer::DEFAULT_ID);
         free(rsmpl_out);
     } else {
         dcblocker_.process(in, in, toGetSamples);
-        Manager::instance().getMainBuffer()->putData(in, toGetBytes);
+        Manager::instance().getMainBuffer()->putData(in, toGetBytes, MainBuffer::DEFAULT_ID);
     }
 
 end:
@@ -589,7 +590,7 @@ void AlsaLayer::playback(int maxSamples)
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
     bool resample = audioSampleRate_ != mainBufferSampleRate;
 
-    int toGet = Manager::instance().getMainBuffer()->availForGet();
+    int toGet = Manager::instance().getMainBuffer()->availForGet(MainBuffer::DEFAULT_ID);
     int toPut = maxSamples * sizeof(SFLDataFormat);
 
     if (toGet <= 0) {    	// no audio available, play tone or silence
@@ -627,7 +628,7 @@ void AlsaLayer::playback(int maxSamples)
         toGet = maxNbBytesToGet;
 
     SFLDataFormat *out = (SFLDataFormat*) malloc(toGet);
-    Manager::instance().getMainBuffer()->getData(out, toGet);
+    Manager::instance().getMainBuffer()->getData(out, toGet, MainBuffer::DEFAULT_ID);
     AudioLayer::applyGain(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
 
     if (resample) {
@@ -656,7 +657,7 @@ void AlsaLayer::audioCallback()
     int playbackAvailSmpl = snd_pcm_avail_update(playbackHandle_);
     int playbackAvailBytes = playbackAvailSmpl * sizeof(SFLDataFormat);
 
-    int toGet = urgentRingBuffer_.AvailForGet();
+    int toGet = urgentRingBuffer_.AvailForGet(MainBuffer::DEFAULT_ID);
 
     if (toGet > 0) {
         // Urgent data (dtmf, incoming call signal) come first.
@@ -664,13 +665,13 @@ void AlsaLayer::audioCallback()
             toGet = playbackAvailBytes;
 
         SFLDataFormat *out = (SFLDataFormat*) malloc(toGet);
-        urgentRingBuffer_.Get(out, toGet);
+        urgentRingBuffer_.Get(out, toGet, MainBuffer::DEFAULT_ID);
         AudioLayer::applyGain(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
 
         write(out, toGet, playbackHandle_);
         free(out);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer()->discard(toGet);
+        Manager::instance().getMainBuffer()->discard(toGet, MainBuffer::DEFAULT_ID);
     } else {
         // regular audio data
         playback(playbackAvailSmpl);
