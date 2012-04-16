@@ -34,6 +34,8 @@
 
 #include <string>
 
+#include <pjsip/sip_msg.h>
+
 class pjsip_msg;
 
 namespace sip_utils {
@@ -42,6 +44,12 @@ namespace sip_utils {
      * @return Header from SIP message
      */
     std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
+
+    pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
+
+    void stripSipUriPrefix(std::string& sipUri);
+
+    std::string parseDisplayName(const char * buffer);
 }
 
 #endif // SIP_UTILS_H_

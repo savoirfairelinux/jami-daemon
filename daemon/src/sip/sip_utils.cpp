@@ -29,9 +29,20 @@
  *  as that of the covered work.
  */
 
+#include <pjsip.h>
+#include <pjlib.h>
+#include <pjsip_ua.h>
+#include <pjlib-util.h>
+#include <pjnath.h>
+#include <pjnath/stun_config.h>
+#include <pj/string.h>
+#include <pjsip/sip_msg.h>
+#include <pjsip/sip_types.h>
+#include <pjsip/sip_uri.h>
+#include <pj/list.h>
+
+
 #include "sip_utils.h"
-#include "pj/string.h"
-#include "pjsip/sip_msg.h"
 
 std::string
 sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
@@ -50,4 +61,67 @@ sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
         return value.substr(0, pos);
     else
         return "";
+}
+
+pjsip_route_hdr *
+sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
+{
+    int port = 0;
+    std::string host;
+
+    size_t found = route.find(":");
+
+    if (found != std::string::npos) {
+        host = route.substr(0, found);
+        port = atoi(route.substr(found + 1, route.length()).c_str());
+    } else
+        host = route;
+
+    pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
+    pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
+    pjsip_sip_uri *url = pjsip_sip_uri_create(hdr_pool, 0);
+    routing->name_addr.uri = (pjsip_uri*) url;
+    pj_strdup2(hdr_pool, &url->host, host.c_str());
+    url->port = port;
+
+    pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
+
+    return route_set;
+}
+
+
+std::string
+sip_utils::parseDisplayName(const char * buffer)
+{
+    const char* from_header = strstr(buffer, "From: ");
+
+    if (!from_header)
+        return "";
+
+    std::string temp(from_header);
+    size_t begin_displayName = temp.find("\"") + 1;
+    size_t end_displayName = temp.rfind("\"");
+    std::string displayName(temp.substr(begin_displayName, end_displayName - begin_displayName));
+
+    static const size_t MAX_DISPLAY_NAME_SIZE = 25;
+    if (displayName.size() > MAX_DISPLAY_NAME_SIZE)
+        return "";
+
+    return displayName;
+}
+
+void
+sip_utils::stripSipUriPrefix(std::string& sipUri)
+{
+    // Remove sip: prefix
+    static const char SIP_PREFIX[] = "sip:";
+    size_t found = sipUri.find(SIP_PREFIX);
+
+    if (found != std::string::npos)
+        sipUri.erase(found, found + (sizeof SIP_PREFIX) - 1);
+
+    found = sipUri.find("@");
+
+    if (found != std::string::npos)
+        sipUri.erase(found);
 }
