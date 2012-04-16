@@ -117,32 +117,6 @@ int SIPSessionReinvite(SIPCall *);
  * Helper function to process refer function on call transfer
  */
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
-/*
-pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
-{
-    int port = 0;
-    std::string host;
-
-    size_t found = route.find(":");
-
-    if (found != std::string::npos) {
-        host = route.substr(0, found);
-        port = atoi(route.substr(found + 1, route.length()).c_str());
-    } else
-        host = route;
-
-    pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
-    pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
-    pjsip_sip_uri *url = pjsip_sip_uri_create(hdr_pool, 0);
-    routing->name_addr.uri = (pjsip_uri*) url;
-    pj_strdup2(hdr_pool, &url->host, host.c_str());
-    url->port = port;
-
-    pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
-
-    return route_set;
-}
-*/
 
 void handleIncomingOptions(pjsip_rx_data *rdata)
 {
