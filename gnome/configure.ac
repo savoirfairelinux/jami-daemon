@@ -30,10 +30,16 @@ if echo "$LIBNOTIFY_LIBS" | grep -q gtk+-x11-2.0; then
     AC_MSG_ERROR([Your libnotify is linked with GTK+2 ! Install libnotify4-dev])
     exit 1
 fi
-PKG_CHECK_MODULES(GTK, gtk+-3.0, , [PKG_CHECK_MODULES(GTK, gtk+-2.0)])
+
+# Check for gtk+-3.0 and if found, check for webkitgtk-3.0, otherwise
+# check for gtk+-2.0 and if found, check for webkitgtk-1.0.
+PKG_CHECK_MODULES(GTK, gtk+-3.0, [PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)],
+        [PKG_CHECK_MODULES(GTK, gtk+-2.0,
+            [PKG_CHECK_MODULES(WEBKIT, webkit-1.0)],
+            [AC_MSG_ERROR(gtk-2 not found)])])
+
 PKG_CHECK_MODULES(GCONF, gconf-2.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
-PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0,, [PKG_CHECK_MODULES(WEBKIT, webkit-1.0)])
 PKG_CHECK_MODULES(X11, x11)
 PKG_CHECK_MODULES(JAVASCRIPT_CORE_GTK, javascriptcoregtk-3.0, ,
 		  AC_MSG_RESULT(javascriptcoregtk not installed))
