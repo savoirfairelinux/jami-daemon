@@ -161,7 +161,7 @@ void ConfigurationTest::testYamlEmitter()
     accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
     accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
     accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
-    accountmap.setKeyValue(REGISTRATION_EXPIRE_KEY, &expire);
+    accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, &expire);
     accountmap.setKeyValue(INTERFACE_KEY, &interface);
     accountmap.setKeyValue(PORT_KEY, &port);
     accountmap.setKeyValue(PUBLISH_ADDR_KEY, &publishAddr);

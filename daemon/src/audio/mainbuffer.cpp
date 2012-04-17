@@ -30,9 +30,12 @@
  */
 
 #include "mainbuffer.h"
+#include "ringbuffer.h"
+#include "sfl_types.h" // for SIZEBUF
 #include <utility> // for std::pair
 #include "logger.h"
-#include "manager.h"
+
+const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
 MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
 {}
@@ -308,7 +311,7 @@ int MainBuffer::availForGet(const std::string & call_id)
     if (callid_set->size() == 1) {
         CallIDSet::iterator iter_id = callid_set->begin();
 
-        if ((call_id != Call::DEFAULT_ID) && (*iter_id == call_id))
+        if ((call_id != DEFAULT_ID) && (*iter_id == call_id))
             DEBUG("This problem should not occur since we have %i element", (int) callid_set->size());
 
         return availForGetByID(*iter_id, call_id);
@@ -335,7 +338,7 @@ int MainBuffer::availForGet(const std::string & call_id)
 int MainBuffer::availForGetByID(const std::string &call_id,
                                 const std::string &reader_id)
 {
-    if ((call_id != Call::DEFAULT_ID) and (reader_id == call_id))
+    if ((call_id != DEFAULT_ID) and (reader_id == call_id))
         ERROR("MainBuffer: Error: RingBuffer has a readpointer on itself");
 
     RingBuffer* ringbuffer = getRingBuffer(call_id);

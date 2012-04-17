@@ -42,7 +42,6 @@ namespace Conf {
 class YamlNode;
 
 typedef std::list<YamlNode *> Sequence;
-typedef std::map<std::string, YamlNode *> Mapping;
 
 enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
 
@@ -109,7 +108,8 @@ class MappingNode : public YamlNode {
         MappingNode(YamlNode *top) :
             YamlNode(MAPPING, top), map_(), tmpKey_() {}
 
-        Mapping *getMapping() {
+        std::map<std::string, YamlNode*> *
+        getMapping() {
             return &map_;
         }
 
@@ -131,7 +131,7 @@ class MappingNode : public YamlNode {
         virtual void deleteChildNodes();
 
     private:
-        Mapping map_;
+        std::map<std::string, YamlNode*> map_;
         std::string tmpKey_;
 };
 

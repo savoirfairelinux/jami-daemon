@@ -317,18 +317,18 @@ void PulseLayer::writeToSpeaker()
 
     notifyincomingCall();
 
-    size_t urgentBytes = urgentRingBuffer_.AvailForGet();
+    size_t urgentBytes = urgentRingBuffer_.AvailForGet(MainBuffer::DEFAULT_ID);
 
     if (urgentBytes > bytes)
         urgentBytes = bytes;
 
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
-        urgentRingBuffer_.Get(data, urgentBytes);
+        urgentRingBuffer_.Get(data, urgentBytes, MainBuffer::DEFAULT_ID);
         applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());  
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer()->discard(urgentBytes);
+        Manager::instance().getMainBuffer()->discard(urgentBytes, MainBuffer::DEFAULT_ID);
         return;
     }
 
@@ -347,7 +347,7 @@ void PulseLayer::writeToSpeaker()
 
     flushUrgent(); // flush remaining samples in _urgentRingBuffer
 
-    size_t availSamples = Manager::instance().getMainBuffer()->availForGet() / sizeof(SFLDataFormat);
+    size_t availSamples = Manager::instance().getMainBuffer()->availForGet(MainBuffer::DEFAULT_ID) / sizeof(SFLDataFormat);
 
     if (availSamples == 0) {
         pa_stream_begin_write(s, &data, &bytes);
@@ -379,7 +379,7 @@ void PulseLayer::writeToSpeaker()
 
     size_t inBytes = inSamples * sizeof(SFLDataFormat);
     pa_stream_begin_write(s, &data, &inBytes);
-    Manager::instance().getMainBuffer()->getData(data, inBytes);
+    Manager::instance().getMainBuffer()->getData(data, inBytes, MainBuffer::DEFAULT_ID);
 
     if (resample) {
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc(outBytes);
@@ -427,7 +427,7 @@ void PulseLayer::readFromMic()
 
     dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
     applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());
-    Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes);
+    Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes, MainBuffer::DEFAULT_ID);
 
     if (pa_stream_drop(record_->pulseStream()) < 0)
         ERROR("Audio: Error: capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));

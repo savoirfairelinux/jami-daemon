@@ -71,7 +71,7 @@ void Conference::bindParticipant(const std::string &participant_id)
         if (participant_id != *iter)
             Manager::instance().getMainBuffer()->bindCallID(participant_id, *iter);
 
-    Manager::instance().getMainBuffer()->bindCallID(participant_id);
+    Manager::instance().getMainBuffer()->bindCallID(participant_id, MainBuffer::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const
@@ -113,14 +113,14 @@ bool Conference::setRecording()
         for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
             mbuffer->bindHalfDuplexOut(process_id, *iter);
 
-        mbuffer->bindHalfDuplexOut(process_id);
+        mbuffer->bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
             mbuffer->unBindHalfDuplexOut(process_id, *iter);
 
-        mbuffer->unBindHalfDuplexOut(process_id);
+        mbuffer->unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }
 
     return recordStatus;
