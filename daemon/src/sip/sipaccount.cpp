@@ -428,10 +428,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     srtpKeyExchange_ = details[CONFIG_SRTP_KEY_EXCHANGE];
 
     // TLS settings
-    // The TLS listener is unique and globally defined through IP2IP_PROFILE
-    if (isIP2IP())
-        tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
-
+    tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
     tlsEnable_ = details[CONFIG_TLS_ENABLE];
     tlsCaListFile_ = details[CONFIG_TLS_CA_LIST_FILE];
     tlsCertificateFile_ = details[CONFIG_TLS_CERTIFICATE_FILE];
