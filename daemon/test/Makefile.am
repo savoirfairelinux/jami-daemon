@@ -5,7 +5,7 @@ check_PROGRAMS = test
 
 TESTS = run_tests.sh
 
-test_CXXFLAGS = -DWORKSPACE="$(top_builddir)/test/"
+test_CXXFLAGS = -DWORKSPACE="$(top_srcdir)/test/"
 test_LDADD = $(top_builddir)/src/libsflphone.la @ZRTPCPP_LIBS@ @LIBCRYPTO_LIBS@ @CPPUNIT_LIBS@ @YAML_LIBS@
 
 EXTRA_DIST = sflphoned-sample.yml history-sample.tpl run_tests.sh
@@ -38,3 +38,7 @@ test_SOURCES = constants.h \
 			   gaincontroltest.cpp \
 			   mainbuffertest.h \
 			   mainbuffertest.cpp
+
+clean-local:
+	rm -rf cppunitresults.xml im:testfile1.txt im:testfile2.txt \
+		sample_echocancel_500ms_8kHz_16bit.raw
