@@ -40,6 +40,19 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TextTestRunner.h>
 
+namespace {
+    void restore()
+    {
+        if (system("mv " CONFIG_SAMPLE_BAK " " CONFIG_SAMPLE) < 0)
+            ERROR("Restoration of %s failed", CONFIG_SAMPLE);
+    }
+    void backup()
+    {
+        if (system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE_BAK) < 0)
+            ERROR("Backup of %s failed", CONFIG_SAMPLE);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
@@ -93,6 +106,7 @@ int main(int argc, char* argv[])
     }
 
     printf("\n\n=== SFLphone initialization ===\n\n");
+    backup();
     Manager::instance().init(CONFIG_SAMPLE);
 
     // Get the top level suite from the registry
@@ -101,6 +115,7 @@ int main(int argc, char* argv[])
 
     if (suite->getChildTestCount() == 0) {
         ERROR("Invalid test suite name: %s", testSuiteName.c_str());
+        restore();
         return 1;
     }
 
@@ -123,6 +138,8 @@ int main(int argc, char* argv[])
 
     printf("=== Test suite terminate ===\n");
     Manager::instance().terminate();
+
+    restore();
 
     return wasSuccessful ? 0 : 1;
 }

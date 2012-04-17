@@ -34,8 +34,10 @@
 #define XSTRINGIFY(s) STRINGIFY(s)
 #define STRINGIFY(s) #s
 #define HISTORY_SAMPLE XSTRINGIFY(WORKSPACE) "history-sample.tpl"
+#define HISTORY_SAMPLE_BAK HISTORY_SAMPLE ".bak"
 
 #define CONFIG_SAMPLE XSTRINGIFY(WORKSPACE) "sflphoned-sample.yml"
+#define CONFIG_SAMPLE_BAK CONFIG_SAMPLE ".bak"
 
 #define HISTORY_SAMPLE_SIZE 3
 #define HISTORY_LIMIT 30
