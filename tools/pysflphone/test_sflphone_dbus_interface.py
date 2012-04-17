@@ -1,4 +1,4 @@
-#!/USR/BIN/ENV PYTHON
+#!/usr/bin/env python
 #
 # Copyright (C) 2012 by the Free Software Foundation, Inc.
 #
