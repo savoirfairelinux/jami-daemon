@@ -297,8 +297,6 @@ SipTransport::createTlsTransport(const std::string &remoteAddr,
     std::string ipAddr = "";
     int port = DEFAULT_SIP_TLS_PORT;
 
-    DEBUG("SipTransport: Create sip transport on %s:%d at destination %s", interface.c_str(), tlsListenerPort, remoteAddr.c_str());
-
     // parse c string
     size_t pos = remoteAddr.find(":");
     if(pos != std::string::npos) {
@@ -308,6 +306,8 @@ SipTransport::createTlsTransport(const std::string &remoteAddr,
     else {
         ipAddr = remoteAddr;
     }
+
+    DEBUG("SipTransport: Create sip transport on %s:%d at destination %s:%d", interface.c_str(), tlsListenerPort, ipAddr.c_str(), port);
 
     pj_str_t remote;
     pj_cstr(&remote, ipAddr.c_str());
