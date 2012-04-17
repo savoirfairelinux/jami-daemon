@@ -35,23 +35,8 @@
 #include "logger.h"
 #include "constants.h"
 
-namespace {
-void restore()
-{
-    if (system("mv " HISTORY_SAMPLE_BAK " " HISTORY_SAMPLE) < 0)
-        ERROR("Restoration of %s failed", HISTORY_SAMPLE);
-}
-
-void backup()
-{
-    if (system("cp " HISTORY_SAMPLE " " HISTORY_SAMPLE_BAK) < 0)
-        ERROR("Backup of %s failed", HISTORY_SAMPLE);
-}
-}
-
 void HistoryTest::setUp()
 {
-    backup();
     history_ = new History;
     history_->setPath(HISTORY_SAMPLE);
 }
@@ -98,5 +83,4 @@ void HistoryTest::test_get_serialized()
 void HistoryTest::tearDown()
 {
     delete history_;
-    restore();
 }
