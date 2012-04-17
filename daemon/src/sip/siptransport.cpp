@@ -61,6 +61,8 @@
 #include "dbus/callmanager.h"
 #include "dbus/configurationmanager.h"
 
+static const char * const DEFAULT_INTERFACE = "default";
+
 static pjsip_transport *localUDPTransport_ = NULL; /** The default transport (5060) */
 
 std::string SipTransport::getSIPLocalIP()
@@ -245,7 +247,7 @@ pj_status_t SipTransport::destroyStunResolver(const std::string &serverName)
 }
 
 
-void SipTransport::createTlsListener(pj_uint16_t tlsListenerPort, pjsip_tls_setting *tlsSetting, pjsip_tpfactory **listener)
+void SipTransport::createTlsListener(const std::string &interface, pj_uint16_t tlsListenerPort, pjsip_tls_setting *tlsSetting, pjsip_tpfactory **listener)
 {
     pj_sockaddr_in local_addr;
     pj_sockaddr_in_init(&local_addr, 0, 0);
@@ -261,13 +263,22 @@ void SipTransport::createTlsListener(pj_uint16_t tlsListenerPort, pjsip_tls_sett
         return;
     }
 
+    std::string listeningAddress;
+    if (interface == DEFAULT_INTERFACE)
+        listeningAddress = getSIPLocalIP();
+    else
+        listeningAddress = getInterfaceAddrFromName(interface);
+
+    if (listeningAddress.empty()) {
+        ERROR("SipTransport: Could not determine ip address for this transport");
+    }
+
     pj_str_t pjAddress;
     pj_cstr(&pjAddress, PJ_INADDR_ANY);
     pj_sockaddr_in_set_str_addr(&local_addr, &pjAddress);
-    std::string localIP(getSIPLocalIP());
 
     pjsip_host_port a_name = {
-        pj_str((char*) localIP.c_str()),
+        pj_str((char*) listeningAddress.c_str()),
         local_addr.sin_port
     };
 
@@ -277,6 +288,7 @@ void SipTransport::createTlsListener(pj_uint16_t tlsListenerPort, pjsip_tls_sett
 
 pjsip_transport *
 SipTransport::createTlsTransport(const std::string &remoteAddr,
+                                const std::string &interface,
                                 pj_uint16_t tlsListenerPort,
                                 pjsip_tls_setting *tlsSettings)
 {
@@ -292,7 +304,7 @@ SipTransport::createTlsTransport(const std::string &remoteAddr,
     static pjsip_tpfactory *localTlsListener = NULL;
 
     if (localTlsListener == NULL)
-        createTlsListener(tlsListenerPort, tlsSettings, &localTlsListener);
+        createTlsListener(interface, tlsListenerPort, tlsSettings, &localTlsListener);
 
     pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
@@ -319,7 +331,7 @@ void SipTransport::createSipTransport(SIPAccount *account)
         size_t trns = remoteSipUri.find(";transport");
         std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
 
-        pjsip_transport *transport = createTlsTransport(remoteAddr, account->getTlsListenerPort(), account->getTlsSetting());
+        pjsip_transport *transport = createTlsTransport(remoteAddr, account->getLocalInterface(), account->getTlsListenerPort(), account->getTlsSetting());
         account->transport_ = transport;
     } else if (account->isStunEnabled()) {
         pjsip_transport *transport = createStunTransport(account->getStunServerName(), account->getStunPort());
@@ -392,7 +404,6 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     DEBUG("SipTransport: Create UDP transport on %s:%d", interface.c_str(), port);
 
     // determine the ip address for this transport
-    static const char * const DEFAULT_INTERFACE = "default";
     std::string listeningAddress;
     if (interface == DEFAULT_INTERFACE)
         listeningAddress = getSIPLocalIP();
