@@ -294,14 +294,26 @@ SipTransport::createTlsTransport(const std::string &remoteAddr,
                                 pjsip_tls_setting *tlsSettings)
 {
     pjsip_transport *transport = NULL;
-
-    pj_str_t remote;
-    pj_cstr(&remote, remoteAddr.c_str());
-
-    pj_sockaddr_in rem_addr;
-    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) DEFAULT_SIP_TLS_PORT);
+    std::string ipAddr = "";
+    int port = DEFAULT_SIP_TLS_PORT;
 
     DEBUG("SipTransport: Create sip transport on %s:%d at destination %s", interface.c_str(), tlsListenerPort, remoteAddr.c_str());
+
+    // parse c string
+    size_t pos = remoteAddr.find(":");
+    if(pos != std::string::npos) {
+        ipAddr = remoteAddr.substr(0, pos);
+        port = atoi(remoteAddr.substr(pos+1, remoteAddr.length() - pos).c_str());
+    }
+    else {
+        ipAddr = remoteAddr;
+    }
+
+    pj_str_t remote;
+    pj_cstr(&remote, ipAddr.c_str());
+
+    pj_sockaddr_in rem_addr;
+    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) port);
 
     // The local tls listener
     static pjsip_tpfactory *localTlsListener = NULL;
@@ -309,6 +321,7 @@ SipTransport::createTlsTransport(const std::string &remoteAddr,
     if (localTlsListener == NULL)
         createTlsListener(interface, tlsListenerPort, tlsSettings, &localTlsListener);
 
+    DEBUG("SipTransport: Get new tls transport from transport manager");
     pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
 
