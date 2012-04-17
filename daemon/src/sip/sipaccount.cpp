@@ -75,7 +75,6 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
     , tlsEnable_("false")
-    , tlsPort_(DEFAULT_SIP_TLS_PORT)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -154,7 +153,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode notSuppWarning(zrtpNotSuppWarning_);
 
     portstr.str("");
-    portstr << tlsPort_;
+    portstr << tlsListenerPort_;
     ScalarNode tlsport(portstr.str());
     ScalarNode certificate(tlsCertificateFile_);
     ScalarNode calist(tlsCaListFile_);
@@ -366,7 +365,9 @@ void SIPAccount::unserialize(const Conf::MappingNode *map)
 
     if (tlsMap) {
         tlsMap->getValue(TLS_ENABLE_KEY, &tlsEnable_);
-        tlsMap->getValue(TLS_PORT_KEY, &tlsPort_);
+        std::string tlsPort;
+        tlsMap->getValue(TLS_PORT_KEY, &tlsPort);
+        tlsListenerPort_ = atoi(tlsPort.c_str());
         tlsMap->getValue(CERTIFICATE_KEY, &tlsCertificateFile_);
         tlsMap->getValue(CALIST_KEY, &tlsCaListFile_);
         tlsMap->getValue(CIPHERS_KEY, &tlsCiphers_);
@@ -639,8 +640,6 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 void SIPAccount::initTlsConfiguration()
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    tlsListenerPort_ = tlsPort_;
-
     pjsip_tls_setting_default(&tlsSetting_);
 
     pj_cstr(&tlsSetting_.ca_list_file, tlsCaListFile_.c_str());

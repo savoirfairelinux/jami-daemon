@@ -640,11 +640,6 @@ class SIPAccount : public Account {
         std::string tlsEnable_;
 
         /**
-         * Specify the TLS port
-         */
-        int tlsPort_;
-
-        /**
          * Certificate autority file
          */
         std::string tlsCaListFile_;
