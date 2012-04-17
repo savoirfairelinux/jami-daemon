@@ -127,9 +127,6 @@ void show_advanced_tls_options(account_t *account)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tlsListenerPort), g_ascii_strtod(tls_listener_port, NULL));
     gtk_box_pack_start(GTK_BOX(hbox), tlsListenerPort, TRUE, TRUE, 0);
 
-    if (!account_is_IP2IP(account))
-        gtk_widget_set_sensitive(tlsListenerPort, FALSE);
-
     label = gtk_label_new(_("Certificate of Authority list"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);

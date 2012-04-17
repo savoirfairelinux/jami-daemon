@@ -1126,9 +1126,6 @@ static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
     GtkWidget *frame = create_network(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-    frame = create_security_widget(account);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
-
     gtk_widget_show_all(vbox);
     return vbox;
 }
