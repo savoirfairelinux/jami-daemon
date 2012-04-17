@@ -30,6 +30,7 @@
 
 #include "audiorecorder.h"
 #include "mainbuffer.h"
+#include <sstream>
 #include <cassert>
 
 int AudioRecorder::count_ = 0;
@@ -45,7 +46,7 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread()
 
     // convert count into string
     std::string s;
-    std::stringstream out;
+    std::ostringstream out;
     out << count_;
     s = out.str();
 
