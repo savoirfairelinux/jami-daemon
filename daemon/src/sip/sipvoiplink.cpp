@@ -1149,8 +1149,8 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
         }
 
         sipTransport.shutdownSipTransport(account);
-        pjsip_transport *transport = sipTransport.createTlsTransport(remoteAddr, account->getTlsListenerPort(),
-                                                              account->getTlsSetting());
+        pjsip_transport *transport = sipTransport.createTlsTransport(account->getLocalInterface(), remoteAddr,
+                                                 account->getTlsListenerPort(), account->getTlsSetting());
 
         if (transport == NULL) {
             ERROR("Error could not create TLS transport for IP2IP call");

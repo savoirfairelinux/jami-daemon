@@ -131,6 +131,7 @@ class SipTransport {
         /**
          * Create The default TLS listener which is global to the application. This means that
          * only one TLS connection can be established for the momment.
+         * @param the interface to bind this listener to
          * @param the port number to create the TCP socket
          * @param pjsip's tls settings for the transport to be created which contains:
          *      - path to ca certificate list file
@@ -140,7 +141,7 @@ class SipTransport {
          *      - the TLS method
          * @param a pointer to store the listener created, in our case this is a static pointer
          */
-        void createTlsListener(pj_uint16_t, pjsip_tls_setting *, pjsip_tpfactory **);
+        void createTlsListener(const std::string &interface, pj_uint16_t, pjsip_tls_setting *, pjsip_tpfactory **);
 
         /**
          * Create a connection oriented TLS transport and register to the specified remote address.
@@ -153,6 +154,7 @@ class SipTransport {
          */
         pjsip_transport *
         createTlsTransport(const std::string &remoteAddr,
+                           const std::string &interface,
                            pj_uint16_t tlsListenerPort,
                            pjsip_tls_setting *tlsSetting);
 
