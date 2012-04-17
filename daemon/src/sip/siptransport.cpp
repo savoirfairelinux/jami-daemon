@@ -249,9 +249,12 @@ pj_status_t SipTransport::destroyStunResolver(const std::string &serverName)
 
 void SipTransport::createTlsListener(const std::string &interface, pj_uint16_t tlsListenerPort, pjsip_tls_setting *tlsSetting, pjsip_tpfactory **listener)
 {
+    pj_status_t status;
     pj_sockaddr_in local_addr;
     pj_sockaddr_in_init(&local_addr, 0, 0);
     local_addr.sin_port = pj_htons(tlsListenerPort);
+
+    DEBUG("SipTransport: Create TLS listener %s:%d", interface.c_str(), tlsListenerPort);
 
     if (tlsSetting == NULL) {
         ERROR("SipTransport: Error TLS settings not specified");
@@ -274,15 +277,13 @@ void SipTransport::createTlsListener(const std::string &interface, pj_uint16_t t
     }
 
     pj_str_t pjAddress;
-    pj_cstr(&pjAddress, PJ_INADDR_ANY);
+    pj_cstr(&pjAddress, listeningAddress.c_str());
     pj_sockaddr_in_set_str_addr(&local_addr, &pjAddress);
+    pj_sockaddr_in_set_port(&local_addr, tlsListenerPort);
 
-    pjsip_host_port a_name = {
-        pj_str((char*) listeningAddress.c_str()),
-        local_addr.sin_port
-    };
-
-    pjsip_tls_transport_start(endpt_, tlsSetting, &local_addr, &a_name, 1, listener);
+    status = pjsip_tls_transport_start(endpt_, tlsSetting, &local_addr, NULL, 1, listener);
+    if(status != PJ_SUCCESS)
+        ERROR("SipTransport: Error Failed to start tls listener");
 }
 
 
@@ -299,6 +300,8 @@ SipTransport::createTlsTransport(const std::string &remoteAddr,
 
     pj_sockaddr_in rem_addr;
     pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t) DEFAULT_SIP_TLS_PORT);
+
+    DEBUG("SipTransport: Create sip transport on %s:%d at destination %s", interface.c_str(), tlsListenerPort, remoteAddr.c_str());
 
     // The local tls listener
     static pjsip_tpfactory *localTlsListener = NULL;
