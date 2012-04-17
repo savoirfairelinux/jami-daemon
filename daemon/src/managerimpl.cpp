@@ -211,7 +211,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
         else if (isConference(current_call_id) and not isConferenceParticipant(call_id))
-            detachParticipant(Call::DEFAULT_ID, current_call_id);
+            detachParticipant(MainBuffer::DEFAULT_ID, current_call_id);
     }
 
     if (IPToIP) {
@@ -284,7 +284,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
         } else if (isConference(current_call_id) and not isConferenceParticipant(call_id)) {
             // if we are talking to a conference and we are answering an incoming call
             DEBUG("Manager: Detach main participant from conference");
-            detachParticipant(Call::DEFAULT_ID, current_call_id);
+            detachParticipant(MainBuffer::DEFAULT_ID, current_call_id);
         }
     }
 
@@ -470,7 +470,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
             DEBUG("Manager: Has current call (%s), put on hold", currentCallId.c_str());
             onHoldCall(currentCallId);
         } else if (isConference(currentCallId) and not isConferenceParticipant(callId))
-            detachParticipant(Call::DEFAULT_ID, currentCallId);
+            detachParticipant(MainBuffer::DEFAULT_ID, currentCallId);
     }
 
     bool isRec = false;
@@ -639,7 +639,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
     // We now need to bind the audio to the remain participant
 
     // Unbind main participant audio from conference
-    getMainBuffer()->unBindAll(Call::DEFAULT_ID);
+    getMainBuffer()->unBindAll(MainBuffer::DEFAULT_ID);
 
     ParticipantSet participants(conf->getParticipantList());
 
@@ -647,7 +647,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
     ParticipantSet::iterator iter_p = participants.begin();
 
     if (iter_p != participants.end())
-        getMainBuffer()->bindCallID(*iter_p, Call::DEFAULT_ID);
+        getMainBuffer()->bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
 
     // Then remove the conference from the conference map
     if (conferenceMap_.erase(conference_id) == 1)
@@ -760,7 +760,7 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
         if (isConference(current_call_id))
-            detachParticipant(Call::DEFAULT_ID, current_call_id);
+            detachParticipant(MainBuffer::DEFAULT_ID, current_call_id);
         else
             onHoldCall(current_call_id);
     }
@@ -806,7 +806,7 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
             p != participants.end(); ++p)
         getMainBuffer()->flush(*p);
 
-    getMainBuffer()->flush(Call::DEFAULT_ID);
+    getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
 
     // Connect stream
     addStream(callId);
@@ -818,7 +818,7 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
         std::string current_call_id(getCurrentCallId());
 
         if (isConference(current_call_id))
-            detachParticipant(Call::DEFAULT_ID, current_call_id);
+            detachParticipant(MainBuffer::DEFAULT_ID, current_call_id);
         else
             onHoldCall(current_call_id);
     }
@@ -835,12 +835,12 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end(); ++iter_p) {
-            getMainBuffer()->bindCallID(*iter_p, Call::DEFAULT_ID);
+            getMainBuffer()->bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
             // Reset ringbuffer's readpointers
             getMainBuffer()->flush(*iter_p);
         }
 
-        getMainBuffer()->flush(Call::DEFAULT_ID);
+        getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
 
         if (conf->getState() == Conference::ACTIVE_DETACHED)
             conf->setState(Conference::ACTIVE_ATTACHED);
@@ -870,7 +870,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     if ((current_call_id != callId1) and (current_call_id != callId2)) {
         // If currently in a conference
         if (isConference(current_call_id))
-            detachParticipant(Call::DEFAULT_ID, current_call_id);
+            detachParticipant(MainBuffer::DEFAULT_ID, current_call_id);
         else
             onHoldCall(current_call_id); // currently in a call
     }
@@ -1016,7 +1016,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
            current_id.c_str());
     std::string current_call_id(getCurrentCallId());
 
-    if (call_id != Call::DEFAULT_ID) {
+    if (call_id != MainBuffer::DEFAULT_ID) {
         std::string currentAccountId(getAccountFromCall(call_id));
         Call *call = getAccountLink(currentAccountId)->getCall(call_id);
 
@@ -1056,7 +1056,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
     } else {
         DEBUG("Manager: Unbind main participant from conference %d");
-        getMainBuffer()->unBindAll(Call::DEFAULT_ID);
+        getMainBuffer()->unBindAll(MainBuffer::DEFAULT_ID);
 
         if (not isConference(current_call_id)) {
             ERROR("Manager: Warning: Current call id (%s) is not a conference", current_call_id.c_str());
@@ -1124,7 +1124,7 @@ void ManagerImpl::processRemainingParticipants(const std::string &current_call_i
              p != participants.end(); ++p)
             getMainBuffer()->flush(*p);
 
-        getMainBuffer()->flush(Call::DEFAULT_ID);
+        getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
     } else if (n == 1) {
         ParticipantSet::iterator p = participants.begin();
 
@@ -1205,14 +1205,14 @@ void ManagerImpl::addStream(const std::string& call_id)
                     iter_p != participants.end(); ++iter_p)
                 getMainBuffer()->flush(*iter_p);
 
-            getMainBuffer()->flush(Call::DEFAULT_ID);
+            getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
         }
 
     } else {
         DEBUG("Manager: Add stream to call");
 
         // bind to main
-        getMainBuffer()->bindCallID(call_id);
+        getMainBuffer()->bindCallID(call_id, MainBuffer::DEFAULT_ID);
 
         ost::MutexLock lock(audioLayerMutex_);
         audiodriver_->flushUrgent();

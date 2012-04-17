@@ -89,6 +89,8 @@ void MappingNode::addNode(YamlNode *node)
     setKeyValue(tmpKey_, node);
 }
 
+typedef std::map<std::string, YamlNode*> Mapping;
+
 void MappingNode::setKeyValue(const std::string &key, YamlNode *value)
 {
     Mapping::iterator it = map_.end();
