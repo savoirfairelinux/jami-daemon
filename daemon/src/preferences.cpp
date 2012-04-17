@@ -160,7 +160,7 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
     preferencemap.setKeyValue(ZEROCONF_ENABLE_KEY, &zeroConfenable);
     preferencemap.setKeyValue(MD5_HASH_KEY, &md5Hash);
 
-    emiter->serializePreference(&preferencemap);
+    emiter->serializePreference(&preferencemap, "preferences");
 }
 
 void Preferences::unserialize(const Conf::MappingNode *map)
@@ -207,7 +207,7 @@ void VoipPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(SYMMETRIC_RTP_KEY, &symmetricRtp);
     preferencemap.setKeyValue(ZID_FILE_KEY, &zidFile);
 
-    emitter->serializeVoipPreference(&preferencemap);
+    emitter->serializePreference(&preferencemap, "voipPreferences");
 }
 
 void VoipPreference::unserialize(const Conf::MappingNode *map)
@@ -255,7 +255,7 @@ void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(HOME_KEY, &home);
     preferencemap.setKeyValue(MOBILE_KEY, &mobile);
 
-    emitter->serializeAddressbookPreference(&preferencemap);
+    emitter->serializePreference(&preferencemap, "addressbook");
 
 }
 
@@ -323,7 +323,7 @@ void HookPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(URL_COMMAND_KEY, &urlCommand);
     preferencemap.setKeyValue(URL_SIP_FIELD_KEY, &urlSipField);
 
-    emitter->serializeHooksPreference(&preferencemap);
+    emitter->serializePreference(&preferencemap, "hooks");
 }
 
 void HookPreference::unserialize(const Conf::MappingNode *map)
@@ -471,7 +471,7 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(ECHO_TAIL_KEY, &echotail);
     preferencemap.setKeyValue(ECHO_DELAY_KEY, &echodelay);
 
-    emitter->serializeAudioPreference(&preferencemap);
+    emitter->serializePreference(&preferencemap, "audio");
 }
 
 void AudioPreference::unserialize(const Conf::MappingNode *map)
@@ -548,7 +548,7 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(TOGGLE_HOLD_SHORT_KEY, &toggleHold);
     preferencemap.setKeyValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup);
 
-    emitter->serializeShortcutPreference(&preferencemap);
+    emitter->serializePreference(&preferencemap, "shortcuts");
 }
 
 void ShortcutPreferences::unserialize(const Conf::MappingNode *map)
