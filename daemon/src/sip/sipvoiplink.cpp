@@ -311,6 +311,12 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     PJ_ASSERT_RETURN(pjsip_dlg_set_transport(dialog, tp) == PJ_SUCCESS, 1);
 
+    if (!call->inv) {
+        ERROR("SIPVoIPLink: Call invite is not initialized");
+        delete call;
+        return false;
+    }
+
     call->inv->mod_data[mod_ua_.id] = call;
 
     // Check whether Replaces header is present in the request and process accordingly.
