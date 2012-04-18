@@ -31,7 +31,6 @@
 
 #include <algorithm> // for std::find
 #include <stdexcept>
-#include <cassert>
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/samplerateconverter.h"
@@ -126,10 +125,11 @@ PulseLayer::~PulseLayer()
 void PulseLayer::context_state_callback(pa_context* c, void *user_data)
 {
     PulseLayer *pulse = static_cast<PulseLayer*>(user_data);
-    assert(c && pulse->mainloop_);
+    assert(c and pulse and pulse->mainloop_);
+    const pa_subscription_mask_t mask = (pa_subscription_mask_t)
+        (PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE);
 
     switch (pa_context_get_state(c)) {
-
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_AUTHORIZING:
         case PA_CONTEXT_SETTING_NAME:
@@ -139,8 +139,7 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
         case PA_CONTEXT_READY:
             DEBUG("Audio: Connection to PulseAudio server established");
             pa_threaded_mainloop_signal(pulse->mainloop_, 0);
-            pa_context_subscribe(c, (pa_subscription_mask_t)(PA_SUBSCRIPTION_MASK_SINK|
-                                 PA_SUBSCRIPTION_MASK_SOURCE), NULL, pulse);
+            pa_context_subscribe(c, mask, NULL, pulse);
             pa_context_set_subscribe_callback(c, context_changed_callback, pulse);
             pulse->updateSinkList();
             pulse->updateSourceList();
@@ -162,7 +161,7 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
 void PulseLayer::updateSinkList()
 {
     sinkList_.clear();
-    pa_context_get_sink_info_list(context_, sink_input_info_callback,  this);
+    pa_context_get_sink_info_list(context_, sink_input_info_callback, this);
 }
 
 void PulseLayer::updateSourceList()
@@ -184,12 +183,10 @@ bool PulseLayer::inSourceList(const std::string &deviceName) const
 
 std::vector<std::string> PulseLayer::getAudioDeviceList(AudioStreamDirection dir) const
 {
-    if(AUDIO_STREAM_CAPTURE == dir) {
+    if (AUDIO_STREAM_CAPTURE == dir)
         return sinkList_;
-    }
-    if(AUDIO_STREAM_PLAYBACK) {
+    else if (AUDIO_STREAM_PLAYBACK)
         return sourceList_;
-    }
 }
 
 void PulseLayer::createStreams(pa_context* c)
@@ -302,18 +299,16 @@ void PulseLayer::writeToSpeaker()
 
     pa_stream *s = playback_->pulseStream();
 
-
     // available bytes to be written in pulseaudio internal buffer
     int writable = pa_stream_writable_size(s);
 
-    if (writable < 0)
+    if (writable < 0) {
         ERROR("Pulse: playback error : %s", pa_strerror(writable));
-
-    if (writable <= 0)
+        return;
+    } else if (writable == 0)
         return;
 
     size_t bytes = writable;
-    void *data;
 
     notifyIncomingCall();
 
@@ -322,6 +317,7 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes > bytes)
         urgentBytes = bytes;
 
+    void *data;
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
         urgentRingBuffer_.Get(data, urgentBytes, MainBuffer::DEFAULT_ID);
