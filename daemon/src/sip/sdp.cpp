@@ -227,7 +227,7 @@ namespace {
     {
         char buffer[2048];
         size_t size = pjmedia_sdp_print(session, buffer, sizeof(buffer));
-        std::string sessionStr(buffer, size);
+        std::string sessionStr(buffer, std::min(size, sizeof(buffer)));
         DEBUG("%s", sessionStr.c_str());
     }
 }
