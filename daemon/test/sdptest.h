@@ -118,6 +118,7 @@ class SDPTest : public CppUnit::TestCase {
 
     private:
         NON_COPYABLE(SDPTest);
+        void receiveAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
 
         Sdp *session_;
         pj_pool_t *testPool_;

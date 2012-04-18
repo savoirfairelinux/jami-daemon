@@ -237,6 +237,11 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs)
     setLocalMediaCapabilities(selectedCodecs);
 
     localSession_ = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_session);
+    if (!localSession_) {
+        ERROR("Sdp: Could not create local SDP session");
+        return !PJ_SUCCESS;
+    }
+
     localSession_->conn = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_conn);
 
     /* Initialize the fields of the struct */
@@ -292,7 +297,6 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
         return;
     }
 
-
     DEBUG("SDP: Remote SDP Session:");
     printSession(remote);
 
@@ -303,26 +307,22 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     remoteSession_ = pjmedia_sdp_session_clone(memPool_, remote);
 
-    pj_status_t status = pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
-                         remoteSession_, &negotiator_);
-
-    assert(status == PJ_SUCCESS);
+    if (pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
+                remoteSession_, &negotiator_) != PJ_SUCCESS) {
+        ERROR("Could not create negotiator with remote offer");
+        negotiator_ = NULL;
+    }
 }
-
-void Sdp::receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote)
-{
-    assert(pjmedia_sdp_neg_get_state(negotiator_) == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER);
-    assert(pjmedia_sdp_neg_set_remote_answer(memPool_, negotiator_, remote) == PJ_SUCCESS);
-    assert(pjmedia_sdp_neg_get_state(negotiator_) == PJMEDIA_SDP_NEG_STATE_WAIT_NEGO);
-}
-
 
 void Sdp::startNegotiation()
 {
+    if (negotiator_ == NULL) {
+        ERROR("Sdp: Can't start negotiation with invalid negotiator");
+        return;
+    }
+
     const pjmedia_sdp_session *active_local;
     const pjmedia_sdp_session *active_remote;
-
-    assert(negotiator_);
 
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
         WARN("SDP: Warning: negotiator not in right state for negotiation");
@@ -372,12 +372,14 @@ Sdp::~Sdp()
 
 void Sdp::addAttributeToLocalAudioMedia(const char *attr)
 {
-    pjmedia_sdp_media_add_attr(localSession_->media[0], pjmedia_sdp_attr_create(memPool_, attr, NULL));
+    if (localSession_)
+        pjmedia_sdp_media_add_attr(localSession_->media[0], pjmedia_sdp_attr_create(memPool_, attr, NULL));
 }
 
 void Sdp::removeAttributeFromLocalAudioMedia(const char *attr)
 {
-    pjmedia_sdp_media_remove_all_attr(localSession_->media[0], attr);
+    if (localSession_)
+        pjmedia_sdp_media_remove_all_attr(localSession_->media[0], attr);
 }
 
 void Sdp::setMediaTransportInfoFromRemoteSdp()
