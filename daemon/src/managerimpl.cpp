@@ -1243,14 +1243,14 @@ void ManagerImpl::saveConfig()
         Conf::YamlEmitter emitter(path_.c_str());
 
         for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter)
-            iter->second->serialize(&emitter);
+            iter->second->serialize(emitter);
 
-        preferences.serialize(&emitter);
-        voipPreferences.serialize(&emitter);
-        addressbookPreference.serialize(&emitter);
-        hookPreference.serialize(&emitter);
-        audioPreference.serialize(&emitter);
-        shortcutPreferences.serialize(&emitter);
+        preferences.serialize(emitter);
+        voipPreferences.serialize(emitter);
+        addressbookPreference.serialize(emitter);
+        hookPreference.serialize(emitter);
+        audioPreference.serialize(emitter);
+        shortcutPreferences.serialize(emitter);
 
         emitter.serializeData();
     } catch (const Conf::YamlEmitterException &e) {
@@ -2570,6 +2570,11 @@ namespace {
     void loadAccount(const Conf::YamlNode *item, AccountMap &accountMap)
     {
         const Conf::MappingNode *node = dynamic_cast<const Conf::MappingNode *>(item);
+        if (!node) {
+            ERROR("ManagerImpl: could not load account");
+            return;
+        }
+
         std::string accountType;
         node->getValue("type", &accountType);
 
@@ -2589,7 +2594,7 @@ namespace {
                 a = new SIPAccount(accountid);
 
             accountMap[accountid] = a;
-            a->unserialize(node);
+            a->unserialize(*node);
         }
     }
 
@@ -2626,12 +2631,12 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
     // build preferences
-    preferences.unserialize(parser.getPreferenceNode());
-    voipPreferences.unserialize(parser.getVoipPreferenceNode());
-    addressbookPreference.unserialize(parser.getAddressbookNode());
-    hookPreference.unserialize(parser.getHookNode());
-    audioPreference.unserialize(parser.getAudioNode());
-    shortcutPreferences.unserialize(parser.getShortcutNode());
+    preferences.unserialize(*parser.getPreferenceNode());
+    voipPreferences.unserialize(*parser.getVoipPreferenceNode());
+    addressbookPreference.unserialize(*parser.getAddressbookNode());
+    hookPreference.unserialize(*parser.getHookNode());
+    audioPreference.unserialize(*parser.getAudioNode());
+    shortcutPreferences.unserialize(*parser.getShortcutNode());
 
     using namespace std::tr1; // for std::tr1::bind and std::tr1::ref
     using namespace std::tr1::placeholders;

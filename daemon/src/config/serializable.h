@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __SERIALIZABLE_H__
-#define __SERIALIZABLE_H__
+#ifndef SERIALIZABLE_H__
+#define SERIALIZABLE_H__
 
 namespace Conf {
     class YamlEmitter;
@@ -40,8 +40,8 @@ class Serializable {
 
     public:
         virtual ~Serializable() {};
-        virtual void serialize(Conf::YamlEmitter *emitter) = 0;
-        virtual void unserialize(const Conf::MappingNode *map) = 0;
+        virtual void serialize(Conf::YamlEmitter &emitter) = 0;
+        virtual void unserialize(const Conf::MappingNode &map) = 0;
 };
 
 #endif

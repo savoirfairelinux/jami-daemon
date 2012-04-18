@@ -125,13 +125,13 @@ class SIPAccount : public Account {
          * Serialize internal state of this account for configuration
          * @param YamlEmitter the configuration engine which generate the configuration file
          */
-        virtual void serialize(Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter &emitter);
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file
          * @param The configuration node for this account
          */
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.

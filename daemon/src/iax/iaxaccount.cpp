@@ -53,13 +53,8 @@ IAXAccount::~IAXAccount()
     delete link_;
 }
 
-void IAXAccount::serialize(Conf::YamlEmitter *emitter)
+void IAXAccount::serialize(Conf::YamlEmitter &emitter)
 {
-    if (emitter == NULL) {
-        ERROR("IAXAccount: Error: emitter is NULL in serialize");
-        return;
-    }
-
     Conf::MappingNode accountmap(NULL);
 
     Conf::ScalarNode id(accountID_);
@@ -87,31 +82,26 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
     accountmap.setKeyValue(CODECS_KEY, &codecs);
 
     try {
-        emitter->serializeAccount(&accountmap);
+        emitter.serializeAccount(&accountmap);
     } catch (const Conf::YamlEmitterException &e) {
         ERROR("ConfigTree: %s", e.what());
     }
 }
 
-void IAXAccount::unserialize(const Conf::MappingNode *map)
+void IAXAccount::unserialize(const Conf::MappingNode &map)
 {
-    if (map == NULL) {
-        ERROR("IAXAccount: Error: Map is NULL in unserialize");
-        return;
-    }
-
-    map->getValue(ALIAS_KEY, &alias_);
-    map->getValue(TYPE_KEY,  &type_);
-    map->getValue(USERNAME_KEY, &username_);
-    map->getValue(PASSWORD_KEY, &password_);
-    map->getValue(HOSTNAME_KEY, &hostname_);
-    map->getValue(ACCOUNT_ENABLE_KEY, &enabled_);
-    map->getValue(MAILBOX_KEY, &mailBox_);
-    map->getValue(CODECS_KEY, &codecStr_);
+    map.getValue(ALIAS_KEY, &alias_);
+    map.getValue(TYPE_KEY,  &type_);
+    map.getValue(USERNAME_KEY, &username_);
+    map.getValue(PASSWORD_KEY, &password_);
+    map.getValue(HOSTNAME_KEY, &hostname_);
+    map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
+    map.getValue(MAILBOX_KEY, &mailBox_);
+    map.getValue(CODECS_KEY, &codecStr_);
 
     // Update codec list which one is used for SDP offer
     setActiveCodecs(ManagerImpl::unserialize(codecStr_));
-    map->getValue(DISPLAY_NAME_KEY, &displayName_);
+    map.getValue(DISPLAY_NAME_KEY, &displayName_);
 }
 
 void IAXAccount::setAccountDetails(std::map<std::string, std::string> details)
