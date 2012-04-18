@@ -470,7 +470,10 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 
 pjsip_tpselector *SipTransport::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
 {
-    assert(transport);
+    if (!transport) {
+        ERROR("SipTransport: transport is not initialized");
+        return NULL;
+    }
     pjsip_tpselector *tp = (pjsip_tpselector *) pj_pool_zalloc(tp_pool, sizeof(pjsip_tpselector));
     tp->type = PJSIP_TPSELECTOR_TRANSPORT;
     tp->u.transport = transport;
