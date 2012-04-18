@@ -315,7 +315,7 @@ void PulseLayer::writeToSpeaker()
     size_t bytes = writable;
     void *data;
 
-    notifyincomingCall();
+    notifyIncomingCall();
 
     size_t urgentBytes = urgentRingBuffer_.AvailForGet(MainBuffer::DEFAULT_ID);
 

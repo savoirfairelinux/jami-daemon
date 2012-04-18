@@ -647,7 +647,7 @@ void AlsaLayer::audioCallback()
     if (!playbackHandle_ or !captureHandle_)
         return;
 
-    notifyincomingCall();
+    notifyIncomingCall();
 
     snd_pcm_wait(playbackHandle_, 20);
 
