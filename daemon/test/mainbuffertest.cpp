@@ -1227,9 +1227,6 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT(mainbuffer_->availForGet(test_id1) == sizeof(int));
     CPPUNIT_ASSERT(mainbuffer_->availForGet(test_id2) == sizeof(int));
 
-
-    int test_output;
-
     // test getData default id (audio layer)
     test_ring_buffer = mainbuffer_->getRingBuffer(MainBuffer::DEFAULT_ID);
     CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));

@@ -1243,14 +1243,14 @@ void ManagerImpl::saveConfig()
         Conf::YamlEmitter emitter(path_.c_str());
 
         for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter)
-            iter->second->serialize(&emitter);
+            iter->second->serialize(emitter);
 
-        preferences.serialize(&emitter);
-        voipPreferences.serialize(&emitter);
-        addressbookPreference.serialize(&emitter);
-        hookPreference.serialize(&emitter);
-        audioPreference.serialize(&emitter);
-        shortcutPreferences.serialize(&emitter);
+        preferences.serialize(emitter);
+        voipPreferences.serialize(emitter);
+        addressbookPreference.serialize(emitter);
+        hookPreference.serialize(emitter);
+        audioPreference.serialize(emitter);
+        shortcutPreferences.serialize(emitter);
 
         emitter.serializeData();
     } catch (const Conf::YamlEmitterException &e) {
@@ -1348,38 +1348,37 @@ void ManagerImpl::removeWaitingCall(const std::string& id)
 // Management of event peer IP-phone
 ////////////////////////////////////////////////////////////////////////////////
 // SipEvent Thread
-void ManagerImpl::incomingCall(Call* call, const std::string& accountId)
+void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 {
-    assert(call);
     stopTone();
 
-    associateCallToAccount(call->getCallId(), accountId);
+    associateCallToAccount(call.getCallId(), accountId);
 
     if (accountId.empty())
-        setIPToIPForCall(call->getCallId(), true);
+        setIPToIPForCall(call.getCallId(), true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
-        std::string peerNumber(call->getPeerNumber());
+        std::string peerNumber(call.getPeerNumber());
 
         const char SIP_PREFIX[] = "sip:";
         size_t startIndex = peerNumber.find(SIP_PREFIX);
 
         if (startIndex != std::string::npos)
-            call->setPeerNumber(peerNumber.substr(startIndex + sizeof(SIP_PREFIX) - 1));
+            call.setPeerNumber(peerNumber.substr(startIndex + sizeof(SIP_PREFIX) - 1));
     }
 
     if (not hasCurrentCall()) {
-        call->setConnectionState(Call::RINGING);
+        call.setConnectionState(Call::RINGING);
         ringtone(accountId);
     }
 
-    addWaitingCall(call->getCallId());
+    addWaitingCall(call.getCallId());
 
-    std::string number(call->getPeerNumber());
+    std::string number(call.getPeerNumber());
 
     std::string from("<" + number + ">");
-    dbus_.getCallManager()->incomingCall(accountId, call->getCallId(), call->getDisplayName() + " " + from);
+    dbus_.getCallManager()->incomingCall(accountId, call.getCallId(), call.getDisplayName() + " " + from);
 }
 
 
@@ -2571,6 +2570,11 @@ namespace {
     void loadAccount(const Conf::YamlNode *item, AccountMap &accountMap)
     {
         const Conf::MappingNode *node = dynamic_cast<const Conf::MappingNode *>(item);
+        if (!node) {
+            ERROR("ManagerImpl: could not load account");
+            return;
+        }
+
         std::string accountType;
         node->getValue("type", &accountType);
 
@@ -2590,7 +2594,7 @@ namespace {
                 a = new SIPAccount(accountid);
 
             accountMap[accountid] = a;
-            a->unserialize(node);
+            a->unserialize(*node);
         }
     }
 
@@ -2627,12 +2631,12 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
     // build preferences
-    preferences.unserialize(parser.getPreferenceNode());
-    voipPreferences.unserialize(parser.getVoipPreferenceNode());
-    addressbookPreference.unserialize(parser.getAddressbookNode());
-    hookPreference.unserialize(parser.getHookNode());
-    audioPreference.unserialize(parser.getAudioNode());
-    shortcutPreferences.unserialize(parser.getShortcutNode());
+    preferences.unserialize(*parser.getPreferenceNode());
+    voipPreferences.unserialize(*parser.getVoipPreferenceNode());
+    addressbookPreference.unserialize(*parser.getAddressbookNode());
+    hookPreference.unserialize(*parser.getHookNode());
+    audioPreference.unserialize(*parser.getAudioNode());
+    shortcutPreferences.unserialize(*parser.getShortcutNode());
 
     using namespace std::tr1; // for std::tr1::bind and std::tr1::ref
     using namespace std::tr1::placeholders;

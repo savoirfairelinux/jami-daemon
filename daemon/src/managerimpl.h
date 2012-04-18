@@ -353,7 +353,7 @@ class ManagerImpl {
          * @param call A call pointer
          * @param accountId an account id
          */
-        void incomingCall(Call* call, const std::string& accountId);
+        void incomingCall(Call &call, const std::string& accountId);
 
         /**
          * Notify the user that the recipient of the call has answered and the put the

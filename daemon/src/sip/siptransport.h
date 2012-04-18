@@ -48,8 +48,6 @@ class SIPAccount;
 class SipTransport {
     public:
         SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool);
-        ~SipTransport();
-
         static std::string getSIPLocalIP();
 
         /**

@@ -171,7 +171,7 @@ class AudioLayer {
 	/**
          * Emit an audio notification on incoming calls
          */
-        void notifyincomingCall();
+        void notifyIncomingCall();
 
         /**
          * Gain applied to mic signal

@@ -101,7 +101,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , link_(SIPVoIPLink::instance())
 {}
 
-void SIPAccount::serialize(Conf::YamlEmitter *emitter)
+void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
     MappingNode accountmap(NULL);
@@ -232,7 +232,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     tlsmap.setKeyValue(VERIFY_SERVER_KEY, &verifyserver);
 
     try {
-        emitter->serializeAccount(&accountmap);
+        emitter.serializeAccount(&accountmap);
     } catch (const YamlEmitterException &e) {
         ERROR("ConfigTree: %s", e.what());
     }
@@ -251,56 +251,54 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
 
 }
 
-void SIPAccount::unserialize(const Conf::MappingNode *map)
+void SIPAccount::unserialize(const Conf::MappingNode &map)
 {
     using namespace Conf;
     MappingNode *srtpMap;
     MappingNode *tlsMap;
     MappingNode *zrtpMap;
 
-    assert(map);
-
-    map->getValue(ALIAS_KEY, &alias_);
-    map->getValue(TYPE_KEY, &type_);
-    map->getValue(USERNAME_KEY, &username_);
-    map->getValue(HOSTNAME_KEY, &hostname_);
-    map->getValue(ACCOUNT_ENABLE_KEY, &enabled_);
-    map->getValue(MAILBOX_KEY, &mailBox_);
-    map->getValue(CODECS_KEY, &codecStr_);
+    map.getValue(ALIAS_KEY, &alias_);
+    map.getValue(TYPE_KEY, &type_);
+    map.getValue(USERNAME_KEY, &username_);
+    map.getValue(HOSTNAME_KEY, &hostname_);
+    map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
+    map.getValue(MAILBOX_KEY, &mailBox_);
+    map.getValue(CODECS_KEY, &codecStr_);
     // Update codec list which one is used for SDP offer
     setActiveCodecs(ManagerImpl::unserialize(codecStr_));
 
-    map->getValue(RINGTONE_PATH_KEY, &ringtonePath_);
-    map->getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
-    map->getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
-    map->getValue(INTERFACE_KEY, &interface_);
+    map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
+    map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
+    map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+    map.getValue(INTERFACE_KEY, &interface_);
     int port;
-    map->getValue(PORT_KEY, &port);
+    map.getValue(PORT_KEY, &port);
     localPort_ = port;
-    map->getValue(PUBLISH_ADDR_KEY, &publishedIpAddress_);
-    map->getValue(PUBLISH_PORT_KEY, &port);
+    map.getValue(PUBLISH_ADDR_KEY, &publishedIpAddress_);
+    map.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
-    map->getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
+    map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
 
     std::string dtmfType;
-    map->getValue(DTMF_TYPE_KEY, &dtmfType);
+    map.getValue(DTMF_TYPE_KEY, &dtmfType);
     dtmfType_ = dtmfType;
 
-    map->getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
-    map->getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
+    map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
+    map.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
-    map->getValue(STUN_ENABLED_KEY, &stunEnabled_);
-    map->getValue(STUN_SERVER_KEY, &stunServer_);
+    map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
+    map.getValue(STUN_SERVER_KEY, &stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
 
-    map->getValue(DISPLAY_NAME_KEY, &displayName_);
+    map.getValue(DISPLAY_NAME_KEY, &displayName_);
 
     std::vector<std::map<std::string, std::string> > creds;
 
-    YamlNode *credNode = map->getValue(CRED_KEY);
+    YamlNode *credNode = map.getValue(CRED_KEY);
 
     /* We check if the credential key is a sequence
      * because it was a mapping in a previous version of
@@ -331,7 +329,7 @@ void SIPAccount::unserialize(const Conf::MappingNode *map)
         // migration from old file format
         std::map<std::string, std::string> credmap;
         std::string password;
-        map->getValue(PASSWORD_KEY, &password);
+        map.getValue(PASSWORD_KEY, &password);
 
         credmap[CONFIG_ACCOUNT_USERNAME] = username_;
         credmap[CONFIG_ACCOUNT_PASSWORD] = password;
@@ -342,7 +340,7 @@ void SIPAccount::unserialize(const Conf::MappingNode *map)
     setCredentials(creds);
 
     // get srtp submap
-    srtpMap = (MappingNode *)(map->getValue(SRTP_KEY));
+    srtpMap = (MappingNode *)(map.getValue(SRTP_KEY));
 
     if (srtpMap) {
         srtpMap->getValue(SRTP_ENABLE_KEY, &srtpEnabled_);
@@ -351,7 +349,7 @@ void SIPAccount::unserialize(const Conf::MappingNode *map)
     }
 
     // get zrtp submap
-    zrtpMap = (MappingNode *)(map->getValue(ZRTP_KEY));
+    zrtpMap = (MappingNode *)(map.getValue(ZRTP_KEY));
 
     if (zrtpMap) {
         zrtpMap->getValue(DISPLAY_SAS_KEY, &zrtpDisplaySas_);
@@ -361,7 +359,7 @@ void SIPAccount::unserialize(const Conf::MappingNode *map)
     }
 
     // get tls submap
-    tlsMap = (MappingNode *)(map->getValue(TLS_KEY));
+    tlsMap = (MappingNode *)(map.getValue(TLS_KEY));
 
     if (tlsMap) {
         tlsMap->getValue(TLS_ENABLE_KEY, &tlsEnable_);

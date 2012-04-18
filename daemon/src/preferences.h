@@ -44,9 +44,8 @@ class Preferences : public Serializable {
 
         Preferences();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         std::string getAccountOrder() const {
             return accountOrder_;
@@ -143,9 +142,8 @@ class VoipPreference : public Serializable {
     public:
         VoipPreference();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         bool getPlayDtmf() const {
             return playDtmf_;
@@ -198,9 +196,8 @@ class AddressbookPreference : public Serializable {
     public:
         AddressbookPreference();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         bool getPhoto() const {
             return photo_;
@@ -275,9 +272,8 @@ class HookPreference : public Serializable {
         HookPreference();
         HookPreference(const std::map<std::string, std::string> &settings);
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         std::string getNumberAddPrefix() const {
             if (numberEnabled_)
@@ -312,9 +308,8 @@ class AudioPreference : public Serializable {
             audioApi_ = api;
         }
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         // alsa preference
         int getCardin() const {
@@ -471,8 +466,8 @@ class AudioPreference : public Serializable {
 class ShortcutPreferences : public Serializable {
     public:
         ShortcutPreferences();
-        virtual void serialize(Conf::YamlEmitter *emitter);
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         void setShortcuts(std::map<std::string, std::string> shortcuts);
         std::map<std::string, std::string> getShortcuts() const;

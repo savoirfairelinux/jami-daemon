@@ -556,32 +556,29 @@ void AlsaLayer::capture()
     if (toGetSamples > framesPerBufferAlsa)
         toGetSamples = framesPerBufferAlsa;
 
-#warning FIXME: there's no reason that in should be malloc'd
-    int toGetBytes = toGetSamples * sizeof(SFLDataFormat);
-    SFLDataFormat* in = (SFLDataFormat*) malloc(toGetBytes);
+    std::vector<SFLDataFormat> in(toGetSamples);
 
-    if (read(in, toGetBytes) != toGetBytes) {
+    const int toGetBytes = in.size() * sizeof(in[0]);
+    if (read(&(*in.begin()), toGetBytes) != toGetBytes) {
         ERROR("ALSA MIC : Couldn't read!");
-        goto end;
+        return;
     }
 
-    AudioLayer::applyGain(in, toGetSamples, getCaptureGain());
+    AudioLayer::applyGain(&(*in.begin()), toGetSamples, getCaptureGain());
 
     if (resample) {
         int outSamples = toGetSamples * ((double) audioSampleRate_ / mainBufferSampleRate);
-        int outBytes = outSamples * sizeof(SFLDataFormat);
-        SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc(outBytes);
-        converter_->resample((SFLDataFormat*) in, rsmpl_out, mainBufferSampleRate, audioSampleRate_, toGetSamples);
-        dcblocker_.process(rsmpl_out, rsmpl_out, outSamples);
-        Manager::instance().getMainBuffer()->putData(rsmpl_out, outBytes, MainBuffer::DEFAULT_ID);
-        free(rsmpl_out);
+        std::vector<SFLDataFormat> rsmpl_out(outSamples);
+        converter_->resample(&(*in.begin()), &(*rsmpl_out.begin()),
+                mainBufferSampleRate, audioSampleRate_, toGetSamples);
+        dcblocker_.process(&(*rsmpl_out.begin()), &(*rsmpl_out.begin()), outSamples);
+        Manager::instance().getMainBuffer()->putData(&(*rsmpl_out.begin()),
+                rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
     } else {
-        dcblocker_.process(in, in, toGetSamples);
-        Manager::instance().getMainBuffer()->putData(in, toGetBytes, MainBuffer::DEFAULT_ID);
+        dcblocker_.process(&(*in.begin()), &(*in.begin()), toGetSamples);
+        Manager::instance().getMainBuffer()->putData(&(*in.begin()),
+                toGetBytes, MainBuffer::DEFAULT_ID);
     }
-
-end:
-    free(in);
 }
 
 void AlsaLayer::playback(int maxSamples)
@@ -650,7 +647,7 @@ void AlsaLayer::audioCallback()
     if (!playbackHandle_ or !captureHandle_)
         return;
 
-    notifyincomingCall();
+    notifyIncomingCall();
 
     snd_pcm_wait(playbackHandle_, 20);
 

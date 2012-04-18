@@ -311,6 +311,12 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     PJ_ASSERT_RETURN(pjsip_dlg_set_transport(dialog, tp) == PJ_SUCCESS, 1);
 
+    if (!call->inv) {
+        ERROR("SIPVoIPLink: Call invite is not initialized");
+        delete call;
+        return false;
+    }
+
     call->inv->mod_data[mod_ua_.id] = call;
 
     // Check whether Replaces header is present in the request and process accordingly.
@@ -343,7 +349,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
         call->setConnectionState(Call::RINGING);
 
-        Manager::instance().incomingCall(call, account_id);
+        Manager::instance().incomingCall(*call, account_id);
         Manager::instance().getAccountLink(account_id)->addCall(call);
     }
 
@@ -1405,14 +1411,13 @@ void outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/
 void transaction_state_changed_cb(pjsip_inv_session * inv,
                                   pjsip_transaction *tsx, pjsip_event *event)
 {
-    assert(tsx);
-    assert(event);
-
-    if (tsx->role != PJSIP_ROLE_UAS || tsx->state != PJSIP_TSX_STATE_TRYING)
+    if (!tsx or !event or tsx->role != PJSIP_ROLE_UAS or
+            tsx->state != PJSIP_TSX_STATE_TRYING)
         return;
 
-    if (pjsip_method_cmp(&tsx->method, &pjsip_refer_method) ==0) {
-        onCallTransfered(inv, event->body.tsx_state.src.rdata);          /** Handle the refer method **/
+    // Handle the refer method
+    if (pjsip_method_cmp(&tsx->method, &pjsip_refer_method) == 0) {
+        onCallTransfered(inv, event->body.tsx_state.src.rdata);
         return;
     }
 

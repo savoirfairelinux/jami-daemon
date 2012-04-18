@@ -38,7 +38,6 @@
 #include "sip/sip_utils.h"
 #include <sstream>
 #include "global.h"
-#include <cassert>
 
 const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
@@ -114,7 +113,8 @@ static const char * const DFT_VOL_SPKR_STR = "100";     /** Default speaker volu
 static const char * const DFT_VOL_MICRO_STR	= "100";    /** Default mic volume */
 } // end anonymous namespace
 
-Preferences::Preferences() : accountOrder_("")
+Preferences::Preferences() :
+    accountOrder_("")
     , historyLimit_(30)
     , historyMaxCalls_(20)
     , notifyMails_(false)
@@ -126,7 +126,7 @@ Preferences::Preferences() : accountOrder_("")
     , md5Hash_(false)
 {}
 
-void Preferences::serialize(Conf::YamlEmitter *emiter)
+void Preferences::serialize(Conf::YamlEmitter &emiter)
 {
     Conf::MappingNode preferencemap(NULL);
 
@@ -160,36 +160,32 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
     preferencemap.setKeyValue(ZEROCONF_ENABLE_KEY, &zeroConfenable);
     preferencemap.setKeyValue(MD5_HASH_KEY, &md5Hash);
 
-    emiter->serializePreference(&preferencemap, "preferences");
+    emiter.serializePreference(&preferencemap, "preferences");
 }
 
-void Preferences::unserialize(const Conf::MappingNode *map)
+void Preferences::unserialize(const Conf::MappingNode &map)
 {
-    if (map == NULL) {
-        ERROR("Preference: Error: Preference map is NULL");
-        return;
-    }
-
-    map->getValue(ORDER_KEY, &accountOrder_);
-    map->getValue(HISTORY_LIMIT_KEY, &historyLimit_);
-    map->getValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls_);
-    map->getValue(NOTIFY_MAILS_KEY, &notifyMails_);
-    map->getValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice_);
-    map->getValue(REGISTRATION_EXPIRE_KEY, &registrationExpire_);
-    map->getValue(PORT_NUM_KEY, &portNum_);
-    map->getValue(SEARCH_BAR_DISPLAY_KEY, &searchBarDisplay_);
-    map->getValue(ZEROCONF_ENABLE_KEY, &zeroConfenable_);
-    map->getValue(MD5_HASH_KEY, &md5Hash_);
+    map.getValue(ORDER_KEY, &accountOrder_);
+    map.getValue(HISTORY_LIMIT_KEY, &historyLimit_);
+    map.getValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls_);
+    map.getValue(NOTIFY_MAILS_KEY, &notifyMails_);
+    map.getValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice_);
+    map.getValue(REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+    map.getValue(PORT_NUM_KEY, &portNum_);
+    map.getValue(SEARCH_BAR_DISPLAY_KEY, &searchBarDisplay_);
+    map.getValue(ZEROCONF_ENABLE_KEY, &zeroConfenable_);
+    map.getValue(MD5_HASH_KEY, &md5Hash_);
 }
 
-VoipPreference::VoipPreference() : playDtmf_(true)
+VoipPreference::VoipPreference() :
+    playDtmf_(true)
     , playTones_(true)
     , pulseLength_(atoi(DFT_PULSE_LENGTH_STR))
     , symmetricRtp_(true)
     , zidFile_(ZRTP_ZIDFILE)
 {}
 
-void VoipPreference::serialize(Conf::YamlEmitter *emitter)
+void VoipPreference::serialize(Conf::YamlEmitter &emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
@@ -207,21 +203,16 @@ void VoipPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(SYMMETRIC_RTP_KEY, &symmetricRtp);
     preferencemap.setKeyValue(ZID_FILE_KEY, &zidFile);
 
-    emitter->serializePreference(&preferencemap, "voipPreferences");
+    emitter.serializePreference(&preferencemap, "voipPreferences");
 }
 
-void VoipPreference::unserialize(const Conf::MappingNode *map)
+void VoipPreference::unserialize(const Conf::MappingNode &map)
 {
-    if (!map) {
-        ERROR("VoipPreference: Error: Preference map is NULL");
-        return;
-    }
-
-    map->getValue(PLAY_DTMF_KEY, &playDtmf_);
-    map->getValue(PLAY_TONES_KEY, &playTones_);
-    map->getValue(PULSE_LENGTH_KEY, &pulseLength_);
-    map->getValue(SYMMETRIC_RTP_KEY, &symmetricRtp_);
-    map->getValue(ZID_FILE_KEY, &zidFile_);
+    map.getValue(PLAY_DTMF_KEY, &playDtmf_);
+    map.getValue(PLAY_TONES_KEY, &playTones_);
+    map.getValue(PULSE_LENGTH_KEY, &pulseLength_);
+    map.getValue(SYMMETRIC_RTP_KEY, &symmetricRtp_);
+    map.getValue(ZID_FILE_KEY, &zidFile_);
 }
 
 AddressbookPreference::AddressbookPreference() : photo_(true)
@@ -233,7 +224,7 @@ AddressbookPreference::AddressbookPreference() : photo_(true)
     , mobile_(true)
 {}
 
-void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
+void AddressbookPreference::serialize(Conf::YamlEmitter &emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
@@ -255,27 +246,22 @@ void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(HOME_KEY, &home);
     preferencemap.setKeyValue(MOBILE_KEY, &mobile);
 
-    emitter->serializePreference(&preferencemap, "addressbook");
-
+    emitter.serializePreference(&preferencemap, "addressbook");
 }
 
-void AddressbookPreference::unserialize(const Conf::MappingNode *map)
+void AddressbookPreference::unserialize(const Conf::MappingNode &map)
 {
-    if (!map) {
-        ERROR("Addressbook: Error: Preference map is NULL");
-        return;
-    }
-
-    map->getValue(PHOTO_KEY, &photo_);
-    map->getValue(ENABLED_KEY, &enabled_);
-    map->getValue(LIST_KEY, &list_);
-    map->getValue(MAX_RESULTS_KEY, &maxResults_);
-    map->getValue(BUSINESS_KEY, &business_);
-    map->getValue(HOME_KEY, &home_);
-    map->getValue(MOBILE_KEY, &mobile_);
+    map.getValue(PHOTO_KEY, &photo_);
+    map.getValue(ENABLED_KEY, &enabled_);
+    map.getValue(LIST_KEY, &list_);
+    map.getValue(MAX_RESULTS_KEY, &maxResults_);
+    map.getValue(BUSINESS_KEY, &business_);
+    map.getValue(HOME_KEY, &home_);
+    map.getValue(MOBILE_KEY, &mobile_);
 }
 
-HookPreference::HookPreference() : iax2Enabled_(false)
+HookPreference::HookPreference() :
+    iax2Enabled_(false)
     , numberAddPrefix_("")
     , numberEnabled_(false)
     , sipEnabled_(false)
@@ -305,7 +291,7 @@ std::map<std::string, std::string> HookPreference::toMap() const
     return settings;
 }
 
-void HookPreference::serialize(Conf::YamlEmitter *emitter)
+void HookPreference::serialize(Conf::YamlEmitter &emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
@@ -323,22 +309,17 @@ void HookPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(URL_COMMAND_KEY, &urlCommand);
     preferencemap.setKeyValue(URL_SIP_FIELD_KEY, &urlSipField);
 
-    emitter->serializePreference(&preferencemap, "hooks");
+    emitter.serializePreference(&preferencemap, "hooks");
 }
 
-void HookPreference::unserialize(const Conf::MappingNode *map)
+void HookPreference::unserialize(const Conf::MappingNode &map)
 {
-    if (!map) {
-        ERROR("Hook: Error: Preference map is NULL");
-        return;
-    }
-
-    map->getValue(IAX2_ENABLED_KEY, &iax2Enabled_);
-    map->getValue(NUMBER_ADD_PREFIX_KEY, &numberAddPrefix_);
-    map->getValue(NUMBER_ENABLED_KEY, &numberEnabled_);
-    map->getValue(SIP_ENABLED_KEY, &sipEnabled_);
-    map->getValue(URL_COMMAND_KEY, &urlCommand_);
-    map->getValue(URL_SIP_FIELD_KEY, &urlSipField_);
+    map.getValue(IAX2_ENABLED_KEY, &iax2Enabled_);
+    map.getValue(NUMBER_ADD_PREFIX_KEY, &numberAddPrefix_);
+    map.getValue(NUMBER_ENABLED_KEY, &numberEnabled_);
+    map.getValue(SIP_ENABLED_KEY, &sipEnabled_);
+    map.getValue(URL_COMMAND_KEY, &urlCommand_);
+    map.getValue(URL_SIP_FIELD_KEY, &urlSipField_);
 }
 
 void HookPreference::runHook(pjsip_msg *msg)
@@ -351,18 +332,18 @@ void HookPreference::runHook(pjsip_msg *msg)
 
 AudioPreference::AudioPreference() :
     audioApi_(PULSEAUDIO_API_STR)
-    , cardin_(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
-    , cardout_(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
-    , cardring_(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
-    , plugin_("default") // PCM_DEFAULT
-    , smplrate_(44100) // DFT_SAMPLE_RATE
+    , cardin_(atoi(ALSA_DFT_CARD))
+    , cardout_(atoi(ALSA_DFT_CARD))
+    , cardring_(atoi(ALSA_DFT_CARD))
+    , plugin_("default")
+    , smplrate_(44100)
     , devicePlayback_("")
     , deviceRecord_("")
     , deviceRingtone_("")
-    , recordpath_("") // DFT_RECORD_PATH
+    , recordpath_("")
     , alwaysRecording_(false)
-    , volumemic_(atoi(DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
-    , volumespkr_(atoi(DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
+    , volumemic_(atoi(DFT_VOL_SPKR_STR))
+    , volumespkr_(atoi(DFT_VOL_MICRO_STR))
     , noisereduce_(true)
     , echocancel_(false)
     , echoCancelTailLength_(100)
@@ -402,7 +383,7 @@ AudioLayer* AudioPreference::switchAndCreateAudioLayer()
     return createAudioLayer();
 }
 
-void AudioPreference::serialize(Conf::YamlEmitter *emitter)
+void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 {
     Conf::MappingNode preferencemap(NULL);
     Conf::MappingNode alsapreferencemap(NULL);
@@ -471,22 +452,20 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(ECHO_TAIL_KEY, &echotail);
     preferencemap.setKeyValue(ECHO_DELAY_KEY, &echodelay);
 
-    emitter->serializePreference(&preferencemap, "audio");
+    emitter.serializePreference(&preferencemap, "audio");
 }
 
-void AudioPreference::unserialize(const Conf::MappingNode *map)
+void AudioPreference::unserialize(const Conf::MappingNode &map)
 {
-    assert(map);
+    map.getValue(AUDIO_API_KEY, &audioApi_);
+    map.getValue(RECORDPATH_KEY, &recordpath_);
+    map.getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
+    map.getValue(VOLUMEMIC_KEY, &volumemic_);
+    map.getValue(VOLUMESPKR_KEY, &volumespkr_);
+    map.getValue(NOISE_REDUCE_KEY, &noisereduce_);
+    map.getValue(ECHO_CANCEL_KEY, &echocancel_);
 
-    map->getValue(AUDIO_API_KEY, &audioApi_);
-    map->getValue(RECORDPATH_KEY, &recordpath_);
-    map->getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
-    map->getValue(VOLUMEMIC_KEY, &volumemic_);
-    map->getValue(VOLUMESPKR_KEY, &volumespkr_);
-    map->getValue(NOISE_REDUCE_KEY, &noisereduce_);
-    map->getValue(ECHO_CANCEL_KEY, &echocancel_);
-
-    Conf::MappingNode *alsamap =(Conf::MappingNode *)(map->getValue("alsa"));
+    Conf::MappingNode *alsamap =(Conf::MappingNode *) map.getValue("alsa");
 
     if (alsamap) {
         alsamap->getValue(CARDIN_KEY, &cardin_);
@@ -496,7 +475,7 @@ void AudioPreference::unserialize(const Conf::MappingNode *map)
         alsamap->getValue(PLUGIN_KEY, &plugin_);
     }
 
-    Conf::MappingNode *pulsemap =(Conf::MappingNode *)(map->getValue("pulse"));
+    Conf::MappingNode *pulsemap =(Conf::MappingNode *)(map.getValue("pulse"));
 
     if (pulsemap) {
         pulsemap->getValue(DEVICE_PLAYBACK_KEY, &devicePlayback_);
@@ -532,7 +511,7 @@ void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 }
 
 
-void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
+void ShortcutPreferences::serialize(Conf::YamlEmitter &emitter)
 {
     Conf::MappingNode preferencemap(NULL);
 
@@ -548,20 +527,15 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(TOGGLE_HOLD_SHORT_KEY, &toggleHold);
     preferencemap.setKeyValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup);
 
-    emitter->serializePreference(&preferencemap, "shortcuts");
+    emitter.serializePreference(&preferencemap, "shortcuts");
 }
 
-void ShortcutPreferences::unserialize(const Conf::MappingNode *map)
+void ShortcutPreferences::unserialize(const Conf::MappingNode &map)
 {
-    if (map == NULL) {
-        ERROR("ShortcutPreference: Error: Preference map is NULL");
-        return;
-    }
-
-    map->getValue(HANGUP_SHORT_KEY, &hangup_);
-    map->getValue(PICKUP_SHORT_KEY, &pickup_);
-    map->getValue(POPUP_SHORT_KEY, &popup_);
-    map->getValue(TOGGLE_HOLD_SHORT_KEY, &toggleHold_);
-    map->getValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup_);
+    map.getValue(HANGUP_SHORT_KEY, &hangup_);
+    map.getValue(PICKUP_SHORT_KEY, &pickup_);
+    map.getValue(POPUP_SHORT_KEY, &popup_);
+    map.getValue(TOGGLE_HOLD_SHORT_KEY, &toggleHold_);
+    map.getValue(TOGGLE_PICKUP_HANGUP_SHORT_KEY, &togglePickupHangup_);
 }
 
