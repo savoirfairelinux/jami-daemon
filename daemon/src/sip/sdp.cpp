@@ -287,7 +287,11 @@ void Sdp::createOffer(const CodecOrder &selectedCodecs)
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        const CodecOrder &selectedCodecs)
 {
-    assert(remote);
+    if (!remote) {
+        ERROR("SDP: Remote session is NULL");
+        return;
+    }
+
 
     DEBUG("SDP: Remote SDP Session:");
     printSession(remote);
