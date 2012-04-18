@@ -624,7 +624,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
             // if peerNumber exist append it to the name string
             call->initRecFilename(std::string(event->ies.calling_number));
-            Manager::instance().incomingCall(call, accountID_);
+            Manager::instance().incomingCall(*call, accountID_);
 
             format = call->getFirstMatchingFormat(event->ies.format, accountID_);
 

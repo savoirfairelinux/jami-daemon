@@ -349,7 +349,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
         call->setConnectionState(Call::RINGING);
 
-        Manager::instance().incomingCall(call, account_id);
+        Manager::instance().incomingCall(*call, account_id);
         Manager::instance().getAccountLink(account_id)->addCall(call);
     }
 
