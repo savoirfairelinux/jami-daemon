@@ -33,6 +33,7 @@
 #include <sstream> // for stringstream
 #include <cstdio>
 #include "logger.h"
+#include "fileutils.h"
 
 // structure for the wave header
 
@@ -76,10 +77,22 @@ void AudioRecord::setSndSamplingRate(int smplRate)
 
 void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path)
 {
+    std::stringstream s;
+    std::string filePath;
+
+    // use HOME directory if path is empty, nor does not exist
+    if(path.empty() || !fileutils::check_dir(path.c_str())) {
+        s << getenv("HOME");
+        filePath = s.str();
+    }
+    else {
+        filePath = path;
+    }
+
     fileType_ = type;
     channels_ = 1;
     sndSmplRate_ = sndSmplRate;
-    savePath_ = path + "/";
+    savePath_ = (*filePath.rbegin() == '/') ? filePath : filePath + "/";
 }
 
 void AudioRecord::initFilename(const std::string &peerNumber)
@@ -230,7 +243,7 @@ void AudioRecord::createFilename()
     out << timeinfo->tm_sec;
     filename_ = out.str();
 
-    DEBUG("AudioRecord: create filename for this call %s ", filename_.c_str());
+    DEBUG("AudioRecord: Generate filename for this call %s ", filename_.c_str());
 }
 
 bool AudioRecord::setRawFile()
