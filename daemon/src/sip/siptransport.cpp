@@ -141,12 +141,7 @@ std::vector<std::string> SipTransport::getAllIpInterface()
 }
 
 SipTransport::SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool) : transportMap_(), stunSocketMap_(), cp_(cp), pool_(pool), endpt_(endpt)
-{
-}
-
-SipTransport::~SipTransport()
-{
-}
+{}
 
 pj_bool_t
 stun_sock_on_status_cb(pj_stun_sock * /*stun_sock*/, pj_stun_sock_op op,
@@ -192,10 +187,15 @@ stun_sock_on_rx_data_cb(pj_stun_sock * /*stun_sock*/, void * /*pkt*/,
 
 pj_status_t SipTransport::createStunResolver(pj_str_t serverName, pj_uint16_t port)
 {
-    pj_stun_config stunCfg;
-    pj_stun_config_init(&stunCfg, &cp_->factory, 0, pjsip_endpt_get_ioqueue(endpt_), pjsip_endpt_get_timer_heap(endpt_));
+    std::string stunResolverName(serverName.ptr, serverName.slen);
+    if (stunSocketMap_.find(stunResolverName) != stunSocketMap_.end()) {
+        DEBUG("SipTransport: %s already added", stunResolverName.c_str());
+        return PJ_SUCCESS;
+    }
 
-    DEBUG("***************** Create Stun Resolver *********************");
+    pj_stun_config stunCfg;
+    pj_stun_config_init(&stunCfg, &cp_->factory, 0,
+            pjsip_endpt_get_ioqueue(endpt_), pjsip_endpt_get_timer_heap(endpt_));
 
     static const pj_stun_sock_cb stun_sock_cb = {
         stun_sock_on_rx_data_cb,
@@ -203,27 +203,30 @@ pj_status_t SipTransport::createStunResolver(pj_str_t serverName, pj_uint16_t po
         stun_sock_on_status_cb
     };
 
-    pj_stun_sock *stun_sock;
-    std::string stunResolverName(serverName.ptr, serverName.slen);
-    pj_status_t status = pj_stun_sock_create(&stunCfg, stunResolverName.c_str(), pj_AF_INET(), &stun_sock_cb, NULL, NULL, &stun_sock);
-
-    // store socket inside list
-    DEBUG("     insert %s resolver in map", stunResolverName.c_str());
-    stunSocketMap_.insert(std::pair<std::string, pj_stun_sock *>(stunResolverName, stun_sock));
+    pj_stun_sock *stun_sock = NULL;
+    pj_status_t status = pj_stun_sock_create(&stunCfg,
+            stunResolverName.c_str(), pj_AF_INET(), &stun_sock_cb, NULL, NULL,
+            &stun_sock);
 
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        ERROR("SipTransport: Error creating STUN socket for %.*s: %s", (int) serverName.slen, serverName.ptr, errmsg);
+        ERROR("SipTransport: Error creating STUN socket for %.*s: %s",
+                (int) serverName.slen, serverName.ptr, errmsg);
         return status;
     }
 
     status = pj_stun_sock_start(stun_sock, &serverName, port, NULL);
 
-    if (status != PJ_SUCCESS) {
+    // store socket inside list
+    if (status == PJ_SUCCESS) {
+        DEBUG("SipTransport: Adding %s resolver", stunResolverName.c_str());
+        stunSocketMap_[stunResolverName] = stun_sock;
+    } else {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        DEBUG("SipTransport: Error starting STUN socket for %.*s: %s", (int) serverName.slen, serverName.ptr, errmsg);
+        DEBUG("SipTransport: Error starting STUN socket for %.*s: %s",
+                (int) serverName.slen, serverName.ptr, errmsg);
         pj_stun_sock_destroy(stun_sock);
     }
 
@@ -237,13 +240,10 @@ pj_status_t SipTransport::destroyStunResolver(const std::string &serverName)
 
     DEBUG("***************** Destroy Stun Resolver *********************");
 
-    std::map<std::string, pj_stun_sock *>::iterator iter;
-    for(iter = stunSocketMap_.begin(); iter != stunSocketMap_.end(); iter++)
-        DEBUG("stun reslover: %s", iter->first.c_str());
-
     if (it != stunSocketMap_.end()) {
         DEBUG("SipTransport: Deleting stun resolver %s", it->first.c_str());
-        pj_stun_sock_destroy(it->second);
+        if (it->second)
+            pj_stun_sock_destroy(it->second);
         stunSocketMap_.erase(it);
     }
 
@@ -355,8 +355,6 @@ void SipTransport::createSipTransport(SIPAccount *account)
         account->transport_ = transport;
     } else if (account->isStunEnabled()) {
         pjsip_transport *transport = createStunTransport(account->getStunServerName(), account->getStunPort());
-        if(transport == NULL)
-            transport = createUdpTransport(account->getLocalInterface(), account->getLocalPort());
         account->transport_ = transport;
     }
     else {
@@ -472,7 +470,10 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 
 pjsip_tpselector *SipTransport::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
 {
-    assert(transport);
+    if (!transport) {
+        ERROR("SipTransport: transport is not initialized");
+        return NULL;
+    }
     pjsip_tpselector *tp = (pjsip_tpselector *) pj_pool_zalloc(tp_pool, sizeof(pjsip_tpselector));
     tp->type = PJSIP_TPSELECTOR_TRANSPORT;
     tp->u.transport = transport;
