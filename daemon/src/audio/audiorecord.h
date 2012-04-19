@@ -102,7 +102,7 @@ class AudioRecord {
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recData(SFLDataFormat* buffer, int nSamples);
+        void recData(SFLDataFormat* buffer, size_t nSamples);
 
     protected:
 
