@@ -354,7 +354,7 @@ void SipTransport::createSipTransport(SIPAccount *account)
         pjsip_transport *transport = createTlsTransport(remoteAddr, account->getLocalInterface(), account->getTlsListenerPort(), account->getTlsSetting());
         account->transport_ = transport;
     } else if (account->isStunEnabled()) {
-        pjsip_transport *transport = createStunTransport(account->getStunServerName(), account->getStunPort());
+        pjsip_transport *transport = createSTUNTransport(*account);
         if(transport == NULL)
             transport = createUdpTransport(account->getLocalInterface(), account->getLocalPort());
         account->transport_ = transport;
@@ -382,7 +382,7 @@ void SipTransport::createSipTransport(SIPAccount *account)
 
     if(account->transport_ == NULL)
         ERROR("SipTransport: Could not create transport on %s:%d",
-                              account->getLocalInterface().c_str(), account->getLocalPort());
+                account->getLocalInterface().c_str(), account->getLocalPort());
 }
 
 void SipTransport::createDefaultSipUdpTransport()
@@ -482,14 +482,15 @@ pjsip_tpselector *SipTransport::initTransportSelector(pjsip_transport *transport
     return tp;
 }
 
-pjsip_transport *SipTransport::createStunTransport(pj_str_t serverName, pj_uint16_t port)
+pjsip_transport *SipTransport::createSTUNTransport(SIPAccount &account)
 {
-    pjsip_transport *transport;
+    pj_str_t serverName = account.getStunServerName();
+    pj_uint16_t port = account.getStunPort();
 
-    DEBUG("SipTransport: Create stun transport  server name: %s, port: %d", serverName, port);// account->getStunPort());
+    DEBUG("SipTransport: Create STUN transport  server name: %s, port: %d", serverName, port);
     if (createStunResolver(serverName, port) != PJ_SUCCESS) {
         ERROR("SipTransport: Can't resolve STUN server");
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }
 
@@ -499,13 +500,13 @@ pjsip_transport *SipTransport::createStunTransport(pj_str_t serverName, pj_uint1
 
     if (pj_sockaddr_in_init(&boundAddr, &serverName, 0) != PJ_SUCCESS) {
         ERROR("SipTransport: Can't initialize IPv4 socket on %*s:%i", serverName.slen, serverName.ptr, port);
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }
 
     if (pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &sock) != PJ_SUCCESS) {
         ERROR("SipTransport: Can't create or bind socket");
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }
 
@@ -515,7 +516,7 @@ pjsip_transport *SipTransport::createStunTransport(pj_str_t serverName, pj_uint1
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("SipTransport: Can't contact STUN server");
         pj_sock_close(sock);
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure("");
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
         return NULL;
     }
 
@@ -524,6 +525,7 @@ pjsip_transport *SipTransport::createStunTransport(pj_str_t serverName, pj_uint1
         pj_ntohs(pub_addr.sin_port)
     };
 
+    pjsip_transport *transport;
     pjsip_udp_transport_attach2(endpt_, PJSIP_TRANSPORT_UDP, sock, &a_name, 1,
                                 &transport);
 

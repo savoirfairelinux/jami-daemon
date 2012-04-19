@@ -46,6 +46,7 @@
 #include "sliders.h"
 #include "statusicon.h"
 #include "assistant.h"
+#include "accountlist.h"
 #include "accountlistconfigdialog.h"
 
 #include "dbus.h"
@@ -448,14 +449,22 @@ accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 }
 
 static void
-stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *reason, void *foo UNUSED)
+stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, void *foo UNUSED)
 {
-    ERROR("Error: Stun status failure: %s failed", reason);
+    ERROR("Error: Stun status failure: account %s failed to setup STUN",
+          accountID);
+    // Disable STUN for the account that tried to create the STUN transport
+    account_t *account = account_list_get_by_id(accountID);
+    if (account) {
+        account_replace(account, ACCOUNT_SIP_STUN_ENABLED, "false");
+        dbus_set_account_details(account);
+    }
 }
 
 static void
 stun_status_success_cb(DBusGProxy *proxy UNUSED, const gchar *message UNUSED, void *foo UNUSED)
 {
+    DEBUG("STUN setup successful");
 }
 
 static void

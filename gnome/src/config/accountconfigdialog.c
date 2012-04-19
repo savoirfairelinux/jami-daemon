@@ -490,7 +490,6 @@ key_exchange_changed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
     gtk_widget_set_sensitive(zrtp_button, sensitive);
 }
 
-
 static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {

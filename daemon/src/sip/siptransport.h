@@ -157,12 +157,6 @@ class SipTransport {
                            pjsip_tls_setting *tlsSetting);
 
         /**
-         * Create a UDP transport using stun server to resove public address
-         * @param account The account for which a transport must be created.
-         */
-        pjsip_transport *createStunTransport(pj_str_t serverName, pj_uint16_t port);
-
-        /**
          * This function unset the transport for a given account.
          */
         void shutdownSipTransport(SIPAccount *account);
@@ -179,6 +173,8 @@ class SipTransport {
 
     private:
         NON_COPYABLE(SipTransport);
+
+        pjsip_transport *createSTUNTransport(SIPAccount &account);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case
