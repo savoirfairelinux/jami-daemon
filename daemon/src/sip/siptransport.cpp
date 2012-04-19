@@ -355,6 +355,8 @@ void SipTransport::createSipTransport(SIPAccount *account)
         account->transport_ = transport;
     } else if (account->isStunEnabled()) {
         pjsip_transport *transport = createStunTransport(account->getStunServerName(), account->getStunPort());
+        if(transport == NULL)
+            transport = createUdpTransport(account->getLocalInterface(), account->getLocalPort());
         account->transport_ = transport;
     }
     else {
