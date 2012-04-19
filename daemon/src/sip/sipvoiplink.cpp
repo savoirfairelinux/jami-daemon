@@ -489,7 +489,9 @@ bool SIPVoIPLink::getEvent()
 void SIPVoIPLink::sendRegister(Account *a)
 {
     SIPAccount *account = dynamic_cast<SIPAccount*>(a);
-    sipTransport.createSipTransport(account);
+    if (!account)
+        throw VoipLinkException("SipVoipLink: Account is not SIPAccount");
+    sipTransport.createSipTransport(*account);
 
     account->setRegister(true);
     account->setRegistrationState(Trying);
@@ -1136,37 +1138,6 @@ bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
     call->getLocalSDP()->setLocalIP(localAddress);
     call->getLocalSDP()->createOffer(account->getActiveCodecs());
 
-    // Init TLS transport if enabled
-    if (account->isTlsEnabled()) {
-        size_t at = toUri.find("@");
-        size_t trns = toUri.find(";transport");
-        if (at == std::string::npos or trns == std::string::npos) {
-            ERROR("UserAgent: Error \"@\" or \";transport\" not in URI %s", toUri.c_str());
-            delete call;
-            return false;
-        }
-
-        std::string remoteAddr(toUri.substr(at + 1, trns - at - 1));
-
-        if (toUri.find("sips:") != 1) {
-            DEBUG("UserAgent: Error \"sips\" scheme required for TLS call");
-            delete call;
-            return false;
-        }
-
-        sipTransport.shutdownSipTransport(account);
-        pjsip_transport *transport = sipTransport.createTlsTransport(account->getLocalInterface(), remoteAddr,
-                                                 account->getTlsListenerPort(), account->getTlsSetting());
-
-        if (transport == NULL) {
-            ERROR("Error could not create TLS transport for IP2IP call");
-            delete call;
-            return false;
-        }
-
-        account->transport_ = transport;
-    }
-
     if (!SIPStartCall(call)) {
         delete call;
         return false;
@@ -1581,7 +1552,7 @@ void registration_cb(pjsip_regc_cbparam *param)
         account->setRegistrationState(ErrorAuth);
         account->setRegister(false);
 
-        SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(account);
+        SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
         return;
     }
 
@@ -1615,14 +1586,14 @@ void registration_cb(pjsip_regc_cbparam *param)
 
         account->setRegister(false);
 
-        SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(account);
+        SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
 
     } else {
         if (account->isRegistered())
             account->setRegistrationState(Registered);
         else {
             account->setRegistrationState(Unregistered);
-            SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(account);
+            SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
         }
     }
 }

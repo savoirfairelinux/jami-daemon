@@ -107,7 +107,7 @@ class SipTransport {
          * transport type specified in account settings
          * @param account The account for which a transport must be created.
          */
-        void createSipTransport(SIPAccount *account);
+        void createSipTransport(SIPAccount &account);
 
         void createDefaultSipUdpTransport();
 
@@ -127,39 +127,9 @@ class SipTransport {
         pjsip_tpselector *initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const;
 
         /**
-         * Create The default TLS listener which is global to the application. This means that
-         * only one TLS connection can be established for the momment.
-         * @param the interface to bind this listener to
-         * @param the port number to create the TCP socket
-         * @param pjsip's tls settings for the transport to be created which contains:
-         *      - path to ca certificate list file
-         *      - path to certertificate file
-         *      - path to private key file
-         *      - the password for the file
-         *      - the TLS method
-         * @param a pointer to store the listener created, in our case this is a static pointer
-         */
-        void createTlsListener(const std::string &interface, pj_uint16_t, pjsip_tls_setting *, pjsip_tpfactory **);
-
-        /**
-         * Create a connection oriented TLS transport and register to the specified remote address.
-         * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
-         * is allowed to be created in the application. Any subsequent account attempting to
-         * register a new using this transport even if new settings are specified.
-         * @param the remote address for this transport to be connected
-         * @param the local port to initialize the TCP socket
-         * @param pjsip's tls transport parameters
-         */
-        pjsip_transport *
-        createTlsTransport(const std::string &remoteAddr,
-                           const std::string &interface,
-                           pj_uint16_t tlsListenerPort,
-                           pjsip_tls_setting *tlsSetting);
-
-        /**
          * This function unset the transport for a given account.
          */
-        void shutdownSipTransport(SIPAccount *account);
+        void shutdownSipTransport(SIPAccount &account);
 
         /**
          * Get the correct address to use (ie advertised) from
@@ -174,7 +144,26 @@ class SipTransport {
     private:
         NON_COPYABLE(SipTransport);
 
-        pjsip_transport *createSTUNTransport(SIPAccount &account);
+        pjsip_transport *
+        createStunTransport(SIPAccount &account);
+        /**
+         * Create a connection oriented TLS transport and register to the specified remote address.
+         * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
+         * is allowed to be created in the application. Any subsequent account attempting to
+         * register a new using this transport even if new settings are specified.
+         * @param the account that is creating the TLS transport
+         */
+        pjsip_transport *
+        createTlsTransport(SIPAccount &account);
+
+        /**
+         * Create The default TLS listener which is global to the application. This means that
+         * only one TLS connection can be established for the momment.
+         * @param the SIPAccount for which we are creating the TLS listener
+         * @return a pointer to the new listener
+         */
+        pjsip_tpfactory *
+        createTlsListener(SIPAccount &account);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case

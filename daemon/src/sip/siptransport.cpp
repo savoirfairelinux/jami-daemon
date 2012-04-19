@@ -251,67 +251,61 @@ pj_status_t SipTransport::destroyStunResolver(const std::string &serverName)
 }
 
 
-void SipTransport::createTlsListener(const std::string &interface, pj_uint16_t tlsListenerPort, pjsip_tls_setting *tlsSetting, pjsip_tpfactory **listener)
+pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
 {
-    pj_status_t status;
     pj_sockaddr_in local_addr;
     pj_sockaddr_in_init(&local_addr, 0, 0);
-    local_addr.sin_port = pj_htons(tlsListenerPort);
+    local_addr.sin_port = pj_htons(account.getTlsListenerPort());
 
-    DEBUG("SipTransport: Create TLS listener %s:%d", interface.c_str(), tlsListenerPort);
-
-    if (tlsSetting == NULL) {
+    if (account.getTlsSetting() == NULL) {
         ERROR("SipTransport: Error TLS settings not specified");
-        return;
+        return NULL;
     }
 
-    if (listener == NULL) {
-        ERROR("SipTransport: Error no pointer to store new TLS listener");
-        return;
-    }
-
+    std::string interface(account.getLocalInterface());
     std::string listeningAddress;
     if (interface == DEFAULT_INTERFACE)
         listeningAddress = getSIPLocalIP();
     else
         listeningAddress = getInterfaceAddrFromName(interface);
 
-    if (listeningAddress.empty()) {
+    if (listeningAddress.empty())
         ERROR("SipTransport: Could not determine ip address for this transport");
-    }
 
     pj_str_t pjAddress;
     pj_cstr(&pjAddress, listeningAddress.c_str());
     pj_sockaddr_in_set_str_addr(&local_addr, &pjAddress);
-    pj_sockaddr_in_set_port(&local_addr, tlsListenerPort);
+    pj_sockaddr_in_set_port(&local_addr, account.getTlsListenerPort());
 
-    status = pjsip_tls_transport_start(endpt_, tlsSetting, &local_addr, NULL, 1, listener);
-    if(status != PJ_SUCCESS)
+    pjsip_tpfactory *listener = NULL;
+    if (pjsip_tls_transport_start(endpt_, account.getTlsSetting(), &local_addr,
+                NULL, 1, &listener) != PJ_SUCCESS) {
         ERROR("SipTransport: Error Failed to start tls listener");
+        listener = NULL;
+    }
+    return listener;
 }
 
 
 pjsip_transport *
-SipTransport::createTlsTransport(const std::string &remoteAddr,
-                                const std::string &interface,
-                                pj_uint16_t tlsListenerPort,
-                                pjsip_tls_setting *tlsSettings)
+SipTransport::createTlsTransport(SIPAccount &account)
 {
-    pjsip_transport *transport = NULL;
+    std::string remoteSipUri(account.getServerUri());
+    static const char SIPS_PREFIX[] = "<sips:";
+    size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
+    size_t trns = remoteSipUri.find(";transport");
+    std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
     std::string ipAddr = "";
     int port = DEFAULT_SIP_TLS_PORT;
 
     // parse c string
     size_t pos = remoteAddr.find(":");
-    if(pos != std::string::npos) {
+    if (pos != std::string::npos) {
         ipAddr = remoteAddr.substr(0, pos);
-        port = atoi(remoteAddr.substr(pos+1, remoteAddr.length() - pos).c_str());
-    }
-    else {
+        port = atoi(remoteAddr.substr(pos + 1, remoteAddr.length() - pos).c_str());
+    } else {
         ipAddr = remoteAddr;
     }
-
-    DEBUG("SipTransport: Create sip transport on %s:%d at destination %s:%d", interface.c_str(), tlsListenerPort, ipAddr.c_str(), port);
 
     pj_str_t remote;
     pj_cstr(&remote, ipAddr.c_str());
@@ -323,66 +317,51 @@ SipTransport::createTlsTransport(const std::string &remoteAddr,
     static pjsip_tpfactory *localTlsListener = NULL;
 
     if (localTlsListener == NULL)
-        createTlsListener(interface, tlsListenerPort, tlsSettings, &localTlsListener);
+        localTlsListener = createTlsListener(account);
 
     DEBUG("SipTransport: Get new tls transport from transport manager");
+    pjsip_transport *transport = NULL;
     pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
-
     if (transport == NULL)
         ERROR("SipTransport: Could not create new TLS transport\n");
 
     return transport;
 }
 
-void SipTransport::createSipTransport(SIPAccount *account)
+void SipTransport::createSipTransport(SIPAccount &account)
 {
-    if (account == NULL) {
-        ERROR("SipTransport: Account is NULL while creating sip transport");
-        return;
-    }
-
     shutdownSipTransport(account);
 
-    if (account->isTlsEnabled()) {
-        std::string remoteSipUri(account->getServerUri());
-        static const char SIPS_PREFIX[] = "<sips:";
-        size_t sips = remoteSipUri.find(SIPS_PREFIX) + (sizeof SIPS_PREFIX) - 1;
-        size_t trns = remoteSipUri.find(";transport");
-        std::string remoteAddr(remoteSipUri.substr(sips, trns-sips));
-
-        pjsip_transport *transport = createTlsTransport(remoteAddr, account->getLocalInterface(), account->getTlsListenerPort(), account->getTlsSetting());
-        account->transport_ = transport;
-    } else if (account->isStunEnabled()) {
-        pjsip_transport *transport = createSTUNTransport(*account);
-        if(transport == NULL)
-            transport = createUdpTransport(account->getLocalInterface(), account->getLocalPort());
-        account->transport_ = transport;
-    }
-    else {
-        pjsip_transport *transport = createUdpTransport(account->getLocalInterface(), account->getLocalPort());
-        account->transport_ = transport;
+    if (account.isTlsEnabled()) {
+        account.transport_ = createTlsTransport(account);
+    } else if (account.isStunEnabled()) {
+        account.transport_ = createStunTransport(account);
+        if (account.transport_ == NULL) {
+            WARN("SipTransport: falling back to UDP transport");
+            account.transport_ = createUdpTransport(account.getLocalInterface(), account.getLocalPort());
+        }
+    } else {
+        account.transport_ = createUdpTransport(account.getLocalInterface(), account.getLocalPort());
     }
 
-
-
-    if (!account->transport_) {
+    if (!account.transport_) {
         DEBUG("SipTransport: Looking into previously created transport map for %s:%d",
-                              account->getLocalInterface().c_str(), account->getLocalPort());
+                account.getLocalInterface().c_str(), account.getLocalPort());
         // Could not create new transport, this transport may already exists
-        account->transport_ = transportMap_[account->getLocalPort()];
+        pjsip_transport *cachedTransport = transportMap_[account.getLocalPort()];
 
-        if (account->transport_)
-            pjsip_transport_add_ref(account->transport_);
-        else {
-            account->transport_ = localUDPTransport_;
-            account->setLocalPort(localUDPTransport_->local_name.port);
+        if (cachedTransport) {
+            account.transport_ = cachedTransport;
+            pjsip_transport_add_ref(account.transport_);
+        } else {
+            if (account.isTlsEnabled())
+                throw std::runtime_error("SipTransport: Could not create TLS connection");
+            assert(localUDPTransport_);
+            account.transport_ = localUDPTransport_;
+            account.setLocalPort(localUDPTransport_->local_name.port);
         }
     }
-
-    if(account->transport_ == NULL)
-        ERROR("SipTransport: Could not create transport on %s:%d",
-                account->getLocalInterface().c_str(), account->getLocalPort());
 }
 
 void SipTransport::createDefaultSipUdpTransport()
@@ -482,7 +461,7 @@ pjsip_tpselector *SipTransport::initTransportSelector(pjsip_transport *transport
     return tp;
 }
 
-pjsip_transport *SipTransport::createSTUNTransport(SIPAccount &account)
+pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 {
     pj_str_t serverName = account.getStunServerName();
     pj_uint16_t port = account.getStunPort();
@@ -534,17 +513,17 @@ pjsip_transport *SipTransport::createSTUNTransport(SIPAccount &account)
     return transport;
 }
 
-void SipTransport::shutdownSipTransport(SIPAccount *account)
+void SipTransport::shutdownSipTransport(SIPAccount &account)
 {
-    if (account->isStunEnabled()) {
-        pj_str_t stunServerName = account->getStunServerName();
+    if (account.isStunEnabled()) {
+        pj_str_t stunServerName = account.getStunServerName();
         std::string server(stunServerName.ptr, stunServerName.slen);
         destroyStunResolver(server);
     }
 
-    if (account->transport_) {
-        pjsip_transport_dec_ref(account->transport_);
-        account->transport_ = NULL;
+    if (account.transport_) {
+        pjsip_transport_dec_ref(account.transport_);
+        account.transport_ = NULL;
     }
 }
 
