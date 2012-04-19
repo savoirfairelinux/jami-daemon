@@ -1551,15 +1551,15 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 
 void registration_cb(pjsip_regc_cbparam *param)
 {
+    if (param == NULL) {
+        ERROR("SipVoipLink: registration callback parameter is NULL");
+        return;
+    }
+
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
 
     if (account == NULL) {
         ERROR("SipVoipLink: account doesn't exist in registration callback");
-        return;
-    }
-
-    if (param == NULL) {
-        ERROR("SipVoipLink: registration callback parameter is NULL");
         return;
     }
 
