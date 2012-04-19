@@ -92,14 +92,6 @@ class SipTransport {
             pool_ = pool;
         }
 
-        /**
-         * Create a new stun resolver. Store it inside the array. Resolve public address for this
-         * server name.
-         * @param serverName The name of the stun server
-         * @param port number
-         */
-        pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
-
         pj_status_t destroyStunResolver(const std::string &serverName);
 
         /**
@@ -110,13 +102,6 @@ class SipTransport {
         void createSipTransport(SIPAccount &account);
 
         void createDefaultSipUdpTransport();
-
-        /**
-        * Create SIP UDP transport from account's setting
-        * @param account The account for which a transport must be created.
-        */
-        pjsip_transport *createUdpTransport(const std::string &interface,
-                                            unsigned int port);
 
         /**
          * Initialize the transport selector
@@ -164,6 +149,21 @@ class SipTransport {
          */
         pjsip_tpfactory *
         createTlsListener(SIPAccount &account);
+
+        /**
+         * Create a new stun resolver. Store it inside the array. Resolve public address for this
+         * server name.
+         * @param serverName The name of the stun server
+         * @param port number
+         */
+        pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
+
+        /**
+        * Create SIP UDP transport from account's setting
+        * @param account The account for which a transport must be created.
+        */
+        pjsip_transport *createUdpTransport(const std::string &interface,
+                                            unsigned int port);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case

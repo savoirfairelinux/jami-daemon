@@ -43,22 +43,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <stdexcept>
 
 #include "logger.h"
 #include "siptransport.h"
 #include "manager.h"
 
-#include "sip/sdp.h"
-#include "sipcall.h"
 #include "sipaccount.h"
-#include "eventthread.h"
-#include "sdes_negotiator.h"
 
 #include "dbus/dbusmanager.h"
-#include "dbus/callmanager.h"
 #include "dbus/configurationmanager.h"
 
 static const char * const DEFAULT_INTERFACE = "default";
@@ -366,16 +361,14 @@ void SipTransport::createSipTransport(SIPAccount &account)
 
 void SipTransport::createDefaultSipUdpTransport()
 {
-    pj_uint16_t port = 0;
-    int counter = 0;
-
     DEBUG("SipTransport: Create default sip udp transport");
 
     SIPAccount *account = Manager::instance().getIP2IPAccount();
 
     pjsip_transport *transport = NULL;
+    pj_uint16_t port = 0;
     static const int DEFAULT_TRANSPORT_ATTEMPTS = 5;
-    for (; transport == NULL and counter < DEFAULT_TRANSPORT_ATTEMPTS; ++counter) {
+    for (int counter = 0; transport == NULL and counter < DEFAULT_TRANSPORT_ATTEMPTS; ++counter) {
         // if default udp transport fails to init on 5060, try other ports
         // with 2 step size increment (i.e. 5062, 5064, ...)
         port = account->getLocalPort() + (counter * 2);
