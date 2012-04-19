@@ -970,6 +970,11 @@ class ManagerImpl {
         AccountMap accountMap_;
 
         /**
+         * Unregister all account in accountMap_
+         */
+        void unregisterAllAccounts();
+
+        /**
          * Load the account map from configuration
          */
         void loadAccountMap(Conf::YamlParser &parser);

@@ -130,6 +130,8 @@ void ManagerImpl::terminate()
 
     saveConfig();
 
+    unregisterAllAccounts();
+
     SIPVoIPLink::destroy();
     // Unload account map AFTER destroying
     // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
@@ -2598,6 +2600,11 @@ namespace {
         }
     }
 
+    void unregisterAccount(std::pair<const std::string, Account*> &item)
+    {
+        item.second->unregisterVoIPLink();
+    }
+
     void unloadAccount(std::pair<const std::string, Account*> &item)
     {
         // avoid deleting IP2IP account twice
@@ -2606,6 +2613,7 @@ namespace {
             item.second = 0;
         }
     }
+
 } // end anonymous namespace
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
@@ -2642,6 +2650,11 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     using namespace std::tr1::placeholders;
     // Each valid account element in sequence is a new account to load
     std::for_each(seq->begin(), seq->end(), bind(loadAccount, _1, ref(accountMap_)));
+}
+
+void ManagerImpl::unregisterAllAccounts()
+{
+    std::for_each(accountMap_.begin(), accountMap_.end(), unregisterAccount);
 }
 
 void ManagerImpl::unloadAccountMap()
