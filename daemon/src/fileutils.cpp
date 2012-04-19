@@ -39,7 +39,7 @@
 #include <iostream>
 #include "fileutils.h"
 
-namespace {
+namespace fileutils {
 // returns true if directory exists
 bool check_dir(const char *path)
 {
@@ -55,9 +55,7 @@ bool check_dir(const char *path)
 
     return true;
 }
-}
 
-namespace fileutils {
 static char *program_dir = NULL;
 
 void set_program_dir(char *program_path)
