@@ -2565,7 +2565,10 @@ namespace {
     bool isIP2IP(const Conf::YamlNode *node)
     {
         std::string id;
-        dynamic_cast<const Conf::MappingNode *>(node)->getValue("id", &id);
+        const Conf::MappingNode *m = dynamic_cast<const Conf::MappingNode *>(node);
+        if (!m)
+            return false;
+        m->getValue("id", &id);
         return id == "IP2IP";
     }
 
@@ -2627,7 +2630,8 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
     if (ip2ip != seq->end()) {
         MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
-        accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(node);
+        if (node)
+            accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(node);
     }
 
     // Initialize default UDP transport according to
