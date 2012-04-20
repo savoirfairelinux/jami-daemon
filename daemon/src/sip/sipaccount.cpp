@@ -241,22 +241,17 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     Sequence::iterator seqit;
 
     for (seqit = seq->begin(); seqit != seq->end(); ++seqit) {
-        MappingNode *node = (MappingNode*)*seqit;
+        MappingNode *node = static_cast<MappingNode*>(*seqit);
         delete node->getValue(CONFIG_ACCOUNT_USERNAME);
         delete node->getValue(CONFIG_ACCOUNT_PASSWORD);
         delete node->getValue(CONFIG_ACCOUNT_REALM);
         delete node;
     }
-
-
 }
 
 void SIPAccount::unserialize(const Conf::MappingNode &map)
 {
     using namespace Conf;
-    MappingNode *srtpMap;
-    MappingNode *tlsMap;
-    MappingNode *zrtpMap;
 
     map.getValue(ALIAS_KEY, &alias_);
     map.getValue(TYPE_KEY, &type_);
@@ -272,7 +267,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
     map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
     map.getValue(INTERFACE_KEY, &interface_);
-    int port;
+    int port = DEFAULT_SIP_PORT;
     map.getValue(PORT_KEY, &port);
     localPort_ = port;
     map.getValue(PUBLISH_ADDR_KEY, &publishedIpAddress_);
@@ -305,12 +300,12 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
      * the configuration file.
      */
     if (credNode && credNode->getType() == SEQUENCE) {
-        SequenceNode *credSeq = (SequenceNode *) credNode;
+        SequenceNode *credSeq = static_cast<SequenceNode *>(credNode);
         Sequence::iterator it;
         Sequence *seq = credSeq->getSequence();
 
         for (it = seq->begin(); it != seq->end(); ++it) {
-            MappingNode *cred = (MappingNode *)(*it);
+            MappingNode *cred = static_cast<MappingNode *>(*it);
             std::string user;
             std::string pass;
             std::string realm;
@@ -340,7 +335,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     setCredentials(creds);
 
     // get srtp submap
-    srtpMap = (MappingNode *)(map.getValue(SRTP_KEY));
+    MappingNode *srtpMap = static_cast<MappingNode *>(map.getValue(SRTP_KEY));
 
     if (srtpMap) {
         srtpMap->getValue(SRTP_ENABLE_KEY, &srtpEnabled_);
@@ -349,7 +344,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     }
 
     // get zrtp submap
-    zrtpMap = (MappingNode *)(map.getValue(ZRTP_KEY));
+    MappingNode *zrtpMap = static_cast<MappingNode *>(map.getValue(ZRTP_KEY));
 
     if (zrtpMap) {
         zrtpMap->getValue(DISPLAY_SAS_KEY, &zrtpDisplaySas_);
@@ -359,7 +354,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     }
 
     // get tls submap
-    tlsMap = (MappingNode *)(map.getValue(TLS_KEY));
+    MappingNode *tlsMap = static_cast<MappingNode *>(map.getValue(TLS_KEY));
 
     if (tlsMap) {
         tlsMap->getValue(TLS_ENABLE_KEY, &tlsEnable_);
