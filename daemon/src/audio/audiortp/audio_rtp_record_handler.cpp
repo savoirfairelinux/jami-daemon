@@ -114,10 +114,6 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
     audioRtpRecord_.dtmfQueue_.push_back(digit);
 }
 
-#ifdef DUMP_PROCESS_DATA_ENCODE
-std::ofstream teststream("test_process_data_encode.raw");
-#endif
-
 int AudioRtpRecordHandler::processDataEncode()
 {
     SFLDataFormat *micData 			= audioRtpRecord_.decData_;
@@ -150,15 +146,12 @@ int AudioRtpRecordHandler::processDataEncode()
     if (Manager::instance().getEchoCancelState())
         echoCanceller.getData(micData);
 
-#ifdef DUMP_PROCESS_DATA_ENCODE
-    teststream.write(reinterpret_cast<char *>(micData), bytesToGet);
-#endif
-
     SFLDataFormat *out = micData;
 
     if (codecSampleRate != mainBufferSampleRate) {
         out = micDataConverted;
-        audioRtpRecord_.converter_->resample(micData, micDataConverted, codecSampleRate, mainBufferSampleRate, samplesToGet);
+        audioRtpRecord_.converter_->resample(micData, micDataConverted,
+                codecSampleRate, mainBufferSampleRate, samplesToGet);
     }
 
     if (Manager::instance().audioPreference.getNoiseReduce()) {
@@ -166,16 +159,13 @@ int AudioRtpRecordHandler::processDataEncode()
         audioRtpRecord_.noiseSuppress_->process(micData, getCodecFrameSize());
     }
 
-    int compSize;
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
-        compSize = audioRtpRecord_.audioCodec_->encode(micDataEncoded, out, getCodecFrameSize());
+        return audioRtpRecord_.audioCodec_->encode(micDataEncoded, out, getCodecFrameSize());
     }
-
-    return compSize;
 }
 
-void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned int size, int payloadType)
+void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
     if (getCodecPayloadType() != payloadType)
         return;
@@ -216,13 +206,13 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned 
     Manager::instance().getMainBuffer()->putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
 
-void AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor)
+void AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, size_t size, SFLDataFormat *factor)
 {
-    // if factor reach 0, this function should have no effect
-    if (*factor <= 0)
+    // if factor reaches 0, this function should have no effect
+    if (!audio or !factor or *factor <= 0)
         return;
 
-    while (size)
+    while (size > 0)
         audio[--size] /= *factor;
 
     *factor /= FADEIN_STEP_SIZE;
