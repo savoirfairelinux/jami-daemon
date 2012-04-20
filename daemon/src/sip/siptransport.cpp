@@ -46,6 +46,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <stdexcept>
+#include <sstream>
 
 #include "logger.h"
 #include "siptransport.h"
@@ -414,20 +415,20 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
         return NULL;
     }
 
-    pj_sockaddr boundAddr;
+    std::ostringstream fullAddress;
+    fullAddress << listeningAddress << ":" << listeningPort;
     pj_str_t udpString;
-    pj_cstr(&udpString, listeningAddress.c_str());
+    pj_cstr(&udpString, fullAddress.str().c_str());
+    pj_sockaddr boundAddr;
     pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &udpString, &boundAddr);
     pj_status_t status;
     pjsip_transport *transport = NULL;
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
-        boundAddr.ipv4.sin_port = listeningPort;
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
         if (status != PJ_SUCCESS) {
             return NULL;
         }
     } else if (boundAddr.addr.sa_family == pj_AF_INET6()) {
-        boundAddr.ipv6.sin6_port = listeningPort;
         status = pjsip_udp_transport_start6(endpt_, &boundAddr.ipv6, NULL, 1, &transport);
         if (status != PJ_SUCCESS) {
             return NULL;
