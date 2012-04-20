@@ -1027,31 +1027,44 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     pjsip_dialog *dialog = NULL;
 
-    if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS)
+    if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
+        ERROR("UserAgent: Unable to sip create dialogs for user agent client");
         return false;
+    }
 
-    if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS)
+    if (pjsip_inv_create_uac(dialog, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv) != PJ_SUCCESS) {
+        ERROR("UserAgent: Unable to create invite session for user agent client");
         return false;
+    }
 
     if (not account->getServiceRoute().empty())
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 
-    pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo());
+    if (pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
+        ERROR("UserAgent: Could not initiaize credential for invite session  authentication");
+        return false;
+    }
 
     call->inv->mod_data[mod_ua_.id] = call;
 
     pjsip_tx_data *tdata;
 
-    if (pjsip_inv_invite(call->inv, &tdata) != PJ_SUCCESS)
+    if (pjsip_inv_invite(call->inv, &tdata) != PJ_SUCCESS) {
+        ERROR("UserAgent: Could not initialize invite messager for this call");
         return false;
+    }
 
     pjsip_tpselector *tp = sipTransport.initTransportSelector(account->transport_, call->inv->pool);
 
-    if (pjsip_dlg_set_transport(dialog, tp) != PJ_SUCCESS)
+    if (pjsip_dlg_set_transport(dialog, tp) != PJ_SUCCESS) {
+        ERROR("UserAgent: Unable to associate transport fir invite session dialog");
         return false;
+    }
 
-    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS)
+    if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+        ERROR("UserAgent: Unable to send invite message for this call");
         return false;
+    }
 
     call->setConnectionState(Call::PROGRESSING);
     call->setState(Call::ACTIVE);
