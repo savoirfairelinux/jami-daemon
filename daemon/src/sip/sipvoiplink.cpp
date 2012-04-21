@@ -1572,7 +1572,7 @@ void registration_cb(pjsip_regc_cbparam *param)
     if (param->code < 0 || param->code >= 300) {
         switch (param->code) {
             case 606:
-                account->setRegistrationState(ErrorConfStun);
+                account->setRegistrationState(ErrorNotAcceptable);
                 break;
 
             case 503:

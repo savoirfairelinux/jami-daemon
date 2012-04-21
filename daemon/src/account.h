@@ -59,7 +59,7 @@ enum RegistrationState {
     ErrorNetwork ,
     ErrorHost,
     ErrorExistStun,
-    ErrorConfStun,
+    ErrorNotAcceptable,
     NumberOfStates
 };
 
