@@ -108,6 +108,20 @@ class SIPVoIPLink : public VoIPLink {
         virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl);
 
         /**
+         * Start a new SIP call using the IP2IP profile
+         * @param The call id
+         * @param The target sip uri
+         */
+        Call *SIPNewIpToIpCall(const std::string& id, const std::string& to);
+
+        /**
+         * Place a call using the currently selected account
+         * @param The call id
+         * @param The target sip uri
+         */
+        Call *newRegisteredAccountCall(const std::string& id, const std::string& toUrl);
+
+        /**
          * Answer the call
          * @param c The call
          */
@@ -168,13 +182,6 @@ class SIPVoIPLink : public VoIPLink {
          * @param code  The char code
          */
         virtual void carryingDTMFdigits(const std::string& id, char code);
-
-        /**
-         * Start a new SIP call using the IP2IP profile
-         * @param The call id
-         * @param The target sip uri
-         */
-        bool SIPNewIpToIpCall(const std::string& id, const std::string& to);
 
         /**
          * Tell the user that the call was answered

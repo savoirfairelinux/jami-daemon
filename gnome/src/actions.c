@@ -816,7 +816,9 @@ void
 sflphone_place_call(callable_obj_t * c)
 {
     DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
-
+    if (place_registered_call(c) < 0)
+        DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
+/*
     if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
@@ -826,6 +828,7 @@ sflphone_place_call(callable_obj_t * c)
         place_direct_call(c);
     } else if (place_registered_call(c) < 0)
         DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
+*/
 }
 
 

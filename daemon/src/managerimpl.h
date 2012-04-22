@@ -961,7 +961,6 @@ class ManagerImpl {
 
         std::map<std::string, bool> IPToIPMap_;
 
-        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
         bool isIPToIP(const std::string& callID) const;
 
@@ -993,6 +992,8 @@ class ManagerImpl {
         MainBuffer mainBuffer_;
 
     public:
+
+        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
         /** Associate a new std::string to a std::string
          * Protected by mutex
