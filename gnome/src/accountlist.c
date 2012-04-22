@@ -162,8 +162,8 @@ const gchar * account_state_name(account_state_t s)
             return _("Network unreachable");
         case ACCOUNT_STATE_ERROR_HOST:
             return _("Host unreachable");
-        case ACCOUNT_STATE_ERROR_CONF_STUN:
-            return _("Stun configuration error");
+        case ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE:
+            return _("Not acceptable");
         case ACCOUNT_STATE_ERROR_EXIST_STUN:
             return _("Stun server invalid");
         case ACCOUNT_STATE_IP2IP_READY:
