@@ -617,6 +617,78 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
+    static const char * const SIP_SCHEME = "sip:";
+    static const char * const SIPS_SCHEME = "sips:";
+
+    DEBUG("UserAgent: New outgoing call");
+
+    bool IPToIP = toUrl.find(SIP_SCHEME) == 0 or
+                  toUrl.find(SIPS_SCHEME) == 0;
+
+    Manager::instance().setIPToIPForCall(id, IPToIP);
+
+    try {
+        if (IPToIP) {
+            return SIPNewIpToIpCall(id, toUrl);
+        }
+        else {
+            return newRegisteredAccountCall(id, toUrl);
+        }
+    }
+    catch(...) {
+        throw;
+    }
+}
+
+Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
+{
+    DEBUG("UserAgent: New IP to IP call to %s", to.c_str());
+
+    SIPAccount *account = Manager::instance().getIP2IPAccount();
+
+    if (!account)
+        throw VoipLinkException("Could not retrieve default account for IP2IP call");
+
+    SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_);
+
+    call->setIPToIP(true);
+    call->initRecFilename(to);
+
+    std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
+
+    if (localAddress == "0.0.0.0")
+        localAddress = SipTransport::getSIPLocalIP();
+
+    setCallMediaLocal(call, localAddress);
+
+    std::string toUri = account->getToUri(to);
+    call->setPeerNumber(toUri);
+
+    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+
+    // Audio Rtp Session must be initialized before creating initial offer in SDP session
+    // since SDES require crypto attribute.
+    call->getAudioRtp().initConfig();
+    call->getAudioRtp().initSession();
+    call->getAudioRtp().initLocalCryptoInfo();
+    call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
+
+    // Building the local SDP offer
+    call->getLocalSDP()->setLocalIP(localAddress);
+    call->getLocalSDP()->createOffer(account->getActiveCodecs());
+
+    if (!SIPStartCall(call)) {
+        delete call;
+        throw VoipLinkException("Could not create new call");
+    }
+
+    return call;
+}
+
+Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::string& toUrl)
+{
+    DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
+
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
 
     if (account == NULL) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
@@ -1114,51 +1186,6 @@ SIPVoIPLink::getSIPCall(const std::string& id)
 
     return result;
 }
-
-bool SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to)
-{
-    SIPAccount *account = Manager::instance().getIP2IPAccount();
-
-    if (!account) {
-        ERROR("Error could not retrieve default account for IP2IP call");
-        return false;
-    }
-
-    SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_);
-    call->setIPToIP(true);
-    call->initRecFilename(to);
-
-    std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
-
-    if (localAddress == "0.0.0.0")
-        localAddress = SipTransport::getSIPLocalIP();
-
-    setCallMediaLocal(call, localAddress);
-
-    std::string toUri = account->getToUri(to);
-    call->setPeerNumber(toUri);
-
-    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
-
-    // Audio Rtp Session must be initialized before creating initial offer in SDP session
-    // since SDES require crypto attribute.
-    call->getAudioRtp().initConfig();
-    call->getAudioRtp().initSession();
-    call->getAudioRtp().initLocalCryptoInfo();
-    call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
-
-    // Building the local SDP offer
-    call->getLocalSDP()->setLocalIP(localAddress);
-    call->getLocalSDP()->createOffer(account->getActiveCodecs());
-
-    if (!SIPStartCall(call)) {
-        delete call;
-        return false;
-    }
-
-    return true;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions

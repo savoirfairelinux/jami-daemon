@@ -197,14 +197,6 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 
     std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
-    static const char * const SIP_SCHEME = "sip:";
-    static const char * const SIPS_SCHEME = "sips:";
-
-    bool IPToIP = to_cleaned.find(SIP_SCHEME) == 0 or
-                  to_cleaned.find(SIPS_SCHEME) == 0;
-
-    setIPToIPForCall(call_id, IPToIP);
-
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
         DEBUG("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
@@ -216,29 +208,21 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
             detachParticipant(MainBuffer::DEFAULT_ID, current_call_id);
     }
 
-    if (IPToIP) {
-        DEBUG("Manager: Start IP2IP call");
-
-        /* We need to retrieve the sip voiplink instance */
-        if (SIPVoIPLink::instance()->SIPNewIpToIpCall(call_id, to_cleaned)) {
-            switchCall(call_id);
-            return true;
-        } else
-            callFailure(call_id);
-
-        return false;
-    }
-
     DEBUG("Manager: Selecting account %s", account_id.c_str());
 
-    // Is this account exist
+    // fallback using the default sip account if the specied doesn't exist
+    std::string use_account_id = "";
     if (!accountExists(account_id)) {
-        ERROR("Manager: Error: Account doesn't exist in new outgoing call");
-        return false;
+        WARN("Manager: Account does not exist, trying with default SIP account");
+        use_account_id = SIPAccount::IP2IP_PROFILE;
+    }
+    else {
+        use_account_id = account_id;
     }
 
-    if (!associateCallToAccount(call_id, account_id))
-        WARN("Manager: Warning: Could not associate call id %s to account id %s", call_id.c_str(), account_id.c_str());
+    // Is this account exist
+    if (!associateCallToAccount(call_id, use_account_id))
+        WARN("Manager: Warning: Could not associate call id %s to account id %s", call_id.c_str(), use_account_id.c_str());
 
     try {
         Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned);
@@ -2491,6 +2475,8 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 bool ManagerImpl::associateCallToAccount(const std::string& callID,
         const std::string& accountID)
 {
+    std::string useAccountID = accountID;
+
     if (getAccountFromCall(callID).empty() and accountExists(accountID)) {
         // account id exist in AccountMap
         ost::MutexLock m(callAccountMapMutex_);
@@ -2684,8 +2670,8 @@ ManagerImpl::getAccount(const std::string& accountID)
     AccountMap::const_iterator iter = accountMap_.find(accountID);
     if (iter != accountMap_.end())
         return iter->second;
-    else
-        return accountMap_[SIPAccount::IP2IP_PROFILE];
+
+    return accountMap_[SIPAccount::IP2IP_PROFILE];
 }
 
 std::string ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
