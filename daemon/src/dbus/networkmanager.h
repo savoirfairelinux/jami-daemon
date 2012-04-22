@@ -56,7 +56,7 @@ class NetworkManager : public org::freedesktop::NetworkManager_proxy,
             NM_STATE_DISCONNECTED
         };
 
-        static const std::string statesString[5];
+        static const std::string statesString[];
 };
 #endif
 
