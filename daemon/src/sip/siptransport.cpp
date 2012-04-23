@@ -418,7 +418,8 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     std::ostringstream fullAddress;
     fullAddress << listeningAddress << ":" << listeningPort;
     pj_str_t udpString;
-    pj_cstr(&udpString, fullAddress.str().c_str());
+    std::string fullAddressStr(fullAddress.str());
+    pj_cstr(&udpString, fullAddressStr.c_str());
     pj_sockaddr boundAddr;
     pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &udpString, &boundAddr);
     pj_status_t status;
