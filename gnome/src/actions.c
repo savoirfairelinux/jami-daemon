@@ -744,15 +744,12 @@ sflphone_keypad(guint keyval, gchar * key)
         sflphone_new_call();
 }
 
-static void place_direct_call(const callable_obj_t * c)
-{
-    g_assert(c->_state == CALL_STATE_DIALING);
-    dbus_place_call(c);
-}
-
-static int place_registered_call(callable_obj_t * c)
+int
+sflphone_place_call(callable_obj_t * c)
 {
     account_t * account = NULL;
+
+    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
 
     if (c->_state != CALL_STATE_DIALING)
         return -1;
@@ -760,22 +757,6 @@ static int place_registered_call(callable_obj_t * c)
     if (!*c->_peer_number)
         return -1;
 
-// No longer usefull
-/*
-    if (account_list_get_size() == 0) {
-        notify_no_accounts();
-        sflphone_fail(c);
-        return -1;
-    }
-*/
-/*
-    if (account_list_get_by_state(ACCOUNT_STATE_REGISTERED) == NULL) {
-        DEBUG("Actions: No registered account, cannot make a call");
-        notify_no_registered_accounts();
-        sflphone_fail(c);
-        return -1;
-    }
-*/
     DEBUG("Actions: Get account for this call");
 
     if (strlen(c->_accountID) != 0) {
@@ -814,26 +795,6 @@ static int place_registered_call(callable_obj_t * c)
 
     return 0;
 }
-
-void
-sflphone_place_call(callable_obj_t * c)
-{
-    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
-    if (place_registered_call(c) < 0)
-        DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
-/*
-    if (is_direct_call(c)) {
-        gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
-        statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-        statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);
-        g_free(msg);
-
-        place_direct_call(c);
-    } else if (place_registered_call(c) < 0)
-        DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
-*/
-}
-
 
 void
 sflphone_detach_participant(const gchar* callID)
