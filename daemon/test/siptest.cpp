@@ -125,7 +125,7 @@ void SIPTest::testSimpleOutgoingIpCall()
     pthread_t thethread;
 
     // command to be executed by the thread, user agent server waiting for a call
-    std::string command("sipp -sn uas -i 127.0.0.1 -p 5062 -m 1 -bg");
+    std::string command("sipp -sn uas -i 127.0.0.1 -p 5068 -m 1 -bg");
 
     int rc = pthread_create(&thethread, NULL, sippThread, &command);
 
@@ -134,7 +134,7 @@ void SIPTest::testSimpleOutgoingIpCall()
 
     std::string testaccount("IP2IP");
     std::string testcallid("callid1234");
-    std::string testcallnumber("sip:test@127.0.0.1:5062");
+    std::string testcallnumber("sip:test@127.0.0.1:5068");
 
     CPPUNIT_ASSERT(!Manager::instance().hasCurrentCall());
 
@@ -143,9 +143,6 @@ void SIPTest::testSimpleOutgoingIpCall()
 
     // must sleep here until receiving 180 and 200 message from peer
     sleep(2);
-
-    // call list should be empty for outgoing calls, only used for incoming calls
-    CPPUNIT_ASSERT(Manager::instance().getCallList().empty());
 
     CPPUNIT_ASSERT(Manager::instance().hasCurrentCall());
     CPPUNIT_ASSERT(Manager::instance().getCurrentCallId() == testcallid);
@@ -183,9 +180,6 @@ void SIPTest::testSimpleIncomingIpCall()
     CPPUNIT_ASSERT(siplink->callMap_.size() == 1);
     CallMap::iterator iterCallId = siplink->callMap_.begin();
     std::string testcallid = iterCallId->first;
-
-    // TODO: hmmm, should IP2IP call be stored in call list....
-    CPPUNIT_ASSERT(Manager::instance().getCallList().size() == 0);
 
     // Answer this call
     CPPUNIT_ASSERT(Manager::instance().answerCall(testcallid));
