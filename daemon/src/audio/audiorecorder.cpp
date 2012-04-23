@@ -58,14 +58,13 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread()
  */
 void AudioRecorder::run()
 {
-    int bufferLength = 10000;
-    SFLDataFormat buffer[bufferLength];
+    const size_t BUFFER_LENGTH = 10000;
+    SFLDataFormat buffer[BUFFER_LENGTH];
 
     while (isRunning()) {
-        int availBytes = mbuffer_->availForGet(recorderId_);
-        int toGet = (availBytes < bufferLength) ? availBytes : bufferLength;
+        size_t availBytes = mbuffer_->availForGet(recorderId_);
 
-        mbuffer_->getData(buffer, toGet, recorderId_);
+        mbuffer_->getData(buffer, std::min(availBytes, BUFFER_LENGTH), recorderId_);
 
         if (availBytes > 0)
             arecord_->recData(buffer, availBytes / sizeof(SFLDataFormat));

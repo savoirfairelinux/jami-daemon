@@ -205,7 +205,9 @@ class SIPAccount : public Account {
         }
 
         void setCredentials(const std::vector<std::map<std::string, std::string> >& details);
-        const std::vector<std::map<std::string, std::string> > &getCredentials();
+
+        const std::vector<std::map<std::string, std::string> > &
+        getCredentials() const;
 
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
