@@ -469,7 +469,7 @@ class SIPAccount : public Account {
          * @param The public IPV4 address in the standard dot notation.
          * @return void
          */
-        void setPublishedAddress(const std::string& publishedIpAddress) {
+        void setPublishedAddress(const std::string &publishedIpAddress) {
             publishedIpAddress_ = publishedIpAddress;
         }
 
@@ -497,11 +497,11 @@ class SIPAccount : public Account {
             return zrtpHelloHash_;
         }
 
-        void setReceivedParameter(std::string received) {
+        void setReceivedParameter(const std::string &received) {
             receivedParameter_ = received;
         }
 
-        std::string getReceivedParameter() {
+        std::string getReceivedParameter() const {
             return receivedParameter_;
         }
 

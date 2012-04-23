@@ -1563,13 +1563,12 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     pj_pool_release(pool);
 }
 
-static void looksForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account) {
+void lookForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account)
+{
     pj_str_t receivedValue = param->rdata->msg_info.via->recvd_param;
-    std::string publicIpFromReceived = "";
 
-    ERROR("looksForReceivedParameter");
-    if(receivedValue.slen) {
-        publicIpFromReceived = std::string(receivedValue.ptr, receivedValue.slen);
+    if (receivedValue.slen) {
+        std::string publicIpFromReceived(receivedValue.ptr, receivedValue.slen);
         DEBUG("Cool received received parameter... uhhh?, the value is %s", publicIpFromReceived.c_str());
         account->setReceivedParameter(publicIpFromReceived);
     }
@@ -1614,7 +1613,7 @@ void registration_cb(pjsip_regc_cbparam *param)
     if (param->code < 0 || param->code >= 300) {
         switch (param->code) {
             case 606:
-                looksForReceivedParameter(param, account);
+                lookForReceivedParameter(param, account);
                 account->setRegistrationState(ErrorNotAcceptable);
                 break;
 
