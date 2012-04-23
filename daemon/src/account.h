@@ -228,13 +228,6 @@ class Account : public Serializable {
             alias_ = alias;
         }
 
-        std::string getType() const {
-            return type_;
-        }
-        void setType(const std::string &type) {
-            type_ = type;
-        }
-
         /**
          * Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice

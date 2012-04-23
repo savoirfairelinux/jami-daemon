@@ -43,15 +43,8 @@
 #include "config/yamlemitter.h"
 
 IAXAccount::IAXAccount(const std::string& accountID)
-    : Account(accountID, "iax2"), password_(),
-    link_(new IAXVoIPLink(accountID))
+    : Account(accountID, "iax2"), password_(), link_(accountID)
 {}
-
-
-IAXAccount::~IAXAccount()
-{
-    delete link_;
-}
 
 void IAXAccount::serialize(Conf::YamlEmitter &emitter)
 {
@@ -142,8 +135,8 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 void IAXAccount::registerVoIPLink()
 {
     try {
-        link_->init();
-        link_->sendRegister(this);
+        link_.init();
+        link_.sendRegister(this);
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
@@ -153,8 +146,8 @@ void
 IAXAccount::unregisterVoIPLink()
 {
     try {
-        link_->sendUnregister(this);
-        link_->terminate();
+        link_.sendUnregister(this);
+        link_.terminate();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
@@ -171,5 +164,5 @@ IAXAccount::loadConfig()
 
 VoIPLink* IAXAccount::getVoIPLink()
 {
-    return link_;
+    return &link_;
 }

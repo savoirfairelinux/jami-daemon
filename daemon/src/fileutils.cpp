@@ -45,7 +45,7 @@ bool check_dir(const char *path)
 {
     DIR *dir = opendir(path);
 
-    if (!dir) {	// doesn't exist
+    if (!dir) { // doesn't exist
         if (mkdir(path, 0755) != 0) {   // couldn't create the dir
             perror(path);
             return false;

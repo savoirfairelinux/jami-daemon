@@ -42,9 +42,8 @@
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>
-#include <cassert>
 
-const char * const SIPAccount::IP2IP_PROFILE  = "IP2IP";
+const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
@@ -867,6 +866,7 @@ std::string computeMd5HashFromCredential(const std::string& username,
     MD5_APPEND(&pms, realm.data(), realm.length());
     MD5_APPEND(&pms, ":", 1);
     MD5_APPEND(&pms, password.data(), password.length());
+#undef MD5_APPEND
 
     unsigned char digest[16];
     pj_md5_final(&pms, digest);
@@ -882,13 +882,17 @@ std::string computeMd5HashFromCredential(const std::string& username,
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
 {
+    // we can not authenticate without credentials
+    if (creds.empty()) {
+        ERROR("SIPAccount: Cannot authenticate with empty credentials list");
+        return;
+    }
+
     using std::vector;
     using std::string;
     using std::map;
 
     bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
-
-    assert(not creds.empty()); // we can not authenticate without credentials
 
     credentials_ = creds;
 
@@ -946,7 +950,8 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     }
 }
 
-const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials()
+const std::vector<std::map<std::string, std::string> > &
+SIPAccount::getCredentials() const
 {
     return credentials_;
 }
@@ -978,8 +983,7 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
     portstr << localPort_;
     ip2ipAccountDetails[CONFIG_LOCAL_PORT] = portstr.str();
 
-    std::map<std::string, std::string> tlsSettings;
-    tlsSettings = getTlsSettings();
+    std::map<std::string, std::string> tlsSettings(getTlsSettings());
     std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
                   ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -988,8 +992,8 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 
 std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 {
-    std::map<std::string, std::string> tlsSettings;
     assert(isIP2IP());
+    std::map<std::string, std::string> tlsSettings;
 
     std::stringstream portstr;
     portstr << tlsListenerPort_;

@@ -32,13 +32,13 @@
 #include "../manager.h"
 #include "logger.h"
 
-const std::string NetworkManager::statesString[5] = {"unknown", "asleep",
-                                                     "connecting", "connected",
-                                                     "disconnected"};
+const std::string NetworkManager::statesString[] = {"unknown", "asleep",
+                                                    "connecting", "connected",
+                                                    "disconnected", "unknown",};
 
 std::string NetworkManager::stateAsString(const uint32_t &state)
 {
-    return statesString[state];
+    return statesString[state < 6 ? state : 5];
 }
 
 void NetworkManager::StateChanged(const uint32_t &state)

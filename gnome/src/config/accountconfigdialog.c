@@ -596,6 +596,10 @@ static void set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNU
 
 static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 {
+    /* Widgets have not been created yet */
+    if (!stun_server_label)
+        return;
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Config: Showing stun options, hiding Local/Published info");
         gtk_widget_show(stun_server_label);
@@ -621,8 +625,6 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
             gtk_widget_show(published_port_spin_box);
         }
     }
-
-    DEBUG("DONE");
 }
 
 
