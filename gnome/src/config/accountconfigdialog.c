@@ -534,7 +534,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 static gchar *
 get_interface_addr_from_name(const gchar * const iface_name)
 {
-#define	UC(b)	(((int)b)&0xff)
+#define UC(b) (((int)b)&0xff)
 
     int fd;
 
