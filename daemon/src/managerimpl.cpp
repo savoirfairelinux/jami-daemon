@@ -226,7 +226,6 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 
     try {
         Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned);
-
         switchCall(call_id);
         call->setConfId(conf_id);
     } catch (const VoipLinkException &e) {

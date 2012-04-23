@@ -515,6 +515,9 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact(account->getContactHeader());
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
+    std::string received(account->getReceivedParameter());
+    pj_str_t pjReceived = pj_str((char *) received.c_str());
+
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
@@ -1560,6 +1563,18 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     pj_pool_release(pool);
 }
 
+static void looksForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account) {
+    pj_str_t receivedValue = param->rdata->msg_info.via->recvd_param;
+    std::string publicIpFromReceived = "";
+
+    ERROR("looksForReceivedParameter");
+    if(receivedValue.slen) {
+        publicIpFromReceived = std::string(receivedValue.ptr, receivedValue.slen);
+        DEBUG("Cool received received parameter... uhhh?, the value is %s", publicIpFromReceived.c_str());
+        account->setReceivedParameter(publicIpFromReceived);
+    }
+}
+
 void registration_cb(pjsip_regc_cbparam *param)
 {
     if (param == NULL) {
@@ -1599,6 +1614,7 @@ void registration_cb(pjsip_regc_cbparam *param)
     if (param->code < 0 || param->code >= 300) {
         switch (param->code) {
             case 606:
+                looksForReceivedParameter(param, account);
                 account->setRegistrationState(ErrorNotAcceptable);
                 break;
 

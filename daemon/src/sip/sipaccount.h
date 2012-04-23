@@ -495,6 +495,14 @@ class SIPAccount : public Account {
             return zrtpHelloHash_;
         }
 
+        void setReceivedParameter(std::string received) {
+            receivedParameter_ = received;
+        }
+
+        std::string getReceivedParameter() {
+            return receivedParameter_;
+        }
+
         /**
          * Timer used to periodically send re-register request based
          * on the "Expire" sip header (or the "expire" Contact parameter)
@@ -718,6 +726,11 @@ class SIPAccount : public Account {
          * Voice over IP Link contains a listener thread and calls
          */
         SIPVoIPLink* link_;
+
+        /**
+         * Received via parameters
+         */
+        std::string receivedParameter_;
 };
 
 #endif
