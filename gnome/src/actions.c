@@ -752,7 +752,7 @@ static void place_direct_call(const callable_obj_t * c)
 
 static int place_registered_call(callable_obj_t * c)
 {
-    account_t * current = NULL;
+    account_t * account = NULL;
 
     if (c->_state != CALL_STATE_DIALING)
         return -1;
@@ -760,51 +760,54 @@ static int place_registered_call(callable_obj_t * c)
     if (!*c->_peer_number)
         return -1;
 
+// No longer usefull
+/*
     if (account_list_get_size() == 0) {
         notify_no_accounts();
         sflphone_fail(c);
         return -1;
     }
-
+*/
+/*
     if (account_list_get_by_state(ACCOUNT_STATE_REGISTERED) == NULL) {
         DEBUG("Actions: No registered account, cannot make a call");
         notify_no_registered_accounts();
         sflphone_fail(c);
         return -1;
     }
-
+*/
     DEBUG("Actions: Get account for this call");
 
     if (strlen(c->_accountID) != 0) {
         DEBUG("Actions: Account %s already set for this call", c->_accountID);
-        current = account_list_get_by_id(c->_accountID);
+        account = account_list_get_by_id(c->_accountID);
     } else {
         DEBUG("Actions: No account set for this call, use first of the list");
-        current = account_list_get_current();
+        account = account_list_get_current();
     }
 
-    if (current == NULL) {
+    if (account == NULL) {
         DEBUG("Actions: Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);
         return -1;
     }
 
-    gpointer status = g_hash_table_lookup(current->properties, "Status");
+    gpointer status = g_hash_table_lookup(account->properties, "Status");
     if (utf8_case_equal(status, "REGISTERED")) {
         /* The call is made with the current account */
         // free memory for previous account id and get a new one
         g_free(c->_accountID);
-        c->_accountID = g_strdup(current->accountID);
+        c->_accountID = g_strdup(account->accountID);
         dbus_place_call(c);
     } else {
         /* Place the call with the first registered account
          * and switch the current account.
          * If we are here, we can be sure that there is at least one.
          */
-        current = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
+        account = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
         g_free(c->_accountID);
-        c->_accountID = g_strdup(current->accountID);
+        c->_accountID = g_strdup(account->accountID);
         dbus_place_call(c);
-        notify_current_account(current);
+        notify_current_account(account);
     }
 
     c->_history_state = g_strdup(OUTGOING_STRING);
