@@ -1612,23 +1612,23 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->code < 0 || param->code >= 300) {
         switch (param->code) {
-            case 606:
+            case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
                 lookForReceivedParameter(param, account);
                 account->setRegistrationState(ErrorNotAcceptable);
                 break;
 
-            case 503:
-            case 408:
+            case PJSIP_SC_SERVICE_UNAVAILABLE:
+            case PJSIP_SC_REQUEST_TIMEOUT:
                 account->setRegistrationState(ErrorHost);
                 break;
 
-            case 401:
-            case 403:
-            case 404:
+            case PJSIP_SC_UNAUTHORIZED:
+            case PJSIP_SC_FORBIDDEN:
+            case PJSIP_SC_NOT_FOUND:
                 account->setRegistrationState(ErrorAuth);
                 break;
 
-            case 423:
+            case PJSIP_SC_INTERVAL_TOO_BRIEF:
                 // Expiration Interval Too Brief
                 account->doubleRegistrationExpire();
                 account->registerVoIPLink();
