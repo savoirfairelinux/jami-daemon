@@ -519,11 +519,12 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
-    if(!received.empty()) {
+    if (!received.empty()) {
         // Set received parameter string to empty in order to avoid creating new transport for each register
         account->setReceivedParameter("");
         // Explicitely set the bound address port to 0 so that pjsip determine a random port by itself
-        account->transport_= sipTransport.createUdpTransport(account->getLocalInterface(), 0, received, account->getLocalPort());
+        account->transport_= sipTransport.createUdpTransport(account->getLocalInterface(), 0, received, account->getRPort());
+        account->setRPort(-1);
         if(account->transport_ == NULL) {
             ERROR("UserAgent: Could not create new udp transport with public address: %s:%d", received.c_str(), account->getLocalPort());
         }
@@ -1582,6 +1583,8 @@ void lookForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account)
         DEBUG("Cool received received parameter... uhhh?, the value is %s", publicIpFromReceived.c_str());
         account->setReceivedParameter(publicIpFromReceived);
     }
+
+    account->setRPort(param->rdata->msg_info.via->rport_param);
 }
 
 void registration_cb(pjsip_regc_cbparam *param)

@@ -99,6 +99,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveTimer_()
     , link_(SIPVoIPLink::instance())
     , receivedParameter_()
+    , rPort_(-1)
 {}
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
