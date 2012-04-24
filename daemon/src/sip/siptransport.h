@@ -140,7 +140,7 @@ class SipTransport {
          * @param The public address for this transport
          * @param The public port for this transport
          */
-        pjsip_transport *createUdpTransport(const std::string &interface, unsigned int port, std::string& publicAddr, unsigned int publicPort);
+        pjsip_transport *createUdpTransport(const std::string &interface, unsigned int port, const std::string &publicAddr, unsigned int publicPort);
 
     private:
         NON_COPYABLE(SipTransport);
