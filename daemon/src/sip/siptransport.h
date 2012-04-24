@@ -101,6 +101,10 @@ class SipTransport {
          */
         void createSipTransport(SIPAccount &account);
 
+        /**
+         * Create the default sip transport on 5060. In case this port is already used
+         * increme
+         */
         void createDefaultSipUdpTransport();
 
         /**
@@ -125,6 +129,18 @@ class SipTransport {
          * @param transport The transport to use to discover the address
          */
         void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
+
+        /**
+         * Create a new udp transport specifying the bound address AND the published address.
+         * The published address is the address to appears in the sip VIA header. This is used
+         * essentially when the client is behind a trafic routing device.
+         *
+         * @param The interface to bind this transport with
+         * @param The requested udp port number
+         * @param The public address for this transport
+         * @param The public port for this transport
+         */
+        pjsip_transport *createUdpTransport(const std::string &interface, unsigned int port, std::string& publicAddr, unsigned int publicPort);
 
     private:
         NON_COPYABLE(SipTransport);

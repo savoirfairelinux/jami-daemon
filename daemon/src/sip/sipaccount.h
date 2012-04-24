@@ -511,7 +511,11 @@ class SIPAccount : public Account {
          */
         static void keepAliveRegistrationCb(pj_timer_heap_t *th, pj_timer_entry *te);
 
+        /**
+         * Pointer to the transport used by this acccount
+         */
         pjsip_transport* transport_;
+
     private:
         NON_COPYABLE(SIPAccount);
 

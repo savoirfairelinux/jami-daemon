@@ -489,6 +489,7 @@ bool SIPVoIPLink::getEvent()
 void SIPVoIPLink::sendRegister(Account *a)
 {
     SIPAccount *account = dynamic_cast<SIPAccount*>(a);
+
     if (!account)
         throw VoipLinkException("SipVoipLink: Account is not SIPAccount");
     sipTransport.createSipTransport(*account);
@@ -511,12 +512,19 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string from(account->getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
-    // Get the contact header for this account
-    std::string contact(account->getContactHeader());
+    // Get the received header
+    std::string received(account->getReceivedParameter());
+
+    // Get the contact header
+    std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
-    std::string received(account->getReceivedParameter());
-    pj_str_t pjReceived = pj_str((char *) received.c_str());
+    if(!received.empty()) {
+        // Set received parameter string to empty in order to avoid creating new transport for each register
+        account->setReceivedParameter("");
+        // Explicitely set the bound address port to 0 so that pjsip determine a random port by itself
+        account->transport_= sipTransport.createUdpTransport(account->getLocalInterface(), 0, received, account->getLocalPort());
+    }
 
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
@@ -535,7 +543,6 @@ void SIPVoIPLink::sendRegister(Account *a)
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(pool_, &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
     pjsip_regc_add_headers(regc, &hdr_list);
-
 
     pjsip_tx_data *tdata;
 
@@ -1588,6 +1595,11 @@ void registration_cb(pjsip_regc_cbparam *param)
         return;
     }
 
+    if(param->code == 200) {
+        account->setRegister(true);
+        account->setRegistrationState(Registered);
+    }
+
     if (account->isContactUpdateEnabled())
         update_contact_header(param, account);
 
@@ -1615,6 +1627,7 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
                 lookForReceivedParameter(param, account);
                 account->setRegistrationState(ErrorNotAcceptable);
+                SIPVoIPLink::instance()->sendRegister(account);
                 break;
 
             case PJSIP_SC_SERVICE_UNAVAILABLE:
