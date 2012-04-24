@@ -99,6 +99,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveTimer_()
     , link_(SIPVoIPLink::instance())
     , receivedParameter_()
+    , rPort_(-1)
 {}
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
@@ -813,7 +814,7 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
 std::string SIPAccount::getContactHeader() const
 {
     if (transport_ == NULL)
-        ERROR("Transport not created yet");
+        ERROR("SipAccount: Transport not created yet");
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
@@ -826,7 +827,17 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
+    std::ostringstream portstr;
+
     link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
+
+    if (!receivedParameter_.empty())
+       address = receivedParameter_;
+
+    if (rPort_ != -1) {
+        portstr << rPort_;
+        port = portstr.str();
+    }
 
     // UDP does not require the transport specification
     std::string scheme;

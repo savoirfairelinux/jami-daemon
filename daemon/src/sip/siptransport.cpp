@@ -54,6 +54,7 @@
 
 #include "sipaccount.h"
 
+#include "pjsip/sip_types.h"
 #include "dbus/dbusmanager.h"
 #include "dbus/configurationmanager.h"
 
@@ -428,6 +429,9 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &udpString, &boundAddr);
     pj_status_t status;
     pjsip_transport *transport = NULL;
+
+
+
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
         if (status != PJ_SUCCESS) {
@@ -444,6 +448,54 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
     transportMap_[fullAddressStr] = transport;
+
+    return transport;
+}
+
+pjsip_transport *
+SipTransport::createUdpTransport(const std::string &interface, unsigned int port, const std::string &publicAddr, unsigned int publicPort)
+{
+    // init socket to bind this transport to
+    pj_uint16_t listeningPort = (pj_uint16_t) port;
+    pjsip_transport *transport = NULL;
+
+    DEBUG("SipTransport: Update UDP transport on %s:%d with public addr %s:%d",
+            interface.c_str(), port, publicAddr.c_str(), publicPort);
+
+    // determine the ip address for this transport
+    std::string listeningAddress;
+    if (interface == DEFAULT_INTERFACE)
+        listeningAddress = getSIPLocalIP();
+    else
+        listeningAddress = getInterfaceAddrFromName(interface);
+
+    if (listeningAddress.empty()) {
+        ERROR("SipTransport: Could not determine ip address for this transport");
+        return NULL;
+    }
+
+    std::ostringstream fullAddress;
+    fullAddress << listeningAddress << ":" << listeningPort;
+    pj_str_t udpString;
+    std::string fullAddressStr(fullAddress.str());
+    pj_cstr(&udpString, fullAddressStr.c_str());
+    pj_sockaddr boundAddr;
+    pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &udpString, &boundAddr);
+
+    pj_str_t public_addr = pj_str((char *) publicAddr.c_str());
+    pjsip_host_port hostPort;
+    hostPort.host = public_addr;
+    hostPort.port = publicPort;
+
+    pj_status_t status;
+    // status = pjsip_udp_transport_restart(transport, PJSIP_UDP_TRANSPORT_DESTROY_SOCKET, PJ_INVALID_SOCKET, &boundAddr.ipv4, &hostPort);
+    status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, &hostPort, 1, &transport);
+    if (status != PJ_SUCCESS) {
+        ERROR("SipTransport: Could not start new transport with address %s:%d, error code %d", publicAddr.c_str(), publicPort, status);
+    }
+
+    // dump debug information to stdout
+    pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
 
     return transport;
 }

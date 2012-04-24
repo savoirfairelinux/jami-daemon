@@ -505,13 +505,26 @@ class SIPAccount : public Account {
             return receivedParameter_;
         }
 
+        int getRPort() const {
+            if (rPort_ == -1)
+                return localPort_;
+            else
+                return rPort_;
+        }
+
+        void setRPort(int rPort) { rPort_ = rPort; }
+
         /**
          * Timer used to periodically send re-register request based
          * on the "Expire" sip header (or the "expire" Contact parameter)
          */
         static void keepAliveRegistrationCb(pj_timer_heap_t *th, pj_timer_entry *te);
 
+        /**
+         * Pointer to the transport used by this acccount
+         */
         pjsip_transport* transport_;
+
     private:
         NON_COPYABLE(SIPAccount);
 
@@ -730,9 +743,14 @@ class SIPAccount : public Account {
         SIPVoIPLink* link_;
 
         /**
-         * Received via parameters
+         * Optional: "received" parameter from VIA header
          */
         std::string receivedParameter_;
+
+        /**
+         * Optional: "rport" parameter from VIA header
+         */
+        int rPort_;
 };
 
 #endif
