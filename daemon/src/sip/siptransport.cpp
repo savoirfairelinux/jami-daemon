@@ -457,7 +457,7 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 {
     // init socket to bind this transport to
     pj_uint16_t listeningPort = (pj_uint16_t) port;
-    pjsip_transport *transport;
+    pjsip_transport *transport = NULL;
 
     DEBUG("SipTransport: Update UDP transport on %s:%d with public addr %s:%d", interface.c_str(), port, publicAddr.c_str(), publicPort);
 

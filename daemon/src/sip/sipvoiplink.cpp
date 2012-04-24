@@ -524,6 +524,9 @@ void SIPVoIPLink::sendRegister(Account *a)
         account->setReceivedParameter("");
         // Explicitely set the bound address port to 0 so that pjsip determine a random port by itself
         account->transport_= sipTransport.createUdpTransport(account->getLocalInterface(), 0, received, account->getLocalPort());
+        if(account->transport_ == NULL) {
+            ERROR("UserAgent: Could not create new udp transport with public address: %s:%d", received.c_str(), account->getLocalPort());
+        }
     }
 
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
@@ -1617,7 +1620,6 @@ void registration_cb(pjsip_regc_cbparam *param)
     if (param->status != PJ_SUCCESS) {
         account->setRegistrationState(ErrorAuth);
         account->setRegister(false);
-
         SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
         return;
     }
@@ -1633,28 +1635,32 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_SERVICE_UNAVAILABLE:
             case PJSIP_SC_REQUEST_TIMEOUT:
                 account->setRegistrationState(ErrorHost);
+                account->setRegister(false);
+                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
                 break;
 
             case PJSIP_SC_UNAUTHORIZED:
             case PJSIP_SC_FORBIDDEN:
             case PJSIP_SC_NOT_FOUND:
                 account->setRegistrationState(ErrorAuth);
+                account->setRegister(false);
+                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
                 break;
 
             case PJSIP_SC_INTERVAL_TOO_BRIEF:
                 // Expiration Interval Too Brief
                 account->doubleRegistrationExpire();
                 account->registerVoIPLink();
+                account->setRegister(false);
+                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
                 break;
 
             default:
                 account->setRegistrationState(Error);
+                account->setRegister(false);
+                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
                 break;
         }
-
-        account->setRegister(false);
-
-        SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
 
     } else {
         if (account->isRegistered())
