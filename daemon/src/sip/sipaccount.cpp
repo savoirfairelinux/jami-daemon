@@ -793,7 +793,7 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
 std::string SIPAccount::getContactHeader() const
 {
     if (transport_ == NULL)
-        ERROR("Transport not created yet");
+        ERROR("SipAccount: Transport not created yet");
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
