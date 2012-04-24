@@ -73,8 +73,7 @@ class Tone : public AudioLoop {
          */
         void fillWavetable();
 
-        double interpolate(double x);
-
+        double interpolate(double x) const;
 
     private:
 

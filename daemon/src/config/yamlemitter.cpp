@@ -29,8 +29,9 @@
  */
 
 #include "yamlemitter.h"
-#include <stdio.h>
-#include "../global.h"
+#include "yamlnode.h"
+#include <cstdio>
+#include "logger.h"
 
 namespace Conf {
 
@@ -73,11 +74,13 @@ void YamlEmitter::close()
 {
     yaml_emitter_delete(&emitter_);
 
+    // Refererence:
+    // http://www.parashift.com/c++-faq-lite/exceptions.html#faq-17.9
     if (!fd_)
-        throw YamlEmitterException("File descriptor not valid");
+        ERROR("File descriptor not valid");
 
     if (fclose(fd_))
-        throw YamlEmitterException("Error closing file descriptor");
+        ERROR("Error closing file descriptor");
 }
 
 void YamlEmitter::serializeData()
@@ -89,8 +92,6 @@ void YamlEmitter::serializeData()
 
 void YamlEmitter::serializeAccount(MappingNode *map)
 {
-    int accountmapping;
-
     if (map->getType() != MAPPING)
         throw YamlEmitterException("Node type is not a mapping while writing account");
 
@@ -111,184 +112,44 @@ void YamlEmitter::serializeAccount(MappingNode *map)
         isFirstAccount_ = false;
     }
 
-    if ((accountmapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+    int accountMapping;
+    if ((accountMapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException("Could not add account mapping to document");
 
-    if (yaml_document_append_sequence_item(&document_, accountSequence_, accountmapping) == 0)
+    if (yaml_document_append_sequence_item(&document_, accountSequence_, accountMapping) == 0)
         throw YamlEmitterException("Could not append account mapping to sequence");
 
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(accountmapping, iter->first, iter->second);
+    addMappingItems(accountMapping, map->getMapping());
 }
 
-void YamlEmitter::serializePreference(MappingNode *map)
+void YamlEmitter::serializePreference(MappingNode *map, const char *preference_str)
 {
     if (map->getType() != MAPPING)
         throw YamlEmitterException("Node type is not a mapping while writing preferences");
 
-    static const char * const PREFERENCE_STR = "preferences";
     int preferenceid;
-
-    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) PREFERENCE_STR, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
+    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) preference_str, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
         throw YamlEmitterException("Could not add scalar to document");
 
-    int preferencemapping;
-    if ((preferencemapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+    int preferenceMapping;
+    if ((preferenceMapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
         throw YamlEmitterException("Could not add mapping to document");
 
-    if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
+    if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferenceMapping) == 0)
         throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
+    addMappingItems(preferenceMapping, map->getMapping());
 }
 
-void YamlEmitter::serializeVoipPreference(MappingNode *map)
+typedef std::map<std::string, YamlNode*> Mapping;
+
+void YamlEmitter::addMappingItems(int mappingID, Mapping *iMap)
 {
-    if (map->getType() != MAPPING)
-        throw YamlEmitterException("Node type is not a mapping while writing preferences");
-
-
-    static const char *const PREFERENCE_STR = "voipPreferences";
-    int preferenceid;
-    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) PREFERENCE_STR, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
-        throw YamlEmitterException("Could not add scalar to document");
-
-    int preferencemapping;
-    if ((preferencemapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
-        throw YamlEmitterException("Could not add mapping to document");
-
-    if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
-        throw YamlEmitterException("Could not add mapping pair to top leve mapping");
-
-    Mapping *internalmap = map->getMapping();
-    Mapping::iterator iter = internalmap->begin();
-
-    while (iter != internalmap->end()) {
-        addMappingItem(preferencemapping, iter->first, iter->second);
-        iter++;
-    }
+    for (Mapping::const_iterator i = iMap->begin(); i != iMap->end(); ++i)
+        addMappingItem(mappingID, i->first, i->second);
 }
 
-void YamlEmitter::serializeAddressbookPreference(MappingNode *map)
-{
-    if (map->getType() != MAPPING)
-        throw YamlEmitterException("Node type is not a mapping while writing preferences");
-
-    static const char * const PREFERENCE_STR = "addressbook";
-    int preferenceid;
-    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) PREFERENCE_STR, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
-        throw YamlEmitterException("Could not add scalar to document");
-    int preferencemapping;
-    if ((preferencemapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
-        throw YamlEmitterException("Could not add mapping to document");
-
-    if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
-        throw YamlEmitterException("Could not add mapping pair to top leve mapping");
-
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
-}
-
-void YamlEmitter::serializeHooksPreference(MappingNode *map)
-{
-    if (map->getType() != MAPPING)
-        throw YamlEmitterException("Node type is not a mapping while writing preferences");
-
-    static const char * const PREFERENCE_STR = "hooks";
-    int preferenceid;
-    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) PREFERENCE_STR, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
-        throw YamlEmitterException("Could not add scalar to document");
-
-    int preferencemapping;
-    if ((preferencemapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
-        throw YamlEmitterException("Could not add mapping to document");
-
-    if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
-        throw YamlEmitterException("Could not add mapping pair to top leve mapping");
-
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
-}
-
-
-void YamlEmitter::serializeAudioPreference(MappingNode *map)
-{
-    static const char *const PREFERENCE_STR = "audio";
-
-    int preferenceid, preferencemapping;
-
-    if (map->getType() != MAPPING)
-        throw YamlEmitterException("Node type is not a mapping while writing preferences");
-
-    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) PREFERENCE_STR, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
-        throw YamlEmitterException("Could not add scalar to document");
-
-    if ((preferencemapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
-        throw YamlEmitterException("Could not add mapping to document");
-
-    if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
-        throw YamlEmitterException("Could not add mapping pair to top leve mapping");
-
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
-}
-
-#ifdef SFL_VIDEO
-void YamlEmitter::serializeVideoPreference(MappingNode *map)
-{
-    if (map->getType() != MAPPING)
-        throw YamlEmitterException("Node type is not a mapping while writing preferences");
-
-
-    static const char * const PREFERENCE_STR = "video";
-    int preferenceid;
-    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) PREFERENCE_STR, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
-        throw YamlEmitterException("Could not add scalar to document");
-
-    int preferencemapping;
-    if ((preferencemapping = yaml_document_add_mapping (&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
-        throw YamlEmitterException("Could not add mapping to document");
-
-    if (yaml_document_append_mapping_pair (&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
-        throw YamlEmitterException("Could not add mapping pair to top leve mapping");
-
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
-}
-#endif
-
-
-void YamlEmitter::serializeShortcutPreference(MappingNode *map)
-{
-    if (map->getType() != MAPPING)
-        throw YamlEmitterException("Node type is not a mapping while writing preferences");
-
-    static const char *const PREFERENCE_STR = "shortcuts";
-    int preferenceid;
-    if ((preferenceid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) PREFERENCE_STR, -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
-        throw YamlEmitterException("Could not add scalar to document");
-
-    int preferencemapping;
-    if ((preferencemapping = yaml_document_add_mapping(&document_, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
-        throw YamlEmitterException("Could not add mapping to document");
-
-    if (yaml_document_append_mapping_pair(&document_, topLevelMapping_, preferenceid, preferencemapping) == 0)
-        throw YamlEmitterException("Could not add mapping pair to top leve mapping");
-
-    Mapping *internalmap = map->getMapping();
-    for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-        addMappingItem(preferencemapping, iter->first, iter->second);
-}
-
-
-void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
+void YamlEmitter::addMappingItem(int mappingid, const std::string &key, YamlNode *node)
 {
     if (node->getType() == SCALAR) {
         ScalarNode *sclr = static_cast<ScalarNode *>(node);
@@ -318,9 +179,7 @@ void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
         if (yaml_document_append_mapping_pair(&document_, mappingid, temp1, temp2) == 0)
             throw YamlEmitterException("Could not add mapping pair to mapping");
 
-        Mapping *internalmap = map->getMapping();
-        for (Mapping::iterator iter = internalmap->begin(); iter != internalmap->end(); ++iter)
-            addMappingItem(temp2, iter->first, iter->second);
+        addMappingItems(temp2, map->getMapping());
 
     } else if (node->getType() == SEQUENCE) {
         SequenceNode *seqnode = static_cast<SequenceNode *>(node);
@@ -347,11 +206,7 @@ void YamlEmitter::addMappingItem(int mappingid, std::string key, YamlNode *node)
                 throw YamlEmitterException("Could not append account mapping to sequence");
 
             MappingNode *mapnode = static_cast<MappingNode*>(yamlNode);
-            Mapping *map = mapnode->getMapping();
-            Mapping::iterator mapit;
-
-            for (mapit = map->begin(); mapit != map->end() ; ++mapit)
-                addMappingItem(id, mapit->first, mapit->second);
+            addMappingItems(id, mapnode->getMapping());
         }
     } else
         throw YamlEmitterException("Unknown node type while adding mapping node");

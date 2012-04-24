@@ -230,17 +230,17 @@ void sflphone_fill_account_list(void)
             acc->state = ACCOUNT_STATE_TRYING;
         else if (g_strcmp0(status, "ERROR") == 0)
             acc->state = ACCOUNT_STATE_ERROR;
-        else if (g_strcmp0(status , "ERROR_AUTH") == 0)
+        else if (g_strcmp0(status, "ERROR_AUTH") == 0)
             acc->state = ACCOUNT_STATE_ERROR_AUTH;
-        else if (g_strcmp0(status , "ERROR_NETWORK") == 0)
+        else if (g_strcmp0(status, "ERROR_NETWORK") == 0)
             acc->state = ACCOUNT_STATE_ERROR_NETWORK;
-        else if (g_strcmp0(status , "ERROR_HOST") == 0)
+        else if (g_strcmp0(status, "ERROR_HOST") == 0)
             acc->state = ACCOUNT_STATE_ERROR_HOST;
-        else if (g_strcmp0(status , "ERROR_CONF_STUN") == 0)
-            acc->state = ACCOUNT_STATE_ERROR_CONF_STUN;
-        else if (g_strcmp0(status , "ERROR_EXIST_STUN") == 0)
+        else if (g_strcmp0(status, "ERROR_NOT_ACCEPTABLE") == 0)
+            acc->state = ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE;
+        else if (g_strcmp0(status, "ERROR_EXIST_STUN") == 0)
             acc->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-        else if (g_strcmp0(status , "ACCOUNT_STATE_IP2IP_READY") == 0)
+        else if (g_strcmp0(status, "ACCOUNT_STATE_IP2IP_READY") == 0)
             acc->state = ACCOUNT_STATE_IP2IP_READY;
         else
             acc->state = ACCOUNT_STATE_INVALID;
@@ -812,7 +812,9 @@ void
 sflphone_place_call(callable_obj_t * c)
 {
     DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
-
+    if (place_registered_call(c) < 0)
+        DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
+/*
     if (is_direct_call(c)) {
         gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
@@ -822,6 +824,7 @@ sflphone_place_call(callable_obj_t * c)
         place_direct_call(c);
     } else if (place_registered_call(c) < 0)
         DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
+*/
 }
 
 

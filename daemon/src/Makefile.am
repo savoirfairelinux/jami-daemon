@@ -50,14 +50,17 @@ noinst_HEADERS = \
 		logger.h \
 		numbercleaner.h \
 		fileutils.h \
-		noncopyable.h
+		noncopyable.h \
+		cc_thread.h \
+		cc_config.h \
+		sfl_types.h \
+		array_size.h
 
 if SFL_VIDEO
 SFL_VIDEO_LIB=./video/libvideo.la
 endif
 
 libsflphone_la_LIBADD = \
-	$(top_builddir)/libs/utilspp/libutilspp.la \
 	$(top_builddir)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \
 	./im/libim.la \
@@ -97,6 +100,7 @@ libsflphone_la_SOURCES = conference.cpp \
 		voiplink.cpp \
 		preferences.cpp \
 		managerimpl.cpp \
+		manager.cpp \
 		managerimpl_registration.cpp \
 		eventthread.cpp \
 		call.cpp \

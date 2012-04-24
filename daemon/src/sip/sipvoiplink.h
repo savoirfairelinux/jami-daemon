@@ -13,6 +13,7 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
@@ -41,21 +42,18 @@
 
 #include <map>
 
-//////////////////////////////
-/* PJSIP imports */
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
-///////////////////////////////
 
 #include "sipaccount.h"
 #include "voiplink.h"
 #include "siptransport.h"
+#include "eventthread.h"
 
-class EventThread;
 class SIPCall;
 class SIPAccount;
 
@@ -68,7 +66,6 @@ class SIPAccount;
 
 class SIPVoIPLink : public VoIPLink {
     public:
-        ~SIPVoIPLink();
 
         /**
          * Singleton method. Enable to retrieve the unique static instance
@@ -77,9 +74,14 @@ class SIPVoIPLink : public VoIPLink {
         static SIPVoIPLink* instance();
 
         /**
+         * Destroy the singleton instance
+         */
+        static void destroy();
+
+        /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual void getEvent();
+        virtual bool getEvent();
 
         /**
          * Build and send SIP registration request
@@ -108,6 +110,20 @@ class SIPVoIPLink : public VoIPLink {
          * @return Call* The current call
          */
         virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl);
+
+        /**
+         * Start a new SIP call using the IP2IP profile
+         * @param The call id
+         * @param The target sip uri
+         */
+        Call *SIPNewIpToIpCall(const std::string& id, const std::string& to);
+
+        /**
+         * Place a call using the currently selected account
+         * @param The call id
+         * @param The target sip uri
+         */
+        Call *newRegisteredAccountCall(const std::string& id, const std::string& toUrl);
 
         /**
          * Answer the call
@@ -172,13 +188,6 @@ class SIPVoIPLink : public VoIPLink {
         virtual void carryingDTMFdigits(const std::string& id, char code);
 
         /**
-         * Start a new SIP call using the IP2IP profile
-         * @param The call id
-         * @param The target sip uri
-         */
-        bool SIPNewIpToIpCall(const std::string& id, const std::string& to);
-
-        /**
          * Tell the user that the call was answered
          * @param
          */
@@ -236,7 +245,13 @@ class SIPVoIPLink : public VoIPLink {
         void createDefaultSipUdpTransport();
 
         SipTransport sipTransport;
+
     private:
+
+        NON_COPYABLE(SIPVoIPLink);
+
+        SIPVoIPLink();
+        ~SIPVoIPLink();
         /**
          * Start a SIP Call
          * @param call  The current call
@@ -246,16 +261,14 @@ class SIPVoIPLink : public VoIPLink {
 
         void dtmfSend(SIPCall *call, char code, const std::string &type);
 
-        NON_COPYABLE(SIPVoIPLink);
-
-        SIPVoIPLink();
-
         /**
          * Threading object
          */
-        EventThread *evThread_;
+        EventThread evThread_;
 
         friend class SIPTest;
+        static bool destroyed_;
+        static SIPVoIPLink *instance_;
 };
 
 #endif // SIPVOIPLINK_H_

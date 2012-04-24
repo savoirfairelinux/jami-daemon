@@ -33,8 +33,8 @@
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
-#ifndef _AUDIOLAYER_TEST_
-#define _AUDIOLAYER_TEST_
+#ifndef AUDIOLAYER_TEST_
+#define AUDIOLAYER_TEST_
 
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
@@ -42,17 +42,10 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <cassert>
-
-// Application import
-#include "manager.h"
-
-#include "config/sfl_config.h"
-
-#include "audio/audiolayer.h"
-#include "audio/alsa/alsalayer.h"
-#include "audio/pulseaudio/pulselayer.h"
 #include "noncopyable.h"
+
+class ManagerImpl;
+class PulseLayer;
 
 class AudioLayerTest: public CppUnit::TestFixture {
 
@@ -79,4 +72,4 @@ class AudioLayerTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(AudioLayerTest);
 
-#endif
+#endif // AUDIOLAYER_TEST_

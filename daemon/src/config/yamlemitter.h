@@ -38,18 +38,20 @@
 #include <yaml.h>
 #include <stdexcept>
 #include <string>
+#include <map>
 #include "noncopyable.h"
-#include "yamlnode.h"
 
 namespace Conf {
 
 #define EMITTER_BUFFERSIZE 65536
 #define EMITTER_MAXEVENT 1024
 
+class MappingNode;
+class YamlNode;
+
 class YamlEmitterException : public std::runtime_error {
     public:
-        YamlEmitterException(const std::string& str="") :
-            std::runtime_error("YamlEmitterException occured: " + str) {}
+        YamlEmitterException(const char *err) : std::runtime_error(err) {}
 };
 
 class YamlEmitter {
@@ -65,20 +67,7 @@ class YamlEmitter {
 
         void serializeAccount(MappingNode *map);
 
-        void serializePreference(MappingNode *map);
-
-        void serializeVoipPreference(MappingNode *map);
-
-        void serializeAddressbookPreference(MappingNode *map);
-
-        void serializeHooksPreference(MappingNode *map);
-
-        void serializeAudioPreference(MappingNode *map);
-
-#ifdef SFL_VIDEO
-        void serializeVideoPreference(MappingNode *map);
-#endif
-        void serializeShortcutPreference(MappingNode *map);
+        void serializePreference(MappingNode *map, const char *preference_str);
 
         void writeAudio();
 
@@ -91,7 +80,8 @@ class YamlEmitter {
     private:
 
         NON_COPYABLE(YamlEmitter);
-        void addMappingItem(int mappingid, std::string key, YamlNode *node);
+        void addMappingItems(int mappingid, std::map<std::string, YamlNode*> *mapping);
+        void addMappingItem(int mappingid, const std::string &key, YamlNode *node);
 
         std::string filename_;
 
@@ -133,4 +123,4 @@ class YamlEmitter {
 };
 }
 
-#endif // YAMLEMITTER_H_
+#endif  // YAMLEMITTER_H__

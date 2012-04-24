@@ -15,9 +15,7 @@ AC_PROG_INSTALL
 AC_HEADER_STDC
 LT_INIT
 
-dnl Only need these for moving to gtk3
-MIGRATION_CFLAGS="-DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGTK_DISABLE_SINGLE_INCLUDES"
-CFLAGS="$CFLAGS -Wall -Wextra -Wshadow $MIGRATION_CFLAGS"
+CFLAGS="$CFLAGS -Wall -Wextra -Wshadow"
 
 dnl GCONF utilities
 AM_GCONF_SOURCE_2
@@ -44,15 +42,21 @@ AS_IF([test "x$enable_video" != "xno"], [
 
 AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" != "xno")
 
-PKG_CHECK_MODULES(GTK, gtk+-3.0)
+# Check for gtk+-3.0 and if found, check for webkitgtk-3.0, otherwise
+# check for gtk+-2.0 and if found, check for webkitgtk-1.0.
+PKG_CHECK_MODULES(GTK, gtk+-3.0, [PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)],
+        [PKG_CHECK_MODULES(GTK, gtk+-2.0,
+            [PKG_CHECK_MODULES(WEBKIT, webkit-1.0)],
+            [AC_MSG_ERROR(gtk-2 not found)])])
+
 PKG_CHECK_MODULES(GCONF, gconf-2.0)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
-PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)
 PKG_CHECK_MODULES(X11, x11)
 PKG_CHECK_MODULES(JAVASCRIPT_CORE_GTK, javascriptcoregtk-3.0, ,
 		  AC_MSG_RESULT(javascriptcoregtk not installed))
 
-PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4],,
+                  AC_MSG_RESULT([check not installed]))
 
 AC_CONFIG_FILES([
 Makefile

@@ -394,7 +394,7 @@ void YamlParser::constructNativeData()
 
 void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
-	Mapping *mapping = map->getMapping();
+    std::map<std::string, YamlNode*> *mapping = map->getMapping();
 
 	accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
     addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];

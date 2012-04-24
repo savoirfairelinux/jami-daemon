@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#ifndef ACCOUNTLIST_H__
-#define ACCOUNTLIST_H__
+#ifndef ACCOUNTLIST_H_
+#define ACCOUNTLIST_H_
 
 #include <gtk/gtk.h>
 /** @file accountlist.h
@@ -58,7 +58,7 @@ typedef enum {
     /** Stun server is not existing. The account is not registered */
     ACCOUNT_STATE_ERROR_EXIST_STUN,
     /** Stun server configuration error. The account is not registered */
-    ACCOUNT_STATE_ERROR_CONF_STUN,
+    ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE,
     /** IP2IP Account is always ready */
     ACCOUNT_STATE_IP2IP_READY,
     /** Invalid state */
@@ -172,7 +172,7 @@ void account_list_move_down(guint index);
  * Return the ID of the current default account
  * @return gchar* The id
  */
-const gchar* account_list_get_current_id (void);
+const gchar* account_list_get_current_id(void);
 
 gchar * account_list_get_ordered_list(void);
 
@@ -198,4 +198,4 @@ void account_insert(account_t *account, const gchar *key, const gchar *value);
 gpointer account_lookup(const account_t *account, gconstpointer key);
 void account_list_remove(const gchar *accountID);
 
-#endif
+#endif  // ACCOUNTLIST_H_

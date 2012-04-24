@@ -132,7 +132,7 @@ class AudioRtpRecordHandler {
         }
 
         int DtmfPending() const {
-            return audioRtpRecord_.dtmfQueue_.size() > 0;
+            return not audioRtpRecord_.dtmfQueue_.empty();
         }
 
         const unsigned char *getMicDataEncoded() const {
@@ -151,12 +151,12 @@ class AudioRtpRecordHandler {
         /**
          * Decode audio data received from peer
          */
-        void processDataDecode(unsigned char * spkrData, unsigned int size, int payloadType);
+        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
 
         /**
         * Ramp In audio data to avoid audio click from peer
         */
-        void fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor);
+        void fadeIn(SFLDataFormat *audio, size_t size, SFLDataFormat *factor);
 
         void setDtmfPayloadType(unsigned int payloadType) {
             audioRtpRecord_.dtmfPayloadType_ = payloadType;
@@ -169,7 +169,7 @@ class AudioRtpRecordHandler {
         void putDtmfEvent(int digit);
 
     protected:
-        AudioRtpRecord	audioRtpRecord_;
+        AudioRtpRecord audioRtpRecord_;
 
     private:
 

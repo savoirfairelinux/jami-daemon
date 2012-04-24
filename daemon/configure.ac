@@ -6,10 +6,6 @@ AC_INIT([sflphone],[1.0.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012]])
 AC_REVISION([$Revision$])
 
-AC_CANONICAL_BUILD
-AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
-
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
@@ -50,7 +46,8 @@ AC_FUNC_ALLOCA
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h malloc.h memory.h \
                   netdb.h netinet/in.h stdlib.h string.h strings.h \
-                  sys/ioctl.h sys/socket.h sys/time.h unistd.h utime.h ostream])
+                  sys/ioctl.h sys/socket.h sys/time.h unistd.h utime.h \
+                  ostream getopt.h])
 
 dnl Check for typedefs, structures, and compiler characteristics
 AC_HEADER_STAT
@@ -89,9 +86,6 @@ AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type 
 AC_FUNC_STAT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
-                inet_ntoa memset mkdir pathconf pow regcomp select setlocale \
-                socket strchr strdup strerror strrchr strstr strtol utime])
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
@@ -147,13 +141,15 @@ AS_IF([test "x$enable_video" != "xno"], [
 AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" != "xno")
 
 LIBCCGNU2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(CCGNU2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION},, AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))
+PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([COMMONCPP_PREFIX], [1], [Use commoncpp include prefix]), [
+        PKG_CHECK_MODULES([CCGNU2], [libccgnu2] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([CCPP_PREFIX], [1], [Use cc++ include prefix]),
+            AC_MSG_ERROR([Missing common cpp development package: libcommoncpp2-dev]))
+        ])
 
-LIBCCEXT2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(CCEXT2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
-
-LIBCCRT_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
+LIBCCRTP_MIN_VERSION=1.3.0
+PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
+        PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
+        ])
 
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
 PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
@@ -218,37 +214,6 @@ AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [
        AC_MSG_ERROR([Unable to find speexdsp development files])
 ])
 
-# check for libcelt
-AC_ARG_WITH([celt], [AS_HELP_STRING([--without-celt],
-            [disable support for celt codec])], [], [with_celt=yes])
-
-AS_IF([test "x$with_celt" != xno],
-    [PKG_CHECK_MODULES(CELT, celt >= 0.9.1,
-        [
-            with_celt_91=yes; AC_MSG_NOTICE([Using celt 0.9.1])
-        ],
-        [
-            PKG_CHECK_MODULES(CELT, celt >= 0.7.1,
-            [
-                with_celt_71=yes; AC_MSG_NOTICE([Using celt 0.7.1])
-            ],
-            [
-dnl celt071 is how certain distros package celt
-        PKG_CHECK_MODULES(CELT, celt071 >= 0.7.1,
-        [
-            with_celt_071=yes; AC_MSG_NOTICE([Using celt071])
-        ],
-        [
-                     AC_MSG_FAILURE([libcelt link test failed. You may use --without-celt to compile without celt codec support.])
-        ])
-        ])
-    ])]
-)
-
-AM_CONDITIONAL(BUILD_CELT_91, test "x$with_celt_91" = "xyes" )
-AM_CONDITIONAL(BUILD_CELT_71, test "x$with_celt_71" = "xyes" )
-AM_CONDITIONAL(BUILD_CELT_071, test "x$with_celt_071" = "xyes" )
-
 dnl Check for IAX
 AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
             [disable support for the iax2 protocol])], [], [with_iax2=yes])
@@ -285,8 +250,6 @@ CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weff
 dnl What to generate
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
-                 libs/utilspp/Makefile \
-                 libs/utilspp/singleton/Makefile \
                  libs/iax2/Makefile])
 
 AC_CONFIG_FILES([src/Makefile \

@@ -30,15 +30,17 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "configurationmanager.h"
 #include <sstream>
-#include "config.h"
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/siptransport.h"
 #include "account.h"
+#include "logger.h"
 #include "sip/sipaccount.h"
 
 namespace {
@@ -55,12 +57,12 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
     SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
-        ERROR("ConfigurationManager: could not find account");
+        ERROR("ConfigurationManager: could not find IP2IP account");
         return ip2ipAccountDetails;
     } else
         return sipaccount->getIp2IpDetails();
 
-    std::map<std::string, std::string> tlsSettings = getTlsSettings();
+    std::map<std::string, std::string> tlsSettings(getTlsSettings());
     std::copy(tlsSettings.begin(), tlsSettings.end(),
               std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -438,23 +440,19 @@ void ConfigurationManager::setShortcuts(
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
     const std::string& accountID)
 {
-    Account *account = Manager::instance().getAccount(accountID);
+    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
     std::vector<std::map<std::string, std::string> > credentialInformation;
 
-    if (!account or account->getType() != "SIP")
+    if (!account)
         return credentialInformation;
-
-    SIPAccount *sipaccount = static_cast<SIPAccount *>(account);
-    return sipaccount->getCredentials();
+    else
+        return account->getCredentials();
 }
 
 void ConfigurationManager::setCredentials(const std::string& accountID,
         const std::vector<std::map<std::string, std::string> >& details)
 {
-    Account *account = Manager::instance().getAccount(accountID);
-
-    if (account and account->getType() == "SIP") {
-        SIPAccount *sipaccount = static_cast<SIPAccount*>(account);
-        sipaccount->setCredentials(details);
-    }
+    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    if (account)
+        account->setCredentials(details);
 }

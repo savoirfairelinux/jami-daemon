@@ -29,6 +29,7 @@
  */
 
 #include <glib/gi18n.h>
+#include "gtk2_wrappers.h"
 #include "sliders.h"
 #include "dbus/dbus.h"
 #include "actions.h"

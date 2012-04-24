@@ -29,10 +29,8 @@
  *  as that of the covered work.
  */
 
-
-#include "global.h"
-#include "../common.h"
 #include "audiocodec.h"
+#include "sfl_types.h"
 #include <cassert>
 
 class Ulaw : public sfl::AudioCodec {

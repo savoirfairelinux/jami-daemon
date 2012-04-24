@@ -50,6 +50,7 @@
 #include "sliders.h"
 #include "statusicon.h"
 #include "assistant.h"
+#include "accountlist.h"
 #include "accountlistconfigdialog.h"
 
 #include "dbus.h"
@@ -454,14 +455,22 @@ accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 }
 
 static void
-stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *reason, void *foo UNUSED)
+stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, void *foo UNUSED)
 {
-    ERROR("Error: Stun status failure: %s failed", reason);
+    ERROR("Error: Stun status failure: account %s failed to setup STUN",
+          accountID);
+    // Disable STUN for the account that tried to create the STUN transport
+    account_t *account = account_list_get_by_id(accountID);
+    if (account) {
+        account_replace(account, ACCOUNT_SIP_STUN_ENABLED, "false");
+        dbus_set_account_details(account);
+    }
 }
 
 static void
 stun_status_success_cb(DBusGProxy *proxy UNUSED, const gchar *message UNUSED, void *foo UNUSED)
 {
+    DEBUG("STUN setup successful");
 }
 
 static void
@@ -620,7 +629,7 @@ screensaver_dbus_proxy_new_cb (GObject * source UNUSED, GAsyncResult *result, gp
 gboolean dbus_connect_session_manager(DBusGConnection *connection)
 {
 
-    if(connection == NULL) {
+    if (connection == NULL) {
         ERROR("DBUS: Error connection is NULL");
         return FALSE;
     }
@@ -635,8 +644,10 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
     }
 */
 
-    g_dbus_proxy_new_for_bus(G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
-                             NULL, GS_SERVICE, GS_PATH, GS_INTERFACE, NULL, screensaver_dbus_proxy_new_cb, NULL);
+    g_dbus_proxy_new_for_bus(G_BUS_TYPE_SESSION,
+                             G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+                             NULL, GS_SERVICE, GS_PATH, GS_INTERFACE, NULL,
+                             screensaver_dbus_proxy_new_cb, NULL);
 
     DEBUG("DBUS: Connected to gnome session manager");
 
@@ -2200,86 +2211,87 @@ dbus_stop_video_preview()
 static guint cookie;
 #define GNOME_SESSION_NO_IDLE_FLAG 8
 
-static void screensaver_inhibit_cb (GObject * source_object, GAsyncResult * res, gpointer user_data UNUSED)
+static void screensaver_inhibit_cb(GObject * source_object, GAsyncResult * res,
+                                   gpointer user_data UNUSED)
 {
-    DEBUG("Screensaver: Inhibit callback");
-
-    GDBusProxy *proxy = G_DBUS_PROXY (source_object);
-    // ScreenSaver *screensaver = (ScreenSaver *) user_data;
-    GVariant *value;
+    DEBUG(__PRETTY_FUNCTION__);
+    GDBusProxy *proxy = G_DBUS_PROXY(source_object);
     GError *error = NULL;
-
-    value = g_dbus_proxy_call_finish (proxy, res, &error);
+    GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        ERROR ("Screensaver: Error: inhibiting the screensaver: %s", error->message);
-        g_error_free (error);
+        ERROR("Screensaver: Error: inhibiting the screensaver: %s", error->message);
+        g_error_free(error);
         return;
     }
 
     /* save the cookie */
-    if (g_variant_is_of_type (value, G_VARIANT_TYPE ("(u)")))
-        g_variant_get (value, "(u)", &cookie);
+    if (g_variant_is_of_type(value, G_VARIANT_TYPE("(u)")))
+        g_variant_get(value, "(u)", &cookie);
     else
         cookie = 0;
 
-    g_variant_unref (value);
+    g_variant_unref(value);
 }
 
-static void screensaver_uninhibit_cb (GObject * source_object, GAsyncResult * res, gpointer user_data UNUSED)
+static void screensaver_uninhibit_cb(GObject * source_object,
+                                     GAsyncResult * res,
+                                     gpointer user_data UNUSED)
 {
-    DEBUG("Screensaver: Uninhibit callback");
-
-    GDBusProxy *proxy = G_DBUS_PROXY (source_object);
-    // ScreenSaver *screensaver = (ScreenSaver *) user_data;
-    GVariant *value;
+    DEBUG(__PRETTY_FUNCTION__);
+    GDBusProxy *proxy = G_DBUS_PROXY(source_object);
     GError *error = NULL;
 
-    value = g_dbus_proxy_call_finish (proxy, res, &error);
+    GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        ERROR ("Screensaver: Error uninhibiting the screensaver: %s", error->message);
-        g_error_free (error);
+        ERROR ("Screensaver: Error uninhibiting the screensaver: %s",
+               error->message);
+        g_error_free(error);
         return;
     }
 
     /* clear the cookie */
     cookie = 0;
-    g_variant_unref (value);
-
+    g_variant_unref(value);
 }
 
 void dbus_screensaver_inhibit(void)
 {
-    guint xid = 0;
-
-    DEBUG("Screensaver: inhibit");
-
     const gchar *appname = g_get_application_name();
-    if(appname == NULL) {
-        ERROR("Screensaver: Could not retreive application name");
+    if (appname == NULL) {
+        ERROR("Screensaver: Could not retrieve application name");
         return;
     }
 
-    GVariant *parameters = g_variant_new ("(susu)", appname, xid, "Phone call ongoing", GNOME_SESSION_NO_IDLE_FLAG);
-    if(parameters == NULL) {
+    guint xid = 0;
+    GVariant *parameters = g_variant_new("(susu)", appname, xid,
+                                         "Phone call ongoing",
+                                         GNOME_SESSION_NO_IDLE_FLAG);
+    if (parameters == NULL) {
         ERROR("Screensaver: Could not create session manager inhibit parameters");
         return;
     }
 
-    g_dbus_proxy_call (session_manager_proxy, "Inhibit", parameters,
-        G_DBUS_CALL_FLAGS_NO_AUTO_START, -1, NULL, screensaver_inhibit_cb, NULL);
+    g_dbus_proxy_call(session_manager_proxy, "Inhibit", parameters,
+                      G_DBUS_CALL_FLAGS_NO_AUTO_START, -1, NULL,
+                      screensaver_inhibit_cb, NULL);
 }
 
 void
 dbus_screensaver_uninhibit(void)
 {
+    if (cookie == 0)
+        return;
     DEBUG("Screensaver: uninhibit");
 
     GVariant *parameters = g_variant_new("(u)", cookie);
-    if(parameters == NULL) {
-        ERROR("Screensaver: Could not create session manager uninhibit parameters");
+    if (parameters == NULL) {
+        ERROR("Screensaver: Could not create session manager uninhibit "
+               "parameters");
         return;
-    };
+    }
 
-    g_dbus_proxy_call (session_manager_proxy, "Uninhibit", g_variant_new ("(u)", cookie),
-        G_DBUS_CALL_FLAGS_NO_AUTO_START, -1, NULL, screensaver_uninhibit_cb, NULL);
+    g_dbus_proxy_call(session_manager_proxy, "Uninhibit",
+                      g_variant_new("(u)", cookie),
+                      G_DBUS_CALL_FLAGS_NO_AUTO_START, -1, NULL,
+                      screensaver_uninhibit_cb, NULL);
 }

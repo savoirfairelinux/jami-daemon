@@ -50,8 +50,4 @@ GtkWidget *show_account_window(const account_t *a);
  */
 void update_account_from_dialog(GtkWidget *dialog, account_t *a);
 
-/**
- * Resets local cache of account pointers */
-void reset_account_store();
-
 #endif

@@ -44,6 +44,7 @@
 #include <gtk/gtk.h>
 
 #include "config.h"
+#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "logger.h"
 #include "actions.h"
@@ -494,7 +495,6 @@ key_exchange_changed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
     gtk_widget_set_sensitive(zrtp_button, sensitive);
 }
 
-
 static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
@@ -601,6 +601,10 @@ static void set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNU
 
 static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 {
+    /* Widgets have not been created yet */
+    if (!stun_server_label)
+        return;
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Config: Showing stun options, hiding Local/Published info");
         gtk_widget_show(stun_server_label);
@@ -626,8 +630,6 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
             gtk_widget_show(published_port_spin_box);
         }
     }
-
-    DEBUG("DONE");
 }
 
 
@@ -879,7 +881,7 @@ create_network(const account_t *account)
 
     int idx = 0;
     for (gchar **iface = iface_list; iface && *iface; iface++, idx++) {
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_address_combo), NULL, *iface);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(local_address_combo), *iface);
         if (g_strcmp0(*iface, local_interface) == 0)
             gtk_combo_box_set_active(GTK_COMBO_BOX(local_address_combo), idx);
     }
@@ -1151,9 +1153,6 @@ static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 
     GtkWidget *frame = create_network(account);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
-
-    frame = create_security_widget(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);

@@ -63,7 +63,7 @@ enum RegistrationState {
     ErrorNetwork ,
     ErrorHost,
     ErrorExistStun,
-    ErrorConfStun,
+    ErrorNotAcceptable,
     NumberOfStates
 };
 
@@ -133,23 +133,23 @@ static const char *const CONFIG_REGISTRATION_STATE_CODE             = "Registrat
 static const char *const CONFIG_REGISTRATION_STATE_DESCRIPTION      = "Registration.description";
 
 // General configuration keys for accounts
-static const char * const aliasKey = "alias";
-static const char * const typeKey = "type";
-static const char * const idKey = "id";
-static const char * const usernameKey = "username";
-static const char * const authenticationUsernameKey = "authenticationUsername";
-static const char * const passwordKey = "password";
-static const char * const hostnameKey = "hostname";
-static const char * const accountEnableKey = "enable";
-static const char * const mailboxKey = "mailbox";
+static const char * const ALIAS_KEY = "alias";
+static const char * const TYPE_KEY = "type";
+static const char * const ID_KEY = "id";
+static const char * const USERNAME_KEY = "username";
+static const char * const AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
+static const char * const PASSWORD_KEY = "password";
+static const char * const HOSTNAME_KEY = "hostname";
+static const char * const ACCOUNT_ENABLE_KEY = "enable";
+static const char * const MAILBOX_KEY = "mailbox";
 
-static const char * const codecsKey = "codecs";  // 0/9/110/111/112/
+static const char * const CODECS_KEY = "codecs";  // 0/9/110/111/112/
 #ifdef SFL_VIDEO
-static const char * const videocodecsKey = "videocodecs";
+static const char * const VIDEO_CODECS_KEY = "videoCodecs";
 #endif
-static const char * const ringtonePathKey = "ringtonePath";
-static const char * const ringtoneEnabledKey = "ringtoneEnabled";
-static const char * const displayNameKey = "displayName";
+static const char * const RINGTONE_PATH_KEY = "ringtonePath";
+static const char * const RINGTONE_ENABLED_KEY = "ringtoneEnabled";
+static const char * const DISPLAY_NAME_KEY = "displayName";
 
 class Account : public Serializable {
 
@@ -235,13 +235,6 @@ class Account : public Serializable {
             alias_ = alias;
         }
 
-        std::string getType() const {
-            return type_;
-        }
-        void setType(const std::string &type) {
-            type_ = type;
-        }
-
 #ifdef SFL_VIDEO
         /**
          * Accessor to data structures
@@ -252,8 +245,7 @@ class Account : public Serializable {
         }
 #endif
 
-        /**
-         * Accessor to data structures
+         /* Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
         std::vector<int> getActiveCodecs() const {

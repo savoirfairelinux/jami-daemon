@@ -37,19 +37,19 @@
 #endif
 
 #include "voiplink.h"
-#include <iax-client.h>
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
-#include "global.h"
+#include "sfl_types.h"
 #include "noncopyable.h"
 #include "audio/samplerateconverter.h"
+#include "eventthread.h"
 
-class EventThread;
+#include <iax-client.h>
+
 class IAXCall;
+class IAXAccount;
 
 class AudioCodec;
 class AudioLayer;
-
-class IAXAccount;
 
 /**
  * @file iaxvoiplink.h
@@ -66,7 +66,7 @@ class IAXVoIPLink : public VoIPLink {
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        void getEvent();
+        bool getEvent();
 
         /**
          * Init the voip link
@@ -120,7 +120,7 @@ class IAXVoIPLink : public VoIPLink {
          * Cancel a call
          * @param id The ID of the call
          */
-        virtual void cancel(const std::string& id UNUSED) {}
+        virtual void cancel(const std::string& /*id*/) {}
 
         /**
          * Put a call on hold
@@ -241,9 +241,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         void iaxOutgoingInvite(IAXCall* call);
 
-        /** Threading object */
-        EventThread* evThread_;
-
         /** registration session : 0 if not register */
         iax_session* regSession_;
 
@@ -257,9 +254,9 @@ class IAXVoIPLink : public VoIPLink {
         ost::Mutex mutexIAX_;
 
         /** encoder/decoder/resampler buffers */
-        SFLDataFormat decData[DEC_BUFFER_SIZE];
-        SFLDataFormat resampledData[DEC_BUFFER_SIZE];
-        unsigned char encodedData[DEC_BUFFER_SIZE];
+        SFLDataFormat decData_[DEC_BUFFER_SIZE];
+        SFLDataFormat resampledData_[DEC_BUFFER_SIZE];
+        unsigned char encodedData_[DEC_BUFFER_SIZE];
 
         /** Sample rate converter object */
         SamplerateConverter converter_;
@@ -271,6 +268,11 @@ class IAXVoIPLink : public VoIPLink {
         bool initDone_;
 
         const std::string accountID_;
+
+        /**
+         * Threading object
+         */
+        EventThread evThread_;
 };
 
 #endif

@@ -31,18 +31,16 @@
  *  as that of the covered work.
  */
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <samplerate.h>
 #include <cstring>
 #include <vector>
 #include <climits>
 
 #include "audiofile.h"
-#include "audio/codecs/audiocodecfactory.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
-
-#include "manager.h"
+#include "logger.h"
 
 RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
     : AudioFile(name), audioCodec_(codec)
@@ -122,16 +120,16 @@ WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileNam
     fileStream.open(fileName.c_str(), std::ios::in | std::ios::binary);
 
     char riff[4] = { 0, 0, 0, 0 };
-    fileStream.read(riff, sizeof riff / sizeof riff[0]);
+    fileStream.read(riff, sizeof riff / sizeof *riff);
 
-    if (strncmp("RIFF", riff, sizeof riff / sizeof riff[0]) != 0)
+    if (strncmp("RIFF", riff, sizeof riff / sizeof *riff) != 0)
         throw AudioFileException("File is not of RIFF format");
 
     char fmt[4] = { 0, 0, 0, 0 };
     int maxIteration = 10;
 
-    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof fmt[0]))
-        fileStream.read(fmt, sizeof fmt / sizeof fmt[0]);
+    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof *fmt))
+        fileStream.read(fmt, sizeof fmt / sizeof *fmt);
 
     if (maxIteration == 0)
         throw AudioFileException("Could not find \"fmt \" chunk");
@@ -172,8 +170,8 @@ WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileNam
     char data[4] = { 0, 0, 0, 0 };
     maxIteration = 10;
 
-    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof data[0]))
-        fileStream.read(data, sizeof data / sizeof data[0]);
+    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof *data))
+        fileStream.read(data, sizeof data / sizeof *data);
 
     // Samplerate converter initialized with 88200 sample long
     SamplerateConverter converter(std::max(fileRate, newRate));

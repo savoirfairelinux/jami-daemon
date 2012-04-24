@@ -33,8 +33,6 @@
 #include "audio/mainbuffer.h"
 #include "history/historyitem.h"
 
-const char * const Call::DEFAULT_ID = "audiolayer_id";
-
 Call::Call(const std::string& id, Call::CallType type)
     : callMutex_()
     , localIPAddress_("")
@@ -155,12 +153,12 @@ Call::setRecording()
 
     if (!recordStatus) {
         mbuffer->bindHalfDuplexOut(process_id, id_);
-        mbuffer->bindHalfDuplexOut(process_id);
+        mbuffer->bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         mbuffer->unBindHalfDuplexOut(process_id, id_);
-        mbuffer->unBindHalfDuplexOut(process_id);
+        mbuffer->unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }
 
     Manager::instance().getMainBuffer()->stateInfo();

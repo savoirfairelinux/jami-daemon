@@ -39,6 +39,7 @@
 #include "audio/audiortp/audio_rtp_factory.h"
 #include "audio/audiortp/audio_zrtp_session.h"
 
+#include "logger.h"
 #include "manager.h"
 
 namespace {

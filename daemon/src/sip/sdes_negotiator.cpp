@@ -32,7 +32,7 @@
 #include "pattern.h"
 
 #include <cstdio>
-#include <memory>
+#include <tr1/memory>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -61,7 +61,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
     // syntax :
     //a=crypto:tag 1*WSP crypto-suite 1*WSP key-params *(1*WSP session-param)
 
-    std::auto_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
+    std::tr1::shared_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
         keyParamsPattern;
 
     try {
@@ -178,7 +178,7 @@ bool SdesNegotiator::negotiate()
     std::vector<CryptoAttribute *> cryptoAttributeVector = parse();
     std::vector<CryptoAttribute *>::iterator iter_offer = cryptoAttributeVector.begin();
 
-    std::vector<CryptoSuiteDefinition>::iterator iter_local = localCapabilities_.begin();
+    std::vector<CryptoSuiteDefinition>::const_iterator iter_local = localCapabilities_.begin();
 
     bool negotiationSuccess = false;
 
@@ -197,10 +197,11 @@ bool SdesNegotiator::negotiate()
                     authTagLength_ = cryptoSuite_.substr(cryptoSuite_.size()-2, 2);
                 }
 
-                iter_local++;
+                ++iter_local;
             }
-            delete(*iter_offer);
-            iter_offer++;
+            delete *iter_offer;
+            *iter_offer = 0;
+            ++iter_offer;
         }
 
     } catch (const ParseError& exception) {

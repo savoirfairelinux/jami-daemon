@@ -30,8 +30,12 @@
  */
 
 #include "mainbuffer.h"
+#include "ringbuffer.h"
+#include "sfl_types.h" // for SIZEBUF
 #include <utility> // for std::pair
-#include "manager.h"
+#include "logger.h"
+
+const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
 MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
 {}
@@ -132,19 +136,16 @@ void MainBuffer::bindCallID(const std::string & call_id1, const std::string & ca
 {
     ost::MutexLock guard(mutex_);
 
-    RingBuffer* ring_buffer;
-    CallIDSet* callid_set;
-
-    if ((ring_buffer = getRingBuffer(call_id1)) == NULL)
+    if (getRingBuffer(call_id1) == NULL)
         createRingBuffer(call_id1);
 
-    if ((callid_set = getCallIDSet(call_id1)) == NULL)
+    if (getCallIDSet(call_id1) == NULL)
         createCallIDSet(call_id1);
 
-    if ((ring_buffer = getRingBuffer(call_id2)) == NULL)
+    if (getRingBuffer(call_id2) == NULL)
         createRingBuffer(call_id2);
 
-    if ((callid_set = getCallIDSet(call_id2)) == NULL)
+    if (getCallIDSet(call_id2) == NULL)
         createCallIDSet(call_id2);
 
     getRingBuffer(call_id1)->createReadPointer(call_id2);
@@ -310,7 +311,7 @@ int MainBuffer::availForGet(const std::string & call_id)
     if (callid_set->size() == 1) {
         CallIDSet::iterator iter_id = callid_set->begin();
 
-        if ((call_id != Call::DEFAULT_ID) && (*iter_id == call_id))
+        if ((call_id != DEFAULT_ID) && (*iter_id == call_id))
             DEBUG("This problem should not occur since we have %i element", (int) callid_set->size());
 
         return availForGetByID(*iter_id, call_id);
@@ -337,7 +338,7 @@ int MainBuffer::availForGet(const std::string & call_id)
 int MainBuffer::availForGetByID(const std::string &call_id,
                                 const std::string &reader_id)
 {
-    if ((call_id != Call::DEFAULT_ID) and (reader_id == call_id))
+    if ((call_id != DEFAULT_ID) and (reader_id == call_id))
         ERROR("MainBuffer: Error: RingBuffer has a readpointer on itself");
 
     RingBuffer* ringbuffer = getRingBuffer(call_id);

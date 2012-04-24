@@ -37,6 +37,7 @@
 #include <numeric>
 #include <cstring>
 #include <cassert>
+#include "logger.h"
 
 AudioLoop::AudioLoop() : buffer_(0),  size_(0), pos_(0), sampleRate_(0)
 {}

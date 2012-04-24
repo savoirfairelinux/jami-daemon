@@ -39,6 +39,7 @@
 #include "sip/sdp.h"
 #include "libav_utils.h"
 #include "manager.h"
+#include "logger.h"
 
 namespace sfl_video {
 

@@ -54,9 +54,9 @@ class VideoPreference : public Serializable
         VideoPreference();
         ~VideoPreference();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter &emitter);
 
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         std::map<std::string, std::string> getSettings() const;
 
@@ -93,19 +93,19 @@ class VideoPreference : public Serializable
         }
 
         std::vector<std::string> getDeviceList() const {
-        	return v4l2_list_->getDeviceList();
+            return v4l2_list_->getDeviceList();
         }
 
         std::vector<std::string> getChannelList(const std::string &dev) const {
-        	return v4l2_list_->getChannelList(dev);
+            return v4l2_list_->getChannelList(dev);
         }
 
         std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel) const {
-        	return v4l2_list_->getSizeList(dev, channel);
+            return v4l2_list_->getSizeList(dev, channel);
         }
 
         std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size) const {
-        	return v4l2_list_->getRateList(dev, channel, size);
+            return v4l2_list_->getRateList(dev, channel, size);
         }
 
     private:

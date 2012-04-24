@@ -31,6 +31,9 @@
 #include "audiorecord.h"
 #include <unistd.h>
 #include <sstream> // for stringstream
+#include <cstdio>
+#include "logger.h"
+#include "fileutils.h"
 
 // structure for the wave header
 
@@ -74,10 +77,22 @@ void AudioRecord::setSndSamplingRate(int smplRate)
 
 void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path)
 {
+    std::stringstream s;
+    std::string filePath;
+
+    // use HOME directory if path is empty, or if path does not exist
+    if (path.empty() || !fileutils::check_dir(path.c_str())) {
+        s << getenv("HOME");
+        filePath = s.str();
+    }
+    else {
+        filePath = path;
+    }
+
     fileType_ = type;
     channels_ = 1;
     sndSmplRate_ = sndSmplRate;
-    savePath_ = path + "/";
+    savePath_ = (*filePath.rbegin() == '/') ? filePath : filePath + "/";
 }
 
 void AudioRecord::initFilename(const std::string &peerNumber)
@@ -108,8 +123,6 @@ std::string AudioRecord::getFilename() const
 bool AudioRecord::openFile()
 {
     bool result = false;
-
-    DEBUG("AudioRecord: Open file()");
 
     if (not fileExists()) {
         DEBUG("AudioRecord: Filename does not exist, creating one");
@@ -155,24 +168,14 @@ bool AudioRecord::isRecording() const
     return recordingEnabled_;
 }
 
-bool AudioRecord::setRecording()
+void AudioRecord::setRecording()
 {
     if (isOpenFile()) {
-        if (!recordingEnabled_) {
-            DEBUG("AudioRecording: Start recording");
-            recordingEnabled_ = true;
-        } else {
-            DEBUG("AudioRecording: Stop recording");
-            recordingEnabled_ = false;
-        }
+        recordingEnabled_ = !recordingEnabled_;
     } else {
         openFile();
         recordingEnabled_ = true; // once opend file, start recording
     }
-
-    // WARNING: Unused return value
-    return true;
-
 }
 
 void AudioRecord::stopRecording()
@@ -183,12 +186,8 @@ void AudioRecord::stopRecording()
 
 void AudioRecord::createFilename()
 {
-    time_t rawtime;
-
-    struct tm * timeinfo;
-
-    rawtime = time(NULL);
-    timeinfo = localtime(&rawtime);
+    time_t rawtime = time(NULL);
+    struct tm * timeinfo = localtime(&rawtime);
 
     std::stringstream out;
 
@@ -228,7 +227,7 @@ void AudioRecord::createFilename()
     out << timeinfo->tm_sec;
     filename_ = out.str();
 
-    DEBUG("AudioRecord: create filename for this call %s ", filename_.c_str());
+    DEBUG("AudioRecord: Generate filename for this call %s ", filename_.c_str());
 }
 
 bool AudioRecord::setRawFile()
@@ -393,28 +392,7 @@ void AudioRecord::closeWavFile()
         WARN("AudioRecord: Error: can't close file");
 }
 
-void AudioRecord::recSpkrData(SFLDataFormat* buffer, int nSamples)
-{
-    if (recordingEnabled_) {
-        nbSamplesMic_ = nSamples;
-
-        for (int i = 0; i < nbSamplesMic_; i++)
-            micBuffer_[i] = buffer[i];
-    }
-}
-
-void AudioRecord::recMicData(SFLDataFormat* buffer, int nSamples)
-{
-    if (recordingEnabled_) {
-        nbSamplesSpk_ = nSamples;
-
-        for (int i = 0; i < nbSamplesSpk_; i++)
-            spkBuffer_[i] = buffer[i];
-
-    }
-}
-
-void AudioRecord::recData(SFLDataFormat* buffer, int nSamples)
+void AudioRecord::recData(SFLDataFormat* buffer, size_t nSamples)
 {
     if (recordingEnabled_) {
         if (fileHandle_ == 0) {
@@ -422,34 +400,11 @@ void AudioRecord::recData(SFLDataFormat* buffer, int nSamples)
             return;
         }
 
-        if (fwrite(buffer, sizeof(SFLDataFormat), nSamples, fileHandle_) != (unsigned int) nSamples)
+        if (fwrite(buffer, sizeof(SFLDataFormat), nSamples, fileHandle_) != nSamples)
             WARN("AudioRecord: Could not record data! ");
         else {
             fflush(fileHandle_);
-            byteCounter_ += (unsigned long)(nSamples*sizeof(SFLDataFormat));
+            byteCounter_ += nSamples * sizeof(SFLDataFormat);
         }
     }
 }
-
-void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2,
-                          int nSamples_1, int /*nSamples_2*/)
-{
-    if (recordingEnabled_) {
-        if (fileHandle_ == 0) {
-            DEBUG("AudioRecord: Can't record data, a file has not yet been opened!");
-            return;
-        }
-
-        for (int k = 0; k < nSamples_1; k++) {
-            mixBuffer_[k] = (buffer_1[k]+buffer_2[k]);
-
-            if (fwrite(&mixBuffer_[k], 2, 1, fileHandle_) != 1)
-                WARN("AudioRecord: Could not record data!");
-            else
-                fflush(fileHandle_);
-        }
-
-        byteCounter_ += (unsigned long)(nSamples_1 * sizeof(SFLDataFormat));
-    }
-}
-

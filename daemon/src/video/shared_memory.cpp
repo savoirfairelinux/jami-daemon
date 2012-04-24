@@ -38,8 +38,10 @@
 #include <sys/shm.h>
 
 #include <cstdlib>
+#include <stdexcept>
 
 #include "manager.h"
+#include "logger.h"
 #include "dbus/video_controls.h"
 #include "fileutils.h"
 

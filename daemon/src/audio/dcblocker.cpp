@@ -30,6 +30,9 @@
 
 #include "dcblocker.h"
 
+DcBlocker::DcBlocker() : y_(0), x_(0), xm1_(0), ym1_(0)
+{}
+
 void DcBlocker::reset()
 {
     y_ = 0;

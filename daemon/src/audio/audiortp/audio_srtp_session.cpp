@@ -28,6 +28,8 @@
  *  as that of the covered work.
  */
 #include "audio_srtp_session.h"
+#include "logger.h"
+#include "array_size.h"
 
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
@@ -102,12 +104,9 @@ namespace {
         std::vector<unsigned char> random_key(length);
 
         // Generate ryptographically strong pseudo-random bytes
-        int err;
-
-        if ((err = RAND_bytes(&(*random_key.begin()), length)) != 1)
+        if (RAND_bytes(&(*random_key.begin()), length) != 1)
             DEBUG("Error occured while generating cryptographically strong pseudo-random key");
 
-        assert((sizeof dest / sizeof dest[0]) <= length);
         memcpy(dest, &(*random_key.begin()), length);
     }
 }
@@ -210,6 +209,7 @@ void AudioSrtpSession::initializeLocalMasterKey()
     DEBUG("AudioSrtp: Init local master key");
     // @TODO key may have different length depending on cipher suite
     localMasterKeyLength_ = sfl::CryptoSuites[localCryptoSuite_].masterKeyLength / 8;
+    assert(ARRAYSIZE(localMasterKey_) >= localMasterKeyLength_);
     DEBUG("AudioSrtp: Local master key length %d", localMasterKeyLength_);
     buffer_fill(localMasterKey_, localMasterKeyLength_);
 }
@@ -218,6 +218,7 @@ void AudioSrtpSession::initializeLocalMasterSalt()
 {
     // @TODO key may have different length depending on cipher suite
     localMasterSaltLength_ = sfl::CryptoSuites[localCryptoSuite_].masterSaltLength / 8;
+    assert(ARRAYSIZE(localMasterSalt_) >= localMasterSaltLength_);
     DEBUG("AudioSrtp: Local master salt length %d", localMasterSaltLength_);
     buffer_fill(localMasterSalt_, localMasterSaltLength_);
 }

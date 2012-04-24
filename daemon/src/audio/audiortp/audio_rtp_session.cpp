@@ -34,7 +34,7 @@
 
 #include "audio_rtp_session.h"
 #include "audio_symmetric_rtp_session.h"
-
+#include "logger.h"
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
@@ -243,7 +243,8 @@ int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
     initNoiseSuppress();
 
     queue_.enableStack();
-    return thread_.start();
+    thread_.start();
+    return 0;
 }
 
 

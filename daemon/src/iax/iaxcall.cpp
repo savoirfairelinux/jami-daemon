@@ -34,6 +34,7 @@
 #include <iax-client.h>
 #include "iaxcall.h"
 #include "iax2/frame.h"
+#include "logger.h"
 #include "account.h"
 #include "manager.h"
 

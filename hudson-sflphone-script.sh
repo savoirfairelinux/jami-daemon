@@ -10,6 +10,9 @@ BUILD=
 CODE_ANALYSIS=0
 DOXYGEN=0
 
+CONFIGDIR=~/.config
+SFLCONFDIR=${CONFIGDIR}/sflphone
+
 function run_code_analysis {
 	# Check if cppcheck is installed on the system
 	if [ `which cppcheck &>/dev/null ; echo $?` -ne 1 ] ; then
@@ -19,6 +22,7 @@ function run_code_analysis {
 	fi
 }
 
+
 function gen_doxygen {
 	# Check if doxygen is installed on the system
 	if [ `which doxygen &>/dev/null ; echo $?` -ne 1 ] ; then
@@ -27,6 +31,58 @@ function gen_doxygen {
 		popd
 	fi
 }
+
+
+function launch_unit_test_daemon {
+        # Run the unit tests for the daemon
+        pushd daemon/test
+        # Remove the previous XML test file
+        rm -rf $XML_RESULTS
+        ./run_tests.sh || exit 1
+        popd
+}
+
+
+function launch_functional_test_daemon {
+        # Run the python functional tests for the daemon
+
+        # make sure no other instance are currently running
+        killall sflphoned
+        killall sipp
+
+        # make sure the configuration directory created
+        CONFDIR=~/.config
+        SFLCONFDIR=${CONFDIR}/sflphone
+
+        eval `dbus-launch --auto-syntax`
+
+        if [ ! -d ${CONFDIR} ]; then
+            mkdir ${CONFDIR}
+        fi
+
+        if [ ! -d ${SFLCONFDIR} ]; then
+            mkdir ${SFLCONFDIR}
+        fi
+
+        # make sure the most recent version of the configuration
+        # is installed
+        pushd tools/pysflphone
+            cp -f sflphoned.functest.yml ${SFLCONFDIR}
+        popd
+
+        # launch sflphone daemon, wait some time for
+        # dbus registration to complete
+        pushd daemon
+            ./src/sflphoned &
+            sleep 3
+        popd
+
+        # launch the test script
+        pushd tools/pysflphone
+            nosetests --with-xunit test_sflphone_dbus_interface.py
+        popd
+}
+
 
 function build_daemon {
 	# Compile the daemon
@@ -55,15 +111,6 @@ function build_daemon {
 	# Compile unit tests
 	make check
 	popd
-
-	if [ $TEST == 1 ]; then
-		# Run the unit tests for the daemon
-		pushd daemon/test
-		# Remove the previous XML test file
-		rm -rf $XML_RESULTS
-		./run_tests.sh || exit 1
-		popd
-	fi
 }
 
 function build_gnome {
@@ -127,6 +174,11 @@ done
 
 # Call appropriate build function, with parameters if needed
 build_$BUILD
+
+if [ $TEST == 1 ]; then
+    # launch_unit_test_daemon
+    launch_functional_test_daemon
+fi
 
 # SUCCESS
 exit 0

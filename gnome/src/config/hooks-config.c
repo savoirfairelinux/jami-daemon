@@ -29,6 +29,7 @@
  */
 
 #include <glib/gi18n.h>
+#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "hooks-config.h"
 #include "dbus.h"

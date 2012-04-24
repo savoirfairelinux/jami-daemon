@@ -262,13 +262,11 @@ class Sdp {
 #ifdef SFL_VIDEO
         std::string getSessionVideoCodec() const;
 #endif
-
-        void receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
-
         sfl::AudioCodec* getSessionAudioMedia() const;
 
     private:
         NON_COPYABLE(Sdp);
+        friend class SDPTest;
 
         std::string getLineFromLocalSDP(const std::string &keyword) const;
 

@@ -30,19 +30,23 @@
 
 #include "networkmanager.h"
 #include "../manager.h"
+#include "array_size.h"
+#include "logger.h"
 
-const std::string NetworkManager::statesString[5] = {"unknown", "asleep",
-                                                     "connecting", "connected",
-                                                     "disconnected"};
+namespace {
+    const char *stateAsString(uint32_t state)
+    {
+        static const char * STATES[] = {"unknown", "asleep", "connecting",
+            "connected", "disconnected"};
 
-std::string NetworkManager::stateAsString(const uint32_t &state)
-{
-    return statesString[state];
+        const size_t idx = state < ARRAYSIZE(STATES) ? state : 0;
+        return STATES[idx];
+    }
 }
 
 void NetworkManager::StateChanged(const uint32_t &state)
 {
-    WARN("Network state changed: %s", stateAsString(state).c_str());
+    WARN("Network state changed: %s", stateAsString(state));
 }
 
 void NetworkManager::PropertiesChanged(const std::map<std::string, ::DBus::Variant> &argin0)

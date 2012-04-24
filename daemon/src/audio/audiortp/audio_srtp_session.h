@@ -153,22 +153,22 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         uint8 localMasterKey_[16];
 
         /** local master key length in byte */
-        int localMasterKeyLength_;
+        size_t localMasterKeyLength_;
 
         uint8 localMasterSalt_[14];
 
         /** local master salt length in byte */
-        int localMasterSaltLength_;
+        size_t localMasterSaltLength_;
 
         uint8 remoteMasterKey_[16];
 
         /** remote master key length in byte */
-        int remoteMasterKeyLength_;
+        size_t remoteMasterKeyLength_;
 
         uint8 remoteMasterSalt_[14];
 
         /** remote master salt length in byte */
-        int remoteMasterSaltLength_;
+        size_t remoteMasterSaltLength_;
 
         /** Used to make sure remote crypto context not initialized wice. */
         bool remoteOfferIsSet_;

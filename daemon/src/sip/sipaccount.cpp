@@ -38,12 +38,12 @@
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
+#include "logger.h"
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>
-#include <cassert>
 
-const char * const SIPAccount::IP2IP_PROFILE  = "IP2IP";
+const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
@@ -74,7 +74,6 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
     , tlsEnable_("false")
-    , tlsPort_(DEFAULT_SIP_TLS_PORT)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -101,7 +100,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , link_(SIPVoIPLink::instance())
 {}
 
-void SIPAccount::serialize(Conf::YamlEmitter *emitter)
+void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
     using std::vector;
@@ -166,8 +165,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode notSuppWarning(zrtpNotSuppWarning_);
 
     portstr.str("");
-    portstr << tlsPort_;
-
+    portstr << tlsListenerPort_;
     ScalarNode tlsport(portstr.str());
     ScalarNode certificate(tlsCertificateFile_);
     ScalarNode calist(tlsCaListFile_);
@@ -182,45 +180,45 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode verifyclient(tlsVerifyServer_);
     ScalarNode verifyserver(tlsVerifyClient_);
 
-    accountmap.setKeyValue(aliasKey, &alias);
-    accountmap.setKeyValue(typeKey, &type);
-    accountmap.setKeyValue(idKey, &id);
-    accountmap.setKeyValue(usernameKey, &username);
-    accountmap.setKeyValue(hostnameKey, &hostname);
-    accountmap.setKeyValue(accountEnableKey, &enable);
-    accountmap.setKeyValue(mailboxKey, &mailbox);
-    accountmap.setKeyValue(registrationExpireKey, &expire);
-    accountmap.setKeyValue(interfaceKey, &interface);
-    accountmap.setKeyValue(portKey, &port);
-    accountmap.setKeyValue(stunServerKey, &stunServer);
-    accountmap.setKeyValue(stunEnabledKey, &stunEnabled);
-    accountmap.setKeyValue(publishAddrKey, &publishAddr);
-    accountmap.setKeyValue(publishPortKey, &publishPort);
-    accountmap.setKeyValue(sameasLocalKey, &sameasLocal);
-    accountmap.setKeyValue(serviceRouteKey, &serviceRoute);
-    accountmap.setKeyValue(updateContactHeaderKey, &contactUpdateEnabled);
-    accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
-    accountmap.setKeyValue(displayNameKey, &displayName);
-    accountmap.setKeyValue(codecsKey, &codecs);
+    accountmap.setKeyValue(ALIAS_KEY, &alias);
+    accountmap.setKeyValue(TYPE_KEY, &type);
+    accountmap.setKeyValue(ID_KEY, &id);
+    accountmap.setKeyValue(USERNAME_KEY, &username);
+    accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
+    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
+    accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
+    accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, &expire);
+    accountmap.setKeyValue(INTERFACE_KEY, &interface);
+    accountmap.setKeyValue(PORT_KEY, &port);
+    accountmap.setKeyValue(STUN_SERVER_KEY, &stunServer);
+    accountmap.setKeyValue(STUN_ENABLED_KEY, &stunEnabled);
+    accountmap.setKeyValue(PUBLISH_ADDR_KEY, &publishAddr);
+    accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
+    accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
+    accountmap.setKeyValue(SERVICE_ROUTE_KEY, &serviceRoute);
+    accountmap.setKeyValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled);
+    accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
+    accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
+    accountmap.setKeyValue(CODECS_KEY, &codecs);
 #ifdef SFL_VIDEO
-    accountmap.setKeyValue(videocodecsKey, &vcodecs);
+    accountmap.setKeyValue(VIDEO_CODECS_KEY, &vcodecs);
 #endif
-    accountmap.setKeyValue(ringtonePathKey, &ringtonePath);
-    accountmap.setKeyValue(ringtoneEnabledKey, &ringtoneEnabled);
+    accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
+    accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
 
-    accountmap.setKeyValue(srtpKey, &srtpmap);
-    srtpmap.setKeyValue(srtpEnableKey, &srtpenabled);
-    srtpmap.setKeyValue(keyExchangeKey, &keyExchange);
-    srtpmap.setKeyValue(rtpFallbackKey, &rtpFallback);
+    accountmap.setKeyValue(SRTP_KEY, &srtpmap);
+    srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
+    srtpmap.setKeyValue(KEY_EXCHANGE_KEY, &keyExchange);
+    srtpmap.setKeyValue(RTP_FALLBACK_KEY, &rtpFallback);
 
-    accountmap.setKeyValue(zrtpKey, &zrtpmap);
-    zrtpmap.setKeyValue(displaySasKey, &displaySas);
-    zrtpmap.setKeyValue(displaySasOnceKey, &displaySasOnce);
-    zrtpmap.setKeyValue(helloHashEnabledKey, &helloHashEnabled);
-    zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
+    accountmap.setKeyValue(ZRTP_KEY, &zrtpmap);
+    zrtpmap.setKeyValue(DISPLAY_SAS_KEY, &displaySas);
+    zrtpmap.setKeyValue(DISPLAY_SAS_ONCE_KEY, &displaySasOnce);
+    zrtpmap.setKeyValue(HELLO_HASH_ENABLED_KEY, &helloHashEnabled);
+    zrtpmap.setKeyValue(NOT_SUPP_WARNING_KEY, &notSuppWarning);
 
     SequenceNode credentialseq(NULL);
-    accountmap.setKeyValue(credKey, &credentialseq);
+    accountmap.setKeyValue(CRED_KEY, &credentialseq);
 
     std::vector<std::map<std::string, std::string> >::const_iterator it;
 
@@ -233,23 +231,23 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
         credentialseq.addNode(map);
     }
 
-    accountmap.setKeyValue(tlsKey, &tlsmap);
-    tlsmap.setKeyValue(tlsPortKey, &tlsport);
-    tlsmap.setKeyValue(certificateKey, &certificate);
-    tlsmap.setKeyValue(calistKey, &calist);
-    tlsmap.setKeyValue(ciphersKey, &ciphers);
-    tlsmap.setKeyValue(tlsEnableKey, &tlsenabled);
-    tlsmap.setKeyValue(methodKey, &tlsmethod);
-    tlsmap.setKeyValue(timeoutKey, &timeout);
-    tlsmap.setKeyValue(tlsPasswordKey, &tlspassword);
-    tlsmap.setKeyValue(privateKeyKey, &privatekey);
-    tlsmap.setKeyValue(requireCertifKey, &requirecertif);
-    tlsmap.setKeyValue(serverKey, &server);
-    tlsmap.setKeyValue(verifyClientKey, &verifyclient);
-    tlsmap.setKeyValue(verifyServerKey, &verifyserver);
+    accountmap.setKeyValue(TLS_KEY, &tlsmap);
+    tlsmap.setKeyValue(TLS_PORT_KEY, &tlsport);
+    tlsmap.setKeyValue(CERTIFICATE_KEY, &certificate);
+    tlsmap.setKeyValue(CALIST_KEY, &calist);
+    tlsmap.setKeyValue(CIPHERS_KEY, &ciphers);
+    tlsmap.setKeyValue(TLS_ENABLE_KEY, &tlsenabled);
+    tlsmap.setKeyValue(METHOD_KEY, &tlsmethod);
+    tlsmap.setKeyValue(TIMEOUT_KEY, &timeout);
+    tlsmap.setKeyValue(TLS_PASSWORD_KEY, &tlspassword);
+    tlsmap.setKeyValue(PRIVATE_KEY_KEY, &privatekey);
+    tlsmap.setKeyValue(REQUIRE_CERTIF_KEY, &requirecertif);
+    tlsmap.setKeyValue(SERVER_KEY, &server);
+    tlsmap.setKeyValue(VERIFY_CLIENT_KEY, &verifyclient);
+    tlsmap.setKeyValue(VERIFY_SERVER_KEY, &verifyserver);
 
     try {
-        emitter->serializeAccount(&accountmap);
+        emitter.serializeAccount(&accountmap);
     } catch (const YamlEmitterException &e) {
         ERROR("ConfigTree: %s", e.what());
     }
@@ -258,7 +256,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     Sequence::iterator seqit;
 
     for (seqit = seq->begin(); seqit != seq->end(); ++seqit) {
-        MappingNode *node = (MappingNode*)*seqit;
+        MappingNode *node = static_cast<MappingNode*>(*seqit);
         delete node->getValue(CONFIG_ACCOUNT_USERNAME);
         delete node->getValue(CONFIG_ACCOUNT_PASSWORD);
         delete node->getValue(CONFIG_ACCOUNT_REALM);
@@ -266,77 +264,67 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     }
 }
 
-void SIPAccount::unserialize(const Conf::MappingNode *map)
+void SIPAccount::unserialize(const Conf::MappingNode &map)
 {
     using namespace Conf;
-    MappingNode *srtpMap;
-    MappingNode *tlsMap;
-    MappingNode *zrtpMap;
 
-    assert(map);
-
-    map->getValue(aliasKey, &alias_);
-    map->getValue(typeKey, &type_);
-    map->getValue(usernameKey, &username_);
-    map->getValue(hostnameKey, &hostname_);
-    map->getValue(accountEnableKey, &enabled_);
-    map->getValue(mailboxKey, &mailBox_);
-    map->getValue(codecsKey, &codecStr_);
+    map.getValue(ALIAS_KEY, &alias_);
+    map.getValue(TYPE_KEY, &type_);
+    map.getValue(USERNAME_KEY, &username_);
+    map.getValue(HOSTNAME_KEY, &hostname_);
+    map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
+    map.getValue(MAILBOX_KEY, &mailBox_);
+    map.getValue(CODECS_KEY, &codecStr_);
 #ifdef SFL_VIDEO
     std::string vcodecs;
-    map->getValue(videocodecsKey, &vcodecs);
+    map.getValue(VIDEO_CODECS_KEY, &vcodecs);
 #endif
-
     // Update codec list which one is used for SDP offer
     setActiveCodecs(ManagerImpl::unserialize(codecStr_));
 
-#ifdef SFL_VIDEO
-    setActiveVideoCodecs(Manager::instance().unserialize(vcodecs));
-#endif
-
-    map->getValue(ringtonePathKey, &ringtonePath_);
-    map->getValue(ringtoneEnabledKey, &ringtoneEnabled_);
-    map->getValue(registrationExpireKey, &registrationExpire_);
-    map->getValue(interfaceKey, &interface_);
-    int port;
-    map->getValue(portKey, &port);
+    map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
+    map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
+    map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+    map.getValue(INTERFACE_KEY, &interface_);
+    int port = DEFAULT_SIP_PORT;
+    map.getValue(PORT_KEY, &port);
     localPort_ = port;
-    map->getValue(publishAddrKey, &publishedIpAddress_);
-    map->getValue(publishPortKey, &port);
+    map.getValue(PUBLISH_ADDR_KEY, &publishedIpAddress_);
+    map.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
-    map->getValue(sameasLocalKey, &publishedSameasLocal_);
+    map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
 
     std::string dtmfType;
-    map->getValue(dtmfTypeKey, &dtmfType);
+    map.getValue(DTMF_TYPE_KEY, &dtmfType);
     dtmfType_ = dtmfType;
 
-    map->getValue(serviceRouteKey, &serviceRoute_);
-    map->getValue(updateContactHeaderKey, &contactUpdateEnabled_);
+    map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
+    map.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
-    map->getValue(stunEnabledKey, &stunEnabled_);
-    map->getValue(stunServerKey, &stunServer_);
+    map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
+    map.getValue(STUN_SERVER_KEY, &stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
 
-    map->getValue(displayNameKey, &displayName_);
+    map.getValue(DISPLAY_NAME_KEY, &displayName_);
 
     std::vector<std::map<std::string, std::string> > creds;
 
-    YamlNode *credNode = map->getValue(credKey);
+    YamlNode *credNode = map.getValue(CRED_KEY);
 
     /* We check if the credential key is a sequence
      * because it was a mapping in a previous version of
      * the configuration file.
      */
     if (credNode && credNode->getType() == SEQUENCE) {
-        SequenceNode *credSeq = (SequenceNode *) credNode;
+        SequenceNode *credSeq = static_cast<SequenceNode *>(credNode);
         Sequence::iterator it;
         Sequence *seq = credSeq->getSequence();
 
         for (it = seq->begin(); it != seq->end(); ++it) {
-            MappingNode *cred = (MappingNode *)(*it);
+            MappingNode *cred = static_cast<MappingNode *>(*it);
             std::string user;
             std::string pass;
             std::string realm;
@@ -355,7 +343,7 @@ void SIPAccount::unserialize(const Conf::MappingNode *map)
         // migration from old file format
         std::map<std::string, std::string> credmap;
         std::string password;
-        map->getValue(passwordKey, &password);
+        map.getValue(PASSWORD_KEY, &password);
 
         credmap[CONFIG_ACCOUNT_USERNAME] = username_;
         credmap[CONFIG_ACCOUNT_PASSWORD] = password;
@@ -366,43 +354,45 @@ void SIPAccount::unserialize(const Conf::MappingNode *map)
     setCredentials(creds);
 
     // get srtp submap
-    srtpMap = (MappingNode *)(map->getValue(srtpKey));
+    MappingNode *srtpMap = static_cast<MappingNode *>(map.getValue(SRTP_KEY));
 
     if (srtpMap) {
-        srtpMap->getValue(srtpEnableKey, &srtpEnabled_);
-        srtpMap->getValue(keyExchangeKey, &srtpKeyExchange_);
-        srtpMap->getValue(rtpFallbackKey, &srtpFallback_);
+        srtpMap->getValue(SRTP_ENABLE_KEY, &srtpEnabled_);
+        srtpMap->getValue(KEY_EXCHANGE_KEY, &srtpKeyExchange_);
+        srtpMap->getValue(RTP_FALLBACK_KEY, &srtpFallback_);
     }
 
     // get zrtp submap
-    zrtpMap = (MappingNode *)(map->getValue(zrtpKey));
+    MappingNode *zrtpMap = static_cast<MappingNode *>(map.getValue(ZRTP_KEY));
 
     if (zrtpMap) {
-        zrtpMap->getValue(displaySasKey, &zrtpDisplaySas_);
-        zrtpMap->getValue(displaySasOnceKey, &zrtpDisplaySasOnce_);
-        zrtpMap->getValue(helloHashEnabledKey, &zrtpHelloHash_);
-        zrtpMap->getValue(notSuppWarningKey, &zrtpNotSuppWarning_);
+        zrtpMap->getValue(DISPLAY_SAS_KEY, &zrtpDisplaySas_);
+        zrtpMap->getValue(DISPLAY_SAS_ONCE_KEY, &zrtpDisplaySasOnce_);
+        zrtpMap->getValue(HELLO_HASH_ENABLED_KEY, &zrtpHelloHash_);
+        zrtpMap->getValue(NOT_SUPP_WARNING_KEY, &zrtpNotSuppWarning_);
     }
 
     // get tls submap
-    tlsMap = (MappingNode *)(map->getValue(tlsKey));
+    MappingNode *tlsMap = static_cast<MappingNode *>(map.getValue(TLS_KEY));
 
     if (tlsMap) {
-        tlsMap->getValue(tlsEnableKey, &tlsEnable_);
-        tlsMap->getValue(tlsPortKey, &tlsPort_);
-        tlsMap->getValue(certificateKey, &tlsCertificateFile_);
-        tlsMap->getValue(calistKey, &tlsCaListFile_);
-        tlsMap->getValue(ciphersKey, &tlsCiphers_);
-        tlsMap->getValue(methodKey, &tlsMethod_);
-        tlsMap->getValue(tlsPasswordKey, &tlsPassword_);
-        tlsMap->getValue(privateKeyKey, &tlsPrivateKeyFile_);
-        tlsMap->getValue(requireCertifKey, &tlsRequireClientCertificate_);
-        tlsMap->getValue(serverKey, &tlsServerName_);
-        tlsMap->getValue(verifyClientKey, &tlsVerifyServer_);
-        tlsMap->getValue(verifyServerKey, &tlsVerifyClient_);
+        tlsMap->getValue(TLS_ENABLE_KEY, &tlsEnable_);
+        std::string tlsPort;
+        tlsMap->getValue(TLS_PORT_KEY, &tlsPort);
+        tlsListenerPort_ = atoi(tlsPort.c_str());
+        tlsMap->getValue(CERTIFICATE_KEY, &tlsCertificateFile_);
+        tlsMap->getValue(CALIST_KEY, &tlsCaListFile_);
+        tlsMap->getValue(CIPHERS_KEY, &tlsCiphers_);
+        tlsMap->getValue(METHOD_KEY, &tlsMethod_);
+        tlsMap->getValue(TLS_PASSWORD_KEY, &tlsPassword_);
+        tlsMap->getValue(PRIVATE_KEY_KEY, &tlsPrivateKeyFile_);
+        tlsMap->getValue(REQUIRE_CERTIF_KEY, &tlsRequireClientCertificate_);
+        tlsMap->getValue(SERVER_KEY, &tlsServerName_);
+        tlsMap->getValue(VERIFY_CLIENT_KEY, &tlsVerifyServer_);
+        tlsMap->getValue(VERIFY_SERVER_KEY, &tlsVerifyClient_);
         // FIXME
-        tlsMap->getValue(timeoutKey, &tlsNegotiationTimeoutSec_);
-        tlsMap->getValue(timeoutKey, &tlsNegotiationTimeoutMsec_);
+        tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutSec_);
+        tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutMsec_);
     }
 }
 
@@ -451,10 +441,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     srtpKeyExchange_ = details[CONFIG_SRTP_KEY_EXCHANGE];
 
     // TLS settings
-    // The TLS listener is unique and globally defined through IP2IP_PROFILE
-    if (isIP2IP())
-        tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
-
+    tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
     tlsEnable_ = details[CONFIG_TLS_ENABLE];
     tlsCaListFile_ = details[CONFIG_TLS_CA_LIST_FILE];
     tlsCertificateFile_ = details[CONFIG_TLS_CERTIFICATE_FILE];
@@ -665,8 +652,6 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 void SIPAccount::initTlsConfiguration()
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    tlsListenerPort_ = tlsPort_;
-
     pjsip_tls_setting_default(&tlsSetting_);
 
     pj_cstr(&tlsSetting_.ca_list_file, tlsCaListFile_.c_str());
@@ -901,6 +886,7 @@ std::string computeMd5HashFromCredential(const std::string& username,
     MD5_APPEND(&pms, realm.data(), realm.length());
     MD5_APPEND(&pms, ":", 1);
     MD5_APPEND(&pms, password.data(), password.length());
+#undef MD5_APPEND
 
     unsigned char digest[16];
     pj_md5_final(&pms, digest);
@@ -916,13 +902,17 @@ std::string computeMd5HashFromCredential(const std::string& username,
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
 {
+    // we can not authenticate without credentials
+    if (creds.empty()) {
+        ERROR("SIPAccount: Cannot authenticate with empty credentials list");
+        return;
+    }
+
     using std::vector;
     using std::string;
     using std::map;
 
     bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
-
-    assert(creds.size() > 0); // we can not authenticate without credentials
 
     credentials_ = creds;
 
@@ -980,7 +970,8 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     }
 }
 
-const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials()
+const std::vector<std::map<std::string, std::string> > &
+SIPAccount::getCredentials() const
 {
     return credentials_;
 }
@@ -1012,8 +1003,7 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
     portstr << localPort_;
     ip2ipAccountDetails[CONFIG_LOCAL_PORT] = portstr.str();
 
-    std::map<std::string, std::string> tlsSettings;
-    tlsSettings = getTlsSettings();
+    std::map<std::string, std::string> tlsSettings(getTlsSettings());
     std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
                   ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -1022,8 +1012,8 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 
 std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 {
-    std::map<std::string, std::string> tlsSettings;
     assert(isIP2IP());
+    std::map<std::string, std::string> tlsSettings;
 
     std::stringstream portstr;
     portstr << tlsListenerPort_;

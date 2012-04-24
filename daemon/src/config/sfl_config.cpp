@@ -30,7 +30,7 @@
  */
 
 #include "sfl_config.h"
-#include "../global.h"
+#include "logger.h"
 #include <fstream>
 #include <cstdlib>
 #include <sys/types.h>

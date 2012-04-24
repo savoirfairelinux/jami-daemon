@@ -40,12 +40,12 @@ using namespace sfl_video;
 VideoPreference::VideoPreference() :
     v4l2_list_(new VideoV4l2ListThread), device_(), channel_(), size_(), rate_()
 {
-	v4l2_list_->start();
+    v4l2_list_->start();
 }
 
 VideoPreference::~VideoPreference()
 {
-	delete v4l2_list_;
+    delete v4l2_list_;
 }
 
 std::map<std::string, std::string> VideoPreference::getSettings() const
@@ -64,13 +64,8 @@ std::map<std::string, std::string> VideoPreference::getSettings() const
     return args;
 }
 
-void VideoPreference::serialize(Conf::YamlEmitter *emitter)
+void VideoPreference::serialize(Conf::YamlEmitter &emitter)
 {
-	if (emitter == NULL) {
-		ERROR("VideoPreference: Error: emitter is NULL while serializing");
-		return;
-	}
-
     Conf::MappingNode preferencemap(NULL);
 
     Conf::ScalarNode device(device_);
@@ -83,19 +78,14 @@ void VideoPreference::serialize(Conf::YamlEmitter *emitter)
     preferencemap.setKeyValue(videoSizeKey, &size);
     preferencemap.setKeyValue(videoRateKey, &rate);
 
-    emitter->serializeVideoPreference(&preferencemap);
+    emitter.serializePreference(&preferencemap, "videoPreferences");
 }
 
-void VideoPreference::unserialize(const Conf::MappingNode *map)
+void VideoPreference::unserialize(const Conf::MappingNode &map)
 {
-    if (map == NULL) {
-        ERROR("VideoPreference: Error: Preference map is NULL");
-        return;
-    }
-
-    map->getValue(videoDeviceKey, &device_);
-    map->getValue(videoChannelKey, &channel_);
-    map->getValue(videoSizeKey, &size_);
-    map->getValue(videoRateKey, &rate_);
+    map.getValue(videoDeviceKey, &device_);
+    map.getValue(videoChannelKey, &channel_);
+    map.getValue(videoSizeKey, &size_);
+    map.getValue(videoRateKey, &rate_);
 }
 

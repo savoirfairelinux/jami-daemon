@@ -35,6 +35,7 @@
 #include "video/video_endpoint.h"
 #include "video/video_preview.h"
 #include "account.h"
+#include "logger.h"
 #include "manager.h"
 
 namespace {

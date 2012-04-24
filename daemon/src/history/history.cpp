@@ -36,7 +36,7 @@
 #include <fstream>
 #include <sys/stat.h> // for mkdir
 #include <ctime>
-#include "global.h"
+#include "fileutils.h"
 #include "logger.h"
 #include "call.h"
 

@@ -2,7 +2,8 @@
 #include <climits>
 #include <fstream>
 
-#include "global.h"
+#include "sfl_types.h"
+#include "logger.h"
 #include "gaincontrol.h"
 
 #define SFL_GAIN_ATTACK_TIME 10
@@ -81,7 +82,7 @@ double GainControl::DetectionAverage::getAverage(double in)
 GainControl::Limiter::Limiter(double r, double thresh) : ratio_(r), threshold_(thresh)
 {}
 
-double GainControl::Limiter::limit(double in)
+double GainControl::Limiter::limit(double in) const
 {
     double out = (in > threshold_ ? (ratio_ * (in - threshold_)) + threshold_ :
            in < -threshold_ ? (ratio_ * (in + threshold_)) - threshold_ : in);

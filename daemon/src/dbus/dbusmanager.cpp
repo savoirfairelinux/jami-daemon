@@ -32,6 +32,7 @@
 #include "dbusmanager.h"
 #include "global.h"
 #include "manager.h"
+#include "logger.h"
 #include "instance.h"
 
 #include "callmanager.h"
@@ -57,7 +58,7 @@ DBusManager::DBusManager() : callManager_(0)
         DBus::_init_threading();
         DBus::default_dispatcher = &dispatcher_;
 
-        DBus::Connection sessionConnection = DBus::Connection::SessionBus();
+        DBus::Connection sessionConnection(DBus::Connection::SessionBus());
         sessionConnection.request_name("org.sflphone.SFLphone");
 
         callManager_ = new CallManager(sessionConnection);
@@ -69,7 +70,7 @@ DBusManager::DBusManager() : callManager_(0)
 #endif
 
 #ifdef USE_NETWORKMANAGER
-        DBus::Connection systemConnection = DBus::Connection::SystemBus();
+        DBus::Connection systemConnection(DBus::Connection::SystemBus());
         networkManager_ = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 
@@ -100,7 +101,7 @@ void DBusManager::exec()
         ERROR("%s: %s, exiting\n", err.name(), err.what());
         ::exit(EXIT_FAILURE);
     } catch (const std::exception &err) {
-        ERROR("%s: %s, exiting\n", err.what());
+        ERROR("%s: exiting\n", err.what());
         ::exit(EXIT_FAILURE);
     }
 }
@@ -113,7 +114,7 @@ void DBusManager::exit()
         ERROR("%s: %s, exiting\n", err.name(), err.what());
         ::exit(EXIT_FAILURE);
     } catch (const std::exception &err) {
-        ERROR("%s: %s, exiting\n", err.what());
+        ERROR("%s: exiting\n", err.what());
         ::exit(EXIT_FAILURE);
     }
 }

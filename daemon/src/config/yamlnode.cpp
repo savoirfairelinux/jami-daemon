@@ -29,32 +29,30 @@
  */
 
 #include "yamlnode.h"
-#include "global.h"
+#include <cstdlib>
+#include "logger.h"
 
 namespace Conf {
 
-
 void YamlDocument::addNode(YamlNode *node)
 {
-    Sequence::iterator it = doc.end();
-    doc.insert(it, node);
+    Sequence::iterator it = doc_.end();
+    doc_.insert(it, node);
 }
 
 YamlNode *YamlDocument::popNode()
 {
-    YamlNode *node = doc.front();
+    YamlNode *node = doc_.front();
 
     //removed element's destructor is called
-    doc.pop_front();
+    doc_.pop_front();
 
     return node;
 }
 
 void YamlDocument::deleteChildNodes()
 {
-    Sequence::iterator it = doc.begin();
-
-    while (it != doc.end()) {
+    for (Sequence::iterator it = doc_.begin(); it != doc_.end(); ++it) {
         YamlNode *yamlNode = static_cast<YamlNode *>(*it);
 
         switch (yamlNode->getType()) {
@@ -83,36 +81,33 @@ void YamlDocument::deleteChildNodes()
             default:
                 break;
         }
-
-        it++;
     }
 }
 
 void MappingNode::addNode(YamlNode *node)
 {
-    Mapping::iterator it = map.end();
-    map.insert(it, std::pair<std::string, YamlNode *> (tmpKey, node));
+    setKeyValue(tmpKey_, node);
 }
+
+typedef std::map<std::string, YamlNode*> Mapping;
 
 void MappingNode::setKeyValue(const std::string &key, YamlNode *value)
 {
-    Mapping::iterator it = map.end();
-    map.insert(it, std::pair<std::string, YamlNode *> (key, value));
+    Mapping::iterator it = map_.end();
+    map_.insert(it, std::pair<std::string, YamlNode *>(key, value));
 }
 
 void MappingNode::removeKeyValue(const std::string &key)
 {
-
-    Mapping::iterator it = map.find(key);
-    map.erase(it);
+    Mapping::iterator it = map_.find(key);
+    map_.erase(it);
 }
-
 
 YamlNode *MappingNode::getValue(const std::string &key) const
 {
-    Mapping::const_iterator it = map.find(key);
+    Mapping::const_iterator it = map_.find(key);
 
-    if (it != map.end()) {
+    if (it != map_.end()) {
         return it->second;
     } else {
         DEBUG("MappingNode: Could not find %s", key.c_str());
@@ -123,7 +118,6 @@ YamlNode *MappingNode::getValue(const std::string &key) const
 void MappingNode::getValue(const std::string &key, bool *b) const
 {
     ScalarNode *node = static_cast<ScalarNode*>(getValue(key));
-
     if (!node)
         return;
 
@@ -137,7 +131,7 @@ void MappingNode::getValue(const std::string &key, int *i) const
     if (!node)
         return;
 
-    *i = atoi(node->getValue().c_str());
+    *i = std::atoi(node->getValue().c_str());
 }
 
 void MappingNode::getValue(const std::string &key, std::string *v) const
@@ -153,9 +147,7 @@ void MappingNode::getValue(const std::string &key, std::string *v) const
 
 void MappingNode::deleteChildNodes()
 {
-    Mapping::iterator it;
-
-    for (it = map.begin(); it != map.end(); ++it) {
+    for (Mapping::iterator it = map_.begin(); it != map_.end(); ++it) {
         YamlNode *yamlNode = static_cast<YamlNode *>(it->second);
 
         if (!yamlNode)
@@ -192,16 +184,13 @@ void MappingNode::deleteChildNodes()
 
 void SequenceNode::addNode(YamlNode *node)
 {
-    Sequence::iterator it = seq.end();
-    seq.insert(it, node);
+    Sequence::iterator it = seq_.end();
+    seq_.insert(it, node);
 }
-
 
 void SequenceNode::deleteChildNodes()
 {
-    Sequence::iterator it;
-
-    for (it = seq.begin(); it != seq.end(); ++it) {
+    for (Sequence::iterator it = seq_.begin(); it != seq_.end(); ++it) {
         YamlNode *yamlNode = static_cast<YamlNode *>(*it);
 
         switch (yamlNode->getType()) {

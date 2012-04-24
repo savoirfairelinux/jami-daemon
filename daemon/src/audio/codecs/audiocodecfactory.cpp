@@ -31,11 +31,15 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include "audiocodecfactory.h"
 #include <cstdlib>
 #include <algorithm> // for std::find
 #include "fileutils.h"
+#include "logger.h"
 
 AudioCodecFactory::AudioCodecFactory() :
     codecsMap_(), defaultCodecList_(), libCache_(), codecInMemory_()

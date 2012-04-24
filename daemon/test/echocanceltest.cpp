@@ -33,15 +33,12 @@
 #include "echocanceltest.h"
 #include "config/sfl_config.h"
 
-using namespace std;
-
 EchoCancelTest::EchoCancelTest() : echoCanceller_() {}
 
 void EchoCancelTest::testEchoCancelProcessing()
 {
-    const int nbSamples = 160;
-    int inputFileLength = 0;
-    int remainingLength = 0;
+    using std::ifstream;
+    using std::ofstream;
 
     SFLDataFormat micData[1000];
     SFLDataFormat spkrData[1000];
@@ -54,13 +51,12 @@ void EchoCancelTest::testEchoCancelProcessing()
     // echo cancelled output
     ofstream echoCancelFile("sample_echocancel_500ms_8kHz_16bit.raw", ofstream::out);
 
-    micFile.seekg(0, ios::end);
-    inputFileLength = micFile.tellg() / sizeof(SFLDataFormat);
-    micFile.seekg(0, ios::beg);
+    micFile.seekg(0, std::ios::end);
+    size_t inputFileLength = micFile.tellg() / sizeof(SFLDataFormat);
+    micFile.seekg(0, std::ios::beg);
 
-    remainingLength = inputFileLength;
-
-    while (remainingLength >= nbSamples) {
+    const int nbSamples = 160;
+    for (int remainingLength = inputFileLength; remainingLength >= nbSamples; remainingLength -= nbSamples) {
         micFile.read(reinterpret_cast<char *>(micData), nbSamples * sizeof(SFLDataFormat));
         spkrFile.read(reinterpret_cast<char *>(spkrData), nbSamples * sizeof(SFLDataFormat));
 
@@ -68,8 +64,6 @@ void EchoCancelTest::testEchoCancelProcessing()
         echoCanceller_.process(micData, echoCancelData, nbSamples);
 
         echoCancelFile.write(reinterpret_cast<char *>(echoCancelData), nbSamples * sizeof(SFLDataFormat));
-
-        remainingLength -= nbSamples;
     }
 
     CPPUNIT_ASSERT(true);

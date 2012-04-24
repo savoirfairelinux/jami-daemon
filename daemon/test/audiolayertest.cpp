@@ -28,23 +28,21 @@
  *  as that of the covered work.
  */
 
-#include <stdio.h>
-#include <sstream>
-
 #include "audiolayertest.h"
-#include "audio/pulseaudio/audiostream.h"
 
+#include "logger.h"
+#include "manager.h"
+#include "audio/alsa/alsalayer.h"
+#include "audio/pulseaudio/pulselayer.h"
+#include "test_utils.h"
 #include <unistd.h>
-
-using std::cout;
-using std::endl;
 
 AudioLayerTest::AudioLayerTest() : manager_(0), pulselayer_(0), layer_(0)
 {}
 
 void AudioLayerTest::testAudioLayerConfig()
 {
-   DEBUG("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
+    TITLE();
 
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
 
@@ -68,12 +66,12 @@ void AudioLayerTest::testAudioLayerConfig()
 
 void AudioLayerTest::testAudioLayerSwitch()
 {
-   DEBUG("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
+    TITLE();
 
     bool wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
 
     for (int i = 0; i < 2; i++) {
-       DEBUG("iter - %i", i);
+        DEBUG("iter - %i", i);
         Manager::instance().switchAudioManager();
 
         if (wasAlsa)
@@ -82,17 +80,19 @@ void AudioLayerTest::testAudioLayerSwitch()
             CPPUNIT_ASSERT(dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
 
         wasAlsa = dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()) != 0;
-        usleep(100000);
+        const struct timespec req = {0, 100000000};
+        nanosleep(&req, 0);
     }
 }
 
 void AudioLayerTest::testPulseConnect()
 {
-   DEBUG("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
+    TITLE();
 
     if (dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver())) {
         Manager::instance().switchAudioManager();
-        usleep(100000);
+        const struct timespec req = {0, 100000000};
+        nanosleep(&req, 0);
     }
 
     pulselayer_ = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());

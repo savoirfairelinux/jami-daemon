@@ -43,6 +43,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "gtk2_wrappers.h"
 #include "eel-gconf-extensions.h"
 #include "dbus.h"
 #include "logger.h"

@@ -66,7 +66,8 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         }
 
         int startSymmetricRtpThread() {
-            return rtpThread_.start();
+            rtpThread_.start();
+            return 0;
         }
 
     private:

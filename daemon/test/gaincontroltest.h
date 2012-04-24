@@ -33,8 +33,8 @@
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
-#ifndef _GAINCONTROL_TEST_
-#define _GAINCONTROL_TEST_
+#ifndef GAINCONTROL_TEST_
+#define GAINCONTROL_TEST_
 
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
@@ -42,9 +42,7 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
-
-#include "audio/gaincontrol.h"
+#include "sfl_types.h"
 
 class GainControlTest: public CppUnit::TestFixture {
 
@@ -55,12 +53,8 @@ class GainControlTest: public CppUnit::TestFixture {
     public:
 
         void testGainProcessing();
-
-    private:
-
-
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(GainControlTest, "GainControlTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(GainControlTest);
 
-#endif
+#endif // GAINCONTROL_TEST_
