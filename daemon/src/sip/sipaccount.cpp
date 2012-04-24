@@ -807,7 +807,17 @@ std::string SIPAccount::getContactHeader() const
 
     // Else we determine this infor based on transport information
     std::string address, port;
+    std::ostringstream portstr;
+
     link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
+
+    if (!receivedParameter_.empty())
+       address = receivedParameter_;
+
+    if (rPort_ != -1) {
+        portstr << rPort_;
+        port = portstr.str();
+    }
 
     // UDP does not require the transport specification
     std::string scheme;
