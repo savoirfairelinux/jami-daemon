@@ -524,6 +524,9 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact(account->getContactHeader());
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
+    std::string received(account->getReceivedParameter());
+    pj_str_t pjReceived = pj_str((char *) received.c_str());
+
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
@@ -1632,6 +1635,17 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     pj_pool_release(pool);
 }
 
+void lookForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account)
+{
+    pj_str_t receivedValue = param->rdata->msg_info.via->recvd_param;
+
+    if (receivedValue.slen) {
+        std::string publicIpFromReceived(receivedValue.ptr, receivedValue.slen);
+        DEBUG("Cool received received parameter... uhhh?, the value is %s", publicIpFromReceived.c_str());
+        account->setReceivedParameter(publicIpFromReceived);
+    }
+}
+
 void registration_cb(pjsip_regc_cbparam *param)
 {
     if (param == NULL) {
@@ -1670,22 +1684,23 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->code < 0 || param->code >= 300) {
         switch (param->code) {
-            case 606:
+            case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
+                lookForReceivedParameter(param, account);
                 account->setRegistrationState(ErrorNotAcceptable);
                 break;
 
-            case 503:
-            case 408:
+            case PJSIP_SC_SERVICE_UNAVAILABLE:
+            case PJSIP_SC_REQUEST_TIMEOUT:
                 account->setRegistrationState(ErrorHost);
                 break;
 
-            case 401:
-            case 403:
-            case 404:
+            case PJSIP_SC_UNAUTHORIZED:
+            case PJSIP_SC_FORBIDDEN:
+            case PJSIP_SC_NOT_FOUND:
                 account->setRegistrationState(ErrorAuth);
                 break;
 
-            case 423:
+            case PJSIP_SC_INTERVAL_TOO_BRIEF:
                 // Expiration Interval Too Brief
                 account->doubleRegistrationExpire();
                 account->registerVoIPLink();

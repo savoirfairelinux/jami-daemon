@@ -98,6 +98,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , registrationStateDetailed_()
     , keepAliveTimer_()
     , link_(SIPVoIPLink::instance())
+    , receivedParameter_()
 {}
 
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
@@ -419,7 +420,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
-    if(stunServer_ != details[CONFIG_STUN_SERVER]) {
+    if (stunServer_ != details[CONFIG_STUN_SERVER]) {
         DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);

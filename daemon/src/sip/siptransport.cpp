@@ -342,10 +342,14 @@ void SipTransport::createSipTransport(SIPAccount &account)
     }
 
     if (!account.transport_) {
-        DEBUG("SipTransport: Looking into previously created transport map for %s:%d",
-                account.getLocalInterface().c_str(), account.getLocalPort());
+        std::ostringstream key;
+        key << account.getLocalInterface();
+        key << ":";
+        key << account.getLocalPort();
+        DEBUG("SipTransport: Looking into previously created transport map for"
+              " %s", key.str().c_str());
         // Could not create new transport, this transport may already exists
-        pjsip_transport *cachedTransport = transportMap_[account.getLocalPort()];
+        pjsip_transport *cachedTransport = transportMap_[key.str()];
 
         if (cachedTransport) {
             account.transport_ = cachedTransport;
@@ -418,7 +422,8 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     std::ostringstream fullAddress;
     fullAddress << listeningAddress << ":" << listeningPort;
     pj_str_t udpString;
-    pj_cstr(&udpString, fullAddress.str().c_str());
+    std::string fullAddressStr(fullAddress.str());
+    pj_cstr(&udpString, fullAddressStr.c_str());
     pj_sockaddr boundAddr;
     pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &udpString, &boundAddr);
     pj_status_t status;
@@ -435,10 +440,10 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
         }
     }
 
-    DEBUG("SipTransport: Listening address %s, listening port %d", listeningAddress.c_str(), listeningPort);
+    DEBUG("SipTransport: Listening address %s", fullAddressStr.c_str());
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
-    transportMap_[listeningPort] = transport;
+    transportMap_[fullAddressStr] = transport;
 
     return transport;
 }

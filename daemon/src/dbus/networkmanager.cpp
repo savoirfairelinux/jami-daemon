@@ -51,7 +51,10 @@ void NetworkManager::StateChanged(const uint32_t &state)
 
 void NetworkManager::PropertiesChanged(const std::map<std::string, ::DBus::Variant> &argin0)
 {
-    WARN("Properties changed: %s", argin0.begin()->first.c_str());
+    WARN("Properties changed: ");
+    for (std::map<std::string, ::DBus::Variant>::const_iterator iter = argin0.begin();
+            iter != argin0.end(); ++iter)
+        WARN("%s", iter->first.c_str());
     Manager::instance().registerAccounts();
 }
 

@@ -169,7 +169,7 @@ class SipTransport {
          * UDP Transports are stored in this map in order to retreive them in case
          * several accounts would share the same port number.
          */
-        std::map<pj_uint16_t, pjsip_transport*> transportMap_;
+        std::map<std::string, pjsip_transport*> transportMap_;
 
         /**
          * Stun resolver array
