@@ -107,12 +107,10 @@ YamlNode *MappingNode::getValue(const std::string &key) const
 {
     Mapping::const_iterator it = map_.find(key);
 
-    if (it != map_.end()) {
+    if (it != map_.end())
         return it->second;
-    } else {
-        DEBUG("MappingNode: Could not find %s", key.c_str());
+    else
         return NULL;
-    }
 }
 
 void MappingNode::getValue(const std::string &key, bool *b) const
