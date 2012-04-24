@@ -524,9 +524,6 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact(account->getContactHeader());
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
-    std::string received(account->getReceivedParameter());
-    pj_str_t pjReceived = pj_str((char *) received.c_str());
-
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
