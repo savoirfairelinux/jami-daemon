@@ -192,13 +192,14 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
 
+    pjsip_msg_body *body = rdata->msg_info.msg->body;
     if (method->id == PJSIP_OTHER_METHOD) {
         pj_str_t *str = &method->name;
         std::string request(str->ptr, str->slen);
 
         if (request.find("NOTIFY") != std::string::npos) {
-            if (rdata->msg_info.msg->body) {
-                void *data = rdata->msg_info.msg->body->data;
+            if (body) {
+                void *data = body->data;
                 if (data) {
                     int voicemail = 0;
                     int ret = sscanf((const char*) data, "Voice-Message: %d/", &voicemail);
@@ -221,7 +222,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
 
     pjmedia_sdp_session *r_sdp;
-    pjsip_msg_body *body = rdata->msg_info.msg->body;
 
     if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
         r_sdp = NULL;
@@ -277,9 +277,9 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     call->getAudioRtp().initConfig();
     call->getAudioRtp().initSession();
 
-    if (rdata->msg_info.msg->body) {
+    if (body) {
         char sdpbuffer[1000];
-        int len = rdata->msg_info.msg->body->print_body(rdata->msg_info.msg->body, sdpbuffer, sizeof sdpbuffer);
+        int len = rdata->msg_info.msg->body->print_body(body, sdpbuffer, sizeof sdpbuffer);
 
         if (len == -1) // error
             len = 0;
