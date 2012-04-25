@@ -261,8 +261,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         addrSdp = addrToUse;
 
     char tmp[PJSIP_MAX_URL_SIZE];
-    int length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, length);
+    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+    std::string peerNumber(tmp, std::min(length, sizeof tmp));
     sip_utils::stripSipUriPrefix(peerNumber);
 
     call->setConnectionState(Call::PROGRESSING);
@@ -545,7 +545,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
-    if (!account->getServiceRoute().empty())
+    if (not account->getServiceRoute().empty())
         pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(account->getServiceRoute(), pool_));
 
     pjsip_regc_set_credentials(regc, account->getCredentialCount(), account->getCredInfo());
@@ -1678,6 +1678,7 @@ void registration_cb(pjsip_regc_cbparam *param)
         }
 
     } else {
+        lookForReceivedParameter(param, account);
         if (account->isRegistered())
             account->setRegistrationState(Registered);
         else {
