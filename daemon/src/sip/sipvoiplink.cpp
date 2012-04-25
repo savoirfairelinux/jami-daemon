@@ -1613,11 +1613,6 @@ void registration_cb(pjsip_regc_cbparam *param)
         return;
     }
 
-    if(param->code == 200) {
-        account->setRegister(true);
-        account->setRegistrationState(Registered);
-    }
-
     if (account->isContactUpdateEnabled())
         update_contact_header(param, account);
 
