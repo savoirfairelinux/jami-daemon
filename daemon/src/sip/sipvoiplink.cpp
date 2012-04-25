@@ -171,7 +171,15 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
+    if (!rdata or !rdata->msg_info.msg) {
+        ERROR("SIPVoIPLink: rx_data is NULL");
+        return false;
+    }
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
+    if (!method) {
+        ERROR("SIPVoIPLink: method is NULL");
+        return false;
+    }
 
     if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
         return true;
@@ -188,15 +196,19 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         pj_str_t *str = &method->name;
         std::string request(str->ptr, str->slen);
 
-        if (request.find("NOTIFY") != (size_t)-1) {
-            int voicemail;
-
-            if (sscanf((const char*)rdata->msg_info.msg->body->data, "Voice-Message: %d/", &voicemail) == 1 && voicemail != 0)
-                Manager::instance().startVoiceMessageNotification(account_id, voicemail);
+        if (request.find("NOTIFY") != std::string::npos) {
+            if (rdata->msg_info.msg->body) {
+                void *data = rdata->msg_info.msg->body->data;
+                if (data) {
+                    int voicemail = 0;
+                    int ret = sscanf((const char*) data, "Voice-Message: %d/", &voicemail);
+                    if (ret == 1 and voicemail != 0)
+                        Manager::instance().startVoiceMessageNotification(account_id, voicemail);
+                }
+            }
         }
 
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
-
         return true;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
         handleIncomingOptions(rdata);
