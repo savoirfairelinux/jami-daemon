@@ -1180,7 +1180,7 @@ void
 dbus_unregister(int pid)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_Instance_unregister(instance_proxy, pid, &error);
+    org_sflphone_SFLphone_Instance_unregister_async(instance_proxy, pid, NULL, NULL);
     check_error(error);
 }
 
