@@ -41,7 +41,7 @@
 class G722 : public sfl::AudioCodec {
 
     public:
-        G722(int payload = 9) : sfl::AudioCodec(payload, "G722"), decode_state_(), encode_state_() {
+        G722() : sfl::AudioCodec(9, "G722"), decode_state_(), encode_state_() {
             clockRate_ = 16000;
             frameSize_ = 320; // samples, 20 ms at 16kHz
             channel_   = 1;
@@ -765,7 +765,7 @@ class G722 : public sfl::AudioCodec {
 // cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* create()
 {
-    return new G722(9);
+    return new G722;
 }
 
 // cppcheck-suppress unusedFunction

@@ -37,7 +37,7 @@ class Alaw : public sfl::AudioCodec {
 
     public:
         // 8 PCMA A 8000 1 [RFC3551]
-        Alaw(int payload = 8) : sfl::AudioCodec(payload, "PCMA") {
+        Alaw() : sfl::AudioCodec(8, "PCMA") {
             clockRate_ = 8000;
             frameSize_ = 160; // samples, 20 ms at 8kHz
             channel_   = 1;
@@ -131,7 +131,7 @@ class Alaw : public sfl::AudioCodec {
 // cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* create()
 {
-    return new Alaw(8);
+    return new Alaw;
 }
 
 // cppcheck-suppress unusedFunction
