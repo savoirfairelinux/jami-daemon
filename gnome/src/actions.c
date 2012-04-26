@@ -749,16 +749,24 @@ sflphone_place_call(callable_obj_t * c)
 {
     account_t * account = NULL;
 
-    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
-
-    if (c->_state != CALL_STATE_DIALING)
+    if(c == NULL) {
+        ERROR("Actions: Callable object is NULL while making new call");
         return -1;
+    }
 
-    if (!*c->_peer_number)
+    DEBUG("Actions: Placing call from %s to %s using account %s", c->_display_name, c->_peer_number, c->_accountID);
+
+    if (c->_state != CALL_STATE_DIALING) {
+        ERROR("Actions: Call not in state dialing, cannot place call");
         return -1;
+    }
 
-    DEBUG("Actions: Get account for this call");
+    if (!c->_peer_number || strlen(c->_peer_number) == 0) {
+        ERROR("Actions: No peer number set for this call");
+        return -1;
+    }
 
+    // Get the account for this call
     if (strlen(c->_accountID) != 0) {
         DEBUG("Actions: Account %s already set for this call", c->_accountID);
         account = account_list_get_by_id(c->_accountID);
@@ -767,29 +775,30 @@ sflphone_place_call(callable_obj_t * c)
         account = account_list_get_current();
     }
 
-    if (account == NULL) {
-        DEBUG("Actions: Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);
-        return -1;
+    // Make sure the previously found account is registered, take first one registered elsewhere
+    if (account) {
+        gpointer status = g_hash_table_lookup(account->properties, "Status");
+        if (!utf8_case_equal(status, "REGISTERED")) {
+            // Place the call with the first registered account
+            account = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
+        }
     }
 
-    gpointer status = g_hash_table_lookup(account->properties, "Status");
-    if (utf8_case_equal(status, "REGISTERED")) {
-        /* The call is made with the current account */
-        // free memory for previous account id and get a new one
-        g_free(c->_accountID);
-        c->_accountID = g_strdup(account->accountID);
-        dbus_place_call(c);
-    } else {
-        /* Place the call with the first registered account
-         * and switch the current account.
-         * If we are here, we can be sure that there is at least one.
-         */
-        account = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
-        g_free(c->_accountID);
-        c->_accountID = g_strdup(account->accountID);
-        dbus_place_call(c);
-        notify_current_account(account);
+    // If there is no account specified or found, fallback on IP2IP call
+    if(account == NULL) {
+        DEBUG("Actions: Could not find an account for this call, making ip to ip call");
+        account = account_list_get_by_id("IP2IP");
+        if (account == NULL) {
+            ERROR("Actions: Could not determine any account for this call");
+            return -1;
+        }
     }
+
+    // free memory for previous account id and use the new one in case it changed
+    g_free(c->_accountID);
+    c->_accountID = g_strdup(account->accountID);
+    dbus_place_call(c);
+    notify_current_account(account);
 
     c->_history_state = g_strdup(OUTGOING_STRING);
 
