@@ -618,6 +618,8 @@ void SIPVoIPLink::sendUnregister(Account *a)
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
+    DEBUG("UserAgent: Register new keep alive timer %d with delay %d", timer.id, delay.sec);
+
     if (timer.id == -1)
         WARN("UserAgent: Timer already scheduled");
 
@@ -1586,17 +1588,34 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     pj_pool_release(pool);
 }
 
-void lookForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account)
+static void lookForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account)
 {
     pj_str_t receivedValue = param->rdata->msg_info.via->recvd_param;
 
     if (receivedValue.slen) {
         std::string publicIpFromReceived(receivedValue.ptr, receivedValue.slen);
-        DEBUG("Cool received received parameter... uhhh?, the value is %s", publicIpFromReceived.c_str());
         account->setReceivedParameter(publicIpFromReceived);
     }
 
     account->setRPort(param->rdata->msg_info.via->rport_param);
+}
+
+static void processRegistrationError(pjsip_regc_cbparam *param, SIPAccount *account, const RegistrationState &state)
+{
+    if(param == NULL) {
+        ERROR("UserAgent: param is NULL while processing registration error");
+        return;
+    }
+
+    if(account == NULL) {
+        ERROR("UserAgent: Account is NULL while processing registration error");
+        return;
+    }
+
+    account->stopKeepAliveTimer();
+    account->setRegistrationState(ErrorAuth);
+    account->setRegister(false);
+    SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
 }
 
 void registration_cb(pjsip_regc_cbparam *param)
@@ -1607,11 +1626,12 @@ void registration_cb(pjsip_regc_cbparam *param)
     }
 
     SIPAccount *account = static_cast<SIPAccount *>(param->token);
-
     if (account == NULL) {
         ERROR("SipVoipLink: account doesn't exist in registration callback");
         return;
     }
+
+    std::string accountid = account->getAccountID();
 
     if (account->isContactUpdateEnabled())
         update_contact_header(param, account);
@@ -1628,47 +1648,52 @@ void registration_cb(pjsip_regc_cbparam *param)
     }
 
     if (param->status != PJ_SUCCESS) {
-        account->setRegistrationState(ErrorAuth);
-        account->setRegister(false);
-        SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
+        ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+        processRegistrationError(param, account, ErrorAuth);
         return;
     }
 
     if (param->code < 0 || param->code >= 300) {
         switch (param->code) {
-            case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
-                lookForReceivedParameter(param, account);
-                account->setRegistrationState(ErrorNotAcceptable);
-                SIPVoIPLink::instance()->sendRegister(account);
+            case PJSIP_SC_MULTIPLE_CHOICES: // 300
+            case PJSIP_SC_MOVED_PERMANENTLY: // 301
+            case PJSIP_SC_MOVED_TEMPORARILY: // 302
+            case PJSIP_SC_USE_PROXY: // 305
+            case PJSIP_SC_ALTERNATIVE_SERVICE: // 380
+                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                processRegistrationError(param, account, Error);
                 break;
-
-            case PJSIP_SC_SERVICE_UNAVAILABLE:
-            case PJSIP_SC_REQUEST_TIMEOUT:
-                account->setRegistrationState(ErrorHost);
-                account->setRegister(false);
-                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
+            case PJSIP_SC_SERVICE_UNAVAILABLE: // 503
+                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                processRegistrationError(param, account, ErrorHost);
                 break;
-
-            case PJSIP_SC_UNAUTHORIZED:
-            case PJSIP_SC_FORBIDDEN:
-            case PJSIP_SC_NOT_FOUND:
-                account->setRegistrationState(ErrorAuth);
-                account->setRegister(false);
-                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
+            case PJSIP_SC_UNAUTHORIZED: // 401
+                // Automatically answered by PJSIP
+                account->registerVoIPLink();
                 break;
-
-            case PJSIP_SC_INTERVAL_TOO_BRIEF:
+            case PJSIP_SC_FORBIDDEN: // 403
+            case PJSIP_SC_NOT_FOUND: // 404
+                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                processRegistrationError(param, account, ErrorAuth);
+                break;
+            case PJSIP_SC_REQUEST_TIMEOUT: // 408
+                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                processRegistrationError(param, account, ErrorHost);
+                break;
+            case PJSIP_SC_INTERVAL_TOO_BRIEF: // 423
                 // Expiration Interval Too Brief
                 account->doubleRegistrationExpire();
                 account->registerVoIPLink();
                 account->setRegister(false);
-                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
                 break;
-
+            case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE: // 606
+                lookForReceivedParameter(param, account);
+                account->setRegistrationState(ErrorNotAcceptable);
+                account->registerVoIPLink();
+                break;
             default:
-                account->setRegistrationState(Error);
-                account->setRegister(false);
-                SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
+                ERROR("UserAgent: Could not register account %s with error %d", param->code);
+                processRegistrationError(param, account, Error);
                 break;
         }
 
