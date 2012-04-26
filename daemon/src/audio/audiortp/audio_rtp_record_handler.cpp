@@ -37,28 +37,27 @@
 
 namespace sfl {
 
-static const SFLDataFormat initFadeinFactor = 32000;
+static const SFLDataFormat INIT_FADE_IN_FACTOR = 32000;
 
 AudioRtpRecord::AudioRtpRecord() :
     audioCodec_(0)
     , audioCodecMutex_()
     , codecPayloadType_(0)
     , hasDynamicPayloadType_(false)
+    , decData_()     // std::tr1::arrays will be 0-initialized
+    , resampledData_()
+    , encodedData_()
     , converter_(0)
     , codecSampleRate_(0)
     , codecFrameSize_(0)
     , converterSamplingRate_(0)
     , dtmfQueue_()
-    , micAmplFactor_(initFadeinFactor)
+    , micAmplFactor_(INIT_FADE_IN_FACTOR)
     , noiseSuppress_(0)
     , audioProcessMutex_()
     , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
-{
-    memset(decData_, 0x0, sizeof decData_);
-    memset(resampledData_, 0x0, sizeof resampledData_);
-    memset(encodedData_, 0x0, sizeof encodedData_);
-}
+{}
 
 AudioRtpRecord::~AudioRtpRecord()
 {
@@ -116,14 +115,10 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
 
 int AudioRtpRecordHandler::processDataEncode()
 {
-    SFLDataFormat *micData 			= audioRtpRecord_.decData_;
-    unsigned char *micDataEncoded 	= audioRtpRecord_.encodedData_;
-    SFLDataFormat *micDataConverted = audioRtpRecord_.resampledData_;
-
     int codecSampleRate = getCodecSampleRate();
     int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
-    double resampleFactor = (double)mainBufferSampleRate / codecSampleRate;
+    double resampleFactor = (double) mainBufferSampleRate / codecSampleRate;
 
     // compute nb of byte to get coresponding to 1 audio frame
     int samplesToGet = resampleFactor * getCodecFrameSize();
@@ -132,10 +127,12 @@ int AudioRtpRecordHandler::processDataEncode()
     if (Manager::instance().getMainBuffer()->availForGet(id_) < bytesToGet)
         return 0;
 
+    SFLDataFormat *micData = audioRtpRecord_.decData_.data();
     int bytes = Manager::instance().getMainBuffer()->getData(micData, bytesToGet, id_);
 
     if (bytes != bytesToGet) {
-        ERROR("%s : asked %d bytes from mainbuffer, got %d", __PRETTY_FUNCTION__, bytesToGet, bytes);
+        ERROR("%s : asked %d bytes from mainbuffer, got %d",
+                __PRETTY_FUNCTION__, bytesToGet, bytes);
         return 0;
     }
 
@@ -147,6 +144,7 @@ int AudioRtpRecordHandler::processDataEncode()
         echoCanceller.getData(micData);
 
     SFLDataFormat *out = micData;
+    SFLDataFormat *micDataConverted = audioRtpRecord_.resampledData_.data();
 
     if (codecSampleRate != mainBufferSampleRate) {
         out = micDataConverted;
@@ -161,6 +159,7 @@ int AudioRtpRecordHandler::processDataEncode()
 
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
+        unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
         return audioRtpRecord_.audioCodec_->encode(micDataEncoded, out, getCodecFrameSize());
     }
 }
@@ -172,16 +171,14 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     int codecSampleRate = getCodecSampleRate();
 
-    SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_;
-    SFLDataFormat *spkrDataConverted = audioRtpRecord_.resampledData_;
-
     int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
-    int inSamples;
+    int inSamples = 0;
+    SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
         // Return the size of data in samples
-        inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded , spkrData , size);
+        inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
 
     fadeIn(spkrDataDecoded, inSamples, &audioRtpRecord_.micAmplFactor_);
@@ -194,10 +191,10 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
+        out = audioRtpRecord_.resampledData_.data();
         // Do sample rate conversion
         outSamples = ((float) inSamples * ((float) mainBufferSampleRate / (float) codecSampleRate));
-        audioRtpRecord_.converter_->resample(spkrDataDecoded, spkrDataConverted, codecSampleRate, mainBufferSampleRate, inSamples);
-        out = spkrDataConverted;
+        audioRtpRecord_.converter_->resample(spkrDataDecoded, out, codecSampleRate, mainBufferSampleRate, inSamples);
     }
 
     if (Manager::instance().getEchoCancelState())

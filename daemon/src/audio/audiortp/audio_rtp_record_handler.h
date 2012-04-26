@@ -34,6 +34,7 @@
 using std::ptrdiff_t;
 
 #include <ccrtp/rtp.h>
+#include <tr1/array>
 #include <list>
 
 class SIPCall;
@@ -72,7 +73,7 @@ timeval2microtimeout(const timeval& t)
 /**
  * Class meant to store internal data in order to encode/decode,
  * resample, process, and packetize audio streams. This class should not be
- * handled directly. Use AudioRtpRecorrdHandeler
+ * handled directly. Use AudioRtpRecordHandler
  */
 class AudioRtpRecord {
     public:
@@ -83,9 +84,9 @@ class AudioRtpRecord {
         ost::Mutex audioCodecMutex_;
         int codecPayloadType_;
         bool hasDynamicPayloadType_;
-        SFLDataFormat decData_[DEC_BUFFER_SIZE];
-        SFLDataFormat resampledData_[DEC_BUFFER_SIZE];
-        unsigned char encodedData_[DEC_BUFFER_SIZE];
+        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> decData_;
+        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> resampledData_;
+        std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converter_;
         int codecSampleRate_;
         int codecFrameSize_;
@@ -136,7 +137,7 @@ class AudioRtpRecordHandler {
         }
 
         const unsigned char *getMicDataEncoded() const {
-            return audioRtpRecord_.encodedData_;
+            return audioRtpRecord_.encodedData_.data();
         }
 
         void initBuffers();
