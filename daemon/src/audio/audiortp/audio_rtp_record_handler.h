@@ -51,9 +51,6 @@ namespace sfl {
 // Frequency (in packet number)
 #define RTP_TIMESTAMP_RESET_FREQ 100
 
-// Factor use to increase volume in fade in
-#define FADEIN_STEP_SIZE 4;
-
 static const int schedulingTimeout = 4000;
 static const int expireTimeout = 1000000;
 
@@ -92,12 +89,18 @@ class AudioRtpRecord {
         int codecFrameSize_;
         int converterSamplingRate_;
         std::list<int> dtmfQueue_;
-        SFLDataFormat micAmplFactor_;
+        SFLDataFormat fadeFactor_;
         NoiseSuppress *noiseSuppress_;
         ost::Mutex audioProcessMutex_;
         std::string callId_;
         unsigned int dtmfPayloadType_;
+
     private:
+        friend class AudioRtpRecordHandler;
+        /**
+        * Ramp In audio data to avoid audio click from peer
+        */
+        void fadeInDecodedData(size_t size);
         NON_COPYABLE(AudioRtpRecord);
 };
 
@@ -153,11 +156,6 @@ class AudioRtpRecordHandler {
          * Decode audio data received from peer
          */
         void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
-
-        /**
-        * Ramp In audio data to avoid audio click from peer
-        */
-        void fadeIn(SFLDataFormat *audio, size_t size, SFLDataFormat *factor);
 
         void setDtmfPayloadType(unsigned int payloadType) {
             audioRtpRecord_.dtmfPayloadType_ = payloadType;

@@ -29,6 +29,7 @@
 
 #include "audio_rtp_record_handler.h"
 #include <fstream>
+#include <algorithm>
 
 #include "logger.h"
 #include "sip/sipcall.h"
@@ -52,7 +53,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , codecFrameSize_(0)
     , converterSamplingRate_(0)
     , dtmfQueue_()
-    , micAmplFactor_(INIT_FADE_IN_FACTOR)
+    , fadeFactor_(INIT_FADE_IN_FACTOR)
     , noiseSuppress_(0)
     , audioProcessMutex_()
     , callId_("")
@@ -138,7 +139,7 @@ int AudioRtpRecordHandler::processDataEncode()
 
     int samples = bytesToGet / sizeof(SFLDataFormat);
 
-    fadeIn(micData, samples, &audioRtpRecord_.micAmplFactor_);
+    audioRtpRecord_.fadeInDecodedData(samples);
 
     if (Manager::instance().getEchoCancelState())
         echoCanceller.getData(micData);
@@ -169,10 +170,6 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     if (getCodecPayloadType() != payloadType)
         return;
 
-    int codecSampleRate = getCodecSampleRate();
-
-    int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
-
     int inSamples = 0;
     SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
@@ -181,13 +178,16 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
 
-    fadeIn(spkrDataDecoded, inSamples, &audioRtpRecord_.micAmplFactor_);
+    audioRtpRecord_.fadeInDecodedData(inSamples);
 
     // Normalize incomming signal
     gainController.process(spkrDataDecoded, inSamples);
 
     SFLDataFormat *out = spkrDataDecoded;
     int outSamples = inSamples;
+
+    int codecSampleRate = getCodecSampleRate();
+    int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
@@ -203,15 +203,17 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     Manager::instance().getMainBuffer()->putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
 
-void AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, size_t size, SFLDataFormat *factor)
+void AudioRtpRecord::fadeInDecodedData(size_t size)
 {
     // if factor reaches 0, this function should have no effect
-    if (!audio or !factor or *factor <= 0)
+    if (fadeFactor_ <= 0 or size > decData_.size())
         return;
 
-    while (size > 0)
-        audio[--size] /= *factor;
+    std::transform(decData_.begin(), decData_.begin() + size, decData_.begin(),
+            std::bind1st(std::divides<double>(), fadeFactor_));
 
-    *factor /= FADEIN_STEP_SIZE;
+    // Factor used to increase volume in fade in
+    const SFLDataFormat FADEIN_STEP_SIZE = 4;
+    fadeFactor_ /= FADEIN_STEP_SIZE;
 }
 }
