@@ -262,7 +262,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 {
     DEBUG("AudioSrtp: Initialize remote crypto context");
 
-    CryptoSuiteDefinition crypto = sfl::CryptoSuites[remoteCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
     delete remoteCryptoCtx_;
     remoteCryptoCtx_ = new ost::CryptoContext(0x0,
@@ -285,7 +285,7 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 {
     DEBUG("AudioSrtp: Initialize local crypto context");
 
-    CryptoSuiteDefinition crypto = sfl::CryptoSuites[localCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 
     delete localCryptoCtx_;
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
@@ -318,11 +318,4 @@ void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
     setOutQueueCryptoContext(localCryptoCtx_);
 }
 
-void AudioSrtpSession::deleteCryptoContexts()
-{
-    delete remoteCryptoCtx_;
-    remoteCryptoCtx_ = 0;
-    delete localCryptoCtx_;
-    localCryptoCtx_ = 0;
-}
 }

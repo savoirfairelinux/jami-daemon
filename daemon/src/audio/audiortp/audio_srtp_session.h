@@ -101,10 +101,6 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         void restoreCryptoContext(ost::CryptoContext *, ost::CryptoContext *);
 
-        /**
-         * Force deletion of the current crypto contexts.
-         */
-        void deleteCryptoContexts();
     private:
         NON_COPYABLE(AudioSrtpSession);
 

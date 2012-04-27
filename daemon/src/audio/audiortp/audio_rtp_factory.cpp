@@ -50,10 +50,6 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
 
 AudioRtpFactory::~AudioRtpFactory()
 {
-    AudioSrtpSession* srtpSession = dynamic_cast<AudioSrtpSession*>(rtpSession_);
-    if (srtpSession)
-        srtpSession->deleteCryptoContexts();
-
     delete rtpSession_;
 }
 
