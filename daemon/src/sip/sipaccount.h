@@ -736,6 +736,8 @@ class SIPAccount : public Account {
          */
         pj_timer_entry keepAliveTimer_;
 
+        bool keepAliveTimerActive_;
+
 
         /**
          * Voice over IP Link contains a listener thread and calls

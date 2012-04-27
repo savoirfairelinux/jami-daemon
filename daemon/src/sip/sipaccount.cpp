@@ -42,13 +42,15 @@
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>
+#include <stdlib.h>
 
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
 namespace {
-    const int MIN_REGISTRATION_TIME = 600;
+    const int MIN_REGISTRATION_TIME = 60;
+    const int DEFAULT_REGISTRATION_TIME = 3600;
 }
 
 SIPAccount::SIPAccount(const std::string& accountID)
@@ -97,6 +99,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
     , keepAliveTimer_()
+    , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
     , receivedParameter_()
     , rPort_(-1)
@@ -402,7 +405,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
     if (stunServer_ != details[CONFIG_STUN_SERVER]) {
-        DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
     }
@@ -410,6 +412,8 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     stunEnabled_ = details[CONFIG_STUN_ENABLE] == "true";
     dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
+    if(registrationExpire_ < MIN_REGISTRATION_TIME)
+        registrationExpire_ = MIN_REGISTRATION_TIME;
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
 
@@ -585,7 +589,13 @@ void SIPAccount::startKeepAliveTimer() {
     if (isTlsEnabled())
         return;
 
-    DEBUG("SIP ACCOUNT: start keep alive timer");
+    if (isIP2IP())
+        return;
+
+    if(keepAliveTimerActive_)
+        return;
+
+    DEBUG("SipAccount: start keep alive timer for account %s", getAccountID().c_str());
 
     // make sure here we have an entirely new timer
     memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
@@ -593,25 +603,31 @@ void SIPAccount::startKeepAliveTimer() {
     pj_time_val keepAliveDelay_;
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
     keepAliveTimer_.user_data = this;
+    keepAliveTimer_.id = rand();
 
     // expiration may be undetermined during the first registration request
     if (registrationExpire_ == 0) {
-        DEBUG("Registration Expire == 0, take 60");
-        keepAliveDelay_.sec = 60;
+        DEBUG("SipAccount: Registration Expire: 0, taking 60 instead");
+        keepAliveDelay_.sec = 3600;
     }
     else {
-        DEBUG("Registration Expire == %d", registrationExpire_);
-        keepAliveDelay_.sec = registrationExpire_;
+        DEBUG("SipAccount: Registration Expire: %d", registrationExpire_);
+        keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
 
-
     keepAliveDelay_.msec = 0;
+
+    keepAliveTimerActive_ = true;
 
     link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer() {
-     link_->cancelKeepAliveTimer(keepAliveTimer_);
+    DEBUG("SipAccount: stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
+
+    keepAliveTimerActive_ = false;
+
+    link_->cancelKeepAliveTimer(keepAliveTimer_);
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
@@ -677,7 +693,7 @@ void SIPAccount::initStunConfiguration()
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
-        registrationExpire_ = MIN_REGISTRATION_TIME; /** Default expire value for registration */
+        registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
@@ -837,6 +853,8 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 {
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
+    ERROR("SipAccount: Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
+
     if (sipAccount == NULL) {
         ERROR("Sip account is NULL while registering a new keep alive timer");
         return;
@@ -850,16 +868,10 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
     if (sipAccount->isTlsEnabled())
         return;
 
-    if (sipAccount->isRegistered()) {
-        // send a new register request
+    sipAccount->stopKeepAliveTimer();
+
+    if (sipAccount->isRegistered())
         sipAccount->registerVoIPLink();
-
-        // make sure the current timer is deactivated
-        sipAccount->stopKeepAliveTimer();
-
-        // register a new timer
-        sipAccount->startKeepAliveTimer();
-    }
 }
 
 namespace {
