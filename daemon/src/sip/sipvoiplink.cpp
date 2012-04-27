@@ -38,6 +38,7 @@
 #include "sip_utils.h"
 
 #include "sipvoiplink.h"
+#include "array_size.h"
 #include "manager.h"
 #include "logger.h"
 
@@ -1329,9 +1330,6 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 // This callback is called after SDP offer/answer session has completed.
 void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 {
-    const pjmedia_sdp_session *remote_sdp;
-    const pjmedia_sdp_session *local_sdp;
-
     SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL) {
@@ -1355,17 +1353,19 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     Sdp *sdpSession = call->getLocalSDP();
 
     // Get active session sessions
+    const pjmedia_sdp_session *remote_sdp;
     pjmedia_sdp_neg_get_active_remote(inv->neg, &remote_sdp);
+    const pjmedia_sdp_session *local_sdp;
     pjmedia_sdp_neg_get_active_local(inv->neg, &local_sdp);
 
     // Print SDP session
     char buffer[1000];
     memset(buffer, 0, sizeof buffer);
-    pjmedia_sdp_print(remote_sdp, buffer, 1000);
+    pjmedia_sdp_print(remote_sdp, buffer, sizeof buffer);
     DEBUG("SDP: Remote active SDP Session:\n%s", buffer);
 
-    memset(buffer, 0, 1000);
-    pjmedia_sdp_print(local_sdp, buffer, 1000);
+    memset(buffer, 0, sizeof buffer);
+    pjmedia_sdp_print(local_sdp, buffer, sizeof buffer);
     DEBUG("SDP: Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
@@ -1385,9 +1385,9 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     bool nego_success = false;
 
     if (!crypto_offer.empty()) {
-        std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+        std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
 
-        for (int i = 0; i < 3; i++)
+        for (size_t i = 0; i < ARRAYSIZE(sfl::CryptoSuites); ++i)
             localCapabilities.push_back(sfl::CryptoSuites[i]);
 
         sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
@@ -1402,8 +1402,12 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
             Manager::instance().getDbusManager()->getCallManager()->secureSdesOn(call->getCallId());
         } else {
+            ERROR("UserAgent: SDES negotiation failure");
             Manager::instance().getDbusManager()->getCallManager()->secureSdesOff(call->getCallId());
         }
+    }
+    else {
+        DEBUG("UserAgent: No crypto offer available");
     }
 
     // We did not find any crypto context for this media, RTP fallback

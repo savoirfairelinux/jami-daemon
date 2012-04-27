@@ -158,7 +158,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     // cryptographic context tagged 1, 2, 3...
     std::string tag = "1";
 
-    std::string crypto_suite = sfl::CryptoSuites[localCryptoSuite_].name;
+    std::string crypto_suite(sfl::CryptoSuites[localCryptoSuite_].name);
 
     // srtp keys formated as the following  as the following
     // inline:keyParameters|keylifetime|MasterKeyIdentifier
@@ -262,9 +262,10 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 {
     DEBUG("AudioSrtp: Initialize remote crypto context");
 
-    CryptoSuiteDefinition crypto = sfl::CryptoSuites[remoteCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
-    delete remoteCryptoCtx_;
+    // delete this crypto context from the internal map
+    removeInQueueCryptoContext(remoteCryptoCtx_);
     remoteCryptoCtx_ = new ost::CryptoContext(0x0,
                                               0,    // roc,
                                               0L,   // keydr,
@@ -285,9 +286,10 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 {
     DEBUG("AudioSrtp: Initialize local crypto context");
 
-    CryptoSuiteDefinition crypto = sfl::CryptoSuites[localCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 
-    delete localCryptoCtx_;
+    // delete this crypto context from the internal map
+    removeOutQueueCryptoContext(localCryptoCtx_);
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
                                              0,     // roc,
                                              0L,    // keydr,
@@ -306,12 +308,16 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
                                             ost::CryptoContext *remoteContext)
 {
-    delete remoteCryptoCtx_;
-    remoteCryptoCtx_ = remoteContext;
-    delete localCryptoCtx_;
-    localCryptoCtx_ = localContext;
-    setInQueueCryptoContext(remoteCryptoCtx_);
-    setOutQueueCryptoContext(localCryptoCtx_);
+    if (remoteCryptoCtx_ != remoteContext) {
+        removeInQueueCryptoContext(remoteCryptoCtx_);
+        remoteCryptoCtx_ = remoteContext;
+        setInQueueCryptoContext(remoteCryptoCtx_);
+    }
+    if (localCryptoCtx_ != localContext) {
+        removeOutQueueCryptoContext(localCryptoCtx_);
+        localCryptoCtx_ = localContext;
+        setOutQueueCryptoContext(localCryptoCtx_);
+    }
 }
 
 }

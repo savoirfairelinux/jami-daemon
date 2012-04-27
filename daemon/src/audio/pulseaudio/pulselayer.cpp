@@ -398,7 +398,7 @@ void PulseLayer::readFromMic()
     size_t bytes;
 
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data) {
-        ERROR("Audio: Error capture stream peek failed: %s" , pa_strerror(pa_context_errno(context_)));
+        // ERROR("Audio: Error capture stream peek failed: %s" , pa_strerror(pa_context_errno(context_)));
         return;
     }
 
