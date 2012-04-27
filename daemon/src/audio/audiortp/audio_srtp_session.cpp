@@ -306,12 +306,23 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
                                             ost::CryptoContext *remoteContext)
 {
-    delete remoteCryptoCtx_;
-    remoteCryptoCtx_ = remoteContext;
-    delete localCryptoCtx_;
-    localCryptoCtx_ = localContext;
+    if (remoteCryptoCtx_ != remoteContext) {
+        delete remoteCryptoCtx_;
+        remoteCryptoCtx_ = remoteContext;
+    }
+    if (localCryptoCtx_ != localContext) {
+        delete localCryptoCtx_;
+        localCryptoCtx_ = localContext;
+    }
     setInQueueCryptoContext(remoteCryptoCtx_);
     setOutQueueCryptoContext(localCryptoCtx_);
 }
 
+void AudioSrtpSession::deleteCryptoContexts()
+{
+    delete remoteCryptoCtx_;
+    remoteCryptoCtx_ = 0;
+    delete localCryptoCtx_;
+    localCryptoCtx_ = 0;
+}
 }
