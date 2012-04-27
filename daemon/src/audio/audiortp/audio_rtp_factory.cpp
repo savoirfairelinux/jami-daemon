@@ -51,8 +51,6 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
 AudioRtpFactory::~AudioRtpFactory()
 {
     delete rtpSession_;
-    delete cachedLocalContext_;
-    delete cachedRemoteContext_;
 }
 
 void AudioRtpFactory::initConfig()
