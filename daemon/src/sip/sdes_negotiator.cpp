@@ -91,7 +91,6 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
     // Take each line from the vector
     // and parse its content
 
-
     std::vector<CryptoAttribute *> cryptoAttributeVector;
 
     for (std::vector<std::string>::iterator iter = remoteAttribute_.begin();
