@@ -158,7 +158,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     // cryptographic context tagged 1, 2, 3...
     std::string tag = "1";
 
-    std::string crypto_suite = sfl::CryptoSuites[localCryptoSuite_].name;
+    std::string crypto_suite(sfl::CryptoSuites[localCryptoSuite_].name);
 
     // srtp keys formated as the following  as the following
     // inline:keyParameters|keylifetime|MasterKeyIdentifier
@@ -309,13 +309,13 @@ void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
     if (remoteCryptoCtx_ != remoteContext) {
         delete remoteCryptoCtx_;
         remoteCryptoCtx_ = remoteContext;
+        setInQueueCryptoContext(remoteCryptoCtx_);
     }
     if (localCryptoCtx_ != localContext) {
         delete localCryptoCtx_;
         localCryptoCtx_ = localContext;
+        setOutQueueCryptoContext(localCryptoCtx_);
     }
-    setInQueueCryptoContext(remoteCryptoCtx_);
-    setOutQueueCryptoContext(localCryptoCtx_);
 }
 
 }
