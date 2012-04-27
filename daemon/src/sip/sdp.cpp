@@ -401,8 +401,6 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
 
 void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
 {
-    CryptoOffer remoteOffer;
-
     for (unsigned i = 0; i < remote_sdp->media_count; ++i) {
         pjmedia_sdp_media *media = remote_sdp->media[i];
 
