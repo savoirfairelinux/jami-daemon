@@ -1402,8 +1402,12 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
             Manager::instance().getDbusManager()->getCallManager()->secureSdesOn(call->getCallId());
         } else {
+            ERROR("UserAgent: SDES negotiation failure");
             Manager::instance().getDbusManager()->getCallManager()->secureSdesOff(call->getCallId());
         }
+    }
+    else {
+        DEBUG("UserAgent: No crypto offer available");
     }
 
     // We did not find any crypto context for this media, RTP fallback

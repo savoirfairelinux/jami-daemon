@@ -410,6 +410,7 @@ void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, Cry
             pjmedia_sdp_attr *attribute = media->attr[j];
 
             // @TODO our parser require the "a=crypto:" to be present
+            ERROR("    attribute %s", pj_strbuf(&attribute->name));
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto_offer.push_back("a=crypto:" + std::string(attribute->value.ptr, attribute->value.slen));
         }

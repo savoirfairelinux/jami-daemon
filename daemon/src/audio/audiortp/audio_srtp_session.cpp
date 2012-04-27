@@ -264,7 +264,8 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
-    delete remoteCryptoCtx_;
+    // delete this crypto context from the internal map
+    removeInQueueCryptoContext(remoteCryptoCtx_);
     remoteCryptoCtx_ = new ost::CryptoContext(0x0,
                                               0,    // roc,
                                               0L,   // keydr,
@@ -287,7 +288,8 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 
-    delete localCryptoCtx_;
+    // delete this crypto context from the internal map
+    removeOutQueueCryptoContext(localCryptoCtx_);
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
                                              0,     // roc,
                                              0L,    // keydr,
@@ -307,11 +309,11 @@ void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
                                             ost::CryptoContext *remoteContext)
 {
     if (remoteCryptoCtx_ != remoteContext) {
-        delete remoteCryptoCtx_;
+        removeInQueueCryptoContext(remoteCryptoCtx_);
         remoteCryptoCtx_ = remoteContext;
     }
     if (localCryptoCtx_ != localContext) {
-        delete localCryptoCtx_;
+        removeOutQueueCryptoContext(localCryptoCtx_);
         localCryptoCtx_ = localContext;
     }
     setInQueueCryptoContext(remoteCryptoCtx_);
