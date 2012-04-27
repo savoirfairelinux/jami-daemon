@@ -31,7 +31,6 @@
 
 #include "sfl_types.h"
 #include "audiocodec.h"
-#include <cassert>
 
 class Alaw : public sfl::AudioCodec {
 
@@ -48,16 +47,14 @@ class Alaw : public sfl::AudioCodec {
     private:
         virtual int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
         {
-            assert(buf_size == frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ALawDecode(*src);
 
             return frameSize_;
         }
 
-        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size)
+        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
         {
-            assert(buf_size >= frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat));
             for (unsigned char *end = dst + frameSize_; dst < end; ++src, ++dst)
                 *dst = ALawEncode(*src);
 

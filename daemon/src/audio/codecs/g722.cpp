@@ -36,7 +36,6 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <cassert>
 
 class G722 : public sfl::AudioCodec {
 
@@ -55,14 +54,12 @@ class G722 : public sfl::AudioCodec {
     private:
         virtual int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
         {
-            assert(buf_size == frameSize_ / sizeof(SFLDataFormat) * encode_state_.bits_per_sample / 8);
-            return g722_decode(dst, (const uint8_t*) src, buf_size);
+            return g722_decode(dst, src, buf_size);
         }
 
         virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size)
         {
-            int out = g722_encode((uint8_t*) dst, src, frameSize_);
-            assert((size_t) out <= buf_size);
+            int out = g722_encode(dst, src, frameSize_);
             return out;
         }
 

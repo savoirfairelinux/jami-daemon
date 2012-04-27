@@ -171,6 +171,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         return;
 
     int inSamples = 0;
+    size = std::min(size, audioRtpRecord_.decData_.size());
     SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
