@@ -1631,24 +1631,26 @@ void registration_cb(pjsip_regc_cbparam *param)
         return;
     }
 
-    std::string accountid = account->getAccountID();
-
     if (account->isContactUpdateEnabled())
         update_contact_header(param, account);
 
     const pj_str_t *description = pjsip_get_status_text(param->code);
 
+    const std::string accountID = account->getAccountID();
+
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
-        Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(account->getAccountID(), state, param->code);
+        Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(accountID, state, param->code);
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);
         account->setRegistrationExpire(param->expiration);
     }
 
+#define FAILURE_MESSAGE() ERROR("UserAgent: Could not register account %s with error %d", accountID.c_str(), param->code)
+
     if (param->status != PJ_SUCCESS) {
-        ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+        FAILURE_MESSAGE();
         processRegistrationError(param, account, ErrorAuth);
         return;
     }
@@ -1660,11 +1662,11 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_MOVED_TEMPORARILY: // 302
             case PJSIP_SC_USE_PROXY: // 305
             case PJSIP_SC_ALTERNATIVE_SERVICE: // 380
-                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                FAILURE_MESSAGE();
                 processRegistrationError(param, account, Error);
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE: // 503
-                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                FAILURE_MESSAGE();
                 processRegistrationError(param, account, ErrorHost);
                 break;
             case PJSIP_SC_UNAUTHORIZED: // 401
@@ -1673,11 +1675,11 @@ void registration_cb(pjsip_regc_cbparam *param)
                 break;
             case PJSIP_SC_FORBIDDEN: // 403
             case PJSIP_SC_NOT_FOUND: // 404
-                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                FAILURE_MESSAGE();
                 processRegistrationError(param, account, ErrorAuth);
                 break;
             case PJSIP_SC_REQUEST_TIMEOUT: // 408
-                ERROR("UserAgent: Could not register account %s with error %d", accountid.c_str(), param->code);
+                FAILURE_MESSAGE();
                 processRegistrationError(param, account, ErrorHost);
                 break;
             case PJSIP_SC_INTERVAL_TOO_BRIEF: // 423
@@ -1692,7 +1694,7 @@ void registration_cb(pjsip_regc_cbparam *param)
                 account->registerVoIPLink();
                 break;
             default:
-                ERROR("UserAgent: Could not register account %s with error %d", param->code);
+                FAILURE_MESSAGE();
                 processRegistrationError(param, account, Error);
                 break;
         }
@@ -1706,6 +1708,8 @@ void registration_cb(pjsip_regc_cbparam *param)
             SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
         }
     }
+
+#undef FAILURE_MESSAGE
 }
 
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
