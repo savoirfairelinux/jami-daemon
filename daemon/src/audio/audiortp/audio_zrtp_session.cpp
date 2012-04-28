@@ -34,26 +34,19 @@
 
 #include "audio_zrtp_session.h"
 #include "zrtp_session_callback.h"
-#include "fileutils.h"
 #include "sip/sipcall.h"
-#include "sip/sdp.h"
-#include "audio/audiolayer.h"
 #include "logger.h"
 #include "manager.h"
+#include "fileutils.h"
 
 #include <libzrtpcpp/zrtpccrtp.h>
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
-
-#include <cstdio>
-#include <cstring>
-#include <cerrno>
-
 #include <ccrtp/rtp.h>
 
 namespace sfl {
 
-AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string& zidFilename) :
+AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename) :
     AudioRtpSession(call, *this, *this),
     ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>(ost::InetHostAddress(call_.getLocalIp().c_str()),
     call_.getLocalAudioPort(),
@@ -62,9 +55,8 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string& zidFilename
     ost::defaultApplication()),
     zidFilename_(zidFilename)
 {
-    DEBUG("AudioZrtpSession initialized");
     initializeZid();
-    DEBUG("AudioZrtpSession: Setting new RTP session with destination %s:%d",
+    DEBUG("Setting new RTP session with destination %s:%d",
           call_.getLocalIp().c_str(), call_.getLocalAudioPort());
 }
 
@@ -83,18 +75,17 @@ void AudioZrtpSession::initializeZid()
 
     std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + zidFilename_;
 
-    DEBUG("    xdg_config %s", xdg_config.c_str());
+    DEBUG("xdg_config %s", xdg_config.c_str());
 
     if (XDG_CACHE_HOME != NULL) {
         std::string xdg_env = std::string(XDG_CACHE_HOME) + zidFilename_;
-        DEBUG("    xdg_env %s", xdg_env.c_str());
+        DEBUG("xdg_env %s", xdg_env.c_str());
         (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
     } else
         zidCompleteFilename = xdg_config;
 
 
     if (initialize(zidCompleteFilename.c_str()) >= 0) {
-        DEBUG("Register callbacks");
         setEnableZrtp(true);
         setUserCallback(new ZrtpSessionCallback(call_));
         return;
@@ -133,7 +124,7 @@ void AudioZrtpSession::run()
 {
     // Set recording sampling rate
     call_.setRecordingSmplRate(getCodecSampleRate());
-    DEBUG("AudioZrtpSession: Entering mainloop for call %s", call_.getCallId().c_str());
+    DEBUG("Entering mainloop for call %s", call_.getCallId().c_str());
 
     uint32 timeout = 0;
 
@@ -168,7 +159,7 @@ void AudioZrtpSession::run()
         }
     }
 
-    DEBUG("AudioZrtpSession: Left main loop for call %s", call_.getCallId().c_str());
+    DEBUG("Left main loop for call %s", call_.getCallId().c_str());
 }
 
 void AudioZrtpSession::incrementTimestampForDTMF()
