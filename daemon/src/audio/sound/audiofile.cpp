@@ -183,7 +183,7 @@ WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileNam
     // sample frames, should not be longer than a minute
     int nbSamples = std::min(60 * fileRate, 8 * bytes / dt / chan);
 
-    DEBUG("WaveFile: frame size %ld, data size %d align %d rate %d avgbyte %d "
+    DEBUG("Frame size %ld, data size %d align %d rate %d avgbyte %d "
           "chunk size %d dt %d", nbSamples, bytes, blockal, fileRate, avgb,
           chunkSize, dt);
 
