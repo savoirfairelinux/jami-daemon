@@ -33,7 +33,7 @@
 
 Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getMainBuffer())
 {
-    DEBUG("=================== Set recornding options: %s", Manager::instance().audioPreference.getRecordpath().c_str());
+    DEBUG("Set recording options: %s", Manager::instance().audioPreference.getRecordpath().c_str());
     recAudio_.setRecordingOption(AudioRecord::FILE_WAV, 8000, Manager::instance().audioPreference.getRecordpath());
 }
 
