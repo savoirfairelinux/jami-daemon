@@ -238,7 +238,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     try {
         emitter.serializeAccount(&accountmap);
     } catch (const YamlEmitterException &e) {
-        ERROR("ConfigTree: %s", e.what());
+        ERROR("%s", e.what());
     }
 
     Sequence *seq = credentialseq.getSequence();
@@ -547,7 +547,7 @@ void SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == "true") {
-        DEBUG("SIPAccount: TLS is enabled for account %s", accountID_.c_str());
+        DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -568,7 +568,7 @@ void SIPAccount::registerVoIPLink()
     try {
         link_->sendRegister(this);
     } catch (const VoipLinkException &e) {
-        ERROR("SIPAccount: %s", e.what());
+        ERROR("%s", e.what());
     }
 }
 
@@ -580,7 +580,7 @@ void SIPAccount::unregisterVoIPLink()
     try {
         link_->sendUnregister(this);
     } catch (const VoipLinkException &e) {
-        ERROR("SIPAccount: %s", e.what());
+        ERROR("%s", e.what());
     }
 }
 
@@ -595,7 +595,7 @@ void SIPAccount::startKeepAliveTimer() {
     if(keepAliveTimerActive_)
         return;
 
-    DEBUG("SipAccount: start keep alive timer for account %s", getAccountID().c_str());
+    DEBUG("Start keep alive timer for account %s", getAccountID().c_str());
 
     // make sure here we have an entirely new timer
     memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
@@ -607,11 +607,11 @@ void SIPAccount::startKeepAliveTimer() {
 
     // expiration may be undetermined during the first registration request
     if (registrationExpire_ == 0) {
-        DEBUG("SipAccount: Registration Expire: 0, taking 60 instead");
+        DEBUG("Registration Expire: 0, taking 60 instead");
         keepAliveDelay_.sec = 3600;
     }
     else {
-        DEBUG("SipAccount: Registration Expire: %d", registrationExpire_);
+        DEBUG("Registration Expire: %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
 
@@ -623,7 +623,7 @@ void SIPAccount::startKeepAliveTimer() {
 }
 
 void SIPAccount::stopKeepAliveTimer() {
-    DEBUG("SipAccount: stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
+    DEBUG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
 
     keepAliveTimerActive_ = false;
 
@@ -810,7 +810,7 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
 std::string SIPAccount::getContactHeader() const
 {
     if (transport_ == NULL)
-        ERROR("SipAccount: Transport not created yet");
+        ERROR("Transport not created yet");
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
@@ -853,10 +853,10 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 {
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
-    ERROR("SipAccount: Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
+    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
 
     if (sipAccount == NULL) {
-        ERROR("Sip account is NULL while registering a new keep alive timer");
+        ERROR("SIP account is NULL while registering a new keep alive timer");
         return;
     }
 
@@ -908,7 +908,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 {
     // we can not authenticate without credentials
     if (creds.empty()) {
-        ERROR("SIPAccount: Cannot authenticate with empty credentials list");
+        ERROR("Cannot authenticate with empty credentials list");
         return;
     }
 

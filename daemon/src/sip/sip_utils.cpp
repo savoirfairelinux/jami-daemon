@@ -40,8 +40,6 @@
 #include <pjsip/sip_types.h>
 #include <pjsip/sip_uri.h>
 #include <pj/list.h>
-
-
 #include "sip_utils.h"
 
 std::string

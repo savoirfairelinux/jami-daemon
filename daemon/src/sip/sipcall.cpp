@@ -32,7 +32,6 @@
  */
 
 #include "sipcall.h"
-#include "audio/audiortp/audio_rtp_factory.h"
 #include "sdp.h"
 
 namespace {
