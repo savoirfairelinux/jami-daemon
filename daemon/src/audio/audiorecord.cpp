@@ -319,7 +319,7 @@ bool AudioRecord::openExistingRawFile()
 
 bool AudioRecord::openExistingWavFile()
 {
-    DEBUG("%s(%s)\n", __PRETTY_FUNCTION__, filename_.c_str());
+    DEBUG("Opening %s", filename_.c_str());
 
     fileHandle_ = fopen(filename_.c_str(), "rb+");
 
