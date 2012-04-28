@@ -1592,34 +1592,25 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     pj_pool_release(pool);
 }
 
-static void lookForReceivedParameter(pjsip_regc_cbparam *param, SIPAccount *account)
+void lookForReceivedParameter(pjsip_regc_cbparam &param, SIPAccount &account)
 {
-    pj_str_t receivedValue = param->rdata->msg_info.via->recvd_param;
+    pj_str_t receivedValue = param.rdata->msg_info.via->recvd_param;
 
     if (receivedValue.slen) {
         std::string publicIpFromReceived(receivedValue.ptr, receivedValue.slen);
-        account->setReceivedParameter(publicIpFromReceived);
+        account.setReceivedParameter(publicIpFromReceived);
     }
 
-    account->setRPort(param->rdata->msg_info.via->rport_param);
+    account.setRPort(param.rdata->msg_info.via->rport_param);
 }
 
-static void processRegistrationError(pjsip_regc_cbparam *param, SIPAccount *account, const RegistrationState &state)
+void processRegistrationError(SIPAccount &account, RegistrationState /*state*/)
 {
-    if(param == NULL) {
-        ERROR("UserAgent: param is NULL while processing registration error");
-        return;
-    }
-
-    if(account == NULL) {
-        ERROR("UserAgent: Account is NULL while processing registration error");
-        return;
-    }
-
-    account->stopKeepAliveTimer();
-    account->setRegistrationState(ErrorAuth);
-    account->setRegister(false);
-    SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
+    account.stopKeepAliveTimer();
+#warning FIXME: We should be using the state parameter here
+    account.setRegistrationState(ErrorAuth);
+    account.setRegister(false);
+    SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(account);
 }
 
 void registration_cb(pjsip_regc_cbparam *param)
@@ -1655,7 +1646,7 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->status != PJ_SUCCESS) {
         FAILURE_MESSAGE();
-        processRegistrationError(param, account, ErrorAuth);
+        processRegistrationError(*account, ErrorAuth);
         return;
     }
 
@@ -1667,11 +1658,11 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_USE_PROXY: // 305
             case PJSIP_SC_ALTERNATIVE_SERVICE: // 380
                 FAILURE_MESSAGE();
-                processRegistrationError(param, account, Error);
+                processRegistrationError(*account, Error);
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE: // 503
                 FAILURE_MESSAGE();
-                processRegistrationError(param, account, ErrorHost);
+                processRegistrationError(*account, ErrorHost);
                 break;
             case PJSIP_SC_UNAUTHORIZED: // 401
                 // Automatically answered by PJSIP
@@ -1680,11 +1671,11 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_FORBIDDEN: // 403
             case PJSIP_SC_NOT_FOUND: // 404
                 FAILURE_MESSAGE();
-                processRegistrationError(param, account, ErrorAuth);
+                processRegistrationError(*account, ErrorAuth);
                 break;
             case PJSIP_SC_REQUEST_TIMEOUT: // 408
                 FAILURE_MESSAGE();
-                processRegistrationError(param, account, ErrorHost);
+                processRegistrationError(*account, ErrorHost);
                 break;
             case PJSIP_SC_INTERVAL_TOO_BRIEF: // 423
                 // Expiration Interval Too Brief
@@ -1693,18 +1684,18 @@ void registration_cb(pjsip_regc_cbparam *param)
                 account->setRegister(false);
                 break;
             case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE: // 606
-                lookForReceivedParameter(param, account);
+                lookForReceivedParameter(*param, *account);
                 account->setRegistrationState(ErrorNotAcceptable);
                 account->registerVoIPLink();
                 break;
             default:
                 FAILURE_MESSAGE();
-                processRegistrationError(param, account, Error);
+                processRegistrationError(*account, Error);
                 break;
         }
 
     } else {
-        lookForReceivedParameter(param, account);
+        lookForReceivedParameter(*param, *account);
         if (account->isRegistered())
             account->setRegistrationState(Registered);
         else {
