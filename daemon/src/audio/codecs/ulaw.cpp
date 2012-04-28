@@ -50,7 +50,7 @@ class Ulaw : public sfl::AudioCodec {
             return frameSize_;
         }
 
-        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size) {
+        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/) {
             for (unsigned char * end = dst + frameSize_; dst < end; ++src, ++dst)
                 *dst = ULawEncode(*src);
 
