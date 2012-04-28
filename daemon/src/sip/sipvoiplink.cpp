@@ -1488,7 +1488,12 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 
     // Get the message inside the transaction
     pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
-    std::string formattedMessage(static_cast<char*>(r_data->msg_info.msg->body->data));
+    if (!r_data->msg_info.msg->body)
+        return;
+    const char *formattedMsgPtr = static_cast<const char*>(r_data->msg_info.msg->body->data);
+    if (!formattedMsgPtr)
+        return;
+    std::string formattedMessage(formattedMsgPtr, strlen(formattedMsgPtr));
 
     // Try to determine who is the recipient of the message
     SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
