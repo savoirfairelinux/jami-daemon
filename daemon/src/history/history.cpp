@@ -64,7 +64,7 @@ bool History::load(int limit)
 
 bool History::save()
 {
-    DEBUG("History: Saving history in XDG directory: %s", path_.c_str());
+    DEBUG("Saving history in XDG directory: %s", path_.c_str());
     ensurePath();
     std::sort(items_.begin(), items_.end());
     std::ofstream outfile(path_.c_str());
@@ -99,7 +99,7 @@ void History::ensurePath()
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                DEBUG("History: Cannot create directory: %m");
+                DEBUG("Cannot create directory: %m");
                 return;
             }
         }
@@ -126,7 +126,7 @@ void History::setPath(const std::string &path)
 void History::addCall(Call *call, int limit)
 {
     if (!call) {
-        ERROR("History: Call is NULL, ignoring");
+        ERROR("Call is NULL, ignoring");
         return;
     }
     call->time_stop();
