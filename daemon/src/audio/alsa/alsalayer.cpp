@@ -219,7 +219,7 @@ AlsaLayer::stopStream()
 #define ALSA_CALL(call, error) ({ \
 			int err_code = call; \
 			if (err_code < 0) \
-				ERROR("ALSA: "error": %s", snd_strerror(err_code)); \
+				ERROR(error ": %s", snd_strerror(err_code)); \
 			err_code; \
 		})
 
@@ -321,7 +321,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     TRY(snd_pcm_hw_params(HW), "hwparams");
 #undef HW
 
-    DEBUG("ALSA: %s using sampling rate %dHz",
+    DEBUG("%s using sampling rate %dHz",
            (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
            audioSampleRate_);
 
@@ -370,7 +370,7 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
         }
 
         default:
-            ERROR("ALSA: unknown write error, dropping frames: %s", snd_strerror(err));
+            ERROR("Unknown write error, dropping frames: %s", snd_strerror(err));
             stopPlaybackStream();
             break;
     }
@@ -405,12 +405,12 @@ AlsaLayer::read(void* buffer, int toCopy)
                     startCaptureStream();
                 }
 
-            ERROR("ALSA: XRUN capture ignored (%s)", snd_strerror(err));
+            ERROR("XRUN capture ignored (%s)", snd_strerror(err));
             break;
         }
 
         case EPERM:
-            ERROR("ALSA: Can't capture, EPERM (%s)", snd_strerror(err));
+            ERROR("Can't capture, EPERM (%s)", snd_strerror(err));
             prepareCaptureStream();
             startCaptureStream();
             break;
@@ -456,7 +456,7 @@ AlsaLayer::getAudioDeviceIndexMap(AudioStreamDirection dir) const
     snd_ctl_card_info_alloca(&info);
     snd_pcm_info_alloca(&pcminfo);
 
-    int numCard = -1 ;
+    int numCard = -1;
 
     std::vector<HwIDPair> audioDevice;
 
