@@ -57,7 +57,7 @@ class G722 : public sfl::AudioCodec {
             return g722_decode(dst, src, buf_size);
         }
 
-        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size)
+        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
         {
             int out = g722_encode(dst, src, frameSize_);
             return out;
