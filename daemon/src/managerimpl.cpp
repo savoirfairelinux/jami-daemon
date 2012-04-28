@@ -2562,7 +2562,7 @@ namespace {
     {
         const Conf::MappingNode *node = dynamic_cast<const Conf::MappingNode *>(item);
         if (!node) {
-            ERROR("ManagerImpl: could not load account");
+            ERROR("Could not load account");
             return;
         }
 
