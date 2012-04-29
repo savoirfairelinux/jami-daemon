@@ -30,7 +30,7 @@
 
 #include "gaincontroltest.h"
 #include "audio/gaincontrol.h"
-#include "config/config.h"
+#include "config/sfl_config.h"
 
 void GainControlTest::testGainProcessing()
 {

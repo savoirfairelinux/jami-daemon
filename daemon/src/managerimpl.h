@@ -43,7 +43,7 @@
 #include "cc_thread.h"
 #include "dbus/dbusmanager.h"
 
-#include "config/config.h"
+#include "config/sfl_config.h"
 
 #include "call.h"
 #include "conference.h"

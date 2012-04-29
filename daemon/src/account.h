@@ -37,7 +37,7 @@
 
 #include "global.h"
 #include "noncopyable.h"
-#include "config/config.h"
+#include "config/sfl_config.h"
 #include "config/serializable.h"
 
 class VoIPLink;

@@ -31,7 +31,7 @@
 #include "yamlparser.h"
 
 #include "../global.h"
-#include "config.h"
+#include "sfl_config.h"
 #include "yamlnode.h"
 #include <cstdio>
 

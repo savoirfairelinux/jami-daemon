@@ -29,9 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "sfl_config.h"
 #include "logger.h"
 #include <fstream>
 #include <cstdlib>
@@ -324,4 +322,3 @@ ConfigTreeIterator::next()
     return tk;
 }
 } // end namespace ConfigTree
-
