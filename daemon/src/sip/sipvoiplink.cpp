@@ -47,6 +47,7 @@
 #include "sipaccount.h"
 #include "eventthread.h"
 #include "sdes_negotiator.h"
+#include "array_size.h"
 
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
@@ -163,8 +164,10 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
          * ACK for a 2xx response must be send using this method.
          */
         pjsip_tx_data *tdata;
-        pjsip_dlg_create_request(dlg, &pjsip_ack_method, rdata->msg_info.cseq->cseq, &tdata);
-        pjsip_dlg_send_request(dlg, tdata, -1, NULL);
+        if (rdata->msg_info.cseq) {
+            pjsip_dlg_create_request(dlg, &pjsip_ack_method, rdata->msg_info.cseq->cseq, &tdata);
+            pjsip_dlg_send_request(dlg, tdata, -1, NULL);
+        }
     }
 
     return PJ_SUCCESS;
@@ -185,8 +188,16 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
         return true;
 
+    if (!rdata->msg_info.to or !rdata->msg_info.from) {
+        ERROR("NULL from/to fields");
+        return false;
+    }
     pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
     pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
+    if (!sip_to_uri or !sip_from_uri) {
+        ERROR("NULL uri");
+        return false;
+    }
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
     std::string account_id(Manager::instance().getAccountIdFromNameAndServer(userName, server));
@@ -199,14 +210,11 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         std::string request(str->ptr, str->slen);
 
         if (request.find("NOTIFY") != std::string::npos) {
-            if (body) {
-                void *data = body->data;
-                if (data) {
-                    int voicemail = 0;
-                    int ret = sscanf((const char*) data, "Voice-Message: %d/", &voicemail);
-                    if (ret == 1 and voicemail != 0)
-                        Manager::instance().startVoiceMessageNotification(account_id, voicemail);
-                }
+            if (body and body->data) {
+                int voicemail = 0;
+                int ret = sscanf((const char*) body->data, "Voice-Message: %d/", &voicemail);
+                if (ret == 1 and voicemail != 0)
+                    Manager::instance().startVoiceMessageNotification(account_id, voicemail);
             }
         }
 
@@ -280,12 +288,12 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (body) {
         char sdpbuffer[1000];
-        int len = rdata->msg_info.msg->body->print_body(body, sdpbuffer, sizeof sdpbuffer);
+        int len = body->print_body(body, sdpbuffer, sizeof sdpbuffer);
 
         if (len == -1) // error
             len = 0;
 
-        std::string sdpoffer(sdpbuffer, len);
+        std::string sdpoffer(sdpbuffer, std::min(len, (int) sizeof sdpbuffer));
         size_t start = sdpoffer.find("a=crypto:");
 
         // Found crypto header in SDP
@@ -293,10 +301,11 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
             CryptoOffer crypto_offer;
             crypto_offer.push_back(std::string(sdpoffer.substr(start, (sdpoffer.size() - start) - 1)));
 
-            std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
+            const size_t size = ARRAYSIZE(sfl::CryptoSuites);
+            std::vector<sfl::CryptoSuiteDefinition> localCapabilities(size);
 
-            for (int i = 0; i < 3; i++)
-                localCapabilities.push_back(sfl::CryptoSuites[i]);
+            std::copy(sfl::CryptoSuites, sfl::CryptoSuites + size,
+                      localCapabilities.begin());
 
             sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 
@@ -939,6 +948,9 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
 bool
 SIPVoIPLink::transferCommon(SIPCall *call, pj_str_t *dst)
 {
+    if (!call or !call->inv)
+        return false;
+
     pjsip_evsub_user xfer_cb;
     pj_bzero(&xfer_cb, sizeof(xfer_cb));
     xfer_cb.on_evsub_state = &transfer_client_cb;
@@ -978,6 +990,10 @@ void
 SIPVoIPLink::transfer(const std::string& id, const std::string& to)
 {
     SIPCall *call = getSIPCall(id);
+    if (call == NULL) {
+        ERROR("Could not find call %s", id.c_str());
+        return;
+    }
     call->stopRecording();
 
     std::string account_id(Manager::instance().getAccountFromCall(id));
@@ -1000,10 +1016,13 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
 
 bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
 {
-    pjsip_dialog *target_dlg = getSIPCall(to)->inv->dlg;
+    SIPCall *call = getSIPCall(to);
+    if (!call or !call->inv or !call->inv->dlg)
+        throw VoipLinkException("Couldn't get invite dialog");
+    pjsip_dialog *target_dlg = call->inv->dlg;
     pjsip_uri *uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
 
-    char str_dest_buf[PJSIP_MAX_URL_SIZE*2] = { '<' };
+    char str_dest_buf[PJSIP_MAX_URL_SIZE * 2] = { '<' };
     pj_str_t dst = { str_dest_buf, 1 };
 
     dst.slen += pjsip_uri_print(PJSIP_URI_IN_REQ_URI, uri, str_dest_buf+1, sizeof(str_dest_buf)-1);
@@ -1028,13 +1047,12 @@ SIPVoIPLink::refuse(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
 
-    if (!call->isIncoming() or call->getConnectionState() == Call::CONNECTED)
+    if (!call or !call->isIncoming() or call->getConnectionState() == Call::CONNECTED or !call->inv)
         return;
 
     call->getAudioRtp().stop();
 
     pjsip_tx_data *tdata;
-
     if (pjsip_inv_end_session(call->inv, PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
         return;
 
@@ -1233,16 +1251,18 @@ int SIPSessionReinvite(SIPCall *call)
     return !PJ_SUCCESS;
 }
 
-void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
+void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 {
+    if (!inv)
+        return;
     SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL)
         return;
 
-    if (inv->state != PJSIP_INV_STATE_CONFIRMED) {
+    if (ev and inv->state != PJSIP_INV_STATE_CONFIRMED) {
         // Update UI with the current status code and description
-        pjsip_transaction * tsx = e->body.tsx_state.tsx;
+        pjsip_transaction * tsx = ev->body.tsx_state.tsx;
         int statusCode = tsx ? tsx->status_code : 404;
 
         if (statusCode) {
@@ -1254,12 +1274,13 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
     }
 
     SIPVoIPLink *link = SIPVoIPLink::instance();
-    if (inv->state == PJSIP_INV_STATE_EARLY and e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
+    if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
+            ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
         call->setConnectionState(Call::RINGING);
         Manager::instance().peerRingingCall(call->getCallId());
-    } else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
+    } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
         // After we sent or received a ACK - The connection is established
-        link->SIPCallAnswered(call, e->body.tsx_state.src.rdata);
+        link->SIPCallAnswered(call, ev->body.tsx_state.src.rdata);
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
         std::string accId(Manager::instance().getAccountFromCall(call->getCallId()));
 
@@ -1291,13 +1312,17 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e)
 
 void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 {
-    SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id ]);
+    if (!inv)
+        return;
+    SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
 
     if (!call)
         return;
 
     std::string accId(Manager::instance().getAccountFromCall(call->getCallId()));
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accId));
+    if (!account)
+        return;
 
     call->getLocalSDP()->receiveOffer(offer, account->getActiveCodecs());
     call->getLocalSDP()->startNegotiation();
@@ -1307,7 +1332,11 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
 
 void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
+    if (!inv or !p_offer)
+        return;
     SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
+    if (!call)
+        return;
     std::string accountid(Manager::instance().getAccountFromCall(call->getCallId()));
 
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountid));
@@ -1332,6 +1361,8 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 // This callback is called after SDP offer/answer session has completed.
 void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 {
+    if (!inv)
+        return;
     SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (call == NULL) {
@@ -1455,7 +1486,7 @@ void outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/
 void transaction_state_changed_cb(pjsip_inv_session * inv,
                                   pjsip_transaction *tsx, pjsip_event *event)
 {
-    if (!tsx or !event or tsx->role != PJSIP_ROLE_UAS or
+    if (!tsx or !event or !inv or tsx->role != PJSIP_ROLE_UAS or
             tsx->state != PJSIP_TSX_STATE_TRYING)
         return;
 
@@ -1538,7 +1569,6 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 
 void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 {
-
     SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(account->getVoIPLink());
     if (siplink == NULL) {
         ERROR("Could not find voip link from account");
@@ -1551,13 +1581,15 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
         return;
     }
 
-    if (param->contact_cnt == 0) {
+    if (!param or param->contact_cnt == 0) {
         WARN("SIPVoIPLink: No contact header in registration callback");
         pj_pool_release(pool);
         return;
     }
 
     pjsip_contact_hdr *contact_hdr = param->contact[0];
+    if (!contact_hdr)
+        return;
 
     pjsip_sip_uri *uri = (pjsip_sip_uri*) contact_hdr->uri;
     if (uri == NULL) {
@@ -1600,6 +1632,8 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 
 void lookForReceivedParameter(pjsip_regc_cbparam &param, SIPAccount &account)
 {
+    if (!param.rdata or !param.rdata->msg_info.via)
+        return;
     pj_str_t receivedValue = param.rdata->msg_info.via->recvd_param;
 
     if (receivedValue.slen) {
@@ -1737,6 +1771,8 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 {
     switch (pjsip_evsub_get_state(sub)) {
         case PJSIP_EVSUB_STATE_ACCEPTED:
+            if (!event)
+                return;
             pj_assert(event->type == PJSIP_EVENT_TSX_STATE && event->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
             break;
 
@@ -1759,6 +1795,8 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 
             pjsip_status_line status_line = { 500, *pjsip_get_status_text(500) };
 
+            if (!r_data->msg_info.msg)
+                return;
             if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD and
                 request.find("NOTIFY") != std::string::npos) {
                 pjsip_msg_body *body = r_data->msg_info.msg->body;
@@ -1774,6 +1812,8 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
                     return;
             }
 
+            if (r_data->msg_info.cid)
+                return;
             std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
             SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(transferCallID[transferID]));
 
@@ -1783,6 +1823,8 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             if (status_line.code / 100 == 2) {
                 pjsip_tx_data *tdata;
 
+                if (!call->inv)
+                    return;
                 if (pjsip_inv_end_session(call->inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS)
                     pjsip_inv_send_msg(call->inv, tdata);
 
@@ -1801,6 +1843,8 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 {
     std::string account_id(Manager::instance().getAccountFromCall(call->getCallId()));
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+    if (!account)
+        return;
 
     unsigned int callLocalAudioPort = ((rand() % 27250) + 5250) * 2;
 
