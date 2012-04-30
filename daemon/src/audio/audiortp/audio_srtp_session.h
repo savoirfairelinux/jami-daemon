@@ -63,8 +63,10 @@ class SIPCall;
    +---------------------+-------------+--------------+---------------+
 */
 
-
 namespace sfl {
+
+#define MAX_MASTER_KEY_LENGTH 16
+#define MAX_MASTER_SALT_LENGTH 14
 
 class AudioSrtpSession : public AudioSymmetricRtpSession {
     public:
@@ -95,11 +97,29 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         ost::CryptoContext* initLocalCryptoInfo();
 
+        void setCryptoContext();
+
         /**
          * Restore the cryptographic context. most likely useful to restore
          * a call after hold action
          */
-        void restoreCryptoContext(ost::CryptoContext *, ost::CryptoContext *);
+        //void restoreCryptoContext();
+
+        void setLocalMasterKey(uint8 *key, size_t length);
+
+        void getLocalMasterKey(uint8 *key, size_t length);
+
+        void setLocalMasterSalt(uint8 *salt, size_t length);
+
+        void getLocalMasterSalt(uint8 *salt, size_t length);
+
+        void setRemoteMasterKey(uint8 *key, size_t length);
+
+        void getRemoteMasterKey(uint8 *key, size_t length);
+
+        void setRemoteMasterSalt(uint8 *salt, size_t length);
+
+        void getRemoteMasterSalt(uint8 *salt, size_t length);
 
     private:
         NON_COPYABLE(AudioSrtpSession);
@@ -150,27 +170,27 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         /** Remote crypto suite is initialized at AES_CM_128_HMAC_SHA1_80*/
         int remoteCryptoSuite_;
 
-        uint8 localMasterKey_[16];
+        uint8 localMasterKey_[MAX_MASTER_KEY_LENGTH];
 
         /** local master key length in byte */
         size_t localMasterKeyLength_;
 
-        uint8 localMasterSalt_[14];
+        uint8 localMasterSalt_[MAX_MASTER_SALT_LENGTH];
 
         /** local master salt length in byte */
         size_t localMasterSaltLength_;
 
-        uint8 remoteMasterKey_[16];
+        uint8 remoteMasterKey_[MAX_MASTER_KEY_LENGTH];
 
         /** remote master key length in byte */
         size_t remoteMasterKeyLength_;
 
-        uint8 remoteMasterSalt_[14];
+        uint8 remoteMasterSalt_[MAX_MASTER_SALT_LENGTH];
 
         /** remote master salt length in byte */
         size_t remoteMasterSaltLength_;
 
-        /** Used to make sure remote crypto context not initialized wice. */
+        /** Used to make sure remote crypto context not initialized twice. */
         bool remoteOfferIsSet_;
 };
 }

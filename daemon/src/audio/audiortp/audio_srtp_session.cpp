@@ -133,7 +133,7 @@ AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
 
 ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfo()
 {
-    DEBUG("Set cryptographic info for this rtp session");
+    DEBUG("AudioSrtpSession: Set cryptographic info for this rtp session");
 
     // Initialize local Crypto context
     initializeLocalMasterKey();
@@ -143,7 +143,7 @@ ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfo()
     // Set local crypto context in ccrtp
     localCryptoCtx_->deriveSrtpKeys(0);
 
-    setOutQueueCryptoContext(localCryptoCtx_);
+    // setOutQueueCryptoContext(localCryptoCtx_);
     return localCryptoCtx_;
 }
 
@@ -197,7 +197,9 @@ AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 
         // init crypto content in Srtp session
         initializeRemoteCryptoContext();
-        setInQueueCryptoContext(remoteCryptoCtx_);
+        if(remoteCryptoCtx_) {
+            setInQueueCryptoContext(remoteCryptoCtx_);
+        }
 
         remoteOfferIsSet_ = true;
     }
@@ -305,19 +307,80 @@ void AudioSrtpSession::initializeLocalCryptoContext()
                                              crypto.srtpAuthTagLength / 8);
 }
 
-void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
-                                            ost::CryptoContext *remoteContext)
+void AudioSrtpSession::setCryptoContext()
 {
-    if (remoteCryptoCtx_ != remoteContext) {
-        removeInQueueCryptoContext(remoteCryptoCtx_);
-        remoteCryptoCtx_ = remoteContext;
-        setInQueueCryptoContext(remoteCryptoCtx_);
-    }
-    if (localCryptoCtx_ != localContext) {
-        removeOutQueueCryptoContext(localCryptoCtx_);
-        localCryptoCtx_ = localContext;
+    if(localCryptoCtx_) {
         setOutQueueCryptoContext(localCryptoCtx_);
     }
+    if(remoteCryptoCtx_) {
+        setInQueueCryptoContext(remoteCryptoCtx_);
+    }
+}
+#if 0
+void AudioSrtpSession::restoreCryptoContext()
+{
+    initializeLocalCryptoContext();
+    initializeRemoteCryptoContext();
+
+    setOutQueueCryptoContext(localCryptoCtx_);
+    setInQueueCryptoContext(remoteCryptoCtx_);
+}
+#endif
+
+void
+AudioSrtpSession::setLocalMasterKey(uint8 *key, size_t length)
+{
+    length = (length > MAX_MASTER_KEY_LENGTH) ? MAX_MASTER_KEY_LENGTH : length;
+    memcpy(localMasterKey_, key, length);
+}
+
+void
+AudioSrtpSession::getLocalMasterKey(uint8 *key, size_t length)
+{
+    length = (length > MAX_MASTER_KEY_LENGTH) ? MAX_MASTER_KEY_LENGTH : length;
+    memcpy(key, localMasterKey_, length);
+}
+
+void
+AudioSrtpSession::setLocalMasterSalt(uint8 *salt, size_t length)
+{
+    length = (length > MAX_MASTER_SALT_LENGTH) ? MAX_MASTER_SALT_LENGTH : length;
+    memcpy(localMasterSalt_, salt, length);
+}
+
+void
+AudioSrtpSession::getLocalMasterSalt(uint8 *salt, size_t length)
+{
+    length = (length > MAX_MASTER_SALT_LENGTH) ? MAX_MASTER_SALT_LENGTH : length;
+    memcpy(salt, localMasterSalt_, length);
+}
+
+void
+AudioSrtpSession::setRemoteMasterKey(uint8 *key, size_t length)
+{
+    length = (length > MAX_MASTER_KEY_LENGTH) ? MAX_MASTER_KEY_LENGTH : length;
+    memcpy(remoteMasterKey_, key, length);
+}
+
+void
+AudioSrtpSession::getRemoteMasterKey(uint8 *key, size_t length)
+{
+    length = (length > MAX_MASTER_KEY_LENGTH) ? MAX_MASTER_KEY_LENGTH : length;
+    memcpy(key, remoteMasterKey_, length);
+}
+
+void
+AudioSrtpSession::setRemoteMasterSalt(uint8 *salt, size_t length)
+{
+    length = (length > MAX_MASTER_SALT_LENGTH) ? MAX_MASTER_SALT_LENGTH : length;
+    memcpy(remoteMasterSalt_, salt, length);
+}
+
+void
+AudioSrtpSession::getRemoteMasterSalt(uint8 *salt, size_t length)
+{
+    length = (length > MAX_MASTER_SALT_LENGTH) ? MAX_MASTER_SALT_LENGTH : length;
+    memcpy(salt, remoteMasterSalt_, length);
 }
 
 }

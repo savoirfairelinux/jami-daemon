@@ -35,6 +35,7 @@
 #include <ccrtp/CryptoContext.h>
 #include "cc_thread.h"
 #include "audio_rtp_session.h"
+#include "audio_srtp_session.h"
 #include "noncopyable.h"
 
 #include "sip/sdes_negotiator.h"
@@ -128,6 +129,8 @@ class AudioRtpFactory {
          */
         void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
 
+        void saveCryptographicInfo();
+
         void setDtmfPayloadType(unsigned int);
 
         /**
@@ -157,6 +160,31 @@ class AudioRtpFactory {
 
         /** Local srtp crypto context to be set into outgoing data queue. */
         ost::CryptoContext *cachedLocalContext_;
+
+        uint8 cachedLocalMasterKey_[MAX_MASTER_KEY_LENGTH];
+
+        /** local master key length in byte */
+        size_t localMasterKeyLength_;
+
+        uint8 cachedLocalMasterSalt_[MAX_MASTER_SALT_LENGTH];
+
+        /** local master salt length in byte */
+        size_t localMasterSaltLength_;
+
+        uint8 cachedRemoteMasterKey_[MAX_MASTER_KEY_LENGTH];
+
+        /** remote master key length in byte */
+        size_t remoteMasterKeyLength_;
+
+        uint8 cachedRemoteMasterSalt_[MAX_MASTER_SALT_LENGTH];
+
+        /** remote master salt length in byte */
+        size_t remoteMasterSaltLength_;
+
+        bool cryptoInfoCached_;
+
+        /** Used to make sure remote crypto context not initialized twice. */
+        bool remoteOfferIsSet_;
 
         SIPCall *ca_;
         KeyExchangeProtocol keyExchangeProtocol_;
