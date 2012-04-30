@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __LOGGER_H__
-#define __LOGGER_H__
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
 #include <syslog.h>
 
@@ -41,10 +41,17 @@ void setDebugMode(bool);
 bool getDebugMode();
 };
 
-#define ERROR(...)	Logger::log(LOG_ERR, __VA_ARGS__)
-#define WARN(...)	Logger::log(LOG_WARNING, __VA_ARGS__)
-#define INFO(...)	Logger::log(LOG_INFO, __VA_ARGS__)
-#define DEBUG(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
+#ifdef NDEBUG
+#define LOGGER(M, LEVEL, ...)
+#else
+#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d: " M, __FILE__, \
+                                          __LINE__, ##__VA_ARGS__)
+#endif
+
+#define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
+#define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
+#define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
+#define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
 
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"
@@ -64,5 +71,5 @@ bool getDebugMode();
 #define WHITE "\033[01;37m"
 #define END_COLOR "\033[0m"
 
-#endif
+#endif // LOGGER_H_
 

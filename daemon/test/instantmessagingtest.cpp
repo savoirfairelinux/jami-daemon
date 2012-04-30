@@ -30,25 +30,21 @@
 
 #include <iostream>
 #include <fstream>
+#include <expat.h>
+#include "test_utils.h"
 
 #include "instantmessagingtest.h"
 #include "im/instant_messaging.h"
-
-#include "expat.h"
-#include <cstdio>
+#include "logger.h"
 
 #define MAXIMUM_SIZE	10
 #define DELIMITER_CHAR	"\n\n"
 
-using std::cout;
-using std::endl;
 using namespace sfl::InstantMessaging;
 
 void InstantMessagingTest::testSaveSingleMessage()
 {
-    DEBUG("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
-
-    std::string input, tmp;
+    TITLE();
     std::string callID = "testfile1.txt";
     std::string filename = "im:";
 
@@ -60,7 +56,9 @@ void InstantMessagingTest::testSaveSingleMessage()
     std::ifstream testfile(filename.c_str(), std::ios::in);
     CPPUNIT_ASSERT(testfile.is_open());
 
+    std::string input;
     while (!testfile.eof()) {
+        std::string tmp;
         std::getline(testfile, tmp);
         input.append(tmp);
     }
@@ -71,9 +69,8 @@ void InstantMessagingTest::testSaveSingleMessage()
 
 void InstantMessagingTest::testSaveMultipleMessage()
 {
-    DEBUG("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
+    TITLE();
 
-    std::string input, tmp;
     std::string callID = "testfile2.txt";
     std::string filename = "im:";
 
@@ -86,7 +83,9 @@ void InstantMessagingTest::testSaveMultipleMessage()
     std::ifstream testfile(filename.c_str(), std::ios::in);
     CPPUNIT_ASSERT(testfile.is_open());
 
+    std::string input;
     while (!testfile.eof()) {
+        std::string tmp;
         std::getline(testfile, tmp);
         input.append(tmp);
     }
@@ -108,14 +107,12 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
 
     std::cout << "startElement " << name << std::endl;
 
-    int *nbEntry = (int *)userData;
+    int *nbEntry = (int *) userData;
 
     char attribute[50];
     char value[50];
 
-    const char **att;
-
-    for (att = atts; *att; att += 2) {
+    for (const char **att = atts; *att; att += 2) {
 
         const char **val = att+1;
 
@@ -169,13 +166,11 @@ void InstantMessagingTest::testGenerateXmlUriList()
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
 
     if (XML_Parse(parser, buffer.c_str(), buffer.size(), 1) == XML_STATUS_ERROR) {
-        std::cout << "Error: " << XML_ErrorString(XML_GetErrorCode(parser))
-                  << " at line " << XML_GetCurrentLineNumber(parser) << std::endl;
+        ERROR("%s at line %d", XML_ErrorString(XML_GetErrorCode(parser)), XML_GetCurrentLineNumber(parser));
         CPPUNIT_ASSERT(false);
     }
 
     XML_ParserFree(parser);
-
     CPPUNIT_ASSERT(nbEntry == 4);
 }
 
@@ -197,20 +192,13 @@ void InstantMessagingTest::testXmlUriListParsing()
     sfl::InstantMessaging::UriEntry::iterator iterAttr;
 
     // An iterator over list entries
-    sfl::InstantMessaging::UriList::iterator iterEntry = list.begin();
-
-
-    while (iterEntry != list.end()) {
+    for (sfl::InstantMessaging::UriList::iterator iterEntry = list.begin();
+            iterEntry != list.end(); ++iterEntry) {
         sfl::InstantMessaging::UriEntry entry = static_cast<sfl::InstantMessaging::UriEntry>(*iterEntry);
         iterAttr = entry.find(sfl::IM_XML_URI);
 
-        if ((iterAttr->second == std::string("sip:alex@example.com")) ||
-                (iterAttr->second == std::string("sip:manu@example.com")))
-            CPPUNIT_ASSERT(true);
-        else
-            CPPUNIT_ASSERT(false);
-
-        iterEntry++;
+        CPPUNIT_ASSERT((iterAttr->second == std::string("sip:alex@example.com")) or
+                (iterAttr->second == std::string("sip:manu@example.com")));
     }
 }
 
@@ -232,8 +220,7 @@ void InstantMessagingTest::testGetTextArea()
     formatedText.append("--boundary--");
 
     std::string message(findTextMessage(formatedText));
-
-    std::cout << "message " << message << std::endl;
+    DEBUG("Message %s", message.c_str());
 
     CPPUNIT_ASSERT(message == "Here is the text area");
 }
@@ -270,7 +257,7 @@ void InstantMessagingTest::testGetUriListArea()
     sfl::InstantMessaging::UriEntry::iterator iterAttr = entry.find(sfl::IM_XML_URI);
 
     if (iterAttr == entry.end()) {
-        std::cout << "Error, did not found attribute" << std::endl;
+        ERROR("Did not find attribute");
         CPPUNIT_ASSERT(false);
     }
 
@@ -303,8 +290,5 @@ void InstantMessagingTest::testIllFormatedMessage()
         exceptionCaught = true;
     }
 
-    if (exceptionCaught)
-        CPPUNIT_ASSERT(true);
-    else
-        CPPUNIT_ASSERT(false);
+    CPPUNIT_ASSERT(exceptionCaught);
 }

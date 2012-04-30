@@ -29,6 +29,7 @@ libdbus_la_CXXFLAGS = \
             -DPROGSHAREDIR=\"${datadir}/sflphone\" \
             $(NETWORKMANAGER)
 
+
 noinst_HEADERS =            \
     callmanager.h           \
     configurationmanager.h  \

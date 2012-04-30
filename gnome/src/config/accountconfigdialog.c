@@ -40,6 +40,7 @@
 #include <gtk/gtk.h>
 
 #include "config.h"
+#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "logger.h"
 #include "actions.h"
@@ -489,7 +490,6 @@ key_exchange_changed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
     gtk_widget_set_sensitive(zrtp_button, sensitive);
 }
 
-
 static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
@@ -500,8 +500,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
         gtk_widget_set_sensitive(use_stun_check_box, FALSE);
         gtk_widget_set_sensitive(same_as_local_radio_button, TRUE);
         gtk_widget_set_sensitive(published_addr_radio_button, TRUE);
-        gtk_widget_hide(stun_server_label);
-        gtk_widget_hide(stun_server_entry);
+        gtk_widget_set_sensitive(stun_server_entry, FALSE);
 
         if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
             gtk_widget_show(published_address_entry);
@@ -518,6 +517,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
             gtk_widget_set_sensitive(published_addr_radio_button, FALSE);
             gtk_widget_show(stun_server_label);
             gtk_widget_show(stun_server_entry);
+            gtk_widget_set_sensitive(stun_server_entry, TRUE);
             gtk_widget_hide(published_address_entry);
             gtk_widget_hide(published_port_spin_box);
             gtk_widget_hide(published_address_label);
@@ -525,8 +525,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
         } else {
             gtk_widget_set_sensitive(same_as_local_radio_button, TRUE);
             gtk_widget_set_sensitive(published_addr_radio_button, TRUE);
-            gtk_widget_hide(stun_server_label);
-            gtk_widget_hide(stun_server_entry);
+            gtk_widget_set_sensitive(stun_server_entry, FALSE);
         }
     }
 }
@@ -534,7 +533,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 static gchar *
 get_interface_addr_from_name(const gchar * const iface_name)
 {
-#define	UC(b)	(((int)b)&0xff)
+#define UC(b) (((int)b)&0xff)
 
     int fd;
 
@@ -596,10 +595,15 @@ static void set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNU
 
 static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 {
+    /* Widgets have not been created yet */
+    if (!stun_server_label)
+        return;
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Config: Showing stun options, hiding Local/Published info");
         gtk_widget_show(stun_server_label);
         gtk_widget_show(stun_server_entry);
+        gtk_widget_set_sensitive(stun_server_entry, TRUE);
         gtk_widget_set_sensitive(same_as_local_radio_button, FALSE);
         gtk_widget_set_sensitive(published_addr_radio_button, FALSE);
 
@@ -608,9 +612,8 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
         gtk_widget_hide(published_address_entry);
         gtk_widget_hide(published_port_spin_box);
     } else {
-        DEBUG("Config: hiding stun options, showing Local/Published info");
-        gtk_widget_hide(stun_server_label);
-        gtk_widget_hide(stun_server_entry);
+        DEBUG("Config: disabling stun options, showing Local/Published info");
+        gtk_widget_set_sensitive(stun_server_entry, FALSE);
         gtk_widget_set_sensitive(same_as_local_radio_button, TRUE);
         gtk_widget_set_sensitive(published_addr_radio_button, TRUE);
 
@@ -621,8 +624,6 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
             gtk_widget_show(published_port_spin_box);
         }
     }
-
-    DEBUG("DONE");
 }
 
 
@@ -874,7 +875,7 @@ create_network(const account_t *account)
 
     int idx = 0;
     for (gchar **iface = iface_list; iface && *iface; iface++, idx++) {
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_address_combo), NULL, *iface);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(local_address_combo), *iface);
         if (g_strcmp0(*iface, local_interface) == 0)
             gtk_combo_box_set_active(GTK_COMBO_BOX(local_address_combo), idx);
     }
@@ -1123,9 +1124,6 @@ static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 
     GtkWidget *frame = create_network(account);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
-
-    frame = create_security_widget(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);

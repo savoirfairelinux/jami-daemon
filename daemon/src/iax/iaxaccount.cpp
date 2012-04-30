@@ -31,32 +31,23 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
+#include "logger.h"
 #include "manager.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
 
 IAXAccount::IAXAccount(const std::string& accountID)
-    : Account(accountID, "iax2"), password_(),
-    link_(new IAXVoIPLink(accountID))
+    : Account(accountID, "iax2"), password_(), link_(accountID)
 {}
 
-
-IAXAccount::~IAXAccount()
+void IAXAccount::serialize(Conf::YamlEmitter &emitter)
 {
-    delete link_;
-}
-
-void IAXAccount::serialize(Conf::YamlEmitter *emitter)
-{
-    if (emitter == NULL) {
-        ERROR("IAXAccount: Error: emitter is NULL in serialize");
-        return;
-    }
-
     Conf::MappingNode accountmap(NULL);
 
     Conf::ScalarNode id(accountID_);
@@ -71,44 +62,39 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
     Conf::ScalarNode codecs(codecStr_);
     Conf::ScalarNode displayName(displayName_);
 
-    accountmap.setKeyValue(aliasKey, &alias);
-    accountmap.setKeyValue(typeKey, &type);
-    accountmap.setKeyValue(idKey, &id);
-    accountmap.setKeyValue(usernameKey, &username);
-    accountmap.setKeyValue(passwordKey, &password);
-    accountmap.setKeyValue(hostnameKey, &hostname);
-    accountmap.setKeyValue(accountEnableKey, &enable);
-    accountmap.setKeyValue(mailboxKey, &mailbox);
+    accountmap.setKeyValue(ALIAS_KEY, &alias);
+    accountmap.setKeyValue(TYPE_KEY, &type);
+    accountmap.setKeyValue(ID_KEY, &id);
+    accountmap.setKeyValue(USERNAME_KEY, &username);
+    accountmap.setKeyValue(PASSWORD_KEY, &password);
+    accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
+    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
+    accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
 
-    accountmap.setKeyValue(displayNameKey, &displayName);
-    accountmap.setKeyValue(codecsKey, &codecs);
+    accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
+    accountmap.setKeyValue(CODECS_KEY, &codecs);
 
     try {
-        emitter->serializeAccount(&accountmap);
+        emitter.serializeAccount(&accountmap);
     } catch (const Conf::YamlEmitterException &e) {
         ERROR("ConfigTree: %s", e.what());
     }
 }
 
-void IAXAccount::unserialize(const Conf::MappingNode *map)
+void IAXAccount::unserialize(const Conf::MappingNode &map)
 {
-    if (map == NULL) {
-        ERROR("IAXAccount: Error: Map is NULL in unserialize");
-        return;
-    }
-
-    map->getValue(aliasKey, &alias_);
-    map->getValue(typeKey,  &type_);
-    map->getValue(usernameKey, &username_);
-    map->getValue(passwordKey, &password_);
-    map->getValue(hostnameKey, &hostname_);
-    map->getValue(accountEnableKey, &enabled_);
-    map->getValue(mailboxKey, &mailBox_);
-    map->getValue(codecsKey, &codecStr_);
+    map.getValue(ALIAS_KEY, &alias_);
+    map.getValue(TYPE_KEY,  &type_);
+    map.getValue(USERNAME_KEY, &username_);
+    map.getValue(PASSWORD_KEY, &password_);
+    map.getValue(HOSTNAME_KEY, &hostname_);
+    map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
+    map.getValue(MAILBOX_KEY, &mailBox_);
+    map.getValue(CODECS_KEY, &codecStr_);
 
     // Update codec list which one is used for SDP offer
     setActiveCodecs(ManagerImpl::unserialize(codecStr_));
-    map->getValue(displayNameKey, &displayName_);
+    map.getValue(DISPLAY_NAME_KEY, &displayName_);
 }
 
 void IAXAccount::setAccountDetails(std::map<std::string, std::string> details)
@@ -149,8 +135,8 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 void IAXAccount::registerVoIPLink()
 {
     try {
-        link_->init();
-        link_->sendRegister(this);
+        link_.init();
+        link_.sendRegister(this);
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
@@ -160,8 +146,8 @@ void
 IAXAccount::unregisterVoIPLink()
 {
     try {
-        link_->sendUnregister(this);
-        link_->terminate();
+        link_.sendUnregister(this);
+        link_.terminate();
     } catch (const VoipLinkException &e) {
         ERROR("IAXAccount: %s", e.what());
     }
@@ -178,5 +164,5 @@ IAXAccount::loadConfig()
 
 VoIPLink* IAXAccount::getVoIPLink()
 {
-    return link_;
+    return &link_;
 }

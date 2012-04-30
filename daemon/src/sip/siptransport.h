@@ -48,8 +48,6 @@ class SIPAccount;
 class SipTransport {
     public:
         SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool);
-        ~SipTransport();
-
         static std::string getSIPLocalIP();
 
         /**
@@ -94,14 +92,6 @@ class SipTransport {
             pool_ = pool;
         }
 
-        /**
-         * Create a new stun resolver. Store it inside the array. Resolve public address for this
-         * server name.
-         * @param serverName The name of the stun server
-         * @param port number
-         */
-        pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
-
         pj_status_t destroyStunResolver(const std::string &serverName);
 
         /**
@@ -109,15 +99,13 @@ class SipTransport {
          * transport type specified in account settings
          * @param account The account for which a transport must be created.
          */
-        void createSipTransport(SIPAccount *account);
-
-        void createDefaultSipUdpTransport();
+        void createSipTransport(SIPAccount &account);
 
         /**
-        * Create SIP UDP transport from account's setting
-        * @param account The account for which a transport must be created.
-        */
-        pjsip_transport *createUdpTransport(std::string interface, unsigned int port);
+         * Create the default sip transport on 5060. In case this port is already used
+         * increme
+         */
+        void createDefaultSipUdpTransport();
 
         /**
          * Initialize the transport selector
@@ -128,43 +116,9 @@ class SipTransport {
         pjsip_tpselector *initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const;
 
         /**
-         * Create The default TLS listener which is global to the application. This means that
-         * only one TLS connection can be established for the momment.
-         * @param the port number to create the TCP socket
-         * @param pjsip's tls settings for the transport to be created which contains:
-         *      - path to ca certificate list file
-         *      - path to certertificate file
-         *      - path to private key file
-         *      - the password for the file
-         *      - the TLS method
-         * @param a pointer to store the listener created, in our case this is a static pointer
-         */
-        void createTlsListener(pj_uint16_t, pjsip_tls_setting *, pjsip_tpfactory **);
-
-        /**
-         * Create a connection oriented TLS transport and register to the specified remote address.
-         * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
-         * is allowed to be created in the application. Any subsequent account attempting to
-         * register a new using this transport even if new settings are specified.
-         * @param the remote address for this transport to be connected
-         * @param the local port to initialize the TCP socket
-         * @param pjsip's tls transport parameters
-         */
-        pjsip_transport *
-        createTlsTransport(const std::string &remoteAddr,
-                           pj_uint16_t tlsListenerPort,
-                           pjsip_tls_setting *tlsSetting);
-
-        /**
-         * Create a UDP transport using stun server to resove public address
-         * @param account The account for which a transport must be created.
-         */
-        pjsip_transport *createStunTransport(pj_str_t serverName, pj_uint16_t port);
-
-        /**
          * This function unset the transport for a given account.
          */
-        void shutdownSipTransport(SIPAccount *account);
+        void shutdownSipTransport(SIPAccount &account);
 
         /**
          * Get the correct address to use (ie advertised) from
@@ -176,14 +130,62 @@ class SipTransport {
          */
         void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
 
+        /**
+         * Create a new udp transport specifying the bound address AND the published address.
+         * The published address is the address to appears in the sip VIA header. This is used
+         * essentially when the client is behind a trafic routing device.
+         *
+         * @param The interface to bind this transport with
+         * @param The requested udp port number
+         * @param The public address for this transport
+         * @param The public port for this transport
+         */
+        pjsip_transport *createUdpTransport(const std::string &interface, unsigned int port, const std::string &publicAddr, unsigned int publicPort);
+
     private:
         NON_COPYABLE(SipTransport);
+
+        pjsip_transport *
+        createStunTransport(SIPAccount &account);
+        /**
+         * Create a connection oriented TLS transport and register to the specified remote address.
+         * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
+         * is allowed to be created in the application. Any subsequent account attempting to
+         * register a new using this transport even if new settings are specified.
+         * @param the account that is creating the TLS transport
+         */
+        pjsip_transport *
+        createTlsTransport(SIPAccount &account);
+
+        /**
+         * Create The default TLS listener which is global to the application. This means that
+         * only one TLS connection can be established for the momment.
+         * @param the SIPAccount for which we are creating the TLS listener
+         * @return a pointer to the new listener
+         */
+        pjsip_tpfactory *
+        createTlsListener(SIPAccount &account);
+
+        /**
+         * Create a new stun resolver. Store it inside the array. Resolve public address for this
+         * server name.
+         * @param serverName The name of the stun server
+         * @param port number
+         */
+        pj_status_t createStunResolver(pj_str_t serverName, pj_uint16_t port);
+
+        /**
+        * Create SIP UDP transport from account's setting
+        * @param account The account for which a transport must be created.
+        */
+        pjsip_transport *createUdpTransport(const std::string &interface,
+                                            unsigned int port);
 
         /**
          * UDP Transports are stored in this map in order to retreive them in case
          * several accounts would share the same port number.
          */
-        std::map<pj_uint16_t, pjsip_transport*> transportMap_;
+        std::map<std::string, pjsip_transport*> transportMap_;
 
         /**
          * Stun resolver array

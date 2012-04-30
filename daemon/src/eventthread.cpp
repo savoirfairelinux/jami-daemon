@@ -31,18 +31,13 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
-EventThread::EventThread(VoIPLink *link) : Thread(), link_(link)
-{
-    setCancel(cancelDeferred);
-}
-
-EventThread::~EventThread() {
-    ost::Thread::terminate();
-}
+EventThread::EventThread(VoIPLink *link) : ost::Thread(), link_(link)
+{}
 
 void EventThread::run()
 {
-    while (!testCancel())
-        link_->getEvent();
+    while (link_->getEvent())
+        ;  // noop
+    ost::Thread::exit();
 }
 

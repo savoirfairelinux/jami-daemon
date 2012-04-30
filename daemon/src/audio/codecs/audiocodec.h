@@ -66,23 +66,6 @@ class AudioCodec : public Codec {
         std::string getMimeSubtype() const;
 
         /**
-         * @Override
-         */
-        const ost::PayloadFormat& getPayloadFormat();
-
-        /**
-         * @Override
-         */
-        void setParameter(const std::string& /*name*/, const std::string& /*value*/) {};
-
-        /**
-         * @Override
-         */
-        std::string getParameter(const std::string& /*name*/) const {
-            return "";
-        };
-
-        /**
          * Decode an input buffer and fill the output buffer with the decoded data
          * @param buffer_size : the size of the input buffer
          * @return the number of samples decoded

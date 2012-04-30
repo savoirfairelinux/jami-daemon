@@ -32,9 +32,9 @@
 #ifndef CALL_H
 #define CALL_H
 
-#include <cc++/thread.h> // for mutex
 #include <sstream>
-
+#include <map>
+#include "cc_thread.h"
 #include "audio/recordable.h"
 
 /*

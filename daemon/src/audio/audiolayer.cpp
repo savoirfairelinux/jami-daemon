@@ -39,7 +39,7 @@ unsigned int AudioLayer::playbackGain_ = 100;
 
 AudioLayer::AudioLayer()
     : isStarted_(false)
-    , urgentRingBuffer_(SIZEBUF, Call::DEFAULT_ID)
+    , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
     , audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_()
     , dcblocker_()
@@ -47,7 +47,7 @@ AudioLayer::AudioLayer()
     , converter_(new SamplerateConverter(audioSampleRate_))
     , lastNotificationTime_(0)
 {
-    urgentRingBuffer_.createReadPointer();
+    urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
 }
 
 
@@ -86,7 +86,7 @@ void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
-void AudioLayer::notifyincomingCall()
+void AudioLayer::notifyIncomingCall()
 {
     if (!Manager::instance().incomingCallWaiting())
         return;

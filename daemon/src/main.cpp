@@ -35,59 +35,111 @@
 #endif
 
 #include <iostream>
-#include <memory> // for auto_ptr
-#include <string>
-#include <cc++/common.h>
+#include <getopt.h>
 #include "fileutils.h"
-
 #include "dbus/dbusmanager.h"
+#include "logger.h"
 #include "manager.h"
 
-ost::CommandOptionNoArg	console(
-    "console", "c", "Log in console (instead of syslog)"
-);
-
-ost::CommandOptionNoArg	debug(
-    "debug", "d", "Debug mode (more verbose)"
-);
-
-ost::CommandOptionNoArg	help(
-    "help", "h", "Print help"
-);
-
-int main(int argc, char **argv)
-{
-    fileutils::set_program_dir(argv[0]);
-    // makeCommandOptionParse allocates the object with operator new, so
-    // auto_ptr is fine in this context.
-    // TODO: This should eventually be replaced with std::unique_ptr for C++0x
-    std::auto_ptr<ost::CommandOptionParse> args(ost::makeCommandOptionParse(argc, argv, ""));
-
-    printf("SFLphone Daemon " VERSION ", by Savoir-Faire Linux 2004-2012\n" \
-           "http://www.sflphone.org/\n");
-
-    if (help.numSet) {
-        std::cerr << args->printUsage();
-        return 0;
-    } else if (args->argsHaveError()) {
-        std::cerr << args->printErrors();
-        std::cerr << args->printUsage();
-        return 1;
+namespace {
+    void print_title()
+    {
+        std::cout << "SFLphone Daemon " << VERSION <<
+            ", by Savoir-Faire Linux 2004-2012" << std::endl <<
+            "http://www.sflphone.org/" << std::endl;
     }
 
-    Logger::setConsoleLog(console.numSet);
-    Logger::setDebugMode(debug.numSet);
+    void print_usage()
+    {
+        std::cout << std::endl <<
+        "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
+        "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
+        "-h, --help \t- Print help" << std::endl;
+    }
+
+    // Parse command line arguments, setting debug options or printing a help
+    // message accordingly.
+    // returns true if we should quit (i.e. help was printed), false otherwise
+    bool parse_args(int argc, char *argv[])
+    {
+        int consoleFlag = false;
+        int debugFlag = false;
+        int helpFlag = false;
+        int versionFlag = false;
+        static const struct option long_options[] = {
+            /* These options set a flag. */
+            {"debug", no_argument, NULL, 'd'},
+            {"console", no_argument, NULL, 'c'},
+            {"help", no_argument, NULL, 'h'},
+            {"version", no_argument, NULL, 'v'},
+            {0, 0, 0, 0} /* Sentinel */
+        };
+
+        while (true) {
+            /* getopt_long stores the option index here. */
+            int option_index = 0;
+            int c = getopt_long(argc, argv, "dchv", long_options, &option_index);
+
+            /* Detect the end of the options. */
+            if (c == -1)
+                break;
+
+            switch (c) {
+                case 'd':
+                    debugFlag = true;
+                    break;
+
+                case 'c':
+                    consoleFlag = true;
+                    break;
+
+                case 'h':
+                case '?':
+                    helpFlag = true;
+                    break;
+
+                case 'v':
+                    versionFlag = true;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        bool quit = false;
+        if (helpFlag) {
+            print_usage();
+            quit = true;
+        } else if (versionFlag) {
+            // We've always print the title/version, so we can just exit
+            quit = true;
+        } else {
+            Logger::setConsoleLog(consoleFlag);
+            Logger::setDebugMode(debugFlag);
+        }
+        return quit;
+    }
+}
+
+int main(int argc, char *argv [])
+{
+    fileutils::set_program_dir(argv[0]);
+    print_title();
+    if (parse_args(argc, argv))
+        return 0;
 
     if (!fileutils::create_pidfile())
         return 1;
 
     try {
-        Manager::instance().init();
+        Manager::instance().init("");
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     } catch (...) {
-        std::cerr << "An exception occured when initializing the system." << std::endl;
+        std::cerr << "An exception occured when initializing " PACKAGE <<
+            std::endl;
         return 1;
     }
 

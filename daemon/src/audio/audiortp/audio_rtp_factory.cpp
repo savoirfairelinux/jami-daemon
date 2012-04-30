@@ -28,8 +28,6 @@
  *  as that of the covered work.
  */
 
-
-
 #include "audio_rtp_factory.h"
 #include "audio_zrtp_session.h"
 #include "audio_srtp_session.h"
@@ -51,8 +49,6 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
 AudioRtpFactory::~AudioRtpFactory()
 {
     delete rtpSession_;
-    delete cachedLocalContext_;
-    delete cachedRemoteContext_;
 }
 
 void AudioRtpFactory::initConfig()
@@ -114,13 +110,13 @@ void AudioRtpFactory::initSession()
 void AudioRtpFactory::start(AudioCodec* audiocodec)
 {
     if (rtpSession_ == NULL)
-        throw AudioRtpFactoryException("AudioRtpFactory: Error: RTP session was null when trying to start audio thread");
+        throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
     if (keyExchangeProtocol_ == SDES and cachedLocalContext_ and cachedRemoteContext_)
         static_cast<AudioSrtpSession *>(rtpSession_)->restoreCryptoContext(cachedLocalContext_, cachedRemoteContext_);
 
     if (rtpSession_->startRtpThread(*audiocodec) != 0)
-        throw AudioRtpFactoryException("AudioRtpFactory: Error: Failed to start AudioRtpSession thread");
+        throw AudioRtpFactoryException("Failed to start AudioRtpSession thread");
 }
 
 void AudioRtpFactory::stop()
@@ -134,7 +130,7 @@ void AudioRtpFactory::stop()
 int AudioRtpFactory::getSessionMedia()
 {
     if (rtpSession_ == NULL)
-        throw AudioRtpFactoryException("AudioRtpFactory: Error: RTP session was null when trying to get session media type");
+        throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
     return rtpSession_->getCodecPayloadType();
 }
@@ -142,7 +138,7 @@ int AudioRtpFactory::getSessionMedia()
 void AudioRtpFactory::updateSessionMedia(AudioCodec *audiocodec)
 {
     if (rtpSession_ == NULL)
-        throw AudioRtpFactoryException("AudioRtpFactory: Error: rtpSession_ was null when trying to update IP address");
+        throw AudioRtpFactoryException("rtpSession_ was NULL when trying to update IP address");
 
     rtpSession_->updateSessionMedia(*audiocodec);
 }
@@ -158,7 +154,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     if (keyExchangeProtocol_ == ZRTP)
         return static_cast<AudioZrtpSession *>(rtpSession_);
     else
-        throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in getAudioZrtpSession");
+        throw AudioRtpFactoryException("rtpSession_ is NULL in getAudioZrtpSession");
 }
 
 void sfl::AudioRtpFactory::initLocalCryptoInfo()

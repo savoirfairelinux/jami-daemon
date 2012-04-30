@@ -31,13 +31,12 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIO_LAYER_H__
-#define __AUDIO_LAYER_H__
+#ifndef AUDIO_LAYER_H_
+#define AUDIO_LAYER_H_
 
-#include <cc++/thread.h> // for ost::Mutex
+#include "cc_thread.h" // for ost::Mutex
 #include <sys/time.h>
-
-#include "manager.h"
+#include <vector>
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "samplerateconverter.h"
@@ -49,6 +48,7 @@
  */
 
 class MainBuffer;
+class AudioPreference;
 
 namespace ost {
 class Time;
@@ -171,7 +171,7 @@ class AudioLayer {
 	/**
          * Emit an audio notification on incoming calls
          */
-        void notifyincomingCall();
+        void notifyIncomingCall();
 
         /**
          * Gain applied to mic signal

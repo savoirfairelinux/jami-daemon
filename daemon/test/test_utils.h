@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,47 +28,10 @@
  *  as that of the covered work.
  */
 
-/*
- * @file ringtonetest.cpp
- * @brief       Regroups unitary tests related to the ringtones.
- *              Check if the wave file has been successfully loaded
- */
+#ifndef TEST_UTILS_H_
+#define TEST_UTILS_H_
 
-#ifndef _RINGTONE_TEST_
-#define _RINGTONE_TEST_
+#define TITLE() DEBUG("-------------------- %s --------------------\n", \
+        __PRETTY_FUNCTION__)
 
-// Cppunit import
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
-
-#include <assert.h>
-
-// Application import
-#include "manager.h"
-#include "audio/sound/audiofile.h"
-#include "global.h"
-#include "user_cfg.h"
-
-class RingtoneTest: public CppUnit::TestFixture {
-
-        /*
-         * Use cppunit library macros to add unit test the factory
-         */
-        CPPUNIT_TEST_SUITE(RingtoneTest);
-        CPPUNIT_TEST(testLoadWavefile);
-        CPPUNIT_TEST_SUITE_END();
-
-    public:
-        /*
-         * Unit tests related to the audio preferences
-         */
-        void testLoadWavefile();
-
-};
-/* Register our test module */
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RingtoneTest, "RingtoneTest");
-CPPUNIT_TEST_SUITE_REGISTRATION(RingtoneTest);
-
-#endif
+#endif // TEST_UTILS_H_

@@ -29,8 +29,8 @@
  *  as that of the covered work.
  */
 
-#include "config.h"
-#include "../global.h"
+#include "sfl_config.h"
+#include "logger.h"
 #include <fstream>
 #include <cstdlib>
 #include <sys/types.h>
@@ -195,7 +195,7 @@ void ConfigTree::setConfigTreeItem(const std::string& section,
 bool
 ConfigTree::populateFromFile(const std::string& fileName)
 {
-    DEBUG("ConfigTree: Populate from file %s", fileName.c_str());
+    DEBUG("Populate from file %s", fileName.c_str());
 
     if (fileName.empty())
         return false;
@@ -322,4 +322,3 @@ ConfigTreeIterator::next()
     return tk;
 }
 } // end namespace ConfigTree
-

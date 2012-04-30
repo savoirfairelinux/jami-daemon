@@ -227,17 +227,17 @@ void sflphone_fill_account_list(void)
             acc->state = ACCOUNT_STATE_TRYING;
         else if (g_strcmp0(status, "ERROR") == 0)
             acc->state = ACCOUNT_STATE_ERROR;
-        else if (g_strcmp0(status , "ERROR_AUTH") == 0)
+        else if (g_strcmp0(status, "ERROR_AUTH") == 0)
             acc->state = ACCOUNT_STATE_ERROR_AUTH;
-        else if (g_strcmp0(status , "ERROR_NETWORK") == 0)
+        else if (g_strcmp0(status, "ERROR_NETWORK") == 0)
             acc->state = ACCOUNT_STATE_ERROR_NETWORK;
-        else if (g_strcmp0(status , "ERROR_HOST") == 0)
+        else if (g_strcmp0(status, "ERROR_HOST") == 0)
             acc->state = ACCOUNT_STATE_ERROR_HOST;
-        else if (g_strcmp0(status , "ERROR_CONF_STUN") == 0)
-            acc->state = ACCOUNT_STATE_ERROR_CONF_STUN;
-        else if (g_strcmp0(status , "ERROR_EXIST_STUN") == 0)
+        else if (g_strcmp0(status, "ERROR_NOT_ACCEPTABLE") == 0)
+            acc->state = ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE;
+        else if (g_strcmp0(status, "ERROR_EXIST_STUN") == 0)
             acc->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-        else if (g_strcmp0(status , "ACCOUNT_STATE_IP2IP_READY") == 0)
+        else if (g_strcmp0(status, "ACCOUNT_STATE_IP2IP_READY") == 0)
             acc->state = ACCOUNT_STATE_IP2IP_READY;
         else
             acc->state = ACCOUNT_STATE_INVALID;
@@ -744,90 +744,66 @@ sflphone_keypad(guint keyval, gchar * key)
         sflphone_new_call();
 }
 
-static void place_direct_call(const callable_obj_t * c)
+int
+sflphone_place_call(callable_obj_t * c)
 {
-    g_assert(c->_state == CALL_STATE_DIALING);
-    dbus_place_call(c);
-}
+    account_t * account = NULL;
 
-static int place_registered_call(callable_obj_t * c)
-{
-    account_t * current = NULL;
-
-    if (c->_state != CALL_STATE_DIALING)
-        return -1;
-
-    if (!*c->_peer_number)
-        return -1;
-
-    if (account_list_get_size() == 0) {
-        notify_no_accounts();
-        sflphone_fail(c);
+    if(c == NULL) {
+        ERROR("Actions: Callable object is NULL while making new call");
         return -1;
     }
 
-    if (account_list_get_by_state(ACCOUNT_STATE_REGISTERED) == NULL) {
-        DEBUG("Actions: No registered account, cannot make a call");
-        notify_no_registered_accounts();
-        sflphone_fail(c);
+    DEBUG("Actions: Placing call from %s to %s using account %s", c->_display_name, c->_peer_number, c->_accountID);
+
+    if (c->_state != CALL_STATE_DIALING) {
+        ERROR("Actions: Call not in state dialing, cannot place call");
         return -1;
     }
 
-    DEBUG("Actions: Get account for this call");
+    if (!c->_peer_number || strlen(c->_peer_number) == 0) {
+        ERROR("Actions: No peer number set for this call");
+        return -1;
+    }
 
+    // Get the account for this call
     if (strlen(c->_accountID) != 0) {
         DEBUG("Actions: Account %s already set for this call", c->_accountID);
-        current = account_list_get_by_id(c->_accountID);
+        account = account_list_get_by_id(c->_accountID);
     } else {
         DEBUG("Actions: No account set for this call, use first of the list");
-        current = account_list_get_current();
+        account = account_list_get_current();
     }
 
-    if (current == NULL) {
-        DEBUG("Actions: Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);
-        return -1;
+    // Make sure the previously found account is registered, take first one registered elsewhere
+    if (account) {
+        gpointer status = g_hash_table_lookup(account->properties, "Status");
+        if (!utf8_case_equal(status, "REGISTERED")) {
+            // Place the call with the first registered account
+            account = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
+        }
     }
 
-    gpointer status = g_hash_table_lookup(current->properties, "Status");
-    if (utf8_case_equal(status, "REGISTERED")) {
-        /* The call is made with the current account */
-        // free memory for previous account id and get a new one
-        g_free(c->_accountID);
-        c->_accountID = g_strdup(current->accountID);
-        dbus_place_call(c);
-    } else {
-        /* Place the call with the first registered account
-         * and switch the current account.
-         * If we are here, we can be sure that there is at least one.
-         */
-        current = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
-        g_free(c->_accountID);
-        c->_accountID = g_strdup(current->accountID);
-        dbus_place_call(c);
-        notify_current_account(current);
+    // If there is no account specified or found, fallback on IP2IP call
+    if(account == NULL) {
+        DEBUG("Actions: Could not find an account for this call, making ip to ip call");
+        account = account_list_get_by_id("IP2IP");
+        if (account == NULL) {
+            ERROR("Actions: Could not determine any account for this call");
+            return -1;
+        }
     }
+
+    // free memory for previous account id and use the new one in case it changed
+    g_free(c->_accountID);
+    c->_accountID = g_strdup(account->accountID);
+    dbus_place_call(c);
+    notify_current_account(account);
 
     c->_history_state = g_strdup(OUTGOING_STRING);
 
     return 0;
 }
-
-void
-sflphone_place_call(callable_obj_t * c)
-{
-    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_display_name, c->_peer_number, c->_accountID);
-
-    if (is_direct_call(c)) {
-        gchar *msg = g_markup_printf_escaped(_("Direct SIP call"));
-        statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-        statusbar_push_message(msg , NULL, __MSG_ACCOUNT_DEFAULT);
-        g_free(msg);
-
-        place_direct_call(c);
-    } else if (place_registered_call(c) < 0)
-        DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
-}
-
 
 void
 sflphone_detach_participant(const gchar* callID)

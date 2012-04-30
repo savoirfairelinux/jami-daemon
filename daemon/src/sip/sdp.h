@@ -274,10 +274,9 @@ class Sdp {
 
         std::string getCodecName();
 
-        void receivingAnswerAfterInitialOffer(const pjmedia_sdp_session* remote);
-
     private:
         NON_COPYABLE(Sdp);
+        friend class SDPTest;
 
         /**
          * The pool to allocate memory, ownership to SipCall

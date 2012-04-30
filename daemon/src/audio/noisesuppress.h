@@ -32,7 +32,7 @@
 #define NOISESUPPRESS_H
 
 #include <speex/speex_preprocess.h>
-#include "global.h" // for SFLDataFormat
+#include "sfl_types.h"
 #include "noncopyable.h"
 
 class NoiseSuppress {

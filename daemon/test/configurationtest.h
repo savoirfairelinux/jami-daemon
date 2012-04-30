@@ -34,8 +34,8 @@
  *              Check if the default configuration has been successfully loaded
  */
 
-#ifndef _CONFIGURATION_TEST_
-#define _CONFIGURATION_TEST_
+#ifndef CONFIGURATION_TEST_
+#define CONFIGURATION_TEST_
 
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
@@ -43,29 +43,12 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
-
-// Application import
-#include "manager.h"
-#include "audio/audiolayer.h"
-#include "global.h"
-#include "config/yamlparser.h"
-#include "config/yamlemitter.h"
-#include "config/yamlnode.h"
-#include "sip/sipaccount.h"
-#include "account.h"
-
 class ConfigurationTest: public CppUnit::TestFixture {
 
         /*
          * Use cppunit library macros to add unit test the factory
          */
         CPPUNIT_TEST_SUITE(ConfigurationTest);
-//      CPPUNIT_TEST( testDefaultValueAudio );
-//	CPPUNIT_TEST( testDefaultValuePreferences );
-//	CPPUNIT_TEST( testDefaultValueSignalisation );
-//	CPPUNIT_TEST( testInitAudioDriver );
-//      CPPUNIT_TEST( testYamlParser );
         CPPUNIT_TEST(testYamlEmitter);
         CPPUNIT_TEST_SUITE_END();
 
@@ -103,4 +86,4 @@ class ConfigurationTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(ConfigurationTest);
 
-#endif
+#endif // CONFIGURATION_TEST_

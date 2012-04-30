@@ -28,6 +28,8 @@
  *  as that of the covered work.
  */
 #include "audio_srtp_session.h"
+#include "logger.h"
+#include "array_size.h"
 
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
@@ -95,19 +97,16 @@ namespace {
     // Fills the array dest with length random bytes
     void buffer_fill(unsigned char dest [], size_t length)
     {
-        DEBUG("AudioSrtp: Init local master key");
+        DEBUG("Init local master key");
 
         // @TODO key may have different length depending on cipher suite
         // Allocate memory for key
         std::vector<unsigned char> random_key(length);
 
         // Generate ryptographically strong pseudo-random bytes
-        int err;
-
-        if ((err = RAND_bytes(&(*random_key.begin()), length)) != 1)
+        if (RAND_bytes(&(*random_key.begin()), length) != 1)
             DEBUG("Error occured while generating cryptographically strong pseudo-random key");
 
-        assert((sizeof dest / sizeof dest[0]) <= length);
         memcpy(dest, &(*random_key.begin()), length);
     }
 }
@@ -134,7 +133,7 @@ AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
 
 ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfo()
 {
-    DEBUG("AudioSrtp: Set cryptographic info for this rtp session");
+    DEBUG("Set cryptographic info for this rtp session");
 
     // Initialize local Crypto context
     initializeLocalMasterKey();
@@ -151,7 +150,7 @@ ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfo()
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 {
 
-    DEBUG("AudioSrtp: Get Cryptographic info from this rtp session");
+    DEBUG("Get Cryptographic info from this rtp session");
 
     std::vector<std::string> crypto_vector;
 
@@ -159,7 +158,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     // cryptographic context tagged 1, 2, 3...
     std::string tag = "1";
 
-    std::string crypto_suite = sfl::CryptoSuites[localCryptoSuite_].name;
+    std::string crypto_suite(sfl::CryptoSuites[localCryptoSuite_].name);
 
     // srtp keys formated as the following  as the following
     // inline:keyParameters|keylifetime|MasterKeyIdentifier
@@ -207,10 +206,11 @@ AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 
 void AudioSrtpSession::initializeLocalMasterKey()
 {
-    DEBUG("AudioSrtp: Init local master key");
+    DEBUG("Init local master key");
     // @TODO key may have different length depending on cipher suite
     localMasterKeyLength_ = sfl::CryptoSuites[localCryptoSuite_].masterKeyLength / 8;
-    DEBUG("AudioSrtp: Local master key length %d", localMasterKeyLength_);
+    assert(ARRAYSIZE(localMasterKey_) >= localMasterKeyLength_);
+    DEBUG("Local master key length %d", localMasterKeyLength_);
     buffer_fill(localMasterKey_, localMasterKeyLength_);
 }
 
@@ -218,20 +218,21 @@ void AudioSrtpSession::initializeLocalMasterSalt()
 {
     // @TODO key may have different length depending on cipher suite
     localMasterSaltLength_ = sfl::CryptoSuites[localCryptoSuite_].masterSaltLength / 8;
-    DEBUG("AudioSrtp: Local master salt length %d", localMasterSaltLength_);
+    assert(ARRAYSIZE(localMasterSalt_) >= localMasterSaltLength_);
+    DEBUG("Local master salt length %d", localMasterSaltLength_);
     buffer_fill(localMasterSalt_, localMasterSaltLength_);
 }
 
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
-    DEBUG("AudioSrtp: Get base64 concatenated keys");
+    DEBUG("Get base64 concatenated keys");
 
     // compute concatenated master and salt length
     int concatLength = localMasterKeyLength_ + localMasterSaltLength_;
 
     uint8 concatKeys[concatLength];
 
-    DEBUG("AudioSrtp: Concatenated length %d", concatLength);
+    DEBUG("Concatenated length %d", concatLength);
 
     // concatenate keys
     memcpy((void*) concatKeys, (void*) localMasterKey_, localMasterKeyLength_);
@@ -259,11 +260,12 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 
 void AudioSrtpSession::initializeRemoteCryptoContext()
 {
-    DEBUG("AudioSrtp: Initialize remote crypto context");
+    DEBUG("Initialize remote crypto context");
 
-    CryptoSuiteDefinition crypto = sfl::CryptoSuites[remoteCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
-    delete remoteCryptoCtx_;
+    // delete this crypto context from the internal map
+    removeInQueueCryptoContext(remoteCryptoCtx_);
     remoteCryptoCtx_ = new ost::CryptoContext(0x0,
                                               0,    // roc,
                                               0L,   // keydr,
@@ -282,11 +284,12 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 
 void AudioSrtpSession::initializeLocalCryptoContext()
 {
-    DEBUG("AudioSrtp: Initialize local crypto context");
+    DEBUG("Initialize local crypto context");
 
-    CryptoSuiteDefinition crypto = sfl::CryptoSuites[localCryptoSuite_];
+    const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 
-    delete localCryptoCtx_;
+    // delete this crypto context from the internal map
+    removeOutQueueCryptoContext(localCryptoCtx_);
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
                                              0,     // roc,
                                              0L,    // keydr,
@@ -305,12 +308,16 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 void AudioSrtpSession::restoreCryptoContext(ost::CryptoContext *localContext,
                                             ost::CryptoContext *remoteContext)
 {
-    delete remoteCryptoCtx_;
-    remoteCryptoCtx_ = remoteContext;
-    delete localCryptoCtx_;
-    localCryptoCtx_ = localContext;
-    setInQueueCryptoContext(remoteCryptoCtx_);
-    setOutQueueCryptoContext(localCryptoCtx_);
+    if (remoteCryptoCtx_ != remoteContext) {
+        removeInQueueCryptoContext(remoteCryptoCtx_);
+        remoteCryptoCtx_ = remoteContext;
+        setInQueueCryptoContext(remoteCryptoCtx_);
+    }
+    if (localCryptoCtx_ != localContext) {
+        removeOutQueueCryptoContext(localCryptoCtx_);
+        localCryptoCtx_ = localContext;
+        setOutQueueCryptoContext(localCryptoCtx_);
+    }
 }
 
 }

@@ -67,11 +67,6 @@ std::string AudioCodec::getMimeSubtype() const
     return codecName_;
 }
 
-const ost::PayloadFormat& AudioCodec::getPayloadFormat()
-{
-    return *payloadFormat_;
-}
-
 uint8 AudioCodec::getPayloadType() const
 {
     return payload_;

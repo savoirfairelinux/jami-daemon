@@ -45,7 +45,6 @@ class NetworkManager : public org::freedesktop::NetworkManager_proxy,
         NetworkManager(DBus::Connection &, const DBus::Path &, const char*);
         void StateChanged(const uint32_t &state);
         void PropertiesChanged(const std::map<std::string, ::DBus::Variant> &argin0);
-        std::string stateAsString(const uint32_t &state);
 
     private:
         enum NMState {
@@ -55,8 +54,6 @@ class NetworkManager : public org::freedesktop::NetworkManager_proxy,
             NM_STATE_CONNECTED,
             NM_STATE_DISCONNECTED
         };
-
-        static const std::string statesString[5];
 };
 #endif
 

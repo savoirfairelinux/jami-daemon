@@ -32,18 +32,18 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_MANAGER_H__
-#define __SFL_MANAGER_H__
+#ifndef MANAGER_IMPL_H_
+#define MANAGER_IMPL_H_
 
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
-#include <cc++/thread.h>
-#include <memory>
+#include <tr1/memory>
+#include "cc_thread.h"
 #include "dbus/dbusmanager.h"
 
-#include "config/config.h"
+#include "config/sfl_config.h"
 
 #include "call.h"
 #include "conference.h"
@@ -93,7 +93,6 @@ static const char * const default_conf = "conf";
 class ManagerImpl {
     public:
         ManagerImpl();
-        ~ManagerImpl();
 
         /**
          * General preferences configuration
@@ -129,7 +128,7 @@ class ManagerImpl {
          * Initialisation of thread (sound) and map.
          * Init a new VoIPLink, audio codec and audio driver
          */
-        void init(std::string config_file = "");
+        void init(const std::string &config_file);
 
         /**
          * Terminate all thread (sound, link) and unload AccountMap
@@ -354,7 +353,7 @@ class ManagerImpl {
          * @param call A call pointer
          * @param accountId an account id
          */
-        void incomingCall(Call* call, const std::string& accountId);
+        void incomingCall(Call &call, const std::string& accountId);
 
         /**
          * Notify the user that the recipient of the call has answered and the put the
@@ -891,14 +890,14 @@ class ManagerImpl {
         AudioLayer* audiodriver_;
 
         // Main thread
-        std::auto_ptr<DTMF> dtmfKey_;
+        std::tr1::shared_ptr<DTMF> dtmfKey_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         ost::Mutex toneMutex_;
-        std::auto_ptr<TelephoneTone> telephoneTone_;
-        std::auto_ptr<AudioFile> audiofile_;
+        std::tr1::shared_ptr<TelephoneTone> telephoneTone_;
+        std::tr1::shared_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
@@ -962,13 +961,17 @@ class ManagerImpl {
 
         std::map<std::string, bool> IPToIPMap_;
 
-        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
         bool isIPToIP(const std::string& callID) const;
 
         /**
          *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
         AccountMap accountMap_;
+
+        /**
+         * Unregister all account in accountMap_
+         */
+        void unregisterAllAccounts();
 
         /**
          * Load the account map from configuration
@@ -994,6 +997,8 @@ class ManagerImpl {
         MainBuffer mainBuffer_;
 
     public:
+
+        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
         /** Associate a new std::string to a std::string
          * Protected by mutex
@@ -1091,4 +1096,4 @@ class ManagerImpl {
           */
         History history_;
 };
-#endif // __MANAGER_H__
+#endif // MANAGER_IMPL_H_

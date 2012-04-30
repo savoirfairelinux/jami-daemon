@@ -30,8 +30,12 @@
  */
 
 #include "mainbuffer.h"
+#include "ringbuffer.h"
+#include "sfl_types.h" // for SIZEBUF
 #include <utility> // for std::pair
-#include "manager.h"
+#include "logger.h"
+
+const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
 MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
 {}
@@ -67,12 +71,12 @@ bool MainBuffer::removeCallIDSet(const std::string & set_id)
     CallIDSet* callid_set = getCallIDSet(set_id);
 
     if (!callid_set) {
-        DEBUG("removeCallIDSet error callid set %s does not exist!", set_id.c_str());
+        DEBUG("CallID set %s does not exist!", set_id.c_str());
         return false;
     }
 
     if (callIDMap_.erase(set_id) == 0) {
-        DEBUG("removeCallIDSet error while removing callid set %s!", set_id.c_str());
+        DEBUG("CallID set %s not found!", set_id.c_str());
         return false;
     }
 
@@ -92,9 +96,9 @@ void MainBuffer::removeCallIDfromSet(const std::string & set_id, const std::stri
     CallIDSet* callid_set = getCallIDSet(set_id);
 
     if (callid_set == NULL)
-        ERROR("removeCallIDfromSet error callid set %s does not exist!", set_id.c_str());
+        ERROR("CallIDSet %s does not exist!", set_id.c_str());
     else if (callid_set->erase(call_id) == 0)
-        ERROR("removeCallIDfromSet error while removing callid %s from set %s!", call_id.c_str(), set_id.c_str());
+        ERROR("Could not find callID %s in set %s!", call_id.c_str(), set_id.c_str());
 }
 
 RingBuffer* MainBuffer::getRingBuffer(const std::string & call_id)
@@ -119,11 +123,11 @@ bool MainBuffer::removeRingBuffer(const std::string & call_id)
             delete ring_buffer;
             return true;
         } else {
-            ERROR("BufferManager: Error: Fail to delete ringbuffer %s!", call_id.c_str());
+            ERROR("Fail to delete ringbuffer %s!", call_id.c_str());
             return false;
         }
     } else {
-        DEBUG("BufferManager: Error: Ringbuffer %s does not exist!", call_id.c_str());
+        DEBUG("Ringbuffer %s does not exist!", call_id.c_str());
         return true;
     }
 }
@@ -132,19 +136,16 @@ void MainBuffer::bindCallID(const std::string & call_id1, const std::string & ca
 {
     ost::MutexLock guard(mutex_);
 
-    RingBuffer* ring_buffer;
-    CallIDSet* callid_set;
-
-    if ((ring_buffer = getRingBuffer(call_id1)) == NULL)
+    if (getRingBuffer(call_id1) == NULL)
         createRingBuffer(call_id1);
 
-    if ((callid_set = getCallIDSet(call_id1)) == NULL)
+    if (getCallIDSet(call_id1) == NULL)
         createCallIDSet(call_id1);
 
-    if ((ring_buffer = getRingBuffer(call_id2)) == NULL)
+    if (getRingBuffer(call_id2) == NULL)
         createRingBuffer(call_id2);
 
-    if ((callid_set = getCallIDSet(call_id2)) == NULL)
+    if (getCallIDSet(call_id2) == NULL)
         createCallIDSet(call_id2);
 
     getRingBuffer(call_id1)->createReadPointer(call_id2);
@@ -214,7 +215,7 @@ void MainBuffer::unBindHalfDuplexOut(const std::string & process_id, const std::
             removeRingBuffer(call_id);
         }
     } else {
-        DEBUG("Error: did not found ringbuffer %s", process_id.c_str());
+        DEBUG("did not found ringbuffer %s", process_id.c_str());
         removeCallIDSet(process_id);
     }
 
@@ -310,7 +311,7 @@ int MainBuffer::availForGet(const std::string & call_id)
     if (callid_set->size() == 1) {
         CallIDSet::iterator iter_id = callid_set->begin();
 
-        if ((call_id != Call::DEFAULT_ID) && (*iter_id == call_id))
+        if ((call_id != DEFAULT_ID) && (*iter_id == call_id))
             DEBUG("This problem should not occur since we have %i element", (int) callid_set->size());
 
         return availForGetByID(*iter_id, call_id);
@@ -337,13 +338,13 @@ int MainBuffer::availForGet(const std::string & call_id)
 int MainBuffer::availForGetByID(const std::string &call_id,
                                 const std::string &reader_id)
 {
-    if ((call_id != Call::DEFAULT_ID) and (reader_id == call_id))
-        ERROR("MainBuffer: Error: RingBuffer has a readpointer on itself");
+    if ((call_id != DEFAULT_ID) and (reader_id == call_id))
+        ERROR("RingBuffer has a readpointer on itself");
 
     RingBuffer* ringbuffer = getRingBuffer(call_id);
 
     if (ringbuffer == NULL) {
-        ERROR("MainBuffer: Error: RingBuffer does not exist");
+        ERROR("RingBuffer does not exist");
         return 0;
     } else
         return ringbuffer->AvailForGet(reader_id);

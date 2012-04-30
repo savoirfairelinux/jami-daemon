@@ -32,7 +32,6 @@
 #include "global.h"
 #include "audiocodec.h"
 #include "noncopyable.h"
-#include <cstdio>
 #include <speex/speex.h>
 #include <cassert>
 
@@ -71,8 +70,8 @@ class Speex : public sfl::AudioCodec {
             speex_frame_size_(0) {
                 assert(payload >= 110 && payload <= 112);
                 assert(110 == PAYLOAD_CODEC_SPEEX_8000 &&
-                        111 == PAYLOAD_CODEC_SPEEX_16000 &&
-                        112 == PAYLOAD_CODEC_SPEEX_32000);
+                       111 == PAYLOAD_CODEC_SPEEX_16000 &&
+                       112 == PAYLOAD_CODEC_SPEEX_32000);
                 int type = payload - 110;
 
                 clockRate_ = clockRate[type];

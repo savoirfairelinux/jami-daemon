@@ -47,48 +47,47 @@ namespace Conf {
     class YamlEmitter;
     class MappingNode;
     // SIP specific configuration keys
-    const char *const interfaceKey = "interface";
-    const char *const portKey = "port";
-    const char *const publishAddrKey = "publishAddr";
-    const char *const publishPortKey = "publishPort";
-    const char *const sameasLocalKey = "sameasLocal";
-    const char *const dtmfTypeKey = "dtmfType";
-    const char *const serviceRouteKey = "serviceRoute";
-    const char *const updateContactHeaderKey = "updateContact";
+    const char *const INTERFACE_KEY = "interface";
+    const char *const PORT_KEY = "port";
+    const char *const PUBLISH_ADDR_KEY = "publishAddr";
+    const char *const PUBLISH_PORT_KEY = "publishPort";
+    const char *const SAME_AS_LOCAL_KEY = "sameasLocal";
+    const char *const DTMF_TYPE_KEY = "dtmfType";
+    const char *const SERVICE_ROUTE_KEY = "serviceRoute";
+    const char *const UPDATE_CONTACT_HEADER_KEY = "updateContact";
 
     // TODO: write an object to store credential which implement serializable
-    const char *const srtpKey = "srtp";
-    const char *const srtpEnableKey = "enable";
-    const char *const keyExchangeKey = "keyExchange";
-    const char *const rtpFallbackKey = "rtpFallback";
+    const char *const SRTP_KEY = "srtp";
+    const char *const SRTP_ENABLE_KEY = "enable";
+    const char *const KEY_EXCHANGE_KEY = "keyExchange";
+    const char *const RTP_FALLBACK_KEY = "rtpFallback";
 
     // TODO: wirte an object to store zrtp params wich implement serializable
-    const char *const zrtpKey = "zrtp";
-    const char *const displaySasKey = "displaySas";
-    const char *const displaySasOnceKey = "displaySasOnce";
-    const char *const helloHashEnabledKey = "helloHashEnabled";
-    const char *const notSuppWarningKey = "notSuppWarning";
+    const char *const ZRTP_KEY = "zrtp";
+    const char *const DISPLAY_SAS_KEY = "displaySas";
+    const char *const DISPLAY_SAS_ONCE_KEY = "displaySasOnce";
+    const char *const HELLO_HASH_ENABLED_KEY = "helloHashEnabled";
+    const char *const NOT_SUPP_WARNING_KEY = "notSuppWarning";
 
     // TODO: write an object to store tls params which implement serializable
-    const char *const tlsKey = "tls";
-    const char *const tlsPortKey = "tlsPort";
-    const char *const certificateKey = "certificate";
-    const char *const calistKey = "calist";
-    const char *const ciphersKey = "ciphers";
-    const char *const tlsEnableKey = "enable";
-    const char *const methodKey = "method";
-    const char *const timeoutKey = "timeout";
-    const char *const tlsPasswordKey = "password";
-    const char *const privateKeyKey = "privateKey";
-    const char *const requireCertifKey = "requireCertif";
-    const char *const serverKey = "server";
-    const char *const verifyClientKey = "verifyClient";
-    const char *const verifyServerKey = "verifyServer";
+    const char *const TLS_KEY = "tls";
+    const char *const TLS_PORT_KEY = "tlsPort";
+    const char *const CERTIFICATE_KEY = "certificate";
+    const char *const CALIST_KEY = "calist";
+    const char *const CIPHERS_KEY = "ciphers";
+    const char *const TLS_ENABLE_KEY = "enable";
+    const char *const METHOD_KEY = "method";
+    const char *const TIMEOUT_KEY = "timeout";
+    const char *const TLS_PASSWORD_KEY = "password";
+    const char *const PRIVATE_KEY_KEY = "privateKey";
+    const char *const REQUIRE_CERTIF_KEY = "requireCertif";
+    const char *const SERVER_KEY = "server";
+    const char *const VERIFY_CLIENT_KEY = "verifyClient";
+    const char *const VERIFY_SERVER_KEY = "verifyServer";
 
-    const char *const stunEnabledKey = "stunEnabled";
-    const char *const stunServerKey = "stunServer";
-
-    const char *const credKey = "credential";
+    const char *const STUN_ENABLED_KEY = "stunEnabled";
+    const char *const STUN_SERVER_KEY = "stunServer";
+    const char *const CRED_KEY = "credential";
 }
 
 class SIPVoIPLink;
@@ -126,13 +125,13 @@ class SIPAccount : public Account {
          * Serialize internal state of this account for configuration
          * @param YamlEmitter the configuration engine which generate the configuration file
          */
-        virtual void serialize(Conf::YamlEmitter *emitter);
+        virtual void serialize(Conf::YamlEmitter &emitter);
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file
          * @param The configuration node for this account
          */
-        virtual void unserialize(const Conf::MappingNode *map);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.
@@ -206,7 +205,9 @@ class SIPAccount : public Account {
         }
 
         void setCredentials(const std::vector<std::map<std::string, std::string> >& details);
-        const std::vector<std::map<std::string, std::string> > &getCredentials();
+
+        const std::vector<std::map<std::string, std::string> > &
+        getCredentials() const;
 
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
@@ -468,7 +469,7 @@ class SIPAccount : public Account {
          * @param The public IPV4 address in the standard dot notation.
          * @return void
          */
-        void setPublishedAddress(const std::string& publishedIpAddress) {
+        void setPublishedAddress(const std::string &publishedIpAddress) {
             publishedIpAddress_ = publishedIpAddress;
         }
 
@@ -496,13 +497,34 @@ class SIPAccount : public Account {
             return zrtpHelloHash_;
         }
 
+        void setReceivedParameter(const std::string &received) {
+            receivedParameter_ = received;
+        }
+
+        std::string getReceivedParameter() const {
+            return receivedParameter_;
+        }
+
+        int getRPort() const {
+            if (rPort_ == -1)
+                return localPort_;
+            else
+                return rPort_;
+        }
+
+        void setRPort(int rPort) { rPort_ = rPort; }
+
         /**
          * Timer used to periodically send re-register request based
          * on the "Expire" sip header (or the "expire" Contact parameter)
          */
         static void keepAliveRegistrationCb(pj_timer_heap_t *th, pj_timer_entry *te);
 
+        /**
+         * Pointer to the transport used by this acccount
+         */
         pjsip_transport* transport_;
+
     private:
         NON_COPYABLE(SIPAccount);
 
@@ -641,11 +663,6 @@ class SIPAccount : public Account {
         std::string tlsEnable_;
 
         /**
-         * Specify the TLS port
-         */
-        int tlsPort_;
-
-        /**
          * Certificate autority file
          */
         std::string tlsCaListFile_;
@@ -719,11 +736,23 @@ class SIPAccount : public Account {
          */
         pj_timer_entry keepAliveTimer_;
 
+        bool keepAliveTimerActive_;
+
 
         /**
          * Voice over IP Link contains a listener thread and calls
          */
         SIPVoIPLink* link_;
+
+        /**
+         * Optional: "received" parameter from VIA header
+         */
+        std::string receivedParameter_;
+
+        /**
+         * Optional: "rport" parameter from VIA header
+         */
+        int rPort_;
 };
 
 #endif

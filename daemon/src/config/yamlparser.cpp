@@ -31,7 +31,7 @@
 #include "yamlparser.h"
 
 #include "../global.h"
-#include "config.h"
+#include "sfl_config.h"
 #include "yamlnode.h"
 #include <cstdio>
 
@@ -390,7 +390,7 @@ void YamlParser::constructNativeData()
 
 void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
-    Mapping *mapping = map->getMapping();
+    std::map<std::string, YamlNode*> *mapping = map->getMapping();
 
     accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
     addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];

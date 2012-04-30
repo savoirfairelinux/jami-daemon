@@ -20,7 +20,7 @@
 #ifndef SPEEXECHOCANCEL_H
 #define SPEEXECHOCANCEL_H
 
-#include "global.h"
+#include "sfl_types.h"
 #include "noncopyable.h"
 #include "ringbuffer.h"
 

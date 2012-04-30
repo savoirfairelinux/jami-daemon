@@ -36,9 +36,9 @@
 #include "logger.h"
 #include "validator.h"
 
-void AccountTest::TestAddRemove(void)
+void AccountTest::TestAddRemove()
 {
-    DEBUG("-------------------- AccountTest::TestAddRemove --------------------\n");
+    DEBUG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
 
     std::map<std::string, std::string> details;
     details[CONFIG_ACCOUNT_TYPE] = "SIP";

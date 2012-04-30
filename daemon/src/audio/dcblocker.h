@@ -31,10 +31,11 @@
 #ifndef DCBLOCKER_H
 #define DCBLOCKER_H
 
-#include "global.h"
+#include "sfl_types.h"
 
 class DcBlocker {
     public:
+        DcBlocker();
         void reset();
         void process(SFLDataFormat *out, SFLDataFormat *in, int samples);
 

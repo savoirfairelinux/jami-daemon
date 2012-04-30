@@ -36,11 +36,11 @@
 #include <cstring>
 #include <utility> // for std::pair
 
+#include "logger.h"
 #include "ringbuffer.h"
-#include "global.h"
 
 // corespond to 106 ms (about 5 rtp packets)
-#define MIN_BUFFER_SIZE	1280
+#define MIN_BUFFER_SIZE 1280
 
 int RingBuffer::count_rb = 0;
 
@@ -132,7 +132,7 @@ RingBuffer::storeReadPointer(int pointer_value, const std::string &call_id)
     if (iter != readpointer_.end())
         iter->second = pointer_value;
     else
-        DEBUG("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
+        DEBUG("Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
 }
 
 

@@ -36,7 +36,7 @@
 
 #include <stdexcept>
 #include <map>
-#include <cc++/thread.h> // for ost::Mutex
+#include "cc_thread.h" // for ost::Mutex
 
 class Call;
 class Account;
@@ -63,7 +63,7 @@ class VoIPLink {
          * Virtual method
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual void getEvent() = 0;
+        virtual bool getEvent() = 0;
 
         /**
          * Virtual method
@@ -182,6 +182,8 @@ class VoIPLink {
 
         /** Mutex to protect call map */
         ost::Mutex callMapMutex_;
+
+        bool handlingEvents_;
 
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID

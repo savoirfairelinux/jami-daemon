@@ -52,7 +52,7 @@
  * Initialize lists and configurations
  * @return TRUE if succeeded, FALSE otherwise
  */
-gboolean sflphone_init();
+gboolean sflphone_init(GError **error);
 
 /**
  * Steps when closing the application.  Will ask for confirmation if a call is in progress.
@@ -157,7 +157,7 @@ void sflphone_keypad(guint keyval, gchar * key);
  * Place a call with a filled callable_obj_t.to
  * @param c A call in CALL_STATE_DIALING state
  */
-void sflphone_place_call(callable_obj_t * c);
+int sflphone_place_call(callable_obj_t * c);
 
 /**
  * Fetch the ip2ip profile through dbus and fill

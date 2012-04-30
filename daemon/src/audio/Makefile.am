@@ -22,7 +22,6 @@ libaudio_la_SOURCES = \
 
 noinst_HEADERS = \
 		audioloop.h \
-		common.h \
 		ringbuffer.h \
 		mainbuffer.h \
 		audiorecord.h \
