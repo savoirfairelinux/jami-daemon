@@ -41,12 +41,8 @@ void setDebugMode(bool);
 bool getDebugMode();
 };
 
-#ifdef NDEBUG
-#define LOGGER(M, LEVEL, ...)
-#else
 #define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d: " M, __FILE__, \
                                           __LINE__, ##__VA_ARGS__)
-#endif
 
 #define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
 #define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
