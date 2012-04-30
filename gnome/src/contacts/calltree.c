@@ -955,7 +955,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
         DEBUG("Calltree: Determine if at least one participant uses SRTP");
 
         for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
-            const gchar * const call_id = (gchar *) part->data;
+            const gchar * const call_id = (const gchar *) part->data;
             callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
             if (call == NULL)
