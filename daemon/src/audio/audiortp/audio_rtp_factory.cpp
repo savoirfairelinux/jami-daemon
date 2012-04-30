@@ -128,10 +128,10 @@ void sfl::AudioRtpFactory::start(AudioCodec* audiocodec)
     else if (keyExchangeProtocol_ == SDES){
         static_cast<AudioSrtpSession *>(rtpSession_)->setCryptoContext();
     }
-*/
     if(keyExchangeProtocol_ == SDES) {
         static_cast<AudioSrtpSession *>(rtpSession_)->setCryptoContext();
     }
+*/
 
     if (rtpSession_->startRtpThread(*audiocodec) != 0)
         throw AudioRtpFactoryException("Failed to start AudioRtpSession thread");

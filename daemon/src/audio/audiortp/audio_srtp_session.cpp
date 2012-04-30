@@ -143,7 +143,7 @@ ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfo()
     // Set local crypto context in ccrtp
     localCryptoCtx_->deriveSrtpKeys(0);
 
-    // setOutQueueCryptoContext(localCryptoCtx_);
+    setOutQueueCryptoContext(localCryptoCtx_);
     return localCryptoCtx_;
 }
 
@@ -267,7 +267,7 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
     // delete this crypto context from the internal map
-    removeInQueueCryptoContext(remoteCryptoCtx_);
+    // removeInQueueCryptoContext(remoteCryptoCtx_);
     remoteCryptoCtx_ = new ost::CryptoContext(0x0,
                                               0,    // roc,
                                               0L,   // keydr,
@@ -291,7 +291,7 @@ void AudioSrtpSession::initializeLocalCryptoContext()
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 
     // delete this crypto context from the internal map
-    removeOutQueueCryptoContext(localCryptoCtx_);
+    // removeOutQueueCryptoContext(localCryptoCtx_);
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
                                              0,     // roc,
                                              0L,    // keydr,
