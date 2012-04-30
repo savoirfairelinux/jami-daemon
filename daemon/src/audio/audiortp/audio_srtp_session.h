@@ -96,6 +96,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * @return The new local crypto context, to be cached by the caller
          */
         ost::CryptoContext* initLocalCryptoInfo();
+        ost::CryptoContext* initLocalCryptoInfoOnOffhold();
 
         /**
          * Restore the cryptographic context. most likely useful to restore

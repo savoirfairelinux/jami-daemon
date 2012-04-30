@@ -123,6 +123,7 @@ class AudioRtpFactory {
         sfl::AudioZrtpSession * getAudioZrtpSession();
 
         void initLocalCryptoInfo();
+        void initLocalCryptoInfoOnOffHold();
 
         /**
          * Set remote cryptographic info. Should be called after negotiation in SDP
@@ -139,6 +140,10 @@ class AudioRtpFactory {
          * back the codec payload for further audio processing.
          */
         void sendDtmfDigit(int digit);
+
+        void saveLocalContext();
+
+        void restoreLocalContext();
 
     private:
         NON_COPYABLE(AudioRtpFactory);

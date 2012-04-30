@@ -869,6 +869,7 @@ SIPVoIPLink::onhold(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
     call->setState(Call::HOLD);
+    call->getAudioRtp().saveLocalContext();
     call->getAudioRtp().stop();
 
     Sdp *sdpSession = call->getLocalSDP();
@@ -908,7 +909,8 @@ SIPVoIPLink::offhold(const std::string& id)
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
-        call->getAudioRtp().initLocalCryptoInfo();
+        call->getAudioRtp().restoreLocalContext();
+        call->getAudioRtp().initLocalCryptoInfoOnOffHold();
         call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
@@ -1444,6 +1446,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // We did not find any crypto context for this media, RTP fallback
     if (!nego_success && call->getAudioRtp().isSdesEnabled()) {
+        ERROR("Negotiation failed but SRTP is enabled, fallback on RTP");
         call->getAudioRtp().stop();
         call->getAudioRtp().setSrtpEnabled(false);
 

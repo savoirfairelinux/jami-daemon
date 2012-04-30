@@ -147,6 +147,21 @@ ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfo()
     return localCryptoCtx_;
 }
 
+ost::CryptoContext* AudioSrtpSession::initLocalCryptoInfoOnOffhold()
+{
+    DEBUG("AudioSrtpSession: Set cryptographic info for this rtp session");
+
+    DEBUG("local key %s", getBase64ConcatenatedKeys().c_str());
+    // Initialize local Crypto context
+    initializeLocalCryptoContext();
+
+    // Set local crypto context in ccrtp
+    localCryptoCtx_->deriveSrtpKeys(0);
+
+    setOutQueueCryptoContext(localCryptoCtx_);
+    return localCryptoCtx_;
+}
+
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 {
 
@@ -183,7 +198,7 @@ ost::CryptoContext*
 AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
     if (not remoteOfferIsSet_) {
-        DEBUG("%s", nego.getKeyInfo().c_str());
+        DEBUG("remote key %s", nego.getKeyInfo().c_str());
 
         // Use second crypto suite if key length is 32 bit, default is 80;
         if (nego.getAuthTagLength() == "32") {
@@ -307,6 +322,7 @@ AudioSrtpSession::setLocalMasterKey(uint8 *key, size_t length)
 {
     length = (length > MAX_MASTER_KEY_LENGTH) ? MAX_MASTER_KEY_LENGTH : length;
     memcpy(localMasterKey_, key, length);
+    localMasterKeyLength_ = length;
 }
 
 void
@@ -321,6 +337,7 @@ AudioSrtpSession::setLocalMasterSalt(uint8 *salt, size_t length)
 {
     length = (length > MAX_MASTER_SALT_LENGTH) ? MAX_MASTER_SALT_LENGTH : length;
     memcpy(localMasterSalt_, salt, length);
+    localMasterSaltLength_ = length;
 }
 
 void

@@ -171,6 +171,18 @@ void sfl::AudioRtpFactory::initLocalCryptoInfo()
     }
 }
 
+void sfl::AudioRtpFactory::initLocalCryptoInfoOnOffHold()
+{
+    DEBUG("AudioRtpFactory: Init local crypto info");
+    if (rtpSession_ && keyExchangeProtocol_ == SDES) {
+        AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_);
+        // the context is invalidated and deleted by the call to initLocalCryptoInfo
+        srtp->initLocalCryptoInfoOnOffhold();
+        ca_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
+    }
+}
+
+
 void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
@@ -191,4 +203,17 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
     rtpSession_->putDtmfEvent(digit);
 }
 
+void sfl::AudioRtpFactory::saveLocalContext()
+{
+    AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
+    srtp->getLocalMasterKey(cachedLocalMasterKey_.data(), cachedLocalMasterKey_.size());
+    srtp->getLocalMasterSalt(cachedLocalMasterSalt_.data(), cachedLocalMasterSalt_.size());
+}
+
+void sfl::AudioRtpFactory::restoreLocalContext()
+{
+    AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
+    srtp->setLocalMasterKey(cachedLocalMasterKey_.data(), cachedLocalMasterKey_.size());
+    srtp->setLocalMasterSalt(cachedLocalMasterSalt_.data(), cachedLocalMasterSalt_.size());
+}
 }
