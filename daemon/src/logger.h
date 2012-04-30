@@ -44,7 +44,7 @@ bool getDebugMode();
 #ifdef NDEBUG
 #define LOGGER(M, LEVEL, ...)
 #else
-#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d: " M "\n", __FILE__, \
+#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d: " M, __FILE__, \
                                           __LINE__, ##__VA_ARGS__)
 #endif
 
