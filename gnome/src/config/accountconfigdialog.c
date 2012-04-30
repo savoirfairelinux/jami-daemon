@@ -533,6 +533,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 static gchar *
 get_interface_addr_from_name(const gchar * const iface_name)
 {
+    g_assert(iface_name);
 #define UC(b) (((int)b)&0xff)
 
     int fd;
@@ -567,6 +568,10 @@ static void local_interface_changed_cb(GtkWidget * widget UNUSED, gpointer data 
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
         gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
+        if (!local_iface_name) {
+            ERROR("Could not get local interface name");
+            return;
+        }
         gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);
 
         gtk_entry_set_text(GTK_ENTRY(local_address_entry), local_iface_addr);
@@ -888,6 +893,10 @@ create_network(const account_t *account)
     // Fill the text entry with the ip address of local interface selected
     local_address_entry = gtk_entry_new();
     gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
+    if (!local_iface_name) {
+        ERROR("Could not get local interface name");
+        return frame;
+    }
     gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);
     g_free(local_iface_name);
     gtk_entry_set_text(GTK_ENTRY(local_address_entry), local_iface_addr);
@@ -990,7 +999,6 @@ GtkWidget* create_published_address(const account_t *account)
     // This will trigger a signal, and the above two
     // widgets need to be instanciated before that.
     g_signal_connect(local_address_combo, "changed", G_CALLBACK(local_interface_changed_cb), local_address_combo);
-
     g_signal_connect(same_as_local_radio_button, "toggled", G_CALLBACK(same_as_local_cb), same_as_local_radio_button);
     g_signal_connect(published_addr_radio_button, "toggled", G_CALLBACK(set_published_addr_manually_cb), published_addr_radio_button);
 
