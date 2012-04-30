@@ -31,8 +31,9 @@
 #ifndef __AUDIO_RTP_FACTORY_H__
 #define __AUDIO_RTP_FACTORY_H__
 
-#include <stdexcept>
 #include <ccrtp/CryptoContext.h>
+#include <stdexcept>
+#include <tr1/array>
 #include "cc_thread.h"
 #include "audio_rtp_session.h"
 #include "audio_srtp_session.h"
@@ -129,8 +130,6 @@ class AudioRtpFactory {
          */
         void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
 
-        void saveCryptographicInfo();
-
         void setDtmfPayloadType(unsigned int);
 
         /**
@@ -155,33 +154,29 @@ class AudioRtpFactory {
         // May be set manually or from config using initAudioRtpConfig
         bool helloHashEnabled_;
 
-        /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext *cachedRemoteContext_;
-
-        /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext *cachedLocalContext_;
-
-        uint8 cachedLocalMasterKey_[MAX_MASTER_KEY_LENGTH];
+        /** local master key for outgoing packet encryption **/
+        std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH> cachedLocalMasterKey_;
 
         /** local master key length in byte */
         size_t localMasterKeyLength_;
 
-        uint8 cachedLocalMasterSalt_[MAX_MASTER_SALT_LENGTH];
+        /** local master salt for outgoing packet encryption **/
+        std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH> cachedLocalMasterSalt_;
 
         /** local master salt length in byte */
         size_t localMasterSaltLength_;
 
-        uint8 cachedRemoteMasterKey_[MAX_MASTER_KEY_LENGTH];
+        /** remote master key for incoming packet decryption **/
+        std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH> cachedRemoteMasterKey_;
 
         /** remote master key length in byte */
         size_t remoteMasterKeyLength_;
 
-        uint8 cachedRemoteMasterSalt_[MAX_MASTER_SALT_LENGTH];
+        /** remote master salt for incoming packet decryption **/
+        std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH> cachedRemoteMasterSalt_;
 
         /** remote master salt length in byte */
         size_t remoteMasterSaltLength_;
-
-        bool cryptoInfoCached_;
 
         /** Used to make sure remote crypto context not initialized twice. */
         bool remoteOfferIsSet_;

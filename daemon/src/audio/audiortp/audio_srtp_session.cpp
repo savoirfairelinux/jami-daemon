@@ -186,7 +186,6 @@ AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
         DEBUG("%s", nego.getKeyInfo().c_str());
 
         // Use second crypto suite if key length is 32 bit, default is 80;
-
         if (nego.getAuthTagLength() == "32") {
             localCryptoSuite_ = 1;
             remoteCryptoSuite_ = 1;
@@ -266,8 +265,6 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[remoteCryptoSuite_];
 
-    // delete this crypto context from the internal map
-    // removeInQueueCryptoContext(remoteCryptoCtx_);
     remoteCryptoCtx_ = new ost::CryptoContext(0x0,
                                               0,    // roc,
                                               0L,   // keydr,
@@ -290,8 +287,6 @@ void AudioSrtpSession::initializeLocalCryptoContext()
 
     const CryptoSuiteDefinition &crypto = sfl::CryptoSuites[localCryptoSuite_];
 
-    // delete this crypto context from the internal map
-    // removeOutQueueCryptoContext(localCryptoCtx_);
     localCryptoCtx_ = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
                                              0,     // roc,
                                              0L,    // keydr,
@@ -306,26 +301,6 @@ void AudioSrtpSession::initializeLocalCryptoContext()
                                              crypto.masterSaltLength / 8,
                                              crypto.srtpAuthTagLength / 8);
 }
-
-void AudioSrtpSession::setCryptoContext()
-{
-    if(localCryptoCtx_) {
-        setOutQueueCryptoContext(localCryptoCtx_);
-    }
-    if(remoteCryptoCtx_) {
-        setInQueueCryptoContext(remoteCryptoCtx_);
-    }
-}
-#if 0
-void AudioSrtpSession::restoreCryptoContext()
-{
-    initializeLocalCryptoContext();
-    initializeRemoteCryptoContext();
-
-    setOutQueueCryptoContext(localCryptoCtx_);
-    setInQueueCryptoContext(remoteCryptoCtx_);
-}
-#endif
 
 void
 AudioSrtpSession::setLocalMasterKey(uint8 *key, size_t length)

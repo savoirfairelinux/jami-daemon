@@ -42,8 +42,12 @@ namespace sfl {
 
 AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
     audioRtpThreadMutex_(), srtpEnabled_(false), helloHashEnabled_(false),
-    cachedRemoteContext_(0), cachedLocalContext_(0), cryptoInfoCached_(false),
-    remoteOfferIsSet_(false), ca_(ca), keyExchangeProtocol_(NONE)
+    cachedLocalMasterKey_(), localMasterKeyLength_(0),
+    cachedLocalMasterSalt_(), localMasterSaltLength_(0),
+    cachedRemoteMasterKey_(), remoteMasterKeyLength_(0),
+    cachedRemoteMasterSalt_(), remoteMasterSaltLength_(0),
+    remoteOfferIsSet_(false), ca_(ca),
+    keyExchangeProtocol_(NONE)
 {}
 
 AudioRtpFactory::~AudioRtpFactory()
@@ -114,25 +118,6 @@ void sfl::AudioRtpFactory::start(AudioCodec* audiocodec)
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
-/*
-    if(cryptoInfoCached_) {
-        AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-
-        srtp->setLocalMasterKey(cachedLocalMasterKey_, 16);
-        srtp->setLocalMasterSalt(cachedLocalMasterSalt_, 14);
-        srtp->setRemoteMasterKey(cachedRemoteMasterKey_, 16);
-        srtp->setRemoteMasterSalt(cachedRemoteMasterSalt_, 14);
-
-        srtp->restoreCryptoContext();
-    }
-    else if (keyExchangeProtocol_ == SDES){
-        static_cast<AudioSrtpSession *>(rtpSession_)->setCryptoContext();
-    }
-    if(keyExchangeProtocol_ == SDES) {
-        static_cast<AudioSrtpSession *>(rtpSession_)->setCryptoContext();
-    }
-*/
-
     if (rtpSession_->startRtpThread(*audiocodec) != 0)
         throw AudioRtpFactoryException("Failed to start AudioRtpSession thread");
 }
@@ -181,7 +166,7 @@ void sfl::AudioRtpFactory::initLocalCryptoInfo()
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession*>(rtpSession_);
         // the context is invalidated and deleted by the call to initLocalCryptoInfo
-        cachedLocalContext_ = srtp->initLocalCryptoInfo();
+        srtp->initLocalCryptoInfo();
         ca_->getLocalSDP()->setLocalSdpCrypto(srtp->getLocalCryptoInfo());
     }
 }
@@ -190,20 +175,7 @@ void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-        cachedRemoteContext_ = srtp->setRemoteCryptoInfo(nego);
-    } else
-        throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in setRemoteCryptoInfo");
-}
-
-void AudioRtpFactory::saveCryptographicInfo()
-{
-    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-        srtp->getLocalMasterKey(cachedLocalMasterKey_, 16);
-        srtp->getLocalMasterSalt(cachedLocalMasterSalt_, 14);
-        srtp->getRemoteMasterKey(cachedRemoteMasterKey_, 16);
-        srtp->getRemoteMasterSalt(cachedRemoteMasterSalt_, 14);
-        cryptoInfoCached_ = true;
+        srtp->setRemoteCryptoInfo(nego);
     } else
         throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in setRemoteCryptoInfo");
 }

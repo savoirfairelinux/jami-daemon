@@ -393,7 +393,8 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
     TRY(pj_init());
     TRY(pjlib_util_init());
     // From 0 (min) to 6 (max)
-    pj_log_set_level(Logger::getDebugMode() ? 6 : 0);
+    // pj_log_set_level(Logger::getDebugMode() ? 6 : 0);
+    pj_log_set_level(0);
     TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
@@ -868,7 +869,6 @@ SIPVoIPLink::onhold(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
     call->setState(Call::HOLD);
-    call->getAudioRtp().saveCryptographicInfo();
     call->getAudioRtp().stop();
 
     Sdp *sdpSession = call->getLocalSDP();

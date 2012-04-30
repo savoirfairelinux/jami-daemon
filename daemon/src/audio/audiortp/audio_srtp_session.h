@@ -97,8 +97,6 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          */
         ost::CryptoContext* initLocalCryptoInfo();
 
-        void setCryptoContext();
-
         /**
          * Restore the cryptographic context. most likely useful to restore
          * a call after hold action
