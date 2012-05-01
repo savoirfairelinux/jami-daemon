@@ -72,6 +72,9 @@ static const char *const CONFIG_ACCOUNT_ALIAS                = "Account.alias";
 static const char *const CONFIG_ACCOUNT_MAILBOX	             = "Account.mailbox";
 static const char *const CONFIG_ACCOUNT_ENABLE               = "Account.enable";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE  = "Account.registrationExpire";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS = "Account.registrationStatus";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.registrationDescription";
 static const char *const CONFIG_CREDENTIAL_NUMBER            = "Credential.count";
 static const char *const CONFIG_ACCOUNT_DTMF_TYPE            = "Account.dtmfType";
 static const char *const CONFIG_RINGTONE_PATH                = "Account.ringtonePath";
@@ -123,10 +126,6 @@ static const char *const CONFIG_TLS_VERIFY_CLIENT            = "TLS.verifyClient
 static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE = "TLS.requireClientCertificate";
 static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC  = "TLS.negotiationTimeoutSec";
 static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC = "TLS.negotiationTimemoutMsec";
-
-static const char *const CONFIG_REGISTRATION_STATUS                 = "Registration.Status";
-static const char *const CONFIG_REGISTRATION_STATE_CODE             = "Registration.code";
-static const char *const CONFIG_REGISTRATION_STATE_DESCRIPTION      = "Registration.description";
 
 // General configuration keys for accounts
 static const char * const ALIAS_KEY = "alias";
