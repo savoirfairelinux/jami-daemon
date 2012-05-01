@@ -200,7 +200,7 @@ void HistoryDock::reload()
    }
    m_History.clear();
    foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
-      if (!m_pAllTimeCB->isChecked() || (QDateTime(m_pFromDW->date()).toTime_t() < call->getStartTimeStamp().toUInt() && QDateTime(m_pToDW->date().addDays(1)).toTime_t() > call->getStartTimeStamp().toUInt() )) {
+      if (call != nullptr && (!m_pAllTimeCB->isChecked() || (QDateTime(m_pFromDW->date()).toTime_t() < call->getStartTimeStamp().toUInt() && QDateTime(m_pToDW->date().addDays(1)).toTime_t() > call->getStartTimeStamp().toUInt() ))) {
          HistoryTreeItem* callItem = new HistoryTreeItem(m_pItemView);
          callItem->setCall(call);
          m_History << callItem;
@@ -259,6 +259,16 @@ void HistoryDock::reload()
          break;
    }
    m_pItemView->sortItems(0,Qt::AscendingOrder);
+
+   int maxWidth = 0;
+
+   //Align all durationwidget
+   foreach(HistoryTreeItem* item, m_History) {
+      maxWidth = (item->getDurWidth() > maxWidth)?item->getDurWidth():maxWidth;
+   }
+   foreach(HistoryTreeItem* item, m_History) {
+      item->setDurWidth(maxWidth);
+   }
 }
 
 ///Enable the ability to set a date range like 1 month to limit history

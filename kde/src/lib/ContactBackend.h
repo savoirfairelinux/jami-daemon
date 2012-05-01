@@ -37,7 +37,7 @@ class LIB_EXPORT ContactBackend : public QObject {
    Q_OBJECT
 public:
    ContactBackend(QObject* parent);
-   virtual Contact*    getContactByPhone ( const QString& phoneNumber ) = 0;
+   virtual Contact*    getContactByPhone ( const QString& phoneNumber , bool resolveDNS = false) = 0;
    virtual Contact*    getContactByUid   ( const QString& uid         ) = 0;
    virtual void        editContact       ( Contact*       contact     ) = 0;
    virtual void        addNewContact     ( Contact*       contact     ) = 0;

@@ -32,4 +32,4 @@ ConfigurationManagerInterface & ConfigurationManagerInterfaceSingleton::getInsta
    }
    return *interface;
 }
-	
+

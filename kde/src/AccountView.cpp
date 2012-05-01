@@ -55,14 +55,14 @@ void AccountView::initItemWidget()
    if(m_pWidget != NULL)
       delete m_pWidget;
 
-   bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
+   bool enabled = getAccountDetail(ACCOUNT_ENABLED) == REGISTRATION_ENABLED_TRUE;
    m_pWidget = new AccountItemWidget();
    m_pWidget->setEnabled(enabled);
    m_pWidget->setAccountText(getAccountDetail(ACCOUNT_ALIAS));
 
    if(isNew() || !enabled)
       m_pWidget->setState(AccountItemWidget::Unregistered);
-   else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
+   else if(getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_READY)
       m_pWidget->setState(AccountItemWidget::Registered);
    else
       m_pWidget->setState(AccountItemWidget::NotWorking);
@@ -91,9 +91,9 @@ AccountItemWidget* AccountView::getItemWidget()
 ///Return the state color
 QColor AccountView::getStateColor()
 {
-   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
+   if(getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_UNREGISTERED)
           return Qt::black;
-   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
+   if(getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_READY)
           return Qt::darkGreen;
    return Qt::red;
 }
@@ -104,9 +104,9 @@ const QString& AccountView::getStateColorName()
    static const QString black    ( "black"     );
    static const QString darkGreen( "darkGreen" );
    static const QString red      ( "red"       );
-   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
+   if(getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_UNREGISTERED)
           return black;
-   if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY)
+   if(getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_READY)
           return darkGreen;
    return red;
 }
@@ -154,11 +154,11 @@ void AccountView::updateState()
       Account::updateState();
 
       AccountItemWidget * m_pWidget = getItemWidget();
-      if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE ) {
+      if(getAccountDetail(ACCOUNT_ENABLED) != REGISTRATION_ENABLED_TRUE ) {
          kDebug() << "Changing account state to Unregistered";
          m_pWidget->setState(AccountItemWidget::Unregistered);
       }
-      else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_READY) {
+      else if(getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_READY) {
          kDebug() << "Changing account state to  Registered";
          m_pWidget->setState(AccountItemWidget::Registered);
       }

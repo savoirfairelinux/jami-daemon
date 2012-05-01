@@ -1180,7 +1180,7 @@ void
 dbus_unregister(int pid)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_Instance_unregister(instance_proxy, pid, &error);
+    org_sflphone_SFLphone_Instance_unregister_async(instance_proxy, pid, NULL, NULL);
     check_error(error);
 }
 
@@ -1722,7 +1722,7 @@ gchar **
 dbus_get_participant_list(const gchar *confID)
 {
     GError *error = NULL;
-    char **list = NULL;
+    gchar **list = NULL;
 
     DEBUG("DBUS: Get conference %s participant list", confID);
     org_sflphone_SFLphone_CallManager_get_participant_list(call_proxy, confID, &list, &error);
