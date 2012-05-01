@@ -97,7 +97,7 @@ namespace {
     }
 
     // Fills the array dest with length random bytes
-    void bufferFillMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& dest)
+    void bufferFillMasterKey(std::vector<uint8>& dest)
     {
         DEBUG("Init local master key");
 
@@ -112,7 +112,7 @@ namespace {
     }
 
     // Fills the array dest with length random bytes
-    void bufferFillMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& dest)
+    void bufferFillMasterSalt(std::vector<uint8>& dest)
     {
         DEBUG("Init local master key");
 
@@ -127,25 +127,18 @@ namespace {
     }
 }
 
-
-
 AudioSrtpSession::AudioSrtpSession(SIPCall &call) :
     AudioSymmetricRtpSession(call),
     remoteCryptoCtx_(0),
     localCryptoCtx_(0),
     localCryptoSuite_(0),
     remoteCryptoSuite_(0),
-    localMasterKey_(),
-    localMasterKeyLength_(0),
-    localMasterSalt_(),
-    localMasterSaltLength_(0),
-    remoteMasterKey_(),
-    remoteMasterKeyLength_(0),
-    remoteMasterSalt_(),
-    remoteMasterSaltLength_(0),
+    localMasterKey_(MAX_MASTER_KEY_LENGTH),
+    localMasterSalt_(MAX_MASTER_SALT_LENGTH),
+    remoteMasterKey_(MAX_MASTER_KEY_LENGTH),
+    remoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false)
 {}
-
 
 void AudioSrtpSession::initLocalCryptoInfo()
 {
@@ -177,7 +170,6 @@ void AudioSrtpSession::initLocalCryptoInfoOnOffhold()
 
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
 {
-
     DEBUG("Get Cryptographic info from this rtp session");
 
     std::vector<std::string> crypto_vector;
@@ -207,7 +199,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo()
     return crypto_vector;
 }
 
-void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
+void AudioSrtpSession::setRemoteCryptoInfo(const sfl::SdesNegotiator& nego)
 {
     if (not remoteOfferIsSet_) {
         // Use second crypto suite if key length is 32 bit, default is 80;
@@ -221,7 +213,7 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 
         // init crypto content in Srtp session
         initializeRemoteCryptoContext();
-        if(remoteCryptoCtx_) {
+        if (remoteCryptoCtx_) {
             setInQueueCryptoContext(remoteCryptoCtx_);
         }
 
@@ -229,18 +221,19 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
     }
 }
 
+namespace {
+    static const size_t BITS_PER_BYTE = 8;
+}
+
 void AudioSrtpSession::initializeLocalMasterKey()
 {
-    DEBUG("Init local master key");
-    // @TODO key may have different length depending on cipher suite
-    localMasterKeyLength_ = sfl::CryptoSuites[localCryptoSuite_].masterKeyLength / 8;
+    localMasterKey_.resize(sfl::CryptoSuites[localCryptoSuite_].masterKeyLength / BITS_PER_BYTE);
     bufferFillMasterKey(localMasterKey_);
 }
 
 void AudioSrtpSession::initializeLocalMasterSalt()
 {
-    // @TODO key may have different length depending on cipher suite
-    localMasterSaltLength_ = sfl::CryptoSuites[localCryptoSuite_].masterSaltLength / 8;
+    localMasterSalt_.resize(sfl::CryptoSuites[localCryptoSuite_].masterSaltLength / BITS_PER_BYTE);
     bufferFillMasterSalt(localMasterSalt_);
 }
 
@@ -249,22 +242,21 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
     DEBUG("Get base64 concatenated keys");
 
     // compute concatenated master and salt length
-    int concatLength = localMasterKeyLength_ + localMasterSaltLength_;
-
-    uint8 concatKeys[concatLength];
+    std::vector<uint8> concatKeys;
+    concatKeys.reserve(localMasterKey_.size() + localMasterSalt_.size());
 
     // concatenate keys
-    memcpy((void*) concatKeys, (void*) localMasterKey_.data(), localMasterKeyLength_);
-    memcpy((void*)(concatKeys + localMasterKeyLength_), (void*) localMasterSalt_.data(), localMasterSaltLength_);
+    concatKeys.insert(concatKeys.end(), localMasterKey_.begin(), localMasterKey_.end());
+    concatKeys.insert(concatKeys.end(), localMasterSalt_.begin(), localMasterSalt_.end());
 
     // encode concatenated keys in base64
-    return encodeBase64((unsigned char*) concatKeys, concatLength);
+    return encodeBase64(&(*concatKeys.begin()), concatKeys.size());
 }
 
 void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
-    remoteMasterKeyLength_ = sfl::CryptoSuites[remoteCryptoSuite_].masterKeyLength / 8;
-    remoteMasterSaltLength_ = sfl::CryptoSuites[remoteCryptoSuite_].masterSaltLength / 8;
+    remoteMasterKey_.resize(sfl::CryptoSuites[remoteCryptoSuite_].masterKeyLength / BITS_PER_BYTE);
+    remoteMasterSalt_.resize(sfl::CryptoSuites[remoteCryptoSuite_].masterSaltLength / BITS_PER_BYTE);
 
     // pointer to binary data
     char *dataptr = (char*) base64keys.data();
@@ -273,9 +265,9 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     std::vector<char> output(decodeBase64((unsigned char*) dataptr, strlen(dataptr)));
 
     // copy master and slt respectively
-    // std::copy(output.begin()
-    memcpy((void*) remoteMasterKey_.data(), &(*output.begin()), remoteMasterKeyLength_);
-    memcpy((void*) remoteMasterSalt_.data(), &(*output.begin()) + remoteMasterKeyLength_, remoteMasterSaltLength_);
+    const std::vector<char>::iterator key_end = output.begin() + remoteMasterKey_.size();
+    std::copy(output.begin(), key_end, remoteMasterKey_.begin());
+    std::copy(key_end, output.end(), remoteMasterSalt_.begin());
 }
 
 void AudioSrtpSession::initializeRemoteCryptoContext()
@@ -289,14 +281,14 @@ void AudioSrtpSession::initializeRemoteCryptoContext()
                                               0L,   // keydr,
                                               SrtpEncryptionAESCM,
                                               SrtpAuthenticationSha1Hmac,
-                                              remoteMasterKey_.data(),
-                                              remoteMasterKeyLength_,
-                                              remoteMasterSalt_.data(),
-                                              remoteMasterSaltLength_,
-                                              crypto.encryptionKeyLength / 8,
-                                              crypto.srtpAuthKeyLength / 8,
-                                              crypto.masterSaltLength / 8,
-                                              crypto.srtpAuthTagLength / 8);
+                                              &(*remoteMasterKey_.begin()),
+                                              remoteMasterKey_.size(),
+                                              &(*remoteMasterSalt_.begin()),
+                                              remoteMasterSalt_.size(),
+                                              crypto.encryptionKeyLength / BITS_PER_BYTE,
+                                              crypto.srtpAuthKeyLength / BITS_PER_BYTE,
+                                              crypto.masterSaltLength / BITS_PER_BYTE,
+                                              crypto.srtpAuthTagLength / BITS_PER_BYTE);
 
 }
 
@@ -311,66 +303,61 @@ void AudioSrtpSession::initializeLocalCryptoContext()
                                              0L,    // keydr,
                                              SrtpEncryptionAESCM,
                                              SrtpAuthenticationSha1Hmac,
-                                             localMasterKey_.data(),
-                                             localMasterKeyLength_,
-                                             localMasterSalt_.data(),
-                                             localMasterSaltLength_,
-                                             crypto.encryptionKeyLength / 8,
-                                             crypto.srtpAuthKeyLength / 8,
-                                             crypto.masterSaltLength / 8,
-                                             crypto.srtpAuthTagLength / 8);
+                                             &(*localMasterKey_.begin()),
+                                             localMasterKey_.size(),
+                                             &(*localMasterSalt_.begin()),
+                                             localMasterSalt_.size(),
+                                             crypto.encryptionKeyLength / BITS_PER_BYTE,
+                                             crypto.srtpAuthKeyLength / BITS_PER_BYTE,
+                                             crypto.masterSaltLength / BITS_PER_BYTE,
+                                             crypto.srtpAuthTagLength / BITS_PER_BYTE);
 }
 
 void
-AudioSrtpSession::setLocalMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key)
+AudioSrtpSession::setLocalMasterKey(const std::vector<uint8>& key)
 {
-    std::copy(key.begin(), key.end(), localMasterKey_.begin());
-    localMasterKeyLength_ = localMasterKey_.size();
+    localMasterKey_ = key;
+}
+
+std::vector<uint8>
+AudioSrtpSession::getLocalMasterKey() const
+{
+    return localMasterKey_;
 }
 
 void
-AudioSrtpSession::getLocalMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key)
+AudioSrtpSession::setLocalMasterSalt(const std::vector<uint8>& salt)
 {
-    std::copy(localMasterKey_.begin(), localMasterKey_.end(), key.begin());
+    localMasterSalt_ = salt;
+}
+
+std::vector<uint8>
+AudioSrtpSession::getLocalMasterSalt() const
+{
+    return localMasterSalt_;
 }
 
 void
-AudioSrtpSession::setLocalMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt)
+AudioSrtpSession::setRemoteMasterKey(const std::vector<uint8>& key)
 {
-    std::copy(salt.begin(), salt.end(), localMasterSalt_.begin());
-    localMasterSaltLength_ = localMasterSalt_.size();
+    remoteMasterKey_ = key;
+}
+
+std::vector<uint8> AudioSrtpSession::getRemoteMasterKey() const
+{
+    return remoteMasterKey_;
 }
 
 void
-AudioSrtpSession::getLocalMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt)
+AudioSrtpSession::setRemoteMasterSalt(const std::vector<uint8>& salt)
 {
-    std::copy(localMasterSalt_.begin(), localMasterSalt_.end(), salt.begin());
+    remoteMasterSalt_ = salt;
 }
 
-void
-AudioSrtpSession::setRemoteMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key)
+std::vector<uint8>
+AudioSrtpSession::getRemoteMasterSalt() const
 {
-    std::copy(key.begin(), key.end(), remoteMasterKey_.begin());
-    remoteMasterKeyLength_ = remoteMasterKey_.size();
-}
-
-void
-AudioSrtpSession::getRemoteMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key)
-{
-    std::copy(remoteMasterKey_.begin(), remoteMasterKey_.end(), key.begin());
-}
-
-void
-AudioSrtpSession::setRemoteMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt)
-{
-    std::copy(salt.begin(), salt.end(), remoteMasterSalt_.begin());
-    remoteMasterSaltLength_ = remoteMasterSalt_.size();
-}
-
-void
-AudioSrtpSession::getRemoteMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt)
-{
-    std::copy(remoteMasterSalt_.begin(), remoteMasterSalt_.end(), salt.begin());
+    return remoteMasterSalt_;
 }
 
 }

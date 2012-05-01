@@ -88,7 +88,7 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * Set remote crypto header from incoming sdp offer. It is expected that the
          * local cryptographic context is initialized with mehod
          */
-        void setRemoteCryptoInfo(sfl::SdesNegotiator &nego);
+        void setRemoteCryptoInfo(const sfl::SdesNegotiator &nego);
 
         /**
          * Init local crypto context for outgoing data
@@ -109,49 +109,49 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
          * Replace the local master key with the one specified. One must call
          * initializeLocalCryptoContext to apply the key to the encryption engine.
          */
-        void setLocalMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key);
+        void setLocalMasterKey(const std::vector<uint8>& key);
 
         /**
          * Store the current local master key in an external buffer
          * for future reinitialization of the session.
          */
-        void getLocalMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key);
+        std::vector<uint8> getLocalMasterKey() const;
 
         /**
          * Replace the local master salt with the one specificed. One must call
          * initializeLocalCryptoContext to apply the key to the encryption engine.
          */
-        void setLocalMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt);
+        void setLocalMasterSalt(const std::vector<uint8>& salt);
 
         /**
          * Store the lcoal master salt in an external buffer for future
          * reinitialization of the ssession.
          */
-        void getLocalMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt);
+        std::vector<uint8> getLocalMasterSalt() const;
 
         /**
          * Replace the remote master key with one specified. One must call
          * initializeRemoteCryptoContext to apply the key to the decryption engine.
          */
-        void setRemoteMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key);
+        void setRemoteMasterKey(const std::vector<uint8>& key);
 
         /**
          * Store the remote master key in an extenal buffer for future
          * reinitialization of the session.
          */
-        void getRemoteMasterKey(std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH>& key);
+        std::vector<uint8> getRemoteMasterKey() const;
 
         /**
          * Replace the remote master salt with one specified. On must call
          * initializeRemoteCryptoContext to apply the key to the decryption engine.
          */
-        void setRemoteMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt);
+        void setRemoteMasterSalt(const std::vector<uint8>& salt);
 
         /**
          * Store the remote master salt in an external buffer for future
          * reinitialization of the session.
          */
-        void getRemoteMasterSalt(std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH>& salt);
+        std::vector<uint8> getRemoteMasterSalt() const;
 
     private:
         NON_COPYABLE(AudioSrtpSession);
@@ -213,42 +213,19 @@ class AudioSrtpSession : public AudioSymmetricRtpSession {
         /**
          * Array to store the local master key
          */
-        std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH> localMasterKey_;
-
-        /**
-         * local master key length in byte
-         */
-        size_t localMasterKeyLength_;
+        std::vector<uint8> localMasterKey_;
 
         /**
          * Array to store local master salt
          */
-        std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH> localMasterSalt_;
+        std::vector<uint8> localMasterSalt_;
 
-        /**
-         * Local master salt length in byte
-         */
-        size_t localMasterSaltLength_;
-
-        /**
-         * Remote master key length
-         */
-        std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH> remoteMasterKey_;
-
-        /**
-         * Remote master key length in byte
-         */
-        size_t remoteMasterKeyLength_;
+        std::vector<uint8> remoteMasterKey_;
 
         /**
          * Array to store the remote master salt
          */
-        std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH> remoteMasterSalt_;
-
-        /**
-         * Remote master salt length in byte
-         */
-        size_t remoteMasterSaltLength_;
+        std::vector<uint8> remoteMasterSalt_;
 
         /**
          * Used to make sure remote crypto context not initialized twice.
