@@ -459,6 +459,10 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
 
 SIPVoIPLink::~SIPVoIPLink()
 {
+    const int MAX_TIMEOUT_ON_LEAVING = 5;
+    for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
+        sleep(1);
+
     handlingEvents_ = false;
     if (thread_) {
         pj_thread_join(thread_);
