@@ -393,7 +393,8 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
     TRY(pj_init());
     TRY(pjlib_util_init());
     // From 0 (min) to 6 (max)
-    pj_log_set_level(Logger::getDebugMode() ? 6 : 0);
+    // pj_log_set_level(Logger::getDebugMode() ? 6 : 0);
+    pj_log_set_level(0);
     TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
@@ -730,7 +731,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
 Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::string& toUrl)
 {
-    DEBUG("New registered account call to %s", toUrl.c_str());
+    DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
 
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
 
@@ -873,6 +874,7 @@ SIPVoIPLink::onhold(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
     call->setState(Call::HOLD);
+    call->getAudioRtp().saveLocalContext();
     call->getAudioRtp().stop();
 
     Sdp *sdpSession = call->getLocalSDP();
@@ -912,6 +914,8 @@ SIPVoIPLink::offhold(const std::string& id)
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
+        call->getAudioRtp().restoreLocalContext();
+        call->getAudioRtp().initLocalCryptoInfoOnOffHold();
         call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
@@ -1429,7 +1433,6 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 
         if (sdesnego.negotiate()) {
-            DEBUG("SDES negotiation successfull");
             nego_success = true;
 
             try {
@@ -1448,6 +1451,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // We did not find any crypto context for this media, RTP fallback
     if (!nego_success && call->getAudioRtp().isSdesEnabled()) {
+        ERROR("Negotiation failed but SRTP is enabled, fallback on RTP");
         call->getAudioRtp().stop();
         call->getAudioRtp().setSrtpEnabled(false);
 
