@@ -173,11 +173,11 @@ void CallTreeItem::setCall(Call *call)
 ///Update data
 void CallTreeItem::updated()
 {
-   kDebug() << "\n\n\n\nI am here\n\n\n\n\n" << m_pItemCall->getState() << "\n\n\n";
    kDebug() << "Updating tree item";
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
    if (contact) {
-      m_pIconL->setPixmap(*contact->getPhoto());
+      if (contact->getPhoto())
+         m_pIconL->setPixmap(*contact->getPhoto());
       m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
    }
    else {

@@ -25,68 +25,68 @@
 
 class QListWidgetItem;
 
-/**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>         
-	Represents an item of a list, that is displayed           
-	by an QListWidgetItem with a QWidget inside.              
-	The two objects are contained in this class, but their    
-	initializations are pure virtual.                         
-	The template class WIDGET_TYPE should be derived from     
-	QWidget.                                                  
-	The implementation of initItem should call initItemWidget 
+/**                                                            
+  * @author Jérémy Quentin <jeremy.quentin@gmail.com>          
+  * Represents an item of a list, that is displayed            
+  * by an QListWidgetItem with a QWidget inside.               
+  * The two objects are contained in this class, but their     
+  * initializations are pure virtual.                          
+  * The template class WIDGET_TYPE should be derived from      
+  * QWidget.                                                   
+  * The implementation of initItem should call initItemWidget  
 */
 template<class WIDGET_TYPE>class LIB_EXPORT Item
 {
 protected:
-	QListWidgetItem * item;
-	WIDGET_TYPE * itemWidget;
-	
+   QListWidgetItem * item;
+   WIDGET_TYPE * itemWidget;
+
 
 public:
-	/**
-	 *  Would be great to take the QListWidget as attribute         
-	 *  to be able to add the itemWidget to the item in the list.   
-	 *  For the moment, we have to do it from outside.              
-	 */
-	Item(/*QListWidget *list=0*/) {
-		item = NULL;
-		itemWidget = NULL;
-	}
-	
-	/**
-	 *   Be careful that it is not already deleted by QObject 
-	 *   Commented for safety reasons...                      
-	 */
-	virtual ~Item() {
-// 		delete item;
-// 		delete itemWidget;
-	}
-	
-	QListWidgetItem* getItem() {
-		return item;
-	}
-	
-	WIDGET_TYPE* getItemWidget() {
-		return itemWidget;
-	}
-	
-	const QListWidgetItem* getItem() const {
-		return item;
-	}
-	const WIDGET_TYPE* getItemWidget() const {
-		return itemWidget;
-	}
-	
-	/**
-	 *   Initializes the item and widget            
-	 *   Implementation should call initItemWidget! 
-	 */
-	virtual void initItem() = 0;
-	
+   /**
+      *  Would be great to take the QListWidget as attribute
+      *  to be able to add the itemWidget to the item in the list.
+      *  For the moment, we have to do it from outside.
+      */
+   Item(/*QListWidget *list=0*/) {
+      item = NULL;
+      itemWidget = NULL;
+   }
+
+   /**
+      *   Be careful that it is not already deleted by QObject
+      *   Commented for safety reasons...
+      */
+   virtual ~Item() {
+      // delete item;
+      // delete itemWidget;
+   }
+
+   QListWidgetItem* getItem() {
+      return item;
+   }
+
+   WIDGET_TYPE* getItemWidget() {
+      return itemWidget;
+   }
+
+   const QListWidgetItem* getItem() const {
+      return item;
+   }
+   const WIDGET_TYPE* getItemWidget() const {
+      return itemWidget;
+   }
+
+   /**
+      *   Initializes the item and widget
+      *   Implementation should call initItemWidget!
+      */
+   virtual void initItem() = 0;
+
 protected:
-	virtual void initItemWidget() = 0;
-	
-	
+   virtual void initItemWidget() = 0;
+
+
 };
 
 #endif

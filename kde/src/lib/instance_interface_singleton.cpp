@@ -27,7 +27,7 @@ InstanceInterface* InstanceInterfaceSingleton::interface
 InstanceInterface& InstanceInterfaceSingleton::getInstance()
 {
    if(!interface->connection().isConnected()) {
-      throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From instance interface.";	
+      throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From instance interface.";
    }
    return *interface;
 }

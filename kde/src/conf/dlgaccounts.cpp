@@ -224,7 +224,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountDetail( ACCOUNT_USERNAME               , edit4_user->text()                                                       );
    /**/account->setAccountDetail( ACCOUNT_PASSWORD               , edit5_password->text()                                                   );
    /**/account->setAccountDetail( ACCOUNT_MAILBOX                , edit6_mailbox->text()                                                    );
-   /**/account->setAccountDetail( ACCOUNT_ENABLED                , account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE      );
+   /**/account->setAccountDetail( ACCOUNT_ENABLED                , account->isChecked()?REGISTRATION_ENABLED_TRUE:REGISTRATION_ENABLED_FALSE);
    /**/                                                                                                                                   /**/
    /*                                                               Security                                                                */
    /**/account->setAccountDetail( TLS_PASSWORD                   , edit_tls_private_key_password->text()                                    );
@@ -302,13 +302,14 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    loadCredentails(account->getAccountDetail(ACCOUNT_ID));
 
    bool ok;
-   int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
-   spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
+   int val = account->getAccountDetail(REGISTRATION_STATUS).toInt(&ok);
+   spinbox_regExpire->setValue(ok ? val : REGISTRATION_EXPIRE_DEFAULT);
 
-   if (credentialList.size())
-      edit5_password->setText( credentialList[0].password );
-
-
+   foreach(CredentialData data,credentialList) {
+      if (data.name == account->getAccountDetail(ACCOUNT_USERNAME)) {
+         edit5_password->setText( data.password );
+      }
+   }
 
 
    switch (account->getAccountDetail(TLS_METHOD ).toInt()) {
@@ -339,7 +340,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/edit3_server->setText                    ( account->getAccountDetail(   ACCOUNT_HOSTNAME              )                 );
    /**/edit4_user->setText                      ( account->getAccountDetail(   ACCOUNT_USERNAME              )                 );
    /**/edit6_mailbox->setText                   ( account->getAccountDetail(   ACCOUNT_MAILBOX               )                 );
-   /**/checkBox_conformRFC->setChecked          ( account->getAccountDetail(   ACCOUNT_RESOLVE_ONCE          )  != "TRUE"      );
+   // /**/checkBox_conformRFC->setChecked          ( account->getAccountDetail(   ACCOUNT_RESOLVE_ONCE          )  != "TRUE"      );
    /**/checkbox_ZRTP_Ask_user->setChecked       ( (account->getAccountDetail(  ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 );
    /**/checkbox_SDES_fallback_rtp->setChecked   ( (account->getAccountDetail(  ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 );
    /**/checkbox_ZRTP_display_SAS->setChecked    ( (account->getAccountDetail(  ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 );
@@ -390,9 +391,9 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
 
    if(protocolIndex == 0) { // if sip selected
-      checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == ACCOUNT_ENABLED_TRUE);
+      checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == REGISTRATION_ENABLED_TRUE);
       line_stun->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
-      //checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == ACCOUNT_ENABLED_TRUE);
+      //checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == REGISTRATION_ENABLED_TRUE);
 
       tab_advanced->setEnabled(true);
       line_stun->setEnabled(checkbox_stun->isChecked());
@@ -558,7 +559,7 @@ void DlgAccounts::updateStatusLabel(AccountView* account)
    if(! account ) {
           return;
         }
-   QString status = account->getAccountDetail(ACCOUNT_STATUS);
+   QString status = account->getAccountDetail(REGISTRATION_STATUS);
    edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
 }
 
@@ -692,12 +693,12 @@ void DlgAccounts::loadCredentails(QString accountId) {
    VectorMapStringString credentials = configurationManager.getCredentials(accountId);
    for (int i=0; i < credentials.size(); i++) {
       QListWidgetItem* newItem = new QListWidgetItem();
-      newItem->setText(credentials[i][ "username" ]);
+      newItem->setText(credentials[i][ CONFIG_ACCOUNT_USERNAME ]);
       CredentialData data;
       data.pointer  = newItem                       ;
-      data.name     = credentials[i][ "username"  ] ;
-      data.password = credentials[i][ "password"  ] ;
-      data.realm    = credentials[i][ "realm"     ] ;
+      data.name     = credentials[i][ CONFIG_ACCOUNT_USERNAME  ] ;
+      data.password = credentials[i][ CONFIG_ACCOUNT_PASSWORD  ] ;
+      data.realm    = credentials[i][ CONFIG_ACCOUNT_REALM     ] ;
       credentialInfo[newItem] = data;
       credentialList << data;
       list_credential->addItem(newItem);
@@ -712,9 +713,9 @@ void DlgAccounts::saveCredential(QString accountId) {
    for (int i=0; i < list_credential->count();i++) {
       QListWidgetItem* currentItem = list_credential->item(i);
       MapStringString credentialData;
-      credentialData["username"] = credentialInfo[currentItem].name     ;
-      credentialData["password"] = credentialInfo[currentItem].password ;
-      credentialData["realm"]    = credentialInfo[currentItem].realm    ;
+      credentialData[CONFIG_ACCOUNT_USERNAME] = credentialInfo[currentItem].name     ;
+      credentialData[CONFIG_ACCOUNT_PASSWORD] = credentialInfo[currentItem].password ;
+      credentialData[CONFIG_ACCOUNT_REALM]    = credentialInfo[currentItem].realm    ;
       toReturn << credentialData;
    }
    configurationManager.setCredentials(accountId,toReturn);

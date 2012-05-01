@@ -14,6 +14,9 @@ FIND_PACKAGE ( KdepimLibs REQUIRED )
 FIND_PACKAGE ( KDE4 REQUIRED )
 FIND_PACKAGE ( Qt4 REQUIRED )
 
+set(AKONADI_MIN_VERSION 1.0)
+find_package(Akonadi QUIET NO_MODULE ${AKONADI_MIN_VERSION})
+
 INCLUDE ( KDE4Defaults )
 
 MESSAGE("cmake install prefix is : ${CMAKE_INSTALL_PREFIX}")
@@ -31,9 +34,7 @@ add_subdirectory(man)
 add_subdirectory(po)
 add_subdirectory(plasma)
 
-# make dist target, see:
-# https://agateau.wordpress.com/2009/08/09/cmake-and-make-dist-the-simple-version/
-set(PROJECT_VERSION "1.0.0")
+set(PROJECT_VERSION "1.0.2")
 set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${PROJECT_VERSION})
     add_custom_target(dist
             COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD

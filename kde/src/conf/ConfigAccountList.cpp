@@ -79,7 +79,7 @@ QVector<AccountView*> ConfigAccountList::getAccountByState(QString & state)
 {
    QVector<AccountView*> v;
    for (int i = 0; i < accounts->size(); ++i) {
-      if ((*accounts)[i]->getAccountDetail(ACCOUNT_STATUS) == state)
+      if ((*accounts)[i]->getAccountDetail(REGISTRATION_STATUS) == state)
          v += (*accounts)[i];
    }
    return v;
@@ -167,7 +167,7 @@ QVector<AccountView*> ConfigAccountList::registeredAccounts() const
    AccountView* current;
    for (int i = 0; i < accounts->count(); ++i) {
       current = (*accounts)[i];
-      if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current->getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED) {
          kDebug() << current->getAlias() << " : " << current;
          registeredAccounts.append(current);
       }
@@ -180,7 +180,7 @@ AccountView* ConfigAccountList::firstRegisteredAccount() const
    AccountView* current;
    for (int i = 0; i < accounts->count(); ++i) {
       current = (*accounts)[i];
-      if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
+      if(current->getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED)
       {
          return current;
       }
