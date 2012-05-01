@@ -98,6 +98,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , zrtpHelloHash_(true)
     , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
+    , keepAliveEnabled_(false)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
@@ -128,6 +129,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
     ScalarNode contactUpdateEnabled(contactUpdateEnabled_);
+    ScalarNode keepAliveEnabled(keepAliveEnabled_);
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -194,6 +196,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(CODECS_KEY, &codecs);
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
+    accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
 
     accountmap.setKeyValue(SRTP_KEY, &srtpmap);
     srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
@@ -278,6 +281,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
     map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
+    map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
     map.getValue(DTMF_TYPE_KEY, &dtmfType);
@@ -416,6 +420,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
+    keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == "true";
 
     // srtp settings
     srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == "true";
@@ -509,6 +514,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_STUN_ENABLE] = stunEnabled_ ? "true" : "false";
     a[CONFIG_STUN_SERVER] = stunServer_;
     a[CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
+    a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? "true" : "false";
 
     a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
     a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";

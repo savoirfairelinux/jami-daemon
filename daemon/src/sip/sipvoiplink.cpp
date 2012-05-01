@@ -598,7 +598,8 @@ void SIPVoIPLink::sendRegister(Account *a)
 
     // start the periodic registration request based on Expire header
     // account determines itself if a keep alive is required
-    account->startKeepAliveTimer();
+    if(account->isKeepAliveEnabled())
+        account->startKeepAliveTimer();
 }
 
 void SIPVoIPLink::sendUnregister(Account *a)

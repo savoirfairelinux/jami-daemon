@@ -55,6 +55,7 @@ namespace Conf {
     const char *const DTMF_TYPE_KEY = "dtmfType";
     const char *const SERVICE_ROUTE_KEY = "serviceRoute";
     const char *const UPDATE_CONTACT_HEADER_KEY = "updateContact";
+    const char *const KEEP_ALIVE_ENABLED = "keepAlive";
 
     // TODO: write an object to store credential which implement serializable
     const char *const SRTP_KEY = "srtp";
@@ -520,6 +521,10 @@ class SIPAccount : public Account {
          */
         static void keepAliveRegistrationCb(pj_timer_heap_t *th, pj_timer_entry *te);
 
+        bool isKeepAliveEnabled() const {
+            return keepAliveEnabled_;
+        }
+
         /**
          * Pointer to the transport used by this acccount
          */
@@ -731,13 +736,21 @@ class SIPAccount : public Account {
         std::pair<int, std::string> registrationStateDetailed_;
 
         /**
+         * Determine if the keep alive timer will be activated or not
+         */
+        bool keepAliveEnabled_;
+
+        /**
          * Timer used to regularrly send re-register request based
          * on the "Expire" sip header (or the "expire" Contact parameter)
          */
         pj_timer_entry keepAliveTimer_;
 
+        /**
+         * Once enabled, this variable tells if the keepalive timer is activated
+         * for this accout
+         */
         bool keepAliveTimerActive_;
-
 
         /**
          * Voice over IP Link contains a listener thread and calls

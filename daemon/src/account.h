@@ -79,6 +79,7 @@ static const char *const CONFIG_CREDENTIAL_NUMBER            = "Credential.count
 static const char *const CONFIG_ACCOUNT_DTMF_TYPE            = "Account.dtmfType";
 static const char *const CONFIG_RINGTONE_PATH                = "Account.ringtonePath";
 static const char *const CONFIG_RINGTONE_ENABLED             = "Account.ringtoneEnabled";
+static const char *const CONFIG_KEEP_ALIVE_ENABLED           = "Account.keepAliveEnabled";
 
 static const char *const CONFIG_ACCOUNT_HOSTNAME             = "Account.hostname";
 static const char *const CONFIG_ACCOUNT_USERNAME             = "Account.username";
