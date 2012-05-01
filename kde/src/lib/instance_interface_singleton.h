@@ -25,9 +25,9 @@
 #include "src/lib/instance_dbus_interface.h"
 #include "typedefs.h"
 
-/**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
-*/
+/**                                                               
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>   
+ */
 class LIB_EXPORT InstanceInterfaceSingleton
 {
 

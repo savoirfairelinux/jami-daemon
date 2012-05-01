@@ -313,7 +313,7 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 QString Call::getStopTimeStamp()     const
 {
    if (m_pStopTime == NULL)
-      return QString();
+      return QString("0");
    return QString::number(m_pStopTime->toTime_t());
 }
 
@@ -321,7 +321,7 @@ QString Call::getStopTimeStamp()     const
 QString Call::getStartTimeStamp()    const
 {
    if (m_pStartTime == NULL)
-      return QString();
+      return QString("0");
    return QString::number(m_pStartTime->toTime_t());
 }
 
@@ -383,6 +383,12 @@ bool Call::isConference()                   const
 const QString& Call::getConfId()            const
 {
    return m_ConfId;
+}
+
+///Get the recording path
+const QString& Call::getRecordingPath()      const
+{
+   return m_RecordingPath;
 }
 
 ///Get the current codec
@@ -457,6 +463,12 @@ void Call::setCallNumber(const QString& number)
 void Call::setConfId(QString value)
 {
    m_ConfId = value;
+}
+
+///Set the recording path
+void Call::setRecordingPath(const QString& path)
+{
+   m_RecordingPath = path;
 }
 
 /*****************************************************************************

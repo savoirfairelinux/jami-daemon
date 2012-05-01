@@ -86,6 +86,12 @@ Account* Account::buildExistingAccountFromId(const QString& _accountId)
       return NULL;
    }
    a->m_pAccountDetails = aDetails;
+
+   //Enable for debug
+   //    foreach (QString str, *aDetails) {
+   //       qDebug() << aDetails->key(str) << str;
+   //    }
+
    return a;
 }
 
@@ -152,6 +158,10 @@ const QString& Account::getAccountDetail(const QString& param) const
    }
    if (m_pAccountDetails->find(param) != m_pAccountDetails->end())
       return (*m_pAccountDetails)[param];
+   else if (m_pAccountDetails->count() > 0) {
+      qDebug() << "Account paramater \"" << param << "\" not found";
+      return EMPTY_STRING;
+   }
    else {
       qDebug() << "Account details not found, there is " << m_pAccountDetails->count() << " details available";
       return EMPTY_STRING;
@@ -167,13 +177,13 @@ const QString& Account::getAlias() const
 ///Is this account enabled
 bool Account::isEnabled() const
 {
-   return (getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE);
+   return (getAccountDetail(ACCOUNT_ENABLED) == REGISTRATION_ENABLED_TRUE);
 }
 
 ///Is this account registered
 bool Account::isRegistered() const
 {
-   return (getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED);
+   return (getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
 
@@ -207,7 +217,7 @@ void Account::setAccountId(const QString& id)
 ///Set account enabled
 void Account::setEnabled(bool checked)
 {
-   setAccountDetail(ACCOUNT_ENABLED, checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
+   setAccountDetail(ACCOUNT_ENABLED, checked ? REGISTRATION_ENABLED_TRUE : REGISTRATION_ENABLED_FALSE);
 }
 
 /*****************************************************************************
@@ -222,8 +232,8 @@ void Account::updateState()
    if(! isNew()) {
       ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
-      QString status = details[ACCOUNT_STATUS];
-      setAccountDetail(ACCOUNT_STATUS, status); //Update -internal- object state
+      QString status = details[REGISTRATION_STATUS];
+      setAccountDetail(REGISTRATION_STATUS, status); //Update -internal- object state
    }
 }
 

@@ -143,7 +143,7 @@ QVector<Account*> AccountList::getAccountsByState(const QString& state)
 {
    QVector<Account *> v;
    for (int i = 0; i < m_pAccounts->size(); ++i) {
-      if ((*m_pAccounts)[i]->getAccountDetail(ACCOUNT_STATUS) == state)
+      if ((*m_pAccounts)[i]->getAccountDetail(REGISTRATION_STATUS) == state)
          v += (*m_pAccounts)[i];
    }
    return v;
@@ -157,7 +157,7 @@ QVector<Account*> AccountList::registeredAccounts() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current->getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED) {
          qDebug() << current->getAlias() << " : " << current;
          registeredAccounts.append(current);
       }
@@ -171,11 +171,11 @@ Account* AccountList::firstRegisteredAccount() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current && current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current && current->getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED) {
          return current;
       }
       else {
-         qDebug() << "Account " << current->getAccountId() << " is not registered (" << current->getAccountDetail(ACCOUNT_STATUS) << ")";
+         qDebug() << "Account " << ((current)?current->getAccountId():"") << " is not registered (" << ((current)?current->getAccountDetail(REGISTRATION_STATUS):"") << ") State:" << ((current)?current->getAccountDetail(REGISTRATION_STATUS):"");
       }
    }
    return NULL;

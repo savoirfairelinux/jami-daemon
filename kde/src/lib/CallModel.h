@@ -175,11 +175,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       struct InternalStruct;
       typedef QList<InternalStruct*> InternalCallList;
       struct InternalStruct {
-	 CallWidget       call       ;
-	 Call*            call_real  ;
-	 Index            index      ;
-	 InternalCallList children   ;
-	 bool             conference ;
+         CallWidget       call       ;
+         Call*            call_real  ;
+         Index            index      ;
+         InternalCallList children   ;
+         bool             conference ;
       };
       typedef QHash< Call*      , InternalStruct* > InternalCall  ;
       typedef QHash< QString    , InternalStruct* > InternalCallId;
