@@ -205,15 +205,21 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
 
 void sfl::AudioRtpFactory::saveLocalContext()
 {
-    AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-    srtp->getLocalMasterKey(cachedLocalMasterKey_);
-    srtp->getLocalMasterSalt(cachedLocalMasterSalt_);
+    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
+        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
+        assert(srtp);
+        srtp->getLocalMasterKey(cachedLocalMasterKey_);
+        srtp->getLocalMasterSalt(cachedLocalMasterSalt_);
+    }
 }
 
 void sfl::AudioRtpFactory::restoreLocalContext()
 {
-    AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-    srtp->setLocalMasterKey(cachedLocalMasterKey_);
-    srtp->setLocalMasterSalt(cachedLocalMasterSalt_);
+    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
+        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
+        assert(srtp);
+        srtp->setLocalMasterKey(cachedLocalMasterKey_);
+        srtp->setLocalMasterSalt(cachedLocalMasterSalt_);
+    }
 }
 }
