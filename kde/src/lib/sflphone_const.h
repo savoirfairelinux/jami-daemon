@@ -1,17 +1,17 @@
 /*
  *  Copyright (C) 2008 Savoir-Faire Linux inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 
- *                                                                              
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                               
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -25,7 +25,7 @@
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code
  */
- 
+
 #define APP_NAME                          "SFLphone KDE Client"
 
 #define SIP                               0
@@ -149,16 +149,16 @@
 // #define TLS_SERVER_NAME                  "TLS.serverName"
 // #define TLS_VERIFY_SERVER                "TLS.verifyServer"
 // #define TLS_VERIFY_CLIENT                "TLS.verifyClient"
-// #define TLS_REQUIRE_CLIENT_CERTIFICATE   "TLS.requireClientCertificate"  
+// #define TLS_REQUIRE_CLIENT_CERTIFICATE   "TLS.requireClientCertificate"
 // #define TLS_NEGOTIATION_TIMEOUT_SEC      "TLS.negotiationTimeoutSec"
 // #define TLS_NEGOTIATION_TIMEOUT_MSEC     "TLS.negotiationTimemoutMsec"
-// 
+//
 // #define LOCAL_INTERFACE                  "Account.localInterface"
 // #define PUBLISHED_SAMEAS_LOCAL           "Account.publishedSameAsLocal"
 // #define LOCAL_PORT                       "Account.localPort"
 // #define PUBLISHED_PORT                   "Account.publishedPort"
 // #define PUBLISHED_ADDRESS                "Account.publishedAddress"
-// 
+//
 // #define REGISTRATION_STATUS              "Registration.Status"
 // #define REGISTRATION_STATE_CODE          "Registration.code"
 // #define REGISTRATION_STATE_DESCRIPTION   "Registration.description"
@@ -338,7 +338,7 @@
 // #define TLS_SERVER_NAME                     "TLS.serverName"
 // #define TLS_VERIFY_SERVER                   "TLS.verifyServer"
 // #define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
-// #define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+// #define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"
 // #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 // #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
@@ -356,7 +356,7 @@
 // #define SDES                               "2"
 
 typedef enum
-{ 
+{
    /** Ringing incoming call */
    CALL_STATE_INCOMING    = 0,
    /** Ringing outgoing call */

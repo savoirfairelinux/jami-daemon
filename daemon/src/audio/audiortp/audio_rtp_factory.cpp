@@ -42,10 +42,10 @@ namespace sfl {
 
 AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
     audioRtpThreadMutex_(), srtpEnabled_(false), helloHashEnabled_(false),
-    cachedLocalMasterKey_(), localMasterKeyLength_(0),
-    cachedLocalMasterSalt_(), localMasterSaltLength_(0),
-    cachedRemoteMasterKey_(), remoteMasterKeyLength_(0),
-    cachedRemoteMasterSalt_(), remoteMasterSaltLength_(0),
+    cachedLocalMasterKey_(MAX_MASTER_KEY_LENGTH),
+    cachedLocalMasterSalt_(MAX_MASTER_SALT_LENGTH),
+    cachedRemoteMasterKey_(MAX_MASTER_KEY_LENGTH),
+    cachedRemoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false), ca_(ca),
     keyExchangeProtocol_(NONE)
 {}
@@ -208,8 +208,8 @@ void sfl::AudioRtpFactory::saveLocalContext()
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
         assert(srtp);
-        srtp->getLocalMasterKey(cachedLocalMasterKey_);
-        srtp->getLocalMasterSalt(cachedLocalMasterSalt_);
+        cachedLocalMasterKey_ = srtp->getLocalMasterKey();
+        cachedLocalMasterSalt_ = srtp->getLocalMasterSalt();
     }
 }
 

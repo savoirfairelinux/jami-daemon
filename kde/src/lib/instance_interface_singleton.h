@@ -18,15 +18,15 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
- 
+
 #ifndef INSTANCE_INTERFACE_SINGLETON_H
 #define INSTANCE_INTERFACE_SINGLETON_H
 
 #include "src/lib/instance_dbus_interface.h"
 #include "typedefs.h"
 
-/**                                                               
- * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>   
+/**
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
  */
 class LIB_EXPORT InstanceInterfaceSingleton
 {

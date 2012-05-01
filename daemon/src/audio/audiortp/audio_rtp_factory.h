@@ -160,28 +160,16 @@ class AudioRtpFactory {
         bool helloHashEnabled_;
 
         /** local master key for outgoing packet encryption **/
-        std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH> cachedLocalMasterKey_;
-
-        /** local master key length in byte */
-        size_t localMasterKeyLength_;
+        std::vector<uint8> cachedLocalMasterKey_;
 
         /** local master salt for outgoing packet encryption **/
-        std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH> cachedLocalMasterSalt_;
-
-        /** local master salt length in byte */
-        size_t localMasterSaltLength_;
+        std::vector<uint8> cachedLocalMasterSalt_;
 
         /** remote master key for incoming packet decryption **/
-        std::tr1::array<uint8, MAX_MASTER_KEY_LENGTH> cachedRemoteMasterKey_;
-
-        /** remote master key length in byte */
-        size_t remoteMasterKeyLength_;
+        std::vector<uint8> cachedRemoteMasterKey_;
 
         /** remote master salt for incoming packet decryption **/
-        std::tr1::array<uint8, MAX_MASTER_SALT_LENGTH> cachedRemoteMasterSalt_;
-
-        /** remote master salt length in byte */
-        size_t remoteMasterSaltLength_;
+        std::vector<uint8> cachedRemoteMasterSalt_;
 
         /** Used to make sure remote crypto context not initialized twice. */
         bool remoteOfferIsSet_;

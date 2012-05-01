@@ -25,15 +25,15 @@
 
 class QListWidgetItem;
 
-/**                                                            
-  * @author Jérémy Quentin <jeremy.quentin@gmail.com>          
-  * Represents an item of a list, that is displayed            
-  * by an QListWidgetItem with a QWidget inside.               
-  * The two objects are contained in this class, but their     
-  * initializations are pure virtual.                          
-  * The template class WIDGET_TYPE should be derived from      
-  * QWidget.                                                   
-  * The implementation of initItem should call initItemWidget  
+/**
+  * @author Jérémy Quentin <jeremy.quentin@gmail.com>
+  * Represents an item of a list, that is displayed
+  * by an QListWidgetItem with a QWidget inside.
+  * The two objects are contained in this class, but their
+  * initializations are pure virtual.
+  * The template class WIDGET_TYPE should be derived from
+  * QWidget.
+  * The implementation of initItem should call initItemWidget
 */
 template<class WIDGET_TYPE>class LIB_EXPORT Item
 {
