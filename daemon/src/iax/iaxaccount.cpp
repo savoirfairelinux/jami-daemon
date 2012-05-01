@@ -126,7 +126,7 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 
     RegistrationState state(registrationState_);
 
-    a[CONFIG_REGISTRATION_STATUS] = mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
     a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
 
     return a;

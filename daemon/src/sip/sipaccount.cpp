@@ -485,9 +485,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[CONFIG_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
-    a[CONFIG_REGISTRATION_STATE_CODE] = registrationStateCode;
-    a[CONFIG_REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
 
     // Add sip specific details
     a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
