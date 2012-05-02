@@ -44,19 +44,10 @@ AudioLayer::AudioLayer()
     , mutex_()
     , dcblocker_()
     , audioPref(Manager::instance().audioPreference)
-    , converter_(new SamplerateConverter(sampleRate_))
+    , converter_(sampleRate_)
     , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
-}
-
-
-AudioLayer::~AudioLayer()
-{
-    if(converter_) {
-        delete converter_;
-        converter_ = NULL;
-    }
 }
 
 void AudioLayer::flushMain()

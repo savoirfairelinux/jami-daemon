@@ -569,7 +569,7 @@ void AlsaLayer::capture()
     if (resample) {
         int outSamples = toGetSamples * ((double) sampleRate_ / mainBufferSampleRate);
         std::vector<SFLDataFormat> rsmpl_out(outSamples);
-        converter_->resample(&(*in.begin()), &(*rsmpl_out.begin()),
+        converter_.resample(&(*in.begin()), &(*rsmpl_out.begin()),
                 rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
                 toGetSamples);
         dcblocker_.process(&(*rsmpl_out.begin()), &(*rsmpl_out.begin()), outSamples);
@@ -633,8 +633,8 @@ void AlsaLayer::playback(int maxSamples)
         int inSamples = toGet / sizeof(SFLDataFormat);
         int outSamples = inSamples * resampleFactor;
         std::vector<SFLDataFormat> rsmpl_out(outSamples);
-        converter_->resample(out, &(*rsmpl_out.begin()), rsmpl_out.size(),
-                             mainBufferSampleRate, sampleRate_, inSamples);
+        converter_.resample(out, &(*rsmpl_out.begin()), rsmpl_out.size(),
+                            mainBufferSampleRate, sampleRate_, inSamples);
         write(&(*rsmpl_out.begin()), outSamples * sizeof(SFLDataFormat), playbackHandle_);
     } else {
         write(out, toGet, playbackHandle_);

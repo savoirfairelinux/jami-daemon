@@ -378,7 +378,7 @@ void PulseLayer::writeToSpeaker()
         const size_t nResampled = (double) readableSamples * resampleFactor;
         size_t resampledBytes =  nResampled * sizeof(SFLDataFormat);
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc(resampledBytes);
-        converter_->resample((SFLDataFormat*)data, rsmpl_out, nResampled,
+        converter_.resample((SFLDataFormat*)data, rsmpl_out, nResampled,
                              mainBufferSampleRate, sampleRate_, readableSamples);
         applyGain(rsmpl_out, nResampled, getPlaybackGain());
         pa_stream_write(s, rsmpl_out, resampledBytes, NULL, 0, PA_SEEK_RELATIVE);
@@ -417,7 +417,7 @@ void PulseLayer::readFromMic()
     }
 
     if (resample)
-        converter_->resample((SFLDataFormat*)data, mic_buffer_, samples, mainBufferSampleRate, sampleRate_, samples);
+        converter_.resample((SFLDataFormat*)data, mic_buffer_, samples, mainBufferSampleRate, sampleRate_, samples);
 
     dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
     applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());

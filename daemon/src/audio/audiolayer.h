@@ -62,7 +62,7 @@ class AudioLayer {
 
     public:
         AudioLayer();
-        virtual ~AudioLayer();
+        virtual ~AudioLayer() {}
 
         virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const = 0;
 
@@ -219,7 +219,7 @@ class AudioLayer {
         /**
          * Manage sampling rate conversion
          */
-        SamplerateConverter *converter_;
+        SamplerateConverter converter_;
 
     private:
         /**
