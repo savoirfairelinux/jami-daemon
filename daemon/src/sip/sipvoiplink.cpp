@@ -318,8 +318,13 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveCodecs());
 
-    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
-    call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
+    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
+    if (!ac) {
+        ERROR("Could not instantiate codec");
+        delete call;
+        return false;
+    }
+    call->getAudioRtp().start(ac);
 
     pjsip_dialog* dialog;
 
@@ -708,14 +713,18 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     std::string toUri = account->getToUri(to);
     call->setPeerNumber(toUri);
 
-    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
 
+    if (!ac) {
+        delete call;
+        throw VoipLinkException("Could not instantiate codec");
+    }
     // Audio Rtp Session must be initialized before creating initial offer in SDP session
     // since SDES require crypto attribute.
     call->getAudioRtp().initConfig();
     call->getAudioRtp().initSession();
     call->getAudioRtp().initLocalCryptoInfo();
-    call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
+    call->getAudioRtp().start(ac);
 
     // Building the local SDP offer
     call->getLocalSDP()->setLocalIP(localAddress);
@@ -768,9 +777,9 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
 
-    if (audiocodec == NULL) {
+    if (ac == NULL) {
         delete call;
         throw VoipLinkException("Could not instantiate codec for early media");
     }
@@ -779,7 +788,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
         call->getAudioRtp().initLocalCryptoInfo();
-        call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
+        call->getAudioRtp().start(ac);
     } catch (...) {
         delete call;
         throw VoipLinkException("Could not start rtp session for early media");
@@ -907,16 +916,16 @@ SIPVoIPLink::offhold(const std::string& id)
             pl = sessionMedia->getPayloadType();
 
         // Create a new instance for this codec
-        sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(pl);
+        sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(pl));
 
-        if (audiocodec == NULL)
+        if (ac == NULL)
             throw VoipLinkException("Could not instantiate codec");
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
         call->getAudioRtp().restoreLocalContext();
         call->getAudioRtp().initLocalCryptoInfoOnOffHold();
-        call->getAudioRtp().start(static_cast<sfl::AudioCodec *>(audiocodec));
+        call->getAudioRtp().start(ac);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
     } catch (...) {
@@ -1082,7 +1091,7 @@ void
 SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
     std::string accountID(Manager::instance().getAccountFromCall(id));
-    SIPAccount *account = static_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
 
     if (account) {
         try {
@@ -1391,6 +1400,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Retreive SDP session for this call
     Sdp *sdpSession = call->getLocalSDP();
+    if (!sdpSession) {
+        ERROR("No SDP session");
+        return;
+    }
 
     // Get active session sessions
     const pjmedia_sdp_session *remote_sdp;
@@ -1461,9 +1474,6 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp().initSession();
     }
 
-    if (!sdpSession)
-        return;
-
     sfl::AudioCodec *sessionMedia = sdpSession->getSessionMedia();
 
     if (!sessionMedia)
@@ -1477,8 +1487,10 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         int pl = sessionMedia->getPayloadType();
 
         if (pl != call->getAudioRtp().getSessionMedia()) {
-            sfl::Codec* audiocodec = Manager::instance().audioCodecFactory.instantiateCodec(pl);
-            call->getAudioRtp().updateSessionMedia(static_cast<sfl::AudioCodec *>(audiocodec));
+            sfl::AudioCodec *ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(pl));
+            if (!ac)
+                throw std::runtime_error("Could not instantiate codec");
+            call->getAudioRtp().updateSessionMedia(ac);
         }
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
