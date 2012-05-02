@@ -21,7 +21,7 @@
 #define CONTACT_DOCK_H
 
 #include <QtGui/QDockWidget>
-#include <QtGui/QTreeWidget>
+#include "CategorizedTreeWidget.h"
 
 //Qt
 class QSplitter;
@@ -80,10 +80,10 @@ private slots:
 };
 
 ///@class ContactTree tree view with additinal drag and drop
-class ContactTree : public QTreeWidget {
+class ContactTree : public CategorizedTreeWidget {
    Q_OBJECT
 public:
-   ContactTree(QWidget* parent) : QTreeWidget(parent) {}
+   ContactTree(QWidget* parent) : CategorizedTreeWidget(parent) {}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };

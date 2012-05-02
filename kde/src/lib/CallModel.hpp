@@ -55,6 +55,27 @@ template  <typename CallWidget, typename Index> typename CallModel<CallWidget,In
 
 /*****************************************************************************
  *                                                                           *
+ *                             Private classes                               *
+ *                                                                           *
+ ****************************************************************************/
+class SortableCallSource {
+public:
+   SortableCallSource(Call* call=0) : count(0),callInfo(call) {}
+   uint count;
+   Call* callInfo;
+   const bool operator<(SortableCallSource other) {
+      return (other.count > count);
+   }
+};
+
+inline bool operator< (const SortableCallSource & s1, const SortableCallSource & s2)
+{
+    return  s1.count < s2.count;
+}
+
+
+/*****************************************************************************
+ *                                                                           *
  *                               Constructor                                 *
  *                                                                           *
  ****************************************************************************/
@@ -425,6 +446,32 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
    if (call) {
       m_sHistoryCalls[call->getStartTimeStamp()] = call;
    }
+}
+
+///Sort all history call by popularity and return the result (most popular first)
+template<typename CallWidget, typename Index> const QStringList CallModel<CallWidget,Index>::getNumbersByPopularity()
+{
+   QHash<QString,SortableCallSource*> hc;
+   foreach (Call* call, getHistory()) {
+      if (!hc[call->getPeerPhoneNumber()]) {
+         hc[call->getPeerPhoneNumber()] = new SortableCallSource(call);
+      }
+      hc[call->getPeerPhoneNumber()]->count++;
+   }
+   QList<SortableCallSource> userList;
+   foreach (SortableCallSource* i,hc) {
+      userList << *i;
+   }
+   qSort(userList);
+   QStringList cl;
+   for (int i=userList.size()-1;i >=0 ;i--) {
+      cl << userList[i].callInfo->getPeerPhoneNumber();
+   }
+   foreach (SortableCallSource* i,hc) {
+      delete i;
+   }
+   
+   return cl;
 }
 
 /*****************************************************************************

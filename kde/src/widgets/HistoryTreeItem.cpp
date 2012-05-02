@@ -74,7 +74,7 @@ protected:
 
 ///Constructor
 HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
-   : QWidget(parent), m_pItemCall(0),m_pMenu(0),m_pAudioSlider(0),m_pTimeLeftL(0),m_pTimePlayedL(0),m_pPlayer(0)
+   : QWidget(parent), m_pItemCall(0),m_pMenu(0),m_pAudioSlider(0),m_pTimeLeftL(0),m_pTimePlayedL(0),m_pPlayer(0),m_pContact(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -188,7 +188,7 @@ Call* HistoryTreeItem::call() const
 ///The item have to be updated
 void HistoryTreeItem::updated()
 {
-   if (!getContactInfo(m_pItemCall->getPeerPhoneNumber())) {
+   if (!getContactInfo(m_pItemCall->getPeerPhoneNumber()),true) {
       if(! m_pItemCall->getPeerName().trimmed().isEmpty()) {
          m_pPeerNameL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
       }
@@ -520,6 +520,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
       if (contact->getPhoto() != NULL)
          m_pIconL->setPixmap(*contact->getPhoto());
       m_pPeerNameL->setText("<b>"+contact->getFormattedName()+"</b>");
+      m_pContact = contact;
    }
    else {
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
@@ -544,7 +545,13 @@ uint HistoryTreeItem::getDuration()
 ///Return the caller name
 QString HistoryTreeItem::getName()
 {
-   return m_Name;
+   if (m_pContact) {
+      return m_pContact->getFormattedName();
+   }
+   else if (!m_Name.isEmpty()){
+      return m_Name;
+   }
+   return "Unknow";
 }
 
 ///Return the caller peer number
