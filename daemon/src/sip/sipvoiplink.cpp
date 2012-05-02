@@ -64,6 +64,7 @@
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 #include <resolv.h>
 #include <istream>
 #include <utility> // for std::pair
@@ -659,20 +660,26 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
     pjsip_endpt_cancel_timer(endpt_, &timer);
 }
 
+bool isValidIpAddress(const std::string &address)
+{
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET, address.data(), &(sa.sin_addr));
+    return result != 0;
+}
+
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
-    static const char * const SIP_SCHEME = "sip:";
-    static const char * const SIPS_SCHEME = "sips:";
+    DEBUG("New outgoing call to %s", toUrl.c_str());
+    std::string toCpy = toUrl;
 
-    DEBUG("New outgoing call");
+    sip_utils::stripSipUriPrefix(toCpy);
 
-    bool IPToIP = toUrl.find(SIP_SCHEME) == 0 or
-                  toUrl.find(SIPS_SCHEME) == 0;
-
+    bool IPToIP = isValidIpAddress(toCpy);
     Manager::instance().setIPToIPForCall(id, IPToIP);
 
     try {
         if (IPToIP) {
+            Manager::instance().associateCallToAccount(id, SIPAccount::IP2IP_PROFILE);
             return SIPNewIpToIpCall(id, toUrl);
         }
         else {
@@ -1138,8 +1145,10 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     std::string id(Manager::instance().getAccountFromCall(call->getCallId()));
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(id));
 
-    if (account == NULL)
+    if (account == NULL) {
+        ERROR("Account is NULL in SIPStartCall");
         return false;
+    }
 
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 

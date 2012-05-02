@@ -220,9 +220,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         use_account_id = account_id;
     }
 
-    // Is this account exist
-    if (!associateCallToAccount(call_id, use_account_id))
-        WARN("Could not associate call id %s to account id %s", call_id.c_str(), use_account_id.c_str());
+    associateCallToAccount(call_id, use_account_id);
 
     try {
         Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned);
@@ -2472,20 +2470,12 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 }
 
 // ACCOUNT handling
-bool ManagerImpl::associateCallToAccount(const std::string& callID,
+void ManagerImpl::associateCallToAccount(const std::string& callID,
         const std::string& accountID)
 {
-    std::string useAccountID = accountID;
-
-    if (getAccountFromCall(callID).empty() and accountExists(accountID)) {
-        // account id exist in AccountMap
-        ost::MutexLock m(callAccountMapMutex_);
-        callAccountMap_[callID] = accountID;
-        DEBUG("Associate Call %s with Account %s", callID.data(), accountID.data());
-        return true;
-    }
-
-    return false;
+    ost::MutexLock m(callAccountMapMutex_);
+    callAccountMap_[callID] = accountID;
+    DEBUG("Associate Call %s with Account %s", callID.data(), accountID.data());
 }
 
 std::string ManagerImpl::getAccountFromCall(const std::string& callID)
