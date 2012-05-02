@@ -93,6 +93,9 @@ public:
    */
    int phoneNumberTypesDisplayed();
 
+
+   bool selectCallPhoneNumber(Call* call,Contact* contact);
+
 private slots:
    /**
     *   Performs the action action on the call call, then updates window.
@@ -161,6 +164,8 @@ private slots:
    void updateVolumeBar      (double _value = -1);
    void updateVolumeControls ();
    void updateDialpad        ();
+
+
 
 
 public slots:

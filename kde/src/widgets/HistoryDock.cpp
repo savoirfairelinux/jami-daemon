@@ -147,12 +147,16 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_CurrentFromDate = m_pFromDW->date();
    m_CurrentToDate   = m_pToDW->date();
 
-   connect(m_pAllTimeCB,                  SIGNAL(toggled(bool)),            this, SLOT(enableDateRange(bool)       ));
-   connect(m_pFilterLE,                   SIGNAL(textChanged(QString)),     this, SLOT(filter(QString)             ));
-   connect(m_pFromDW  ,                   SIGNAL(changed(QDate)),           this, SLOT(updateLinkedFromDate(QDate) ));
-   connect(m_pToDW    ,                   SIGNAL(changed(QDate)),           this, SLOT(updateLinkedToDate(QDate)   ));
-   connect(m_pSortByCBB,                  SIGNAL(currentIndexChanged(int)), this, SLOT(reload()                    ));
-   connect(AkonadiBackend::getInstance(), SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo()         ));
+   connect(m_pAllTimeCB,                   SIGNAL(toggled(bool)),            this, SLOT(enableDateRange(bool)       ));
+   connect(m_pFilterLE,                    SIGNAL(textChanged(QString)),     this, SLOT(filter(QString)             ));
+   connect(m_pFromDW  ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedFromDate(QDate) ));
+   connect(m_pToDW    ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedToDate(QDate)   ));
+   connect(m_pSortByCBB,                   SIGNAL(currentIndexChanged(int)), this, SLOT(reload()                    ));
+   connect(AkonadiBackend::getInstance(),  SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo()         ));
+   connect(SFLPhone::model()            ,  SIGNAL(historyChanged()),         this, SLOT(reload()                    ));
+
+   kDebug() << "\n\n\n\nHERE" << ConfigurationSkeleton::historySortMode() << ConfigurationSkeleton::displayDataRange() << ConfigurationSkeleton::historyMax();
+   m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::historySortMode());
 }
 
 ///Destructor
@@ -194,6 +198,7 @@ void HistoryDock::updateContactInfo()
 ///Reload the history list
 void HistoryDock::reload()
 {
+   kDebug() << "IN RELOAD";
    m_pItemView->clear();
    foreach(HistoryTreeItem* hitem, m_History) {
       delete hitem;
@@ -258,6 +263,7 @@ void HistoryDock::reload()
          }
          break;
    }
+   ConfigurationSkeleton::setHistorySortMode(m_pSortByCBB->currentIndex());
    m_pItemView->sortItems(0,Qt::AscendingOrder);
 
    int maxWidth = 0;
@@ -388,7 +394,14 @@ void HistoryDock::keyPressEvent(QKeyEvent* event) {
    int key = event->key();
    if(key == Qt::Key_Escape)
       m_pFilterLE->setText(QString());
-   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {}
+   else if ((key == Qt::Key_Return || key == Qt::Key_Enter) && m_pItemView->selectedItems().size() > 0) {
+      if (m_pItemView->selectedItems()[0] && m_pItemView->itemWidget(m_pItemView->selectedItems()[0],0)) {
+         QNumericTreeWidgetItem* item = dynamic_cast<QNumericTreeWidgetItem*>(m_pItemView->selectedItems()[0]);
+         if (item) {
+            SFLPhone::model()->addDialingCall(item->widget->getName(), SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(item->widget->getPhoneNumber());
+         }
+      }
+   }
    else if((key == Qt::Key_Backspace) && (m_pFilterLE->text().size()))
       m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
    else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))

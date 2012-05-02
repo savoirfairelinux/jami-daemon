@@ -48,9 +48,13 @@
     <entry name="displayDataRange" type="Bool">
     	<label>Defines whether call history is restricted to a specific date range</label>
     </entry>
+   <entry name="historySortMode" type="Int">
+      <label>Define sorting order for history list</label>
+    </entry>
    <entry name="displayContactCallHistory" type="Bool">
         <label>Defines if the individual contact history list is visible</label>
     </entry>
+    
 
     <!-- Audio Settings -->
 

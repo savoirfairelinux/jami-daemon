@@ -31,7 +31,7 @@
 #include <QtGui/QMessageBox>
 #include <QtGui/QPainter>
 #include <QtGui/QColor>
-#include <QFontMetrics>
+#include <QtGui/QFontMetrics>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
 #include <Phonon/MediaObject>
@@ -85,7 +85,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pAddToContact = new KAction(this);
    m_pBookmark     = new KAction(this);
 
-   m_pCallAgain->setShortcut    ( Qt::CTRL + Qt::Key_Enter       );
+   m_pCallAgain->setShortcut    ( Qt::Key_Enter       );
    m_pCallAgain->setText        ( i18n("Call Again")             );
    m_pCallAgain->setIcon        ( KIcon(ICON_DIALING)            );
 
@@ -351,7 +351,7 @@ void HistoryTreeItem::showRecordPlayer()
               this, SLOT(stateChanged(Phonon::State,Phonon::State)));
       
    }
-   qDebug() << "Path:" << m_pItemCall->getRecordingPath();
+   kDebug() << "Path:" << m_pItemCall->getRecordingPath();
    m_pPlayer->setVisible(true);
    Phonon::MediaSource source(m_pItemCall->getRecordingPath());
    m_lSources.append(source);
@@ -393,7 +393,7 @@ void HistoryTreeItem::tick(qint64 time)
 ///Called on player state change
 void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldState */)
 {
-   qDebug() << "Player state changed";
+   kDebug() << "Player state changed";
    switch (newState) {
       case Phonon::ErrorState:
             if (m_pMediaObject->errorType() == Phonon::FatalError) {

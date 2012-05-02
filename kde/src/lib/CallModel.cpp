@@ -60,7 +60,12 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
       qDebug() << "Call found" << call;
       call->stateChanged(state);
    }
-   //updateWindowCallState(); //NEED_PORT
+
+   if (call->getCurrentState() == CALL_STATE_OVER) {
+      addToHistory(call);
+      emit historyChanged();
+   }
+   
    emit callStateChanged(call);
    
 }

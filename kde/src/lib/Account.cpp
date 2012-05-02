@@ -183,7 +183,7 @@ bool Account::isEnabled() const
 ///Is this account registered
 bool Account::isRegistered() const
 {
-   return (getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
+   return (getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
 
@@ -232,8 +232,8 @@ void Account::updateState()
    if(! isNew()) {
       ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
-      QString status = details[REGISTRATION_STATUS];
-      setAccountDetail(REGISTRATION_STATUS, status); //Update -internal- object state
+      QString status = details[ACCOUNT_REGISTRATION_STATUS];
+      setAccountDetail(ACCOUNT_REGISTRATION_STATUS, status); //Update -internal- object state
    }
 }
 

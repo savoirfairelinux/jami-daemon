@@ -54,6 +54,7 @@ public:
    virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
    virtual Call* addRingingCall   ( const QString& callId                       ) = 0;
    virtual Call* addIncomingCall  ( const QString& callId                       ) = 0;
+   virtual void  addToHistory     ( Call* call                                  ) = 0;
    virtual Call* addCall          ( Call* call           , Call* parent =0      );
    virtual Call* getCall          ( const QString& callId                       ) const = 0;
 public slots:
@@ -67,15 +68,16 @@ public slots:
 private:
    static bool dbusInit;
 signals:
-   void callStateChanged        (Call* call                              );
-   void incomingCall            (Call* call                              );
-   void conferenceCreated       (Call* conf                              );
-   void conferenceChanged       (Call* conf                              );
-   void conferenceRemoved       (const QString& confId                   );
-   void aboutToRemoveConference (Call* conf                              );
-   void voiceMailNotify         (const QString& accountID , int    count );
-   void volumeChanged           (const QString& device    , double value );
-   void callAdded               (Call* call               , Call* parent );
+   void callStateChanged        ( Call* call                              );
+   void incomingCall            ( Call* call                              );
+   void conferenceCreated       ( Call* conf                              );
+   void conferenceChanged       ( Call* conf                              );
+   void conferenceRemoved       ( const QString& confId                   );
+   void aboutToRemoveConference ( Call* conf                              );
+   void voiceMailNotify         ( const QString& accountID , int    count );
+   void volumeChanged           ( const QString& device    , double value );
+   void callAdded               ( Call* call               , Call* parent );
+   void historyChanged          (                                         );
 };
 
 /**
@@ -109,6 +111,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void           removeCall       ( Call* call                                     );
       void           attendedTransfer ( Call* toTransfer           , Call* target      );
       void           transfer         ( Call* toTransfer           , QString target    );
+      void           addToHistory     ( Call* call                                     );
       
       virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
 

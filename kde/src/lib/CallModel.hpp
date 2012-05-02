@@ -419,6 +419,14 @@ template<typename CallWidget, typename Index> const CallHash& CallModel<CallWidg
    return m_sHistoryCalls;
 }
 
+///Add to history
+template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::addToHistory(Call* call)
+{
+   if (call) {
+      m_sHistoryCalls[call->getStartTimeStamp()] = call;
+   }
+}
+
 /*****************************************************************************
  *                                                                           *
  *                           Account related code                            *
@@ -442,7 +450,7 @@ template<typename CallWidget, typename Index> QString CallModel<CallWidget,Index
 template<typename CallWidget, typename Index> Account* CallModel<CallWidget,Index>::getCurrentAccount()
 {
    Account* priorAccount = getAccountList()->getAccountById(m_sPriorAccountId);
-   if(priorAccount && priorAccount->getAccountDetail(REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
+   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
       return priorAccount;
    }
    else {

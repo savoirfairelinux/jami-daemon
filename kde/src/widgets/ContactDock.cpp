@@ -43,6 +43,8 @@
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
 #include "conf/ConfigurationSkeleton.h"
+#include "CallView.h"
+#include "SFLPhoneView.h"
 
 //SFLPhone library
 #include "lib/Call.h"
@@ -293,7 +295,15 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
    int key = event->key();
    if(key == Qt::Key_Escape)
       m_pFilterLE->setText(QString());
-   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {}
+   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {
+      if (m_pContactView->selectedItems()[0] && m_pContactView->itemWidget(m_pContactView->selectedItems()[0],0)) {
+         QNumericTreeWidgetItem_hist* item = dynamic_cast<QNumericTreeWidgetItem_hist*>(m_pContactView->selectedItems()[0]);
+         if (item) {
+            Call* call;
+            SFLPhone::app()->view()->selectCallPhoneNumber(call,item->widget->getContact());
+         }
+      }
+   }
    else if((key == Qt::Key_Backspace) && (m_pFilterLE->text().size()))
       m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
    else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))

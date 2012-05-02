@@ -302,7 +302,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    loadCredentails(account->getAccountDetail(ACCOUNT_ID));
 
    bool ok;
-   int val = account->getAccountDetail(REGISTRATION_STATUS).toInt(&ok);
+   int val = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS).toInt(&ok);
    spinbox_regExpire->setValue(ok ? val : REGISTRATION_EXPIRE_DEFAULT);
 
    foreach(CredentialData data,credentialList) {
@@ -559,7 +559,7 @@ void DlgAccounts::updateStatusLabel(AccountView* account)
    if(! account ) {
           return;
         }
-   QString status = account->getAccountDetail(REGISTRATION_STATUS);
+   QString status = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS);
    edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
 }
 

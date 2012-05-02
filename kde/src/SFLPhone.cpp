@@ -397,8 +397,8 @@ void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 void SFLPhone::on_m_pView_incomingCall(const Call * call)
 {
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(call->getPeerPhoneNumber());
-   if (contact) {
-      KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName(),*contact->getPhoto());
+   if (contact && call) {
+      KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName(),(contact->getPhoto())?*contact->getPhoto():NULL);
    }
    KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
 }
