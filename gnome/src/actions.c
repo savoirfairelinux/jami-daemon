@@ -922,7 +922,6 @@ void sflphone_fill_codec_list_per_account(account_t *account)
     for (guint i = 0; i < order->len; i++) {
         gint payload = g_array_index(order, gint, i);
 
-        printf("sflphone_fill_codec_list_per_account: %d\n", payload);
         // Each account will have a copy of the system-wide capabilities
         codec_t *cpy = codec_create_new_from_caps(codec_list_get_by_payload((gconstpointer)(uintptr_t) payload, NULL));
 
