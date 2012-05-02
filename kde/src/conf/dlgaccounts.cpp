@@ -369,6 +369,20 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/combo_security_STRP->setCurrentIndex     ( account->getAccountDetail(   TLS_METHOD                    ).toInt()         );
    /*                                                                                                                          */
 
+   if (account->getAccountDetail(ACCOUNT_USERNAME).isEmpty()) {
+      frame2_editAccounts->setTabEnabled(0,false);
+      frame2_editAccounts->setTabEnabled(1,false);
+      frame2_editAccounts->setTabEnabled(3,false);
+      frame2_editAccounts->setTabEnabled(4,false);
+   }
+   else {
+      frame2_editAccounts->setTabEnabled(0,true);
+      frame2_editAccounts->setTabEnabled(1,true);
+      frame2_editAccounts->setTabEnabled(3,true);
+      frame2_editAccounts->setTabEnabled(4,true);
+      frame2_editAccounts->setCurrentIndex(0);
+   }
+
    combo_tls_method->setCurrentIndex        ( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
