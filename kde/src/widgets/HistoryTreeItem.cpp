@@ -298,10 +298,10 @@ void HistoryTreeItem::showRecordPlayer()
       m_pPause       = new QToolButton        (           );
       m_pStop        = new QToolButton        (           );
       m_pNote        = new QToolButton        (           );
-      
+
       l->addWidget(r1w);
       l->addWidget(r2w);
-      
+
       m_pPlayer->setAttribute( Qt::WA_TranslucentBackground, true );
       m_pPlayer->setMinimumSize(0,25);
       m_pPlayer->setStyleSheet("margin-top:5px");
@@ -309,16 +309,16 @@ void HistoryTreeItem::showRecordPlayer()
       l-> setContentsMargins(0,0,0,0);
       r1->setContentsMargins(0,0,0,0);
       r2->setContentsMargins(0,0,0,0);
-      
+
       m_pPause->setIcon ( KIcon( "media-playback-pause" ));
       m_pStop->setIcon  ( KIcon( "media-playback-stop"  ));
       m_pNote->setIcon  ( KIcon( "view-pim-notes"       ));
-      
+
       m_pPause->setMinimumSize(30,30);
       m_pStop->setMinimumSize (30,30);
       m_pNote->setMinimumSize (30,30);
       QSpacerItem* hSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
-      
+
       r1->addWidget( m_pTimePlayedL );
       r1->addWidget( m_pAudioSlider );
       r1->addWidget( m_pTimeLeftL   );
@@ -326,10 +326,10 @@ void HistoryTreeItem::showRecordPlayer()
       r2->addWidget( m_pStop        );
       r2->addItem  ( hSpacer        );
       r2->addWidget( m_pNote        );
-      
+
       m_pPlayer->setMinimumSize(width(),height());
       m_pPlayer->setMaximumSize(width(),height());
-      
+
       l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
       m_pPlayer->setVisible(true);
 
@@ -339,17 +339,17 @@ void HistoryTreeItem::showRecordPlayer()
       Phonon::createPath(m_pMediaObject, m_pAudioOutput);
 
       m_pAudioSlider->setMediaObject(m_pMediaObject);
-      
+
       m_pMediaObject->setTickInterval(1000);
 
       connect( m_pStop        , SIGNAL(clicked()    ) , this , SLOT( stopPlayer()      ));
       connect( m_pPause       , SIGNAL(clicked()    ) , this , SLOT( playPausePlayer() ));
       connect( m_pNote        , SIGNAL(clicked()    ) , this , SLOT( editNote()        ));
       connect( m_pMediaObject , SIGNAL(tick(qint64) ) , this , SLOT( tick(qint64)      ));
-      
+
       connect(m_pMediaObject  , SIGNAL(stateChanged(Phonon::State,Phonon::State)),
               this, SLOT(stateChanged(Phonon::State,Phonon::State)));
-      
+
    }
    kDebug() << "Path:" << m_pItemCall->getRecordingPath();
    m_pPlayer->setVisible(true);
@@ -358,7 +358,7 @@ void HistoryTreeItem::showRecordPlayer()
    if (m_lSources.size() > 0)
       m_pMetaInformationResolver->setCurrentSource(m_lSources.first());
    m_pMediaObject->play();
-   
+
 }
 
 ///Called when the user press the stop button
@@ -380,7 +380,7 @@ void HistoryTreeItem::playPausePlayer()
 ///Add or edit the note associated with this call
 void HistoryTreeItem::editNote()
 {
-   
+
 }
 
 ///Update player labels
@@ -488,7 +488,7 @@ void HistoryTreeItem::setCall(Call *call)
    m_Duration    = dur;
    m_Name        = m_pItemCall->getPeerName();
    m_PhoneNumber = m_pItemCall->getPeerPhoneNumber();
-   
+
    m_pPlay->  setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
    m_pRemove->setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
 }

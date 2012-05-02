@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "audiorecord.h"
 #include <unistd.h>
 #include <sstream> // for stringstream
@@ -98,7 +102,7 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std:
 void AudioRecord::initFilename(const std::string &peerNumber)
 {
     std::string fName(filename_);
-    fName.append("-" + peerNumber);
+    fName.append("-" + peerNumber + "-" PACKAGE);
 
     if (fileType_ == FILE_RAW) {
         if (filename_.find(".raw") == std::string::npos) {

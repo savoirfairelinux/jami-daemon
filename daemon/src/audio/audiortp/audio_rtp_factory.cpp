@@ -42,10 +42,10 @@ namespace sfl {
 
 AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
     audioRtpThreadMutex_(), srtpEnabled_(false), helloHashEnabled_(false),
-    cachedLocalMasterKey_(), localMasterKeyLength_(0),
-    cachedLocalMasterSalt_(), localMasterSaltLength_(0),
-    cachedRemoteMasterKey_(), remoteMasterKeyLength_(0),
-    cachedRemoteMasterSalt_(), remoteMasterSaltLength_(0),
+    cachedLocalMasterKey_(MAX_MASTER_KEY_LENGTH),
+    cachedLocalMasterSalt_(MAX_MASTER_SALT_LENGTH),
+    cachedRemoteMasterKey_(MAX_MASTER_KEY_LENGTH),
+    cachedRemoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false), ca_(ca),
     keyExchangeProtocol_(NONE)
 {}
@@ -205,15 +205,21 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
 
 void sfl::AudioRtpFactory::saveLocalContext()
 {
-    AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-    srtp->getLocalMasterKey(cachedLocalMasterKey_);
-    srtp->getLocalMasterSalt(cachedLocalMasterSalt_);
+    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
+        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
+        assert(srtp);
+        cachedLocalMasterKey_ = srtp->getLocalMasterKey();
+        cachedLocalMasterSalt_ = srtp->getLocalMasterSalt();
+    }
 }
 
 void sfl::AudioRtpFactory::restoreLocalContext()
 {
-    AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-    srtp->setLocalMasterKey(cachedLocalMasterKey_);
-    srtp->setLocalMasterSalt(cachedLocalMasterSalt_);
+    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
+        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
+        assert(srtp);
+        srtp->setLocalMasterKey(cachedLocalMasterKey_);
+        srtp->setLocalMasterSalt(cachedLocalMasterSalt_);
+    }
 }
 }
