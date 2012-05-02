@@ -317,7 +317,7 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes > bytes)
         urgentBytes = bytes;
 
-    void *data;
+    void *data = 0;
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
         urgentRingBuffer_.Get(data, urgentBytes, MainBuffer::DEFAULT_ID);
@@ -371,16 +371,17 @@ void PulseLayer::writeToSpeaker()
     if (inSamples > availSamples)
         inSamples = availSamples;
 
-    size_t outBytes = (double)inSamples * resampleFactor * sizeof(SFLDataFormat);
-
     size_t inBytes = inSamples * sizeof(SFLDataFormat);
     pa_stream_begin_write(s, &data, &inBytes);
     Manager::instance().getMainBuffer()->getData(data, inBytes, MainBuffer::DEFAULT_ID);
 
     if (resample) {
+        const size_t nResampled = (double) inSamples * resampleFactor;
+        size_t outBytes =  nResampled * sizeof(SFLDataFormat);
         SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc(outBytes);
-        converter_->resample((SFLDataFormat*)data, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
-        applyGain(rsmpl_out, outBytes / sizeof(SFLDataFormat), getPlaybackGain());
+        converter_->resample((SFLDataFormat*)data, rsmpl_out, nResampled,
+                             mainBufferSampleRate, audioSampleRate_, inSamples);
+        applyGain(rsmpl_out, nResampled, getPlaybackGain());
         pa_stream_write(s, rsmpl_out, outBytes, NULL, 0, PA_SEEK_RELATIVE);
         pa_xfree(rsmpl_out);
     } else {
@@ -417,7 +418,7 @@ void PulseLayer::readFromMic()
     }
 
     if (resample)
-        converter_->resample((SFLDataFormat*)data, mic_buffer_, mainBufferSampleRate, audioSampleRate_, samples);
+        converter_->resample((SFLDataFormat*)data, mic_buffer_, samples, mainBufferSampleRate, audioSampleRate_, samples);
 
     dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
     applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());

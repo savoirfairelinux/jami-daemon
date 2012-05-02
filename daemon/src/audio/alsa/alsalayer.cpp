@@ -570,7 +570,8 @@ void AlsaLayer::capture()
         int outSamples = toGetSamples * ((double) audioSampleRate_ / mainBufferSampleRate);
         std::vector<SFLDataFormat> rsmpl_out(outSamples);
         converter_->resample(&(*in.begin()), &(*rsmpl_out.begin()),
-                mainBufferSampleRate, audioSampleRate_, toGetSamples);
+                rsmpl_out.size(), mainBufferSampleRate, audioSampleRate_,
+                toGetSamples);
         dcblocker_.process(&(*rsmpl_out.begin()), &(*rsmpl_out.begin()), outSamples);
         Manager::instance().getMainBuffer()->putData(&(*rsmpl_out.begin()),
                 rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
@@ -631,10 +632,10 @@ void AlsaLayer::playback(int maxSamples)
     if (resample) {
         int inSamples = toGet / sizeof(SFLDataFormat);
         int outSamples = inSamples * resampleFactor;
-        SFLDataFormat *rsmpl_out = (SFLDataFormat*) malloc(outSamples * sizeof(SFLDataFormat));
-        converter_->resample(out, rsmpl_out, mainBufferSampleRate, audioSampleRate_, inSamples);
-        write(rsmpl_out, outSamples * sizeof(SFLDataFormat), playbackHandle_);
-        free(rsmpl_out);
+        std::vector<SFLDataFormat> rsmpl_out(outSamples);
+        converter_->resample(out, &(*rsmpl_out.begin()), rsmpl_out.size(),
+                             mainBufferSampleRate, audioSampleRate_, inSamples);
+        write(&(*rsmpl_out.begin()), outSamples * sizeof(SFLDataFormat), playbackHandle_);
     } else {
         write(out, toGet, playbackHandle_);
     }

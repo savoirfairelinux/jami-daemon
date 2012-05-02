@@ -144,16 +144,20 @@ int AudioRtpRecordHandler::processDataEncode()
         echoCanceller.getData(micData);
 
     SFLDataFormat *out = micData;
-    SFLDataFormat *micDataConverted = audioRtpRecord_.resampledData_.data();
 
     if (codecSampleRate != mainBufferSampleRate) {
-        out = micDataConverted;
-        audioRtpRecord_.converter_->resample(micData, micDataConverted,
-                codecSampleRate, mainBufferSampleRate, samplesToGet);
+        assert(audioRtpRecord_.converter_);
+        audioRtpRecord_.converter_->resample(micData,
+                audioRtpRecord_.resampledData_.data(),
+                audioRtpRecord_.resampledData_.size(), codecSampleRate,
+                mainBufferSampleRate,
+                samplesToGet);
+        out = audioRtpRecord_.resampledData_.data();
     }
 
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
+        assert(audioRtpRecord_.noiseSuppress_);
         audioRtpRecord_.noiseSuppress_->process(micData, getCodecFrameSize());
     }
 
@@ -194,7 +198,9 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         out = audioRtpRecord_.resampledData_.data();
         // Do sample rate conversion
         outSamples = ((float) inSamples * ((float) mainBufferSampleRate / (float) codecSampleRate));
-        audioRtpRecord_.converter_->resample(spkrDataDecoded, out, codecSampleRate, mainBufferSampleRate, inSamples);
+        audioRtpRecord_.converter_->resample(spkrDataDecoded, out,
+                audioRtpRecord_.resampledData_.size(), codecSampleRate,
+                mainBufferSampleRate, inSamples);
     }
 
     if (Manager::instance().getEchoCancelState())

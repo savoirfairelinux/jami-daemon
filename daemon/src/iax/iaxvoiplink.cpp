@@ -38,6 +38,7 @@
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
 #include "audio/samplerateconverter.h"
+#include "array_size.h"
 
 #include <cmath>
 #include <dlfcn.h>
@@ -180,7 +181,8 @@ IAXVoIPLink::sendAudioFromMic()
         SFLDataFormat *in;
 
         if (audioRate != mainBufferSampleRate) {
-            converter_.resample(decData_, resampledData_, audioRate, mainBufferSampleRate, samples);
+            converter_.resample(decData_, resampledData_, ARRAYSIZE(resampledData_),
+                                audioRate, mainBufferSampleRate, samples);
             in = resampledData_;
             outSamples = 0;
         } else {
@@ -569,7 +571,8 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 
     if (audioRate != mainBufferSampleRate) {
         outSize = (double)outSize * (mainBufferSampleRate / audioRate);
-        converter_.resample(decData_, resampledData_, mainBufferSampleRate, audioRate, samples);
+        converter_.resample(decData_, resampledData_, ARRAYSIZE(resampledData_),
+                            mainBufferSampleRate, audioRate, samples);
         out = resampledData_;
     }
 

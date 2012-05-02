@@ -59,7 +59,7 @@ class SamplerateConverter {
          * @param SamplerateConverter2 The desired sample rate
          * @param nbSamples	  The number of samples to process
          */
-        void resample(SFLDataFormat* dataIn , SFLDataFormat* dataOut , int oldrate, int newrate, int nbSamples);
+        void resample(SFLDataFormat* dataIn, SFLDataFormat* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
 
         /**
          * Convert short table to floats for audio processing
