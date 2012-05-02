@@ -51,7 +51,8 @@ namespace sfl {
 
 class AudioCodec : public Codec {
     public:
-        AudioCodec(uint8 payload, const std::string &codecName);
+        AudioCodec(uint8 payload, const std::string &codecName, int clockRate,
+                   int frameSize, int channel);
 
         /**
          * Copy constructor.

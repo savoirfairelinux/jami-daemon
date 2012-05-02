@@ -205,7 +205,7 @@ WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileNam
         const int outSamples = ceil(nbSamples * ratio);
         size_ = outSamples;
         buffer_ = new SFLDataFormat[size_];
-        converter.resample(tempBuffer, buffer_, fileRate, newRate, nbSamples);
+        converter.resample(tempBuffer, buffer_, size_, fileRate, newRate, nbSamples);
         delete [] tempBuffer;
     } else
         buffer_ = tempBuffer;

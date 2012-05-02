@@ -31,6 +31,7 @@
 #include "samplerateconverter.h"
 #include "manager.h"
 #include <cassert>
+#include "logger.h"
 
 SamplerateConverter::SamplerateConverter(int freq) : floatBufferIn_(0),
     floatBufferOut_(0), samples_(0), maxFreq_(freq), src_state_(0)
@@ -63,15 +64,16 @@ SamplerateConverter::Short2FloatArray(const short *in, float *out, int len)
 }
 
 void SamplerateConverter::resample(SFLDataFormat *dataIn,
-                                   SFLDataFormat *dataOut, int inputFreq,
-                                   int outputFreq, int nbSamples)
+                                   SFLDataFormat *dataOut,
+                                   size_t dataOutSize, int inputFreq,
+                                   int outputFreq, size_t nbSamples)
 {
     double sampleFactor = (double) outputFreq / inputFreq;
 
     if (sampleFactor == 1.0)
         return;
 
-    const int outSamples = nbSamples * sampleFactor;
+    size_t outSamples = nbSamples * sampleFactor;
     const unsigned int maxSamples = std::max(outSamples, nbSamples);
 
     if (maxSamples > samples_) {
@@ -91,8 +93,12 @@ void SamplerateConverter::resample(SFLDataFormat *dataIn,
     src_data.src_ratio = sampleFactor;
     src_data.end_of_input = 0; // More data will come
 
-    Short2FloatArray(dataIn , floatBufferIn_, nbSamples);
+    Short2FloatArray(dataIn, floatBufferIn_, nbSamples);
     src_process(src_state_, &src_data);
 
-    src_float_to_short_array(floatBufferOut_, dataOut , outSamples);
+    if (outSamples > dataOutSize) {
+        ERROR("Outsamples exceeds output buffer size, clamping to %u", dataOutSize);
+        outSamples = dataOutSize;
+    }
+    src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
 }
