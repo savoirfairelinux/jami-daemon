@@ -34,6 +34,7 @@
 
 //SFLPhone
 class Call;
+class Contact;
 
 //Qt
 class QTreeWidgetItem;
@@ -104,6 +105,7 @@ class HistoryTreeItem : public QWidget
     QString      m_Name           ;
     QString      m_PhoneNumber    ;
     QGridLayout* m_pMainLayout    ;
+    Contact*     m_pContact;
 
     QTreeWidgetItem* m_pItem;
 
@@ -126,6 +128,7 @@ protected:
 
 public slots:
    void updated();
+   bool getContactInfo(QString phone);
 
 private slots:
    void showContext(const QPoint& pos);
@@ -135,7 +138,6 @@ private slots:
    void addContact();
    void addToContact();
    void bookmark();
-   bool getContactInfo(QString phone);
    void removeRecording();
    void showRecordPlayer();
    void stopPlayer();

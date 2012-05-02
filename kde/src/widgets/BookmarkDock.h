@@ -25,12 +25,16 @@
 //Qt
 class QTreeWidget;
 class QSplitter;
+class QCheckBox;
+class QTreeView;
 
 //KDE
 class KLineEdit;
 
 //SFLPhone
 class HistoryTreeItem;
+class CategoryDrawer;
+class CategorizedTreeWidget;
 
 //Typedef
 typedef QList<HistoryTreeItem*> BookmarkList;
@@ -47,15 +51,18 @@ public:
    void addBookmark(const QString& phone);
 private:
    //Attributes
-   QTreeWidget*  m_pItemView;
-   KLineEdit*    m_pFilterLE;
-   QSplitter*    m_pSplitter;
-   BookmarkList  m_pBookmark;
+   CategorizedTreeWidget*  m_pItemView  ;
+   KLineEdit*              m_pFilterLE  ;
+   QSplitter*              m_pSplitter  ;
+   BookmarkList            m_pBookmark  ;
+   QCheckBox*              m_pMostUsedCK;
+   QTreeView*              m_pTest;
 
    //Mutators
    void addBookmark_internal(const QString& phone);
 private slots:
    void filter(QString text);
+   void reload();
 };
 
 #endif

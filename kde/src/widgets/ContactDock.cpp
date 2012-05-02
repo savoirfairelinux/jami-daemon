@@ -111,7 +111,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    KeyPressEaterC *keyPressEater = new KeyPressEaterC(this);
    m_pContactView->installEventFilter(keyPressEater);
 
-   m_pContactView->setAlternatingRowColors(true);
+   //m_pContactView->setAlternatingRowColors(true);
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
@@ -138,6 +138,10 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
    connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         this,        SLOT(setHistoryVisible(bool)              ));
    setWindowTitle(i18n("Contact"));
+
+   for (int i=65;i<=90;i++) {
+      m_pContactView->addCategory(QString(i));
+   }
 }
 
 ///Destructor
@@ -158,29 +162,30 @@ void ContactDock::reloadContact()
 {
    ContactList list = AkonadiBackend::getInstance()->update();
    foreach (Contact* cont, list) {
-      ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
-      QNumericTreeWidgetItem_hist* item = new QNumericTreeWidgetItem_hist(m_pContactView);
-      item->widget = aContact;
-      aContact->setItem(item);
-      aContact->setContact(cont);
+      if (cont->getPhoneNumbers().count()) {
+         ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
+         QNumericTreeWidgetItem_hist* item = m_pContactView->addItem<QNumericTreeWidgetItem_hist>(QString(cont->getFormattedName()[0]));
+         item->widget = aContact;
+         aContact->setItem(item);
+         aContact->setContact(cont);
 
-      PhoneNumbers numbers =  aContact->getContact()->getPhoneNumbers();
-      kDebug() << "Phone count" << numbers.count();
-      if (numbers.count() > 1) {
-         foreach (Contact::PhoneNumber* number, numbers) {
-            QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
-            QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber(),this);
-            item2->number = number->getNumber();
-            m_pContactView->setItemWidget(item2,0,numberL);
+         PhoneNumbers numbers =  aContact->getContact()->getPhoneNumbers();
+         kDebug() << "Phone count" << numbers.count();
+         if (numbers.count() > 1) {
+            foreach (Contact::PhoneNumber* number, numbers) {
+               QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
+               QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber(),this);
+               item2->number = number->getNumber();
+               m_pContactView->setItemWidget(item2,0,numberL);
+            }
          }
-      }
-      else if (numbers.count() == 1) {
-         item->number = numbers[0]->getNumber();
-      }
+         else if (numbers.count() == 1) {
+            item->number = numbers[0]->getNumber();
+         }
 
-      m_pContactView->addTopLevelItem(item);
-      m_pContactView->setItemWidget(item,0,aContact);
-      m_Contacts << aContact;
+         m_pContactView->setItemWidget(item,0,aContact);
+         m_Contacts << aContact;
+      }
    }
 }
 

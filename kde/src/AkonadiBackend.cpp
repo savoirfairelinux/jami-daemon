@@ -92,7 +92,7 @@ ContactBackend* AkonadiBackend::getInstance()
 ///@param resolveDNS check if the DNS is used by an account, then assume contact with that phone number / extension is the same as the caller
 Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resolveDNS)
 {
-   if (!resolveDNS)
+   if (!resolveDNS || phoneNumber.indexOf("@") == -1)
       return m_ContactByPhone[phoneNumber];
    else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
       foreach (Account* a, SFLPhone::model()->getAccountList()->getAccounts()) {
