@@ -88,17 +88,17 @@ void Account::loadDefaultCodecs()
 
 
 
-void Account::setActiveCodecs(const std::vector <std::string> &list)
+void Account::setActiveCodecs(const std::vector<std::string> &list)
 {
     // first clear the previously stored codecs
     codecOrder_.clear();
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecOrder vector to save the order.
-    for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
-            ++iter) {
+    for (std::vector<std::string>::const_iterator iter = list.begin();
+            iter != list.end(); ++iter) {
         int payload = std::atoi(iter->c_str());
-        codecOrder_.push_back((int) payload);
+        codecOrder_.push_back(payload);
     }
 
     // update the codec string according to new codec selection

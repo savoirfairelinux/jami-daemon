@@ -93,7 +93,7 @@ preferences_dialog_fill_codec_list(const account_t *account)
             gtk_list_store_set(codecStore, &iter,
                                COLUMN_CODEC_ACTIVE, c->is_active,
                                COLUMN_CODEC_NAME, c->name,
-                               COLUMN_CODEC_FREQUENCY,	g_strdup_printf("%f kHz", c->sample_rate * 0.001),
+                               COLUMN_CODEC_FREQUENCY,	g_strdup_printf("%d kHz", (gint)(c->sample_rate * 0.001)),
                                COLUMN_CODEC_BITRATE, g_strdup_printf("%.1f kbps", c->_bitrate),
                                -1);
         }
@@ -407,7 +407,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("Aie, no account selected");
+        ERROR("no account selected");
         return;
     }
 
@@ -419,8 +419,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
                        COLUMN_CODEC_NAME, &name, COLUMN_CODEC_FREQUENCY,
                        &srate, -1);
 
-    DEBUG("%s, %s\n", name, srate);
-    DEBUG("%i\n", g_queue_get_length(acc->codecs));
+    DEBUG("Selected Codec: %s, %s", name, srate);
 
     codec_t* codec;
 
@@ -534,7 +533,8 @@ GtkWidget* audiocodecs_box(const account_t *account)
                                G_TYPE_STRING,	 /* Name */
                                G_TYPE_STRING,	 /* Frequency */
                                G_TYPE_STRING,	 /* Bit rate */
-                               G_TYPE_STRING	 /* Bandwith */);
+                               G_TYPE_STRING	 /* Bandwith */
+                               );
 
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));
