@@ -49,6 +49,7 @@
 #include "lib/callmanager_interface_singleton.h"
 #include "lib/instance_interface_singleton.h"
 #include "lib/sflphone_const.h"
+#include "lib/Contact.h"
 
 //ConfigurationDialog* SFLPhoneView::configDialog;
 
@@ -239,6 +240,37 @@ void SFLPhoneView::action(Call* call, call_action action)
    }
 }
 
+///Select a phone number when calling using a contact
+bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
+{
+   if (contact->getPhoneNumbers().count() == 1) {
+      call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+      call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
+   }
+   else if (contact->getPhoneNumbers().count() > 1) {
+      bool ok = false;
+      QHash<QString,QString> map;
+      QStringList list;
+      foreach (Contact::PhoneNumber* number, contact->getPhoneNumbers()) {
+         map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
+         list << number->getType()+" ("+number->getNumber()+")";
+      }
+      QString result = QInputDialog::getItem (this, QString("Select phone number"), QString("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
+      if (ok) {
+         call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+         call2->appendText(map[result]);
+      }
+      else {
+         kDebug() << "Operation cancelled";
+         return false;
+      }
+   }
+   else {
+      kDebug() << "This contact have no valid phone number";
+      return false;
+   }
+   return true;
+}
 
 /*****************************************************************************
  *                                                                           *

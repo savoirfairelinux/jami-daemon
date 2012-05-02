@@ -259,32 +259,8 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
       Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
       if (contact) {
          Call* call2;
-         if (contact->getPhoneNumbers().count() == 1) {
-            call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
-            call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
-         }
-         else if (contact->getPhoneNumbers().count() > 1) {
-            bool ok = false;
-            QHash<QString,QString> map;
-            QStringList list;
-            foreach (Contact::PhoneNumber* number, contact->getPhoneNumbers()) {
-               map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
-               list << number->getType()+" ("+number->getNumber()+")";
-            }
-            QString result = QInputDialog::getItem (this, QString("Select phone number"), QString("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
-            if (ok) {
-               call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
-               call2->appendText(map[result]);
-            }
-            else {
-               kDebug() << "Operation cancelled";
-               return false;
-            }
-         }
-         else {
-            kDebug() << "This contact have no valid phone number";
+         if (!SFLPhone::app()->view()->selectCallPhoneNumber(call2,contact))
             return false;
-         }
          if (!parent) {
             //Dropped on free space
             kDebug() << "Adding new dialing call";
@@ -382,12 +358,13 @@ Call* CallView::addCall(Call* call, Call* parent)
 ///Transfer a call
 void CallView::transfer()
 {
-   if (m_pCallPendingTransfer) {
+   if (m_pCallPendingTransfer && !m_pTransferLE->text().isEmpty()) {
       SFLPhone::model()->transfer(m_pCallPendingTransfer,m_pTransferLE->text());
-      m_pCallPendingTransfer = 0;
-      m_pTransferLE->clear();
-      m_pTransferOverlay->setVisible(false);
    }
+
+   m_pCallPendingTransfer = 0;
+   m_pTransferLE->clear();
+   m_pTransferOverlay->setVisible(false);
 }
 
 /*****************************************************************************
@@ -421,6 +398,13 @@ void CallView::hideOverlay()
    if (m_pActiveOverlay)
       m_pActiveOverlay->setVisible(false);
    m_pActiveOverlay = 0;
+
+   if (m_pCallPendingTransfer && m_pCallPendingTransfer->getState() == CALL_STATE_TRANSFER ) {
+      m_pCallPendingTransfer->actionPerformed(CALL_ACTION_TRANSFER);
+   }
+   
+   m_pCallPendingTransfer = 0;
+   m_pTransferLE->clear();
 }
 
 ///Be sure the size of the overlay stay the same
@@ -721,8 +705,9 @@ void CallViewOverlay::setVisible(bool enabled) {
       if (m_pTimer) {
          m_pTimer->stop();
          disconnect(m_pTimer);
+         delete m_pTimer;
       }
-      m_pTimer = new QTimer(this); //TODO LEAK?
+      m_pTimer = new QTimer(this);
       connect(m_pTimer, SIGNAL(timeout()), this, SLOT(changeVisibility()));
       m_step = 0;
       m_black.setAlpha(0);
