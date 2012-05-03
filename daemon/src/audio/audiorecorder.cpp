@@ -30,6 +30,7 @@
 
 #include "audiorecorder.h"
 #include "mainbuffer.h"
+#include "logger.h"
 #include <sstream>
 #include <cassert>
 #include <tr1/array>
@@ -37,7 +38,7 @@
 int AudioRecorder::count_ = 0;
 
 AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread(),
-    recorderId_(), mbuffer_(mb), arecord_(arec)
+    recorderId_(), mbuffer_(mb), arecord_(arec), running_(true)
 {
     assert(mb);
 
@@ -63,13 +64,13 @@ void AudioRecorder::run()
     std::tr1::array<SFLDataFormat, BUFFER_LENGTH> buffer;
     buffer.assign(0);
 
-    while (isRunning()) {
+    while (running_) {
         size_t availBytes = mbuffer_->availForGet(recorderId_);
         mbuffer_->getData(buffer.data(), std::min(availBytes, buffer.size()), recorderId_);
 
         if (availBytes > 0)
             arecord_->recData(buffer.data(), availBytes / sizeof(SFLDataFormat));
 
-        sleep(20);
+        Thread::sleep(20);
     }
 }

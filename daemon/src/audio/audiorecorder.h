@@ -44,6 +44,7 @@ class AudioRecorder : public ost::Thread {
         AudioRecorder(AudioRecord  *arec, MainBuffer *mb);
 
         ~AudioRecorder() {
+            running_ = false;
             terminate();
         }
 
@@ -61,6 +62,7 @@ class AudioRecorder : public ost::Thread {
         std::string recorderId_;
         MainBuffer *mbuffer_;
         AudioRecord *arecord_;
+        bool running_;
 };
 
 #endif
