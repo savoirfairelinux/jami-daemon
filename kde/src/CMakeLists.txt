@@ -48,6 +48,7 @@ SET(	sflphone_client_kde_SRCS
 	widgets/TranslucentButtons.cpp
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
+   widgets/SortableDockCommon.cpp
 	Codec.cpp
 	AccountListModel.cpp
 	AkonadiBackend.cpp

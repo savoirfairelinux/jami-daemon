@@ -23,7 +23,7 @@
 
 #include <QObject>
 #include <QVector>
-#include <QHash>
+#include <QMap>
 #include "typedefs.h"
 
 //Qt
@@ -37,7 +37,7 @@ class AccountList;
 class Account;
 class ContactBackend;
 
-typedef QHash<QString, Call*> CallHash;
+typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
 
 ///@class CallModelBase Base class for the central model/frontend
@@ -126,11 +126,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void removeConference          ( Call* call                                  );
 
       //Getters
-      int size                                        ();
-      CallList                 getCallList            ();
-      static const CallHash&   getHistory             ();
-      static const QStringList getNumbersByPopularity ();
-      static const QStringList getHistoryCallId       ();
+      int size                                                     ();
+      CallList                              getCallList            ();
+      static const CallMap&                getHistory             ();
+      static const QStringList              getNumbersByPopularity ();
+      static const QStringList getHistoryCallId                    ();
 
       //Account related
       static Account* getCurrentAccount  (                     );
@@ -191,8 +191,8 @@ class LIB_EXPORT CallModel : public CallModelBase {
       typedef QHash< Index      , InternalStruct* > InternalIndex ;
 
       //Static attributes
-      static CallHash m_sActiveCalls ;
-      static CallHash m_sHistoryCalls;
+      static CallMap m_sActiveCalls ;
+      static CallMap m_sHistoryCalls;
       
       static InternalCall   m_sPrivateCallList_call  ;
       static InternalCallId m_sPrivateCallList_callId;

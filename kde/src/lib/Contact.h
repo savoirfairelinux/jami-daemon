@@ -69,6 +69,8 @@ private:
    QString      m_PreferredEmail ;
    QString      m_Organization   ;
    QString      m_Uid            ;
+   QString      m_Group          ;
+   QString      m_Department     ;
    bool         m_DisplayPhoto   ;
    PhoneNumbers m_Numbers        ;
    
@@ -89,17 +91,21 @@ public:
    virtual const QString& getPreferredEmail()  const;
    virtual const QPixmap* getPhoto()           const;
    virtual const QString& getType()            const;
+   virtual const QString& getGroup()           const;
+   virtual const QString& getDepartment()      const;
 
    //Setters
-   virtual void setPhoneNumbers   (PhoneNumbers          );
-   virtual void setFormattedName  (const QString& name   );
-   virtual void setNickName       (const QString& name   );
-   virtual void setFirstName      (const QString& name   );
-   virtual void setFamilyName     (const QString& name   );
-   virtual void setOrganization   (const QString& name   );
-   virtual void setPreferredEmail (const QString& name   );
-   virtual void setUid            (const QString& id     );
-   virtual void setPhoto          (QPixmap* photo        );
+   virtual void setPhoneNumbers   ( PhoneNumbers          );
+   virtual void setFormattedName  ( const QString& name   );
+   virtual void setNickName       ( const QString& name   );
+   virtual void setFirstName      ( const QString& name   );
+   virtual void setFamilyName     ( const QString& name   );
+   virtual void setOrganization   ( const QString& name   );
+   virtual void setPreferredEmail ( const QString& name   );
+   virtual void setGroup          ( const QString& name   );
+   virtual void setDepartment     ( const QString& name   );
+   virtual void setUid            ( const QString& id     );
+   virtual void setPhoto          ( QPixmap* photo        );
    
 protected:
    virtual void initItemWidget();

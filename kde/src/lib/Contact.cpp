@@ -106,6 +106,17 @@ const QString& Contact::getUid() const
    return m_Uid;
 }
 
+///Get the group
+const QString& Contact::getGroup() const
+{
+   return m_Group;
+}
+
+const QString& Contact::getDepartment() const
+{
+   return m_Department;
+}
+
 ///Get the contact type
 const QString& Contact::getType() const
 {
@@ -164,4 +175,16 @@ void Contact::setPreferredEmail(const QString& name)
 void Contact::setUid(const QString& id)
 {
    m_Uid = id;
+}
+
+///Set Group
+void Contact::setGroup(const QString& name)
+{
+   m_Group = name;
+}
+
+///Set department
+void Contact::setDepartment(const QString& name)
+{
+   m_Department = name;
 }
