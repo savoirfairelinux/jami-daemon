@@ -41,6 +41,11 @@
 #include "audio/samplerateconverter.h"
 
 #define MAX_BUFFER_LENGTH 40000
+#define TMP_LOWSMPLR_BUFFER_LENGTH 160
+#define TMP_HIGHSMPLR_BUFFER_LENGTH 320
+
+typedef std::tr1::array<SFLDataFormat, TMP_LOWSMPLR_BUFFER_LENGTH> LowSmplrBuffer;
+typedef std::tr1::array<SFLDataFormat, TMP_HIGHSMPLR_BUFFER_LENGTH> HighSmplrBuffer;
 
 class ResamplerTest : public CppUnit::TestCase {
 
@@ -51,7 +56,7 @@ class ResamplerTest : public CppUnit::TestCase {
     CPPUNIT_TEST(testUpsamplingRamp);
     CPPUNIT_TEST(testDownsamplingRamp);
     CPPUNIT_TEST(testUpsamplingTriangle);
-    // CPPUNIT_TEST(testDownsamplingTriangle);
+    CPPUNIT_TEST(testDownsamplingTriangle);
     CPPUNIT_TEST(testUpsamplingSine);
     CPPUNIT_TEST(testDownsamplingSine);
     CPPUNIT_TEST_SUITE_END();
@@ -117,6 +122,16 @@ private:
      * Generate a sine signal to be stored in inputBuffer
      */
     void generateSineSignal();
+
+    /*
+     * Perform upsampling on the whole input buffer
+     */
+    void performUpsampling(SamplerateConverter &converter);
+
+    /*
+     * Perform downsampling on the whold input buffer
+     */
+    void performDownsampling(SamplerateConverter &converter);
 
     /**
      * Used to store input samples
