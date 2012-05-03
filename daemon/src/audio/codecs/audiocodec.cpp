@@ -44,12 +44,10 @@ AudioCodec::AudioCodec(uint8 payload, const std::string &codecName,
     frameSize_(frameSize),
     bitrate_(0.0),
     bandwidth_(0.0),
-    hasDynamicPayload_(false),
     payload_(payload),
-    payloadFormat_(0)
-{
-    init(payload, clockRate_);
-}
+    payloadFormat_(payload, clockRate_),
+    hasDynamicPayload_((payload_ >= 96 and payload_ <= 127) or payload_ == 9)
+{}
 
 AudioCodec::AudioCodec(const AudioCodec& c) :
     codecName_(c.codecName_),
@@ -58,23 +56,10 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     frameSize_(c.frameSize_),
     bitrate_(c.bitrate_),
     bandwidth_(c.bandwidth_),
-    hasDynamicPayload_(c.hasDynamicPayload_),
     payload_(c.payload_),
-    payloadFormat_(c.payloadFormat_)
-{
-    init(c.payload_, c.clockRate_);
-}
-
-void AudioCodec::init(uint8 payloadType, uint32 clockRate)
-{
-#warning FIXME: we don't need to allocate payloadFormat_ dynamically
-
-    payloadFormat_ = new ost::DynamicPayloadFormat(payloadType, clockRate);
-
-    // If g722 (payload 9), we need to init libccrtp symetric sessions with using
-    // dynamic payload format. This way we get control on rtp clockrate.
-    hasDynamicPayload_ = ((payload_ >= 96 and payload_ <= 127) or payload_ == 9);
-}
+    payloadFormat_(c.payloadFormat_),
+    hasDynamicPayload_(c.hasDynamicPayload_)
+{}
 
 std::string AudioCodec::getMimeSubtype() const
 {
@@ -104,11 +89,6 @@ unsigned AudioCodec::getFrameSize() const
 double AudioCodec::getBitRate() const
 {
     return bitrate_;
-}
-
-AudioCodec::~AudioCodec()
-{
-    delete payloadFormat_;
 }
 
 } // end namespace sfl
