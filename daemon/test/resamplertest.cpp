@@ -46,133 +46,154 @@ void ResamplerTest::tearDown()
 
 void ResamplerTest::testUpsamplingRamp()
 {
-    std::tr1::array<SFLDataFormat, 160> tmpInputBuffer;
-    std::tr1::array<SFLDataFormat, 320> tmpOutputBuffer;
-
     // generate input samples and store them in inputBuffer
     generateRamp();
 
     std::cout << "Test Upsampling Ramp" << std::endl;
-    converter = new SamplerateConverter(44100);
+    SamplerateConverter converter(44100);
 
-    CPPUNIT_ASSERT(converter != NULL);
+    performUpsampling(converter);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + 160, tmpInputBuffer.begin());
-    converter->resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 8000, 16000, tmpInputBuffer.size());
+    LowSmplrBuffer tmpInputBuffer;
+    HighSmplrBuffer tmpOutputBuffer;
 
-    std::cout << "Output Buffer" << std::endl;
-    for(int i = 0; i < tmpOutputBuffer.size(); i++)
-        std::cout << tmpOutputBuffer[i] << ", ";
-    std::cout << std::endl;
-
+    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
     std::cout << "Input Buffer" << std::endl;
     for(int i = 0; i < tmpInputBuffer.size(); i++)
         std::cout << tmpInputBuffer[i] << ", ";
     std::cout << std::endl;
 
-    delete converter;
+    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    std::cout << "Output Buffer" << std::endl;
+    for(int i = 0; i < tmpOutputBuffer.size(); i++)
+        std::cout << tmpOutputBuffer[i] << ", ";
+    std::cout << std::endl;
 }
 
 void ResamplerTest::testDownsamplingRamp()
 {
-    std::tr1::array<SFLDataFormat, 320> tmpInputBuffer;
-    std::tr1::array<SFLDataFormat, 160> tmpOutputBuffer;
-
     generateRamp();
 
     std::cout << "Test Downsampling Ramp" << std::endl;
-    converter = new SamplerateConverter(44100);
+    SamplerateConverter converter(44100);
 
-    CPPUNIT_ASSERT(converter != NULL);
+    performDownsampling(converter);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + 320, tmpInputBuffer.begin());
-    converter->resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 16000, 8000, tmpInputBuffer.size());
+    HighSmplrBuffer tmpInputBuffer;
+    LowSmplrBuffer tmpOutputBuffer;
 
-    std::cout << "Output Buffer" << std::endl;
-    for(int i = 0; i < tmpOutputBuffer.size(); i++)
-        std::cout << tmpOutputBuffer[i] << ", ";
-    std::cout << std::endl;
-
+    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
     std::cout << "Input Buffer" << std::endl;
     for(int i = 0; i < tmpInputBuffer.size(); i++)
         std::cout << tmpInputBuffer[i] << ", ";
     std::cout << std::endl;
 
-    delete converter;
+    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    std::cout << "Output Buffer" << std::endl;
+    for(int i = 0; i < tmpOutputBuffer.size(); i++)
+        std::cout << tmpOutputBuffer[i] << ", ";
+    std::cout << std::endl;
 }
 
 void ResamplerTest::testUpsamplingTriangle()
 {
-    std::tr1::array<SFLDataFormat, 160> tmpInputBuffer;
-    std::tr1::array<SFLDataFormat, 320> tmpOutputBuffer;
-
     generateTriangularSignal();
 
     std::cout << "Test Upsampling Triangle" << std::endl;
-    converter = new SamplerateConverter(44100);
+    SamplerateConverter converter(44100);
 
-    CPPUNIT_ASSERT(converter != NULL);
+    performUpsampling(converter);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + 160, tmpInputBuffer.begin());
-    converter->resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 8000, 16000, tmpInputBuffer.size());
+    LowSmplrBuffer tmpInputBuffer;
+    HighSmplrBuffer tmpOutputBuffer;
 
-    delete converter;
+    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    std::cout << "Input Buffer" << std::endl;
+    for(int i = 0; i < tmpInputBuffer.size(); i++)
+        std::cout << tmpInputBuffer[i] << ", ";
+    std::cout << std::endl;
+
+    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    std::cout << "Output Buffer" << std::endl;
+    for(int i = 0; i < tmpOutputBuffer.size(); i++)
+        std::cout << tmpOutputBuffer[i] << ", ";
+    std::cout << std::endl;
 }
 
 void ResamplerTest::testDownsamplingTriangle()
 {
-    std::tr1::array<SFLDataFormat, 320> tmpInputBuffer;
-    std::tr1::array<SFLDataFormat, 160> tmpOutputBuffer;
-
     generateTriangularSignal();
 
     std::cout << "Test Downsampling Triangle" << std::endl;
-    converter = new SamplerateConverter(44100);
+    SamplerateConverter converter(44100);
 
-    CPPUNIT_ASSERT(converter != NULL);
+    performDownsampling(converter);
 
-    std::copy(inputBuffer.begin(), inputBuffer.end() + 320, tmpInputBuffer.begin());
-    converter->resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 16000, 8000, tmpInputBuffer.size());
+    HighSmplrBuffer tmpInputBuffer;
+    LowSmplrBuffer tmpOutputBuffer;
 
-    delete converter;
+    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    std::cout << "Input Buffer" << std::endl;
+    for(int i = 0; i < tmpInputBuffer.size(); i++)
+        std::cout << tmpInputBuffer[i] << ", ";
+    std::cout << std::endl;
+
+    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    std::cout << "Output Buffer" << std::endl;
+    for(int i = 0; i < tmpOutputBuffer.size(); i++)
+        std::cout << tmpOutputBuffer[i] << ", ";
+    std::cout << std::endl;
 }
-
 void ResamplerTest::testUpsamplingSine()
 {
-    std::tr1::array<SFLDataFormat, 160> tmpInputBuffer;
-    std::tr1::array<SFLDataFormat, 320> tmpOutputBuffer;
-
     // generate input samples and store them in inputBuffer
     generateSineSignal();
 
     std::cout << "Test Upsampling Sine" << std::endl;
-    converter = new SamplerateConverter(44100);
+    SamplerateConverter converter(44100);
 
-    CPPUNIT_ASSERT(converter != NULL);
+    performUpsampling(converter);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + 160, tmpInputBuffer.begin());
-    converter->resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 8000, 16000, tmpInputBuffer.size());
+    LowSmplrBuffer tmpInputBuffer;
+    HighSmplrBuffer tmpOutputBuffer;
 
-    delete converter;
+    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    std::cout << "Input Buffer" << std::endl;
+    for(int i = 0; i < tmpInputBuffer.size(); i++)
+        std::cout << tmpInputBuffer[i] << ", ";
+    std::cout << std::endl;
+
+    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    std::cout << "Output Buffer" << std::endl;
+    for(int i = 0; i < tmpOutputBuffer.size(); i++)
+        std::cout << tmpOutputBuffer[i] << ", ";
+    std::cout << std::endl;
 }
 
 void ResamplerTest::testDownsamplingSine()
 {
-    std::tr1::array<SFLDataFormat, 320> tmpInputBuffer;
-    std::tr1::array<SFLDataFormat, 160> tmpOutputBuffer;
-
     // generate input samples and store them in inputBuffer
     generateSineSignal();
 
     std::cout << "Test Downsampling Sine" << std::endl;
-    converter = new SamplerateConverter(44100);
+    SamplerateConverter converter(44100);
 
-    CPPUNIT_ASSERT(converter != NULL);
+    performDownsampling(converter);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + 320, tmpInputBuffer.begin());
-    converter->resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 8000, 16000, tmpInputBuffer.size());
+    HighSmplrBuffer tmpInputBuffer;
+    LowSmplrBuffer tmpOutputBuffer;
 
-    delete converter;
+    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    std::cout << "Input Buffer" << std::endl;
+    for(int i = 0; i < tmpInputBuffer.size(); i++)
+        std::cout << tmpInputBuffer[i] << ", ";
+    std::cout << std::endl;
+
+    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    std::cout << "Output Buffer" << std::endl;
+    for(int i = 0; i < tmpOutputBuffer.size(); i++)
+        std::cout << tmpOutputBuffer[i] << ", ";
+    std::cout << std::endl;
 }
 
 void ResamplerTest::generateRamp()
@@ -192,6 +213,32 @@ void ResamplerTest::generateTriangularSignal()
 void ResamplerTest::generateSineSignal()
 {
     for(int i = 0; i < inputBuffer.size(); i++) {
-        //inputBuffer[i] = (SFLDataFormat)(
+        inputBuffer[i] = (SFLDataFormat)(1000.0 * sin((double)i));
+    }
+}
+
+void ResamplerTest::performUpsampling(SamplerateConverter &converter)
+{
+    LowSmplrBuffer tmpInputBuffer;
+    HighSmplrBuffer tmpOutputBuffer;
+
+    int i, j;
+    for(i = 0, j = 0; i < (inputBuffer.size() / 2); i += tmpInputBuffer.size(), j += tmpOutputBuffer.size()) {
+        std::copy(inputBuffer.begin() + i, inputBuffer.begin() + tmpInputBuffer.size() + i, tmpInputBuffer.begin());
+        converter.resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 8000, 16000, tmpInputBuffer.size());
+        std::copy(tmpOutputBuffer.begin(), tmpOutputBuffer.end(), outputBuffer.begin() + j);
+    }
+}
+
+void ResamplerTest::performDownsampling(SamplerateConverter &converter)
+{
+    HighSmplrBuffer tmpInputBuffer;
+    LowSmplrBuffer tmpOutputBuffer;
+
+    int i, j;
+    for(i = 0, j = 0; i < inputBuffer.size(); i += tmpInputBuffer.size(), j += tmpOutputBuffer.size()) {
+        std::copy(inputBuffer.begin() + i, inputBuffer.begin() + tmpInputBuffer.size() + i, tmpInputBuffer.begin());
+        converter.resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 16000, 8000, tmpInputBuffer.size());
+        std::copy(tmpOutputBuffer.begin(), tmpOutputBuffer.end(), outputBuffer.begin() + j);
     }
 }
