@@ -32,6 +32,7 @@
 #include "mainbuffer.h"
 #include <sstream>
 #include <cassert>
+#include <tr1/array>
 
 int AudioRecorder::count_ = 0;
 
@@ -59,15 +60,15 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread()
 void AudioRecorder::run()
 {
     const size_t BUFFER_LENGTH = 10000;
-    SFLDataFormat buffer[BUFFER_LENGTH];
+    std::tr1::array<SFLDataFormat, BUFFER_LENGTH> buffer;
+    buffer.assign(0);
 
     while (isRunning()) {
         size_t availBytes = mbuffer_->availForGet(recorderId_);
-
-        mbuffer_->getData(buffer, std::min(availBytes, BUFFER_LENGTH), recorderId_);
+        mbuffer_->getData(buffer.data(), std::min(availBytes, buffer.size()), recorderId_);
 
         if (availBytes > 0)
-            arecord_->recData(buffer, availBytes / sizeof(SFLDataFormat));
+            arecord_->recData(buffer.data(), availBytes / sizeof(SFLDataFormat));
 
         sleep(20);
     }

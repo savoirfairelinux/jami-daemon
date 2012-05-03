@@ -111,7 +111,7 @@ void ManagerImpl::init(const std::string &config_file)
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
             telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
-            dtmfKey_.reset(new DTMF(8000));
+            dtmfKey_.reset(new DTMF(getMainBuffer()->getInternalSamplingRate()));
         }
     }
 
