@@ -33,8 +33,7 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-#include <dlfcn.h>
-#include <cc++/config.h>
+#include "cc_config.h"
 #include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
 
 #include "codec.h"

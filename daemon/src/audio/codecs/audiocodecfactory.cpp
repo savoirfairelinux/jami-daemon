@@ -38,6 +38,7 @@
 #include "audiocodecfactory.h"
 #include <cstdlib>
 #include <algorithm> // for std::find
+#include <dlfcn.h>
 #include "fileutils.h"
 #include "logger.h"
 
