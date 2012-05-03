@@ -37,7 +37,7 @@
 
 const char * const MainBuffer::DEFAULT_ID = "audiolayer_id";
 
-MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(8000)
+MainBuffer::MainBuffer() : ringBufferMap_(), callIDMap_(), mutex_(), internalSamplingRate_(16000)
 {}
 
 MainBuffer::~MainBuffer()

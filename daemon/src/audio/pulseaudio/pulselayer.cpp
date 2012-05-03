@@ -38,6 +38,9 @@
 #include "logger.h"
 #include "manager.h"
 
+#include <stdlib.h>
+#include <fstream>
+
 namespace {
 
 void playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
@@ -61,6 +64,11 @@ void stream_moved_callback(pa_stream *s, void *userdata UNUSED)
 }
 
 } // end anonymous namespace
+
+#ifdef RECTODISK
+std::ofstream outfileResampled ("testMicOuputResampled.raw", std::ifstream::binary);
+std::ofstream outfile("testMicOuput.raw", std::ifstream::binary);
+#endif
 
 PulseLayer::PulseLayer()
     : playback_(0)
@@ -106,6 +114,11 @@ PulseLayer::PulseLayer()
 
 PulseLayer::~PulseLayer()
 {
+#ifdef RECTODISK
+    outfile.close();
+    outfileResampled.close();
+#endif
+
     disconnectAudioStream();
 
     if (mainloop_)
@@ -416,12 +429,19 @@ void PulseLayer::readFromMic()
         mic_buffer_ = new SFLDataFormat[samples];
     }
 
-    if (resample)
+#ifdef RECTODISK
+    outfile.write((const char *)data, bytes);
+#endif
+    if (resample) {
         converter_.resample((SFLDataFormat*)data, mic_buffer_, samples, mainBufferSampleRate, sampleRate_, samples);
+    }
 
-    dcblocker_.process(mic_buffer_, resample ? mic_buffer_ : (SFLDataFormat*)data, samples);
+    dcblocker_.process(mic_buffer_, (SFLDataFormat*)data, samples);
     applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());
     Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes, MainBuffer::DEFAULT_ID);
+#ifdef RECTODISK
+    outfileResampled.write((const char *)mic_buffer_, bytes);
+#endif
 
     if (pa_stream_drop(record_->pulseStream()) < 0)
         ERROR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
