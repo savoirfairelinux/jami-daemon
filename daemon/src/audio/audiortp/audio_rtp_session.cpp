@@ -141,7 +141,8 @@ void AudioRtpSession::sendDtmfEvent()
     queue_.setMark(false);
 
     // get back the payload to audio
-    queue_.setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) getCodecPayloadType()));
+    const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getCodecPayloadType()));
+    queue_.setPayloadFormat(pf);
 }
 
 
