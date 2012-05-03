@@ -148,6 +148,8 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 
    QTimer* timer = new QTimer(this);
 
+   m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::contactSortMode());
+
    connect (AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                   this,        SLOT(reloadContact()                      ));
    connect (m_pSortByCBB                 ,SIGNAL(currentIndexChanged(int)),                              this,        SLOT(reloadContact()                      ));
    connect (m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,        SLOT(loadContactHistory(QTreeWidgetItem*) ));
@@ -156,6 +158,8 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    connect (timer                        ,SIGNAL(timeout()),                                             this,        SLOT(reloadHistoryConst()                 ));
    timer->start(1800*1000); //30 minutes
    setWindowTitle(i18n("Contact"));
+
+   
 }
 
 ///Destructor
@@ -242,6 +246,8 @@ void ContactDock::reloadContact()
       default:
          m_pContactView->sortItems(0,Qt::AscendingOrder);
    }
+
+   ConfigurationSkeleton::setContactSortMode(m_pSortByCBB->currentIndex());
 }
 
 ///Query the call history for all items related to this contact

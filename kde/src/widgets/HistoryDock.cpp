@@ -146,9 +146,10 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    QDate date(2000,1,1);
    m_pFromDW->setDate(date);
 
-   reload();
    m_CurrentFromDate = m_pFromDW->date();
    m_CurrentToDate   = m_pToDW->date();
+   
+   m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::historySortMode());
 
    connect(m_pAllTimeCB,                   SIGNAL(toggled(bool)),            this, SLOT(enableDateRange(bool)       ));
    connect(m_pFilterLE,                    SIGNAL(textChanged(QString)),     this, SLOT(filter(QString)             ));
@@ -158,8 +159,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    connect(AkonadiBackend::getInstance(),  SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo()         ));
    connect(SFLPhone::model()            ,  SIGNAL(historyChanged()),         this, SLOT(reload()                    ));
 
-   kDebug() << "\n\n\n\nHERE" << ConfigurationSkeleton::historySortMode() << ConfigurationSkeleton::displayDataRange() << ConfigurationSkeleton::historyMax();
-   m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::historySortMode());
+   reload();
 }
 
 ///Destructor

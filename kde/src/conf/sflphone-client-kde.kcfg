@@ -54,6 +54,9 @@
    <entry name="historySortMode" type="Int">
       <label>Define sorting order for history list</label>
     </entry>
+   <entry name="contactSortMode" type="Int">
+      <label>Define sorting order for contact list</label>
+    </entry>
    <entry name="displayContactCallHistory" type="Bool">
         <label>Defines if the individual contact history list is visible</label>
     </entry>
