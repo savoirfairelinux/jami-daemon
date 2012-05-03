@@ -45,8 +45,8 @@ template  <typename CallWidget, typename Index> bool CallModel<CallWidget,Index>
 template  <typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::m_sCallInit            = false ;
 template  <typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::m_sHistoryInit         = false ;
 
-template  <typename CallWidget, typename Index> QHash<QString, Call*> CallModel<CallWidget,Index>::m_sActiveCalls  ;
-template  <typename CallWidget, typename Index> QHash<QString, Call*> CallModel<CallWidget,Index>::m_sHistoryCalls ;
+template  <typename CallWidget, typename Index> CallMap CallModel<CallWidget,Index>::m_sActiveCalls  ;
+template  <typename CallWidget, typename Index> CallMap CallModel<CallWidget,Index>::m_sHistoryCalls ;
 
 template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalCall   CallModel<CallWidget,Index>::m_sPrivateCallList_call   ;
 template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalCallId CallModel<CallWidget,Index>::m_sPrivateCallList_callId ;
@@ -434,7 +434,7 @@ template<typename CallWidget, typename Index> const QStringList CallModel<CallWi
 }
 
 ///Return the history list
-template<typename CallWidget, typename Index> const CallHash& CallModel<CallWidget,Index>::getHistory()
+template<typename CallWidget, typename Index> const CallMap& CallModel<CallWidget,Index>::getHistory()
 {
    qDebug() << "Getting history" << m_sHistoryCalls.count();
    return m_sHistoryCalls;
@@ -473,6 +473,7 @@ template<typename CallWidget, typename Index> const QStringList CallModel<CallWi
    
    return cl;
 }
+
 
 /*****************************************************************************
  *                                                                           *

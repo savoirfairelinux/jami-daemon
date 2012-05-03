@@ -66,6 +66,7 @@ private:
    Akonadi::Session*              m_pSession   ;
    Akonadi::Collection            m_Collection ;
    QHash<QString,KABC::Addressee> m_AddrHash   ;
+   ContactList                    m_pContacts  ;
 
 protected:
    ContactList update_slot();

@@ -20,8 +20,11 @@
 #ifndef CONTACT_DOCK_H
 #define CONTACT_DOCK_H
 
+#include <QtCore/QHash>
 #include <QtGui/QDockWidget>
 #include "CategorizedTreeWidget.h"
+#include "SortableDockCommon.h"
+//#include "AkonadiBackend.h"
 
 //Qt
 class QSplitter;
@@ -29,6 +32,8 @@ class QListWidget;
 class QComboBox;
 class QTreeWidgetItem;
 class QCheckBox;
+class QStringList;
+class DateTime;
 
 //KDE
 class KLineEdit;
@@ -49,9 +54,11 @@ namespace KABC {
 ///SFLPhone
 class ContactTree;
 class ContactItemWidget;
+class StaticEventHandler;
+class Contact;
 
 ///@class ContactDock Dock to access contacts
-class ContactDock : public QDockWidget
+class ContactDock : public QDockWidget, public SortableDockCommon
 {
    Q_OBJECT
 public:
@@ -61,11 +68,11 @@ public:
 
 private:
    //Attributes
-   KLineEdit*                   m_pFilterLE;
-   QSplitter*                   m_pSplitter;
+   KLineEdit*                   m_pFilterLE   ;
+   QSplitter*                   m_pSplitter   ;
    ContactTree*                 m_pContactView;
-   QListWidget*                 m_pCallView;
-   QComboBox*                   m_pSortByCBB;
+   QListWidget*                 m_pCallView   ;
+   QComboBox*                   m_pSortByCBB  ;
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_Contacts;
 
@@ -73,10 +80,11 @@ public slots:
    virtual void keyPressEvent(QKeyEvent* event);
 
 private slots:
-   void reloadContact();
-   void loadContactHistory(QTreeWidgetItem* item);
-   void filter(const QString& text);
-   void setHistoryVisible(bool visible);
+   void reloadContact      (                       );
+   void loadContactHistory ( QTreeWidgetItem* item );
+   void filter             ( const QString& text   );
+   void setHistoryVisible  ( bool visible          );
+   void reloadHistoryConst (                       );
 };
 
 ///@class ContactTree tree view with additinal drag and drop

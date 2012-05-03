@@ -156,6 +156,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             aContact->setFamilyName     (tmp.familyName()     );
             aContact->setOrganization   (tmp.organization()   );
             aContact->setPreferredEmail (tmp.preferredEmail() );
+            aContact->setDepartment     (tmp.department()     );
             aContact->setUid            (tmp.uid()            );
             aContact->setPhoneNumbers   (newNumbers           );
 
@@ -166,6 +167,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             contacts << aContact;
          }
       }
+      m_pContacts = m_ContactByUid.values();
    }
    return contacts;
 }
@@ -196,6 +198,7 @@ void AkonadiBackend::addNewContact(Contact* contact)
    newContact.setGivenName      ( contact->getFirstName()       );
    newContact.setFamilyName     ( contact->getSecondName()      );
    newContact.setOrganization   ( contact->getOrganization()    );
+   newContact.setDepartment     ( contact->getDepartment()      );
    //newContact.setPreferredEmail ( contact->getPreferredEmail()  );//TODO
 
    foreach (Contact::PhoneNumber* nb, contact->getPhoneNumbers()) {
@@ -255,7 +258,7 @@ void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list
 ///Update the contact list even without a new collection
 ContactList AkonadiBackend::update_slot()
 {
-   return update(m_Collection);
+   return m_pContacts;//update(m_Collection);
 }
 
 /*****************************************************************************
