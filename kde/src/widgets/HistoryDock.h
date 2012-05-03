@@ -23,6 +23,8 @@
 #include <QtGui/QDockWidget>
 #include <QtGui/QTreeWidget>
 #include <QtCore/QDate>
+#include "SortableDockCommon.h"
+#include "CategorizedTreeWidget.h"
 
 //Qt
 class QTreeWidgetItem;
@@ -46,7 +48,7 @@ class HistoryTree;
 typedef QList<HistoryTreeItem*> HistoryList;
 
 ///@class HistoryDock Dock to see the previous SFLPhone calls
-class HistoryDock : public QDockWidget {
+class HistoryDock : public QDockWidget, public SortableDockCommon {
    Q_OBJECT
 
 public:
@@ -101,10 +103,10 @@ private slots:
 
 
 ///@class HistoryTree Simple tree view with additional keybpard filter
-class HistoryTree : public QTreeWidget {
+class HistoryTree : public CategorizedTreeWidget {
    Q_OBJECT
 public:
-   HistoryTree(QWidget* parent) : QTreeWidget(parent) {}
+   HistoryTree(QWidget* parent) : CategorizedTreeWidget(parent) {}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };

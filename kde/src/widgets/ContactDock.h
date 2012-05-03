@@ -24,7 +24,6 @@
 #include <QtGui/QDockWidget>
 #include "CategorizedTreeWidget.h"
 #include "SortableDockCommon.h"
-//#include "AkonadiBackend.h"
 
 //Qt
 class QSplitter;

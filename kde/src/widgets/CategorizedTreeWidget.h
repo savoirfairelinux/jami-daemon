@@ -36,7 +36,7 @@ class CategorizedTreeWidget : public QTreeWidget
 
   public:
     template <class T = QTreeWidgetItem> T* addItem(QString category);
-    QTreeWidgetItem* addCategory(QString name);
+    template <class T = QTreeWidgetItem> T* addCategory(QString name);
 
     QVector<QTreeWidgetItem*> realItems() const;
 
@@ -70,9 +70,15 @@ template <class T> T* CategorizedTreeWidget::addItem(QString category)
   return iwdg;
 }
 
-// QTreeWidgetItem* CategorizedTreeWidget::addItem(QString category)
-// {
-//   return addItem<QTreeWidgetItem>(category);
-// }
+
+template <class T> T* CategorizedTreeWidget::addCategory(QString name)
+{
+   T* categoryItem = new T(this);
+   categoryItem->setText(0, name);
+   addTopLevelItem(categoryItem);
+   expandItem(categoryItem);
+   setItemHidden(categoryItem,true);
+   return categoryItem;
+}
 
 #endif

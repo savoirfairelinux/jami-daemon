@@ -136,6 +136,8 @@ CategorizedTreeWidget::CategorizedTreeWidget(QWidget *parent)
   setHeaderHidden(true);
   setRootIsDecorated(false);
   setIndentation(25);
+  setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  setHorizontalScrollMode(QAbstractItemView::ScrollPerItem);
 }
 
 void CategorizedTreeWidget::drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const
@@ -150,14 +152,4 @@ void CategorizedTreeWidget::drawBranches(QPainter* painter, const QRect& rect, c
 QVector<QTreeWidgetItem*> CategorizedTreeWidget::realItems() const
 {
   return m_lItems;
-}
-
-QTreeWidgetItem* CategorizedTreeWidget::addCategory(QString name)
-{
-   QTreeWidgetItem* categoryItem = new QTreeWidgetItem();
-   categoryItem->setText(0, name);
-   addTopLevelItem(categoryItem);
-   expandItem(categoryItem);
-   setItemHidden(categoryItem,true);
-   return categoryItem;
 }

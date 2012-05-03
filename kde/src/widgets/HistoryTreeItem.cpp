@@ -158,6 +158,8 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pMainLayout->addWidget ( m_pDurationL   , 0 , 4 , 4 , 1 );
    setLayout(m_pMainLayout);
    setMinimumSize(QSize(50, 30));
+   setMaximumSize(QSize(300,99999));
+   setSizePolicy(QSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum));
 
    if (!phone.isEmpty()) {
       getContactInfo(phone);
