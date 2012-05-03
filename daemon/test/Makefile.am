@@ -37,7 +37,9 @@ test_SOURCES = constants.h \
 			   gaincontroltest.h \
 			   gaincontroltest.cpp \
 			   mainbuffertest.h \
-			   mainbuffertest.cpp
+			   mainbuffertest.cpp \
+			   resamplertest.h \
+			   resamplertest.cpp
 
 clean-local:
 	rm -rf cppunitresults.xml im:testfile1.txt im:testfile2.txt \
