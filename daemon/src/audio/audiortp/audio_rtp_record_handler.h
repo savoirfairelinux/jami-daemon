@@ -93,6 +93,7 @@ class AudioRtpRecord {
         std::list<int> dtmfQueue_;
         SFLDataFormat fadeFactor_;
         NoiseSuppress *noiseSuppressEncode_;
+        NoiseSuppress *noiseSuppressDecode_;
         ost::Mutex audioProcessMutex_;
         std::string callId_;
         unsigned int dtmfPayloadType_;
