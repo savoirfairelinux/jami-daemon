@@ -119,7 +119,7 @@ static void
 call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 {
     DEBUG("CallTree: Selection callback");
-    GtkTreeModel *model = GTK_TREE_MODEL(active_calltree_tab->store);
+    GtkTreeModel *model = gtk_tree_view_get_model(gtk_tree_selection_get_tree_view(sel));
 
     GtkTreeIter iter;
 
