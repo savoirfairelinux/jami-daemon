@@ -1673,11 +1673,10 @@ void lookForReceivedParameter(pjsip_regc_cbparam &param, SIPAccount &account)
     account.setRPort(param.rdata->msg_info.via->rport_param);
 }
 
-void processRegistrationError(SIPAccount &account, RegistrationState /*state*/)
+void processRegistrationError(SIPAccount &account, RegistrationState state)
 {
     account.stopKeepAliveTimer();
-#warning FIXME: We should be using the state parameter here
-    account.setRegistrationState(ErrorAuth);
+    account.setRegistrationState(state);
     account.setRegister(false);
     SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(account);
 }
