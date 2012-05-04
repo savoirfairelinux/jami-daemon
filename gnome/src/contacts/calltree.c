@@ -89,7 +89,9 @@ enum {
     COLUMN_ACCOUNT_PIXBUF = 0,
     COLUMN_ACCOUNT_DESC,
     COLUMN_ACCOUNT_SECURITY_PIXBUF,
-    COLUMN_ACCOUNT_PTR
+    COLUMN_ACCOUNT_PTR,
+    COLUMN_IS_CONFERENCE,
+    COLUMNS_IN_TREE_STORE
 };
 
 /**
@@ -101,6 +103,15 @@ popup_menu(GtkWidget *widget,
 {
     show_popup_menu(widget, NULL);
     return TRUE;
+}
+
+/* Returns TRUE if row contains a conference object pointer */
+static gboolean
+is_conference(GtkTreeModel *model, GtkTreeIter *iter)
+{
+    gboolean result = FALSE;
+    gtk_tree_model_get(model, iter, COLUMN_IS_CONFERENCE, &result, -1);
+    return result;
 }
 
 /* Call back when the user click on a call in the list */
@@ -125,13 +136,13 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     gchar *string_path = gtk_tree_path_to_string(path);
     calltree_selected_path_depth = gtk_tree_path_get_depth(path);
 
-    if (gtk_tree_model_iter_has_child(model, &iter)) {
+    GValue val = G_VALUE_INIT;
+    /* Get pointer to selected object, may be a call or a conference */
+    gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_PTR, &val);
+
+    if (is_conference(model, &iter)) {
         DEBUG("CallTree: Selected a conference");
         calltree_selected_type = A_CONFERENCE;
-
-        GValue val;
-        val.g_type = 0;
-        gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
         calltree_selected_conf = (conference_obj_t*) g_value_get_pointer(&val);
         g_value_unset(&val);
@@ -151,10 +162,6 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     } else {
         DEBUG("CallTree: Selected a call");
         calltree_selected_type = A_CALL;
-
-        GValue val;
-        val.g_type = 0;
-        gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
         calltree_selected_call = g_value_get_pointer(&val);
         g_value_unset(&val);
@@ -421,11 +428,12 @@ calltree_create(calltab_t* tab, int searchbar_type)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(calltree_sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(calltree_sw), GTK_SHADOW_IN);
 
-    tab->store = gtk_tree_store_new(4,
+    tab->store = gtk_tree_store_new(COLUMNS_IN_TREE_STORE,
                                     GDK_TYPE_PIXBUF, /* Icon */
                                     G_TYPE_STRING,   /* Description */
                                     GDK_TYPE_PIXBUF, /* Security Icon */
-                                    G_TYPE_POINTER   /* Pointer to the Object */
+                                    G_TYPE_POINTER,  /* Pointer to the Object */
+                                    G_TYPE_BOOLEAN   /* True if this is conference */
                                    );
 
     tab->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tab->store));
@@ -533,15 +541,13 @@ calltree_create(calltab_t* tab, int searchbar_type)
 
 
 static void
-calltree_remove_call_recursive(calltab_t* tab, callable_obj_t * callable, GtkTreeIter *parent)
+calltree_remove_call_recursive(calltab_t* tab, gconstpointer callable, GtkTreeIter *parent)
 {
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);
 
     if (!callable)
         ERROR("CallTree: Error: Not a valid call");
-
-    DEBUG("CallTree: Remove call %s", callable->_callID);
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
 
@@ -552,10 +558,10 @@ calltree_remove_call_recursive(calltab_t* tab, callable_obj_t * callable, GtkTre
             if (gtk_tree_model_iter_has_child(model, &child))
                 calltree_remove_call_recursive(tab, callable, &child);
 
-            GValue val = { .g_type = 0 };
+            GValue val = G_VALUE_INIT;
             gtk_tree_model_get_value(model, &child, COLUMN_ACCOUNT_PTR, &val);
 
-            callable_obj_t * iterCall = g_value_get_pointer(&val);
+            gconstpointer iterCall = g_value_get_pointer(&val);
             g_value_unset(&val);
 
             if (iterCall == callable)
@@ -591,7 +597,6 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
     GdkPixbuf *pixbuf = NULL;
     GdkPixbuf *pixbuf_security = NULL;
     GtkTreeIter iter;
-    GValue val;
     GtkTreeStore* store = tab->store;
 
     gchar* srtp_enabled = NULL;
@@ -622,7 +627,7 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
             if (gtk_tree_model_iter_has_child(GTK_TREE_MODEL(store), &iter))
                 calltree_update_call_recursive(tab, c, &iter);
 
-            val.g_type = 0;
+            GValue val = G_VALUE_INIT;
             gtk_tree_model_get_value(GTK_TREE_MODEL(store), &iter, COLUMN_ACCOUNT_PTR, &val);
 
             callable_obj_t * iterCall = (callable_obj_t*) g_value_get_pointer(&val);
@@ -730,6 +735,7 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * c, GtkTreeIter *
                                COLUMN_ACCOUNT_DESC, description,
                                COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
                                COLUMN_ACCOUNT_PTR, c,
+                               COLUMN_IS_CONFERENCE, FALSE,
                                -1);
 
             g_free(description);
@@ -834,6 +840,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                        COLUMN_ACCOUNT_DESC, description,
                        COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
                        COLUMN_ACCOUNT_PTR, c,
+                       COLUMN_IS_CONFERENCE, FALSE,
                        -1);
 
     g_free(description);
@@ -883,6 +890,7 @@ void calltree_add_history_entry(callable_obj_t *c)
                        COLUMN_ACCOUNT_DESC, full_description,
                        COLUMN_ACCOUNT_SECURITY_PIXBUF, NULL,
                        COLUMN_ACCOUNT_PTR, c,
+                       COLUMN_IS_CONFERENCE, FALSE,
                        -1);
 
     g_free(full_description);
@@ -902,6 +910,9 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 
     if (!conf) {
         ERROR("Calltree: Error: Conference is null");
+        return;
+    } else if (!conf->_confID) {
+        ERROR("Calltree: Error: Conference ID is null");
         return;
     }
 
@@ -1015,6 +1026,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
                        COLUMN_ACCOUNT_DESC, description,
                        COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
                        COLUMN_ACCOUNT_PTR, conf,
+                       COLUMN_IS_CONFERENCE, TRUE,
                        -1);
     g_free(description);
 
@@ -1057,8 +1069,7 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
             if (gtk_tree_model_iter_has_child(model, &iter_parent))
                 calltree_remove_conference_recursive(tab, conf, &iter_parent);
 
-            GValue confval;
-            confval.g_type = 0;
+            GValue confval = G_VALUE_INIT;
             gtk_tree_model_get_value(model, &iter_parent, COLUMN_ACCOUNT_PTR, &confval);
 
             conference_obj_t *tempconf = (conference_obj_t*) g_value_get_pointer(&confval);
@@ -1073,8 +1084,7 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
                     GtkTreeIter iter_child;
 
                     if (gtk_tree_model_iter_nth_child(model, &iter_child, &iter_parent, j)) {
-                        GValue callval;
-                        callval.g_type = 0;
+                        GValue callval = G_VALUE_INIT;
                         gtk_tree_model_get_value(model, &iter_child, COLUMN_ACCOUNT_PTR, &callval);
 
                         callable_obj_t *call = g_value_get_pointer(&callval);
@@ -1172,6 +1182,15 @@ gboolean calltree_update_clock(gpointer data UNUSED)
     return TRUE;
 }
 
+static gboolean
+non_draggable_call(callable_obj_t *call)
+{
+    return call->_state == CALL_STATE_DIALING ||
+           call->_state == CALL_STATE_INVALID ||
+           call->_state == CALL_STATE_FAILURE ||
+           call->_state == CALL_STATE_BUSY    ||
+           call->_state == CALL_STATE_TRANSFER;
+}
 
 static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUSED, gpointer data UNUSED)
 {
@@ -1192,18 +1211,11 @@ static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUS
     GtkTreeIter iter;
     GtkTreeIter parent_conference; // conference for which this call is attached
 
-    GValue val;
-
     // Make sure drag n drop does not imply a dialing call for either selected and dragged call
     if (calltree_selected_call && (calltree_selected_type == A_CALL)) {
         DEBUG("CallTree: Selected a call");
 
-        if (calltree_selected_call->_state == CALL_STATE_DIALING ||
-                calltree_selected_call->_state == CALL_STATE_INVALID ||
-                calltree_selected_call->_state == CALL_STATE_FAILURE ||
-                calltree_selected_call->_state == CALL_STATE_BUSY ||
-                calltree_selected_call->_state == CALL_STATE_TRANSFER) {
-
+        if (non_draggable_call(calltree_selected_call)) {
             DEBUG("CallTree: Selected an invalid call");
 
             calltree_remove_call(current_calls_tab, calltree_selected_call);
@@ -1213,17 +1225,11 @@ static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUS
             return;
         }
 
-
         if (calltree_dragged_call && (calltree_dragged_type == A_CALL)) {
 
             DEBUG("CallTree: Dragged on a call");
 
-            if (calltree_dragged_call->_state == CALL_STATE_DIALING ||
-                    calltree_dragged_call->_state == CALL_STATE_INVALID ||
-                    calltree_dragged_call->_state == CALL_STATE_FAILURE ||
-                    calltree_dragged_call->_state == CALL_STATE_BUSY ||
-                    calltree_dragged_call->_state == CALL_STATE_TRANSFER) {
-
+            if (non_draggable_call(calltree_dragged_call)) {
                 DEBUG("CallTree: Dragged on an invalid call");
 
                 calltree_remove_call(current_calls_tab, calltree_selected_call);
@@ -1388,14 +1394,15 @@ static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUS
                 DEBUG("Dragged a conference call onto another conference call %s, %s", gtk_tree_path_to_string(dpath), gtk_tree_path_to_string(spath));
 
                 conference_obj_t *conf = NULL;
-                val.g_type = 0;
 
                 if (gtk_tree_model_get_iter(model, &iter, dpath)) {
-                    gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_PTR, &val);
-                    conf = (conference_obj_t*) g_value_get_pointer(&val);
+                    if (is_conference(model, &iter)) {
+                        GValue val = G_VALUE_INIT;
+                        gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_PTR, &val);
+                        conf = (conference_obj_t*) g_value_get_pointer(&val);
+                        g_value_unset(&val);
+                    }
                 }
-
-                g_value_unset(&val);
 
                 sflphone_detach_participant(calltree_selected_call_id);
 
@@ -1422,7 +1429,6 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
     GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreePath *drop_path;
     GtkTreeViewDropPosition position;
-    GValue val;
 
     if (active_calltree_tab == history_tab) {
         g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
@@ -1433,16 +1439,15 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
 
     GtkTreeIter iter;
 
-    val.g_type = 0;
     gtk_tree_view_get_drag_dest_row(tree_view, &drop_path, &position);
 
     if (drop_path) {
 
         gtk_tree_model_get_iter(tree_model, &iter, drop_path);
+        GValue val = G_VALUE_INIT;
         gtk_tree_model_get_value(tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
-
-        if (gtk_tree_model_iter_has_child(tree_model, &iter)) {
+        if (is_conference(tree_model, &iter)) {
             DEBUG("CallTree: Dragging on a conference");
             calltree_dragged_type = A_CONFERENCE;
             calltree_dragged_call = NULL;
@@ -1458,7 +1463,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
                 DEBUG("CallTree: GTK_TREE_VIEW_DROP_AFTER");
                 calltree_dragged_path = gtk_tree_path_to_string(drop_path);
                 calltree_dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-                calltree_dragged_call_id = "NULL";
+                calltree_dragged_call_id = NULL;
                 calltree_dragged_call = NULL;
                 calltree_dragged_conf = NULL;
                 break;
@@ -1482,7 +1487,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
                 DEBUG("CallTree: GTK_TREE_VIEW_DROP_BEFORE");
                 calltree_dragged_path = gtk_tree_path_to_string(drop_path);
                 calltree_dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-                calltree_dragged_call_id = "NULL";
+                calltree_dragged_call_id = NULL;
                 calltree_dragged_call = NULL;
                 calltree_dragged_conf = NULL;
                 break;
