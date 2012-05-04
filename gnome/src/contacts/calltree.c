@@ -1192,7 +1192,7 @@ non_draggable_call(callable_obj_t *call)
            call->_state == CALL_STATE_TRANSFER;
 }
 
-static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUSED, gpointer data UNUSED)
+static void drag_end_cb(GtkWidget *widget, GdkDragContext * context UNUSED, gpointer data UNUSED)
 {
     if (active_calltree_tab == history_tab)
         return;
@@ -1203,7 +1203,8 @@ static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUS
     DEBUG("CallTree: dragged path %s, dragged_call_id %s, dragged_path_depth %d",
           calltree_dragged_path, calltree_dragged_call_id, calltree_dragged_path_depth);
 
-    GtkTreeModel *model = (GtkTreeModel*) current_calls_tab->store;
+    GtkTreeView *treeview = GTK_TREE_VIEW(widget);
+    GtkTreeModel *model = gtk_tree_view_get_model(treeview);
     GtkTreePath *path = gtk_tree_path_new_from_string(calltree_dragged_path);
     GtkTreePath *dpath = gtk_tree_path_new_from_string(calltree_dragged_path);
     GtkTreePath *spath = gtk_tree_path_new_from_string(calltree_selected_path);
