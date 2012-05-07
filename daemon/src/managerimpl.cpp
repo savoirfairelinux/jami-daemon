@@ -842,6 +842,10 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 void ManagerImpl::joinParticipant(const std::string& callId1, const std::string& callId2)
 {
     DEBUG("Join participants %s, %s", callId1.c_str(), callId2.c_str());
+    if (callId1 == callId2) {
+        ERROR("Cannot join participant %s to itself", callId1.c_str());
+        return;
+    }
 
     std::map<std::string, std::string> call1Details(getCallDetails(callId1));
     std::map<std::string, std::string> call2Details(getCallDetails(callId2));
