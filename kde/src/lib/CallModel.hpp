@@ -63,7 +63,7 @@ public:
    SortableCallSource(Call* call=0) : count(0),callInfo(call) {}
    uint count;
    Call* callInfo;
-   const bool operator<(SortableCallSource other) {
+   bool operator<(SortableCallSource other) {
       return (other.count > count);
    }
 };

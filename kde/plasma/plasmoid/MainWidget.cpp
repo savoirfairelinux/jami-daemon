@@ -71,14 +71,14 @@ void MainWidget::dataUpdated(const QString& source, const Plasma::DataEngine::Da
 {
    if ((source == "calls") && (frmCalls)) {
       QHash<QString, QVariant> value = data;
-      bool modified = false;
+      //bool modified = false;
       foreach(QVariant call, value) {
          if (!callWidgetList[value.key(call)]) {
             callWidgetList[ value.key(call) ] = new CallItem();
             callWidgetList[ value.key(call) ]->setCallId(value.key(call));
             callLayout->insertItem(0,callWidgetList[value.key(call)]);
             mainTabs->setCurrentIndex(CALL);
-            modified = true;
+            //modified = true;
          }
          callWidgetList[value.key(call)]->setCallerName(call.toHash()  [ "Name"   ].toString());
          callWidgetList[value.key(call)]->setCallerNumber(call.toHash()[ "Number" ].toString());

@@ -426,11 +426,12 @@ void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldS
 ///Reference code for metastate change
 void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State oldState)
 {
+   Q_UNUSED(oldState);
    if (newState == Phonon::ErrorState) {
       QMessageBox::warning(this, tr("Error opening files"),
             m_pMetaInformationResolver->errorString());
       while (!m_lSources.isEmpty() &&
-               !(m_lSources.takeLast() == m_pMetaInformationResolver->currentSource())) {}  /* loop */;
+         !(m_lSources.takeLast() == m_pMetaInformationResolver->currentSource())) {}  /* loop */;
       return;
    }
 
@@ -454,6 +455,7 @@ void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State old
 ///Resize the player
 void HistoryTreeItem::resizeEvent(QResizeEvent* event)
 {
+   Q_UNUSED(event);
    if (m_pPlayer) {
       m_pPlayer->setMinimumSize(width(),height());
       m_pPlayer->setMaximumSize(width(),height());

@@ -258,7 +258,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
    if (!QString(encodedContact).isEmpty()) {
       Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
       if (contact) {
-         Call* call2;
+         Call* call2 = NULL;
          if (!SFLPhone::app()->view()->selectCallPhoneNumber(call2,contact))
             return false;
          if (!parent) {
