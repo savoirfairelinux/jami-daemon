@@ -244,7 +244,7 @@ void CallTreeItem::updated()
 void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
 {
    kDebug() << "Drag enter";
-   if (SFLPhone::model()->getIndex(this)->parent() &&
+   if (SFLPhone::model()->getIndex(this) && SFLPhone::model()->getIndex(this)->parent() &&
       SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
       SFLPhone::model()->getIndex(this)->parent() == SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
       e->mimeData()->data( MIME_CALLID) != SFLPhone::model()->getCall(this)->getCallId()) {

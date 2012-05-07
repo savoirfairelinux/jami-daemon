@@ -195,7 +195,7 @@ void ContactDock::reloadContact()
    }
    
    foreach (Contact* cont, list) {
-      if (cont->getPhoneNumbers().count()) {
+      if (cont->getPhoneNumbers().count() && usableNumberCount(cont)) {
          ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
          QString category;
          switch (CURRENT_SORTING_MODE) {
@@ -390,3 +390,13 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
  *                                  Helpers                                  *
  *                                                                           *
  ****************************************************************************/
+
+int ContactDock::usableNumberCount(Contact* cont)
+{
+   uint result =0;
+   QStringList list = ConfigurationSkeleton::phoneTypeList();
+   foreach (Contact::PhoneNumber* pn,cont->getPhoneNumbers()) {
+      result += list.indexOf(pn->getType()) != -1;
+   }
+   return result;
+}

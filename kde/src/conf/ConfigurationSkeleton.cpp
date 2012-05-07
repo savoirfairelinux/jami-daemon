@@ -66,19 +66,19 @@ void ConfigurationSkeleton::readConfig()
 
    //Call history settings
    //setEnableHistory(true);
-   setHistoryMax(1000);//configurationManager.getHistoryLimit());
+   setHistoryMax(configurationManager.getHistoryLimit());
 
    ////////////////////////
    ////Display settings////
    ////////////////////////
 
    //Notification settings
-   setNotifOnCalls(true);
-   setNotifOnMessages(true);//configurationManager.getMailNotify());
+   //setNotifOnCalls(true);
+   setNotifOnMessages(configurationManager.getMailNotify());
 
    //Window display settings
-   setDisplayOnStart(true);
-   setDisplayOnCalls(true);
+   //setDisplayOnStart(true);
+   //setDisplayOnCalls(true);
 
    /////////////////////////
    ////Accounts settings////
@@ -98,12 +98,9 @@ void ConfigurationSkeleton::readConfig()
 
    //ringtones settings
    setEnableRingtones(true);
-   QString ringtone = "";
-   if(ringtone.isEmpty()) {
-      setRingtone(QString(SHARE_INSTALL_PREFIX) + "sflphone/ringtones/konga.ul");
-   }
-   else {
-      setRingtone(ringtone);
+   //QString ringtone = "";
+   if(ringtone().isEmpty()) {
+      setRingtone(QString(SHARE_INSTALL_PREFIX) + "/sflphone/ringtones/konga.ul");
    }
 
    //codecs settings
@@ -131,31 +128,17 @@ void ConfigurationSkeleton::readConfig()
    //if(!ok) kDebug() << "outputDevice is not a number";
    //setAlsaOutputDevice(outputDevice);
 
-   ///////////////////////
-   ////Record settings////
-   ///////////////////////
-
-   QString recordPath = configurationManager.getRecordPath();
-   if(! recordPath.isEmpty()) {
-      setDestinationFolder(recordPath);
-   }
-   else {
-      setDestinationFolder(QDir::home().path());
-   }
-
-
-
    /////////////////////////////
    ////Address book settings////
    /////////////////////////////
 
    MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
    setEnableAddressBook(addressBookSettings[ADDRESSBOOK_ENABLE]);
-   setMaxResults(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
-   setDisplayPhoto(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
-   setBusiness(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
-   setMobile(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
-   setHome(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
+//    setMaxResults(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
+//    setDisplayPhoto(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
+//    setBusiness(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
+//    setMobile(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
+//    setHome(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
 
    /////////////////////////////
    ///////Hooks settings////////
@@ -176,7 +159,7 @@ void ConfigurationSkeleton::writeConfig()
 {
    //ConfigurationSkeleton::writeConfig();
    kDebug() << "Writing config";
-   /*ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
 
    ////////////////////////
@@ -200,7 +183,8 @@ void ConfigurationSkeleton::writeConfig()
 
    //Notification settings
    //if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
-   //if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
+//    if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
+   //configurationManager.setMailNotify(notifOnMessages());
 
    //Window display settings
    //WARNING états inversés
@@ -222,15 +206,15 @@ void ConfigurationSkeleton::writeConfig()
    kDebug() << "Writing Audio settings";
 
    //Audio Interface settings
-   int prevManager = configurationManager.getAudioManager();
-   int newManager = interface();
-   if(prevManager != newManager) {
-      configurationManager.setAudioManager(newManager);
-   }
+//    int prevManager = configurationManager.getAudioManager();
+//    int newManager = interface();
+//    if(prevManager != newManager) {
+//       configurationManager.setAudioManager(newManager);
+//    }
 
    //ringtones settings
-   if(enableRingtones() != configurationManager.isRingtoneEnabled()) configurationManager.ringtoneEnabled();
-   configurationManager.setRingtoneChoice(ringtone());
+//    if(enableRingtones() != configurationManager.isRingtoneEnabled()) configurationManager.ringtoneEnabled();
+//    configurationManager.setRingtoneChoice(ringtone());
 
    //codecs settings
    //kDebug() << "activeCodecList = " << activeCodecList();
@@ -238,12 +222,12 @@ void ConfigurationSkeleton::writeConfig()
 
 
    //alsa settings
-   if(prevManager == CONST_ALSA && newManager == EnumInterface::ALSA) {
-      kDebug() << "setting alsa settings";
-      configurationManager.setOutputAudioPlugin(alsaPlugin());
-      configurationManager.setAudioInputDevice(alsaInputDevice());
-      configurationManager.setAudioOutputDevice(alsaOutputDevice());
-   }
+//    if(prevManager == CONST_ALSA && newManager == EnumInterface::ALSA) {
+//       kDebug() << "setting alsa settings";
+//       configurationManager.setOutputAudioPlugin(alsaPlugin());
+//       configurationManager.setAudioInputDevice(alsaInputDevice());
+//       configurationManager.setAudioOutputDevice(alsaOutputDevice());
+//    }
 
 
    ///////////////////////
@@ -252,8 +236,8 @@ void ConfigurationSkeleton::writeConfig()
 
    kDebug() << "Writing Record settings";
 
-   QString destination = destinationFolder();
-   configurationManager.setRecordPath(destination);
+//    QString destination = destinationFolder();
+//    configurationManager.setRecordPath(destination);
 
 
    /////////////////////////////
@@ -264,11 +248,11 @@ void ConfigurationSkeleton::writeConfig()
 
    MapStringInt addressBookSettings = MapStringInt();
    addressBookSettings[ADDRESSBOOK_ENABLE] = enableAddressBook();
-   addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = maxResults();
-   addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO] = displayPhoto();
-   addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS] = business();
-   addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = mobile();
-   addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = home();
+//    addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = maxResults();
+//    addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO] = displayPhoto();
+//    addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS] = business();
+//    addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = mobile();
+//    addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = home();
    configurationManager.setAddressbookSettings(addressBookSettings);
 
    /////////////////////////////
@@ -286,7 +270,7 @@ void ConfigurationSkeleton::writeConfig()
    hooksSettings[HOOKS_COMMAND] = hooksCommand();
    configurationManager.setHookSettings(hooksSettings);
 
-   kDebug() << "Finished to write config\n";*/
+   kDebug() << "Finished to write config\n";
    ConfigurationSkeletonBase::writeConfig();
 }
 

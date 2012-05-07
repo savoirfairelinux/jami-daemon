@@ -187,6 +187,11 @@ void SFLPhone::setupActions()
    action_displayDialpad = new KAction(KIcon(QIcon(ICON_DISPLAY_DIALPAD)), i18n("Display dialpad"), this);
    action_displayDialpad->setCheckable( true );
    action_displayDialpad->setChecked  ( ConfigurationSkeleton::displayDialpad() );
+   action_configureSflPhone->setText(i18n("Configure SFLphone"));
+
+   action_displayMessageBox = new KAction(KIcon("mail-message-new"), i18n("Display text message box"), this);
+   action_displayMessageBox->setCheckable( true );
+   action_displayMessageBox->setChecked  ( ConfigurationSkeleton::displayMessageBox() );
 
    action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);
    action_displayVolumeControls->setCheckable( true );
@@ -205,6 +210,7 @@ void SFLPhone::setupActions()
    /**/connect(action_mailBox,               SIGNAL(triggered()),           m_pView , SLOT(mailBox()                   ));
    /**/connect(action_displayVolumeControls, SIGNAL(toggled(bool)),         m_pView , SLOT(displayVolumeControls(bool) ));
    /**/connect(action_displayDialpad,        SIGNAL(toggled(bool)),         m_pView , SLOT(displayDialpad(bool)        ));
+   /**/connect(action_displayMessageBox,     SIGNAL(toggled(bool)),         m_pView , SLOT(displayMessageBox(bool)     ));
    /**/connect(action_accountCreationWizard, SIGNAL(triggered()),           m_pView , SLOT(accountCreationWizard()     ));
    /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
    /*                                                                                                                   */
@@ -220,6 +226,7 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_quit"                  , action_quit                  );
    actionCollection()->addAction("action_displayVolumeControls" , action_displayVolumeControls );
    actionCollection()->addAction("action_displayDialpad"        , action_displayDialpad        );
+   actionCollection()->addAction("action_displayMessageBox"     , action_displayMessageBox     );
    actionCollection()->addAction("action_configureSflPhone"     , action_configureSflPhone     );
    actionCollection()->addAction("action_accountCreationWizard" , action_accountCreationWizard );
    actionCollection()->addAction("action_configureShortcut"     , action_configureShortcut     );

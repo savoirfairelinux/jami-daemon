@@ -74,6 +74,8 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    m_pItemView   = new CategorizedTreeWidget(this);
    m_pMostUsedCK = new QCheckBox(this);
 
+   m_pFilterLE->setPlaceholderText(i18n("Filter"));
+
    m_pMostUsedCK->setChecked(ConfigurationSkeleton::displayContactCallHistory());
    
    QWidget* mainWidget = new QWidget(this);

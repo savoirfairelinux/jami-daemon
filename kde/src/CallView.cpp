@@ -619,6 +619,7 @@ Call* CallView::addConference(Call* conf)
 ///Executed when the daemon signal a modification in an existing conference. Update the call list and update the TreeView
 bool CallView::conferenceChanged(Call* conf)
 {
+   if (!dynamic_cast<Call*>(conf)) return false;
    kDebug() << "Conference changed";
    //if (!SFLPhone::model()->conferenceChanged(confId, state))
    //  return false;
