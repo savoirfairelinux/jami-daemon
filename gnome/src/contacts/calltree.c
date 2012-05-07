@@ -1427,23 +1427,21 @@ void drag_history_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED,
 
 void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
 {
-    GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
-    GtkTreePath *drop_path;
-    GtkTreeViewDropPosition position;
-
     if (active_calltree_tab == history_tab) {
         g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
         return;
     }
 
+    GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreeModel* tree_model = gtk_tree_view_get_model(tree_view);
 
-    GtkTreeIter iter;
-
+    GtkTreeViewDropPosition position;
+    GtkTreePath *drop_path;
     gtk_tree_view_get_drag_dest_row(tree_view, &drop_path, &position);
 
     if (drop_path) {
 
+        GtkTreeIter iter;
         gtk_tree_model_get_iter(tree_model, &iter, drop_path);
         GValue val = G_VALUE_INIT;
         gtk_tree_model_get_value(tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
@@ -1458,10 +1456,12 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
             calltree_dragged_conf = NULL;
         }
 
+        DEBUG("Position %d", position);
         switch (position)  {
 
             case GTK_TREE_VIEW_DROP_AFTER:
-                DEBUG("CallTree: GTK_TREE_VIEW_DROP_AFTER");
+                /* fallthrough */
+            case GTK_TREE_VIEW_DROP_BEFORE:
                 calltree_dragged_path = gtk_tree_path_to_string(drop_path);
                 calltree_dragged_path_depth = gtk_tree_path_get_depth(drop_path);
                 calltree_dragged_call_id = NULL;
@@ -1470,31 +1470,8 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
                 break;
 
             case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
-                DEBUG("CallTree: GTK_TREE_VIEW_DROP_INTO_OR_AFTER");
-                calltree_dragged_path = gtk_tree_path_to_string(drop_path);
-                calltree_dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-
-                if (calltree_dragged_type == A_CALL) {
-                    calltree_dragged_call_id = ((callable_obj_t*) g_value_get_pointer(&val))->_callID;
-                    calltree_dragged_call = (callable_obj_t*) g_value_get_pointer(&val);
-                } else {
-                    calltree_dragged_call_id = ((conference_obj_t*) g_value_get_pointer(&val))->_confID;
-                    calltree_dragged_conf = (conference_obj_t*) g_value_get_pointer(&val);
-                }
-
-                break;
-
-            case GTK_TREE_VIEW_DROP_BEFORE:
-                DEBUG("CallTree: GTK_TREE_VIEW_DROP_BEFORE");
-                calltree_dragged_path = gtk_tree_path_to_string(drop_path);
-                calltree_dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-                calltree_dragged_call_id = NULL;
-                calltree_dragged_call = NULL;
-                calltree_dragged_conf = NULL;
-                break;
-
+                /* fallthrough */
             case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
-                DEBUG("CallTree: GTK_TREE_VIEW_DROP_INTO_OR_BEFORE");
                 calltree_dragged_path = gtk_tree_path_to_string(drop_path);
                 calltree_dragged_path_depth = gtk_tree_path_get_depth(drop_path);
 
@@ -1505,7 +1482,6 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
                     calltree_dragged_call_id = ((conference_obj_t*) g_value_get_pointer(&val))->_confID;
                     calltree_dragged_conf = (conference_obj_t*) g_value_get_pointer(&val);
                 }
-
                 break;
 
             default:
@@ -1530,7 +1506,7 @@ static void menuitem_response(gchar *string)
     } else
         DEBUG("CallTree: Error unknown option selected in menu %s", string);
 
-    // Make sure the create conference opetion will appear next time the menu pops
+    // Make sure the create conference option will appear next time the menu pops
     // The create conference option will hide if tow call from the same conference are draged on each other
     gtk_widget_show(calltree_menu_items);
 
