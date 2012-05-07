@@ -305,6 +305,7 @@ void SFLPhoneView::updateWindowCallState()
       enabledActions[ SFLPhone::Hold     ] = false;
       enabledActions[ SFLPhone::Transfer ] = false;
       enabledActions[ SFLPhone::Record   ] = false;
+      m_pMessageBoxW->setVisible(false);
    }
    else {
       call_state state = call->getState();
@@ -325,6 +326,7 @@ void SFLPhoneView::updateWindowCallState()
             break;
          case CALL_STATE_CURRENT:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
+            m_pMessageBoxW->setVisible(true);
             break;
          case CALL_STATE_DIALING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -336,6 +338,7 @@ void SFLPhoneView::updateWindowCallState()
          case CALL_STATE_HOLD:
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
+            m_pMessageBoxW->setVisible(true);
             break;
          case CALL_STATE_FAILURE:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
