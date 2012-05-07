@@ -1905,7 +1905,6 @@ static guint cookie;
 static void screensaver_inhibit_cb(GObject * source_object, GAsyncResult * res,
                                    gpointer user_data UNUSED)
 {
-    DEBUG(__PRETTY_FUNCTION__);
     GDBusProxy *proxy = G_DBUS_PROXY(source_object);
     GError *error = NULL;
     GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
@@ -1928,7 +1927,6 @@ static void screensaver_uninhibit_cb(GObject * source_object,
                                      GAsyncResult * res,
                                      gpointer user_data UNUSED)
 {
-    DEBUG(__PRETTY_FUNCTION__);
     GDBusProxy *proxy = G_DBUS_PROXY(source_object);
     GError *error = NULL;
 

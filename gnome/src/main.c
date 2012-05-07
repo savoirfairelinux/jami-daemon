@@ -86,7 +86,7 @@ main(int argc, char *argv[])
     textdomain("sflphone-client-gnome");
 
     if (!sflphone_init(&error)) {
-        ERROR(error->message);
+        ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
                                 GTK_WINDOW(get_main_window()),
                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
