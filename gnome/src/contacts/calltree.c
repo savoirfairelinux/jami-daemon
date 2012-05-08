@@ -475,7 +475,7 @@ calltree_create(calltab_t* tab, int searchbar_type)
                      G_CALLBACK(button_pressed),
                      NULL);
 
-    if (tab != history_tab && tab != contacts_tab) {
+    if (g_strcmp0(tab->_name, CURRENT_CALLS) == 0) {
         // Make calltree reordable for drag n drop
         gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
 
