@@ -69,6 +69,8 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
    setPalette(pal);
 
+   m_pMessageBoxW->setVisible(ConfigurationSkeleton::displayMessageBox());
+
    //                SENDER                                        SIGNAL                             RECEIVER                                            SLOT                                  /
    /**/connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
    /**/connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
@@ -78,6 +80,8 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
    /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
    /**/connect(&configurationManager                 , SIGNAL(accountsChanged())                     , TreeWidgetCallModel::getAccountList() , SLOT(updateAccounts()                           ));
+   /**/connect(m_pSendMessageLE                      , SIGNAL(returnPressed())                       , this                                  , SLOT(sendMessage()                              ));
+   /**/connect(m_pSendMessagePB                      , SIGNAL(clicked())                             , this                                  , SLOT(sendMessage()                              ));
    /*                                                                                                                                                                                           */
 
    TreeWidgetCallModel::getAccountList()->updateAccounts();
@@ -301,6 +305,7 @@ void SFLPhoneView::updateWindowCallState()
       enabledActions[ SFLPhone::Hold     ] = false;
       enabledActions[ SFLPhone::Transfer ] = false;
       enabledActions[ SFLPhone::Record   ] = false;
+      m_pMessageBoxW->setVisible(false);
    }
    else {
       call_state state = call->getState();
@@ -321,6 +326,7 @@ void SFLPhoneView::updateWindowCallState()
             break;
          case CALL_STATE_CURRENT:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
+            m_pMessageBoxW->setVisible(true);
             break;
          case CALL_STATE_DIALING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -332,6 +338,7 @@ void SFLPhoneView::updateWindowCallState()
          case CALL_STATE_HOLD:
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
+            m_pMessageBoxW->setVisible(true);
             break;
          case CALL_STATE_FAILURE:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
@@ -525,6 +532,12 @@ void SFLPhoneView::displayDialpad(bool checked)
 {
    ConfigurationSkeleton::setDisplayDialpad(checked);
    updateDialpad();
+}
+
+void SFLPhoneView::displayMessageBox(bool checked)
+{
+   ConfigurationSkeleton::setDisplayMessageBox(checked);
+   m_pMessageBoxW->setVisible(checked);
 }
 
 ///Input grabber
@@ -785,6 +798,14 @@ void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
       updateRecordBar(value);
    if(! (toolButton_sndVol->isChecked() && value == 0.0))
       updateVolumeBar(value);
+}
+
+void SFLPhoneView::sendMessage()
+{
+   Call* call = callTreeModel->getCurrentItem();
+   if (dynamic_cast<Call*>(call) && !m_pSendMessageLE->text().isEmpty()) {
+      call->sendTextMessage(m_pSendMessageLE->text());
+   }
 }
 
 #include "SFLPhoneView.moc"

@@ -22,15 +22,28 @@
 #include <QToolButton>
 #include <QAction>
 
+#include "conf/ConfigurationSkeleton.h"
+#include "conf/ConfigurationDialog.h"
+
 DlgGeneral::DlgGeneral(QWidget *parent)
  : QWidget(parent)
 {
    setupUi(this);
    connect(toolButton_historyClear, SIGNAL(clicked()), this, SIGNAL(clearCallHistoryAsked()));
-}
 
+   kcfg_historyMax->setValue(ConfigurationSkeleton::historyMax());
+}
 
 DlgGeneral::~DlgGeneral()
 {
 }
 
+void DlgGeneral::updateWidgets()
+{
+   
+}
+
+void DlgGeneral::updateSettings()
+{
+   ConfigurationSkeleton::setHistoryMax(kcfg_historyMax->value());
+}

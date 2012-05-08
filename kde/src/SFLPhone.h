@@ -87,6 +87,7 @@ private:
    KAction* action_quit                  ;
    KAction* action_displayVolumeControls ;
    KAction* action_displayDialpad        ;
+   KAction* action_displayMessageBox     ;
    KAction* action_configureSflPhone     ;
    KAction* action_configureShortcut     ;
    KAction* action_accountCreationWizard ;

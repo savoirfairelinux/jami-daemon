@@ -289,7 +289,7 @@ void HistoryDock::reload()
 
    //Align all durationwidget
    foreach(HistoryTreeItem* item, m_History) {
-      maxWidth = (item->getDurWidth() > maxWidth)?item->getDurWidth():maxWidth;
+      maxWidth = ((uint)item->getDurWidth() > (uint)maxWidth)?item->getDurWidth():maxWidth;
    }
    foreach(HistoryTreeItem* item, m_History) {
       item->setDurWidth(maxWidth);

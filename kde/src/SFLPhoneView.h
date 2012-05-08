@@ -164,7 +164,7 @@ private slots:
    void updateVolumeBar      (double _value = -1);
    void updateVolumeControls ();
    void updateDialpad        ();
-
+   void sendMessage();
 
 
 
@@ -206,6 +206,7 @@ public slots:
 
    void displayVolumeControls(bool checked = true);
    void displayDialpad(bool checked = true);
+   void displayMessageBox(bool checked = true);
    void configureSflPhone();
    void accountCreationWizard();
    void accept   ();

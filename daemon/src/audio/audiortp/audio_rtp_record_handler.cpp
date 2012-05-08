@@ -63,6 +63,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , dtmfQueue_()
     , fadeFactor_(INIT_FADE_IN_FACTOR)
     , noiseSuppressEncode_(0)
+    , noiseSuppressDecode_(0)
     , audioProcessMutex_()
     , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
@@ -79,6 +80,7 @@ AudioRtpRecord::~AudioRtpRecord()
     delete converterDecode_;
     delete audioCodec_;
     delete noiseSuppressEncode_;
+    delete noiseSuppressDecode_;
 }
 
 
@@ -123,6 +125,8 @@ void AudioRtpRecordHandler::initNoiseSuppress()
     ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
     delete audioRtpRecord_.noiseSuppressEncode_;
     audioRtpRecord_.noiseSuppressEncode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
+    delete audioRtpRecord_.noiseSuppressDecode_;
+    audioRtpRecord_.noiseSuppressDecode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
 }
 
 void AudioRtpRecordHandler::putDtmfEvent(int digit)
@@ -207,6 +211,13 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         // Return the size of data in samples
         inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
+
+    if (Manager::instance().audioPreference.getNoiseReduce()) {
+        ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
+        assert(audioRtpRecord_.noiseSuppressDecode_);
+        audioRtpRecord_.noiseSuppressDecode_->process(spkrDataDecoded, getCodecFrameSize());
+    }
+
 
     audioRtpRecord_.fadeInDecodedData(inSamples);
 

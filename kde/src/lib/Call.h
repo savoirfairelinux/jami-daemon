@@ -168,6 +168,7 @@ public:
    void appendText(const QString& str);
    void backspaceItemText();
    void changeCurrentState(call_state newState);
+   void sendTextMessage(QString message);
    
 private:
 

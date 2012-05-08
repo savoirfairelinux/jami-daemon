@@ -40,9 +40,9 @@ class ContactBackend;
 typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
 
-///@class CallModelBase Base class for the central model/frontend
-///This class need to exist because template classes can't have signals ans
-///slots because Qt MOC generator can't guess the type at precompilation
+///@class CallModelBase Base class for the central model/frontend          
+///This class need to exist because template classes can't have signals and
+///slots because Qt MOC generator can't guess the type at precompilation   
 class LIB_EXPORT CallModelBase : public QObject
 {
    Q_OBJECT
