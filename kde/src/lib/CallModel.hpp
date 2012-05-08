@@ -436,7 +436,6 @@ template<typename CallWidget, typename Index> const QStringList CallModel<CallWi
 ///Return the history list
 template<typename CallWidget, typename Index> const CallMap& CallModel<CallWidget,Index>::getHistory()
 {
-   qDebug() << "Getting history" << m_sHistoryCalls.count();
    return m_sHistoryCalls;
 }
 

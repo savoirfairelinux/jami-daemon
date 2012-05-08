@@ -286,7 +286,7 @@ void CallTreeItem::dragLeaveEvent ( QDragLeaveEvent *e )
 ///Something is being dropped
 void CallTreeItem::dropEvent(QDropEvent *e)
 {
-   kDebug() << "Drop accepted" << e->pos();
+   kDebug() << "Drop accepted";
    QTimer::singleShot(500, this, SLOT(hide()));
    m_isHover = false;
    if (e->pos().x() < rect().width()/2) {
