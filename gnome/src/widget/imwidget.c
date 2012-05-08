@@ -29,6 +29,7 @@
 
 #include "imwindow.h"
 #include "logger.h"
+#include "gtk2_wrappers.h"
 #include "imwidget.h"
 #include "dbus.h"
 #include "unused.h"

@@ -35,7 +35,7 @@ fi
 # check for gtk+-2.0 and if found, check for webkitgtk-1.0.
 PKG_CHECK_MODULES(GTK, gtk+-3.0, [PKG_CHECK_MODULES(WEBKIT, webkitgtk-3.0)],
         [PKG_CHECK_MODULES(GTK, gtk+-2.0,
-            [PKG_CHECK_MODULES(WEBKIT, webkit-1.0)],
+            [PKG_CHECK_MODULES(WEBKIT, webkit-1.0) && PKG_CHECK_MODULES(GTHREAD, gthread-2.0)],
             [AC_MSG_ERROR(gtk-2 not found)])])
 
 PKG_CHECK_MODULES(GCONF, gconf-2.0)
