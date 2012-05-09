@@ -129,7 +129,7 @@ is_conference(GtkTreeModel *model, GtkTreeIter *iter)
 static void
 call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 {
-    DEBUG("CallTree: Selection callback");
+    DEBUG("Selection callback");
     GtkTreeModel *model = gtk_tree_view_get_model(gtk_tree_selection_get_tree_view(sel));
 
     GtkTreeIter iter;
@@ -139,12 +139,10 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
         return;
     }
 
-    if (active_calltree_tab == history_tab) {
-        DEBUG("CallTree: Current call tree is history");
-    }
-    else if (active_calltree_tab == current_calls_tab) {
-        DEBUG("CallTree: Current call tree is current calls");
-    }
+    if (active_calltree_tab == history_tab)
+        DEBUG("Current call tree is history");
+    else if (active_calltree_tab == current_calls_tab)
+        DEBUG("Current call tree is current calls");
 
     // store info for dragndrop
     GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
@@ -157,7 +155,7 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
     if (is_conference(model, &iter)) {
-        DEBUG("CallTree: Selected a conference");
+        DEBUG("Selected a conference");
         calltree_source_type = A_CONFERENCE;
 
         calltree_source_conf = (conference_obj_t*) g_value_get_pointer(&val);
@@ -174,11 +172,11 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
             if (calltree_source_conf->_im_widget)
                 im_window_show_tab(calltree_source_conf->_im_widget);
 
-            DEBUG("CallTree: source_path %s, source_conf_id %s, source_path_depth %d",
+            DEBUG("source_path %s, source_conf_id %s, source_path_depth %d",
                   calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
         }
     } else {
-        DEBUG("CallTree: Selected a call");
+        DEBUG("Selected a call");
         calltree_source_type = A_CALL;
 
         calltree_source_call = g_value_get_pointer(&val);
@@ -195,7 +193,7 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
             if (calltree_source_call->_im_widget)
                 im_window_show_tab(calltree_source_call->_im_widget);
 
-            DEBUG("CallTree: source_path %s, source_call_id %s, source_path_depth %d",
+            DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
                   calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
         }
     }
@@ -211,10 +209,10 @@ row_activated(GtkTreeView *tree_view UNUSED,
               GtkTreeViewColumn *column UNUSED,
               void * data UNUSED)
 {
-    DEBUG("CallTree: Double click action");
+    DEBUG("Double click action");
 
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
-        DEBUG("CallTree: Selected a call");
+        DEBUG("Selected a call");
         callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
 
         if (selectedCall) {
@@ -251,7 +249,7 @@ row_activated(GtkTreeView *tree_view UNUSED,
             }
         }
     } else if (calltab_get_selected_type(active_calltree_tab) == A_CONFERENCE) {
-        DEBUG("CallTree: Selected a conference");
+        DEBUG("Selected a conference");
 
         if (active_calltree_tab == current_calls_tab) {
             conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
@@ -274,7 +272,7 @@ row_activated(GtkTreeView *tree_view UNUSED,
                 }
             }
         } else
-            WARN("CallTree: Selected a conference in history, should not be possible");
+            WARN("Selected a conference in history, should not be possible");
     }
 }
 
@@ -284,18 +282,18 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
 {
     gchar * displaySasOnce = NULL;
 
-    DEBUG("CallTree: Single click action");
+    DEBUG("Single click action");
 
     callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
     conference_obj_t *selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
     if (active_calltree_tab == current_calls_tab)
-        DEBUG("CallTree: Active calltree is current_calls");
+        DEBUG("Active calltree is current_calls");
     else if (active_calltree_tab == history_tab)
-        DEBUG("CallTree: Active calltree is history");
+        DEBUG("Active calltree is history");
 
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
-        DEBUG("CallTree: Selected a call");
+        DEBUG("Selected a call");
 
         if (selectedCall) {
             account_t *account_details = account_list_get_by_id(selectedCall->_accountID);
@@ -339,11 +337,11 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
             }
         }
     } else if (calltab_get_selected_type(active_calltree_tab) == A_CONFERENCE) {
-        DEBUG("CallTree: Selected a conference");
+        DEBUG("Selected a conference");
         if (selectedConf)
-            DEBUG("CallTree: There is actually a selected conf");
+            DEBUG("There is actually a selected conf");
     } else
-        WARN("CallTree: Warning: Unknown selection type");
+        WARN("Unknown selection type");
 }
 
 static gboolean
@@ -569,7 +567,7 @@ calltree_remove_call_recursive(calltab_t* tab, gconstpointer callable, GtkTreeIt
     GtkTreeModel *model = GTK_TREE_MODEL(store);
 
     if (!callable)
-        ERROR("CallTree: Error: Not a valid call");
+        ERROR("Error: Not a valid call");
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
 
@@ -844,7 +842,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     } else if (tab == contacts_tab)
         pixbuf = c->_contact_thumbnail;
     else
-        WARN("CallTree: This widget doesn't exist - This is a bug in the application.");
+        WARN("This widget doesn't exist - This is a bug in the application.");
 
     //Resize it
     if (pixbuf && (gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)) {
@@ -1102,7 +1100,7 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
             /* if this is the conference we want to remove */
             if (tempconf == conf) {
                 int nbParticipants = gtk_tree_model_iter_n_children(model, &iter_parent);
-                DEBUG("CallTree: nbParticipants: %d", nbParticipants);
+                DEBUG("nbParticipants: %d", nbParticipants);
 
                 for (int j = 0; j < nbParticipants; j++) {
                     GtkTreeIter iter_child;
@@ -1120,7 +1118,7 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
                     }
                 }
 
-                DEBUG("CallTree: Remove conference %s", conf->_confID);
+                DEBUG("Remove conference %s", conf->_confID);
                 gtk_tree_store_remove(tab->store, &iter_parent);
             }
         }
@@ -1134,9 +1132,9 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
 
 void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
 {
-    DEBUG("CallTree: Remove conference %s", conf->_confID);
+    DEBUG("Remove conference %s", conf->_confID);
     calltree_remove_conference_recursive(tab, conf, NULL);
-    DEBUG("CallTree: Finished Removing conference");
+    DEBUG("Finished Removing conference");
 }
 
 void calltree_display(calltab_t *tab)
@@ -1162,14 +1160,14 @@ void calltree_display(calltab_t *tab)
         gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), TRUE);
         set_focus_on_addressbook_searchbar();
     } else
-        ERROR("CallTree: Error: Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
+        ERROR("Error: Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
 
     gtk_widget_hide(active_calltree_tab->tree);
     active_calltree_tab = tab;
     gtk_widget_show(active_calltree_tab->tree);
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
-    DEBUG("CallTree: Emit signal changed from calltree_display");
+    DEBUG("Emit signal changed from calltree_display");
     g_signal_emit_by_name(sel, "changed");
     update_actions();
 }
@@ -1290,20 +1288,20 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context UNUSED, gpo
 
     // Make sure drag n drop does not imply a dialing call for either source and dest call
     if (calltree_source_call && (calltree_source_type == A_CALL)) {
-        DEBUG("CallTree: Selected a call");
+        DEBUG("Selected a call");
 
         if (non_draggable_call(calltree_source_call)) {
-            DEBUG("CallTree: Selected an invalid call");
+            DEBUG("Selected an invalid call");
             undo_drag_call_action(calltree_source_call_for_drag, NULL);
             return;
         }
 
         if (calltree_dest_call && (calltree_dest_type == A_CALL)) {
 
-            DEBUG("CallTree: Dragged on a call");
+            DEBUG("Dragged on a call");
 
             if (non_draggable_call(calltree_dest_call)) {
-                DEBUG("CallTree: Dragged on an invalid call");
+                DEBUG("Dragged on an invalid call");
                 undo_drag_call_action(calltree_source_call_for_drag, spath);
                 return;
             }
@@ -1564,7 +1562,7 @@ static void menuitem_response(gchar * string)
         dbus_attended_transfer(calltree_source_call, calltree_dest_call);
         calltree_remove_call(current_calls_tab, calltree_source_call);
     } else
-        DEBUG("CallTree: Error unknown option in menu %s", string);
+        ERROR("Unknown option in menu %s", string);
 
     // Make sure the create conference option will appear next time the menu pops
     // The create conference option will hide if tow call from the same conference are draged on each other
