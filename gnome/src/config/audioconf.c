@@ -93,7 +93,7 @@ preferences_dialog_fill_codec_list(const account_t *account)
             gtk_list_store_set(codecStore, &iter,
                                COLUMN_CODEC_ACTIVE, c->is_active,
                                COLUMN_CODEC_NAME, c->name,
-                               COLUMN_CODEC_FREQUENCY,	g_strdup_printf("%d kHz", (gint)(c->sample_rate * 0.001)),
+                               COLUMN_CODEC_FREQUENCY, g_strdup_printf("%d kHz", (gint)(c->sample_rate * 0.001)),
                                COLUMN_CODEC_BITRATE, g_strdup_printf("%.1f kbps", c->_bitrate),
                                -1);
         }
@@ -184,7 +184,7 @@ select_active_output_audio_device()
     } while (gtk_tree_model_iter_next(model, &iter));
 
     // No index was found, select first one
-    WARN("Warning : No active output device found");
+    WARN("No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
 }
 
@@ -530,10 +530,10 @@ GtkWidget* audiocodecs_box(const account_t *account)
     gtk_box_pack_start(GTK_BOX(audiocodecs_hbox), scrolledWindow, TRUE, TRUE, 0);
     GtkListStore *codecStore = gtk_list_store_new(CODEC_COLUMN_COUNT,
                                G_TYPE_BOOLEAN, /* Active */
-                               G_TYPE_STRING,	 /* Name */
-                               G_TYPE_STRING,	 /* Frequency */
-                               G_TYPE_STRING,	 /* Bit rate */
-                               G_TYPE_STRING	 /* Bandwith */
+                               G_TYPE_STRING,  /* Name */
+                               G_TYPE_STRING,  /* Frequency */
+                               G_TYPE_STRING,  /* Bit rate */
+                               G_TYPE_STRING   /* Bandwidth */
                                );
 
     // Create codec tree view with list store
@@ -607,7 +607,7 @@ select_audio_manager(void)
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
         gtk_container_remove(GTK_CONTAINER(alsa_conf) , alsabox);
         gtk_widget_hide(alsa_conf);
-    
+
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
             main_window_volume_controls(FALSE);
             eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
@@ -677,7 +677,7 @@ GtkWidget* alsa_box()
     GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
     gtk_table_attach(GTK_TABLE(table), info_bar, 1, 3, 1, 2, GTK_FILL, GTK_SHRINK, 10, 10);
 
-    DEBUG("Audio: Configuration plugin");
+    DEBUG("Configuration plugin");
     GtkWidget *label = gtk_label_new(_("ALSA plugin"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -699,7 +699,7 @@ GtkWidget* alsa_box()
 
     // Device : Output device
     // Create title label
-    DEBUG("Audio: Configuration output");
+    DEBUG("Configuration output");
     label = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -721,7 +721,7 @@ GtkWidget* alsa_box()
 
     // Device : Input device
     // Create title label
-    DEBUG("Audio: Configuration input");
+    DEBUG("Configuration input");
     label = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -742,7 +742,7 @@ GtkWidget* alsa_box()
     gtk_table_attach(GTK_TABLE(table), input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(input);
 
-    DEBUG("Audio: Configuration rintgtone");
+    DEBUG("Configuration rintgtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -827,7 +827,7 @@ GtkWidget* create_audio_configuration()
     GtkWidget *folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
     /* Get the path where to save audio files */
     gchar *recordingPath = dbus_get_record_path();
-    DEBUG("AudioConf: Load recording path %s", recordingPath);
+    DEBUG("Load recording path %s", recordingPath);
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(folderChooser), recordingPath);
     g_free(recordingPath);
 
