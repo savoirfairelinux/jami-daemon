@@ -57,7 +57,6 @@ static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
 
 static GtkWidget *calltree_sw = NULL;
 static GtkCellRenderer *calltree_rend = NULL;
-static GtkTreeViewColumn *calltree_col = NULL;
 static GtkTreeSelection *calltree_sel = NULL;
 
 static GtkWidget *calltree_popupmenu = NULL;
@@ -86,7 +85,7 @@ static conference_obj_t *calltree_selected_conf = NULL;
 
 static void drag_data_get_cb(GtkTreeDragSource *drag_source, GtkTreePath *path, GtkSelectionData *selection_data, gpointer data);
 static void drag_end_cb(GtkWidget *, GdkDragContext *, gpointer);
-static void drag_begin_cb (GtkWidget *widget, GdkDragContext *context, gpointer data UNUSED);
+static void drag_begin_cb(GtkWidget *widget, GdkDragContext *context, gpointer data UNUSED);
 static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void drag_history_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void menuitem_response(gchar *);
@@ -509,10 +508,9 @@ calltree_create(calltab_t* tab, int searchbar_type)
     gtk_widget_grab_focus(GTK_WIDGET(tab->view));
 
     calltree_rend = gtk_cell_renderer_pixbuf_new();
-    calltree_col = gtk_tree_view_column_new_with_attributes("Icon", calltree_rend, "pixbuf", COLUMN_ACCOUNT_PIXBUF,
-                   NULL);
+    GtkTreeViewColumn *calltree_col = gtk_tree_view_column_new_with_attributes("Icon", calltree_rend, "pixbuf", COLUMN_ACCOUNT_PIXBUF, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tab->view), calltree_col);
-calltree_rend = gtk_cell_renderer_text_new();
+    calltree_rend = gtk_cell_renderer_text_new();
     calltree_col = gtk_tree_view_column_new_with_attributes("Description", calltree_rend,
                    "markup", COLUMN_ACCOUNT_DESC,
                    NULL);
