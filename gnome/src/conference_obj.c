@@ -51,11 +51,6 @@ create_new_conference(conference_state_t state, const gchar* const confID)
     // Allocate memory
     conference_obj_t *new_conf = g_new0(conference_obj_t, 1);
 
-    if (!new_conf) {
-        ERROR("Could not allocate data ");
-        return NULL;
-    }
-
     // Set state field
     new_conf->_state = state;
 
