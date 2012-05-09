@@ -38,20 +38,21 @@
 #include "calltab.h"
 #include "calllist.h"
 
-conference_obj_t *create_new_conference(conference_state_t state, const gchar* const confID)
+conference_obj_t *
+create_new_conference(conference_state_t state, const gchar* const confID)
 {
     if (confID == NULL) {
-        ERROR("Conference: Error: Conference ID is NULL while creating new conference");
+        ERROR("Conference ID is NULL while creating new conference");
         return NULL;
     }
 
-    DEBUG("Conference: Create new conference %s", confID);
+    DEBUG("Create new conference %s", confID);
 
     // Allocate memory
     conference_obj_t *new_conf = g_new0(conference_obj_t, 1);
 
     if (!new_conf) {
-        ERROR("Conference: Error: Could not allocate data ");
+        ERROR("Could not allocate data ");
         return NULL;
     }
 
@@ -114,7 +115,7 @@ void conference_add_participant_number(const gchar *call_id, conference_obj_t *c
     callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
     if (!call) {
-        ERROR("Conference: Error: Could not find %s", call_id);
+        ERROR("Could not find %s", call_id);
         return;
     }
 
@@ -124,7 +125,7 @@ void conference_add_participant_number(const gchar *call_id, conference_obj_t *c
 
 void conference_add_participant(const gchar* call_id, conference_obj_t* conf)
 {
-    DEBUG("Conference: Conference %s, adding participant %s", conf->_confID, call_id);
+    DEBUG("Conference %s, adding participant %s", conf->_confID, call_id);
 
     // store the new participant list after appending participant id
     conf->participant_list = g_slist_append(conf->participant_list, (gpointer) g_strdup(call_id));
@@ -142,10 +143,8 @@ void conference_remove_participant(const gchar* call_id, conference_obj_t* conf)
 
 void conference_participant_list_update(gchar** participants, conference_obj_t* conf)
 {
-    DEBUG("Conference: Participant list update");
-
     if (!conf) {
-        ERROR("Conference: Error: Conference is NULL");
+        ERROR("Conference is NULL");
         return;
     }
 
