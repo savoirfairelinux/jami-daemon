@@ -93,6 +93,9 @@ public:
    */
    int phoneNumberTypesDisplayed();
 
+
+   bool selectCallPhoneNumber(Call* call,Contact* contact);
+
 private slots:
    /**
     *   Performs the action action on the call call, then updates window.
@@ -161,6 +164,8 @@ private slots:
    void updateVolumeBar      (double _value = -1);
    void updateVolumeControls ();
    void updateDialpad        ();
+   void sendMessage();
+
 
 
 public slots:
@@ -201,6 +206,7 @@ public slots:
 
    void displayVolumeControls(bool checked = true);
    void displayDialpad(bool checked = true);
+   void displayMessageBox(bool checked = true);
    void configureSflPhone();
    void accountCreationWizard();
    void accept   ();

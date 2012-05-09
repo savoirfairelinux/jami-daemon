@@ -82,15 +82,18 @@ class AudioRtpRecord {
         int codecPayloadType_;
         bool hasDynamicPayloadType_;
         std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> decData_;
-        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> resampledData_;
+// FIXME: resampledData should be resized as needed
+        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE * 4> resampledData_;
         std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
-        SamplerateConverter *converter_;
+        SamplerateConverter *converterEncode_;
+        SamplerateConverter *converterDecode_;
         int codecSampleRate_;
         int codecFrameSize_;
         int converterSamplingRate_;
         std::list<int> dtmfQueue_;
         SFLDataFormat fadeFactor_;
-        NoiseSuppress *noiseSuppress_;
+        NoiseSuppress *noiseSuppressEncode_;
+        NoiseSuppress *noiseSuppressDecode_;
         ost::Mutex audioProcessMutex_;
         std::string callId_;
         unsigned int dtmfPayloadType_;

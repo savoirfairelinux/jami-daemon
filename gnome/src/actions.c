@@ -217,7 +217,7 @@ void sflphone_fill_account_list(void)
         account_list_add(acc);
         /* Fill the actual array of credentials */
         dbus_get_credentials(acc);
-        gchar * status = account_lookup(acc, REGISTRATION_STATUS);
+        gchar * status = account_lookup(acc, ACCOUNT_REGISTRATION_STATUS);
 
         if (g_strcmp0(status, "REGISTERED") == 0)
             acc->state = ACCOUNT_STATE_REGISTERED;
@@ -242,10 +242,10 @@ void sflphone_fill_account_list(void)
         else
             acc->state = ACCOUNT_STATE_INVALID;
 
-        gchar * code = account_lookup(acc, REGISTRATION_STATE_CODE);
+        gchar * code = account_lookup(acc, ACCOUNT_REGISTRATION_STATE_CODE);
         if (code != NULL)
             acc->protocol_state_code = atoi(code);
-        acc->protocol_state_description = account_lookup(acc, REGISTRATION_STATE_DESCRIPTION);
+        acc->protocol_state_description = account_lookup(acc, ACCOUNT_REGISTRATION_STATE_DESC);
     }
 
     g_strfreev(array);

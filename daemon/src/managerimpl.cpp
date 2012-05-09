@@ -50,7 +50,6 @@
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 #include "audio/alsa/alsalayer.h"
-#include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
@@ -111,7 +110,7 @@ void ManagerImpl::init(const std::string &config_file)
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
             telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
-            dtmfKey_.reset(new DTMF(8000));
+            dtmfKey_.reset(new DTMF(getMainBuffer()->getInternalSamplingRate()));
         }
     }
 
@@ -220,9 +219,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         use_account_id = account_id;
     }
 
-    // Is this account exist
-    if (!associateCallToAccount(call_id, use_account_id))
-        WARN("Could not associate call id %s to account id %s", call_id.c_str(), use_account_id.c_str());
+    associateCallToAccount(call_id, use_account_id);
 
     try {
         Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned);
@@ -348,6 +345,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
             Call * call = SIPVoIPLink::instance()->getCall(callId);
             history_.addCall(call, preferences.getHistoryLimit());
             SIPVoIPLink::instance()->hangup(callId);
+            saveHistory();
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
         }
@@ -358,6 +356,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         history_.addCall(call, preferences.getHistoryLimit());
         link->hangup(callId);
         removeCallAccount(callId);
+        saveHistory();
     }
 
     getMainBuffer()->stateInfo();
@@ -1537,6 +1536,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         Call * call = SIPVoIPLink::instance()->getCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         SIPVoIPLink::instance()->hangup(call_id);
+        saveHistory();
     }
     else {
         const std::string account_id(getAccountFromCall(call_id));
@@ -1544,6 +1544,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         Call * call = link->getCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         link->peerHungup(call_id);
+        saveHistory();
     }
 
     /* Broadcast a signal over DBus */
@@ -2472,20 +2473,12 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 }
 
 // ACCOUNT handling
-bool ManagerImpl::associateCallToAccount(const std::string& callID,
+void ManagerImpl::associateCallToAccount(const std::string& callID,
         const std::string& accountID)
 {
-    std::string useAccountID = accountID;
-
-    if (getAccountFromCall(callID).empty() and accountExists(accountID)) {
-        // account id exist in AccountMap
-        ost::MutexLock m(callAccountMapMutex_);
-        callAccountMap_[callID] = accountID;
-        DEBUG("Associate Call %s with Account %s", callID.data(), accountID.data());
-        return true;
-    }
-
-    return false;
+    ost::MutexLock m(callAccountMapMutex_);
+    callAccountMap_[callID] = accountID;
+    DEBUG("Associate Call %s with Account %s", callID.data(), accountID.data());
 }
 
 std::string ManagerImpl::getAccountFromCall(const std::string& callID)

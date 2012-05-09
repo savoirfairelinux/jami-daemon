@@ -31,10 +31,12 @@
 #ifndef __AUDIO_RTP_FACTORY_H__
 #define __AUDIO_RTP_FACTORY_H__
 
-#include <stdexcept>
 #include <ccrtp/CryptoContext.h>
+#include <stdexcept>
+#include <tr1/array>
 #include "cc_thread.h"
 #include "audio_rtp_session.h"
+#include "audio_srtp_session.h"
 #include "noncopyable.h"
 
 #include "sip/sdes_negotiator.h"
@@ -121,6 +123,7 @@ class AudioRtpFactory {
         sfl::AudioZrtpSession * getAudioZrtpSession();
 
         void initLocalCryptoInfo();
+        void initLocalCryptoInfoOnOffHold();
 
         /**
          * Set remote cryptographic info. Should be called after negotiation in SDP
@@ -138,6 +141,10 @@ class AudioRtpFactory {
          */
         void sendDtmfDigit(int digit);
 
+        void saveLocalContext();
+
+        void restoreLocalContext();
+
     private:
         NON_COPYABLE(AudioRtpFactory);
         enum KeyExchangeProtocol { NONE, SDES, ZRTP };
@@ -152,11 +159,20 @@ class AudioRtpFactory {
         // May be set manually or from config using initAudioRtpConfig
         bool helloHashEnabled_;
 
-        /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext *cachedRemoteContext_;
+        /** local master key for outgoing packet encryption **/
+        std::vector<uint8> cachedLocalMasterKey_;
 
-        /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext *cachedLocalContext_;
+        /** local master salt for outgoing packet encryption **/
+        std::vector<uint8> cachedLocalMasterSalt_;
+
+        /** remote master key for incoming packet decryption **/
+        std::vector<uint8> cachedRemoteMasterKey_;
+
+        /** remote master salt for incoming packet decryption **/
+        std::vector<uint8> cachedRemoteMasterSalt_;
+
+        /** Used to make sure remote crypto context not initialized twice. */
+        bool remoteOfferIsSet_;
 
         SIPCall *ca_;
         KeyExchangeProtocol keyExchangeProtocol_;

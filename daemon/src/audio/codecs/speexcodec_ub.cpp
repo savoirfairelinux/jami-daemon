@@ -35,7 +35,7 @@
 // cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* create()
 {
-    return new Speex(112);
+    return new Speex(112, 32000, 640, 0, true, &speex_uwb_mode);
 }
 
 // cppcheck-suppress unusedFunction

@@ -48,20 +48,25 @@ class AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:
    static   ContactBackend* getInstance();
-   Contact* getContactByPhone ( const QString& phoneNumber );
-   Contact* getContactByUid   ( const QString& uid         );
-   void     editContact       ( Contact*       contact     );
-   void     addNewContact     ( Contact*       contact     );
+   Contact* getContactByPhone ( const QString& phoneNumber ,bool resolveDNS = false );
+   Contact* getContactByUid   ( const QString& uid                                  );
+   void     editContact       ( Contact*       contact                              );
+   void     addNewContact     ( Contact*       contact                              );
 
 private:
    AkonadiBackend(QObject* parent);
    virtual ~AkonadiBackend();
+
+   //Helper
+   QString getUserFromPhone(QString phoneNumber);
+   QString getHostNameFromPhone(QString phoneNumber);
 
    //Attributes
    static AkonadiBackend*         m_pInstance  ;
    Akonadi::Session*              m_pSession   ;
    Akonadi::Collection            m_Collection ;
    QHash<QString,KABC::Addressee> m_AddrHash   ;
+   ContactList                    m_pContacts  ;
 
 protected:
    ContactList update_slot();

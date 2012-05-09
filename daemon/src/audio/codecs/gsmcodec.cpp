@@ -47,10 +47,8 @@ class Gsm : public sfl::AudioCodec {
 
     public:
         // _payload should be 3
-        Gsm() : sfl::AudioCodec(3, "GSM"), decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
-            clockRate_ = 8000;
-            frameSize_ = 160; // samples, 20 ms at 8kHz
-            channel_ = 1;
+        Gsm() : sfl::AudioCodec(3, "GSM", 8000, 160, 1),
+        decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
             bitrate_ = 13.3;
             hasDynamicPayload_ = false;
 

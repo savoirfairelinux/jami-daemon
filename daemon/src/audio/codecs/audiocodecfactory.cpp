@@ -38,6 +38,7 @@
 #include "audiocodecfactory.h"
 #include <cstdlib>
 #include <algorithm> // for std::find
+#include <dlfcn.h>
 #include "fileutils.h"
 #include "logger.h"
 
@@ -82,11 +83,9 @@ std::vector<int32_t >
 AudioCodecFactory::getAudioCodecList() const
 {
     std::vector<int32_t> list;
-int size = codecsMap_.size();
-printf("%d\n",size);
     for (CodecsMap::const_iterator iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
         if (iter->second)
-            list.push_back((int32_t)iter->first);
+            list.push_back((int32_t) iter->first);
 
     return list;
 }

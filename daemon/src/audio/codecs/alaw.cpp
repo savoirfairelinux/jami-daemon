@@ -36,10 +36,7 @@ class Alaw : public sfl::AudioCodec {
 
     public:
         // 8 PCMA A 8000 1 [RFC3551]
-        Alaw() : sfl::AudioCodec(8, "PCMA") {
-            clockRate_ = 8000;
-            frameSize_ = 160; // samples, 20 ms at 8kHz
-            channel_   = 1;
+        Alaw() : sfl::AudioCodec(8, "PCMA", 8000, 160, 1) {
             bitrate_ = 64;
             hasDynamicPayload_ = false;
         }

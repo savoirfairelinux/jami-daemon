@@ -25,6 +25,7 @@
 #include "conf/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
 #include <QtGui/QHeaderView>
+#include <KStandardDirs>
 
 #include "lib/sflphone_const.h"
 
@@ -36,9 +37,13 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
    KUrlRequester_ringtone->setMode(KFile::File | KFile::ExistingOnly);
    KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone");
    KUrlRequester_ringtone->lineEdit()->setReadOnly(true);
+   KUrlRequester_ringtone->setUrl( KStandardDirs::realFilePath(ConfigurationSkeleton::ringtone()));
+
+
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
    KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
-   KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
+   KUrlRequester_destinationFolder->setUrl(KUrl(configurationManager.getRecordPath()));
    KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder");
    KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true);
 
@@ -63,8 +68,10 @@ void DlgAudio::updateSettings()
    //alsaPlugin
    ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
    skeleton->setAlsaPlugin(box_alsaPlugin->currentText());
-
-   //codecTableHasChanged = false;
+   skeleton->setRingtone(KUrlRequester_ringtone->lineEdit()->text());
+   
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   configurationManager.setRecordPath(KUrlRequester_destinationFolder->lineEdit()->text());
 }
 
 bool DlgAudio::hasChanged()

@@ -248,7 +248,8 @@ class IAXVoIPLink : public VoIPLink {
 
         /** encoder/decoder/resampler buffers */
         SFLDataFormat decData_[DEC_BUFFER_SIZE];
-        SFLDataFormat resampledData_[DEC_BUFFER_SIZE];
+#warning FIXME: resampled buffer should be resized as appropriate
+        SFLDataFormat resampledData_[DEC_BUFFER_SIZE * 4];
         unsigned char encodedData_[DEC_BUFFER_SIZE];
 
         /** Sample rate converter object */

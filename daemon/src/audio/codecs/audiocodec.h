@@ -33,7 +33,8 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-#include <dlfcn.h>
+#include "cc_config.h"
+#include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
 
 #include "codec.h"
 
@@ -42,23 +43,19 @@
 // Also assume mono
 #define DEC_BUFFER_SIZE ((44100 * 20) / 1000)
 
-namespace ost {
-class PayloadFormat;
-class DynamicPayloadFormat;
-}
-
 namespace sfl {
 
 class AudioCodec : public Codec {
     public:
-        AudioCodec(uint8 payload, const std::string &codecName);
+        AudioCodec(uint8 payload, const std::string &codecName, int clockRate,
+                   int frameSize, int channel);
 
         /**
          * Copy constructor.
          */
         AudioCodec(const AudioCodec& codec);
 
-        virtual ~AudioCodec();
+        virtual ~AudioCodec() {};
 
         /**
          * @Override
@@ -130,15 +127,14 @@ class AudioCodec : public Codec {
         /** Bandwidth */
         double bandwidth_;
 
-        bool hasDynamicPayload_;
-
     private:
         AudioCodec& operator=(const AudioCodec&);
         uint8 payload_;
 
-        ost::DynamicPayloadFormat* payloadFormat_;
+        ost::DynamicPayloadFormat payloadFormat_;
 
-        void init(uint8 payloadType, uint32 clockRate);
+protected:
+        bool hasDynamicPayload_;
 };
 } // end namespace sfl
 

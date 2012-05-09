@@ -1006,7 +1006,7 @@ class ManagerImpl {
          * @param accountID the known accountID present in accountMap
          * @return bool True if the new association is create
          */
-        bool associateCallToAccount(const std::string& callID, const std::string& accountID);
+        void associateCallToAccount(const std::string& callID, const std::string& accountID);
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in

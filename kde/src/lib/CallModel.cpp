@@ -60,7 +60,12 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
       qDebug() << "Call found" << call;
       call->stateChanged(state);
    }
-   //updateWindowCallState(); //NEED_PORT
+
+   if (call->getCurrentState() == CALL_STATE_OVER) {
+      addToHistory(call);
+      emit historyChanged();
+   }
+   
    emit callStateChanged(call);
    
 }
@@ -91,7 +96,7 @@ void CallModelBase::on1_changingConference(const QString &confID, const QString 
 {
    Call* conf = getCall(confID);
    qDebug() << "Changing conference state" << conf << confID;
-   if (conf) {
+   if (conf && dynamic_cast<Call*>(conf)) { //Prevent a race condition between call and conference
       changeConference(confID, state);
       emit conferenceChanged(conf);
    }

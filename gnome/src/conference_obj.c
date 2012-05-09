@@ -150,7 +150,7 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
     }
 
     for (gchar **part = participants; part && *part; ++part) {
-        gchar *call_id = (gchar *) (*part);
+        const gchar *call_id = (const gchar *) (*part);
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
         if (call->_confID != NULL) {

@@ -31,7 +31,6 @@
 #ifndef TEST_UTILS_H_
 #define TEST_UTILS_H_
 
-#define TITLE() DEBUG("-------------------- %s --------------------\n", \
-        __PRETTY_FUNCTION__)
+#define TITLE() DEBUG("Starting test..."); fflush(stderr)
 
 #endif // TEST_UTILS_H_

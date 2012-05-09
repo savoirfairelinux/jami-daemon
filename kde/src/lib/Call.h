@@ -151,6 +151,7 @@ public:
    const QString&       getConfId           () const;
    const QString&       getTransferNumber   () const;
    const QString&       getCallNumber       () const;
+   const QString&       getRecordingPath    () const;
 
    //Automated function
    call_state stateChanged(const QString & newState);
@@ -161,11 +162,13 @@ public:
    void setConfId(QString value);
    void setTransferNumber(const QString& number);
    void setCallNumber(const QString& number);
+   void setRecordingPath(const QString& path);
    
    //Mutators
    void appendText(const QString& str);
    void backspaceItemText();
    void changeCurrentState(call_state newState);
+   void sendTextMessage(QString message);
    
 private:
 
@@ -175,6 +178,7 @@ private:
    QString                m_ConfId         ;
    QString                m_PeerPhoneNumber;
    QString                m_PeerName       ;
+   QString                m_RecordingPath  ;
    history_state          m_HistoryState   ;
    QDateTime*             m_pStartTime     ;
    QDateTime*             m_pStopTime      ;

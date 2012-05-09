@@ -44,6 +44,8 @@
 
 //SFLPhone library
 #include "lib/Contact.h"
+#include "lib/AccountList.h"
+#include "lib/Account.h"
 
 //SFLPhone
 #include "SFLPhone.h"
@@ -86,10 +88,19 @@ ContactBackend* AkonadiBackend::getInstance()
    return m_pInstance;
 }
 
-///Find contact using a phone number
-Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber)
+///Find contact using a phone number,
+///@param resolveDNS check if the DNS is used by an account, then assume contact with that phone number / extension is the same as the caller
+Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resolveDNS)
 {
-   return m_ContactByPhone[phoneNumber];
+   if (!resolveDNS || phoneNumber.indexOf("@") == -1)
+      return m_ContactByPhone[phoneNumber];
+   else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
+      foreach (Account* a, SFLPhone::model()->getAccountList()->getAccounts()) {
+         if (a->getAccountDetail(ACCOUNT_HOSTNAME) == getHostNameFromPhone(phoneNumber))
+            return m_ContactByPhone[getUserFromPhone(phoneNumber)];
+      }
+   }
+   return nullptr;
 }
 
 ///Find contact by UID
@@ -145,6 +156,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             aContact->setFamilyName     (tmp.familyName()     );
             aContact->setOrganization   (tmp.organization()   );
             aContact->setPreferredEmail (tmp.preferredEmail() );
+            aContact->setDepartment     (tmp.department()     );
             aContact->setUid            (tmp.uid()            );
             aContact->setPhoneNumbers   (newNumbers           );
 
@@ -155,6 +167,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             contacts << aContact;
          }
       }
+      m_pContacts = m_ContactByUid.values();
    }
    return contacts;
 }
@@ -185,6 +198,7 @@ void AkonadiBackend::addNewContact(Contact* contact)
    newContact.setGivenName      ( contact->getFirstName()       );
    newContact.setFamilyName     ( contact->getSecondName()      );
    newContact.setOrganization   ( contact->getOrganization()    );
+   newContact.setDepartment     ( contact->getDepartment()      );
    //newContact.setPreferredEmail ( contact->getPreferredEmail()  );//TODO
 
    foreach (Contact::PhoneNumber* nb, contact->getPhoneNumbers()) {
@@ -244,5 +258,35 @@ void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list
 ///Update the contact list even without a new collection
 ContactList AkonadiBackend::update_slot()
 {
-   return update(m_Collection);
+   return m_pContacts;//update(m_Collection);
+}
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Helpers                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Return the extension/user of an URI (<sip:12345@exemple.com>)
+QString AkonadiBackend::getUserFromPhone(QString phoneNumber)
+{
+   if (phoneNumber.indexOf("@") != -1) {
+      QString user = phoneNumber.split("@")[0];
+      if (user.indexOf(":") != -1) {
+         return user.split(":")[1];
+      }
+      else {
+         return user;
+      }
+   }
+   return phoneNumber;
+}
+
+///Return the domaine of an URI (<sip:12345@exemple.com>)
+QString AkonadiBackend::getHostNameFromPhone(QString phoneNumber)
+{
+   if (phoneNumber.indexOf("@") != -1) {
+      return phoneNumber.split("@")[1].left(phoneNumber.split("@")[1].size()-1);
+   }
+   return "";
 }
