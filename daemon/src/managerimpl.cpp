@@ -50,7 +50,6 @@
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 #include "audio/alsa/alsalayer.h"
-#include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
