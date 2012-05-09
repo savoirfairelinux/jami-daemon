@@ -65,12 +65,12 @@ static GtkWidget *calltree_menu_items = NULL;
 static CallType calltree_dest_type = A_INVALID;
 static CallType calltree_source_type = A_INVALID;
 
-static const gchar *calltree_dest_call_id = NULL;
-static const gchar *calltree_source_call_id = NULL;
-static const gchar *calltree_source_call_id_for_drag = NULL;
+static gchar *calltree_dest_call_id = NULL;
+static gchar *calltree_source_call_id = NULL;
+static gchar *calltree_source_call_id_for_drag = NULL;
 static gchar *calltree_dest_path = NULL;
 static gchar *calltree_source_path = NULL;
-static const gchar *calltree_source_path_for_drag = NULL;
+static gchar *calltree_source_path_for_drag = NULL;
 
 static gint calltree_dest_path_depth = -1;
 static gint calltree_source_path_depth = -1;
@@ -165,9 +165,10 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 
         if (calltree_source_conf) {
             calltab_select_conf(active_calltree_tab, calltree_source_conf);
-            calltree_source_call_id = calltree_source_conf->_confID;
+            g_free(calltree_source_call_id);
+            calltree_source_call_id = g_strdup(calltree_source_conf->_confID);
             g_free(calltree_source_path);
-            calltree_source_path = string_path;
+            calltree_source_path = g_strdup(string_path);
             calltree_source_call = NULL;
 
             if (calltree_source_conf->_im_widget)
@@ -185,9 +186,10 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 
         if (calltree_source_call) {
             calltab_select_call(active_calltree_tab, calltree_source_call);
-            calltree_source_call_id = calltree_source_call->_callID;
+            g_free(calltree_source_call_id);
+            calltree_source_call_id = g_strdup(calltree_source_call->_callID);
             g_free(calltree_source_path);
-            calltree_source_path = string_path;
+            calltree_source_path = g_strdup(string_path);
             calltree_source_conf = NULL;
 
             if (calltree_source_call->_im_widget)
@@ -198,6 +200,7 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
         }
     }
 
+    g_free(string_path);
     update_actions();
 }
 
@@ -1240,11 +1243,12 @@ static void drag_data_get_cb(GtkTreeDragSource *drag_source UNUSED, GtkTreePath 
 
 static void drag_begin_cb(GtkWidget *widget UNUSED, GdkDragContext *context UNUSED, gpointer data UNUSED)
 {
-    DEBUG("CallTree: Source Drag Begin callback");
-    DEBUG("CallTreeS: source_path %s, source_call_id %s, source_path_depth %d",
+    DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
           calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
-    calltree_source_path_for_drag = calltree_source_path;
-    calltree_source_call_id_for_drag = calltree_source_call_id;
+    g_free(calltree_source_path_for_drag);
+    calltree_source_path_for_drag = g_strdup(calltree_source_path);
+    g_free(calltree_source_call_id_for_drag);
+    calltree_source_call_id_for_drag = g_strdup(calltree_source_call_id);
     calltree_source_path_depth_for_drag = calltree_source_path_depth;
     calltree_source_call_for_drag = calltree_source_call;
 }
@@ -1272,9 +1276,9 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context UNUSED, gpo
     if (active_calltree_tab == history_tab)
         return;
 
-    DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
+    DEBUG("source_path for drag %s, source_call_id for drag %s, source_path_depth for drag%d",
           calltree_source_path_for_drag, calltree_source_call_id_for_drag, calltree_source_path_depth_for_drag);
-    DEBUG("dest path %s, dest %s, dest_path_depth %d",
+    DEBUG("source path %s, source call id %s, source path depth %d",
           calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
 
     GtkTreeView *treeview = GTK_TREE_VIEW(widget);
