@@ -96,7 +96,7 @@ void CallModelBase::on1_changingConference(const QString &confID, const QString 
 {
    Call* conf = getCall(confID);
    qDebug() << "Changing conference state" << conf << confID;
-   if (conf) {
+   if (conf && dynamic_cast<Call*>(conf)) { //Prevent a race condition between call and conference
       changeConference(confID, state);
       emit conferenceChanged(conf);
    }

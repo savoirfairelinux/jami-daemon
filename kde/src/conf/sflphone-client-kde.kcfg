@@ -26,21 +26,31 @@
 
     <entry name="notifOnCalls" type="Bool">
     	<label>Defines whether user should be notified when receiving a call.</label>
+      <default>true</default>
     </entry>
     <entry name="notifOnMessages" type="Bool">
     	<label>Defines whether user should be notified when receiving a message.</label>
+      <default>true</default>
     </entry>
     <entry name="displayOnStart" type="Bool">
     	<label>Defines whether the main window should be displayed on start.</label>
+      <default>true</default>
     </entry>
     <entry name="displayOnCalls" type="Bool">
     	<label>Defines whether the main window should be displayed when receiving a message.</label>
+      <default>true</default>
     </entry>
     <entry name="displayDialpad" type="Bool">
     	<label>Defines whether the dialpad is being shown by default</label>
+      <default>true</default>
+    </entry>
+    <entry name="displayMessageBox" type="Bool">
+      <label>Defines whether the text message box is visible</label>
+      <default>false</default>
     </entry>
     <entry name="displayVolume" type="Bool">
     	<label>Defines whether the volume widgets are visible by default</label>
+      <default>false</default>
     </entry>
     <entry name="displayMenu" type="Bool">
     	<label>Defines whether the main menu is visible by default, it can be restored with "Ctrl+m"</label>
@@ -59,7 +69,7 @@
     </entry>
    <entry name="displayContactCallHistory" type="Bool">
         <label>Defines if the individual contact history list is visible</label>
-    </entry>
+   </entry>
     
 
     <!-- Audio Settings -->
@@ -77,11 +87,6 @@
     <entry name="ringtone" type="Path">
     	<label>Defines which ringtone is used.</label>
     </entry>
-    <!--
-    <entry name="activeCodecList" type="StringList">
-    	<label>Defines which ALSA plugin to use.</label>
-    </entry>
-    -->
     <entry name="alsaPlugin" type="String">
     	<label>Defines which ALSA plugin to use.</label>
     </entry>
@@ -100,31 +105,15 @@
     <entry name="enableAddressBook" type="Bool">
     	<label>Defines whether the search in KDE Address Book is enabled</label>
     </entry>
-    <entry name="maxResults" type="Int">
-    	<label>Defines the max number of contacts to display during a search in address book.</label>
-    </entry>
-    <entry name="displayPhoto" type="Bool">
-    	<label>Defines whether to display contacts photos.</label>
-    </entry>
-    <entry name="business" type="Bool">
-    	<label>Defines whether to display professionnal phone numbers.</label>
-    </entry>
-    <entry name="mobile" type="Bool">
-    	<label>Defines whether to display mobile phone numbers.</label>
-    </entry>
-    <entry name="home" type="Bool">
-    	<label>Defines whether to display personnal phone numbers.</label>
+
+    <entry name="phoneTypeList" type="StringList">
+      <label>Defines whether the search in KDE Address Book is enabled</label>
+      <default>{Work,Home,Messenger,Prefered number,Voice,Mobile,Work,Video,Mailbox,Modem,Car,ISDN,PCS,Pager,Other...,Work}</default>
     </entry>
 
     <!-- Bookmark -->
     <entry name="bookmarkList" type="StringList">
         <label>List of bookmarked clients</label>
-    </entry>
-
-    <!-- Record Settings -->
-
-    <entry name="destinationFolder" type="Path">
-    	<label>Defines the destination directory for call recordings.</label>
     </entry>
 
     <!-- Hooks Settings -->

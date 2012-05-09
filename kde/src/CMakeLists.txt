@@ -11,6 +11,8 @@ ADD_DEFINITIONS("-std=c++0x")
 
 add_subdirectory(lib)
 
+find_package(Phonon)
+
 MESSAGE("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 IF(${CMAKE_BUILD_TYPE} MATCHES Release)
@@ -21,39 +23,39 @@ ENDIF(${CMAKE_BUILD_TYPE} MATCHES Release)
 SET ( KDE4_KABC_LIBS  -lkabc )
 
 SET(	sflphone_client_kde_SRCS
-	SFLPhoneView.cpp
-	SFLPhone.cpp
-        SFLPhoneapplication.cpp
-	widgets/SFLPhoneTray.cpp
-	main.cpp
-	AccountWizard.cpp
-	widgets/AccountItemWidget.cpp
-	widgets/CallTreeItem.cpp
-        widgets/HistoryTreeItem.cpp
-	ActionSetAccountFirst.cpp
-	conf/ConfigurationDialog.cpp
-	conf/dlggeneral.cpp
-	conf/dlgdisplay.cpp
-	conf/dlgaccounts.cpp
-	conf/dlgaudio.cpp
-	conf/dlgaddressbook.cpp
-	conf/dlghooks.cpp
-	conf/ConfigurationSkeleton.cpp
-	conf/ConfigAccountList.cpp
-	widgets/Dialpad.cpp
-	widgets/ContactItemWidget.cpp
-	widgets/ContactDock.cpp
-	widgets/HistoryDock.cpp
-	widgets/BookmarkDock.cpp
-	widgets/TranslucentButtons.cpp
+   SFLPhoneView.cpp
+   SFLPhone.cpp
+   SFLPhoneapplication.cpp
+   widgets/SFLPhoneTray.cpp
+   main.cpp
+   AccountWizard.cpp
+   widgets/AccountItemWidget.cpp
+   widgets/CallTreeItem.cpp
+   widgets/HistoryTreeItem.cpp
+   ActionSetAccountFirst.cpp
+   conf/ConfigurationDialog.cpp
+   conf/dlggeneral.cpp
+   conf/dlgdisplay.cpp
+   conf/dlgaccounts.cpp
+   conf/dlgaudio.cpp
+   conf/dlgaddressbook.cpp
+   conf/dlghooks.cpp
+   conf/ConfigurationSkeleton.cpp
+   conf/ConfigAccountList.cpp
+   widgets/Dialpad.cpp
+   widgets/ContactItemWidget.cpp
+   widgets/ContactDock.cpp
+   widgets/HistoryDock.cpp
+   widgets/BookmarkDock.cpp
+   widgets/TranslucentButtons.cpp
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
    widgets/SortableDockCommon.cpp
-	Codec.cpp
-	AccountListModel.cpp
-	AkonadiBackend.cpp
-        CallView.cpp
-        AccountView.cpp
+   Codec.cpp
+   AccountListModel.cpp
+   AkonadiBackend.cpp
+   CallView.cpp
+   AccountView.cpp
 )
 
 

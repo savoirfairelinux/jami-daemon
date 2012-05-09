@@ -38,6 +38,11 @@ public:
    //Destructor
    ~DlgGeneral();
 
+public slots:
+   //Mutator
+   void updateWidgets();
+   void updateSettings();
+
 signals:
    void clearCallHistoryAsked();
 

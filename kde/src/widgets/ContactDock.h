@@ -75,6 +75,9 @@ private:
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_Contacts;
 
+   //Helpers
+   int usableNumberCount(Contact* cont);
+
 public slots:
    virtual void keyPressEvent(QKeyEvent* event);
 

@@ -535,6 +535,11 @@ void Call::changeCurrentState(call_state newState)
       emit isOver(this);
 }
 
+void Call::sendTextMessage(QString message)
+{
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   callManager.sendTextMessage(m_CallId,message);
+}
 
 /*****************************************************************************
  *                                                                           *

@@ -50,7 +50,6 @@
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 #include "audio/alsa/alsalayer.h"
-#include "audio/pulseaudio/pulselayer.h"
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
@@ -346,6 +345,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
             Call * call = SIPVoIPLink::instance()->getCall(callId);
             history_.addCall(call, preferences.getHistoryLimit());
             SIPVoIPLink::instance()->hangup(callId);
+            saveHistory();
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
         }
@@ -356,6 +356,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         history_.addCall(call, preferences.getHistoryLimit());
         link->hangup(callId);
         removeCallAccount(callId);
+        saveHistory();
     }
 
     getMainBuffer()->stateInfo();
@@ -1539,6 +1540,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         Call * call = SIPVoIPLink::instance()->getCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         SIPVoIPLink::instance()->hangup(call_id);
+        saveHistory();
     }
     else {
         const std::string account_id(getAccountFromCall(call_id));
@@ -1546,6 +1548,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         Call * call = link->getCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         link->peerHungup(call_id);
+        saveHistory();
     }
 
     /* Broadcast a signal over DBus */

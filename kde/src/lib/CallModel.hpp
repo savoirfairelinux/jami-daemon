@@ -63,7 +63,7 @@ public:
    SortableCallSource(Call* call=0) : count(0),callInfo(call) {}
    uint count;
    Call* callInfo;
-   const bool operator<(SortableCallSource other) {
+   bool operator<(SortableCallSource other) {
       return (other.count > count);
    }
 };
@@ -436,7 +436,6 @@ template<typename CallWidget, typename Index> const QStringList CallModel<CallWi
 ///Return the history list
 template<typename CallWidget, typename Index> const CallMap& CallModel<CallWidget,Index>::getHistory()
 {
-   qDebug() << "Getting history" << m_sHistoryCalls.count();
    return m_sHistoryCalls;
 }
 
@@ -736,24 +735,25 @@ template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,In
 ///Common set of instruction shared by all gui updater
 template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::updateCommon(Call* call)
 {
-   if (!m_sPrivateCallList_call[call]) {
+   if (!m_sPrivateCallList_call[call] && dynamic_cast<Call*>(call)) {
       m_sPrivateCallList_call   [ call              ]             = new InternalStruct            ;
       m_sPrivateCallList_call   [ call              ]->call_real  = call                          ;
       m_sPrivateCallList_call   [ call              ]->conference = false                         ;
       m_sPrivateCallList_callId [ call->getCallId() ]             = m_sPrivateCallList_call[call] ;
    }
+   else
+      return false;
    return true;
 }
 
 ///Update the widget associated with this call                     
 template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::updateWidget     (Call* call, CallWidget value )
 {
-   updateCommon(call);
+   if (!updateCommon(call)) return false;
    m_sPrivateCallList_call[call]->call = value                         ;
    m_sPrivateCallList_widget[value]    = m_sPrivateCallList_call[call] ;
    return true;
 }
-
 
 ///Update the index associated with this call
 template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::updateIndex      (Call* call, Index value      )

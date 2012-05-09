@@ -25,6 +25,33 @@
     </widget>
    </item>
    <item>
+    <widget class="QWidget" name="m_pMessageBoxW" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="KLineEdit" name="m_pSendMessageLE">
+          <property name="placeholderText">
+           <string>Send text message</string>
+          </property>
+          <property name="showClearButton" stdset="0">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="m_pSendMessagePB">
+          <property name="text">
+           <string>Send</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QWidget" name="widget_controls" native="true">
      <property name="enabled">
       <bool>true</bool>
@@ -163,6 +190,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+  </customwidget>
   <customwidget>
    <class>Dialpad</class>
    <extends>QWidget</extends>
