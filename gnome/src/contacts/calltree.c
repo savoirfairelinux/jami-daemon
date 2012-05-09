@@ -491,13 +491,13 @@ calltree_create(calltab_t* tab, int searchbar_type)
 
         calltree_menu_items = gtk_menu_item_new_with_label(SFL_TRANSFER_CALL);
         g_signal_connect_swapped(calltree_menu_items, "activate",
-                                 G_CALLBACK(menuitem_response), (gpointer) g_strdup(SFL_TRANSFER_CALL));
+                                 G_CALLBACK(menuitem_response), g_strdup(SFL_TRANSFER_CALL));
         gtk_menu_shell_append(GTK_MENU_SHELL(calltree_popupmenu), calltree_menu_items);
         gtk_widget_show(calltree_menu_items);
 
         calltree_menu_items = gtk_menu_item_new_with_label(SFL_CREATE_CONFERENCE);
         g_signal_connect_swapped(calltree_menu_items, "activate",
-                                 G_CALLBACK(menuitem_response), (gpointer) g_strdup(SFL_CREATE_CONFERENCE));
+                                 G_CALLBACK(menuitem_response), g_strdup(SFL_CREATE_CONFERENCE));
         gtk_menu_shell_append(GTK_MENU_SHELL(calltree_popupmenu), calltree_menu_items);
         gtk_widget_show(calltree_menu_items);
     } else if (tab == history_tab) {
@@ -1572,5 +1572,6 @@ static void menuitem_response(gchar *string)
     gtk_widget_show(calltree_menu_items);
 
     DEBUG("%s", string);
+    g_free(string);
 }
 
