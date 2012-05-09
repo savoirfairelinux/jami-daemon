@@ -1249,14 +1249,13 @@ static void drag_begin_cb (GtkWidget *widget UNUSED, GdkDragContext *context UNU
 
 static void undo_drag_call_action(callable_obj_t *c, GtkTreePath *spath)
 {
-    GtkTreeIter parent_conference; // conference for which this call is attached
-
     calltree_remove_call(current_calls_tab, c);
 
     if (spath && calltree_selected_call_for_drag->_confID) {
         gtk_tree_path_up(spath);
+        // conference for which this call is attached
+        GtkTreeIter parent_conference;
         gtk_tree_model_get_iter(GTK_TREE_MODEL(current_calls_tab->store), &parent_conference, spath);
-
         calltree_add_call(current_calls_tab, c, &parent_conference);
     }
     else {
@@ -1289,7 +1288,6 @@ static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUS
     GtkTreePath *spath = gtk_tree_path_new_from_string(calltree_selected_path_for_drag);
 
     GtkTreeIter iter;
-    GtkTreeIter parent_conference; // conference for which this call is attached
 
     // Make sure drag n drop does not imply a dialing call for either selected and dragged call
     if (calltree_selected_call && (calltree_selected_type == A_CALL)) {
@@ -1438,6 +1436,8 @@ static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUS
             // TODO: dragged a conference call on another conference call (different conference)
 
             gtk_tree_path_up(path);
+            // conference for which this call is attached
+            GtkTreeIter parent_conference;
             gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
 
             gtk_tree_path_up(dpath);
