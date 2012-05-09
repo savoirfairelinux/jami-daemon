@@ -178,7 +178,7 @@ sflphone_ringing(callable_obj_t * c)
 void
 sflphone_hung_up(callable_obj_t * c)
 {
-    DEBUG("SFLphone: Hung up");
+    DEBUG("%s", __PRETTY_FUNCTION__);
 
     calllist_remove_call(current_calls_tab, c->_callID);
     calltree_remove_call(current_calls_tab, c);
@@ -299,7 +299,7 @@ sflphone_hang_up()
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
-    DEBUG("SFLphone: Hang up");
+    DEBUG("%s", __PRETTY_FUNCTION__);
 
     if (selectedConf) {
         im_widget_update_state(IM_WIDGET(selectedConf->_im_widget), FALSE);
@@ -436,7 +436,7 @@ sflphone_on_hold()
 void
 sflphone_off_hold()
 {
-    DEBUG("sflphone_off_hold");
+    DEBUG("%s", __PRETTY_FUNCTION__);
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
@@ -749,29 +749,29 @@ sflphone_place_call(callable_obj_t * c)
 {
     account_t * account = NULL;
 
-    if(c == NULL) {
-        ERROR("Actions: Callable object is NULL while making new call");
+    if (c == NULL) {
+        ERROR("Callable object is NULL while making new call");
         return -1;
     }
 
-    DEBUG("Actions: Placing call from %s to %s using account %s", c->_display_name, c->_peer_number, c->_accountID);
+    DEBUG("Placing call from %s to %s using account %s", c->_display_name, c->_peer_number, c->_accountID);
 
     if (c->_state != CALL_STATE_DIALING) {
-        ERROR("Actions: Call not in state dialing, cannot place call");
+        ERROR("Call not in state dialing, cannot place call");
         return -1;
     }
 
     if (!c->_peer_number || strlen(c->_peer_number) == 0) {
-        ERROR("Actions: No peer number set for this call");
+        ERROR("No peer number set for this call");
         return -1;
     }
 
     // Get the account for this call
     if (strlen(c->_accountID) != 0) {
-        DEBUG("Actions: Account %s already set for this call", c->_accountID);
+        DEBUG("Account %s already set for this call", c->_accountID);
         account = account_list_get_by_id(c->_accountID);
     } else {
-        DEBUG("Actions: No account set for this call, use first of the list");
+        DEBUG("No account set for this call, use first of the list");
         account = account_list_get_current();
     }
 
@@ -786,7 +786,7 @@ sflphone_place_call(callable_obj_t * c)
 
     // If there is no account specified or found, fallback on IP2IP call
     if(account == NULL) {
-        DEBUG("Actions: Could not find an account for this call, making ip to ip call");
+        DEBUG("Could not find an account for this call, making ip to ip call");
         account = account_list_get_by_id("IP2IP");
         if (account == NULL) {
             ERROR("Actions: Could not determine any account for this call");
@@ -815,7 +815,7 @@ sflphone_detach_participant(const gchar* callID)
     else
         selectedCall = calllist_get_call(current_calls_tab, callID);
 
-    DEBUG("Action: Detach participant %s", selectedCall->_callID);
+    DEBUG("Detach participant %s", selectedCall->_callID);
 
     if (selectedCall->_confID) {
         g_free(selectedCall->_confID);
@@ -831,12 +831,12 @@ sflphone_detach_participant(const gchar* callID)
 void
 sflphone_add_participant(const gchar* callID, const gchar* confID)
 {
-    DEBUG(">SFLphone: Add participant %s to conference %s", callID, confID);
+    DEBUG("Add participant %s to conference %s", callID, confID);
 
     callable_obj_t *call = calllist_get_call(current_calls_tab, callID);
 
     if (call == NULL) {
-        ERROR("SFLphone: Error: Could not find call");
+        ERROR("Could not find call");
         return;
     }
 
@@ -846,7 +846,7 @@ sflphone_add_participant(const gchar* callID, const gchar* confID)
 void
 sflphone_add_main_participant(const conference_obj_t * c)
 {
-    DEBUG("sflphone add main participant");
+    DEBUG("%s", __PRETTY_FUNCTION__);
     dbus_add_main_participant(c->_confID);
 }
 
@@ -857,7 +857,7 @@ sflphone_rec_call()
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
     if (selectedCall) {
-        DEBUG("SFLphone: Set record for selected call");
+        DEBUG("Set record for selected call");
         dbus_set_record(selectedCall->_callID);
 
         switch (selectedCall->_state) {
@@ -874,7 +874,7 @@ sflphone_rec_call()
 
         calltree_update_call(current_calls_tab, selectedCall);
     } else if (selectedConf) {
-        DEBUG("SFLphone: Set record for selected conf");
+        DEBUG("Set record for selected conf");
         dbus_set_record(selectedConf->_confID);
 
         switch (selectedConf->_state) {
@@ -895,7 +895,7 @@ sflphone_rec_call()
                 break;
         }
 
-        DEBUG("Actions: Remove and add conference %s", selectedConf->_confID);
+        DEBUG("Remove and add conference %s", selectedConf->_confID);
         calltree_remove_conference(current_calls_tab, selectedConf);
         calltree_add_conference_to_current_calls(selectedConf);
     }
@@ -906,7 +906,7 @@ sflphone_rec_call()
 void
 sflphone_mute_call()
 {
-    DEBUG("Actions: Mute call");
+    DEBUG("%s", __PRETTY_FUNCTION__);
 
     toggle_slider_mute_microphone();
 }
@@ -1073,7 +1073,7 @@ sflphone_request_go_clear(void)
 void
 sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code)
 {
-    DEBUG("SFLPhone: Call State changed %s", description);
+    DEBUG("Call State changed %s", description);
 
     if (c == NULL) {
         ERROR("SFLphone: Error: callable obj is NULL in %s at %d", __FILE__, __LINE__);
