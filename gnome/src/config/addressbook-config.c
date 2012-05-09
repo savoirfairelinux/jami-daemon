@@ -219,7 +219,7 @@ addressbook_config_book_active_toggled(
     treePath = gtk_tree_path_new_from_string(path);
 
     if (!(model = gtk_tree_view_get_model(GTK_TREE_VIEW(data)))) {
-        DEBUG("Addressbook: No valid model (%s:%d)", __FILE__, __LINE__);
+        DEBUG("No valid model (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
@@ -241,7 +241,8 @@ addressbook_config_book_active_toggled(
     book_data = addrbook->get_book_data_by_uid(uid);
 
     if (book_data == NULL) {
-        ERROR("Addressbook: Error: Could not find addressbook %s", uid);
+        ERROR("Could not find addressbook %s", uid);
+        return;
     }
 
     book_data->active = active;
@@ -299,12 +300,12 @@ addressbook_config_fill_book_list()
     GSList *books_data = addrbook->get_books_data(book_list);
 
     if (!books_data) {
-        DEBUG("Addressbook: No valid books data (%s:%d)", __FILE__, __LINE__);
+        DEBUG("No valid books data (%s:%d)", __FILE__, __LINE__);
     }
 
     // Get model of view and clear it
     if (!(store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view))))) {
-        DEBUG("Addressbook: Could not find model from treeview (%s:%d)", __FILE__, __LINE__);
+        DEBUG("Could not find model from treeview (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
