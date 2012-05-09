@@ -1547,6 +1547,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
             default:
                 break;
         }
+        g_value_unset(&val);
     }
 }
 
