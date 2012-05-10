@@ -998,10 +998,9 @@ static void fill_treeview_with_calls(void)
     guint n = calllist_get_size(history_tab);
 
     for (guint i = 0; i < n; ++i) {
-        QueueElement *element = calllist_get_nth(history_tab, i);
-
-        if (element->type == CALL_ELEMENT)
-            calltree_add_history_entry(element->elem.call);
+        callable_obj_t *call = calllist_get_nth(history_tab, i);
+        if (call)
+            calltree_add_history_entry(call);
     }
 }
 

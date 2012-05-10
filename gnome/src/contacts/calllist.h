@@ -39,18 +39,6 @@
   * @brief A list to hold calls.
   */
 
-typedef enum { CALL_ELEMENT, CONF_ELEMENT } ElementType;
-
-typedef union {
-   callable_obj_t *call;
-   conference_obj_t *conf;
-} callableElement;
-
-typedef struct {
-    ElementType type;
-    callableElement elem;
-} QueueElement;
-
 typedef struct {
     GtkTreeStore* store;
     GtkWidget* view;
@@ -118,7 +106,7 @@ calllist_get_size(const calltab_t* tab);
 /** Return the call at the nth position in the list
   * @param n The position of the call you want
   * @return A call or NULL */
-QueueElement *
+callable_obj_t*
 calllist_get_nth(calltab_t* tab, guint n);
 
 /** Return the call corresponding to the callID

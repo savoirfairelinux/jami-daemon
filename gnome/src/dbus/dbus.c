@@ -405,15 +405,14 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
     const gint calllist_size = calllist_get_size(history_tab);
 
     for (gint i = 0; i < calllist_size; i++) {
-        QueueElement *element = calllist_get_nth(history_tab, i);
+        callable_obj_t *call = calllist_get_nth(history_tab, i);
 
-        if (element == NULL) {
+        if (call == NULL) {
             ERROR("DBUS: ERROR: Could not find %dth call", i);
             break;
-        } else if (element->type == CALL_ELEMENT) {
-            if (g_strcmp0(element->elem.call->_recordfile, filepath) == 0)
-                element->elem.call->_record_is_playing = FALSE;
         }
+        if (g_strcmp0(call->_recordfile, filepath) == 0)
+            call->_record_is_playing = FALSE;
     }
 
     update_actions();

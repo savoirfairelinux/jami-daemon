@@ -611,7 +611,8 @@ calltree_remove_call_recursive(calltab_t* tab, gconstpointer callable, GtkTreeIt
 void
 calltree_remove_call(calltab_t* tab, callable_obj_t * c)
 {
-    calltree_remove_call_recursive(tab, c, NULL);
+    if (c)
+        calltree_remove_call_recursive(tab, c, NULL);
 }
 
 GdkPixbuf *history_state_to_pixbuf(const gchar *history_state)
