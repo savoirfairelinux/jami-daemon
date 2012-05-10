@@ -953,7 +953,6 @@ void sflphone_fill_call_list(void)
         gchar *callID = *calls;
         if (!calllist_get_call(current_calls_tab, callID)) {
             callable_obj_t *c = create_new_call_from_details(*calls, dbus_get_call_details(*calls));
-            g_free(callID);
             c->_zrtp_confirmed = FALSE;
             calllist_add_call(current_calls_tab, c);
             if (!c->_confID || strlen(c->_confID) == 0)
