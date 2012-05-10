@@ -147,7 +147,7 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
         const gchar *call_id = (const gchar *) (*part);
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
-        if (call->_confID != NULL) {
+        if (call) {
             g_free(call->_confID);
             call->_confID = NULL;
         }
@@ -161,6 +161,10 @@ void conference_participant_list_update(gchar** participants, conference_obj_t* 
     for (gchar **part = participants; part && *part; ++part) {
         gchar *call_id = (gchar *) (*part);
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
+        if (!call) {
+            restore_call(call_id);
+            call = calllist_get_call(current_calls_tab, call_id);
+        }
         call->_confID = g_strdup(conf->_confID);
         conference_add_participant(call_id, conf);
     }

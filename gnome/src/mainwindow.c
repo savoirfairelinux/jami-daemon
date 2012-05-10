@@ -130,6 +130,7 @@ main_window_ask_quit()
         question = _("There is one call in progress.");
     else
         question = _("There are calls in progress.");
+    DEBUG("Currently %d calls in progress", calllist_get_size(current_calls_tab));
 
     GtkWidget *dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(window),
                         GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s\n%s",

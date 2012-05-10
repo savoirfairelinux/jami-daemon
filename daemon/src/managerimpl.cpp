@@ -2785,6 +2785,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
         call_details["DISPLAY_NAME"] = call->getDisplayName();
         call_details["CALL_STATE"] = call->getStateStr();
         call_details["CALL_TYPE"] = type.str();
+        call_details["CONF_ID"] = call->getConfId();
     } else {
         ERROR("Call is NULL");
         call_details["ACCOUNTID"] = "";

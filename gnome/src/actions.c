@@ -277,9 +277,6 @@ gboolean sflphone_init(GError **error)
     // Fetch the ip2ip profile
     sflphone_fill_ip2ip_profile();
 
-    // Fetch the conference list
-    sflphone_fill_conference_list();
-
     return TRUE;
 }
 
@@ -954,11 +951,14 @@ void sflphone_fill_call_list(void)
 
     for (gchar **calls = list; calls && *calls; ++calls) {
         gchar *callID = *calls;
-        callable_obj_t *c = create_new_call_from_details(*calls, dbus_get_call_details(*calls));
-        g_free(callID);
-        c->_zrtp_confirmed = FALSE;
-        calllist_add_call(current_calls_tab, c);
-        calltree_add_call(current_calls_tab, c, NULL);
+        if (!calllist_get_call(current_calls_tab, callID)) {
+            callable_obj_t *c = create_new_call_from_details(*calls, dbus_get_call_details(*calls));
+            g_free(callID);
+            c->_zrtp_confirmed = FALSE;
+            calllist_add_call(current_calls_tab, c);
+            if (!c->_confID || strlen(c->_confID) == 0)
+                calltree_add_call(current_calls_tab, c, NULL);
+        }
     }
 
     g_strfreev(list);
@@ -1001,7 +1001,7 @@ static void fill_treeview_with_calls(void)
     for (guint i = 0; i < n; ++i) {
         QueueElement *element = calllist_get_nth(history_tab, i);
 
-        if (element->type == HIST_CALL)
+        if (element->type == CALL_ELEMENT)
             calltree_add_history_entry(element->elem.call);
     }
 }

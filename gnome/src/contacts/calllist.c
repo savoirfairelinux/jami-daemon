@@ -42,10 +42,11 @@ gint is_callID_callstruct(gconstpointer a, gconstpointer b)
 {
     const QueueElement *c = a;
 
-    if (c == NULL || c->type != HIST_CALL)
+    // if it's null or a conference it's not the call we're looking for
+    if (c == NULL || c->type != CALL_ELEMENT)
         return 1;
 
-    return utf8_case_cmp(c->elem.call->_callID, (const gchar *) b);
+    return g_strcmp0(c->elem.call->_callID, (const gchar *) b);
 }
 
 // TODO : try to do this more generically
@@ -93,7 +94,7 @@ calllist_free_element(gpointer data, gpointer user_data UNUSED)
 {
     QueueElement *element = data;
 
-    g_assert(element->type == HIST_CALL);
+    g_assert(element->type == CALL_ELEMENT);
     free_callable_obj_t(element->elem.call);
 
     g_free(element);
@@ -116,17 +117,19 @@ calllist_reset(calltab_t* tab)
 void
 calllist_add_call(calltab_t* tab, callable_obj_t * c)
 {
+    DEBUG("Adding call with callID %s to tab %s", c->_callID, tab->_name);
     QueueElement *element = g_new0(QueueElement, 1);
-    element->type = HIST_CALL;
+    element->type = CALL_ELEMENT;
     element->elem.call = c;
     g_queue_push_tail(tab->callQueue, (gpointer) element);
+    DEBUG("Tab %s has %d calls", tab->_name, calllist_get_size(tab));
 }
 
 void
 calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
 {
     QueueElement *element = g_new0(QueueElement, 1);
-    element->type = HIST_CALL;
+    element->type = CALL_ELEMENT;
     element->elem.call = c;
     g_queue_push_head(tab->callQueue, (gpointer) element);
 }
@@ -139,7 +142,7 @@ calllist_clean_history(void)
     for (guint i = 0; i < size; i++) {
         QueueElement* c = calllist_get_nth(history_tab, i);
 
-        if (c->type == HIST_CALL)
+        if (c->type == CALL_ELEMENT)
             calltree_remove_call(history_tab, c->elem.call);
     }
 
@@ -163,7 +166,7 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
 
     QueueElement *element = (QueueElement *) c->data;
 
-    if (element->type != HIST_CALL) {
+    if (element->type != CALL_ELEMENT) {
         ERROR("CallList: Error: Element %s is not a call", callID);
         return;
     }
@@ -203,14 +206,14 @@ calllist_get_call(calltab_t* tab, const gchar * callID)
     GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL) {
-        ERROR("CallList: Error: Could not find call %s", callID);
+        ERROR("Could not find call %s in tab %s", callID, tab->_name);
         return NULL;
     }
 
     QueueElement *element = c->data;
 
-    if (element->type != HIST_CALL) {
-        ERROR("CallList: Error: Element %s is not a call", callID);
+    if (element->type != CALL_ELEMENT) {
+        ERROR("Element %s is not a call", callID);
         return NULL;
     }
 

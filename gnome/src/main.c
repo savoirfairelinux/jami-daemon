@@ -115,8 +115,8 @@ main(int argc, char *argv[])
     status_bar_display_account();
 
     sflphone_fill_history();
-    sflphone_fill_call_list();
     sflphone_fill_conference_list();
+    sflphone_fill_call_list();
     history_search_init();
 
     // Update the GUI

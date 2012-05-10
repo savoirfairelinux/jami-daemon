@@ -571,7 +571,7 @@ calltree_remove_call_recursive(calltab_t* tab, gconstpointer callable, GtkTreeIt
     GtkTreeModel *model = GTK_TREE_MODEL(store);
 
     if (!callable)
-        ERROR("Error: Not a valid call");
+        ERROR("Not a valid call");
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
 
@@ -935,14 +935,14 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
     account_t *account_details = NULL;
 
     if (!conf) {
-        ERROR("Calltree: Error: Conference is null");
+        ERROR("Conference is null");
         return;
     } else if (!conf->_confID) {
-        ERROR("Calltree: Error: Conference ID is null");
+        ERROR("Conference ID is null");
         return;
     }
 
-    DEBUG("Calltree: Add conference %s", conf->_confID);
+    DEBUG("Add conference %s", conf->_confID);
 
     GtkTreeIter iter;
     gtk_tree_store_append(current_calls_tab->store, &iter, NULL);
@@ -989,33 +989,33 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
     conf->_conference_secured = TRUE;
 
     if (conf->participant_list) {
-        DEBUG("Calltree: Determine if at least one participant uses SRTP");
+        DEBUG("Determine if at least one participant uses SRTP");
 
         for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
             const gchar * const call_id = (const gchar *) part->data;
             callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
             if (call == NULL)
-                ERROR("Calltree: Error: Could not find call %s in call list", call_id);
+                ERROR("Could not find call %s in call list", call_id);
             else {
                 account_details = account_list_get_by_id(call->_accountID);
                 gchar *srtp_enabled = "";
 
                 if (!account_details)
-                    ERROR("Calltree: Error: Could not find account %s in account list", call->_accountID);
+                    ERROR("Could not find account %s in account list", call->_accountID);
                 else
                     srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
 
                 if (utf8_case_equal(srtp_enabled, "true")) {
-                    DEBUG("Calltree: SRTP enabled for participant %s", call_id);
+                    DEBUG("SRTP enabled for participant %s", call_id);
                     conf->_conf_srtp_enabled = TRUE;
                     break;
                 } else
-                    DEBUG("Calltree: SRTP is not enabled for participant %s", call_id);
+                    DEBUG("SRTP is not enabled for participant %s", call_id);
             }
         }
 
-        DEBUG("Calltree: Determine if all conference participants are secured");
+        DEBUG("Determine if all conference participants are secured");
 
         if (conf->_conf_srtp_enabled) {
             for (GSList *part = conf->participant_list; part; part = g_slist_next(part)) {
@@ -1024,11 +1024,11 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 
                 if (call) {
                     if (call->_srtp_state == SRTP_STATE_UNLOCKED) {
-                        DEBUG("Calltree: Participant %s is not secured", call_id);
+                        DEBUG("Participant %s is not secured", call_id);
                         conf->_conference_secured = FALSE;
                         break;
                     } else
-                        DEBUG("Calltree: Participant %s is secured", call_id);
+                        DEBUG("Participant %s is secured", call_id);
                 }
             }
         }
@@ -1036,15 +1036,15 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 
     if (conf->_conf_srtp_enabled) {
         if (conf->_conference_secured) {
-            DEBUG("Calltree: Conference is secured");
+            DEBUG("Conference is secured");
             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
         } else {
-            DEBUG("Calltree: Conference is not secured");
+            DEBUG("Conference is not secured");
             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
         }
     }
 
-    DEBUG("Calltree: Add conference to tree store");
+    DEBUG("Add conference to tree store");
 
     gchar *description = g_markup_printf_escaped("<b>%s</b>", "");
     gtk_tree_store_set(current_calls_tab->store, &iter,
@@ -1164,7 +1164,7 @@ void calltree_display(calltab_t *tab)
         gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), TRUE);
         set_focus_on_addressbook_searchbar();
     } else
-        ERROR("Error: Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
+        ERROR("Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
 
     gtk_widget_hide(active_calltree_tab->tree);
     active_calltree_tab = tab;
@@ -1556,11 +1556,14 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
 
 static void menuitem_response(gchar * string)
 {
-    if (g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0)
+    if (g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0) {
         dbus_join_participant(calltree_source_call_for_drag->_callID,
                               calltree_dest_call->_callID);
+        calltree_remove_call(current_calls_tab, calltree_source_call);
+        calltree_remove_call(current_calls_tab, calltree_dest_call);
+    }
     else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
-        DEBUG("Calltree: Transferring call %s, to %s",
+        DEBUG("Transferring call %s, to %s",
               calltree_source_call->_peer_number,
               calltree_dest_call->_peer_number);
         dbus_attended_transfer(calltree_source_call, calltree_dest_call);
