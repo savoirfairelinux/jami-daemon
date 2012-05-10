@@ -372,6 +372,10 @@ static gchar *clean_display_number(gchar *name)
         name += (sizeof(SIP_PREFIX) - 1);
     else if (g_str_has_prefix(name, SIPS_PREFIX))
         name += (sizeof(SIPS_PREFIX) - 1);
+
+    gchar * pos = g_strrstr(name, ">");
+    if (pos)
+        *pos = '\0';
     return name;
 }
 
@@ -391,7 +395,8 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, con
     }
 
     // Different display depending on type
-    gchar *name, *details = NULL;
+    gchar *name = NULL;
+    gchar *details = NULL;
 
     if (*c->_display_name) {
         name = c->_display_name;
