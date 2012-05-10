@@ -51,6 +51,10 @@
 #include "imwindow.h"
 #include "searchbar.h"
 
+#if !GTK_CHECK_VERSION(2, 30, 0)
+#define G_VALUE_INIT  { 0, { { 0 } } }
+#endif
+
 // Messages used in menu item
 static const gchar * const SFL_CREATE_CONFERENCE = "Create conference";
 static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
