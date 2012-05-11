@@ -25,7 +25,7 @@
 #include <Plasma/Service>
 #include <QHash>
 
-#include "../../src/lib/CallModel.h"
+#include "../../lib/CallModel.h"
 
 typedef QHash<QString,QVariant> HashStringString;
 class Call;

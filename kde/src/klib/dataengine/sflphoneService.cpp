@@ -1,6 +1,6 @@
 #include "sflphoneService.h"
 
-#include "../../src/lib/Call.h"
+#include "../../lib/Call.h"
 
 SFLPhoneService::SFLPhoneService(SFLPhoneEngine *engine)
 

@@ -2,14 +2,14 @@
 
 #include <Plasma/DataContainer>
 
-#include "../../src/lib/Call.h"
-#include "../../src/lib/Account.h"
-#include "../../src/lib/AccountList.h"
-#include "../../src/lib/dbus/metatypes.h"
-#include "../../src/lib/instance_interface_singleton.h"
-#include "../../src/lib/configurationmanager_interface_singleton.h"
-#include "../../src/lib/callmanager_interface_singleton.h"
-#include "../../src/lib/sflphone_const.h"
+#include "../../lib/Call.h"
+#include "../../lib/Account.h"
+#include "../../lib/AccountList.h"
+#include "../../lib/dbus/metatypes.h"
+#include "../../lib/instance_interface_singleton.h"
+#include "../../lib/configurationmanager_interface_singleton.h"
+#include "../../lib/callmanager_interface_singleton.h"
+#include "../../lib/sflphone_const.h"
 #include "sflphoneService.h"
 
 CallModel<>* SFLPhoneEngine::m_pModel = NULL;

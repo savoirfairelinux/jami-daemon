@@ -11,6 +11,8 @@ PROJECT(ksflphone)
 
 SET ( KDE4_KABC_LIBS  -lkabc )
 
+add_subdirectory(dataengine)
+
 SET(LOCAL_CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 SET(CMAKE_MODULE_PATH "${LOCAL_CMAKE_MODULE_PATH}")
 

@@ -6,8 +6,8 @@
 #include <Plasma/Service>
 #include <Plasma/ServiceJob>
 
-#include "../../src/lib/Call.h"
-#include "../../src/lib/CallModel.h"
+#include "../../lib/Call.h"
+#include "../../lib/CallModel.h"
 
 using namespace Plasma;
 
