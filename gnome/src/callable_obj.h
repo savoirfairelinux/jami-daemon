@@ -204,4 +204,6 @@ gchar* call_get_audio_codec(callable_obj_t *obj);
 
 gboolean call_was_outgoing(callable_obj_t * obj);
 
+void restore_call(const gchar *id);
+
 #endif

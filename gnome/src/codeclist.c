@@ -176,7 +176,7 @@ void codec_set_prefered_order(guint codec_index, GQueue *q)
 
 void codec_list_move_codec_up(guint codec_index, GQueue **q)
 {
-    DEBUG("Codec list Size: %i \n", codec_list_get_size());
+    DEBUG("Codec list size: %i \n", codec_list_get_size());
 
     GQueue *tmp = *q;
 
@@ -190,8 +190,7 @@ void codec_list_move_codec_up(guint codec_index, GQueue **q)
 
 void codec_list_move_codec_down(guint codec_index, GQueue **q)
 {
-
-    DEBUG("Codec list Size: %i \n", codec_list_get_size());
+    DEBUG("Codec list size: %i \n", codec_list_get_size());
 
     GQueue *tmp = *q;
 

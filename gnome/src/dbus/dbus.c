@@ -215,7 +215,7 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state)
 
 /**
  * This function process call state changes in case the call have not been created yet.
- * This mainly occurs when anotehr SFLphone client takes actions.
+ * This mainly occurs when another SFLphone client takes actions.
  */
 static void
 process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
@@ -229,7 +229,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
     } else if (g_strcmp0(state, "HUNGUP") == 0)
         return; // Could occur if a user picked up the phone and hung up without making a call
 
-    // The callID is unknow, threat it like a new call
+    // The callID is unknown, treat it like a new call
     // If it were an incoming call, we won't be here
     // It means that a new call has been initiated with an other client (cli for instance)
     if (g_strcmp0(state, "RINGING") == 0 ||
@@ -238,17 +238,10 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
 
         DEBUG("DBUS: New ringing call! accountID: %s", callID);
 
-        // We fetch the details associated to the specified call
-        GHashTable *call_details = dbus_get_call_details(callID);
-        callable_obj_t *new_call = create_new_call_from_details(callID, call_details);
-
-        if (utf8_case_equal(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING))
-            new_call->_history_state = g_strdup(INCOMING_STRING);
-        else
-            new_call->_history_state = g_strdup(OUTGOING_STRING);
-
-        calllist_add_call(current_calls_tab, new_call);
-        calltree_add_call(current_calls_tab, new_call, NULL);
+        restore_call(callID);
+        callable_obj_t *new_call = calllist_get_call(current_calls_tab, callID);
+        if (new_call)
+            calltree_add_call(current_calls_tab, new_call, NULL);
         update_actions();
         calltree_display(current_calls_tab);
     }
@@ -412,15 +405,14 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
     const gint calllist_size = calllist_get_size(history_tab);
 
     for (gint i = 0; i < calllist_size; i++) {
-        QueueElement *element = calllist_get_nth(history_tab, i);
+        callable_obj_t *call = calllist_get_nth(history_tab, i);
 
-        if (element == NULL) {
+        if (call == NULL) {
             ERROR("DBUS: ERROR: Could not find %dth call", i);
             break;
-        } else if (element->type == HIST_CALL) {
-            if (g_strcmp0(element->elem.call->_recordfile, filepath) == 0)
-                element->elem.call->_record_is_playing = FALSE;
         }
+        if (g_strcmp0(call->_recordfile, filepath) == 0)
+            call->_record_is_playing = FALSE;
     }
 
     update_actions();
@@ -1476,7 +1468,7 @@ dbus_is_iax2_enabled()
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
-    DEBUG("DBUS: Join participant %s and %s\n", sel_callID, drag_callID);
+    DEBUG("Join participant %s and %s\n", sel_callID, drag_callID);
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID, drag_callID, &error);
     check_error(error);

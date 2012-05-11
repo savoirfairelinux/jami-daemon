@@ -41,26 +41,26 @@
 
 struct _wizard *wiz;
 static int account_type;
-static int use_sflphone_org = 1;
+static gboolean use_sflphone_org = TRUE;
 static account_t* current;
 static char message[1024];
 /**
  * Forward function
  */
-static gint forward_page_func(gint current_page , gpointer data);
+static gint forward_page_func(gint current_page, gpointer data);
 
 /**
  * Page template
  */
 static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
-void prefill_sip(void) ;
+void prefill_sip(void);
 
-void set_account_type(GtkWidget* widget , gpointer data UNUSED)
+void set_account_type(GtkWidget* widget, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
         account_type = _SIP;
     else
-        account_type = _IAX ;
+        account_type = _IAX;
 }
 
 static void show_password_cb(GtkWidget *widget UNUSED, gpointer data)
@@ -101,12 +101,10 @@ void getMessageSummary(const gchar * alias, const gchar * server, const gchar * 
         strcat(message, _("None"));
 }
 
-void set_sflphone_org(GtkWidget* widget , gpointer data UNUSED)
+void set_sflphone_org(GtkWidget* widget, gpointer data UNUSED)
 {
-    use_sflphone_org = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)) ?1:0) ;
+    use_sflphone_org = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
-
-
 
 /**
  * Callback when the close button of the dialog is clicked
@@ -220,10 +218,10 @@ void enable_stun(GtkWidget* widget)
 
 void build_wizard(void)
 {
-    use_sflphone_org = 1;
+    use_sflphone_org = TRUE;
 
     if (wiz)
-        return ;
+        return;
 
     wiz = (struct _wizard*) g_malloc(sizeof(struct _wizard));
     current = create_default_account();
@@ -237,7 +235,7 @@ void build_wizard(void)
 
     gtk_window_set_title(GTK_WINDOW(wiz->assistant), _("SFLphone account creation wizard"));
     gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
-    gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200 , 200);
+    gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200, 200);
 
     build_intro();
     build_sfl_or_account();
@@ -248,22 +246,20 @@ void build_wizard(void)
     build_email_configuration();
     build_summary();
 
-    g_signal_connect(G_OBJECT(wiz->assistant), "close" , G_CALLBACK(close_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "close", G_CALLBACK(close_callback), NULL);
 
-    g_signal_connect(G_OBJECT(wiz->assistant), "cancel" , G_CALLBACK(cancel_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "cancel", G_CALLBACK(cancel_callback), NULL);
 
     gtk_widget_show_all(wiz->assistant);
 
-    gtk_assistant_set_forward_page_func(GTK_ASSISTANT(wiz->assistant), (GtkAssistantPageFunc) forward_page_func , NULL , NULL);
+    gtk_assistant_set_forward_page_func(GTK_ASSISTANT(wiz->assistant), (GtkAssistantPageFunc) forward_page_func, NULL, NULL);
     gtk_assistant_update_buttons_state(GTK_ASSISTANT(wiz->assistant));
 }
 
 GtkWidget* build_intro()
 {
-    GtkWidget *label;
-
-    wiz->intro = create_vbox(GTK_ASSISTANT_PAGE_INTRO  , "SFLphone GNOME client" , _("Welcome to the Account creation wizard of SFLphone!"));
-    label = gtk_label_new(_("This installation wizard will help you configure an account.")) ;
+    wiz->intro = create_vbox(GTK_ASSISTANT_PAGE_INTRO, "SFLphone GNOME client", _("Welcome to the Account creation wizard of SFLphone!"));
+    GtkWidget *label = gtk_label_new(_("This installation wizard will help you configure an account."));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
     gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
@@ -275,17 +271,14 @@ GtkWidget* build_intro()
 
 GtkWidget* build_select_account()
 {
-    GtkWidget* sip;
-    GtkWidget* iax;
+    wiz->protocols = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("VoIP Protocols"), _("Select an account type"));
 
-    wiz->protocols = create_vbox(GTK_ASSISTANT_PAGE_CONTENT , _("VoIP Protocols") , _("Select an account type"));
+    GtkWidget *sip = gtk_radio_button_new_with_label(NULL, _("SIP (Session Initiation Protocol)"));
+    gtk_box_pack_start(GTK_BOX(wiz->protocols), sip, TRUE, TRUE, 0);
+    GtkWidget *iax = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sip), _("IAX2 (InterAsterix Exchange)"));
+    gtk_box_pack_start(GTK_BOX(wiz->protocols), iax, TRUE, TRUE, 0);
 
-    sip = gtk_radio_button_new_with_label(NULL, _("SIP (Session Initiation Protocol)"));
-    gtk_box_pack_start(GTK_BOX(wiz->protocols) , sip , TRUE, TRUE, 0);
-    iax = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sip), _("IAX2 (InterAsterix Exchange)"));
-    gtk_box_pack_start(GTK_BOX(wiz->protocols) , iax , TRUE, TRUE, 0);
-
-    g_signal_connect(G_OBJECT(sip) , "clicked" , G_CALLBACK(set_account_type) , NULL);
+    g_signal_connect(G_OBJECT(sip), "clicked", G_CALLBACK(set_account_type), NULL);
 
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->protocols, TRUE);
     return wiz->protocols;
@@ -294,16 +287,13 @@ GtkWidget* build_select_account()
 
 GtkWidget* build_sfl_or_account()
 {
-    GtkWidget* sfl;
-    GtkWidget* cus;
+    wiz->sflphone_org = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("Account"), _("Please select one of the following options"));
 
-    wiz->sflphone_org = create_vbox(GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Please select one of the following options"));
-
-    sfl = gtk_radio_button_new_with_label(NULL, _("Create a free SIP/IAX2 account on sflphone.org \n(For testing purpose only)"));
-    gtk_box_pack_start(GTK_BOX(wiz->sflphone_org) , sfl , TRUE, TRUE, 0);
-    cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), _("Register an existing SIP or IAX2 account"));
-    gtk_box_pack_start(GTK_BOX(wiz->sflphone_org) , cus , TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(sfl) , "clicked" , G_CALLBACK(set_sflphone_org) , NULL);
+    GtkWidget *sfl = gtk_radio_button_new_with_label(NULL, _("Create a free SIP/IAX2 account on sflphone.org \n(For testing purpose only)"));
+    gtk_box_pack_start(GTK_BOX(wiz->sflphone_org), sfl, TRUE, TRUE, 0);
+    GtkWidget *cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), _("Register an existing SIP or IAX2 account"));
+    gtk_box_pack_start(GTK_BOX(wiz->sflphone_org), cus, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(sfl), "clicked", G_CALLBACK(set_sflphone_org), NULL);
 
     return wiz->sflphone_org;
 }
@@ -315,12 +305,12 @@ GtkWidget* build_sip_account_configuration(void)
     GtkWidget* label;
     GtkWidget * clearTextCheckbox;
 
-    wiz->sip_account = create_vbox(GTK_ASSISTANT_PAGE_CONTENT , _("SIP account settings") , _("Please fill the following information"));
+    wiz->sip_account = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("SIP account settings"), _("Please fill the following information"));
     // table
-    table = gtk_table_new(7, 2  ,  FALSE/* homogeneous */);
+    table = gtk_table_new(7, 2,  FALSE/* homogeneous */);
     gtk_table_set_row_spacings(GTK_TABLE(table), 10);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->sip_account) , table , TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(wiz->sip_account), table, TRUE, TRUE, 0);
 
     // alias field
     label = gtk_label_new_with_mnemonic(_("_Alias"));
@@ -374,7 +364,7 @@ GtkWidget* build_sip_account_configuration(void)
     wiz->zrtp_enable = gtk_check_button_new_with_mnemonic(_("Secure communications with _ZRTP"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
     gtk_table_attach(GTK_TABLE(table), wiz->zrtp_enable, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable) , TRUE);
+    gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable), TRUE);
 
     //gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->sip_account, TRUE);
     return wiz->sip_account;
@@ -385,12 +375,12 @@ GtkWidget* build_email_configuration(void)
     GtkWidget* label;
     GtkWidget*  table;
 
-    wiz->email = create_vbox(GTK_ASSISTANT_PAGE_CONTENT , _("Optional email address") , _("This email address will be used to send your voicemail messages."));
+    wiz->email = create_vbox(GTK_ASSISTANT_PAGE_CONTENT, _("Optional email address"), _("This email address will be used to send your voicemail messages."));
 
-    table = gtk_table_new(4, 2  ,  FALSE/* homogeneous */);
+    table = gtk_table_new(4, 2,  FALSE/* homogeneous */);
     gtk_table_set_row_spacings(GTK_TABLE(table), 10);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->email) , table , TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(wiz->email), table, TRUE, TRUE, 0);
 
     // email field
     label = gtk_label_new_with_mnemonic(_("_Email address"));
@@ -404,7 +394,7 @@ GtkWidget* build_email_configuration(void)
     wiz->zrtp_enable = gtk_check_button_new_with_mnemonic(_("Secure communications with _ZRTP"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
     gtk_table_attach(GTK_TABLE(table), wiz->zrtp_enable, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable) , TRUE);
+    gtk_widget_set_sensitive(GTK_WIDGET(wiz->zrtp_enable), TRUE);
 
     return wiz->email;
 }
@@ -415,12 +405,12 @@ GtkWidget* build_iax_account_configuration(void)
     GtkWidget*  table;
     GtkWidget * clearTextCheckbox;
 
-    wiz->iax_account = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM , _("IAX2 account settings") , _("Please fill the following information"));
+    wiz->iax_account = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM, _("IAX2 account settings"), _("Please fill the following information"));
 
-    table = gtk_table_new(6, 2  ,  FALSE/* homogeneous */);
+    table = gtk_table_new(6, 2,  FALSE/* homogeneous */);
     gtk_table_set_row_spacings(GTK_TABLE(table), 10);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->iax_account) , table , TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(wiz->iax_account), table, TRUE, TRUE, 0);
 
     // alias field
     label = gtk_label_new_with_mnemonic(_("_Alias"));
@@ -471,7 +461,7 @@ GtkWidget* build_iax_account_configuration(void)
 
     current -> state = ACCOUNT_STATE_UNREGISTERED;
 
-    g_signal_connect(G_OBJECT(wiz->assistant) , "apply" , G_CALLBACK(iax_apply_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(iax_apply_callback), NULL);
 
     return wiz->iax_account;
 }
@@ -481,20 +471,20 @@ GtkWidget* build_nat_settings(void)
     GtkWidget* label;
     GtkWidget* table;
 
-    wiz->nat = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM , _("Network Address Translation (NAT)") , _("You should probably enable this if you are behind a firewall."));
+    wiz->nat = create_vbox(GTK_ASSISTANT_PAGE_CONFIRM, _("Network Address Translation (NAT)"), _("You should probably enable this if you are behind a firewall."));
 
     // table
-    table = gtk_table_new(2, 2  ,  FALSE/* homogeneous */);
+    table = gtk_table_new(2, 2, FALSE/* homogeneous */);
     gtk_table_set_row_spacings(GTK_TABLE(table), 10);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(wiz->nat), table , TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(wiz->nat), table, TRUE, TRUE, 0);
 
     // enable
     wiz->enable = gtk_check_button_new_with_mnemonic(_("E_nable STUN"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->enable), FALSE);
     gtk_table_attach(GTK_TABLE(table), wiz->enable, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_set_sensitive(GTK_WIDGET(wiz->enable) , TRUE);
-    g_signal_connect(G_OBJECT(GTK_TOGGLE_BUTTON(wiz->enable)) , "toggled" , G_CALLBACK(enable_stun), NULL);
+    gtk_widget_set_sensitive(GTK_WIDGET(wiz->enable), TRUE);
+    g_signal_connect(G_OBJECT(GTK_TOGGLE_BUTTON(wiz->enable)), "toggled", G_CALLBACK(enable_stun), NULL);
 
     // server address
     label = gtk_label_new_with_mnemonic(_("_STUN server"));
@@ -505,21 +495,20 @@ GtkWidget* build_nat_settings(void)
     gtk_table_attach(GTK_TABLE(table), wiz->addr, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive(GTK_WIDGET(wiz->addr), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)));
 
-    g_signal_connect(G_OBJECT(wiz->assistant) , "apply" , G_CALLBACK(sip_apply_callback), NULL);
+    g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(sip_apply_callback), NULL);
 
     return wiz->nat;
 }
 
 GtkWidget* build_summary()
 {
-    wiz->summary = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY  , _("Account Registration") , _("Congratulations!"));
+    wiz->summary = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY, _("Account Registration"), _("Congratulations!"));
 
     strcpy(message,"");
-    wiz->label_summary = gtk_label_new(message) ;
+    wiz->label_summary = gtk_label_new(message);
     gtk_label_set_selectable(GTK_LABEL(wiz->label_summary), TRUE);
     gtk_misc_set_alignment(GTK_MISC(wiz->label_summary), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(wiz->label_summary), TRUE);
-    //gtk_widget_set_size_request(GTK_WIDGET(wiz->label_summary), 380, -1);
     gtk_box_pack_start(GTK_BOX(wiz->summary), wiz->label_summary, FALSE, TRUE, 0);
 
     return wiz->summary;
@@ -528,9 +517,9 @@ GtkWidget* build_summary()
 GtkWidget* build_registration_error()
 {
     GtkWidget *label;
-    wiz->reg_failed = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY  , "Account Registration" , "Registration error");
+    wiz->reg_failed = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY, "Account Registration", "Registration error");
 
-    label = gtk_label_new(" Please correct the information.") ;
+    label = gtk_label_new(" Please correct the information.");
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
     gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
@@ -549,7 +538,7 @@ void set_sip_infos_sentivite(gboolean b)
 
 void prefill_sip(void)
 {
-    if (use_sflphone_org == 1) {
+    if (use_sflphone_org) {
         char alias[300];
         char *email;
         email = (char *) gtk_entry_get_text(GTK_ENTRY(wiz->mailbox));
@@ -579,7 +568,7 @@ typedef enum {
     PAGE_SUMMARY
 } assistant_state;
 
-static gint forward_page_func(gint current_page , gpointer data UNUSED)
+static gint forward_page_func(gint current_page, gpointer data UNUSED)
 {
     gint next_page = 0;
 
@@ -589,9 +578,9 @@ static gint forward_page_func(gint current_page , gpointer data UNUSED)
             break;
         case PAGE_SFL:
 
-            if (use_sflphone_org) {
+            if (use_sflphone_org)
                 next_page = PAGE_EMAIL;
-            } else
+            else
                 next_page = PAGE_TYPE;
 
             break;
@@ -600,8 +589,9 @@ static gint forward_page_func(gint current_page , gpointer data UNUSED)
             if (account_type == _SIP) {
                 set_sip_infos_sentivite(TRUE);
                 next_page = PAGE_SIP;
-            } else
+            } else {
                 next_page = PAGE_IAX;
+            }
 
             break;
         case PAGE_SIP:
@@ -629,18 +619,13 @@ static gint forward_page_func(gint current_page , gpointer data UNUSED)
 
 static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
 {
-    GtkWidget *vbox;
-    GtkWidget *label;
-    gchar *str;
-
-    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 24);
 
     gtk_assistant_append_page(GTK_ASSISTANT(wiz->assistant), vbox);
     gtk_assistant_set_page_type(GTK_ASSISTANT(wiz->assistant), vbox, type);
-    str = g_strdup_printf(" %s", title);
+    gchar *str = g_strdup_printf(" %s", title);
     gtk_assistant_set_page_title(GTK_ASSISTANT(wiz->assistant), vbox, str);
-
     g_free(str);
 
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), vbox, TRUE);
@@ -654,7 +639,7 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
 #endif
 
     if (section) {
-        label = gtk_label_new(NULL);
+        GtkWidget *label = gtk_label_new(NULL);
         str = g_strdup_printf("<b>%s</b>\n", section);
         gtk_label_set_markup(GTK_LABEL(label), str);
         g_free(str);

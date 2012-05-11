@@ -375,6 +375,7 @@
                   <li>DISPLAY_NAME</li>
                   <li>CALL_STATE</li>
                   <li>CALL_TYPE</li>
+                  <li>CONF_ID</li>
                 </ul>
               </tp:docstring>
             </arg>

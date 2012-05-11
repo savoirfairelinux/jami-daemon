@@ -36,9 +36,9 @@
 #include <glib/gi18n.h>
 #include "contacts/calltab.h"
 #include "contacts/calltree.h"
+#include "logger.h"
 #include "dbus.h"
 #include <unistd.h>
-
 
 gint get_state_callstruct(gconstpointer a, gconstpointer b)
 {
@@ -146,6 +146,7 @@ callable_obj_t *create_new_call_from_details(const gchar *call_id, GHashTable *d
     const gchar * const peer_number = g_hash_table_lookup(details, "PEER_NUMBER");
     const gchar * const display_name = g_hash_table_lookup(details, "DISPLAY_NAME");
     const gchar * const state_str = g_hash_table_lookup(details, "CALL_STATE");
+    const gchar * const conf_id = g_hash_table_lookup(details, "CONF_ID");
 
     if (utf8_case_equal(state_str, "CURRENT"))
         state = CALL_STATE_CURRENT;
@@ -162,6 +163,7 @@ callable_obj_t *create_new_call_from_details(const gchar *call_id, GHashTable *d
 
     gchar *number = call_get_peer_number(peer_number);
     callable_obj_t *c = create_new_call(CALL, state, call_id, accountID, display_name, number);
+    c->_confID = g_strdup(conf_id);
     g_free(number);
     return c;
 }
@@ -306,4 +308,23 @@ gchar *get_formatted_start_timestamp(time_t start)
 gboolean call_was_outgoing(callable_obj_t * obj)
 {
     return g_strcmp0(obj->_history_state, OUTGOING_STRING) == 0;
+}
+
+void restore_call(const gchar *id)
+{
+    DEBUG("Restoring call %s", id);
+    // We fetch the details associated to the specified call
+    GHashTable *call_details = dbus_get_call_details(id);
+    if (!call_details) {
+        ERROR("Invalid call ID");
+        return;
+    }
+    callable_obj_t *new_call = create_new_call_from_details(id, call_details);
+
+    if (utf8_case_equal(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING))
+        new_call->_history_state = g_strdup(INCOMING_STRING);
+    else
+        new_call->_history_state = g_strdup(OUTGOING_STRING);
+
+    calllist_add_call(current_calls_tab, new_call);
 }

@@ -147,7 +147,7 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
 {
     const gchar *enabled = account_lookup(account, ACCOUNT_ENABLED);
     const gchar *type = account_lookup(account, ACCOUNT_TYPE);
-    DEBUG("Config: Adding account: Account is enabled :%s", enabled);
+    DEBUG("Account is enabled :%s", enabled);
     const gchar *state_name = account_state_name(account->state);
 
     gtk_list_store_set(account_store, iter,
@@ -157,8 +157,6 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
                        COLUMN_ACCOUNT_ACTIVE, utf8_case_equal(enabled, "true"),
                        COLUMN_ACCOUNT_ID, account->accountID, -1);
 }
-
-
 
 /**
  * Fills the treelist with accounts, should be called whenever the account
