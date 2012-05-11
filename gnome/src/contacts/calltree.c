@@ -35,6 +35,7 @@
 #include "str_utils.h"
 #include <string.h>
 #include <stdlib.h>
+#include <gtk/gtk.h>
 
 #include "gtk2_wrappers.h"
 #include "eel-gconf-extensions.h"
@@ -79,9 +80,9 @@ static callable_obj_t *calltree_source_call_for_drag = NULL;
 static conference_obj_t *calltree_dest_conf = NULL;
 static conference_obj_t *calltree_source_conf = NULL;
 
-static void drag_data_get_cb(GtkTreeDragSource *drag_source, GtkTreePath *path, GtkSelectionData *selection_data, gpointer data);
+static void drag_data_get_cb(GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selection_data,
+                             guint target_type, guint etime, gpointer user_data);
 static void drag_end_cb(GtkWidget *, GdkDragContext *, gpointer);
-static void drag_begin_cb(GtkWidget *widget, GdkDragContext *context, gpointer data UNUSED);
 static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void drag_history_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void menuitem_response(gchar *str);
@@ -485,7 +486,6 @@ calltree_create(calltab_t* tab, int searchbar_type)
 
         // source widget drag n drop signals
         g_signal_connect(G_OBJECT(tab->view), "drag_end", G_CALLBACK(drag_end_cb), NULL);
-        g_signal_connect(G_OBJECT(tab->view), "drag_begin", G_CALLBACK(drag_begin_cb), NULL);
 
         // destination widget drag n drop signals
         g_signal_connect(G_OBJECT(tab->view), "drag_data_received", G_CALLBACK(drag_data_received_cb), NULL);
@@ -1218,20 +1218,32 @@ non_draggable_call(callable_obj_t *call)
  * Source side drag signals
  * The data to be dragged to
  */
-static void drag_data_get_cb(GtkTreeDragSource *drag_source UNUSED, GtkTreePath *path UNUSED, GtkSelectionData *selection_data UNUSED, gpointer data UNUSED)
+static void
+drag_data_get_cb(GtkWidget *widget, GdkDragContext *context,
+                 GtkSelectionData *selection_data, guint target_type,
+                 guint etime, gpointer user_data)
 {
-}
+    GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(tree_view);
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gtk_tree_selection_get_selected(sel, &model, &iter);
+    gchar *id;
+    gtk_tree_model_get(model, &iter, COLUMN_ID, &id, -1);
+    DEBUG("get_cb: source id is %s", id);
+    enum {BITS_PER_BYTE = 8};
+    gtk_selection_data_set(selection_data, NULL, BITS_PER_BYTE, (guchar*) id, strlen(id));
 
-static void drag_begin_cb(GtkWidget *widget UNUSED, GdkDragContext *context UNUSED, gpointer data UNUSED)
-{
-    DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
-          calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
     g_free(calltree_source_path_for_drag);
     calltree_source_path_for_drag = g_strdup(calltree_source_path);
     g_free(calltree_source_call_id_for_drag);
-    calltree_source_call_id_for_drag = g_strdup(calltree_source_call_id);
+    calltree_source_call_id = g_strdup(id);
+    calltree_source_call_id_for_drag = g_strdup(id);
     calltree_source_path_depth_for_drag = calltree_source_path_depth;
     calltree_source_call_for_drag = calltree_source_call;
+    DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
+          calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
+    //g_free(id);
 }
 
 static void undo_drag_call_action(callable_obj_t *call, GtkTreePath *spath)
@@ -1255,11 +1267,6 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context UNUSED, gpo
 {
     if (active_calltree_tab == history_tab)
         return;
-
-    DEBUG("source_path for drag %s, source_call_id for drag %s, source_path_depth for drag%d",
-          calltree_source_path_for_drag, calltree_source_call_id_for_drag, calltree_source_path_depth_for_drag);
-    DEBUG("source path %s, source call id %s, source path depth %d",
-          calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
 
     GtkTreeView *treeview = GTK_TREE_VIEW(widget);
     GtkTreeModel *model = gtk_tree_view_get_model(treeview);
@@ -1461,7 +1468,8 @@ void drag_history_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED,
     g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
 }
 
-void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
+void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED,
+                           gint y UNUSED, GtkSelectionData *selection_data, guint target_type UNUSED, guint etime UNUSED, gpointer data UNUSED)
 {
     if (active_calltree_tab == history_tab) {
         g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
