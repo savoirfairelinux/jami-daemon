@@ -625,7 +625,7 @@ void Call::call()
    qDebug() << "account = " << m_Account;
    if(m_Account.isEmpty()) {
       qDebug() << "Account is not set, taking the first registered.";
-      this->m_Account = CallModelConvenience::getCurrentAccountId();
+      this->m_Account = CallModel<>::getCurrentAccountId();
    }
    if(!m_Account.isEmpty()) {
       qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId;

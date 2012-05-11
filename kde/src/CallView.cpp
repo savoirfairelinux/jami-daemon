@@ -44,7 +44,7 @@
 #include "widgets/CallTreeItem.h"
 #include "SFLPhone.h"
 #include "SFLPhoneView.h"
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop

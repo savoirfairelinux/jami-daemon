@@ -23,6 +23,8 @@
 
 #include <QObject>
 #include <QVector>
+#include <QWidget>
+#include <QModelIndex>
 #include <QMap>
 #include "typedefs.h"
 
@@ -86,7 +88,7 @@ signals:
  *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
  */
 ///@class CallModel Central model/frontend to deal with sflphoned
-template  <typename CallWidget, typename Index>
+template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
 class LIB_EXPORT CallModel : public CallModelBase {
    public:
       enum ModelType {
@@ -212,11 +214,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       bool  updateCommon (Call* call);
 };
 
-class CallModelConvenience : public CallModel<QWidget*,QModelIndex*>
+/*class CallModelConvenience : public CallModel<QWidget*,QModelIndex*>
 {
    public:
       CallModelConvenience(ModelType type) : CallModel<QWidget*,QModelIndex*>(type) {}
-};
+};*/
 
 #include "CallModel.hpp"
 

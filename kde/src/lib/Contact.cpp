@@ -150,7 +150,7 @@ void Contact::setFamilyName(const QString& name)
 ///Set the Photo/Avatar
 void Contact::setPhoto(QPixmap* photo)
 {
-   m_pPhoto      = photo;
+   m_pPhoto = photo;
 }
 
 ///Set the formatted name (display name)

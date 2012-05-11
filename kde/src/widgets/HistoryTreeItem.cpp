@@ -52,7 +52,7 @@
 #include "lib/Call.h"
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
 

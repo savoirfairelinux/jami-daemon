@@ -22,6 +22,7 @@
 #define SFLPHONEENGINE_H
 
 #include <Plasma/DataEngine>
+#include <Plasma/Service>
 #include <QHash>
 
 #include "../../src/lib/CallModel.h"
@@ -35,7 +36,12 @@ class SFLPhoneEngine : public Plasma::DataEngine
 
    public:
       SFLPhoneEngine(QObject* parent, const QVariantList& args);
+      Plasma::Service *serviceForSource(const QString &source);
       virtual QStringList sources() const;
+
+      static CallModel<>* getModel();
+      
+      friend class SFLPhoneService;
 
    protected:
       bool sourceRequestEvent(const QString& name);
@@ -45,11 +51,12 @@ class SFLPhoneEngine : public Plasma::DataEngine
       QHash<QString, HashStringString > historyCall  ;
       QHash<QString, HashStringString > currentCall  ;
       QHash<QString, QStringList> currentConferences ;
-      CallModelConvenience* m_pModel;
+      static CallModel<>* m_pModel;
       QString getCallStateName(call_state state);
       void updateHistory        ();
       void updateCallList       ();
       void updateContacts       ();
+      void updateAccounts       ();
       void updateConferenceList ();
       void updateInfo();
    private slots:

@@ -47,7 +47,7 @@
 #include "lib/Contact.h"
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "AccountWizard.h"
 #include "SFLPhoneView.h"
 #include "widgets/SFLPhoneTray.h"

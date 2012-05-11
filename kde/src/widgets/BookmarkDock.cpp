@@ -40,7 +40,7 @@
 #include "SFLPhone.h"
 #include "widgets/CategoryDrawer.h"
 #include "widgets/CategorizedTreeWidget.h"
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 
 ///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {

@@ -20,7 +20,9 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
-#include <lib/ContactBackend.h>
+#include "../lib/ContactBackend.h"
+#include "../lib/CallModel.h"
+#include "../lib/typedefs.h"
 #include <akonadi/collectionmodel.h>
 
 //Qt
@@ -44,14 +46,17 @@ class Contact;
 typedef QList<Contact*> ContactList;
 
 ///@class AkonadiBackend Implement a backend for Akonadi
-class AkonadiBackend : public ContactBackend {
+class LIB_EXPORT AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:
    static   ContactBackend* getInstance();
    Contact* getContactByPhone ( const QString& phoneNumber ,bool resolveDNS = false );
    Contact* getContactByUid   ( const QString& uid                                  );
-   void     editContact       ( Contact*       contact                              );
-   void     addNewContact     ( Contact*       contact                              );
+   void     editContact       ( Contact*       contact , QWidget* parent = 0        );
+   void     addNewContact     ( Contact*       contact , QWidget* parent = 0        );
+   
+   virtual void     editContact   ( Contact*   contact                              );
+   virtual void     addNewContact ( Contact*   contact                              );
 
 private:
    AkonadiBackend(QObject* parent);
@@ -63,6 +68,7 @@ private:
 
    //Attributes
    static AkonadiBackend*         m_pInstance  ;
+   static CallModel<>*            m_pModel     ;
    Akonadi::Session*              m_pSession   ;
    Akonadi::Collection            m_Collection ;
    QHash<QString,KABC::Addressee> m_AddrHash   ;

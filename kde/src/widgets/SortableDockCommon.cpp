@@ -10,7 +10,7 @@
 #include "lib/Contact.h"
 #include "lib/CallModel.h"
 #include "SFLPhone.h"
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 
 ///StaticEventHandler constructor
 StaticEventHandler::StaticEventHandler(QObject* parent) : QObject(parent)

@@ -3,19 +3,26 @@
 #include <Plasma/DataContainer>
 
 #include "../../src/lib/Call.h"
+#include "../../src/lib/Account.h"
+#include "../../src/lib/AccountList.h"
 #include "../../src/lib/dbus/metatypes.h"
 #include "../../src/lib/instance_interface_singleton.h"
 #include "../../src/lib/configurationmanager_interface_singleton.h"
 #include "../../src/lib/callmanager_interface_singleton.h"
 #include "../../src/lib/sflphone_const.h"
+#include "sflphoneService.h"
+
+CallModel<>* SFLPhoneEngine::m_pModel = NULL;
 
 SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
     : Plasma::DataEngine(parent, args)
 {
    Q_UNUSED(args)
-   m_pModel = new CallModelConvenience(CallModelConvenience::ActiveCall);
-   m_pModel->initCall();
-   m_pModel->initHistory();
+   if (not m_pModel) {
+      m_pModel = new CallModel<>(CallModel<>::ActiveCall);
+      m_pModel->initCall();
+      m_pModel->initHistory();
+   }
 
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
 
@@ -39,6 +46,9 @@ bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
    else if ( name == "info"        ) {
       updateInfo();
    }
+   else if ( name == "accounts"    ) {
+      updateAccounts();
+   }
    return true;//updateSourceEvent(name);
 }
 
@@ -50,8 +60,19 @@ bool SFLPhoneEngine::updateSourceEvent(const QString &name)
 
 QStringList SFLPhoneEngine::sources() const {
    QStringList toReturn;
-   toReturn << "calls" << "history" << "conferences" << "info";
+   toReturn << "calls" << "history" << "conferences" << "info" << "accounts";
    return toReturn;
+}
+
+Plasma::Service* SFLPhoneEngine::serviceForSource(const QString &source)
+{
+    /*if (source != "calls") {
+        return 0;
+    }*/
+
+    SFLPhoneService *service = new SFLPhoneService(this);
+    service->setParent(this);
+    return service;
 }
 
 QString SFLPhoneEngine::getCallStateName(call_state state)
@@ -118,13 +139,22 @@ void SFLPhoneEngine::updateConferenceList()
 
 void SFLPhoneEngine::updateContacts()
 {
-
+   
 }
 
 void SFLPhoneEngine::updateInfo()
 {
    qDebug() << "Currentaccount: " << m_pModel->getCurrentAccountId();
-   setData("info", I18N_NOOP("Account"), m_pModel->getCurrentAccountId());
+   setData("info", I18N_NOOP("Current_account"), m_pModel->getCurrentAccountId());
+}
+
+void SFLPhoneEngine::updateAccounts()
+{
+   const QVector<Account*>& list = m_pModel->getAccountList()->getAccounts();
+   foreach(Account* a,list) {
+      qDebug() << "Account: " << a->getAccountId();
+      setData("accounts", a->getAccountDetail(ACCOUNT_ALIAS), a->getAccountId());
+   }
 }
 
 void SFLPhoneEngine::callStateChangedSignal(Call* call)
@@ -168,6 +198,11 @@ void SFLPhoneEngine::voiceMailNotifySignal(const QString& accountId, int count)
 void SFLPhoneEngine::accountChanged()
 {
 
+}
+
+CallModel<>* SFLPhoneEngine::getModel()
+{
+   return m_pModel;
 }
 
 K_EXPORT_PLASMA_DATAENGINE(sflphone, SFLPhoneEngine)

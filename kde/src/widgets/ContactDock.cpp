@@ -40,7 +40,7 @@
 #include <KIcon>
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
 #include "conf/ConfigurationSkeleton.h"

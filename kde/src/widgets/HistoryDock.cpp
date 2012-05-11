@@ -42,7 +42,7 @@
 //SFLPhone
 #include "SFLPhone.h"
 #include "widgets/HistoryTreeItem.h"
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "conf/ConfigurationSkeleton.h"
 
 //SFLPhone library

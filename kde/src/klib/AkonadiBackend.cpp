@@ -43,22 +43,29 @@
 #include <kabc/phonenumber.h>
 
 //SFLPhone library
-#include "lib/Contact.h"
-#include "lib/AccountList.h"
-#include "lib/Account.h"
+#include "../lib/Contact.h"
+#include "../lib/AccountList.h"
+#include "../lib/Account.h"
 
 //SFLPhone
-#include "SFLPhone.h"
-#include "SFLPhoneView.h"
+//#include "SFLPhone.h"
+//#include "SFLPhoneView.h"
 
 ///Init static attributes
 AkonadiBackend*  AkonadiBackend::m_pInstance = 0;
+CallModel<>*     AkonadiBackend::m_pModel = 0;
 
 ///Constructor
 AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 {
    //QTimer::singleShot( 0, this, SLOT( delayedInit() ) );
    m_pSession = new Akonadi::Session( "SFLPhone::instance" );
+
+   if ( not m_pModel ) {
+      m_pModel = new CallModel<>(CallModel<>::ActiveCall);
+      m_pModel->initCall();
+      m_pModel->initHistory();
+   }
 
    // fetching all collections containing emails recursively, starting at the root collection
    Akonadi::CollectionFetchJob *job = new Akonadi::CollectionFetchJob( Akonadi::Collection::root(), Akonadi::CollectionFetchJob::Recursive, this );
@@ -95,7 +102,7 @@ Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resol
    if (!resolveDNS || phoneNumber.indexOf("@") == -1)
       return m_ContactByPhone[phoneNumber];
    else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
-      foreach (Account* a, SFLPhone::model()->getAccountList()->getAccounts()) {
+      foreach (Account* a, m_pModel->getAccountList()->getAccounts()) {
          if (a->getAccountDetail(ACCOUNT_HOSTNAME) == getHostNameFromPhone(phoneNumber))
             return m_ContactByPhone[getUserFromPhone(phoneNumber)];
       }
@@ -173,24 +180,24 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
 }
 
 ///Edit backend value using an updated frontend contact
-void AkonadiBackend::editContact(Contact* contact)
+void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
 {
    KABC::Addressee ct = m_AddrHash[contact->getUid()];
    if (ct.uid() != contact->getUid()) {
       kDebug() << "Contact not found";
       return;
    }
-   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, SFLPhone::app()->view() );
+   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
    Akonadi::Item item;
    item.setPayload<KABC::Addressee>(ct);
    editor->loadContact(item);
-   KDialog* dlg = new KDialog(SFLPhone::app()->view());
+   KDialog* dlg = new KDialog(parent);
    dlg->setMainWidget(editor);
    dlg->exec();
 }
 
 ///Add a new contact
-void AkonadiBackend::addNewContact(Contact* contact)
+void AkonadiBackend::addNewContact(Contact* contact,QWidget* parent)
 {
    KABC::Addressee newContact;
    newContact.setNickName       ( contact->getNickName()        );
@@ -222,14 +229,13 @@ void AkonadiBackend::addNewContact(Contact* contact)
       newContact.insertPhoneNumber(pn);
    }
 
-
    //aContact->setPhoneNumbers   (newNumbers           );//TODO
 
-    Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::CreateMode, SFLPhone::app()->view() );
+   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::CreateMode, parent );
 
    editor->setContactTemplate(newContact);
 
-   KDialog* dlg = new KDialog(SFLPhone::app()->view());
+   KDialog* dlg = new KDialog(parent);
    dlg->setMainWidget(editor);
    dlg->exec();
 
@@ -237,6 +243,18 @@ void AkonadiBackend::addNewContact(Contact* contact)
       kDebug() << "Unable to save new contact to storage";
       return;
    }
+}
+
+///Implement virtual pure method
+void AkonadiBackend::editContact(Contact* contact)
+{
+   editContact(contact,0);
+}
+
+///Implement virtual pure method
+void AkonadiBackend::addNewContact(Contact* contact)
+{
+   addNewContact(contact,0);
 }
 
 
