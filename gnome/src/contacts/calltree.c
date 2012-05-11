@@ -1259,13 +1259,9 @@ static void undo_drag_call_action(callable_obj_t *call, GtkTreePath *spath)
     calltree_dest_call = NULL;
 }
 
-static void drag_end_cb(GtkWidget * widget, GdkDragContext * context UNUSED, gpointer data UNUSED)
+static void perform_action_after_drag(GtkTreeView *treeView)
 {
-    if (active_calltree_tab == history_tab)
-        return;
-
-    GtkTreeView *treeview = GTK_TREE_VIEW(widget);
-    GtkTreeModel *model = gtk_tree_view_get_model(treeview);
+    GtkTreeModel *model = gtk_tree_view_get_model(treeView);
 
     GtkTreePath *path = gtk_tree_path_new_from_string(calltree_dest_path);
     GtkTreePath *dpath = gtk_tree_path_new_from_string(calltree_dest_path);
@@ -1459,25 +1455,18 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context UNUSED, gpo
     }
 }
 
-void drag_history_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
-{
-    g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
-}
+static void determine_drop_path(GtkTreeView *treeView) {
 
-void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED,
-                           gint y UNUSED, GtkSelectionData *selection_data, guint target_type UNUSED, guint etime UNUSED, gpointer data UNUSED)
-{
     if (active_calltree_tab == history_tab) {
-        g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
+        g_signal_stop_emission_by_name(G_OBJECT(treeView), "drag_data_received");
         return;
     }
 
-    GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
-    GtkTreeModel* tree_model = gtk_tree_view_get_model(tree_view);
+    GtkTreeModel* tree_model = gtk_tree_view_get_model(treeView);
 
     GtkTreeViewDropPosition position;
     GtkTreePath *drop_path;
-    gtk_tree_view_get_drag_dest_row(tree_view, &drop_path, &position);
+    gtk_tree_view_get_drag_dest_row(treeView, &drop_path, &position);
 
     if (drop_path) {
         gchar *drop_path_str = gtk_tree_path_to_string(drop_path);
@@ -1531,6 +1520,25 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gi
                 break;
         }
     }
+
+
+
+}
+
+static void drag_end_cb(GtkWidget * widget, GdkDragContext * context UNUSED, gpointer data UNUSED)
+{
+    perform_action_after_drag(GTK_TREE_VIEW(widget));
+}
+
+void drag_history_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
+{
+    g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
+}
+
+void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UNUSED,
+                           gint y UNUSED, GtkSelectionData *selection_data, guint target_type UNUSED, guint etime, gpointer data UNUSED)
+{
+    determine_drop_path(GTK_TREE_VIEW(widget));
 }
 
 /* Print a string when a menu item is selected */
