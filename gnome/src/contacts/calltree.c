@@ -153,7 +153,6 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 
     if (is_conference(model, &iter)) {
         DEBUG("Selected a conference");
-        calltree_source_type = A_CONFERENCE;
 
         calltree_source_conf = conferencelist_get(active_calltree_tab, id);
         g_free(id);
@@ -174,7 +173,6 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
         }
     } else {
         DEBUG("Selected a call");
-        calltree_source_type = A_CALL;
 
         calltree_source_call = calllist_get_call(active_calltree_tab, id);
         g_free(id);
@@ -1223,6 +1221,8 @@ drag_data_get_cb(GtkWidget *widget, GdkDragContext *context,
                  GtkSelectionData *selection_data, guint target_type,
                  guint etime, gpointer user_data)
 {
+    DEBUG("Drag data get callback");
+
     GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreeSelection *sel = gtk_tree_view_get_selection(tree_view);
     GtkTreeModel *model;
