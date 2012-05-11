@@ -181,7 +181,7 @@ sflphone_hung_up(callable_obj_t * c)
     DEBUG("%s", __PRETTY_FUNCTION__);
 
     calllist_remove_call(current_calls_tab, c->_callID);
-    calltree_remove_call(current_calls_tab, c);
+    calltree_remove_call(current_calls_tab, c->_callID);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
     update_actions();
@@ -395,7 +395,7 @@ sflphone_pick_up()
         case CALL_STATE_TRANSFER:
             dbus_transfer(selectedCall);
             time(&selectedCall->_time_stop);
-            calltree_remove_call(current_calls_tab, selectedCall);
+            calltree_remove_call(current_calls_tab, selectedCall->_callID);
             calllist_remove_call(current_calls_tab, selectedCall->_callID);
             break;
         case CALL_STATE_CURRENT:
@@ -694,7 +694,7 @@ sflphone_keypad(guint keyval, gchar * key)
                     case GDK_KP_Enter:
                         dbus_transfer(c);
                         time(&c->_time_stop);
-                        calltree_remove_call(current_calls_tab, c);
+                        calltree_remove_call(current_calls_tab, c->_callID);
                         break;
                     case GDK_Escape:
                         sflphone_unset_transfer();
@@ -820,7 +820,7 @@ sflphone_detach_participant(const gchar* callID)
     }
 
     im_widget_update_state(IM_WIDGET(selectedCall->_im_widget), TRUE);
-    calltree_remove_call(current_calls_tab, selectedCall);
+    calltree_remove_call(current_calls_tab, selectedCall->_callID);
     calltree_add_call(current_calls_tab, selectedCall, NULL);
     dbus_detach_participant(selectedCall->_callID);
 }
