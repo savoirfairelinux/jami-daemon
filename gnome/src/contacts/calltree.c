@@ -1229,8 +1229,12 @@ drag_data_get_cb(GtkWidget *widget, GdkDragContext *context,
     GtkTreeIter iter;
     gtk_tree_selection_get_selected(sel, &model, &iter);
     gchar *id;
-    gtk_tree_model_get(model, &iter, COLUMN_ID, &id, -1);
-    DEBUG("get_cb: source id is %s", id);
+    gboolean is_conf;
+    gtk_tree_model_get(model, &iter, COLUMN_ID, &id, COLUMN_IS_CONFERENCE, &is_conf, -1);
+    calltree_source_type = is_conf ? A_CONFERENCE : A_CALL;
+    DEBUG("get_cb: source id is %s and it is %sa conference", id, is_conf ? "" : "not ");
+    /* Set selection data...it is not used yet but this is how the source should pass
+     * data to the received callback */
     enum {BITS_PER_BYTE = 8};
     gtk_selection_data_set(selection_data, NULL, BITS_PER_BYTE, (guchar*) id, strlen(id));
 
