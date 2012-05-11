@@ -51,7 +51,7 @@
 #include "imwindow.h"
 #include "searchbar.h"
 
-#if !GTK_CHECK_VERSION(2, 30, 0)
+#if !GLIB_CHECK_VERSION(2, 30, 0)
 #define G_VALUE_INIT  { 0, { { 0 } } }
 #endif
 
