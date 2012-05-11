@@ -126,11 +126,10 @@ is_conference(GtkTreeModel *model, GtkTreeIter *iter)
 static void
 call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 {
-    DEBUG("Selection callback");
+    DEBUG("Calltree selection callback");
     GtkTreeModel *model = gtk_tree_view_get_model(gtk_tree_selection_get_tree_view(sel));
 
     GtkTreeIter iter;
-
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
         DEBUG("gtk_tree_selection_get_selected return non zero!!!!!!!!!!!!!!!!!!!!!!!!! stop selected callback\n");
         return;
@@ -140,12 +139,6 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
         DEBUG("Current call tree is history");
     else if (active_calltree_tab == current_calls_tab)
         DEBUG("Current call tree is current calls");
-
-    // store info for dragndrop
-    GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
-    gchar *string_path = gtk_tree_path_to_string(path);
-    calltree_source_path_depth = gtk_tree_path_get_depth(path);
-    DEBUG("Selected path: %s", string_path);
 
     /* Get ID of selected object, may be a call or a conference */
     gchar *id;
@@ -159,17 +152,6 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 
         if (calltree_source_conf) {
             calltab_select_conf(active_calltree_tab, calltree_source_conf);
-            g_free(calltree_source_call_id);
-            calltree_source_call_id = g_strdup(calltree_source_conf->_confID);
-            g_free(calltree_source_path);
-            calltree_source_path = g_strdup(string_path);
-            calltree_source_call = NULL;
-
-            if (calltree_source_conf->_im_widget)
-                im_window_show_tab(calltree_source_conf->_im_widget);
-
-            DEBUG("source_path %s, source_conf_id %s, source_path_depth %d",
-                  calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
         }
     } else {
         DEBUG("Selected a call");
@@ -179,21 +161,9 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 
         if (calltree_source_call) {
             calltab_select_call(active_calltree_tab, calltree_source_call);
-            g_free(calltree_source_call_id);
-            calltree_source_call_id = g_strdup(calltree_source_call->_callID);
-            g_free(calltree_source_path);
-            calltree_source_path = g_strdup(string_path);
-            calltree_source_conf = NULL;
-
-            if (calltree_source_call->_im_widget)
-                im_window_show_tab(calltree_source_call->_im_widget);
-
-            DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
-                  calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
         }
     }
 
-    g_free(string_path);
     update_actions();
 }
 
@@ -1239,15 +1209,37 @@ drag_data_get_cb(GtkWidget *widget, GdkDragContext *context,
     gtk_selection_data_set(selection_data, NULL, BITS_PER_BYTE, (guchar*) id, strlen(id));
 
     g_free(calltree_source_path_for_drag);
-    calltree_source_path_for_drag = g_strdup(calltree_source_path);
     g_free(calltree_source_call_id_for_drag);
+    g_free(calltree_source_path);
+
+    GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
+    calltree_source_path = gtk_tree_path_to_string(path);
+    calltree_source_path_depth = gtk_tree_path_get_depth(path);
+    calltree_source_path_for_drag = g_strdup(calltree_source_path);
     calltree_source_call_id = g_strdup(id);
     calltree_source_call_id_for_drag = g_strdup(id);
     calltree_source_path_depth_for_drag = calltree_source_path_depth;
     calltree_source_call_for_drag = calltree_source_call;
     DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
           calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
+
+    if(is_conf) {
+        calltree_source_call = NULL;
+        calltree_source_conf = conferencelist_get(active_calltree_tab, id);
+        if(calltree_source_conf == NULL) {
+            ERROR("Could not retreive conference from call tab");
+        }
+    }
+    else {
+        calltree_source_call = calllist_get_call(active_calltree_tab, id);
+        calltree_source_conf = NULL;
+        if(calltree_source_call == NULL) {
+            ERROR("Could not retreive call from call tab");
+        }
+    }
     //g_free(id);
+
+
 }
 
 static void undo_drag_call_action(callable_obj_t *call, GtkTreePath *spath)
