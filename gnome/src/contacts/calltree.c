@@ -52,6 +52,13 @@
 #include "imwindow.h"
 #include "searchbar.h"
 
+typedef struct {
+    gchar *source_ID;
+    gchar *dest_ID;
+} PopupData;
+
+static PopupData *popup_data = NULL;
+
 // Messages used in menu item
 static const gchar * const SFL_CREATE_CONFERENCE = "Create conference";
 static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
@@ -59,33 +66,19 @@ static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
 static GtkWidget *calltree_popupmenu = NULL;
 static GtkWidget *calltree_menu_items = NULL;
 
-static CallType calltree_dest_type = A_INVALID;
-static CallType calltree_source_type = A_INVALID;
-
-static gchar *calltree_dest_call_id = NULL;
-static gchar *calltree_source_call_id = NULL;
-static gchar *calltree_source_call_id_for_drag = NULL;
-static gchar *calltree_dest_path = NULL;
-static gchar *calltree_source_path = NULL;
-static gchar *calltree_source_path_for_drag = NULL;
-
-static gint calltree_dest_path_depth = -1;
-static gint calltree_source_path_depth = -1;
-static gint calltree_source_path_depth_for_drag = -1;
-
-static callable_obj_t *calltree_dest_call = NULL;
 static callable_obj_t *calltree_source_call = NULL;
-static callable_obj_t *calltree_source_call_for_drag = NULL;
 
-static conference_obj_t *calltree_dest_conf = NULL;
 static conference_obj_t *calltree_source_conf = NULL;
 
-static void drag_data_get_cb(GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selection_data,
-                             guint target_type, guint etime, gpointer user_data);
-static void drag_end_cb(GtkWidget *, GdkDragContext *, gpointer);
 static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void drag_history_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
-static void menuitem_response(gchar *str);
+static void menuitem_response(gchar * string);
+
+static GtkTargetEntry target_list[] = {
+    { "MY_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, 0 }
+};
+
+static const guint n_targets = G_N_ELEMENTS(target_list);
 
 enum {
     COLUMN_ACCOUNT_PIXBUF = 0,
@@ -450,15 +443,12 @@ calltree_create(calltab_t* tab, int searchbar_type)
 
     if (g_strcmp0(tab->_name, CURRENT_CALLS) == 0) {
         // Make calltree reordable for drag n drop
-        gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
+        //gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
 
-        // source widget drag n drop signals
-        g_signal_connect(G_OBJECT(tab->view), "drag_end", G_CALLBACK(drag_end_cb), NULL);
-
+        gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tab->view), GDK_BUTTON1_MASK, target_list, n_targets, GDK_ACTION_DEFAULT | GDK_ACTION_MOVE);
+        gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tab->view), target_list, n_targets, GDK_ACTION_DEFAULT);
         // destination widget drag n drop signals
         g_signal_connect(G_OBJECT(tab->view), "drag_data_received", G_CALLBACK(drag_data_received_cb), NULL);
-
-        g_signal_connect(G_OBJECT(tab->view), "drag_data_get", G_CALLBACK(drag_data_get_cb), NULL);
 
         calltree_popupmenu = gtk_menu_new();
 
@@ -1172,397 +1162,158 @@ gboolean calltree_update_clock(gpointer data UNUSED)
     return TRUE;
 }
 
-static gboolean
-non_draggable_call(callable_obj_t *call)
-{
-    return call->_state == CALL_STATE_DIALING ||
-           call->_state == CALL_STATE_INVALID ||
-           call->_state == CALL_STATE_FAILURE ||
-           call->_state == CALL_STATE_BUSY    ||
-           call->_state == CALL_STATE_TRANSFER;
-}
-
-/**
- * Source side drag signals
- * The data to be dragged to
- */
-static void
-drag_data_get_cb(GtkWidget *widget, GdkDragContext *context,
-                 GtkSelectionData *selection_data, guint target_type,
-                 guint etime, gpointer user_data)
-{
-    DEBUG("Drag data get callback");
-
-    GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
-    GtkTreeSelection *sel = gtk_tree_view_get_selection(tree_view);
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-    gtk_tree_selection_get_selected(sel, &model, &iter);
-    gchar *id;
-    gboolean is_conf;
-    gtk_tree_model_get(model, &iter, COLUMN_ID, &id, COLUMN_IS_CONFERENCE, &is_conf, -1);
-    calltree_source_type = is_conf ? A_CONFERENCE : A_CALL;
-    DEBUG("get_cb: source id is %s and it is %sa conference", id, is_conf ? "" : "not ");
-    /* Set selection data...it is not used yet but this is how the source should pass
-     * data to the received callback */
-    enum {BITS_PER_BYTE = 8};
-    gtk_selection_data_set(selection_data, NULL, BITS_PER_BYTE, (guchar*) id, strlen(id));
-
-    g_free(calltree_source_path_for_drag);
-    g_free(calltree_source_call_id_for_drag);
-    g_free(calltree_source_path);
-
-    GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
-    calltree_source_path = gtk_tree_path_to_string(path);
-    calltree_source_path_depth = gtk_tree_path_get_depth(path);
-    calltree_source_path_for_drag = g_strdup(calltree_source_path);
-    calltree_source_call_id = g_strdup(id);
-    calltree_source_call_id_for_drag = g_strdup(id);
-    calltree_source_path_depth_for_drag = calltree_source_path_depth;
-    calltree_source_call_for_drag = calltree_source_call;
-    DEBUG("source_path %s, source_call_id %s, source_path_depth %d",
-          calltree_source_path, calltree_source_call_id, calltree_source_path_depth);
-
-    if(is_conf) {
-        calltree_source_call = NULL;
-        calltree_source_conf = conferencelist_get(active_calltree_tab, id);
-        if(calltree_source_conf == NULL) {
-            ERROR("Could not retreive conference from call tab");
-        }
-    }
-    else {
-        calltree_source_call = calllist_get_call(active_calltree_tab, id);
-        calltree_source_conf = NULL;
-        if(calltree_source_call == NULL) {
-            ERROR("Could not retreive call from call tab");
-        }
-    }
-    //g_free(id);
-
-
-}
-
-static void undo_drag_call_action(callable_obj_t *call, GtkTreePath *spath)
-{
-    calltree_remove_call(current_calls_tab, call->_callID);
-
-    if (spath && calltree_source_call_for_drag->_confID) {
-        gtk_tree_path_up(spath);
-        // conference for which this call is attached
-        GtkTreeIter parent;
-        gtk_tree_model_get_iter(GTK_TREE_MODEL(current_calls_tab->store), &parent, spath);
-        calltree_add_call(current_calls_tab, call, &parent);
-    } else {
-        calltree_add_call(current_calls_tab, call, NULL);
-    }
-
-    calltree_dest_call = NULL;
-}
-
-static void perform_action_after_drag(GtkTreeView *treeView)
-{
-    GtkTreeModel *model = gtk_tree_view_get_model(treeView);
-
-    GtkTreePath *path = gtk_tree_path_new_from_string(calltree_dest_path);
-    GtkTreePath *dpath = gtk_tree_path_new_from_string(calltree_dest_path);
-    GtkTreePath *spath = gtk_tree_path_new_from_string(calltree_source_path_for_drag);
-
-    // Make sure drag n drop does not imply a dialing call for either source and dest call
-    if (calltree_source_call && (calltree_source_type == A_CALL)) {
-        DEBUG("Selected a call");
-
-        if (non_draggable_call(calltree_source_call)) {
-            DEBUG("Selected an invalid call");
-            undo_drag_call_action(calltree_source_call_for_drag, NULL);
-            return;
-        }
-
-        if (calltree_dest_call && (calltree_dest_type == A_CALL)) {
-
-            DEBUG("Dragged on a call");
-
-            if (non_draggable_call(calltree_dest_call)) {
-                DEBUG("Dragged on an invalid call");
-                undo_drag_call_action(calltree_source_call_for_drag, spath);
-                return;
-            }
-        }
-    }
-
-    // Make sure a conference is only dragged on another conference
-    if (calltree_source_conf && (calltree_source_type == A_CONFERENCE)) {
-        DEBUG("Selected a conference");
-        if (!calltree_dest_conf && (calltree_dest_type == A_CALL)) {
-
-            ERROR("Dragged a conference on a call, destination conference is NULL");
-            conference_obj_t* conf = calltree_source_conf;
-
-            calltree_remove_conference(current_calls_tab, conf);
-            calltree_add_conference_to_current_calls(conf);
-
-            calltree_dest_call = NULL;
-            return;
-        }
-    }
-
-    if (calltree_source_path_depth_for_drag == 1) {
-        if (calltree_dest_path_depth == 1) {
-            if (calltree_source_type == A_CALL && calltree_dest_type == A_CALL) {
-                DEBUG("Dragged a call on a call");
-                if (calltree_source_call_for_drag && calltree_dest_call) {
-                    calltree_remove_call(current_calls_tab, calltree_source_call_for_drag->_callID);
-                    calltree_add_call(current_calls_tab, calltree_source_call_for_drag, NULL);
-                    // pop menu to determine if we actually create a conference or do a call transfer
-                    gtk_menu_popup(GTK_MENU(calltree_popupmenu), NULL, NULL, NULL, NULL, 0, 0);
-                }
-            } else if (calltree_source_type == A_CALL && calltree_dest_type == A_CONFERENCE) {
-                DEBUG("Dragged a call on a conference");
-                if (!calltree_source_call_for_drag) {
-                    ERROR("Dragged a NULL call on a conference");
-                    return;
-                }
-
-                g_free(calltree_source_call_for_drag->_confID);
-                calltree_source_call_for_drag->_confID = g_strdup(calltree_dest_call_id);
-
-                g_free(calltree_source_call_for_drag->_historyConfID);
-                calltree_source_call_for_drag->_historyConfID = g_strdup(calltree_dest_call_id);
-
-                sflphone_add_participant(calltree_source_call_id_for_drag, calltree_dest_call_id);
-            } else if (calltree_source_type == A_CONFERENCE && calltree_dest_type == A_CALL) {
-                DEBUG("Dragged a conference on a call");
-                conference_obj_t* conf = calltree_source_conf;
-                calltree_remove_conference(current_calls_tab, conf);
-                calltree_add_conference_to_current_calls(conf);
-            } else if (calltree_source_type == A_CONFERENCE && calltree_dest_type == A_CONFERENCE) {
-                DEBUG("Dragged a conference on a conference");
-                if (gtk_tree_path_compare(dpath, spath) == 0) {
-
-                    if (!current_calls_tab) {
-                        ERROR("Error while joining the same conference");
-                        return;
-                    }
-
-                    DEBUG("Joined the same conference!");
-                    gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls_tab->view), path, FALSE);
-                } else {
-                    if (!calltree_source_conf) {
-                        ERROR("Source conference is null while joining conferences");
-                        return;
-                    }
-
-                    if (!calltree_dest_conf) {
-                        ERROR("Dest conference is null while joining conferences");
-                        return;
-                    }
-
-                    DEBUG("Joined conferences %s and %s!\n", calltree_dest_path, calltree_source_path);
-                    dbus_join_conference(calltree_source_conf->_confID, calltree_dest_conf->_confID);
-                }
-            } else {
-                ERROR("Unexpected drag and drop scenario");
-                // TODO: dragged a single call on a NULL element (should do nothing)
-                // TODO: dragged a conference on a NULL element (should do nothing)
-            }
-        } else if (calltree_dest_path_depth == 2) {
-            if (calltree_source_type == A_CALL && calltree_dest_type == A_CALL) {
-                // TODO: dragged a call on a conference call
-                calltree_remove_call(current_calls_tab, calltree_source_call->_callID);
-                calltree_add_call(current_calls_tab, calltree_source_call, NULL);
-
-            } else if (calltree_source_type == A_CONFERENCE && calltree_dest_type == A_CALL) {
-                // TODO: dragged a conference on a conference call
-                calltree_remove_conference(current_calls_tab, calltree_source_conf);
-                calltree_add_conference_to_current_calls(calltree_source_conf);
-            } else {
-                ERROR("Unexpected drag and drop scenario");
-                // TODO: dragged a single call on a NULL element
-                // TODO: dragged a conference on a NULL element
-            }
-        } else {
-            ERROR("Unexpected calltree dest path depth %d", calltree_dest_path_depth);
-        }
-    } else {
-        if (calltree_dest_path_depth == 1) {
-            if (calltree_source_type == A_CALL && calltree_dest_type == A_CALL) {
-                DEBUG("Dragged a conference call on a call");
-                sflphone_detach_participant(calltree_source_call_id);
-
-                if (calltree_source_call && calltree_dest_call)
-                    gtk_menu_popup(GTK_MENU(calltree_popupmenu), NULL, NULL, NULL, NULL, 0, 0);
-
-            } else if (calltree_source_type == A_CALL && calltree_dest_type == A_CONFERENCE) {
-                // dragged a conference call on a conference
-                sflphone_detach_participant(calltree_source_call_id);
-
-                if (calltree_source_call && calltree_dest_conf) {
-                    DEBUG("Adding a participant, since dragged call on a conference");
-                    sflphone_add_participant(calltree_source_call_id, calltree_dest_call_id);
-                }
-            } else {
-                DEBUG("Dragged a conference call on a NULL element");
-                sflphone_detach_participant(calltree_source_call_id);
-            }
-        } else if (calltree_dest_path_depth == 2) {
-            DEBUG("Dragged a conference call on another conference call (same conference)");
-            // TODO: dragged a conference call on another conference call (different conference)
-
-            gtk_tree_path_up(path);
-            // conference for which this call is attached
-            GtkTreeIter parent;
-            if (!gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent, path)) {
-                ERROR("Could not find parent conference");
-                return;
-            }
-
-            gtk_tree_path_up(dpath);
-            gtk_tree_path_up(spath);
-
-            if (gtk_tree_path_compare(dpath, spath) == 0) {
-                DEBUG("Dragged a call in the same conference");
-                calltree_remove_call(current_calls_tab, calltree_source_call->_callID);
-                calltree_add_call(current_calls_tab, calltree_source_call, &parent);
-                gtk_widget_hide(calltree_menu_items);
-                gtk_menu_popup(GTK_MENU(calltree_popupmenu), NULL, NULL, NULL, NULL,
-                        0, 0);
-            } else {
-                DEBUG("Dragged a conference call onto another conference call %s, %s", gtk_tree_path_to_string(dpath), gtk_tree_path_to_string(spath));
-                conference_obj_t *conf = NULL;
-
-                GtkTreeIter iter;
-                if (gtk_tree_model_get_iter(model, &iter, dpath)) {
-                    if (is_conference(model, &iter)) {
-                        gchar *id;
-                        gtk_tree_model_get(model, &iter, COLUMN_ID, &id, -1);
-                        conf = conferencelist_get(current_calls_tab, id);
-                        g_free(id);
-                    }
-                }
-
-                sflphone_detach_participant(calltree_source_call_id);
-
-                if (conf)
-                    sflphone_add_participant(calltree_source_call_id, conf->_confID);
-                else
-                    ERROR("Didn't find a conference!");
-            }
-        } else {
-            ERROR("Unexpected calltree dragged path depth");
-            // TODO: dragged a conference call on another conference call (different conference)
-            // TODO: dragged a conference call on a NULL element (same conference)
-            // TODO: dragged a conference call on a NULL element (different conference)
-        }
-    }
-}
-
-static void determine_drop_path(GtkTreeView *treeView) {
-
-    if (active_calltree_tab == history_tab) {
-        g_signal_stop_emission_by_name(G_OBJECT(treeView), "drag_data_received");
-        return;
-    }
-
-    GtkTreeModel* tree_model = gtk_tree_view_get_model(treeView);
-
-    GtkTreeViewDropPosition position;
-    GtkTreePath *drop_path;
-    gtk_tree_view_get_drag_dest_row(treeView, &drop_path, &position);
-
-    if (drop_path) {
-        gchar *drop_path_str = gtk_tree_path_to_string(drop_path);
-        DEBUG("Got drop path %s", drop_path_str);
-        g_free(drop_path_str);
-
-        GtkTreeIter iter;
-        gtk_tree_model_get_iter(tree_model, &iter, drop_path);
-        gchar *id;
-        gtk_tree_model_get(tree_model, &iter, COLUMN_ID, &id, -1);
-
-        if (is_conference(tree_model, &iter)) {
-            DEBUG("Destination is a conference");
-            calltree_dest_type = A_CONFERENCE;
-            calltree_dest_call = NULL;
-        } else {
-            DEBUG("Destination is a call");
-            calltree_dest_type = A_CALL;
-            calltree_dest_conf = NULL;
-        }
-
-        DEBUG("Position %d", position);
-        switch (position)  {
-
-            case GTK_TREE_VIEW_DROP_BEFORE:
-                /* fallthrough */
-            case GTK_TREE_VIEW_DROP_AFTER:
-                g_free(calltree_dest_path);
-                calltree_dest_path = gtk_tree_path_to_string(drop_path);
-                calltree_dest_path_depth = gtk_tree_path_get_depth(drop_path);
-                calltree_dest_call_id = NULL;
-                calltree_dest_call = NULL;
-                calltree_dest_conf = NULL;
-                break;
-
-            case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
-                /* fallthrough */
-            case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
-                g_free(calltree_dest_path);
-                calltree_dest_path = gtk_tree_path_to_string(drop_path);
-                calltree_dest_path_depth = gtk_tree_path_get_depth(drop_path);
-
-                if (calltree_dest_type == A_CALL) {
-                    calltree_dest_call_id = g_strdup(id);
-                    calltree_dest_call = calllist_get_call(current_calls_tab, id);
-                } else {
-                    calltree_dest_call_id = g_strdup(id);
-                    calltree_dest_conf = conferencelist_get(current_calls_tab, id);
-                }
-                g_free(id);
-                break;
-        }
-    }
-
-
-
-}
-
-static void drag_end_cb(GtkWidget * widget, GdkDragContext * context UNUSED, gpointer data UNUSED)
-{
-    perform_action_after_drag(GTK_TREE_VIEW(widget));
-}
 
 void drag_history_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
 {
     g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
 }
 
-void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UNUSED,
-                           gint y UNUSED, GtkSelectionData *selection_data, guint target_type UNUSED, guint etime, gpointer data UNUSED)
+static void cleanup_popup_data(PopupData **data)
 {
-    determine_drop_path(GTK_TREE_VIEW(widget));
+    if (data && *data) {
+        g_free((*data)->source_ID);
+        g_free((*data)->dest_ID);
+        g_free(*data);
+        *data = 0;
+    }
+}
+
+
+static gboolean
+render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition dest_pos,
+            GtkTreeIter *source_iter)
+{
+    GtkTreeIter dest_iter;
+    if (!gtk_tree_model_get_iter(model, &dest_iter, dest_path)) {
+        ERROR("Could not set dest iter");
+        return FALSE;
+    }
+
+    GtkTreePath *source_path = gtk_tree_model_get_path(model, source_iter);
+    if (!gtk_tree_path_compare(source_path, dest_path)) {
+        ERROR("invalid drop: source and dest are same");
+        gtk_tree_path_free(source_path);
+        return FALSE;
+    } else if (gtk_tree_path_is_ancestor(source_path, dest_path)) {
+        ERROR("invalid drop: source is ancestor of dest");
+        gtk_tree_path_free(source_path);
+        return FALSE;
+    } else if (gtk_tree_path_is_descendant(source_path, dest_path)) {
+        ERROR("invalid drop: source is descendant of dest");
+        gtk_tree_path_free(source_path);
+        return FALSE;
+    }
+    gtk_tree_path_free(source_path);
+
+    GValue dest_val = G_VALUE_INIT;
+    gtk_tree_model_get_value(model, &dest_iter, COLUMN_ID, &dest_val);
+    const gchar *dest_ID = g_value_get_string(&dest_val);
+    GValue source_val = G_VALUE_INIT;
+    gtk_tree_model_get_value(model, source_iter, COLUMN_ID, &source_val);
+    const gchar *source_ID = g_value_get_string(&source_val);
+
+    gboolean result;
+    switch (dest_pos) {
+        case GTK_TREE_VIEW_DROP_BEFORE:
+            DEBUG("DROP_BEFORE, ignoring for now");
+            result = FALSE;
+            break;
+        case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
+            /* fallthrough */
+        case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
+            {
+                DEBUG("DROP_INTO");
+                GtkTreeIter iter_parent;
+                if (!gtk_tree_model_iter_parent(model, &iter_parent, &dest_iter)) {
+                    if (is_conference(model, &dest_iter)) {
+                        if (is_conference(model, source_iter)) {
+                            DEBUG("dropped conference on conference, merging conferences");
+                            dbus_join_conference(source_ID, dest_ID);
+                        } else {
+                            DEBUG("dropped call on conference, adding a call to a conference");
+                            sflphone_add_participant(source_ID, dest_ID);
+                        }
+                    } else {
+                        DEBUG("Dropped call on call, creating new conference or transferring");
+                        cleanup_popup_data(&popup_data);
+                        popup_data = g_new0(PopupData, 1);
+                        popup_data->source_ID = g_strdup(source_ID);
+                        popup_data->dest_ID = g_strdup(dest_ID);
+                        gtk_menu_popup(GTK_MENU(calltree_popupmenu), NULL, NULL, NULL, NULL, 0, 0);
+                    }
+                } else {
+                    callable_obj_t *dest_call = calllist_get_call(current_calls_tab, dest_ID);
+                    if (dest_call && dest_call->_confID) {
+                        DEBUG("dropped call on participant, adding a call to a conference");
+                        sflphone_add_participant(source_ID, dest_call->_confID);
+                    }
+                }
+                result = TRUE;
+                break;
+            }
+        case GTK_TREE_VIEW_DROP_AFTER:
+            DEBUG("DROP_AFTER, ignoring for now");
+            result = FALSE;
+            break;
+        default:
+            ERROR("Unexpected position");
+            result = FALSE;
+            break;
+    }
+    g_value_unset(&dest_val);
+    g_value_unset(&source_val);
+    return result;
+}
+
+void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UNUSED,
+                           gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint target_type UNUSED, guint etime, gpointer data UNUSED)
+{
+    GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
+    GtkTreeModel *model = GTK_TREE_MODEL(gtk_tree_view_get_model(tree_view));
+    GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(tree_view);
+    GtkTreeIter source_iter;
+    if (!gtk_tree_selection_get_selected(tree_selection, NULL, &source_iter)) {
+        ERROR("No tree element selected");
+        return;
+    }
+    GtkTreePath *dest_path;
+    GtkTreeViewDropPosition dest_pos;
+    if (!gtk_tree_view_get_dest_row_at_pos(tree_view, x, y, &dest_path, &dest_pos)) {
+        ERROR("No row at given position");
+        return;
+    }
+
+    gboolean success = render_drop(model, dest_path, dest_pos, &source_iter);
+    if (gdk_drag_context_get_selected_action(context) == GDK_ACTION_MOVE)
+        gtk_drag_finish(context, success, TRUE, etime);
 }
 
 /* Print a string when a menu item is selected */
 
-static void menuitem_response(gchar * string)
+static void
+menuitem_response(gchar * string)
 {
     if (g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0) {
-        dbus_join_participant(calltree_source_call_for_drag->_callID,
-                              calltree_dest_call->_callID);
-        calltree_remove_call(current_calls_tab, calltree_source_call->_callID);
-        calltree_remove_call(current_calls_tab, calltree_dest_call->_callID);
-    }
-    else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
+        dbus_join_participant(popup_data->source_ID,
+                              popup_data->dest_ID);
+        calltree_remove_call(current_calls_tab, popup_data->source_ID);
+        calltree_remove_call(current_calls_tab, popup_data->dest_ID);
+    } else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
+        callable_obj_t * source_call = calllist_get_call(current_calls_tab, popup_data->source_ID);
+        callable_obj_t * dest_call = calllist_get_call(current_calls_tab, popup_data->dest_ID);
         DEBUG("Transferring call %s, to %s",
-              calltree_source_call->_peer_number,
-              calltree_dest_call->_peer_number);
-        dbus_attended_transfer(calltree_source_call, calltree_dest_call);
-        calltree_remove_call(current_calls_tab, calltree_source_call->_callID);
+              source_call->_peer_number,
+              dest_call->_peer_number);
+        dbus_attended_transfer(source_call, dest_call);
+        calltree_remove_call(current_calls_tab, popup_data->source_ID);
     } else
         ERROR("Unknown option in menu %s", string);
 
     // Make sure the create conference option will appear next time the menu pops
     // The create conference option will hide if tow call from the same conference are draged on each other
     gtk_widget_show(calltree_menu_items);
+
+    cleanup_popup_data(&popup_data);
 
     DEBUG("%s", string);
 }
