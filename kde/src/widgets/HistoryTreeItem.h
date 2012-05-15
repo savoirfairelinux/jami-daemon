@@ -65,7 +65,7 @@ class HistoryTreeItem : public QWidget
     //Getters
     Call*            call           () const;
     uint             getTimeStamp   ();
-    uint             getDuration    ();
+    uint             getLength    ();
     QString          getName        ();
     QString          getPhoneNumber ();
     QTreeWidgetItem* getItem        ();
@@ -87,7 +87,7 @@ class HistoryTreeItem : public QWidget
     QLabel*      m_pPeerNameL     ;
     QLabel*      m_pCallNumberL   ;
     QLabel*      m_pTimeL         ;
-    QLabel*      m_pDurationL     ;
+    QLabel*      m_pLengthL     ;
 
     KAction*     m_pCallAgain     ;
     KAction*     m_pAddContact    ;
@@ -101,7 +101,7 @@ class HistoryTreeItem : public QWidget
     QToolButton* m_pRemove        ;
 
     uint         m_TimeStamp      ;
-    uint         m_Duration       ;
+    uint         m_Length       ;
     QString      m_Name           ;
     QString      m_PhoneNumber    ;
     QGridLayout* m_pMainLayout    ;

@@ -188,3 +188,22 @@ void Contact::setDepartment(const QString& name)
 {
    m_Department = name;
 }
+
+///Turn the contact into QString-QString hash
+QHash<QString,QVariant> Contact::toHash()
+{
+   QHash<QString,QVariant> aContact;
+   //aContact[""] = PhoneNumbers   getPhoneNumbers()    const;
+   aContact[ "nickName"       ] = getNickName();
+   aContact[ "firstName"      ] = getFirstName();
+   aContact[ "secondName"     ] = getSecondName();
+   aContact[ "formattedName"  ] = getFormattedName();
+   aContact[ "organization"   ] = getOrganization();
+   aContact[ "Uid"            ] = getUid();
+   aContact[ "preferredEmail" ] = getPreferredEmail();
+   //aContact["Photo"] = getPhoto(      const;
+   aContact[ "type"           ] = getType();
+   aContact[ "group"          ] = getGroup();
+   aContact[ "department"     ] = getDepartment();
+   return aContact;
+}

@@ -43,7 +43,7 @@
 #include "SFLPhone.h"
 #include "widgets/HistoryTreeItem.h"
 #include "klib/AkonadiBackend.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -122,7 +122,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pFilterLE->setClearButtonShown(true);
 
    QStringList sortBy;
-   sortBy << "Date" << "Name" << "Popularity" << "Duration";
+   sortBy << "Date" << "Name" << "Popularity" << "Length";
    m_pSortByCBB->addItems(sortBy);
 
    QWidget* mainWidget = new QWidget(this);
@@ -173,15 +173,6 @@ HistoryDock::~HistoryDock()
  *                                  Getters                                  *
  *                                                                           *
  ****************************************************************************/
-
-///Return the identity of the call caller
-QString HistoryDock::getIdentity(HistoryTreeItem* item)
-{
-   if (item->getName().trimmed().isEmpty())
-      return item->getPhoneNumber();
-   else
-      return item->getName();
-}
 
 
 /*****************************************************************************
@@ -234,7 +225,7 @@ void HistoryDock::reload()
             m_pItemView->setItemWidget(item,0,hitem);
          }
          break;
-      case Name: {
+      case Name2: {
          QHash<QString,QTreeWidgetItem*> group;
          foreach(HistoryTreeItem* item, m_History) {
 //             if (!group[getIdentity(item)]) {
@@ -242,7 +233,7 @@ void HistoryDock::reload()
 //                group[getIdentity(item)]->setText(0,getIdentity(item));
 //                m_pItemView->addTopLevelItem(group[getIdentity(item)]);
 //             }
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(getIdentity(item));
+            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(getIdentity(item->call()));
             item->setItem(twItem);
             twItem->widget = item;
             m_pItemView->setItemWidget(twItem,0,item);
@@ -252,24 +243,24 @@ void HistoryDock::reload()
       case Popularity: {
          QHash<QString,QNumericTreeWidgetItem*> group;
          foreach(HistoryTreeItem* item, m_History) {
-            if (!group[getIdentity(item)]) {
-               group[getIdentity(item)] = m_pItemView->addCategory<QNumericTreeWidgetItem>(getIdentity(item));
-               group[getIdentity(item)]->weight = 0;
-               m_pItemView->addTopLevelItem(group[getIdentity(item)]);
+            if (!group[getIdentity(item->call())]) {
+               group[getIdentity(item->call())] = m_pItemView->addCategory<QNumericTreeWidgetItem>(getIdentity(item->call()));
+               group[getIdentity(item->call())]->weight = 0;
+               m_pItemView->addTopLevelItem(group[getIdentity(item->call())]);
             }
-            group[getIdentity(item)]->weight++;
-            group[getIdentity(item)]->setText(0,getIdentity(item)+" ("+QString::number(group[getIdentity(item)]->weight)+")");
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(getIdentity(item));
+            group[getIdentity(item->call())]->weight++;
+            group[getIdentity(item->call())]->setText(0,getIdentity(item->call())+" ("+QString::number(group[getIdentity(item->call())]->weight)+")");
+            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(getIdentity(item->call()));
             item->setItem(twItem);
             twItem->widget = item;
             m_pItemView->setItemWidget(twItem,0,item);
          }
          break;
       }
-      case Duration:
+      case Length:
          foreach(HistoryTreeItem* hitem, m_History) {
             QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(" ");
-            item->weight = hitem->getDuration();
+            item->weight = hitem->getLength();
             hitem->setItem(item);
             m_pItemView->addTopLevelItem(item);
             m_pItemView->setItemWidget(item,0,hitem);

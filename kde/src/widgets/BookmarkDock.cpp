@@ -35,7 +35,7 @@
 #include <KLineEdit>
 
 //SFLPhone
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "widgets/HistoryTreeItem.h"
 #include "SFLPhone.h"
 #include "widgets/CategoryDrawer.h"

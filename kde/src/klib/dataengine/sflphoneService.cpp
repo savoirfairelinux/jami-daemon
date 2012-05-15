@@ -18,7 +18,6 @@ ServiceJob *SFLPhoneService::createJob(const QString &operation, QMap<QString, Q
     if (operation == "Call") {
        return new CallJob(this, operation,parameters);
     }
-    qDebug() << "\n\n\nIN SERVICE" << parameters["query"];
     m_engine->setData(operation, parameters["query"]);
     return 0;
 }

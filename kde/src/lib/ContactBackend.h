@@ -24,12 +24,16 @@
 
 #include <QObject>
 #include <QHash>
+#include <QStringList>
+#include <QVariant>
 
 #include "typedefs.h"
+#include "Contact.h"
 
 //SFLPhone
 class Contact;
 
+//Typedef
 typedef QList<Contact*> ContactList;
 
 ///@class ContactBackend Allow different way to handle contact without poluting the library

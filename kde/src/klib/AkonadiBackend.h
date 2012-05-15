@@ -43,8 +43,6 @@ namespace Akonadi {
 //SFLPhone
 class Contact;
 
-typedef QList<Contact*> ContactList;
-
 ///@class AkonadiBackend Implement a backend for Akonadi
 class LIB_EXPORT AkonadiBackend : public ContactBackend {
    Q_OBJECT

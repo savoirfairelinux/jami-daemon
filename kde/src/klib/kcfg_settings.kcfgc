@@ -3,3 +3,5 @@ File=sflphone-client-kde.kcfg
 ClassName=ConfigurationSkeletonBase
 Singleton=true
 Mutators=true
+Visibility=LIB_EXPORT
+IncludeFiles=\"../src/lib/typedefs.h\"

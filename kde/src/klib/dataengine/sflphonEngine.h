@@ -26,11 +26,13 @@
 #include <QHash>
 
 #include "../../lib/CallModel.h"
+#include "../SortableDockCommon.h"
 
 typedef QHash<QString,QVariant> HashStringString;
+typedef QHash<QString,QHash<QString,QVariant> > ContactHash;
 class Call;
 
-class SFLPhoneEngine : public Plasma::DataEngine
+class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
 {
    Q_OBJECT
 
@@ -48,18 +50,20 @@ class SFLPhoneEngine : public Plasma::DataEngine
       bool updateSourceEvent(const QString& source);
 
    private:
-      QHash<QString, HashStringString > historyCall  ;
-      QHash<QString, HashStringString > currentCall  ;
-      QHash<QString, QStringList> currentConferences ;
-      static CallModel<>* m_pModel;
+      QHash<QString, HashStringString > historyCall        ;
+      QHash<QString, HashStringString > currentCall        ;
+      QHash<QString, QStringList>       currentConferences ;
+      static CallModel<>*               m_pModel           ;
+      ContactHash                       m_hContacts        ;
       QString getCallStateName(call_state state);
       void updateHistory        ();
       void updateCallList       ();
-      void updateContacts       ();
       void updateAccounts       ();
       void updateConferenceList ();
+      void updateContacts       ();
       void updateInfo();
    private slots:
+      void updateCollection();
       void callStateChangedSignal  (Call* call);
       void incomingCallSignal      (Call* conf);
       void conferenceCreatedSignal (Call* conf);

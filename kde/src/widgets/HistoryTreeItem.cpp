@@ -140,7 +140,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pIconL         = new QLabel( this );
    m_pPeerNameL     = new QLabel( this );
    m_pCallNumberL   = new QLabel( this );
-   m_pDurationL     = new QLabel( this );
+   m_pLengthL     = new QLabel( this );
    m_pTimeL         = new QLabel( this );
 
    m_pIconL->setMinimumSize(70,0);
@@ -155,7 +155,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pMainLayout->addItem   ( verticalSpacer , 4 , 1         );
    m_pMainLayout->addWidget ( m_pPlay        , 0 , 2 , 4 , 1 );
    m_pMainLayout->addWidget ( m_pRemove      , 0 , 3 , 4 , 1 );
-   m_pMainLayout->addWidget ( m_pDurationL   , 0 , 4 , 4 , 1 );
+   m_pMainLayout->addWidget ( m_pLengthL   , 0 , 4 , 4 , 1 );
    setLayout(m_pMainLayout);
    setMinimumSize(QSize(50, 30));
    setMaximumSize(QSize(300,99999));
@@ -483,13 +483,13 @@ void HistoryTreeItem::setCall(Call *call)
    m_pTimeL->setText(QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toUInt()).toString());
 
    int dur = m_pItemCall->getStopTimeStamp().toInt() - m_pItemCall->getStartTimeStamp().toInt();
-   m_pDurationL->setText(QString("%1").arg(dur/3600,2).trimmed()+":"+QString("%1").arg((dur%3600)/60,2).trimmed()+":"+QString("%1").arg((dur%3600)%60,2).trimmed()+" ");
+   m_pLengthL->setText(QString("%1").arg(dur/3600,2).trimmed()+":"+QString("%1").arg((dur%3600)/60,2).trimmed()+":"+QString("%1").arg((dur%3600)%60,2).trimmed()+" ");
 
    connect(m_pItemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
    updated();
 
    m_TimeStamp   = m_pItemCall->getStartTimeStamp().toUInt();
-   m_Duration    = dur;
+   m_Length    = dur;
    m_Name        = m_pItemCall->getPeerName();
    m_PhoneNumber = m_pItemCall->getPeerPhoneNumber();
 
@@ -505,8 +505,8 @@ void HistoryTreeItem::setItem(QTreeWidgetItem* item)
 
 void HistoryTreeItem::setDurWidth(uint width)
 {
-   m_pDurationL->setMaximumSize(width, 9999 );
-   m_pDurationL->setMinimumSize(width, 0    );
+   m_pLengthL->setMaximumSize(width, 9999 );
+   m_pLengthL->setMinimumSize(width, 0    );
 }
 
 
@@ -543,9 +543,9 @@ uint HistoryTreeItem::getTimeStamp()
 }
 
 ///Return the duration
-uint HistoryTreeItem::getDuration()
+uint HistoryTreeItem::getLength()
 {
-   return m_Duration;
+   return m_Length;
 }
 
 ///Return the caller name
@@ -575,6 +575,6 @@ QTreeWidgetItem* HistoryTreeItem::getItem()
 ///Get the width of the durationWidget
 uint HistoryTreeItem::getDurWidth()
 {
-   QFontMetrics fm(m_pDurationL->font());
-   return fm.width(m_pDurationL->text());
+   QFontMetrics fm(m_pLengthL->font());
+   return fm.width(m_pLengthL->text());
 }

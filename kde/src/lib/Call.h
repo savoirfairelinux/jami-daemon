@@ -158,11 +158,12 @@ public:
    call_state actionPerformed(call_action action);
    
    //Setters
-   void setConference(bool value);
-   void setConfId(QString value);
-   void setTransferNumber(const QString& number);
-   void setCallNumber(const QString& number);
-   void setRecordingPath(const QString& path);
+   void setConference     ( bool value            );
+   void setConfId         ( QString value         );
+   void setTransferNumber ( const QString& number );
+   void setCallNumber     ( const QString& number );
+   void setRecordingPath  ( const QString& path   );
+   void setPeerName       ( const QString& name   );
    
    //Mutators
    void appendText(const QString& str);

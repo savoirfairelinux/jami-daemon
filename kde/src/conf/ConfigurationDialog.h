@@ -24,7 +24,7 @@
 #include <kconfigdialog.h>
 
 
-#include "kcfg_settings.h"
+#include "klib/kcfg_settings.h"
 #include "SFLPhoneView.h"
 
 

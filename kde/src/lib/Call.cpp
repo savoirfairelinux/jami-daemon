@@ -471,6 +471,12 @@ void Call::setRecordingPath(const QString& path)
    m_RecordingPath = path;
 }
 
+///Set peer name
+void Call::setPeerName(const QString& name)
+{
+   m_PeerName = name;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Mutator                                  *

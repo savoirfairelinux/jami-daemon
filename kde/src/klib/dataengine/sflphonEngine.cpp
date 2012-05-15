@@ -10,7 +10,9 @@
 #include "../../lib/configurationmanager_interface_singleton.h"
 #include "../../lib/callmanager_interface_singleton.h"
 #include "../../lib/sflphone_const.h"
-#include "sflphoneService.h"
+#include "../../klib/AkonadiBackend.h"
+#include "../../klib/HelperFunctions.h"
+#include "sflphoneService.h">
 
 CallModel<>* SFLPhoneEngine::m_pModel = NULL;
 
@@ -24,12 +26,15 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
       m_pModel->initHistory();
    }
 
-   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   //CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
 
-   connect(m_pModel              , SIGNAL( callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)  ));
-   connect(&callManager          , SIGNAL( incomingCall(Call*))      , this , SLOT(incomingCallSignal(Call*)      ));
-   connect(&callManager          , SIGNAL( conferenceCreated(Call*)) , this , SLOT(conferenceCreatedSignal(Call*) ));
-   connect(&callManager          , SIGNAL( conferenceChanged(Call*)) , this , SLOT(conferenceChangedSignal(Call*) ));
+   connect(m_pModel                     , SIGNAL( callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)  ));
+   //connect(&callManager                 , SIGNAL( incomingCall(Call*))      , this , SLOT(incomingCallSignal(Call*)      ));
+   //connect(&callManager                 , SIGNAL( conferenceCreated(Call*)) , this , SLOT(conferenceCreatedSignal(Call*) ));
+   //connect(&callManager                 , SIGNAL( conferenceChanged(Call*)) , this , SLOT(conferenceChangedSignal(Call*) ));
+   connect(AkonadiBackend::getInstance(), SIGNAL( collectionChanged())      , this , SLOT(updateCollection()             ));
+   
+   //updateContacts();
 }
 
 bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
@@ -49,6 +54,9 @@ bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
    else if ( name == "accounts"    ) {
       updateAccounts();
    }
+   else if ( name == "contacts"    ) {
+      updateContacts();
+   }
    return true;//updateSourceEvent(name);
 }
 
@@ -60,15 +68,15 @@ bool SFLPhoneEngine::updateSourceEvent(const QString &name)
 
 QStringList SFLPhoneEngine::sources() const {
    QStringList toReturn;
-   toReturn << "calls" << "history" << "conferences" << "info" << "accounts";
+   toReturn << "calls" << "history" << "conferences" << "info" << "accounts" << "contacts";
    return toReturn;
 }
 
 Plasma::Service* SFLPhoneEngine::serviceForSource(const QString &source)
 {
-    /*if (source != "calls") {
+    if (source != "calls") {
         return 0;
-    }*/
+    }
 
     SFLPhoneService *service = new SFLPhoneService(this);
     service->setParent(this);
@@ -105,11 +113,18 @@ QString SFLPhoneEngine::getCallStateName(call_state state)
 
 void SFLPhoneEngine::updateHistory()
 {
-   foreach (Call* oldCall, m_pModel->getHistory()) {
-      historyCall[oldCall->getCallId()][ "Name"   ] = oldCall->getPeerName();
-      historyCall[oldCall->getCallId()][ "Number" ] = oldCall->getPeerPhoneNumber();
-      historyCall[oldCall->getCallId()][ "Date"   ] = oldCall->getStopTimeStamp();
-      setData("history", I18N_NOOP(oldCall->getCallId()), historyCall[oldCall->getCallId()]);
+   CallList list = m_pModel->getHistory().values();
+   setHistoryCategory(list,HistorySortingMode::Date);
+
+   foreach (Call* oldCall, list) {
+      qDebug() << oldCall->getStopTimeStamp();
+      historyCall[oldCall->getCallId()][ "peerName"   ] = oldCall->getPeerName();
+      historyCall[oldCall->getCallId()][ "peerNumber" ] = oldCall->getPeerPhoneNumber();
+      historyCall[oldCall->getCallId()][ "length"     ] = oldCall->getStopTimeStamp().toInt() - oldCall->getStartTimeStamp().toInt();
+      historyCall[oldCall->getCallId()][ "date"       ] = oldCall->getStopTimeStamp();
+      if (oldCall->property("section").isValid())
+         historyCall[oldCall->getCallId()][ "section"    ] = oldCall->property("section");
+      setData("history", oldCall->getCallId() , historyCall[oldCall->getCallId()]);
    }
 }
 
@@ -117,10 +132,10 @@ void SFLPhoneEngine::updateCallList()
 {
    foreach (Call* call, m_pModel->getCalls()) {
       if ((!m_pModel->isConference(call)) && (call->getState() != CALL_STATE_OVER)) {
-         currentCall[call->getCallId()][ "Name"      ] = call->getPeerName();
-         currentCall[call->getCallId()][ "Number"    ] = call->getPeerPhoneNumber();
-         currentCall[call->getCallId()][ "StateName" ] = getCallStateName(call->getState());
-         currentCall[call->getCallId()][ "State"     ] = call->getState();
+         currentCall[call->getCallId()][ "peerName"      ] = call->getPeerName();
+         currentCall[call->getCallId()][ "peerNumber"    ] = call->getPeerPhoneNumber();
+         currentCall[call->getCallId()][ "stateName"     ] = getCallStateName(call->getState());
+         currentCall[call->getCallId()][ "state"         ] = call->getState();
          setData("calls", call->getCallId(), currentCall[call->getCallId()]);
       }
    }
@@ -137,14 +152,47 @@ void SFLPhoneEngine::updateConferenceList()
    }
 }
 
-void SFLPhoneEngine::updateContacts()
+void SFLPhoneEngine::updateCollection()
 {
    
+   typedef QHash<QString,QVariant> SerializedContact;
+   ContactList list = AkonadiBackend::getInstance()->update();
+   if (!list.size())
+      return;
+   ContactHash hash = HelperFunctions::toHash(list);
+   foreach (SerializedContact cont, hash) {
+      if (!m_hContacts[hash.key(cont)].size()) {
+         m_hContacts[hash.key(cont)] = cont;
+      }
+      //
+   }
+   removeAllData("contacts");
+   int i=0;
+   foreach (SerializedContact cont, m_hContacts) {
+      cont["section"] = "test";
+      setData("contacts", QString::number(i), QVariant(cont));
+      i++;
+   }
+}
+
+void SFLPhoneEngine::updateContacts()
+{
+   QHash<QString,QVariant> test;
+   test[ "nickName"       ] = "";
+   test[ "firstName"      ] = "";
+   test[ "secondName"     ] = "";
+   test[ "formattedName"  ] = "";
+   test[ "organization"   ] = "";
+   test[ "Uid"            ] = "";
+   test[ "preferredEmail" ] = "";
+   test[ "type"           ] = "";
+   test[ "group"          ] = "";
+   test[ "department"     ] = "";
+   setData("contacts", "fake",test );
 }
 
 void SFLPhoneEngine::updateInfo()
 {
-   qDebug() << "Currentaccount: " << m_pModel->getCurrentAccountId();
    setData("info", I18N_NOOP("Current_account"), m_pModel->getCurrentAccountId());
 }
 
@@ -152,7 +200,6 @@ void SFLPhoneEngine::updateAccounts()
 {
    const QVector<Account*>& list = m_pModel->getAccountList()->getAccounts();
    foreach(Account* a,list) {
-      qDebug() << "Account: " << a->getAccountId();
       setData("accounts", a->getAccountDetail(ACCOUNT_ALIAS), a->getAccountId());
    }
 }
@@ -197,7 +244,7 @@ void SFLPhoneEngine::voiceMailNotifySignal(const QString& accountId, int count)
 
 void SFLPhoneEngine::accountChanged()
 {
-
+   
 }
 
 CallModel<>* SFLPhoneEngine::getModel()

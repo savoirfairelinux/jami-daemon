@@ -53,7 +53,7 @@
 
 ///Init static attributes
 AkonadiBackend*  AkonadiBackend::m_pInstance = 0;
-CallModel<>*     AkonadiBackend::m_pModel = 0;
+CallModel<>*     AkonadiBackend::m_pModel    = 0;
 
 ///Constructor
 AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
@@ -127,10 +127,9 @@ Contact* AkonadiBackend::getContactByUid(const QString& uid)
 ContactList AkonadiBackend::update(Akonadi::Collection collection)
 {
    m_Collection = collection;
-   ContactList contacts;
    if ( !collection.isValid() ) {
       kDebug() << "The current collection is not valid";
-      return contacts;
+      return ContactList();
    }
 
    Akonadi::RecursiveItemFetchJob *job = new Akonadi::RecursiveItemFetchJob( collection, QStringList() << KABC::Addressee::mimeType() << KABC::ContactGroup::mimeType());
@@ -171,12 +170,11 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                aContact->setPhoto(new QPixmap(QPixmap::fromImage( tmp.photo().data()).scaled(QSize(48,48))));
             else
                aContact->setPhoto(0);
-            contacts << aContact;
          }
       }
       m_pContacts = m_ContactByUid.values();
    }
-   return contacts;
+   return m_ContactByUid.values();
 }
 
 ///Edit backend value using an updated frontend contact

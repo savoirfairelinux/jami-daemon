@@ -43,7 +43,7 @@
 #include "klib/AkonadiBackend.h"
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "CallView.h"
 #include "SFLPhoneView.h"
 
@@ -72,15 +72,6 @@ class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
          //}
          return text(column) < other.text(column);
       }
-};
-
-///@enum SortingMode Available sorting mode
-enum SortingMode {
-   Name              ,
-   Organisation      ,
-   Recently_used     ,
-   Group             ,
-   Department
 };
 
 ///Forward keypresses to the filter line edit
@@ -390,13 +381,3 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
  *                                  Helpers                                  *
  *                                                                           *
  ****************************************************************************/
-
-int ContactDock::usableNumberCount(Contact* cont)
-{
-   uint result =0;
-   QStringList list = ConfigurationSkeleton::phoneTypeList();
-   foreach (Contact::PhoneNumber* pn,cont->getPhoneNumbers()) {
-      result += list.indexOf(pn->getType()) != -1;
-   }
-   return result;
-}

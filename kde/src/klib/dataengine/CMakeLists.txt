@@ -22,7 +22,10 @@ target_link_libraries(plasma_engine_sflphone
                       qtsflphone
                       ksflphone
                       ${KDE4_KDECORE_LIBS}
-                      ${KDE4_PLASMA_LIBS})
+                      ${KDE4_PLASMA_LIBS}
+                      ${KDEPIMLIBS_AKONADI_KMIME_LIBS}
+                      ${KDEPIMLIBS_AKONADI_LIBS}
+                      ${KDEPIMLIBS_AKONADI_CONTACT_LIBS} )
 
 install(TARGETS plasma_engine_sflphone
         DESTINATION ${PLUGIN_INSTALL_DIR})
@@ -33,4 +36,3 @@ install(FILES plasma-engine-sflphone.desktop
 install(FILES sflphone.operations
         DESTINATION ${DATA_INSTALL_DIR}/plasma/services)
 
-#TARGET_LINK_LIBRARIES(sflphone-client-kde sflphonekde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDE4_KABC_LIBS})

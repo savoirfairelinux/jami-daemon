@@ -22,10 +22,10 @@
 #define CONFIGURATIONSKELETON_H
 
 #include <QWidget>
+#include "../lib/typedefs.h"
 
-#include "kcfg_settings.h"
+#include "src/klib/kcfg_settings.h"
 //#include "CodecListModel.h"
-#include "AccountListModel.h"
 
 /**
    @author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -38,7 +38,7 @@
    This class reimplements the writeConfig and readConfig functions to ask the
    daemon instead of the normal behavior (read and write in a kconfig file).
 */
-class ConfigurationSkeleton : public ConfigurationSkeletonBase
+class LIB_EXPORT ConfigurationSkeleton : public ConfigurationSkeletonBase
 {
 Q_OBJECT
 

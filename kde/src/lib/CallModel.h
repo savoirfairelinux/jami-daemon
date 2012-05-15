@@ -128,11 +128,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void removeConference          ( Call* call                                  );
 
       //Getters
-      int size                                                     ();
-      CallList                              getCallList            ();
-      static const CallMap&                getHistory             ();
-      static const QStringList              getNumbersByPopularity ();
-      static const QStringList getHistoryCallId                    ();
+      int size                                        ();
+      CallList                 getCallList            ();
+      static const CallMap&    getHistory             ();
+      static const QStringList getNumbersByPopularity ();
+      static const QStringList getHistoryCallId       ();
 
       //Account related
       static Account* getCurrentAccount  (                     );

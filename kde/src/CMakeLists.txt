@@ -42,7 +42,6 @@ SET(
    conf/dlgaudio.cpp
    conf/dlgaddressbook.cpp
    conf/dlghooks.cpp
-   conf/ConfigurationSkeleton.cpp
    conf/ConfigAccountList.cpp
    widgets/Dialpad.cpp
    widgets/ContactItemWidget.cpp
@@ -52,7 +51,6 @@ SET(
    widgets/TranslucentButtons.cpp
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
-   widgets/SortableDockCommon.cpp
    Codec.cpp
    AccountListModel.cpp
    CallView.cpp
@@ -79,8 +77,6 @@ SET(
 
 KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/SFLPhoneView_base.ui  ${config_ui_files}  )
 
-KDE4_ADD_KCFG_FILES(sflphone_client_kde_SRCS conf/kcfg_settings.kcfgc)
-INSTALL(FILES conf/sflphone-client-kde.kcfg DESTINATION ${KCFG_INSTALL_DIR})
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})
 
