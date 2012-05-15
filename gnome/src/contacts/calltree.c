@@ -595,129 +595,131 @@ calltree_update_call_recursive(calltab_t* tab, callable_obj_t * call, GtkTreeIte
     }
 
     for (gint i = 0; i < nbChild; i++) {
+        GtkTreeModel *model = GTK_TREE_MODEL(store);
+        if (gtk_tree_model_iter_nth_child(model, &iter, parent, i)) {
 
-        if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, parent, i)) {
-
-            if (gtk_tree_model_iter_has_child(GTK_TREE_MODEL(store), &iter))
+            if (is_conference(model, &iter)) {
                 calltree_update_call_recursive(tab, call, &iter);
+            } else {
 
-            gchar *id;
-            gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, COLUMN_ID, &id, -1);
+                gchar *id;
+                gtk_tree_model_get(model, &iter, COLUMN_ID, &id, -1);
 
-            callable_obj_t * iterCall = calllist_get_call(tab, id);
-            g_free(id);
+                callable_obj_t * iterCall = calllist_get_call(tab, id);
+                g_free(id);
 
-            if (iterCall != call)
-                continue;
+                if (iterCall != call)
+                    continue;
 
-            /* Update text */
-            gchar * description = NULL;
-            gchar * audio_codec = call_get_audio_codec(call);
+                /* Update text */
+                gchar * description = NULL;
+                gchar * audio_codec = call_get_audio_codec(call);
 
-            if (call->_state == CALL_STATE_TRANSFER)
-                description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "");
-            else
-                if (call->_sas && display_sas && call->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !call->_zrtp_confirmed)
-                    description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "");
+                if (call->_state == CALL_STATE_TRANSFER)
+                    description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "");
                 else
-                    description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec);
+                    if (call->_sas && display_sas && call->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !call->_zrtp_confirmed)
+                        description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "");
+                    else
+                        description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec);
 
-            g_free(audio_codec);
+                g_free(audio_codec);
 
-            /* Update icons */
-            if (tab == current_calls_tab) {
-                DEBUG("Receiving in state %d", call->_state);
+                /* Update icons */
+                if (tab == current_calls_tab) {
+                    DEBUG("Receiving in state %d", call->_state);
 
-                switch (call->_state) {
-                    case CALL_STATE_HOLD:
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-                        break;
-                    case CALL_STATE_INCOMING:
-                    case CALL_STATE_RINGING:
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
-                        break;
-                    case CALL_STATE_CURRENT:
+                    switch (call->_state) {
+                        case CALL_STATE_HOLD:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
+                            break;
+                        case CALL_STATE_INCOMING:
+                        case CALL_STATE_RINGING:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+                            break;
+                        case CALL_STATE_CURRENT:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                            break;
+                        case CALL_STATE_DIALING:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+                            break;
+                        case CALL_STATE_FAILURE:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
+                            break;
+                        case CALL_STATE_BUSY:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
+                            break;
+                        case CALL_STATE_TRANSFER:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfer.svg", NULL);
+                            break;
+                        case CALL_STATE_RECORD:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                            break;
+                        default:
+                            WARN("Update calltree - Should not happen!");
+                    }
+
+                    switch (call->_srtp_state) {
+                        case SRTP_STATE_SDES_SUCCESS:
+                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+                            break;
+                        case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
+                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
+                            if (call->_sas != NULL)
+                                DEBUG("SAS is ready with value %s", call->_sas);
+                            break;
+                        case SRTP_STATE_ZRTP_SAS_CONFIRMED:
+                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+                            break;
+                        case SRTP_STATE_ZRTP_SAS_SIGNED:
+                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
+                            break;
+                        case SRTP_STATE_UNLOCKED:
+                            if (utf8_case_equal(srtp_enabled, "true"))
+                                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+                            break;
+                        default:
+                            WARN("Update calltree srtp state #%d- Should not happen!", call->_srtp_state);
+                            if (utf8_case_equal(srtp_enabled, "true"))
+                                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+                    }
+
+                } else if (tab == history_tab) {
+                    // parent is NULL this is not a conference participant
+                    if (parent == NULL)
+                        pixbuf = history_state_to_pixbuf(call->_history_state);
+                    else // parent is not NULL this is a conference participant
                         pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
-                        break;
-                    case CALL_STATE_DIALING:
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
-                        break;
-                    case CALL_STATE_FAILURE:
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
-                        break;
-                    case CALL_STATE_BUSY:
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
-                        break;
-                    case CALL_STATE_TRANSFER:
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfer.svg", NULL);
-                        break;
-                    case CALL_STATE_RECORD:
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
-                        break;
-                    default:
-                        WARN("Update calltree - Should not happen!");
+
+                    g_free(description);
+                    description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
+                    gchar *date = get_formatted_start_timestamp(call->_time_start);
+                    gchar *duration = get_call_duration(call);
+                    gchar *full_duration = g_strconcat(date , duration , NULL);
+                    g_free(date);
+                    g_free(duration);
+
+                    gchar *old_description = description;
+                    description = g_strconcat(old_description, full_duration, NULL);
+                    g_free(full_duration);
+                    g_free(old_description);
                 }
 
-                switch (call->_srtp_state) {
-                    case SRTP_STATE_SDES_SUCCESS:
-                        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
-                        break;
-                    case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
-                        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
-                        if (call->_sas != NULL)
-                            DEBUG("SAS is ready with value %s", call->_sas);
-                        break;
-                    case SRTP_STATE_ZRTP_SAS_CONFIRMED:
-                        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
-                        break;
-                    case SRTP_STATE_ZRTP_SAS_SIGNED:
-                        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
-                        break;
-                    case SRTP_STATE_UNLOCKED:
-                        if (utf8_case_equal(srtp_enabled, "true"))
-                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
-                        break;
-                    default:
-                        WARN("Update calltree srtp state #%d- Should not happen!", call->_srtp_state);
-                        if (utf8_case_equal(srtp_enabled, "true"))
-                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
-                }
-
-            } else if (tab == history_tab) {
-                // parent is NULL this is not a conference participant
-                if (parent == NULL)
-                    pixbuf = history_state_to_pixbuf(call->_history_state);
-                else // parent is not NULL this is a conference participant
-                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                gtk_tree_store_set(store, &iter,
+                        COLUMN_ACCOUNT_PIXBUF, pixbuf,
+                        COLUMN_ACCOUNT_DESC, description,
+                        COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
+                        COLUMN_ID, call->_callID,
+                        COLUMN_IS_CONFERENCE, FALSE,
+                        -1);
 
                 g_free(description);
-                description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
-                gchar *date = get_formatted_start_timestamp(call->_time_start);
-                gchar *duration = get_call_duration(call);
-                gchar *full_duration = g_strconcat(date , duration , NULL);
-                g_free(date);
-                g_free(duration);
 
-                gchar *old_description = description;
-                description = g_strconcat(old_description, full_duration, NULL);
-                g_free(full_duration);
-                g_free(old_description);
+                if (pixbuf != NULL)
+                    g_object_unref(G_OBJECT(pixbuf));
+                if (pixbuf_security != NULL)
+                    g_object_unref(G_OBJECT(pixbuf_security));
             }
-
-            gtk_tree_store_set(store, &iter,
-                               COLUMN_ACCOUNT_PIXBUF, pixbuf,
-                               COLUMN_ACCOUNT_DESC, description,
-                               COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
-                               COLUMN_ID, call->_callID,
-                               COLUMN_IS_CONFERENCE, FALSE,
-                               -1);
-
-            g_free(description);
-
-            if (pixbuf != NULL)
-                g_object_unref(G_OBJECT(pixbuf));
-            if (pixbuf_security != NULL)
-                g_object_unref(G_OBJECT(pixbuf_security));
         }
     }
 
@@ -1043,35 +1045,37 @@ void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t
             if (gtk_tree_model_iter_has_child(model, &iter_parent))
                 calltree_remove_conference_recursive(tab, conf, &iter_parent);
 
-            gchar *conf_id;
-            gtk_tree_model_get(model, &iter_parent, COLUMN_ID, &conf_id, -1);
+            if (is_conference(model, &iter_parent)) {
+                gchar *conf_id;
+                gtk_tree_model_get(model, &iter_parent, COLUMN_ID, &conf_id, -1);
 
-            conference_obj_t *tempconf = conferencelist_get(tab, conf_id);
-            g_free(conf_id);
+                conference_obj_t *tempconf = conferencelist_get(tab, conf_id);
+                g_free(conf_id);
 
-            /* if this is the conference we want to remove */
-            if (tempconf == conf) {
-                int nbParticipants = gtk_tree_model_iter_n_children(model, &iter_parent);
-                DEBUG("nbParticipants: %d", nbParticipants);
+                /* if this is the conference we want to remove */
+                if (tempconf == conf) {
+                    int nbParticipants = gtk_tree_model_iter_n_children(model, &iter_parent);
+                    DEBUG("nbParticipants: %d", nbParticipants);
 
-                for (int j = 0; j < nbParticipants; j++) {
-                    GtkTreeIter iter_child;
+                    for (int j = 0; j < nbParticipants; j++) {
+                        GtkTreeIter iter_child;
 
-                    if (gtk_tree_model_iter_nth_child(model, &iter_child, &iter_parent, j)) {
-                        gchar *call_id;
-                        gtk_tree_model_get(model, &iter_child, COLUMN_ID, &call_id, -1);
+                        if (gtk_tree_model_iter_nth_child(model, &iter_child, &iter_parent, j)) {
+                            gchar *call_id;
+                            gtk_tree_model_get(model, &iter_child, COLUMN_ID, &call_id, -1);
 
-                        callable_obj_t *call = calllist_get_call(tab, call_id);
-                        g_free(call_id);
+                            callable_obj_t *call = calllist_get_call(tab, call_id);
+                            g_free(call_id);
 
-                        // do not add back call in history calltree when cleaning it
-                        if (call && tab != history_tab)
-                            calltree_add_call(tab, call, NULL);
+                            // do not add back call in history calltree when cleaning it
+                            if (call && tab != history_tab)
+                                calltree_add_call(tab, call, NULL);
+                        }
                     }
-                }
 
-                DEBUG("Remove conference %s", conf->_confID);
-                gtk_tree_store_remove(tab->store, &iter_parent);
+                    DEBUG("Remove conference %s", conf->_confID);
+                    gtk_tree_store_remove(tab->store, &iter_parent);
+                }
             }
         }
     }
