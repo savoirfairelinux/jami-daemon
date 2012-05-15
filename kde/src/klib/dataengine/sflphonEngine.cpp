@@ -34,7 +34,6 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
    //connect(&callManager                 , SIGNAL( conferenceChanged(Call*)) , this , SLOT(conferenceChangedSignal(Call*) ));
    connect(AkonadiBackend::getInstance(), SIGNAL( collectionChanged())      , this , SLOT(updateCollection()             ));
    
-   //updateContacts();
 }
 
 bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
