@@ -66,10 +66,6 @@ static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
 static GtkWidget *calltree_popupmenu = NULL;
 static GtkWidget *calltree_menu_items = NULL;
 
-static callable_obj_t *calltree_source_call = NULL;
-
-static conference_obj_t *calltree_source_conf = NULL;
-
 static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void menuitem_response(gchar * string);
 
@@ -86,12 +82,6 @@ enum {
     COLUMN_ID,
     COLUMN_IS_CONFERENCE,
     COLUMNS_IN_TREE_STORE
-};
-
-enum {
-    DRAG_ACTION_CALL_ON_CALL = 0,
-    DRAG_ACTION_CALL_ON_CONF,
-    DRAG_ACTION_CALL_OUT_CONf
 };
 
 /**
@@ -138,21 +128,19 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     if (is_conference(model, &iter)) {
         DEBUG("Selected a conference");
 
-        calltree_source_conf = conferencelist_get(active_calltree_tab, id);
+        conference_obj_t *calltree_selected_conf = conferencelist_get(active_calltree_tab, id);
         g_free(id);
 
-        if (calltree_source_conf) {
-            calltab_select_conf(active_calltree_tab, calltree_source_conf);
-        }
+        if (calltree_selected_conf)
+            calltab_select_conf(active_calltree_tab, calltree_selected_conf);
     } else {
         DEBUG("Selected a call");
 
-        calltree_source_call = calllist_get_call(active_calltree_tab, id);
+        callable_obj_t *selected_call = calllist_get_call(active_calltree_tab, id);
         g_free(id);
 
-        if (calltree_source_call) {
-            calltab_select_call(active_calltree_tab, calltree_source_call);
-        }
+        if (selected_call)
+            calltab_select_call(active_calltree_tab, selected_call);
     }
 
     update_actions();
