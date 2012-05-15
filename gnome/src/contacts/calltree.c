@@ -1167,6 +1167,19 @@ static void cleanup_popup_data(PopupData **data)
 }
 
 
+static gboolean try_detach(const gchar *source_ID, GtkTreeModel *model, GtkTreeIter *dest_iter)
+{
+    callable_obj_t *source_call = calllist_get_call(current_calls_tab, source_ID);
+    GtkTreeIter iter_parent;
+    if (source_call && source_call->_confID &&
+        !gtk_tree_model_iter_parent(model, &iter_parent, dest_iter)) {
+        sflphone_detach_participant(source_ID);
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
 static gboolean
 render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition dest_pos,
             GtkTreeIter *source_iter)
@@ -1203,8 +1216,8 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
     gboolean result;
     switch (dest_pos) {
         case GTK_TREE_VIEW_DROP_BEFORE:
-            DEBUG("DROP_BEFORE, ignoring for now");
-            result = FALSE;
+            DEBUG("DROP_BEFORE, detaching if appropriate");
+            result = try_detach(source_ID, model, &dest_iter);
             break;
         case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
             /* fallthrough */
@@ -1217,10 +1230,16 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
                         if (is_conference(model, source_iter)) {
                             DEBUG("dropped conference on conference, merging conferences");
                             dbus_join_conference(source_ID, dest_ID);
+                            result = TRUE;
                         } else {
                             DEBUG("dropped call on conference, adding a call to a conference");
                             sflphone_add_participant(source_ID, dest_ID);
+                            result = TRUE;
                         }
+                    } else if (is_conference(model, source_iter)) {
+                        DEBUG("dropped conference on call, merging call into conference");
+                        sflphone_add_participant(dest_ID, source_ID);
+                        result = TRUE;
                     } else {
                         DEBUG("Dropped call on call, creating new conference or transferring");
                         calltree_remove_call(current_calls_tab, source_ID);
@@ -1231,21 +1250,25 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
                         popup_data->source_ID = g_strdup(source_ID);
                         popup_data->dest_ID = g_strdup(dest_ID);
                         gtk_menu_popup(GTK_MENU(calltree_popupmenu), NULL, NULL, NULL, NULL, 0, 0);
+                        result = TRUE;
                     }
                 } else {
                     callable_obj_t *dest_call = calllist_get_call(current_calls_tab, dest_ID);
                     if (dest_call && dest_call->_confID) {
                         DEBUG("dropped call on participant, adding a call to a conference");
                         sflphone_add_participant(source_ID, dest_call->_confID);
+                        result = TRUE;
                     }
                 }
-                result = TRUE;
+                result = FALSE;
                 break;
             }
         case GTK_TREE_VIEW_DROP_AFTER:
-            DEBUG("DROP_AFTER, ignoring for now");
-            result = FALSE;
+        {
+            DEBUG("DROP_AFTER, detaching if appropriate");
+            result = try_detach(source_ID, model, &dest_iter);
             break;
+        }
         default:
             ERROR("Unexpected position");
             result = FALSE;
