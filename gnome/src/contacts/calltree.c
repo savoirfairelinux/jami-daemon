@@ -1246,22 +1246,6 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
         return FALSE;
     }
 
-    GtkTreePath *source_path = gtk_tree_model_get_path(model, source_iter);
-    if (!gtk_tree_path_compare(source_path, dest_path)) {
-        ERROR("invalid drop: source and dest are same");
-        gtk_tree_path_free(source_path);
-        return FALSE;
-    } else if (gtk_tree_path_is_ancestor(source_path, dest_path)) {
-        ERROR("invalid drop: source is ancestor of dest");
-        gtk_tree_path_free(source_path);
-        return FALSE;
-    } else if (gtk_tree_path_is_descendant(source_path, dest_path)) {
-        ERROR("invalid drop: source is descendant of dest");
-        gtk_tree_path_free(source_path);
-        return FALSE;
-    }
-    gtk_tree_path_free(source_path);
-
     gboolean result;
     switch (dest_pos) {
         case GTK_TREE_VIEW_DROP_BEFORE:
@@ -1272,6 +1256,22 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
             /* fallthrough */
         case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
             DEBUG("DROP_INTO");
+            GtkTreePath *source_path = gtk_tree_model_get_path(model, source_iter);
+            if (!gtk_tree_path_compare(source_path, dest_path)) {
+                ERROR("invalid drop: source and dest are same");
+                gtk_tree_path_free(source_path);
+                return FALSE;
+            } else if (gtk_tree_path_is_ancestor(source_path, dest_path)) {
+                ERROR("invalid drop: source is ancestor of dest");
+                gtk_tree_path_free(source_path);
+                return FALSE;
+            } else if (gtk_tree_path_is_descendant(source_path, dest_path)) {
+                ERROR("invalid drop: source is descendant of dest");
+                gtk_tree_path_free(source_path);
+                return FALSE;
+            }
+            gtk_tree_path_free(source_path);
+
             result = handle_drop_into(model, source_iter, &dest_iter);
             break;
         case GTK_TREE_VIEW_DROP_AFTER:
