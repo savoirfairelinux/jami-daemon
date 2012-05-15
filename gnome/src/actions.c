@@ -186,11 +186,6 @@ sflphone_hung_up(callable_obj_t * c)
     call_remove_all_errors(c);
     update_actions();
 
-    if (c->_confID) {
-        g_free(c->_confID);
-        c->_confID = NULL;
-    }
-
     // test whether the widget contains text, if not remove it
     if ((im_window_get_nb_tabs() > 1) && c->_im_widget && !(IM_WIDGET(c->_im_widget)->containText))
         im_window_remove_tab(c->_im_widget);
@@ -616,8 +611,12 @@ sflphone_new_call()
 
     callable_obj_t *current_selected_call = calltab_get_selected_call(current_calls_tab);
 
-    if ((current_selected_call != NULL) && (current_selected_call->_confID == NULL))
-        sflphone_on_hold();
+    if (current_selected_call != NULL) {
+        gchar *confID = dbus_get_conference_id(current_selected_call->_callID);
+        if(g_strcmp0(confID, "") != 0) {
+            sflphone_on_hold();
+        }
+    }
 
     // Play a tone when creating a new call
     if (calllist_get_size(current_calls_tab) == 0)
@@ -816,11 +815,6 @@ sflphone_detach_participant(const gchar* callID)
 
     DEBUG("Detach participant %s", selectedCall->_callID);
 
-    if (selectedCall->_confID) {
-        g_free(selectedCall->_confID);
-        selectedCall->_confID = NULL;
-    }
-
     im_widget_update_state(IM_WIDGET(selectedCall->_im_widget), TRUE);
     calltree_remove_call(current_calls_tab, selectedCall->_callID);
     calltree_add_call(current_calls_tab, selectedCall, NULL);
@@ -949,20 +943,23 @@ void sflphone_fill_codec_list_per_account(account_t *account)
 
 void sflphone_fill_call_list(void)
 {
-    gchar **list = dbus_get_call_list();
+    gchar **call_list = dbus_get_call_list();
 
-    for (gchar **calls = list; calls && *calls; ++calls) {
-        gchar *callID = *calls;
+    for (gchar **callp = call_list; callp && *callp; ++callp) {
+        gchar *callID = *callp;
         if (!calllist_get_call(current_calls_tab, callID)) {
-            callable_obj_t *c = create_new_call_from_details(*calls, dbus_get_call_details(*calls));
-            c->_zrtp_confirmed = FALSE;
-            calllist_add_call(current_calls_tab, c);
-            if (!c->_confID || strlen(c->_confID) == 0)
-                calltree_add_call(current_calls_tab, c, NULL);
+            callable_obj_t *call = create_new_call_from_details(*callp, dbus_get_call_details(*callp));
+            call->_zrtp_confirmed = FALSE;
+            calllist_add_call(current_calls_tab, call);
+
+            // add in treeview only if does not participate to a conference
+            gchar *confID = dbus_get_conference_id(call->_callID);
+            if(g_strcmp0(confID, "") == 0)
+                calltree_add_call(current_calls_tab, call, NULL);
         }
     }
 
-    g_strfreev(list);
+    g_strfreev(call_list);
 }
 
 
