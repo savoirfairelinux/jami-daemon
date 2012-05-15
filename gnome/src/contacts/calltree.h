@@ -35,12 +35,10 @@
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
   */
-
 typedef enum {
     A_CALL,
     A_CONFERENCE,
-    A_INVALID
-} CallType;
+    } CallType;
 
 /**
  * Tags used to identify display type in calltree
@@ -102,21 +100,10 @@ calltree_remove_conference(calltab_t *, const conference_obj_t *);
 void
 calltree_display (calltab_t *);
 
-void
-row_activated (GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
-
 /**
  * Update elapsed time based on selected calltree's call
  */
 gboolean
 calltree_update_clock(gpointer);
-
-/**
- * @param The calltab (current_calls, history, contacts)
- * @param The call
- * @param The callID/confID
- */
-void
-calltree_(calltab_t *, callable_obj_t *, const gchar * const);
 
 #endif

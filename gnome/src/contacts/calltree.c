@@ -147,11 +147,11 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
 }
 
 /* A row is activated when it is double clicked */
-void
-row_activated(GtkTreeView *tree_view UNUSED,
-              GtkTreePath *path UNUSED,
-              GtkTreeViewColumn *column UNUSED,
-              void * data UNUSED)
+static void
+row_activated_cb(GtkTreeView *tree_view UNUSED,
+                 GtkTreePath *path UNUSED,
+                 GtkTreeViewColumn *column UNUSED,
+                 void * data UNUSED)
 {
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
         DEBUG("Selected a call");
@@ -403,7 +403,7 @@ calltree_create(calltab_t* tab, int searchbar_type)
     gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tab->view), FALSE);
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tab->view), FALSE);
     g_signal_connect(G_OBJECT(tab->view), "row-activated",
-                     G_CALLBACK(row_activated),
+                     G_CALLBACK(row_activated_cb),
                      NULL);
 
     gtk_widget_set_can_focus(calltree_sw, TRUE);
