@@ -1196,9 +1196,9 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
     } else {
         // Happens when we drag a call on anther call which participate to a conference
         callable_obj_t *dest_call = calllist_get_call(current_calls_tab, dest_ID);
-        if(dest_call) {
+        if (dest_call) {
             gchar *conf_ID = dbus_get_conference_id(dest_call->_callID);
-            if(g_strcmp0(conf_ID, "") != 0) {
+            if (g_strcmp0(conf_ID, "") != 0) {
                 sflphone_add_participant(source_ID, conf_ID);
                 result = TRUE;
             }
