@@ -83,7 +83,7 @@ calltree_update_call (calltab_t *, callable_obj_t *);
  * @param c The ID of the call to remove
  */
 void
-calltree_remove_call(calltab_t *, const gchar*);
+calltree_remove_call(calltab_t *, const gchar*, gboolean do_update_actions);
 
 /**
  * Add a callable object to history treeview
