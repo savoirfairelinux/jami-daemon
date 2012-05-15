@@ -1156,15 +1156,13 @@ void ManagerImpl::joinConference(const std::string& conf_id1,
         return;
     }
 
-    if (iter->second) {
-        Conference *conf = iter->second;
-        ParticipantSet participants(conf->getParticipantList());
+    Conference *conf = conferenceMap_.find(conf_id1)->second;
+    ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator p = participants.begin();
-                p != participants.end(); ++p) {
-            detachParticipant(*p, "");
-            addParticipant(*p, conf_id2);
-        }
+    for (ParticipantSet::const_iterator p = participants.begin();
+            p != participants.end(); ++p) {
+        detachParticipant(*p, "");
+        addParticipant(*p, conf_id2);
     }
 }
 
