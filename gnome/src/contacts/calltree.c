@@ -545,168 +545,164 @@ GdkPixbuf *history_state_to_pixbuf(const gchar *history_state)
     return pixbuf;
 }
 
-static void
-calltree_update_call_recursive(calltab_t* tab, callable_obj_t * call, GtkTreeIter *parent)
+typedef struct {
+    calltab_t *tab;
+    callable_obj_t *call;
+} CallUpdateCtx;
+
+static gboolean
+update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gpointer data)
 {
     GdkPixbuf *pixbuf = NULL;
     GdkPixbuf *pixbuf_security = NULL;
-    GtkTreeIter iter;
+    CallUpdateCtx *ctx = (CallUpdateCtx*) data;
+    calltab_t *tab = ctx->tab;
+    callable_obj_t *call = ctx->call;
     GtkTreeStore* store = tab->store;
 
     gchar* srtp_enabled = NULL;
     gboolean display_sas = TRUE;
     account_t* account = NULL;
 
-    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
+    account = account_list_get_by_id(call->_accountID);
 
-    if (call) {
-        account = account_list_get_by_id(call->_accountID);
-
-        if (account != NULL) {
-            srtp_enabled = account_lookup(account, ACCOUNT_SRTP_ENABLED);
-            display_sas = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
-        } else {
-            GHashTable * properties = sflphone_get_ip2ip_properties();
-            if (properties != NULL) {
-                srtp_enabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
-                display_sas = utf8_case_equal(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
-            }
+    if (account != NULL) {
+        srtp_enabled = account_lookup(account, ACCOUNT_SRTP_ENABLED);
+        display_sas = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+    } else {
+        GHashTable * properties = sflphone_get_ip2ip_properties();
+        if (properties != NULL) {
+            srtp_enabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
+            display_sas = utf8_case_equal(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
         }
     }
 
-    for (gint i = 0; i < nbChild; i++) {
-        GtkTreeModel *model = GTK_TREE_MODEL(store);
-        if (gtk_tree_model_iter_nth_child(model, &iter, parent, i)) {
+    gchar *id;
+    gtk_tree_model_get(model, iter, COLUMN_ID, &id, -1);
 
-            if (is_conference(model, &iter)) {
-                calltree_update_call_recursive(tab, call, &iter);
-            } else {
+    callable_obj_t * iterCall = calllist_get_call(tab, id);
+    g_free(id);
 
-                gchar *id;
-                gtk_tree_model_get(model, &iter, COLUMN_ID, &id, -1);
+    if (iterCall != call)
+        return FALSE;
 
-                callable_obj_t * iterCall = calllist_get_call(tab, id);
-                g_free(id);
+    /* Update text */
+    gchar * description = NULL;
+    gchar * audio_codec = call_get_audio_codec(call);
 
-                if (iterCall != call)
-                    continue;
+    if (call->_state == CALL_STATE_TRANSFER)
+        description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "");
+    else
+        if (call->_sas && display_sas && call->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !call->_zrtp_confirmed)
+            description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "");
+        else
+            description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec);
 
-                /* Update text */
-                gchar * description = NULL;
-                gchar * audio_codec = call_get_audio_codec(call);
+    g_free(audio_codec);
 
-                if (call->_state == CALL_STATE_TRANSFER)
-                    description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "");
-                else
-                    if (call->_sas && display_sas && call->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !call->_zrtp_confirmed)
-                        description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "");
-                    else
-                        description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec);
+    /* Update icons */
+    if (tab == current_calls_tab) {
+        DEBUG("Receiving in state %d", call->_state);
 
-                g_free(audio_codec);
-
-                /* Update icons */
-                if (tab == current_calls_tab) {
-                    DEBUG("Receiving in state %d", call->_state);
-
-                    switch (call->_state) {
-                        case CALL_STATE_HOLD:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-                            break;
-                        case CALL_STATE_INCOMING:
-                        case CALL_STATE_RINGING:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
-                            break;
-                        case CALL_STATE_CURRENT:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
-                            break;
-                        case CALL_STATE_DIALING:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
-                            break;
-                        case CALL_STATE_FAILURE:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
-                            break;
-                        case CALL_STATE_BUSY:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
-                            break;
-                        case CALL_STATE_TRANSFER:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfer.svg", NULL);
-                            break;
-                        case CALL_STATE_RECORD:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
-                            break;
-                        default:
-                            WARN("Update calltree - Should not happen!");
-                    }
-
-                    switch (call->_srtp_state) {
-                        case SRTP_STATE_SDES_SUCCESS:
-                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
-                            break;
-                        case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
-                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
-                            if (call->_sas != NULL)
-                                DEBUG("SAS is ready with value %s", call->_sas);
-                            break;
-                        case SRTP_STATE_ZRTP_SAS_CONFIRMED:
-                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
-                            break;
-                        case SRTP_STATE_ZRTP_SAS_SIGNED:
-                            pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
-                            break;
-                        case SRTP_STATE_UNLOCKED:
-                            if (utf8_case_equal(srtp_enabled, "true"))
-                                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
-                            break;
-                        default:
-                            WARN("Update calltree srtp state #%d- Should not happen!", call->_srtp_state);
-                            if (utf8_case_equal(srtp_enabled, "true"))
-                                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
-                    }
-
-                } else if (tab == history_tab) {
-                    // parent is NULL this is not a conference participant
-                    if (parent == NULL)
-                        pixbuf = history_state_to_pixbuf(call->_history_state);
-                    else // parent is not NULL this is a conference participant
-                        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
-
-                    g_free(description);
-                    description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
-                    gchar *date = get_formatted_start_timestamp(call->_time_start);
-                    gchar *duration = get_call_duration(call);
-                    gchar *full_duration = g_strconcat(date , duration , NULL);
-                    g_free(date);
-                    g_free(duration);
-
-                    gchar *old_description = description;
-                    description = g_strconcat(old_description, full_duration, NULL);
-                    g_free(full_duration);
-                    g_free(old_description);
-                }
-
-                gtk_tree_store_set(store, &iter,
-                        COLUMN_ACCOUNT_PIXBUF, pixbuf,
-                        COLUMN_ACCOUNT_DESC, description,
-                        COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
-                        COLUMN_ID, call->_callID,
-                        COLUMN_IS_CONFERENCE, FALSE,
-                        -1);
-
-                g_free(description);
-
-                if (pixbuf != NULL)
-                    g_object_unref(G_OBJECT(pixbuf));
-                if (pixbuf_security != NULL)
-                    g_object_unref(G_OBJECT(pixbuf_security));
-            }
+        switch (call->_state) {
+            case CALL_STATE_HOLD:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
+                break;
+            case CALL_STATE_INCOMING:
+            case CALL_STATE_RINGING:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+                break;
+            case CALL_STATE_CURRENT:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                break;
+            case CALL_STATE_DIALING:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+                break;
+            case CALL_STATE_FAILURE:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
+                break;
+            case CALL_STATE_BUSY:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
+                break;
+            case CALL_STATE_TRANSFER:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfer.svg", NULL);
+                break;
+            case CALL_STATE_RECORD:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                break;
+            default:
+                WARN("Update calltree - Should not happen!");
         }
+
+        switch (call->_srtp_state) {
+            case SRTP_STATE_SDES_SUCCESS:
+                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+                break;
+            case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
+                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
+                if (call->_sas != NULL)
+                    DEBUG("SAS is ready with value %s", call->_sas);
+                break;
+            case SRTP_STATE_ZRTP_SAS_CONFIRMED:
+                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+                break;
+            case SRTP_STATE_ZRTP_SAS_SIGNED:
+                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
+                break;
+            case SRTP_STATE_UNLOCKED:
+                if (utf8_case_equal(srtp_enabled, "true"))
+                    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+                break;
+            default:
+                WARN("Update calltree srtp state #%d- Should not happen!", call->_srtp_state);
+                if (utf8_case_equal(srtp_enabled, "true"))
+                    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+        }
+
+    } else if (tab == history_tab) {
+        pixbuf = history_state_to_pixbuf(call->_history_state);
+
+        g_free(description);
+        description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
+        gchar *date = get_formatted_start_timestamp(call->_time_start);
+        gchar *duration = get_call_duration(call);
+        gchar *full_duration = g_strconcat(date , duration , NULL);
+        g_free(date);
+        g_free(duration);
+
+        gchar *old_description = description;
+        description = g_strconcat(old_description, full_duration, NULL);
+        g_free(full_duration);
+        g_free(old_description);
     }
+
+    gtk_tree_store_set(store, iter,
+            COLUMN_ACCOUNT_PIXBUF, pixbuf,
+            COLUMN_ACCOUNT_DESC, description,
+            COLUMN_ACCOUNT_SECURITY_PIXBUF, pixbuf_security,
+            COLUMN_ID, call->_callID,
+            COLUMN_IS_CONFERENCE, FALSE,
+            -1);
+
+    g_free(description);
+
+    if (pixbuf != NULL)
+        g_object_unref(G_OBJECT(pixbuf));
+    if (pixbuf_security != NULL)
+        g_object_unref(G_OBJECT(pixbuf_security));
+    return TRUE;
 }
 
-void calltree_update_call(calltab_t* tab, callable_obj_t * c)
+void calltree_update_call(calltab_t* tab, callable_obj_t * call)
 {
-    calltree_update_call_recursive(tab, c, NULL);
+    if (!call) {
+        ERROR("Call is NULL, ignoring");
+        return;
+    }
+    CallUpdateCtx ctx = {tab, call};
+    GtkTreeStore *store = tab->store;
+    GtkTreeModel *model = GTK_TREE_MODEL(store);
+    gtk_tree_model_foreach(model, update_call, (gpointer) &ctx);
     update_actions();
 }
 
