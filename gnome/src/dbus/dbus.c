@@ -1723,6 +1723,16 @@ dbus_get_participant_list(const gchar *confID)
     return list;
 }
 
+gchar *
+dbus_get_conference_id(const gchar *callID)
+{
+    gchar *confID = NULL;
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_get_conference_id(config_proxy, callID, &confID, &error);
+    check_error(error);
+    return confID;
+}
+
 GHashTable *
 dbus_get_conference_details(const gchar *confID)
 {

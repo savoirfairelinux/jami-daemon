@@ -2853,6 +2853,20 @@ std::vector<std::string> ManagerImpl::getParticipantList(const std::string& conf
     return v;
 }
 
+std::string ManagerImpl::getConferenceId(const std::string& callID)
+{
+    std::string account_id = getAccountFromCall(callID);
+    Call *call = getAccountLink(account_id)->getCall(callID);
+    if(call == NULL) {
+        ERROR("Get conference id");
+        return "";
+    }
+
+    std::string confID = call->getConfId();
+
+    return confID;
+}
+
 void ManagerImpl::saveHistory()
 {
     if (!history_.save())
