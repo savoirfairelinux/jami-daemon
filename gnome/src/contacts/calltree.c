@@ -1166,20 +1166,24 @@ static void cleanup_popup_data(PopupData **data)
     }
 }
 
+static gboolean
+has_parent(GtkTreeModel *model, GtkTreeIter *child)
+{
+    GtkTreeIter parent;
+    return gtk_tree_model_iter_parent(model, &parent, child);
+}
 
 static gboolean try_detach(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *dest_iter)
 {
-    GValue source_val = G_VALUE_INIT;
-    gtk_tree_model_get_value(model, source_iter, COLUMN_ID, &source_val);
-    const gchar *source_ID = g_value_get_string(&source_val);
-    callable_obj_t *source_call = calllist_get_call(current_calls_tab, source_ID);
     gboolean result = FALSE;
-    GtkTreeIter iter_parent;
-    if (source_call && source_call->_confID && !gtk_tree_model_iter_parent(model, &iter_parent, dest_iter)) {
+    if (has_parent(model, source_iter) && !has_parent(model, dest_iter)) {
+        GValue source_val = G_VALUE_INIT;
+        gtk_tree_model_get_value(model, source_iter, COLUMN_ID, &source_val);
+        const gchar *source_ID = g_value_get_string(&source_val);
         sflphone_detach_participant(source_ID);
         result = TRUE;
+        g_value_unset(&source_val);
     }
-    g_value_unset(&source_val);
     return result;
 }
 
@@ -1194,9 +1198,12 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
     gtk_tree_model_get_value(model, dest_iter, COLUMN_ID, &dest_val);
     const gchar *dest_ID = g_value_get_string(&dest_val);
 
-    GtkTreeIter iter_parent;
     gboolean result = FALSE;
-    if (!gtk_tree_model_iter_parent(model, &iter_parent, dest_iter)) {
+
+    if (has_parent(model, source_iter)) {
+        DEBUG("Source is participant, should only be detached");
+        result = FALSE;
+    } else if (!has_parent(model, dest_iter)) {
         if (is_conference(model, dest_iter)) {
             if (is_conference(model, source_iter)) {
                 DEBUG("dropped conference on conference, merging conferences");
