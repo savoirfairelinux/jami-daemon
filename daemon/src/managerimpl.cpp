@@ -1144,14 +1144,14 @@ void ManagerImpl::processRemainingParticipants(const std::string &current_call_i
 void ManagerImpl::joinConference(const std::string& conf_id1,
                                  const std::string& conf_id2)
 {
-    ConferenceMap::iterator iter(conferenceMap_.find(conf_id1));
+    DEBUG("Join conferences %s and %s", conf_id1.c_str(), conf_id2.c_str());
 
-    if (iter == conferenceMap_.end()) {
+    if (conferenceMap_.find(conf_id1) == conferenceMap_.end()) {
         ERROR("Not a valid conference ID: %s", conf_id1.c_str());
         return;
     }
 
-    if (conferenceMap_.find(conf_id2) != conferenceMap_.end()) {
+    if (conferenceMap_.find(conf_id2) == conferenceMap_.end()) {
         ERROR("Not a valid conference ID: %s", conf_id2.c_str());
         return;
     }
