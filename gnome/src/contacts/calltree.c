@@ -550,6 +550,11 @@ typedef struct {
     callable_obj_t *call;
 } CallUpdateCtx;
 
+typedef struct {
+    calltab_t *tab;
+    const conference_obj_t *conf;
+} ConferenceRemoveCtx;
+
 static gboolean
 update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gpointer data)
 {
@@ -1004,61 +1009,57 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 }
 
 static
-void calltree_remove_conference_recursive(calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent)
+gboolean
+remove_conference(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gpointer data)
 {
-    GtkTreeModel *model = GTK_TREE_MODEL(tab->store);
-    int nbChildren = gtk_tree_model_iter_n_children(model, parent);
+    if (!is_conference(model, iter))
+        return FALSE;
 
-    for (int i = 0; i < nbChildren; i++) {
-        GtkTreeIter iter_parent;
+    gchar *conf_id;
+    gtk_tree_model_get(model, iter, COLUMN_ID, &conf_id, -1);
 
-        /* if the nth child of parent has one or more children */
-        if (gtk_tree_model_iter_nth_child(model, &iter_parent, parent, i)) {
-            /* RECURSION! */
-            if (gtk_tree_model_iter_has_child(model, &iter_parent))
-                calltree_remove_conference_recursive(tab, conf, &iter_parent);
+    ConferenceRemoveCtx * ctx = (ConferenceRemoveCtx *) data;
+    calltab_t *tab = ctx->tab;
+    conference_obj_t *tempconf = conferencelist_get(tab, conf_id);
+    g_free(conf_id);
 
-            if (is_conference(model, &iter_parent)) {
-                gchar *conf_id;
-                gtk_tree_model_get(model, &iter_parent, COLUMN_ID, &conf_id, -1);
+    const conference_obj_t *conf = ctx->conf;
+    /* if this is not the conference we want to remove */
+    if (tempconf != conf)
+        return FALSE;
 
-                conference_obj_t *tempconf = conferencelist_get(tab, conf_id);
-                g_free(conf_id);
+    int nbParticipants = gtk_tree_model_iter_n_children(model, iter);
+    DEBUG("nbParticipants: %d", nbParticipants);
 
-                /* if this is the conference we want to remove */
-                if (tempconf == conf) {
-                    int nbParticipants = gtk_tree_model_iter_n_children(model, &iter_parent);
-                    DEBUG("nbParticipants: %d", nbParticipants);
+    for (int j = 0; j < nbParticipants; j++) {
+        GtkTreeIter iter_child;
 
-                    for (int j = 0; j < nbParticipants; j++) {
-                        GtkTreeIter iter_child;
+        if (gtk_tree_model_iter_nth_child(model, &iter_child, iter, j)) {
+            gchar *call_id;
+            gtk_tree_model_get(model, &iter_child, COLUMN_ID, &call_id, -1);
 
-                        if (gtk_tree_model_iter_nth_child(model, &iter_child, &iter_parent, j)) {
-                            gchar *call_id;
-                            gtk_tree_model_get(model, &iter_child, COLUMN_ID, &call_id, -1);
+            callable_obj_t *call = calllist_get_call(tab, call_id);
+            g_free(call_id);
 
-                            callable_obj_t *call = calllist_get_call(tab, call_id);
-                            g_free(call_id);
-
-                            // do not add back call in history calltree when cleaning it
-                            if (call && tab != history_tab)
-                                calltree_add_call(tab, call, NULL);
-                        }
-                    }
-
-                    gtk_tree_store_remove(tab->store, &iter_parent);
-                }
-            }
+            // do not add back call in history calltree when cleaning it
+            if (call && tab != history_tab)
+                calltree_add_call(tab, call, NULL);
         }
     }
 
+    gtk_tree_store_remove(GTK_TREE_STORE(model), iter);
+
     if (calltab_get_selected_conf(tab) == conf)
         calltab_select_conf(tab, NULL);
+    return TRUE;
 }
 
 void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
 {
-    calltree_remove_conference_recursive(tab, conf, NULL);
+    ConferenceRemoveCtx context = {tab, conf};
+    GtkTreeStore *store = tab->store;
+    GtkTreeModel *model = GTK_TREE_MODEL(store);
+    gtk_tree_model_foreach(model, remove_conference, (gpointer) &context);
 
     update_actions();
     DEBUG("Finished removing conference %s", conf->_confID);
