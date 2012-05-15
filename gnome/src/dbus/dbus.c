@@ -338,7 +338,6 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, void *foo U
         if (call->_state == CALL_STATE_RECORD)
             new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
 
-        call->_confID = g_strdup(confID);
         call->_historyConfID = g_strdup(confID);
     }
 
@@ -365,8 +364,6 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
         callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
 
         if (call) {
-            g_free(call->_confID);
-            call->_confID = NULL;
             im_widget_update_state(IM_WIDGET(call->_im_widget), TRUE);
         }
     }
