@@ -1728,7 +1728,7 @@ dbus_get_conference_id(const gchar *callID)
 {
     gchar *confID = NULL;
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_get_conference_id(config_proxy, callID, &confID, &error);
+    org_sflphone_SFLphone_CallManager_get_conference_id(call_proxy, callID, &confID, &error);
     check_error(error);
     return confID;
 }
