@@ -12,6 +12,7 @@
 #include "../../lib/sflphone_const.h"
 #include "../../klib/AkonadiBackend.h"
 #include "../../klib/HelperFunctions.h"
+#include "../../klib/ConfigurationSkeleton.h"
 #include "sflphoneService.h">
 
 CallModel<>* SFLPhoneEngine::m_pModel = NULL;
@@ -56,6 +57,9 @@ bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
    else if ( name == "contacts"    ) {
       updateContacts();
    }
+   else if ( name == "bookmark"    ) {
+      updateBookmarkList();
+   }
    return true;//updateSourceEvent(name);
 }
 
@@ -67,7 +71,7 @@ bool SFLPhoneEngine::updateSourceEvent(const QString &name)
 
 QStringList SFLPhoneEngine::sources() const {
    QStringList toReturn;
-   toReturn << "calls" << "history" << "conferences" << "info" << "accounts" << "contacts";
+   toReturn << "calls" << "history" << "conferences" << "info" << "accounts" << "contacts" << "bookmark";
    return toReturn;
 }
 
@@ -116,7 +120,6 @@ void SFLPhoneEngine::updateHistory()
    setHistoryCategory(list,HistorySortingMode::Date);
 
    foreach (Call* oldCall, list) {
-      qDebug() << oldCall->getStopTimeStamp();
       historyCall[oldCall->getCallId()][ "peerName"   ] = oldCall->getPeerName();
       historyCall[oldCall->getCallId()][ "peerNumber" ] = oldCall->getPeerPhoneNumber();
       historyCall[oldCall->getCallId()][ "length"     ] = oldCall->getStopTimeStamp().toInt() - oldCall->getStartTimeStamp().toInt();
@@ -137,6 +140,38 @@ void SFLPhoneEngine::updateCallList()
          currentCall[call->getCallId()][ "state"         ] = call->getState();
          setData("calls", call->getCallId(), currentCall[call->getCallId()]);
       }
+   }
+}
+
+void SFLPhoneEngine::updateBookmarkList()
+{
+   removeAllData("bookmark");
+   int i=0;
+   QStringList cl = getModel()->getNumbersByPopularity();
+   for (;i < ((cl.size() < 10)?cl.size():10);i++) {
+      QHash<QString,QVariant> pop;
+      Contact* cont = AkonadiBackend::getInstance()->getContactByPhone(cl[i],true);
+      if (cont) {
+         pop["peerName"     ] = cont->getFormattedName();
+      }
+      else {
+         pop["peerName"     ] = cl[i];
+      }
+      pop["peerNumber"   ] = cl[i];
+      pop["section"      ] = "Popular";
+      pop["listPriority" ] = 1000;
+      setData("bookmark", QString::number(i), pop);
+   }
+
+   //TODO Wont work for now
+   foreach (QString nb, ConfigurationSkeleton::bookmarkList()) {
+      i++;
+      QHash<QString,QVariant> pop;
+      pop["peerName"     ] = "TODO";
+      pop["peerNumber"   ] = nb;
+      pop["section"      ] = "1";
+      pop["listPriority" ] = 0;
+      setData("bookmark", QString::number(i), pop);
    }
 }
 
@@ -172,6 +207,7 @@ void SFLPhoneEngine::updateCollection()
       setData("contacts", QString::number(i), QVariant(cont));
       i++;
    }
+   updateBookmarkList();
 }
 
 void SFLPhoneEngine::updateContacts()

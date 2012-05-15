@@ -61,6 +61,7 @@ class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
       void updateAccounts       ();
       void updateConferenceList ();
       void updateContacts       ();
+      void updateBookmarkList   ();
       void updateInfo();
    private slots:
       void updateCollection();
