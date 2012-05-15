@@ -506,31 +506,28 @@ calltree_create(calltab_t* tab, int searchbar_type)
     gtk_widget_show(tab->tree);
 }
 
+static gboolean
+remove_element_if_match(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gpointer data)
+{
+    const gchar *target_id = (const gchar *) data;
+    gchar *id;
+    gtk_tree_model_get(model, iter, COLUMN_ID, &id, -1);
+    gboolean result = FALSE;
+    if (g_strcmp0(id, target_id) == 0) {
+        gtk_tree_store_remove(GTK_TREE_STORE(model), iter);
+        result = TRUE;  // stop iterating, we found it
+    }
+    g_free(id);
 
-static void
-calltree_remove_call_recursive(calltab_t* tab, const gchar *target_id, GtkTreeIter *parent)
+    return result;
+}
+
+void
+calltree_remove_call(calltab_t* tab, const gchar *target_id)
 {
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);
-
-    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
-
-    for (int i = 0; i < nbChild; i++) {
-        GtkTreeIter child;
-
-        if (gtk_tree_model_iter_nth_child(model, &child, parent, i)) {
-            if (gtk_tree_model_iter_has_child(model, &child))
-                calltree_remove_call_recursive(tab, target_id, &child);
-
-            gchar *id;
-            gtk_tree_model_get(model, &child, COLUMN_ID, &id, -1);
-
-            if (g_strcmp0(id, target_id) == 0)
-                gtk_tree_store_remove(store, &child);
-
-            g_free(id);
-        }
-    }
+    gtk_tree_model_foreach(model, remove_element_if_match, (gpointer) target_id);
 
     /* invalidate selected call if it was our target */
     callable_obj_t *sel = calltab_get_selected_call(tab);
@@ -538,14 +535,6 @@ calltree_remove_call_recursive(calltab_t* tab, const gchar *target_id, GtkTreeIt
         calltab_select_call(tab, NULL);
 
     statusbar_update_clock("");
-}
-
-void
-calltree_remove_call(calltab_t* tab, const gchar *id, gboolean do_update_actions)
-{
-    calltree_remove_call_recursive(tab, id, NULL);
-    if (do_update_actions)
-        update_actions();
 }
 
 GdkPixbuf *history_state_to_pixbuf(const gchar *history_state)
@@ -1004,7 +993,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
         const gchar * const call_id = (gchar *) part->data;
         callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
-        calltree_remove_call(current_calls_tab, call->_callID, FALSE);
+        calltree_remove_call(current_calls_tab, call->_callID);
         calltree_add_call(current_calls_tab, call, &iter);
     }
 
@@ -1209,7 +1198,7 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
             result = TRUE;
         } else {
             DEBUG("dropped call on call, creating new conference or transferring");
-            calltree_remove_call(current_calls_tab, source_ID, FALSE);
+            calltree_remove_call(current_calls_tab, source_ID);
             callable_obj_t *source_call = calllist_get_call(current_calls_tab, source_ID);
             calltree_add_call(current_calls_tab, source_call, NULL);
             cleanup_popup_data(&popup_data);
@@ -1313,8 +1302,9 @@ menuitem_response(gchar * string)
     if (g_strcmp0(string, SFL_CREATE_CONFERENCE) == 0) {
         dbus_join_participant(popup_data->source_ID,
                               popup_data->dest_ID);
-        calltree_remove_call(current_calls_tab, popup_data->source_ID, TRUE);
-        calltree_remove_call(current_calls_tab, popup_data->dest_ID, TRUE);
+        calltree_remove_call(current_calls_tab, popup_data->source_ID);
+        calltree_remove_call(current_calls_tab, popup_data->dest_ID);
+        update_actions();
     } else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
         callable_obj_t * source_call = calllist_get_call(current_calls_tab, popup_data->source_ID);
         callable_obj_t * dest_call = calllist_get_call(current_calls_tab, popup_data->dest_ID);
@@ -1322,7 +1312,7 @@ menuitem_response(gchar * string)
               source_call->_peer_number,
               dest_call->_peer_number);
         dbus_attended_transfer(source_call, dest_call);
-        calltree_remove_call(current_calls_tab, popup_data->source_ID, TRUE);
+        calltree_remove_call(current_calls_tab, popup_data->source_ID);
     } else
         ERROR("Unknown option in menu %s", string);
 
