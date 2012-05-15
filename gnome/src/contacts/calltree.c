@@ -1205,11 +1205,14 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
             result = TRUE;
         }
     } else {
+        // Happens when we drag a call on anther call which participate to a conference
         callable_obj_t *dest_call = calllist_get_call(current_calls_tab, dest_ID);
-        if (dest_call && dest_call->_confID) {
-            DEBUG("dropped call on participant, adding a call to a conference");
-            sflphone_add_participant(source_ID, dest_call->_confID);
-            result = TRUE;
+        if(dest_call) {
+            gchar *conf_ID = dbus_get_conference_id(dest_call->_callID);
+            if(g_strcmp0(conf_ID, "") != 0) {
+                sflphone_add_participant(source_ID, conf_ID);
+                result = TRUE;
+            }
         }
     }
     g_value_unset(&source_val);
