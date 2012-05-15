@@ -136,7 +136,7 @@ calllist_clean_history(void)
     for (guint i = 0; i < size; i++) {
         callable_obj_t * c = calllist_get_nth(history_tab, i);
         if (c)
-            calltree_remove_call(history_tab, c);
+            calltree_remove_call(history_tab, c->_callID);
     }
 
     calllist_reset(history_tab);
@@ -146,7 +146,7 @@ void
 calllist_remove_from_history(callable_obj_t* c)
 {
     calllist_remove_call(history_tab, c->_callID);
-    calltree_remove_call(history_tab, c);
+    calltree_remove_call(history_tab, c->_callID);
 }
 
 void
