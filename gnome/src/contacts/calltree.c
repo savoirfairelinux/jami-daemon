@@ -71,7 +71,6 @@ static callable_obj_t *calltree_source_call = NULL;
 static conference_obj_t *calltree_source_conf = NULL;
 
 static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
-static void drag_history_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
 static void menuitem_response(gchar * string);
 
 static GtkTargetEntry target_list[] = {
@@ -442,8 +441,6 @@ calltree_create(calltab_t* tab, int searchbar_type)
                      NULL);
 
     if (g_strcmp0(tab->_name, CURRENT_CALLS) == 0) {
-        // Make calltree reordable for drag n drop
-        //gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
 
         gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tab->view), GDK_BUTTON1_MASK, target_list, n_targets, GDK_ACTION_DEFAULT | GDK_ACTION_MOVE);
         gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tab->view), target_list, n_targets, GDK_ACTION_DEFAULT);
@@ -463,9 +460,6 @@ calltree_create(calltab_t* tab, int searchbar_type)
                                  G_CALLBACK(menuitem_response), g_strdup(SFL_CREATE_CONFERENCE));
         gtk_menu_shell_append(GTK_MENU_SHELL(calltree_popupmenu), calltree_menu_items);
         gtk_widget_show(calltree_menu_items);
-    } else if (tab == history_tab) {
-        gtk_tree_view_set_show_expanders(GTK_TREE_VIEW(tab->view), TRUE);
-        g_signal_connect(G_OBJECT(tab->view), "drag_data_received", G_CALLBACK(drag_history_received_cb), NULL);
     }
 
     gtk_widget_grab_focus(GTK_WIDGET(tab->view));
@@ -1160,12 +1154,6 @@ gboolean calltree_update_clock(gpointer data UNUSED)
 
     statusbar_update_clock(msg);
     return TRUE;
-}
-
-
-void drag_history_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
-{
-    g_signal_stop_emission_by_name(G_OBJECT(widget), "drag_data_received");
 }
 
 static void cleanup_popup_data(PopupData **data)
