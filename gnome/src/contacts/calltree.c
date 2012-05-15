@@ -1223,6 +1223,9 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
                         }
                     } else {
                         DEBUG("Dropped call on call, creating new conference or transferring");
+                        calltree_remove_call(current_calls_tab, source_ID);
+                        callable_obj_t *source_call = calllist_get_call(current_calls_tab, source_ID);
+                        calltree_add_call(current_calls_tab, source_call, NULL);
                         cleanup_popup_data(&popup_data);
                         popup_data = g_new0(PopupData, 1);
                         popup_data->source_ID = g_strdup(source_ID);
