@@ -152,9 +152,6 @@ sflphone_quit()
         calllist_clean(current_calls_tab);
         calllist_clean(contacts_tab);
         calllist_clean(history_tab);
-        gtk_tree_store_clear(history_tab->store);
-        gtk_tree_store_clear(current_calls_tab->store);
-        gtk_tree_store_clear(contacts_tab->store);
         gtk_main_quit();
     }
 }
