@@ -1206,6 +1206,24 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
     return result;
 }
 
+static gboolean valid_drop(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreePath *dest_path)
+{
+    gboolean result = TRUE;
+    GtkTreePath *source_path = gtk_tree_model_get_path(model, source_iter);
+    if (!gtk_tree_path_compare(source_path, dest_path)) {
+        ERROR("invalid drop: source and destination are the same");
+        result = FALSE;
+    } else if (gtk_tree_path_is_ancestor(source_path, dest_path)) {
+        ERROR("invalid drop: source is ancestor of destination");
+        result = FALSE;
+    } else if (gtk_tree_path_is_descendant(source_path, dest_path)) {
+        ERROR("invalid drop: source is descendant of destination");
+        result = FALSE;
+    }
+    gtk_tree_path_free(source_path);
+    return result;
+}
+
 static gboolean
 render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition dest_pos,
             GtkTreeIter *source_iter)
@@ -1216,41 +1234,19 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
         return FALSE;
     }
 
-    gboolean result;
+    gboolean result = FALSE;
     switch (dest_pos) {
         case GTK_TREE_VIEW_DROP_BEFORE:
-            DEBUG("DROP_BEFORE, detaching if appropriate");
+        case GTK_TREE_VIEW_DROP_AFTER:
+            DEBUG("dropped at position %d, detaching if appropriate", dest_pos);
             result = try_detach(model, source_iter, &dest_iter);
             break;
+
         case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
-            /* fallthrough */
         case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
             DEBUG("DROP_INTO");
-            GtkTreePath *source_path = gtk_tree_model_get_path(model, source_iter);
-            if (!gtk_tree_path_compare(source_path, dest_path)) {
-                ERROR("invalid drop: source and dest are same");
-                gtk_tree_path_free(source_path);
-                return FALSE;
-            } else if (gtk_tree_path_is_ancestor(source_path, dest_path)) {
-                ERROR("invalid drop: source is ancestor of dest");
-                gtk_tree_path_free(source_path);
-                return FALSE;
-            } else if (gtk_tree_path_is_descendant(source_path, dest_path)) {
-                ERROR("invalid drop: source is descendant of dest");
-                gtk_tree_path_free(source_path);
-                return FALSE;
-            }
-            gtk_tree_path_free(source_path);
-
-            result = handle_drop_into(model, source_iter, &dest_iter);
-            break;
-        case GTK_TREE_VIEW_DROP_AFTER:
-            DEBUG("DROP_AFTER, detaching if appropriate");
-            result = try_detach(model, source_iter, &dest_iter);
-            break;
-        default:
-            ERROR("Unexpected position");
-            result = FALSE;
+            if (valid_drop(model, source_iter, dest_path))
+                result = handle_drop_into(model, source_iter, &dest_iter);
             break;
     }
     return result;
