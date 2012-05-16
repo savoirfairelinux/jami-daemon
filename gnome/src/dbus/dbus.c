@@ -68,7 +68,7 @@ static GDBusProxy *session_manager_proxy;
 static gboolean check_error(GError *error)
 {
     if (error) {
-        DEBUG("DBUS: Error: %s", error->message);
+        ERROR("%s", error->message);
         g_error_free(error);
         return TRUE;
     }
@@ -236,7 +236,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
         g_strcmp0(state, "CURRENT") == 0 ||
         g_strcmp0(state, "RECORD")) {
 
-        DEBUG("DBUS: New ringing call! accountID: %s", callID);
+        DEBUG("New ringing call! accountID: %s", callID);
 
         restore_call(callID);
         callable_obj_t *new_call = calllist_get_call(current_calls_tab, callID);
@@ -256,7 +256,7 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
     if (c)
         process_existing_call_state_change(c, state);
     else {
-        WARN("DBUS: Call does not exist in %s", __func__);
+        WARN("Call does not exist in %s", __func__);
         process_nonexisting_call_state_change(callID, state);
     }
 }
@@ -276,12 +276,12 @@ static void
 conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
                       const gchar *state, void *foo UNUSED)
 {
-    DEBUG("DBUS: Conference state changed: %s\n", state);
+    DEBUG("Conference state changed: %s\n", state);
 
     conference_obj_t* changed_conf = conferencelist_get(current_calls_tab, confID);
 
     if (changed_conf == NULL) {
-        ERROR("DBUS: Conference is NULL in conference state changed");
+        ERROR("Conference is NULL in conference state changed");
         return;
     }
 
@@ -319,7 +319,7 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 static void
 conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, void *foo UNUSED)
 {
-    DEBUG("DBUS: Conference %s added", confID);
+    DEBUG("Conference %s added", confID);
 
     conference_obj_t *new_conf = create_new_conference(CONFERENCE_STATE_ACTIVE_ATTACHED, confID);
 
@@ -353,7 +353,7 @@ static void
 conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
                       void *foo UNUSED)
 {
-    DEBUG("DBUS: Conference removed %s", confID);
+    DEBUG("Conference removed %s", confID);
     conference_obj_t *c = conferencelist_get(current_calls_tab, confID);
     calltree_remove_conference(current_calls_tab, c);
 
@@ -375,17 +375,17 @@ static void
 record_playback_filepath_cb(DBusGProxy *proxy UNUSED, const gchar *id,
                             const gchar *filepath)
 {
-    DEBUG("DBUS: Filepath for %s: %s", id, filepath);
+    DEBUG("Filepath for %s: %s", id, filepath);
     callable_obj_t *call = calllist_get_call(current_calls_tab, id);
     conference_obj_t *conf = conferencelist_get(current_calls_tab, id);
 
     if (call && conf) {
-        ERROR("DBUS: Two objects for this callid");
+        ERROR("Two objects for this callid");
         return;
     }
 
     if (!call && !conf) {
-        ERROR("DBUS: Could not get object");
+        ERROR("Could not get object");
         return;
     }
 
@@ -398,14 +398,14 @@ record_playback_filepath_cb(DBusGProxy *proxy UNUSED, const gchar *id,
 static void
 record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
 {
-    DEBUG("DBUS: Playback stopped for %s", filepath);
+    DEBUG("Playback stopped for %s", filepath);
     const gint calllist_size = calllist_get_size(history_tab);
 
     for (gint i = 0; i < calllist_size; i++) {
         callable_obj_t *call = calllist_get_nth(history_tab, i);
 
         if (call == NULL) {
-            ERROR("DBUS: ERROR: Could not find %dth call", i);
+            ERROR("Could not find %dth call", i);
             break;
         }
         if (g_strcmp0(call->_recordfile, filepath) == 0)
@@ -471,7 +471,7 @@ transfer_failed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 static void
 secure_sdes_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
-    DEBUG("DBUS: SRTP using SDES is on");
+    DEBUG("SRTP using SDES is on");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -483,7 +483,7 @@ secure_sdes_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSE
 static void
 secure_sdes_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
-    DEBUG("DBUS: SRTP using SDES is off");
+    DEBUG("SRTP using SDES is off");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -496,7 +496,7 @@ static void
 secure_zrtp_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
                   const gchar *cipher, void *foo UNUSED)
 {
-    DEBUG("DBUS: SRTP using ZRTP is ON secure_on_cb");
+    DEBUG("SRTP using ZRTP is ON secure_on_cb");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -509,7 +509,7 @@ secure_zrtp_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
 static void
 secure_zrtp_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
-    DEBUG("DBUS: SRTP using ZRTP is OFF");
+    DEBUG("SRTP using ZRTP is OFF");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -522,7 +522,7 @@ static void
 show_zrtp_sas_cb(DBusGProxy *proxy UNUSED, const gchar *callID, const gchar *sas,
                  gboolean verified, void *foo UNUSED)
 {
-    DEBUG("DBUS: Showing SAS");
+    DEBUG("Showing SAS");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
@@ -532,7 +532,7 @@ show_zrtp_sas_cb(DBusGProxy *proxy UNUSED, const gchar *callID, const gchar *sas
 static void
 confirm_go_clear_cb(DBusGProxy *proxy UNUSED, const gchar *callID, void *foo UNUSED)
 {
-    DEBUG("DBUS: Confirm Go Clear request");
+    DEBUG("Confirm Go Clear request");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
@@ -555,7 +555,7 @@ static void
 sip_call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
                   const gchar *description, guint code, void *foo UNUSED)
 {
-    DEBUG("DBUS: Sip call state changed %s", callID);
+    DEBUG("Sip call state changed %s", callID);
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
@@ -597,11 +597,11 @@ error_alert(DBusGProxy *proxy UNUSED, int err, void *foo UNUSED)
 static void
 screensaver_dbus_proxy_new_cb (GObject * source UNUSED, GAsyncResult *result, gpointer user_data UNUSED)
 {
-    DEBUG("DBUS: Session manager connection callback");
+    DEBUG("Session manager connection callback");
 
     session_manager_proxy = g_dbus_proxy_new_for_bus_finish (result, NULL);
     if (session_manager_proxy == NULL)
-        ERROR("DBUS: Error, could not initialize gnome session manager");
+        ERROR("could not initialize gnome session manager");
 }
 
 #define GS_SERVICE   "org.gnome.SessionManager"
@@ -612,7 +612,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
 {
 
     if (connection == NULL) {
-        ERROR("DBUS: Error connection is NULL");
+        ERROR("connection is NULL");
         return FALSE;
     }
 /*
@@ -621,7 +621,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
                             "org.gnome.SessionManager.Inhibitor");
 
     if(session_manager_proxy == NULL) {
-        ERROR("DBUS: Error, could not create session manager proxy");
+        ERROR("Error, could not create session manager proxy");
         return FALSE;
     }
 */
@@ -631,7 +631,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
                              NULL, GS_SERVICE, GS_PATH, GS_INTERFACE, NULL,
                              screensaver_dbus_proxy_new_cb, NULL);
 
-    DEBUG("DBUS: Connected to gnome session manager");
+    DEBUG("Connected to gnome session manager");
 
     return TRUE;
 }
@@ -650,7 +650,7 @@ gboolean dbus_connect(GError **error)
 
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
     if (connection == NULL) {
-        ERROR("DBUS: Error, could not establish connection with session bus");
+        ERROR("could not establish connection with session bus");
         return FALSE;
     }
 
@@ -870,7 +870,7 @@ gboolean dbus_connect(GError **error)
 
     gboolean status = dbus_connect_session_manager(connection);
     if(status == FALSE) {
-        ERROR("DBUS: Error, could not connect to gnome session manager");
+        ERROR("could not connect to gnome session manager");
         return FALSE;
     }
 
@@ -1482,7 +1482,7 @@ dbus_create_conf_from_participant_list(const gchar **list)
 void
 dbus_add_participant(const gchar *callID, const gchar *confID)
 {
-    DEBUG("DBUS: Add participant %s to %s\n", callID, confID);
+    DEBUG("Add participant %s to %s\n", callID, confID);
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID, confID, &error);
     check_error(error);
@@ -1713,7 +1713,7 @@ dbus_get_participant_list(const gchar *confID)
     GError *error = NULL;
     gchar **list = NULL;
 
-    DEBUG("DBUS: Get conference %s participant list", confID);
+    DEBUG("Get conference %s participant list", confID);
     org_sflphone_SFLphone_CallManager_get_participant_list(call_proxy, confID, &list, &error);
     check_error(error);
 
@@ -1835,7 +1835,7 @@ dbus_get_all_ip_interface(void)
         if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
             ERROR("Caught remote method (get_all_ip_interface) exception  %s: %s", dbus_g_error_get_name(error), error->message);
         else
-            ERROR("Error while calling get_all_ip_interface: %s", error->message);
+            ERROR("%s", error->message);
 
         g_error_free(error);
     } else
@@ -1855,7 +1855,7 @@ dbus_get_all_ip_interface_by_name(void)
             ERROR("Caught remote method (get_all_ip_interface) exception  %s: %s",
                   dbus_g_error_get_name(error), error->message);
         else
-            ERROR("Error while calling get_all_ip_interface: %s", error->message);
+            ERROR("%s", error->message);
 
         g_error_free(error);
     }
@@ -1874,7 +1874,7 @@ dbus_get_shortcuts(void)
             ERROR("Caught remote method (get_shortcuts) exception  %s: %s",
                   dbus_g_error_get_name(error), error->message);
         else
-            ERROR("Error while calling get_shortcuts: %s", error->message);
+            ERROR("%s", error->message);
 
         g_error_free(error);
     }
@@ -1908,7 +1908,7 @@ static void screensaver_inhibit_cb(GObject * source_object, GAsyncResult * res,
     GError *error = NULL;
     GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        ERROR("Screensaver: Error: inhibiting the screensaver: %s", error->message);
+        ERROR("%s", error->message);
         g_error_free(error);
         return;
     }
@@ -1931,7 +1931,7 @@ static void screensaver_uninhibit_cb(GObject * source_object,
 
     GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        ERROR ("Screensaver: Error uninhibiting the screensaver: %s",
+        ERROR ("%s",
                error->message);
         g_error_free(error);
         return;
@@ -1946,7 +1946,7 @@ void dbus_screensaver_inhibit(void)
 {
     const gchar *appname = g_get_application_name();
     if (appname == NULL) {
-        ERROR("Screensaver: Could not retrieve application name");
+        ERROR("could not retrieve application name");
         return;
     }
 
@@ -1955,7 +1955,7 @@ void dbus_screensaver_inhibit(void)
                                          "Phone call ongoing",
                                          GNOME_SESSION_NO_IDLE_FLAG);
     if (parameters == NULL) {
-        ERROR("Screensaver: Could not create session manager inhibit parameters");
+        ERROR("Could not create session manager inhibit parameters");
         return;
     }
 
@@ -1969,11 +1969,11 @@ dbus_screensaver_uninhibit(void)
 {
     if (cookie == 0)
         return;
-    DEBUG("Screensaver: uninhibit");
+    DEBUG("uninhibit");
 
     GVariant *parameters = g_variant_new("(u)", cookie);
     if (parameters == NULL) {
-        ERROR("Screensaver: Could not create session manager uninhibit "
+        ERROR("Could not create session manager uninhibit "
                "parameters");
         return;
     }
