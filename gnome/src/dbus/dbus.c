@@ -154,7 +154,6 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
         id = call->_callID;
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
-
         if (!conf) {
             ERROR("Message received, but no recipient found");
             return;
@@ -279,7 +278,6 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
     DEBUG("Conference state changed: %s\n", state);
 
     conference_obj_t* changed_conf = conferencelist_get(current_calls_tab, confID);
-
     if (changed_conf == NULL) {
         ERROR("Conference is NULL in conference state changed");
         return;
@@ -355,6 +353,11 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 {
     DEBUG("Conference removed %s", confID);
     conference_obj_t *c = conferencelist_get(current_calls_tab, confID);
+    if(c == NULL) {
+        ERROR("Could not find conference %s from list", confID);
+        return;
+    }
+
     calltree_remove_conference(current_calls_tab, c);
 
     im_widget_update_state(IM_WIDGET(c->_im_widget), FALSE);
