@@ -33,6 +33,7 @@
 #include "../global.h"
 #include "sfl_config.h"
 #include "yamlnode.h"
+#include "logger.h"
 #include <cstdio>
 
 namespace Conf {
@@ -258,6 +259,7 @@ void YamlParser::processScalar(YamlNode *topNode)
             break;
         case MAPPING:
             ((MappingNode *)(topNode))->addNode(sclr);
+            break;
         case SCALAR:
         default:
             break;
