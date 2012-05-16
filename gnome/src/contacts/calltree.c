@@ -52,6 +52,10 @@
 #include "imwindow.h"
 #include "searchbar.h"
 
+#if !GLIB_CHECK_VERSION(2, 30, 0)
+#define G_VALUE_INIT  { 0, { { 0 } } }
+#endif
+
 typedef struct {
     gchar *source_ID;
     gchar *dest_ID;
