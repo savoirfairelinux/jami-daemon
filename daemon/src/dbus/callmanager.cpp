@@ -232,6 +232,12 @@ CallManager::getParticipantList(const std::string& confID)
     return Manager::instance().getParticipantList(confID);
 }
 
+std::string
+CallManager::getConferenceId(const std::string& callID)
+{
+    return Manager::instance().getConferenceId(callID);
+}
+
 bool
 CallManager::startRecordedFilePlayback(const std::string& filepath)
 {

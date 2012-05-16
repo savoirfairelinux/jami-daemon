@@ -98,9 +98,9 @@ calltab_create_searchbar(calltab_t* tab)
 {
     g_assert(tab);
 
-    if (utf8_case_equal(tab->_name, HISTORY))
+    if (g_strcmp0(tab->_name, HISTORY) == 0)
         tab->searchbar = history_searchbar_new();
-    else if (utf8_case_equal(tab->_name, CONTACTS))
+    else if (g_strcmp0(tab->_name, CONTACTS) == 0)
         tab->searchbar = contacts_searchbar_new();
     else
         ERROR("Current calls tab does not need a searchbar\n");

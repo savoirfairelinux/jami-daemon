@@ -847,6 +847,7 @@ remove_from_history(void * foo UNUSED)
     }
 
     calllist_remove_from_history(call);
+    update_actions();
 }
 
 static void

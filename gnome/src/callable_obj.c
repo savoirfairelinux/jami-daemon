@@ -146,7 +146,6 @@ callable_obj_t *create_new_call_from_details(const gchar *call_id, GHashTable *d
     const gchar * const peer_number = g_hash_table_lookup(details, "PEER_NUMBER");
     const gchar * const display_name = g_hash_table_lookup(details, "DISPLAY_NAME");
     const gchar * const state_str = g_hash_table_lookup(details, "CALL_STATE");
-    const gchar * const conf_id = g_hash_table_lookup(details, "CONF_ID");
 
     if (utf8_case_equal(state_str, "CURRENT"))
         state = CALL_STATE_CURRENT;
@@ -163,7 +162,6 @@ callable_obj_t *create_new_call_from_details(const gchar *call_id, GHashTable *d
 
     gchar *number = call_get_peer_number(peer_number);
     callable_obj_t *c = create_new_call(CALL, state, call_id, accountID, display_name, number);
-    c->_confID = g_strdup(conf_id);
     g_free(number);
     return c;
 }
@@ -199,8 +197,7 @@ callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry)
     value =  g_hash_table_lookup(entry, TIMESTAMP_STOP_KEY);
     new_call->_time_stop = value ? atoi(value) : 0;
     new_call->_recordfile = g_strdup(g_hash_table_lookup(entry, RECORDING_PATH_KEY));
-    new_call->_confID = g_strdup(g_hash_table_lookup(entry, CONFID_KEY));
-    new_call->_historyConfID = g_strdup(new_call->_confID);
+    new_call->_historyConfID = g_strdup(g_hash_table_lookup(entry, CONFID_KEY));
     new_call->_record_is_playing = FALSE;
 
     return new_call;
@@ -209,7 +206,6 @@ callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry)
 void free_callable_obj_t (callable_obj_t *c)
 {
     g_free(c->_callID);
-    g_free(c->_confID);
     g_free(c->_historyConfID);
     g_free(c->_accountID);
     g_free(c->_srtp_cipher);
