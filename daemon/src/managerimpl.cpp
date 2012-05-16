@@ -1144,27 +1144,25 @@ void ManagerImpl::processRemainingParticipants(const std::string &current_call_i
 void ManagerImpl::joinConference(const std::string& conf_id1,
                                  const std::string& conf_id2)
 {
-    ConferenceMap::iterator iter(conferenceMap_.find(conf_id1));
+    DEBUG("Join conferences %s and %s", conf_id1.c_str(), conf_id2.c_str());
 
-    if (iter == conferenceMap_.end()) {
+    if (conferenceMap_.find(conf_id1) == conferenceMap_.end()) {
         ERROR("Not a valid conference ID: %s", conf_id1.c_str());
         return;
     }
 
-    if (conferenceMap_.find(conf_id2) != conferenceMap_.end()) {
+    if (conferenceMap_.find(conf_id2) == conferenceMap_.end()) {
         ERROR("Not a valid conference ID: %s", conf_id2.c_str());
         return;
     }
 
-    if (iter->second) {
-        Conference *conf = iter->second;
-        ParticipantSet participants(conf->getParticipantList());
+    Conference *conf = conferenceMap_.find(conf_id1)->second;
+    ParticipantSet participants(conf->getParticipantList());
 
-        for (ParticipantSet::const_iterator p = participants.begin();
-                p != participants.end(); ++p) {
-            detachParticipant(*p, "");
-            addParticipant(*p, conf_id2);
-        }
+    for (ParticipantSet::const_iterator p = participants.begin();
+            p != participants.end(); ++p) {
+        detachParticipant(*p, "");
+        addParticipant(*p, conf_id2);
     }
 }
 
@@ -2613,8 +2611,9 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
     if (ip2ip != seq->end()) {
         MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
-        if (node)
-            accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(node);
+        if (node) {
+            accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
+        }
     }
 
     // Initialize default UDP transport according to
@@ -2853,6 +2852,20 @@ std::vector<std::string> ManagerImpl::getParticipantList(const std::string& conf
         WARN("Did not find conference %s", confID.c_str());
 
     return v;
+}
+
+std::string ManagerImpl::getConferenceId(const std::string& callID)
+{
+    std::string account_id = getAccountFromCall(callID);
+    Call *call = getAccountLink(account_id)->getCall(callID);
+    if(call == NULL) {
+        ERROR("Get conference id");
+        return "";
+    }
+
+    std::string confID = call->getConfId();
+
+    return confID;
 }
 
 void ManagerImpl::saveHistory()

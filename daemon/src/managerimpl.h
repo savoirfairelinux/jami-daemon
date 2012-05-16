@@ -458,6 +458,8 @@ class ManagerImpl {
          */
         std::vector<std::string> getParticipantList(const std::string& confID) const;
 
+        std::string getConferenceId(const std::string& callID);
+
         /**
          * Save the details of an existing account, given the account ID
          * This will load the configuration map with the given data.
