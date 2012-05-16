@@ -22,37 +22,48 @@
 #define SFLPHONEENGINE_H
 
 #include <Plasma/DataEngine>
+#include <Plasma/Service>
 #include <QHash>
 
-#include "../../src/lib/CallModel.h"
+#include "../../lib/CallModel.h"
+#include "../SortableDockCommon.h"
 
 typedef QHash<QString,QVariant> HashStringString;
+typedef QHash<QString,QHash<QString,QVariant> > ContactHash;
 class Call;
 
-class SFLPhoneEngine : public Plasma::DataEngine
+class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
 {
    Q_OBJECT
 
    public:
       SFLPhoneEngine(QObject* parent, const QVariantList& args);
+      Plasma::Service *serviceForSource(const QString &source);
       virtual QStringList sources() const;
+
+      static CallModel<>* getModel();
+      
+      friend class SFLPhoneService;
 
    protected:
       bool sourceRequestEvent(const QString& name);
       bool updateSourceEvent(const QString& source);
 
    private:
-      QHash<QString, HashStringString > historyCall  ;
-      QHash<QString, HashStringString > currentCall  ;
-      QHash<QString, QStringList> currentConferences ;
-      CallModelConvenience* m_pModel;
+      QHash<QString, HashStringString > historyCall        ;
+      QHash<QString, HashStringString > currentCall        ;
+      QHash<QString, QStringList>       currentConferences ;
+      static CallModel<>*               m_pModel           ;
+      ContactHash                       m_hContacts        ;
       QString getCallStateName(call_state state);
       void updateHistory        ();
       void updateCallList       ();
-      void updateContacts       ();
+      void updateAccounts       ();
       void updateConferenceList ();
+      void updateContacts       ();
       void updateInfo();
    private slots:
+      void updateCollection();
       void callStateChangedSignal  (Call* call);
       void incomingCallSignal      (Call* conf);
       void conferenceCreatedSignal (Call* conf);

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE kcfg SYSTEM
+    "http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+<kcfg>
+  <group name="Call">
+    <entry name="AccountId" type="String">
+      <label>Account id to make this call</label>
+    </entry>
+    <entry name="Number" type="String">
+      <label>Number to call</label>
+    </entry>
+  </group>
+</kcfg>

@@ -13,14 +13,19 @@ include_directories(
 
 set(sflphone_engine_SRCS
      sflphonEngine.cpp
+     sflphoneService.cpp
     )
 
 
 kde4_add_plugin(plasma_engine_sflphone ${sflphone_engine_SRCS})
 target_link_libraries(plasma_engine_sflphone
                       qtsflphone
+                      ksflphone
                       ${KDE4_KDECORE_LIBS}
-                      ${KDE4_PLASMA_LIBS})
+                      ${KDE4_PLASMA_LIBS}
+                      ${KDEPIMLIBS_AKONADI_KMIME_LIBS}
+                      ${KDEPIMLIBS_AKONADI_LIBS}
+                      ${KDEPIMLIBS_AKONADI_CONTACT_LIBS} )
 
 install(TARGETS plasma_engine_sflphone
         DESTINATION ${PLUGIN_INSTALL_DIR})
@@ -28,4 +33,6 @@ install(TARGETS plasma_engine_sflphone
 install(FILES plasma-engine-sflphone.desktop
         DESTINATION ${SERVICES_INSTALL_DIR})
 
-#TARGET_LINK_LIBRARIES(sflphone-client-kde sflphonekde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDE4_KABC_LIBS})
+install(FILES sflphone.operations
+        DESTINATION ${DATA_INSTALL_DIR}/plasma/services)
+

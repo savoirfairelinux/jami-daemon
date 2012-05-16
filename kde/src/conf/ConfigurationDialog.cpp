@@ -24,7 +24,7 @@
 #include <KDebug>
 
 
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 
 #include "dlggeneral.h"
 #include "dlgdisplay.h"

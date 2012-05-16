@@ -22,7 +22,7 @@
 #include <QToolButton>
 #include <QAction>
 
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
 
 DlgGeneral::DlgGeneral(QWidget *parent)

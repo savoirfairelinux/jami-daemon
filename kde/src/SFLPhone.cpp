@@ -47,14 +47,14 @@
 #include "lib/Contact.h"
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "AccountWizard.h"
 #include "SFLPhoneView.h"
 #include "widgets/SFLPhoneTray.h"
 #include "widgets/ContactDock.h"
 #include "widgets/HistoryDock.h"
 #include "widgets/BookmarkDock.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 
 SFLPhone* SFLPhone::m_sApp = NULL;
 TreeWidgetCallModel* SFLPhone::m_pModel = NULL;

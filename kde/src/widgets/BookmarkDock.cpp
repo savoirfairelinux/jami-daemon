@@ -35,12 +35,12 @@
 #include <KLineEdit>
 
 //SFLPhone
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "widgets/HistoryTreeItem.h"
 #include "SFLPhone.h"
 #include "widgets/CategoryDrawer.h"
 #include "widgets/CategorizedTreeWidget.h"
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 
 ///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {

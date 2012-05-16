@@ -38,7 +38,7 @@
 
 //SFLPhone
 #include "conf/ConfigurationDialog.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "AccountWizard.h"
 #include "ActionSetAccountFirst.h"
 #include "SFLPhone.h"

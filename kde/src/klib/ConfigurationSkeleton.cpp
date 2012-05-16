@@ -20,8 +20,8 @@
  ***************************************************************************/
 #include "ConfigurationSkeleton.h"
 
-#include "lib/configurationmanager_interface_singleton.h"
-#include "lib/sflphone_const.h"
+#include "../lib/configurationmanager_interface_singleton.h"
+#include "../lib/sflphone_const.h"
 
 //KDE
 #include <KDebug>

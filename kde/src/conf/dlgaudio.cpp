@@ -22,7 +22,7 @@
 
 #include <KLineEdit>
 #include "lib/configurationmanager_interface_singleton.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
 #include <QtGui/QHeaderView>
 #include <KStandardDirs>

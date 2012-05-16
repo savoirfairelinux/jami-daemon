@@ -471,6 +471,12 @@ void Call::setRecordingPath(const QString& path)
    m_RecordingPath = path;
 }
 
+///Set peer name
+void Call::setPeerName(const QString& name)
+{
+   m_PeerName = name;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Mutator                                  *
@@ -625,7 +631,7 @@ void Call::call()
    qDebug() << "account = " << m_Account;
    if(m_Account.isEmpty()) {
       qDebug() << "Account is not set, taking the first registered.";
-      this->m_Account = CallModelConvenience::getCurrentAccountId();
+      this->m_Account = CallModel<>::getCurrentAccountId();
    }
    if(!m_Account.isEmpty()) {
       qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId;

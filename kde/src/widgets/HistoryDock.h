@@ -23,8 +23,10 @@
 #include <QtGui/QDockWidget>
 #include <QtGui/QTreeWidget>
 #include <QtCore/QDate>
-#include "SortableDockCommon.h"
+#include "../klib/SortableDockCommon.h"
 #include "CategorizedTreeWidget.h"
+#include "CallTreeItem.h"
+#include <QtGui/QTreeWidgetItem>
 
 //Qt
 class QTreeWidgetItem;
@@ -48,7 +50,7 @@ class HistoryTree;
 typedef QList<HistoryTreeItem*> HistoryList;
 
 ///@class HistoryDock Dock to see the previous SFLPhone calls
-class HistoryDock : public QDockWidget, public SortableDockCommon {
+class HistoryDock : public QDockWidget, public SortableDockCommon<CallTreeItem*,QTreeWidgetItem*> {
    Q_OBJECT
 
 public:
@@ -60,17 +62,6 @@ public:
    virtual ~HistoryDock();
 
 private:
-   //Enum
-   enum SortBy {
-      Date       = 0,
-      Name       = 1,
-      Popularity = 2,
-      Duration   = 3
-   };
-
-   //Getters
-   QString getIdentity(HistoryTreeItem* item);
-
    //Attributes
    HistoryTree*  m_pItemView        ;
    KLineEdit*    m_pFilterLE        ;

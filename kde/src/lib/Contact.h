@@ -21,7 +21,8 @@
 #ifndef CONTACT_H
 #define CONTACT_H
 
-#include <QObject>
+#include <QtCore/QObject>
+#include <QtCore/QVariant>
 
 //Qt
 class QListWidgetItem;
@@ -106,6 +107,9 @@ public:
    virtual void setDepartment     ( const QString& name   );
    virtual void setUid            ( const QString& id     );
    virtual void setPhoto          ( QPixmap* photo        );
+
+   //Mutator
+   QHash<QString,QVariant> toHash();
    
 protected:
    virtual void initItemWidget();

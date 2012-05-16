@@ -48,7 +48,7 @@
 #include "lib/Call.h"
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "widgets/TranslucentButtons.h"
 #include "SFLPhone.h"
 

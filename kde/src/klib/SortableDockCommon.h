@@ -1,8 +1,12 @@
 #ifndef SORTABLE_DOCK_COMMON
 #define SORTABLE_DOCK_COMMON
 
-#include <QObject>
-#include <QHash>
+#include <QtCore/QObject>
+#include <QtCore/QHash>
+#include <QtCore/QModelIndex>
+#include <QtGui/QWidget>
+
+#include "HelperFunctions.h"
 
 //Qt
 class QString;
@@ -13,16 +17,41 @@ class QDateTime;
 //SFLPhone
 class StaticEventHandler;
 class Contact;
+class Call;
 
-class SortableDockCommon {
+///@enum ContactSortingMode Available sorting mode
+enum ContactSortingMode {
+   Name              ,
+   Organisation      ,
+   Recently_used     ,
+   Group             ,
+   Department
+};
+
+///@enum HistorySortingMode
+enum HistorySortingMode {
+   Date       = 0,
+   Name2      = 1,
+   Popularity = 2,
+   Length   = 3
+};
+
+template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
+class LIB_EXPORT SortableDockCommon {
    public:
       friend class StaticEventHandler;
       
-   protected:
-      SortableDockCommon(){};
       //Helpers
-      static QString timeToHistoryCategory(QDate date);
-      static QHash<Contact*, QDateTime> getContactListByTime(/*ContactList list*/);
+      static QString getIdentity(Call* item);
+      static int usableNumberCount(Contact* cont);
+      static void setHistoryCategory ( QList<Call*>& calls       , HistorySortingMode mode );
+      static void setContactCategory ( QList<Contact*> contacts , ContactSortingMode mode );
+      
+   protected:
+      SortableDockCommon();
+      //Helpers
+      static QString                    timeToHistoryCategory ( QDate date                                         );
+      static QHash<Contact*, QDateTime> getContactListByTime  ( /*ContactList list*/                               );
 
       //Attributes
       static QStringList         m_slHistoryConst;
@@ -62,14 +91,18 @@ class SortableDockCommon {
 
 
 ///@class StaticEventHandler "cron jobs" for static member;
-class StaticEventHandler : public QObject
+class LIB_EXPORT StaticEventHandler : public QObject
 {
    Q_OBJECT
    public:
-      StaticEventHandler(QObject* parent);
+      StaticEventHandler(QObject* parent, QStringList* list);
 
-   private slots:
+   public slots:
       void update();
+   private:
+      QStringList* m_pList;
 };
+
+#include "SortableDockCommon.hpp"
 
 #endif
