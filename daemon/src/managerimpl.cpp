@@ -2872,6 +2872,8 @@ void ManagerImpl::saveHistory()
 {
     if (!history_.save())
         ERROR("Could not save history!");
+    else
+        dbus_.getConfigurationManager()->historyChanged();
 }
 
 void ManagerImpl::clearHistory()

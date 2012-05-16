@@ -446,6 +446,9 @@
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 
+       <signal name="historyChanged" tp:name-for-bindings="historyChanged">
+       </signal>
+
        <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
            <arg type="s" name="accountID"/>
            <arg type="i" name="registration_state"/>
