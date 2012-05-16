@@ -1048,6 +1048,11 @@ remove_conference(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *it
 
 void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
 {
+    if(conf == NULL) {
+        ERROR("Could not remove conference, conference pointer is NULL");
+        return;
+    }
+
     ConferenceRemoveCtx context = {tab, conf};
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);

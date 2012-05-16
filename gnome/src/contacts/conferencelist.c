@@ -111,7 +111,6 @@ void conferencelist_remove(calltab_t *tab, const gchar* const conf)
     gchar *c = (gchar*) conferencelist_get(tab, conf);
 
     if (c == NULL) {
-        ERROR("ConferenceList: Error: Could not find conference %s", conf);
         return;
     }
 
@@ -130,7 +129,6 @@ conference_obj_t* conferencelist_get(calltab_t *tab, const gchar* const conf_id)
     GList *c = g_queue_find_custom(tab->conferenceQueue, conf_id, is_confID_confstruct);
 
     if (c == NULL) {
-        ERROR("ConferenceList: Error: Could not find conference %s", conf_id);
         return NULL;
     }
 
