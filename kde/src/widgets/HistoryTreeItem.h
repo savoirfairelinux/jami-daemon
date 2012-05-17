@@ -125,6 +125,7 @@ class HistoryTreeItem : public QWidget
 
 protected:
    virtual void resizeEvent(QResizeEvent* event);
+   virtual void mouseDoubleClickEvent(QMouseEvent* event);
 
 public slots:
    void updated();

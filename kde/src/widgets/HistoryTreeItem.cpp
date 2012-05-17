@@ -462,6 +462,11 @@ void HistoryTreeItem::resizeEvent(QResizeEvent* event)
    }
 }
 
+void HistoryTreeItem::mouseDoubleClickEvent(QMouseEvent* event)
+{
+   callAgain();
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Setters                                  *
