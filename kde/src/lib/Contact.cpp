@@ -199,9 +199,9 @@ QHash<QString,QVariant> Contact::toHash()
    aContact[ "secondName"     ] = getSecondName();
    aContact[ "formattedName"  ] = getFormattedName();
    aContact[ "organization"   ] = getOrganization();
-   aContact[ "Uid"            ] = getUid();
+   aContact[ "uid"            ] = getUid();
    aContact[ "preferredEmail" ] = getPreferredEmail();
-   //aContact["Photo"] = getPhoto(      const;
+   //aContact[ "Photo"          ] = QVariant(*getPhoto());
    aContact[ "type"           ] = getType();
    aContact[ "group"          ] = getGroup();
    aContact[ "department"     ] = getDepartment();

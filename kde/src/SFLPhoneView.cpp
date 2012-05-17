@@ -145,10 +145,10 @@ void SFLPhoneView::typeString(QString str)
    }
 
    foreach (Call* call2, SFLPhone::model()->getCallList()) {
-      if(currentCall != call2 && call2->getState() == CALL_STATE_CURRENT) {
+      if(dynamic_cast<Call*>(call2) && currentCall != call2 && call2->getState() == CALL_STATE_CURRENT) {
          action(call2, CALL_ACTION_HOLD);
       }
-      else if(call2->getState() == CALL_STATE_DIALING) {
+      else if(dynamic_cast<Call*>(call2) && call2->getState() == CALL_STATE_DIALING) {
          candidate = call2;
       }
    }

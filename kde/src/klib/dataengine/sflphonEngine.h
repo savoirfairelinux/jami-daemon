@@ -63,6 +63,8 @@ class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
       void updateContacts       ();
       void updateBookmarkList   ();
       void updateInfo();
+      
+      void generateNumberList(QString name);
    private slots:
       void updateCollection();
       void callStateChangedSignal  (Call* call);
