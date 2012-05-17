@@ -52,7 +52,7 @@
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
-static const char version[] = "1.0.2";
+static const char version[] = "1.1.0";
 
 int main(int argc, char **argv)
 {
@@ -75,7 +75,6 @@ int main(int argc, char **argv)
       );
       about.addAuthor( ki18n( "Jérémy Quentin"         ), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com"  );
       about.addAuthor( ki18n( "Emmanuel Lepage Vallee" ), KLocalizedString(), "emmanuel.lepage@savoirfairelinux.com" );
-      //about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
       KCmdLineArgs::init(argc, argv, &about);
       KCmdLineOptions options;
       KCmdLineArgs::addCmdLineOptions(options);

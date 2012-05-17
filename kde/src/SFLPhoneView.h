@@ -47,7 +47,7 @@ class CallView;
  *
  * @short Main view
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
- * @version 0.9.6
+ * @version 1.1.0
  */
 class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
 {
