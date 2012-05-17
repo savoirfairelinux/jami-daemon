@@ -102,7 +102,7 @@ void Account::setActiveCodecs(const std::vector<std::string> &list)
     }
 
     // update the codec string according to new codec selection
-    codecStr_ = ManagerImpl::serialize(list);
+    codecStr_ = ManagerImpl::join_string(list);
 }
 
 std::string Account::mapStateNumberToString(RegistrationState state)

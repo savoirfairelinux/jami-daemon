@@ -268,7 +268,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(MAILBOX_KEY, &mailBox_);
     map.getValue(CODECS_KEY, &codecStr_);
     // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::unserialize(codecStr_));
+    setActiveCodecs(ManagerImpl::split_string(codecStr_));
 
     map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
     map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
