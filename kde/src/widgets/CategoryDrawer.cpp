@@ -14,7 +14,7 @@
  * along with this library; see the file COPYING.LIB.  If not, write to    *
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,    *
  * Boston, MA 02110-1301, USA.                                             *
- ***************************************************************************/
+ **************************************************************************/
 
 // this code is taken from SystemSettings/icons/CategoryDrawer.{h,cpp}
 // Rafael agreet to relicense it under LGPLv2 or LGPLv3, just as we need it,
