@@ -115,10 +115,8 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     GtkTreeModel *model = gtk_tree_view_get_model(gtk_tree_selection_get_tree_view(sel));
 
     GtkTreeIter iter;
-    if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
-        DEBUG("gtk_tree_selection_get_selected return non zero!!!!!!!!!!!!!!!!!!!!!!!!! stop selected callback\n");
+    if (!gtk_tree_selection_get_selected(sel, &model, &iter))
         return;
-    }
 
     if (active_calltree_tab == history_tab)
         DEBUG("Current call tree is history");
@@ -1048,6 +1046,11 @@ remove_conference(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *it
 
 void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
 {
+    if(conf == NULL) {
+        ERROR("Could not remove conference, conference pointer is NULL");
+        return;
+    }
+
     ConferenceRemoveCtx context = {tab, conf};
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);

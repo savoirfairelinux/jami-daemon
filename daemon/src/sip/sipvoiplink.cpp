@@ -667,8 +667,14 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 
 bool isValidIpAddress(const std::string &address)
 {
+    size_t pos = address.find(":");
+    std::string address_without_port(address);
+    if (pos != std::string::npos)
+        address_without_port = address.substr(0, pos);
+
+    DEBUG("Testing address %s", address_without_port.c_str());
     struct sockaddr_in sa;
-    int result = inet_pton(AF_INET, address.data(), &(sa.sin_addr));
+    int result = inet_pton(AF_INET, address_without_port.data(), &(sa.sin_addr));
     return result != 0;
 }
 
@@ -1629,8 +1635,10 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 
     // TODO: make this based on transport type
     // with pjsip_transport_get_default_port_for_type(tp_type);
-    if (uri->port == 0)
+    if (uri->port == 0) {
+        ERROR("Port is 0 in uri");
         uri->port = DEFAULT_SIP_PORT;
+    }
 
     std::string recvContactHost(uri->host.ptr, uri->host.slen);
     std::stringstream ss;

@@ -571,9 +571,9 @@ class ManagerImpl {
          * Required format: payloads separated with one slash.
          * @return std::string The serializabled string
          */
-        static std::string serialize(const std::vector<std::string> &v);
+        static std::string join_string(const std::vector<std::string> &v);
 
-        static std::vector<std::string> unserialize(std::string v);
+        static std::vector<std::string> split_string(std::string v);
 
         /**
          * Ringtone option.

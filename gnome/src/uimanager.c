@@ -134,7 +134,7 @@ static void add_to_toolbar(GtkWidget *toolbar, GtkWidget *item, int pos)
 static void
 call_mute(void)
 {
-    DEBUG("UIManager: Mute call button pressed");
+    DEBUG("Mute call button pressed");
     sflphone_mute_call();
 }
 
@@ -143,7 +143,7 @@ static void
 update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging_enabled) {
     int pos = 0;
 
-    DEBUG("UIManager: Update actions for call %s", selectedCall->_callID);
+    DEBUG("Update actions for call %s", selectedCall->_callID);
 
     if(selectedCall == NULL) {
         ERROR("Selected call is NULL while updating toolbar");
@@ -158,7 +158,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
     switch (selectedCall->_state) {
         case CALL_STATE_INCOMING:
         {
-                DEBUG("UIManager: Call State Incoming");
+                DEBUG("Call State Incoming");
                 // Make the button toolbar clickable
                 gtk_action_set_sensitive(pickUpAction_, TRUE);
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
@@ -174,7 +174,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         }
         case CALL_STATE_HOLD:
         {
-                DEBUG("UIManager: Call State Hold");
+                DEBUG("Call State Hold");
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_widget_set_sensitive(holdMenu_, TRUE);
                 gtk_widget_set_sensitive(offHoldToolbar_, TRUE);
@@ -194,7 +194,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         }
         case CALL_STATE_RINGING:
         {
-                DEBUG("UIManager: Call State Ringing");
+                DEBUG("Call State Ringing");
                 gtk_action_set_sensitive(pickUpAction_, TRUE);
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 pos = 1;
@@ -204,7 +204,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         }
         case CALL_STATE_DIALING:
         {
-                DEBUG("UIManager: Call State Dialing");
+                DEBUG("Call State Dialing");
                 gtk_action_set_sensitive(pickUpAction_, TRUE);
 
                 if (active_calltree_tab == current_calls_tab)
@@ -229,7 +229,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         }
         case CALL_STATE_CURRENT:
         {
-                DEBUG("UIManager: Call State Current");
+                DEBUG("Call State Current");
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_action_set_sensitive(recordAction_, TRUE);
                 gtk_action_set_sensitive(muteAction_, TRUE);
@@ -260,7 +260,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
 
         case CALL_STATE_RECORD:
         {
-                DEBUG("UIManager: Call State Record");
+                DEBUG("Call State Record");
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_action_set_sensitive(recordAction_, TRUE);
                 gtk_action_set_sensitive(muteAction_, TRUE);
@@ -292,7 +292,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         case CALL_STATE_FAILURE:
         {
                 pos = 1;
-                DEBUG("UIManager: Call State Busy/Failure");
+                DEBUG("Call State Busy/Failure");
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                 break;
@@ -317,7 +317,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 break;
         }
         default:
-            ERROR("UIMAnager: Error: Unknown state in action update!");
+            ERROR("Unknown state in action update!");
             break;
         }
     }
@@ -327,7 +327,7 @@ static void
 update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_messaging_enabled) {
     int pos = 0;
 
-    DEBUG("UIManager: Update actions for conference");
+    DEBUG("Update actions for conference");
 
     // update icon in systray
     show_status_hangup_icon();
@@ -336,7 +336,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
 
         case CONFERENCE_STATE_ACTIVE_ATTACHED:
         case CONFERENCE_STATE_ACTIVE_DETACHED:
-            DEBUG("UIManager: Conference State Active");
+            DEBUG("Conference State Active");
 
             if (active_calltree_tab == current_calls_tab) {
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
@@ -365,7 +365,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
         case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
         case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD: {
             pos = 1;
-            DEBUG("UIManager: Conference State Record");
+            DEBUG("Conference State Record");
             gtk_action_set_sensitive(hangUpAction_, TRUE);
             gtk_widget_set_sensitive(holdToolbar_, TRUE);
             gtk_action_set_sensitive(recordAction_, TRUE);
@@ -382,7 +382,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
         }
         case CONFERENCE_STATE_HOLD:
         case CONFERENCE_STATE_HOLD_RECORD: {
-            DEBUG("UIManager: Conference State Hold");
+            DEBUG("Conference State Hold");
             pos = 1;
             gtk_action_set_sensitive(hangUpAction_, TRUE);
             gtk_widget_set_sensitive(offHoldToolbar_, TRUE);
@@ -399,7 +399,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
             break;
         }
         default:
-            WARN("UIManager: Error: Should not happen in action update!");
+            WARN("Should not happen in action update!");
             break;
     }
 
@@ -603,7 +603,7 @@ help_about(void * foo UNUSED)
 static void
 call_new_call(void * foo UNUSED)
 {
-    DEBUG("UIManager: New call button pressed");
+    DEBUG("New call button pressed");
     sflphone_new_call();
 }
 
@@ -638,7 +638,7 @@ call_hold(void* foo UNUSED)
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
-    DEBUG("UIManager: Hold button pressed");
+    DEBUG("Hold button pressed");
 
     if (selectedCall) {
         if (selectedCall->_state == CALL_STATE_HOLD)
@@ -698,10 +698,10 @@ conference_hold(void* foo UNUSED)
 {
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
-    DEBUG("UIManager: Hold button pressed for conference");
+    DEBUG("Hold button pressed for conference");
 
     if (selectedConf == NULL) {
-        ERROR("UIManager: No conference selected");
+        ERROR("No conference selected");
         return;
     }
 
@@ -731,7 +731,7 @@ conference_hold(void* foo UNUSED)
 static void
 call_pick_up(void * foo UNUSED)
 {
-    DEBUG("UIManager: Pick up");
+    DEBUG("Pick up");
 
     if (calllist_get_size(current_calls_tab) > 0) {
         sflphone_pick_up();
@@ -758,7 +758,7 @@ call_pick_up(void * foo UNUSED)
 static void
 call_hang_up(void)
 {
-    DEBUG("UIManager: Hang up button pressed(call)");
+    DEBUG("Hang up button pressed(call)");
     /*
      * [#3020]	Restore the record toggle button
      *			We set it to FALSE, as when we hang up a call, the recording is stopped.
@@ -770,7 +770,7 @@ call_hang_up(void)
 static void
 conference_hang_up(void)
 {
-    DEBUG("UIManager: Hang up button pressed(conference)");
+    DEBUG("Hang up button pressed(conference)");
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
     if (selectedConf)
@@ -780,23 +780,23 @@ conference_hang_up(void)
 static void
 call_record(void)
 {
-    DEBUG("UIManager: Record button pressed");
+    DEBUG("Record button pressed");
     sflphone_rec_call();
 }
 
 static void
 start_playback_record_cb(void)
 {
-    DEBUG("UIManager: Start playback button pressed");
+    DEBUG("Start playback button pressed");
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
 
     if (selectedCall == NULL) {
-        ERROR("UIManager: Error: No selected object in playback record callback");
+        ERROR("No selected object in playback record callback");
         return;
     }
 
-    DEBUG("UIManager: Start selected call file playback %s", selectedCall->_recordfile);
+    DEBUG("Start selected call file playback %s", selectedCall->_recordfile);
     selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
 
     update_actions();
@@ -805,23 +805,23 @@ start_playback_record_cb(void)
 static void
 stop_playback_record_cb(void)
 {
-    DEBUG("UIManager: Stop playback button pressed");
+    DEBUG("Stop playback button pressed");
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
 
     if (selectedCall == NULL) {
-        ERROR("UIManager: Error: No selected object in history treeview");
+        ERROR("No selected object in history treeview");
         return;
     }
 
     if (selectedCall) {
         if (selectedCall->_recordfile == NULL) {
-            ERROR("UIManager: Error: Record file is NULL");
+            ERROR("Record file is NULL");
             return;
         }
 
         dbus_stop_recorded_file_playback(selectedCall->_recordfile);
-        DEBUG("UIManager: Stop selected call file playback %s", selectedCall->_recordfile);
+        DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
         selectedCall->_record_is_playing = FALSE;
     }
 
@@ -839,10 +839,10 @@ remove_from_history(void * foo UNUSED)
 {
     callable_obj_t* call = calltab_get_selected_call(history_tab);
 
-    DEBUG("UIManager: Remove the call from the history");
+    DEBUG("Remove the call from the history");
 
     if (call == NULL) {
-        ERROR("UIManager: Error: Call is NULL");
+        ERROR("Call is NULL");
         return;
     }
 
@@ -855,10 +855,10 @@ call_back(void * foo UNUSED)
 {
     callable_obj_t *selected_call = calltab_get_selected_call(active_calltree_tab);
 
-    DEBUG("UIManager: Call back");
+    DEBUG("Call back");
 
     if (selected_call == NULL) {
-        ERROR("UIManager: Error: No selected call");
+        ERROR("No selected call");
         return;
     }
 
@@ -891,14 +891,14 @@ edit_copy(void * foo UNUSED)
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
 
-    DEBUG("UIManager: Edit/Copy");
+    DEBUG("Edit/Copy");
 
     if (selectedCall == NULL) {
-        ERROR("UIManager: Error: No selected call", selectedCall);
+        ERROR("No selected call", selectedCall);
         return;
     }
 
-    DEBUG("UIManager: Clipboard number: %s\n", selectedCall->_peer_number);
+    DEBUG("Clipboard number: %s\n", selectedCall->_peer_number);
     gtk_clipboard_set_text(clip, selectedCall->_peer_number,
                            strlen(selectedCall->_peer_number));
 }
@@ -972,7 +972,7 @@ edit_paste(void * foo UNUSED)
         gchar * old = selectedCall->_peer_number;
         selectedCall->_peer_number = g_strconcat(old, no, NULL);
         g_free(old);
-        DEBUG("UIManager: TO: %s", selectedCall->_peer_number);
+        DEBUG("TO: %s", selectedCall->_peer_number);
 
         g_free(selectedCall->_peer_info);
         selectedCall->_peer_info = g_strconcat("\"\" <",
@@ -1325,7 +1325,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
     conference_obj_t * selectedConf = NULL;
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
-        DEBUG("UIManager: Menus: Selected a call");
+        DEBUG("Menus: Selected a call");
         selectedCall = calltab_get_selected_call(current_calls_tab);
 
         if (selectedCall) {
@@ -1361,13 +1361,13 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
                     hangup = TRUE;
                     break;
                 default:
-                    WARN("UIManager: Should not happen in show_popup_menu for calls!")
+                    WARN("Should not happen in show_popup_menu for calls!")
                     ;
                     break;
             }
         }
     } else {
-        DEBUG("UIManager: Menus: selected a conf");
+        DEBUG("Menus: selected a conf");
         selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
         if (selectedConf) {
@@ -1384,7 +1384,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
                     hangup_or_hold_conf = TRUE;
                     break;
                 default:
-                    WARN("UIManager: Should not happen in show_popup_menu for conferences!")
+                    WARN("Should not happen in show_popup_menu for conferences!")
                     ;
                     break;
             }
@@ -1394,7 +1394,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
     GtkWidget *menu = gtk_menu_new();
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
-        DEBUG("UIManager: Build call menu");
+        DEBUG("Build call menu");
         if (copy) {
             GtkWidget *menu_items = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY,
                                     get_accel_group());
@@ -1501,7 +1501,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
         }
 
     } else {
-        DEBUG("UIManager: Build conf menus");
+        DEBUG("Build conf menus");
 
         if (hangup_or_hold_conf) {
             GtkWidget *menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));

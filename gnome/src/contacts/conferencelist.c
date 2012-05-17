@@ -94,11 +94,11 @@ void conferencelist_add(calltab_t *tab, const conference_obj_t* conf)
 }
 
 
-void conferencelist_remove(calltab_t *tab, const gchar* const conf)
+void conferencelist_remove(calltab_t *tab, const gchar* const conf_id)
 {
-    DEBUG("ConferenceList: Remove conference %s", conf);
+    DEBUG("ConferenceList: Remove conference %s", conf_id);
 
-    if (conf == NULL) {
+    if (conf_id == NULL) {
         ERROR("ConferenceList: Error: Conf id is NULL");
         return;
     }
@@ -108,12 +108,10 @@ void conferencelist_remove(calltab_t *tab, const gchar* const conf)
         return;
     }
 
-    gchar *c = (gchar*) conferencelist_get(tab, conf);
+    conference_obj_t *c =  conferencelist_get(tab, conf_id);
 
-    if (c == NULL) {
-        ERROR("ConferenceList: Error: Could not find conference %s", conf);
+    if (c == NULL)
         return;
-    }
 
     g_queue_remove(tab->conferenceQueue, c);
 }
@@ -129,10 +127,8 @@ conference_obj_t* conferencelist_get(calltab_t *tab, const gchar* const conf_id)
 
     GList *c = g_queue_find_custom(tab->conferenceQueue, conf_id, is_confID_confstruct);
 
-    if (c == NULL) {
-        ERROR("ConferenceList: Error: Could not find conference %s", conf_id);
+    if (c == NULL)
         return NULL;
-    }
 
     return (conference_obj_t*) c->data;
 }
