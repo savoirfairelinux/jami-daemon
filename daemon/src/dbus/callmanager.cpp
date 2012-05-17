@@ -35,9 +35,11 @@
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
+#include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h"
 #include "audio/audiortp/audio_zrtp_session.h"
 
+#include "logger.h"
 #include "manager.h"
 
 CallManager::CallManager(DBus::Connection& connection)
@@ -72,7 +74,7 @@ void CallManager::placeCallFirstAccount(const std::string& callID,
         accountList = Manager::instance().getAccountList();
 
     for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
-        if ((*iter != IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
+        if ((*iter != SIPAccount::IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
             Manager::instance().outgoingCall(*iter, callID, to);
             return;
         }
@@ -128,10 +130,20 @@ void CallManager::attendedTransfer(const std::string& transferID, const std::str
 
 void CallManager::setVolume(const std::string& device, const double& value)
 {
-    if (device == "speaker")
-        Manager::instance().setSpkrVolume((int)(value * 100.0));
-    else if (device == "mic")
-        Manager::instance().setMicVolume((int)(value * 100.0));
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if(!audiolayer) {
+        ERROR("Audio layer not valid while updating volume");
+        return;
+    }
+
+    DEBUG("DBUS set volume for %s: %f", device.c_str(), value);
+
+    if (device == "speaker") { 
+        audiolayer->setPlaybackGain((int)(value * 100.0));
+    } else if (device == "mic") {
+        audiolayer->setCaptureGain((int)(value * 100.0));
+    }
 
     volumeChanged(device, value);
 }
@@ -139,10 +151,17 @@ void CallManager::setVolume(const std::string& device, const double& value)
 double
 CallManager::getVolume(const std::string& device)
 {
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    if(!audiolayer) {
+        ERROR("Audio layer not valid while updating volume");
+        return 0.0;
+    }
+
     if (device == "speaker")
-        return Manager::instance().getSpkrVolume() / 100.0;
+        return audiolayer->getPlaybackGain() / 100.0;
     else if (device == "mic")
-        return Manager::instance().getMicVolume() / 100.0;
+        return audiolayer->getCaptureGain() / 100.0;
 
     return 0;
 }
@@ -211,6 +230,12 @@ std::vector< std::string >
 CallManager::getParticipantList(const std::string& confID)
 {
     return Manager::instance().getParticipantList(confID);
+}
+
+std::string
+CallManager::getConferenceId(const std::string& callID)
+{
+    return Manager::instance().getConferenceId(callID);
 }
 
 bool

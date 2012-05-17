@@ -30,7 +30,11 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+#include "gtk2_wrappers.h"
 #include "actions.h"
 #include "dbus.h"
 #include "calltree.h"
@@ -47,9 +51,11 @@
 #include "uimanager.h"
 #include "unused.h"
 #include "config/audioconf.h"
+#include "str_utils.h"
 
 #include "eel-gconf-extensions.h"
 
+#include <glib/gi18n.h>
 #include <sys/stat.h>
 #include <gtk/gtk.h>
 
@@ -124,6 +130,7 @@ main_window_ask_quit()
         question = _("There is one call in progress.");
     else
         question = _("There are calls in progress.");
+    DEBUG("Currently %d calls in progress", calllist_get_size(current_calls_tab));
 
     GtkWidget *dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(window),
                         GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s\n%s",
@@ -242,15 +249,21 @@ create_main_window()
     gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE /*expand*/,
                        FALSE /*fill*/, 0 /*padding*/);
 
+    speaker_control = create_slider("speaker");
+    mic_control = create_slider("mic");
+    g_object_ref(speaker_control);
+    g_object_ref(mic_control);
+
     if (SHOW_VOLUME) {
-        speaker_control = create_slider("speaker");
         gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE /*expand*/,
-                         TRUE /*fill*/, 0 /*padding*/);
-        gtk_widget_show_all(speaker_control);
-        mic_control = create_slider("mic");
+                          TRUE /*fill*/, 0 /*padding*/);
         gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
+        gtk_widget_show_all(speaker_control);
         gtk_widget_show_all(mic_control);
+    } else {
+        gtk_widget_hide(speaker_control);
+        gtk_widget_hide(mic_control);
     }
 
     if (eel_gconf_get_boolean(CONF_SHOW_DIALPAD)) {
@@ -315,11 +328,11 @@ void
 main_window_volume_controls(gboolean state)
 {
     if (state) {
-        speaker_control = create_slider("speaker");
+        // speaker_control = create_slider("speaker");
         gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all(speaker_control);
-        mic_control = create_slider("mic");
+        // mic_control = create_slider("mic");
         gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all(mic_control);
@@ -393,22 +406,22 @@ main_window_zrtp_not_supported(callable_obj_t * c)
 {
     gchar* warning_enabled = "";
 
-    account_t *account_details = account_list_get_by_id(c->_accountID);
+    account_t *account = account_list_get_by_id(c->_accountID);
 
-    if (account_details != NULL) {
-        warning_enabled = g_hash_table_lookup(account_details->properties,
-                                              ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+    if (account != NULL) {
+        warning_enabled = account_lookup(account,
+                                         ACCOUNT_ZRTP_NOT_SUPP_WARNING);
         DEBUG("Warning Enabled %s", warning_enabled);
     } else {
         DEBUG("Account is null callID %s", c->_callID);
         GHashTable * properties = sflphone_get_ip2ip_properties();
 
         if (properties)
-            warning_enabled = g_hash_table_lookup (properties,
-                                                   ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+            warning_enabled = g_hash_table_lookup(properties,
+                                                  ACCOUNT_ZRTP_NOT_SUPP_WARNING);
     }
 
-    if (g_strcasecmp(warning_enabled, "true") == 0) {
+    if (utf8_case_equal(warning_enabled, "true")) {
         PidginMiniDialog *mini_dialog;
         gchar *desc = g_markup_printf_escaped(
                           _("ZRTP is not supported by peer %s\n"), c->_peer_number);

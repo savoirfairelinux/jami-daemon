@@ -24,7 +24,7 @@
 #include <KDebug>
 
 
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 
 #include "dlggeneral.h"
 #include "dlgdisplay.h"
@@ -69,12 +69,16 @@ void ConfigurationDialog::updateWidgets()
 {
    dlgAudio->updateWidgets();
    dlgAccounts->updateWidgets();
+   dlgGeneral->updateWidgets();
+   dlgAddressBook->updateWidgets();
 }
 
 void ConfigurationDialog::updateSettings()
 {
    dlgAudio->updateSettings();
    dlgAccounts->updateSettings();
+   dlgGeneral->updateSettings();
+   dlgAddressBook->updateSettings();
 }
 
 bool ConfigurationDialog::hasChanged()

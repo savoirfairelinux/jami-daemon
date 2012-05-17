@@ -28,44 +28,37 @@
  *  as that of the covered work.
  */
 
-#include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <expat.h>
+#include "test_utils.h"
 
 #include "instantmessagingtest.h"
-
-#include "expat.h"
-#include <stdio.h>
+#include "im/instant_messaging.h"
+#include "logger.h"
 
 #define MAXIMUM_SIZE	10
 #define DELIMITER_CHAR	"\n\n"
 
-using std::cout;
-using std::endl;
-
-
-void InstantMessagingTest::setUp()
-{
-    im_ = new sfl::InstantMessaging();
-}
+using namespace sfl::InstantMessaging;
 
 void InstantMessagingTest::testSaveSingleMessage()
 {
-    DEBUG("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
-
-    std::string input, tmp;
+    TITLE();
     std::string callID = "testfile1.txt";
     std::string filename = "im:";
 
     // Open a file stream and try to write in it
-    CPPUNIT_ASSERT(im_->saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+    CPPUNIT_ASSERT(saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out));
 
     filename.append(callID);
     // Read it to check it has been successfully written
     std::ifstream testfile(filename.c_str(), std::ios::in);
-    CPPUNIT_ASSERT(testfile.is_open() == true);
+    CPPUNIT_ASSERT(testfile.is_open());
 
+    std::string input;
     while (!testfile.eof()) {
+        std::string tmp;
         std::getline(testfile, tmp);
         input.append(tmp);
     }
@@ -76,22 +69,23 @@ void InstantMessagingTest::testSaveSingleMessage()
 
 void InstantMessagingTest::testSaveMultipleMessage()
 {
-    DEBUG("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
+    TITLE();
 
-    std::string input, tmp;
     std::string callID = "testfile2.txt";
     std::string filename = "im:";
 
     // Open a file stream and try to write in it
-    CPPUNIT_ASSERT(im_->saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
-    CPPUNIT_ASSERT(im_->saveMessage("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
+    CPPUNIT_ASSERT(saveMessage("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out));
+    CPPUNIT_ASSERT(saveMessage("Cool", "Alex", callID, std::ios::out || std::ios::app));
 
     filename.append(callID);
     // Read it to check it has been successfully written
     std::ifstream testfile(filename.c_str(), std::ios::in);
-    CPPUNIT_ASSERT(testfile.is_open() == true);
+    CPPUNIT_ASSERT(testfile.is_open());
 
+    std::string input;
     while (!testfile.eof()) {
+        std::string tmp;
         std::getline(testfile, tmp);
         input.append(tmp);
     }
@@ -113,14 +107,12 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
 
     std::cout << "startElement " << name << std::endl;
 
-    int *nbEntry = (int *)userData;
+    int *nbEntry = (int *) userData;
 
     char attribute[50];
     char value[50];
 
-    const char **att;
-
-    for (att = atts; *att; att += 2) {
+    for (const char **att = atts; *att; att += 2) {
 
         const char **val = att+1;
 
@@ -140,17 +132,14 @@ static void XMLCALL startElementCallback(void *userData, const char *name, const
     }
 
     *nbEntry += 1;
-
 }
 
-static void XMLCALL endElementCallback(void * /*userData*/, const char * /*name*/)
-{
-    // std::cout << "endElement " << name << std::endl;
-}
+static void XMLCALL
+endElementCallback(void * /*userData*/, const char * /*name*/)
+{}
 
 void InstantMessagingTest::testGenerateXmlUriList()
 {
-
     std::cout << std::endl;
 
     // Create a test list with two entries
@@ -165,7 +154,7 @@ void InstantMessagingTest::testGenerateXmlUriList()
     list.push_front(entry1);
     list.push_front(entry2);
 
-    std::string buffer = im_->generateXmlUriList(list);
+    std::string buffer = generateXmlUriList(list);
     CPPUNIT_ASSERT(buffer.size() != 0);
 
     std::cout << buffer << std::endl;
@@ -177,16 +166,12 @@ void InstantMessagingTest::testGenerateXmlUriList()
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
 
     if (XML_Parse(parser, buffer.c_str(), buffer.size(), 1) == XML_STATUS_ERROR) {
-        std::cout << "Error: " << XML_ErrorString(XML_GetErrorCode(parser))
-                  << " at line " << XML_GetCurrentLineNumber(parser) << std::endl;
+        ERROR("%s at line %d", XML_ErrorString(XML_GetErrorCode(parser)), XML_GetCurrentLineNumber(parser));
         CPPUNIT_ASSERT(false);
     }
 
     XML_ParserFree(parser);
-
     CPPUNIT_ASSERT(nbEntry == 4);
-
-    CPPUNIT_ASSERT(true);
 }
 
 void InstantMessagingTest::testXmlUriListParsing()
@@ -200,27 +185,20 @@ void InstantMessagingTest::testXmlUriListParsing()
     xmlbuffer.append("</resource-lists>");
 
 
-    sfl::InstantMessaging::UriList list = im_->parseXmlUriList(xmlbuffer);
+    sfl::InstantMessaging::UriList list = parseXmlUriList(xmlbuffer);
     CPPUNIT_ASSERT(list.size() == 2);
 
     // An iterator over xml attribute
     sfl::InstantMessaging::UriEntry::iterator iterAttr;
 
     // An iterator over list entries
-    sfl::InstantMessaging::UriList::iterator iterEntry = list.begin();
-
-
-    while (iterEntry != list.end()) {
+    for (sfl::InstantMessaging::UriList::iterator iterEntry = list.begin();
+            iterEntry != list.end(); ++iterEntry) {
         sfl::InstantMessaging::UriEntry entry = static_cast<sfl::InstantMessaging::UriEntry>(*iterEntry);
         iterAttr = entry.find(sfl::IM_XML_URI);
 
-        if ((iterAttr->second == std::string("sip:alex@example.com")) ||
-                (iterAttr->second == std::string("sip:manu@example.com")))
-            CPPUNIT_ASSERT(true);
-        else
-            CPPUNIT_ASSERT(false);
-
-        iterEntry++;
+        CPPUNIT_ASSERT((iterAttr->second == std::string("sip:alex@example.com")) or
+                (iterAttr->second == std::string("sip:manu@example.com")));
     }
 }
 
@@ -241,13 +219,11 @@ void InstantMessagingTest::testGetTextArea()
     formatedText.append("</resource-lists>");
     formatedText.append("--boundary--");
 
-    std::string message = im_->findTextMessage(formatedText);
-
-    std::cout << "message " << message << std::endl;
+    std::string message(findTextMessage(formatedText));
+    DEBUG("Message %s", message.c_str());
 
     CPPUNIT_ASSERT(message == "Here is the text area");
 }
-
 
 void InstantMessagingTest::testGetUriListArea()
 {
@@ -265,13 +241,13 @@ void InstantMessagingTest::testGetUriListArea()
     formatedText.append("</resource-lists>");
     formatedText.append("--boundary--");
 
-    std::string urilist = im_->findTextUriList(formatedText);
+    std::string urilist = findTextUriList(formatedText);
 
     CPPUNIT_ASSERT(urilist.compare("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\"><list><entry uri=\"sip:alex@example.com\" cp:copyControl=\"to\" /><entry uri=\"sip:manu@example.com\" cp:copyControl=\"to\" /></list></resource-lists>") == 0);
 
     std::cout << "urilist: " << urilist << std::endl;
 
-    sfl::InstantMessaging::UriList list = im_->parseXmlUriList(urilist);
+    sfl::InstantMessaging::UriList list = parseXmlUriList(urilist);
     CPPUNIT_ASSERT(list.size() == 2);
 
     // order may be important, for example to identify message sender
@@ -281,14 +257,13 @@ void InstantMessagingTest::testGetUriListArea()
     sfl::InstantMessaging::UriEntry::iterator iterAttr = entry.find(sfl::IM_XML_URI);
 
     if (iterAttr == entry.end()) {
-        std::cout << "Error, did not found attribute" << std::endl;
+        ERROR("Did not find attribute");
         CPPUNIT_ASSERT(false);
     }
 
     std::string from = iterAttr->second;
     CPPUNIT_ASSERT(from == "sip:alex@example.com");
 }
-
 
 void InstantMessagingTest::testIllFormatedMessage()
 {
@@ -310,21 +285,10 @@ void InstantMessagingTest::testIllFormatedMessage()
     formatedText.append("--boundary--");
 
     try {
-        std::string message = im_->findTextMessage(formatedText);
-    } catch (sfl::InstantMessageException &e) {
+        std::string message = findTextMessage(formatedText);
+    } catch (const sfl::InstantMessageException &e) {
         exceptionCaught = true;
     }
 
-    if (exceptionCaught)
-        CPPUNIT_ASSERT(true);
-    else
-        CPPUNIT_ASSERT(false);
-
-}
-
-
-void InstantMessagingTest::tearDown()
-{
-    delete im_;
-    im_ = 0;
+    CPPUNIT_ASSERT(exceptionCaught);
 }

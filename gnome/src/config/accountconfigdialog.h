@@ -39,8 +39,15 @@
 
 /**
  * Display the main account widget
- * @param a The account you want to edit or null for a new account
+ * @param a The account you want to display
+ * @return The dialog with the pertinent account information
  */
-void show_account_window (account_t *a);
+GtkWidget *show_account_window(const account_t *a);
+
+/*
+ * @param dialog The dialog the account will be update from
+ * @param a The account you want to display
+ */
+void update_account_from_dialog(GtkWidget *dialog, account_t *a);
 
 #endif

@@ -32,7 +32,6 @@
  */
 
 #include "sipcall.h"
-#include "audio/audiortp/audio_rtp_factory.h"
 #include "sdp.h"
 
 namespace {
@@ -52,4 +51,17 @@ SIPCall::~SIPCall()
 {
     delete local_sdp_;
     pj_pool_release(pool_);
+}
+
+void SIPCall::answer()
+{
+    pjsip_tx_data *tdata;
+    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
+        throw std::runtime_error("Could not init invite request answer (200 OK)");
+
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
+        throw std::runtime_error("Could not send invite request answer (200 OK)");
+
+    setConnectionState(CONNECTED);
+    setState(ACTIVE);
 }

@@ -31,6 +31,8 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
+#include "gtk2_wrappers.h"
 #include "searchbar.h"
 #include "calltree.h"
 #include "calltab.h"
@@ -45,18 +47,18 @@ static GtkWidget * searchbox;
 static GtkWidget * addressbookentry;
 
 static GtkWidget * cbox;
-static GtkListStore * liststore = NULL;
+static GtkListStore * liststore;
 
 static gint cboxSignalId;
 
-static GtkWidget *menu = NULL;
+static GtkWidget *menu;
 
 /**
  * Searchbar icons
  */
-static GdkPixbuf *incoming_pixbuf = NULL;
-static GdkPixbuf *outgoing_pixbuf = NULL;
-static GdkPixbuf *missed_pixbuf = NULL;
+static GdkPixbuf *incoming_pixbuf;
+static GdkPixbuf *outgoing_pixbuf;
+static GdkPixbuf *missed_pixbuf;
 
 void searchbar_addressbook_activated(GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
 {

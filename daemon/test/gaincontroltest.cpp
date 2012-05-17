@@ -28,12 +28,9 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
-
 #include "gaincontroltest.h"
-#include "config/config.h"
-
-using namespace std;
+#include "audio/gaincontrol.h"
+#include "config/sfl_config.h"
 
 void GainControlTest::testGainProcessing()
 {

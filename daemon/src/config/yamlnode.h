@@ -42,58 +42,56 @@ namespace Conf {
 class YamlNode;
 
 typedef std::list<YamlNode *> Sequence;
-typedef std::map<std::string, YamlNode *> Mapping;
 
 enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
 
 class YamlNode {
     public:
-
-        YamlNode(NodeType t, YamlNode *top=NULL) : type(t), topNode(top) {}
+        YamlNode(NodeType t, YamlNode *top = NULL) : type_(t), topNode_(top) {}
 
         virtual ~YamlNode() {}
 
-        NodeType getType() {
-            return type;
+        NodeType getType() const {
+            return type_;
         }
 
         YamlNode *getTopNode() {
-            return topNode;
+            return topNode_;
         }
 
         virtual void deleteChildNodes() = 0;
 
     private:
         NON_COPYABLE(YamlNode);
-        NodeType type;
-        YamlNode *topNode;
+        NodeType type_;
+        YamlNode *topNode_;
 };
 
 
-class YamlDocument : YamlNode {
+class YamlDocument : public YamlNode {
     public:
-        YamlDocument(YamlNode* top=NULL) : YamlNode(DOCUMENT, top), doc() {}
+        YamlDocument(YamlNode* top = NULL) : YamlNode(DOCUMENT, top), doc_() {}
 
         void addNode(YamlNode *node);
 
         YamlNode *popNode();
 
         Sequence *getSequence() {
-            return &doc;
+            return &doc_;
         }
 
         virtual void deleteChildNodes();
 
     private:
-        Sequence doc;
+        Sequence doc_;
 };
 
 class SequenceNode : public YamlNode {
     public:
-        SequenceNode(YamlNode *top) : YamlNode(SEQUENCE, top), seq() {}
+        SequenceNode(YamlNode *top) : YamlNode(SEQUENCE, top), seq_() {}
 
         Sequence *getSequence() {
-            return &seq;
+            return &seq_;
         }
 
         void addNode(YamlNode *node);
@@ -101,57 +99,59 @@ class SequenceNode : public YamlNode {
         virtual void deleteChildNodes();
 
     private:
-        Sequence seq;
+        Sequence seq_;
 };
 
 
 class MappingNode : public YamlNode {
     public:
-        MappingNode(YamlNode *top) : YamlNode(MAPPING, top), map(), tmpKey() {}
+        MappingNode(YamlNode *top) :
+            YamlNode(MAPPING, top), map_(), tmpKey_() {}
 
-        Mapping *getMapping() {
-            return &map;
+        std::map<std::string, YamlNode*> *
+        getMapping() {
+            return &map_;
         }
 
         void addNode(YamlNode *node);
 
         void setTmpKey(std::string key) {
-            tmpKey = key;
+            tmpKey_ = key;
         }
 
-        void  setKeyValue(const std::string &key, YamlNode *value);
+        void setKeyValue(const std::string &key, YamlNode *value);
 
         void removeKeyValue(const std::string &key);
 
-        YamlNode *getValue(const std::string &key);
-        void getValue(const std::string &key, bool *b);
-        void getValue(const std::string &key, int *i);
-        void getValue(const std::string &key, std::string *s);
+        YamlNode *getValue(const std::string &key) const;
+        void getValue(const std::string &key, bool *b) const;
+        void getValue(const std::string &key, int *i) const;
+        void getValue(const std::string &key, std::string *s) const;
 
         virtual void deleteChildNodes();
 
     private:
-        Mapping map;
-        std::string tmpKey;
+        std::map<std::string, YamlNode*> map_;
+        std::string tmpKey_;
 };
 
 class ScalarNode : public YamlNode {
     public:
-        ScalarNode(std::string s="", YamlNode *top=NULL) : YamlNode(SCALAR, top), str(s) {}
-        ScalarNode(bool b, YamlNode *top=NULL) : YamlNode(SCALAR, top), str(b ? "true" : "false") {}
+        ScalarNode(std::string s="", YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(s) {}
+        ScalarNode(bool b, YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(b ? "true" : "false") {}
 
-        const std::string &getValue() {
-            return str;
+        const std::string &getValue() const {
+            return str_;
         }
 
         void setValue(const std::string &s) {
-            str = s;
+            str_ = s;
         }
 
         virtual void deleteChildNodes() {}
 
     private:
-        std::string str;
+        std::string str_;
 };
 
 }

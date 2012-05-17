@@ -32,9 +32,7 @@
 #define IAXACCOUNT_H
 
 #include "account.h"
-#include "noncopyable.h"
-
-class IAXVoIPLink;
+#include "iaxvoiplink.h"
 
 /**
  * @file: iaxaccount.h
@@ -43,11 +41,9 @@ class IAXVoIPLink;
 class IAXAccount : public Account {
     public:
         IAXAccount(const std::string& accountID);
-        ~IAXAccount();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         void setAccountDetails(std::map<std::string, std::string> details);
 
@@ -67,10 +63,9 @@ class IAXAccount : public Account {
         }
 
     private:
-        NON_COPYABLE(IAXAccount);
          // Account login information: password
         std::string password_;
-        IAXVoIPLink *link_;
+        IAXVoIPLink link_;
         virtual VoIPLink* getVoIPLink();
 };
 

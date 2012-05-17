@@ -29,6 +29,7 @@
  */
 
 #include "calltab.h"
+#include "str_utils.h"
 #include "callable_obj.h"
 #include "calltree.h"
 #include "conferencelist.h"
@@ -37,13 +38,13 @@
 static gint is_confID_confstruct(gconstpointer a, gconstpointer b)
 {
     conference_obj_t * c = (conference_obj_t*) a;
-    return g_strcasecmp(c->_confID, (const gchar*) b);
+    return utf8_case_cmp(c->_confID, (const gchar*) b);
 }
 
 void conferencelist_init(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Call tab is NULL");
+        ERROR("Call tab is NULL");
         return;
     }
 
@@ -54,7 +55,7 @@ void conferencelist_init(calltab_t *tab)
 void conferencelist_clean(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Calltab tab is NULL");
+        ERROR("Calltab tab is NULL");
         return;
     }
 
@@ -64,7 +65,7 @@ void conferencelist_clean(calltab_t *tab)
 void conferencelist_reset(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Calltab tab is NULL");
+        ERROR("Calltab tab is NULL");
         return;
     }
 
@@ -76,12 +77,12 @@ void conferencelist_reset(calltab_t *tab)
 void conferencelist_add(calltab_t *tab, const conference_obj_t* conf)
 {
     if (conf == NULL) {
-        ERROR("ConferenceList: Error: Conference is NULL");
+        ERROR("Conference is NULL");
         return;
     }
 
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Tab is NULL");
+        ERROR("Tab is NULL");
         return;
     }
 
@@ -93,45 +94,41 @@ void conferencelist_add(calltab_t *tab, const conference_obj_t* conf)
 }
 
 
-void conferencelist_remove(calltab_t *tab, const gchar* const conf)
+void conferencelist_remove(calltab_t *tab, const gchar* const conf_id)
 {
-    DEBUG("ConferenceList: Remove conference %s", conf);
+    DEBUG("Remove conference %s", conf_id);
 
-    if (conf == NULL) {
-        ERROR("ConferenceList: Error: Conf id is NULL");
+    if (conf_id == NULL) {
+        ERROR("Conf id is NULL");
         return;
     }
 
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Calltab is NULL");
+        ERROR("Calltab is NULL");
         return;
     }
 
-    gchar *c = (gchar*) conferencelist_get(tab, conf);
+    conference_obj_t *c =  conferencelist_get(tab, conf_id);
 
-    if (c == NULL) {
-        ERROR("ConferenceList: Error: Could not find conference %s", conf);
+    if (c == NULL)
         return;
-    }
 
     g_queue_remove(tab->conferenceQueue, c);
 }
 
 conference_obj_t* conferencelist_get(calltab_t *tab, const gchar* const conf_id)
 {
-    DEBUG("ConferenceList: Conference list get %s", conf_id);
+    DEBUG("Conference list get %s", conf_id);
 
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Calltab is NULL");
+        ERROR("Calltab is NULL");
         return NULL;
     }
 
     GList *c = g_queue_find_custom(tab->conferenceQueue, conf_id, is_confID_confstruct);
 
-    if (c == NULL) {
-        ERROR("ConferenceList: Error: Could not find conference %s", conf_id);
+    if (c == NULL)
         return NULL;
-    }
 
     return (conference_obj_t*) c->data;
 }
@@ -139,14 +136,14 @@ conference_obj_t* conferencelist_get(calltab_t *tab, const gchar* const conf_id)
 conference_obj_t* conferencelist_get_nth(calltab_t *tab, guint n)
 {
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Calltab is NULL");
+        ERROR("Calltab is NULL");
         return NULL;
     }
 
     conference_obj_t *c = g_queue_peek_nth(tab->conferenceQueue, n);
 
     if (c == NULL) {
-        ERROR("ConferenceList: Error: Could not fetch conference %d", n);
+        ERROR("Could not fetch conference %d", n);
         return NULL;
     }
 
@@ -156,7 +153,7 @@ conference_obj_t* conferencelist_get_nth(calltab_t *tab, guint n)
 conference_obj_t *conferencelist_pop_head(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Tab is NULL");
+        ERROR("Tab is NULL");
         return NULL;
     }
 
@@ -166,7 +163,7 @@ conference_obj_t *conferencelist_pop_head(calltab_t *tab)
 guint conferencelist_get_size(calltab_t *tab)
 {
     if (tab == NULL) {
-        ERROR("ConferenceList: Error: Calltab is NULL");
+        ERROR("Calltab is NULL");
         return 0;
     }
 

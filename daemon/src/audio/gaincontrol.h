@@ -80,7 +80,7 @@ class GainControl {
                 /**
                  * Perform compression on input signal
                  */
-                double limit(double);
+                double limit(double) const;
 
             private:
                 double ratio_;

@@ -51,8 +51,6 @@ Short description of content of source tree
 -------------------------------------------
 
 - ringtones/ contains the different ringtones.
-- stund/ is an implementation of the protocol STUN used when there is a NAT.
-- utilspp/ allows to implement a singleton.
 - src/ is the core of SFLphone. It contains the main.cpp, managerimpl.cpp
   files, audio and gui directories, and files about signalisation SIP. Later,
   it should be better, when IAX will be implemented, that a directory groups

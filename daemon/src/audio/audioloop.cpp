@@ -37,6 +37,7 @@
 #include <numeric>
 #include <cstring>
 #include <cassert>
+#include "logger.h"
 
 AudioLoop::AudioLoop() : buffer_(0),  size_(0), pos_(0), sampleRate_(0)
 {}
@@ -52,10 +53,10 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
     size_t pos = pos_;
 
     if (size_ == 0) {
-        ERROR("AudioLoop: Error: Audio loop size is 0");
+        ERROR("Audio loop size is 0");
         return;
     } else if (pos >= size_) {
-        ERROR("AudioLoop: Error: Invalid loop position %d", pos);
+        ERROR("Invalid loop position %d", pos);
         return;
     }
 

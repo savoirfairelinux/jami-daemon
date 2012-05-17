@@ -32,8 +32,9 @@
 
 #include "account.h"
 #include "manager.h"
+#include "dbus/configurationmanager.h"
 
-Account::Account(const std::string& accountID, const std::string &type) :
+Account::Account(const std::string &accountID, const std::string &type) :
     accountID_(accountID)
     , username_()
     , hostname_()
@@ -54,8 +55,7 @@ Account::Account(const std::string& accountID, const std::string &type) :
 }
 
 Account::~Account()
-{
-}
+{}
 
 void Account::setRegistrationState(const RegistrationState &state)
 {
@@ -63,7 +63,8 @@ void Account::setRegistrationState(const RegistrationState &state)
         registrationState_ = state;
 
         // Notify the client
-        Manager::instance().connectionStatusNotification();
+        ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
+        c->registrationStateChanged(accountID_, registrationState_);
     }
 }
 
@@ -87,21 +88,21 @@ void Account::loadDefaultCodecs()
 
 
 
-void Account::setActiveCodecs(const std::vector <std::string> &list)
+void Account::setActiveCodecs(const std::vector<std::string> &list)
 {
     // first clear the previously stored codecs
     codecOrder_.clear();
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecOrder vector to save the order.
-    for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
-            ++iter) {
+    for (std::vector<std::string>::const_iterator iter = list.begin();
+            iter != list.end(); ++iter) {
         int payload = std::atoi(iter->c_str());
-        codecOrder_.push_back((int) payload);
+        codecOrder_.push_back(payload);
     }
 
     // update the codec string according to new codec selection
-    codecStr_ = ManagerImpl::serialize(list);
+    codecStr_ = ManagerImpl::join_string(list);
 }
 
 std::string Account::mapStateNumberToString(RegistrationState state)

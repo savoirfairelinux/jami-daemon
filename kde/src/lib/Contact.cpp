@@ -106,6 +106,17 @@ const QString& Contact::getUid() const
    return m_Uid;
 }
 
+///Get the group
+const QString& Contact::getGroup() const
+{
+   return m_Group;
+}
+
+const QString& Contact::getDepartment() const
+{
+   return m_Department;
+}
+
 ///Get the contact type
 const QString& Contact::getType() const
 {
@@ -139,7 +150,7 @@ void Contact::setFamilyName(const QString& name)
 ///Set the Photo/Avatar
 void Contact::setPhoto(QPixmap* photo)
 {
-   m_pPhoto      = photo;
+   m_pPhoto = photo;
 }
 
 ///Set the formatted name (display name)
@@ -164,4 +175,35 @@ void Contact::setPreferredEmail(const QString& name)
 void Contact::setUid(const QString& id)
 {
    m_Uid = id;
+}
+
+///Set Group
+void Contact::setGroup(const QString& name)
+{
+   m_Group = name;
+}
+
+///Set department
+void Contact::setDepartment(const QString& name)
+{
+   m_Department = name;
+}
+
+///Turn the contact into QString-QString hash
+QHash<QString,QVariant> Contact::toHash()
+{
+   QHash<QString,QVariant> aContact;
+   //aContact[""] = PhoneNumbers   getPhoneNumbers()    const;
+   aContact[ "nickName"       ] = getNickName();
+   aContact[ "firstName"      ] = getFirstName();
+   aContact[ "secondName"     ] = getSecondName();
+   aContact[ "formattedName"  ] = getFormattedName();
+   aContact[ "organization"   ] = getOrganization();
+   aContact[ "uid"            ] = getUid();
+   aContact[ "preferredEmail" ] = getPreferredEmail();
+   //aContact[ "Photo"          ] = QVariant(*getPhoto());
+   aContact[ "type"           ] = getType();
+   aContact[ "group"          ] = getGroup();
+   aContact[ "department"     ] = getDepartment();
+   return aContact;
 }

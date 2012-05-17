@@ -30,15 +30,17 @@
 
 #include "audiorecorder.h"
 #include "mainbuffer.h"
+#include "logger.h"
+#include <sstream>
 #include <cassert>
+#include <tr1/array>
 
 int AudioRecorder::count_ = 0;
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread(),
-    recorderId_(), mbuffer_(mb), arecord_(arec)
+AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : ost::Thread(),
+    recorderId_(), mbuffer_(mb), arecord_(arec), running_(true)
 {
     assert(mb);
-    setCancel(cancelDeferred);
 
     ++count_;
 
@@ -46,7 +48,7 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread(),
 
     // convert count into string
     std::string s;
-    std::stringstream out;
+    std::ostringstream out;
     out << count_;
     s = out.str();
 
@@ -58,18 +60,17 @@ AudioRecorder::AudioRecorder(AudioRecord  *arec, MainBuffer *mb) : Thread(),
  */
 void AudioRecorder::run()
 {
-    int bufferLength = 10000;
-    SFLDataFormat buffer[bufferLength];
+    const size_t BUFFER_LENGTH = 10000;
+    std::tr1::array<SFLDataFormat, BUFFER_LENGTH> buffer;
+    buffer.assign(0);
 
-    while (true) {
-        int availBytes = mbuffer_->availForGet(recorderId_);
-        int toGet = (availBytes < bufferLength) ? availBytes : bufferLength;
-
-        mbuffer_->getData(buffer, toGet, recorderId_);
+    while (running_) {
+        size_t availBytes = mbuffer_->availForGet(recorderId_);
+        mbuffer_->getData(buffer.data(), std::min(availBytes, buffer.size()), recorderId_);
 
         if (availBytes > 0)
-            arecord_->recData(buffer, availBytes / sizeof(SFLDataFormat));
+            arecord_->recData(buffer.data(), availBytes / sizeof(SFLDataFormat));
 
-        sleep(20);
+        Thread::sleep(20);
     }
 }

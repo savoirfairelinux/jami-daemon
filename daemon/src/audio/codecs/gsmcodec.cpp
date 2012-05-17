@@ -31,8 +31,8 @@
 
 
 #include "audiocodec.h"
+#include "sfl_types.h"
 #include "noncopyable.h"
-#include <cassert>
 #include <stdexcept>
 
 extern "C" {
@@ -47,10 +47,8 @@ class Gsm : public sfl::AudioCodec {
 
     public:
         // _payload should be 3
-        Gsm(int payload=3) : sfl::AudioCodec(payload, "GSM"), decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
-            clockRate_ = 8000;
-            frameSize_ = 160; // samples, 20 ms at 8kHz
-            channel_ = 1;
+        Gsm() : sfl::AudioCodec(3, "GSM", 8000, 160, 1),
+        decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
             bitrate_ = 13.3;
             hasDynamicPayload_ = false;
 
@@ -61,22 +59,22 @@ class Gsm : public sfl::AudioCodec {
                 throw std::runtime_error("ERROR: encode_gsm_create\n");
         }
 
-        virtual ~Gsm() {
+        virtual ~Gsm()
+        {
             gsm_destroy(decode_gsmhandle_);
             gsm_destroy(encode_gsmhandle_);
         }
 
-        virtual int	decode(short * dst, unsigned char * src, size_t buf_size) {
-            assert(buf_size == 33);
-
+        virtual int decode(SFLDataFormat * dst, unsigned char * src, size_t /*buf_size*/)
+        {
             if (gsm_decode(decode_gsmhandle_, (gsm_byte*) src, (gsm_signal*) dst) < 0)
                 throw std::runtime_error("ERROR: gsm_decode\n");
 
             return frameSize_;
         }
 
-        virtual int	encode(unsigned char * dst, short * src, size_t buf_size) {
-            assert(buf_size >= 33);
+        virtual int encode(unsigned char * dst, SFLDataFormat * src, size_t /*buf_size*/)
+        {
             gsm_encode(encode_gsmhandle_, (gsm_signal*) src, (gsm_byte*) dst);
             return 33;
         }
@@ -87,11 +85,13 @@ class Gsm : public sfl::AudioCodec {
         gsm encode_gsmhandle_;
 };
 
+// cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* create()
 {
-    return new Gsm(3);
+    return new Gsm;
 }
 
+// cppcheck-suppress unusedFunction
 extern "C" void destroy(sfl::Codec* a)
 {
     delete a;

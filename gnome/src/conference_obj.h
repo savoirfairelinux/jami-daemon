@@ -32,7 +32,7 @@
 #define __CONFERENCE_OBJ_H__
 
 #include <gtk/gtk.h>
-#include <glib/gprintf.h>
+#include <glib.h>
 #include <stdlib.h>
 #include <time.h>
 

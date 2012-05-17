@@ -32,9 +32,9 @@
 #ifndef CALL_H
 #define CALL_H
 
-#include <cc++/thread.h> // for mutex
 #include <sstream>
-
+#include <map>
+#include "cc_thread.h"
 #include "audio/recordable.h"
 
 /*
@@ -174,6 +174,8 @@ class Call : public Recordable {
             isIPToIP_ = IPToIP;
         }
 
+        virtual void answer() = 0;
+
         /**
          * Set my IP [not protected]
          * @param ip  The local IP address
@@ -201,10 +203,6 @@ class Call : public Recordable {
          * @return unsigned int  The local audio port
          */
         unsigned int getLocalAudioPort();
-
-        std::string getRecFileId() const {
-            return getDisplayName();
-        }
 
         void time_stop();
         std::map<std::string, std::string> createHistoryEntry() const;

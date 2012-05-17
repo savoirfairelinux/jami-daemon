@@ -32,17 +32,18 @@
  *  as that of the covered work.
  */
 
-#ifndef __SFL_MANAGER_H__
-#define __SFL_MANAGER_H__
+#ifndef MANAGER_IMPL_H_
+#define MANAGER_IMPL_H_
 
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
-#include <cc++/thread.h>
+#include <tr1/memory>
+#include "cc_thread.h"
 #include "dbus/dbusmanager.h"
 
-#include "config/config.h"
+#include "config/sfl_config.h"
 
 #include "call.h"
 #include "conference.h"
@@ -52,15 +53,12 @@
 
 #include "audio/mainbuffer.h"
 #include "preferences.h"
+#include "history/history.h"
 #include "noncopyable.h"
 
-namespace sfl {
-class InstantMessaging;
-}
-
 namespace Conf {
-class YamlParser;
-class YamlEmitter;
+    class YamlParser;
+    class YamlEmitter;
 }
 
 class DTMF;
@@ -75,6 +73,7 @@ class DNSService;
 #endif
 
 class Account;
+class SIPAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<std::string, Account*> AccountMap;
@@ -94,8 +93,6 @@ static const char * const default_conf = "conf";
 class ManagerImpl {
     public:
         ManagerImpl();
-        ~ManagerImpl();
-
 
         /**
          * General preferences configuration
@@ -131,7 +128,7 @@ class ManagerImpl {
          * Initialisation of thread (sound) and map.
          * Init a new VoIPLink, audio codec and audio driver
          */
-        void init(std::string config_file="");
+        void init(const std::string &config_file);
 
         /**
          * Terminate all thread (sound, link) and unload AccountMap
@@ -356,7 +353,7 @@ class ManagerImpl {
          * @param call A call pointer
          * @param accountId an account id
          */
-        void incomingCall(Call* call, const std::string& accountId);
+        void incomingCall(Call &call, const std::string& accountId);
 
         /**
          * Notify the user that the recipient of the call has answered and the put the
@@ -400,11 +397,6 @@ class ManagerImpl {
          * @param nb_msg The number of messages
          */
         void startVoiceMessageNotification(const std::string& accountId, int nb_msg);
-
-        /**
-         * Notify the client through DBus that registration state has been updated
-         */
-        void connectionStatusNotification();
 
         /**
          * ConfigurationManager - Send registration request
@@ -465,6 +457,8 @@ class ManagerImpl {
          * @return std::vector<std::string> A list of call IDs
          */
         std::vector<std::string> getParticipantList(const std::string& confID) const;
+
+        std::string getConferenceId(const std::string& callID);
 
         /**
          * Save the details of an existing account, given the account ID
@@ -577,9 +571,9 @@ class ManagerImpl {
          * Required format: payloads separated with one slash.
          * @return std::string The serializabled string
          */
-        static std::string serialize(const std::vector<std::string> &v);
+        static std::string join_string(const std::vector<std::string> &v);
 
-        static std::vector<std::string> unserialize(std::string v);
+        static std::vector<std::string> split_string(std::string v);
 
         /**
          * Ringtone option.
@@ -694,17 +688,6 @@ class ManagerImpl {
         std::vector <std::string> getAddressbookList() const;
 
         /**
-         * Hook configuration
-         */
-        std::map<std::string, std::string> getHookSettings() const;
-
-        /**
-         * Hook configuration
-         */
-        void setHookSettings(const std::map<std::string, std::string>& settings);
-
-
-        /**
          * Get the audio manager
          * @return int The audio manager
          *		    "alsa"
@@ -738,16 +721,6 @@ class ManagerImpl {
         std::vector<std::string> getActiveCodecList() const;
 
         /**
-         * Retrieve in the configuration tree the value of a parameter in a specific section
-         * @param section	The section to look in
-         * @param name	The name of the parameter you want to get
-         * @param arg	Undocumented
-         * @return bool	true on success
-         *			false otherwise
-         */
-        bool getConfig(const std::string& section, const std::string& name, TokenList& arg) const;
-
-        /**
          * Change a specific value in the configuration tree.
          * This value will then be saved in the user config file sflphonedrc
          * @param section	The section name
@@ -768,26 +741,6 @@ class ManagerImpl {
          *		      false otherwise
          */
         void setConfig(const std::string& section, const std::string& name, int value);
-
-        /**
-         * Get a int from the configuration tree
-         * Throw an Conf::ConfigTreeItemException if not found
-         * @param section The section name to look in
-         * @param name    The parameter name
-         * @return int    The int value
-         */
-
-        int getConfigInt(const std::string& section, const std::string& name) const;
-
-        /**
-           * Get a bool from the configuration tree
-           * Throw an Conf::ConfigTreeItemException if not found
-           * @param section The section name to look in
-           * @param name    The parameter name
-           * @return bool    The bool value
-           */
-
-        bool getConfigBool(const std::string& section, const std::string& name) const;
 
         /**
          * Get a string from the configuration tree
@@ -849,42 +802,6 @@ class ManagerImpl {
          */
         bool incomingCallWaiting() const;
 
-        /*
-         * Inline functions to manage speaker volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @return unsigned short	The volume value
-         */
-        unsigned short getSpkrVolume() const {
-            return speakerVolume_;
-        }
-
-        /*
-         * Inline functions to manage speaker volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @param spkr_vol	The volume value
-         */
-        void setSpkrVolume(unsigned short spkr_vol);
-
-        /*
-         * Inline functions to manage mic volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @return unsigned short	The volume value
-         */
-        unsigned short getMicVolume() const {
-            return micVolume_;
-        }
-
-        /*
-         * Inline functions to manage mic volume control
-         * Read by main thread and AudioLayer thread
-         * Write by main thread only
-         * @param mic_vol	The volume value
-         */
-        void setMicVolume(unsigned short mic_vol);
-
         /**
          * Return a new random callid that is not present in the list
          * @return std::string A brand new callid
@@ -941,18 +858,12 @@ class ManagerImpl {
         /**
          * Create config directory in home user and return configuration file path
          */
-        std::string getConfigFile() const;
-
+        std::string createConfigFile() const;
 
         /*
          * Initialize zeroconf module and scanning
          */
         void initZeroconf();
-
-        /*
-         * Init the volume for speakers/micro from 0 to 100 value
-         */
-        void initVolume();
 
         /**
          * Switch of current call id
@@ -981,19 +892,18 @@ class ManagerImpl {
         AudioLayer* audiodriver_;
 
         // Main thread
-
-        DTMF* dtmfKey_;
+        std::tr1::shared_ptr<DTMF> dtmfKey_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         ost::Mutex toneMutex_;
-        TelephoneTone* telephoneTone_;
-        AudioFile *audiofile_;
+        std::tr1::shared_ptr<TelephoneTone> telephoneTone_;
+        std::tr1::shared_ptr<AudioFile> audiofile_;
 
         // To handle volume control
-        short speakerVolume_;
-        short micVolume_;
+        // short speakerVolume_;
+        // short micVolume_;
         // End of sound variable
 
         /**
@@ -1028,13 +938,6 @@ class ManagerImpl {
          */
         void removeWaitingCall(const std::string& id);
 
-        /**
-         * Tell if a call is waiting and should be remove
-         * @param id std::string to test
-         * @return bool True if the call is waiting
-         */
-        bool isWaitingCall(const std::string& id) const;
-
         /** Remove a CallID/std::string association
          * Protected by mutex
          * @param callID the CallID to remove
@@ -1060,7 +963,6 @@ class ManagerImpl {
 
         std::map<std::string, bool> IPToIPMap_;
 
-        void setIPToIPForCall(const std::string& callID, bool IPToIP);
 
         bool isIPToIP(const std::string& callID) const;
 
@@ -1069,9 +971,18 @@ class ManagerImpl {
         AccountMap accountMap_;
 
         /**
-         * Load the account from configuration
+         * Unregister all account in accountMap_
          */
-        void loadAccountMap(Conf::YamlParser *parser);
+        void unregisterAllAccounts();
+
+        /**
+         * Load the account map from configuration
+         */
+        void loadAccountMap(Conf::YamlParser &parser);
+        /**
+         * Load default account map (no configuration)
+         */
+        void loadDefaultAccountMap();
 
         /**
          * Unload the account (delete them)
@@ -1089,13 +1000,15 @@ class ManagerImpl {
 
     public:
 
+        void setIPToIPForCall(const std::string& callID, bool IPToIP);
+
         /** Associate a new std::string to a std::string
          * Protected by mutex
          * @param callID the new CallID not in the list yet
          * @param accountID the known accountID present in accountMap
          * @return bool True if the new association is create
          */
-        bool associateCallToAccount(const std::string& callID, const std::string& accountID);
+        void associateCallToAccount(const std::string& callID, const std::string& accountID);
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in
@@ -1110,13 +1023,6 @@ class ManagerImpl {
          */
         MainBuffer *getMainBuffer() {
             return &mainBuffer_;
-        }
-
-        /**
-         * Return a pointer to the instance of InstantMessaging
-         */
-        sfl::InstantMessaging *getInstantMessageModule() {
-            return imModule_;
         }
 
         /**
@@ -1150,6 +1056,7 @@ class ManagerImpl {
          * @return Account*	 The account pointer or 0
          */
         Account* getAccount(const std::string& accountID);
+        SIPAccount* getIP2IPAccount();
 
         /** Return the std::string from a CallID
          * Protected by mutex
@@ -1166,8 +1073,6 @@ class ManagerImpl {
         VoIPLink* getAccountLink(const std::string& accountID="");
 
         std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
-
-        int getLocalIp2IpPort() const;
 
         std::string getStunServer() const;
         void setStunServer(const std::string &server);
@@ -1191,13 +1096,6 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        History *history_;
-
-        /**
-         * Instant messaging module, resposible to initiate, format, parse,
-         * send, and receive instant messages.
-         */
-        sfl::InstantMessaging *imModule_;
+        History history_;
 };
-
-#endif // __MANAGER_H__
+#endif // MANAGER_IMPL_H_

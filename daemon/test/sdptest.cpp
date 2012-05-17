@@ -116,6 +116,12 @@ void SDPTest::tearDown()
     pj_pool_release(testPool_);
 }
 
+void SDPTest::receiveAnswerAfterInitialOffer(const pjmedia_sdp_session* remote)
+{
+    assert(pjmedia_sdp_neg_get_state(session_->negotiator_) == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER);
+    assert(pjmedia_sdp_neg_set_remote_answer(session_->memPool_, session_->negotiator_, remote) == PJ_SUCCESS);
+    assert(pjmedia_sdp_neg_get_state(session_->negotiator_) == PJMEDIA_SDP_NEG_STATE_WAIT_NEGO);
+}
 
 void SDPTest::testInitialOfferFirstCodec()
 {
@@ -141,7 +147,7 @@ void SDPTest::testInitialOfferFirstCodec()
     // pjmedia_sdp_parse(testPool_, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(testPool_, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
-    session_->receivingAnswerAfterInitialOffer(remoteAnswer);
+    receiveAnswerAfterInitialOffer(remoteAnswer);
     session_->startNegotiation();
 
     session_->setMediaTransportInfoFromRemoteSdp();
@@ -213,7 +219,7 @@ void SDPTest::testInitialOfferLastCodec()
     // pjmedia_sdp_parse(testPool_, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(testPool_, (char*)sdp_answer2, strlen(sdp_answer2), &remoteAnswer);
 
-    session_->receivingAnswerAfterInitialOffer(remoteAnswer);
+    receiveAnswerAfterInitialOffer(remoteAnswer);
     session_->startNegotiation();
 
     session_->setMediaTransportInfoFromRemoteSdp();
@@ -287,7 +293,7 @@ void SDPTest::testReinvite()
     // pjmedia_sdp_parse(testPool_, test[0].offer_answer[0].sdp2, strlen(test[0].offer_answer[0].sdp2), &remoteAnswer);
     pjmedia_sdp_parse(testPool_, (char*)sdp_answer1, strlen(sdp_answer1), &remoteAnswer);
 
-    session_->receivingAnswerAfterInitialOffer(remoteAnswer);
+    receiveAnswerAfterInitialOffer(remoteAnswer);
     session_->startNegotiation();
 
     session_->setMediaTransportInfoFromRemoteSdp();
@@ -298,7 +304,7 @@ void SDPTest::testReinvite()
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
     CPPUNIT_ASSERT(session_->getSessionMedia()->getMimeSubtype() == "PCMU");
 
-    pjmedia_sdp_parse(testPool_, (char*)sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
+    pjmedia_sdp_parse(testPool_, (char*) sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);
 
     session_->receiveOffer(reinviteOffer, codecSelection);
 

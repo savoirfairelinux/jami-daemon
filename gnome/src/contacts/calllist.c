@@ -29,6 +29,7 @@
  */
 
 #include "calllist.h"
+#include "str_utils.h"
 #include <string.h>
 #include "calltab.h"
 #include "calltree.h"
@@ -36,15 +37,19 @@
 #include "logger.h"
 #include "eel-gconf-extensions.h"
 
-static
-gint is_callID_callstruct(gconstpointer a, gconstpointer b)
+// Must return 0 when a match is found
+static gint
+is_callID_callstruct(gconstpointer a, gconstpointer b)
 {
-    const QueueElement *c = a;
+    const callable_obj_t *c = a;
 
-    if (c == NULL || c->type != HIST_CALL)
+    // if it's null or not a call it's not the call we're looking for
+    if (c == NULL) {
+        ERROR("NULL element in list");
         return 1;
+    }
 
-    return g_strcasecmp(c->elem.call->_callID, (const gchar *) b);
+    return g_strcmp0(c->_callID, (const gchar *) b);
 }
 
 // TODO : try to do this more generically
@@ -85,17 +90,13 @@ void calllist_add_contact(gchar *contact_name, gchar *contact_phone, contact_typ
 }
 
 /*
- * Function passed to calllist_clean to free every QueueElement.
+ * Function passed to calllist_clean to free every callable_obj_t.
  */
 static void
 calllist_free_element(gpointer data, gpointer user_data UNUSED)
 {
-    QueueElement *element = data;
-
-    g_assert(element->type == HIST_CALL);
-    free_callable_obj_t(element->elem.call);
-
-    g_free(element);
+    callable_obj_t *call = data;
+    free_callable_obj_t(call);
 }
 
 void
@@ -103,6 +104,7 @@ calllist_clean(calltab_t* tab)
 {
     g_queue_foreach(tab->callQueue, calllist_free_element, NULL);
     g_queue_free(tab->callQueue);
+    tab->callQueue = 0;
 }
 
 void
@@ -115,19 +117,15 @@ calllist_reset(calltab_t* tab)
 void
 calllist_add_call(calltab_t* tab, callable_obj_t * c)
 {
-    QueueElement *element = g_new0(QueueElement, 1);
-    element->type = HIST_CALL;
-    element->elem.call = c;
-    g_queue_push_tail(tab->callQueue, (gpointer) element);
+    DEBUG("Adding call with callID %s to tab %s", c->_callID, tab->_name);
+    g_queue_push_tail(tab->callQueue, c);
+    DEBUG("Tab %s has %d calls", tab->_name, calllist_get_size(tab));
 }
 
 void
 calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
 {
-    QueueElement *element = g_new0(QueueElement, 1);
-    element->type = HIST_CALL;
-    element->elem.call = c;
-    g_queue_push_head(tab->callQueue, (gpointer) element);
+    g_queue_push_head(tab->callQueue, c);
 }
 
 void
@@ -136,10 +134,9 @@ calllist_clean_history(void)
     guint size = calllist_get_size(history_tab);
 
     for (guint i = 0; i < size; i++) {
-        QueueElement* c = calllist_get_nth(history_tab, i);
-
-        if (c->type == HIST_CALL)
-            calltree_remove_call(history_tab, c->elem.call);
+        callable_obj_t * c = calllist_get_nth(history_tab, i);
+        if (c)
+            calltree_remove_call(history_tab, c->_callID);
     }
 
     calllist_reset(history_tab);
@@ -149,7 +146,7 @@ void
 calllist_remove_from_history(callable_obj_t* c)
 {
     calllist_remove_call(history_tab, c->_callID);
-    calltree_remove_call(history_tab, c);
+    calltree_remove_call(history_tab, c->_callID);
 }
 
 void
@@ -160,22 +157,17 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
     if (c == NULL)
         return;
 
-    QueueElement *element = (QueueElement *) c->data;
+    callable_obj_t *call = c->data;
 
-    if (element->type != HIST_CALL) {
-        ERROR("CallList: Error: Element %s is not a call", callID);
-        return;
-    }
-
-    g_queue_remove(tab->callQueue, element);
+    DEBUG("Removing call %s from tab %s", callID, tab->_name);
+    g_queue_remove(tab->callQueue, call);
 
     /* Don't save empty (i.e. started dialing, then deleted) calls */
-    if (element->elem.call->_peer_number && strlen(element->elem.call->_peer_number) > 0) {
-        calllist_add_call(history_tab, element->elem.call);
-        calltree_add_history_entry(element->elem.call);
+    if (call->_peer_number && strlen(call->_peer_number) > 0) {
+        calllist_add_call(history_tab, call);
+        calltree_add_history_entry(call);
     }
 }
-
 
 callable_obj_t *
 calllist_get_by_state(calltab_t* tab, call_state_t state)
@@ -190,7 +182,7 @@ calllist_get_size(const calltab_t* tab)
     return g_queue_get_length(tab->callQueue);
 }
 
-QueueElement *
+callable_obj_t*
 calllist_get_nth(calltab_t* tab, guint n)
 {
     return g_queue_peek_nth(tab->callQueue, n);
@@ -202,16 +194,9 @@ calllist_get_call(calltab_t* tab, const gchar * callID)
     GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL) {
-        ERROR("CallList: Error: Could not find call %s", callID);
+        ERROR("Could not find call %s in tab %s", callID, tab->_name);
         return NULL;
     }
 
-    QueueElement *element = c->data;
-
-    if (element->type != HIST_CALL) {
-        ERROR("CallList: Error: Element %s is not a call", callID);
-        return NULL;
-    }
-
-    return element->elem.call;
+    return c->data;
 }

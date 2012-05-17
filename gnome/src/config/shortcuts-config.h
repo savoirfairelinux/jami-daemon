@@ -32,7 +32,7 @@
 #define _SHORTCUTS_CONFIG
 
 #include <gtk/gtk.h>
-#include <glib/gtypes.h>
+#include <glib.h>
 
 #include "actions.h"
 #include <utils.h>

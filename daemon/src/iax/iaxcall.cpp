@@ -29,8 +29,12 @@
  *  as that of the covered work.
  */
 
+#include <cstring>
+#include <sys/socket.h>
+#include <iax-client.h>
 #include "iaxcall.h"
 #include "iax2/frame.h"
+#include "logger.h"
 #include "account.h"
 #include "manager.h"
 
@@ -114,4 +118,9 @@ int IAXCall::getAudioCodec() const
             ERROR("IAX: Format %d not supported!", format);
             return -1;
     }
+}
+
+void IAXCall::answer()
+{
+    iax_answer(session);
 }

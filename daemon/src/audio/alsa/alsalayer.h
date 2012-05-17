@@ -115,7 +115,7 @@ class AlsaLayer : public AudioLayer {
          * @return	int	  Its index
          */
         int getAudioDeviceIndex(const std::string &description) const;
-
+        
         void playback(int maxSamples);
         void capture();
 
@@ -149,7 +149,7 @@ class AlsaLayer : public AudioLayer {
         }
 
     private:
-
+        friend class AlsaThread;
 
         /**
          * Calls snd_pcm_open and retries if device is busy, since dmix plugin
@@ -241,7 +241,7 @@ class AlsaLayer : public AudioLayer {
         bool is_playback_open_;
         bool is_capture_open_;
 
-        AlsaThread* audioThread_;
+        AlsaThread *audioThread_;
 };
 
 #endif // _ALSA_LAYER_H_

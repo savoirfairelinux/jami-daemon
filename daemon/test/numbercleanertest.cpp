@@ -28,11 +28,11 @@
  *  as that of the covered work.
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <sstream>
 #include <dlfcn.h>
 
-#include "global.h"
+#include "logger.h"
 
 #include "numbercleanertest.h"
 

@@ -32,33 +32,32 @@
  *  as that of the covered work.
  */
 
-#include "audio_rtp_session.h"
 #include "audio_symmetric_rtp_session.h"
-#include "audio_rtp_record_handler.h"
-#include "sip/sdp.h"
+#include "logger.h"
 #include "sip/sipcall.h"
-#include "audio/audiolayer.h"
 
 namespace sfl {
 
-AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall * sipcall) :
+AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     ost::TimerPort()
-    , ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort())
-    , AudioRtpSession(sipcall, Symmetric, this, this)
-    , echoCanceller()
-    , rtpThread_(new AudioRtpThread(this))
+    , ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    , AudioRtpSession(call, *this, *this)
+    , rtpThread_(*this)
 {
-    DEBUG("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", ca_->getLocalIp().c_str(), ca_->getLocalAudioPort());
-    audioRtpRecord_.callId_ = ca_->getCallId();
+    DEBUG("Setting new RTP session with destination %s:%d",
+            call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+    audioRtpRecord_.callId_ = call_.getCallId();
 }
 
 AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
 {
-    rtpThread_->running = false;
-    delete rtpThread_;
+    if (rtpThread_.running_) {
+        rtpThread_.running_ = false;
+        rtpThread_.join();
+    }
 }
 
-AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSession *session) : running(true), rtpSession(session)
+AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSession &session) : running_(true), rtpSession_(session)
 {}
 
 void AudioSymmetricRtpSession::AudioRtpThread::run()
@@ -67,21 +66,36 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
     TimerPort::setTimer(threadSleep);
 
-    DEBUG("AudioRtpThread: Entering Audio rtp thread main loop");
+    DEBUG("Entering Audio rtp thread main loop");
 
-    while (running) {
+    while (running_) {
         // Send session
-        if (rtpSession->DtmfPending())
-            rtpSession->sendDtmfEvent();
+        if (rtpSession_.DtmfPending())
+            rtpSession_.sendDtmfEvent();
         else
-            rtpSession->sendMicData();
+            rtpSession_.sendMicData();
 
         Thread::sleep(TimerPort::getTimer());
 
         TimerPort::incTimer(threadSleep);
     }
 
-    DEBUG("AudioRtpThread: Leaving audio rtp thread loop");
+    DEBUG("Leaving audio rtp thread loop");
 }
 
+void AudioSymmetricRtpSession::setSessionMedia(AudioCodec &audioCodec)
+{
+    AudioRtpSession::setSessionMedia(audioCodec);
+    call_.setRecordingSmplRate(getCodecSampleRate());
+}
+
+int AudioSymmetricRtpSession::startRtpThread(AudioCodec &audiocodec)
+{
+    DEBUG("Starting main thread");
+    if (isStarted_)
+        return 0;
+
+    AudioRtpSession::startRtpThread(audiocodec);
+    return startSymmetricRtpThread();
+}
 }

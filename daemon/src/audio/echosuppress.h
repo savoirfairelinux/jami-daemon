@@ -8,9 +8,11 @@
 #ifndef ECHOSUPPRESS_H_
 #define ECHOSUPPRESS_H_
 
-#include "pjmedia/echo.h"
-#include "global.h"
+#include "sfl_types.h"
 #include "noncopyable.h"
+
+class pjmedia_echo_state;
+class pj_pool_t;
 
 class EchoSuppress {
     public:

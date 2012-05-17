@@ -31,6 +31,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "constants.h"
+#include "fileutils.h"
 
 #include <cstdlib>
 
@@ -42,12 +43,12 @@
 namespace {
     void restore()
     {
-        if (system("mv " CONFIG_SAMPLE ".bak " CONFIG_SAMPLE) < 0)
+        if (system("mv " CONFIG_SAMPLE_BAK " " CONFIG_SAMPLE) < 0)
             ERROR("Restoration of %s failed", CONFIG_SAMPLE);
     }
     void backup()
     {
-        if (system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE ".bak") < 0)
+        if (system("cp " CONFIG_SAMPLE " " CONFIG_SAMPLE_BAK) < 0)
             ERROR("Backup of %s failed", CONFIG_SAMPLE);
     }
 }
@@ -57,6 +58,8 @@ int main(int argc, char* argv[])
     printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
     Logger::setConsoleLog(true);
     Logger::setDebugMode(true);
+    if (!fileutils::create_pidfile())
+        return 1;
 
     int argvIndex = 1;
     bool xmlOutput = false;

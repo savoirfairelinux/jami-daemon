@@ -29,9 +29,11 @@
 
 #include "recordable.h"
 #include "manager.h"
+#include "logger.h"
 
 Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getMainBuffer())
 {
+    DEBUG("Set recording options: %s", Manager::instance().audioPreference.getRecordpath().c_str());
     recAudio_.setRecordingOption(AudioRecord::FILE_WAV, 8000, Manager::instance().audioPreference.getRecordpath());
 }
 
@@ -54,9 +56,4 @@ std::string Recordable::getFilename() const
 void Recordable::setRecordingSmplRate(int smplRate)
 {
     recAudio_.setSndSamplingRate(smplRate);
-}
-
-int Recordable::getRecordingSmplRate() const
-{
-    return recAudio_.getSndSamplingRate();
 }

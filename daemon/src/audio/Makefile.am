@@ -22,7 +22,6 @@ libaudio_la_SOURCES = \
 
 noinst_HEADERS = \
 		audioloop.h \
-		common.h \
 		ringbuffer.h \
 		mainbuffer.h \
 		audiorecord.h \
@@ -43,6 +42,3 @@ libaudio_la_LIBADD = \
 	./alsa/libalsalayer.la \
 	./pulseaudio/libpulselayer.la \
 	./sound/libsound.la
-
-
-

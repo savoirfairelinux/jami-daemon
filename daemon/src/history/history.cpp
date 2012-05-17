@@ -33,29 +33,18 @@
 #include "history.h"
 #include <cerrno>
 #include <algorithm>
+#include <fstream>
 #include <sys/stat.h> // for mkdir
 #include <ctime>
-#include "global.h"
+#include "fileutils.h"
 #include "logger.h"
 #include "call.h"
 
-namespace {
-    int oldestAllowed(int days)
-    {
-        time_t currentTimestamp;
-        time(&currentTimestamp);
-        // Number of seconds in one day: 60 sec/min x 60 min/hr x 24hr/day
-        static const int DAY_UNIX_TIMESTAMP = 60 * 60 * 24;
-        return static_cast<int>(currentTimestamp) - (days * DAY_UNIX_TIMESTAMP);
-    }
+using std::map;
+using std::string;
+using std::vector;
 
-    using std::map;
-    using std::string;
-    using std::vector;
-}
-
-History::History() :
-    items_(), path_("")
+History::History() : items_(), path_("")
 {}
 
 bool History::load(int limit)
@@ -75,7 +64,7 @@ bool History::load(int limit)
 
 bool History::save()
 {
-    DEBUG("History: Saving history in XDG directory: %s", path_.c_str());
+    DEBUG("Saving history in XDG directory: %s", path_.c_str());
     ensurePath();
     std::sort(items_.begin(), items_.end());
     std::ofstream outfile(path_.c_str());
@@ -110,7 +99,7 @@ void History::ensurePath()
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                DEBUG("History: Cannot create directory: %m");
+                DEBUG("Cannot create directory: %m");
                 return;
             }
         }
@@ -137,7 +126,7 @@ void History::setPath(const std::string &path)
 void History::addCall(Call *call, int limit)
 {
     if (!call) {
-        ERROR("History: Call is NULL, ignoring");
+        ERROR("Call is NULL, ignoring");
         return;
     }
     call->time_stop();

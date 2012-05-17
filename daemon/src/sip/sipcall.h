@@ -89,6 +89,7 @@ class SIPCall : public Call {
         pjsip_inv_session *inv;
 
     private:
+        virtual void answer();
 
         NON_COPYABLE(SIPCall);
 

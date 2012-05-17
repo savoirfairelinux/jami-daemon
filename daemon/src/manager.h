@@ -29,13 +29,16 @@
  *  as that of the covered work.
  */
 
-#ifndef SFLPHONE_MANAGER_H
-#define SFLPHONE_MANAGER_H
+#ifndef MANAGER_H_
+#define MANAGER_H_
 
-#include "utilspp/singleton.hpp"
+// we could forward declare ManagerImpl BUT anyone who will call instance
+// will need this include.
 #include "managerimpl.h"
 
-typedef utilspp::SingletonHolder<ManagerImpl> Manager;
+namespace Manager {
+    ManagerImpl& instance();
+}
 
-#endif
+#endif // MANAGER_H_
 

@@ -31,13 +31,12 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIO_LAYER_H__
-#define __AUDIO_LAYER_H__
+#ifndef AUDIO_LAYER_H_
+#define AUDIO_LAYER_H_
 
-#include <cc++/thread.h> // for ost::Mutex
+#include "cc_thread.h" // for ost::Mutex
 #include <sys/time.h>
-
-#include "manager.h"
+#include <vector>
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "samplerateconverter.h"
@@ -49,6 +48,7 @@
  */
 
 class MainBuffer;
+class AudioPreference;
 
 namespace ost {
 class Time;
@@ -62,7 +62,7 @@ class AudioLayer {
 
     public:
         AudioLayer();
-        virtual ~AudioLayer();
+        virtual ~AudioLayer() {}
 
         virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const = 0;
 
@@ -105,7 +105,52 @@ class AudioLayer {
          */
         void flushUrgent();
 
+        /**
+         * Apply gain to audio frame
+         */
+        static void applyGain(SFLDataFormat *src , int samples, int gain);
 
+        /**
+         * Convert audio amplitude value from linear value to dB
+         */
+        static double amplitudeLinearToDB(double value) {
+            return 20.0 * log10(value);
+        }
+
+        /**
+         * Convert audio amplitude from dB to Linear value
+         */
+        static double ampluitudeDBToLinear(double value) {
+            return pow(10.0, value / 20.0);
+        }
+ 
+        /**
+         * Set capture stream gain (microphone)
+         */
+        void setCaptureGain(unsigned int gain) {
+            captureGain_ = gain;
+        }
+
+        /**
+         * Set capture stream gain (microphone) 
+         */
+       unsigned int getCaptureGain(void) {
+            return captureGain_;
+        }
+
+        /**
+         * Set playback stream gain (speaker)
+         */
+        void setPlaybackGain(unsigned int gain) {
+            playbackGain_ = gain;
+        }
+
+        /**
+         * Get playback stream gain (speaker) 
+         */
+        unsigned int getPlaybackGain(void) {
+            return playbackGain_;
+        }
 
         /**
          * Get the sample rate of the audio layer
@@ -113,7 +158,7 @@ class AudioLayer {
          *			    default: 44100 HZ
          */
         unsigned int getSampleRate() const {
-            return audioSampleRate_;
+            return sampleRate_;
         }
 
         /**
@@ -126,7 +171,17 @@ class AudioLayer {
 	/**
          * Emit an audio notification on incoming calls
          */
-        void notifyincomingCall();
+        void notifyIncomingCall();
+
+        /**
+         * Gain applied to mic signal
+         */
+        static unsigned int captureGain_;
+
+        /**
+         * Gain applied to playback signal
+         */
+        static unsigned int playbackGain_;
 
     protected:
 
@@ -144,15 +199,27 @@ class AudioLayer {
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int audioSampleRate_;
+        unsigned int sampleRate_;
 
         /**
          * Lock for the entire audio layer
          */
         ost::Mutex mutex_;
+
+        /**
+         * Remove audio offset that can be introduced by certain cheap audio device
+         */
         DcBlocker dcblocker_;
+
+        /**
+         * Configuration file for this 
+         */
         AudioPreference &audioPref;
-        SamplerateConverter *converter_;
+
+        /**
+         * Manage sampling rate conversion
+         */
+        SamplerateConverter converter_;
 
     private:
         /**

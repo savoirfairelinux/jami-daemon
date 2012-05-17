@@ -13,7 +13,7 @@ SFLPhonePlasmoid::SFLPhonePlasmoid(QObject* parent, const QVariantList& args)
    //m_svg.setImagePath("widgets/background");
    setBackgroundHints(DefaultBackground);
 
-   CallModelConvenience::init();
+   CallModel<>::init();
 
    setMinimumSize(24,24);
 }

@@ -33,8 +33,9 @@
 
 #include <string>
 #include <cstdlib>
+#include <memory>
 
-#include "global.h"
+#include "sfl_types.h"
 #include "noncopyable.h"
 
 class AudioRecord {
@@ -44,14 +45,7 @@ class AudioRecord {
 
         AudioRecord();
 
-        ~AudioRecord();
-
         void setSndSamplingRate(int smplRate);
-        /**
-         * Get the recrding sampling rate
-         */
-        int getSndSamplingRate() const;
-
         void setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path);
 
         /**
@@ -96,44 +90,19 @@ class AudioRecord {
         /**
          * Set recording flag
          */
-        bool setRecording();
+        void setRecording();
 
         /**
          * Stop recording flag
          */
         void stopRecording();
 
-
-        /**
-         * Record a chunk of data in an internal buffer
-         * @param buffer  The data chunk to be recorded
-         * @param nSamples Number of samples (number of bytes) to be recorded
-         */
-        void recSpkrData(SFLDataFormat* buffer, int nSamples);
-
-        /**
-         * Record a chunk of data in an internal buffer
-         * @param buffer  The data chunk to be recorded
-         * @param nSamples Number of samples (number of bytes) to be recorded
-         */
-        void recMicData(SFLDataFormat* buffer, int nSamples);
-
         /**
          * Record a chunk of data in an openend file
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recData(SFLDataFormat* buffer, int nSamples);
-
-        /**
-         * Record a chunk of data in an openend file, Mix two differnet buffer
-         * @param buffer_1  The first data chunk to be recorded
-         * @param buffer_2  The second data chunk to be recorded
-         * @param nSamples_1 Number of samples (number of bytes) of buffer_1
-         * @param nSamples_2 Number of samples (number of bytes) of buffer_2
-         */
-        void recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
-
+        void recData(SFLDataFormat* buffer, size_t nSamples);
 
     protected:
 
@@ -206,7 +175,7 @@ class AudioRecord {
         /**
          * Maximum number of samples
          */
-        int nbSamplesMax_;
+        static const int NB_SAMPLES_MAX = 3000;
 
         /**
          * Recording flage
@@ -216,17 +185,17 @@ class AudioRecord {
         /**
          * Buffer used for mixing two channels
          */
-        SFLDataFormat* mixBuffer_;
+        SFLDataFormat mixBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Buffer used to copy mic info
          */
-        SFLDataFormat* micBuffer_;
+        SFLDataFormat micBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Buffer used to copy spkr info
          */
-        SFLDataFormat* spkBuffer_;
+        SFLDataFormat spkBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Filename for this recording

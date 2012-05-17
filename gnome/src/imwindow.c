@@ -30,7 +30,11 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+#include "gtk2_wrappers.h"
 #include "eel-gconf-extensions.h"
 #include "logger.h"
 #include "imwindow.h"
@@ -41,9 +45,8 @@
 #include <sys/stat.h>
 
 /** Local variables */
-static GtkWidget *im_window = NULL;
-static GtkWidget *im_notebook = NULL;
-
+static GtkWidget *im_window;
+static GtkWidget *im_notebook;
 
 static void im_window_init();
 

@@ -31,26 +31,22 @@
  *  as that of the covered work.
  */
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <samplerate.h>
 #include <cstring>
-#include <limits.h>
+#include <vector>
+#include <climits>
 
 #include "audiofile.h"
-#include "audio/codecs/audiocodecfactory.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
+#include "logger.h"
 
-#include "manager.h"
-
-RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int sampleRate)
-    : audioCodec_(codec)
+RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
+    : AudioFile(name), audioCodec_(codec)
 {
-    filepath_ = name;
-
     if (filepath_.empty())
         throw AudioFileException("Unable to open audio file: filename is empty");
-
 
     std::fstream file;
     file.open(filepath_.c_str(), std::fstream::in);
@@ -62,8 +58,8 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
     size_t length = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    char *fileBuffer = new char[length];
-    file.read(fileBuffer,length);
+    std::vector<char> fileBuffer(length);
+    file.read(&fileBuffer[0], length);
     file.close();
 
     const unsigned int frameSize = audioCodec_->getFrameSize();
@@ -74,7 +70,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
 
     SFLDataFormat *monoBuffer = new SFLDataFormat[decodedSize];
     SFLDataFormat *bufpos = monoBuffer;
-    unsigned char *filepos = reinterpret_cast<unsigned char *>(fileBuffer);
+    unsigned char *filepos = reinterpret_cast<unsigned char *>(&fileBuffer[0]);
     size_ = decodedSize;
 
     while (length >= encFrameSize) {
@@ -82,8 +78,6 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
         filepos += encFrameSize;
         length -= encFrameSize;
     }
-
-    delete [] fileBuffer;
 
     if (sampleRate == audioRate)
         buffer_ = monoBuffer;
@@ -115,28 +109,27 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec* codec, unsigned int s
 }
 
 
-WaveFile::WaveFile(const std::string& fileName, int newRate)
+WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileName)
 {
     const std::fstream fs(fileName.c_str(), std::ios_base::in);
 
     if (!fs)
         throw AudioFileException("File " + fileName + " doesn't exist");
 
-    filepath_ = fileName;
     std::fstream fileStream;
     fileStream.open(fileName.c_str(), std::ios::in | std::ios::binary);
 
     char riff[4] = { 0, 0, 0, 0 };
-    fileStream.read(riff, sizeof riff / sizeof riff[0]);
+    fileStream.read(riff, sizeof riff / sizeof *riff);
 
-    if (strncmp("RIFF", riff, sizeof riff / sizeof riff[0]) != 0)
+    if (strncmp("RIFF", riff, sizeof riff / sizeof *riff) != 0)
         throw AudioFileException("File is not of RIFF format");
 
     char fmt[4] = { 0, 0, 0, 0 };
     int maxIteration = 10;
 
-    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof fmt[0]))
-        fileStream.read(fmt, sizeof fmt / sizeof fmt[0]);
+    while (maxIteration-- and strncmp("fmt ", fmt, sizeof fmt / sizeof *fmt))
+        fileStream.read(fmt, sizeof fmt / sizeof *fmt);
 
     if (maxIteration == 0)
         throw AudioFileException("Could not find \"fmt \" chunk");
@@ -177,8 +170,8 @@ WaveFile::WaveFile(const std::string& fileName, int newRate)
     char data[4] = { 0, 0, 0, 0 };
     maxIteration = 10;
 
-    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof data[0]))
-        fileStream.read(data, sizeof data / sizeof data[0]);
+    while (maxIteration-- && strncmp("data", data, sizeof data / sizeof *data))
+        fileStream.read(data, sizeof data / sizeof *data);
 
     // Samplerate converter initialized with 88200 sample long
     SamplerateConverter converter(std::max(fileRate, newRate));
@@ -190,7 +183,7 @@ WaveFile::WaveFile(const std::string& fileName, int newRate)
     // sample frames, should not be longer than a minute
     int nbSamples = std::min(60 * fileRate, 8 * bytes / dt / chan);
 
-    DEBUG("WaveFile: frame size %ld, data size %d align %d rate %d avgbyte %d "
+    DEBUG("Frame size %ld, data size %d align %d rate %d avgbyte %d "
           "chunk size %d dt %d", nbSamples, bytes, blockal, fileRate, avgb,
           chunkSize, dt);
 
@@ -212,7 +205,7 @@ WaveFile::WaveFile(const std::string& fileName, int newRate)
         const int outSamples = ceil(nbSamples * ratio);
         size_ = outSamples;
         buffer_ = new SFLDataFormat[size_];
-        converter.resample(tempBuffer, buffer_, fileRate, newRate, nbSamples);
+        converter.resample(tempBuffer, buffer_, size_, fileRate, newRate, nbSamples);
         delete [] tempBuffer;
     } else
         buffer_ = tempBuffer;

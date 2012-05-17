@@ -20,10 +20,10 @@
 #ifndef SPEEXECHOCANCEL_H
 #define SPEEXECHOCANCEL_H
 
-#include "global.h"
+#include "sfl_types.h"
 #include "noncopyable.h"
+#include "ringbuffer.h"
 
-class RingBuffer;
 class SpeexEchoState_;
 typedef SpeexEchoState_ SpeexEchoState;
 class SpeexPreprocessState_;
@@ -57,8 +57,8 @@ class SpeexEchoCancel {
         SpeexEchoState *echoState_;
         SpeexPreprocessState *preState_;
 
-        RingBuffer *micData_;
-        RingBuffer *spkrData_;
+        RingBuffer micData_;
+        RingBuffer spkrData_;
 
         bool spkrStopped_;
 

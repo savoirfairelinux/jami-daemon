@@ -29,51 +29,72 @@
 
 #include "audio_rtp_record_handler.h"
 #include <fstream>
+#include <algorithm>
 
+#include "logger.h"
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "manager.h"
 
+#include <fstream>
+
 namespace sfl {
 
-static const SFLDataFormat initFadeinFactor = 32000;
+static const SFLDataFormat INIT_FADE_IN_FACTOR = 32000;
+
+#ifdef RECTODISK
+std::ofstream rtpResampled ("testRtpOutputResampled.raw", std::ifstream::binary);
+std::ofstream rtpNotResampled("testRtpOutput.raw", std::ifstream::binary);
+#endif
 
 AudioRtpRecord::AudioRtpRecord() :
     audioCodec_(0)
     , audioCodecMutex_()
     , codecPayloadType_(0)
     , hasDynamicPayloadType_(false)
-    , converter_(0)
+    , decData_()     // std::tr1::arrays will be 0-initialized
+    , resampledData_()
+    , encodedData_()
+    , converterEncode_(0)
+    , converterDecode_(0)
     , codecSampleRate_(0)
     , codecFrameSize_(0)
     , converterSamplingRate_(0)
     , dtmfQueue_()
-    , micAmplFactor_(initFadeinFactor)
-    , noiseSuppress_(0)
+    , fadeFactor_(INIT_FADE_IN_FACTOR)
+    , noiseSuppressEncode_(0)
+    , noiseSuppressDecode_(0)
     , audioProcessMutex_()
     , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
-{
-    memset(decData_, 0x0, sizeof decData_);
-    memset(resampledData_, 0x0, sizeof resampledData_);
-    memset(encodedData_, 0x0, sizeof encodedData_);
-}
+{}
 
 AudioRtpRecord::~AudioRtpRecord()
 {
-    delete converter_;
+#ifdef RECTODISK
+    rtpResampled.close();
+    rtpNotResampled.close();
+#endif
+
+    delete converterEncode_;
+    delete converterDecode_;
     delete audioCodec_;
-    delete noiseSuppress_;
+    delete noiseSuppressEncode_;
+    delete noiseSuppressDecode_;
 }
 
 
-AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall *ca) : audioRtpRecord_(), id_(ca->getCallId()), echoCanceller(ca->getMemoryPool()), gainController(8000, -10.0)
+AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
+    audioRtpRecord_(),
+    id_(call.getCallId()),
+    echoCanceller(call.getMemoryPool()),
+    gainController(8000, -10.0)
 {}
 
 
 AudioRtpRecordHandler::~AudioRtpRecordHandler() {}
 
-void AudioRtpRecordHandler::setRtpMedia(AudioCodec* audioCodec)
+void AudioRtpRecordHandler::setRtpMedia(AudioCodec *audioCodec)
 {
     ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
 
@@ -93,15 +114,19 @@ void AudioRtpRecordHandler::initBuffers()
 
     // initialize SampleRate converter using AudioLayer's sampling rate
     // (internal buffers initialized with maximal sampling rate and frame size)
-    delete audioRtpRecord_.converter_;
-    audioRtpRecord_.converter_ = new SamplerateConverter(getCodecSampleRate());
+    delete audioRtpRecord_.converterEncode_;
+    audioRtpRecord_.converterEncode_ = new SamplerateConverter(getCodecSampleRate());
+    delete audioRtpRecord_.converterDecode_;
+    audioRtpRecord_.converterDecode_ = new SamplerateConverter(getCodecSampleRate());
 }
 
 void AudioRtpRecordHandler::initNoiseSuppress()
 {
     ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
-    delete audioRtpRecord_.noiseSuppress_;
-    audioRtpRecord_.noiseSuppress_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
+    delete audioRtpRecord_.noiseSuppressEncode_;
+    audioRtpRecord_.noiseSuppressEncode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
+    delete audioRtpRecord_.noiseSuppressDecode_;
+    audioRtpRecord_.noiseSuppressDecode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
 }
 
 void AudioRtpRecordHandler::putDtmfEvent(int digit)
@@ -109,20 +134,12 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
     audioRtpRecord_.dtmfQueue_.push_back(digit);
 }
 
-#ifdef DUMP_PROCESS_DATA_ENCODE
-std::ofstream teststream("test_process_data_encode.raw");
-#endif
-
 int AudioRtpRecordHandler::processDataEncode()
 {
-    SFLDataFormat *micData 			= audioRtpRecord_.decData_;
-    unsigned char *micDataEncoded 	= audioRtpRecord_.encodedData_;
-    SFLDataFormat *micDataConverted = audioRtpRecord_.resampledData_;
-
     int codecSampleRate = getCodecSampleRate();
     int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
-    double resampleFactor = (double)mainBufferSampleRate / codecSampleRate;
+    double resampleFactor = (double) mainBufferSampleRate / codecSampleRate;
 
     // compute nb of byte to get coresponding to 1 audio frame
     int samplesToGet = resampleFactor * getCodecFrameSize();
@@ -131,65 +148,78 @@ int AudioRtpRecordHandler::processDataEncode()
     if (Manager::instance().getMainBuffer()->availForGet(id_) < bytesToGet)
         return 0;
 
+    SFLDataFormat *micData = audioRtpRecord_.decData_.data();
     int bytes = Manager::instance().getMainBuffer()->getData(micData, bytesToGet, id_);
 
+#ifdef RECTODISK
+    rtpNotResampled.write((const char *)micData, bytes);
+#endif
+
     if (bytes != bytesToGet) {
-        ERROR("%s : asked %d bytes from mainbuffer, got %d", __PRETTY_FUNCTION__, bytesToGet, bytes);
+        ERROR("Asked for %d bytes from mainbuffer, got %d", bytesToGet, bytes);
         return 0;
     }
 
     int samples = bytesToGet / sizeof(SFLDataFormat);
 
-    fadeIn(micData, samples, &audioRtpRecord_.micAmplFactor_);
+    audioRtpRecord_.fadeInDecodedData(samples);
 
     if (Manager::instance().getEchoCancelState())
         echoCanceller.getData(micData);
 
-#ifdef DUMP_PROCESS_DATA_ENCODE
-    teststream.write(reinterpret_cast<char *>(micData), bytesToGet);
-#endif
-
     SFLDataFormat *out = micData;
 
     if (codecSampleRate != mainBufferSampleRate) {
-        out = micDataConverted;
-        audioRtpRecord_.converter_->resample(micData, micDataConverted, codecSampleRate, mainBufferSampleRate, samplesToGet);
+        assert(audioRtpRecord_.converterEncode_);
+
+        audioRtpRecord_.converterEncode_->resample(micData,
+                audioRtpRecord_.resampledData_.data(),
+                audioRtpRecord_.resampledData_.size(),
+                mainBufferSampleRate, codecSampleRate,
+                samplesToGet);
+
+#ifdef RECTODISK
+        rtpResampled.write((const char *)audioRtpRecord_.resampledData_.data(), samplesToGet*sizeof(SFLDataFormat)/2 );
+#endif
+
+        out = audioRtpRecord_.resampledData_.data();
     }
 
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
-        audioRtpRecord_.noiseSuppress_->process(micData, getCodecFrameSize());
+        assert(audioRtpRecord_.noiseSuppressEncode_);
+        audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
 
-    int compSize;
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
-        compSize = audioRtpRecord_.audioCodec_->encode(micDataEncoded, out, getCodecFrameSize());
+        unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
+        return audioRtpRecord_.audioCodec_->encode(micDataEncoded, out, getCodecFrameSize());
     }
-
-    return compSize;
 }
 
-void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned int size, int payloadType)
+void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
     if (getCodecPayloadType() != payloadType)
         return;
 
-    int codecSampleRate = getCodecSampleRate();
-
-    SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_;
-    SFLDataFormat *spkrDataConverted = audioRtpRecord_.resampledData_;
-
-    int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
-
-    int inSamples;
+    int inSamples = 0;
+    size = std::min(size, audioRtpRecord_.decData_.size());
+    SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
         // Return the size of data in samples
-        inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded , spkrData , size);
+        inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
 
-    fadeIn(spkrDataDecoded, inSamples, &audioRtpRecord_.micAmplFactor_);
+    if (Manager::instance().audioPreference.getNoiseReduce()) {
+        ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
+        assert(audioRtpRecord_.noiseSuppressDecode_);
+        audioRtpRecord_.noiseSuppressDecode_->process(spkrDataDecoded, getCodecFrameSize());
+    }
+
+
+    audioRtpRecord_.fadeInDecodedData(inSamples);
 
     // Normalize incomming signal
     gainController.process(spkrDataDecoded, inSamples);
@@ -197,12 +227,17 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned 
     SFLDataFormat *out = spkrDataDecoded;
     int outSamples = inSamples;
 
+    int codecSampleRate = getCodecSampleRate();
+    int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
+        out = audioRtpRecord_.resampledData_.data();
         // Do sample rate conversion
         outSamples = ((float) inSamples * ((float) mainBufferSampleRate / (float) codecSampleRate));
-        audioRtpRecord_.converter_->resample(spkrDataDecoded, spkrDataConverted, codecSampleRate, mainBufferSampleRate, inSamples);
-        out = spkrDataConverted;
+        audioRtpRecord_.converterDecode_->resample(spkrDataDecoded, out,
+                audioRtpRecord_.resampledData_.size(), codecSampleRate,
+                mainBufferSampleRate, inSamples);
     }
 
     if (Manager::instance().getEchoCancelState())
@@ -211,15 +246,17 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, unsigned 
     Manager::instance().getMainBuffer()->putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
 
-void AudioRtpRecordHandler::fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor)
+void AudioRtpRecord::fadeInDecodedData(size_t size)
 {
-    // if factor reach 0, this function should have no effect
-    if (*factor <= 0)
+    // if factor reaches 0, this function should have no effect
+    if (fadeFactor_ <= 0 or size > decData_.size())
         return;
 
-    while (size)
-        audio[--size] /= *factor;
+    std::transform(decData_.begin(), decData_.begin() + size, decData_.begin(),
+            std::bind1st(std::divides<double>(), fadeFactor_));
 
-    *factor /= FADEIN_STEP_SIZE;
+    // Factor used to increase volume in fade in
+    const SFLDataFormat FADEIN_STEP_SIZE = 4;
+    fadeFactor_ /= FADEIN_STEP_SIZE;
 }
 }

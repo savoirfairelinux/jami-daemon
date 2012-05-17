@@ -38,7 +38,7 @@
 
 //SFLPhone
 #include "conf/ConfigurationDialog.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "AccountWizard.h"
 #include "ActionSetAccountFirst.h"
 #include "SFLPhone.h"
@@ -49,6 +49,7 @@
 #include "lib/callmanager_interface_singleton.h"
 #include "lib/instance_interface_singleton.h"
 #include "lib/sflphone_const.h"
+#include "lib/Contact.h"
 
 //ConfigurationDialog* SFLPhoneView::configDialog;
 
@@ -68,6 +69,8 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
    setPalette(pal);
 
+   m_pMessageBoxW->setVisible(ConfigurationSkeleton::displayMessageBox());
+
    //                SENDER                                        SIGNAL                             RECEIVER                                            SLOT                                  /
    /**/connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
    /**/connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
@@ -77,6 +80,8 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
    /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
    /**/connect(&configurationManager                 , SIGNAL(accountsChanged())                     , TreeWidgetCallModel::getAccountList() , SLOT(updateAccounts()                           ));
+   /**/connect(m_pSendMessageLE                      , SIGNAL(returnPressed())                       , this                                  , SLOT(sendMessage()                              ));
+   /**/connect(m_pSendMessagePB                      , SIGNAL(clicked())                             , this                                  , SLOT(sendMessage()                              ));
    /*                                                                                                                                                                                           */
 
    TreeWidgetCallModel::getAccountList()->updateAccounts();
@@ -140,10 +145,10 @@ void SFLPhoneView::typeString(QString str)
    }
 
    foreach (Call* call2, SFLPhone::model()->getCallList()) {
-      if(currentCall != call2 && call2->getState() == CALL_STATE_CURRENT) {
+      if(dynamic_cast<Call*>(call2) && currentCall != call2 && call2->getState() == CALL_STATE_CURRENT) {
          action(call2, CALL_ACTION_HOLD);
       }
-      else if(call2->getState() == CALL_STATE_DIALING) {
+      else if(dynamic_cast<Call*>(call2) && call2->getState() == CALL_STATE_DIALING) {
          candidate = call2;
       }
    }
@@ -239,6 +244,37 @@ void SFLPhoneView::action(Call* call, call_action action)
    }
 }
 
+///Select a phone number when calling using a contact
+bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
+{
+   if (contact->getPhoneNumbers().count() == 1) {
+      call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+      call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
+   }
+   else if (contact->getPhoneNumbers().count() > 1) {
+      bool ok = false;
+      QHash<QString,QString> map;
+      QStringList list;
+      foreach (Contact::PhoneNumber* number, contact->getPhoneNumbers()) {
+         map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
+         list << number->getType()+" ("+number->getNumber()+")";
+      }
+      QString result = QInputDialog::getItem (this, QString("Select phone number"), QString("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
+      if (ok) {
+         call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+         call2->appendText(map[result]);
+      }
+      else {
+         kDebug() << "Operation cancelled";
+         return false;
+      }
+   }
+   else {
+      kDebug() << "This contact have no valid phone number";
+      return false;
+   }
+   return true;
+}
 
 /*****************************************************************************
  *                                                                           *
@@ -269,6 +305,7 @@ void SFLPhoneView::updateWindowCallState()
       enabledActions[ SFLPhone::Hold     ] = false;
       enabledActions[ SFLPhone::Transfer ] = false;
       enabledActions[ SFLPhone::Record   ] = false;
+      m_pMessageBoxW->setVisible(false);
    }
    else {
       call_state state = call->getState();
@@ -289,6 +326,7 @@ void SFLPhoneView::updateWindowCallState()
             break;
          case CALL_STATE_CURRENT:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
+            m_pMessageBoxW->setVisible(true);
             break;
          case CALL_STATE_DIALING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -300,6 +338,7 @@ void SFLPhoneView::updateWindowCallState()
          case CALL_STATE_HOLD:
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
+            m_pMessageBoxW->setVisible(true);
             break;
          case CALL_STATE_FAILURE:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
@@ -493,6 +532,12 @@ void SFLPhoneView::displayDialpad(bool checked)
 {
    ConfigurationSkeleton::setDisplayDialpad(checked);
    updateDialpad();
+}
+
+void SFLPhoneView::displayMessageBox(bool checked)
+{
+   ConfigurationSkeleton::setDisplayMessageBox(checked);
+   m_pMessageBoxW->setVisible(checked);
 }
 
 ///Input grabber
@@ -753,6 +798,14 @@ void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
       updateRecordBar(value);
    if(! (toolButton_sndVol->isChecked() && value == 0.0))
       updateVolumeBar(value);
+}
+
+void SFLPhoneView::sendMessage()
+{
+   Call* call = callTreeModel->getCurrentItem();
+   if (dynamic_cast<Call*>(call) && !m_pSendMessageLE->text().isEmpty()) {
+      call->sendTextMessage(m_pSendMessageLE->text());
+   }
 }
 
 #include "SFLPhoneView.moc"

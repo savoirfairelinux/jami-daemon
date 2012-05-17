@@ -34,14 +34,12 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 #include <fstream>
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
-
-#include "call.h"
-#include "sip/sipcall.h"
 
 #include <map>
 #include <list>
@@ -66,18 +64,9 @@ class InstantMessageException : public std::runtime_error {
             std::runtime_error("InstantMessageException occured: " + str) {}
 };
 
-class InstantMessaging {
-    public:
-        typedef std::map <std::string, std::string> UriEntry;
-        typedef std::list <UriEntry> UriList;
-
-        /**
-         * Return the maximum number if character for a single SIP MESSAGE.
-         * Longer messages should be splitted in several smaller messages using split_message
-         */
-        static size_t getMessageMaximumSize() {
-            return MAXIMUM_MESSAGE_LENGTH;
-        }
+namespace InstantMessaging {
+        typedef std::map<std::string, std::string> UriEntry;
+        typedef std::list<UriEntry> UriList;
 
         /*
          * Write the text message to the right file
@@ -102,7 +91,6 @@ class InstantMessaging {
 
         std::vector<std::string> split_message(std::string);
 
-
         /**
          * Generate Xml participant list for multi recipient based on RFC Draft 5365
          *
@@ -111,7 +99,7 @@ class InstantMessaging {
         * @return A string containing the full XML formated information to be included in the
         *         sip instant message.
         */
-        std::string generateXmlUriList(UriList& list);
+        std::string generateXmlUriList(UriList &list);
 
         /**
          * Parse the Urilist from a SIP Instant Message provided by a UriList service.
@@ -120,7 +108,7 @@ class InstantMessaging {
          *
          * @return An UriList of UriEntry containing parsed XML information as a map.
          */
-        UriList parseXmlUriList(std::string& urilist);
+        UriList parseXmlUriList(const std::string &urilist);
 
         /**
          * Format text message according to RFC 5365, append recipient-list to the message
@@ -130,7 +118,7 @@ class InstantMessaging {
          *
          * @return formated text stored into a string to be included in sip MESSAGE
          */
-        std::string appendUriList(std::string text, UriList& list);
+        std::string appendUriList(const std::string &text, UriList &list);
 
         /**
              * Retreive the xml formated uri list in formated text data according to RFC 5365
@@ -139,7 +127,7 @@ class InstantMessaging {
          *
          * @return A string containing the XML content
          */
-        std::string findTextUriList(std::string& text);
+        std::string findTextUriList(const std::string &text);
 
         /**
              * Retrive the plain text message in formated text data according to RFC 5365
@@ -148,7 +136,7 @@ class InstantMessaging {
          *
          * @return A string containing the actual message
          */
-        std::string findTextMessage(std::string& text);
-};
+        std::string findTextMessage(const std::string &text);
+} // end namespace InstantMessaging
 }
 #endif // __INSTANT_MESSAGING_H_

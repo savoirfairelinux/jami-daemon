@@ -23,7 +23,9 @@
 
 #include <QObject>
 #include <QVector>
-#include <QHash>
+#include <QWidget>
+#include <QModelIndex>
+#include <QMap>
 #include "typedefs.h"
 
 //Qt
@@ -37,12 +39,12 @@ class AccountList;
 class Account;
 class ContactBackend;
 
-typedef QHash<QString, Call*> CallHash;
+typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
 
-///@class CallModelBase Base class for the central model/frontend
-///This class need to exist because template classes can't have signals ans
-///slots because Qt MOC generator can't guess the type at precompilation
+///@class CallModelBase Base class for the central model/frontend          
+///This class need to exist because template classes can't have signals and
+///slots because Qt MOC generator can't guess the type at precompilation   
 class LIB_EXPORT CallModelBase : public QObject
 {
    Q_OBJECT
@@ -54,6 +56,7 @@ public:
    virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
    virtual Call* addRingingCall   ( const QString& callId                       ) = 0;
    virtual Call* addIncomingCall  ( const QString& callId                       ) = 0;
+   virtual void  addToHistory     ( Call* call                                  ) = 0;
    virtual Call* addCall          ( Call* call           , Call* parent =0      );
    virtual Call* getCall          ( const QString& callId                       ) const = 0;
 public slots:
@@ -67,15 +70,16 @@ public slots:
 private:
    static bool dbusInit;
 signals:
-   void callStateChanged        (Call* call                              );
-   void incomingCall            (Call* call                              );
-   void conferenceCreated       (Call* conf                              );
-   void conferenceChanged       (Call* conf                              );
-   void conferenceRemoved       (const QString& confId                   );
-   void aboutToRemoveConference (Call* conf                              );
-   void voiceMailNotify         (const QString& accountID , int    count );
-   void volumeChanged           (const QString& device    , double value );
-   void callAdded               (Call* call               , Call* parent );
+   void callStateChanged        ( Call* call                              );
+   void incomingCall            ( Call* call                              );
+   void conferenceCreated       ( Call* conf                              );
+   void conferenceChanged       ( Call* conf                              );
+   void conferenceRemoved       ( const QString& confId                   );
+   void aboutToRemoveConference ( Call* conf                              );
+   void voiceMailNotify         ( const QString& accountID , int    count );
+   void volumeChanged           ( const QString& device    , double value );
+   void callAdded               ( Call* call               , Call* parent );
+   void historyChanged          (                                         );
 };
 
 /**
@@ -84,7 +88,7 @@ signals:
  *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
  */
 ///@class CallModel Central model/frontend to deal with sflphoned
-template  <typename CallWidget, typename Index>
+template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
 class LIB_EXPORT CallModel : public CallModelBase {
    public:
       enum ModelType {
@@ -109,6 +113,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void           removeCall       ( Call* call                                     );
       void           attendedTransfer ( Call* toTransfer           , Call* target      );
       void           transfer         ( Call* toTransfer           , QString target    );
+      void           addToHistory     ( Call* call                                     );
       
       virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
 
@@ -123,10 +128,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void removeConference          ( Call* call                                  );
 
       //Getters
-      int size                                  ();
-      CallList                 getCallList      ();
-      static const CallHash&   getHistory       ();
-      static const QStringList getHistoryCallId ();
+      int size                                        ();
+      CallList                 getCallList            ();
+      static const CallMap&    getHistory             ();
+      static const QStringList getNumbersByPopularity ();
+      static const QStringList getHistoryCallId       ();
 
       //Account related
       static Account* getCurrentAccount  (                     );
@@ -175,11 +181,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       struct InternalStruct;
       typedef QList<InternalStruct*> InternalCallList;
       struct InternalStruct {
-	 CallWidget       call       ;
-	 Call*            call_real  ;
-	 Index            index      ;
-	 InternalCallList children   ;
-	 bool             conference ;
+         CallWidget       call       ;
+         Call*            call_real  ;
+         Index            index      ;
+         InternalCallList children   ;
+         bool             conference ;
       };
       typedef QHash< Call*      , InternalStruct* > InternalCall  ;
       typedef QHash< QString    , InternalStruct* > InternalCallId;
@@ -187,8 +193,8 @@ class LIB_EXPORT CallModel : public CallModelBase {
       typedef QHash< Index      , InternalStruct* > InternalIndex ;
 
       //Static attributes
-      static CallHash m_sActiveCalls ;
-      static CallHash m_sHistoryCalls;
+      static CallMap m_sActiveCalls ;
+      static CallMap m_sHistoryCalls;
       
       static InternalCall   m_sPrivateCallList_call  ;
       static InternalCallId m_sPrivateCallList_callId;
@@ -208,11 +214,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
       bool  updateCommon (Call* call);
 };
 
-class CallModelConvenience : public CallModel<QWidget*,QModelIndex*>
+/*class CallModelConvenience : public CallModel<QWidget*,QModelIndex*>
 {
    public:
       CallModelConvenience(ModelType type) : CallModel<QWidget*,QModelIndex*>(type) {}
-};
+};*/
 
 #include "CallModel.hpp"
 

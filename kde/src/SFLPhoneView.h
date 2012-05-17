@@ -47,7 +47,7 @@ class CallView;
  *
  * @short Main view
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
- * @version 0.9.6
+ * @version 1.1.0
  */
 class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
 {
@@ -92,6 +92,9 @@ public:
    * chosen to be displayed in SFLphone configuration.
    */
    int phoneNumberTypesDisplayed();
+
+
+   bool selectCallPhoneNumber(Call* call,Contact* contact);
 
 private slots:
    /**
@@ -161,6 +164,8 @@ private slots:
    void updateVolumeBar      (double _value = -1);
    void updateVolumeControls ();
    void updateDialpad        ();
+   void sendMessage();
+
 
 
 public slots:
@@ -201,6 +206,7 @@ public slots:
 
    void displayVolumeControls(bool checked = true);
    void displayDialpad(bool checked = true);
+   void displayMessageBox(bool checked = true);
    void configureSflPhone();
    void accountCreationWizard();
    void accept   ();

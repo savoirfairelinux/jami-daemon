@@ -13,6 +13,7 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
@@ -37,23 +38,18 @@
 
 #include <map>
 
-//////////////////////////////
-/* PJSIP imports */
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
 #include <pjlib-util.h>
+#include <pjnath.h>
 #include <pjnath/stun_config.h>
-///////////////////////////////
 
 #include "sipaccount.h"
 #include "voiplink.h"
+#include "siptransport.h"
+#include "eventthread.h"
 
-namespace sfl {
-class InstantMessaging;
-}
-
-class EventThread;
 class SIPCall;
 class SIPAccount;
 
@@ -66,7 +62,6 @@ class SIPAccount;
 
 class SIPVoIPLink : public VoIPLink {
     public:
-        ~SIPVoIPLink();
 
         /**
          * Singleton method. Enable to retrieve the unique static instance
@@ -75,19 +70,14 @@ class SIPVoIPLink : public VoIPLink {
         static SIPVoIPLink* instance();
 
         /**
-         * Try to initiate the pjsip engine/thread and set config
+         * Destroy the singleton instance
          */
-        virtual void init();
-
-        /**
-         * Shut the library and clean up
-         */
-        virtual void terminate();
+        static void destroy();
 
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
-        virtual void getEvent();
+        virtual bool getEvent();
 
         /**
          * Build and send SIP registration request
@@ -116,6 +106,20 @@ class SIPVoIPLink : public VoIPLink {
          * @return Call* The current call
          */
         virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl);
+
+        /**
+         * Start a new SIP call using the IP2IP profile
+         * @param The call id
+         * @param The target sip uri
+         */
+        Call *SIPNewIpToIpCall(const std::string& id, const std::string& to);
+
+        /**
+         * Place a call using the currently selected account
+         * @param The call id
+         * @param The target sip uri
+         */
+        Call *newRegisteredAccountCall(const std::string& id, const std::string& toUrl);
 
         /**
          * Answer the call
@@ -180,13 +184,6 @@ class SIPVoIPLink : public VoIPLink {
         virtual void carryingDTMFdigits(const std::string& id, char code);
 
         /**
-         * Start a new SIP call using the IP2IP profile
-         * @param The call id
-         * @param The target sip uri
-         */
-        bool SIPNewIpToIpCall(const std::string& id, const std::string& to);
-
-        /**
          * Tell the user that the call was answered
          * @param
          */
@@ -225,74 +222,29 @@ class SIPVoIPLink : public VoIPLink {
         std::string getUseragentName(SIPAccount *) const;
 
         /**
-         * List all the interfaces on the system and return
-         * a vector list containing their IPV4 address.
-         * @param void
-         * @return std::vector<std::string> A std::string vector
-         * of IPV4 address available on all of the interfaces on
-         * the system.
-         */
-        static std::vector<std::string> getAllIpInterface();
-
-        /**
-        * List all the interfaces on the system and return
-        * a vector list containing their name (eth0, eth0:1 ...).
-        * @param void
-        * @return std::vector<std::string> A std::string vector
-        * of interface name available on all of the interfaces on
-        * the system.
-        */
-        static std::vector<std::string> getAllIpInterfaceByName();
-
-        /**
-         * List all the interfaces on the system and return
-         * a vector list containing their name (eth0, eth0:1 ...).
-         * @param void
-         * @return std::vector<std::string> A std::string vector
-         * of interface name available on all of the interfaces on
-         * the system.
-         */
-        static std::string getInterfaceAddrFromName(const std::string &ifaceName);
-
-        /**
-         * Initialize the transport selector
-         * @param transport		A transport associated with an account
-         *
-         * @return          	A pointer to the transport selector structure
-         */
-        pjsip_tpselector *initTransportSelector(pjsip_transport *, pj_pool_t *) const;
-
-        /**
-         * This function unset the transport for a given account.
-         */
-        void shutdownSipTransport(SIPAccount *account);
-
-        /**
          * Send a SIP message to a call identified by its callid
          *
-         * @param The InstantMessaging module which contains formating, parsing and sending method
          * @param The Id of the call to send the message to
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
-        void sendTextMessage(sfl::InstantMessaging *module, const std::string& callID, const std::string& message, const std::string& from);
+        void sendTextMessage(const std::string& callID,
+                             const std::string& message,
+                             const std::string& from);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
          */
         void createDefaultSipUdpTransport();
 
-        /**
-         * Get the correct address to use (ie advertised) from
-         * a uri. The corresponding transport that should be used
-         * with that uri will be discovered.
-         *
-         * @param uri The uri from which we want to discover the address to use
-         * @param transport The transport to use to discover the address
-         */
-        void findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &address, std::string &port) const;
+        SipTransport sipTransport;
 
     private:
+
+        NON_COPYABLE(SIPVoIPLink);
+
+        SIPVoIPLink();
+        ~SIPVoIPLink();
         /**
          * Start a SIP Call
          * @param call  The current call
@@ -302,57 +254,14 @@ class SIPVoIPLink : public VoIPLink {
 
         void dtmfSend(SIPCall *call, char code, const std::string &type);
 
-        NON_COPYABLE(SIPVoIPLink);
-
-        SIPVoIPLink();
-
-        /**
-         * Resolve public address for this account
-         */
-        pj_status_t stunServerResolve(SIPAccount *);
-
-        /**
-         * Create the default TLS listener.
-         */
-        void createTlsListener(SIPAccount*, pjsip_tpfactory **listener);
-
-        /**
-         * General Sip transport creation method according to the
-         * transport type specified in account settings
-         * @param account The account for which a transport must be created.
-         */
-        void createSipTransport(SIPAccount *account);
-
-        /**
-        * Create SIP UDP transport from account's setting
-        * @param account The account for which a transport must be created.
-        */
-        void createUdpTransport(SIPAccount *account);
-
-        /**
-         * Create a TLS transport from the default TLS listener from
-         * @param account The account for which a transport must be created.
-         */
-        void createTlsTransport(SIPAccount *, std::string remoteAddr);
-
-        /**
-         * Create a UDP transport using stun server to resove public address
-         * @param account The account for which a transport must be created.
-         */
-        void createStunTransport(SIPAccount *account);
-
-        /**
-         * UDP Transports are stored in this map in order to retreive them in case
-         * several accounts would share the same port number.
-         */
-        std::map<pj_uint16_t, pjsip_transport*> transportMap_;
-
         /**
          * Threading object
          */
-        EventThread *evThread_;
+        EventThread evThread_;
 
         friend class SIPTest;
+        static bool destroyed_;
+        static SIPVoIPLink *instance_;
 };
 
 #endif // SIPVOIPLINK_H_

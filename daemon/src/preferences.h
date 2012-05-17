@@ -32,82 +32,20 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
-
-// general preferences
-static const char * const orderKey = "order";
-static const char * const audioApiKey = "audioApi";
-static const char * const historyLimitKey = "historyLimit";
-static const char * const historyMaxCallsKey = "historyMaxCalls";
-static const char * const  notifyMailsKey = "notifyMails";
-static const char * const zoneToneChoiceKey = "zoneToneChoice";
-static const char * const registrationExpireKey = "registrationExpire";
-static const char * const portNumKey = "portNum";
-static const char * const searchBarDisplayKey = "searchBarDisplay";
-static const char * const zeroConfenableKey = "zeroConfenable";
-static const char * const md5HashKey = "md5Hash";
-
-// voip preferences
-static const char * const playDtmfKey = "playDtmf";
-static const char * const playTonesKey = "playTones";
-static const char * const pulseLengthKey = "pulseLength";
-static const char * const symmetricRtpKey = "symmetric";
-static const char * const zidFileKey = "zidFile";
-
-// addressbook preferences
-static const char * const photoKey = "photo";
-static const char * const enabledKey = "enabled";
-static const char * const listKey = "list";
-static const char * const maxResultsKey = "maxResults";
-static const char * const businessKey = "business";
-static const char * const homeKey = "home";
-static const char * const mobileKey = "mobile";
-
-// hooks preferences
-static const char * const iax2EnabledKey = "iax2Enabled";
-static const char * const numberAddPrefixKey = "numberAddPrefix";
-static const char * const numberEnabledKey = "numberEnabled";
-static const char * const sipEnabledKey = "sipEnabled";
-static const char * const urlCommandKey = "urlCommand";
-static const char * const urlSipFieldKey = "urlSipField";
-
-// audio preferences
-static const char * const alsamapKey = "alsa";
-static const char * const pulsemapKey = "pulse";
-static const char * const cardinKey = "cardIn";
-static const char * const cardoutKey = "cardOut";
-static const char * const cardringKey = "cardRing";
-static const char * const pluginKey = "plugin";
-static const char * const smplrateKey = "smplRate";
-static const char * const devicePlaybackKey = "devicePlayback";
-static const char * const deviceRecordKey = "deviceRecord";
-static const char * const deviceRingtoneKey = "deviceRingtone";
-static const char * const recordpathKey = "recordPath";
-static const char * const alwaysRecordingKey = "alwaysRecording";
-static const char * const volumemicKey = "volumeMic";
-static const char * const volumespkrKey = "volumeSpkr";
-static const char * const noiseReduceKey = "noiseReduce";
-static const char * const echoCancelKey = "echoCancel";
-static const char * const echoTailKey = "echoTailLength";
-static const char * const echoDelayKey = "echoDelayLength";
-
-// shortcut preferences
-static const char * const hangupShortKey = "hangUp";
-static const char * const pickupShortKey = "pickUp";
-static const char * const popupShortKey = "popupWindow";
-static const char * const toggleHoldShortKey = "toggleHold";
-static const char * const togglePickupHangupShortKey = "togglePickupHangup";
+#include <string>
+#include <map>
 
 class AudioLayer;
 
 class Preferences : public Serializable {
     public:
         static const char * const DFT_ZONE;
+        static const char * const REGISTRATION_EXPIRE_KEY;
 
         Preferences();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         std::string getAccountOrder() const {
             return accountOrder_;
@@ -204,9 +142,8 @@ class VoipPreference : public Serializable {
     public:
         VoipPreference();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         bool getPlayDtmf() const {
             return playDtmf_;
@@ -259,9 +196,8 @@ class AddressbookPreference : public Serializable {
     public:
         AddressbookPreference();
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         bool getPhoto() const {
             return photo_;
@@ -326,63 +262,28 @@ class AddressbookPreference : public Serializable {
         bool business_;
         bool home_;
         bool mobile_;
-
 };
 
+
+class pjsip_msg;
 
 class HookPreference : public Serializable {
     public:
         HookPreference();
+        HookPreference(const std::map<std::string, std::string> &settings);
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(Conf::MappingNode *map);
-
-        bool getIax2Enabled() const {
-            return iax2Enabled_;
-        }
-
-        void setIax2Enabled(bool i) {
-            iax2Enabled_ = i;
-        }
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         std::string getNumberAddPrefix() const {
-            return numberAddPrefix_;
+            if (numberEnabled_)
+                return numberAddPrefix_;
+            else
+                return "";
         }
 
-        void setNumberAddPrefix(const std::string &n) {
-            numberAddPrefix_ = n;
-        }
-
-        bool getNumberEnabled() const {
-            return numberEnabled_;
-        }
-
-        void setNumberEnabled(bool n) {
-            numberEnabled_ = n;
-        }
-
-        bool getSipEnabled() const {
-            return sipEnabled_;
-        }
-
-        void setSipEnabled(bool s) {
-            sipEnabled_ = s;
-        }
-
-        std::string getUrlCommand() const {
-            return urlCommand_;
-        }
-        void setUrlCommand(const std::string &u) {
-            urlCommand_ = u;
-        }
-
-        std::string getUrlSipField() const {
-            return urlSipField_;
-        }
-        void setUrlSipField(const std::string &u) {
-            urlSipField_ = u;
-        }
+        std::map<std::string, std::string> toMap() const;
+        void runHook(pjsip_msg *msg);
 
     private:
         bool iax2Enabled_;
@@ -391,7 +292,6 @@ class HookPreference : public Serializable {
         bool sipEnabled_;
         std::string urlCommand_;
         std::string urlSipField_;
-
 };
 
 class AudioPreference : public Serializable {
@@ -408,9 +308,8 @@ class AudioPreference : public Serializable {
             audioApi_ = api;
         }
 
-        virtual void serialize(Conf::YamlEmitter *emitter);
-
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         // alsa preference
         int getCardin() const {
@@ -567,8 +466,8 @@ class AudioPreference : public Serializable {
 class ShortcutPreferences : public Serializable {
     public:
         ShortcutPreferences();
-        virtual void serialize(Conf::YamlEmitter *emitter);
-        virtual void unserialize(Conf::MappingNode *map);
+        virtual void serialize(Conf::YamlEmitter &emitter);
+        virtual void unserialize(const Conf::MappingNode &map);
 
         void setShortcuts(std::map<std::string, std::string> shortcuts);
         std::map<std::string, std::string> getShortcuts() const;

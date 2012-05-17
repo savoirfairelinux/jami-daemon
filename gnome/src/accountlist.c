@@ -29,7 +29,11 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
+#include "str_utils.h"
+#include "dbus.h"
 #include "accountlist.h"
+#include "logger.h"
 #include "actions.h"
 #include "unused.h"
 
@@ -42,14 +46,13 @@ static guint account_list_get_position(account_t *account)
     for (guint i = 0; i < size; i++) {
         account_t *tmp = account_list_get_nth(i);
 
-        if (g_strcasecmp(tmp->accountID, account->accountID) == 0)
+        if (utf8_case_equal(tmp->accountID, account->accountID))
             return i;
     }
 
     // Not found
     return -1;
 }
-
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 static gint is_accountID_struct(gconstpointer a, gconstpointer b)
@@ -73,6 +76,7 @@ static gint get_state_struct(gconstpointer a, gconstpointer b)
 
 void account_list_init()
 {
+    account_list_free();
     accountQueue = g_queue_new();
 }
 
@@ -96,6 +100,7 @@ account_list_get_by_state(account_state_t state)
 account_t *
 account_list_get_by_id(const gchar * const accountID)
 {
+    g_assert(accountID);
     GList * c = g_queue_find_custom(accountQueue, accountID, is_accountID_struct);
 
     if (c)
@@ -123,9 +128,7 @@ account_list_get_current()
 
     // if we are here, it means that we have at least one registered account in the list
     // So we get the first one
-    account_t *current = account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
-
-    return current;
+    return account_list_get_by_state(ACCOUNT_STATE_REGISTERED);
 }
 
 void account_list_set_current(account_t *current)
@@ -144,58 +147,47 @@ void account_list_set_current(account_t *current)
 
 const gchar * account_state_name(account_state_t s)
 {
-    gchar * state;
-
     switch (s) {
         case ACCOUNT_STATE_REGISTERED:
-            state = _("Registered");
-            break;
+            return _("Registered");
         case ACCOUNT_STATE_UNREGISTERED:
-            state = _("Not Registered");
-            break;
+            return _("Not Registered");
         case ACCOUNT_STATE_TRYING:
-            state = _("Trying...");
-            break;
+            return _("Trying...");
         case ACCOUNT_STATE_ERROR:
-            state = _("Error");
-            break;
+            return _("Error");
         case ACCOUNT_STATE_ERROR_AUTH:
-            state = _("Authentication Failed");
-            break;
+            return _("Authentication Failed");
         case ACCOUNT_STATE_ERROR_NETWORK:
-            state = _("Network unreachable");
-            break;
+            return _("Network unreachable");
         case ACCOUNT_STATE_ERROR_HOST:
-            state = _("Host unreachable");
-            break;
-        case ACCOUNT_STATE_ERROR_CONF_STUN:
-            state = _("Stun configuration error");
-            break;
+            return _("Host unreachable");
+        case ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE:
+            return _("Not acceptable");
         case ACCOUNT_STATE_ERROR_EXIST_STUN:
-            state = _("Stun server invalid");
-            break;
-        case IP2IP_PROFILE_STATUS:
-            state = _("Ready");
-            break;
+            return _("Stun server invalid");
+        case ACCOUNT_STATE_IP2IP_READY:
+            return _("Ready");
         default:
-            state = _("Invalid");
-            break;
+            return _("Invalid");
     }
-
-    return state;
 }
 
 void account_list_free_elm(gpointer elm, gpointer data UNUSED)
 {
     account_t *a = elm;
     g_free(a->accountID);
+    a->accountID = NULL;
     g_free(a);
 }
 
 void account_list_free()
 {
-    g_queue_foreach(accountQueue, account_list_free_elm, NULL);
-    g_queue_free(accountQueue);
+    if (accountQueue) {
+        g_queue_foreach(accountQueue, account_list_free_elm, NULL);
+        g_queue_free(accountQueue);
+        accountQueue = NULL;
+    }
 }
 
 void
@@ -222,20 +214,34 @@ account_list_get_registered_accounts(void)
     guint res = 0;
 
     for (guint i = 0; i < account_list_get_size(); i++)
-        if (account_list_get_nth(i) -> state == (ACCOUNT_STATE_REGISTERED))
+        if (account_list_get_nth(i)->state == (ACCOUNT_STATE_REGISTERED))
             res++;
 
     return res;
 }
 
-gchar* account_list_get_current_id(void)
+const gchar* account_list_get_current_id(void)
 {
     account_t *current = account_list_get_current();
 
     if (current)
         return current->accountID;
     else
-        return "";
+        return NULL;
+}
+
+void account_list_remove(const gchar *accountID)
+{
+    account_t *target = account_list_get_by_id(accountID);
+    if (target) {
+#if GLIB_CHECK_VERSION(2, 30, 0)
+        if (!g_queue_remove(accountQueue, target))
+            ERROR("Could not remove account with ID %s", accountID);
+#else
+        g_queue_remove(accountQueue, target);
+#endif
+    }
+
 }
 
 gchar * account_list_get_ordered_list(void)
@@ -243,10 +249,8 @@ gchar * account_list_get_ordered_list(void)
     gchar *order = strdup("");
 
     for (guint i = 0; i < account_list_get_size(); i++) {
-        account_t * account = NULL;
-        account = account_list_get_nth(i);
-
-        if (account != NULL) {
+        account_t * account = account_list_get_nth(i);
+        if (account) {
             gchar *new_order = g_strconcat(order, account->accountID, "/", NULL);
             g_free(order);
             order = new_order;
@@ -263,9 +267,9 @@ gboolean current_account_has_mailbox(void)
     account_t *current = account_list_get_current();
 
     if (current) {
-        gchar * account_mailbox = g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX);
+        gchar * account_mailbox = account_lookup(current, ACCOUNT_MAILBOX);
 
-        if (account_mailbox && g_strcasecmp(account_mailbox, "") != 0)
+        if (account_mailbox && !utf8_case_equal(account_mailbox, ""))
             return TRUE;
     }
 
@@ -275,7 +279,6 @@ gboolean current_account_has_mailbox(void)
 void current_account_set_message_number(guint nb)
 {
     account_t *current = account_list_get_current();
-
     if (current)
         current->_messages_number = nb;
 }
@@ -283,7 +286,6 @@ void current_account_set_message_number(guint nb)
 guint current_account_get_message_number(void)
 {
     account_t *current = account_list_get_current();
-
     if (current)
         return current->_messages_number;
     else
@@ -293,9 +295,77 @@ guint current_account_get_message_number(void)
 gboolean current_account_has_new_message(void)
 {
     account_t *current = account_list_get_current();
+    return current && current->_messages_number > 0;
+}
 
-    if (current)
-        return (current->_messages_number > 0);
+gboolean account_is_IP2IP(const account_t *account)
+{
+    g_assert(account);
+    return g_strcmp0(account->accountID, IP2IP_PROFILE) == 0;
+}
 
-    return FALSE;
+static gboolean is_type(const account_t *account, const gchar *type)
+{
+    const gchar *account_type = account_lookup(account, ACCOUNT_TYPE);
+    return g_strcmp0(account_type, type) == 0;
+}
+
+gboolean account_is_SIP(const account_t *account)
+{
+    return is_type(account, "SIP");
+}
+
+gboolean account_is_IAX(const account_t *account)
+{
+    return is_type(account, "IAX");
+}
+
+account_t *create_default_account()
+{
+    account_t *account = g_new0(account_t, 1);
+    account->accountID = g_strdup("new"); // FIXME: maybe replace with NULL?
+    account->properties = dbus_get_account_details("");
+    sflphone_fill_codec_list_per_account(account);
+    initialize_credential_information(account);
+    return account;
+}
+
+account_t *create_account_with_ID(const gchar *ID)
+{
+    account_t *account = g_new0(account_t, 1);
+    account->accountID = g_strdup(ID);
+    account->properties = dbus_get_account_details(ID);
+    sflphone_fill_codec_list_per_account(account);
+    initialize_credential_information(account);
+    return account;
+}
+
+void initialize_credential_information(account_t *account)
+{
+    if (!account->credential_information) {
+        account->credential_information = g_ptr_array_sized_new(1);
+        GHashTable * new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), g_strdup("*"));
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), g_strdup(""));
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), g_strdup(""));
+        g_ptr_array_add(account->credential_information, new_table);
+    }
+}
+
+void account_replace(account_t *account, const gchar *key, const gchar *value)
+{
+    g_assert(account && account->properties);
+    g_hash_table_replace(account->properties, g_strdup(key), g_strdup(value));
+}
+
+void account_insert(account_t *account, const gchar *key, const gchar *value)
+{
+    g_assert(account && account->properties);
+    g_hash_table_insert(account->properties, g_strdup(key), g_strdup(value));
+}
+
+gpointer account_lookup(const account_t *account, gconstpointer key)
+{
+    g_assert(account && account->properties);
+    return g_hash_table_lookup(account->properties, key);
 }

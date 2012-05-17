@@ -34,6 +34,7 @@
 using std::ptrdiff_t;
 
 #include <ccrtp/rtp.h>
+#include <tr1/array>
 #include <list>
 
 class SIPCall;
@@ -49,9 +50,6 @@ namespace sfl {
 
 // Frequency (in packet number)
 #define RTP_TIMESTAMP_RESET_FREQ 100
-
-// Factor use to increase volume in fade in
-#define FADEIN_STEP_SIZE 4;
 
 static const int schedulingTimeout = 4000;
 static const int expireTimeout = 1000000;
@@ -72,7 +70,7 @@ timeval2microtimeout(const timeval& t)
 /**
  * Class meant to store internal data in order to encode/decode,
  * resample, process, and packetize audio streams. This class should not be
- * handled directly. Use AudioRtpRecorrdHandeler
+ * handled directly. Use AudioRtpRecordHandler
  */
 class AudioRtpRecord {
     public:
@@ -83,27 +81,36 @@ class AudioRtpRecord {
         ost::Mutex audioCodecMutex_;
         int codecPayloadType_;
         bool hasDynamicPayloadType_;
-        SFLDataFormat decData_[DEC_BUFFER_SIZE];
-        SFLDataFormat resampledData_[DEC_BUFFER_SIZE];
-        unsigned char encodedData_[DEC_BUFFER_SIZE];
-        SamplerateConverter *converter_;
+        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> decData_;
+// FIXME: resampledData should be resized as needed
+        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE * 4> resampledData_;
+        std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
+        SamplerateConverter *converterEncode_;
+        SamplerateConverter *converterDecode_;
         int codecSampleRate_;
         int codecFrameSize_;
         int converterSamplingRate_;
         std::list<int> dtmfQueue_;
-        SFLDataFormat micAmplFactor_;
-        NoiseSuppress *noiseSuppress_;
+        SFLDataFormat fadeFactor_;
+        NoiseSuppress *noiseSuppressEncode_;
+        NoiseSuppress *noiseSuppressDecode_;
         ost::Mutex audioProcessMutex_;
         std::string callId_;
         unsigned int dtmfPayloadType_;
+
     private:
+        friend class AudioRtpRecordHandler;
+        /**
+        * Ramp In audio data to avoid audio click from peer
+        */
+        void fadeInDecodedData(size_t size);
         NON_COPYABLE(AudioRtpRecord);
 };
 
 
 class AudioRtpRecordHandler {
     public:
-        AudioRtpRecordHandler(SIPCall *);
+        AudioRtpRecordHandler(SIPCall &);
         virtual ~AudioRtpRecordHandler();
 
         /**
@@ -132,11 +139,11 @@ class AudioRtpRecordHandler {
         }
 
         int DtmfPending() const {
-            return audioRtpRecord_.dtmfQueue_.size() > 0;
+            return not audioRtpRecord_.dtmfQueue_.empty();
         }
 
         const unsigned char *getMicDataEncoded() const {
-            return audioRtpRecord_.encodedData_;
+            return audioRtpRecord_.encodedData_.data();
         }
 
         void initBuffers();
@@ -151,12 +158,7 @@ class AudioRtpRecordHandler {
         /**
          * Decode audio data received from peer
          */
-        void processDataDecode(unsigned char * spkrData, unsigned int size, int payloadType);
-
-        /**
-        * Ramp In audio data to avoid audio click from peer
-        */
-        void fadeIn(SFLDataFormat *audio, int size, SFLDataFormat *factor);
+        void processDataDecode(unsigned char * spkrData, size_t size, int payloadType);
 
         void setDtmfPayloadType(unsigned int payloadType) {
             audioRtpRecord_.dtmfPayloadType_ = payloadType;
@@ -169,7 +171,7 @@ class AudioRtpRecordHandler {
         void putDtmfEvent(int digit);
 
     protected:
-        AudioRtpRecord	audioRtpRecord_;
+        AudioRtpRecord audioRtpRecord_;
 
     private:
 

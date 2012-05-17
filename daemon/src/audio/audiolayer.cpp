@@ -34,23 +34,20 @@
 #include "audio/dcblocker.h"
 #include "manager.h"
 
+unsigned int AudioLayer::captureGain_ = 100;
+unsigned int AudioLayer::playbackGain_ = 100;
+
 AudioLayer::AudioLayer()
     : isStarted_(false)
-    , urgentRingBuffer_(SIZEBUF, Call::DEFAULT_ID)
-    , audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
+    , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
+    , sampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_()
     , dcblocker_()
     , audioPref(Manager::instance().audioPreference)
-    , converter_(new SamplerateConverter(audioSampleRate_))
+    , converter_(sampleRate_)
     , lastNotificationTime_(0)
 {
-    urgentRingBuffer_.createReadPointer();
-}
-
-
-AudioLayer::~AudioLayer()
-{
-    delete converter_;
+    urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
 }
 
 void AudioLayer::flushMain()
@@ -72,8 +69,15 @@ void AudioLayer::putUrgent(void* buffer, int toCopy)
     urgentRingBuffer_.Put(buffer, toCopy);
 }
 
+void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
+{
+    if (gain != 100)
+        for (int i = 0 ; i < samples; i++)
+            src[i] = src[i] * gain* 0.01;
+}
+
 // Notify (with a beep) an incoming call when there is already a call in progress
-void AudioLayer::notifyincomingCall()
+void AudioLayer::notifyIncomingCall()
 {
     if (!Manager::instance().incomingCallWaiting())
         return;

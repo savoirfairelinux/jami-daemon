@@ -313,7 +313,7 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 QString Call::getStopTimeStamp()     const
 {
    if (m_pStopTime == NULL)
-      return QString();
+      return QString("0");
    return QString::number(m_pStopTime->toTime_t());
 }
 
@@ -321,7 +321,7 @@ QString Call::getStopTimeStamp()     const
 QString Call::getStartTimeStamp()    const
 {
    if (m_pStartTime == NULL)
-      return QString();
+      return QString("0");
    return QString::number(m_pStartTime->toTime_t());
 }
 
@@ -383,6 +383,12 @@ bool Call::isConference()                   const
 const QString& Call::getConfId()            const
 {
    return m_ConfId;
+}
+
+///Get the recording path
+const QString& Call::getRecordingPath()      const
+{
+   return m_RecordingPath;
 }
 
 ///Get the current codec
@@ -459,6 +465,18 @@ void Call::setConfId(QString value)
    m_ConfId = value;
 }
 
+///Set the recording path
+void Call::setRecordingPath(const QString& path)
+{
+   m_RecordingPath = path;
+}
+
+///Set peer name
+void Call::setPeerName(const QString& name)
+{
+   m_PeerName = name;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Mutator                                  *
@@ -523,6 +541,11 @@ void Call::changeCurrentState(call_state newState)
       emit isOver(this);
 }
 
+void Call::sendTextMessage(QString message)
+{
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   callManager.sendTextMessage(m_CallId,message);
+}
 
 /*****************************************************************************
  *                                                                           *
@@ -608,7 +631,7 @@ void Call::call()
    qDebug() << "account = " << m_Account;
    if(m_Account.isEmpty()) {
       qDebug() << "Account is not set, taking the first registered.";
-      this->m_Account = CallModelConvenience::getCurrentAccountId();
+      this->m_Account = CallModel<>::getCurrentAccountId();
    }
    if(!m_Account.isEmpty()) {
       qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId;

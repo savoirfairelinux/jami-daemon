@@ -28,8 +28,10 @@
  *  as that of the covered work.
  */
 
-#include <audiostream.h>
+#include "audiostream.h"
 #include "pulselayer.h"
+#include "logger.h"
+#include <stdexcept>
 
 AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string& deviceName)
     : audiostream_(0), mainloop_(m)
@@ -51,8 +53,8 @@ AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *des
     audiostream_ = pa_stream_new(c, desc, &sample_spec, &channel_map);
 
     if (!audiostream_) {
-        ERROR("Pulse: %s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
-        throw std::runtime_error("Pulse : could not create stream\n");
+        ERROR("%s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
+        throw std::runtime_error("Could not create stream\n");
     }
 
     pa_buffer_attr attributes;
@@ -94,36 +96,36 @@ AudioStream::~AudioStream()
 }
 
 void
-AudioStream::stream_state_callback(pa_stream* s, void* user_data UNUSED)
+AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 {
     char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
     switch (pa_stream_get_state(s)) {
         case PA_STREAM_CREATING:
-            DEBUG("Pulse: Stream is creating...");
+            DEBUG("Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
-            DEBUG("Pulse: Stream is terminating...");
+            DEBUG("Stream is terminating...");
             break;
 
         case PA_STREAM_READY:
-            DEBUG("Pulse: Stream successfully created, connected to %s", pa_stream_get_device_name(s));
-            DEBUG("Pulse: maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
-            DEBUG("Pulse: tlength %u", pa_stream_get_buffer_attr(s)->tlength);
-            DEBUG("Pulse: prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
-            DEBUG("Pulse: minreq %u", pa_stream_get_buffer_attr(s)->minreq);
-            DEBUG("Pulse: fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
-            DEBUG("Pulse: samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
+            DEBUG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
+            DEBUG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
+            DEBUG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
+            DEBUG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
+            DEBUG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
+            DEBUG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+            DEBUG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
             break;
 
         case PA_STREAM_UNCONNECTED:
-            DEBUG("Pulse: Stream unconnected");
+            DEBUG("Stream unconnected");
             break;
 
         case PA_STREAM_FAILED:
         default:
-            ERROR("Pulse: Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+            ERROR("Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
             break;
     }
 }

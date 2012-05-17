@@ -21,7 +21,10 @@
 #ifndef DLGADDRESSBOOK_H
 #define DLGADDRESSBOOK_H
 
-#include <QWidget>
+#include <QtCore/QHash>
+#include <QtCore/QString>
+#include <QtGui/QWidget>
+#include <QtGui/QListWidgetItem>
 
 #include "ui_dlgaddressbookbase.h"
 
@@ -35,6 +38,14 @@ public:
    DlgAddressBook(QWidget *parent = 0);
 
    ~DlgAddressBook();
+
+private:
+   QHash<QString,QListWidgetItem*> m_mNumbertype;
+
+public slots:
+   void updateWidgets();
+   void updateSettings();
+
 
 };
 

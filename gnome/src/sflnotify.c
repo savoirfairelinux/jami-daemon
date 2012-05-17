@@ -29,6 +29,9 @@
  */
 
 #include "config.h"
+#include <glib.h>
+#include <glib/gi18n.h>
+#include "str_utils.h"
 #include "eel-gconf-extensions.h"
 #include "sflnotify.h"
 #include "logger.h"
@@ -87,7 +90,7 @@ notify_incoming_message(const gchar *callID, const gchar *msg)
     create_new_gnome_notification(title,
                                   (gchar *)msg,
                                   NOTIFY_URGENCY_CRITICAL,
-                                  (g_strcasecmp(__TIMEOUT_MODE, "default") == 0) ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
+                                  utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
 #endif
 }
 
@@ -110,7 +113,7 @@ notify_incoming_call(callable_obj_t* c)
     create_new_gnome_notification(title,
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
-                                  (g_strcasecmp(__TIMEOUT_MODE, "default") == 0) ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
+                                  utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
 #endif
 }
 
@@ -182,7 +185,7 @@ notify_secure_on(callable_obj_t* c)
     create_new_gnome_notification(title,
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
-                                  (g_strcasecmp(__TIMEOUT_MODE, "default") == 0) ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
+                                  utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
 #endif
 }
 
@@ -195,7 +198,7 @@ notify_zrtp_not_supported(callable_obj_t* c)
     create_new_gnome_notification(title,
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
-                                  (g_strcasecmp(__TIMEOUT_MODE, "default") == 0) ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
+                                  utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
 #endif
 }
 
@@ -208,7 +211,7 @@ notify_zrtp_negotiation_failed(callable_obj_t* c)
     create_new_gnome_notification(title,
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
-                                  (g_strcasecmp(__TIMEOUT_MODE, "default") == 0) ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
+                                  utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
 #endif
 }
 
@@ -221,6 +224,6 @@ notify_secure_off(callable_obj_t* c)
     create_new_gnome_notification(title,
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
-                                  (g_strcasecmp(__TIMEOUT_MODE, "default") == 0) ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
+                                  utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER);
 #endif
 }

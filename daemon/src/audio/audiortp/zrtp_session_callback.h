@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __ZRTP_SESSION_CALLBACK_H__
-#define __ZRTP_SESSION_CALLBACK_H__
+#ifndef ZRTP_SESSION_CALLBACK_H_
+#define ZRTP_SESSION_CALLBACK_H_
 #include <cstddef>
 
 using std::ptrdiff_t;
@@ -37,9 +37,8 @@ using std::ptrdiff_t;
 #include <libzrtpcpp/zrtpccrtp.h>
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
-#include <exception>
+#include <string>
 #include <map>
-#include "noncopyable.h"
 
 class SIPCall;
 
@@ -47,7 +46,7 @@ namespace sfl {
 
 class ZrtpSessionCallback: public ZrtpUserCallback {
     public:
-        ZrtpSessionCallback(SIPCall *sipcall);
+        ZrtpSessionCallback(SIPCall &call);
 
         void secureOn(std::string cipher);
         void secureOff();
@@ -58,12 +57,11 @@ class ZrtpSessionCallback: public ZrtpUserCallback {
         void confirmGoClear();
 
     private:
-        NON_COPYABLE(ZrtpSessionCallback);
-        SIPCall* sipcall_;
+        SIPCall &call_;
         static std::map<int32, std::string> infoMap_;
         static std::map<int32, std::string> warningMap_;
         static std::map<int32, std::string> severeMap_;
         static std::map<int32, std::string> zrtpMap_;
 };
 }
-#endif // __ZRTP_SESSION_CALLBACK_H__
+#endif // ZRTP_SESSION_CALLBACK_H_

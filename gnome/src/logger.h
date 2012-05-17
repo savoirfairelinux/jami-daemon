@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __LOGGER_H
-#define __LOGGER_H
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
 void internal_log (const int level, const char* format, ...);
 void set_log_level (const int level);
@@ -39,9 +39,16 @@ void set_log_level (const int level);
 #define LOG_INFO 3
 #define LOG_DEBUG 4
 
-#define ERROR(...)     internal_log(LOG_ERR, __VA_ARGS__)
-#define WARN(...)      internal_log(LOG_WARN, __VA_ARGS__)
-#define INFO(...)      internal_log(LOG_INFO, __VA_ARGS__)
-#define DEBUG(...)     internal_log(LOG_DEBUG, __VA_ARGS__)
+#define INTERNAL_LOG(M, LEVEL, ...) internal_log(LEVEL, "%s:%d: " M, __FILE__, \
+                                                 __LINE__, ##__VA_ARGS__)
 
-#endif
+#define ERROR(M, ...)     INTERNAL_LOG(M, LOG_ERR, ##__VA_ARGS__)
+#define WARN(M, ...)      INTERNAL_LOG(M, LOG_WARN, ##__VA_ARGS__)
+#define INFO(M, ...)      INTERNAL_LOG(M, LOG_INFO, ##__VA_ARGS__)
+#define DEBUG(M, ...)     INTERNAL_LOG(M, LOG_DEBUG, ##__VA_ARGS__)
+
+/* Prints an error message and returns if the pointer A is NULL */
+#define RETURN_IF_NULL(A, M, ...) \
+    if (!(A)) { ERROR(M, ##__VA_ARGS__); return; }
+
+#endif // LOGGER_H_

@@ -28,11 +28,11 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIORECORDER_H_
-#define __AUDIORECORDER_H_
+#ifndef AUDIORECORDER_H_
+#define AUDIORECORDER_H_
 
 #include <string>
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include "audiorecord.h"
 #include "noncopyable.h"
 
@@ -44,6 +44,7 @@ class AudioRecorder : public ost::Thread {
         AudioRecorder(AudioRecord  *arec, MainBuffer *mb);
 
         ~AudioRecorder() {
+            running_ = false;
             terminate();
         }
 
@@ -61,6 +62,7 @@ class AudioRecorder : public ost::Thread {
         std::string recorderId_;
         MainBuffer *mbuffer_;
         AudioRecord *arecord_;
+        bool running_;
 };
 
 #endif

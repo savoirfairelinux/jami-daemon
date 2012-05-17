@@ -29,9 +29,33 @@
  */
 
 #include <libgen.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <fstream>
 #include <cstdlib>
+#include <signal.h>
+#include <string>
+#include <sstream>
+#include <iostream>
+#include "fileutils.h"
 
 namespace fileutils {
+// returns true if directory exists
+bool check_dir(const char *path)
+{
+    DIR *dir = opendir(path);
+
+    if (!dir) { // doesn't exist
+        if (mkdir(path, 0755) != 0) {   // couldn't create the dir
+            perror(path);
+            return false;
+        }
+    } else
+        closedir(dir);
+
+    return true;
+}
+
 static char *program_dir = NULL;
 
 void set_program_dir(char *program_path)
@@ -44,4 +68,46 @@ const char *get_program_dir()
     return program_dir;
 }
 
+bool create_pidfile()
+{
+    const char * const xdg_env = XDG_CACHE_HOME;
+    std::string path = xdg_env ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
+
+    if (!check_dir(path.c_str()))
+        return false;
+
+    path += "sflphone";
+
+    if (!check_dir(path.c_str()))
+        return false;
+
+    std::string pidfile = path + "/" PIDFILE;
+    std::ifstream is(pidfile.c_str());
+
+    if (is) {
+        // PID file exists. Check if the former process is still alive or
+        // not. If alive, give user a hint.
+        int oldPid;
+        is >> oldPid;
+
+        if (kill(oldPid, 0) == 0) {
+            // Use cerr because logging has not been initialized
+            std::cerr << "There is already a sflphoned daemon running in " <<
+                "the system. Starting Failed." << std::endl;
+            return false;
+        }
+    }
+
+    // write pid file
+    std::ofstream os(pidfile.c_str());
+
+    if (!os) {
+        perror(pidfile.c_str());
+        return false;
+    } else {
+        os << getpid();
+    }
+
+    return true;
+}
 }

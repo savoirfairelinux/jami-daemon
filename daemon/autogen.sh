@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash
 
 # Workaround for http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=565663
 mkdir -p m4
@@ -7,11 +7,14 @@ HOOKS_DIR="../.git/hooks"
 # install pre-commit hook for doing clean commits
 if [ -d "$HOOKS_DIR" ];
 then
-    if test ! \( -x ${HOOKS_DIR}/pre-commit -a -L ${HOOKS_DIR}/pre-commit \);
+    pushd ${HOOKS_DIR}
+    if test ! \( -x pre-commit -a -L pre-commit \);
     then
-        rm -f ${HOOKS_DIR}/pre-commit
-        ln -s ${HOOKS_DIR}/pre-commit.sample ${HOOKS_DIR}/pre-commit
+        echo "Creating symbolic link for pre-commit hook..."
+        rm -f pre-commit
+        ln -s pre-commit.sample pre-commit
     fi
+    popd
 fi
 
 autoreconf --force --install --verbose -Wall -I m4

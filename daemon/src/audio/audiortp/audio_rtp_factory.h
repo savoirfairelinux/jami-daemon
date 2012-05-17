@@ -31,10 +31,12 @@
 #ifndef __AUDIO_RTP_FACTORY_H__
 #define __AUDIO_RTP_FACTORY_H__
 
-#include <stdexcept>
-#include <cc++/thread.h>
 #include <ccrtp/CryptoContext.h>
+#include <stdexcept>
+#include <tr1/array>
+#include "cc_thread.h"
 #include "audio_rtp_session.h"
+#include "audio_srtp_session.h"
 #include "noncopyable.h"
 
 #include "sip/sdes_negotiator.h"
@@ -62,15 +64,15 @@ class AudioRtpFactory {
         AudioRtpFactory(SIPCall *ca);
         ~AudioRtpFactory();
 
-        void initAudioRtpConfig();
+        void initConfig();
 
         /**
          * 	Lazy instantiation method. Create a new RTP session of a given
          * type according to the content of the configuration file.
          * @param ca A pointer on a SIP call
-         * @return A new AudioSymmetricRtpSession object
+         * @return A new AudioRtpSession object
          */
-        void initAudioSymmetricRtpSession();
+        void initSession();
 
         /**
          * Start the audio rtp thread of the type specified in the configuration
@@ -103,7 +105,7 @@ class AudioRtpFactory {
         void updateDestinationIpAddress();
 
         bool isSdesEnabled() const {
-            return srtpEnabled_ and keyExchangeProtocol_ == sfl::Sdes;
+            return srtpEnabled_ and keyExchangeProtocol_ == SDES;
         }
 
         /**
@@ -121,6 +123,7 @@ class AudioRtpFactory {
         sfl::AudioZrtpSession * getAudioZrtpSession();
 
         void initLocalCryptoInfo();
+        void initLocalCryptoInfoOnOffHold();
 
         /**
          * Set remote cryptographic info. Should be called after negotiation in SDP
@@ -138,30 +141,41 @@ class AudioRtpFactory {
          */
         void sendDtmfDigit(int digit);
 
+        void saveLocalContext();
+
+        void restoreLocalContext();
+
     private:
         NON_COPYABLE(AudioRtpFactory);
+        enum KeyExchangeProtocol { NONE, SDES, ZRTP };
         AudioRtpSession *rtpSession_;
         ost::Mutex audioRtpThreadMutex_;
 
-        // Field used when initializinga udio rtp session
+        // Field used when initializing audio rtp session
         // May be set manually or from config using initAudioRtpConfig
         bool srtpEnabled_;
 
         // Field used when initializinga udio rtp session
         // May be set manually or from config using initAudioRtpConfig
-        RtpMethod keyExchangeProtocol_;
-
-        // Field used when initializinga udio rtp session
-        // May be set manually or from config using initAudioRtpConfig
         bool helloHashEnabled_;
 
-        /** Remote srtp crypto context to be set into incoming data queue. */
-        ost::CryptoContext *remoteContext_;
+        /** local master key for outgoing packet encryption **/
+        std::vector<uint8> cachedLocalMasterKey_;
 
-        /** Local srtp crypto context to be set into outgoing data queue. */
-        ost::CryptoContext *localContext_;
+        /** local master salt for outgoing packet encryption **/
+        std::vector<uint8> cachedLocalMasterSalt_;
+
+        /** remote master key for incoming packet decryption **/
+        std::vector<uint8> cachedRemoteMasterKey_;
+
+        /** remote master salt for incoming packet decryption **/
+        std::vector<uint8> cachedRemoteMasterSalt_;
+
+        /** Used to make sure remote crypto context not initialized twice. */
+        bool remoteOfferIsSet_;
 
         SIPCall *ca_;
+        KeyExchangeProtocol keyExchangeProtocol_;
 };
 }
 #endif // __AUDIO_RTP_FACTORY_H__

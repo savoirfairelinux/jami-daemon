@@ -30,19 +30,27 @@
  *  as that of the covered work.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sipaccount.h"
 #include "sipvoiplink.h"
+#include "config/yamlnode.h"
+#include "config/yamlemitter.h"
+#include "logger.h"
 #include "manager.h"
-#include "config.h"
 #include <pwd.h>
 #include <sstream>
-#include <cassert>
+#include <stdlib.h>
 
+const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
 namespace {
-    const int MIN_REGISTRATION_TIME = 600;
+    const int MIN_REGISTRATION_TIME = 60;
+    const int DEFAULT_REGISTRATION_TIME = 3600;
 }
 
 SIPAccount::SIPAccount(const std::string& accountID)
@@ -60,15 +68,14 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , serviceRoute_()
     , tlsListenerPort_(DEFAULT_SIP_TLS_PORT)
     , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
-    , cred_(NULL)
+    , cred_()
     , tlsSetting_()
     , contactHeader_()
     , contactUpdateEnabled_(false)
     , stunServerName_()
-    , stunPort_(0)
+    , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
     , tlsEnable_("false")
-    , tlsPort_(DEFAULT_SIP_TLS_PORT)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -91,16 +98,15 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , zrtpHelloHash_(true)
     , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
+    , keepAliveEnabled_(false)
     , keepAliveTimer_()
+    , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
+    , receivedParameter_()
+    , rPort_(-1)
 {}
 
-SIPAccount::~SIPAccount()
-{
-    delete [] cred_;
-}
-
-void SIPAccount::serialize(Conf::YamlEmitter *emitter)
+void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
     MappingNode accountmap(NULL);
@@ -116,13 +122,14 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode type(Account::type_);
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
-    ScalarNode expire(registrationExpireStr);
+    ScalarNode expire(registrationExpireStr.str());
     ScalarNode interface(interface_);
     std::stringstream portstr;
     portstr << localPort_;
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
     ScalarNode contactUpdateEnabled(contactUpdateEnabled_);
+    ScalarNode keepAliveEnabled(keepAliveEnabled_);
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -152,7 +159,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode notSuppWarning(zrtpNotSuppWarning_);
 
     portstr.str("");
-    portstr << tlsPort_;
+    portstr << tlsListenerPort_;
     ScalarNode tlsport(portstr.str());
     ScalarNode certificate(tlsCertificateFile_);
     ScalarNode calist(tlsCaListFile_);
@@ -167,161 +174,156 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter)
     ScalarNode verifyclient(tlsVerifyServer_);
     ScalarNode verifyserver(tlsVerifyClient_);
 
-    accountmap.setKeyValue(aliasKey, &alias);
-    accountmap.setKeyValue(typeKey, &type);
-    accountmap.setKeyValue(idKey, &id);
-    accountmap.setKeyValue(usernameKey, &username);
-    accountmap.setKeyValue(hostnameKey, &hostname);
-    accountmap.setKeyValue(accountEnableKey, &enable);
-    accountmap.setKeyValue(mailboxKey, &mailbox);
-    accountmap.setKeyValue(registrationExpireKey, &expire);
-    accountmap.setKeyValue(interfaceKey, &interface);
-    accountmap.setKeyValue(portKey, &port);
-    accountmap.setKeyValue(stunServerKey, &stunServer);
-    accountmap.setKeyValue(stunEnabledKey, &stunEnabled);
-    accountmap.setKeyValue(publishAddrKey, &publishAddr);
-    accountmap.setKeyValue(publishPortKey, &publishPort);
-    accountmap.setKeyValue(sameasLocalKey, &sameasLocal);
-    accountmap.setKeyValue(serviceRouteKey, &serviceRoute);
-    accountmap.setKeyValue(updateContactHeaderKey, &contactUpdateEnabled);
-    accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
-    accountmap.setKeyValue(displayNameKey, &displayName);
-    accountmap.setKeyValue(codecsKey, &codecs);
-    accountmap.setKeyValue(ringtonePathKey, &ringtonePath);
-    accountmap.setKeyValue(ringtoneEnabledKey, &ringtoneEnabled);
+    accountmap.setKeyValue(ALIAS_KEY, &alias);
+    accountmap.setKeyValue(TYPE_KEY, &type);
+    accountmap.setKeyValue(ID_KEY, &id);
+    accountmap.setKeyValue(USERNAME_KEY, &username);
+    accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
+    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
+    accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
+    accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, &expire);
+    accountmap.setKeyValue(INTERFACE_KEY, &interface);
+    accountmap.setKeyValue(PORT_KEY, &port);
+    accountmap.setKeyValue(STUN_SERVER_KEY, &stunServer);
+    accountmap.setKeyValue(STUN_ENABLED_KEY, &stunEnabled);
+    accountmap.setKeyValue(PUBLISH_ADDR_KEY, &publishAddr);
+    accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
+    accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
+    accountmap.setKeyValue(SERVICE_ROUTE_KEY, &serviceRoute);
+    accountmap.setKeyValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled);
+    accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
+    accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
+    accountmap.setKeyValue(CODECS_KEY, &codecs);
+    accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
+    accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
+    accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
 
-    accountmap.setKeyValue(srtpKey, &srtpmap);
-    srtpmap.setKeyValue(srtpEnableKey, &srtpenabled);
-    srtpmap.setKeyValue(keyExchangeKey, &keyExchange);
-    srtpmap.setKeyValue(rtpFallbackKey, &rtpFallback);
+    accountmap.setKeyValue(SRTP_KEY, &srtpmap);
+    srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
+    srtpmap.setKeyValue(KEY_EXCHANGE_KEY, &keyExchange);
+    srtpmap.setKeyValue(RTP_FALLBACK_KEY, &rtpFallback);
 
-    accountmap.setKeyValue(zrtpKey, &zrtpmap);
-    zrtpmap.setKeyValue(displaySasKey, &displaySas);
-    zrtpmap.setKeyValue(displaySasOnceKey, &displaySasOnce);
-    zrtpmap.setKeyValue(helloHashEnabledKey, &helloHashEnabled);
-    zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
+    accountmap.setKeyValue(ZRTP_KEY, &zrtpmap);
+    zrtpmap.setKeyValue(DISPLAY_SAS_KEY, &displaySas);
+    zrtpmap.setKeyValue(DISPLAY_SAS_ONCE_KEY, &displaySasOnce);
+    zrtpmap.setKeyValue(HELLO_HASH_ENABLED_KEY, &helloHashEnabled);
+    zrtpmap.setKeyValue(NOT_SUPP_WARNING_KEY, &notSuppWarning);
 
     SequenceNode credentialseq(NULL);
-    accountmap.setKeyValue(credKey, &credentialseq);
+    accountmap.setKeyValue(CRED_KEY, &credentialseq);
 
     std::vector<std::map<std::string, std::string> >::const_iterator it;
 
     for (it = credentials_.begin(); it != credentials_.end(); ++it) {
         std::map<std::string, std::string> cred = *it;
         MappingNode *map = new MappingNode(NULL);
-        map->setKeyValue(USERNAME, new ScalarNode(cred[USERNAME]));
-        map->setKeyValue(PASSWORD, new ScalarNode(cred[PASSWORD]));
-        map->setKeyValue(REALM, new ScalarNode(cred[REALM]));
+        map->setKeyValue(CONFIG_ACCOUNT_USERNAME, new ScalarNode(cred[CONFIG_ACCOUNT_USERNAME]));
+        map->setKeyValue(CONFIG_ACCOUNT_PASSWORD, new ScalarNode(cred[CONFIG_ACCOUNT_PASSWORD]));
+        map->setKeyValue(CONFIG_ACCOUNT_REALM, new ScalarNode(cred[CONFIG_ACCOUNT_REALM]));
         credentialseq.addNode(map);
     }
 
-    accountmap.setKeyValue(tlsKey, &tlsmap);
-    tlsmap.setKeyValue(tlsPortKey, &tlsport);
-    tlsmap.setKeyValue(certificateKey, &certificate);
-    tlsmap.setKeyValue(calistKey, &calist);
-    tlsmap.setKeyValue(ciphersKey, &ciphers);
-    tlsmap.setKeyValue(tlsEnableKey, &tlsenabled);
-    tlsmap.setKeyValue(methodKey, &tlsmethod);
-    tlsmap.setKeyValue(timeoutKey, &timeout);
-    tlsmap.setKeyValue(tlsPasswordKey, &tlspassword);
-    tlsmap.setKeyValue(privateKeyKey, &privatekey);
-    tlsmap.setKeyValue(requireCertifKey, &requirecertif);
-    tlsmap.setKeyValue(serverKey, &server);
-    tlsmap.setKeyValue(verifyClientKey, &verifyclient);
-    tlsmap.setKeyValue(verifyServerKey, &verifyserver);
+    accountmap.setKeyValue(TLS_KEY, &tlsmap);
+    tlsmap.setKeyValue(TLS_PORT_KEY, &tlsport);
+    tlsmap.setKeyValue(CERTIFICATE_KEY, &certificate);
+    tlsmap.setKeyValue(CALIST_KEY, &calist);
+    tlsmap.setKeyValue(CIPHERS_KEY, &ciphers);
+    tlsmap.setKeyValue(TLS_ENABLE_KEY, &tlsenabled);
+    tlsmap.setKeyValue(METHOD_KEY, &tlsmethod);
+    tlsmap.setKeyValue(TIMEOUT_KEY, &timeout);
+    tlsmap.setKeyValue(TLS_PASSWORD_KEY, &tlspassword);
+    tlsmap.setKeyValue(PRIVATE_KEY_KEY, &privatekey);
+    tlsmap.setKeyValue(REQUIRE_CERTIF_KEY, &requirecertif);
+    tlsmap.setKeyValue(SERVER_KEY, &server);
+    tlsmap.setKeyValue(VERIFY_CLIENT_KEY, &verifyclient);
+    tlsmap.setKeyValue(VERIFY_SERVER_KEY, &verifyserver);
 
     try {
-        emitter->serializeAccount(&accountmap);
+        emitter.serializeAccount(&accountmap);
     } catch (const YamlEmitterException &e) {
-        ERROR("ConfigTree: %s", e.what());
+        ERROR("%s", e.what());
     }
 
     Sequence *seq = credentialseq.getSequence();
     Sequence::iterator seqit;
 
     for (seqit = seq->begin(); seqit != seq->end(); ++seqit) {
-        MappingNode *node = (MappingNode*)*seqit;
-        delete node->getValue(USERNAME);
-        delete node->getValue(PASSWORD);
-        delete node->getValue(REALM);
+        MappingNode *node = static_cast<MappingNode*>(*seqit);
+        delete node->getValue(CONFIG_ACCOUNT_USERNAME);
+        delete node->getValue(CONFIG_ACCOUNT_PASSWORD);
+        delete node->getValue(CONFIG_ACCOUNT_REALM);
         delete node;
     }
-
-
 }
 
-void SIPAccount::unserialize(Conf::MappingNode *map)
+void SIPAccount::unserialize(const Conf::MappingNode &map)
 {
     using namespace Conf;
-    MappingNode *srtpMap;
-    MappingNode *tlsMap;
-    MappingNode *zrtpMap;
 
-    assert(map);
-
-    map->getValue(aliasKey, &alias_);
-    map->getValue(typeKey, &type_);
-    map->getValue(usernameKey, &username_);
-    map->getValue(hostnameKey, &hostname_);
-    map->getValue(accountEnableKey, &enabled_);
-    map->getValue(mailboxKey, &mailBox_);
-    map->getValue(codecsKey, &codecStr_);
+    map.getValue(ALIAS_KEY, &alias_);
+    map.getValue(TYPE_KEY, &type_);
+    map.getValue(USERNAME_KEY, &username_);
+    map.getValue(HOSTNAME_KEY, &hostname_);
+    map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
+    map.getValue(MAILBOX_KEY, &mailBox_);
+    map.getValue(CODECS_KEY, &codecStr_);
     // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::unserialize(codecStr_));
+    setActiveCodecs(ManagerImpl::split_string(codecStr_));
 
-    map->getValue(ringtonePathKey, &ringtonePath_);
-    map->getValue(ringtoneEnabledKey, &ringtoneEnabled_);
-    map->getValue(registrationExpireKey, &registrationExpire_);
-    map->getValue(interfaceKey, &interface_);
-    int port;
-    map->getValue(portKey, &port);
+    map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
+    map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
+    map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+    map.getValue(INTERFACE_KEY, &interface_);
+    int port = DEFAULT_SIP_PORT;
+    map.getValue(PORT_KEY, &port);
     localPort_ = port;
-    map->getValue(publishAddrKey, &publishedIpAddress_);
-    map->getValue(publishPortKey, &port);
+    map.getValue(PUBLISH_ADDR_KEY, &publishedIpAddress_);
+    map.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
-    map->getValue(sameasLocalKey, &publishedSameasLocal_);
+    map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
+    map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
-    map->getValue(dtmfTypeKey, &dtmfType);
+    map.getValue(DTMF_TYPE_KEY, &dtmfType);
     dtmfType_ = dtmfType;
 
-    map->getValue(serviceRouteKey, &serviceRoute_);
-    map->getValue(updateContactHeaderKey, &contactUpdateEnabled_);
+    map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
+    map.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
-    map->getValue(stunEnabledKey, &stunEnabled_);
-    map->getValue(stunServerKey, &stunServer_);
+    map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
+    map.getValue(STUN_SERVER_KEY, &stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
 
-    map->getValue(displayNameKey, &displayName_);
+    map.getValue(DISPLAY_NAME_KEY, &displayName_);
 
     std::vector<std::map<std::string, std::string> > creds;
 
-    YamlNode *credNode = map->getValue(credKey);
+    YamlNode *credNode = map.getValue(CRED_KEY);
 
     /* We check if the credential key is a sequence
      * because it was a mapping in a previous version of
      * the configuration file.
      */
     if (credNode && credNode->getType() == SEQUENCE) {
-        SequenceNode *credSeq = (SequenceNode *) credNode;
+        SequenceNode *credSeq = static_cast<SequenceNode *>(credNode);
         Sequence::iterator it;
         Sequence *seq = credSeq->getSequence();
 
         for (it = seq->begin(); it != seq->end(); ++it) {
-            MappingNode *cred = (MappingNode *)(*it);
+            MappingNode *cred = static_cast<MappingNode *>(*it);
             std::string user;
             std::string pass;
             std::string realm;
-            cred->getValue(USERNAME, &user);
-            cred->getValue(PASSWORD, &pass);
-            cred->getValue(REALM, &realm);
+            cred->getValue(CONFIG_ACCOUNT_USERNAME, &user);
+            cred->getValue(CONFIG_ACCOUNT_PASSWORD, &pass);
+            cred->getValue(CONFIG_ACCOUNT_REALM, &realm);
             std::map<std::string, std::string> credentialMap;
-            credentialMap[USERNAME] = user;
-            credentialMap[PASSWORD] = pass;
-            credentialMap[REALM] = realm;
+            credentialMap[CONFIG_ACCOUNT_USERNAME] = user;
+            credentialMap[CONFIG_ACCOUNT_PASSWORD] = pass;
+            credentialMap[CONFIG_ACCOUNT_REALM] = realm;
             creds.push_back(credentialMap);
         }
     }
@@ -330,54 +332,56 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
         // migration from old file format
         std::map<std::string, std::string> credmap;
         std::string password;
-        map->getValue(passwordKey, &password);
+        map.getValue(PASSWORD_KEY, &password);
 
-        credmap[USERNAME] = username_;
-        credmap[PASSWORD] = password;
-        credmap[REALM] = "*";
+        credmap[CONFIG_ACCOUNT_USERNAME] = username_;
+        credmap[CONFIG_ACCOUNT_PASSWORD] = password;
+        credmap[CONFIG_ACCOUNT_REALM] = "*";
         creds.push_back(credmap);
     }
 
     setCredentials(creds);
 
     // get srtp submap
-    srtpMap = (MappingNode *)(map->getValue(srtpKey));
+    MappingNode *srtpMap = static_cast<MappingNode *>(map.getValue(SRTP_KEY));
 
     if (srtpMap) {
-        srtpMap->getValue(srtpEnableKey, &srtpEnabled_);
-        srtpMap->getValue(keyExchangeKey, &srtpKeyExchange_);
-        srtpMap->getValue(rtpFallbackKey, &srtpFallback_);
+        srtpMap->getValue(SRTP_ENABLE_KEY, &srtpEnabled_);
+        srtpMap->getValue(KEY_EXCHANGE_KEY, &srtpKeyExchange_);
+        srtpMap->getValue(RTP_FALLBACK_KEY, &srtpFallback_);
     }
 
     // get zrtp submap
-    zrtpMap = (MappingNode *)(map->getValue(zrtpKey));
+    MappingNode *zrtpMap = static_cast<MappingNode *>(map.getValue(ZRTP_KEY));
 
     if (zrtpMap) {
-        zrtpMap->getValue(displaySasKey, &zrtpDisplaySas_);
-        zrtpMap->getValue(displaySasOnceKey, &zrtpDisplaySasOnce_);
-        zrtpMap->getValue(helloHashEnabledKey, &zrtpHelloHash_);
-        zrtpMap->getValue(notSuppWarningKey, &zrtpNotSuppWarning_);
+        zrtpMap->getValue(DISPLAY_SAS_KEY, &zrtpDisplaySas_);
+        zrtpMap->getValue(DISPLAY_SAS_ONCE_KEY, &zrtpDisplaySasOnce_);
+        zrtpMap->getValue(HELLO_HASH_ENABLED_KEY, &zrtpHelloHash_);
+        zrtpMap->getValue(NOT_SUPP_WARNING_KEY, &zrtpNotSuppWarning_);
     }
 
     // get tls submap
-    tlsMap = (MappingNode *)(map->getValue(tlsKey));
+    MappingNode *tlsMap = static_cast<MappingNode *>(map.getValue(TLS_KEY));
 
     if (tlsMap) {
-        tlsMap->getValue(tlsEnableKey, &tlsEnable_);
-        tlsMap->getValue(tlsPortKey, &tlsPort_);
-        tlsMap->getValue(certificateKey, &tlsCertificateFile_);
-        tlsMap->getValue(calistKey, &tlsCaListFile_);
-        tlsMap->getValue(ciphersKey, &tlsCiphers_);
-        tlsMap->getValue(methodKey, &tlsMethod_);
-        tlsMap->getValue(tlsPasswordKey, &tlsPassword_);
-        tlsMap->getValue(privateKeyKey, &tlsPrivateKeyFile_);
-        tlsMap->getValue(requireCertifKey, &tlsRequireClientCertificate_);
-        tlsMap->getValue(serverKey, &tlsServerName_);
-        tlsMap->getValue(verifyClientKey, &tlsVerifyServer_);
-        tlsMap->getValue(verifyServerKey, &tlsVerifyClient_);
+        tlsMap->getValue(TLS_ENABLE_KEY, &tlsEnable_);
+        std::string tlsPort;
+        tlsMap->getValue(TLS_PORT_KEY, &tlsPort);
+        tlsListenerPort_ = atoi(tlsPort.c_str());
+        tlsMap->getValue(CERTIFICATE_KEY, &tlsCertificateFile_);
+        tlsMap->getValue(CALIST_KEY, &tlsCaListFile_);
+        tlsMap->getValue(CIPHERS_KEY, &tlsCiphers_);
+        tlsMap->getValue(METHOD_KEY, &tlsMethod_);
+        tlsMap->getValue(TLS_PASSWORD_KEY, &tlsPassword_);
+        tlsMap->getValue(PRIVATE_KEY_KEY, &tlsPrivateKeyFile_);
+        tlsMap->getValue(REQUIRE_CERTIF_KEY, &tlsRequireClientCertificate_);
+        tlsMap->getValue(SERVER_KEY, &tlsServerName_);
+        tlsMap->getValue(VERIFY_CLIENT_KEY, &tlsVerifyServer_);
+        tlsMap->getValue(VERIFY_SERVER_KEY, &tlsVerifyClient_);
         // FIXME
-        tlsMap->getValue(timeoutKey, &tlsNegotiationTimeoutSec_);
-        tlsMap->getValue(timeoutKey, &tlsNegotiationTimeoutMsec_);
+        tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutSec_);
+        tlsMap->getValue(TIMEOUT_KEY, &tlsNegotiationTimeoutMsec_);
     }
 }
 
@@ -387,8 +391,8 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     // Account setting common to SIP and IAX
     alias_ = details[CONFIG_ACCOUNT_ALIAS];
     type_ = details[CONFIG_ACCOUNT_TYPE];
-    username_ = details[USERNAME];
-    hostname_ = details[HOSTNAME];
+    username_ = details[CONFIG_ACCOUNT_USERNAME];
+    hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
     enabled_ = details[CONFIG_ACCOUNT_ENABLE] == "true";
     ringtonePath_ = details[CONFIG_RINGTONE_PATH];
     ringtoneEnabled_ = details[CONFIG_RINGTONE_ENABLED] == "true";
@@ -397,54 +401,58 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     // SIP specific account settings
 
     // general sip settings
-    displayName_ = details[DISPLAY_NAME];
-    serviceRoute_ = details[ROUTESET];
-    interface_ = details[LOCAL_INTERFACE];
-    publishedSameasLocal_ = details[PUBLISHED_SAMEAS_LOCAL] == "true";
-    publishedIpAddress_ = details[PUBLISHED_ADDRESS];
-    localPort_ = atoi(details[LOCAL_PORT].c_str());
-    publishedPort_ = atoi(details[PUBLISHED_PORT].c_str());
-    stunServer_ = details[STUN_SERVER];
-    stunEnabled_ = details[STUN_ENABLE] == "true";
-    dtmfType_ = details[ACCOUNT_DTMF_TYPE];
+    displayName_ = details[CONFIG_DISPLAY_NAME];
+    serviceRoute_ = details[CONFIG_ACCOUNT_ROUTESET];
+    interface_ = details[CONFIG_LOCAL_INTERFACE];
+    publishedSameasLocal_ = details[CONFIG_PUBLISHED_SAMEAS_LOCAL] == "true";
+    publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
+    localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
+    publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
+    if (stunServer_ != details[CONFIG_STUN_SERVER]) {
+        link_->sipTransport.destroyStunResolver(stunServer_);
+        // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
+    }
+    stunServer_ = details[CONFIG_STUN_SERVER];
+    stunEnabled_ = details[CONFIG_STUN_ENABLE] == "true";
+    dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
+    if(registrationExpire_ < MIN_REGISTRATION_TIME)
+        registrationExpire_ = MIN_REGISTRATION_TIME;
 
-    userAgent_ = details[USERAGENT];
+    userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
+    keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == "true";
 
     // srtp settings
-    srtpEnabled_ = details[SRTP_ENABLE] == "true";
-    srtpFallback_ = details[SRTP_RTP_FALLBACK] == "true";
-    zrtpDisplaySas_ = details[ZRTP_DISPLAY_SAS] == "true";
-    zrtpDisplaySasOnce_ = details[ZRTP_DISPLAY_SAS_ONCE] == "true";
-    zrtpNotSuppWarning_ = details[ZRTP_NOT_SUPP_WARNING] == "true";
-    zrtpHelloHash_ = details[ZRTP_HELLO_HASH] == "true";
-    srtpKeyExchange_ = details[SRTP_KEY_EXCHANGE];
+    srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == "true";
+    srtpFallback_ = details[CONFIG_SRTP_RTP_FALLBACK] == "true";
+    zrtpDisplaySas_ = details[CONFIG_ZRTP_DISPLAY_SAS] == "true";
+    zrtpDisplaySasOnce_ = details[CONFIG_ZRTP_DISPLAY_SAS_ONCE] == "true";
+    zrtpNotSuppWarning_ = details[CONFIG_ZRTP_NOT_SUPP_WARNING] == "true";
+    zrtpHelloHash_ = details[CONFIG_ZRTP_HELLO_HASH] == "true";
+    srtpKeyExchange_ = details[CONFIG_SRTP_KEY_EXCHANGE];
 
     // TLS settings
-    // The TLS listener is unique and globally defined through IP2IP_PROFILE
-    if (accountID_ == IP2IP_PROFILE)
-        tlsListenerPort_ = atoi(details[TLS_LISTENER_PORT].c_str());
-
-    tlsEnable_ = details[TLS_ENABLE];
-    tlsCaListFile_ = details[TLS_CA_LIST_FILE];
-    tlsCertificateFile_ = details[TLS_CERTIFICATE_FILE];
-    tlsPrivateKeyFile_ = details[TLS_PRIVATE_KEY_FILE];
-    tlsPassword_ = details[TLS_PASSWORD];
-    tlsMethod_ = details[TLS_METHOD];
-    tlsCiphers_ = details[TLS_CIPHERS];
-    tlsServerName_ = details[TLS_SERVER_NAME];
-    tlsVerifyServer_ = details[TLS_VERIFY_SERVER] == "true";
-    tlsVerifyClient_ = details[TLS_VERIFY_CLIENT] == "true";
-    tlsRequireClientCertificate_ = details[TLS_REQUIRE_CLIENT_CERTIFICATE] == "true";
-    tlsNegotiationTimeoutSec_ = details[TLS_NEGOTIATION_TIMEOUT_SEC];
-    tlsNegotiationTimeoutMsec_ = details[TLS_NEGOTIATION_TIMEOUT_MSEC];
+    tlsListenerPort_ = atoi(details[CONFIG_TLS_LISTENER_PORT].c_str());
+    tlsEnable_ = details[CONFIG_TLS_ENABLE];
+    tlsCaListFile_ = details[CONFIG_TLS_CA_LIST_FILE];
+    tlsCertificateFile_ = details[CONFIG_TLS_CERTIFICATE_FILE];
+    tlsPrivateKeyFile_ = details[CONFIG_TLS_PRIVATE_KEY_FILE];
+    tlsPassword_ = details[CONFIG_TLS_PASSWORD];
+    tlsMethod_ = details[CONFIG_TLS_METHOD];
+    tlsCiphers_ = details[CONFIG_TLS_CIPHERS];
+    tlsServerName_ = details[CONFIG_TLS_SERVER_NAME];
+    tlsVerifyServer_ = details[CONFIG_TLS_VERIFY_SERVER] == "true";
+    tlsVerifyClient_ = details[CONFIG_TLS_VERIFY_CLIENT] == "true";
+    tlsRequireClientCertificate_ = details[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] == "true";
+    tlsNegotiationTimeoutSec_ = details[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC];
+    tlsNegotiationTimeoutMsec_ = details[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC];
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
-        map[USERNAME] = username_;
-        map[PASSWORD] = details[PASSWORD];
-        map[REALM]    = "*";
+        map[CONFIG_ACCOUNT_USERNAME] = username_;
+        map[CONFIG_ACCOUNT_PASSWORD] = details[CONFIG_ACCOUNT_PASSWORD];
+        map[CONFIG_ACCOUNT_REALM]    = "*";
         v.push_back(map);
         setCredentials(v);
     }
@@ -454,14 +462,14 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a[ACCOUNT_ID] = accountID_;
+    a[CONFIG_ACCOUNT_ID] = accountID_;
     // The IP profile does not allow to set an alias
-    a[CONFIG_ACCOUNT_ALIAS] = (accountID_ == IP2IP_PROFILE) ? IP2IP_PROFILE : alias_;
+    a[CONFIG_ACCOUNT_ALIAS] = isIP2IP() ? IP2IP_PROFILE : alias_;
 
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_TYPE] = type_;
-    a[HOSTNAME] = hostname_;
-    a[USERNAME] = username_;
+    a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
+    a[CONFIG_ACCOUNT_USERNAME] = username_;
 
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? "true" : "false";
@@ -471,7 +479,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         registrationStateDescription = "Direct IP call";
     else {
         state = registrationState_;
@@ -482,57 +490,58 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[REGISTRATION_STATUS] = (accountID_ == IP2IP_PROFILE) ? "READY": mapStateNumberToString(state);
-    a[REGISTRATION_STATE_CODE] = registrationStateCode;
-    a[REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
 
     // Add sip specific details
-    a[ROUTESET] = serviceRoute_;
-    a[USERAGENT] = userAgent_;
+    a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
+    a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
 
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
-    a[LOCAL_INTERFACE] = interface_;
-    a[PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
-    a[PUBLISHED_ADDRESS] = publishedIpAddress_;
+    a[CONFIG_LOCAL_INTERFACE] = interface_;
+    a[CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
+    a[CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
 
     std::stringstream localport;
     localport << localPort_;
-    a[LOCAL_PORT] = localport.str();
+    a[CONFIG_LOCAL_PORT] = localport.str();
     std::stringstream publishedport;
     publishedport << publishedPort_;
-    a[PUBLISHED_PORT] = publishedport.str();
-    a[STUN_ENABLE] = stunEnabled_ ? "true" : "false";
-    a[STUN_SERVER] = stunServer_;
-    a[ACCOUNT_DTMF_TYPE] = dtmfType_;
+    a[CONFIG_PUBLISHED_PORT] = publishedport.str();
+    a[CONFIG_STUN_ENABLE] = stunEnabled_ ? "true" : "false";
+    a[CONFIG_STUN_SERVER] = stunServer_;
+    a[CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
+    a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? "true" : "false";
 
-    a[SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    a[SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
-    a[SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
+    a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
+    a[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
 
-    a[ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
-    a[ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
-    a[ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
-    a[ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
+    a[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
+    a[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
+    a[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
+    a[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     std::stringstream tlslistenerport;
     tlslistenerport << tlsListenerPort_;
-    a[TLS_LISTENER_PORT] = tlslistenerport.str();
-    a[TLS_ENABLE] = tlsEnable_;
-    a[TLS_CA_LIST_FILE] = tlsCaListFile_;
-    a[TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
-    a[TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
-    a[TLS_PASSWORD] = tlsPassword_;
-    a[TLS_METHOD] = tlsMethod_;
-    a[TLS_CIPHERS] = tlsCiphers_;
-    a[TLS_SERVER_NAME] = tlsServerName_;
-    a[TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
-    a[TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
-    a[TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
-    a[TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
-    a[TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
+    a[CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
+    a[CONFIG_TLS_ENABLE] = tlsEnable_;
+    a[CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
+    a[CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    a[CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    a[CONFIG_TLS_PASSWORD] = tlsPassword_;
+    a[CONFIG_TLS_METHOD] = tlsMethod_;
+    a[CONFIG_TLS_CIPHERS] = tlsCiphers_;
+    a[CONFIG_TLS_SERVER_NAME] = tlsServerName_;
+    a[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
+    a[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
+    a[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    a[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    a[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
     return a;
 }
@@ -544,7 +553,7 @@ void SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == "true") {
-        DEBUG("SIPAccount: TLS is enabled for account %s", accountID_.c_str());
+        DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -559,25 +568,25 @@ void SIPAccount::registerVoIPLink()
 
     // In our definition of the ip2ip profile (aka Direct IP Calls),
     // no registration should be performed
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         return;
 
     try {
         link_->sendRegister(this);
     } catch (const VoipLinkException &e) {
-        ERROR("SIPAccount: %s", e.what());
+        ERROR("%s", e.what());
     }
 }
 
 void SIPAccount::unregisterVoIPLink()
 {
-    if (accountID_ == IP2IP_PROFILE)
+    if (isIP2IP())
         return;
 
     try {
         link_->sendUnregister(this);
     } catch (const VoipLinkException &e) {
-        ERROR("SIPAccount: %s", e.what());
+        ERROR("%s", e.what());
     }
 }
 
@@ -586,23 +595,45 @@ void SIPAccount::startKeepAliveTimer() {
     if (isTlsEnabled())
         return;
 
+    if (isIP2IP())
+        return;
+
+    if(keepAliveTimerActive_)
+        return;
+
+    DEBUG("Start keep alive timer for account %s", getAccountID().c_str());
+
+    // make sure here we have an entirely new timer
+    memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
+
     pj_time_val keepAliveDelay_;
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
     keepAliveTimer_.user_data = this;
+    keepAliveTimer_.id = rand();
 
     // expiration may be undetermined during the first registration request
-    if (registrationExpire_ == 0)
-        keepAliveDelay_.sec = 60;
-    else
-        keepAliveDelay_.sec = registrationExpire_;
+    if (registrationExpire_ == 0) {
+        DEBUG("Registration Expire: 0, taking 60 instead");
+        keepAliveDelay_.sec = 3600;
+    }
+    else {
+        DEBUG("Registration Expire: %d", registrationExpire_);
+        keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
+    }
 
     keepAliveDelay_.msec = 0;
+
+    keepAliveTimerActive_ = true;
 
     link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer() {
-     link_->cancelKeepAliveTimer(keepAliveTimer_);
+    DEBUG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
+
+    keepAliveTimerActive_ = false;
+
+    link_->cancelKeepAliveTimer(keepAliveTimer_);
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
@@ -625,8 +656,6 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 void SIPAccount::initTlsConfiguration()
 {
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    tlsListenerPort_ = tlsPort_;
-
     pjsip_tls_setting_default(&tlsSetting_);
 
     pj_cstr(&tlsSetting_.ca_list_file, tlsCaListFile_.c_str());
@@ -670,7 +699,7 @@ void SIPAccount::initStunConfiguration()
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
-        registrationExpire_ = MIN_REGISTRATION_TIME; /** Default expire value for registration */
+        registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
@@ -786,53 +815,75 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
 
 std::string SIPAccount::getContactHeader() const
 {
-    std::string scheme;
-    std::string transport;
+    if (transport_ == NULL)
+        ERROR("Transport not created yet");
+
+    // The transport type must be specified, in our case START_OTHER refers to stun transport
+    pjsip_transport_type_e transportType = transportType_;
+    if (transportType == PJSIP_TRANSPORT_START_OTHER)
+        transportType = PJSIP_TRANSPORT_UDP;
 
     // Use the CONTACT header provided by the registrar if any
-    if(!contactHeader_.empty())
+    if (!contactHeader_.empty())
         return contactHeader_;
 
     // Else we determine this infor based on transport information
     std::string address, port;
-    link_->findLocalAddressFromTransport(transport_, transportType_, address, port);
+    std::ostringstream portstr;
+
+    link_->sipTransport.findLocalAddressFromTransport(transport_, transportType, address, port);
+
+    if (!receivedParameter_.empty())
+       address = receivedParameter_;
+
+    if (rPort_ != -1) {
+        portstr << rPort_;
+        port = portstr.str();
+    }
 
     // UDP does not require the transport specification
+    std::string scheme;
+    std::string transport;
     if (transportType_ == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
-        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType));
     } else
         scheme = "sip:";
 
     return displayName_ + (displayName_.empty() ? "" : " ") + "<" +
-           scheme + username_ + (username_.empty() ? "":"@") +
+           scheme + username_ + (username_.empty() ? "" : "@") +
            address + ":" + port + transport + ">";
 }
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
-   SIPAccount *sipAccount = reinterpret_cast<SIPAccount *>(te->user_data);
+    SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
-   if (sipAccount->isTlsEnabled())
-       return;
+    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
 
-   if(sipAccount->isRegistered()) {
+    if (sipAccount == NULL) {
+        ERROR("SIP account is NULL while registering a new keep alive timer");
+        return;
+    }
 
-       // send a new register request
-       sipAccount->registerVoIPLink();
+    // IP2IP default does not require keep-alive
+    if (sipAccount->isIP2IP())
+        return;
 
-       // make sure the current timer is deactivated
-       sipAccount->stopKeepAliveTimer();
+    // TLS is connection oriented and does not require keep-alive
+    if (sipAccount->isTlsEnabled())
+        return;
 
-       // register a new timer
-       sipAccount->startKeepAliveTimer();
-   }
+    sipAccount->stopKeepAliveTimer();
+
+    if (sipAccount->isRegistered())
+        sipAccount->registerVoIPLink();
 }
 
 namespace {
-std::string computeMd5HashFromCredential(
-    const std::string& username, const std::string& password,
-    const std::string& realm)
+std::string computeMd5HashFromCredential(const std::string& username,
+                                         const std::string& password,
+                                         const std::string& realm)
 {
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
@@ -845,6 +896,7 @@ std::string computeMd5HashFromCredential(
     MD5_APPEND(&pms, realm.data(), realm.length());
     MD5_APPEND(&pms, ":", 1);
     MD5_APPEND(&pms, password.data(), password.length());
+#undef MD5_APPEND
 
     unsigned char digest[16];
     pj_md5_final(&pms, digest);
@@ -856,29 +908,31 @@ std::string computeMd5HashFromCredential(
 
     return std::string(hash, 32);
 }
-
-
 } // anon namespace
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
 {
+    // we can not authenticate without credentials
+    if (creds.empty()) {
+        ERROR("Cannot authenticate with empty credentials list");
+        return;
+    }
+
     using std::vector;
     using std::string;
     using std::map;
 
     bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
 
-    assert(creds.size() > 0); // we can not authenticate without credentials
-
     credentials_ = creds;
 
     /* md5 hashing */
     for (vector<map<string, string> >::iterator it = credentials_.begin(); it != credentials_.end(); ++it) {
-        map<string, string>::const_iterator val = (*it).find(USERNAME);
+        map<string, string>::const_iterator val = (*it).find(CONFIG_ACCOUNT_USERNAME);
         const std::string username = val != (*it).end() ? val->second : "";
-        val = (*it).find(REALM);
+        val = (*it).find(CONFIG_ACCOUNT_REALM);
         const std::string realm(val != (*it).end() ? val->second : "");
-        val = (*it).find(PASSWORD);
+        val = (*it).find(CONFIG_ACCOUNT_PASSWORD);
         const std::string password(val != (*it).end() ? val->second : "");
 
         if (md5HashingEnabled) {
@@ -892,32 +946,30 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
             // re-hash a hashed password.
 
             if (password.length() != 32)
-                (*it)[PASSWORD] = computeMd5HashFromCredential(username, password, realm);
+                (*it)[CONFIG_ACCOUNT_PASSWORD] = computeMd5HashFromCredential(username, password, realm);
         }
     }
 
     // Create the credential array
-    delete[] cred_;
-    cred_ = new pjsip_cred_info[credentials_.size()];
+    cred_.resize(credentials_.size());
 
     size_t i = 0;
-
     for (vector<map<string, string > >::const_iterator iter = credentials_.begin();
             iter != credentials_.end(); ++iter) {
-        map<string, string>::const_iterator val = (*iter).find(PASSWORD);
+        map<string, string>::const_iterator val = (*iter).find(CONFIG_ACCOUNT_PASSWORD);
         const std::string password = val != (*iter).end() ? val->second : "";
         int dataType = (md5HashingEnabled and password.length() == 32)
                        ? PJSIP_CRED_DATA_DIGEST
                        : PJSIP_CRED_DATA_PLAIN_PASSWD;
 
-        val = (*iter).find(USERNAME);
+        val = (*iter).find(CONFIG_ACCOUNT_USERNAME);
 
         if (val != (*iter).end())
             cred_[i].username = pj_str((char*) val->second.c_str());
 
         cred_[i].data = pj_str((char*) password.c_str());
 
-        val = (*iter).find(REALM);
+        val = (*iter).find(CONFIG_ACCOUNT_REALM);
 
         if (val != (*iter).end())
             cred_[i].realm = pj_str((char*) val->second.c_str());
@@ -928,7 +980,8 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     }
 }
 
-const std::vector<std::map<std::string, std::string> > &SIPAccount::getCredentials()
+const std::vector<std::map<std::string, std::string> > &
+SIPAccount::getCredentials() const
 {
     return credentials_;
 }
@@ -945,23 +998,22 @@ std::string SIPAccount::getUserAgentName() const
 
 std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
-    assert(accountID_ == IP2IP_PROFILE);
+    assert(isIP2IP());
     std::map<std::string, std::string> ip2ipAccountDetails;
-    ip2ipAccountDetails[ACCOUNT_ID] = IP2IP_PROFILE;
-    ip2ipAccountDetails[SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    ip2ipAccountDetails[SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
-    ip2ipAccountDetails[SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
-    ip2ipAccountDetails[ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
-    ip2ipAccountDetails[LOCAL_INTERFACE] = interface_;
+    ip2ipAccountDetails[CONFIG_ACCOUNT_ID] = IP2IP_PROFILE;
+    ip2ipAccountDetails[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    ip2ipAccountDetails[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
+    ip2ipAccountDetails[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
+    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
+    ip2ipAccountDetails[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
+    ip2ipAccountDetails[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
+    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
+    ip2ipAccountDetails[CONFIG_LOCAL_INTERFACE] = interface_;
     std::stringstream portstr;
     portstr << localPort_;
-    ip2ipAccountDetails[LOCAL_PORT] = portstr.str();
+    ip2ipAccountDetails[CONFIG_LOCAL_PORT] = portstr.str();
 
-    std::map<std::string, std::string> tlsSettings;
-    tlsSettings = getTlsSettings();
+    std::map<std::string, std::string> tlsSettings(getTlsSettings());
     std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
                   ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -970,25 +1022,25 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 
 std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 {
+    assert(isIP2IP());
     std::map<std::string, std::string> tlsSettings;
-    assert(accountID_ == IP2IP_PROFILE);
 
     std::stringstream portstr;
     portstr << tlsListenerPort_;
-    tlsSettings[TLS_LISTENER_PORT] = portstr.str();
-    tlsSettings[TLS_ENABLE] = tlsEnable_;
-    tlsSettings[TLS_CA_LIST_FILE] = tlsCaListFile_;
-    tlsSettings[TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
-    tlsSettings[TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
-    tlsSettings[TLS_PASSWORD] = tlsPassword_;
-    tlsSettings[TLS_METHOD] = tlsMethod_;
-    tlsSettings[TLS_CIPHERS] = tlsCiphers_;
-    tlsSettings[TLS_SERVER_NAME] = tlsServerName_;
-    tlsSettings[TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
-    tlsSettings[TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
-    tlsSettings[TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
-    tlsSettings[TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
-    tlsSettings[TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
+    tlsSettings[CONFIG_TLS_LISTENER_PORT] = portstr.str();
+    tlsSettings[CONFIG_TLS_ENABLE] = tlsEnable_;
+    tlsSettings[CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
+    tlsSettings[CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    tlsSettings[CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    tlsSettings[CONFIG_TLS_PASSWORD] = tlsPassword_;
+    tlsSettings[CONFIG_TLS_METHOD] = tlsMethod_;
+    tlsSettings[CONFIG_TLS_CIPHERS] = tlsCiphers_;
+    tlsSettings[CONFIG_TLS_SERVER_NAME] = tlsServerName_;
+    tlsSettings[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
+    tlsSettings[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
+    tlsSettings[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    tlsSettings[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    tlsSettings[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
     return tlsSettings;
 }
@@ -1021,23 +1073,28 @@ void set_opt(const std::map<std::string, std::string> &details, const char *key,
 
 void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    assert(accountID_ == IP2IP_PROFILE);
-    set_opt(details, TLS_LISTENER_PORT, tlsListenerPort_);
-    set_opt(details, TLS_ENABLE, tlsEnable_);
-    set_opt(details, TLS_CA_LIST_FILE, tlsCaListFile_);
-    set_opt(details, TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-    set_opt(details, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    set_opt(details, TLS_PASSWORD, tlsPassword_);
-    set_opt(details, TLS_METHOD, tlsMethod_);
-    set_opt(details, TLS_CIPHERS, tlsCiphers_);
-    set_opt(details, TLS_SERVER_NAME, tlsServerName_);
-    set_opt(details, TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    set_opt(details, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    set_opt(details, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-    set_opt(details, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
+    assert(isIP2IP());
+    set_opt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    set_opt(details, CONFIG_TLS_ENABLE, tlsEnable_);
+    set_opt(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
+    set_opt(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    set_opt(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    set_opt(details, CONFIG_TLS_PASSWORD, tlsPassword_);
+    set_opt(details, CONFIG_TLS_METHOD, tlsMethod_);
+    set_opt(details, CONFIG_TLS_CIPHERS, tlsCiphers_);
+    set_opt(details, CONFIG_TLS_SERVER_NAME, tlsServerName_);
+    set_opt(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    set_opt(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    set_opt(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    set_opt(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec_);
 }
 
 VoIPLink* SIPAccount::getVoIPLink()
 {
     return link_;
+}
+
+bool SIPAccount::isIP2IP() const
+{
+    return accountID_ == IP2IP_PROFILE;
 }

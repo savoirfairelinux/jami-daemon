@@ -123,7 +123,7 @@ GHashTable *dbus_get_account_details(const gchar *accountID);
  * ConfigurationManager - Set the details of a specific account
  * @param a The account to update
  */
-void dbus_set_account_details(account_t *a);
+void dbus_set_account_details(const account_t *a);
 
 /**
  * ConfigurationManager - Set the additional credential information
@@ -389,6 +389,12 @@ void dbus_add_participant(const gchar *callID, const gchar *confID);
 gchar **dbus_get_participant_list(const gchar *confID);
 
 /**
+ * If thsi call participate to a conference, return the conference id
+ * Return an empty string elsewhere
+ */
+gchar *dbus_get_conference_id(const gchar *callID);
+
+/**
  * Toggle recording for this instance, may be call or conference
  */
 void dbus_set_record(const gchar *id);
@@ -560,5 +566,15 @@ gboolean dbus_start_recorded_file_playback(const gchar *);
  * @param The recorded file to pause
  */
 void dbus_stop_recorded_file_playback(const gchar *);
+
+/**
+ * Prevent Gnome Session Manager from entering in screen-saver mode 
+ */
+void dbus_screensaver_inhibit(void);
+
+/**
+ * Allow Gnome Session Manager to enter in screen-saver mode
+ */
+void dbus_screensaver_uninhibit(void);
 
 #endif

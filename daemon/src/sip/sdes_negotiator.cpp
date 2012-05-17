@@ -32,6 +32,7 @@
 #include "pattern.h"
 
 #include <cstdio>
+#include <tr1/memory>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -60,30 +61,27 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
     // syntax :
     //a=crypto:tag 1*WSP crypto-suite 1*WSP key-params *(1*WSP session-param)
 
-    Pattern
-    * generalSyntaxPattern,
-    * tagPattern,
-    * cryptoSuitePattern,
-    * keyParamsPattern;
+    std::tr1::shared_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
+        keyParamsPattern;
 
     try {
         // used to match white space (which are used as separator)
-        generalSyntaxPattern = new Pattern("[\x20\x09]+", "g");
+        generalSyntaxPattern.reset(new Pattern("[\x20\x09]+", "g"));
 
-        tagPattern = new Pattern("^a=crypto:(?P<tag>[0-9]{1,9})");
+        tagPattern.reset(new Pattern("^a=crypto:(?P<tag>[0-9]{1,9})"));
 
-        cryptoSuitePattern = new Pattern(
+        cryptoSuitePattern.reset(new Pattern(
             "(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
             "AES_CM_128_HMAC_SHA1_32|" \
             "F8_128_HMAC_SHA1_80|" \
-            "[A-Za-z0-9_]+)"); // srtp-crypto-suite-ext
+            "[A-Za-z0-9_]+)")); // srtp-crypto-suite-ext
 
-        keyParamsPattern = new Pattern(
+        keyParamsPattern.reset(new Pattern(
             "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
             "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)"	 \
             "(\\|2\\^(?P<lifetime>[0-9]+)\\|"		 \
             "(?P<mkiValue>[0-9]+)\\:"			 \
-            "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
+            "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g"));
 
     } catch (const CompileError& exception) {
         throw ParseError("A compile exception occured on a pattern.");
@@ -92,7 +90,6 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
     // Take each line from the vector
     // and parse its content
-
 
     std::vector<CryptoAttribute *> cryptoAttributeVector;
 
@@ -176,11 +173,10 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
 bool SdesNegotiator::negotiate()
 {
-
-    std::vector<CryptoAttribute *> cryptoAttributeVector = parse();
+    std::vector<CryptoAttribute *> cryptoAttributeVector(parse());
     std::vector<CryptoAttribute *>::iterator iter_offer = cryptoAttributeVector.begin();
 
-    std::vector<CryptoSuiteDefinition>::iterator iter_local = localCapabilities_.begin();
+    std::vector<CryptoSuiteDefinition>::const_iterator iter_local = localCapabilities_.begin();
 
     bool negotiationSuccess = false;
 
@@ -196,13 +192,14 @@ bool SdesNegotiator::negotiate()
                     cryptoSuite_ = (*iter_offer)->getCryptoSuite();
                     srtpKeyMethod_ = (*iter_offer)->getSrtpKeyMethod();
                     srtpKeyInfo_ = (*iter_offer)->getSrtpKeyInfo();
-                    authTagLength_ = cryptoSuite_.substr(cryptoSuite_.size()-2, 2);
+                    authTagLength_ = cryptoSuite_.substr(cryptoSuite_.size() - 2, 2);
                 }
 
-                iter_local++;
+                ++iter_local;
             }
-            delete(*iter_offer);
-            iter_offer++;
+            delete *iter_offer;
+            *iter_offer = 0;
+            ++iter_offer;
         }
 
     } catch (const ParseError& exception) {

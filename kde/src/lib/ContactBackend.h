@@ -24,12 +24,16 @@
 
 #include <QObject>
 #include <QHash>
+#include <QStringList>
+#include <QVariant>
 
 #include "typedefs.h"
+#include "Contact.h"
 
 //SFLPhone
 class Contact;
 
+//Typedef
 typedef QList<Contact*> ContactList;
 
 ///@class ContactBackend Allow different way to handle contact without poluting the library
@@ -37,7 +41,7 @@ class LIB_EXPORT ContactBackend : public QObject {
    Q_OBJECT
 public:
    ContactBackend(QObject* parent);
-   virtual Contact*    getContactByPhone ( const QString& phoneNumber ) = 0;
+   virtual Contact*    getContactByPhone ( const QString& phoneNumber , bool resolveDNS = false) = 0;
    virtual Contact*    getContactByUid   ( const QString& uid         ) = 0;
    virtual void        editContact       ( Contact*       contact     ) = 0;
    virtual void        addNewContact     ( Contact*       contact     ) = 0;

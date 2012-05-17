@@ -28,28 +28,23 @@
  *  as that of the covered work.
  */
 
-#include <cstdio>
-#include <sstream>
 #include <cstdlib>
 
 #include "historytest.h"
+#include "history/history.h"
 #include "logger.h"
 #include "constants.h"
-#include "validator.h"
-
-using std::cout;
-using std::endl;
 
 namespace {
 void restore()
 {
-    if (system("mv " HISTORY_SAMPLE ".bak " HISTORY_SAMPLE) < 0)
-        ERROR("Restoration of %s failed" HISTORY_SAMPLE);
+    if (system("mv " HISTORY_SAMPLE_BAK " " HISTORY_SAMPLE) < 0)
+        ERROR("Restoration of %s failed", HISTORY_SAMPLE);
 }
 
 void backup()
 {
-    if (system("cp " HISTORY_SAMPLE " " HISTORY_SAMPLE ".bak") < 0)
+    if (system("cp " HISTORY_SAMPLE " " HISTORY_SAMPLE_BAK) < 0)
         ERROR("Backup of %s failed", HISTORY_SAMPLE);
 }
 }

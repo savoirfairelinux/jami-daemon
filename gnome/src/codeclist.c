@@ -176,7 +176,7 @@ void codec_set_prefered_order(guint codec_index, GQueue *q)
 
 void codec_list_move_codec_up(guint codec_index, GQueue **q)
 {
-    DEBUG("Codec list Size: %i \n", codec_list_get_size());
+    DEBUG("Codec list size: %i \n", codec_list_get_size());
 
     GQueue *tmp = *q;
 
@@ -190,8 +190,7 @@ void codec_list_move_codec_up(guint codec_index, GQueue **q)
 
 void codec_list_move_codec_down(guint codec_index, GQueue **q)
 {
-
-    DEBUG("Codec list Size: %i \n", codec_list_get_size());
+    DEBUG("Codec list size: %i \n", codec_list_get_size());
 
     GQueue *tmp = *q;
 
@@ -204,7 +203,7 @@ void codec_list_move_codec_down(guint codec_index, GQueue **q)
 
 }
 
-void codec_list_update_to_daemon(account_t *acc)
+void codec_list_update_to_daemon(const account_t *acc)
 {
     // Length of the codec list
     int length = g_queue_get_length(acc->codecs);
@@ -217,7 +216,7 @@ void codec_list_update_to_daemon(account_t *acc)
     int c = 0;
     int i;
 
-    for (i = 0; i < length; i++) {
+    for (i = 0; i < length; ++i) {
         codec_t* currentCodec = codec_list_get_nth(i, acc->codecs);
 
         if (currentCodec) {
@@ -240,14 +239,14 @@ void codec_list_update_to_daemon(account_t *acc)
 
     // Allocate NULL array at the end for Dbus
     codecList = (void*) g_realloc(codecList, (c + 1) * sizeof(void*));
-    *(codecList+c) = NULL;
+    *(codecList + c) = NULL;
 
     // call dbus function with array of strings
     dbus_set_active_audio_codec_list(codecList, acc->accountID);
 
     // Delete memory
     for (i = 0; i < c; i++)
-        g_free((gchar*) *(codecList+i));
+        g_free((gchar*) *(codecList + i) );
 
     g_free(codecList);
 }

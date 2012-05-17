@@ -6,7 +6,6 @@
 *.Po
 *.Plo
 *.loT
-*.m4
 *.Tpo
 Makefile.in
 Makefile
@@ -69,6 +68,10 @@ config_auto.h
 
 # Ignore temp files
 *~
+
+# Cscope/Ctags files
+cscope.*
+tags
 
 # IDE stuffs
 nbproject

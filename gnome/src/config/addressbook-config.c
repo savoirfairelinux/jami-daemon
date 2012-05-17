@@ -29,11 +29,14 @@
  */
 
 #include "addressbook-config.h"
+#include "gtk2_wrappers.h"
+#include "str_utils.h"
 #include "dbus.h"
 #include "unused.h"
 #include "logger.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
+#include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -216,7 +219,7 @@ addressbook_config_book_active_toggled(
     treePath = gtk_tree_path_new_from_string(path);
 
     if (!(model = gtk_tree_view_get_model(GTK_TREE_VIEW(data)))) {
-        DEBUG("Addressbook: No valid model (%s:%d)", __FILE__, __LINE__);
+        DEBUG("No valid model (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
@@ -238,7 +241,8 @@ addressbook_config_book_active_toggled(
     book_data = addrbook->get_book_data_by_uid(uid);
 
     if (book_data == NULL) {
-        ERROR("Addressbook: Error: Could not find addressbook %s", uid);
+        ERROR("Could not find addressbook %s", uid);
+        return;
     }
 
     book_data->active = active;
@@ -296,12 +300,12 @@ addressbook_config_fill_book_list()
     GSList *books_data = addrbook->get_books_data(book_list);
 
     if (!books_data) {
-        DEBUG("Addressbook: No valid books data (%s:%d)", __FILE__, __LINE__);
+        DEBUG("No valid books data (%s:%d)", __FILE__, __LINE__);
     }
 
     // Get model of view and clear it
     if (!(store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view))))) {
-        DEBUG("Addressbook: Could not find model from treeview (%s:%d)", __FILE__, __LINE__);
+        DEBUG("Could not find model from treeview (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
@@ -442,14 +446,14 @@ addressbook_display(AddressBook_Config *settings, const gchar *field)
 {
     gboolean display;
 
-    if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO) == 0)
-        display = (settings->display_contact_photo == 1) ? TRUE : FALSE;
-    else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS) == 0)
-        display = (settings->search_phone_business == 1) ? TRUE : FALSE;
-    else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_HOME) == 0)
-        display = (settings->search_phone_home == 1) ? TRUE : FALSE;
-    else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE) == 0)
-        display = (settings->search_phone_mobile == 1) ? TRUE : FALSE;
+    if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+        display = settings->display_contact_photo == 1;
+    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+        display = settings->search_phone_business == 1;
+    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_HOME))
+        display = settings->search_phone_home == 1;
+    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+        display = settings->search_phone_mobile == 1;
     else
         display = FALSE;
 

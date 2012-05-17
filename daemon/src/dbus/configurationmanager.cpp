@@ -30,14 +30,17 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "configurationmanager.h"
 #include <sstream>
-#include "config.h"
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
+#include "sip/siptransport.h"
 #include "account.h"
+#include "logger.h"
 #include "sip/sipaccount.h"
 
 const char* ConfigurationManager::SERVER_PATH =
@@ -50,15 +53,15 @@ ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
     std::map<std::string, std::string> ip2ipAccountDetails;
-    SIPAccount *sipaccount = static_cast<SIPAccount *>(Manager::instance().getAccount(IP2IP_PROFILE));
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
-        ERROR("ConfigurationManager: could not find account");
+        ERROR("Could not find IP2IP account");
         return ip2ipAccountDetails;
     } else
         return sipaccount->getIp2IpDetails();
 
-    std::map<std::string, std::string> tlsSettings = getTlsSettings();
+    std::map<std::string, std::string> tlsSettings(getTlsSettings());
     std::copy(tlsSettings.begin(), tlsSettings.end(),
               std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -79,19 +82,19 @@ ConfigurationManager::getTlsSettingsDefault()
     portstr << DEFAULT_SIP_TLS_PORT;
 
     std::map<std::string, std::string> tlsSettingsDefault;
-    tlsSettingsDefault[TLS_LISTENER_PORT] = portstr.str();
-    tlsSettingsDefault[TLS_CA_LIST_FILE] = "";
-    tlsSettingsDefault[TLS_CERTIFICATE_FILE] = "";
-    tlsSettingsDefault[TLS_PRIVATE_KEY_FILE] = "";
-    tlsSettingsDefault[TLS_PASSWORD] = "";
-    tlsSettingsDefault[TLS_METHOD] = "TLSv1";
-    tlsSettingsDefault[TLS_CIPHERS] = "";
-    tlsSettingsDefault[TLS_SERVER_NAME] = "";
-    tlsSettingsDefault[TLS_VERIFY_SERVER] = "true";
-    tlsSettingsDefault[TLS_VERIFY_CLIENT] = "true";
-    tlsSettingsDefault[TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
-    tlsSettingsDefault[TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
-    tlsSettingsDefault[TLS_NEGOTIATION_TIMEOUT_MSEC] = "0";
+    tlsSettingsDefault[CONFIG_TLS_LISTENER_PORT] = portstr.str();
+    tlsSettingsDefault[CONFIG_TLS_CA_LIST_FILE] = "";
+    tlsSettingsDefault[CONFIG_TLS_CERTIFICATE_FILE] = "";
+    tlsSettingsDefault[CONFIG_TLS_PRIVATE_KEY_FILE] = "";
+    tlsSettingsDefault[CONFIG_TLS_PASSWORD] = "";
+    tlsSettingsDefault[CONFIG_TLS_METHOD] = "TLSv1";
+    tlsSettingsDefault[CONFIG_TLS_CIPHERS] = "";
+    tlsSettingsDefault[CONFIG_TLS_SERVER_NAME] = "";
+    tlsSettingsDefault[CONFIG_TLS_VERIFY_SERVER] = "true";
+    tlsSettingsDefault[CONFIG_TLS_VERIFY_CLIENT] = "true";
+    tlsSettingsDefault[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
+    tlsSettingsDefault[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
+    tlsSettingsDefault[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = "0";
 
     return tlsSettingsDefault;
 }
@@ -100,7 +103,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 {
     std::map<std::string, std::string> tlsSettings;
 
-    SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount(IP2IP_PROFILE);
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount)
         return tlsSettings;
@@ -110,10 +113,10 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
 void ConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    SIPAccount * sipaccount = (SIPAccount *) Manager::instance().getAccount(IP2IP_PROFILE);
+    SIPAccount * sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
-        DEBUG("ConfigurationManager: Error: No valid account in set TLS settings");
+        DEBUG("No valid account in set TLS settings");
         return;
     }
 
@@ -261,7 +264,7 @@ int32_t ConfigurationManager::getAudioDeviceIndex(const std::string& name)
 
 std::string ConfigurationManager::getCurrentAudioOutputPlugin()
 {
-    DEBUG("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
+    DEBUG("Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
 
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
@@ -389,13 +392,13 @@ void ConfigurationManager::setAddressbookList(
 
 std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
-    return Manager::instance().getHookSettings();
+    return Manager::instance().hookPreference.toMap();
 }
 
 void ConfigurationManager::setHookSettings(const std::map<std::string,
         std::string>& settings)
 {
-    Manager::instance().setHookSettings(settings);
+    Manager::instance().hookPreference = HookPreference(settings);
 }
 
 void ConfigurationManager::setAccountsOrder(const std::string& order)
@@ -411,17 +414,17 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistor
 std::string
 ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return SIPVoIPLink::getInterfaceAddrFromName(interface);
+    return SipTransport::getInterfaceAddrFromName(interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface()
 {
-    return SIPVoIPLink::getAllIpInterface();
+    return SipTransport::getAllIpInterface();
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName()
 {
-    return SIPVoIPLink::getAllIpInterfaceByName();
+    return SipTransport::getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string> ConfigurationManager::getShortcuts()
@@ -439,23 +442,19 @@ void ConfigurationManager::setShortcuts(
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
     const std::string& accountID)
 {
-    Account *account = Manager::instance().getAccount(accountID);
+    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
     std::vector<std::map<std::string, std::string> > credentialInformation;
 
-    if (!account or account->getType() != "SIP")
+    if (!account)
         return credentialInformation;
-
-    SIPAccount *sipaccount = static_cast<SIPAccount *>(account);
-    return sipaccount->getCredentials();
+    else
+        return account->getCredentials();
 }
 
 void ConfigurationManager::setCredentials(const std::string& accountID,
         const std::vector<std::map<std::string, std::string> >& details)
 {
-    Account *account = Manager::instance().getAccount(accountID);
-
-    if (account and account->getType() == "SIP") {
-        SIPAccount *sipaccount = static_cast<SIPAccount*>(account);
-        sipaccount->setCredentials(details);
-    }
+    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    if (account)
+        account->setCredentials(details);
 }

@@ -30,10 +30,8 @@
  *  as that of the covered work.
  */
 
-
-
-#if !defined(_G722_H_)
-#define _G722_H_
+#ifndef G722_H_
+#define G722_H_
 
 /**
 
@@ -54,13 +52,13 @@ enum {
 };
 
 #ifndef INT16_MAX
-#define INT16_MAX       32767
+#define INT16_MAX 32767
 #endif
 #ifndef INT16_MIN
-#define INT16_MIN       (-32768)
+#define INT16_MIN (-32768)
 #endif
 
-typedef struct {
+struct g722_state_t {
     /*! TRUE if the operating in the special ITU test mode, with the band split filters
              disabled. */
     int itu_test_mode;
@@ -94,58 +92,6 @@ typedef struct {
     int in_bits;
     unsigned int out_buffer;
     int out_bits;
-} g722_encode_state_t;
+};
 
-typedef struct {
-    /*! TRUE if the operating in the special ITU test mode, with the band split filters
-             disabled. */
-    int itu_test_mode;
-    /*! TRUE if the G.722 data is packed */
-    int packed;
-    /*! TRUE if decode to 8k samples/second */
-    int eight_k;
-    /*! 6 for 48000kbps, 7 for 56000kbps, or 8 for 64000kbps. */
-    int bits_per_sample;
-
-    /*! Signal history for the QMF */
-    int x[24];
-
-    struct {
-        int s;
-        int sp;
-        int sz;
-        int r[3];
-        int a[3];
-        int ap[3];
-        int p[3];
-        int d[7];
-        int b[7];
-        int bp[7];
-        int sg[7];
-        int nb;
-        int det;
-    } band[2];
-
-    unsigned int in_buffer;
-    int in_bits;
-    unsigned int out_buffer;
-    int out_bits;
-} g722_decode_state_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-    void g722_encode_init();
-    int g722_encode_release();
-    int g722_encode(uint8_t g722_data[], const int16_t amp[], int len);
-
-    void g722_decode_init();
-    int g722_decode_release();
-    int g722_decode(int16_t amp[], const uint8_t g722_data[], int len);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif  // G722_H_

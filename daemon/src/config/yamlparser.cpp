@@ -31,8 +31,9 @@
 #include "yamlparser.h"
 
 #include "../global.h"
-#include "config.h"
+#include "sfl_config.h"
 #include "yamlnode.h"
+#include "logger.h"
 #include <cstdio>
 
 namespace Conf {
@@ -219,21 +220,18 @@ void YamlParser::processStream()
 
 void YamlParser::processDocument()
 {
-    doc_ = new YamlDocument();
-
-    if (!doc_)
-        throw YamlParserException("Not able to create new document");
+    doc_ = new YamlDocument;
 
     for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_DOCUMENT_END_EVENT); ++eventIndex_) {
         switch (events_[eventIndex_].type) {
             case YAML_SCALAR_EVENT:
-                processScalar((YamlNode *) doc_);
+                processScalar(doc_);
                 break;
             case YAML_SEQUENCE_START_EVENT:
-                processSequence((YamlNode *) doc_);
+                processSequence(doc_);
                 break;
             case YAML_MAPPING_START_EVENT:
-                processMapping((YamlNode *) doc_);
+                processMapping(doc_);
                 break;
             default:
                 break;
@@ -250,7 +248,7 @@ void YamlParser::processScalar(YamlNode *topNode)
     if (!topNode)
         throw YamlParserException("No container for scalar");
 
-    ScalarNode *sclr = new ScalarNode(std::string((const char*)events_[eventIndex_].data.scalar.value), topNode);
+    ScalarNode *sclr = new ScalarNode(std::string((const char*) events_[eventIndex_].data.scalar.value), topNode);
 
     switch (topNode->getType()) {
         case DOCUMENT:
@@ -261,6 +259,7 @@ void YamlParser::processScalar(YamlNode *topNode)
             break;
         case MAPPING:
             ((MappingNode *)(topNode))->addNode(sclr);
+            break;
         case SCALAR:
         default:
             break;
@@ -366,6 +365,8 @@ void YamlParser::processMapping(YamlNode *topNode)
 
 void YamlParser::constructNativeData()
 {
+    if (!doc_)
+        throw YamlParserException("YAML Document not initialized");
     Sequence *seq = doc_->getSequence();
 
     for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {
@@ -390,7 +391,7 @@ void YamlParser::constructNativeData()
 
 void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
-    Mapping *mapping = map->getMapping();
+    std::map<std::string, YamlNode*> *mapping = map->getMapping();
 
     accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
     addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];
