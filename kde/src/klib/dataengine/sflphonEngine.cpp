@@ -5,6 +5,7 @@
 #include "../../lib/Call.h"
 #include "../../lib/Account.h"
 #include "../../lib/AccountList.h"
+#include "../../lib/Contact.h"
 #include "../../lib/dbus/metatypes.h"
 #include "../../lib/instance_interface_singleton.h"
 #include "../../lib/configurationmanager_interface_singleton.h"
@@ -30,6 +31,8 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
    //CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
 
    connect(m_pModel                     , SIGNAL( callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)  ));
+   connect(m_pModel                     , SIGNAL( callAdded(Call*))         , this , SLOT(callStateChangedSignal(Call*)  ));
+   connect(m_pModel                     , SIGNAL( callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)  ));
    //connect(&callManager                 , SIGNAL( incomingCall(Call*))      , this , SLOT(incomingCallSignal(Call*)      ));
    //connect(&callManager                 , SIGNAL( conferenceCreated(Call*)) , this , SLOT(conferenceCreatedSignal(Call*) ));
    //connect(&callManager                 , SIGNAL( conferenceChanged(Call*)) , this , SLOT(conferenceChangedSignal(Call*) ));
@@ -39,26 +42,29 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
 
 bool SFLPhoneEngine::sourceRequestEvent(const QString &name)
 {
-   if      ( name == "history"     ) {
+   if      ( name == "history"         ) {
       updateHistory();
    }
-   else if ( name == "calls"       ) {
+   else if ( name == "calls"           ) {
       updateCallList();
    }
-   else if ( name == "conferences" ) {
+   else if ( name == "conferences"     ) {
       updateConferenceList();
    }
-   else if ( name == "info"        ) {
+   else if ( name == "info"            ) {
       updateInfo();
    }
-   else if ( name == "accounts"    ) {
+   else if ( name == "accounts"        ) {
       updateAccounts();
    }
-   else if ( name == "contacts"    ) {
+   else if ( name == "contacts"        ) {
       updateContacts();
    }
-   else if ( name == "bookmark"    ) {
+   else if ( name == "bookmark"        ) {
       updateBookmarkList();
+   }
+   else if ( name.left(7) == "Number:" ) {
+      generateNumberList(name);
    }
    return true;//updateSourceEvent(name);
 }
@@ -124,6 +130,7 @@ void SFLPhoneEngine::updateHistory()
       historyCall[oldCall->getCallId()][ "peerNumber" ] = oldCall->getPeerPhoneNumber();
       historyCall[oldCall->getCallId()][ "length"     ] = oldCall->getStopTimeStamp().toInt() - oldCall->getStartTimeStamp().toInt();
       historyCall[oldCall->getCallId()][ "date"       ] = oldCall->getStopTimeStamp();
+      historyCall[oldCall->getCallId()][ "id"         ] = oldCall->getCallId();
       if (oldCall->property("section").isValid())
          historyCall[oldCall->getCallId()][ "section"    ] = oldCall->property("section");
       setData("history", oldCall->getCallId() , historyCall[oldCall->getCallId()]);
@@ -132,12 +139,14 @@ void SFLPhoneEngine::updateHistory()
 
 void SFLPhoneEngine::updateCallList()
 {
+   removeAllData("calls");
    foreach (Call* call, m_pModel->getCalls()) {
       if ((!m_pModel->isConference(call)) && (call->getState() != CALL_STATE_OVER)) {
          currentCall[call->getCallId()][ "peerName"      ] = call->getPeerName();
          currentCall[call->getCallId()][ "peerNumber"    ] = call->getPeerPhoneNumber();
          currentCall[call->getCallId()][ "stateName"     ] = getCallStateName(call->getState());
          currentCall[call->getCallId()][ "state"         ] = call->getState();
+         currentCall[call->getCallId()][ "id"            ] = call->getCallId();
          setData("calls", call->getCallId(), currentCall[call->getCallId()]);
       }
    }
@@ -157,9 +166,10 @@ void SFLPhoneEngine::updateBookmarkList()
       else {
          pop["peerName"     ] = cl[i];
       }
-      pop["peerNumber"   ] = cl[i];
-      pop["section"      ] = "Popular";
-      pop["listPriority" ] = 1000;
+      pop["peerNumber"   ] = cl[i]     ;
+      pop["section"      ] = "Popular" ;
+      pop["listPriority" ] = 1000      ;
+      pop["id"           ] = i         ;
       setData("bookmark", QString::number(i), pop);
    }
 
@@ -167,10 +177,11 @@ void SFLPhoneEngine::updateBookmarkList()
    foreach (QString nb, ConfigurationSkeleton::bookmarkList()) {
       i++;
       QHash<QString,QVariant> pop;
-      pop["peerName"     ] = "TODO";
-      pop["peerNumber"   ] = nb;
-      pop["section"      ] = "1";
-      pop["listPriority" ] = 0;
+      pop["peerName"     ] = "TODO" ;
+      pop["peerNumber"   ] = nb     ;
+      pop["section"      ] = "1"    ;
+      pop["listPriority" ] = 0      ;
+      pop["id"           ] = i      ;
       setData("bookmark", QString::number(i), pop);
    }
 }
@@ -237,8 +248,26 @@ void SFLPhoneEngine::updateAccounts()
    foreach(Account* a,list) {
       QHash<QString,QVariant> acc;
       acc["id"] = a->getAccountId();
-      acc["alias"] = a->getAccountDetail(ACCOUNT_ALIAS)
-      setData("accounts", QString::number(rand()) , a->getAccountId());
+      acc["alias"] = a->getAccountDetail(ACCOUNT_ALIAS);
+      setData("accounts", QString::number(rand()) , acc);
+   }
+}
+
+void SFLPhoneEngine::generateNumberList(QString name)
+{
+   QString contactUid = name.right(name.size()-7);
+   qDebug() << "LOOKING FOR " << contactUid;
+   Contact* cont = AkonadiBackend::getInstance()->getContactByUid(contactUid);
+   if (cont) {
+      foreach(Contact::PhoneNumber* num,cont->getPhoneNumbers()) {
+         QHash<QString,QVariant> hash;
+         hash[ "number" ] = num->getNumber();
+         hash[ "type"   ] = num->getType();
+         setData(name, QString::number(rand()) , hash);
+      }
+   }
+   else {
+      kDebug() << "Contact not found";
    }
 }
 
