@@ -39,6 +39,7 @@
 #include <tr1/array>
 
 #include "audio/samplerateconverter.h"
+#include "noncopyable.h"
 
 #define MAX_BUFFER_LENGTH 40000
 #define TMP_LOWSMPLR_BUFFER_LENGTH 160
@@ -62,7 +63,7 @@ class ResamplerTest : public CppUnit::TestCase {
     CPPUNIT_TEST_SUITE_END();
 
   public:
-    ResamplerTest() : CppUnit::TestCase("Resampler module test") {}
+    ResamplerTest();
 
     /*
      * Code factoring - Common resources can be initialized here.
@@ -107,6 +108,7 @@ class ResamplerTest : public CppUnit::TestCase {
     void testDownsamplingSine();
 
 private:
+    NON_COPYABLE(ResamplerTest);
 
     /*
      * Generate a ramp to be stored in inputBuffer
@@ -142,12 +144,6 @@ private:
      * Used to receive output samples
      */
     std::tr1::array<SFLDataFormat, MAX_BUFFER_LENGTH> outputBuffer;
-
-    /**
-     * Pointer to samplerate converter, may be reinitialized during tests
-     * don't keep a statically declared instance.
-     */
-    SamplerateConverter *converter;
 };
 
 /* Register the test module */
