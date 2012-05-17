@@ -33,4 +33,9 @@
       <label>A valid call identifier number</label>
     </entry>
   </group>
+  <group name="Record">
+    <entry name="callid" type="String">
+      <label>A valid call identifier number</label>
+    </entry>
+  </group>
 </kcfg>
