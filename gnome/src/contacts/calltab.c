@@ -53,7 +53,7 @@ void
 calltab_select_call(calltab_t* tab, callable_obj_t * c)
 {
     g_assert(tab);
-    DEBUG("CallTab: Select call %s", c ? c->_callID : "");
+    DEBUG("Select call %s", c ? c->_callID : "");
 
     tab->selectedType = A_CALL;
     tab->selectedCall = c;
@@ -65,7 +65,7 @@ void
 calltab_select_conf(calltab_t *tab, conference_obj_t * c)
 {
     g_assert(tab);
-    DEBUG("CallTab: Selected conf %s", c ? c->_confID : "");
+    DEBUG("Selected conf %s", c ? c->_confID : "");
 
     tab->selectedType = A_CONFERENCE;
     tab->selectedConf = c;
