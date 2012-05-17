@@ -106,4 +106,16 @@ calltree_display (calltab_t *);
 gboolean
 calltree_update_clock(gpointer);
 
+gboolean
+is_conference(GtkTreeModel *model, GtkTreeIter *iter);
+
+enum {
+    COLUMN_ACCOUNT_PIXBUF = 0,
+    COLUMN_ACCOUNT_DESC,
+    COLUMN_ACCOUNT_SECURITY_PIXBUF,
+    COLUMN_ID,
+    COLUMN_IS_CONFERENCE,
+    COLUMNS_IN_TREE_STORE
+};
+
 #endif
