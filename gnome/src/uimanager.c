@@ -230,6 +230,9 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         case CALL_STATE_CURRENT:
         {
                 DEBUG("Call State Current");
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_block(recordWidget_, recordButtonConnId_);
+
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_action_set_sensitive(recordAction_, TRUE);
                 gtk_action_set_sensitive(muteAction_, TRUE);
@@ -249,11 +252,10 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 if (instant_messaging_enabled) {
                     add_to_toolbar(toolbar_, imToolbar_, pos++);
 
-                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_block(recordWidget_, recordButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), FALSE);
+
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
                 g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
                 break;
         }
@@ -261,6 +263,9 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         case CALL_STATE_RECORD:
         {
                 DEBUG("Call State Record");
+                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
+                g_signal_handler_block(recordWidget_, recordButtonConnId_);
+
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_action_set_sensitive(recordAction_, TRUE);
                 gtk_action_set_sensitive(muteAction_, TRUE);
@@ -280,11 +285,10 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 if (instant_messaging_enabled)
                     add_to_toolbar(toolbar_, imToolbar_, pos++);
 
-                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_block(recordWidget_, recordButtonConnId_);
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), TRUE);
+
+                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
                 g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
                 break;
         }
@@ -337,11 +341,11 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
         case CONFERENCE_STATE_ACTIVE_ATTACHED:
         case CONFERENCE_STATE_ACTIVE_DETACHED:
             DEBUG("Conference State Active");
-
+            g_signal_handler_block(recordWidget_, recordButtonConnId_);
             if (active_calltree_tab == current_calls_tab) {
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_widget_set_sensitive(holdToolbar_, TRUE);
-                gtk_action_set_sensitive(recordAction_, TRUE);
+                gtk_widget_set_sensitive(recordWidget_, TRUE);
                 pos = 1;
                 add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                 add_to_toolbar(toolbar_, holdToolbar_, pos++);
@@ -360,15 +364,16 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
                         add_to_toolbar(toolbar_, playRecordWidget_, pos);
                 }
             }
-
+            g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
             break;
         case CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD:
         case CONFERENCE_STATE_ACTIVE_DETACHED_RECORD: {
+            g_signal_handler_block(recordWidget_, recordButtonConnId_);
             pos = 1;
             DEBUG("Conference State Record");
             gtk_action_set_sensitive(hangUpAction_, TRUE);
             gtk_widget_set_sensitive(holdToolbar_, TRUE);
-            gtk_action_set_sensitive(recordAction_, TRUE);
+            gtk_widget_set_sensitive(recordWidget_, TRUE);
             add_to_toolbar(toolbar_, hangUpWidget_, pos++);
             add_to_toolbar(toolbar_, holdToolbar_, pos++);
             add_to_toolbar(toolbar_, recordWidget_, pos++);
@@ -377,16 +382,17 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
                 gtk_action_set_sensitive(imAction_, TRUE);
                 add_to_toolbar(toolbar_, imToolbar_, pos);
             }
-
+            g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
             break;
         }
         case CONFERENCE_STATE_HOLD:
         case CONFERENCE_STATE_HOLD_RECORD: {
             DEBUG("Conference State Hold");
+            g_signal_handler_block(recordWidget_, recordButtonConnId_);
             pos = 1;
             gtk_action_set_sensitive(hangUpAction_, TRUE);
             gtk_widget_set_sensitive(offHoldToolbar_, TRUE);
-            gtk_action_set_sensitive(recordAction_, TRUE);
+            gtk_widget_set_sensitive(recordWidget_, TRUE);
             add_to_toolbar(toolbar_, hangUpWidget_, pos++);
             add_to_toolbar(toolbar_, offHoldToolbar_, pos++);
             add_to_toolbar(toolbar_, recordWidget_, pos++);
@@ -395,6 +401,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
                 gtk_action_set_sensitive(imAction_, TRUE);
                 add_to_toolbar(toolbar_, imToolbar_, pos);
             }
+            g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
 
             break;
         }
