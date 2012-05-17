@@ -40,7 +40,7 @@ do
                 echo "Options :"
                 echo " --skip-push"
                 echo " --skip-upload"
-		echo " --kde-client"
+                echo " --kde-client"
                 echo " --no-logging"
                 echo " --release"
                 echo " --version-index=[1,2,...]"
@@ -118,8 +118,8 @@ if [ ${IS_KDE_CLIENT} ]; then
 	TAG_NAME_PREFIX="kde."
 	LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
 fi
-CURRENT_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=1 | cut -d'/' -f3)
-PREVIOUS_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=2 | cut -d'/' -f3 | tail -n1)
+CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
+PREVIOUS_RELEASE_TAG_NAME=`git describe --tags --abbrev=0 ${CURRENT_RELEASE_TAG_NAME}^`
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
 PREVIOUS_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
 CURRENT_COMMIT=`git show --pretty=format:"%H"  -s | tail -n 1`
