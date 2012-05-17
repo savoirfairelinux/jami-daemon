@@ -30,6 +30,9 @@ ServiceJob *SFLPhoneService::createJob(const QString &operation, QMap<QString, Q
     else if (operation == "Hold") {
        return new HoldJob(this, operation,parameters);
     }
+    else if (operation == "Record") {
+       return new RecordJob(this, operation,parameters);
+    }
     m_engine->setData(operation, parameters["query"]);
     return 0;
 }

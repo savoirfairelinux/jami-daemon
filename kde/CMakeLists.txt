@@ -34,7 +34,7 @@ add_subdirectory(man)
 add_subdirectory(po)
 add_subdirectory(plasma)
 
-set(PROJECT_VERSION "1.0.2")
+set(PROJECT_VERSION "1.1.0")
 set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${PROJECT_VERSION})
     add_custom_target(dist
             COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD

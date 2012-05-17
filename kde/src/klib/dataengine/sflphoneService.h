@@ -124,5 +124,23 @@ private:
    QString m_CallId;
 };
 
+class RecordJob : public Plasma::ServiceJob
+{
+   Q_OBJECT
+public:
+    RecordJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap())
+        : Plasma::ServiceJob("", operation, parameters, parent)
+        , m_CallId         ( parameters[ "callid" ].toString() )
+    {}
+
+   void start()
+   {
+      Call* call = SFLPhoneEngine::getModel()->getCall(m_CallId);
+      call->actionPerformed(CALL_ACTION_RECORD);
+   }
+private:
+   QString m_CallId;
+};
+
 
 #endif //SFLPHONE_SERVICE_H

@@ -139,6 +139,13 @@ void SFLPhoneEngine::updateHistory()
 
 void SFLPhoneEngine::updateCallList()
 {
+   QHash<QString,QVariant> test;
+   test[ "peerName"   ] = "";
+   test[ "peerNumber" ] = "";
+   test[ "stateName"  ] = "";
+   test[ "state"      ] = "";
+   test[ "id"         ] = "";
+   setData("calls", "fake",test );
    removeAllData("calls");
    foreach (Call* call, m_pModel->getCalls()) {
       if ((!m_pModel->isConference(call)) && (call->getState() != CALL_STATE_OVER)) {
