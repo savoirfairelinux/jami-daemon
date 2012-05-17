@@ -54,45 +54,34 @@ search_type_matches_state(SearchType type, const gchar *state)
 
 static gboolean history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
-    gboolean ret = TRUE;
-    callable_obj_t *history_entry = NULL;
-    const gchar *text = NULL;
+    /* Skip conferences */
+    if (is_conference(model, iter))
+        return TRUE;
 
     // Fetch the call description
-    GValue val;
-    memset(&val, 0, sizeof val);
-    gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
+    const gchar *text = NULL;
+    const gchar *id = NULL;
+    gtk_tree_model_get(model, iter, COLUMN_ACCOUNT_DESC, &text, COLUMN_ID, &id, -1);
+    callable_obj_t *history_entry = calllist_get_call(history_tab, id);
 
-    if (G_VALUE_HOLDS_STRING(&val))
-        text = (gchar *) g_value_get_string(&val);
-
-    // Fetch the call type
-    GValue obj;
-    memset(&obj, 0, sizeof obj);
-    gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 3, &obj);
-
-    if (G_VALUE_HOLDS_POINTER(&obj))
-        history_entry = (gpointer) g_value_get_pointer(&obj);
-
+    gboolean ret = TRUE;
     if (text && history_entry) {
         // Filter according to the type of call
         // MISSED, INCOMING, OUTGOING, ALL
         const gchar* search = gtk_entry_get_text(history_searchbar_widget);
 
         if (!search || !*search)
-            goto end;
+            return TRUE;
 
         SearchType search_type = get_current_history_search_type();
         ret = g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
 
         if (search_type == SEARCH_ALL)
-            goto end;
+            return ret;
         else // We need a match on the history_state and the current search type
             ret = ret && search_type_matches_state(search_type, history_entry->_history_state);
     }
 
-end:
-    g_value_unset(&val);
     return ret;
 }
 

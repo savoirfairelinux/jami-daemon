@@ -79,15 +79,6 @@ static GtkTargetEntry target_list[] = {
 
 static const guint n_targets = G_N_ELEMENTS(target_list);
 
-enum {
-    COLUMN_ACCOUNT_PIXBUF = 0,
-    COLUMN_ACCOUNT_DESC,
-    COLUMN_ACCOUNT_SECURITY_PIXBUF,
-    COLUMN_ID,
-    COLUMN_IS_CONFERENCE,
-    COLUMNS_IN_TREE_STORE
-};
-
 /**
  * Show popup menu
  */
@@ -100,7 +91,7 @@ popup_menu(GtkWidget *widget,
 }
 
 /* Returns TRUE if row contains a conference object pointer */
-static gboolean
+gboolean
 is_conference(GtkTreeModel *model, GtkTreeIter *iter)
 {
     gboolean result = FALSE;
