@@ -1802,7 +1802,7 @@ std::string ManagerImpl::createConfigFile() const
     return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 
-std::vector<std::string> ManagerImpl::unserialize(std::string s)
+std::vector<std::string> ManagerImpl::split_string(std::string s)
 {
     std::vector<std::string> list;
     std::string temp;
@@ -1817,7 +1817,7 @@ std::vector<std::string> ManagerImpl::unserialize(std::string s)
     return list;
 }
 
-std::string ManagerImpl::serialize(const std::vector<std::string> &v)
+std::string ManagerImpl::join_string(const std::vector<std::string> &v)
 {
     std::ostringstream os;
     std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
@@ -2531,7 +2531,7 @@ std::string ManagerImpl::getNewCallID()
 
 std::vector<std::string> ManagerImpl::loadAccountOrder() const
 {
-    return unserialize(preferences.getAccountOrder());
+    return split_string(preferences.getAccountOrder());
 }
 
 void ManagerImpl::loadDefaultAccountMap()
@@ -2611,9 +2611,8 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
     if (ip2ip != seq->end()) {
         MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
-        if (node) {
+        if (node)
             accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
-        }
     }
 
     // Initialize default UDP transport according to
@@ -2734,13 +2733,13 @@ void ManagerImpl::setAddressbookSettings(const std::map<std::string, int32_t>& s
 
 void ManagerImpl::setAddressbookList(const std::vector<std::string>& list)
 {
-    addressbookPreference.setList(ManagerImpl::serialize(list));
+    addressbookPreference.setList(ManagerImpl::join_string(list));
     saveConfig();
 }
 
 std::vector<std::string> ManagerImpl::getAddressbookList() const
 {
-    return unserialize(addressbookPreference.getList());
+    return split_string(addressbookPreference.getList());
 }
 
 void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)

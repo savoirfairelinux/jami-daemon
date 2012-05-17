@@ -15,8 +15,20 @@ ServiceJob *SFLPhoneService::createJob(const QString &operation, QMap<QString, Q
         return 0;
     }
 
-    if (operation == "Call") {
+    if      (operation == "Call") {
        return new CallJob(this, operation,parameters);
+    }
+    else if (operation == "DMTF") {
+       return new DTMFJob(this, operation,parameters);
+    }
+    else if (operation == "Transfer") {
+       return new TransferJob(this, operation,parameters);
+    }
+    else if (operation == "Hangup") {
+       return new HangUpJob(this, operation,parameters);
+    }
+    else if (operation == "Hold") {
+       return new HoldJob(this, operation,parameters);
     }
     m_engine->setData(operation, parameters["query"]);
     return 0;
