@@ -65,6 +65,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
     public:
 
         VideoControls(DBus::Connection& connection);
+        VideoPreference &getVideoPreferences();
 
         std::vector<std::string> getCodecList();
         std::vector<std::string> getCodecDetails(const std::string& payload);

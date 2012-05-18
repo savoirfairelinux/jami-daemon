@@ -49,6 +49,12 @@ VideoControls::VideoControls(DBus::Connection& connection) :
     libav_utils::sfl_avcodec_init();
 }
 
+VideoPreference &
+VideoControls::getVideoPreferences()
+{
+    return videoPreference_;
+}
+
 /**
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts

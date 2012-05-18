@@ -43,11 +43,6 @@ VideoPreference::VideoPreference() :
     v4l2_list_->start();
 }
 
-VideoPreference::~VideoPreference()
-{
-    delete v4l2_list_;
-}
-
 std::map<std::string, std::string> VideoPreference::getSettings() const
 {
     std::map<std::string, std::string> args;

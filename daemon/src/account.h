@@ -143,10 +143,8 @@ static const char * const HOSTNAME_KEY = "hostname";
 static const char * const ACCOUNT_ENABLE_KEY = "enable";
 static const char * const MAILBOX_KEY = "mailbox";
 
-static const char * const CODECS_KEY = "codecs";  // 0/9/110/111/112/
-#ifdef SFL_VIDEO
+static const char * const AUDIO_CODECS_KEY = "audioCodecs";  // 0/9/110/111/112/
 static const char * const VIDEO_CODECS_KEY = "videoCodecs";
-#endif
 static const char * const RINGTONE_PATH_KEY = "ringtonePath";
 static const char * const RINGTONE_ENABLED_KEY = "ringtoneEnabled";
 static const char * const DISPLAY_NAME_KEY = "displayName";
@@ -235,7 +233,6 @@ class Account : public Serializable {
             alias_ = alias;
         }
 
-#ifdef SFL_VIDEO
         /**
          * Accessor to data structures
          * @return std::vector<std::string>& The list that reflects the user's choice
@@ -243,13 +240,12 @@ class Account : public Serializable {
         std::vector<std::string> getActiveVideoCodecs() const {
             return videoCodecList_;
         }
-#endif
 
          /* Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
         std::vector<int> getActiveCodecs() const {
-            return codecList_;
+            return audioCodecList_;
         }
 
         /**
@@ -257,9 +253,7 @@ class Account : public Serializable {
          * SDP offer and configuration respectively
          */
         void setActiveCodecs(const std::vector<std::string>& list);
-#ifdef SFL_VIDEO
         void setActiveVideoCodecs(const std::vector<std::string>& list);
-#endif
 
         std::string getRingtonePath() const {
             return ringtonePath_;
@@ -344,20 +338,24 @@ class Account : public Serializable {
         /**
          * Vector containing the order of the codecs
          */
-        std::vector<int> codecList_;
-      
-#ifdef SFL_VIDEO
+        std::vector<int> audioCodecList_;
+
         /**
          * Vector containing the order of the video codecs
          */
         std::vector<std::string> videoCodecList_;
-#endif
 
         /**
-         * List of codec obtained when parsing configuration and used
+         * List of audio codecs obtained when parsing configuration and used
          * to generate codec order list
          */
-        std::string codecStr_;
+        std::string audioCodecStr_;
+
+        /**
+         * List of video codecs obtained when parsing configuration and used
+         * to generate codec order list
+         */
+        std::string videoCodecStr_;
 
         /**
          * Ringtone .au file used for this account

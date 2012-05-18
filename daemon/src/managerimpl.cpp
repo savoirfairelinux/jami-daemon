@@ -58,6 +58,9 @@
 #include "manager.h"
 
 #include "dbus/configurationmanager.h"
+#ifdef SFL_VIDEO
+#include "dbus/video_controls.h"
+#endif
 
 #include "conference.h"
 
@@ -2640,6 +2643,12 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     hookPreference.unserialize(*parser.getHookNode());
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
+#ifdef SFL_VIDEO
+    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
+    MappingNode *videoNode = parser.getVideoNode();
+    if (videoNode)
+        controls->getVideoPreferences().unserialize(*videoNode);
+#endif
 
     using namespace std::tr1; // for std::tr1::bind and std::tr1::ref
     using namespace std::tr1::placeholders;

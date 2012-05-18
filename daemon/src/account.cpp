@@ -45,11 +45,10 @@ Account::Account(const std::string &accountID, const std::string &type) :
     , enabled_(true)
     , type_(type)
     , registrationState_(Unregistered)
-    , codecList_()
-#ifdef SFL_VIDEO
+    , audioCodecList_()
     , videoCodecList_()
-#endif
-    , codecStr_()
+    , audioCodecStr_()
+    , videoCodecStr_()
     , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
     , ringtoneEnabled_(true)
     , displayName_("")
@@ -92,28 +91,28 @@ void Account::loadDefaultCodecs()
 #endif
 }
 
-#ifdef SFL_VIDEO
 void Account::setActiveVideoCodecs(const std::vector<std::string> &list)
 {
+#ifdef SFL_VIDEO
     videoCodecList_ = !list.empty() ? list : sfl_video::getCodecList();
-}
 #endif
+}
 
-void Account::setActiveCodecs(const std::vector <std::string> &list)
+void Account::setActiveCodecs(const std::vector<std::string> &list)
 {
     // first clear the previously stored codecs
-    codecList_.clear();
+    audioCodecList_.clear();
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecOrder vector to save the order.
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
             ++iter) {
         int payload = std::atoi(iter->c_str());
-        codecList_.push_back(static_cast<int>(payload));
+        audioCodecList_.push_back(static_cast<int>(payload));
     }
 
     // update the codec string according to new codec selection
-    codecStr_ = ManagerImpl::join_string(list);
+    audioCodecStr_ = ManagerImpl::join_string(list);
 }
 
 std::string Account::mapStateNumberToString(RegistrationState state)

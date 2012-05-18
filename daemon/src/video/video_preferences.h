@@ -37,6 +37,7 @@
 
 #include <map>
 #include <string>
+#include <tr1/memory>
 
 namespace sflvideo {
     class VideoV4l2ListThread;
@@ -52,7 +53,6 @@ class VideoPreference : public Serializable
     public:
 
         VideoPreference();
-        ~VideoPreference();
 
         virtual void serialize(Conf::YamlEmitter &emitter);
 
@@ -112,7 +112,7 @@ class VideoPreference : public Serializable
         NON_COPYABLE(VideoPreference);
 
         // V4L2 devices
-        sfl_video::VideoV4l2ListThread *v4l2_list_;
+        std::tr1::shared_ptr<sfl_video::VideoV4l2ListThread> v4l2_list_;
 
         std::string device_;
         std::string channel_;
