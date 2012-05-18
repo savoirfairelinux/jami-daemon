@@ -91,7 +91,6 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
     // Take each line from the vector
     // and parse its content
 
-
     std::vector<CryptoAttribute *> cryptoAttributeVector;
 
     for (std::vector<std::string>::iterator iter = remoteAttribute_.begin();
@@ -174,8 +173,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
 
 bool SdesNegotiator::negotiate()
 {
-
-    std::vector<CryptoAttribute *> cryptoAttributeVector = parse();
+    std::vector<CryptoAttribute *> cryptoAttributeVector(parse());
     std::vector<CryptoAttribute *>::iterator iter_offer = cryptoAttributeVector.begin();
 
     std::vector<CryptoSuiteDefinition>::const_iterator iter_local = localCapabilities_.begin();
@@ -194,7 +192,7 @@ bool SdesNegotiator::negotiate()
                     cryptoSuite_ = (*iter_offer)->getCryptoSuite();
                     srtpKeyMethod_ = (*iter_offer)->getSrtpKeyMethod();
                     srtpKeyInfo_ = (*iter_offer)->getSrtpKeyInfo();
-                    authTagLength_ = cryptoSuite_.substr(cryptoSuite_.size()-2, 2);
+                    authTagLength_ = cryptoSuite_.substr(cryptoSuite_.size() - 2, 2);
                 }
 
                 ++iter_local;

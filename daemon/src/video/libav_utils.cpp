@@ -54,18 +54,18 @@ namespace {
 
 void findInstalledVideoCodecs()
 {
-	std::vector<std::string> libav_codecs;
+    std::vector<std::string> libav_codecs;
     AVCodec *p = NULL;
     while ((p = av_codec_next(p)))
         if (p->type == AVMEDIA_TYPE_VIDEO)
             libav_codecs.push_back(p->name);
 
-	std::map<std::string, std::string>::const_iterator it;
+    std::map<std::string, std::string>::const_iterator it;
     for (it = encoders.begin(); it != encoders.end(); ++it) {
         if (std::find(libav_codecs.begin(), libav_codecs.end(), it->second) != libav_codecs.end())
-        	video_codecs.push_back(it->first);
+            video_codecs.push_back(it->first);
         else
-        	ERROR("Didn't find \"%s\" encoder\n", it->second.c_str());
+            ERROR("Didn't find \"%s\" encoder\n", it->second.c_str());
     }
 }
 

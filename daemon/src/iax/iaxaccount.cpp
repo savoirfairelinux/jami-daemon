@@ -93,7 +93,7 @@ void IAXAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(CODECS_KEY, &codecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::unserialize(codecStr_));
+    setActiveCodecs(ManagerImpl::split_string(codecStr_));
     map.getValue(DISPLAY_NAME_KEY, &displayName_);
 }
 
@@ -126,7 +126,7 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 
     RegistrationState state(registrationState_);
 
-    a[CONFIG_REGISTRATION_STATUS] = mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
     a[CONFIG_ACCOUNT_USERAGENT] = userAgent_;
 
     return a;

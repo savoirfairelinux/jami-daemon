@@ -40,8 +40,6 @@
 #include <pjsip/sip_types.h>
 #include <pjsip/sip_uri.h>
 #include <pj/list.h>
-
-
 #include "sip_utils.h"
 
 std::string
@@ -80,6 +78,7 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
     pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
     pjsip_sip_uri *url = pjsip_sip_uri_create(hdr_pool, 0);
+    url->lr_param = 1;
     routing->name_addr.uri = (pjsip_uri*) url;
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;

@@ -40,7 +40,7 @@
 #include <unistd.h>
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
 #include "SFLPhone.h"
 

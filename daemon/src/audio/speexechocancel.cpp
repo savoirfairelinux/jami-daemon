@@ -48,7 +48,7 @@ SpeexEchoCancel::SpeexEchoCancel() :
     tmpMic_(),
     tmpOut_()
 {
-    DEBUG("EchoCancel: Initializing echo canceller with delay: %d, filter "
+    DEBUG("Initializing echo canceller with delay: %d, filter "
           "length: %d, frame size: %d and samplerate %d", echoDelay_,
           echoTailLength_, EC_FRAME_SIZE, SPEEX_SAMPLE_RATE);
 

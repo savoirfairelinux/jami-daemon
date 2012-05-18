@@ -17,7 +17,8 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
+
 #include <unistd.h>
 #include "AccountWizard.h"
 #include <QVBoxLayout>
@@ -246,7 +247,7 @@ void AccountWizard::accept()
          server   = QString( SFL_ACCOUNT_HOST     );
          password = QString( acc.passwd           );
          user     = QString( acc.user             );
-         enabled  = QString( ACCOUNT_ENABLED_TRUE );
+         enabled  = QString( REGISTRATION_ENABLED_TRUE );
 
          is_create_account = true;
          is_using_sip      = true;
@@ -260,7 +261,7 @@ void AccountWizard::accept()
       ret += i18n("This assistant is now finished.") + "\n";
 
       alias    = field   ( FIELD_SIP_ALIAS      ).toString();
-      enabled  = QString ( ACCOUNT_ENABLED_TRUE );
+      enabled  = QString ( REGISTRATION_ENABLED_TRUE );
       mailbox  = field   ( FIELD_SIP_VOICEMAIL  ).toString();
       protocol = QString ( ACCOUNT_TYPE_SIP     );
       server   = field   ( FIELD_SIP_SERVER     ).toString();
@@ -275,7 +276,7 @@ void AccountWizard::accept()
       ret += i18n("This assistant is now finished.") + "\n";
 
       alias    = field   ( FIELD_IAX_ALIAS      ).toString();
-      enabled  = QString ( ACCOUNT_ENABLED_TRUE );
+      enabled  = QString ( REGISTRATION_ENABLED_TRUE );
       mailbox  = field   ( FIELD_IAX_VOICEMAIL  ).toString();
       protocol = QString ( ACCOUNT_TYPE_IAX     );
       server   = field   ( FIELD_IAX_SERVER     ).toString();
@@ -290,21 +291,21 @@ void AccountWizard::accept()
    // common sip paramaters
    if(is_using_sip) {
       if(field(FIELD_SIP_ENABLE_STUN).toBool()) {
-         stun_enabled = QString(ACCOUNT_ENABLED_TRUE);
+         stun_enabled = QString(REGISTRATION_ENABLED_TRUE);
          stun_server  = field(FIELD_SIP_STUN_SERVER).toString();
       }
       else {
-         stun_enabled = QString(ACCOUNT_ENABLED_FALSE);
+         stun_enabled = QString(REGISTRATION_ENABLED_FALSE);
          stun_server  = QString();
       }
 
       if(field(FIELD_ZRTP_ENABLED).toBool()) {
-         srtp_enabled          = QString( ACCOUNT_ENABLED_TRUE  );
+         srtp_enabled          = QString( REGISTRATION_ENABLED_TRUE  );
          key_exchange          = QString( ZRTP                  );
-         zrtp_display_sas      = QString( ACCOUNT_ENABLED_TRUE  );
-         zrtp_not_supp_warning = QString( ACCOUNT_ENABLED_TRUE  );
-         zrtp_hello_hash       = QString( ACCOUNT_ENABLED_TRUE  );
-         display_sas_once      = QString( ACCOUNT_ENABLED_FALSE );
+         zrtp_display_sas      = QString( REGISTRATION_ENABLED_TRUE  );
+         zrtp_not_supp_warning = QString( REGISTRATION_ENABLED_TRUE  );
+         zrtp_hello_hash       = QString( REGISTRATION_ENABLED_TRUE  );
+         display_sas_once      = QString( REGISTRATION_ENABLED_FALSE );
       }
 
       QStringList ifaceList = configurationManager.getAllIpInterface();

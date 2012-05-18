@@ -38,6 +38,7 @@ AccountListModel::AccountListModel(QObject *parent)
 ///Destructor
 AccountListModel::~AccountListModel()
 {
+
 }
 
 

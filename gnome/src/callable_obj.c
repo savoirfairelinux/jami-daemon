@@ -40,9 +40,9 @@
 #include <glib/gi18n.h>
 #include "contacts/calltab.h"
 #include "contacts/calltree.h"
+#include "logger.h"
 #include "dbus.h"
 #include <unistd.h>
-
 
 gint get_state_callstruct(gconstpointer a, gconstpointer b)
 {
@@ -110,6 +110,21 @@ out:
     return ret;
 }
 
+void call_add_error(callable_obj_t * call, gpointer dialog)
+{
+    g_ptr_array_add(call->_error_dialogs, dialog);
+}
+
+void call_remove_error(callable_obj_t * call, gpointer dialog)
+{
+    g_ptr_array_remove(call->_error_dialogs, dialog);
+}
+
+void call_remove_all_errors(callable_obj_t * call)
+{
+    g_ptr_array_foreach(call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
+}
+
 callable_obj_t *create_new_call(callable_type_t type, call_state_t state,
                                 const gchar* const callID,
                                 const gchar* const accountID,
@@ -118,6 +133,7 @@ callable_obj_t *create_new_call(callable_type_t type, call_state_t state,
 {
     callable_obj_t *obj = g_new0(callable_obj_t, 1);
 
+    obj->_error_dialogs = g_ptr_array_new();
     obj->_type = type;
     obj->_state = state;
     obj->_callID = *callID ? g_strdup(callID) : g_strdup_printf("%d", rand());
@@ -192,8 +208,7 @@ callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry)
     value =  g_hash_table_lookup(entry, TIMESTAMP_STOP_KEY);
     new_call->_time_stop = value ? atoi(value) : 0;
     new_call->_recordfile = g_strdup(g_hash_table_lookup(entry, RECORDING_PATH_KEY));
-    new_call->_confID = g_strdup(g_hash_table_lookup(entry, CONFID_KEY));
-    new_call->_historyConfID = g_strdup(new_call->_confID);
+    new_call->_historyConfID = g_strdup(g_hash_table_lookup(entry, CONFID_KEY));
     new_call->_record_is_playing = FALSE;
 
     return new_call;
@@ -202,7 +217,6 @@ callable_obj_t *create_history_entry_from_hashtable(GHashTable *entry)
 void free_callable_obj_t (callable_obj_t *c)
 {
     g_free(c->_callID);
-    g_free(c->_confID);
     g_free(c->_historyConfID);
     g_free(c->_accountID);
     g_free(c->_srtp_cipher);
@@ -301,4 +315,23 @@ gchar *get_formatted_start_timestamp(time_t start)
 gboolean call_was_outgoing(callable_obj_t * obj)
 {
     return g_strcmp0(obj->_history_state, OUTGOING_STRING) == 0;
+}
+
+void restore_call(const gchar *id)
+{
+    DEBUG("Restoring call %s", id);
+    // We fetch the details associated to the specified call
+    GHashTable *call_details = dbus_get_call_details(id);
+    if (!call_details) {
+        ERROR("Invalid call ID");
+        return;
+    }
+    callable_obj_t *new_call = create_new_call_from_details(id, call_details);
+
+    if (utf8_case_equal(g_hash_table_lookup(call_details, "CALL_TYPE"), INCOMING_STRING))
+        new_call->_history_state = g_strdup(INCOMING_STRING);
+    else
+        new_call->_history_state = g_strdup(OUTGOING_STRING);
+
+    calllist_add_call(current_calls_tab, new_call);
 }

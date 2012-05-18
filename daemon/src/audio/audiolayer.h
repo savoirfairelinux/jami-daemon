@@ -62,7 +62,7 @@ class AudioLayer {
 
     public:
         AudioLayer();
-        virtual ~AudioLayer();
+        virtual ~AudioLayer() {}
 
         virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const = 0;
 
@@ -158,7 +158,7 @@ class AudioLayer {
          *			    default: 44100 HZ
          */
         unsigned int getSampleRate() const {
-            return audioSampleRate_;
+            return sampleRate_;
         }
 
         /**
@@ -199,7 +199,7 @@ class AudioLayer {
          * Sample Rate SFLphone should send sound data to the sound card
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int audioSampleRate_;
+        unsigned int sampleRate_;
 
         /**
          * Lock for the entire audio layer
@@ -219,7 +219,7 @@ class AudioLayer {
         /**
          * Manage sampling rate conversion
          */
-        SamplerateConverter *converter_;
+        SamplerateConverter converter_;
 
     private:
         /**

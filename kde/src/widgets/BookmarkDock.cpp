@@ -26,6 +26,8 @@
 #include <QtGui/QTreeWidgetItem>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QSplitter>
+#include <QtGui/QCheckBox>
+#include <QStandardItemModel>
 
 //KDE
 #include <KLocalizedString>
@@ -33,8 +35,12 @@
 #include <KLineEdit>
 
 //SFLPhone
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "widgets/HistoryTreeItem.h"
+#include "SFLPhone.h"
+#include "widgets/CategoryDrawer.h"
+#include "widgets/CategorizedTreeWidget.h"
+#include "klib/AkonadiBackend.h"
 
 ///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
@@ -65,13 +71,21 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
 
    m_pFilterLE   = new KLineEdit(this);
    m_pSplitter   = new QSplitter(Qt::Vertical,this);
-   m_pItemView   = new QTreeWidget(this);
+   m_pItemView   = new CategorizedTreeWidget(this);
+   m_pMostUsedCK = new QCheckBox(this);
+
+   m_pFilterLE->setPlaceholderText(i18n("Filter"));
+
+   m_pMostUsedCK->setChecked(ConfigurationSkeleton::displayContactCallHistory());
 
    QWidget* mainWidget = new QWidget(this);
    setWidget(mainWidget);
 
+   m_pMostUsedCK->setText("Show most called contacts");
+
    QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
 
+   mainLayout->addWidget(m_pMostUsedCK);
    mainLayout->addWidget(m_pSplitter);
    m_pSplitter->addWidget(m_pItemView);
    mainLayout->addWidget(m_pFilterLE);
@@ -82,11 +96,10 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    setWindowTitle(i18n("Bookmark"));
    m_pItemView->headerItem()->setText(0,i18n("Bookmark") );
 
-   foreach (QString nb, ConfigurationSkeleton::bookmarkList()) {
-      addBookmark_internal(nb);
-   }
-
-   connect(m_pFilterLE, SIGNAL(textChanged(QString)), this, SLOT(filter(QString) ));
+   connect(m_pFilterLE                    , SIGNAL(textChanged(QString)), this , SLOT(filter(QString)  ));
+   connect(m_pMostUsedCK                  , SIGNAL(toggled(bool)),        this , SLOT(reload()         ));
+   connect(AkonadiBackend::getInstance()  , SIGNAL(collectionChanged()) , this , SLOT(reload()  ));
+   reload();
 }
 
 ///Destructor
@@ -106,7 +119,15 @@ BookmarkDock::~BookmarkDock()
 void BookmarkDock::addBookmark_internal(const QString& phone)
 {
    HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone);
-   QTreeWidgetItem* item   = new QTreeWidgetItem(m_pItemView      );
+   QTreeWidgetItem* item   = NULL;
+
+   if (widget->getName() == "Unknow" || widget->getName().isEmpty()) {
+      item = m_pItemView->addItem<QNumericTreeWidgetItem>("Unknow");
+   }
+   else {
+      item = m_pItemView->addItem<QNumericTreeWidgetItem>(QString(widget->getName()[0]));
+   }
+
    widget->setItem(item);
    m_pItemView->addTopLevelItem(item);
    m_pItemView->setItemWidget(item,0,widget);
@@ -124,8 +145,33 @@ void BookmarkDock::addBookmark(const QString& phone)
 void BookmarkDock::filter(QString text)
 {
    foreach(HistoryTreeItem* item, m_pBookmark) {
-      bool visible = (item->getName().toLower().indexOf(text) != -1) || (item->getPhoneNumber().toLower().indexOf(text) != -1);
-      item->getItem()-> setHidden(!visible);
+      bool visible = (item->getName().toLower().indexOf(text.toLower()) != -1) || (item->getPhoneNumber().toLower().indexOf(text.toLower()) != -1);
+      item->getItem()->setHidden(!visible);
    }
    m_pItemView->expandAll();
+}
+
+///Show the most popular items
+void BookmarkDock::reload()
+{
+   m_pItemView->clear();
+   m_pBookmark.clear();
+   m_pItemView->addCategory("Popular");
+   for (int i=65;i<=90;i++) {
+      m_pItemView->addCategory(QString(i));
+   }
+   if (m_pMostUsedCK->isChecked()) {
+      QStringList cl = SFLPhone::model()->getNumbersByPopularity();
+      for (int i=0;i < ((cl.size() < 10)?cl.size():10);i++) {
+         QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>("Popular");
+         HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,cl[i]);
+         widget->setItem(item);
+         m_pItemView->setItemWidget(item,0,widget);
+         m_pBookmark << widget;
+      }
+   }
+   foreach (QString nb, ConfigurationSkeleton::bookmarkList()) {
+      addBookmark_internal(nb);
+   }
+   ConfigurationSkeleton::setDisplayContactCallHistory(m_pMostUsedCK->isChecked());
 }

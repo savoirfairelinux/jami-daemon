@@ -20,8 +20,12 @@
 #ifndef CONTACT_DOCK_H
 #define CONTACT_DOCK_H
 
+#include <QtCore/QHash>
 #include <QtGui/QDockWidget>
-#include <QtGui/QTreeWidget>
+#include "CategorizedTreeWidget.h"
+#include "../klib/SortableDockCommon.h"
+#include "CallTreeItem.h"
+#include <QtGui/QTreeWidgetItem>
 
 //Qt
 class QSplitter;
@@ -29,6 +33,8 @@ class QListWidget;
 class QComboBox;
 class QTreeWidgetItem;
 class QCheckBox;
+class QStringList;
+class DateTime;
 
 //KDE
 class KLineEdit;
@@ -49,9 +55,11 @@ namespace KABC {
 ///SFLPhone
 class ContactTree;
 class ContactItemWidget;
+class StaticEventHandler;
+class Contact;
 
 ///@class ContactDock Dock to access contacts
-class ContactDock : public QDockWidget
+class ContactDock : public QDockWidget, public SortableDockCommon<CallTreeItem*,QTreeWidgetItem*>
 {
    Q_OBJECT
 public:
@@ -61,11 +69,11 @@ public:
 
 private:
    //Attributes
-   KLineEdit*                   m_pFilterLE;
-   QSplitter*                   m_pSplitter;
+   KLineEdit*                   m_pFilterLE   ;
+   QSplitter*                   m_pSplitter   ;
    ContactTree*                 m_pContactView;
-   QListWidget*                 m_pCallView;
-   QComboBox*                   m_pSortByCBB;
+   QListWidget*                 m_pCallView   ;
+   QComboBox*                   m_pSortByCBB  ;
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_Contacts;
 
@@ -73,17 +81,18 @@ public slots:
    virtual void keyPressEvent(QKeyEvent* event);
 
 private slots:
-   void reloadContact();
-   void loadContactHistory(QTreeWidgetItem* item);
-   void filter(const QString& text);
-   void setHistoryVisible(bool visible);
+   void reloadContact      (                       );
+   void loadContactHistory ( QTreeWidgetItem* item );
+   void filter             ( const QString& text   );
+   void setHistoryVisible  ( bool visible          );
+   void reloadHistoryConst (                       );
 };
 
 ///@class ContactTree tree view with additinal drag and drop
-class ContactTree : public QTreeWidget {
+class ContactTree : public CategorizedTreeWidget {
    Q_OBJECT
 public:
-   ContactTree(QWidget* parent) : QTreeWidget(parent) {}
+   ContactTree(QWidget* parent) : CategorizedTreeWidget(parent) {}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };

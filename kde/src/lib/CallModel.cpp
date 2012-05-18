@@ -1,22 +1,23 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
+
 //Parent
 #include <CallModel.h>
 
@@ -60,9 +61,14 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
       qDebug() << "Call found" << call;
       call->stateChanged(state);
    }
-   //updateWindowCallState(); //NEED_PORT
+
+   if (call->getCurrentState() == CALL_STATE_OVER) {
+      addToHistory(call);
+      emit historyChanged();
+   }
+
    emit callStateChanged(call);
-   
+
 }
 
 void CallModelBase::on1_incomingCall(const QString & accountID, const QString & callID)
@@ -91,7 +97,7 @@ void CallModelBase::on1_changingConference(const QString &confID, const QString 
 {
    Call* conf = getCall(confID);
    qDebug() << "Changing conference state" << conf << confID;
-   if (conf) {
+   if (conf && dynamic_cast<Call*>(conf)) { //Prevent a race condition between call and conference
       changeConference(confID, state);
       emit conferenceChanged(conf);
    }

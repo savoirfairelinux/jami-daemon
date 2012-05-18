@@ -48,7 +48,7 @@
 #include "lib/Call.h"
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "widgets/TranslucentButtons.h"
 #include "SFLPhone.h"
 
@@ -173,11 +173,11 @@ void CallTreeItem::setCall(Call *call)
 ///Update data
 void CallTreeItem::updated()
 {
-   kDebug() << "\n\n\n\nI am here\n\n\n\n\n" << m_pItemCall->getState() << "\n\n\n";
    kDebug() << "Updating tree item";
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
    if (contact) {
-      m_pIconL->setPixmap(*contact->getPhoto());
+      if (contact->getPhoto())
+         m_pIconL->setPixmap(*contact->getPhoto());
       m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
    }
    else {
@@ -244,7 +244,7 @@ void CallTreeItem::updated()
 void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
 {
    kDebug() << "Drag enter";
-   if (SFLPhone::model()->getIndex(this)->parent() &&
+   if (SFLPhone::model()->getIndex(this) && SFLPhone::model()->getIndex(this)->parent() &&
       SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
       SFLPhone::model()->getIndex(this)->parent() == SFLPhone::model()->getIndex(e->mimeData()->data( MIME_CALLID))->parent() &&
       e->mimeData()->data( MIME_CALLID) != SFLPhone::model()->getCall(this)->getCallId()) {
@@ -286,7 +286,7 @@ void CallTreeItem::dragLeaveEvent ( QDragLeaveEvent *e )
 ///Something is being dropped
 void CallTreeItem::dropEvent(QDropEvent *e)
 {
-   kDebug() << "Drop accepted" << e->pos();
+   kDebug() << "Drop accepted";
    QTimer::singleShot(500, this, SLOT(hide()));
    m_isHover = false;
    if (e->pos().x() < rect().width()/2) {

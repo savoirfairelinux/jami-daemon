@@ -76,6 +76,7 @@ Sdp::Sdp(pj_pool_t *pool)
 void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 {
     activeLocalSession_ = (pjmedia_sdp_session*) sdp;
+
     if (activeLocalSession_->media_count < 1)
         return;
 
@@ -274,6 +275,7 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool /*audio*/)
     }
 
     med->attr[ med->attr_count++] = pjmedia_sdp_attr_create(memPool_, "sendrecv", NULL);
+
     if (!zrtpHelloHash_.empty())
         addZrtpAttribute(med, zrtpHelloHash_);
 
@@ -719,8 +721,6 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
 
 void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
 {
-    CryptoOffer remoteOffer;
-
     for (unsigned i = 0; i < remote_sdp->media_count; ++i) {
         pjmedia_sdp_media *media = remote_sdp->media[i];
 

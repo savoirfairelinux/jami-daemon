@@ -36,40 +36,34 @@ using std::ptrdiff_t;
 
 namespace sfl {
 
-AudioCodec::AudioCodec(uint8 payload, const std::string &codecName) :
-    codecName_(codecName), clockRate_(8000), channel_(1), frameSize_(0),
-    bitrate_(0.0), bandwidth_(0.0), hasDynamicPayload_(false),
-    payload_(payload), payloadFormat_(0)
-{
-    init(payload, clockRate_);
-}
+AudioCodec::AudioCodec(uint8 payload, const std::string &codecName,
+                       int clockRate, int frameSize, int channel) :
+    codecName_(codecName),
+    clockRate_(clockRate),
+    channel_(channel),
+    frameSize_(frameSize),
+    bitrate_(0.0),
+    bandwidth_(0.0),
+    payload_(payload),
+    payloadFormat_(payload, clockRate_),
+    hasDynamicPayload_((payload_ >= 96 and payload_ <= 127) or payload_ == 9)
+{}
 
 AudioCodec::AudioCodec(const AudioCodec& c) :
-    codecName_(c.codecName_), clockRate_(c.clockRate_), channel_(c.channel_),
-    frameSize_(c.frameSize_), bitrate_(c.bitrate_), bandwidth_(c.bandwidth_),
-    hasDynamicPayload_(c.hasDynamicPayload_), payload_(c.payload_),
-    payloadFormat_(c.payloadFormat_)
-{
-    init(c.payload_, c.clockRate_);
-}
-
-void AudioCodec::init(uint8 payloadType, uint32 clockRate)
-{
-    payloadFormat_ = new ost::DynamicPayloadFormat(payloadType, clockRate);
-
-    // If g722 (payload 9), we need to init libccrtp symetric sessions with using
-    // dynamic payload format. This way we get control on rtp clockrate.
-    hasDynamicPayload_ = ((payload_ >= 96 and payload_ <= 127) or payload_ == 9);
-}
+    codecName_(c.codecName_),
+    clockRate_(c.clockRate_),
+    channel_(c.channel_),
+    frameSize_(c.frameSize_),
+    bitrate_(c.bitrate_),
+    bandwidth_(c.bandwidth_),
+    payload_(c.payload_),
+    payloadFormat_(c.payloadFormat_),
+    hasDynamicPayload_(c.hasDynamicPayload_)
+{}
 
 std::string AudioCodec::getMimeSubtype() const
 {
     return codecName_;
-}
-
-const ost::PayloadFormat& AudioCodec::getPayloadFormat()
-{
-    return *payloadFormat_;
 }
 
 uint8 AudioCodec::getPayloadType() const
@@ -95,11 +89,6 @@ unsigned AudioCodec::getFrameSize() const
 double AudioCodec::getBitRate() const
 {
     return bitrate_;
-}
-
-AudioCodec::~AudioCodec()
-{
-    delete payloadFormat_;
 }
 
 } // end namespace sfl

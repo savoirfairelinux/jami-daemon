@@ -56,7 +56,7 @@ Account::Account(const std::string &accountID, const std::string &type) :
     , userAgent_("SFLphone")
     , mailBox_()
 {
-    // Initialize the codec list, used when creating a new account
+    // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
 }
 
@@ -77,25 +77,25 @@ void Account::setRegistrationState(const RegistrationState &state)
 void Account::loadDefaultCodecs()
 {
     // Initialize codec
-    std::vector<std::string> codecList;
-    codecList.push_back("0");
-    codecList.push_back("3");
-    codecList.push_back("8");
-    codecList.push_back("9");
-    codecList.push_back("110");
-    codecList.push_back("111");
-    codecList.push_back("112");
+    std::vector<std::string> result;
+    result.push_back("0");
+    result.push_back("3");
+    result.push_back("8");
+    result.push_back("9");
+    result.push_back("110");
+    result.push_back("111");
+    result.push_back("112");
 
-    setActiveCodecs(codecList);
+    setActiveCodecs(result);
 #ifdef SFL_VIDEO
     setActiveVideoCodecs(sfl_video::getCodecList());
 #endif
 }
 
 #ifdef SFL_VIDEO
-void Account::setActiveVideoCodecs (const std::vector <std::string> &list)
+void Account::setActiveVideoCodecs(const std::vector<std::string> &list)
 {
-	videoCodecList_ = !list.empty() ? list : sfl_video::getCodecList();
+    videoCodecList_ = !list.empty() ? list : sfl_video::getCodecList();
 }
 #endif
 
@@ -105,14 +105,15 @@ void Account::setActiveCodecs(const std::vector <std::string> &list)
     codecList_.clear();
 
     // list contains the ordered payload of active codecs picked by the user for this account
-    // we used the CodecList vector to save the order.
-    for (std::vector<std::string>::const_iterator i = list.begin(); i != list.end(); ++i) {
-        int payload = std::atoi(i->c_str());
+    // we used the CodecOrder vector to save the order.
+    for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
+            ++iter) {
+        int payload = std::atoi(iter->c_str());
         codecList_.push_back(static_cast<int>(payload));
     }
 
     // update the codec string according to new codec selection
-    codecStr_ = ManagerImpl::serialize(list);
+    codecStr_ = ManagerImpl::join_string(list);
 }
 
 std::string Account::mapStateNumberToString(RegistrationState state)

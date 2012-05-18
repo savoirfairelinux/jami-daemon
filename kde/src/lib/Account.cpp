@@ -1,23 +1,22 @@
-/***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 //Parent
 #include "Account.h"
@@ -86,6 +85,12 @@ Account* Account::buildExistingAccountFromId(const QString& _accountId)
       return NULL;
    }
    a->m_pAccountDetails = aDetails;
+
+   //Enable for debug
+   //    foreach (QString str, *aDetails) {
+   //       qDebug() << aDetails->key(str) << str;
+   //    }
+
    return a;
 }
 
@@ -152,6 +157,10 @@ const QString& Account::getAccountDetail(const QString& param) const
    }
    if (m_pAccountDetails->find(param) != m_pAccountDetails->end())
       return (*m_pAccountDetails)[param];
+   else if (m_pAccountDetails->count() > 0) {
+      qDebug() << "Account paramater \"" << param << "\" not found";
+      return EMPTY_STRING;
+   }
    else {
       qDebug() << "Account details not found, there is " << m_pAccountDetails->count() << " details available";
       return EMPTY_STRING;
@@ -167,13 +176,13 @@ const QString& Account::getAlias() const
 ///Is this account enabled
 bool Account::isEnabled() const
 {
-   return (getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE);
+   return (getAccountDetail(ACCOUNT_ENABLED) == REGISTRATION_ENABLED_TRUE);
 }
 
 ///Is this account registered
 bool Account::isRegistered() const
 {
-   return (getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED);
+   return (getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
 
@@ -207,7 +216,7 @@ void Account::setAccountId(const QString& id)
 ///Set account enabled
 void Account::setEnabled(bool checked)
 {
-   setAccountDetail(ACCOUNT_ENABLED, checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
+   setAccountDetail(ACCOUNT_ENABLED, checked ? REGISTRATION_ENABLED_TRUE : REGISTRATION_ENABLED_FALSE);
 }
 
 /*****************************************************************************
@@ -222,8 +231,8 @@ void Account::updateState()
    if(! isNew()) {
       ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
-      QString status = details[ACCOUNT_STATUS];
-      setAccountDetail(ACCOUNT_STATUS, status); //Update -internal- object state
+      QString status = details[ACCOUNT_REGISTRATION_STATUS];
+      setAccountDetail(ACCOUNT_REGISTRATION_STATUS, status); //Update -internal- object state
    }
 }
 

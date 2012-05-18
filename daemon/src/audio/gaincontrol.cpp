@@ -23,7 +23,7 @@ GainControl::GainControl(double sr, double target) : averager_(sr, SFL_GAIN_ATTA
     , maxIncreaseStep_(exp(0.11513 * 12. * 160 / 8000)) // Computed on 12 frames (240 ms)
     , maxDecreaseStep_(exp(-0.11513 * 40. * 160 / 8000))// Computed on 40 frames (800 ms)
 {
-    DEBUG("GainControl: Target gain %f dB (%f linear)", targetLeveldB_, targetLevelLinear_);
+    DEBUG("Target gain %f dB (%f linear)", targetLeveldB_, targetLevelLinear_);
 }
 
 void GainControl::process(SFLDataFormat *buf, int samples)

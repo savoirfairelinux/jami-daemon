@@ -33,12 +33,9 @@
  */
 
 #include "audio_rtp_session.h"
-#include "audio_symmetric_rtp_session.h"
 #include "logger.h"
 #include "sip/sdp.h"
 #include "sip/sipcall.h"
-#include "audio/audiolayer.h"
-#include <ccrtp/rtp.h>
 #include <ccrtp/oqueue.h>
 #include "manager.h"
 
@@ -72,10 +69,10 @@ void AudioRtpSession::updateSessionMedia(AudioCodec &audioCodec)
     Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 
     if (lastSamplingRate != audioRtpRecord_.codecSampleRate_) {
-        DEBUG("AudioRtpSession: Update noise suppressor with sampling rate %d and frame size %d", getCodecSampleRate(), getCodecFrameSize());
+        DEBUG("Update noise suppressor with sampling rate %d and frame size %d",
+              getCodecSampleRate(), getCodecFrameSize());
         initNoiseSuppress();
     }
-
 }
 
 void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
@@ -94,20 +91,20 @@ void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
     else
         timestampIncrement_ = frameSize;
 
-    DEBUG("AudioRtpSession: Codec payload: %d", payloadType);
-    DEBUG("AudioRtpSession: Codec sampling rate: %d", smplRate);
-    DEBUG("AudioRtpSession: Codec frame size: %d", frameSize);
-    DEBUG("AudioRtpSession: RTP timestamp increment: %d", timestampIncrement_);
+    DEBUG("Codec payload: %d", payloadType);
+    DEBUG("Codec sampling rate: %d", smplRate);
+    DEBUG("Codec frame size: %d", frameSize);
+    DEBUG("RTP timestamp increment: %d", timestampIncrement_);
 
     if (payloadType == g722PayloadType) {
-        DEBUG("AudioRtpSession: Setting G722 payload format");
+        DEBUG("Setting G722 payload format");
         queue_.setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, g722RtpClockRate));
     } else {
         if (dynamic) {
-            DEBUG("AudioRtpSession: Setting dynamic payload format");
+            DEBUG("Setting dynamic payload format");
             queue_.setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, smplRate));
         } else {
-            DEBUG("AudioRtpSession: Setting static payload format");
+            DEBUG("Setting static payload format");
             queue_.setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) payloadType));
         }
     }
@@ -129,7 +126,7 @@ void AudioRtpSession::sendDtmfEvent()
 
     audioRtpRecord_.dtmfQueue_.pop_front();
 
-    DEBUG("AudioRtpSession: Send RTP Dtmf (%d)", payload.event);
+    DEBUG("Send RTP Dtmf (%d)", payload.event);
 
     incrementTimestampForDTMF();
 
@@ -144,7 +141,8 @@ void AudioRtpSession::sendDtmfEvent()
     queue_.setMark(false);
 
     // get back the payload to audio
-    queue_.setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) getCodecPayloadType()));
+    const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getCodecPayloadType()));
+    queue_.setPayloadFormat(pf);
 }
 
 
@@ -156,7 +154,7 @@ void AudioRtpSession::receiveSpeakerData()
         return;
 
     unsigned char* spkrDataIn = (unsigned char*) adu->getData(); // data in char
-    unsigned int size = adu->getSize(); // size in char
+    size_t size = adu->getSize(); // size in char
 
     // DTMF over RTP, size must be over 4 in order to process it as voice data
     if (size > 4)
@@ -184,7 +182,8 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::setSessionTimeouts()
 {
-    DEBUG("AudioRtpSession: Set session scheduling timeout (%d) and expireTimeout (%d)", sfl::schedulingTimeout, sfl::expireTimeout);
+    DEBUG("Set session scheduling timeout (%d) and expireTimeout (%d)",
+            sfl::schedulingTimeout, sfl::expireTimeout);
 
     queue_.setSchedulingTimeout(sfl::schedulingTimeout);
     queue_.setExpireTimeout(sfl::expireTimeout);
@@ -196,7 +195,7 @@ void AudioRtpSession::setDestinationIpAddress()
     remote_ip_ = ost::InetHostAddress(call_.getLocalSDP()->getRemoteIP().c_str());
 
     if (!remote_ip_) {
-        WARN("AudioRtpSession: Target IP address (%s) is not correct!",
+        WARN("Target IP address (%s) is not correct!",
               call_.getLocalSDP()->getRemoteIP().data());
         return;
     }
@@ -204,24 +203,24 @@ void AudioRtpSession::setDestinationIpAddress()
     // Store remote port in case we would need to forget current destination
     remote_port_ = (unsigned short) call_.getLocalSDP()->getRemoteAudioPort();
 
-    DEBUG("AudioRtpSession: New remote address for session: %s:%d",
+    DEBUG("New remote address for session: %s:%d",
           call_.getLocalSDP()->getRemoteIP().data(), remote_port_);
 
     if (!queue_.addDestination(remote_ip_, remote_port_)) {
-        WARN("AudioRtpSession: Can't add new destination to session!");
+        WARN("Can't add new destination to session!");
         return;
     }
 }
 
 void AudioRtpSession::updateDestinationIpAddress()
 {
-    DEBUG("AudioRtpSession: Update destination ip address");
+    DEBUG("Update destination ip address");
 
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
     if (!queue_.forgetDestination(remote_ip_, remote_port_, remote_port_ + 1))
-        DEBUG("AudioRtpSession: Did not remove previous destination");
+        DEBUG("Did not remove previous destination");
 
     // new destination is stored in call
     // we just need to recall this method
@@ -234,7 +233,7 @@ int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
     if (isStarted_)
         return 0;
 
-    DEBUG("AudioRtpSession: Starting main thread");
+    DEBUG("Starting main thread");
 
     isStarted_ = true;
     setSessionTimeouts();

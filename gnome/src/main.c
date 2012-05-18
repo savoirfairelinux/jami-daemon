@@ -87,7 +87,7 @@ main(int argc, char *argv[])
     textdomain("sflphone-client-gnome");
 
     if (!sflphone_init(&error)) {
-        ERROR(error->message);
+        ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
                                 GTK_WINDOW(get_main_window()),
                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -116,8 +116,8 @@ main(int argc, char *argv[])
     status_bar_display_account();
 
     sflphone_fill_history();
-    sflphone_fill_call_list();
     sflphone_fill_conference_list();
+    sflphone_fill_call_list();
     history_search_init();
 
     // Update the GUI

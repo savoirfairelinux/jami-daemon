@@ -1,0 +1,21 @@
+[Desktop Entry]
+Name=SFLPhone plasmoid
+Comment=Plasma client for SFLPhone daemon
+Icon=chronometer
+
+X-Plasma-API=declarativeappletscript
+X-Plasma-MainScript=ui/main.qml
+X-Plasma-DefaultSize=350,650
+
+X-KDE-PluginInfo-Author=Emmanuel Lepage Vallee
+X-KDE-PluginInfo-Email=emmanuel.lepage@savoirfairelinux.com
+X-KDE-PluginInfo-Website=http://sflphone.org/
+X-KDE-PluginInfo-Category=Phone
+X-KDE-PluginInfo-Name=org.kde.sflphone
+X-KDE-PluginInfo-Version=0.1
+
+X-KDE-PluginInfo-Depends=
+X-KDE-PluginInfo-License=GPL
+X-KDE-PluginInfo-EnabledByDefault=true
+X-KDE-ServiceTypes=Plasma/Applet
+Type=Service

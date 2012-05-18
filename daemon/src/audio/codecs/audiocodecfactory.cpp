@@ -37,6 +37,7 @@
 
 #include "audiocodecfactory.h"
 #include <cstdlib>
+#include <dlfcn.h>
 #include <algorithm> // for std::find
 #include "fileutils.h"
 #include "logger.h"
@@ -50,10 +51,10 @@ AudioCodecFactory::AudioCodecFactory() :
     if (codecDynamicList.empty())
         ERROR("Error - No codecs available");
     else {
-        for (CodecVector::const_iterator i = codecDynamicList.begin();
-             i != codecDynamicList.end() ; ++i) {
-            codecsMap_[(int)(*i)->getPayloadType()] = *i;
-            DEBUG("Loaded codec %s" , (*i)->getMimeSubtype().c_str());
+        for (CodecVector::const_iterator iter = codecDynamicList.begin();
+                iter != codecDynamicList.end() ; ++iter) {
+            codecsMap_[(int)(*iter)->getPayloadType()] = *iter;
+            DEBUG("Loaded codec %s" , (*iter)->getMimeSubtype().c_str());
         }
     }
 }
@@ -80,11 +81,9 @@ std::vector<int32_t >
 AudioCodecFactory::getAudioCodecList() const
 {
     std::vector<int32_t> list;
-    int size = codecsMap_.size();
-    printf("%d\n",size);
-    for (CodecsMap::const_iterator i = codecsMap_.begin(); i != codecsMap_.end(); ++i)
-        if (i->second)
-            list.push_back((int32_t)i->first);
+    for (CodecsMap::const_iterator iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
+        if (iter->second)
+            list.push_back((int32_t)iter->first);
 
     return list;
 }
@@ -112,20 +111,22 @@ double AudioCodecFactory::getBitRate(int payload) const
         return 0.0;
 }
 
+
 int AudioCodecFactory::getSampleRate(int payload) const
 {
     CodecsMap::const_iterator iter = codecsMap_.find(payload);
 
-    if (iter!=codecsMap_.end())
-        return (iter->second->getClockRate() * 0.001);
-	return 0;
+    if (iter != codecsMap_.end())
+        return iter->second->getClockRate();
+    else
+        return 0;
 }
 
 void AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
 {
     defaultCodecList_.clear();
     // list contains the ordered payload of active codecs picked by the user
-    // we used the CodecList vector to save the order.
+    // we used the CodecOrder vector to save the order.
 
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
         int payload = std::atoi(iter->c_str());
@@ -138,9 +139,9 @@ void AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
 
 AudioCodecFactory::~AudioCodecFactory()
 {
-    for (std::vector<CodecHandlePointer>::const_iterator i =
-         codecInMemory_.begin(); i != codecInMemory_.end(); ++i)
-        unloadCodec(*i);
+    for (std::vector<CodecHandlePointer>::const_iterator iter =
+                codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter)
+        unloadCodec(*iter);
 }
 
 std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
@@ -195,7 +196,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
 
 sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
 {
-    void * codecHandle = dlopen(path.c_str() , RTLD_LAZY);
+    void * codecHandle = dlopen(path.c_str(), RTLD_LAZY);
 
     if (!codecHandle) {
         ERROR("%s\n", dlerror());
@@ -204,7 +205,7 @@ sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
 
     dlerror();
 
-    create_t* createCodec = (create_t*) dlsym(codecHandle , CODEC_ENTRY_SYMBOL);
+    create_t* createCodec = (create_t*) dlsym(codecHandle, CODEC_ENTRY_SYMBOL);
     char *error = dlerror();
 
     if (error) {
@@ -238,9 +239,11 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
 
 sfl::Codec* AudioCodecFactory::instantiateCodec(int payload) const
 {
-    for (std::vector<CodecHandlePointer>::const_iterator i = codecInMemory_.begin(); i != codecInMemory_.end(); ++i) {
-        if (i->first->getPayloadType() == payload) {
-            create_t* createCodec = (create_t*) dlsym(i->second , CODEC_ENTRY_SYMBOL);
+    std::vector< CodecHandlePointer >::const_iterator iter;
+
+    for (iter = codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter) {
+        if (iter->first->getPayloadType() == payload) {
+            create_t* createCodec = (create_t*) dlsym(iter->second , CODEC_ENTRY_SYMBOL);
 
             char *error = dlerror();
 
@@ -309,8 +312,10 @@ AudioCodecFactory::alreadyInCache(const std::string &lib)
 
 bool AudioCodecFactory::isCodecLoaded(int payload) const
 {
-    for (CodecsMap::const_iterator i = codecsMap_.begin(); i != codecsMap_.end(); ++i)
-        if (i->first == payload)
+    CodecsMap::const_iterator iter;
+
+    for (iter = codecsMap_.begin(); iter != codecsMap_.end(); ++iter)
+        if (iter->first == payload)
             return true;
 
     return false;

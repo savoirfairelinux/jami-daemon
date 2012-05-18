@@ -31,8 +31,9 @@
 #include "yamlparser.h"
 
 #include "../global.h"
-#include "config.h"
+#include "sfl_config.h"
 #include "yamlnode.h"
+#include "logger.h"
 #include <cstdio>
 
 namespace Conf {
@@ -223,10 +224,7 @@ void YamlParser::processStream()
 
 void YamlParser::processDocument()
 {
-    doc_ = new YamlDocument();
-
-    if (!doc_)
-        throw YamlParserException("Not able to create new document");
+    doc_ = new YamlDocument;
 
     for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_DOCUMENT_END_EVENT); ++eventIndex_) {
         switch (events_[eventIndex_].type) {
@@ -265,6 +263,7 @@ void YamlParser::processScalar(YamlNode *topNode)
             break;
         case MAPPING:
             ((MappingNode *)(topNode))->addNode(sclr);
+            break;
         case SCALAR:
         default:
             break;
@@ -370,6 +369,8 @@ void YamlParser::processMapping(YamlNode *topNode)
 
 void YamlParser::constructNativeData()
 {
+    if (!doc_)
+        throw YamlParserException("YAML Document not initialized");
     Sequence *seq = doc_->getSequence();
 
     for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {

@@ -23,6 +23,7 @@
 
 //Qt
 #include <QtCore/QDateTime>
+#include <QtCore/QMap>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QListWidget>
 #include <QtGui/QTreeWidget>
@@ -39,14 +40,18 @@
 #include <KIcon>
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
+#include "CallView.h"
+#include "SFLPhoneView.h"
 
 //SFLPhone library
 #include "lib/Call.h"
 #include "lib/Contact.h"
+
+#define CURRENT_SORTING_MODE m_pSortByCBB->currentIndex()
 
 ///@class QNumericTreeWidgetItem_hist TreeWidget using different sorting criterias
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
@@ -94,9 +99,10 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 
 
    QStringList sortType;
-   sortType << "Name" << "Organisation" << "Phone number type" << "Rencently used" << "Group";
+   sortType << "Name" << "Organisation" << "Recently used" << "Group" << "Department";
+
    m_pSortByCBB->addItems(sortType);
-   m_pSortByCBB->setDisabled(true);
+   //m_pSortByCBB->setDisabled(true);
 
    QWidget* mainWidget = new QWidget(this);
    setWidget(mainWidget);
@@ -109,7 +115,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    KeyPressEaterC *keyPressEater = new KeyPressEaterC(this);
    m_pContactView->installEventFilter(keyPressEater);
 
-   m_pContactView->setAlternatingRowColors(true);
+   //m_pContactView->setAlternatingRowColors(true);
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
@@ -131,11 +137,20 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pSplitter->setChildrenCollapsible(true);
    m_pSplitter->setStretchFactor(0,7);
 
+   QTimer* timer = new QTimer(this);
+
+   m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::contactSortMode());
+
    connect (AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                   this,        SLOT(reloadContact()                      ));
+   connect (m_pSortByCBB                 ,SIGNAL(currentIndexChanged(int)),                              this,        SLOT(reloadContact()                      ));
    connect (m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,        SLOT(loadContactHistory(QTreeWidgetItem*) ));
    connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
    connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         this,        SLOT(setHistoryVisible(bool)              ));
+   connect (timer                        ,SIGNAL(timeout()),                                             this,        SLOT(reloadHistoryConst()                 ));
+   timer->start(1800*1000); //30 minutes
    setWindowTitle(i18n("Contact"));
+
+
 }
 
 ///Destructor
@@ -155,31 +170,75 @@ ContactDock::~ContactDock()
 void ContactDock::reloadContact()
 {
    ContactList list = AkonadiBackend::getInstance()->update();
-   foreach (Contact* cont, list) {
-      ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
-      QNumericTreeWidgetItem_hist* item = new QNumericTreeWidgetItem_hist(m_pContactView);
-      item->widget = aContact;
-      aContact->setItem(item);
-      aContact->setContact(cont);
+   if (!list.size())
+      return;
+   m_pContactView->clear();
+   m_Contacts.clear();
 
-      PhoneNumbers numbers =  aContact->getContact()->getPhoneNumbers();
-      kDebug() << "Phone count" << numbers.count();
-      if (numbers.count() > 1) {
-         foreach (Contact::PhoneNumber* number, numbers) {
-            QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
-            QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber(),this);
-            item2->number = number->getNumber();
-            m_pContactView->setItemWidget(item2,0,numberL);
+   QHash<Contact*, QDateTime> recentlyUsed;
+   switch (CURRENT_SORTING_MODE) {
+      case Recently_used:
+         recentlyUsed = getContactListByTime();
+         foreach (QString cat, m_slHistoryConst) {
+            m_pContactView->addCategory(cat);
          }
-      }
-      else if (numbers.count() == 1) {
-         item->number = numbers[0]->getNumber();
-      }
-
-      m_pContactView->addTopLevelItem(item);
-      m_pContactView->setItemWidget(item,0,aContact);
-      m_Contacts << aContact;
+         break;
    }
+
+   foreach (Contact* cont, list) {
+      if (cont->getPhoneNumbers().count() && usableNumberCount(cont)) {
+         ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
+         QString category;
+         switch (CURRENT_SORTING_MODE) {
+            case Name:
+               category = QString(cont->getFormattedName()[0]);
+               break;
+            case Organisation:
+               category = (cont->getOrganization().isEmpty())?"Unknow":cont->getOrganization();
+               break;
+            case Recently_used:
+               if (recentlyUsed.find(cont) != recentlyUsed.end())
+                  category = timeToHistoryCategory(recentlyUsed[cont].date());
+               else
+                  category = m_slHistoryConst[Never];
+               break;
+            case Group:
+               category = "TODO";
+               break;
+            case Department:
+               category = (cont->getDepartment().isEmpty())?"Unknow":cont->getDepartment();;
+               break;
+         }
+         QNumericTreeWidgetItem_hist* item = m_pContactView->addItem<QNumericTreeWidgetItem_hist>(category);
+         item->widget = aContact;
+         aContact->setItem(item);
+         aContact->setContact(cont);
+
+         PhoneNumbers numbers =  aContact->getContact()->getPhoneNumbers();
+         if (numbers.count() > 1) {
+            foreach (Contact::PhoneNumber* number, numbers) {
+               QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
+               QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber(),this);
+               item2->number = number->getNumber();
+               m_pContactView->setItemWidget(item2,0,numberL);
+            }
+         }
+         else if (numbers.count() == 1) {
+            item->number = numbers[0]->getNumber();
+         }
+
+         m_pContactView->setItemWidget(item,0,aContact);
+         m_Contacts << aContact;
+      }
+   }
+   switch (CURRENT_SORTING_MODE) {
+      case Recently_used:
+         break;
+      default:
+         m_pContactView->sortItems(0,Qt::AscendingOrder);
+   }
+
+   ConfigurationSkeleton::setContactSortMode(m_pSortByCBB->currentIndex());
 }
 
 ///Query the call history for all items related to this contact
@@ -208,17 +267,26 @@ void ContactDock::filter(const QString& text)
    foreach(ContactItemWidget* item, m_Contacts) {
       bool foundNumber = false;
       foreach (Contact::PhoneNumber* number, item->getContact()->getPhoneNumbers()) {
-         foundNumber |= number->getNumber().toLower().indexOf(text) != -1;
+         foundNumber |= number->getNumber().toLower().indexOf(text.toLower()) != -1;
       }
-      bool visible = (item->getContact()->getFormattedName().toLower().indexOf(text) != -1)
-                  || (item->getContact()->getOrganization().toLower().indexOf(text) != -1)
-                  || (item->getContact()->getPreferredEmail().toLower().indexOf(text) != -1)
+      bool visible = (item->getContact()->getFormattedName  ().toLower().indexOf(text.toLower()) != -1)
+                  || (item->getContact()->getOrganization   ().toLower().indexOf(text.toLower()) != -1)
+                  || (item->getContact()->getPreferredEmail ().toLower().indexOf(text.toLower()) != -1)
+                  || (item->getContact()->getDepartment     ().toLower().indexOf(text.toLower()) != -1)
                   || foundNumber;
       item->getItem()->setHidden(!visible);
    }
-   m_pContactView->expandAll();
+   //m_pContactView->expandAll();
 }
 
+void ContactDock::reloadHistoryConst()
+{
+   switch (CURRENT_SORTING_MODE) {
+      case Recently_used:
+         reloadContact();
+         break;
+   }
+}
 
 /*****************************************************************************
  *                                                                           *
@@ -293,9 +361,23 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
    int key = event->key();
    if(key == Qt::Key_Escape)
       m_pFilterLE->setText(QString());
-   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {}
+   else if(key == Qt::Key_Return || key == Qt::Key_Enter) {
+      if (m_pContactView->selectedItems()[0] && m_pContactView->itemWidget(m_pContactView->selectedItems()[0],0)) {
+         QNumericTreeWidgetItem_hist* item = dynamic_cast<QNumericTreeWidgetItem_hist*>(m_pContactView->selectedItems()[0]);
+         if (item) {
+            Call* call = NULL;
+            SFLPhone::app()->view()->selectCallPhoneNumber(call,item->widget->getContact());
+         }
+      }
+   }
    else if((key == Qt::Key_Backspace) && (m_pFilterLE->text().size()))
       m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
    else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))
       m_pFilterLE->setText(m_pFilterLE->text()+event->text());
 }
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Helpers                                  *
+ *                                                                           *
+ ****************************************************************************/

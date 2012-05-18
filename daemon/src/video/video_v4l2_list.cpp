@@ -106,7 +106,7 @@ VideoV4l2ListThread::VideoV4l2ListThread() : devices_(), mutex_(), udev_(0), ude
                 try {
                     addDevice(devpath);
                 } catch (const std::runtime_error &e) {
-                    ERROR(e.what());
+                    ERROR("%s", e.what());
                 }
             }
         }
@@ -135,7 +135,7 @@ udev_failed:
             if (!addDevice(ss.str()))
                 return;
         } catch (const std::runtime_error &e) {
-            ERROR(e.what());
+            ERROR("%s", e.what());
             return;
         }
     }
@@ -221,7 +221,7 @@ void VideoV4l2ListThread::run()
                         addDevice(node);
                         Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
                     } catch (const std::runtime_error &e) {
-                        ERROR(e.what());
+                        ERROR("%s", e.what());
                     }
                 } else if (!strcmp(action, "remove")) {
                     DEBUG("udev: removing %s", node);

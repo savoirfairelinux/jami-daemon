@@ -32,13 +32,9 @@
  *  as that of the covered work.
  */
 
-#include "audio_rtp_session.h"
 #include "audio_symmetric_rtp_session.h"
-#include "audio_rtp_record_handler.h"
 #include "logger.h"
-#include "sip/sdp.h"
 #include "sip/sipcall.h"
-#include "audio/audiolayer.h"
 
 namespace sfl {
 
@@ -48,7 +44,8 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     , AudioRtpSession(call, *this, *this)
     , rtpThread_(*this)
 {
-    DEBUG("AudioSymmetricRtpSession: Setting new RTP session with destination %s:%d", call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+    DEBUG("Setting new RTP session with destination %s:%d",
+            call_.getLocalIp().c_str(), call_.getLocalAudioPort());
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 
@@ -69,7 +66,7 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
     TimerPort::setTimer(threadSleep);
 
-    DEBUG("AudioRtpThread: Entering Audio rtp thread main loop");
+    DEBUG("Entering Audio rtp thread main loop");
 
     while (running_) {
         // Send session
@@ -83,7 +80,7 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
         TimerPort::incTimer(threadSleep);
     }
 
-    DEBUG("AudioRtpThread: Leaving audio rtp thread loop");
+    DEBUG("Leaving audio rtp thread loop");
 }
 
 void AudioSymmetricRtpSession::setSessionMedia(AudioCodec &audioCodec)
@@ -94,12 +91,11 @@ void AudioSymmetricRtpSession::setSessionMedia(AudioCodec &audioCodec)
 
 int AudioSymmetricRtpSession::startRtpThread(AudioCodec &audiocodec)
 {
-    DEBUG("AudioSymmetricRtpSession: Starting main thread");
+    DEBUG("Starting main thread");
     if (isStarted_)
         return 0;
 
     AudioRtpSession::startRtpThread(audiocodec);
     return startSymmetricRtpThread();
 }
-
 }

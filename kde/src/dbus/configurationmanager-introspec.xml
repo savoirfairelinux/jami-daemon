@@ -37,9 +37,9 @@
                         <li>DISPLAY_NAMEL: The display name</li>
                         <li>STUN_ENABLE: True or False (Default: False)</li>
                         <li>STUN_SERVER: The STUN server address</li>
-                        <li>REGISTRATION_STATUS: The account registration status. Should be Registered to make calls.</li>
-                        <li>REGISTRATION_STATE_CODE</li>
-                        <li>REGISTRATION_STATE_DESCRIPTION</li>
+                        <li>ACCOUNT_REGISTRATION_STATUS: The account registration status. Should be Registered to make calls.</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_CODE</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_DESC</li>
                         <li>SRTP_KEY_EXCHANGE</li>
                         <li>SRTP_ENABLE: Whether or not voice communication are encrypted - True or False (Default: False)</li>
                         <li>SRTP_RTP_FALLBACK</li>
@@ -447,6 +447,21 @@
        </method>
 
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
+       </signal>
+
+       <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="registration_state"/>
+       </signal>
+
+       <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
+           <arg type="s" name="reason">
+           </arg>
+       </signal>
+
+       <signal name="stunStatusSuccess" tp:name-for_bindings="stunStatusSuccess">
+           <arg type="s" name="message">
+           </arg>
        </signal>
 
        <signal name="errorAlert" tp:name-for-bindings="errorAlert">

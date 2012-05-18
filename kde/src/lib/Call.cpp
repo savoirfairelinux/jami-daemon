@@ -1,23 +1,22 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 //Parent
 #include "Call.h"
@@ -313,7 +312,7 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 QString Call::getStopTimeStamp()     const
 {
    if (m_pStopTime == NULL)
-      return QString();
+      return QString("0");
    return QString::number(m_pStopTime->toTime_t());
 }
 
@@ -321,7 +320,7 @@ QString Call::getStopTimeStamp()     const
 QString Call::getStartTimeStamp()    const
 {
    if (m_pStartTime == NULL)
-      return QString();
+      return QString("0");
    return QString::number(m_pStartTime->toTime_t());
 }
 
@@ -383,6 +382,12 @@ bool Call::isConference()                   const
 const QString& Call::getConfId()            const
 {
    return m_ConfId;
+}
+
+///Get the recording path
+const QString& Call::getRecordingPath()      const
+{
+   return m_RecordingPath;
 }
 
 ///Get the current codec
@@ -459,6 +464,18 @@ void Call::setConfId(QString value)
    m_ConfId = value;
 }
 
+///Set the recording path
+void Call::setRecordingPath(const QString& path)
+{
+   m_RecordingPath = path;
+}
+
+///Set peer name
+void Call::setPeerName(const QString& name)
+{
+   m_PeerName = name;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Mutator                                  *
@@ -523,6 +540,11 @@ void Call::changeCurrentState(call_state newState)
       emit isOver(this);
 }
 
+void Call::sendTextMessage(QString message)
+{
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   callManager.sendTextMessage(m_CallId,message);
+}
 
 /*****************************************************************************
  *                                                                           *
@@ -608,7 +630,7 @@ void Call::call()
    qDebug() << "account = " << m_Account;
    if(m_Account.isEmpty()) {
       qDebug() << "Account is not set, taking the first registered.";
-      this->m_Account = CallModelConvenience::getCurrentAccountId();
+      this->m_Account = CallModel<>::getCurrentAccountId();
    }
    if(!m_Account.isEmpty()) {
       qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId;

@@ -433,6 +433,12 @@ void dbus_add_participant(const gchar *callID, const gchar *confID);
 gchar **dbus_get_participant_list(const gchar *confID);
 
 /**
+ * If thsi call participate to a conference, return the conference id
+ * Return an empty string elsewhere
+ */
+gchar *dbus_get_conference_id(const gchar *callID);
+
+/**
  * Toggle recording for this instance, may be call or conference
  */
 void dbus_set_record(const gchar *id);

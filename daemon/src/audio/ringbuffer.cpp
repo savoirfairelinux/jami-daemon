@@ -132,7 +132,7 @@ RingBuffer::storeReadPointer(int pointer_value, const std::string &call_id)
     if (iter != readpointer_.end())
         iter->second = pointer_value;
     else
-        DEBUG("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
+        DEBUG("Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id_.c_str());
 }
 
 

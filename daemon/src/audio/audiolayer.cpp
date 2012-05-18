@@ -40,23 +40,14 @@ unsigned int AudioLayer::playbackGain_ = 100;
 AudioLayer::AudioLayer()
     : isStarted_(false)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
-    , audioSampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
+    , sampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_()
     , dcblocker_()
     , audioPref(Manager::instance().audioPreference)
-    , converter_(new SamplerateConverter(audioSampleRate_))
+    , converter_(sampleRate_)
     , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
-}
-
-
-AudioLayer::~AudioLayer()
-{
-    if(converter_) {
-        delete converter_;
-        converter_ = NULL;
-    }
 }
 
 void AudioLayer::flushMain()

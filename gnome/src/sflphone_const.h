@@ -60,6 +60,10 @@
 #define ACCOUNT_MAILBOX                    "Account.mailbox"
 #define ACCOUNT_USERAGENT                  "Account.useragent"
 #define ACCOUNT_REGISTRATION_EXPIRE        "Account.registrationExpire"
+#define ACCOUNT_REGISTRATION_STATUS        "Account.registrationStatus"
+#define ACCOUNT_REGISTRATION_STATE_CODE    "Account.registrationCode"
+#define ACCOUNT_REGISTRATION_STATE_DESC    "Account.registrationDescription"
+
 #define ACCOUNT_SIP_STUN_SERVER            "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
 #define ACCOUNT_DTMF_TYPE                  "Account.dtmfType"
@@ -103,10 +107,6 @@
 #define LOCAL_PORT                         "Account.localPort"
 #define PUBLISHED_PORT                     "Account.publishedPort"
 #define PUBLISHED_ADDRESS                  "Account.publishedAddress"
-
-#define REGISTRATION_STATUS                "Registration.Status"
-#define REGISTRATION_STATE_CODE            "Registration.code"
-#define REGISTRATION_STATE_DESCRIPTION     "Registration.description"
 
 #define SHORTCUT_PICKUP                    "pickUp"
 #define SHORTCUT_HANGUP                    "hangUp"

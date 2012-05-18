@@ -96,8 +96,7 @@ typedef struct  {
     int _state_code;                // The numeric state code as defined in SIP or IAX
     gchar* _state_code_description; // A textual description of _state_code
     gchar* _callID;                 // The call ID
-    gchar* _confID;                 // The conference ID (NULL if don't participate to a conference)
-    gchar* _historyConfID;	        // Persistent conf id to be stored in history
+    gchar* _historyConfID;          // Persistent conf id to be stored in history
     gchar* _accountID;              // The account the call is made with
     time_t _time_start;             // The timestamp the call was initiating
     time_t _time_stop;              // The timestamp the call was over
@@ -129,6 +128,14 @@ typedef struct  {
      * The thumbnail, if callable_obj_type=CONTACT
      */
     GdkPixbuf *_contact_thumbnail;
+
+    /**
+     * Maintains a list of error dialogs
+     * associated with that call so that
+     * they could be destroyed at the right
+     * moment.
+     */
+    GPtrArray * _error_dialogs;
 
     /**
      * The recording file for this call, if NULL, no recording available
@@ -197,5 +204,7 @@ gchar* call_get_audio_codec(callable_obj_t *obj);
 gchar* call_get_audio_codec (callable_obj_t *obj);
 gchar* call_get_video_codec (callable_obj_t *obj);
 gboolean call_was_outgoing(callable_obj_t * obj);
+
+void restore_call(const gchar *id);
 
 #endif

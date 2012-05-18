@@ -1,21 +1,22 @@
-/*
- *  Copyright (C) 2008 Savoir-Faire Linux inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 
- *                                                                              
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
- *  (at your option) any later version.
- *                                                                                
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *                                                                               
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 #ifndef __SFLPHONE_CONST_H
 #define __SFLPHONE_CONST_H
@@ -25,7 +26,7 @@
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code
  */
- 
+
 #define APP_NAME                          "SFLphone KDE Client"
 
 #define SIP                               0
@@ -110,63 +111,139 @@
 
 
 /** Account details */
-#define ACCOUNT_TYPE                     "Account.type"
-#define ACCOUNT_ALIAS		         "Account.alias"
-#define ACCOUNT_ENABLED		         "Account.enable"
-#define ACCOUNT_MAILBOX		         "Account.mailbox"
-#define ACCOUNT_RESOLVE_ONCE             "Account.resolveOnce"
-#define ACCOUNT_REGISTRATION_EXPIRE      "Account.expire"
-#define ACCOUNT_SIP_STUN_SERVER	         "STUN.server"
-#define ACCOUNT_SIP_STUN_ENABLED         "STUN.enable"
-#define ACCOUNT_HOSTNAME                 "hostname"
-#define ACCOUNT_USERNAME                 "username"
-#define ACCOUNT_PASSWORD                 "password"
-#define ACCOUNT_AUTHENTICATION_USERNAME  "authenticationUsername"
-#define ACCOUNT_REALM                    "realm"
-#define ACCOUNT_KEY_EXCHANGE             "SRTP.keyExchange"
-#define ACCOUNT_SRTP_ENABLED             "SRTP.enable"
-#define ACCOUNT_ZRTP_DISPLAY_SAS         "ZRTP.displaySAS"
-#define ACCOUNT_ZRTP_NOT_SUPP_WARNING    "ZRTP.notSuppWarning"
-#define ACCOUNT_ZRTP_HELLO_HASH          "ZRTP.helloHashEnable"
-#define ACCOUNT_DISPLAY_SAS_ONCE         "ZRTP.displaySasOnce"
-#define KEY_EXCHANGE_NONE                "0"
-#define ZRTP                             "1"
-#define SDES                             "2"
+// #define ACCOUNT_ID                         "Account.id"
+// #define ACCOUNT_TYPE                       "Account.type"
+// #define ACCOUNT_ALIAS                      "Account.alias"
+// #define ACCOUNT_ENABLED                    "Account.enable"
+// #define ACCOUNT_MAILBOX                    "Account.mailbox"
+// #define ACCOUNT_USERAGENT                  "Account.useragent"
+// #define ACCOUNT_REGISTRATION_EXPIRE        "Account.registrationExpire"
+// #define ACCOUNT_SIP_STUN_SERVER            "STUN.server"
+// #define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
+// #define ACCOUNT_DTMF_TYPE                  "Account.dtmfType"
+// #define ACCOUNT_HOSTNAME                   "Account.hostname"
+// #define ACCOUNT_USERNAME                   "Account.username"
+// #define ACCOUNT_ROUTE                      "Account.routeset"
+// #define ACCOUNT_PASSWORD                   "Account.password"
+// #define ACCOUNT_REALM                      "Account.realm"
+// #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
+// #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
+// #define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
+// #define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
+// #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
+// #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
+// #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
+// #define KEY_EXCHANGE_NONE                "0"
+// #define ZRTP                             "1"
+// #define SDES                             "2"
 
 /** TLS */
-#define TLS_LISTENER_PORT                   "TLS.listenerPort"
-#define TLS_ENABLE                       "TLS.enable"
-#define TLS_PORT                         "TLS.port"
-#define TLS_CA_LIST_FILE                 "TLS.certificateListFile"
-#define TLS_CERTIFICATE_FILE             "TLS.certificateFile"
-#define TLS_PRIVATE_KEY_FILE             "TLS.privateKeyFile"
-#define TLS_PASSWORD                     "TLS.password"
-#define TLS_METHOD                       "TLS.method"
-#define TLS_CIPHERS                      "TLS.ciphers"
-#define TLS_SERVER_NAME                  "TLS.serverName"
-#define TLS_VERIFY_SERVER                "TLS.verifyServer"
-#define TLS_VERIFY_CLIENT                "TLS.verifyClient"
-#define TLS_REQUIRE_CLIENT_CERTIFICATE   "TLS.requireClientCertificate"  
-#define TLS_NEGOTIATION_TIMEOUT_SEC      "TLS.negotiationTimeoutSec"
-#define TLS_NEGOTIATION_TIMEOUT_MSEC     "TLS.negotiationTimemoutMsec"
+// #define TLS_LISTENER_PORT                "TLS.listenerPort"
+// #define TLS_ENABLE                       "TLS.enable"
+// #define TLS_PORT                         "TLS.port"
+// #define TLS_CA_LIST_FILE                 "TLS.certificateListFile"
+// #define TLS_CERTIFICATE_FILE             "TLS.certificateFile"
+// #define TLS_PRIVATE_KEY_FILE             "TLS.privateKeyFile"
+// #define TLS_PASSWORD                     "TLS.password"
+// #define TLS_METHOD                       "TLS.method"
+// #define TLS_CIPHERS                      "TLS.ciphers"
+// #define TLS_SERVER_NAME                  "TLS.serverName"
+// #define TLS_VERIFY_SERVER                "TLS.verifyServer"
+// #define TLS_VERIFY_CLIENT                "TLS.verifyClient"
+// #define TLS_REQUIRE_CLIENT_CERTIFICATE   "TLS.requireClientCertificate"
+// #define TLS_NEGOTIATION_TIMEOUT_SEC      "TLS.negotiationTimeoutSec"
+// #define TLS_NEGOTIATION_TIMEOUT_MSEC     "TLS.negotiationTimemoutMsec"
+//
+// #define LOCAL_INTERFACE                  "Account.localInterface"
+// #define PUBLISHED_SAMEAS_LOCAL           "Account.publishedSameAsLocal"
+// #define LOCAL_PORT                       "Account.localPort"
+// #define PUBLISHED_PORT                   "Account.publishedPort"
+// #define PUBLISHED_ADDRESS                "Account.publishedAddress"
+//
+// #define REGISTRATION_STATUS              "Registration.Status"
+// #define REGISTRATION_STATE_CODE          "Registration.code"
+// #define REGISTRATION_STATE_DESCRIPTION   "Registration.description"
 
-#define LOCAL_INTERFACE                  "Account.localInterface"
-#define PUBLISHED_SAMEAS_LOCAL           "Account.publishedSameAsLocal"
-#define LOCAL_PORT                       "Account.localPort"
-#define PUBLISHED_PORT                   "Account.publishedPort"
-#define PUBLISHED_ADDRESS                "Account.publishedAddress"
 
-#define REGISTRATION_STATUS              "Status"
-#define REGISTRATION_STATE_CODE          "Registration.code" 
-#define REGISTRATION_STATE_DESCRIPTION   "Registration.description"
+#define IP2IP_PROFILE                      "IP2IP"
+
+#define ACCOUNT_ID                         "Account.id"
+#define ACCOUNT_TYPE                       "Account.type"
+#define ACCOUNT_ALIAS                      "Account.alias"
+#define ACCOUNT_ENABLED                    "Account.enable"
+#define ACCOUNT_MAILBOX                    "Account.mailbox"
+#define ACCOUNT_USERAGENT                  "Account.useragent"
+#define ACCOUNT_REGISTRATION_EXPIRE        "Account.registrationExpire"
+#define ACCOUNT_REGISTRATION_STATUS        "Account.registrationStatus"
+#define ACCOUNT_REGISTRATION_STATE_CODE    "Account.registrationCode"
+#define ACCOUNT_REGISTRATION_STATE_DESC    "Account.registrationDescription"
+
+#define ACCOUNT_SIP_STUN_SERVER            "STUN.server"
+#define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
+#define ACCOUNT_DTMF_TYPE                  "Account.dtmfType"
+#define ACCOUNT_HOSTNAME                   "Account.hostname"
+#define ACCOUNT_USERNAME                   "Account.username"
+#define ACCOUNT_ROUTE                      "Account.routeset"
+#define ACCOUNT_PASSWORD                   "Account.password"
+#define ACCOUNT_REALM                      "Account.realm"
+#define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
+#define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
+#define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
+#define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
+#define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
+#define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
+#define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
+#define KEY_EXCHANGE_NONE                  "none"
+#define ZRTP                               "zrtp"
+#define SDES                               "sdes"
+
+#define CONFIG_RINGTONE_PATH               "Account.ringtonePath"
+#define CONFIG_RINGTONE_ENABLED            "Account.ringtoneEnabled"
+
+#define TLS_LISTENER_PORT                  "TLS.listenerPort"
+#define TLS_ENABLE                         "TLS.enable"
+#define TLS_PORT                           "TLS.port"
+#define TLS_CA_LIST_FILE                   "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE               "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE               "TLS.privateKeyFile"
+#define TLS_PASSWORD                       "TLS.password"
+#define TLS_METHOD                         "TLS.method"
+#define TLS_CIPHERS                        "TLS.ciphers"
+#define TLS_SERVER_NAME                    "TLS.serverName"
+#define TLS_VERIFY_SERVER                  "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                  "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE     "TLS.requireClientCertificate"
+#define TLS_NEGOTIATION_TIMEOUT_SEC        "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC       "TLS.negotiationTimemoutMsec"
+
+#define SHORTCUT_PICKUP                    "pickUp"
+#define SHORTCUT_HANGUP                    "hangUp"
+#define SHORTCUT_POPUP                     "popupWindow"
+#define SHORTCUT_TOGGLEPICKUPHANGUP        "togglePickupHangup"
+#define SHORTCUT_TOGGLEHOLD                "toggleHold"
+
+
+#define CONFIG_ACCOUNT_HOSTNAME             "Account.hostname"
+#define CONFIG_ACCOUNT_USERNAME             "Account.username"
+#define CONFIG_ACCOUNT_ROUTESET             "Account.routeset"
+#define CONFIG_ACCOUNT_PASSWORD             "Account.password"
+#define CONFIG_ACCOUNT_REALM                "Account.realm"
+#define CONFIG_ACCOUNT_DEFAULT_REALM        "*"
+#define CONFIG_ACCOUNT_USERAGENT            "Account.useragent"
+
+#define LOCAL_INTERFACE                    "Account.localInterface"
+#define PUBLISHED_SAMEAS_LOCAL             "Account.publishedSameAsLocal"
+#define LOCAL_PORT                         "Account.localPort"
+#define PUBLISHED_PORT                     "Account.publishedPort"
+#define PUBLISHED_ADDRESS                  "Account.publishedAddress"
 
 
 /** Maybe to remove **/
-#define ACCOUNT_EXPIRE                   "Account.expire"
-#define ACCOUNT_STATUS                   "Status"
-#define ACCOUNT_EXPIRE_DEFAULT            600
-#define ACCOUNT_ENABLED_TRUE              "true"
-#define ACCOUNT_ENABLED_FALSE             "false"
+// #define ACCOUNT_EXPIRE                   "Account.expire"
+// #define ACCOUNT_STATUS                   "Status"
+#define REGISTRATION_EXPIRE_DEFAULT            600
+#define REGISTRATION_ENABLED_TRUE              "true"
+#define REGISTRATION_ENABLED_FALSE             "false"
 #define ACCOUNT_TYPE_SIP                  "SIP"
 #define ACCOUNT_TYPE_IAX                  "IAX"
 #define ACCOUNT_TYPES_TAB                 {QString(ACCOUNT_TYPE_SIP), QString(ACCOUNT_TYPE_IAX)}
@@ -250,37 +327,37 @@
 #define CONST_PULSEAUDIO                  1
 
 /** TLS */
-#define TLS_LISTENER_PORT                   "TLS.listenerPort"
-#define TLS_ENABLE                          "TLS.enable"
-#define TLS_PORT                            "TLS.port"
-#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
-#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
-#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
-#define TLS_PASSWORD                        "TLS.password"
-#define TLS_METHOD                          "TLS.method"
-#define TLS_CIPHERS                         "TLS.ciphers"
-#define TLS_SERVER_NAME                     "TLS.serverName"
-#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
-#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
-#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
-#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
-#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+// #define TLS_LISTENER_PORT                   "TLS.listenerPort"
+// #define TLS_ENABLE                          "TLS.enable"
+// #define TLS_PORT                            "TLS.port"
+// #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
+// #define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
+// #define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
+// #define TLS_PASSWORD                        "TLS.password"
+// #define TLS_METHOD                          "TLS.method"
+// #define TLS_CIPHERS                         "TLS.ciphers"
+// #define TLS_SERVER_NAME                     "TLS.serverName"
+// #define TLS_VERIFY_SERVER                   "TLS.verifyServer"
+// #define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
+// #define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"
+// #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
+// #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
-#define ACCOUNT_ID                         "Account.id"
-#define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
-#define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
-#define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
-#define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
-#define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
-#define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
-#define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
-#define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
-#define KEY_EXCHANGE_NONE                  "0"
-#define ZRTP                               "1"
-#define SDES                               "2"
+// #define ACCOUNT_ID                         "Account.id"
+// #define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
+// #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
+// #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
+// #define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
+// #define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
+// #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
+// #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
+// #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
+// #define KEY_EXCHANGE_NONE                  "0"
+// #define ZRTP                               "1"
+// #define SDES                               "2"
 
 typedef enum
-{ 
+{
    /** Ringing incoming call */
    CALL_STATE_INCOMING    = 0,
    /** Ringing outgoing call */
@@ -316,4 +393,18 @@ static const QString empty("");
 #define MIME_CONTACT_PHONE    "text/sflphone.contact.phone"
 #define MIME_PLAIN_TEXT       "text/plain"
 #endif
+
+/** HISTORY SERIALIZATION */
+#define ACCOUNT_ID_KEY      "accountid"
+#define CALLID_KEY          "callid"
+#define CONFID_KEY          "confid"
+#define DISPLAY_NAME_KEY    "display_name"
+#define PEER_NUMBER_KEY     "peer_number"
+#define RECORDING_PATH_KEY  "recordfile"
+#define STATE_KEY           "state"
+#define TIMESTAMP_START_KEY "timestamp_start"
+#define TIMESTAMP_STOP_KEY  "timestamp_stop"
+#define MISSED_STRING       "missed"
+#define INCOMING_STRING     "incoming"
+#define OUTGOING_STRING     "outgoing"
 

@@ -1,23 +1,22 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 
 #ifndef CALL_H
@@ -151,21 +150,25 @@ public:
    const QString&       getConfId           () const;
    const QString&       getTransferNumber   () const;
    const QString&       getCallNumber       () const;
+   const QString&       getRecordingPath    () const;
 
    //Automated function
    call_state stateChanged(const QString & newState);
    call_state actionPerformed(call_action action);
    
    //Setters
-   void setConference(bool value);
-   void setConfId(QString value);
-   void setTransferNumber(const QString& number);
-   void setCallNumber(const QString& number);
+   void setConference     ( bool value            );
+   void setConfId         ( QString value         );
+   void setTransferNumber ( const QString& number );
+   void setCallNumber     ( const QString& number );
+   void setRecordingPath  ( const QString& path   );
+   void setPeerName       ( const QString& name   );
    
    //Mutators
    void appendText(const QString& str);
    void backspaceItemText();
    void changeCurrentState(call_state newState);
+   void sendTextMessage(QString message);
    
 private:
 
@@ -175,6 +178,7 @@ private:
    QString                m_ConfId         ;
    QString                m_PeerPhoneNumber;
    QString                m_PeerName       ;
+   QString                m_RecordingPath  ;
    history_state          m_HistoryState   ;
    QDateTime*             m_pStartTime     ;
    QDateTime*             m_pStopTime      ;

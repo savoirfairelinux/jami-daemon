@@ -60,10 +60,10 @@ namespace sfl {
     class AudioZrtpSession;
 }
 
-class CallManager : public org::sflphone::SFLphone::CallManager_adaptor,
-    public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor {
-        
+class CallManager
+    : public org::sflphone::SFLphone::CallManager_adaptor,
+  public DBus::IntrospectableAdaptor,
+      public DBus::ObjectAdaptor {
     public:
 
         CallManager(DBus::Connection& connection);
@@ -82,13 +82,13 @@ class CallManager : public org::sflphone::SFLphone::CallManager_adaptor,
         void hold(const std::string& callID);
         void unhold(const std::string& callID);
         void transfer(const std::string& callID, const std::string& to);
-        void attendedTransfer(const std::string& transferID, const std::string &targetID);
-        std::map<std::string, std::string> getCallDetails(const std::string &callID);
-        std::vector<std::string> getCallList();
+        void attendedTransfer(const std::string& transferID, const std::string& targetID);
+        std::map< std::string, std::string > getCallDetails(const std::string& callID);
+        std::vector< std::string > getCallList();
 
         /* Conference related methods */
-        void joinParticipant(const std::string& sel_callID, const std::string &drag_callID);
-        void createConfFromParticipantList(const std::vector<std::string> &participants);
+        void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+        void createConfFromParticipantList(const std::vector< std::string >& participants);
         void addParticipant(const std::string& callID, const std::string& confID);
         void addMainParticipant(const std::string& confID);
         void detachParticipant(const std::string& callID);
@@ -98,13 +98,14 @@ class CallManager : public org::sflphone::SFLphone::CallManager_adaptor,
         void unholdConference(const std::string& confID);
         std::vector<std::string> getConferenceList();
         std::vector<std::string> getParticipantList(const std::string& confID);
+        std::string getConferenceId(const std::string& callID);
         std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
         /* File Playback methods */
         bool startRecordedFilePlayback(const std::string& filepath);
         void stopRecordedFilePlayback(const std::string& filepath);
 
-        /* General media methods */
+        /* General audio methods */
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
         void setRecording(const std::string& callID);
@@ -130,4 +131,3 @@ class CallManager : public org::sflphone::SFLphone::CallManager_adaptor,
 };
 
 #endif//CALLMANAGER_H
-

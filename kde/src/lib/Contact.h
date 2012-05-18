@@ -1,27 +1,28 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
+
 #ifndef CONTACT_H
 #define CONTACT_H
 
-#include <QObject>
+#include <QtCore/QObject>
+#include <QtCore/QVariant>
 
 //Qt
 class QListWidgetItem;
@@ -69,6 +70,8 @@ private:
    QString      m_PreferredEmail ;
    QString      m_Organization   ;
    QString      m_Uid            ;
+   QString      m_Group          ;
+   QString      m_Department     ;
    bool         m_DisplayPhoto   ;
    PhoneNumbers m_Numbers        ;
    
@@ -89,17 +92,24 @@ public:
    virtual const QString& getPreferredEmail()  const;
    virtual const QPixmap* getPhoto()           const;
    virtual const QString& getType()            const;
+   virtual const QString& getGroup()           const;
+   virtual const QString& getDepartment()      const;
 
    //Setters
-   virtual void setPhoneNumbers   (PhoneNumbers          );
-   virtual void setFormattedName  (const QString& name   );
-   virtual void setNickName       (const QString& name   );
-   virtual void setFirstName      (const QString& name   );
-   virtual void setFamilyName     (const QString& name   );
-   virtual void setOrganization   (const QString& name   );
-   virtual void setPreferredEmail (const QString& name   );
-   virtual void setUid            (const QString& id     );
-   virtual void setPhoto          (QPixmap* photo        );
+   virtual void setPhoneNumbers   ( PhoneNumbers          );
+   virtual void setFormattedName  ( const QString& name   );
+   virtual void setNickName       ( const QString& name   );
+   virtual void setFirstName      ( const QString& name   );
+   virtual void setFamilyName     ( const QString& name   );
+   virtual void setOrganization   ( const QString& name   );
+   virtual void setPreferredEmail ( const QString& name   );
+   virtual void setGroup          ( const QString& name   );
+   virtual void setDepartment     ( const QString& name   );
+   virtual void setUid            ( const QString& id     );
+   virtual void setPhoto          ( QPixmap* photo        );
+
+   //Mutator
+   QHash<QString,QVariant> toHash();
    
 protected:
    virtual void initItemWidget();

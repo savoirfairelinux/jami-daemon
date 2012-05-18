@@ -38,6 +38,7 @@
 #include "hooks/urlhook.h"
 #include "audio/audiolayer.h"
 #include "audio/samplerateconverter.h"
+#include "array_size.h"
 
 #include <cmath>
 #include <dlfcn.h>
@@ -180,7 +181,8 @@ IAXVoIPLink::sendAudioFromMic()
         SFLDataFormat *in;
 
         if (audioRate != mainBufferSampleRate) {
-            converter_.resample(decData_, resampledData_, audioRate, mainBufferSampleRate, samples);
+            converter_.resample(decData_, resampledData_, ARRAYSIZE(resampledData_),
+                                audioRate, mainBufferSampleRate, samples);
             in = resampledData_;
             outSamples = 0;
         } else {
@@ -209,8 +211,6 @@ IAXVoIPLink::getIAXCall(const std::string& id)
 void
 IAXVoIPLink::sendRegister(Account *a)
 {
-    DEBUG("Send register");
-
     IAXAccount *account = dynamic_cast<IAXAccount*>(a);
 
     if (account->getHostname().empty())
@@ -282,8 +282,6 @@ IAXVoIPLink::answer(Call *call)
 void
 IAXVoIPLink::hangup(const std::string& id)
 {
-    DEBUG("IAXVoIPLink: Hangup");
-
     IAXCall* call = getIAXCall(id);
 
     if (call == NULL)
@@ -304,8 +302,6 @@ IAXVoIPLink::hangup(const std::string& id)
 void
 IAXVoIPLink::peerHungup(const std::string& id)
 {
-    DEBUG("IAXVoIPLink: Peer hung up");
-
     IAXCall* call = getIAXCall(id);
 
     if (call == NULL)
@@ -583,7 +579,8 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 
     if (audioRate != mainBufferSampleRate) {
         outSize = (double)outSize * (mainBufferSampleRate / audioRate);
-        converter_.resample(decData_, resampledData_, mainBufferSampleRate, audioRate, samples);
+        converter_.resample(decData_, resampledData_, ARRAYSIZE(resampledData_),
+                            mainBufferSampleRate, audioRate, samples);
         out = resampledData_;
     }
 

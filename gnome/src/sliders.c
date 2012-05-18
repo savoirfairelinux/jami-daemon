@@ -124,14 +124,14 @@ void set_slider_value(const gchar *device, gdouble newval)
 
     if (g_strcmp0(device, "speaker") == 0) {
         dev = DEVICE_SPEAKER;
-        DEBUG("Slider: Set value for speaker: %f\n", newval);
+        DEBUG("Set value for speaker: %f\n", newval);
     }
     else if (g_strcmp0(device, "mic") == 0) {
         dev = DEVICE_MIC;
-        DEBUG("Slider: Set value for mic: %f\n", newval);
+        DEBUG("Set value for mic: %f\n", newval);
     }
     else {
-        ERROR("Slider: Unknown device: %s", device);
+        ERROR("Unknown device: %s", device);
         return;
     }
 
@@ -148,14 +148,14 @@ void set_slider_no_update (const gchar * device, gdouble newval)
 
     if (g_strcmp0(device, "speaker") == 0) {
         dev = DEVICE_SPEAKER;
-        DEBUG("Slider: Set value no update for speaker: %f\n", newval);
+        DEBUG("Set value no update for speaker: %f\n", newval);
     }
     else if (g_strcmp0(device, "mic") == 0) {
         dev = DEVICE_MIC;
-        DEBUG("Slider: Set value no update for mic: %f\n", newval);
+        DEBUG("Set value no update for mic: %f\n", newval);
     }
     else {
-        ERROR("Slider: Unknown device: %s", device);
+        ERROR("Unknown device: %s", device);
         return;
     }
 
@@ -172,8 +172,6 @@ void set_slider_no_update (const gchar * device, gdouble newval)
 
 void toggle_slider_mute_microphone(void)
 {
-    DEBUG("Slider: Mute/Unmute toggle");
-
     switch(device_state) {
     case DEVICE_STATE_ACTIVE:
         value[DEVICE_MIC] = gtk_range_get_value(GTK_RANGE(slider[DEVICE_MIC]));
@@ -185,7 +183,7 @@ void toggle_slider_mute_microphone(void)
         device_state = DEVICE_STATE_ACTIVE;
         break;
     default:
-        ERROR("Slider: Unknown state");
+        ERROR("Unknown state");
         break;
     }
 }

@@ -42,13 +42,15 @@
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>
+#include <stdlib.h>
 
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 
 namespace {
-    const int MIN_REGISTRATION_TIME = 600;
+    const int MIN_REGISTRATION_TIME = 60;
+    const int DEFAULT_REGISTRATION_TIME = 3600;
 }
 
 SIPAccount::SIPAccount(const std::string& accountID)
@@ -96,7 +98,9 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , zrtpHelloHash_(true)
     , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
+    , keepAliveEnabled_(false)
     , keepAliveTimer_()
+    , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
     , receivedParameter_()
     , rPort_(-1)
@@ -127,6 +131,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
     ScalarNode contactUpdateEnabled(contactUpdateEnabled_);
+    ScalarNode keepAliveEnabled(keepAliveEnabled_);
 
     ScalarNode mailbox(mailBox_);
     ScalarNode publishAddr(publishedIpAddress_);
@@ -141,9 +146,9 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     for (vector<string>::const_iterator i = videoCodecList_.begin();
             i != videoCodecList_.end(); ++i)
         DEBUG("%s", i->c_str());
-    DEBUG("%s", Manager::instance().serialize(videoCodecList_).c_str());
+    DEBUG("%s", Manager::instance().join_string(videoCodecList_).c_str());
 
-    ScalarNode vcodecs(Manager::instance().serialize(videoCodecList_));
+    ScalarNode vcodecs(Manager::instance().join_string(videoCodecList_));
 #endif
 
     ScalarNode ringtonePath(ringtonePath_);
@@ -207,6 +212,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 #endif
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
+    accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
 
     accountmap.setKeyValue(SRTP_KEY, &srtpmap);
     srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);
@@ -251,7 +257,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     try {
         emitter.serializeAccount(&accountmap);
     } catch (const YamlEmitterException &e) {
-        ERROR("ConfigTree: %s", e.what());
+        ERROR("%s", e.what());
     }
 
     Sequence *seq = credentialseq.getSequence();
@@ -282,7 +288,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(VIDEO_CODECS_KEY, &vcodecs);
 #endif
     // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::unserialize(codecStr_));
+    setActiveCodecs(ManagerImpl::split_string(codecStr_));
 
     map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
     map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
@@ -295,6 +301,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
     map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
+    map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
     map.getValue(DTMF_TYPE_KEY, &dtmfType);
@@ -422,7 +429,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
     if (stunServer_ != details[CONFIG_STUN_SERVER]) {
-        DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
     }
@@ -430,8 +436,11 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     stunEnabled_ = details[CONFIG_STUN_ENABLE] == "true";
     dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
+    if(registrationExpire_ < MIN_REGISTRATION_TIME)
+        registrationExpire_ = MIN_REGISTRATION_TIME;
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
+    keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == "true";
 
     // srtp settings
     srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == "true";
@@ -501,9 +510,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateDescription = registrationStateDetailed_.second;
     }
 
-    a[CONFIG_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
-    a[CONFIG_REGISTRATION_STATE_CODE] = registrationStateCode;
-    a[CONFIG_REGISTRATION_STATE_DESCRIPTION] = registrationStateDescription;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY": mapStateNumberToString(state);
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
+    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
 
     // Add sip specific details
     a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
@@ -525,6 +534,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_STUN_ENABLE] = stunEnabled_ ? "true" : "false";
     a[CONFIG_STUN_SERVER] = stunServer_;
     a[CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
+    a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? "true" : "false";
 
     a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
     a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
@@ -563,7 +573,7 @@ void SIPAccount::registerVoIPLink()
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_ == "true") {
-        DEBUG("SIPAccount: TLS is enabled for account %s", accountID_.c_str());
+        DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -584,7 +594,7 @@ void SIPAccount::registerVoIPLink()
     try {
         link_->sendRegister(this);
     } catch (const VoipLinkException &e) {
-        ERROR("SIPAccount: %s", e.what());
+        ERROR("%s", e.what());
     }
 }
 
@@ -596,7 +606,7 @@ void SIPAccount::unregisterVoIPLink()
     try {
         link_->sendUnregister(this);
     } catch (const VoipLinkException &e) {
-        ERROR("SIPAccount: %s", e.what());
+        ERROR("%s", e.what());
     }
 }
 
@@ -605,7 +615,13 @@ void SIPAccount::startKeepAliveTimer() {
     if (isTlsEnabled())
         return;
 
-    DEBUG("SIP ACCOUNT: start keep alive timer");
+    if (isIP2IP())
+        return;
+
+    if(keepAliveTimerActive_)
+        return;
+
+    DEBUG("Start keep alive timer for account %s", getAccountID().c_str());
 
     // make sure here we have an entirely new timer
     memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
@@ -613,25 +629,31 @@ void SIPAccount::startKeepAliveTimer() {
     pj_time_val keepAliveDelay_;
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
     keepAliveTimer_.user_data = this;
+    keepAliveTimer_.id = rand();
 
     // expiration may be undetermined during the first registration request
     if (registrationExpire_ == 0) {
-        DEBUG("Registration Expire == 0, take 60");
-        keepAliveDelay_.sec = 60;
+        DEBUG("Registration Expire: 0, taking 60 instead");
+        keepAliveDelay_.sec = 3600;
     }
     else {
-        DEBUG("Registration Expire == %d", registrationExpire_);
-        keepAliveDelay_.sec = registrationExpire_;
+        DEBUG("Registration Expire: %d", registrationExpire_);
+        keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
 
-
     keepAliveDelay_.msec = 0;
+
+    keepAliveTimerActive_ = true;
 
     link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer() {
-     link_->cancelKeepAliveTimer(keepAliveTimer_);
+    DEBUG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
+
+    keepAliveTimerActive_ = false;
+
+    link_->cancelKeepAliveTimer(keepAliveTimer_);
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
@@ -697,7 +719,7 @@ void SIPAccount::initStunConfiguration()
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
-        registrationExpire_ = MIN_REGISTRATION_TIME; /** Default expire value for registration */
+        registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
@@ -814,7 +836,7 @@ void SIPAccount::setContactHeader(std::string address, std::string port)
 std::string SIPAccount::getContactHeader() const
 {
     if (transport_ == NULL)
-        ERROR("SipAccount: Transport not created yet");
+        ERROR("Transport not created yet");
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
@@ -857,8 +879,10 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 {
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
+    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
+
     if (sipAccount == NULL) {
-        ERROR("Sip account is NULL while registering a new keep alive timer");
+        ERROR("SIP account is NULL while registering a new keep alive timer");
         return;
     }
 
@@ -870,16 +894,10 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
     if (sipAccount->isTlsEnabled())
         return;
 
-    if (sipAccount->isRegistered()) {
-        // send a new register request
+    sipAccount->stopKeepAliveTimer();
+
+    if (sipAccount->isRegistered())
         sipAccount->registerVoIPLink();
-
-        // make sure the current timer is deactivated
-        sipAccount->stopKeepAliveTimer();
-
-        // register a new timer
-        sipAccount->startKeepAliveTimer();
-    }
 }
 
 namespace {
@@ -916,7 +934,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 {
     // we can not authenticate without credentials
     if (creds.empty()) {
-        ERROR("SIPAccount: Cannot authenticate with empty credentials list");
+        ERROR("Cannot authenticate with empty credentials list");
         return;
     }
 

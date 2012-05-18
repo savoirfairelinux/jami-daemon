@@ -1,23 +1,23 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
+
 #include "dlgaccounts.h"
 
 #include <QtGui/QInputDialog>
@@ -81,10 +81,13 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    setupUi(this);
    disconnect(keditlistbox_codec->addButton(),SIGNAL(clicked()));
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   button_accountUp->setIcon     ( KIcon( "go-up"       ) );
-   button_accountDown->setIcon   ( KIcon( "go-down"     ) );
-   button_accountAdd->setIcon    ( KIcon( "list-add"    ) );
-   button_accountRemove->setIcon ( KIcon( "list-remove" ) );
+   button_accountUp->setIcon         ( KIcon( "go-up"       ) );
+   button_accountDown->setIcon       ( KIcon( "go-down"     ) );
+   button_accountAdd->setIcon        ( KIcon( "list-add"    ) );
+   button_accountRemove->setIcon     ( KIcon( "list-remove" ) );
+   button_add_credential->setIcon    ( KIcon( "list-add"    ) );
+   button_remove_credential->setIcon ( KIcon( "list-remove" ) );
+
    accountList = new ConfigAccountList(false);
    loadAccountList();
    loadCodecList();
@@ -101,7 +104,6 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /**/connect(edit6_mailbox,                  SIGNAL(textEdited(const QString &)) , this      , SLOT(changedAccountList()      ));
    /**/connect(spinbox_regExpire,              SIGNAL(editingFinished())           , this      , SLOT(changedAccountList()      ));
    /**/connect(comboBox_ni_local_address,      SIGNAL(currentIndexChanged (int))   , this      , SLOT(changedAccountList()      ));
-   /**/connect(checkBox_conformRFC,            SIGNAL(clicked(bool))               , this      , SLOT(changedAccountList()      ));
    /**/connect(button_accountUp,               SIGNAL(clicked())                   , this      , SLOT(changedAccountList()      ));
    /**/connect(button_accountDown,             SIGNAL(clicked())                   , this      , SLOT(changedAccountList()      ));
    /**/connect(button_accountAdd,              SIGNAL(clicked())                   , this      , SLOT(changedAccountList()      ));
@@ -224,7 +226,8 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountDetail( ACCOUNT_USERNAME               , edit4_user->text()                                                       );
    /**/account->setAccountDetail( ACCOUNT_PASSWORD               , edit5_password->text()                                                   );
    /**/account->setAccountDetail( ACCOUNT_MAILBOX                , edit6_mailbox->text()                                                    );
-   /**/account->setAccountDetail( ACCOUNT_ENABLED                , account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE      );
+   /**/account->setAccountDetail( ACCOUNT_ENABLED                , account->isChecked()?REGISTRATION_ENABLED_TRUE:REGISTRATION_ENABLED_FALSE);
+   /**/account->setAccountDetail( ACCOUNT_REGISTRATION_EXPIRE    , QString::number(spinbox_regExpire->value())                              );
    /**/                                                                                                                                   /**/
    /*                                                               Security                                                                */
    /**/account->setAccountDetail( TLS_PASSWORD                   , edit_tls_private_key_password->text()                                    );
@@ -301,14 +304,15 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
    loadCredentails(account->getAccountDetail(ACCOUNT_ID));
 
-   bool ok;
-   int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
-   spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
+//    bool ok;
+//    int val = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS).toInt(&ok);
+//    spinbox_regExpire->setValue(ok ? val : REGISTRATION_EXPIRE_DEFAULT);
 
-   if (credentialList.size())
-      edit5_password->setText( credentialList[0].password );
-
-
+   foreach(CredentialData data,credentialList) {
+      if (data.name == account->getAccountDetail(ACCOUNT_USERNAME)) {
+         edit5_password->setText( data.password );
+      }
+   }
 
 
    switch (account->getAccountDetail(TLS_METHOD ).toInt()) {
@@ -339,7 +343,6 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/edit3_server->setText                    ( account->getAccountDetail(   ACCOUNT_HOSTNAME              )                 );
    /**/edit4_user->setText                      ( account->getAccountDetail(   ACCOUNT_USERNAME              )                 );
    /**/edit6_mailbox->setText                   ( account->getAccountDetail(   ACCOUNT_MAILBOX               )                 );
-   /**/checkBox_conformRFC->setChecked          ( account->getAccountDetail(   ACCOUNT_RESOLVE_ONCE          )  != "TRUE"      );
    /**/checkbox_ZRTP_Ask_user->setChecked       ( (account->getAccountDetail(  ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 );
    /**/checkbox_SDES_fallback_rtp->setChecked   ( (account->getAccountDetail(  ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 );
    /**/checkbox_ZRTP_display_SAS->setChecked    ( (account->getAccountDetail(  ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 );
@@ -347,6 +350,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/checkbox_ZTRP_send_hello->setChecked     ( (account->getAccountDetail(  ACCOUNT_ZRTP_HELLO_HASH       )  == "true")?1:0 );
    /**/checkbox_stun->setChecked                ( (account->getAccountDetail(  ACCOUNT_SIP_STUN_ENABLED      )  == "true")?1:0 );
    /**/line_stun->setText                       ( account->getAccountDetail(   ACCOUNT_SIP_STUN_SERVER       )                 );
+   /**/spinbox_regExpire->setValue              ( account->getAccountDetail(   ACCOUNT_REGISTRATION_EXPIRE   ).toInt()         );
    /**/radioButton_pa_same_as_local->setChecked ( (account->getAccountDetail(  PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 );
    /**/radioButton_pa_custom->setChecked        ( !(account->getAccountDetail( PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 );
    /**/lineEdit_pa_published_address->setText   ( account->getAccountDetail(   PUBLISHED_ADDRESS             )                 );
@@ -368,8 +372,23 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/combo_security_STRP->setCurrentIndex     ( account->getAccountDetail(   TLS_METHOD                    ).toInt()         );
    /*                                                                                                                          */
 
+   if (account->getAccountDetail(ACCOUNT_USERNAME).isEmpty()) {
+      frame2_editAccounts->setTabEnabled(0,false);
+      frame2_editAccounts->setTabEnabled(1,false);
+      frame2_editAccounts->setTabEnabled(3,false);
+      frame2_editAccounts->setTabEnabled(4,false);
+   }
+   else {
+      frame2_editAccounts->setTabEnabled(0,true);
+      frame2_editAccounts->setTabEnabled(1,true);
+      frame2_editAccounts->setTabEnabled(3,true);
+      frame2_editAccounts->setTabEnabled(4,true);
+      frame2_editAccounts->setCurrentIndex(0);
+   }
+
    combo_tls_method->setCurrentIndex        ( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+
 
    comboBox_ni_local_address->clear();
    QStringList interfaceList = configurationManager.getAllIpInterfaceByName();
@@ -390,9 +409,9 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
 
    if(protocolIndex == 0) { // if sip selected
-      checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == ACCOUNT_ENABLED_TRUE);
+      checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == REGISTRATION_ENABLED_TRUE);
       line_stun->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
-      //checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == ACCOUNT_ENABLED_TRUE);
+      //checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == REGISTRATION_ENABLED_TRUE);
 
       tab_advanced->setEnabled(true);
       line_stun->setEnabled(checkbox_stun->isChecked());
@@ -558,7 +577,7 @@ void DlgAccounts::updateStatusLabel(AccountView* account)
    if(! account ) {
           return;
         }
-   QString status = account->getAccountDetail(ACCOUNT_STATUS);
+   QString status = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS);
    edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
 }
 
@@ -692,12 +711,12 @@ void DlgAccounts::loadCredentails(QString accountId) {
    VectorMapStringString credentials = configurationManager.getCredentials(accountId);
    for (int i=0; i < credentials.size(); i++) {
       QListWidgetItem* newItem = new QListWidgetItem();
-      newItem->setText(credentials[i][ "username" ]);
+      newItem->setText(credentials[i][ CONFIG_ACCOUNT_USERNAME ]);
       CredentialData data;
       data.pointer  = newItem                       ;
-      data.name     = credentials[i][ "username"  ] ;
-      data.password = credentials[i][ "password"  ] ;
-      data.realm    = credentials[i][ "realm"     ] ;
+      data.name     = credentials[i][ CONFIG_ACCOUNT_USERNAME  ] ;
+      data.password = credentials[i][ CONFIG_ACCOUNT_PASSWORD  ] ;
+      data.realm    = credentials[i][ CONFIG_ACCOUNT_REALM     ] ;
       credentialInfo[newItem] = data;
       credentialList << data;
       list_credential->addItem(newItem);
@@ -712,9 +731,9 @@ void DlgAccounts::saveCredential(QString accountId) {
    for (int i=0; i < list_credential->count();i++) {
       QListWidgetItem* currentItem = list_credential->item(i);
       MapStringString credentialData;
-      credentialData["username"] = credentialInfo[currentItem].name     ;
-      credentialData["password"] = credentialInfo[currentItem].password ;
-      credentialData["realm"]    = credentialInfo[currentItem].realm    ;
+      credentialData[CONFIG_ACCOUNT_USERNAME] = credentialInfo[currentItem].name     ;
+      credentialData[CONFIG_ACCOUNT_PASSWORD] = credentialInfo[currentItem].password ;
+      credentialData[CONFIG_ACCOUNT_REALM]    = credentialInfo[currentItem].realm    ;
       toReturn << credentialData;
    }
    configurationManager.setCredentials(accountId,toReturn);

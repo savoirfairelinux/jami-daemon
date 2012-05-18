@@ -1,5 +1,3 @@
-#ifndef CALL_VIEW
-#define CALL_VIEW
 /***************************************************************************
  *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
@@ -19,6 +17,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+#ifndef CALL_VIEW
+#define CALL_VIEW
 
 #include <QtGui/QItemDelegate>
 #include <QtGui/QTreeWidget>

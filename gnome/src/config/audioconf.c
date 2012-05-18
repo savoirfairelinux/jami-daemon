@@ -414,6 +414,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
         return;
     }
 
+    // Get active value and name at iteration
     gboolean active;
     gchar* name;
     gchar* srate;
