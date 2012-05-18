@@ -408,7 +408,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
             std::string account_id(getAccountFromCall(callId));
 
             if (account_id.empty()) {
-                DEBUG("Account ID %s or callid %s doesn't exists in call onHold", account_id.c_str(), callId.c_str());
+                DEBUG("Account ID %s or callid %s doesn't exist in call onHold", account_id.c_str(), callId.c_str());
                 return;
             }
 
@@ -840,11 +840,35 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
     switchCall(conference_id);
 }
 
+Call *
+ManagerImpl::getCallFromCallID(const std::string &callID)
+{
+    std::string accountID = getAccountFromCall(callID);
+    Call *call = getAccountLink(accountID)->getCall(callID);
+    return call;
+}
+
 void ManagerImpl::joinParticipant(const std::string& callId1, const std::string& callId2)
 {
     DEBUG("Join participants %s, %s", callId1.c_str(), callId2.c_str());
     if (callId1 == callId2) {
         ERROR("Cannot join participant %s to itself", callId1.c_str());
+        return;
+    }
+
+    // Set corresponding conference ids for call 1
+    Call *call1 = getCallFromCallID(callId1);
+
+    if (call1 == NULL) {
+        ERROR("Could not find call %s", callId1.c_str());
+        return;
+    }
+
+    // Set corresponding conderence details
+    Call *call2 = getCallFromCallID(callId2);
+
+    if (call2 == NULL) {
+        ERROR("Could not find call %s", callId2.c_str());
         return;
     }
 
@@ -863,28 +887,11 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
             onHoldCall(current_call_id); // currently in a call
     }
 
+
     Conference *conf = createConference(callId1, callId2);
-
-    // Set corresponding conference ids for call 1
-    std::string currentAccountId1 = getAccountFromCall(callId1);
-    Call *call1 = getAccountLink(currentAccountId1)->getCall(callId1);
-
-    if (call1 == NULL) {
-        ERROR("Could not find call %s", callId1.c_str());
-        return;
-    }
 
     call1->setConfId(conf->getConfID());
     getMainBuffer()->unBindAll(callId1);
-
-    // Set corresponding conderence details
-    std::string currentAccountId2(getAccountFromCall(callId2));
-    Call *call2 = getAccountLink(currentAccountId2)->getCall(callId2);
-
-    if (call2 == NULL) {
-        ERROR("Could not find call %s", callId2.c_str());
-        return;
-    }
 
     call2->setConfId(conf->getConfID());
     getMainBuffer()->unBindAll(callId2);
