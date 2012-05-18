@@ -841,6 +841,12 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+
+        /**
+         * Get the Call referred to by callID. If the Call does not exist, return NULL
+         */
+        Call *getCallFromCallID(const std::string &callID);
+
         /**
          * Play the dtmf-associated sound
          * @param code  The pressed key
@@ -1070,7 +1076,7 @@ class ManagerImpl {
          * @param accountID	  Account ID to get
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
-        VoIPLink* getAccountLink(const std::string& accountID="");
+        VoIPLink* getAccountLink(const std::string& accountID);
 
         std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
 
