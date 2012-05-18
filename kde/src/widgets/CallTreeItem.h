@@ -59,18 +59,19 @@ class CallTreeItem : public QWidget
 
  private:
     //Attributes
-    Call*    m_pItemCall;
-    bool     m_Init;
-    bool     m_isHover;
-    QLabel*  m_pIconL;
-    QLabel*  m_pPeerL;
-    QLabel*  m_pCallNumberL;
-    QLabel*  m_pTransferPrefixL;
-    QLabel*  m_pTransferNumberL;
-    QLabel*  m_pCodecL;
-    QLabel*  m_pSecureL;
-    QLabel*  m_pHistoryPeerL;
-    TranslucentButtons* m_pBtnConf;
+    Call*    m_pItemCall        ;
+    bool     m_Init             ;
+    bool     m_isHover          ;
+    QLabel*  m_pIconL           ;
+    QLabel*  m_pPeerL           ;
+    QLabel*  m_pCallNumberL     ;
+    QLabel*  m_pTransferPrefixL ;
+    QLabel*  m_pTransferNumberL ;
+    QLabel*  m_pCodecL          ;
+    QLabel*  m_pSecureL         ;
+    QLabel*  m_pHistoryPeerL    ;
+    
+    TranslucentButtons* m_pBtnConf ;
     TranslucentButtons* m_pBtnTrans;
 
   protected:

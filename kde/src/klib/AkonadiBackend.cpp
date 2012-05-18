@@ -71,7 +71,7 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
    Akonadi::CollectionFetchJob *job = new Akonadi::CollectionFetchJob( Akonadi::Collection::root(), Akonadi::CollectionFetchJob::Recursive, this );
    job->fetchScope().setContentMimeTypes( QStringList() << "text/directory" );
    connect( job, SIGNAL( collectionsReceived( const Akonadi::Collection::List& ) ), this, SLOT( collectionsReceived( const Akonadi::Collection::List& ) ) );
-}
+} //AkonadiBackend
 
 ///Destructor
 AkonadiBackend::~AkonadiBackend()
@@ -108,7 +108,7 @@ Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resol
       }
    }
    return nullptr;
-}
+} //getContactByPhone
 
 ///Find contact by UID
 Contact* AkonadiBackend::getContactByUid(const QString& uid)
@@ -175,7 +175,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
       m_pContacts = m_ContactByUid.values();
    }
    return m_ContactByUid.values();
-}
+} //update
 
 ///Edit backend value using an updated frontend contact
 void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
@@ -192,7 +192,7 @@ void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
    KDialog* dlg = new KDialog(parent);
    dlg->setMainWidget(editor);
    dlg->exec();
-}
+} //editContact
 
 ///Add a new contact
 void AkonadiBackend::addNewContact(Contact* contact,QWidget* parent)
@@ -241,7 +241,7 @@ void AkonadiBackend::addNewContact(Contact* contact,QWidget* parent)
       kDebug() << "Unable to save new contact to storage";
       return;
    }
-}
+} //addNewContact
 
 ///Implement virtual pure method
 void AkonadiBackend::editContact(Contact* contact)
@@ -296,7 +296,7 @@ QString AkonadiBackend::getUserFromPhone(QString phoneNumber)
       }
    }
    return phoneNumber;
-}
+} //getUserFromPhone
 
 ///Return the domaine of an URI (<sip:12345@exemple.com>)
 QString AkonadiBackend::getHostNameFromPhone(QString phoneNumber)

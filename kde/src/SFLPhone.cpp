@@ -56,14 +56,12 @@
 #include "widgets/BookmarkDock.h"
 #include "klib/ConfigurationSkeleton.h"
 
-SFLPhone* SFLPhone::m_sApp = NULL;
+SFLPhone* SFLPhone::m_sApp              = NULL;
 TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
 
 ///Constructor
 SFLPhone::SFLPhone(QWidget *parent)
-    : KXmlGuiWindow(parent),
-      m_pInitialized(false),
-      m_pView(new SFLPhoneView(this))
+    : KXmlGuiWindow(parent), m_pInitialized(false), m_pView(new SFLPhoneView(this))
 {
     setupActions();
     m_sApp = this;
@@ -78,10 +76,10 @@ SFLPhone::~SFLPhone()
 ///Init everything
 bool SFLPhone::initialize()
 {
-  if ( m_pInitialized ) {
-    kDebug() << "Already initialized.";
-    return false;
-  }
+   if ( m_pInitialized ) {
+      kDebug() << "Already initialized.";
+      return false;
+   }
 
    ConfigurationSkeleton::self();
 
@@ -89,22 +87,22 @@ bool SFLPhone::initialize()
    CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
    histoModel->initHistory();
 
-  ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-  // accept dnd
-  setAcceptDrops(true);
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   // accept dnd
+   setAcceptDrops(true);
 
    m_pContactCD = new ContactDock(this);
    addDockWidget(Qt::TopDockWidgetArea,m_pContactCD);
 
-  // tell the KXmlGuiWindow that this is indeed the main widget
-  m_pCentralDW = new QDockWidget(this);
-  m_pCentralDW->setObjectName  ( "callDock"                                    );
-  m_pCentralDW->setSizePolicy  ( QSizePolicy::Expanding,QSizePolicy::Expanding );
-  m_pCentralDW->setWidget      ( m_pView                                       );
-  m_pCentralDW->setWindowTitle ( i18n("Call")                                  );
-  m_pCentralDW->setFeatures    ( QDockWidget::NoDockWidgetFeatures             );
-  m_pView->setSizePolicy       ( QSizePolicy::Expanding,QSizePolicy::Expanding );
-  m_pCentralDW->setStyleSheet  ( "\
+   // tell the KXmlGuiWindow that this is indeed the main widget
+   m_pCentralDW = new QDockWidget(this);
+   m_pCentralDW->setObjectName  ( "callDock"                                    );
+   m_pCentralDW->setSizePolicy  ( QSizePolicy::Expanding,QSizePolicy::Expanding );
+   m_pCentralDW->setWidget      ( m_pView                                       );
+   m_pCentralDW->setWindowTitle ( i18n("Call")                                  );
+   m_pCentralDW->setFeatures    ( QDockWidget::NoDockWidgetFeatures             );
+   m_pView->setSizePolicy       ( QSizePolicy::Expanding,QSizePolicy::Expanding );
+   m_pCentralDW->setStyleSheet  ( "\
       QDockWidget::title {\
          margin:0px;\
          padding:0px;\
@@ -112,48 +110,49 @@ bool SFLPhone::initialize()
          max-height:0px;\
       }\
       \
-  ");
+   ");
 
-  m_pCentralDW->setTitleBarWidget(new QWidget());
-  m_pCentralDW->setContentsMargins(0,0,0,0);
-  m_pView->setContentsMargins(0,0,0,0);
+   m_pCentralDW->setTitleBarWidget(new QWidget());
+   m_pCentralDW->setContentsMargins(0,0,0,0);
+   m_pView->setContentsMargins     (0,0,0,0);
 
-  addDockWidget(Qt::TopDockWidgetArea,m_pCentralDW);
+   addDockWidget(Qt::TopDockWidgetArea,m_pCentralDW);
 
-  m_pHistoryDW  = new HistoryDock(this);
-  m_pBookmarkDW = new BookmarkDock(this);
-  addDockWidget( Qt::TopDockWidgetArea,m_pHistoryDW  );
-  addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
-  tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
+   m_pHistoryDW       = new HistoryDock  ( this                     );
+   m_pBookmarkDW      = new BookmarkDock ( this                     );
+   m_pStatusBarWidget = new QLabel       (                          );
+   m_pTrayIcon        = new SFLPhoneTray ( this->windowIcon(), this );
+   
+   addDockWidget( Qt::TopDockWidgetArea,m_pHistoryDW  );
+   addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
+   tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
 
-  setWindowIcon(QIcon(ICON_SFLPHONE));
-  setWindowTitle(i18n("SFLphone"));
+   setWindowIcon (QIcon(ICON_SFLPHONE) );
+   setWindowTitle(i18n("SFLphone")     );
 
-  setupActions();
+   setupActions();
 
-  m_pStatusBarWidget = new QLabel();
-  statusBar()->addWidget(m_pStatusBarWidget);
+   statusBar()->addWidget(m_pStatusBarWidget);
 
 
-  m_pTrayIcon = new SFLPhoneTray(this->windowIcon(), this);
-  m_pTrayIcon->show();
+   m_pTrayIcon->show();
 
-  m_pIconChanged = false;
 
-  setObjectNames();
-  QMetaObject::connectSlotsByName(this);
-  m_pView->loadWindow();
+   setObjectNames();
+   QMetaObject::connectSlotsByName(this);
+   m_pView->loadWindow();
 
-  move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
-  show();
+   move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
+   show();
 
-  if(configurationManager.getAccountList().value().isEmpty()) {
+   if(configurationManager.getAccountList().value().isEmpty()) {
       (new AccountWizard())->show();
-  }
+   }
 
-  m_pInitialized = true;
+   m_pIconChanged = false;
+   m_pInitialized = true ;
 
-  return true;
+   return true;
 }
 
 ///Setup evry actions

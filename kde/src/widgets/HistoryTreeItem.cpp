@@ -140,7 +140,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pIconL         = new QLabel( this );
    m_pPeerNameL     = new QLabel( this );
    m_pCallNumberL   = new QLabel( this );
-   m_pLengthL     = new QLabel( this );
+   m_pLengthL       = new QLabel( this );
    m_pTimeL         = new QLabel( this );
 
    m_pIconL->setMinimumSize(70,0);
@@ -166,7 +166,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
       m_pCallNumberL->setText(phone);
       m_PhoneNumber = phone;
    }
-}
+} //HistoryTreeItem
 
 ///Destructor
 HistoryTreeItem::~HistoryTreeItem()
@@ -211,8 +211,7 @@ void HistoryTreeItem::updated()
          m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
    }
-
-}
+} //updated
 
 ///Show the context menu
 void HistoryTreeItem::showContext(const QPoint& pos)
@@ -350,7 +349,7 @@ void HistoryTreeItem::showRecordPlayer()
       connect( m_pMediaObject , SIGNAL(tick(qint64) ) , this , SLOT( tick(qint64)      ));
 
       connect(m_pMediaObject  , SIGNAL(stateChanged(Phonon::State,Phonon::State)),
-              this, SLOT(stateChanged(Phonon::State,Phonon::State)));
+         this, SLOT(stateChanged(Phonon::State,Phonon::State)));
 
    }
    kDebug() << "Path:" << m_pItemCall->getRecordingPath();
@@ -361,7 +360,7 @@ void HistoryTreeItem::showRecordPlayer()
       m_pMetaInformationResolver->setCurrentSource(m_lSources.first());
    m_pMediaObject->play();
 
-}
+} //showRecordPlayer
 
 ///Called when the user press the stop button
 void HistoryTreeItem::stopPlayer()
@@ -421,7 +420,7 @@ void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldS
       default:
             ;
    }
-}
+} //stateChanged
 
 ///Reference code for metastate change
 void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State oldState)
@@ -450,7 +449,7 @@ void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State old
    if (m_lSources.size() > index) {
       m_pMetaInformationResolver->setCurrentSource(m_lSources.at(index));
    }
-}
+} //metaStateChanged
 
 ///Resize the player
 void HistoryTreeItem::resizeEvent(QResizeEvent* event)
@@ -500,7 +499,7 @@ void HistoryTreeItem::setCall(Call *call)
 
    m_pPlay->  setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
    m_pRemove->setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
-}
+} //setCall
 
 ///Set the index associed with this widget
 void HistoryTreeItem::setItem(QTreeWidgetItem* item)
@@ -539,7 +538,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
       return false;
    }
    return true;
-}
+} //getContactInfo
 
 ///Return the time stamp
 uint HistoryTreeItem::getTimeStamp()

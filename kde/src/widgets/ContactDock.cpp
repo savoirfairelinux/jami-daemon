@@ -64,12 +64,6 @@ class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    private:
       bool operator<(const QTreeWidgetItem & other) const {
          int column = treeWidget()->sortColumn();
-         //if (dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)) {
-            //if (widget !=0 && dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->widget != 0)
-            //   return widget->getTimeStamp() < dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->widget->getTimeStamp();
-            //else if (weight > 0 && dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->weight > 0)
-            //   return weight > dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->weight;
-         //}
          return text(column) < other.text(column);
       }
 };
@@ -84,7 +78,7 @@ bool KeyPressEaterC::eventFilter(QObject *obj, QEvent *event)
       // standard event processing
       return QObject::eventFilter(obj, event);
    }
-}
+} //eventFilter
 
 ///Constructor
 ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
@@ -150,8 +144,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    timer->start(1800*1000); //30 minutes
    setWindowTitle(i18n("Contact"));
 
-   
-}
+} //ContactDock
 
 ///Destructor
 ContactDock::~ContactDock()
@@ -239,7 +232,7 @@ void ContactDock::reloadContact()
    }
 
    ConfigurationSkeleton::setContactSortMode(m_pSortByCBB->currentIndex());
-}
+} //reloadContact
 
 ///Query the call history for all items related to this contact
 void ContactDock::loadContactHistory(QTreeWidgetItem* item)
@@ -259,7 +252,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
          }
       }
    }
-}
+} //loadContactHistory
 
 ///Filter contact
 void ContactDock::filter(const QString& text)
@@ -277,7 +270,7 @@ void ContactDock::filter(const QString& text)
       item->getItem()->setHidden(!visible);
    }
    //m_pContactView->expandAll();
-}
+} //filter
 
 void ContactDock::reloadHistoryConst()
 {
@@ -318,7 +311,7 @@ QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
       kDebug() << "the item is not a call";
    }
    return mimeData;
-}
+} //mimeData
 
 ///Handle data being dropped on the widget
 bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
@@ -374,7 +367,7 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
       m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
    else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))
       m_pFilterLE->setText(m_pFilterLE->text()+event->text());
-}
+} //keyPressEvent
 
 /*****************************************************************************
  *                                                                           *

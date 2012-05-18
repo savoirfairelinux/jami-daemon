@@ -27,6 +27,7 @@
 //SFLPhone
 #include "../lib/Contact.h"
 
+///Transform a contact list to a [QString][QString][QVariant] hash
 ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
    QHash<QString,QHash<QString,QVariant> > hash;
    for (int i=0;i<contacts.size();i++) {

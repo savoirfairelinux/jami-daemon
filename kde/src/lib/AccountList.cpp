@@ -74,7 +74,7 @@ void AccountList::update()
    for (int i = 0; i < accountIds.size(); ++i) {
       m_pAccounts->insert(i, Account::buildExistingAccountFromId(accountIds[i]));
    }
-}
+} //update
 
 ///Update accounts
 void AccountList::updateAccounts()
@@ -88,7 +88,7 @@ void AccountList::updateAccounts()
       (*m_pAccounts) += Account::buildExistingAccountFromId(accountIds[i]);
    }
    emit accountListUpdated();
-}
+} //updateAccounts
 
 
 /*****************************************************************************
@@ -174,7 +174,9 @@ Account* AccountList::firstRegisteredAccount() const
          return current;
       }
       else {
-         qDebug() << "Account " << ((current)?current->getAccountId():"") << " is not registered (" << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"") << ") State:" << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"");
+         qDebug() << "Account " << ((current)?current->getAccountId():"") << " is not registered ("
+         << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"") << ") State:"
+         << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"");
       }
    }
    return NULL;

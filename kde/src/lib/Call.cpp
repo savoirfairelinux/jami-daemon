@@ -159,7 +159,7 @@ Call* Call::buildExistingCall(QString callId)
    call->m_HistoryState  = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]) ;
    
    return call;
-}
+} //buildExistingCall
 
 ///Build a call from a dialing call (a call that is about to exist)
 Call* Call::buildDialingCall(QString callId, const QString & peerName, QString account)
@@ -182,7 +182,7 @@ Call* Call::buildIncomingCall(const QString & callId)
    Call* call = new Call(CALL_STATE_INCOMING, callId, peerName, from, account);
    call->m_HistoryState = MISSED;
    return call;
-}
+} //buildIncomingCall
 
 ///Build a rigging call (from dbus)
 Call* Call::buildRingingCall(const QString & callId)
@@ -197,7 +197,7 @@ Call* Call::buildRingingCall(const QString & callId)
    Call* call = new Call(CALL_STATE_RINGING, callId, peerName, from, account);
    call->m_HistoryState = OUTGOING;
    return call;
-}
+} //buildRingingCall
 
 /*****************************************************************************
  *                                                                           *
@@ -255,7 +255,7 @@ history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, 
       return MISSED   ;
    else
       return NONE     ;
-}
+} //getHistoryStateFromDaemonCallState
 
 ///Get the start sate from the daemon state
 call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
@@ -276,7 +276,7 @@ call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QStri
       return CALL_STATE_RINGING  ;
    else
       return CALL_STATE_FAILURE  ;
-}
+} //getStartStateFromDaemonCallState
 
 /*****************************************************************************
  *                                                                           *
@@ -306,7 +306,7 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
    
    qDebug() << "stateChanged signal received with unknown state.";
    return DAEMON_CALL_STATE_FAILURE    ;
-}
+} //toDaemonCallState
 
 ///Get the time (second from 1 jan 1970) when the call ended
 QString Call::getStopTimeStamp()     const
@@ -430,7 +430,7 @@ bool Call::isSecure() const {
       return true;
    }
    return false;
-}
+} //isSecure
 
 
 /*****************************************************************************
@@ -497,7 +497,7 @@ call_state Call::stateChanged(const QString& newStateName)
       qDebug() << "A conference have no call state";
       return CALL_STATE_ERROR;
    }
-}
+} //stateChanged
 
 ///An acount have been performed
 call_state Call::actionPerformed(call_action action)
@@ -515,7 +515,7 @@ call_state Call::actionPerformed(call_action action)
       //return the new state
    }
    return m_CurrentState;
-}
+} //actionPerformed
 
 /*
 void Call::putRecording()
@@ -531,7 +531,6 @@ void Call::putRecording()
 ///Change the state
 void Call::changeCurrentState(call_state newState)
 {
-   //qDebug() << "Call state changed to: " << newState;
    m_CurrentState = newState;
 
    emit changed();

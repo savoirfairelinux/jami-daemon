@@ -67,7 +67,7 @@ void AccountView::initItemWidget()
    else
       m_pWidget->setState(AccountItemWidget::NotWorking);
    connect(m_pWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
-}
+} //initItemWidget
 
 
 /*****************************************************************************
@@ -167,4 +167,4 @@ void AccountView::updateState()
          m_pWidget->setState(AccountItemWidget::NotWorking);
       }
    }
-}
+} //updateState

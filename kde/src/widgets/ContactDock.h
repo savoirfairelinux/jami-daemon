@@ -114,4 +114,4 @@ private:
 
 };
 
-#endif
+#endif //CONTACT_DOCK_H

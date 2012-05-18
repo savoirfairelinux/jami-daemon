@@ -48,7 +48,7 @@ DlgAddressBook::DlgAddressBook(QWidget *parent)
       i->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
       i->setCheckState((list.indexOf(m_mNumbertype.key(i)) != -1)?Qt::Checked:Qt::Unchecked);
    }
-}
+} //DlgAddressBook
 
 DlgAddressBook::~DlgAddressBook()
 {

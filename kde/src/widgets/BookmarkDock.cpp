@@ -100,7 +100,7 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    connect(m_pMostUsedCK                  , SIGNAL(toggled(bool)),        this , SLOT(reload()         ));
    connect(AkonadiBackend::getInstance()  , SIGNAL(collectionChanged()) , this , SLOT(reload()  ));
    reload();
-}
+} //BookmarkDock
 
 ///Destructor
 BookmarkDock::~BookmarkDock()
@@ -132,7 +132,7 @@ void BookmarkDock::addBookmark_internal(const QString& phone)
    m_pItemView->addTopLevelItem(item);
    m_pItemView->setItemWidget(item,0,widget);
    m_pBookmark << widget;
-}
+} //addBookmark_internal
 
 ///Proxy to add a new bookmark
 void BookmarkDock::addBookmark(const QString& phone)
@@ -174,4 +174,4 @@ void BookmarkDock::reload()
       addBookmark_internal(nb);
    }
    ConfigurationSkeleton::setDisplayContactCallHistory(m_pMostUsedCK->isChecked());
-}
+} //reload

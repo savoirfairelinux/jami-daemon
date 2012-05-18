@@ -57,7 +57,7 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
    connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
 
    connect(dlgGeneral, SIGNAL(clearCallHistoryAsked()), this, SIGNAL(clearCallHistoryAsked()));
-}
+} //ConfigurationDialog
 
 
 ConfigurationDialog::~ConfigurationDialog()

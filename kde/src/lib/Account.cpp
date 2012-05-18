@@ -64,7 +64,7 @@ const QString& account_state_name(const QString& s)
    if(s == QString(ACCOUNT_STATE_ERROR_EXIST_STUN) )
       return stunServerInvalid      ;
    return invalid                   ;
-}
+} //account_state_name
 
 ///Constructors
 Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
@@ -92,7 +92,7 @@ Account* Account::buildExistingAccountFromId(const QString& _accountId)
    //    }
 
    return a;
-}
+} //buildExistingAccountFromId
 
 ///Build an account from it's name / alias
 Account* Account::buildNewAccountFromAlias(const QString& alias)
@@ -165,7 +165,7 @@ const QString& Account::getAccountDetail(const QString& param) const
       qDebug() << "Account details not found, there is " << m_pAccountDetails->count() << " details available";
       return EMPTY_STRING;
    }
-}
+} //getAccountDetail
 
 ///Get the alias
 const QString& Account::getAlias() const

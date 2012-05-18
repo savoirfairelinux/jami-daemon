@@ -34,12 +34,12 @@ Codec::Codec(int payload, bool enabled)
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    QStringList details = configurationManager.getAudioCodecDetails(payload);
-   m_Payload   = QString::number(payload);
-   m_Enabled   = enabled;
-   m_Name      = details[CODEC_NAME];
-   m_Frequency = details[CODEC_SAMPLE_RATE];
-   m_Bitrate   = details[CODEC_BIT_RATE];
-   m_Bandwidth = details[CODEC_BANDWIDTH];
+   m_Payload   = QString::number(payload)    ;
+   m_Enabled   = enabled                     ;
+   m_Name      = details[ CODEC_NAME        ];
+   m_Frequency = details[ CODEC_SAMPLE_RATE ];
+   m_Bitrate   = details[ CODEC_BIT_RATE    ];
+   m_Bandwidth = details[ CODEC_BANDWIDTH   ];
 }
 
 
@@ -95,13 +95,13 @@ bool Codec::isEnabled() const
 ///Set the payload
 void Codec::setPayload(const QString& payload)
 {
-  m_Payload = payload;
+  m_Payload   = payload;
 }
 
 ///Set the codec name
 void Codec::setName(const QString& name)
 {
-  m_Name = name;
+  m_Name      = name;
 }
 
 ///Set the frequency
@@ -113,7 +113,7 @@ void Codec::setFrequency(const QString& frequency)
 ///Set the bitrate
 void Codec::setBitrate(const QString& bitrate)
 {
-  m_Bitrate = bitrate;
+  m_Bitrate   = bitrate;
 }
 
 ///Set the bandwidth
@@ -125,5 +125,5 @@ void Codec::setBandwidth(const QString& bandwidth)
 ///Make this cedec enabled
 void Codec::setEnabled(bool enabled)
 {
-  m_Enabled = enabled;
+  m_Enabled   = enabled;
 }

@@ -88,7 +88,6 @@ CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
 {
    Q_UNUSED(type)
    init();
-
 }
 
 ///Open the connection to the daemon and register this client
@@ -105,7 +104,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
    }
    m_sInstanceInit = true;
    return true;
-}
+} //init
 
 ///Fill the call list
 ///@warning This solution wont scale to multiple call or history model implementation. Some static addCall + foreach for each call would be needed if this case ever become unavoidable
@@ -127,7 +126,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
    }
    m_sCallInit = true;
    return true;
-}
+} //initCall
 
 ///Set how the call can find more informations about the call it receive
 CALLMODEL_TEMPLATE void CALLMODEL_T::initContact ( ContactBackend* be )
@@ -163,7 +162,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
    }
    m_sHistoryInit = true;
    return true;
-}
+} //initHistory
 
 
 /*****************************************************************************
@@ -227,7 +226,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
    addCall(call);
    selectItem(call);
    return call;
-}
+} //addCallCommon
 
 ///Create a new dialing call from peer name and the account ID
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, QString account)
@@ -239,7 +238,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, QS
    
    Call* call = Call::buildDialingCall(generateCallId(), peerName, account2);
    return addCallCommon(call);
-}
+}  //addDialingCall
 
 ///Create a new incomming call when the daemon is being called
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addIncomingCall(const QString& callId)
@@ -288,7 +287,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeCall(Call* call)
    if (m_sPrivateCallList_index[m_sPrivateCallList_index.key(internal)] == internal) {
       m_sPrivateCallList_index.remove(m_sPrivateCallList_index.key(internal));
    }
-}
+} //removeCall
 
 ///Transfer "toTransfer" to "target" and wait to see it it succeeded
 CALLMODEL_TEMPLATE void CALLMODEL_T::attendedTransfer(Call* toTransfer, Call* target)
@@ -299,7 +298,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::attendedTransfer(Call* toTransfer, Call* ta
    //TODO [Daemon] Implement this correctly
    toTransfer->changeCurrentState(CALL_STATE_OVER);
    target->changeCurrentState(CALL_STATE_OVER);
-}
+} //attendedTransfer
 
 ///Transfer this call to  "target" number
 CALLMODEL_TEMPLATE void CALLMODEL_T::transfer(Call* toTransfer, QString target)
@@ -309,7 +308,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::transfer(Call* toTransfer, QString target)
    toTransfer->changeCurrentState(CALL_STATE_TRANSFER);
    toTransfer->actionPerformed(CALL_ACTION_ACCEPT);
    toTransfer->changeCurrentState(CALL_STATE_OVER);
-}
+} //transfer
 
 /*****************************************************************************
  *                                                                           *
@@ -344,7 +343,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
    m_sPrivateCallList_callId[confID] = aNewStruct;
    
    return newConf;
-}
+} //addConference
 
 ///Join two call to create a conference, the conference will be created later (see addConference)
 CALLMODEL_TEMPLATE bool CALLMODEL_T::createConferenceFromCall(Call* call1, Call* call2)
@@ -353,7 +352,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::createConferenceFromCall(Call* call1, Call*
   CallManagerInterface &callManager = CallManagerInterfaceSingleton::getInstance();
   callManager.joinParticipant(call1->getCallId(),call2->getCallId());
   return true;
-}
+} //createConferenceFromCall
 
 ///Add a new participant to a conference
 CALLMODEL_TEMPLATE bool CALLMODEL_T::addParticipant(Call* call2, Call* conference)
@@ -367,7 +366,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::addParticipant(Call* call2, Call* conferenc
       qDebug() << "This is not a conference";
       return false;
    }
-}
+} //addParticipant
 
 ///Remove a participant from a conference
 CALLMODEL_TEMPLATE bool CALLMODEL_T::detachParticipant(Call* call)
@@ -401,7 +400,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::changeConference(const QString& confId, con
       return false;
    }
    return true;
-}
+} //changeConference
 
 ///Remove a conference from the model and the TreeView
 CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(const QString &confId)
@@ -477,7 +476,7 @@ CALLMODEL_TEMPLATE const QStringList CALLMODEL_T::getNumbersByPopularity()
    }
    
    return cl;
-}
+} //getNumbersByPopularity
 
 
 /*****************************************************************************
@@ -496,7 +495,7 @@ CALLMODEL_TEMPLATE QString CALLMODEL_T::getCurrentAccountId()
    else {
       return firstRegistered->getAccountId();
    }
-}
+} //getCurrentAccountId
 
 
 ///Return the current account
@@ -510,7 +509,7 @@ CALLMODEL_TEMPLATE Account* CALLMODEL_T::getCurrentAccount()
       qDebug() << "Returning the first account" << getAccountList()->size();
       return getAccountList()->firstRegisteredAccount();
    }
-}
+} //getCurrentAccount
 
 ///Return a list of registered accounts
 CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::getAccountList()
