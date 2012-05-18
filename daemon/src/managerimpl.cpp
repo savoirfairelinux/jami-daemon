@@ -247,13 +247,10 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     // store the current call id
     std::string current_call_id(getCurrentCallId());
 
-    // Retreive call coresponding to this id
-    std::string account_id = getAccountFromCall(call_id);
-    Call *call = getAccountLink(account_id)->getCall(call_id);
+    Call *call = getCallFromCallID(call_id);
 
-    if (call == NULL) {
+    if (call == NULL)
         ERROR("Call is NULL");
-    }
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
@@ -271,6 +268,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     }
 
     try {
+        const std::string account_id = getAccountFromCall(call_id);
         getAccountLink(account_id)->answer(call);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
@@ -351,9 +349,9 @@ void ManagerImpl::hangupCall(const std::string& callId)
         }
     } else {
         std::string accountId(getAccountFromCall(callId));
-        VoIPLink *link = getAccountLink(accountId);
-        Call * call = link->getCall(callId);
+        Call * call = getCallFromCallID(callId);
         history_.addCall(call, preferences.getHistoryLimit());
+        VoIPLink *link = getAccountLink(accountId);
         link->hangup(callId);
         removeCallAccount(callId);
         saveHistory();
@@ -402,7 +400,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 
     try {
         if (isIPToIP(callId)) {
-            SIPVoIPLink::instance()-> onhold(callId);
+            SIPVoIPLink::instance()->onhold(callId);
         } else {
             /* Classic call, attached to an account */
             std::string account_id(getAccountFromCall(callId));
@@ -437,7 +435,6 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 //THREAD=Main
 void ManagerImpl::offHoldCall(const std::string& callId)
 {
-    std::string accountId;
     std::string codecName;
 
     DEBUG("Put call %s off hold", callId.c_str());
@@ -463,10 +460,8 @@ void ManagerImpl::offHoldCall(const std::string& callId)
         SIPVoIPLink::instance()->offhold(callId);
     else {
         /* Classic call, attached to an account */
-        accountId = getAccountFromCall(callId);
-
+        const std::string accountId(getAccountFromCall(callId));
         DEBUG("Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
-
         Call * call = getAccountLink(accountId)->getCall(callId);
 
         if (call) {
@@ -478,9 +473,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
     dbus_.getCallManager()->callStateChanged(callId, isRec ? "UNHOLD_RECORD" : "UNHOLD_CURRENT");
 
     if (isConferenceParticipant(callId)) {
-        std::string currentAccountId(getAccountFromCall(callId));
-        Call *call = getAccountLink(currentAccountId)->getCall(callId);
-
+        Call *call = getCallFromCallID(callId);
         if (call)
             switchCall(call->getConfId());
 
@@ -645,8 +638,9 @@ void ManagerImpl::removeConference(const std::string& conference_id)
 Conference*
 ManagerImpl::getConferenceFromCallID(const std::string& call_id)
 {
-    std::string account_id(getAccountFromCall(call_id));
-    Call *call = getAccountLink(account_id)->getCall(call_id);
+    Call *call = getCallFromCallID(call_id);
+    if (!call)
+        return NULL;
 
     ConferenceMap::const_iterator iter(conferenceMap_.find(call->getConfId()));
 
@@ -695,12 +689,12 @@ void ManagerImpl::unHoldConference(const std::string& id)
         ParticipantSet participants(conf->getParticipantList());
 
         for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
-            Call *call = getAccountLink(getAccountFromCall(*iter))->getCall(*iter);
-
-            // if one call is currently recording, the conference is in state recording
-            isRec |= call->isRecording();
-
-            offHoldCall(*iter);
+            Call *call = getCallFromCallID(*iter);
+            if (call) {
+                // if one call is currently recording, the conference is in state recording
+                isRec |= call->isRecording();
+                offHoldCall(*iter);
+            }
         }
 
         conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
@@ -843,7 +837,7 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 Call *
 ManagerImpl::getCallFromCallID(const std::string &callID)
 {
-    std::string accountID = getAccountFromCall(callID);
+    const std::string accountID(getAccountFromCall(callID));
     Call *call = getAccountLink(accountID)->getCall(callID);
     return call;
 }
