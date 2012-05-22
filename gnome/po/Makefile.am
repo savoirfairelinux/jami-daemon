@@ -4,6 +4,7 @@ DOMAIN=sflphone-client-gnome
 
 
 POFILES=\
+        ab.po \
 	ar.po \
 	ast.po \
 	ca.po \
