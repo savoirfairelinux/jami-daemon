@@ -741,8 +741,8 @@ void DlgAccounts::saveCredential(QString accountId) {
 
 void DlgAccounts::addCredential() {
    QListWidgetItem* newItem = new QListWidgetItem();
-   newItem->setText("New credential");
-   credentialInfo[newItem] = {newItem, "New credential", "",""};
+   newItem->setText(i18n("New credential"));
+   credentialInfo[newItem] = {newItem, i18n("New credential"), "",""};
 
    selectCredential(newItem,list_credential->currentItem());
    list_credential->addItem(newItem);

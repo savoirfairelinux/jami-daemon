@@ -70,7 +70,7 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    m_pTransferOverlay->resize(size());
    m_pTransferOverlay->setCornerWidget(lblImg);
 
-   m_pTransferB->setText("Transfer");
+   m_pTransferB->setText(i18n("Transfer"));
    m_pTransferB->setMaximumSize(70,9000);
    
    gl->addItem  (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum), 0 , 0 , 1 , 3 );
@@ -227,7 +227,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
       if (contact)
          name = contact->getFormattedName();
       else
-         name = "Unknow";
+         name = i18n("Unknow");
       Call* call2 = SFLPhone::model()->addDialingCall(name, SFLPhone::model()->getCurrentAccountId());
       call2->appendText(QString(encodedPhoneNumber));
       if (!parent) {
@@ -648,7 +648,7 @@ bool CallView::conferenceChanged(Call* conf)
             insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(j)));
       }
 
-   Q_ASSERT_X(SFLPhone::model()->getIndex(conf)->childCount() == 0,"changind conference","A conference can't have no participants");
+   Q_ASSERT_X(SFLPhone::model()->getIndex(conf)->childCount() == 0,"changing conference","A conference can't have no participants");
 
    return true;
 } //conferenceChanged

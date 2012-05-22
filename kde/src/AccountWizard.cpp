@@ -204,25 +204,25 @@ void AccountWizard::accept()
    QString ret;
    MapStringString accountDetails;
 
-   QString& alias    = accountDetails[ QString(ACCOUNT_ALIAS)    ];
-   QString& enabled  = accountDetails[ QString(ACCOUNT_ENABLED)  ];
-   QString& mailbox  = accountDetails[ QString(ACCOUNT_MAILBOX)  ];
-   QString& protocol = accountDetails[ QString(ACCOUNT_TYPE)     ];
-   QString& server   = accountDetails[ QString(ACCOUNT_HOSTNAME) ];
-   QString& user     = accountDetails[ QString(ACCOUNT_USERNAME) ];
-   QString& password = accountDetails[ QString(ACCOUNT_PASSWORD) ];
+   QString& alias    = accountDetails[ QString( ACCOUNT_ALIAS    ) ];
+   QString& enabled  = accountDetails[ QString( ACCOUNT_ENABLED  ) ];
+   QString& mailbox  = accountDetails[ QString( ACCOUNT_MAILBOX  ) ];
+   QString& protocol = accountDetails[ QString( ACCOUNT_TYPE     ) ];
+   QString& server   = accountDetails[ QString( ACCOUNT_HOSTNAME ) ];
+   QString& user     = accountDetails[ QString( ACCOUNT_USERNAME ) ];
+   QString& password = accountDetails[ QString( ACCOUNT_PASSWORD ) ];
 
    // sip only parameters
    QString& stun_enabled = accountDetails[ QString(ACCOUNT_SIP_STUN_ENABLED) ];
    QString& stun_server  = accountDetails[ QString(ACCOUNT_SIP_STUN_SERVER)  ];
 
    // zrtp only parameters
-   QString& srtp_enabled          = accountDetails[ QString(ACCOUNT_SRTP_ENABLED)          ];
-   QString& key_exchange          = accountDetails[ QString(ACCOUNT_KEY_EXCHANGE)          ];
-   QString& zrtp_display_sas      = accountDetails[ QString(ACCOUNT_ZRTP_DISPLAY_SAS)      ];
-   QString& zrtp_not_supp_warning = accountDetails[ QString(ACCOUNT_ZRTP_NOT_SUPP_WARNING) ];
-   QString& zrtp_hello_hash       = accountDetails[ QString(ACCOUNT_ZRTP_HELLO_HASH)       ];
-   QString& display_sas_once      = accountDetails[ QString(ACCOUNT_DISPLAY_SAS_ONCE)      ];
+   QString& srtp_enabled          = accountDetails[ QString( ACCOUNT_SRTP_ENABLED          ) ];
+   QString& key_exchange          = accountDetails[ QString( ACCOUNT_KEY_EXCHANGE          ) ];
+   QString& zrtp_display_sas      = accountDetails[ QString( ACCOUNT_ZRTP_DISPLAY_SAS      ) ];
+   QString& zrtp_not_supp_warning = accountDetails[ QString( ACCOUNT_ZRTP_NOT_SUPP_WARNING ) ];
+   QString& zrtp_hello_hash       = accountDetails[ QString( ACCOUNT_ZRTP_HELLO_HASH       ) ];
+   QString& display_sas_once      = accountDetails[ QString( ACCOUNT_DISPLAY_SAS_ONCE      ) ];
 
    //  interface paramters
    QString& locale_interface  = accountDetails[ QString(LOCAL_INTERFACE)   ];
@@ -550,17 +550,17 @@ WizardAccountSIPFormPage::WizardAccountSIPFormPage(QWidget *parent)
 
 WizardAccountSIPFormPage::~WizardAccountSIPFormPage()
 {
-   delete label_alias;
-   delete label_server;
-   delete label_user;
-   delete label_password;
-   delete label_voicemail;
-   delete label_enableZrtp;
-   delete lineEdit_alias;
-   delete lineEdit_server;
-   delete lineEdit_user;
-   delete lineEdit_password;
-   delete lineEdit_voicemail;
+   delete label_alias        ;
+   delete label_server       ;
+   delete label_user         ;
+   delete label_password     ;
+   delete label_voicemail    ;
+   delete label_enableZrtp   ;
+   delete lineEdit_alias     ;
+   delete lineEdit_server    ;
+   delete lineEdit_user      ;
+   delete lineEdit_password  ;
+   delete lineEdit_voicemail ;
    delete checkBox_enableZrtp;
 }
 
@@ -619,15 +619,15 @@ WizardAccountIAXFormPage::WizardAccountIAXFormPage(QWidget *parent)
 
 WizardAccountIAXFormPage::~WizardAccountIAXFormPage()
 {
-   delete label_alias;
-   delete label_server;
-   delete label_user;
-   delete label_password;
-   delete label_voicemail;
-   delete lineEdit_alias;
-   delete lineEdit_server;
-   delete lineEdit_user;
-   delete lineEdit_password;
+   delete label_alias       ;
+   delete label_server      ;
+   delete label_user        ;
+   delete label_password    ;
+   delete label_voicemail   ;
+   delete lineEdit_alias    ;
+   delete lineEdit_server   ;
+   delete lineEdit_user     ;
+   delete lineEdit_password ;
    delete lineEdit_voicemail;
 }
 
@@ -668,7 +668,7 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
 WizardAccountStunPage::~WizardAccountStunPage()
 {
    delete checkBox_enableStun;
-   delete label_StunServer;
+   delete label_StunServer   ;
    delete lineEdit_StunServer;
 }
 

@@ -24,6 +24,9 @@
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 
+//KDE
+#include <KLocale>
+
 //SFLPhone
 #include "../lib/Contact.h"
 
@@ -39,7 +42,7 @@ ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
          conth["phoneType"  ] = cont->getPhoneNumbers()[0]->getType();
       }
       else {
-         conth["phoneNumber"] = QString::number(cont->getPhoneNumbers().size())+" numbers";
+         conth["phoneNumber"] = QString::number(cont->getPhoneNumbers().size())+i18n(" numbers");
          conth["phoneType"  ] = "";
       }
       hash[contacts[i]->getUid()] = conth;

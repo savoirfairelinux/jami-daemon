@@ -258,7 +258,7 @@ bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
          map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
          list << number->getType()+" ("+number->getNumber()+")";
       }
-      QString result = QInputDialog::getItem (this, QString("Select phone number"), QString("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
+      QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
       if (ok) {
          call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
          call2->appendText(map[result]);
@@ -325,7 +325,7 @@ void SFLPhoneView::updateWindowCallState()
             break;
          case CALL_STATE_CURRENT:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
-            m_pMessageBoxW->setVisible(true);
+            m_pMessageBoxW->setVisible(true)                                     ;
             break;
          case CALL_STATE_DIALING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -337,7 +337,7 @@ void SFLPhoneView::updateWindowCallState()
          case CALL_STATE_HOLD:
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
-            m_pMessageBoxW->setVisible(true);
+            m_pMessageBoxW->setVisible(true)                                     ;
             break;
          case CALL_STATE_FAILURE:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
@@ -481,10 +481,10 @@ void SFLPhoneView::updateVolumeControls()
    //SFLPhone::app()->action_displayVolumeControls->setChecked(display);
    //widget_recVol->setVisible(display);
    //widget_sndVol->setVisible(display);
-   toolButton_recVol->setVisible ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
-   toolButton_sndVol->setVisible ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
-   slider_recVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
-   slider_sndVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked()  && ConfigurationSkeleton::displayVolume() );
+   toolButton_recVol->setVisible ( SFLPhone::app()->action_displayVolumeControls->isChecked() && ConfigurationSkeleton::displayVolume() );
+   toolButton_sndVol->setVisible ( SFLPhone::app()->action_displayVolumeControls->isChecked() && ConfigurationSkeleton::displayVolume() );
+   slider_recVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked() && ConfigurationSkeleton::displayVolume() );
+   slider_sndVol->setVisible     ( SFLPhone::app()->action_displayVolumeControls->isChecked() && ConfigurationSkeleton::displayVolume() );
 
 }
 

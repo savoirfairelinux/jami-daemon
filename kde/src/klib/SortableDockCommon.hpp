@@ -22,6 +22,10 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QStringList>
 #include <QtCore/QTimer>
+#include <QtCore/QString>
+
+//KDE
+#include <KLocale>
 
 //SFLPhone
 #include "../lib/Call.h"
@@ -143,7 +147,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,Histo
             }
             break;
          case HistorySortingMode::Length:
-            category = "TODO";
+            category = i18n("TODO");
             break;
          default:
             break;
@@ -185,7 +189,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
                category = QString(cont->getFormattedName()[0]);
                break;
             case ContactSortingMode::Organisation:
-               category = (cont->getOrganization().isEmpty())?"Unknow":cont->getOrganization();
+               category = (cont->getOrganization().isEmpty())?i18n("Unknow"):cont->getOrganization();
                break;
             case ContactSortingMode::Recently_used:
                if (recentlyUsed.find(cont) != recentlyUsed.end())
@@ -194,10 +198,10 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
                   category = m_slHistoryConst[Never];
                break;
             case ContactSortingMode::Group:
-               category = "TODO";
+               category = i18n("TODO");
                break;
             case ContactSortingMode::Department:
-               category = (cont->getDepartment().isEmpty())?"Unknow":cont->getDepartment();;
+               category = (cont->getDepartment().isEmpty())?i18n("Unknow"):cont->getDepartment();;
                break;
             default:
                break;

@@ -81,7 +81,7 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    QWidget* mainWidget = new QWidget(this);
    setWidget(mainWidget);
 
-   m_pMostUsedCK->setText("Show most called contacts");
+   m_pMostUsedCK->setText(i18n("Show most called contacts"));
 
    QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
 
@@ -121,8 +121,8 @@ void BookmarkDock::addBookmark_internal(const QString& phone)
    HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone);
    QTreeWidgetItem* item   = NULL;
 
-   if (widget->getName() == "Unknow" || widget->getName().isEmpty()) {
-      item = m_pItemView->addItem<QNumericTreeWidgetItem>("Unknow");
+   if (widget->getName() == i18n("Unknow") || widget->getName().isEmpty()) {
+      item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18n("Unknow"));
    }
    else {
       item = m_pItemView->addItem<QNumericTreeWidgetItem>(QString(widget->getName()[0]));
@@ -156,14 +156,14 @@ void BookmarkDock::reload()
 {
    m_pItemView->clear();
    m_pBookmark.clear();
-   m_pItemView->addCategory("Popular");
+   m_pItemView->addCategory(i18n("Popular"));
    for (int i=65;i<=90;i++) {
       m_pItemView->addCategory(QString(i));
    }
    if (m_pMostUsedCK->isChecked()) {
       QStringList cl = SFLPhone::model()->getNumbersByPopularity();
       for (int i=0;i < ((cl.size() < 10)?cl.size():10);i++) {
-         QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>("Popular");
+         QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18n("Popular"));
          HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,cl[i]);
          widget->setItem(item);
          m_pItemView->setItemWidget(item,0,widget);
