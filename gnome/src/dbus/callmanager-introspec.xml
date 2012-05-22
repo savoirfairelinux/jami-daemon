@@ -372,6 +372,11 @@
             <arg type="s" name="filepath" />
         </signal>
 
+        <signal name="updatePlaybackScale" tp:name-for-bindings="updatePlaybackScale">
+            <tp:docstring/>
+            <arg type="s" name="callid" />
+            <arg type="i" name="value" />
+        </signal>
 
         <method name="getCallDetails" tp:name-for-bindings="getCallDetails">
             <tp:docstring>

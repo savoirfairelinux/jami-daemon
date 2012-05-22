@@ -71,6 +71,7 @@ static GtkWidget *dialpad;
 static GtkWidget *speaker_control;
 static GtkWidget *mic_control;
 static GtkWidget *statusBar;
+static GtkWidget *hscale;
 
 static gchar *status_current_message;
 
@@ -215,7 +216,6 @@ create_main_window()
     gtk_widget_set_name(window, "mainwindow");
 
     ui_manager = uimanager_new();
-
     if (!ui_manager) {
         ERROR("Could not load xml GUI\n");
         exit(1);
@@ -226,7 +226,13 @@ create_main_window()
                                gtk_ui_manager_get_accel_group(ui_manager));
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0 /*spacing*/);
+    gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
+    gtk_box_set_spacing(GTK_BOX(vbox), 0);
+
     subvbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5 /*spacing*/);
+    gtk_box_set_homogeneous(GTK_BOX(subvbox), FALSE);
+    gtk_box_set_spacing(GTK_BOX(vbox), 0);
+
 
     GtkWidget *widget = create_menus(ui_manager);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE /*expand*/, TRUE /*fill*/,
@@ -236,6 +242,32 @@ create_main_window()
     // Do not override GNOME user settings
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE /*expand*/, TRUE /*fill*/,
                        0 /*padding*/);
+
+    gdouble init_value = 0.0;
+    gdouble min_value = 0.0;
+    gdouble max_value = 100.0;
+    gdouble stepincrement = 1.0;
+    gdouble pageincrement = 1.0;
+    gdouble pagesize = 1.0;
+
+    GtkAdjustment *adjustment = gtk_adjustment_new(init_value, min_value, max_value, stepincrement, pageincrement, pagesize);
+    if(adjustment == NULL) {
+        WARN("Invalid adjustment value for horizontal scale");
+    }
+
+    hscale = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, adjustment);
+    if(hscale == NULL) {
+        WARN("Could not create new horizontal scale");
+    }
+
+    gfloat xalign = 0.0f;
+    gfloat yalign = 0.0f;
+    gfloat xscale = 1.0f;
+    gfloat yscale = 0.0f;
+    GtkWidget *align = gtk_alignment_new(xalign, yalign, xscale, yscale);
+    gtk_container_add(GTK_CONTAINER(align), hscale);
+
+    gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(align), TRUE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE /*expand*/,
                        TRUE /*fill*/, 0 /*padding*/);
@@ -477,4 +509,11 @@ main_window_confirm_go_clear(callable_obj_t * c)
                                   NULL);
 
     add_error_dialog(GTK_WIDGET(mini_dialog));
+}
+
+void update_playback_scale(guint current, guint size)
+{
+    gdouble val = ((gdouble) current / (gdouble) size) * 100.0;
+
+    gtk_range_set_value(GTK_RANGE(hscale), val);
 }

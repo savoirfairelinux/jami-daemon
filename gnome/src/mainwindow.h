@@ -102,4 +102,6 @@ void main_window_confirm_go_clear (callable_obj_t * c);
 
 void focus_on_searchbar_out();
 void focus_on_searchbar_in();
+
+void update_playback_scale(guint current, guint size);
 #endif

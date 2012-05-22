@@ -418,6 +418,21 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
     update_actions();
 }
 
+#define POSITION_MASK 0x0000FFFF
+#define SIZE_MASK 0xFFFF0000
+
+static void
+update_playback_scale_cb(DBusGProxy *proxy UNUSED, const gchar *callid, guint value)
+{
+    guint size = (value & SIZE_MASK);
+    guint position = (value & POSITION_MASK);
+
+    // DEBUG("Playback scale update position: %d, size: %d", position << 8, size >> 16);
+    // DEBUG("Playback scale update value: %d, sizeof guint: %d", value, sizeof(guint));
+
+    update_playback_scale(position << 8, size >> 16);
+}
+
 static void
 registration_state_changed_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
                               guint state, void *foo UNUSED)
@@ -801,6 +816,10 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_add_signal(call_proxy, "recordPlaybackStopped", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "recordPlaybackStopped",
                                 G_CALLBACK(record_playback_stopped_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal(call_proxy, "updatePlaybackScale", G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(call_proxy, "updatePlaybackScale",
+                                G_CALLBACK(update_playback_scale_cb), NULL, NULL);
 
     /* Security related callbacks */
     dbus_g_proxy_add_signal(call_proxy, "secureSdesOn", G_TYPE_STRING,

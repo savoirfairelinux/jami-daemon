@@ -2074,6 +2074,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
         try {
             audiofile_.reset(new WaveFile(filepath, sampleRate));
+            audiofile_.get()->setIsRecording(true);
         } catch (const AudioFileException &e) {
             ERROR("Exception: %s", e.what());
         }
