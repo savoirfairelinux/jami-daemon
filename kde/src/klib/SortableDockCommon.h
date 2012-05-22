@@ -45,7 +45,7 @@ enum ContactSortingMode {
    Organisation      ,
    Recently_used     ,
    Group             ,
-   Department
+   Department        ,
 };
 
 ///@enum HistorySortingMode
@@ -53,29 +53,29 @@ enum HistorySortingMode {
    Date       = 0,
    Name2      = 1,
    Popularity = 2,
-   Length   = 3
+   Length     = 3,
 };
 
 template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
 class LIB_EXPORT SortableDockCommon {
    public:
       friend class StaticEventHandler;
-
+      
       //Helpers
       static QString getIdentity(Call* item);
       static int usableNumberCount(Contact* cont);
       static void setHistoryCategory ( QList<Call*>& calls       , HistorySortingMode mode );
       static void setContactCategory ( QList<Contact*> contacts , ContactSortingMode mode );
-
+      
    protected:
       SortableDockCommon();
       //Helpers
-      static QString                    timeToHistoryCategory ( QDate date                                         );
-      static QHash<Contact*, QDateTime> getContactListByTime  ( /*ContactList list*/                               );
+      static QString                    timeToHistoryCategory ( QDate date );
+      static QHash<Contact*, QDateTime> getContactListByTime  (            );
 
       //Attributes
       static QStringList         m_slHistoryConst;
-
+      
       ///@enum HistoryConst match m_slHistoryConst
       enum HistoryConst {
          Today             = 0  ,

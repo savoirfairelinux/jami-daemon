@@ -168,7 +168,7 @@ void CallTreeItem::setCall(Call *call)
    connect(m_pItemCall, SIGNAL(changed()), this,     SLOT(updated()));
 
    updated();
-}
+} //setCall
 
 ///Update data
 void CallTreeItem::updated()
@@ -231,7 +231,7 @@ void CallTreeItem::updated()
       kDebug() << "not emmiting tranfer signal";
    }
    changed();
-}
+} //updated
 
 
 /*****************************************************************************
@@ -262,7 +262,7 @@ void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
    }
    else
       e->ignore();
-}
+} //dragEnterEvent
 
 ///The cursor move on a potential drag event
 void CallTreeItem::dragMoveEvent  ( QDragMoveEvent  *e )
@@ -311,7 +311,7 @@ void CallTreeItem::resizeEvent ( QResizeEvent *e )
    }
 
    e->accept();
-}
+} //resizeEvent
 
 void CallTreeItem::transferEvent(QMimeData* data)
 {

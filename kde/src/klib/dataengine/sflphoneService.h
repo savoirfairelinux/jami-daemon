@@ -31,133 +31,90 @@
 
 using namespace Plasma;
 
+///@class SFLPhoneService RPC between the plasmoid and the library
 class SFLPhoneService : public Plasma::Service
 {
-    Q_OBJECT
+   Q_OBJECT
 
 public:
-    SFLPhoneService(SFLPhoneEngine *engine);
-    ServiceJob *createJob(const QString &operation, QMap<QString, QVariant> &parameters);
+   SFLPhoneService(SFLPhoneEngine *engine);
+   ServiceJob *createJob(const QString &operation, QMap<QString, QVariant> &parameters);
 
 private:
-    SFLPhoneEngine *m_engine;
-
+   SFLPhoneEngine *m_engine;
 };
 
+///@class CallJob Call using and account and a number
 class CallJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-    CallJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap())
-        : Plasma::ServiceJob("", operation, parameters, parent)
-        , m_AccountId ( parameters[ "AccountId" ].toString() )
-        , m_Number    ( parameters[ "Number"    ].toString() )
-    {}
+   CallJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
-    void start()
-    {
-      Call* call = SFLPhoneEngine::getModel()->addDialingCall(m_Number,m_AccountId);
-      call->setCallNumber(m_Number);
-      call->actionPerformed(CALL_ACTION_ACCEPT);
-    }
+   void start();
 
 private:
     QString m_AccountId;
-    QString m_Number;
+    QString m_Number   ;
 };
 
+///@class DTMFJob Play a sound when called
 class DTMFJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-    DTMFJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap())
-        : Plasma::ServiceJob("", operation, parameters, parent)
-        , m_mStr( parameters[ "str" ].toString() )
-    {}
+   DTMFJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
-   void start()
-   {
-      CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-      callManager.playDTMF(m_mStr);
-   }
+   void start();
 private:
    QString m_mStr;
 };
 
+///@class HangUpJob Hang up a call using an id
 class HangUpJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-    HangUpJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap())
-        : Plasma::ServiceJob("", operation, parameters, parent)
-        , m_CallId( parameters[ "callid" ].toString() )
-    {}
+   HangUpJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
-   void start()
-   {
-      Call* call = SFLPhoneEngine::getModel()->getCall(m_CallId);
-      call->actionPerformed(CALL_ACTION_REFUSE);
-      call->changeCurrentState(CALL_STATE_OVER);
-   }
+   void start();
 private:
    QString m_CallId;
 };
 
+///@class TransferJob Transfer a call
 class TransferJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-    TransferJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap())
-        : Plasma::ServiceJob("", operation, parameters, parent)
-        , m_CallId         ( parameters[ "callid" ].toString()         )
-        , m_transferNumber ( parameters[ "transfernumber" ].toString() )
-    {}
+   TransferJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
-   void start()
-   {
-      Call* call = SFLPhoneEngine::getModel()->getCall(m_CallId);
-      call->setTransferNumber(m_transferNumber);
-      call->changeCurrentState(CALL_STATE_TRANSFER);
-      call->actionPerformed(CALL_ACTION_ACCEPT);
-      call->changeCurrentState(CALL_STATE_OVER);
-   }
+   void start();
 private:
-   QString m_CallId;
+   QString m_CallId        ;
    QString m_transferNumber;
 };
 
+///@class HoldJob Put or remove a call from hold mode
 class HoldJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-    HoldJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap())
-        : Plasma::ServiceJob("", operation, parameters, parent)
-        , m_CallId         ( parameters[ "callid" ].toString() )
-    {}
+   HoldJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
-   void start()
-   {
-      Call* call = SFLPhoneEngine::getModel()->getCall(m_CallId);
-      call->actionPerformed(CALL_ACTION_HOLD);
-   }
+   void start();
 private:
    QString m_CallId;
 };
 
+///@class RecordJob Record a call
 class RecordJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-    RecordJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap())
-        : Plasma::ServiceJob("", operation, parameters, parent)
-        , m_CallId         ( parameters[ "callid" ].toString() )
-    {}
+   RecordJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
-   void start()
-   {
-      Call* call = SFLPhoneEngine::getModel()->getCall(m_CallId);
-      call->actionPerformed(CALL_ACTION_RECORD);
-   }
+   void start();
 private:
    QString m_CallId;
 };

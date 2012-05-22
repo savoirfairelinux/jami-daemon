@@ -83,22 +83,33 @@ class CallView : public QTreeWidget {
    Q_OBJECT
    public:
       CallView                    ( QWidget* parent = 0                                                               );
+
+      //Getters
       Call* getCurrentItem        (                                                                                   );
       QWidget* getWidget          (                                                                                   );
+      bool haveOverlay            (                                                                                   );
+      virtual QMimeData* mimeData ( const QList<QTreeWidgetItem *> items                                              ) const;
+
+      //Setters
       void setTitle               ( const QString& title                                                              );
+
+      //Mutator
       bool selectItem             ( Call* item                                                                        );
       bool removeItem             ( Call* item                                                                        );
       bool dropMimeData           ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
-      virtual QMimeData* mimeData ( const QList<QTreeWidgetItem *> items                                              ) const;
-      bool haveOverlay();
+      bool callToCall             ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
+      bool phoneNumberToCall      ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
+      bool contactToCall          ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
 
    private:
+      //Mutator
       QTreeWidgetItem* extractItem ( const QString& callId                             );
       QTreeWidgetItem* extractItem ( QTreeWidgetItem* item                             );
       CallTreeItem* insertItem     ( QTreeWidgetItem* item, QTreeWidgetItem* parent=0  );
       CallTreeItem* insertItem     ( QTreeWidgetItem* item, Call* parent               );
       void clearArtefact           ( QTreeWidgetItem* item                             );
 
+      //Attributes
       QPushButton*     m_pTransferB;
       KLineEdit*       m_pTransferLE;
       CallViewOverlay* m_pTransferOverlay;
@@ -106,13 +117,11 @@ class CallView : public QTreeWidget {
       Call*            m_pCallPendingTransfer;
 
    protected:
+      //Reimlementation
       virtual void dragEnterEvent ( QDragEnterEvent *e );
       virtual void dragMoveEvent  ( QDragMoveEvent  *e );
       virtual void dragLeaveEvent ( QDragLeaveEvent *e );
       virtual void resizeEvent    ( QResizeEvent    *e );
-      bool callToCall        ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
-      bool phoneNumberToCall ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
-      bool contactToCall     ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
 
    public slots:
       void destroyCall        ( Call* toDestroy);

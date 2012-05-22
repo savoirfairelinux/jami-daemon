@@ -127,8 +127,8 @@ public:
    static TreeWidgetCallModel* model ();
    SFLPhoneView*               view  ();
 
-   ContactDock*  contactDock();
-   HistoryDock*  historyDock();
+   ContactDock*  contactDock ();
+   HistoryDock*  historyDock ();
    BookmarkDock* bookmarkDock();
 
 private slots:

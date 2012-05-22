@@ -106,7 +106,6 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     GtkTreeModel *model = gtk_tree_view_get_model(gtk_tree_selection_get_tree_view(sel));
 
     GtkTreeIter iter;
-
     if (!gtk_tree_selection_get_selected(sel, &model, &iter))
         return;
 
@@ -524,8 +523,6 @@ calltree_remove_call(calltab_t* tab, const gchar *target_id)
     callable_obj_t *sel = calltab_get_selected_call(tab);
     if (sel && g_strcmp0(sel->_callID, target_id) == 0)
         calltab_select_call(tab, NULL);
-
-    update_actions();
 
     statusbar_update_clock("");
 }
@@ -969,8 +966,6 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
         }
     }
 
-    DEBUG("Calltree: Add conference to tree store");
-
     gchar *description = g_markup_printf_escaped("<b>%s</b>", "");
     gtk_tree_store_set(current_calls_tab->store, &iter,
                        COLUMN_ACCOUNT_PIXBUF, pixbuf,
@@ -1097,7 +1092,6 @@ void calltree_display(calltab_t *tab)
     gtk_widget_show(active_calltree_tab->tree);
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
-    DEBUG("CallTree: Emit signal changed from calltree_display");
     g_signal_emit_by_name(sel, "changed");
     update_actions();
 }

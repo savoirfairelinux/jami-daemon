@@ -57,7 +57,7 @@ Dialpad::Dialpad(QWidget *parent)
       layout->addWidget  ( text      );
       connect(m_pButtons[i],SIGNAL(typed(QString&)),this,SLOT(clicked(QString&)));
    }
-}
+} //Dialpad
 
 ///Proxy to make the view more convinient to use
 void Dialpad::clicked(QString& text)

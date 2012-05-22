@@ -89,7 +89,7 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    connect(m_pEmail        , SIGNAL(triggered()) , this,SLOT(sendEmail()      ));
    connect(m_pAddPhone     , SIGNAL(triggered()) , this,SLOT(addPhone()       ));
    connect(m_pBookmark     , SIGNAL(triggered()) , this,SLOT(bookmark()       ));
-}
+} //ContactItemWidget
 
 ///Destructor
 ContactItemWidget::~ContactItemWidget()
@@ -138,7 +138,7 @@ void ContactItemWidget::setContact(Contact* contact)
 
    updated();
    connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
-}
+} //setContact
 
 ///Set the model index
 void ContactItemWidget::setItem(QTreeWidgetItem* item)
@@ -185,7 +185,7 @@ void ContactItemWidget::updated()
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
    else
       m_pIconL->setPixmap(*m_pContactKA->getPhoto());
-}
+} //updated
 
 
 /*****************************************************************************
@@ -258,7 +258,7 @@ void ContactItemWidget::showContext(const QPoint& pos)
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
    m_pBookmark->setEnabled(numbers.count() == 1);
    m_pMenu->exec(mapToGlobal(pos));
-}
+} //showContext
 
 ///Send an email
 //TODO

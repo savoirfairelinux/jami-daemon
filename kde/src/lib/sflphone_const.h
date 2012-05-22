@@ -65,7 +65,6 @@
 #define ICON_TRANSFER                     ":/images/icons/transfert.svg"
 #define ICON_TRANSF_HOLD                  ":/images/icons/transfert.svg"
 #define ICON_CONFERENCE                   ":/images/icons/user-group-properties.svg"
-
 #define ICON_CALL                         ":/images/icons/call.svg"
 #define ICON_HANGUP                       ":/images/icons/hang_up.svg"
 #define ICON_UNHOLD                       ":/images/icons/unhold.svg"
@@ -75,34 +74,26 @@
 #define ICON_REC_DEL_OFF                  ":/images/icons/record_disabled.svg"
 #define ICON_REC_DEL_ON                   ":/images/icons/record.svg"
 #define ICON_MAILBOX                      ":/images/icons/mailbox.svg"
-
 #define ICON_REC_VOL_0                    ":/images/icons/mic.svg"
 #define ICON_REC_VOL_1                    ":/images/icons/mic_25.svg"
 #define ICON_REC_VOL_2                    ":/images/icons/mic_50.svg"
 #define ICON_REC_VOL_3                    ":/images/icons/mic_75.svg"
-
 #define ICON_SND_VOL_0                    ":/images/icons/speaker.svg"
 #define ICON_SND_VOL_1                    ":/images/icons/speaker_25.svg"
 #define ICON_SND_VOL_2                    ":/images/icons/speaker_50.svg"
 #define ICON_SND_VOL_3                    ":/images/icons/speaker_75.svg"
-
 #define ICON_SCREEN_MAIN                  ":/images/icons/sflphone.svg"
 #define ICON_SCREEN_HISTORY               ":/images/icons/history2.svg"
 #define ICON_SCREEN_ADDRESS               ":/images/icons/x-office-address-book.png"
-
 #define ICON_DISPLAY_VOLUME_CONSTROLS     ":/images/icons/icon_volume_off.svg"
 #define ICON_DISPLAY_DIALPAD              ":/images/icons/icon_dialpad.svg"
-
 #define ICON_HISTORY_INCOMING             ":/images/icons/incoming.svg"
 #define ICON_HISTORY_OUTGOING             ":/images/icons/outgoing.svg"
 #define ICON_HISTORY_MISSED               ":/images/icons/missed.svg"
-
 #define ICON_ACCOUNT_LED_RED              ":/images/icons/led-red.svg"
 #define ICON_ACCOUNT_LED_GREEN            ":/images/icons/led-green.svg"
 #define ICON_ACCOUNT_LED_GRAY             ":/images/icons/led-gray.svg"
-
 #define ICON_QUIT                         ":/images/icons/application-exit.png"
-
 #define ICON_SFLPHONE                     ":/images/icons/sflphone.svg"
 #define ICON_TRAY_NOTIF                   ":/images/icons/sflphone_notif.svg"
 
@@ -111,59 +102,8 @@
 
 
 /** Account details */
-// #define ACCOUNT_ID                         "Account.id"
-// #define ACCOUNT_TYPE                       "Account.type"
-// #define ACCOUNT_ALIAS                      "Account.alias"
-// #define ACCOUNT_ENABLED                    "Account.enable"
-// #define ACCOUNT_MAILBOX                    "Account.mailbox"
-// #define ACCOUNT_USERAGENT                  "Account.useragent"
-// #define ACCOUNT_REGISTRATION_EXPIRE        "Account.registrationExpire"
-// #define ACCOUNT_SIP_STUN_SERVER            "STUN.server"
-// #define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
-// #define ACCOUNT_DTMF_TYPE                  "Account.dtmfType"
-// #define ACCOUNT_HOSTNAME                   "Account.hostname"
-// #define ACCOUNT_USERNAME                   "Account.username"
-// #define ACCOUNT_ROUTE                      "Account.routeset"
-// #define ACCOUNT_PASSWORD                   "Account.password"
-// #define ACCOUNT_REALM                      "Account.realm"
-// #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
-// #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
-// #define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
-// #define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
-// #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
-// #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
-// #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
-// #define KEY_EXCHANGE_NONE                "0"
-// #define ZRTP                             "1"
-// #define SDES                             "2"
 
 /** TLS */
-// #define TLS_LISTENER_PORT                "TLS.listenerPort"
-// #define TLS_ENABLE                       "TLS.enable"
-// #define TLS_PORT                         "TLS.port"
-// #define TLS_CA_LIST_FILE                 "TLS.certificateListFile"
-// #define TLS_CERTIFICATE_FILE             "TLS.certificateFile"
-// #define TLS_PRIVATE_KEY_FILE             "TLS.privateKeyFile"
-// #define TLS_PASSWORD                     "TLS.password"
-// #define TLS_METHOD                       "TLS.method"
-// #define TLS_CIPHERS                      "TLS.ciphers"
-// #define TLS_SERVER_NAME                  "TLS.serverName"
-// #define TLS_VERIFY_SERVER                "TLS.verifyServer"
-// #define TLS_VERIFY_CLIENT                "TLS.verifyClient"
-// #define TLS_REQUIRE_CLIENT_CERTIFICATE   "TLS.requireClientCertificate"
-// #define TLS_NEGOTIATION_TIMEOUT_SEC      "TLS.negotiationTimeoutSec"
-// #define TLS_NEGOTIATION_TIMEOUT_MSEC     "TLS.negotiationTimemoutMsec"
-//
-// #define LOCAL_INTERFACE                  "Account.localInterface"
-// #define PUBLISHED_SAMEAS_LOCAL           "Account.publishedSameAsLocal"
-// #define LOCAL_PORT                       "Account.localPort"
-// #define PUBLISHED_PORT                   "Account.publishedPort"
-// #define PUBLISHED_ADDRESS                "Account.publishedAddress"
-//
-// #define REGISTRATION_STATUS              "Registration.Status"
-// #define REGISTRATION_STATE_CODE          "Registration.code"
-// #define REGISTRATION_STATE_DESCRIPTION   "Registration.description"
-
 
 #define IP2IP_PROFILE                      "IP2IP"
 
@@ -200,6 +140,8 @@
 #define CONFIG_RINGTONE_PATH               "Account.ringtonePath"
 #define CONFIG_RINGTONE_ENABLED            "Account.ringtoneEnabled"
 
+
+/**Security */
 #define TLS_LISTENER_PORT                  "TLS.listenerPort"
 #define TLS_ENABLE                         "TLS.enable"
 #define TLS_PORT                           "TLS.port"
@@ -216,6 +158,7 @@
 #define TLS_NEGOTIATION_TIMEOUT_SEC        "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC       "TLS.negotiationTimemoutMsec"
 
+/**Shortcut*/
 #define SHORTCUT_PICKUP                    "pickUp"
 #define SHORTCUT_HANGUP                    "hangUp"
 #define SHORTCUT_POPUP                     "popupWindow"
@@ -223,13 +166,13 @@
 #define SHORTCUT_TOGGLEHOLD                "toggleHold"
 
 
-#define CONFIG_ACCOUNT_HOSTNAME             "Account.hostname"
-#define CONFIG_ACCOUNT_USERNAME             "Account.username"
-#define CONFIG_ACCOUNT_ROUTESET             "Account.routeset"
-#define CONFIG_ACCOUNT_PASSWORD             "Account.password"
-#define CONFIG_ACCOUNT_REALM                "Account.realm"
-#define CONFIG_ACCOUNT_DEFAULT_REALM        "*"
-#define CONFIG_ACCOUNT_USERAGENT            "Account.useragent"
+#define CONFIG_ACCOUNT_HOSTNAME            "Account.hostname"
+#define CONFIG_ACCOUNT_USERNAME            "Account.username"
+#define CONFIG_ACCOUNT_ROUTESET            "Account.routeset"
+#define CONFIG_ACCOUNT_PASSWORD            "Account.password"
+#define CONFIG_ACCOUNT_REALM               "Account.realm"
+#define CONFIG_ACCOUNT_DEFAULT_REALM       "*"
+#define CONFIG_ACCOUNT_USERAGENT           "Account.useragent"
 
 #define LOCAL_INTERFACE                    "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL             "Account.publishedSameAsLocal"
@@ -239,11 +182,9 @@
 
 
 /** Maybe to remove **/
-// #define ACCOUNT_EXPIRE                   "Account.expire"
-// #define ACCOUNT_STATUS                   "Status"
-#define REGISTRATION_EXPIRE_DEFAULT            600
-#define REGISTRATION_ENABLED_TRUE              "true"
-#define REGISTRATION_ENABLED_FALSE             "false"
+#define REGISTRATION_EXPIRE_DEFAULT       600
+#define REGISTRATION_ENABLED_TRUE         "true"
+#define REGISTRATION_ENABLED_FALSE        "false"
 #define ACCOUNT_TYPE_SIP                  "SIP"
 #define ACCOUNT_TYPE_IAX                  "IAX"
 #define ACCOUNT_TYPES_TAB                 {QString(ACCOUNT_TYPE_SIP), QString(ACCOUNT_TYPE_IAX)}
@@ -286,8 +227,8 @@
 #define DAEMON_CALL_STATE_INIT_CURRENT    "CURRENT"
 #define DAEMON_CALL_STATE_INIT_HOLD       "HOLD"
 #define DAEMON_CALL_STATE_INIT_BUSY       "BUSY"
-#define DAEMON_CALL_STATE_INIT_INCOMING       "INCOMING"
-#define DAEMON_CALL_STATE_INIT_RINGING       "RINGING"
+#define DAEMON_CALL_STATE_INIT_INCOMING   "INCOMING"
+#define DAEMON_CALL_STATE_INIT_RINGING    "RINGING"
 #define DAEMON_CALL_STATE_INIT_INACTIVE   "INACTIVE"
 
 #define DAEMON_CALL_TYPE_INCOMING         "0"
@@ -326,60 +267,20 @@
 #define CONST_ALSA                        0
 #define CONST_PULSEAUDIO                  1
 
-/** TLS */
-// #define TLS_LISTENER_PORT                   "TLS.listenerPort"
-// #define TLS_ENABLE                          "TLS.enable"
-// #define TLS_PORT                            "TLS.port"
-// #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
-// #define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
-// #define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
-// #define TLS_PASSWORD                        "TLS.password"
-// #define TLS_METHOD                          "TLS.method"
-// #define TLS_CIPHERS                         "TLS.ciphers"
-// #define TLS_SERVER_NAME                     "TLS.serverName"
-// #define TLS_VERIFY_SERVER                   "TLS.verifyServer"
-// #define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
-// #define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"
-// #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
-// #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
-
-// #define ACCOUNT_ID                         "Account.id"
-// #define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
-// #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
-// #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
-// #define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
-// #define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
-// #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
-// #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
-// #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
-// #define KEY_EXCHANGE_NONE                  "0"
-// #define ZRTP                               "1"
-// #define SDES                               "2"
-
 typedef enum
 {
-   /** Ringing incoming call */
-   CALL_STATE_INCOMING    = 0,
-   /** Ringing outgoing call */
-   CALL_STATE_RINGING     = 1,
-   /** Call to which the user can speak and hear */
-   CALL_STATE_CURRENT     = 2,
-   /** Call which numbers are being added by the user */
-   CALL_STATE_DIALING     = 3,
-   /** Call is on hold */
-   CALL_STATE_HOLD        = 4,
-   /** Call has failed */
-   CALL_STATE_FAILURE     = 5,
-   /** Call is busy */
-   CALL_STATE_BUSY        = 6,
-   /** Call is being transfered.  During this state, the user can enter the new number. */
-   CALL_STATE_TRANSFER    = 7,
-   /** Call is on hold for transfer */
-   CALL_STATE_TRANSF_HOLD = 8,
-   /** Call is over and should not be used */
-   CALL_STATE_OVER        = 9,
-   /** This state should never be reached */
-   CALL_STATE_ERROR       = 10
+   
+   CALL_STATE_INCOMING    = 0, /** Ringing incoming call */
+   CALL_STATE_RINGING     = 1, /** Ringing outgoing call */
+   CALL_STATE_CURRENT     = 2, /** Call to which the user can speak and hear */
+   CALL_STATE_DIALING     = 3, /** Call which numbers are being added by the user */
+   CALL_STATE_HOLD        = 4, /** Call is on hold */
+   CALL_STATE_FAILURE     = 5, /** Call has failed */
+   CALL_STATE_BUSY        = 6, /** Call is busy */
+   CALL_STATE_TRANSFER    = 7, /** Call is being transfered.  During this state, the user can enter the new number. */
+   CALL_STATE_TRANSF_HOLD = 8, /** Call is on hold for transfer */
+   CALL_STATE_OVER        = 9, /** Call is over and should not be used */
+   CALL_STATE_ERROR       = 10 /** This state should never be reached */
 } call_state;
 
 static const QString empty("");
@@ -395,16 +296,15 @@ static const QString empty("");
 #endif
 
 /** HISTORY SERIALIZATION */
-#define ACCOUNT_ID_KEY      "accountid"
-#define CALLID_KEY          "callid"
-#define CONFID_KEY          "confid"
-#define DISPLAY_NAME_KEY    "display_name"
-#define PEER_NUMBER_KEY     "peer_number"
-#define RECORDING_PATH_KEY  "recordfile"
-#define STATE_KEY           "state"
-#define TIMESTAMP_START_KEY "timestamp_start"
-#define TIMESTAMP_STOP_KEY  "timestamp_stop"
-#define MISSED_STRING       "missed"
-#define INCOMING_STRING     "incoming"
-#define OUTGOING_STRING     "outgoing"
-
+#define ACCOUNT_ID_KEY        "accountid"
+#define CALLID_KEY            "callid"
+#define CONFID_KEY            "confid"
+#define DISPLAY_NAME_KEY      "display_name"
+#define PEER_NUMBER_KEY       "peer_number"
+#define RECORDING_PATH_KEY    "recordfile"
+#define STATE_KEY             "state"
+#define TIMESTAMP_START_KEY   "timestamp_start"
+#define TIMESTAMP_STOP_KEY    "timestamp_stop"
+#define MISSED_STRING         "missed"
+#define INCOMING_STRING       "incoming"
+#define OUTGOING_STRING       "outgoing"

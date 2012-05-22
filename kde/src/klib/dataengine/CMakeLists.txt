@@ -35,3 +35,4 @@ install(FILES plasma-engine-sflphone.desktop
 
 install(FILES sflphone.operations
         DESTINATION ${DATA_INSTALL_DIR}/plasma/services)
+

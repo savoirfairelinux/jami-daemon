@@ -133,7 +133,7 @@ void CallManager::setVolume(const std::string& device, const double& value)
     AudioLayer *audiolayer = Manager::instance().getAudioDriver();
 
     if(!audiolayer) {
-        ERROR("CallManager: Audio layer not valid while updating volume");
+        ERROR("Audio layer not valid while updating volume");
         return;
     }
 
@@ -154,7 +154,7 @@ CallManager::getVolume(const std::string& device)
     AudioLayer *audiolayer = Manager::instance().getAudioDriver();
 
     if(!audiolayer) {
-        ERROR("CallManager: Audio layer not valid while updating volume");
+        ERROR("Audio layer not valid while updating volume");
         return 0.0;
     }
 

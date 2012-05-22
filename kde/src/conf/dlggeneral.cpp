@@ -40,7 +40,7 @@ DlgGeneral::~DlgGeneral()
 
 void DlgGeneral::updateWidgets()
 {
-
+   
 }
 
 void DlgGeneral::updateSettings()

@@ -75,6 +75,9 @@ void Account::setRegistrationState(const RegistrationState &state)
 
 void Account::loadDefaultCodecs()
 {
+    // TODO
+    // CodecMap codecMap = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
+
     // Initialize codec
     std::vector<std::string> result;
     result.push_back("0");
@@ -108,7 +111,7 @@ void Account::setActiveCodecs(const std::vector<std::string> &list)
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
             ++iter) {
         int payload = std::atoi(iter->c_str());
-        audioCodecList_.push_back(static_cast<int>(payload));
+        audioCodecList_.push_back(payload);
     }
 
     // update the codec string according to new codec selection

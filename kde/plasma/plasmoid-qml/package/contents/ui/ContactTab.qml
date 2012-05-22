@@ -68,7 +68,7 @@ Plasma.Page {
                if (phoneCount > 1) {
                   //requestNumberOverlay = true
                   selectedPCount = phoneCount
-
+                  
                }
                else if (phoneCount == 1) {
                   callNumber = phoneNumber
@@ -84,14 +84,14 @@ Plasma.Page {
          ]
       }
    }
-
+   
    anchors {
       top: tabs.bottom;
       left: parent.left;
       right: parent.right;
       bottom: parent.bottom;
    }
-
+   
    PlasmaCore.DataSource {
       id: contactSource
       engine: "sflphone"
@@ -101,7 +101,7 @@ Plasma.Page {
          plasmoid.busy = false
       }
    }
-
+   
    PlasmaCore.SortFilterModel {
       id: nameFilter
       filterRole: "formattedName"
@@ -112,7 +112,7 @@ Plasma.Page {
          keyRoleFilter: "[\\d]*"
       }
    }
-
+   
    PlasmaCore.SortFilterModel {
       id: orgFilter
       filterRole: "organization"
@@ -120,7 +120,7 @@ Plasma.Page {
       sortOrder: "AscendingOrder"
       sourceModel: nameFilter
    }
-
+   
    PlasmaCore.SortFilterModel {
       id: depFilter
       filterRole: "department"
@@ -137,7 +137,7 @@ Plasma.Page {
       sourceSize.width: parent.width
       sourceSize.height: parent.width
    }
-
+   
    ListView {
       id: callList
       width:parent.width
@@ -152,7 +152,7 @@ Plasma.Page {
             delegate: ListSectiondelegate {}
       }
    }
-
+   
    Plasma.TabBar {
       id:sortTab
       width:parent.width
@@ -162,7 +162,7 @@ Plasma.Page {
          Plasma.TabButton {
             text: Array("Name","Organisation","Recent","Department","Group")[index];
             onPressedChanged: {
-
+               
             }
          }
       }*/
@@ -203,7 +203,7 @@ Plasma.Page {
          }
       }
    }
-
+   
    Rectangle {
       width:parent.width
       height:50

@@ -6,7 +6,7 @@ Plasma.Page {
     id: bookmarkTab
     height:parent.height-50
     width: parent.width
-
+    
     property int selectedItem: -1
 
    Component {
@@ -73,7 +73,7 @@ Plasma.Page {
          ]
       }
    }
-
+   
    PlasmaCore.DataSource {
       id: bookmarkSource
       engine: "sflphone"
@@ -106,7 +106,7 @@ Plasma.Page {
       right: parent.right;
       bottom: parent.bottom;
    }
-
+   
    Image {
       source: "plasmapackage:/images/favorites.svg";
       width:parent.width

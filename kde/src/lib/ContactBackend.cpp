@@ -27,11 +27,13 @@
 //Qt
 #include <QtCore/QHash>
 
+///Constructor
 ContactBackend::ContactBackend(QObject* parent) : QObject(parent)
 {
    
 }
 
+///Update slot
 ContactList ContactBackend::update()
 {
    return update_slot();

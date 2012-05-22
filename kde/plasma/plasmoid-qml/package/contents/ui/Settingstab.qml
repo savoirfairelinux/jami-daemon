@@ -4,9 +4,9 @@ import org.kde.plasma.core       0.1 as PlasmaCore
 
 Plasma.Page {
    id:settingsTab
-
+   
    property string defaultaccount: "IP2IP"
-
+   
    anchors {
       top: tabs.bottom;
       left: parent.left;
@@ -54,7 +54,7 @@ Plasma.Page {
          keyRoleFilter: "[\\d]*"
       }
    }
-
+   
    Column {
       width:parent.width
       spacing:3
@@ -99,52 +99,52 @@ Plasma.Page {
             ]
          }
       }
-
+      
       Item {
          height:15
          width:1
          anchors.bottomMargin:10
       }
-
+      
       Plasma.Label {
          text: "Bookmark"
       }
-
+      
       Rectangle {
          height:1
          width:parent.width -30
          color:theme.textColor
          anchors.bottomMargin:10
       }
-
+      
       Plasma.CheckBox {
          text:"Show popular as bookmark"
          width:parent.width
       }
-
+      
       Item {
          height:15
          width:1
          anchors.bottomMargin:10
       }
-
+      
       Plasma.Label {
          text: "Advanced"
       }
-
+      
       Rectangle {
          height:1
          width:parent.width -30
          color:theme.textColor
          anchors.bottomMargin:10
       }
-
+      
       Item {
          height:5
          width:1
          anchors.bottomMargin:10
       }
-
+      
       Plasma.Button {
          text:"Configure sflphone"
          anchors.margins : 10

@@ -1112,7 +1112,7 @@ create_audiocodecs_configuration(const account_t *account)
     gtk_table_attach(GTK_TABLE(table), file_chooser, 0, 1, 1, 2,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    gtk_widget_show_all (vbox);
+    gtk_widget_show_all(vbox);
 
     return vbox;
 }
@@ -1129,12 +1129,12 @@ create_videocodecs_configuration(const account_t *a)
 
     // Box for the videocodecs
     GtkWidget *videocodecs = gnome_main_section_new(_("Video"));
-    gtk_box_pack_start (GTK_BOX (vbox), videocodecs, FALSE, FALSE, 0);
-    gtk_widget_set_size_request (GTK_WIDGET (videocodecs), -1, 200);
-    gtk_widget_show (videocodecs);
-    gtk_container_add (GTK_CONTAINER (videocodecs) , box);
+    gtk_box_pack_start(GTK_BOX (vbox), videocodecs, FALSE, FALSE, 0);
+    gtk_widget_set_size_request(GTK_WIDGET (videocodecs), -1, 200);
+    gtk_widget_show(videocodecs);
+    gtk_container_add(GTK_CONTAINER (videocodecs) , box);
 
-    gtk_widget_show_all (vbox);
+    gtk_widget_show_all(vbox);
 
     return vbox;
 }

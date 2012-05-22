@@ -55,8 +55,7 @@
 
 ///Constructor
 SFLPhoneView::SFLPhoneView(QWidget *parent)
-   : QWidget(parent),
-     wizard(0), errorWindow(0)
+   : QWidget(parent), wizard(0), errorWindow(0)
 {
    setupUi(this);
 
@@ -161,7 +160,7 @@ void SFLPhoneView::typeString(QString str)
    if(!currentCall && candidate) {
       candidate->appendText(str);
    }
-}
+} //typeString
 
 ///Called when a backspace is detected
 void SFLPhoneView::backspace()
@@ -199,7 +198,7 @@ void SFLPhoneView::escape()
          action(call, CALL_ACTION_REFUSE);
       }
    }
-}
+} //escape
 
 ///Called when enter is detected
 void SFLPhoneView::enter()
@@ -227,7 +226,7 @@ void SFLPhoneView::enter()
  *                                                                           *
  ****************************************************************************/
 
-///
+///Change call state
 void SFLPhoneView::action(Call* call, call_action action)
 {
    if(! call) {
@@ -242,7 +241,7 @@ void SFLPhoneView::action(Call* call, call_action action)
       }
       updateWindowCallState();
    }
-}
+} //action
 
 ///Select a phone number when calling using a contact
 bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
@@ -274,7 +273,7 @@ bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
       return false;
    }
    return true;
-}
+} //selectCallPhoneNumber
 
 /*****************************************************************************
  *                                                                           *
@@ -386,7 +385,7 @@ void SFLPhoneView::updateWindowCallState()
    emit recordCheckStateChangeAsked   ( recordActivated );
 
    kDebug() << "Window updated.";
-}
+} //updateWindowCallState
 
 ///Deprecated?
 int SFLPhoneView::phoneNumberTypesDisplayed()
@@ -704,7 +703,7 @@ void SFLPhoneView::accept()
          action(call, CALL_ACTION_ACCEPT);
       }
    }
-}
+} //accept
 
 ///Refuse call
 void SFLPhoneView::refuse()

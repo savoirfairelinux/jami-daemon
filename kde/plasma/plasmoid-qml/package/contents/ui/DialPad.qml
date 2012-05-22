@@ -6,7 +6,7 @@ Rectangle {
     width:parent.width
     height:200
     color:theme.viewBackgroundColor
-
+   
     signal numbrePressed(string number)
     function getNumber(idx) {
         var nb = new Array("1","2","3","4","5","6","7","8","9","*","0","#")
@@ -30,7 +30,7 @@ Rectangle {
             }
         }
     }
-
+    
     Component.onCompleted: {
        dialPad.numbrePressed.connect(display.addText)
     }

@@ -69,7 +69,7 @@ void DlgAudio::updateSettings()
    ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
    skeleton->setAlsaPlugin(box_alsaPlugin->currentText());
    skeleton->setRingtone(KUrlRequester_ringtone->lineEdit()->text());
-
+   
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    configurationManager.setRecordPath(KUrlRequester_destinationFolder->lineEdit()->text());
 }

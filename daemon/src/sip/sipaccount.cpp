@@ -429,6 +429,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
     if (stunServer_ != details[CONFIG_STUN_SERVER]) {
+        DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
     }
@@ -641,6 +642,7 @@ void SIPAccount::startKeepAliveTimer() {
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
 
+
     keepAliveDelay_.msec = 0;
 
     keepAliveTimerActive_ = true;
@@ -719,7 +721,7 @@ void SIPAccount::initStunConfiguration()
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
-        registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
+        registrationExpire_ = MIN_REGISTRATION_TIME; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
@@ -896,8 +898,15 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 
     sipAccount->stopKeepAliveTimer();
 
-    if (sipAccount->isRegistered())
+    if (sipAccount->isRegistered()) {
         sipAccount->registerVoIPLink();
+
+        // make sure the current timer is deactivated
+        sipAccount->stopKeepAliveTimer();
+
+        // register a new timer
+        sipAccount->startKeepAliveTimer();
+    }
 }
 
 namespace {

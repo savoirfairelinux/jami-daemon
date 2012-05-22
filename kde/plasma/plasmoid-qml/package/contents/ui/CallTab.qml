@@ -218,7 +218,7 @@ Plasma.Page {
 
       }
    }
-
+   
    Image {
       source: "plasmapackage:/images/phone.svg";
       width:parent.width

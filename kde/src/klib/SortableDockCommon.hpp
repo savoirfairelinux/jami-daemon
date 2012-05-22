@@ -40,9 +40,7 @@ CALLMODEL_TEMPLATE StaticEventHandler* SORTABLE_T::m_spEvHandler = new StaticEve
 
 CALLMODEL_TEMPLATE SORTABLE_T::SortableDockCommon()
 {
-   /*if (not m_spEvHandler) {
-      m_spEvHandler = new StaticEventHandler(0,&(SORTABLE_T::m_slHistoryConst));
-   }*/
+   
 }
 
 
@@ -56,7 +54,7 @@ CALLMODEL_TEMPLATE QString SORTABLE_T::timeToHistoryCategory(QDate date)
 {
    if (m_slHistoryConst.size() < 10)
       m_spEvHandler->update();
-
+      
    //m_spEvHandler->update();
    if (QDate::currentDate()  == date || QDate::currentDate()  < date) //The future case would be a bug, but it have to be handled anyway or it will appear in "very long time ago"
       return m_slHistoryConst[HistoryConst::Today];
@@ -106,7 +104,7 @@ CALLMODEL_TEMPLATE QHash<Contact*, QDateTime> SORTABLE_T::getContactListByTime(/
       }
    }
    return toReturn;
-}
+} //getContactListByTime
 
 CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,HistorySortingMode mode)
 {
@@ -164,7 +162,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,Histo
       default:
          break;
    }
-}
+} //setHistoryCategory
 
 CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,ContactSortingMode mode)
 {
@@ -206,7 +204,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
          }
       }
    }
-}
+} //setContactCategory
 
 ///Return the identity of the call caller, try to return something usefull
 CALLMODEL_TEMPLATE QString SORTABLE_T::getIdentity(Call* item)

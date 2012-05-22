@@ -80,14 +80,6 @@ codec_t * codec_list_get_by_name(gconstpointer name, GQueue *q);
 void codec_set_prefered_order(guint index, GQueue *q);
 
 /**
- * Move the codec from an unit up in the codec_list
- * @param index The current index in the list
- * @param q
- * @param up true if moving upwards
- */
-void codec_list_move(guint index, GQueue *q, gboolean up);
-
-/**
  * Notify modifications on codecs to the server
  */
 void codec_list_update_to_daemon(const account_t *acc);
@@ -99,16 +91,6 @@ GQueue* get_video_codecs_list(void);
 GQueue* get_audio_codecs_list(void);
 
 /*
- * Instanciate a new codec with the given specification
- *
- * @param payload	The unique RTP payload
- * @param specs		A list of codec specifications. Ordered: name, sample rate, bit rate
- * @param active	Whether or not this codec should active (checked)
- * @param c			A pointer to receive the new codec instance
- */
-void codec_create_new(gint payload, gchar **specs, gboolean active, codec_t **c);
-
-/*
  * Attach a codec list to a specific account
  *
  * @param acc		A pointer on the account to modify
@@ -116,4 +98,10 @@ void codec_create_new(gint payload, gchar **specs, gboolean active, codec_t **c)
 void account_create_codec_list(account_t **acc);
 
 codec_t *codec_create_new_from_caps(codec_t *original);
+
+void codec_set_active(codec_t *c, gboolean active);
+
+void codec_list_move_codec_up(guint codec_index, GQueue **q);
+void codec_list_move_codec_down(guint codec_index, GQueue **q);
+
 #endif

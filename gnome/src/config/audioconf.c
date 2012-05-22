@@ -31,6 +31,7 @@
 #include <glib/gi18n.h>
 #include "gtk2_wrappers.h"
 #include "str_utils.h"
+#include "codeclist.h"
 #include "audioconf.h"
 #include "utils.h"
 #include "logger.h"
@@ -66,6 +67,8 @@ enum {
     CODEC_COLUMN_COUNT
 };
 
+static void codec_move_up(GtkButton *button UNUSED, gpointer data);
+static void codec_move_down(GtkButton *button UNUSED, gpointer data);
 static void active_is_always_recording(void);
 
 /**
@@ -187,7 +190,7 @@ select_active_output_audio_device()
     } while (gtk_tree_model_iter_next(model, &iter));
 
     // No index was found, select first one
-    WARN("Warning : No active output device found");
+    WARN("No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
 }
 
@@ -410,7 +413,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("Aie, no account selected");
+        ERROR("no account selected");
         return;
     }
 
@@ -422,16 +425,15 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
                        COLUMN_CODEC_NAME, &name, COLUMN_CODEC_FREQUENCY,
                        &srate, -1);
 
-    DEBUG("%s, %s\n", name, srate);
-    DEBUG("%i\n", g_queue_get_length(acc->acodecs));
+    DEBUG("Selected Codec: %s, %s", name, srate);
 
-    codec_t* codec;
+    codec_t* codec = NULL;
 
-    if ((utf8_case_cmp(name,"speex") == 0) && (utf8_case_cmp(srate,"8 kHz") == 0))
+    if (utf8_case_equal(name,"speex") && utf8_case_equal(srate, "8 kHz"))
         codec = codec_list_get_by_payload(110, acc->acodecs);
-    else if ((utf8_case_cmp(name,"speex") ==0) && (utf8_case_cmp(srate,"16 kHz") ==0))
+    else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate,"16 kHz"))
         codec = codec_list_get_by_payload(111, acc->acodecs);
-    else if ((utf8_case_cmp(name,"speex") ==0) && (utf8_case_cmp(srate,"32 kHz") ==0))
+    else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate, "32 kHz"))
         codec = codec_list_get_by_payload(112, acc->acodecs);
     else
         codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
@@ -447,7 +449,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     gtk_tree_path_free(treePath);
 
     // Modify codec queue to represent change
-    codec->is_active = active;
+    if (codec)
+        codec_set_active(codec, active);
 }
 
 /**
@@ -494,9 +497,13 @@ static void codec_move(gboolean moveUp, gpointer data)
     // Retrieve the user data
     account_t *acc = (account_t*) data;
 
-    /* propagate changes in codec queue */
-    if (acc)
-        codec_list_move(indice, acc->acodecs, moveUp);
+    if (acc) {
+        // propagate changes in codec queue
+        if (moveUp)
+            codec_list_move_codec_up(indice, &acc->acodecs);
+        else
+            codec_list_move_codec_down(indice, &acc->acodecs);
+    }
 }
 
 /**
@@ -603,7 +610,7 @@ select_audio_manager(void)
         gtk_action_set_sensitive(volumeToggle_, TRUE);
     } else if (must_show_alsa_conf() && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pulse))) {
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
-        gtk_container_remove(GTK_CONTAINER(alsa_conf), alsabox);
+        gtk_container_remove(GTK_CONTAINER(alsa_conf) , alsabox);
         gtk_widget_hide(alsa_conf);
 
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
@@ -675,7 +682,7 @@ GtkWidget* alsa_box()
     GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
     gtk_table_attach(GTK_TABLE(table), info_bar, 1, 3, 1, 2, GTK_FILL, GTK_SHRINK, 10, 10);
 
-    DEBUG("Audio: Configuration plugin");
+    DEBUG("Configuration plugin");
     GtkWidget *label = gtk_label_new(_("ALSA plugin"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -697,7 +704,7 @@ GtkWidget* alsa_box()
 
     // Device : Output device
     // Create title label
-    DEBUG("Audio: Configuration output");
+    DEBUG("Configuration output");
     label = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -719,7 +726,7 @@ GtkWidget* alsa_box()
 
     // Device : Input device
     // Create title label
-    DEBUG("Audio: Configuration input");
+    DEBUG("Configuration input");
     label = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -740,7 +747,7 @@ GtkWidget* alsa_box()
     gtk_table_attach(GTK_TABLE(table), input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(input);
 
-    DEBUG("Audio: Configuration rintgtone");
+    DEBUG("Configuration rintgtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -825,7 +832,7 @@ GtkWidget* create_audio_configuration()
     GtkWidget *folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
     /* Get the path where to save audio files */
     gchar *recordingPath = dbus_get_record_path();
-    DEBUG("AudioConf: Load recording path %s", recordingPath);
+    DEBUG("Load recording path %s", recordingPath);
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(folderChooser), recordingPath);
     g_free(recordingPath);
 

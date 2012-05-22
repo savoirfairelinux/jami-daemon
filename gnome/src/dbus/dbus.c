@@ -162,7 +162,6 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
         id = call->_callID;
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
-
         if (!conf) {
             ERROR("Message received, but no recipient found");
             return;
@@ -287,7 +286,6 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
     DEBUG("Conference state changed: %s\n", state);
 
     conference_obj_t* changed_conf = conferencelist_get(current_calls_tab, confID);
-
     if (changed_conf == NULL) {
         ERROR("Conference is NULL in conference state changed");
         return;

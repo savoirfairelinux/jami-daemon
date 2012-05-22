@@ -31,8 +31,7 @@ ActionSetAccountFirst::ActionSetAccountFirst(Account* account, QObject *parent)
 {
    setCheckable(true);
    this->account = account;
-   connect(this,    SIGNAL(triggered()),
-           this,    SLOT(emitSetFirst()));
+   connect(this,    SIGNAL(triggered()), this,    SLOT(emitSetFirst()));
 }
 
 ///Destructor

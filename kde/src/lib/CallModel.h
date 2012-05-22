@@ -42,9 +42,9 @@ class ContactBackend;
 typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
 
-///@class CallModelBase Base class for the central model/frontend
+///@class CallModelBase Base class for the central model/frontend          
 ///This class need to exist because template classes can't have signals and
-///slots because Qt MOC generator can't guess the type at precompilation
+///slots because Qt MOC generator can't guess the type at precompilation   
 class LIB_EXPORT CallModelBase : public QObject
 {
    Q_OBJECT
@@ -83,9 +83,9 @@ signals:
 };
 
 /**
- * Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible
- *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The Mirror model
- *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).
+ * Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible  
+ *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The Mirror model  
+ *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
  */
 ///@class CallModel Central model/frontend to deal with sflphoned
 template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
@@ -114,7 +114,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void           attendedTransfer ( Call* toTransfer           , Call* target      );
       void           transfer         ( Call* toTransfer           , QString target    );
       void           addToHistory     ( Call* call                                     );
-
+      
       virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
 
       //Comference related
@@ -143,7 +143,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
 
       //Connection related
       static bool init();
-
+      
       //Magic dispatcher
       Call* findCallByCallId( const QString& callId   );
       CallList getCalls     (                         );
@@ -151,31 +151,31 @@ class LIB_EXPORT CallModel : public CallModelBase {
       CallList getCalls     ( const QString& callId   ) const;
       CallList getCalls     ( const Call* call        ) const;
       CallList getCalls     ( const Index idx         ) const;
-
+      
       bool isConference     ( const Call* call        ) const;
       bool isConference     ( const QString& callId   ) const;
       bool isConference     ( const Index idx         ) const;
       bool isConference     ( const CallWidget widget ) const;
-
+      
       Call* getCall         ( const QString& callId   ) const;
       Call* getCall         ( const Index idx         ) const;
       Call* getCall         ( const Call* call        ) const;
       Call* getCall         ( const CallWidget widget ) const;
-
+      
       Index getIndex        ( const Call* call        ) const;
       Index getIndex        ( const Index idx         ) const;
       Index getIndex        ( const CallWidget widget ) const;
       Index getIndex        ( const QString& callId   ) const;
-
+      
       CallWidget getWidget  ( const Call* call        ) const;
       CallWidget getWidget  ( const Index idx         ) const;
       CallWidget getWidget  ( const CallWidget widget ) const;
       CallWidget getWidget  ( const QString& getWidget) const;
-
+      
       bool updateIndex      ( Call* call, Index value      );
       bool updateWidget     ( Call* call, CallWidget value );
-
-
+      
+      
    protected:
       //Struct
       struct InternalStruct;
@@ -195,12 +195,12 @@ class LIB_EXPORT CallModel : public CallModelBase {
       //Static attributes
       static CallMap m_sActiveCalls ;
       static CallMap m_sHistoryCalls;
-
+      
       static InternalCall   m_sPrivateCallList_call  ;
       static InternalCallId m_sPrivateCallList_callId;
       static InternalWidget m_sPrivateCallList_widget;
       static InternalIndex  m_sPrivateCallList_index ;
-
+      
       static QString      m_sPriorAccountId;
       static AccountList* m_spAccountList  ;
       static bool         m_sCallInit      ;

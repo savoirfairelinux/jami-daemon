@@ -53,7 +53,7 @@ public:
    Contact* getContactByUid   ( const QString& uid                                  );
    void     editContact       ( Contact*       contact , QWidget* parent = 0        );
    void     addNewContact     ( Contact*       contact , QWidget* parent = 0        );
-
+   
    virtual void     editContact   ( Contact*   contact                              );
    virtual void     addNewContact ( Contact*   contact                              );
 

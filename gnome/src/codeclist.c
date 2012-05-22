@@ -71,6 +71,20 @@ static codec_t *codec_create(gint payload, gchar **specs)
     return codec;
 }
 
+gint
+is_name_codecstruct(gconstpointer a, gconstpointer b)
+{
+    const codec_t *c = a;
+    return !!g_strcmp0(c->name, (const gchar *) b);
+}
+
+static gint
+is_payload_codecstruct(gconstpointer a, gconstpointer b)
+{
+    const codec_t *c = a;
+    return (c->payload == GPOINTER_TO_INT(b)) ? 0 : 1;
+}
+
 static gboolean codecs_audio_load(void)
 {
     // This is a global list inherited by all accounts
@@ -88,6 +102,19 @@ static gboolean codecs_audio_load(void)
 
     // If we didn't load any codecs, problem ...
     return g_queue_get_length(&audioCodecs) > 0;
+}
+
+static void
+codec_free(gpointer data, gpointer user_data UNUSED)
+{
+    codec_t *codec = (codec_t*) data;
+    g_free(codec->name);
+    g_free(codec->bitrate);
+}
+
+static void codecs_audio_unload(void)
+{
+    g_queue_foreach(&audioCodecs, codec_free, NULL);
 }
 
 #ifdef SFL_VIDEO
@@ -117,43 +144,64 @@ gboolean codecs_load(void)
 {
     return codecs_audio_load() && codecs_video_load();
 }
+
+static void codecs_video_unload(void)
+{
+    g_queue_foreach(&videoCodecs, codec_free, NULL);
+}
+
+void codecs_unload(void)
+{
+    codecs_audio_unload();
+    codecs_video_unload();
+}
+
 #else
 gboolean codecs_load(void)
 {
     return codecs_audio_load();
 }
-#endif
-
-static void codec_free(gpointer data, gpointer user_data UNUSED)
-{
-    codec_t *codec = (codec_t*) data;
-    g_free(codec->name);
-    g_free(codec->bitrate);
-}
 
 void codecs_unload(void)
 {
-    g_queue_foreach(&audioCodecs, codec_free, NULL);
+    codecs_audio_unload();
 }
+#endif // SFL_VIDEO
 
 codec_t *codec_create_new_from_caps(codec_t *original)
 {
-    if (!original)
-        return NULL;
+    codec_t *codec = NULL;
 
-    codec_t *codec = g_new0(codec_t, 1);
-    if (codec) {
-        memcpy(codec, original, sizeof *codec);
+    if (original) {
+        codec = g_new0(codec_t, 1);
+        codec->payload = original->payload;
         codec->is_active = TRUE;
+        codec->name = g_strdup(original->name);
+        codec->sample_rate = original->sample_rate;
+        codec->bitrate = g_strdup(original->bitrate);
     }
 
     return codec;
 }
 
-static gint
-is_name_codecstruct(gconstpointer a, gconstpointer b)
+
+void codec_list_clear(GQueue **queue)
 {
-    return g_strcmp0(((codec_t*) a)->name, (const gchar *) b);
+    if (*queue != NULL)
+        g_queue_free(*queue);
+
+    *queue = g_queue_new();
+}
+
+void codec_list_add(codec_t * c, GQueue **queue)
+{
+    // Add a codec to a specific list
+    g_queue_push_tail(*queue, (gpointer) c);
+}
+
+void codec_set_active(codec_t *c, gboolean active)
+{
+    c->is_active = active;
 }
 
 codec_t* codec_list_get_by_name(gconstpointer name, GQueue *q)
@@ -162,36 +210,47 @@ codec_t* codec_list_get_by_name(gconstpointer name, GQueue *q)
     return c ? (codec_t *) c->data : NULL;
 }
 
-static gint
-is_payload_codecstruct(gconstpointer a, gconstpointer b)
-{
-    const codec_t *c = a;
-    return (c->payload == GPOINTER_TO_INT(b)) ? 0 : 1;
-}
-
 codec_t* codec_list_get_by_payload(int payload, GQueue *q)
 {
     GList * c = g_queue_find_custom(q, (gconstpointer)(uintptr_t) payload, is_payload_codecstruct);
     return c ? c->data : NULL;
 }
 
+codec_t* codec_list_get_nth(guint codec_index, GQueue *q)
+{
+    return g_queue_peek_nth(q, codec_index);
+}
+
 void codec_set_prefered_order(guint codec_index, GQueue *q)
 {
-    codec_t * prefered = (codec_t *) g_queue_peek_nth(q, codec_index);
+    codec_t * prefered = codec_list_get_nth(codec_index, q);
     g_queue_pop_nth(q, codec_index);
     g_queue_push_head(q, prefered);
 }
 
-void codec_list_move(guint codec_index, GQueue *q, gboolean up)
+void codec_list_move_codec_up(guint codec_index, GQueue **q)
 {
-    guint already = up ? 0 : q->length;
-    gint  new = up ? codec_index - 1 : codec_index + 1;
+    GQueue *tmp = *q;
 
-    if (codec_index == already)
-        return;
+    if (codec_index != 0) {
+        gpointer codec = g_queue_pop_nth(tmp, codec_index);
+        g_queue_push_nth(tmp, codec, codec_index - 1);
+    }
 
-    gpointer codec = g_queue_pop_nth(q, codec_index);
-    g_queue_push_nth(q, codec, new);
+    *q = tmp;
+}
+
+void codec_list_move_codec_down(guint codec_index, GQueue **q)
+{
+    GQueue *tmp = *q;
+
+    if (codec_index != g_queue_get_length(tmp)) {
+        gpointer codec = g_queue_pop_nth(tmp, codec_index);
+        g_queue_push_nth(tmp, codec, codec_index + 1);
+    }
+
+    *q = tmp;
+
 }
 
 /* FIXME:tmatth: Clean this up, shouldn't have to do all the reallocs
@@ -255,6 +314,7 @@ static void codec_list_update_to_daemon_video(const account_t *acc)
     // Delete memory
     for (guint i = 0; i < c; i++)
         g_free(*(codecList + i));
+
     g_free(codecList);
 }
 #endif

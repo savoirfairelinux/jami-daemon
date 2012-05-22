@@ -24,9 +24,13 @@
 
 //Qt
 #include <QtGui/QHBoxLayout>
+#include <QtGui/QCheckBox>
+#include <QtGui/QLabel>
+#include <QtGui/QIcon>
 
 //KDE
 #include <KDebug>
+#include <KLed>
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -56,7 +60,7 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
    updateDisplay();
 
    QMetaObject::connectSlotsByName(this);
-}
+} //AccountItemWidget
 
 ///Destructor
 AccountItemWidget::~AccountItemWidget()
@@ -89,7 +93,7 @@ void AccountItemWidget::updateStateDisplay()
       default:
          kDebug() << "Calling AccountItemWidget::setState with value " << m_State << ", not part of enum AccountItemWidget::State.";
    }
-}
+} //updateStateDisplay
 
 ///If this item is enable or not
 void AccountItemWidget::updateEnabledDisplay()

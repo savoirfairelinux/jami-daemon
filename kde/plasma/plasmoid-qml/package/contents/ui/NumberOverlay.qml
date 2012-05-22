@@ -6,7 +6,7 @@ Rectangle {
    id:numberOverlay
 
    property string contactId: ""
-
+   
    color:"#BB000000"
    width:parent.width
    height:parent.height
@@ -41,7 +41,7 @@ Rectangle {
    Column {
       width:parent.width
       anchors.centerIn : parent
-
+      
       spacing:10
       Repeater {
          model: PlasmaCore.DataModel {
@@ -63,12 +63,12 @@ Rectangle {
          }
       }
    }
-
+   
    states: [
       State {
          name: "active"
          when: (visible == true)
-
+         
          PropertyChanges {
             target:contactNumberSource
             connectedSources: ["Number:"+contactId]

@@ -10,7 +10,7 @@
       <label>Number to call</label>
     </entry>
   </group>
-  <group name="DMTF">
+  <group name="DMTF"> 
     <entry name="str" type="String">
       <label>Right sound for a key</label>
     </entry>

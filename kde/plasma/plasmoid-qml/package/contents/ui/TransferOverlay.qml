@@ -93,7 +93,7 @@ Rectangle {
             height:100
             width:1
          }
-
+         
          Plasma.Button {
             text: "Transfer"
             //width:parent.width/2

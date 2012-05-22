@@ -24,7 +24,7 @@ Rectangle {
          }
       }
    }
-
+   
    ContactTab {
       id:contactList
       visible:false
@@ -36,28 +36,28 @@ Rectangle {
          }
       }
    }
-
+   
    Settingstab {
       id:settingsTab
       visible:false
    }
-
+   
    HistoryTab {
       id:historyList
       visible:false
    }
-
+   
    BookmarkTab {
       id:bookmarkList
       visible:false
    }
-
+   
    TabBar {
       id:tabs
       width:parent.width
       height:50
    }
-
+   
    NumberOverlay {
       id:numberOverlay
       visible:false
@@ -78,7 +78,7 @@ Rectangle {
          }
       }
    }
-
+   
    function call(number) {
       var service = dataSource.serviceForSource("calls")
       var operation = service.operationDescription("Call")
@@ -86,14 +86,14 @@ Rectangle {
       operation.Number = number
       var job = service.startOperationCall(operation)
    }
-
+   
    function playDMTF(number) {
       var service = dataSource.serviceForSource("calls")
       var operation = service.operationDescription("DMTF")
       operation.str = number
       var job = service.startOperationCall(operation)
    }
-
+   
    function transfer(callId,transferNumber) {
       var service = dataSource.serviceForSource("calls")
       var operation = service.operationDescription("Transfer")
@@ -101,14 +101,14 @@ Rectangle {
       operation.transfernumber = transferNumber
       var job = service.startOperationCall(operation)
    }
-
+   
    function hangUp(callId) {
       var service = dataSource.serviceForSource("calls")
       var operation = service.operationDescription("Hangup")
       operation.callid = callId
       var job = service.startOperationCall(operation)
    }
-
+   
    function hold(callId) {
       var service = dataSource.serviceForSource("calls")
       var operation = service.operationDescription("Hold")

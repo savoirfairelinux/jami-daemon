@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 ADD_DEFINITIONS("-std=c++0x")
 
 ADD_DEFINITIONS(
-	${QT_DEFINITIONS}
+	${QT_DEFINITIONS} 
 	-fexceptions
 )
 
@@ -35,9 +35,9 @@ set( ksflphone_LIB_SRCS
 )
 
 KDE4_ADD_KCFG_FILES(ksflphone_LIB_SRCS kcfg_settings.kcfgc)
-
+ 
 kde4_add_library( ksflphone  SHARED ${ksflphone_LIB_SRCS} )
-
+ 
 target_link_libraries( ksflphone
   qtsflphone
   ${QT_QTCORE_LIBRARY}
@@ -63,5 +63,5 @@ install( FILES ${ksflphone_LIB_HDRS}
   DESTINATION ${INCLUDE_INSTALL_DIR}/ksflphone
   COMPONENT Devel
 )
-
+ 
 install( TARGETS ksflphone  ${INSTALL_TARGETS_DEFAULT_ARGS} )

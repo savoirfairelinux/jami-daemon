@@ -66,9 +66,9 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
       addToHistory(call);
       emit historyChanged();
    }
-
+   
    emit callStateChanged(call);
-
+   
 }
 
 void CallModelBase::on1_incomingCall(const QString & accountID, const QString & callID)

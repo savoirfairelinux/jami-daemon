@@ -21,15 +21,24 @@
 #ifndef SFLPHONEENGINE_H
 #define SFLPHONEENGINE_H
 
+//Base
+#include "../SortableDockCommon.h"
 #include <Plasma/DataEngine>
-#include <Plasma/Service>
+
+//Qt
 #include <QHash>
 
-#include "../../lib/CallModel.h"
-#include "../SortableDockCommon.h"
+//KDE
+namespace Plasma {
+   class Service;
+}
 
-typedef QHash<QString,QVariant> HashStringString;
-typedef QHash<QString,QHash<QString,QVariant> > ContactHash;
+//SFLPhone
+#include "../../lib/CallModel.h"
+
+//Typedef
+typedef QHash<QString,QVariant>                 HashStringString;
+typedef QHash<QString,QHash<QString,QVariant> > ContactHash     ;
 class Call;
 
 class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
@@ -37,42 +46,53 @@ class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
    Q_OBJECT
 
    public:
+      //Constructor
       SFLPhoneEngine(QObject* parent, const QVariantList& args);
-      Plasma::Service *serviceForSource(const QString &source);
-      virtual QStringList sources() const;
+      ~SFLPhoneEngine() {};
 
-      static CallModel<>* getModel();
+      //Getter
+      Plasma::Service*    serviceForSource (const QString &source)       ;
+      virtual QStringList sources          (                     ) const ;
+      static CallModel<>* getModel         (                     )       ;
+
+      //Friends
       friend class SFLPhoneService;
 
+
    protected:
-      bool sourceRequestEvent(const QString& name);
-      bool updateSourceEvent(const QString& source);
+      //Reimplementation
+      bool sourceRequestEvent(const QString& name   );
+      bool updateSourceEvent (const QString& source );
+
 
    private:
-      QHash<QString, HashStringString > historyCall        ;
-      QHash<QString, HashStringString > currentCall        ;
-      QHash<QString, QStringList>       currentConferences ;
-      static CallModel<>*               m_pModel           ;
-      ContactHash                       m_hContacts        ;
+      //Attributes
+      static CallModel<>*  m_pModel   ;
+      ContactHash          m_hContacts;
+
+      //Getter
       QString getCallStateName(call_state state);
+
+      //Callback
       void updateHistory        ();
       void updateCallList       ();
       void updateAccounts       ();
       void updateConferenceList ();
       void updateContacts       ();
       void updateBookmarkList   ();
-      void updateInfo();
+      void updateInfo           ();
+
+      //Mutator
       void generateNumberList(QString name);
+
+
    private slots:
-      void updateCollection();
-      void callStateChangedSignal  (Call* call);
-      void incomingCallSignal      (Call* conf);
-      void conferenceCreatedSignal (Call* conf);
-      void conferenceChangedSignal (Call* conf);
-      //void conferenceRemovedSignal(const QString& confId);
-      void incomingMessageSignal( const QString& accountId, const QString& message );
-      void voiceMailNotifySignal( const QString& accountId, int count              );
-      void accountChanged();
+      //Slots
+      void updateCollection        (                                                  );
+      void callStateChangedSignal  (Call* call                                        );
+      void incomingCallSignal      (Call* conf                                        );
+      void incomingMessageSignal   ( const QString& accountId, const QString& message );
+      void voiceMailNotifySignal   ( const QString& accountId, int count              );
 };
 
 #endif // SFLPHONEENGINE_H

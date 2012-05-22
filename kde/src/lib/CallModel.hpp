@@ -88,7 +88,6 @@ CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
 {
    Q_UNUSED(type)
    init();
-
 }
 
 ///Open the connection to the daemon and register this client
@@ -98,14 +97,14 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
       registerCommTypes();
       InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
       instance.Register(getpid(), APP_NAME);
-
+      
       //Setup accounts
       if (m_spAccountList == NULL)
          m_spAccountList = new AccountList(true);
    }
    m_sInstanceInit = true;
    return true;
-}
+} //init
 
 ///Fill the call list
 ///@warning This solution wont scale to multiple call or history model implementation. Some static addCall + foreach for each call would be needed if this case ever become unavoidable
@@ -119,7 +118,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
          m_sActiveCalls[tmpCall->getCallId()] = tmpCall;
          addCall(tmpCall);
       }
-
+   
       QStringList confList = callManager.getConferenceList();
       foreach (QString confId, confList) {
           addConference(confId);
@@ -127,7 +126,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
    }
    m_sCallInit = true;
    return true;
-}
+} //initCall
 
 ///Set how the call can find more informations about the call it receive
 CALLMODEL_TEMPLATE void CALLMODEL_T::initContact ( ContactBackend* be )
@@ -163,7 +162,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
    }
    m_sHistoryInit = true;
    return true;
-}
+} //initHistory
 
 
 /*****************************************************************************
@@ -211,7 +210,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCall(Call* call, Call* parent)
    InternalStruct* aNewStruct = new InternalStruct;
    aNewStruct->call_real  = call;
    aNewStruct->conference = false;
-
+   
    m_sPrivateCallList_call[call]                = aNewStruct;
    m_sPrivateCallList_callId[call->getCallId()] = aNewStruct;
 
@@ -227,7 +226,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
    addCall(call);
    selectItem(call);
    return call;
-}
+} //addCallCommon
 
 ///Create a new dialing call from peer name and the account ID
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, QString account)
@@ -236,10 +235,10 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, QS
    if (account2.isEmpty()) {
       account2 = getCurrentAccountId();
    }
-
+   
    Call* call = Call::buildDialingCall(generateCallId(), peerName, account2);
    return addCallCommon(call);
-}
+}  //addDialingCall
 
 ///Create a new incomming call when the daemon is being called
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addIncomingCall(const QString& callId)
@@ -288,7 +287,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeCall(Call* call)
    if (m_sPrivateCallList_index[m_sPrivateCallList_index.key(internal)] == internal) {
       m_sPrivateCallList_index.remove(m_sPrivateCallList_index.key(internal));
    }
-}
+} //removeCall
 
 ///Transfer "toTransfer" to "target" and wait to see it it succeeded
 CALLMODEL_TEMPLATE void CALLMODEL_T::attendedTransfer(Call* toTransfer, Call* target)
@@ -299,7 +298,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::attendedTransfer(Call* toTransfer, Call* ta
    //TODO [Daemon] Implement this correctly
    toTransfer->changeCurrentState(CALL_STATE_OVER);
    target->changeCurrentState(CALL_STATE_OVER);
-}
+} //attendedTransfer
 
 ///Transfer this call to  "target" number
 CALLMODEL_TEMPLATE void CALLMODEL_T::transfer(Call* toTransfer, QString target)
@@ -309,7 +308,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::transfer(Call* toTransfer, QString target)
    toTransfer->changeCurrentState(CALL_STATE_TRANSFER);
    toTransfer->actionPerformed(CALL_ACTION_ACCEPT);
    toTransfer->changeCurrentState(CALL_STATE_OVER);
-}
+} //transfer
 
 /*****************************************************************************
  *                                                                           *
@@ -324,7 +323,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    QStringList callList = callManager.getParticipantList(confID);
    qDebug() << "Paticiapants are:" << callList;
-
+   
    if (!callList.size()) {
       qDebug() << "This conference (" + confID + ") contain no call";
       return 0;
@@ -335,16 +334,16 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
       return 0;
    }
    Call* newConf =  new Call(confID, m_sPrivateCallList_callId[callList[0]]->call_real->getAccountId());
-
+   
    InternalStruct* aNewStruct = new InternalStruct;
    aNewStruct->call_real  = newConf;
    aNewStruct->conference = true;
-
+   
    m_sPrivateCallList_call[newConf]  = aNewStruct;
    m_sPrivateCallList_callId[confID] = aNewStruct;
-
+   
    return newConf;
-}
+} //addConference
 
 ///Join two call to create a conference, the conference will be created later (see addConference)
 CALLMODEL_TEMPLATE bool CALLMODEL_T::createConferenceFromCall(Call* call1, Call* call2)
@@ -353,7 +352,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::createConferenceFromCall(Call* call1, Call*
   CallManagerInterface &callManager = CallManagerInterfaceSingleton::getInstance();
   callManager.joinParticipant(call1->getCallId(),call2->getCallId());
   return true;
-}
+} //createConferenceFromCall
 
 ///Add a new participant to a conference
 CALLMODEL_TEMPLATE bool CALLMODEL_T::addParticipant(Call* call2, Call* conference)
@@ -367,7 +366,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::addParticipant(Call* call2, Call* conferenc
       qDebug() << "This is not a conference";
       return false;
    }
-}
+} //addParticipant
 
 ///Remove a participant from a conference
 CALLMODEL_TEMPLATE bool CALLMODEL_T::detachParticipant(Call* call)
@@ -390,18 +389,18 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::changeConference(const QString& confId, con
 {
    qDebug() << "Conf changed";
    Q_UNUSED(state)
-
+   
    if (!m_sPrivateCallList_callId[confId]) {
       qDebug() << "The conference does not exist";
       return false;
    }
-
+   
    if (!m_sPrivateCallList_callId[confId]->index) {
       qDebug() << "The conference item does not exist";
       return false;
    }
    return true;
-}
+} //changeConference
 
 ///Remove a conference from the model and the TreeView
 CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(const QString &confId)
@@ -414,7 +413,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(const QString &confId)
 CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(Call* call)
 {
    InternalStruct* internal = m_sPrivateCallList_call[call];
-
+   
    if (!internal) {
       qDebug() << "Cannot remove conference: call not found";
       return;
@@ -475,9 +474,9 @@ CALLMODEL_TEMPLATE const QStringList CALLMODEL_T::getNumbersByPopularity()
    foreach (SortableCallSource* i,hc) {
       delete i;
    }
-
+   
    return cl;
-}
+} //getNumbersByPopularity
 
 
 /*****************************************************************************
@@ -496,7 +495,7 @@ CALLMODEL_TEMPLATE QString CALLMODEL_T::getCurrentAccountId()
    else {
       return firstRegistered->getAccountId();
    }
-}
+} //getCurrentAccountId
 
 
 ///Return the current account
@@ -510,7 +509,7 @@ CALLMODEL_TEMPLATE Account* CALLMODEL_T::getCurrentAccount()
       qDebug() << "Returning the first account" << getAccountList()->size();
       return getAccountList()->firstRegisteredAccount();
    }
-}
+} //getCurrentAccount
 
 ///Return a list of registered accounts
 CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::getAccountList()
@@ -538,7 +537,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::setPriorAccountId(const QString& value) {
  *                                                                           *
  ****************************************************************************/
 
-///Get a call from it's widget
+///Get a call from it's widget                                     
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const CallWidget widget     ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
@@ -547,7 +546,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const CallWidget widget 
    return NULL;
 }
 
-///Get a call list from a conference
+///Get a call list from a conference                               
 CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const CallWidget widget     ) const
 {
    QList<Call*> toReturn;
@@ -559,7 +558,7 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const CallWidget widget 
    return toReturn;
 }
 
-///Get a list of every call
+///Get a list of every call                                        
 CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls (                             )
 {
    QList<Call*> toReturn;
@@ -569,7 +568,7 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls (                         
    return toReturn;
 }
 
-///Is the call associated with that widget a conference
+///Is the call associated with that widget a conference            
 CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const CallWidget widget      ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
@@ -578,7 +577,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const CallWidget widget 
    return false;
 }
 
-///Is that call a conference
+///Is that call a conference                                       
 CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const Call* call             ) const
 {
    if (m_sPrivateCallList_call[(Call*)call]) {
@@ -587,15 +586,15 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const Call* call        
    return false;
 }
 
-///Do nothing, provided for API consistency
+///Do nothing, provided for API consistency                        
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const Call* call             ) const
-{
+{ 
    return call;
 }
 
-///Return the calls from the "call" conference
+///Return the calls from the "call" conference                     
 CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const Call* call             ) const
-{
+{ 
    QList<Call*> toReturn;
    if (m_sPrivateCallList_call[call] && m_sPrivateCallList_call[call]->conference) {
       foreach (InternalStruct* child, m_sPrivateCallList_call[call]->children) {
@@ -605,18 +604,18 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const Call* call        
    return toReturn;
 }
 
-///Is the call associated with that Index a conference
+///Is the call associated with that Index a conference             
 CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const Index idx              ) const
-{
+{ 
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->conference;
    }
    return false;
 }
 
-///Get the call associated with this index
+///Get the call associated with this index                         
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const Index idx              ) const
-{
+{ 
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->call_real;
    }
@@ -624,9 +623,9 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const Index idx         
    return NULL;
 }
 
-///Get the call associated with that conference index
+///Get the call associated with that conference index              
 CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const Index idx              ) const
-{
+{ 
    QList<Call*> toReturn;
    if (m_sPrivateCallList_index[idx] && m_sPrivateCallList_index[idx]->conference) {
       foreach (InternalStruct* child, m_sPrivateCallList_index[idx]->children) {
@@ -636,25 +635,25 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const Index idx         
    return toReturn;
 }
 
-///Is the call associated with that ID a conference
+///Is the call associated with that ID a conference                
 CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const QString& callId        ) const
-{
+{ 
    if (m_sPrivateCallList_callId[callId]) {
       return m_sPrivateCallList_callId[callId]->conference;
    }
    return false;
 }
 
-///Get the call associated with this ID
+///Get the call associated with this ID                            
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const QString& callId        ) const
-{
+{ 
    if (m_sPrivateCallList_callId[callId]) {
       return m_sPrivateCallList_callId[callId]->call_real;
    }
    return NULL;
 }
 
-///Get the calls associated with this ID
+///Get the calls associated with this ID                           
 CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const QString& callId        ) const
 {
    QList<Call*> toReturn;
@@ -666,7 +665,7 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const QString& callId   
    return toReturn;
 }
 
-///Get the index associated with this call
+///Get the index associated with this call                         
 CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Call* call             ) const
 {
    if (m_sPrivateCallList_call[(Call*)call]) {
@@ -675,7 +674,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Call* call        
    return NULL;
 }
 
-///Get the index associated with this index (dummy implementation)
+///Get the index associated with this index (dummy implementation) 
 CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Index idx              ) const
 {
    if (m_sPrivateCallList_index[idx]) {
@@ -684,7 +683,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Index idx         
    return NULL;
 }
 
-///Get the index associated with this call
+///Get the index associated with this call                         
 CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const CallWidget widget      ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
@@ -693,7 +692,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const CallWidget widget 
    return NULL;
 }
 
-///Get the index associated with this ID
+///Get the index associated with this ID                           
 CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const QString& callId        ) const
 {
    if (m_sPrivateCallList_callId[callId]) {
@@ -702,7 +701,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const QString& callId   
    return NULL;
 }
 
-///Get the widget associated with this call
+///Get the widget associated with this call                        
 CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Call* call             ) const
 {
    if (m_sPrivateCallList_call[call]) {
@@ -711,7 +710,7 @@ CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Call* call        
    return NULL;
 }
 
-///Get the widget associated with this ID
+///Get the widget associated with this ID                          
 CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Index idx              ) const
 {
    if (m_sPrivateCallList_index[idx]) {
@@ -720,7 +719,7 @@ CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Index idx         
    return NULL;
 }
 
-///Get the widget associated with this widget (dummy)
+///Get the widget associated with this widget (dummy)              
 CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const CallWidget widget      ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
@@ -729,7 +728,7 @@ CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const CallWidget widget 
    return NULL;
 }
 
-///Get the widget associated with this ID
+///Get the widget associated with this ID                          
 CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const QString& widget        ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
@@ -752,7 +751,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::updateCommon(Call* call)
    return true;
 }
 
-///Update the widget associated with this call
+///Update the widget associated with this call                     
 CALLMODEL_TEMPLATE bool CALLMODEL_T::updateWidget     (Call* call, CallWidget value )
 {
    if (!updateCommon(call)) return false;

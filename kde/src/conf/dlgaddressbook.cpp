@@ -26,7 +26,7 @@ DlgAddressBook::DlgAddressBook(QWidget *parent)
  : QWidget(parent)
 {
    setupUi(this);
-
+   
    m_pPhoneTypeList->addItem( m_mNumbertype["Work"]            = new QListWidgetItem("Work"            ));
    m_pPhoneTypeList->addItem( m_mNumbertype["Home"]            = new QListWidgetItem("Home"            ));
    m_pPhoneTypeList->addItem( m_mNumbertype["Messenger"]       = new QListWidgetItem("Messenger"       ));
@@ -48,7 +48,7 @@ DlgAddressBook::DlgAddressBook(QWidget *parent)
       i->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
       i->setCheckState((list.indexOf(m_mNumbertype.key(i)) != -1)?Qt::Checked:Qt::Unchecked);
    }
-}
+} //DlgAddressBook
 
 DlgAddressBook::~DlgAddressBook()
 {
@@ -57,7 +57,7 @@ DlgAddressBook::~DlgAddressBook()
 
 void DlgAddressBook::updateWidgets()
 {
-
+   
 }
 
 void DlgAddressBook::updateSettings()

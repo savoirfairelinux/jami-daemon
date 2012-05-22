@@ -90,7 +90,7 @@ class KateColorTreeDelegate : public QStyledItemDelegate
     virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
     {
       Q_ASSERT(index.isValid());
-
+      
       //BEGIN: draw toplevel items
       if (!index.parent().isValid()) {
         QStyleOptionViewItem opt(option);
@@ -102,7 +102,7 @@ class KateColorTreeDelegate : public QStyledItemDelegate
         return;
       }
       //END: draw toplevel items
-
+      
       //BEGIN: draw background of category for all other items
       {
         QStyleOptionViewItem opt(option);

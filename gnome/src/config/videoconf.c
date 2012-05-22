@@ -252,7 +252,6 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
  */
 static void codec_move(gboolean moveUp, gpointer data)
 {
-
     GtkTreeIter iter;
     GtkTreeIter *iter2;
     GtkTreeModel *model;
@@ -261,41 +260,44 @@ static void codec_move(gboolean moveUp, gpointer data)
     gchar *path;
 
     // Get view, model and selection of codec store
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView));
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (codecTreeView));
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
 
     // Find selected iteration and create a copy
-    gtk_tree_selection_get_selected (GTK_TREE_SELECTION (selection), &model, &iter);
-    iter2 = gtk_tree_iter_copy (&iter);
+    gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), &model, &iter);
+    iter2 = gtk_tree_iter_copy(&iter);
 
     // Find path of iteration
-    path = gtk_tree_model_get_string_from_iter (GTK_TREE_MODEL (model), &iter);
-    treePath = gtk_tree_path_new_from_string (path);
-    gint *indices = gtk_tree_path_get_indices (treePath);
-    gint indice = indices[0];
+    path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL (model), &iter);
+    treePath = gtk_tree_path_new_from_string(path);
+    gint *indices = gtk_tree_path_get_indices(treePath);
+    gint pos = indices[0];
 
     // Depending on button direction get new path
     if (moveUp)
-        gtk_tree_path_prev (treePath);
+        gtk_tree_path_prev(treePath);
     else
-        gtk_tree_path_next (treePath);
+        gtk_tree_path_next(treePath);
 
-    gtk_tree_model_get_iter (model, &iter, treePath);
+    gtk_tree_model_get_iter(model, &iter, treePath);
 
     // Swap iterations if valid
     if (gtk_list_store_iter_is_valid (GTK_LIST_STORE (model), &iter))
-        gtk_list_store_swap (GTK_LIST_STORE (model), &iter, iter2);
+        gtk_list_store_swap(GTK_LIST_STORE (model), &iter, iter2);
 
     // Scroll to new position
-    gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (codecTreeView), treePath, NULL, FALSE, 0, 0);
+    gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(codecTreeView), treePath, NULL, FALSE, 0, 0);
 
     // Free resources
-    gtk_tree_path_free (treePath);
-    gtk_tree_iter_free (iter2);
-    g_free (path);
+    gtk_tree_path_free(treePath);
+    gtk_tree_iter_free(iter2);
+    g_free(path);
 
     // Perpetuate changes in codec queue
-    codec_list_move (indice, ((account_t*)data)->vcodecs, moveUp);
+    if (moveUp)
+        codec_list_move_codec_up(pos, &((account_t*)data)->vcodecs);
+    else
+        codec_list_move_codec_down(pos, &((account_t*)data)->vcodecs);
 }
 
 /**

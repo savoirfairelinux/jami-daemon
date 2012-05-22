@@ -112,7 +112,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
     activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
 
     if (!sdp) {
-        ERROR("Sdp: Error: Remote sdp is NULL while parsing telephone event attribute");
+        ERROR("Remote sdp is NULL while parsing telephone event attribute");
         return;
     }
 
@@ -132,7 +132,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
         }
     }
 
-    ERROR("Sdp: Error: Could not found dtmf event from remote sdp");
+    ERROR("Could not found dtmf event from remote sdp");
 }
 
 #ifdef SFL_VIDEO

@@ -26,6 +26,7 @@
 #include "frame.h"
 #include "iax2.h"
 #include "iax2-parser.h"
+#include "sys/socket.h"
 
 #define MAXSTRLEN 80
 

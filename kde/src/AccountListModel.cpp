@@ -28,6 +28,12 @@
 //SFLPhone
 #include "conf/ConfigAccountList.h"
 
+//Qt
+#include <QtGui/QIcon>
+
+//KDE
+#include <KLed>
+
 ///Constructor
 AccountListModel::AccountListModel(QObject *parent)
  : QAbstractListModel(parent)
@@ -38,7 +44,7 @@ AccountListModel::AccountListModel(QObject *parent)
 ///Destructor
 AccountListModel::~AccountListModel()
 {
-
+   
 }
 
 
@@ -68,7 +74,7 @@ QVariant AccountListModel::data ( const QModelIndex& index, int role) const
          return QVariant(QIcon(ICON_ACCOUNT_LED_RED));
    }
    return QVariant();
-}
+} //data
 
 ///Flags for "index"
 Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const

@@ -25,23 +25,23 @@
     <!-- Display Settings -->
 
     <entry name="notifOnCalls" type="Bool">
-        <label>Defines whether user should be notified when receiving a call.</label>
+    	<label>Defines whether user should be notified when receiving a call.</label>
       <default>true</default>
     </entry>
     <entry name="notifOnMessages" type="Bool">
-        <label>Defines whether user should be notified when receiving a message.</label>
+    	<label>Defines whether user should be notified when receiving a message.</label>
       <default>true</default>
     </entry>
     <entry name="displayOnStart" type="Bool">
-        <label>Defines whether the main window should be displayed on start.</label>
+    	<label>Defines whether the main window should be displayed on start.</label>
       <default>true</default>
     </entry>
     <entry name="displayOnCalls" type="Bool">
-        <label>Defines whether the main window should be displayed when receiving a message.</label>
+    	<label>Defines whether the main window should be displayed when receiving a message.</label>
       <default>true</default>
     </entry>
     <entry name="displayDialpad" type="Bool">
-        <label>Defines whether the dialpad is being shown by default</label>
+    	<label>Defines whether the dialpad is being shown by default</label>
       <default>true</default>
     </entry>
     <entry name="displayMessageBox" type="Bool">
@@ -49,17 +49,17 @@
       <default>false</default>
     </entry>
     <entry name="displayVolume" type="Bool">
-        <label>Defines whether the volume widgets are visible by default</label>
+    	<label>Defines whether the volume widgets are visible by default</label>
       <default>false</default>
     </entry>
     <entry name="displayMenu" type="Bool">
-        <label>Defines whether the main menu is visible by default, it can be restored with "Ctrl+m"</label>
+    	<label>Defines whether the main menu is visible by default, it can be restored with "Ctrl+m"</label>
     </entry>
     <entry name="displayDataRange" type="Bool">
-        <label>Defines whether call history is restricted to a specific date range</label>
+    	<label>Defines whether call history is restricted to a specific date range</label>
     </entry>
     <entry name="displayPopularAsBookmark" type="Bool">
-        <label>Defines whether or not to display the 10 most popular phone number as bookmark automagically</label>
+      <label>Defines whether or not to display the 10 most popular phone number as bookmark automagically</label>
     </entry>
    <entry name="historySortMode" type="Int">
       <label>Define sorting order for history list</label>
@@ -70,40 +70,40 @@
    <entry name="displayContactCallHistory" type="Bool">
         <label>Defines if the individual contact history list is visible</label>
    </entry>
-
+    
 
     <!-- Audio Settings -->
 
     <entry name="interface" type="Enum">
-        <label>Defines the Stun server to use.</label>
-        <choices>
-            <choice name="ALSA" />
-            <choice name="PulseAudio" />
-        </choices>
+    	<label>Defines the Stun server to use.</label>
+    	<choices>
+    		<choice name="ALSA" />
+    		<choice name="PulseAudio" />
+    	</choices>
     </entry>
     <entry name="enableRingtones" type="Bool">
-        <label>Defines whether ringtones are enabled.</label>
+    	<label>Defines whether ringtones are enabled.</label>
     </entry>
     <entry name="ringtone" type="Path">
-        <label>Defines which ringtone is used.</label>
+    	<label>Defines which ringtone is used.</label>
     </entry>
     <entry name="alsaPlugin" type="String">
-        <label>Defines which ALSA plugin to use.</label>
+    	<label>Defines which ALSA plugin to use.</label>
     </entry>
     <entry name="alsaInputDevice" type="Int">
-        <label>Defines which ALSA Input device to use.</label>
+    	<label>Defines which ALSA Input device to use.</label>
     </entry>
     <entry name="alsaOutputDevice" type="Int">
-        <label>Defines which ALSA Output device to use.</label>
+    	<label>Defines which ALSA Output device to use.</label>
     </entry>
     <entry name="pulseAudioVolumeAlter" type="Bool">
-        <label>Defines whether pulse audio can mute other applications during a call.</label>
+    	<label>Defines whether pulse audio can mute other applications during a call.</label>
     </entry>
 
     <!-- Address Book Settings -->
 
     <entry name="enableAddressBook" type="Bool">
-        <label>Defines whether the search in KDE Address Book is enabled</label>
+    	<label>Defines whether the search in KDE Address Book is enabled</label>
     </entry>
 
     <entry name="phoneTypeList" type="StringList">
@@ -119,22 +119,22 @@
     <!-- Hooks Settings -->
 
     <entry name="enableHooksSIP" type="Bool">
-        <label>Defines whether to enable hooks for SIP accounts.</label>
+    	<label>Defines whether to enable hooks for SIP accounts.</label>
     </entry>
     <entry name="enableHooksIAX" type="Bool">
-        <label>Defines whether to enable hooks for IAX accounts.</label>
+    	<label>Defines whether to enable hooks for IAX accounts.</label>
     </entry>
     <entry name="hooksSIPHeader" type="String">
-        <label>Defines which header to catch for SIP accounts hooks.</label>
+    	<label>Defines which header to catch for SIP accounts hooks.</label>
     </entry>
     <entry name="hooksCommand" type="String">
-        <label>Defines which command to execute.</label>
+    	<label>Defines which command to execute.</label>
     </entry>
     <entry name="addPrefix" type="Bool">
-        <label>Defines whether to add a prefix for outgoing calls.</label>
+    	<label>Defines whether to add a prefix for outgoing calls.</label>
     </entry>
     <entry name="prepend" type="String">
-        <label>Defines the prefix to add.</label>
+    	<label>Defines the prefix to add.</label>
     </entry>
   </group>
 </kcfg>

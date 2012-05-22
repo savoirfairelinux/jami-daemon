@@ -19,25 +19,28 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
 
+//Unix
 #include <unistd.h>
-#include "AccountWizard.h"
-#include <QVBoxLayout>
-#include <QFormLayout>
-#include "lib/sflphone_const.h"
-#include "lib/configurationmanager_interface_singleton.h"
-#include <QLabel>
-#include <QRadioButton>
-#include <QLineEdit>
-#include <QCheckBox>
-
-#include <klocale.h>
-
 #include <netdb.h>
 
+//Qt
+#include <QtGui/QVBoxLayout>
+#include <QtGui/QFormLayout>
+#include <QtGui/QLabel>
+#include <QtGui/QRadioButton>
+#include <QtGui/QLineEdit>
+#include <QtGui/QCheckBox>
+
 //KDE
+#include <KLocale>
 #include <KDebug>
 
+//SFLphone
+#include "AccountWizard.h"
+#include "lib/sflphone_const.h"
+#include "lib/configurationmanager_interface_singleton.h"
 
+//Define
 #define FIELD_SFL_ACCOUNT        "SFL"
 #define FIELD_OTHER_ACCOUNT      "OTHER"
 #define FIELD_SIP_ACCOUNT        "SIP"
@@ -64,9 +67,10 @@
 #define SFL_ACCOUNT_HOST         "sip.sflphone.org"
 
 /***************************************************************************
+ *                                                                         *
  *   Global functions for creating an account on sflphone.org              *
  *                                                                         *
- ***************************************************************************/
+ **************************************************************************/
 
 typedef struct {
    bool    success ;
@@ -81,9 +85,9 @@ int sendRequest(QString host, int port, QString req, QString & ret)
    int s;
    struct sockaddr_in servSockAddr;
    struct hostent *servHostEnt;
-   long int length=0;
-   long int status=0;
-   int i=0;
+   long int length = 0;
+   long int status = 0;
+   int i           = 0;
    FILE *f;
    char buf[1024];
 
@@ -237,16 +241,16 @@ void AccountWizard::accept()
 
       if(acc.success) {
          ret += i18n("This assistant is now finished.") + "\n";
-         field( FIELD_SIP_ALIAS     ) = QString(acc.user) + "@" + SFL_ACCOUNT_HOST;
-         field( FIELD_SIP_VOICEMAIL ) = QString();
-         field( FIELD_SIP_SERVER    ) = QString(SFL_ACCOUNT_HOST);
-         field( FIELD_SIP_PASSWORD  ) = QString(acc.passwd);
-         field( FIELD_SIP_USER      ) = QString(acc.user);
+         field( FIELD_SIP_ALIAS     ) = QString( acc.user) + "@" + SFL_ACCOUNT_HOST;
+         field( FIELD_SIP_VOICEMAIL ) = QString(                                  );
+         field( FIELD_SIP_SERVER    ) = QString( SFL_ACCOUNT_HOST                 );
+         field( FIELD_SIP_PASSWORD  ) = QString( acc.passwd                       );
+         field( FIELD_SIP_USER      ) = QString( acc.user                         );
 
-         protocol = QString( ACCOUNT_TYPE_SIP     );
-         server   = QString( SFL_ACCOUNT_HOST     );
-         password = QString( acc.passwd           );
-         user     = QString( acc.user             );
+         protocol = QString( ACCOUNT_TYPE_SIP          );
+         server   = QString( SFL_ACCOUNT_HOST          );
+         password = QString( acc.passwd                );
+         user     = QString( acc.user                  );
          enabled  = QString( REGISTRATION_ENABLED_TRUE );
 
          is_create_account = true;
@@ -260,13 +264,13 @@ void AccountWizard::accept()
    else if(field(FIELD_SIP_ACCOUNT).toBool()) { //sip
       ret += i18n("This assistant is now finished.") + "\n";
 
-      alias    = field   ( FIELD_SIP_ALIAS      ).toString();
-      enabled  = QString ( REGISTRATION_ENABLED_TRUE );
-      mailbox  = field   ( FIELD_SIP_VOICEMAIL  ).toString();
-      protocol = QString ( ACCOUNT_TYPE_SIP     );
-      server   = field   ( FIELD_SIP_SERVER     ).toString();
-      password = field   ( FIELD_SIP_PASSWORD   ).toString();
-      user     = field   ( FIELD_SIP_USER       ).toString();
+      alias    = field   ( FIELD_SIP_ALIAS           ).toString();
+      enabled  = QString ( REGISTRATION_ENABLED_TRUE )           ;
+      mailbox  = field   ( FIELD_SIP_VOICEMAIL       ).toString();
+      protocol = QString ( ACCOUNT_TYPE_SIP          )           ;
+      server   = field   ( FIELD_SIP_SERVER          ).toString();
+      password = field   ( FIELD_SIP_PASSWORD        ).toString();
+      user     = field   ( FIELD_SIP_USER            ).toString();
 
       is_create_account = true;
       is_using_sip = true;
@@ -275,13 +279,13 @@ void AccountWizard::accept()
    else { // iax
       ret += i18n("This assistant is now finished.") + "\n";
 
-      alias    = field   ( FIELD_IAX_ALIAS      ).toString();
-      enabled  = QString ( REGISTRATION_ENABLED_TRUE );
-      mailbox  = field   ( FIELD_IAX_VOICEMAIL  ).toString();
-      protocol = QString ( ACCOUNT_TYPE_IAX     );
-      server   = field   ( FIELD_IAX_SERVER     ).toString();
-      password = field   ( FIELD_IAX_PASSWORD   ).toString();
-      user     = field   ( FIELD_IAX_USER       ).toString();
+      alias    = field   ( FIELD_IAX_ALIAS           ).toString();
+      enabled  = QString ( REGISTRATION_ENABLED_TRUE )           ;
+      mailbox  = field   ( FIELD_IAX_VOICEMAIL       ).toString();
+      protocol = QString ( ACCOUNT_TYPE_IAX          )           ;
+      server   = field   ( FIELD_IAX_SERVER          ).toString();
+      password = field   ( FIELD_IAX_PASSWORD        ).toString();
+      user     = field   ( FIELD_IAX_USER            ).toString();
 
       is_create_account = true;
       is_using_sip = false;
@@ -301,7 +305,7 @@ void AccountWizard::accept()
 
       if(field(FIELD_ZRTP_ENABLED).toBool()) {
          srtp_enabled          = QString( REGISTRATION_ENABLED_TRUE  );
-         key_exchange          = QString( ZRTP                  );
+         key_exchange          = QString( ZRTP                       );
          zrtp_display_sas      = QString( REGISTRATION_ENABLED_TRUE  );
          zrtp_not_supp_warning = QString( REGISTRATION_ENABLED_TRUE  );
          zrtp_hello_hash       = QString( REGISTRATION_ENABLED_TRUE  );
@@ -341,8 +345,8 @@ void AccountWizard::accept()
 WizardIntroPage::WizardIntroPage(QWidget *parent)
      : QWizardPage(parent)
 {
-   setTitle(i18n("Account creation wizard"));
-   setSubTitle(i18n("Welcome to the Account creation wizard of SFLphone!"));
+   setTitle   (i18n( "Account creation wizard"                             ) );
+   setSubTitle(i18n( "Welcome to the Account creation wizard of SFLphone!" ) );
 
    introLabel = new QLabel(i18n("This installation wizard will help you configure an account."));
    introLabel->setWordWrap(true);
@@ -375,8 +379,8 @@ WizardAccountAutoManualPage::WizardAccountAutoManualPage(QWidget *parent)
    setTitle(i18n("Account"));
    setSubTitle(i18n("Please select one of the following options"));
 
-   radioButton_SFL    = new QRadioButton(i18n("Create a free SIP/IAX2 account on sflphone.org"));
-   radioButton_manual = new QRadioButton(i18n("Register an existing SIP or IAX2 account"));
+   radioButton_SFL    = new QRadioButton( i18n("Create a free SIP/IAX2 account on sflphone.org" ) );
+   radioButton_manual = new QRadioButton( i18n("Register an existing SIP or IAX2 account"       ) );
    radioButton_SFL->setChecked(true);
 
    registerField( FIELD_SFL_ACCOUNT   , radioButton_SFL    );
@@ -407,7 +411,8 @@ int WizardAccountAutoManualPage::nextId() const
 /***************************************************************************
  *   Class WizardAccountTypePage                                           *
  *   Page in which user choses between SIP and IAX account.                *
- ***************************************************************************/
+ **************************************************************************/
+
 ///The third page
 WizardAccountTypePage::WizardAccountTypePage(QWidget *parent)
      : QWizardPage(parent)
@@ -453,23 +458,23 @@ int WizardAccountTypePage::nextId() const
 WizardAccountEmailAddressPage::WizardAccountEmailAddressPage(QWidget *parent)
      : QWizardPage(parent)
 {
-   setTitle(i18n("Optional email address"));
-   setSubTitle(i18n("This email address will be used to send your voicemail messages."));
+   setTitle(   i18n( "Optional email address"                                           ));
+   setSubTitle(i18n( "This email address will be used to send your voicemail messages." ));
 
-   label_emailAddress    = new QLabel(i18n("Email address"));
-   lineEdit_emailAddress = new QLineEdit();
-   label_enableZrtp      = new QLabel(i18n("Secure with ZRTP"));
-   checkBox_enableZrtp   = new QCheckBox();
+   label_emailAddress    = new QLabel    ( i18n("Email address")    );
+   lineEdit_emailAddress = new QLineEdit (                          );
+   label_enableZrtp      = new QLabel    ( i18n("Secure with ZRTP") );
+   checkBox_enableZrtp   = new QCheckBox (                          );
 
    registerField( FIELD_EMAIL_ADDRESS , lineEdit_emailAddress );
    registerField( FIELD_ZRTP_ENABLED  , checkBox_enableZrtp   );
 
    QFormLayout *layout = new QFormLayout;
 
-   layout->setWidget(0 , QFormLayout::LabelRole , label_emailAddress    );
-   layout->setWidget(0 , QFormLayout::FieldRole , lineEdit_emailAddress );
-   layout->setWidget(1 , QFormLayout::LabelRole , label_enableZrtp      );
-   layout->setWidget(1 , QFormLayout::FieldRole , checkBox_enableZrtp   );
+   layout->setWidget( 0 , QFormLayout::LabelRole , label_emailAddress    );
+   layout->setWidget( 0 , QFormLayout::FieldRole , lineEdit_emailAddress );
+   layout->setWidget( 1 , QFormLayout::LabelRole , label_enableZrtp      );
+   layout->setWidget( 1 , QFormLayout::FieldRole , checkBox_enableZrtp   );
 
    setLayout(layout);
 }
@@ -477,10 +482,10 @@ WizardAccountEmailAddressPage::WizardAccountEmailAddressPage(QWidget *parent)
 ///Email page destructor
 WizardAccountEmailAddressPage::~WizardAccountEmailAddressPage()
 {
-   delete label_emailAddress;
+   delete label_emailAddress   ;
    delete lineEdit_emailAddress;
-   delete label_enableZrtp;
-   delete checkBox_enableZrtp;
+   delete label_enableZrtp     ;
+   delete checkBox_enableZrtp  ;
 }
 
 ///
@@ -639,12 +644,12 @@ int WizardAccountIAXFormPage::nextId() const
 WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
      : QWizardPage(parent)
 {
-   setTitle(i18n("Network Address Translation (NAT)"));
-   setSubTitle(i18n("You should probably enable this if you are behind a firewall."));
+   setTitle(   i18n( "Network Address Translation (NAT)"                            ) );
+   setSubTitle(i18n( "You should probably enable this if you are behind a firewall.") );
 
-   checkBox_enableStun = new QCheckBox(i18n("Enable STUN"));
-   label_StunServer    = new QLabel(i18n("Stun Server"));
-   lineEdit_StunServer = new QLineEdit();
+   checkBox_enableStun = new QCheckBox( i18n("Enable STUN") );
+   label_StunServer    = new QLabel   ( i18n("Stun Server") );
+   lineEdit_StunServer = new QLineEdit(                     );
    lineEdit_StunServer->setDisabled(true);
 
    registerField(FIELD_SIP_ENABLE_STUN, checkBox_enableStun);
@@ -680,8 +685,8 @@ int WizardAccountStunPage::nextId() const
 WizardAccountConclusionPage::WizardAccountConclusionPage(QWidget *parent)
      : QWizardPage(parent)
 {
-   setTitle(i18n("This assistant is now finished."));
-   setSubTitle(i18n("After checking the settings you chose, click \"Finish\" to create the account."));
+   setTitle(   i18n( "This assistant is now finished."));
+   setSubTitle(i18n( "After checking the settings you chose, click \"Finish\" to create the account."));
 
    QVBoxLayout *layout = new QVBoxLayout;
    setLayout(layout);
@@ -689,6 +694,7 @@ WizardAccountConclusionPage::WizardAccountConclusionPage(QWidget *parent)
 
 WizardAccountConclusionPage::~WizardAccountConclusionPage()
 {
+   
 }
 
 int WizardAccountConclusionPage::nextId() const

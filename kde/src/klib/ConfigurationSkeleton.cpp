@@ -26,6 +26,9 @@
 //KDE
 #include <KDebug>
 
+ConfigurationSkeleton * ConfigurationSkeleton::instance = NULL;
+
+///Constructor
 ConfigurationSkeleton::ConfigurationSkeleton()
  : ConfigurationSkeletonBase()
 {
@@ -34,8 +37,12 @@ ConfigurationSkeleton::ConfigurationSkeleton()
    readConfig();
 }
 
-ConfigurationSkeleton * ConfigurationSkeleton::instance = NULL;
+///Destructor
+ConfigurationSkeleton::~ConfigurationSkeleton()
+{
+}
 
+///Signleton
 ConfigurationSkeleton * ConfigurationSkeleton::self()
 {
    if(instance == NULL)
@@ -43,34 +50,21 @@ ConfigurationSkeleton * ConfigurationSkeleton::self()
    return instance;
 }
 
-
-ConfigurationSkeleton::~ConfigurationSkeleton()
-{
-}
-
-// CodecListModel * ConfigurationSkeleton::getCodecListModel()
-// {
-//    return codecListModel;
-// }
-
+///Read the config and override some variable using deamon defaults
 void ConfigurationSkeleton::readConfig()
 {
    //ConfigurationSkeleton::readConfig();
    kDebug() << "Reading config";
 
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
-   ////////////////////////
-   ////General settings////
-   ////////////////////////
+   //General settings
 
    //Call history settings
    //setEnableHistory(true);
    setHistoryMax(configurationManager.getHistoryLimit());
 
-   ////////////////////////
-   ////Display settings////
-   ////////////////////////
+   //Display settings
 
    //Notification settings
    //setNotifOnCalls(true);
@@ -80,16 +74,9 @@ void ConfigurationSkeleton::readConfig()
    //setDisplayOnStart(true);
    //setDisplayOnCalls(true);
 
-   /////////////////////////
-   ////Accounts settings////
-   /////////////////////////
+   //Accounts settings
 
-//    loadAccountList();
-
-
-   //////////////////////
-   ////Audio settings////
-   //////////////////////
+   //Audio settings
 
    //Audio Interface settings
    QString audioManager = configurationManager.getAudioManager();
@@ -128,21 +115,17 @@ void ConfigurationSkeleton::readConfig()
    //if(!ok) kDebug() << "outputDevice is not a number";
    //setAlsaOutputDevice(outputDevice);
 
-   /////////////////////////////
-   ////Address book settings////
-   /////////////////////////////
+   //Address book settings
 
    MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
    setEnableAddressBook(addressBookSettings[ADDRESSBOOK_ENABLE]);
-//    setMaxResults(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
-//    setDisplayPhoto(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
-//    setBusiness(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
-//    setMobile(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
-//    setHome(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
+   //setMaxResults(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
+   //setDisplayPhoto(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
+   //setBusiness(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
+   //setMobile(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
+   //setHome(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
 
-   /////////////////////////////
-   ///////Hooks settings////////
-   /////////////////////////////
+   //Hooks settings
 
    MapStringString hooksSettings = configurationManager.getHookSettings().value();
    setAddPrefix(hooksSettings[HOOKS_ENABLED]=="1");
@@ -162,9 +145,7 @@ void ConfigurationSkeleton::writeConfig()
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
 
-   ////////////////////////
-   ////General settings////
-   ////////////////////////
+   //General settings
 
    kDebug() << "Writing General settings";
 
@@ -174,16 +155,13 @@ void ConfigurationSkeleton::writeConfig()
         //}
    configurationManager.setHistoryLimit(historyMax());
 
-
-   ////////////////////////
-   ////Display settings////
-   ////////////////////////
+   //Display settings
 
    kDebug() << "Writing Display settings";
 
    //Notification settings
    //if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
-//    if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
+   //    if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
    //configurationManager.setMailNotify(notifOnMessages());
 
    //Window display settings
@@ -191,30 +169,26 @@ void ConfigurationSkeleton::writeConfig()
    //if(displayOnStart() == configurationManager.isStartHidden()) configurationManager.startHidden();
    //if(displayOnCalls() != configurationManager.popupMode()) configurationManager.switchPopupMode();
 
-   /////////////////////////
-   ////Accounts settings////
-   /////////////////////////
+   //Accounts settings
 
    kDebug() << "Writing Accounts settings";
 
-//    saveAccountList();
+   //    saveAccountList();
 
-   //////////////////////
-   ////Audio settings////
-   //////////////////////
+   //Audio settings
 
    kDebug() << "Writing Audio settings";
 
    //Audio Interface settings
-//    int prevManager = configurationManager.getAudioManager();
-//    int newManager = interface();
-//    if(prevManager != newManager) {
-//       configurationManager.setAudioManager(newManager);
-//    }
+   //    int prevManager = configurationManager.getAudioManager();
+   //    int newManager = interface();
+   //    if(prevManager != newManager) {
+   //       configurationManager.setAudioManager(newManager);
+   //    }
 
    //ringtones settings
-//    if(enableRingtones() != configurationManager.isRingtoneEnabled()) configurationManager.ringtoneEnabled();
-//    configurationManager.setRingtoneChoice(ringtone());
+   //    if(enableRingtones() != configurationManager.isRingtoneEnabled()) configurationManager.ringtoneEnabled();
+   //    configurationManager.setRingtoneChoice(ringtone());
 
    //codecs settings
    //kDebug() << "activeCodecList = " << activeCodecList();
@@ -222,42 +196,35 @@ void ConfigurationSkeleton::writeConfig()
 
 
    //alsa settings
-//    if(prevManager == CONST_ALSA && newManager == EnumInterface::ALSA) {
-//       kDebug() << "setting alsa settings";
-//       configurationManager.setOutputAudioPlugin(alsaPlugin());
-//       configurationManager.setAudioInputDevice(alsaInputDevice());
-//       configurationManager.setAudioOutputDevice(alsaOutputDevice());
-//    }
+   //    if(prevManager == CONST_ALSA && newManager == EnumInterface::ALSA) {
+   //       kDebug() << "setting alsa settings";
+   //       configurationManager.setOutputAudioPlugin(alsaPlugin());
+   //       configurationManager.setAudioInputDevice(alsaInputDevice());
+   //       configurationManager.setAudioOutputDevice(alsaOutputDevice());
+   //    }
 
-
-   ///////////////////////
-   ////Record settings////
-   ///////////////////////
+   //Record settings
 
    kDebug() << "Writing Record settings";
 
-//    QString destination = destinationFolder();
-//    configurationManager.setRecordPath(destination);
+   //    QString destination = destinationFolder();
+   //    configurationManager.setRecordPath(destination);
 
 
-   /////////////////////////////
-   ////Address Book settings////
-   /////////////////////////////
+   //Address Book settings
 
    kDebug() << "Writing Address Book settings";
 
    MapStringInt addressBookSettings = MapStringInt();
    addressBookSettings[ADDRESSBOOK_ENABLE] = enableAddressBook();
-//    addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = maxResults();
-//    addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO] = displayPhoto();
-//    addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS] = business();
-//    addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = mobile();
-//    addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = home();
+   //    addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = maxResults();
+   //    addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO] = displayPhoto();
+   //    addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS] = business();
+   //    addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = mobile();
+   //    addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = home();
    configurationManager.setAddressbookSettings(addressBookSettings);
 
-   /////////////////////////////
-   ///////Hooks settings////////
-   /////////////////////////////
+   //Hooks settings
 
    kDebug() << "Writing Hooks settings";
 

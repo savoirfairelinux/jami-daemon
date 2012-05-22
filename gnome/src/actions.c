@@ -264,6 +264,7 @@ gboolean sflphone_init(GError **error)
     contacts_tab = calltab_init(TRUE, CONTACTS);
     history_tab = calltab_init(TRUE, HISTORY);
 
+    codecs_load();
     conferencelist_init(current_calls_tab);
 
     // Fetch the configured accounts
@@ -271,9 +272,6 @@ gboolean sflphone_init(GError **error)
 
     // Fetch the ip2ip profile
     sflphone_fill_ip2ip_profile();
-
-    // Fetch the conference list
-    sflphone_fill_conference_list();
 
     return TRUE;
 }
@@ -394,6 +392,7 @@ sflphone_pick_up()
             dbus_transfer(selectedCall);
             time(&selectedCall->_time_stop);
             calltree_remove_call(current_calls_tab, selectedCall->_callID);
+            update_actions();
             calllist_remove_call(current_calls_tab, selectedCall->_callID);
             break;
         case CALL_STATE_CURRENT:
@@ -956,6 +955,7 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
         else
             ERROR ("SFLphone: Couldn't find codec %d %p", payload, orig);
     }
+
     g_array_unref(order);
 
     g_queue_clear(account->acodecs);
