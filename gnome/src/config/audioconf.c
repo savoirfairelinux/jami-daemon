@@ -81,25 +81,31 @@ preferences_dialog_fill_codec_list(const account_t *account)
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
 
-    GQueue *list = account ? account->acodecs : get_audio_codecs_list();
+    GQueue *list;
+    if (!account) {
+        DEBUG("Account is NULL, using global codec list");
+        list = get_audio_codecs_list();
+    } else {
+        list = account->acodecs;
+    }
 
     // Insert codecs
     for (size_t i = 0; i < list->length; ++i) {
-        codec_t *c = g_queue_peek_nth (list, i);
+        codec_t *c = g_queue_peek_nth(list, i);
 
         if (c) {
-            DEBUG ("%s", c->name);
+            DEBUG("%s is %sactive", c->name, c->is_active ? "" : "not ");
             GtkTreeIter iter;
-            gtk_list_store_append (codecStore, &iter);
-            gchar *samplerate = g_strdup_printf ("%d kHz", c->sample_rate);
-            gchar *bitrate = g_strdup_printf ("%s kbps", c->bitrate);
+            gtk_list_store_append(codecStore, &iter);
+            gchar *samplerate = g_strdup_printf("%d kHz", c->sample_rate);
+            gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
 
-            gtk_list_store_set (codecStore, &iter,
-                                COLUMN_CODEC_ACTIVE, c->is_active,
-                                COLUMN_CODEC_NAME,	c->name,
-                                COLUMN_CODEC_FREQUENCY,	samplerate,
-                                COLUMN_CODEC_BITRATE, bitrate,
-                                -1);
+            gtk_list_store_set(codecStore, &iter,
+                               COLUMN_CODEC_ACTIVE, c->is_active,
+                               COLUMN_CODEC_NAME, c->name,
+                               COLUMN_CODEC_FREQUENCY, samplerate,
+                               COLUMN_CODEC_BITRATE, bitrate,
+                               -1);
             g_free(samplerate);
             g_free(bitrate);
         }
@@ -536,10 +542,10 @@ GtkWidget* audiocodecs_box(const account_t *account)
     gtk_box_pack_start(GTK_BOX(audiocodecs_hbox), scrolledWindow, TRUE, TRUE, 0);
     GtkListStore *codecStore = gtk_list_store_new(CODEC_COLUMN_COUNT,
                                G_TYPE_BOOLEAN, /* Active */
-                               G_TYPE_STRING,	 /* Name */
-                               G_TYPE_STRING,	 /* Frequency */
-                               G_TYPE_STRING,	 /* Bit rate */
-                               G_TYPE_STRING	 /* Bandwith */);
+                               G_TYPE_STRING, /* Name */
+                               G_TYPE_STRING, /* Frequency */
+                               G_TYPE_STRING, /* Bitrate */
+                               G_TYPE_STRING  /* Bandwidth */);
 
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));

@@ -718,12 +718,6 @@ class ManagerImpl {
         int32_t getMailNotify() const;
 
         /**
-         * Get the list of the active codecs
-         * @return std::vector< ::std::string >  The list of active codecs
-         */
-        std::vector<std::string> getActiveCodecList() const;
-
-        /**
          * Change a specific value in the configuration tree.
          * This value will then be saved in the user config file sflphonedrc
          * @param section	The section name

@@ -87,10 +87,10 @@ VideoControls::setActiveCodecList(const std::vector<std::string>& list, const st
 {
     Account *acc = Manager::instance().getAccount(accountID);
 
-    if (acc != NULL)
-        acc->setActiveCodecs(list);
-
-    Manager::instance().saveConfig();
+    if (acc != NULL) {
+        acc->setActiveVideoCodecs(list);
+        Manager::instance().saveConfig();
+    }
 }
 
 std::vector<std::string> VideoControls::getInputDeviceList()

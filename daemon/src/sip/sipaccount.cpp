@@ -141,14 +141,11 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode publishPort(publicportstr.str());
 
     ScalarNode sameasLocal(publishedSameasLocal_);
+    DEBUG("%s", audioCodecStr_.c_str());
     ScalarNode audioCodecs(audioCodecStr_);
 #ifdef SFL_VIDEO
-    for (vector<string>::const_iterator i = videoCodecList_.begin();
-            i != videoCodecList_.end(); ++i)
-        DEBUG("%s", i->c_str());
-    DEBUG("%s", Manager::instance().join_string(videoCodecList_).c_str());
-
-    ScalarNode videoCodecs(Manager::instance().join_string(videoCodecList_));
+    DEBUG("%s", videoCodecStr_.c_str());
+    ScalarNode videoCodecs(videoCodecStr_);
 #endif
 
     ScalarNode ringtonePath(ringtonePath_);
@@ -283,12 +280,12 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
     map.getValue(MAILBOX_KEY, &mailBox_);
     map.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
+    // Update codec list which one is used for SDP offer
+    setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
 #ifdef SFL_VIDEO
     map.getValue(VIDEO_CODECS_KEY, &videoCodecStr_);
     setActiveVideoCodecs(ManagerImpl::split_string(videoCodecStr_));
 #endif
-    // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::split_string(audioCodecStr_));
 
     map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
     map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);

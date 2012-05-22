@@ -244,7 +244,7 @@ class Account : public Serializable {
          /* Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
-        std::vector<int> getActiveCodecs() const {
+        std::vector<int> getActiveAudioCodecs() const {
             return audioCodecList_;
         }
 
@@ -252,7 +252,7 @@ class Account : public Serializable {
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
          */
-        void setActiveCodecs(const std::vector<std::string>& list);
+        void setActiveAudioCodecs(const std::vector<std::string>& list);
         void setActiveVideoCodecs(const std::vector<std::string>& list);
 
         std::string getRingtonePath() const {
@@ -289,7 +289,6 @@ class Account : public Serializable {
 
         /**
          * Helper function used to load the default codec order from the codec factory
-         * setActiveCodecs is called to sync both codecList_ and codecStr_
          */
         void loadDefaultCodecs();
 

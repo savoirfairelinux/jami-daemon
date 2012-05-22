@@ -88,7 +88,7 @@ void Account::loadDefaultCodecs()
     result.push_back("111");
     result.push_back("112");
 
-    setActiveCodecs(result);
+    setActiveAudioCodecs(result);
 #ifdef SFL_VIDEO
     setActiveVideoCodecs(sfl_video::getCodecList());
 #endif
@@ -97,11 +97,15 @@ void Account::loadDefaultCodecs()
 void Account::setActiveVideoCodecs(const std::vector<std::string> &list)
 {
 #ifdef SFL_VIDEO
+    // first clear the previously stored codecs
+    videoCodecList_.clear();
     videoCodecList_ = !list.empty() ? list : sfl_video::getCodecList();
+    // update the codec string according to new codec selection
+    videoCodecStr_ = ManagerImpl::join_string(list);
 #endif
 }
 
-void Account::setActiveCodecs(const std::vector<std::string> &list)
+void Account::setActiveAudioCodecs(const std::vector<std::string> &list)
 {
     // first clear the previously stored codecs
     audioCodecList_.clear();

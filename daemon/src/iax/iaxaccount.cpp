@@ -93,7 +93,7 @@ void IAXAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::split_string(audioCodecStr_));
+    setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
     map.getValue(DISPLAY_NAME_KEY, &displayName_);
 }
 

@@ -78,7 +78,7 @@ AudioCodecFactory::getCodecName(int payload) const
         return "";
 }
 
-std::vector<int32_t >
+std::vector<int32_t>
 AudioCodecFactory::getAudioCodecList() const
 {
     std::vector<int32_t> list;

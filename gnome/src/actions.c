@@ -909,26 +909,29 @@ sflphone_mute_call()
 static void
 sflphone_fill_video_codec_list_per_account(account_t *account)
 {
-    gchar **order = dbus_get_active_video_codec_list(account->accountID);
     if (!account->vcodecs)
         account->vcodecs = g_queue_new();
-    GQueue* vcodecs = get_video_codecs_list();
+    else
+        g_queue_clear(account->vcodecs);
+
+    /* First add the active codecs for this account */
+    GQueue* system_vcodecs = get_video_codecs_list();
+    gchar **order = dbus_get_active_video_codec_list(account->accountID);
     for (gchar **pl = order; *pl; pl++) {
-        codec_t *orig = codec_list_get_by_name(*pl, vcodecs);
+        codec_t *orig = codec_list_get_by_name(*pl, system_vcodecs);
         codec_t *c = codec_create_new_from_caps(orig);
         if (c)
             g_queue_push_tail(account->vcodecs, c);
         else
-            ERROR ("SFLphone: Couldn't find codec %s %p", *pl, orig);
+            ERROR("Couldn't find codec %s %p", *pl, orig);
         g_free(*pl);
     }
     g_free(order);
 
-    g_queue_clear(account->vcodecs);
-
-    guint caps_size = g_queue_get_length(vcodecs);
+    /* Here we add installed codecs that aren't active for the account */
+    guint caps_size = g_queue_get_length(system_vcodecs);
     for (guint i = 0; i < caps_size; ++i) {
-        codec_t * vcodec = g_queue_peek_nth(vcodecs, i);
+        codec_t * vcodec = g_queue_peek_nth(system_vcodecs, i);
         if (codec_list_get_by_name(vcodec->name, account->vcodecs) == NULL) {
             vcodec->is_active = FALSE;
             g_queue_push_tail(account->vcodecs, vcodec);
@@ -942,27 +945,28 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
 {
     if (!account->acodecs)
         account->acodecs = g_queue_new();
+    else
+        g_queue_clear(account->acodecs);
 
+    /* First add the active codecs for this account */
     GArray *order = dbus_get_active_audio_codec_list(account->accountID);
-    GQueue* acodecs = get_audio_codecs_list();
+    GQueue *system_acodecs = get_audio_codecs_list();
     for (guint i = 0; i < order->len; i++) {
         gint payload = g_array_index(order, gint, i);
-        codec_t *orig = codec_list_get_by_payload(payload, acodecs);
+        codec_t *orig = codec_list_get_by_payload(payload, system_acodecs);
         codec_t *c = codec_create_new_from_caps(orig);
 
         if (c)
             g_queue_push_tail(account->acodecs, c);
         else
-            ERROR ("SFLphone: Couldn't find codec %d %p", payload, orig);
+            ERROR("Couldn't find codec %d %p", payload, orig);
     }
-
     g_array_unref(order);
 
-    g_queue_clear(account->acodecs);
-
-    guint caps_size = g_queue_get_length(acodecs);
+    /* Here we add installed codecs that aren't active for the account */
+    guint caps_size = g_queue_get_length(system_acodecs);
     for (guint i = 0; i < caps_size; ++i) {
-        codec_t * acodec = g_queue_peek_nth(acodecs, i);
+        codec_t * acodec = g_queue_peek_nth(system_acodecs, i);
         if (codec_list_get_by_payload(acodec->payload, account->acodecs) == NULL) {
             acodec->is_active = FALSE;
             g_queue_push_tail(account->acodecs, acodec);
