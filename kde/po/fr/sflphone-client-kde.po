@@ -968,6 +968,34 @@ msgstr "Aujourd'hui"
 msgid "Yesterday"
 msgstr "Hier"
 
+#: src/klib/SortableDockCommon.cpp:53
+msgid "Monday"
+msgstr "Lundi"
+
+#: src/klib/SortableDockCommon.cpp:53
+msgid "Tuesday"
+msgstr "Mardi"
+
+#: src/klib/SortableDockCommon.cpp:53
+msgid "Wednesday"
+msgstr "Mercredi"
+
+#: src/klib/SortableDockCommon.cpp:53
+msgid "Thursday"
+msgstr "Jeudi"
+
+#: src/klib/SortableDockCommon.cpp:53
+msgid "Friday"
+msgstr "Vendredi"
+
+#: src/klib/SortableDockCommon.cpp:53
+msgid "Saterday"
+msgstr "Samedi"
+
+#: src/klib/SortableDockCommon.cpp:53
+msgid "Sunday"
+msgstr "Dimanche"
+
 #: src/klib/SortableDockCommon.cpp:58
 msgid "Last week"
 msgstr "La semaine dernière"
@@ -1246,7 +1274,7 @@ msgstr "Depuis:"
 
 #: src/widgets/HistoryDock.cpp:97
 msgid "To:"
-msgstr "Jusquà:"
+msgstr "Jusqu'à:"
 
 #: src/widgets/HistoryDock.cpp:100
 msgid "Display all"
@@ -1254,7 +1282,7 @@ msgstr "Afficher tout"
 
 #: src/widgets/HistoryDock.cpp:125
 msgid "Date"
-msgstr "date"
+msgstr "Date"
 
 #: src/widgets/HistoryDock.cpp:125
 msgid "Popularity"

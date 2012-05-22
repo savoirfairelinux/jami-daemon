@@ -198,7 +198,7 @@ void HistoryDock::reload()
    switch (CURRENT_SORTING_MODE) {
       case Date:
          foreach (QString cat, m_slHistoryConst) {
-            m_pItemView->addCategory(cat);
+            m_pItemView->addCategory(i18n(cat.toAscii()));
          }
          break;
    }

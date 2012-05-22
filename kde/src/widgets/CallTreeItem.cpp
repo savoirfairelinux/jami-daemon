@@ -187,7 +187,7 @@ void CallTreeItem::updated()
          m_pPeerL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
       }
       else {
-         m_pPeerL->setText(i18n("<b>Unknow</b>"));
+         m_pPeerL->setText(i18n("<b>Unknown</b>"));
       }
    }
 

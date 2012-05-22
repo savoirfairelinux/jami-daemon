@@ -534,7 +534,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    }
    else {
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      m_pPeerNameL->setText(i18n("<b>Unknow</b>"));
+      m_pPeerNameL->setText(i18n("<b>Unknown</b>"));
       return false;
    }
    return true;
@@ -561,7 +561,7 @@ QString HistoryTreeItem::getName()
    else if (!m_Name.isEmpty()){
       return m_Name;
    }
-   return i18n("Unknow");
+   return i18n("Unknown");
 }
 
 ///Return the caller peer number

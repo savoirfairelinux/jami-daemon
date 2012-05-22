@@ -187,7 +187,7 @@ void ContactDock::reloadContact()
                category = QString(cont->getFormattedName()[0]);
                break;
             case Organisation:
-               category = (cont->getOrganization().isEmpty())?i18n("Unknow"):cont->getOrganization();
+               category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
                break;
             case Recently_used:
                if (recentlyUsed.find(cont) != recentlyUsed.end())
@@ -199,7 +199,7 @@ void ContactDock::reloadContact()
                category = i18n("TODO");
                break;
             case Department:
-               category = (cont->getDepartment().isEmpty())?i18n("Unknow"):cont->getDepartment();;
+               category = (cont->getDepartment().isEmpty())?i18n("Unknown"):cont->getDepartment();;
                break;
          }
          QNumericTreeWidgetItem_hist* item = m_pContactView->addItem<QNumericTreeWidgetItem_hist>(category);
