@@ -227,7 +227,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
       if (contact)
          name = contact->getFormattedName();
       else
-         name = i18n("Unknow");
+         name = i18n("Unknown");
       Call* call2 = SFLPhone::model()->addDialingCall(name, SFLPhone::model()->getCurrentAccountId());
       call2->appendText(QString(encodedPhoneNumber));
       if (!parent) {

@@ -189,7 +189,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
                category = QString(cont->getFormattedName()[0]);
                break;
             case ContactSortingMode::Organisation:
-               category = (cont->getOrganization().isEmpty())?i18n("Unknow"):cont->getOrganization();
+               category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
                break;
             case ContactSortingMode::Recently_used:
                if (recentlyUsed.find(cont) != recentlyUsed.end())
@@ -201,7 +201,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
                category = i18n("TODO");
                break;
             case ContactSortingMode::Department:
-               category = (cont->getDepartment().isEmpty())?i18n("Unknow"):cont->getDepartment();;
+               category = (cont->getDepartment().isEmpty())?i18n("Unknown"):cont->getDepartment();;
                break;
             default:
                break;

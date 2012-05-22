@@ -152,7 +152,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
                   hc[ STATE_KEY           ]
          );
          if (pastCall->getPeerName().isEmpty()) {
-            pastCall->setPeerName("Unknow");
+            pastCall->setPeerName("Unknown");
          }
          pastCall->setRecordingPath(hc[ RECORDING_PATH_KEY ]);
          m_sHistoryCalls[ hc[TIMESTAMP_START_KEY ]] = pastCall;
