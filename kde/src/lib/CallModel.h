@@ -67,6 +67,12 @@ public slots:
    void on1_conferenceRemoved  ( const QString& confId                             );
    void on1_voiceMailNotify    ( const QString& accountID , int count              );
    void on1_volumeChanged      ( const QString& device    , double value           );
+
+protected:
+   static CallMap m_sActiveCalls;
+
+private slots:
+  void removeActiveCall(Call*);
 private:
    static bool dbusInit;
 signals:
@@ -83,9 +89,8 @@ signals:
 };
 
 /**
- * Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible  
- *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The Mirror model  
- *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
+ * Using QAbstractModel resulted in a failure. Managing all corner case bloated the code to the point of no
+ * return. This frontend may not be cleaner from a design point of view, but it is from a code point of view
  */
 ///@class CallModel Central model/frontend to deal with sflphoned
 template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
@@ -193,7 +198,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       typedef QHash< Index      , InternalStruct* > InternalIndex ;
 
       //Static attributes
-      static CallMap m_sActiveCalls ;
       static CallMap m_sHistoryCalls;
       
       static InternalCall   m_sPrivateCallList_call  ;
@@ -213,13 +217,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       Call* addCallCommon(Call* call);
       bool  updateCommon (Call* call);
 };
-
-/*class CallModelConvenience : public CallModel<QWidget*,QModelIndex*>
-{
-   public:
-      CallModelConvenience(ModelType type) : CallModel<QWidget*,QModelIndex*>(type) {}
-};*/
-
 #include "CallModel.hpp"
 
 #endif

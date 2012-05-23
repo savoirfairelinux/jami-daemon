@@ -952,6 +952,12 @@ msgstr "Terminée"
 msgid "Error"
 msgstr "Erreur"
 
+msgid "Ringing (in)"
+msgstr "Sonnerie (entrant)"
+
+msgid "Ringing (out)"
+msgstr "Sonnerie (sortante)"
+
 #: src/klib/dataengine/sflphonEngine.cpp:302
 msgid "Current_account"
 msgstr ""
@@ -1527,6 +1533,31 @@ msgstr "Définir si il faut ajouter un préfix pour les appels sortants"
 #: rc.cpp:454
 msgid "Defines the prefix to add."
 msgstr "Définir le préfix à ajouter"
+
+#: src/SFLPhoneAccessibility.cpp:30
+msgid "You currently have %1 calls"
+msgstr "Vous avez %1 appel en cours"
+
+#: src/SFLPhoneAccessibility.cpp:30
+msgid "You currently have no call"
+msgstr "Vous n'avez pas d'appels en cours"
+
+#: src/SFLPhoneAccessibility.cpp:30
+msgid "Call from %1, number %2"
+msgstr "Appel de %1, au numero %2"
+
+msgid "The current call is %1"
+msgstr "L'appel actuel est %1"
+
+msgid ",Your peer is %1"
+msgstr ", votre interlocuteur est %1"
+
+msgid ", the peer phone number is %1 "
+msgstr ", le numero de votre interlocuteur est %1"
+
+msgid " and you have been talking since %1 seconds"
+msgstr " et vous parlez depuis %1 seconde"
+
 
 #: rc.cpp:467
 msgctxt "NAME OF TRANSLATORS"

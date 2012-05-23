@@ -97,7 +97,8 @@ const function Call::stateChangedFunctionMap[11][6] =
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
 
-ContactBackend* Call::m_pContactBackend = 0;
+ContactBackend* Call::m_pContactBackend = nullptr;
+Call*           Call::m_sSelectedCall   = nullptr;
 
 void Call::setContactBackend(ContactBackend* be)
 {
@@ -308,6 +309,48 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
    return DAEMON_CALL_STATE_FAILURE    ;
 } //toDaemonCallState
 
+///Transform a backend state into a translated string
+const QString Call::toHumanStateName() const
+{
+   switch (m_CurrentState) {
+      case CALL_STATE_INCOMING:
+         return ( "Ringing (in)"  );
+         break;
+      case CALL_STATE_RINGING:
+         return ( "Ringing (out)" );
+         break;
+      case CALL_STATE_CURRENT:
+         return ( "Talking"       );
+         break;
+      case CALL_STATE_DIALING:
+         return ( "Dialing"       );
+         break;
+      case CALL_STATE_HOLD:
+         return ( "Hold"          );
+         break;
+      case CALL_STATE_FAILURE:
+         return ( "Failed"        );
+         break;
+      case CALL_STATE_BUSY:
+         return ( "Busy"          );
+         break;
+      case CALL_STATE_TRANSFER:
+         return ( "Transfer"      );
+         break;
+      case CALL_STATE_TRANSF_HOLD:
+         return ( "Transfer hold" );
+         break;
+      case CALL_STATE_OVER:
+         return ( "Over"          );
+         break;
+      case CALL_STATE_ERROR:
+         return ( "Error"         );
+         break;
+      default:
+         return "";
+   }
+}
+
 ///Get the time (second from 1 jan 1970) when the call ended
 QString Call::getStopTimeStamp()     const
 {
@@ -415,6 +458,12 @@ bool Call::isHistory()                      const
    return (getState() == CALL_STATE_OVER);
 }
 
+///Is this call selected (useful for GUIs)
+bool Call::isSelected() const
+{
+   return m_sSelectedCall == this;
+}
+
 ///This function could also be called mayBeSecure or haveChancesToBeEncryptedButWeCantTell.
 bool Call::isSecure() const {
 
@@ -474,6 +523,14 @@ void Call::setRecordingPath(const QString& path)
 void Call::setPeerName(const QString& name)
 {
    m_PeerName = name;
+}
+
+///Set selected
+void Call::setSelected(const bool value)
+{
+   if (value) {
+      m_sSelectedCall = this;
+   }
 }
 
 /*****************************************************************************

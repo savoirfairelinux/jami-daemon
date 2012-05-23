@@ -147,10 +147,12 @@ public:
    QString              getCurrentCodecName () const;
    bool                 isSecure            () const;
    bool                 isConference        () const;
+   bool                 isSelected          () const;
    const QString&       getConfId           () const;
    const QString&       getTransferNumber   () const;
    const QString&       getCallNumber       () const;
    const QString&       getRecordingPath    () const;
+   const QString        toHumanStateName    () const;
 
    //Automated function
    call_state stateChanged(const QString & newState);
@@ -163,6 +165,7 @@ public:
    void setCallNumber     ( const QString& number );
    void setRecordingPath  ( const QString& path   );
    void setPeerName       ( const QString& name   );
+   void setSelected       ( const bool     value  );
    
    //Mutators
    void appendText(const QString& str);
@@ -188,8 +191,9 @@ private:
    bool                   m_isConference   ;
    call_state             m_CurrentState   ;
    bool                   m_Recording      ;
+   static Call*           m_sSelectedCall  ;
    
-   //Automate attributes
+   //State machine
    /**
     *  actionPerformedStateMap[orig_state][action]
     *  Map of the states to go to when the action action is 

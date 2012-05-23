@@ -438,7 +438,7 @@ void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State old
       return;
 
    if (m_pMetaInformationResolver->currentSource().type() == Phonon::MediaSource::Invalid)
-            return;
+      return;
 
    QMap<QString, QString> metaData = m_pMetaInformationResolver->metaData();
 
@@ -463,6 +463,7 @@ void HistoryTreeItem::resizeEvent(QResizeEvent* event)
 
 void HistoryTreeItem::mouseDoubleClickEvent(QMouseEvent* event)
 {
+   Q_UNUSED(event);
    callAgain();
 }
 

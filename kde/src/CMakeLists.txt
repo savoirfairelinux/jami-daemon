@@ -28,6 +28,8 @@ SET(
    SFLPhoneView.cpp
    SFLPhone.cpp
    SFLPhoneapplication.cpp
+   KSpeechInterfaceSingleton.cpp
+   SFLPhoneAccessibility.cpp
    widgets/SFLPhoneTray.cpp
    main.cpp
    AccountWizard.cpp
@@ -76,6 +78,7 @@ SET(
 )
 
 KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/SFLPhoneView_base.ui  ${config_ui_files}  )
+QT4_ADD_DBUS_INTERFACES(sflphone_client_kde_SRCS ${KDE4_DBUS_INTERFACES_DIR}/org.kde.KSpeech.xml)
 
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})

@@ -78,6 +78,10 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    gl->addWidget(m_pTransferB                                                    , 1 , 4 , 1 , 2 );
    gl->addItem  (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum), 2 , 0 , 1 , 3 );
 
+   foreach(Call* active, SFLPhone::model()->getCallList()) {
+      addCall(active);
+   }
+
    //User Interface even
    //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                        /
    /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)              ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
@@ -583,7 +587,9 @@ void CallView::itemDoubleClicked(QTreeWidgetItem* item, int column) {
 
 void CallView::itemClicked(QTreeWidgetItem* item, int column) {
    Q_UNUSED(column)
-   emit itemChanged(SFLPhone::model()->getCall(item));
+   Call* call = SFLPhone::model()->getCall(item);
+   call->setSelected(true);
+   emit itemChanged(call);
    kDebug() << "Item clicked";
 }
 
