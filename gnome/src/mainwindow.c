@@ -52,7 +52,6 @@
 #include "unused.h"
 #include "config/audioconf.h"
 #include "str_utils.h"
-#include "seekableslider.h"
 
 #include "eel-gconf-extensions.h"
 
