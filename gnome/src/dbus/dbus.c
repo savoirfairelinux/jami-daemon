@@ -430,7 +430,7 @@ update_playback_scale_cb(DBusGProxy *proxy UNUSED, const gchar *callid, guint va
     // DEBUG("Playback scale update position: %d, size: %d", position << 8, size >> 16);
     // DEBUG("Playback scale update value: %d, sizeof guint: %d", value, sizeof(guint));
 
-    update_playback_scale(position << 8, size >> 16);
+    update_playback_scale(position, size >> 16);
 }
 
 static void
@@ -1571,6 +1571,12 @@ dbus_get_record_path(void)
     check_error(error);
 
     return path;
+}
+
+void dbus_set_record_playback_seek(gdouble value) {
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_record_playback_seek(call_proxy, value, &error);
+    check_error(error);
 }
 
 void dbus_set_is_always_recording(const gboolean alwaysRec)

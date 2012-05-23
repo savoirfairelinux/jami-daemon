@@ -52,6 +52,7 @@
 #include "unused.h"
 #include "config/audioconf.h"
 #include "str_utils.h"
+#include "seekableslider.h"
 
 #include "eel-gconf-extensions.h"
 
@@ -72,6 +73,8 @@ static GtkWidget *speaker_control;
 static GtkWidget *mic_control;
 static GtkWidget *statusBar;
 static GtkWidget *hscale;
+
+static gboolean can_update_scale = TRUE;
 
 static gchar *status_current_message;
 
@@ -103,6 +106,52 @@ static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *ev
     eel_gconf_set_integer(CONF_MAIN_WINDOW_POSITION_Y, pos_y);
 
     return FALSE;
+}
+
+gboolean
+on_playback_scale_value_changed_cb(GtkRange *range, GtkScrollType scroll, gdouble value, gpointer user_data)
+{
+    dbus_set_record_playback_seek(value);
+
+    return FALSE;
+}
+
+
+gboolean
+on_playback_scale_pressed_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+    if(event->button == 1)
+        event->button = 2;
+
+    can_update_scale = FALSE;
+
+    return FALSE;
+}
+
+gboolean
+on_playback_scale_released_cb(GtkWidget *widget, GdkEventButton  *event, gpointer user_data)
+{
+    if(event->button == 1)
+        event->button = 2;
+
+    can_update_scale = TRUE;
+
+    return FALSE;
+}
+
+gboolean
+on_playback_scale_moved_cb(GtkWidget *widget, GdkEvent  *event, gpointer user_data)
+{
+    return FALSE;
+}
+
+gboolean
+on_playback_scale_scrolled_cb(GtkWidget *widget, GdkEvent  *event, gpointer user_data)
+{
+
+    DEBUG("on_playback_scale_scrolled_cb");
+
+    return TRUE;
 }
 
 
@@ -259,6 +308,24 @@ create_main_window()
     if(hscale == NULL) {
         WARN("Could not create new horizontal scale");
     }
+
+    g_signal_connect(G_OBJECT(hscale), "change-value",
+                     G_CALLBACK(on_playback_scale_value_changed_cb), NULL);
+
+    g_signal_connect_object(G_OBJECT (hscale), "button-press-event",
+                     G_CALLBACK (on_playback_scale_pressed_cb), NULL, 0);
+
+    g_signal_connect_object(G_OBJECT (hscale), "button-release-event",
+                     G_CALLBACK (on_playback_scale_released_cb), NULL, 0);
+
+    g_signal_connect_object(G_OBJECT (hscale), "motion-notify-event",
+                     G_CALLBACK (on_playback_scale_moved_cb), NULL, 0);
+
+//    g_signal_connect_object (G_OBJECT (hscale), "value_changed",
+//                     G_CALLBACK (on_playback_scale_changed_cb), NULL);
+
+    g_signal_connect_object (G_OBJECT (hscale), "scroll-event",
+                     G_CALLBACK (on_playback_scale_scrolled_cb), NULL, 0);
 
     gfloat xalign = 0.0f;
     gfloat yalign = 0.0f;
@@ -515,5 +582,7 @@ void update_playback_scale(guint current, guint size)
 {
     gdouble val = ((gdouble) current / (gdouble) size) * 100.0;
 
-    gtk_range_set_value(GTK_RANGE(hscale), val);
+    if(can_update_scale == TRUE) {
+        gtk_range_set_value(GTK_RANGE(hscale), val);
+    }
 }

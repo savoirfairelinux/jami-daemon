@@ -2086,6 +2086,13 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     return true;
 }
 
+void ManagerImpl::recordingPlaybackSeek(const double value)
+{
+    if(audiofile_.get()) {
+        audiofile_.get()->seek(value);
+    }
+}
+
 
 void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
 {

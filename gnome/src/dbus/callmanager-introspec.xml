@@ -367,6 +367,13 @@
             <arg type="s" name="filepath"/>
         </signal>
 
+        <method name="recordPlaybackSeek" tp:name-for-bindings="setVolume">
+            <tp:docstring>
+              <p>Sets the playback position using a linear scale [0,100].</p>
+            </tp:docstring>
+            <arg type="d" name="value" direction="in"/>
+        </method>
+
         <signal name="recordPlaybackStopped" tp:name-for-bindings="recordPlaybackStopped">
             <tp:docstring/>
             <arg type="s" name="filepath" />

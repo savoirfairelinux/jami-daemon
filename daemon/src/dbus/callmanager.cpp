@@ -256,6 +256,12 @@ CallManager::setRecording(const std::string& callID)
     Manager::instance().setRecordingCall(callID);
 }
 
+void
+CallManager::recordPlaybackSeek(const double& value)
+{
+    Manager::instance().recordingPlaybackSeek(value);
+}
+
 bool
 CallManager::getIsRecording(const std::string& callID)
 {

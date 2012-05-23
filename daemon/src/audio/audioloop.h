@@ -57,6 +57,8 @@ class AudioLoop {
          */
         void getNext(SFLDataFormat* output, size_t samples, short volume=100);
 
+        void seek(double relative_position);
+
         /**
          * Reset the pointer position
          */
