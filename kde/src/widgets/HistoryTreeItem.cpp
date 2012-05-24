@@ -535,7 +535,10 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    }
    else {
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      m_pPeerNameL->setText(i18n("<b>Unknown</b>"));
+      if (!phoneNumber.isEmpty())
+         m_pPeerNameL->setText("<b>"+phoneNumber+"</b>");
+      else
+         m_pPeerNameL->setText(i18n("<b>Unknown</b>"));
       return false;
    }
    return true;

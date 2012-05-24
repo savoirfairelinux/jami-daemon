@@ -101,11 +101,11 @@ class HistoryTreeItem : public QWidget
     QToolButton* m_pRemove        ;
 
     uint         m_TimeStamp      ;
-    uint         m_Length       ;
+    uint         m_Length         ;
     QString      m_Name           ;
     QString      m_PhoneNumber    ;
     QGridLayout* m_pMainLayout    ;
-    Contact*     m_pContact;
+    Contact*     m_pContact       ;
 
     QTreeWidgetItem* m_pItem;
 

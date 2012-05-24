@@ -148,7 +148,7 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
    Q_UNUSED(action)
    QByteArray encodedCallId      = data->data( MIME_CALLID      );
    if (!QString(encodedCallId).isEmpty()) {
-      if (SFLPhone::model()->getIndex(encodedCallId))
+      if (SFLPhone::model()->getIndex(encodedCallId) && dynamic_cast<Call*>(SFLPhone::model()->getCall(encodedCallId))) //Prevent a race
         clearArtefact(SFLPhone::model()->getIndex(encodedCallId));
 
       if (!parent) {
