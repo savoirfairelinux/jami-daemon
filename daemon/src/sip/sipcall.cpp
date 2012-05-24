@@ -36,9 +36,9 @@
 #include "audio/audiortp/audio_rtp_factory.h"
 #include "sdp.h"
 #include "manager.h"
+#ifdef SFL_VIDEO
 #include "dbus/video_controls.h"
 
-#ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
 #endif
 

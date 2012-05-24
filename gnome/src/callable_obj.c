@@ -70,13 +70,13 @@ gchar* call_get_peer_number(const gchar *format)
 }
 
 #ifdef SFL_VIDEO
-gchar* call_get_video_codec (callable_obj_t *obj)
+gchar* call_get_video_codec(callable_obj_t *obj)
 {
     return dbus_get_current_video_codec_name(obj);
 }
 #endif
 
-gchar* call_get_audio_codec (callable_obj_t *obj)
+gchar* call_get_audio_codec(callable_obj_t *obj)
 {
     gchar *ret = NULL;
     gchar *audio_codec = NULL;

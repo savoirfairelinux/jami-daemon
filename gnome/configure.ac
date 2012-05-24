@@ -31,16 +31,16 @@ if echo "$LIBNOTIFY_LIBS" | grep -q gtk+-x11-2.0; then
     exit 1
 fi
 
-dnl Video is default-enabled                                                    
-AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))  
-AS_IF([test "x$enable_video" != "xno"], [
+dnl Video is default-disabled
+AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
+AS_IF([test "x$enable_video" = "xyes"], [
     AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
 
     PKG_CHECK_MODULES(CLUTTER, clutter-1.0)
     PKG_CHECK_MODULES(CLUTTERGTK, clutter-gtk-1.0)
     ]);
 
-AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" != "xno")
+AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 
 # Check for gtk+-3.0 and if found, check for webkitgtk-3.0, otherwise
 # check for gtk+-2.0 and if found, check for webkitgtk-1.0.

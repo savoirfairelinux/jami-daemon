@@ -582,9 +582,13 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
         return FALSE;
 
     /* Update text */
-    gchar * description = NULL;
-    gchar * audio_codec = call_get_audio_codec(call);
-    gchar * video_codec = call_get_video_codec(call);
+    gchar *description = NULL;
+    gchar *audio_codec = call_get_audio_codec(call);
+#ifdef SFL_VIDEO
+    gchar *video_codec = call_get_video_codec(call);
+#else
+    gchar *video_codec = g_strdup("");
+#endif
 
     if (call->_state == CALL_STATE_TRANSFER)
         description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "", "");

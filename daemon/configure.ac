@@ -112,10 +112,10 @@ dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
 
-dnl Video is default-enabled
-AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
+dnl Video is default-disabled
+AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
 
-AS_IF([test "x$enable_video" != "xno"], [
+AS_IF([test "x$enable_video" = "xyes"], [
         AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
 
         dnl The libav versions correspond to the last libav release: 0.7
@@ -138,7 +138,7 @@ AS_IF([test "x$enable_video" != "xno"], [
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev package: libudev-dev]))
     ]);
 
-AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" != "xno")
+AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([COMMONCPP_PREFIX], [1], [Use commoncpp include prefix]), [
