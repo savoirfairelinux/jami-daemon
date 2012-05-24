@@ -2798,7 +2798,7 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
     return call_details;
 }
 
-std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory() const
+std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory()
 {
     return history_.getSerialized();
 }
