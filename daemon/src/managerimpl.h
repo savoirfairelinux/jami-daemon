@@ -1050,7 +1050,7 @@ class ManagerImpl {
         */
         bool accountExists(const std::string& accountID);
 
-        std::vector<std::map<std::string, std::string> > getHistory() const;
+        std::vector<std::map<std::string, std::string> > getHistory();
         void clearHistory();
 
         /**
