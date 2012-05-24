@@ -872,37 +872,42 @@ gboolean dbus_connect(GError **error)
                                 G_CALLBACK(error_alert), NULL, NULL);
 
 #ifdef SFL_VIDEO
-    video_proxy = dbus_g_proxy_new_for_name(connection,
-            "org.sflphone.SFLphone", "/org/sflphone/SFLphone/VideoControls",
-            "org.sflphone.SFLphone.VideoControls");
-        g_assert(video_proxy != NULL);
-        /* Video related signals */
-        dbus_g_proxy_add_signal(video_proxy, "deviceEvent", G_TYPE_INVALID);
-        dbus_g_proxy_connect_signal(video_proxy, "deviceEvent",
-                                    G_CALLBACK(video_device_event_cb), NULL, NULL);
+    const gchar *videocontrols_object_instance = "/org/sflphone/SFLphone/VideoControls";
+    const gchar *videocontrols_interface = "org.sflphone.SFLphone.VideoControls";
+    video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
+            videocontrols_object_instance, videocontrols_interface);
+    g_assert(video_proxy != NULL);
+    if (video_proxy == NULL) {
+        ERROR("Error: Failed to connect to %s", videocontrols_object_instance);
+        return FALSE;
+    }
+    /* Video related signals */
+    dbus_g_proxy_add_signal(video_proxy, "deviceEvent", G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "deviceEvent",
+            G_CALLBACK(video_device_event_cb), NULL, NULL);
 
-        /* Marshaller for INT INT INT INT INT */
-        dbus_g_object_register_marshaller(
-                g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
-                G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    /* Marshaller for INT INT INT INT INT */
+    dbus_g_object_register_marshaller(
+            g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
-        dbus_g_proxy_add_signal(video_proxy, "receivingEvent", G_TYPE_INT,
-                G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
-                G_TYPE_INVALID);
-        dbus_g_proxy_connect_signal(video_proxy, "receivingEvent",
-                G_CALLBACK(receiving_video_event_cb), NULL,
-                NULL);
+    dbus_g_proxy_add_signal(video_proxy, "receivingEvent", G_TYPE_INT,
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
+            G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "receivingEvent",
+            G_CALLBACK(receiving_video_event_cb), NULL,
+            NULL);
 
-        /* Marshaller for INT INT */
-        dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
+    /* Marshaller for INT INT */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
                                       G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT,
                                       G_TYPE_INVALID);
 
-        dbus_g_proxy_add_signal(video_proxy, "stoppedReceivingEvent",
-                G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
-        dbus_g_proxy_connect_signal(video_proxy, "stoppedReceivingEvent",
-                G_CALLBACK(stopped_receiving_video_event_cb),
-                NULL, NULL);
+    dbus_g_proxy_add_signal(video_proxy, "stoppedReceivingEvent",
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "stoppedReceivingEvent",
+            G_CALLBACK(stopped_receiving_video_event_cb),
+            NULL, NULL);
 #endif
 
     /* Defines a default timeout for the proxies */
@@ -911,6 +916,9 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_set_default_timeout(call_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(instance_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(config_proxy, DEFAULT_DBUS_TIMEOUT);
+#ifdef SFL_VIDEO
+    dbus_g_proxy_set_default_timeout(video_proxy, DEFAULT_DBUS_TIMEOUT);
+#endif
 #endif
 
     gboolean status = dbus_connect_session_manager(connection);
@@ -1782,7 +1790,7 @@ void
 dbus_set_video_input_device(const gchar *device)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device(config_proxy, device, &error);
+    org_sflphone_SFLphone_VideoControls_set_input_device(video_proxy, device, &error);
     check_error(error);
 }
 

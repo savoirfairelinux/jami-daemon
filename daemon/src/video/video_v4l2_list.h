@@ -54,11 +54,11 @@ class VideoV4l2ListThread : public ost::Thread {
         std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel);
         std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size);
 
-        VideoV4l2Device &getDevice(const std::string &name);
-        const std::string &getDeviceNode(const std::string &name);
+        std::string getDeviceNode(const std::string &name);
         unsigned getChannelNum(const std::string &dev, const std::string &name);
 
     private:
+        std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
         NON_COPYABLE(VideoV4l2ListThread);
         void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);

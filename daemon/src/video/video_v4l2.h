@@ -77,7 +77,7 @@ class VideoV4l2Channel {
         void setFourcc(unsigned code);
         const char * getFourcc() const;
 
-        std::vector<std::string> getSizeList();
+        std::vector<std::string> getSizeList() const;
         VideoV4l2Size getSize(const std::string &name) const;
 
         unsigned idx;
@@ -100,7 +100,7 @@ class VideoV4l2Device {
 
         std::vector<std::string> getChannelList() const;
 
-        VideoV4l2Channel &getChannel(const std::string &name);
+        const VideoV4l2Channel &getChannel(const std::string &name) const;
 
     private:
         std::vector<VideoV4l2Channel> channels;

@@ -43,7 +43,7 @@ VideoPreference::VideoPreference() :
     v4l2_list_->start();
 }
 
-std::map<std::string, std::string> VideoPreference::getSettings() const
+std::map<std::string, std::string> VideoPreference::getSettings()
 {
     std::map<std::string, std::string> args;
     std::stringstream ss;
@@ -84,3 +84,22 @@ void VideoPreference::unserialize(const Conf::MappingNode &map)
     map.getValue(videoRateKey, &rate_);
 }
 
+std::vector<std::string>
+VideoPreference::getDeviceList() {
+    return v4l2_list_->getDeviceList();
+}
+
+std::vector<std::string>
+VideoPreference::getChannelList(const std::string &dev) {
+    return v4l2_list_->getChannelList(dev);
+}
+
+std::vector<std::string>
+VideoPreference::getSizeList(const std::string &dev, const std::string &channel) {
+    return v4l2_list_->getSizeList(dev, channel);
+}
+
+std::vector<std::string>
+VideoPreference::getRateList(const std::string &dev, const std::string &channel, const std::string &size) {
+    return v4l2_list_->getRateList(dev, channel, size);
+}

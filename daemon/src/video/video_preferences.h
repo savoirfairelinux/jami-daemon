@@ -32,14 +32,14 @@
 #define VIDEO_PREFERENCE_H__
 
 #include "config/serializable.h"
-#include "video/video_v4l2_list.h"
 #include "video/video_v4l2.h"
+#include "noncopyable.h"
 
 #include <map>
 #include <string>
 #include <tr1/memory>
 
-namespace sflvideo {
+namespace sfl_video {
     class VideoV4l2ListThread;
 }
 // video preferences
@@ -58,7 +58,7 @@ class VideoPreference : public Serializable
 
         virtual void unserialize(const Conf::MappingNode &map);
 
-        std::map<std::string, std::string> getSettings() const;
+        std::map<std::string, std::string> getSettings();
 
         std::string getDevice() const {
             return device_;
@@ -92,21 +92,13 @@ class VideoPreference : public Serializable
             rate_ = rate;
         }
 
-        std::vector<std::string> getDeviceList() const {
-            return v4l2_list_->getDeviceList();
-        }
+        std::vector<std::string> getDeviceList();
 
-        std::vector<std::string> getChannelList(const std::string &dev) const {
-            return v4l2_list_->getChannelList(dev);
-        }
+        std::vector<std::string> getChannelList(const std::string &dev);
 
-        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel) const {
-            return v4l2_list_->getSizeList(dev, channel);
-        }
+        std::vector<std::string> getSizeList(const std::string &dev, const std::string &channel);
 
-        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size) const {
-            return v4l2_list_->getRateList(dev, channel, size);
-        }
+        std::vector<std::string> getRateList(const std::string &dev, const std::string &channel, const std::string &size);
 
     private:
         NON_COPYABLE(VideoPreference);

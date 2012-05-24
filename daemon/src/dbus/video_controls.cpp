@@ -136,6 +136,7 @@ std::string VideoControls::getInputDeviceRate()
 
 void VideoControls::setInputDevice(const std::string& api)
 {
+    DEBUG("Setting device to %s", api.c_str());
     videoPreference_.setDevice(api);
 }
 
@@ -155,7 +156,7 @@ void VideoControls::setInputDeviceRate(const std::string& api)
 }
 
 std::map<std::string, std::string>
-VideoControls::getSettings() const {
+VideoControls::getSettings() {
     return videoPreference_.getSettings();
 }
 
@@ -184,10 +185,10 @@ void VideoControls::startPreview(int32_t &width, int32_t &height,
 
 void VideoControls::stopPreview()
 {
-	if (preview_.get()) {
-		DEBUG("Stopping video preview");
-		preview_.reset();
-	}
+    if (preview_.get()) {
+        DEBUG("Stopping video preview");
+        preview_.reset();
+    }
 }
 
 std::string

@@ -135,15 +135,15 @@ VideoV4l2Size::VideoV4l2Size(unsigned height, unsigned width) :
 
 vector<string> VideoV4l2Size::getRateList()
 {
-	vector<string> v;
+    vector<string> v;
 
-	for (vector<float>::const_iterator i = rates_.begin() ; i != rates_.end(); ++i) {
-		std::stringstream ss;
-		ss << *i;
-		v.push_back(ss.str());
-	}
+    for (vector<float>::const_iterator i = rates_.begin() ; i != rates_.end(); ++i) {
+        std::stringstream ss;
+        ss << *i;
+        v.push_back(ss.str());
+    }
 
-	return v;
+    return v;
 }
 
 void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
@@ -195,18 +195,16 @@ void VideoV4l2Channel::setFourcc(unsigned code)
 const char *
 VideoV4l2Channel::getFourcc() const
 {
-	return fourcc_;
+    return fourcc_;
 }
 
-vector<string> VideoV4l2Channel::getSizeList()
+vector<string> VideoV4l2Channel::getSizeList() const
 {
     vector<string> v;
 
-    size_t n = sizes_.size();
-    for (size_t i = 0 ; i < n ; ++i) {
-        VideoV4l2Size &size = sizes_[i];
+    for (size_t i = 0 ; i < sizes_.size(); ++i) {
         std::stringstream ss;
-        ss << size.width << "x" << size.height;
+        ss << sizes_[i].width << "x" << sizes_[i].height;
         v.push_back(ss.str());
     }
 
@@ -296,7 +294,7 @@ void VideoV4l2Channel::getFormat(int fd)
 
 VideoV4l2Size VideoV4l2Channel::getSize(const string &name) const
 {
-	for (vector<VideoV4l2Size>::const_iterator i = sizes_.begin(); i != sizes_.end(); ++i) {
+    for (vector<VideoV4l2Size>::const_iterator i = sizes_.begin(); i != sizes_.end(); ++i) {
         std::stringstream ss;
         ss << i->width << "x" << i->height;
         if (ss.str() == name)
@@ -313,7 +311,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const string &device) :
 {
     v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
-    	throw std::runtime_error("could not query capabilities");
+        throw std::runtime_error("could not query capabilities");
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
         throw std::runtime_error("not a capture device");
@@ -342,20 +340,20 @@ vector<string> VideoV4l2Device::getChannelList() const
 {
     vector<string> v;
 
-    size_t n = channels.size();
+    const size_t n = channels.size();
     for (size_t i = 0 ; i < n ; ++i)
         v.push_back(channels[i].name);
 
     return v;
 }
 
-VideoV4l2Channel &VideoV4l2Device::getChannel(const string &name)
+const VideoV4l2Channel &VideoV4l2Device::getChannel(const string &name) const
 {
-	for (size_t i = 0; i < channels.size(); ++i)
-		if (channels[i].name == name)
-			return channels[i];
+    for (size_t i = 0; i < channels.size(); ++i)
+        if (channels[i].name == name)
+            return channels[i];
 
-	return channels.back();
+    return channels.back();
 }
 
 } // end namespace sfl

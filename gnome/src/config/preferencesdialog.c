@@ -64,8 +64,6 @@
 /**
  * Local variables
  */
-static gboolean dialogOpen = FALSE;
-
 static GtkWidget * history_value;
 
 static GtkWidget *starthidden;
@@ -389,7 +387,6 @@ static GtkTreeModel* create_model(GtkWidget *widget)
 guint
 show_preferences_dialog()
 {
-    dialogOpen = TRUE;
     GtkDialog *dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
                                    GTK_WINDOW(get_main_window()),
                                    GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -471,8 +468,6 @@ show_preferences_dialog()
 
     save_configuration_parameters();
     update_actions();
-
-    dialogOpen = FALSE;
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
     return result;

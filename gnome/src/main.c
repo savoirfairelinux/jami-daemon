@@ -47,14 +47,9 @@
 int
 main(int argc, char *argv[])
 {
-    GError *error = NULL;
-    // Handle logging
-    int i;
-
-    // Check arguments if debug mode is activated
-    for (i = 0; i < argc; i++)
-        if (g_strcmp0(argv[i], "--debug") == 0)
-            set_log_level(LOG_DEBUG);
+    // Internationalization
+    bindtextdomain("sflphone-client-gnome", LOCALEDIR);
+    textdomain("sflphone-client-gnome");
 
 #if !GTK_CHECK_VERSION(2,32,0)
     g_thread_init(NULL);
@@ -64,6 +59,11 @@ main(int argc, char *argv[])
 
     // Start GTK application
     gtk_init(&argc, &argv);
+
+    // Check arguments if debug mode is activated
+    for (int i = 0; i < argc; i++)
+        if (g_strcmp0(argv[i], "--debug") == 0)
+            set_log_level(LOG_DEBUG);
 
     g_print("%s %s\n", PACKAGE, VERSION);
     g_print("\nCopyright (c) 2005 - 2012 Savoir-faire Linux Inc.\n\n");
@@ -82,10 +82,7 @@ main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    // Internationalization
-    bindtextdomain("sflphone-client-gnome", LOCALEDIR);
-    textdomain("sflphone-client-gnome");
-
+    GError *error = NULL;
     if (!sflphone_init(&error)) {
         ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
