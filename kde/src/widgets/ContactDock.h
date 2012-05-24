@@ -75,7 +75,7 @@ private:
    QListWidget*                 m_pCallView   ;
    QComboBox*                   m_pSortByCBB  ;
    QCheckBox*                   m_pShowHistoCK;
-   QList<ContactItemWidget*>    m_Contacts;
+   QList<ContactItemWidget*>    m_Contacts    ;
 
 public slots:
    virtual void keyPressEvent(QKeyEvent* event);

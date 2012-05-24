@@ -372,7 +372,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/combo_security_STRP->setCurrentIndex     ( account->getAccountDetail(   TLS_METHOD                    ).toInt()         );
    /*                                                                                                                          */
 
-   if (account->getAccountDetail(ACCOUNT_USERNAME).isEmpty()) {
+   if (account->getAccountDetail(ACCOUNT_ALIAS) == "IP2IP") {
       frame2_editAccounts->setTabEnabled(0,false);
       frame2_editAccounts->setTabEnabled(1,false);
       frame2_editAccounts->setTabEnabled(3,false);
@@ -741,8 +741,8 @@ void DlgAccounts::saveCredential(QString accountId) {
 
 void DlgAccounts::addCredential() {
    QListWidgetItem* newItem = new QListWidgetItem();
-   newItem->setText("New credential");
-   credentialInfo[newItem] = {newItem, "New credential", "",""};
+   newItem->setText(i18n("New credential"));
+   credentialInfo[newItem] = {newItem, i18n("New credential"), "",""};
 
    selectCredential(newItem,list_credential->currentItem());
    list_credential->addItem(newItem);

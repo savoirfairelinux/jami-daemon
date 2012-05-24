@@ -48,7 +48,6 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sInstanceInit        = false ;
 CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sCallInit            = false ;
 CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sHistoryInit         = false ;
 
-CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sActiveCalls  ;
 CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sHistoryCalls ;
 
 CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalCall   CALLMODEL_T::m_sPrivateCallList_call   ;
@@ -152,7 +151,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
                   hc[ STATE_KEY           ]
          );
          if (pastCall->getPeerName().isEmpty()) {
-            pastCall->setPeerName("Unknow");
+            pastCall->setPeerName("Unknown");
          }
          pastCall->setRecordingPath(hc[ RECORDING_PATH_KEY ]);
          m_sHistoryCalls[ hc[TIMESTAMP_START_KEY ]] = pastCall;
@@ -188,7 +187,8 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCallList()
 {
    QList<Call*> callList;
    foreach(Call* call, m_sActiveCalls) {
-      callList.push_back(call);
+      if (call->getState() != CALL_STATE_OVER) //Prevent a race
+         callList.push_back(call);
    }
    return callList;
 }

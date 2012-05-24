@@ -155,7 +155,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pMainLayout->addItem   ( verticalSpacer , 4 , 1         );
    m_pMainLayout->addWidget ( m_pPlay        , 0 , 2 , 4 , 1 );
    m_pMainLayout->addWidget ( m_pRemove      , 0 , 3 , 4 , 1 );
-   m_pMainLayout->addWidget ( m_pLengthL   , 0 , 4 , 4 , 1 );
+   m_pMainLayout->addWidget ( m_pLengthL     , 0 , 4 , 4 , 1 );
    setLayout(m_pMainLayout);
    setMinimumSize(QSize(50, 30));
    setMaximumSize(QSize(300,99999));
@@ -276,7 +276,7 @@ void HistoryTreeItem::bookmark()
 
 void HistoryTreeItem::removeRecording()
 {
-   int ret = KMessageBox::questionYesNo(this, "Are you sure you want to delete this recording?", "Delete recording");
+   int ret = KMessageBox::questionYesNo(this, i18n("Are you sure you want to delete this recording?"), i18n("Delete recording"));
    if (ret == KMessageBox::Yes) {
       kDebug() << "Deleting file";
       QFile::remove(m_pItemCall->getRecordingPath());
@@ -398,10 +398,10 @@ void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldS
    switch (newState) {
       case Phonon::ErrorState:
             if (m_pMediaObject->errorType() == Phonon::FatalError) {
-               QMessageBox::warning(this, tr("Fatal Error"),
+               QMessageBox::warning(this, i18n("Fatal Error"),
                m_pMediaObject->errorString());
             } else {
-               QMessageBox::warning(this, tr("Error"),
+               QMessageBox::warning(this, i18n("Error"),
                m_pMediaObject->errorString());
             }
             break;
@@ -409,11 +409,11 @@ void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldS
                m_pPause->setIcon(KIcon("media-playback-pause"));
                break;
       case Phonon::StoppedState:
-               m_pPause->setIcon(KIcon("media-playback-play"));
+               m_pPause->setIcon(KIcon("media-playback-play" ));
                m_pTimePlayedL->setText("00:00");
                break;
       case Phonon::PausedState:
-               m_pPause->setIcon(KIcon("media-playback-play"));
+               m_pPause->setIcon(KIcon("media-playback-play" ));
                break;
       case Phonon::BufferingState:
                break;
@@ -427,7 +427,7 @@ void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State old
 {
    Q_UNUSED(oldState);
    if (newState == Phonon::ErrorState) {
-      QMessageBox::warning(this, tr("Error opening files"),
+      QMessageBox::warning(this, i18n("Error opening files"),
             m_pMetaInformationResolver->errorString());
       while (!m_lSources.isEmpty() &&
          !(m_lSources.takeLast() == m_pMetaInformationResolver->currentSource())) {}  /* loop */;
@@ -438,7 +438,7 @@ void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State old
       return;
 
    if (m_pMetaInformationResolver->currentSource().type() == Phonon::MediaSource::Invalid)
-            return;
+      return;
 
    QMap<QString, QString> metaData = m_pMetaInformationResolver->metaData();
 
@@ -463,6 +463,7 @@ void HistoryTreeItem::resizeEvent(QResizeEvent* event)
 
 void HistoryTreeItem::mouseDoubleClickEvent(QMouseEvent* event)
 {
+   Q_UNUSED(event);
    callAgain();
 }
 
@@ -534,7 +535,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    }
    else {
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      m_pPeerNameL->setText(i18n("<b>Unknow</b>"));
+      m_pPeerNameL->setText(i18n("<b>Unknown</b>"));
       return false;
    }
    return true;
@@ -561,7 +562,7 @@ QString HistoryTreeItem::getName()
    else if (!m_Name.isEmpty()){
       return m_Name;
    }
-   return "Unknow";
+   return i18n("Unknown");
 }
 
 ///Return the caller peer number

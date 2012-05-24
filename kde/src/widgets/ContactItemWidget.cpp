@@ -172,9 +172,6 @@ void ContactItemWidget::updated()
    }
 
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
-   foreach (Contact::PhoneNumber* number, numbers) {
-      kDebug() << "Phone:" << number->getNumber() << number->getType();
-   }
 
    if (getCallNumbers().count() == 1)
       m_pCallNumberL->setText(getCallNumbers()[0]->getNumber());

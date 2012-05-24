@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
+ *   Author : Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,49 +17,16 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
-#ifndef CODEC_H
-#define CODEC_H
+#ifndef KSPEECH_INTERFACE_SINGLETON_H
+#define KSPEECH_INTERFACE_SINGLETON_H
 
-#include <QObject>
+#include "src/kspeechinterface.h"
 
-//Qt
-class QString;
-
-///@class Codec A SIP codec
-class Codec : public QObject
-{
-Q_OBJECT
-
+class KSpeechInterfaceSingleton {
 public:
-   Codec(int payload, bool enabled);
-
-   //Getters
-   const QString& getPayload   () const;
-   const QString& getName      () const;
-   const QString& getFrequency () const;
-   const QString& getBitrate   () const;
-   const QString& getBandwidth () const;
-   bool isEnabled              () const;
-
-   //Setters
-   void setPayload   ( const QString& payload   );
-   void setName      ( const QString& name      );
-   void setFrequency ( const QString& frequency );
-   void setBitrate   ( const QString& bitrate   );
-   void setBandwidth ( const QString& bandwidth );
-   void setEnabled   ( bool  enabled            );
-
+   static OrgKdeKSpeechInterface* getInstance();
 private:
-   //Attributes
-   QString m_Payload   ;
-   QString m_Name      ;
-   QString m_Frequency ;
-   QString m_Bitrate   ;
-   QString m_Bandwidth ;
-   bool    m_Enabled   ;
-
-   //Operators
-   Codec& operator=(const Codec&);
+   static OrgKdeKSpeechInterface* m_pInstance;
 };
 
 #endif

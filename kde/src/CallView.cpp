@@ -45,6 +45,8 @@
 #include "SFLPhone.h"
 #include "SFLPhoneView.h"
 #include "klib/AkonadiBackend.h"
+#include "klib/ConfigurationSkeleton.h"
+#include "SFLPhoneAccessibility.h"
 
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
@@ -69,14 +71,19 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    m_pTransferOverlay->setVisible(false);
    m_pTransferOverlay->resize(size());
    m_pTransferOverlay->setCornerWidget(lblImg);
+   m_pTransferOverlay->setAccessMessage(i18n("Please enter a transfer number and press enter, press escape to cancel"));
 
-   m_pTransferB->setText("Transfer");
+   m_pTransferB->setText(i18n("Transfer"));
    m_pTransferB->setMaximumSize(70,9000);
    
    gl->addItem  (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum), 0 , 0 , 1 , 3 );
    gl->addWidget(m_pTransferLE                                                   , 1 , 1 , 1 , 2 );
    gl->addWidget(m_pTransferB                                                    , 1 , 4 , 1 , 2 );
    gl->addItem  (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum), 2 , 0 , 1 , 3 );
+
+   foreach(Call* active, SFLPhone::model()->getCallList()) {
+      addCall(active);
+   }
 
    //User Interface even
    //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                        /
@@ -227,7 +234,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
       if (contact)
          name = contact->getFormattedName();
       else
-         name = "Unknow";
+         name = i18n("Unknown");
       Call* call2 = SFLPhone::model()->addDialingCall(name, SFLPhone::model()->getCurrentAccountId());
       call2->appendText(QString(encodedPhoneNumber));
       if (!parent) {
@@ -364,8 +371,11 @@ void CallView::transfer()
 {
    if (m_pCallPendingTransfer && !m_pTransferLE->text().isEmpty()) {
       SFLPhone::model()->transfer(m_pCallPendingTransfer,m_pTransferLE->text());
+      if (ConfigurationSkeleton::enableVoiceFeedback()) {
+         SFLPhoneAccessibility::getInstance()->say(i18n("You call have been transferred to ")+m_pTransferLE->text());
+      }
    }
-
+   
    m_pCallPendingTransfer = 0;
    m_pTransferLE->clear();
    m_pTransferOverlay->setVisible(false);
@@ -408,7 +418,7 @@ void CallView::hideOverlay()
    }
    
    m_pCallPendingTransfer = 0;
-   m_pTransferLE->clear();
+   //m_pTransferLE->clear();
 } //hideOverlay
 
 ///Be sure the size of the overlay stay the same
@@ -583,7 +593,14 @@ void CallView::itemDoubleClicked(QTreeWidgetItem* item, int column) {
 
 void CallView::itemClicked(QTreeWidgetItem* item, int column) {
    Q_UNUSED(column)
-   emit itemChanged(SFLPhone::model()->getCall(item));
+   Call* call = SFLPhone::model()->getCall(item);
+   call->setSelected(true);
+
+   if (ConfigurationSkeleton::enableReadDetails()) {
+      SFLPhoneAccessibility::getInstance()->currentCallDetails();
+   }
+
+   emit itemChanged(call);
    kDebug() << "Item clicked";
 }
 
@@ -648,7 +665,7 @@ bool CallView::conferenceChanged(Call* conf)
             insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(j)));
       }
 
-   Q_ASSERT_X(SFLPhone::model()->getIndex(conf)->childCount() == 0,"changind conference","A conference can't have no participants");
+   Q_ASSERT_X(SFLPhone::model()->getIndex(conf)->childCount() == 0,"changing conference","A conference can't have no participants");
 
    return true;
 } //conferenceChanged
@@ -721,6 +738,9 @@ void CallViewOverlay::setVisible(bool enabled) {
    }
    m_enabled = enabled;
    QWidget::setVisible(enabled);
+   if (!m_accessMessage.isEmpty() && enabled == true && ConfigurationSkeleton::enableReadLabel()) {
+      SFLPhoneAccessibility::getInstance()->say(m_accessMessage);
+   }
 } //setVisible
 
 ///How to paint the overlay
@@ -746,4 +766,10 @@ void CallViewOverlay::changeVisibility() {
    repaint();
    if (m_step >= 35)
       m_pTimer->stop();
+}
+
+///Set accessibility message
+void CallViewOverlay::setAccessMessage(QString message)
+{
+   m_accessMessage = message;
 }

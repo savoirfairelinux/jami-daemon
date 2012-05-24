@@ -55,6 +55,7 @@
 #include "widgets/HistoryDock.h"
 #include "widgets/BookmarkDock.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "SFLPhoneAccessibility.h"
 
 SFLPhone* SFLPhone::m_sApp              = NULL;
 TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
@@ -230,6 +231,12 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_accountCreationWizard" , action_accountCreationWizard );
    actionCollection()->addAction("action_configureShortcut"     , action_configureShortcut     );
 
+   QList<KAction*> acList = *SFLPhoneAccessibility::getInstance();
+   
+   foreach(KAction* ac,acList) {
+      actionCollection()->addAction(ac->objectName() , ac);
+   }
+
    setAutoSaveSettings();
    createGUI();
 }
@@ -404,7 +411,7 @@ void SFLPhone::on_m_pView_incomingCall(const Call * call)
 {
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(call->getPeerPhoneNumber());
    if (contact && call) {
-      KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName(),(contact->getPhoto())?*contact->getPhoto():NULL);
+      KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()),((contact->getPhoto())?*contact->getPhoto():NULL));
    }
-   KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
+   KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()));
 }

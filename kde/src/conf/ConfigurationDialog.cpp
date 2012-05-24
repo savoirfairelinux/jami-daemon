@@ -31,6 +31,7 @@
 #include "dlgaudio.h"
 #include "dlgaddressbook.h"
 #include "dlghooks.h"
+#include "dlgaccessibility.h"
 
 #include "lib/sflphone_const.h"
 
@@ -39,19 +40,21 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 {
    this->setWindowIcon(QIcon(ICON_SFLPHONE));
 
-   dlgGeneral     = new DlgGeneral     (this);
-   dlgDisplay     = new DlgDisplay     (this);
-   dlgAccounts    = new DlgAccounts    (this);
-   dlgAudio       = new DlgAudio       (this);
-   dlgAddressBook = new DlgAddressBook (this);
-   dlgHooks       = new DlgHooks       (this);
-
-   addPage( dlgGeneral      , i18n("General")      , "sflphone-client-kde"   );
-   addPage( dlgDisplay      , i18n("Display")      , "applications-graphics" );
-   addPage( dlgAccounts     , i18n("Accounts")     , "user-identity"         );
-   addPage( dlgAudio        , i18n("Audio")        , "audio-headset"         );
-   addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" );
-   addPage( dlgHooks        , i18n("Hooks")        , "insert-link"           );
+   dlgGeneral       = new DlgGeneral       (this);
+   dlgDisplay       = new DlgDisplay       (this);
+   dlgAccounts      = new DlgAccounts      (this);
+   dlgAudio         = new DlgAudio         (this);
+   dlgAddressBook   = new DlgAddressBook   (this);
+   dlgHooks         = new DlgHooks         (this);
+   dlgAccessibility = new DlgAccessibility (this);
+   
+   addPage( dlgGeneral       , i18n("General")       , "sflphone-client-kde"               );
+   addPage( dlgDisplay       , i18n("Display")       , "applications-graphics"             );
+   addPage( dlgAccounts      , i18n("Accounts")      , "user-identity"                     );
+   addPage( dlgAudio         , i18n("Audio")         , "audio-headset"                     );
+   addPage( dlgAddressBook   , i18n("Address Book")  , "x-office-address-book"             );
+   addPage( dlgHooks         , i18n("Hooks")         , "insert-link"                       );
+   addPage( dlgAccessibility , i18n("Accessibility") , "preferences-desktop-accessibility" );
 
    connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
    connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
@@ -66,18 +69,20 @@ ConfigurationDialog::~ConfigurationDialog()
 
 void ConfigurationDialog::updateWidgets()
 {
-   dlgAudio->updateWidgets();
-   dlgAccounts->updateWidgets();
-   dlgGeneral->updateWidgets();
-   dlgAddressBook->updateWidgets();
+   dlgAudio->updateWidgets        ();
+   dlgAccounts->updateWidgets     ();
+   dlgGeneral->updateWidgets      ();
+   dlgAddressBook->updateWidgets  ();
+   dlgAccessibility->updateWidgets();
 }
 
 void ConfigurationDialog::updateSettings()
 {
-   dlgAudio->updateSettings();
-   dlgAccounts->updateSettings();
-   dlgGeneral->updateSettings();
-   dlgAddressBook->updateSettings();
+   dlgAudio->updateSettings        ();
+   dlgAccounts->updateSettings     ();
+   dlgGeneral->updateSettings      ();
+   dlgAddressBook->updateSettings  ();
+   dlgAccessibility->updateSettings();
 }
 
 bool ConfigurationDialog::hasChanged()
@@ -100,8 +105,8 @@ void ConfigurationDialog::applyCustomSettings()
           ConfigurationSkeleton::self()->writeConfig();
    }
    updateSettings();
-   updateWidgets();
-   updateButtons();
+   updateWidgets ();
+   updateButtons ();
    emit changesApplied();
 }
 

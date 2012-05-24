@@ -1,7 +1,6 @@
 /************************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *   Copyright (C)  2012 by Savoir-Faire Linux                                      *
+ *   Author : Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
  *                                                                                  *
  *   This library is free software; you can redistribute it and/or                  *
  *   modify it under the terms of the GNU Lesser General Public                     *
@@ -18,34 +17,27 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 
-#include "HelperFunctions.h"
+#ifndef DLGACCESSIBILITY_H
+#define DLGACCESSIBILITY_H
 
-//Qt
-#include <QtCore/QString>
-#include <QtCore/QVariant>
+#include <QWidget>
 
-//KDE
-#include <KLocale>
+#include "ui_dlgaccessibility.h"
 
-//SFLPhone
-#include "../lib/Contact.h"
+///@class DlgAccessibility Display option for the visually impaired
+class DlgAccessibility : public QWidget, public Ui_DlgAccessibility
+{
+Q_OBJECT
+public:
+   //Constructor
+   DlgAccessibility(QWidget *parent = 0);
 
-///Transform a contact list to a [QString][QString][QVariant] hash
-ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
-   QHash<QString,QHash<QString,QVariant> > hash;
-   for (int i=0;i<contacts.size();i++) {
-      Contact* cont = contacts[i];
-      QHash<QString,QVariant> conth = cont->toHash();
-      conth["phoneCount"] = cont->getPhoneNumbers().size();
-      if (cont->getPhoneNumbers().size() == 1) {
-         conth["phoneNumber"] = cont->getPhoneNumbers()[0]->getNumber();
-         conth["phoneType"  ] = cont->getPhoneNumbers()[0]->getType();
-      }
-      else {
-         conth["phoneNumber"] = QString::number(cont->getPhoneNumbers().size())+i18n(" numbers");
-         conth["phoneType"  ] = "";
-      }
-      hash[contacts[i]->getUid()] = conth;
-   }
-   return hash;
-}
+   //Destructor
+   ~DlgAccessibility();
+
+public slots:
+void updateSettings();
+void updateWidgets();
+};
+
+#endif

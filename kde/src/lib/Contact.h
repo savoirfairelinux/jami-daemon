@@ -96,17 +96,17 @@ public:
    virtual const QString& getDepartment()      const;
 
    //Setters
-   virtual void setPhoneNumbers   ( PhoneNumbers          );
-   virtual void setFormattedName  ( const QString& name   );
-   virtual void setNickName       ( const QString& name   );
-   virtual void setFirstName      ( const QString& name   );
-   virtual void setFamilyName     ( const QString& name   );
-   virtual void setOrganization   ( const QString& name   );
-   virtual void setPreferredEmail ( const QString& name   );
-   virtual void setGroup          ( const QString& name   );
-   virtual void setDepartment     ( const QString& name   );
-   virtual void setUid            ( const QString& id     );
-   virtual void setPhoto          ( QPixmap* photo        );
+   virtual void setPhoneNumbers   ( PhoneNumbers        );
+   virtual void setFormattedName  ( const QString& name );
+   virtual void setNickName       ( const QString& name );
+   virtual void setFirstName      ( const QString& name );
+   virtual void setFamilyName     ( const QString& name );
+   virtual void setOrganization   ( const QString& name );
+   virtual void setPreferredEmail ( const QString& name );
+   virtual void setGroup          ( const QString& name );
+   virtual void setDepartment     ( const QString& name );
+   virtual void setUid            ( const QString& id   );
+   virtual void setPhoto          ( QPixmap* photo      );
 
    //Mutator
    QHash<QString,QVariant> toHash();

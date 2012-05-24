@@ -48,10 +48,10 @@ Dialpad::Dialpad(QWidget *parent)
       QLabel* number      = new QLabel       ( m_pNumbers[i]      );
       QLabel* text        = new QLabel       ( m_pTexts[i]        );
       m_pButtons[i]->setMinimumHeight(30);
-      gridLayout->addWidget(m_pButtons[i],i/3,i%3);
-      number->setFont(QFont("", m_NumberSize));
-      number->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-      text->setFont(QFont("", m_TextSize));
+      gridLayout->addWidget( m_pButtons[i],i/3,i%3              );
+      number->setFont      ( QFont("", m_NumberSize)            );
+      number->setAlignment ( Qt::AlignRight | Qt::AlignVCenter  );
+      text->setFont        ( QFont("", m_TextSize)              );
       layout->setSpacing ( m_Spacing );
       layout->addWidget  ( number    );
       layout->addWidget  ( text      );

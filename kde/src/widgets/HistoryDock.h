@@ -85,11 +85,11 @@ public slots:
    virtual void keyPressEvent(QKeyEvent* event);
 
 private slots:
-   void filter               (QString text );
-   void updateLinkedFromDate (QDate   date );
-   void updateLinkedToDate   (QDate   date );
-   void reload               (             );
-   void updateContactInfo    (             );
+   void filter               ( QString text );
+   void updateLinkedFromDate ( QDate   date );
+   void updateLinkedToDate   ( QDate   date );
+   void reload               (              );
+   void updateContactInfo    (              );
 };
 
 
