@@ -1558,6 +1558,11 @@ msgstr ", le numero de votre interlocuteur est %1"
 msgid " and you have been talking since %1 seconds"
 msgstr " et vous parlez depuis %1 seconde"
 
+msgid "Please enter a transfer number and press enter, press escape to cancel"
+msgstr "Veuillez entrer un numero pour vers lequel transferrer et appuiyez sur entrer, appuiyez sur echape pour annuler"
+
+msgid "You call have been transferred to "
+msgstr "Votre appel à été transferré au numéro "
 
 #: rc.cpp:467
 msgctxt "NAME OF TRANSLATORS"

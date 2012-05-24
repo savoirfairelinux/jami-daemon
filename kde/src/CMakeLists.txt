@@ -44,6 +44,7 @@ SET(
    conf/dlgaudio.cpp
    conf/dlgaddressbook.cpp
    conf/dlghooks.cpp
+   conf/dlgaccessibility.cpp
    conf/ConfigAccountList.cpp
    widgets/Dialpad.cpp
    widgets/ContactItemWidget.cpp
@@ -75,6 +76,7 @@ SET(
    conf/dlgaudiobase.ui
    conf/dlgaddressbookbase.ui
    conf/dlghooksbase.ui
+   conf/dlgaccessibility.ui
 )
 
 KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/SFLPhoneView_base.ui  ${config_ui_files}  )

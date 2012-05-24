@@ -62,17 +62,19 @@ public:
    //Setters
    void setCornerWidget(QWidget* wdg);
    void setVisible(bool enabled);
+   void setAccessMessage(QString message);
 
 protected:
    virtual void paintEvent  (QPaintEvent*  event );
    virtual void resizeEvent (QResizeEvent* e     );
 
 private:
-   QWidget* m_pIcon  ;
-   uint     m_step   ;
-   QTimer*  m_pTimer ;
-   bool     m_enabled;
-   QColor   m_black  ;
+   QWidget* m_pIcon        ;
+   uint     m_step         ;
+   QTimer*  m_pTimer       ;
+   bool     m_enabled      ;
+   QColor   m_black        ;
+   QString  m_accessMessage;
 
 private slots:
    void changeVisibility();

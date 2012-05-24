@@ -5,13 +5,15 @@ PROJECT(sflphone-client-kde)
 SET(LOCAL_CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/" )
 SET(CMAKE_MODULE_PATH       "${LOCAL_CMAKE_MODULE_PATH}" )
 
+SET(QT_USE_QT*)
+
 # --- custom targets: ---
 INCLUDE( ${LOCAL_CMAKE_MODULE_PATH}/TargetDistclean.cmake  REQUIRED)
 
 FIND_PACKAGE ( Kabc       REQUIRED            )
 FIND_PACKAGE ( KdepimLibs REQUIRED            )
 FIND_PACKAGE ( KDE4       REQUIRED            )
-FIND_PACKAGE ( Qt4        REQUIRED QT_USE_QT* )
+FIND_PACKAGE ( Qt4        REQUIRED QtCore QtGui QtXml QtDBus QtTest QtSVG QT_USE_QT* )
 
 set(AKONADI_MIN_VERSION 1.0)
 find_package(Akonadi QUIET NO_MODULE ${AKONADI_MIN_VERSION})

@@ -33,9 +33,10 @@ private:
    QString numberToDigit(QString number);
    static SFLPhoneAccessibility* m_pInstance;
 
-private slots:
+public slots:
    void listCall();
    void currentCallDetails();
+   void say(QString message);
 };
 
 #endif

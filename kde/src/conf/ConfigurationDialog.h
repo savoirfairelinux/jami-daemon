@@ -37,6 +37,7 @@ class DlgAudio;
 class DlgAddressBook;
 class DlgRecord;
 class DlgHooks;
+class DlgAccessibility;
 
 class SFLPhoneView;
 
@@ -55,18 +56,16 @@ class ConfigurationDialog : public KConfigDialog
 {
 Q_OBJECT
 private:
-
-
-   DlgGeneral     * dlgGeneral;
-   DlgDisplay     * dlgDisplay;
-   DlgAccounts    * dlgAccounts;
-   DlgAudio       * dlgAudio;
-   DlgAddressBook * dlgAddressBook;
-   DlgHooks       * dlgHooks;
+   DlgGeneral*       dlgGeneral      ;
+   DlgDisplay*       dlgDisplay      ;
+   DlgAccounts*      dlgAccounts     ;
+   DlgAudio*         dlgAudio        ;
+   DlgAddressBook*   dlgAddressBook  ;
+   DlgHooks*         dlgHooks        ;
+   DlgAccessibility* dlgAccessibility;
 
 public:
    ConfigurationDialog(SFLPhoneView *parent = 0);
-
    ~ConfigurationDialog();
 
 

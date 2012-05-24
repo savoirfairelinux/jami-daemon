@@ -98,3 +98,8 @@ void SFLPhoneAccessibility::currentCallDetails()
       }
    }
 }
+
+void SFLPhoneAccessibility::say(QString message)
+{
+   KSpeechInterfaceSingleton::getInstance()->say(message, KSpeech::soPlainText);
+}

@@ -45,6 +45,8 @@
 #include "SFLPhone.h"
 #include "SFLPhoneView.h"
 #include "klib/AkonadiBackend.h"
+#include "klib/ConfigurationSkeleton.h"
+#include "SFLPhoneAccessibility.h"
 
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
@@ -69,6 +71,7 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    m_pTransferOverlay->setVisible(false);
    m_pTransferOverlay->resize(size());
    m_pTransferOverlay->setCornerWidget(lblImg);
+   m_pTransferOverlay->setAccessMessage(i18n("Please enter a transfer number and press enter, press escape to cancel"));
 
    m_pTransferB->setText(i18n("Transfer"));
    m_pTransferB->setMaximumSize(70,9000);
@@ -368,8 +371,11 @@ void CallView::transfer()
 {
    if (m_pCallPendingTransfer && !m_pTransferLE->text().isEmpty()) {
       SFLPhone::model()->transfer(m_pCallPendingTransfer,m_pTransferLE->text());
+      if (ConfigurationSkeleton::enableVoiceFeedback()) {
+         SFLPhoneAccessibility::getInstance()->say(i18n("You call have been transferred to ")+m_pTransferLE->text());
+      }
    }
-
+   
    m_pCallPendingTransfer = 0;
    m_pTransferLE->clear();
    m_pTransferOverlay->setVisible(false);
@@ -412,7 +418,7 @@ void CallView::hideOverlay()
    }
    
    m_pCallPendingTransfer = 0;
-   m_pTransferLE->clear();
+   //m_pTransferLE->clear();
 } //hideOverlay
 
 ///Be sure the size of the overlay stay the same
@@ -589,6 +595,11 @@ void CallView::itemClicked(QTreeWidgetItem* item, int column) {
    Q_UNUSED(column)
    Call* call = SFLPhone::model()->getCall(item);
    call->setSelected(true);
+
+   if (ConfigurationSkeleton::enableReadDetails()) {
+      SFLPhoneAccessibility::getInstance()->currentCallDetails();
+   }
+
    emit itemChanged(call);
    kDebug() << "Item clicked";
 }
@@ -727,6 +738,9 @@ void CallViewOverlay::setVisible(bool enabled) {
    }
    m_enabled = enabled;
    QWidget::setVisible(enabled);
+   if (!m_accessMessage.isEmpty() && enabled == true && ConfigurationSkeleton::enableReadLabel()) {
+      SFLPhoneAccessibility::getInstance()->say(m_accessMessage);
+   }
 } //setVisible
 
 ///How to paint the overlay
@@ -752,4 +766,10 @@ void CallViewOverlay::changeVisibility() {
    repaint();
    if (m_step >= 35)
       m_pTimer->stop();
+}
+
+///Set accessibility message
+void CallViewOverlay::setAccessMessage(QString message)
+{
+   m_accessMessage = message;
 }
