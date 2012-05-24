@@ -102,6 +102,7 @@ class CallView : public QTreeWidget {
       bool callToCall             ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
       bool phoneNumberToCall      ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
       bool contactToCall          ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
+      void moveSelectedItem       ( Qt::Key direction                                                                 );
 
    private:
       //Mutator

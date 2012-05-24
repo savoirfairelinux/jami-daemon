@@ -418,7 +418,6 @@ void CallView::hideOverlay()
    }
    
    m_pCallPendingTransfer = 0;
-   //m_pTransferLE->clear();
 } //hideOverlay
 
 ///Be sure the size of the overlay stay the same
@@ -699,6 +698,23 @@ void CallView::keyPressEvent(QKeyEvent* event) {
    SFLPhone::app()->view()->keyPressEvent(event);
 }
 
+///Move selection using arrow keys
+void CallView::moveSelectedItem( Qt::Key direction )
+{
+   if (direction == Qt::Key_Left) {
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveLeft ,Qt::NoModifier));
+   }
+   else if (direction == Qt::Key_Right) {
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveRight,Qt::NoModifier));
+   }
+   else if (direction == Qt::Key_Up) {
+      qDebug() << "Move up";
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveUp   ,Qt::NoModifier));
+   }
+   else if (direction == Qt::Key_Down) {
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveDown ,Qt::NoModifier));
+   }
+}
 
 /*****************************************************************************
  *                                                                           *

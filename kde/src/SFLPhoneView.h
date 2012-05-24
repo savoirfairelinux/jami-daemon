@@ -29,12 +29,9 @@
 class QString;
 class QKeyEvent;
 class QErrorMessage;
-class QListWidget;
 
 //SFLPhone
-class ConfigurationDialog;
 class AccountWizard;
-class CallView;
 
 
 /**
@@ -185,24 +182,7 @@ public slots:
    void updateStatusMessage();
 
 
-   virtual void keyPressEvent(QKeyEvent *event)
-   {
-      int key = event->key();
-      if(key == Qt::Key_Escape)
-         escape();
-      else if(key == Qt::Key_Return || key == Qt::Key_Enter)
-         enter();
-      else if(key == Qt::Key_Backspace)
-         backspace();
-      else
-      {
-         QString text = event->text();
-         if(! text.isEmpty())
-         {
-            typeString(text);
-         }
-      }
-   }
+   virtual void keyPressEvent(QKeyEvent *event);
 
    void displayVolumeControls(bool checked = true);
    void displayDialpad(bool checked = true);
