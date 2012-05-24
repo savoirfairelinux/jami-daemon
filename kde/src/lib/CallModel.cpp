@@ -22,6 +22,7 @@
 #include <CallModel.h>
 
 bool CallModelBase::dbusInit = false;
+CallMap CallModelBase::m_sActiveCalls;
 
 CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 {
@@ -122,18 +123,23 @@ void CallModelBase::on1_voiceMailNotify(const QString &accountID, int count)
 
 void CallModelBase::on1_volumeChanged(const QString & device, double value)
 {
-//    qDebug() << "Signal : Volume Changed !";
-//    if(! (toolButton_recVol->isChecked() && value == 0.0))
-//       updateRecordBar();
-//    if(! (toolButton_sndVol->isChecked() && value == 0.0))
-//       updateVolumeBar();
    emit volumeChanged(device,value);
 }
 
 Call* CallModelBase::addCall(Call* call, Call* parent)
 {
    emit callAdded(call,parent);
+
+   connect(call, SIGNAL(isOver(Call*)), this, SLOT(removeActiveCall(Call*)));
    return call;
+}
+
+///Remove it from active calls
+void CallModelBase::removeActiveCall(Call* call)
+{
+   Q_UNUSED(call);
+   //There is a race condition
+   //m_sActiveCalls[call->getCallId()] = nullptr;
 }
 
 //More code in CallModel.hpp

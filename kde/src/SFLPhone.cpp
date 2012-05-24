@@ -55,6 +55,7 @@
 #include "widgets/HistoryDock.h"
 #include "widgets/BookmarkDock.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "SFLPhoneAccessibility.h"
 
 SFLPhone* SFLPhone::m_sApp              = NULL;
 TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
@@ -229,6 +230,12 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_configureSflPhone"     , action_configureSflPhone     );
    actionCollection()->addAction("action_accountCreationWizard" , action_accountCreationWizard );
    actionCollection()->addAction("action_configureShortcut"     , action_configureShortcut     );
+
+   QList<KAction*> acList = *SFLPhoneAccessibility::getInstance();
+   
+   foreach(KAction* ac,acList) {
+      actionCollection()->addAction(ac->objectName() , ac);
+   }
 
    setAutoSaveSettings();
    createGUI();

@@ -56,7 +56,6 @@ static const char version[] = "1.1.0";
 
 int main(int argc, char **argv)
 {
-
    try
    {
       KLocale::setMainCatalog("sflphone-client-kde");

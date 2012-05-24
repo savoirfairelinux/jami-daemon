@@ -48,7 +48,6 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sInstanceInit        = false ;
 CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sCallInit            = false ;
 CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sHistoryInit         = false ;
 
-CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sActiveCalls  ;
 CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sHistoryCalls ;
 
 CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalCall   CALLMODEL_T::m_sPrivateCallList_call   ;
@@ -188,7 +187,8 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCallList()
 {
    QList<Call*> callList;
    foreach(Call* call, m_sActiveCalls) {
-      callList.push_back(call);
+      if (call->getState() != CALL_STATE_OVER) //Prevent a race
+         callList.push_back(call);
    }
    return callList;
 }
