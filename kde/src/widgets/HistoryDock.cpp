@@ -89,16 +89,16 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    setObjectName("historyDock");
    setMinimumSize(250,0);
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-   m_pFilterLE   = new KLineEdit();
-   m_pItemView   = new HistoryTree(this);
-   m_pSortByCBB  = new QComboBox();
-   m_pSortByL    = new QLabel(i18n("Sort by:"));
-   m_pFromL      = new QLabel(i18n("From:"));
-   m_pToL        = new QLabel(i18n("To:"));
-   m_pFromDW     = new KDateWidget();
-   m_pToDW       = new KDateWidget();
-   m_pAllTimeCB  = new QCheckBox(i18n("Display all"));
-   m_pLinkPB     = new QPushButton(this);
+   m_pFilterLE   = new KLineEdit   (                    );
+   m_pItemView   = new HistoryTree ( this               );
+   m_pSortByCBB  = new QComboBox   (                    );
+   m_pSortByL    = new QLabel      ( i18n("Sort by:")   );
+   m_pFromL      = new QLabel      ( i18n("From:")      );
+   m_pToL        = new QLabel      ( i18n("To:")        );
+   m_pFromDW     = new KDateWidget (                    );
+   m_pToDW       = new KDateWidget (                    );
+   m_pAllTimeCB  = new QCheckBox   ( i18n("Display all"));
+   m_pLinkPB     = new QPushButton ( this               );
 
    m_pAllTimeCB->setChecked(ConfigurationSkeleton::displayDataRange());
    enableDateRange(ConfigurationSkeleton::displayDataRange());
@@ -122,7 +122,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pFilterLE->setClearButtonShown(true);
 
    QStringList sortBy;
-   sortBy << "Date" << "Name" << "Popularity" << "Length";
+   sortBy << i18n("Date") << i18n("Name") << i18n("Popularity") << i18n("Length");
    m_pSortByCBB->addItems(sortBy);
 
    QWidget* mainWidget = new QWidget(this);
@@ -198,7 +198,7 @@ void HistoryDock::reload()
    switch (CURRENT_SORTING_MODE) {
       case Date:
          foreach (QString cat, m_slHistoryConst) {
-            m_pItemView->addCategory(cat);
+            m_pItemView->addCategory(i18n(cat.toAscii()));
          }
          break;
    }

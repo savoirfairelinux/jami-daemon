@@ -22,6 +22,10 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QStringList>
 #include <QtCore/QTimer>
+#include <QtCore/QString>
+
+//KDE
+#include <KLocale>
 
 //SFLPhone
 #include "../lib/Call.h"
@@ -57,31 +61,31 @@ CALLMODEL_TEMPLATE QString SORTABLE_T::timeToHistoryCategory(QDate date)
       
    //m_spEvHandler->update();
    if (QDate::currentDate()  == date || QDate::currentDate()  < date) //The future case would be a bug, but it have to be handled anyway or it will appear in "very long time ago"
-      return m_slHistoryConst[HistoryConst::Today];
+      return i18n(m_slHistoryConst[HistoryConst::Today].toAscii());
 
    //Check for last week
    for (int i=1;i<7;i++) {
       if (QDate::currentDate().addDays(-i)  == date)
-         return m_slHistoryConst[i]; //Yesterday to Six_days_ago
+         return i18n(m_slHistoryConst[i].toAscii()); //Yesterday to Six_days_ago
    }
 
    //Check for last month
    for (int i=1;i<4;i++) {
       if (QDate::currentDate().addDays(-(i*7))  >= date && QDate::currentDate().addDays(-(i*7) -7)  < date)
-         return m_slHistoryConst[i+Last_week-1]; //Last_week to Three_weeks_ago
+         return i18n(m_slHistoryConst[i+Last_week-1].toAscii()); //Last_week to Three_weeks_ago
    }
 
    //Check for last year
    for (int i=1;i<12;i++) {
       if (QDate::currentDate().addMonths(-i)  >= date && QDate::currentDate().addMonths((-i) - 1)  < date)
-         return m_slHistoryConst[i+Last_month-1]; //Last_month to Twelve_months ago
+         return i18n(m_slHistoryConst[i+Last_month-1].toAscii()); //Last_month to Twelve_months ago
    }
 
    if (QDate::currentDate().addYears(-1)  >= date && QDate::currentDate().addYears(-2)  < date)
-      return m_slHistoryConst[Last_year];
+      return i18n(m_slHistoryConst[Last_year].toAscii());
 
    //Every other senario
-   return m_slHistoryConst[Very_long_time_ago];
+   return i18n(m_slHistoryConst[Very_long_time_ago].toAscii());
 }
 
 ///Return the list of contact from history (in order, most recently used first)
@@ -113,7 +117,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,Histo
    switch (mode) {
       case HistorySortingMode::Date:
          foreach (QString cat, m_slHistoryConst) {
-            byDate[cat] = QList<Call*>();
+            byDate[i18n(cat.toAscii())] = QList<Call*>();
          }
          break;
       case HistorySortingMode::Popularity:
@@ -143,7 +147,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,Histo
             }
             break;
          case HistorySortingMode::Length:
-            category = "TODO";
+            category = i18n("TODO");
             break;
          default:
             break;
@@ -154,7 +158,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,Histo
       case HistorySortingMode::Date:
          calls.clear();
          foreach (QString cat, m_slHistoryConst) {
-            foreach (Call* call, byDate[cat]) {
+            foreach (Call* call, byDate[i18n(cat.toAscii())]) {
                calls << call;
             }
          }
@@ -185,19 +189,19 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
                category = QString(cont->getFormattedName()[0]);
                break;
             case ContactSortingMode::Organisation:
-               category = (cont->getOrganization().isEmpty())?"Unknow":cont->getOrganization();
+               category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
                break;
             case ContactSortingMode::Recently_used:
                if (recentlyUsed.find(cont) != recentlyUsed.end())
                   category = timeToHistoryCategory(recentlyUsed[cont].date());
                else
-                  category = m_slHistoryConst[Never];
+                  category = i18n(m_slHistoryConst[Never].toAscii());
                break;
             case ContactSortingMode::Group:
-               category = "TODO";
+               category = i18n("TODO");
                break;
             case ContactSortingMode::Department:
-               category = (cont->getDepartment().isEmpty())?"Unknow":cont->getDepartment();;
+               category = (cont->getDepartment().isEmpty())?i18n("Unknown"):cont->getDepartment();;
                break;
             default:
                break;

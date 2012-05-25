@@ -127,25 +127,6 @@ Plasma::Service* SFLPhoneEngine::serviceForSource(const QString &source)
  *                                                                           *
  ****************************************************************************/
 
-///Transform a backend state into a translated string
-QString SFLPhoneEngine::getCallStateName(call_state state)
-{
-   /*                     STATE                                  I18N NAME               */
-   /**/if      ( state == CALL_STATE_INCOMING    ) { return I18N_NOOP( "Ringing (in)"  ); }
-   /**/else if ( state == CALL_STATE_RINGING     ) { return I18N_NOOP( "Ringing (out)" ); }
-   /**/else if ( state == CALL_STATE_CURRENT     ) { return I18N_NOOP( "Talking"       ); }
-   /**/else if ( state == CALL_STATE_DIALING     ) { return I18N_NOOP( "Dialing"       ); }
-   /**/else if ( state == CALL_STATE_HOLD        ) { return I18N_NOOP( "Hold"          ); }
-   /**/else if ( state == CALL_STATE_FAILURE     ) { return I18N_NOOP( "Failed"        ); }
-   /**/else if ( state == CALL_STATE_BUSY        ) { return I18N_NOOP( "Busy"          ); }
-   /**/else if ( state == CALL_STATE_TRANSFER    ) { return I18N_NOOP( "Transfer"      ); }
-   /**/else if ( state == CALL_STATE_TRANSF_HOLD ) { return I18N_NOOP( "Transfer hold" ); }
-   /**/else if ( state == CALL_STATE_OVER        ) { return I18N_NOOP( "Over"          ); }
-   /**/else if ( state == CALL_STATE_ERROR       ) { return I18N_NOOP( "Error"         ); }
-   /*                                                                                    */
-   return "";
-}
-
 ///Return the model
 CallModel<>* SFLPhoneEngine::getModel()
 {
@@ -194,13 +175,13 @@ void SFLPhoneEngine::updateCallList()
    foreach (Call* call, m_pModel->getCalls()) {
       if ((!m_pModel->isConference(call)) && (call->getState() != CALL_STATE_OVER)) {
          HashStringString current;
-         /*               KEY                     VALUE                               */
-         /**/current[ "peerName"      ] = call->getPeerName        (                  );
-         /**/current[ "peerNumber"    ] = call->getPeerPhoneNumber (                  );
-         /**/current[ "stateName"     ] = getCallStateName         ( call->getState() );
-         /**/current[ "state"         ] = call->getState           (                  );
-         /**/current[ "id"            ] = call->getCallId          (                  );
-         /*                                                                           */
+         /*               KEY                     VALUE              */
+         /**/current[ "peerName"      ] = call->getPeerName        ( );
+         /**/current[ "peerNumber"    ] = call->getPeerPhoneNumber ( );
+         /**/current[ "stateName"     ] = call->toHumanStateName   ( );
+         /**/current[ "state"         ] = call->getState           ( );
+         /**/current[ "id"            ] = call->getCallId          ( );
+         /*                                                          */
          setData("calls", call->getCallId(), current);
       }
    }

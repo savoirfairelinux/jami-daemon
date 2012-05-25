@@ -18,34 +18,30 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 
-#include "HelperFunctions.h"
+#include "dlgaccessibility.h"
+#include "klib/ConfigurationSkeleton.h"
 
-//Qt
-#include <QtCore/QString>
-#include <QtCore/QVariant>
+///Constructor
+DlgAccessibility::DlgAccessibility(QWidget *parent)
+ : QWidget(parent)
+{
+   setupUi(this);
+}
 
-//KDE
-#include <KLocale>
+///Destructor
+DlgAccessibility::~DlgAccessibility()
+{
+   
+}
 
-//SFLPhone
-#include "../lib/Contact.h"
+///Save
+void DlgAccessibility::updateSettings()
+{
+   
+}
 
-///Transform a contact list to a [QString][QString][QVariant] hash
-ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
-   QHash<QString,QHash<QString,QVariant> > hash;
-   for (int i=0;i<contacts.size();i++) {
-      Contact* cont = contacts[i];
-      QHash<QString,QVariant> conth = cont->toHash();
-      conth["phoneCount"] = cont->getPhoneNumbers().size();
-      if (cont->getPhoneNumbers().size() == 1) {
-         conth["phoneNumber"] = cont->getPhoneNumbers()[0]->getNumber();
-         conth["phoneType"  ] = cont->getPhoneNumbers()[0]->getType();
-      }
-      else {
-         conth["phoneNumber"] = QString::number(cont->getPhoneNumbers().size())+i18n(" numbers");
-         conth["phoneType"  ] = "";
-      }
-      hash[contacts[i]->getUid()] = conth;
-   }
-   return hash;
+///Load
+void DlgAccessibility::updateWidgets()
+{
+   
 }

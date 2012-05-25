@@ -124,12 +124,12 @@ void CallTreeItem::setCall(Call *call)
    m_pBtnConf = new TranslucentButtons(this);
    m_pBtnConf->setVisible(false);
    m_pBtnConf->setParent(this);
-   m_pBtnConf->setText("Conference");
+   m_pBtnConf->setText(i18n("Conference"));
    m_pBtnConf->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/confBlackWhite.png")));
    connect(m_pBtnConf,SIGNAL(dataDropped(QMimeData*)),this,SLOT(conversationEvent(QMimeData*)));
 
    m_pBtnTrans = new TranslucentButtons(this);
-   m_pBtnTrans->setText("Transfer");
+   m_pBtnTrans->setText(i18n("Transfer"));
    m_pBtnTrans->setVisible(false);
    m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
    connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
@@ -187,7 +187,7 @@ void CallTreeItem::updated()
          m_pPeerL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
       }
       else {
-         m_pPeerL->setText(i18n("<b>Unknow</b>"));
+         m_pPeerL->setText(i18n("<b>Unknown</b>"));
       }
    }
 

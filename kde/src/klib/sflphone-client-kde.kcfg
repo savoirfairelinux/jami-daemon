@@ -136,5 +136,19 @@
     <entry name="prepend" type="String">
     	<label>Defines the prefix to add.</label>
     </entry>
+
+    <!-- Accessibility Settings -->
+    <entry name="enableVoiceFeedback" type="bool">
+      <label>Enable audio feedback from common actions</label>
+      <default> false </default>
+    </entry>
+    <entry name="enableReadLabel" type="bool">
+      <label>Automatically read label when an overlay is being displayed</label>
+      <default> false </default>
+    </entry>
+    <entry name="enableReadDetails" type="bool">
+      <label>Automattically read the call details when it is selected</label>
+      <default> false </default>
+    </entry>
   </group>
 </kcfg>

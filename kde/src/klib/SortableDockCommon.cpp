@@ -24,6 +24,10 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QStringList>
 #include <QtCore/QTimer>
+#include <QtCore/QString>
+
+//KDE
+#include <KLocale>
 
 //SFLPhone
 #include "../lib/Call.h"
@@ -44,30 +48,30 @@ StaticEventHandler::StaticEventHandler(QObject* parent, QStringList* list) : QOb
 void StaticEventHandler::update()
 {
    (*m_pList)= {
-      "Today"                                          ,//0
-      "Yesterday"                                      ,//1
-      QDate::currentDate().addDays(-2).toString("dddd"),//2
-      QDate::currentDate().addDays(-3).toString("dddd"),//3
-      QDate::currentDate().addDays(-4).toString("dddd"),//4
-      QDate::currentDate().addDays(-5).toString("dddd"),//5
-      QDate::currentDate().addDays(-6).toString("dddd"),//6
-      "Last week"                                      ,//7
-      "Two weeks ago"                                  ,//8
-      "Three weeks ago"                                ,//9
-      "Last month"                                     ,//10
-      "Two months ago"                                 ,//11
-      "Three months ago"                               ,//12
-      "Four months ago"                                ,//13
-      "Five months ago"                                ,//14
-      "Six months ago"                                 ,//15
-      "Seven months ago"                               ,//16
-      "Eight months ago"                               ,//17
-      "Nine months ago"                                ,//18
-      "Ten months ago"                                 ,//19
-      "Eleven months ago"                              ,//20
-      "Twelve months ago"                              ,//21
-      "Last year"                                      ,//22
-      "Very long time ago"                             ,//23
-      "Never"                                           //24
+      "Today"                                                    ,//0
+      "Yesterday"                                                ,//1
+      QDate::currentDate().addDays(-2).toString("dddd").toAscii(),//2
+      QDate::currentDate().addDays(-3).toString("dddd").toAscii(),//3
+      QDate::currentDate().addDays(-4).toString("dddd").toAscii(),//4
+      QDate::currentDate().addDays(-5).toString("dddd").toAscii(),//5
+      QDate::currentDate().addDays(-6).toString("dddd").toAscii(),//6
+      "Last week"                                                ,//7
+      "Two weeks ago"                                            ,//8
+      "Three weeks ago"                                          ,//9
+      "Last month"                                               ,//10
+      "Two months ago"                                           ,//11
+      "Three months ago"                                         ,//12
+      "Four months ago"                                          ,//13
+      "Five months ago"                                          ,//14
+      "Six months ago"                                           ,//15
+      "Seven months ago"                                         ,//16
+      "Eight months ago"                                         ,//17
+      "Nine months ago"                                          ,//18
+      "Ten months ago"                                           ,//19
+      "Eleven months ago"                                        ,//20
+      "Twelve months ago"                                        ,//21
+      "Last year"                                                ,//22
+      "Very long time ago"                                       ,//23
+      "Never"                                                     //24
    };
 }
