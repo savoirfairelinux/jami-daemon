@@ -427,10 +427,7 @@ update_playback_scale_cb(DBusGProxy *proxy UNUSED, const gchar *callid, guint va
     guint size = (value & SIZE_MASK);
     guint position = (value & POSITION_MASK);
 
-    // DEBUG("Playback scale update position: %d, size: %d", position << 8, size >> 16);
-    // DEBUG("Playback scale update value: %d, sizeof guint: %d", value, sizeof(guint));
-
-    update_playback_scale(position, size >> 16);
+    main_window_update_playback_scale(position, size >> 16);
 }
 
 static void

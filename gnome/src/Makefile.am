@@ -29,6 +29,7 @@ sflphone_client_gnome_SOURCES = \
   eel-gconf-extensions.c \
   shortcuts.c \
   str_utils.c \
+  seekslider.c \
   gtk2_wrappers.c
 
 noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \

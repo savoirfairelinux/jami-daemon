@@ -52,6 +52,7 @@
 #include "unused.h"
 #include "config/audioconf.h"
 #include "str_utils.h"
+#include "seekslider.h"
 
 #include "eel-gconf-extensions.h"
 
@@ -71,13 +72,11 @@ static GtkWidget *dialpad;
 static GtkWidget *speaker_control;
 static GtkWidget *mic_control;
 static GtkWidget *statusBar;
-static GtkWidget *hscale;
-
-static gboolean can_update_scale = TRUE;
+static GtkWidget *seekslider = NULL;
 
 static gchar *status_current_message;
 
-static gboolean focus_is_on_searchbar;
+static gboolean focus_is_on_searchbar = FALSE;
 
 void
 focus_on_searchbar_out()
@@ -106,53 +105,6 @@ static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *ev
 
     return FALSE;
 }
-
-gboolean
-on_playback_scale_value_changed_cb(GtkRange *range, GtkScrollType scroll, gdouble value, gpointer user_data)
-{
-    dbus_set_record_playback_seek(value);
-
-    return FALSE;
-}
-
-
-gboolean
-on_playback_scale_pressed_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
-{
-    if(event->button == 1)
-        event->button = 2;
-
-    can_update_scale = FALSE;
-
-    return FALSE;
-}
-
-gboolean
-on_playback_scale_released_cb(GtkWidget *widget, GdkEventButton  *event, gpointer user_data)
-{
-    if(event->button == 1)
-        event->button = 2;
-
-    can_update_scale = TRUE;
-
-    return FALSE;
-}
-
-gboolean
-on_playback_scale_moved_cb(GtkWidget *widget, GdkEvent  *event, gpointer user_data)
-{
-    return FALSE;
-}
-
-gboolean
-on_playback_scale_scrolled_cb(GtkWidget *widget, GdkEvent  *event, gpointer user_data)
-{
-
-    DEBUG("on_playback_scale_scrolled_cb");
-
-    return TRUE;
-}
-
 
 /**
  * Minimize the main window.
@@ -229,8 +181,6 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data
 void
 create_main_window()
 {
-    focus_is_on_searchbar = FALSE;
-
     // Get configuration stored in gconf
     int width =  eel_gconf_get_integer(CONF_MAIN_WINDOW_WIDTH);
     int height =  eel_gconf_get_integer(CONF_MAIN_WINDOW_HEIGHT);
@@ -238,7 +188,9 @@ create_main_window()
     int position_y =  eel_gconf_get_integer(CONF_MAIN_WINDOW_POSITION_Y);
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
     gtk_container_set_border_width(GTK_CONTAINER(window), 0);
+
     gtk_window_set_title(GTK_WINDOW(window), "SFLphone VoIP Client");
     gtk_window_set_default_size(GTK_WINDOW(window), width, height);
     struct stat st;
@@ -247,6 +199,7 @@ create_main_window()
         gtk_window_set_default_icon_from_file(LOGO, NULL);
 
     gtk_window_set_position(GTK_WINDOW(window) , GTK_WIN_POS_MOUSE);
+    gtk_widget_set_name(window, "mainwindow");
 
     /* Connect the destroy event of the window with our on_destroy function
      * When the window is about to be destroyed we get a notificaiton and
@@ -261,7 +214,6 @@ create_main_window()
     g_signal_connect_object(G_OBJECT(window), "configure-event",
                             G_CALLBACK(window_configure_cb), NULL, 0);
 
-    gtk_widget_set_name(window, "mainwindow");
 
     ui_manager = uimanager_new();
     if (!ui_manager) {
@@ -270,82 +222,36 @@ create_main_window()
     }
 
     /* Create an accel group for window's shortcuts */
-    gtk_window_add_accel_group(GTK_WINDOW(window),
-                               gtk_ui_manager_get_accel_group(ui_manager));
+    gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group(ui_manager));
 
-    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0 /*spacing*/);
+    /* Populate the main window */
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
-    gtk_box_set_spacing(GTK_BOX(vbox), 0);
 
-    subvbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5 /*spacing*/);
+    subvbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_box_set_homogeneous(GTK_BOX(subvbox), FALSE);
-    gtk_box_set_spacing(GTK_BOX(vbox), 0);
-
 
     GtkWidget *widget = create_menus(ui_manager);
-    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE /*expand*/, TRUE /*fill*/,
-                       0 /*padding*/);
+    if(widget == NULL)
+        WARN("Error could not create widget\n");
+    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
     widget = create_toolbar_actions(ui_manager);
-    // Do not override GNOME user settings
-    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE /*expand*/, TRUE /*fill*/,
-                       0 /*padding*/);
+    if(widget == NULL)
+        WARN("Error could not create widget\n");
+    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
-    gdouble init_value = 0.0;
-    gdouble min_value = 0.0;
-    gdouble max_value = 100.0;
-    gdouble stepincrement = 1.0;
-    gdouble pageincrement = 1.0;
-    gdouble pagesize = 1.0;
+    seekslider = GTK_WIDGET(sfl_seekslider_new());
+    if(seekslider == NULL)
+        WARN("Error could not create widget\n");
+    gtk_box_pack_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
 
-    GtkAdjustment *adjustment = gtk_adjustment_new(init_value, min_value, max_value, stepincrement, pageincrement, pagesize);
-    if(adjustment == NULL) {
-        WARN("Invalid adjustment value for horizontal scale");
-    }
+    /* Add tree views */
+    gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
 
-    hscale = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, adjustment);
-    if(hscale == NULL) {
-        WARN("Could not create new horizontal scale");
-    }
-
-    g_signal_connect(G_OBJECT(hscale), "change-value",
-                     G_CALLBACK(on_playback_scale_value_changed_cb), NULL);
-
-    g_signal_connect_object(G_OBJECT (hscale), "button-press-event",
-                     G_CALLBACK (on_playback_scale_pressed_cb), NULL, 0);
-
-    g_signal_connect_object(G_OBJECT (hscale), "button-release-event",
-                     G_CALLBACK (on_playback_scale_released_cb), NULL, 0);
-
-    g_signal_connect_object(G_OBJECT (hscale), "motion-notify-event",
-                     G_CALLBACK (on_playback_scale_moved_cb), NULL, 0);
-
-//    g_signal_connect_object (G_OBJECT (hscale), "value_changed",
-//                     G_CALLBACK (on_playback_scale_changed_cb), NULL);
-
-    g_signal_connect_object (G_OBJECT (hscale), "scroll-event",
-                     G_CALLBACK (on_playback_scale_scrolled_cb), NULL, 0);
-
-    gfloat xalign = 0.0f;
-    gfloat yalign = 0.0f;
-    gfloat xscale = 1.0f;
-    gfloat yscale = 0.0f;
-    GtkWidget *align = gtk_alignment_new(xalign, yalign, xscale, yscale);
-    gtk_container_add(GTK_CONTAINER(align), hscale);
-
-    gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(align), TRUE, TRUE, 0);
-
-    gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE /*expand*/,
-                       TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE /*expand*/,
-                       TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE /*expand*/,
-                       TRUE /*fill*/, 0 /*padding*/);
-
-    g_signal_connect_object(G_OBJECT(window), "configure-event",
-                            G_CALLBACK(window_configure_cb), NULL, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE /*expand*/,
-                       FALSE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE, FALSE, 0);
 
     speaker_control = create_slider("speaker");
     mic_control = create_slider("mic");
@@ -353,10 +259,8 @@ create_main_window()
     g_object_ref(mic_control);
 
     if (SHOW_VOLUME) {
-        gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE /*expand*/,
-                          TRUE /*fill*/, 0 /*padding*/);
-        gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE /*expand*/,
-                         TRUE /*fill*/, 0 /*padding*/);
+        gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE, TRUE, 0);
+        gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE, TRUE, 0);
         gtk_widget_show_all(speaker_control);
         gtk_widget_show_all(mic_control);
     } else {
@@ -366,14 +270,17 @@ create_main_window()
 
     if (eel_gconf_get_boolean(CONF_SHOW_DIALPAD)) {
         dialpad = create_dialpad();
-        gtk_box_pack_end(GTK_BOX(subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+        gtk_box_pack_end(GTK_BOX(subvbox), dialpad, FALSE, TRUE, 0);
         gtk_widget_show_all(dialpad);
     }
 
     /* Status bar */
     statusBar = gtk_statusbar_new();
-    gtk_box_pack_start(GTK_BOX(vbox), statusBar, FALSE /*expand*/,
-                       TRUE /*fill*/, 0 /*padding*/);
+    if(statusBar == NULL)
+        WARN("Error could not create widget\n");
+    gtk_box_pack_start(GTK_BOX(vbox), statusBar, FALSE, TRUE, 0);
+
+
     gtk_container_add(GTK_CONTAINER(window), vbox);
 
     /* make sure that everything, window and label, are visible */
@@ -384,6 +291,9 @@ create_main_window()
 
     /* dont't show the contact list */
     gtk_widget_hide(contacts_tab->tree);
+
+    /* show playback scale only if a recorded call is selected */
+    gtk_widget_hide(seekslider);
 
     /* don't show waiting layer */
     gtk_widget_hide(waitingLayer);
@@ -577,11 +487,20 @@ main_window_confirm_go_clear(callable_obj_t * c)
     add_error_dialog(GTK_WIDGET(mini_dialog));
 }
 
-void update_playback_scale(guint current, guint size)
+void
+main_window_update_playback_scale(guint current, guint size)
 {
-    gdouble val = ((gdouble) current / (gdouble) size) * 100.0;
+     sfl_seekslider_update_scale(SFL_SEEKSLIDER(seekslider), current, size);
+}
 
-    if(can_update_scale == TRUE) {
-        gtk_range_set_value(GTK_RANGE(hscale), val);
-    }
+void
+main_window_show_playback_scale()
+{
+    gtk_widget_show(seekslider);
+}
+
+void
+main_window_hide_playback_scale()
+{
+    gtk_widget_hide(seekslider);
 }
