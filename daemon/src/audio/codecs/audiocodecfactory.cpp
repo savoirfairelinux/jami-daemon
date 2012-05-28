@@ -274,36 +274,30 @@ bool AudioCodecFactory::seemsValid(const std::string &lib)
 
     // Second: check the extension of the file name.
     // If it is different than SFL_CODEC_VALID_EXTEN , not a SFL shared library
-    if (lib.substr(lib.length() - suffix.length() , lib.length()) != suffix)
+    if (lib.substr(lib.length() - suffix.length(), lib.length()) != suffix)
         return false;
 
+    std::vector<std::string> validCodecs;
+    validCodecs.push_back("ulaw");
+    validCodecs.push_back("alaw");
+    validCodecs.push_back("g722");
 
-#ifndef HAVE_SPEEX_CODEC
-
-    if (lib.substr(prefix.length() , len) == "speex")
-        return false;
-
+#ifdef HAVE_SPEEX_CODEC
+    validCodecs.push_back("speex_nb");
+    validCodecs.push_back("speex_wb");
+    validCodecs.push_back("speex_ub");
 #endif
 
-#ifndef HAVE_GSM_CODEC
-
-    if (lib.substr(prefix.length() , len) == "gsm")
-        return false;
-
+#ifdef HAVE_GSM_CODEC
+    validCodecs.push_back("gsm");
 #endif
 
-#ifndef BUILD_ILBC
-
-    if (lib.substr(prefix.length() , len) == "ilbc")
-        return false;
-
+#ifdef BUILD_ILBC
+    validCodecs.push_back("ilbc")
 #endif
 
-    if (lib.substr(0, prefix.length()) == prefix)
-        if (lib.substr(lib.length() - suffix.length() , suffix.length()) == suffix)
-            return true;
-
-    return false;
+    const std::string name(lib.substr(prefix.length(), len));
+    return find(validCodecs.begin(), validCodecs.end(), name) != validCodecs.end();
 }
 
 bool
