@@ -118,6 +118,18 @@ void ManagerImpl::init(const std::string &config_file)
     registerAccounts();
 }
 
+void ManagerImpl::run()
+{
+    DEBUG("Starting DBus event loop");
+    dbus_.exec();
+}
+
+void ManagerImpl::finish()
+{
+    terminate();
+    dbus_.exit();
+}
+
 void ManagerImpl::terminate()
 {
     std::vector<std::string> callList(getCallList());
@@ -2866,14 +2878,12 @@ std::string ManagerImpl::getConferenceId(const std::string& callID)
 {
     std::string account_id = getAccountFromCall(callID);
     Call *call = getAccountLink(account_id)->getCall(callID);
-    if(call == NULL) {
-        ERROR("Get conference id");
+    if (call == NULL) {
+        ERROR("Call is NULL");
         return "";
     }
 
-    std::string confID = call->getConfId();
-
-    return confID;
+    return call->getConfId();
 }
 
 void ManagerImpl::saveHistory()
