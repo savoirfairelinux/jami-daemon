@@ -41,6 +41,7 @@
 #include "widgets/CategoryDrawer.h"
 #include "widgets/CategorizedTreeWidget.h"
 #include "klib/AkonadiBackend.h"
+#include "klib/HelperFunctions.h"
 
 ///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
@@ -145,7 +146,8 @@ void BookmarkDock::addBookmark(const QString& phone)
 void BookmarkDock::filter(QString text)
 {
    foreach(HistoryTreeItem* item, m_pBookmark) {
-      bool visible = (item->getName().toLower().indexOf(text.toLower()) != -1) || (item->getPhoneNumber().toLower().indexOf(text.toLower()) != -1);
+      bool visible = (HelperFunctions::normStrippped(item->getName()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+         || (HelperFunctions::normStrippped(item->getPhoneNumber()).indexOf(HelperFunctions::normStrippped(text)) != -1);
       item->getItem()->setHidden(!visible);
    }
    m_pItemView->expandAll();

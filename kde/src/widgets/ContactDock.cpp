@@ -255,17 +255,6 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
    }
 } //loadContactHistory
 
-///Remove accent and upper caps, try to stay ascii as much as possible
-QString normStrippped(QString str)
-{
-   QString normStripppedC;
-   foreach(QChar char2,str.toLower().normalized(QString::NormalizationForm_KD) ) {
-      if (!char2.combiningClass())
-         normStripppedC += char2;
-   }
-   return normStripppedC;
-}
-
 ///Filter contact
 void ContactDock::filter(const QString& text)
 {
@@ -274,10 +263,10 @@ void ContactDock::filter(const QString& text)
       foreach (Contact::PhoneNumber* number, item->getContact()->getPhoneNumbers()) {
          foundNumber |= number->getNumber().toLower().indexOf(text.toLower()) != -1;
       }
-      bool visible = (normStrippped(item->getContact()->getFormattedName  ()).indexOf(normStrippped(text)) != -1)
-                  || (normStrippped(item->getContact()->getOrganization   ()).indexOf(normStrippped(text)) != -1)
-                  || (normStrippped(item->getContact()->getPreferredEmail ()).indexOf(normStrippped(text)) != -1)
-                  || (normStrippped(item->getContact()->getDepartment     ()).indexOf(normStrippped(text)) != -1)
+      bool visible = (HelperFunctions::normStrippped(item->getContact()->getFormattedName  ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getOrganization   ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getPreferredEmail ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getDepartment     ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
                   || foundNumber;
       item->getItem()->setHidden(!visible);
 
