@@ -40,6 +40,7 @@
 #include <algorithm> // for std::find
 #include <dlfcn.h>
 #include "fileutils.h"
+#include "array_size.h"
 #include "logger.h"
 
 AudioCodecFactory::AudioCodecFactory() :
@@ -277,27 +278,28 @@ bool AudioCodecFactory::seemsValid(const std::string &lib)
     if (lib.substr(lib.length() - suffix.length(), lib.length()) != suffix)
         return false;
 
-    std::vector<std::string> validCodecs;
-    validCodecs.push_back("ulaw");
-    validCodecs.push_back("alaw");
-    validCodecs.push_back("g722");
-
+    static const std::string validCodecs[] = {
+    "ulaw",
+    "alaw",
+    "g722",
 #ifdef HAVE_SPEEX_CODEC
-    validCodecs.push_back("speex_nb");
-    validCodecs.push_back("speex_wb");
-    validCodecs.push_back("speex_ub");
+    "speex_nb",
+    "speex_wb",
+    "speex_ub",
 #endif
 
 #ifdef HAVE_GSM_CODEC
-    validCodecs.push_back("gsm");
+    "gsm",
 #endif
 
 #ifdef BUILD_ILBC
-    validCodecs.push_back("ilbc")
+    "ilbc",
 #endif
+    ""};
 
     const std::string name(lib.substr(prefix.length(), len));
-    return find(validCodecs.begin(), validCodecs.end(), name) != validCodecs.end();
+    const std::string *end = validCodecs + ARRAYSIZE(validCodecs);
+    return find(validCodecs, end, name) != end;
 }
 
 bool
@@ -317,7 +319,8 @@ bool AudioCodecFactory::isCodecLoaded(int payload) const
     return false;
 }
 
-std::vector <std::string> AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
+std::vector <std::string>
+AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
 {
     std::vector<std::string> v;
     std::stringstream ss;
