@@ -263,12 +263,13 @@ void ContactDock::filter(const QString& text)
       foreach (Contact::PhoneNumber* number, item->getContact()->getPhoneNumbers()) {
          foundNumber |= number->getNumber().toLower().indexOf(text.toLower()) != -1;
       }
-      bool visible = (item->getContact()->getFormattedName  ().toLower().indexOf(text.toLower()) != -1)
-                  || (item->getContact()->getOrganization   ().toLower().indexOf(text.toLower()) != -1)
-                  || (item->getContact()->getPreferredEmail ().toLower().indexOf(text.toLower()) != -1)
-                  || (item->getContact()->getDepartment     ().toLower().indexOf(text.toLower()) != -1)
+      bool visible = (HelperFunctions::normStrippped(item->getContact()->getFormattedName  ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getOrganization   ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getPreferredEmail ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getDepartment     ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
                   || foundNumber;
       item->getItem()->setHidden(!visible);
+
    }
    //m_pContactView->expandAll();
 } //filter

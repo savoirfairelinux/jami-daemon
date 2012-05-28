@@ -49,3 +49,16 @@ ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
    }
    return hash;
 }
+
+
+
+///Remove accent and upper caps, try to stay ascii as much as possible
+QString HelperFunctions::normStrippped(QString str)
+{
+   QString normStripppedC;
+   foreach(QChar char2,str.toLower().normalized(QString::NormalizationForm_KD) ) {
+      if (!char2.combiningClass())
+         normStripppedC += char2;
+   }
+   return normStripppedC;
+}

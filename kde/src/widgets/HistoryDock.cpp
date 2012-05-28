@@ -296,7 +296,7 @@ void HistoryDock::enableDateRange(bool enable)
 void HistoryDock::filter(QString text)
 {
    foreach(HistoryTreeItem* item, m_History) {
-      bool visible = (item->getName().toLower().indexOf(text) != -1) || (item->getPhoneNumber().toLower().indexOf(text) != -1);
+      bool visible = (HelperFunctions::normStrippped(item->getName()).indexOf(text) != -1) || (HelperFunctions::normStrippped(item->getPhoneNumber()).indexOf(text) != -1);
       item->getItem()-> setHidden(!visible);
    }
    m_pItemView->expandAll();
