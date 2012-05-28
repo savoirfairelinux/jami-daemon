@@ -527,7 +527,8 @@ void SFLPhoneView::updateStatusMessage()
    else {
       emit statusMessageChangeAsked(i18n("Using account")
                      + " \'" + account->getAlias()
-                     + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+                     + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ", "
+                     + account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) + ")");
    }
 }
 
