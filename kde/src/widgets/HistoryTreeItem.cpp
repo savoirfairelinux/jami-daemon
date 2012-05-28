@@ -45,6 +45,7 @@
 #include <KAction>
 #include <KIcon>
 #include <KMessageBox>
+#include <KStandardDirs>
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -500,6 +501,7 @@ void HistoryTreeItem::setCall(Call *call)
 
    m_pPlay->  setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
    m_pRemove->setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
+   getContactInfo(m_PhoneNumber);
 } //setCall
 
 ///Set the index associed with this widget
@@ -528,13 +530,18 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    if (contact) {
       if (contact->getPhoto() != NULL)
          m_pIconL->setPixmap(*contact->getPhoto());
+      else if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())
+         m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
       else
          m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
       m_pPeerNameL->setText("<b>"+contact->getFormattedName()+"</b>");
       m_pContact = contact;
    }
    else {
-      m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())
+         m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
+      else
+         m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
       if (!phoneNumber.isEmpty())
          m_pPeerNameL->setText("<b>"+phoneNumber+"</b>");
       else
