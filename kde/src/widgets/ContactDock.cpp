@@ -141,6 +141,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
    connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         this,        SLOT(setHistoryVisible(bool)              ));
    connect (timer                        ,SIGNAL(timeout()),                                             this,        SLOT(reloadHistoryConst()                 ));
+   connect(ConfigurationSkeleton::self() ,SIGNAL(configChanged()),                                       this,        SLOT(reloadContact()                      ));
    timer->start(1800*1000); //30 minutes
    setWindowTitle(i18n("Contact"));
 

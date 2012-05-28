@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>350</width>
-    <height>250</height>
+    <width>661</width>
+    <height>593</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,6 +39,29 @@
      <property name="sortingEnabled">
       <bool>true</bool>
      </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Contact list details</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QCheckBox" name="kcfg_displayOrganisation">
+        <property name="text">
+         <string>Display organisation</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="kcfg_displayEmail">
+        <property name="text">
+         <string>Display e-mail address</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
