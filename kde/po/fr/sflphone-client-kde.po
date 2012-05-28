@@ -1564,6 +1564,16 @@ msgstr "Veuillez entrer un numero pour vers lequel transferrer et appuiyez sur e
 msgid "You call have been transferred to "
 msgstr "Votre appel à été transferré au numéro "
 
+#. i18n: file: src/conf/dlgaddressbookbase.ui:27
+msgid "Display organisation"
+msgstr "Afficher l'organisation"
+
+msgid "Display e-mail address"
+msgstr "Afficher le courriel"
+
+msgid "Contact list details"
+msgstr "Detaisl d'affichage des contacts"
+
 #: rc.cpp:467
 msgctxt "NAME OF TRANSLATORS"
 msgid "Your names"

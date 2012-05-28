@@ -41,6 +41,7 @@
 #include <algorithm> // for std::find
 #include <dlfcn.h>
 #include "fileutils.h"
+#include "array_size.h"
 #include "logger.h"
 
 AudioCodecFactory::AudioCodecFactory() :
@@ -273,36 +274,31 @@ bool AudioCodecFactory::seemsValid(const std::string &lib)
 
     // Second: check the extension of the file name.
     // If it is different than SFL_CODEC_VALID_EXTEN , not a SFL shared library
-    if (lib.substr(lib.length() - suffix.length() , lib.length()) != suffix)
+    if (lib.substr(lib.length() - suffix.length(), lib.length()) != suffix)
         return false;
 
-
-#ifndef HAVE_SPEEX_CODEC
-
-    if (lib.substr(prefix.length() , len) == "speex")
-        return false;
-
+    static const std::string validCodecs[] = {
+    "ulaw",
+    "alaw",
+    "g722",
+#ifdef HAVE_SPEEX_CODEC
+    "speex_nb",
+    "speex_wb",
+    "speex_ub",
 #endif
 
-#ifndef HAVE_GSM_CODEC
-
-    if (lib.substr(prefix.length() , len) == "gsm")
-        return false;
-
+#ifdef HAVE_GSM_CODEC
+    "gsm",
 #endif
 
-#ifndef BUILD_ILBC
-
-    if (lib.substr(prefix.length() , len) == "ilbc")
-        return false;
-
+#ifdef BUILD_ILBC
+    "ilbc",
 #endif
+    ""};
 
-    if (lib.substr(0, prefix.length()) == prefix)
-        if (lib.substr(lib.length() - suffix.length() , suffix.length()) == suffix)
-            return true;
-
-    return false;
+    const std::string name(lib.substr(prefix.length(), len));
+    const std::string *end = validCodecs + ARRAYSIZE(validCodecs);
+    return find(validCodecs, end, name) != end;
 }
 
 bool
@@ -322,7 +318,8 @@ bool AudioCodecFactory::isCodecLoaded(int payload) const
     return false;
 }
 
-std::vector <std::string> AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
+std::vector <std::string>
+AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
 {
     std::vector<std::string> v;
     std::stringstream ss;

@@ -279,7 +279,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     if(alias_ != IP2IP_PROFILE) map.getValue(HOSTNAME_KEY, &hostname_);
     map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
     if(alias_ != IP2IP_PROFILE) map.getValue(MAILBOX_KEY, &mailBox_);
-    map.getValue(CODECS_KEY, &codecStr_);
+    map.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
     // Update codec list which one is used for SDP offer
     setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
 #ifdef SFL_VIDEO
