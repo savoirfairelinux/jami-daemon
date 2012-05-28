@@ -33,19 +33,34 @@
  */
 
 #include "audioloop.h"
+#include "manager.h"
+#include "dbus/callmanager.h"
 #include <cmath>
 #include <numeric>
 #include <cstring>
 #include <cassert>
 #include "logger.h"
 
-AudioLoop::AudioLoop() : buffer_(0),  size_(0), pos_(0), sampleRate_(0)
+AudioLoop::AudioLoop() : buffer_(0),  size_(0), pos_(0), sampleRate_(0), isRecording_(false)
 {}
 
 AudioLoop::~AudioLoop()
 {
     delete [] buffer_;
 }
+
+void
+AudioLoop::seek(double relative_position)
+{
+
+    DEBUG("seek relative position: %f", relative_position);
+
+    size_t new_pos = (size_t)((double)size_ * (relative_position * 0.01));
+
+    pos_ = new_pos;
+}
+
+static unsigned int updatePlaybackScale = 0;
 
 void
 AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
@@ -84,5 +99,14 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
     }
 
     pos_ = pos;
+
+    if(isRecording_) {
+        if((updatePlaybackScale % 5) == 0) {
+            CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
+            // cm->updatePlaybackScale("", (pos_ >> 8) + (size_ << 16));
+            cm->updatePlaybackScale("", pos_ + (size_ << 16));
+        }
+        updatePlaybackScale++;
+    }
 }
 

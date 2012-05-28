@@ -57,6 +57,8 @@ class AudioLoop {
          */
         void getNext(SFLDataFormat* output, size_t samples, short volume=100);
 
+        void seek(double relative_position);
+
         /**
          * Reset the pointer position
          */
@@ -72,6 +74,13 @@ class AudioLoop {
             return size_;
         }
 
+        /**
+         * This should be set to true for recording playback
+         */
+        void setIsRecording(bool isRec) {
+           isRecording_ = isRec;
+        }
+
 
     protected:
         /** The data buffer */
@@ -85,6 +94,9 @@ class AudioLoop {
 
         /** Sample rate */
         unsigned int sampleRate_;
+
+        /** Is a playback recording */
+        bool isRecording_;
 
     private:
         NON_COPYABLE(AudioLoop);

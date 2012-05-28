@@ -215,15 +215,25 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 pos = 0;
                 add_to_toolbar(toolbar_, pickUpWidget_, pos++);
 
-                if (active_calltree_tab == current_calls_tab)
+                if (active_calltree_tab == current_calls_tab) {
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
+                    main_window_hide_playback_scale();
+                }
                 else if (active_calltree_tab == history_tab) {
                     if (is_non_empty(selectedCall->_recordfile)) {
+                        main_window_show_playback_scale();
                         if (selectedCall->_record_is_playing)
                             add_to_toolbar(toolbar_, stopRecordWidget_, pos++);
                         else
                             add_to_toolbar(toolbar_, playRecordWidget_, pos++);
                     }
+                    else {
+                        main_window_hide_playback_scale();
+                    }
+
+                }
+                else {
+                    main_window_hide_playback_scale();
                 }
                 break;
         }
@@ -355,14 +365,22 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
                     gtk_action_set_sensitive(imAction_, TRUE);
                     add_to_toolbar(toolbar_, imToolbar_, pos);
                 }
+                main_window_hide_playback_scale();
             } else if (active_calltree_tab == history_tab) {
                 if (is_non_empty(selectedConf->_recordfile)) {
+                    main_window_show_playback_scale();
                     pos = 2;
                     if (selectedConf->_record_is_playing)
                         add_to_toolbar(toolbar_, stopRecordWidget_, pos);
                     else
                         add_to_toolbar(toolbar_, playRecordWidget_, pos);
                 }
+                else {
+                    main_window_hide_playback_scale();
+                }
+            }
+            else {
+                main_window_hide_playback_scale();
             }
             g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
             break;

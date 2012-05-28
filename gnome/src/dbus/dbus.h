@@ -454,6 +454,11 @@ void dbus_set_record_path(const gchar *path);
 gchar *dbus_get_record_path(void);
 
 /**
+ *
+ */
+void dbus_set_record_playback_seek(gdouble value);
+
+/**
  * Set the always recording functionality, once true all call
  * will be set in recording mode once answered
  */

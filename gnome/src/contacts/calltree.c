@@ -527,11 +527,42 @@ calltree_remove_call(calltab_t* tab, const gchar *target_id)
     statusbar_update_clock("");
 }
 
-GdkPixbuf *history_state_to_pixbuf(const gchar *history_state)
+static GdkPixbuf *history_state_to_pixbuf(callable_obj_t *call)
 {
-    gchar *svg_filename = g_strconcat(ICONS_DIR, "/", history_state, ".svg", NULL);
+    if(call == NULL) {
+        ERROR("Not a valid call in history state to pixbuf");
+        return NULL;
+    }
+
+    gboolean has_rec_file = FALSE;
+    gboolean is_incoming = FALSE;
+    gboolean is_outgoing = FALSE;
+
+    if(call->_recordfile && strlen(call->_recordfile) > 0)
+        has_rec_file = TRUE;
+
+    if(g_strcmp0(call->_history_state, OUTGOING_STRING) == 0)
+        is_incoming = TRUE;
+    else if(g_strcmp0(call->_history_state, INCOMING_STRING) == 0)
+        is_outgoing = TRUE;
+
+    gchar *svg_filename = NULL;
+
+    if(!has_rec_file)
+        svg_filename = g_strconcat(ICONS_DIR, "/", call->_history_state, ".svg", NULL);
+    else {
+        if(is_incoming)
+            svg_filename = g_strconcat(ICONS_DIR, "/", "incoming_rec", ".svg", NULL);
+        else if(is_outgoing)
+            svg_filename = g_strconcat(ICONS_DIR, "/", "outgoing_rec", ".svg", NULL);
+        else
+            svg_filename = g_strconcat(ICONS_DIR, "/", call->_history_state, ".svg", NULL);
+    }
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(svg_filename, NULL);
+
     g_free(svg_filename);
+
     return pixbuf;
 }
 
@@ -661,7 +692,7 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
         }
 
     } else if (tab == history_tab) {
-        pixbuf = history_state_to_pixbuf(call->_history_state);
+        pixbuf = history_state_to_pixbuf(call);
 
         g_free(description);
         description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "", "");
@@ -819,7 +850,7 @@ void calltree_add_history_entry(callable_obj_t *call)
     GtkTreeIter iter;
     gtk_tree_store_prepend(history_tab->store, &iter, NULL);
 
-    GdkPixbuf *pixbuf = history_state_to_pixbuf(call->_history_state);
+    GdkPixbuf *pixbuf = history_state_to_pixbuf(call);
 
     gchar *date = get_formatted_start_timestamp(call->_time_start);
     gchar *duration = get_call_duration(call);

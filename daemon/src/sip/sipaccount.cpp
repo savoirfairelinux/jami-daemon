@@ -276,10 +276,10 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(ALIAS_KEY, &alias_);
     map.getValue(TYPE_KEY, &type_);
     map.getValue(USERNAME_KEY, &username_);
-    map.getValue(HOSTNAME_KEY, &hostname_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(HOSTNAME_KEY, &hostname_);
     map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
-    map.getValue(MAILBOX_KEY, &mailBox_);
-    map.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(MAILBOX_KEY, &mailBox_);
+    map.getValue(CODECS_KEY, &codecStr_);
     // Update codec list which one is used for SDP offer
     setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
 #ifdef SFL_VIDEO
@@ -289,7 +289,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
 
     map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
     map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
-    map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
     map.getValue(INTERFACE_KEY, &interface_);
     int port = DEFAULT_SIP_PORT;
     map.getValue(PORT_KEY, &port);
@@ -298,18 +298,18 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
     map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
-    map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
     map.getValue(DTMF_TYPE_KEY, &dtmfType);
     dtmfType_ = dtmfType;
 
-    map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
     map.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
-    map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
-    map.getValue(STUN_SERVER_KEY, &stunServer_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(STUN_SERVER_KEY, &stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
@@ -426,7 +426,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
     if (stunServer_ != details[CONFIG_STUN_SERVER]) {
-        DEBUG("Stun server changed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         link_->sipTransport.destroyStunResolver(stunServer_);
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
     }
@@ -639,7 +638,6 @@ void SIPAccount::startKeepAliveTimer() {
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
 
-
     keepAliveDelay_.msec = 0;
 
     keepAliveTimerActive_ = true;
@@ -718,7 +716,7 @@ void SIPAccount::initStunConfiguration()
 void SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
-        registrationExpire_ = MIN_REGISTRATION_TIME; /** Default expire value for registration */
+        registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
     if (tlsEnable_ == "true") {
         initTlsConfiguration();
@@ -895,15 +893,8 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 
     sipAccount->stopKeepAliveTimer();
 
-    if (sipAccount->isRegistered()) {
+    if (sipAccount->isRegistered())
         sipAccount->registerVoIPLink();
-
-        // make sure the current timer is deactivated
-        sipAccount->stopKeepAliveTimer();
-
-        // register a new timer
-        sipAccount->startKeepAliveTimer();
-    }
 }
 
 namespace {

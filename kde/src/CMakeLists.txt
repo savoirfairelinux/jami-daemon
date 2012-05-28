@@ -3,6 +3,8 @@ ADD_DEFINITIONS(
    ${KDE4_DEFINITIONS}
    ${QT_DEFINITIONS}
    -fexceptions
+   -Wno-reorder
+   -Wno-deprecated-declarations
    -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\""
    -DSHARE_INSTALL_PREFIX="\\\"${SHARE_INSTALL_PREFIX}\\\""
 )

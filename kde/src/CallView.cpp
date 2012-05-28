@@ -148,7 +148,7 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
    Q_UNUSED(action)
    QByteArray encodedCallId      = data->data( MIME_CALLID      );
    if (!QString(encodedCallId).isEmpty()) {
-      if (SFLPhone::model()->getIndex(encodedCallId))
+      if (SFLPhone::model()->getIndex(encodedCallId) && dynamic_cast<Call*>(SFLPhone::model()->getCall(encodedCallId))) //Prevent a race
         clearArtefact(SFLPhone::model()->getIndex(encodedCallId));
 
       if (!parent) {
@@ -418,7 +418,6 @@ void CallView::hideOverlay()
    }
    
    m_pCallPendingTransfer = 0;
-   //m_pTransferLE->clear();
 } //hideOverlay
 
 ///Be sure the size of the overlay stay the same
@@ -699,6 +698,23 @@ void CallView::keyPressEvent(QKeyEvent* event) {
    SFLPhone::app()->view()->keyPressEvent(event);
 }
 
+///Move selection using arrow keys
+void CallView::moveSelectedItem( Qt::Key direction )
+{
+   if (direction == Qt::Key_Left) {
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveLeft ,Qt::NoModifier));
+   }
+   else if (direction == Qt::Key_Right) {
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveRight,Qt::NoModifier));
+   }
+   else if (direction == Qt::Key_Up) {
+      qDebug() << "Move up";
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveUp   ,Qt::NoModifier));
+   }
+   else if (direction == Qt::Key_Down) {
+      setCurrentIndex(moveCursor(QAbstractItemView::MoveDown ,Qt::NoModifier));
+   }
+}
 
 /*****************************************************************************
  *                                                                           *

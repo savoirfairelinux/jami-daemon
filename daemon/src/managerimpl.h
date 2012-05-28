@@ -633,6 +633,8 @@ class ManagerImpl {
              */
         bool startRecordedFilePlayback(const std::string&);
 
+        void recordingPlaybackSeek(const double value);
+
         /**
          * Stop playback of recorded file
          * @param File of the file to stop

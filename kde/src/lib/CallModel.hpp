@@ -187,7 +187,7 @@ CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCallList()
 {
    QList<Call*> callList;
    foreach(Call* call, m_sActiveCalls) {
-      if (call->getState() != CALL_STATE_OVER) //Prevent a race
+      if (dynamic_cast<Call*>(call) && call->getState() != CALL_STATE_OVER) //Prevent a race
          callList.push_back(call);
    }
    return callList;
