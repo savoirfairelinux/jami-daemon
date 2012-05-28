@@ -31,6 +31,7 @@
 class QLabel;
 class QPushButton;
 class QMimeData;
+class QTimer;
 
 //KDE
 class KIcon;
@@ -70,6 +71,8 @@ class CallTreeItem : public QWidget
     QLabel*  m_pCodecL          ;
     QLabel*  m_pSecureL         ;
     QLabel*  m_pHistoryPeerL    ;
+    QLabel*  m_pElapsedL        ;
+    QTimer*  m_pTimer           ;
     
     TranslucentButtons* m_pBtnConf ;
     TranslucentButtons* m_pBtnTrans;
@@ -86,6 +89,7 @@ private slots:
    void transferEvent(QMimeData* data);
    void conversationEvent(QMimeData* data);
    void hide();
+   void incrementTimer();
 
 public slots:
    void updated();

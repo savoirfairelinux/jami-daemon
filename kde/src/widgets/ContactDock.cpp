@@ -185,7 +185,7 @@ void ContactDock::reloadContact()
          QString category;
          switch (CURRENT_SORTING_MODE) {
             case Name:
-               category = QString(cont->getFormattedName()[0]);
+               category = HelperFunctions::normStrippped(QString(cont->getFormattedName()[0])).toUpper();
                break;
             case Organisation:
                category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
@@ -271,6 +271,7 @@ void ContactDock::filter(const QString& text)
       item->getItem()->setHidden(!visible);
 
    }
+
    //m_pContactView->expandAll();
 } //filter
 

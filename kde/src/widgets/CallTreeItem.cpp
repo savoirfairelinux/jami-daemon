@@ -57,7 +57,7 @@ const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, IC
 
 ///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
-   : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0)
+   : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0),m_pTimer(0)
 {
    setMaximumSize(99999,50);
 }
@@ -115,6 +115,7 @@ void CallTreeItem::setCall(Call *call)
    m_pTransferPrefixL  = new QLabel(i18n("Transfer to : "));
    m_pTransferNumberL  = new QLabel();
    m_pPeerL            = new QLabel();
+   m_pElapsedL         = new QLabel();
    QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    QHBoxLayout* mainLayout = new QHBoxLayout();
@@ -161,6 +162,7 @@ void CallTreeItem::setCall(Call *call)
    descr->addLayout(transfer);
    descr->addItem(verticalSpacer);
    mainLayout->addLayout(descr);
+   mainLayout->addWidget(m_pElapsedL);
 
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
@@ -168,6 +170,7 @@ void CallTreeItem::setCall(Call *call)
    connect(m_pItemCall, SIGNAL(changed()), this,     SLOT(updated()));
 
    updated();
+   
 } //setCall
 
 ///Update data
@@ -231,6 +234,16 @@ void CallTreeItem::updated()
       kDebug() << "not emmiting tranfer signal";
    }
    changed();
+
+   if (state == CALL_STATE_CURRENT && !m_pTimer) {
+      m_pTimer = new QTimer(this);
+      m_pTimer->setInterval(1000);
+      connect(m_pTimer,SIGNAL(timeout()),this,SLOT(incrementTimer()));
+      m_pTimer->start();
+   }
+   else if (m_pTimer && (state == CALL_STATE_OVER || state == CALL_STATE_ERROR || state == CALL_STATE_FAILURE )) {
+      m_pTimer->stop();
+   }
 } //updated
 
 
@@ -313,21 +326,31 @@ void CallTreeItem::resizeEvent ( QResizeEvent *e )
    e->accept();
 } //resizeEvent
 
+///Called when a call is dropped on transfer
 void CallTreeItem::transferEvent(QMimeData* data)
 {
    emit transferDropEvent(m_pItemCall,data);
 }
 
+///Called when a call is dropped on conversation
 void CallTreeItem::conversationEvent(QMimeData* data)
 {
    kDebug() << "Proxying conversation mime";
    emit conversationDropEvent(m_pItemCall,data);
 }
 
+///Called when the overlay need to be hidden
 void CallTreeItem::hide()
 {
    if (!m_isHover) {
       m_pBtnConf->setVisible(false);
       m_pBtnTrans->setVisible(false);
    }
+}
+
+///Increment the current call elapsed time label
+void CallTreeItem::incrementTimer()
+{
+   int nsec = QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toInt()).time().secsTo( QTime::currentTime() );
+   m_pElapsedL->setText(QString("%1:%2").arg(nsec/60,2).arg(nsec%60,2));
 }
