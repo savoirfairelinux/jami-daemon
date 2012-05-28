@@ -26,14 +26,17 @@
  *
  */
 
-// #include <config.h>
+
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <gtk/gtk.h>
-
+#include "gtk2_wrappers.h"
 #include "seekslider.h"
 #include "dbus.h"
 #include "logger.h"
-#include "config.h"
 
 /**
  * SECTION:sfl-seekslider
@@ -64,19 +67,19 @@ static void sfl_seekslider_get_property (GObject *object, guint prop_id, GValue 
 
 static gboolean on_playback_scale_value_changed_cb(GtkRange *range, GtkScrollType scroll, gdouble value, gpointer user_data);
 static gboolean on_playback_scale_pressed_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
-static gboolean on_playback_scale_released_cb(GtkWidget *widget, GdkEventButton  *event, gpointer user_data);
-static gboolean on_playback_scale_moved_cb(GtkWidget *widget, GdkEvent  *event, gpointer user_data);
-static gboolean on_playback_scale_scrolled_cb(GtkWidget *widget, GdkEvent  *event, gpointer user_data);
+static gboolean on_playback_scale_released_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
+static gboolean on_playback_scale_moved_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+static gboolean on_playback_scale_scrolled_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data);
 
 struct SFLSeekSliderPrivate
 {
-	GtkWidget *hscale;
-        gboolean can_update_scale;
+    GtkWidget *hscale;
+    gboolean can_update_scale;
 };
 
 enum
 {
-	PROP_0,
+    PROP_0,
 };
 
 G_DEFINE_TYPE (SFLSeekSlider, sfl_seekslider, GTK_TYPE_HBOX)
@@ -106,15 +109,13 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
     gdouble pageincrement = SEEKSLIDER_PAGEINCREMENT;
     gdouble pagesize = SEEKSLIDER_PAGESIZE;
 
-    GtkAdjustment *adjustment = gtk_adjustment_new(init_value, min_value, max_value, stepincrement, pageincrement, pagesize);
-    if(adjustment == NULL) {
+    GtkAdjustment *adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(init_value, min_value, max_value, stepincrement, pageincrement, pagesize));
+    if (adjustment == NULL)
         WARN("Invalid adjustment value for horizontal scale");
-    }
 
     seekslider->priv->hscale = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, adjustment);
-    if(seekslider->priv->hscale == NULL) {
+    if (seekslider->priv->hscale == NULL)
          WARN("Could not create new horizontal scale");
-    }
 
     g_signal_connect(G_OBJECT(seekslider->priv->hscale), "change-value",
                      G_CALLBACK(on_playback_scale_value_changed_cb), seekslider);
@@ -159,9 +160,9 @@ static void
 sfl_seekslider_set_property (GObject *object, guint prop_id, const GValue *value G_GNUC_UNUSED, GParamSpec *pspec)
 {
     switch (prop_id) {
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-	break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
     }
 }
 
@@ -169,9 +170,9 @@ static void
 sfl_seekslider_get_property (GObject *object, guint prop_id, GValue *value G_GNUC_UNUSED, GParamSpec *pspec)
 {
     switch (prop_id) {
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-        break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
     }
 }
 
@@ -207,7 +208,7 @@ on_playback_scale_value_changed_cb(GtkRange *range G_GNUC_UNUSED, GtkScrollType 
 static gboolean
 on_playback_scale_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event, gpointer user_data)
 {
-    if(event->button == 1)
+    if (event->button == 1)
         event->button = 2;
 
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
@@ -217,9 +218,9 @@ on_playback_scale_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *ev
 }
 
 static gboolean
-on_playback_scale_released_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton  *event, gpointer user_data)
+on_playback_scale_released_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event, gpointer user_data)
 {
-    if(event->button == 1)
+    if (event->button == 1)
         event->button = 2;
 
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
@@ -229,27 +230,27 @@ on_playback_scale_released_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton  *
 }
 
 static gboolean
-on_playback_scale_moved_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent  *event G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+on_playback_scale_moved_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
 {
     return FALSE;
 }
 
 static gboolean
-on_playback_scale_scrolled_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent  *event G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+on_playback_scale_scrolled_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
 {
     return TRUE;
 }
 
 void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint size)
 {
-    if(size == 0)
+    if (size == 0)
         size = 1;
 
-    if(current > size)
+    if (current > size)
         current = size;
 
     gdouble val = ((gdouble) current / (gdouble) size) * 100.0;
 
-    if(seekslider->priv->can_update_scale == TRUE) {
-        gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), val); }
+    if (seekslider->priv->can_update_scale)
+        gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), val);
 }
