@@ -91,6 +91,7 @@ private:
    KAction* action_configureSflPhone     ;
    KAction* action_configureShortcut     ;
    KAction* action_accountCreationWizard ;
+   KAction* action_pastenumber           ;
    QActionGroup* action_screen           ;
 
    SFLPhoneView*  m_pView            ;

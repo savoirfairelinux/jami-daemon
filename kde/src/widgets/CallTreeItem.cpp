@@ -140,6 +140,8 @@ void CallTreeItem::setCall(Call *call)
 
    m_pSecureL = new QLabel(this);
 
+   m_pElapsedL->setStyleSheet("margin-right:5px;");
+
    mainLayout->setSpacing(4);
    QVBoxLayout* descr = new QVBoxLayout();
    descr->setMargin(1);
