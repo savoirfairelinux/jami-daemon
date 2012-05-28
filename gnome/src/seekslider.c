@@ -73,6 +73,7 @@ static gboolean on_playback_scale_scrolled_cb(GtkWidget *widget, GdkEvent *event
 
 struct SFLSeekSliderPrivate
 {
+    GtkWidget *hbox;
     GtkWidget *hscale;
     gboolean can_update_scale;
 };
@@ -111,11 +112,15 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
 
     GtkAdjustment *adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(init_value, min_value, max_value, stepincrement, pageincrement, pagesize));
     if (adjustment == NULL)
-        WARN("Invalid adjustment value for horizontal scale");
+        WARN("Invalid adjustment value for horizontal scale in seekslider");
 
     seekslider->priv->hscale = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, adjustment);
     if (seekslider->priv->hscale == NULL)
-         WARN("Could not create new horizontal scale");
+        WARN("Could not create new horizontal scale for seekslider");
+
+    seekslider->priv->hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    if(seekslider->priv->hbox == NULL)
+        WARN("Could not create new horizontal box for seekslider");
 
     g_signal_connect(G_OBJECT(seekslider->priv->hscale), "change-value",
                      G_CALLBACK(on_playback_scale_value_changed_cb), seekslider);
@@ -134,9 +139,12 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
 
     g_object_set(G_OBJECT(seekslider->priv->hscale), "draw-value", FALSE, NULL);
 
-    gtk_widget_show (seekslider->priv->hscale);
+    gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->hscale, TRUE, TRUE, 0);
 
-    gtk_box_pack_start(GTK_BOX(&seekslider->parent), seekslider->priv->hscale, TRUE, TRUE, 0);
+    gtk_widget_show (seekslider->priv->hscale);
+    gtk_widget_show (seekslider->priv->hbox);
+
+    gtk_box_pack_start(GTK_BOX(&seekslider->parent), seekslider->priv->hbox, TRUE, TRUE, 0);
 
     seekslider->priv->can_update_scale = TRUE;
 }
