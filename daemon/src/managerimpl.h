@@ -131,9 +131,19 @@ class ManagerImpl {
         void init(const std::string &config_file);
 
         /**
+         * Enter Dbus mainloop
+         */
+        void run();
+
+        /**
          * Terminate all thread (sound, link) and unload AccountMap
          */
         void terminate();
+
+        /*
+         * Terminate all threads and exit DBus loop
+         */
+        void finish();
 
         /**
          * Accessor to audiodriver.

@@ -37,7 +37,6 @@
 #include <iostream>
 #include <getopt.h>
 #include "fileutils.h"
-#include "dbus/dbusmanager.h"
 #include "logger.h"
 #include "manager.h"
 
@@ -122,8 +121,19 @@ namespace {
     }
 }
 
+void signal_handler(int code)
+{
+    std::cerr << "Caught signal " << strsignal(code) << ", terminating..." << std::endl;
+    Manager::instance().finish();
+}
+
 int main(int argc, char *argv [])
 {
+    // TODO: Block signals for all threads but the main thread, decide how/if we should
+    // handle other signals
+    signal(SIGTERM, signal_handler);
+    signal(SIGINT, signal_handler);
+
     fileutils::set_program_dir(argv[0]);
     print_title();
     if (parse_args(argc, argv))
@@ -143,8 +153,7 @@ int main(int argc, char *argv [])
         return 1;
     }
 
-    DEBUG("Starting DBus event loop");
-    Manager::instance().getDbusManager()->exec();
+    Manager::instance().run();
     Manager::instance().saveHistory();
 
     return 0;
