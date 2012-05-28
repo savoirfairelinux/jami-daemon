@@ -42,6 +42,7 @@
 //SFLPhone
 #include "klib/AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "SFLPhone.h"
 
 //SFLPhone library
@@ -50,7 +51,7 @@
 
 ///Constructor
 ContactItemWidget::ContactItemWidget(QWidget *parent)
-   : QWidget(parent), m_pMenu(0)
+   : QWidget(parent), m_pMenu(0),m_pOrganizationL(0),m_pEmailL(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
    m_pCallAgain  = new KAction(this);
@@ -110,8 +111,6 @@ void ContactItemWidget::setContact(Contact* contact)
    m_pContactKA     = contact;
    m_pIconL         = new QLabel ( this );
    m_pContactNameL  = new QLabel (      );
-   m_pOrganizationL = new QLabel ( this );
-   m_pEmailL        = new QLabel (      );
    m_pCallNumberL   = new QLabel ( this );
 
    m_pIconL->setMinimumSize(70,48);
@@ -128,10 +127,24 @@ void ContactItemWidget::setContact(Contact* contact)
    mainLayout->setContentsMargins(0,0,0,0);
    mainLayout->addWidget( m_pIconL        , 0 , 0 , 4 , 1 );
    mainLayout->addWidget( m_pContactNameL , 0 , 1         );
-   mainLayout->addWidget( m_pOrganizationL, 1 , 1         );
-   mainLayout->addWidget( m_pCallNumberL  , 2 , 1         );
-   mainLayout->addWidget( m_pEmailL       , 3 , 1         );
-   mainLayout->addItem(verticalSpacer     , 4 , 1         );
+
+   uint row = 1;
+
+   if (ConfigurationSkeleton::displayOrganisation()) {
+      m_pOrganizationL = new QLabel ( this );
+      mainLayout->addWidget( m_pOrganizationL, row , 1);
+      row++;
+   }
+   mainLayout->addWidget( m_pCallNumberL  , row , 1       );
+   row++;
+
+   if (ConfigurationSkeleton::displayEmail()) {
+      m_pEmailL        = new QLabel (      );
+      mainLayout->addWidget( m_pEmailL       , row , 1    );
+      row++;
+   }
+   
+   mainLayout->addItem(verticalSpacer     , row , 1       );
 
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
@@ -157,17 +170,17 @@ void ContactItemWidget::setItem(QTreeWidgetItem* item)
 void ContactItemWidget::updated()
 {
    m_pContactNameL->setText("<b>"+m_pContactKA->getFormattedName()+"</b>");
-   if (!m_pContactKA->getOrganization().isEmpty()) {
+   if (m_pOrganizationL && !m_pContactKA->getOrganization().isEmpty()) {
       m_pOrganizationL->setText(m_pContactKA->getOrganization());
    }
-   else {
+   else if (m_pOrganizationL) {
       m_pOrganizationL->setVisible(false);
    }
 
-   if (!getEmail().isEmpty()) {
+   if (m_pEmailL && !getEmail().isEmpty()) {
       m_pEmailL->setText(getEmail());
    }
-   else {
+   else if (m_pEmailL) {
       m_pEmailL->setVisible(false);
    }
 

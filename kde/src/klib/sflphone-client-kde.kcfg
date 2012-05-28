@@ -111,6 +111,16 @@
       <default>{Work,Home,Messenger,Prefered number,Voice,Mobile,Work,Video,Mailbox,Modem,Car,ISDN,PCS,Pager,Other...,Work}</default>
     </entry>
 
+    <entry name="displayOrganisation" type="bool">
+      <label>Defines whether to display the organisation the the contact list item</label>
+      <default>true</default>
+    </entry>
+
+    <entry name="displayEmail" type="bool">
+      <label>Defines whether to display the organisation the the contact list item</label>
+      <default>false</default>
+    </entry>
+
     <!-- Bookmark -->
     <entry name="bookmarkList" type="StringList">
         <label>List of bookmarked clients</label>
