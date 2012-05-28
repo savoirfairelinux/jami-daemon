@@ -31,7 +31,7 @@ rm -f *.tar.gz
 
 rm -rf lang/
 rm -rf tools/
-rm -rf kde/
+#rm -rf kde/
 
 rm -rf .git/
 rm -f .gitignore
