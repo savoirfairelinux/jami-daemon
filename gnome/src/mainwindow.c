@@ -293,7 +293,7 @@ create_main_window()
     gtk_widget_hide(contacts_tab->tree);
 
     /* show playback scale only if a recorded call is selected */
-    gtk_widget_hide(seekslider);
+    gtk_widget_set_sensitive(seekslider, FALSE);
 
     /* don't show waiting layer */
     gtk_widget_hide(waitingLayer);
@@ -496,11 +496,11 @@ main_window_update_playback_scale(guint current, guint size)
 void
 main_window_show_playback_scale()
 {
-    gtk_widget_show(seekslider);
+    gtk_widget_set_sensitive(seekslider, TRUE);
 }
 
 void
 main_window_hide_playback_scale()
 {
-    gtk_widget_hide(seekslider);
+    gtk_widget_set_sensitive(seekslider, FALSE);
 }
