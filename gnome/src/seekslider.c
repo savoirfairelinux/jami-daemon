@@ -315,9 +315,7 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-
     if (selectedCall == NULL) {
-        ERROR("No selected object in history treeview");
         return;
     }
 
