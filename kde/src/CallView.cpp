@@ -85,6 +85,11 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
       addCall(active);
    }
 
+   foreach(Call* active, SFLPhone::model()->getConferenceList()) {
+      addConference(active);
+   }
+
+   qDebug() << "\n\n\nHERE";
    //User Interface even
    //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                        /
    /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)              ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
@@ -523,10 +528,9 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
       parent->addChild(item);
 
    CallTreeItem* callItem = new CallTreeItem();
-   connect(callItem, SIGNAL(showChilds(CallTreeItem*)), this, SLOT(showDropOptions(CallTreeItem*)));
-   connect(callItem, SIGNAL(askTransfer(Call*)), this, SLOT(showTransferOverlay(Call*)));
-   connect(callItem, SIGNAL(transferDropEvent(Call*,QMimeData*)), this, SLOT(transferDropEvent(Call*,QMimeData*)));
-   connect(callItem, SIGNAL(conversationDropEvent(Call*,QMimeData*)), this, SLOT(conversationDropEvent(Call*,QMimeData*)));
+   connect(callItem, SIGNAL(askTransfer(Call*))                     , this, SLOT(showTransferOverlay(Call*)              ));
+   connect(callItem, SIGNAL(transferDropEvent(Call*,QMimeData*))    , this, SLOT(transferDropEvent(Call*,QMimeData*)     ));
+   connect(callItem, SIGNAL(conversationDropEvent(Call*,QMimeData*)), this, SLOT(conversationDropEvent(Call*,QMimeData*) ));
 
    SFLPhone::model()->updateWidget(SFLPhone::model()->getCall(item), callItem);
    callItem->setCall(SFLPhone::model()->getCall(item));
@@ -616,7 +620,7 @@ void CallView::itemClicked(QTreeWidgetItem* item, int column) {
 ///Add a new conference, get the call list and update the interface as needed
 Call* CallView::addConference(Call* conf)
 {
-   kDebug() << "Conference created";
+   kDebug() << "\n\n\nConference created";
    Call* newConf =  conf;//SFLPhone::model()->addConference(confID);//TODO ELV?
 
    QTreeWidgetItem* confItem = new QTreeWidgetItem();

@@ -42,11 +42,12 @@
 #define CALLMODEL_T CallModel<CallWidget,Index>
 
 //Static member
-CALLMODEL_TEMPLATE QString CALLMODEL_T::m_sPriorAccountId   = ""    ;
-CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::m_spAccountList = 0    ;
-CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sInstanceInit        = false ;
-CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sCallInit            = false ;
-CALLMODEL_TEMPLATE bool CALLMODEL_T::m_sHistoryInit         = false ;
+CALLMODEL_TEMPLATE QString      CALLMODEL_T::m_sPriorAccountId      = ""        ;
+CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::m_spAccountList        = 0         ;
+CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sInstanceInit        = false     ;
+CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sCallInit            = false     ;
+CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sHistoryInit         = false     ;
+CALLMODEL_TEMPLATE CallMap      CALLMODEL_T::m_lConfList            = CallMap();
 
 CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sHistoryCalls ;
 
@@ -120,7 +121,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
    
       QStringList confList = callManager.getConferenceList();
       foreach (QString confId, confList) {
-          addConference(confId);
+          CallModelBase::addConferenceS(addConference(confId));
       }
    }
    m_sCallInit = true;
@@ -183,14 +184,30 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::findCallByCallId(const QString& callId)
 }
 
 ///Return the action call list
-CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCallList()
+CALLMODEL_TEMPLATE CallList CALLMODEL_T::getCallList()
 {
-   QList<Call*> callList;
+   CallList callList;
    foreach(Call* call, m_sActiveCalls) {
       if (dynamic_cast<Call*>(call) && call->getState() != CALL_STATE_OVER) //Prevent a race
          callList.push_back(call);
    }
    return callList;
+}
+
+///Return all conferences
+CALLMODEL_TEMPLATE CallList CALLMODEL_T::getConferenceList()
+{
+   CallList confList;
+
+   //That way it can not be invalid
+   QStringList confListS = CallManagerInterfaceSingleton::getInstance().getConferenceList();
+   foreach (QString confId, confListS) {
+        if (m_lConfList[confId] != nullptr)
+           confList << m_lConfList[confId];
+        else
+           confList << addConference(confId);
+   }
+   return confList;
 }
 
 
@@ -341,6 +358,8 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
    
    m_sPrivateCallList_call[newConf]  = aNewStruct;
    m_sPrivateCallList_callId[confID] = aNewStruct;
+
+   m_lConfList[newConf->getConfId()] = newConf;
    
    return newConf;
 } //addConference
@@ -419,6 +438,8 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(Call* call)
       return;
    }
    removeCall(call);
+
+   m_lConfList[call->getConfId()] = nullptr;
 }
 
 
