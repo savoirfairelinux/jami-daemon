@@ -70,7 +70,7 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
     while (running_) {
         // Send session
-        if (rtpSession_.DtmfPending())
+        if (rtpSession_.hasDTMFPending())
             rtpSession_.sendDtmfEvent();
         else
             rtpSession_.sendMicData();

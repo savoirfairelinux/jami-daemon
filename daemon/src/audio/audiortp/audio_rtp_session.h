@@ -66,6 +66,8 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         void updateDestinationIpAddress();
 
+        virtual int getIncrementForDTMF() const;
+
     protected:
         /**
          * Set the audio codec for this RTP session
@@ -121,11 +123,6 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          * Receive data from peer
          */
         void receiveSpeakerData();
-
-        /**
-         * Increment timestamp for DTMF event
-         */
-        virtual void incrementTimestampForDTMF();
 
         // Main destination address for this rtp session.
         // Stored in case or reINVITE, which may require to forget
