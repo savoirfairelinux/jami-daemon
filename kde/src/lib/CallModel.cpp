@@ -134,6 +134,13 @@ Call* CallModelBase::addCall(Call* call, Call* parent)
    return call;
 }
 
+Call* CallModelBase::addConferenceS(Call* conf)
+{
+   qDebug() << "-----Emitting conference" << conf->getConfId();
+   emit conferenceCreated(conf);
+   return conf;
+}
+
 ///Remove it from active calls
 void CallModelBase::removeActiveCall(Call* call)
 {
