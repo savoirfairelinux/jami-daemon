@@ -300,14 +300,11 @@ static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNU
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
     if (selectedCall == NULL) {
-        ERROR("No selected object in playback record callback");
         return;
     }
 
     DEBUG("Start selected call file playback %s", selectedCall->_recordfile);
     selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
-
-    // update_actions();
 
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PAUSE);
 }
@@ -336,8 +333,6 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
         }
         selectedCall->_record_is_playing = FALSE;
     }
-
-    // update_actions();
 
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
 }
