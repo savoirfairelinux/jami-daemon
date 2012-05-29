@@ -56,8 +56,8 @@ const function Call::actionPerformedFunctionMap[11][5] =
 /*HOLD           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },/**/
 /*FAILURE        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
 /*BUSY           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
-/*TRANSFERT      */  {&Call::transfer   , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },/**/
-/*TRANSFERT_HOLD */  {&Call::transfer   , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },/**/
+/*TRANSFERT      */  {&Call::transfer   , &Call::hangUp   , &Call::transfer       , &Call::hold        ,  &Call::setRecord     },/**/
+/*TRANSFERT_HOLD */  {&Call::transfer   , &Call::hangUp   , &Call::transfer       , &Call::unhold      ,  &Call::setRecord     },/**/
 /*OVER           */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
 /*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       } /**/
 };//                                                                                                                                 
@@ -712,7 +712,7 @@ void Call::call()
 void Call::transfer()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Transferring call to number : " << m_TransferNumber << ". callId : " << m_CallId;
+   qDebug() << "\n\n\nTransferring call to number : " << m_TransferNumber << ". callId : " << m_CallId << "\n\n\n";
    callManager.transfer(m_CallId, m_TransferNumber);
    this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
 }
