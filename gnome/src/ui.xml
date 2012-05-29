@@ -56,8 +56,6 @@
     
     <toolitem name="VoicemailToolbar" action="Voicemail"/>
     <toolitem name="HistoryToolbar" action="History"/>
-    <toolitem name="StartPlaybackRecordToolbar" action="StartPlaybackRecord"/>
-    <toolitem name="StopPlaybackRecordToolbar" action="StopPlaybackRecord" />
   </toolbar>
 
   <popup name="PopupMenu">

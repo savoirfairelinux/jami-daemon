@@ -533,9 +533,9 @@ static GdkPixbuf *history_state_to_pixbuf(callable_obj_t *call)
         has_rec_file = TRUE;
 
     if(g_strcmp0(call->_history_state, OUTGOING_STRING) == 0)
-        is_incoming = TRUE;
-    else if(g_strcmp0(call->_history_state, INCOMING_STRING) == 0)
         is_outgoing = TRUE;
+    else if(g_strcmp0(call->_history_state, INCOMING_STRING) == 0)
+        is_incoming = TRUE;
 
     gchar *svg_filename = NULL;
 

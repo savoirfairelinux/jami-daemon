@@ -509,6 +509,9 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, Call* parent)
 ///Insert a TreeView item in the TreeView as child of parent or as a top level item, also restore the item Widget
 CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* parent)
 {
+   if (!dynamic_cast<QTreeWidgetItem*>(item) && !dynamic_cast<QTreeWidgetItem*>(parent))
+      return nullptr;
+   
    if (!item) {
       kDebug() << "This is not a valid call";
       return 0;

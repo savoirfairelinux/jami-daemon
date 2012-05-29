@@ -28,6 +28,7 @@
 #include <QtGui/QPalette>
 #include <QtGui/QInputDialog>
 #include <QtGui/QWidget>
+#include <QtGui/QClipboard>
 #include <QErrorMessage>
 
 //KDE
@@ -239,6 +240,13 @@ void SFLPhoneView::enter()
          kDebug() << "Enter when call selected not in appropriate state. Doing nothing.";
       }
    }
+}
+
+///Create a call from the clipboard content
+void SFLPhoneView::paste()
+{
+   QClipboard* cb = QApplication::clipboard();;
+   typeString(cb->text());
 }
 
 
@@ -527,7 +535,8 @@ void SFLPhoneView::updateStatusMessage()
    else {
       emit statusMessageChangeAsked(i18n("Using account")
                      + " \'" + account->getAlias()
-                     + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+                     + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ", "
+                     + account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) + ")");
    }
 }
 

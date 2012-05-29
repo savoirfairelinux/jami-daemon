@@ -244,12 +244,14 @@ create_main_window()
     seekslider = GTK_WIDGET(sfl_seekslider_new());
     if(seekslider == NULL)
         WARN("Error could not create widget\n");
-    gtk_box_pack_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
+
 
     /* Add tree views */
     gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
+
+    gtk_box_pack_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE, FALSE, 0);
 
@@ -293,7 +295,9 @@ create_main_window()
     gtk_widget_hide(contacts_tab->tree);
 
     /* show playback scale only if a recorded call is selected */
+    sfl_seekslider_set_display(SFL_SEEKSLIDER(seekslider), SFL_SEEKSLIDER_DISPLAY_PLAY);
     gtk_widget_set_sensitive(seekslider, FALSE);
+    main_window_hide_playback_scale();
 
     /* don't show waiting layer */
     gtk_widget_hide(waitingLayer);
@@ -494,13 +498,32 @@ main_window_update_playback_scale(guint current, guint size)
 }
 
 void
-main_window_show_playback_scale()
+main_window_set_playback_scale_sensitive()
 {
     gtk_widget_set_sensitive(seekslider, TRUE);
 }
 
 void
-main_window_hide_playback_scale()
+main_window_set_playback_scale_unsensitive()
 {
     gtk_widget_set_sensitive(seekslider, FALSE);
+}
+
+void
+main_window_show_playback_scale()
+{
+    gtk_widget_show(seekslider);
+}
+
+void
+main_window_hide_playback_scale()
+{
+    gtk_widget_hide(seekslider);
+    main_window_reset_playback_scale();
+}
+
+void
+main_window_reset_playback_scale()
+{
+    sfl_seekslider_reset((SFLSeekSlider *)seekslider);
 }
