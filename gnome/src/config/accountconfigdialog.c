@@ -1218,8 +1218,9 @@ static void update_account_from_basic_tab(account_t *account)
         const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
         account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
 
-        account_replace(account, CONFIG_RINGTONE_PATH,
-                        gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser)));
+        gchar *ringtone_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser));
+        account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
+        g_free(ringtone_path);
 
         gchar *address_combo_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
         account_replace(account, LOCAL_INTERFACE, address_combo_text);
