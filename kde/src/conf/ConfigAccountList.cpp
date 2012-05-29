@@ -59,12 +59,16 @@ AccountView* ConfigAccountList::addAccount(const QString& alias)
 
 void ConfigAccountList::removeAccount(QListWidgetItem* item)
 {
-   if(!item)
-      kDebug() << "Attempting to remove an account from a NULL item."; return;
+   if(!item) {
+      kDebug() << "Attempting to remove an account from a NULL item.";
+      return;
+   }
 
    AccountView* a = (AccountView*) getAccountByItem(item);
-   if(!a)
-      kDebug() << "Attempting to remove an unexisting account."; return;
+   if(!a) {
+      kDebug() << "Attempting to remove an unexisting account.";
+      return;
+   }
 
    accounts->remove(accounts->indexOf(a));
 }
