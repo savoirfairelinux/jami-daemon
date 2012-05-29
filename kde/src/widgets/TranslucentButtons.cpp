@@ -47,7 +47,6 @@ void TranslucentButtons::paintEvent(QPaintEvent* event)
 ///Override the visibility toggler
 void TranslucentButtons::setVisible(bool enabled)
 {
-   kDebug() << "Enabling!";
    if (m_enabled != enabled) {
       if (m_pTimer) {
          m_pTimer->stop();

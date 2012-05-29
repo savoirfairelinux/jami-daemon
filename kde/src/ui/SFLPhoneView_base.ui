@@ -158,10 +158,6 @@
         <property name="text">
          <string/>
         </property>
-        <property name="icon">
-         <iconset>
-          <normaloff>:/Images/mic_75.svg</normaloff>:/Images/mic_75.svg</iconset>
-        </property>
         <property name="checkable">
          <bool>true</bool>
         </property>
@@ -171,10 +167,6 @@
        <widget class="QToolButton" name="toolButton_sndVol">
         <property name="text">
          <string/>
-        </property>
-        <property name="icon">
-         <iconset>
-          <normaloff>:/Images/speaker_75.svg</normaloff>:/Images/speaker_75.svg</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>

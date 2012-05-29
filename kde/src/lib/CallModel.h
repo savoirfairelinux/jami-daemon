@@ -59,6 +59,7 @@ public:
    virtual void  addToHistory     ( Call* call                                  ) = 0;
    virtual Call* addCall          ( Call* call           , Call* parent =0      );
    virtual Call* getCall          ( const QString& callId                       ) const = 0;
+   Call*   addConferenceS         ( Call* conf                                  );
 public slots:
    void on1_callStateChanged   ( const QString& callID    , const QString &state   );
    void on1_incomingCall       ( const QString& accountID , const QString & callID );
@@ -135,6 +136,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       //Getters
       int size                                        ();
       CallList                 getCallList            ();
+      CallList                 getConferenceList      ();
       static const CallMap&    getHistory             ();
       static const QStringList getNumbersByPopularity ();
       static const QStringList getHistoryCallId       ();
@@ -204,6 +206,8 @@ class LIB_EXPORT CallModel : public CallModelBase {
       static InternalCallId m_sPrivateCallList_callId;
       static InternalWidget m_sPrivateCallList_widget;
       static InternalIndex  m_sPrivateCallList_index ;
+
+      static CallMap        m_lConfList;
       
       static QString      m_sPriorAccountId;
       static AccountList* m_spAccountList  ;
