@@ -66,33 +66,19 @@ class YamlParser {
 
         void constructNativeData();
 
-        SequenceNode *getAccountSequence() {
-            return accountSequence_;
-        };
+        SequenceNode *getAccountSequence();
 
-        MappingNode *getPreferenceNode() {
-            return preferenceNode_;
-        }
+        MappingNode *getPreferenceNode();
 
-        MappingNode *getAddressbookNode() {
-            return addressbookNode_;
-        }
+        MappingNode *getAddressbookNode();
 
-        MappingNode *getAudioNode() {
-            return audioNode_;
-        }
+        MappingNode *getAudioNode();
 
-        MappingNode *getHookNode() {
-            return hooksNode_;
-        }
+        MappingNode *getHookNode();
 
-        MappingNode *getVoipPreferenceNode() {
-            return voiplinkNode_;
-        }
+        MappingNode *getVoipPreferenceNode();
 
-        MappingNode *getShortcutNode() {
-            return shortcutNode_;
-        }
+        MappingNode *getShortcutNode();
 
     private:
         NON_COPYABLE(YamlParser);

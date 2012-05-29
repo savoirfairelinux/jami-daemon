@@ -62,6 +62,54 @@ YamlParser::YamlParser(const char *file) : filename_(file)
     yaml_parser_set_input_file(&parser_, fd_);
 }
 
+#define CHECK_AND_RETURN(x) \
+    if (!x) throw YamlParserException("Invalid node"); \
+    return x
+
+SequenceNode *
+YamlParser::getAccountSequence()
+{
+    CHECK_AND_RETURN(accountSequence_);
+}
+
+MappingNode *
+YamlParser::getPreferenceNode()
+{
+    CHECK_AND_RETURN(preferenceNode_);
+}
+
+MappingNode *
+YamlParser::getAddressbookNode()
+{
+    CHECK_AND_RETURN(addressbookNode_);
+}
+
+MappingNode *
+YamlParser::getAudioNode()
+{
+    CHECK_AND_RETURN(audioNode_);
+}
+
+MappingNode *
+YamlParser::getHookNode()
+{
+    CHECK_AND_RETURN(hooksNode_);
+}
+
+MappingNode *
+YamlParser::getVoipPreferenceNode()
+{
+    CHECK_AND_RETURN(voiplinkNode_);
+}
+
+MappingNode *
+YamlParser::getShortcutNode()
+{
+    CHECK_AND_RETURN(shortcutNode_);
+}
+
+#undef CHECK_AND_RETURN
+
 YamlParser::~YamlParser()
 {
     if (fd_) {
