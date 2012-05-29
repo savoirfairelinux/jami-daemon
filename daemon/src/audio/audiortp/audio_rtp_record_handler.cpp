@@ -47,6 +47,14 @@ std::ofstream rtpResampled ("testRtpOutputResampled.raw", std::ifstream::binary)
 std::ofstream rtpNotResampled("testRtpOutput.raw", std::ifstream::binary);
 #endif
 
+DTMFEvent::DTMFEvent(int digit) : payload(), newevent(true), length(1000)
+{
+    payload.event = digit;
+    payload.ebit = false; // end of event bit
+    payload.rbit = false; // reserved bit
+    payload.duration = 1; // duration for this event
+}
+
 AudioRtpRecord::AudioRtpRecord() :
     audioCodec_(0)
     , audioCodecMutex_()
@@ -131,7 +139,8 @@ void AudioRtpRecordHandler::initNoiseSuppress()
 
 void AudioRtpRecordHandler::putDtmfEvent(int digit)
 {
-    audioRtpRecord_.dtmfQueue_.push_back(digit);
+    DTMFEvent dtmf(digit);
+    audioRtpRecord_.dtmfQueue_.push_back(dtmf);
 }
 
 int AudioRtpRecordHandler::processDataEncode()

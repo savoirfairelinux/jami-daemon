@@ -71,8 +71,8 @@ class AudioZrtpSession :
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
-        void incrementTimestampForDTMF();
         void setSessionMedia(AudioCodec &codec);
+        virtual int getIncrementForDTMF() const;
 };
 
 }

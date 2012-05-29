@@ -881,6 +881,11 @@ class ManagerImpl {
         void initZeroconf();
 
         /**
+         * Set current call ID to empty string
+         */
+        void unsetCurrentCall();
+
+        /**
          * Switch of current call id
          * @param id The new callid
          */

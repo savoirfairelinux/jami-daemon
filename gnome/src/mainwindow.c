@@ -178,6 +178,24 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data
     return TRUE;
 }
 
+static void pack_main_window_start(GtkBox *box, GtkWidget *widget, gboolean expand, gboolean fill, guint padding)
+{
+    if(box == NULL) {
+        ERROR("Box is NULL while packing main window");
+        return;
+    }
+
+    if(widget == NULL) {
+        ERROR("Widget is NULL while packing the mainwindow");
+        return;
+    }
+
+    GtkWidget *alignment =  gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+    gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 0, 6, 6);
+    gtk_container_add(GTK_CONTAINER(alignment), widget);
+    gtk_box_pack_start(box, alignment, expand, fill, padding);
+}
+
 void
 create_main_window()
 {
@@ -224,34 +242,28 @@ create_main_window()
     /* Create an accel group for window's shortcuts */
     gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group(ui_manager));
 
-    /* Populate the main window */
+    /* Instantiate vbox, subvbox as homogeneous */
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(vbox), FALSE);
 
     subvbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_box_set_homogeneous(GTK_BOX(subvbox), FALSE);
 
+    /* Populate the main window */
     GtkWidget *widget = create_menus(ui_manager);
-    if(widget == NULL)
-        WARN("Error could not create widget\n");
-    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+    pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
     widget = create_toolbar_actions(ui_manager);
-    if(widget == NULL)
-        WARN("Error could not create widget\n");
-    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
-
-    seekslider = GTK_WIDGET(sfl_seekslider_new());
-    if(seekslider == NULL)
-        WARN("Error could not create widget\n");
-
+    pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
     /* Add tree views */
     gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
 
-    gtk_box_pack_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
+    /* Add playback scale */
+    seekslider = GTK_WIDGET(sfl_seekslider_new());
+    pack_main_window_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE, FALSE, 0);
 
@@ -278,11 +290,9 @@ create_main_window()
 
     /* Status bar */
     statusBar = gtk_statusbar_new();
-    if(statusBar == NULL)
-        WARN("Error could not create widget\n");
-    gtk_box_pack_start(GTK_BOX(vbox), statusBar, FALSE, TRUE, 0);
+    pack_main_window_start(GTK_BOX(vbox), statusBar, FALSE, TRUE, 0);
 
-
+    /* Add to main window */
     gtk_container_add(GTK_CONTAINER(window), vbox);
 
     /* make sure that everything, window and label, are visible */

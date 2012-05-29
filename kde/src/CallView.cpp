@@ -85,6 +85,10 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
       addCall(active);
    }
 
+   foreach(Call* active, SFLPhone::model()->getConferenceList()) {
+      addConference(active);
+   }
+
    //User Interface even
    //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                        /
    /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)              ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
@@ -175,7 +179,7 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
       else if ((parent->parent()) || (parent->childCount())) {
          kDebug() << "Call dropped on a conference";
 
-         if ((SFLPhone::model()->getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
+         if (SFLPhone::model()->getIndex(encodedCallId)->childCount() && (SFLPhone::model()->getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
             kDebug() << "Conference dropped on a call (doing nothing)";
             return true;
          }
@@ -210,7 +214,7 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
          SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call1),SFLPhone::model()->getCall(call2));
          return true;
       }
-      else if ((SFLPhone::model()->getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
+      else if (SFLPhone::model()->getIndex(encodedCallId) && (SFLPhone::model()->getIndex(encodedCallId)->childCount()) && (!parent->childCount())) {
          kDebug() << "Call dropped on it's own conference (doing nothing)";
          return true;
       }
@@ -378,6 +382,7 @@ void CallView::transfer()
    
    m_pCallPendingTransfer = 0;
    m_pTransferLE->clear();
+
    m_pTransferOverlay->setVisible(false);
 }
 
@@ -409,13 +414,12 @@ bool CallView::haveOverlay()
 ///Remove the active overlay
 void CallView::hideOverlay()
 {
-   if (m_pActiveOverlay)
+   if (m_pActiveOverlay){
+      disconnect(m_pCallPendingTransfer,SIGNAL(changed()),this,SLOT(hideOverlay()));
       m_pActiveOverlay->setVisible(false);
-   m_pActiveOverlay = 0;
-
-   if (m_pCallPendingTransfer && m_pCallPendingTransfer->getState() == CALL_STATE_TRANSFER ) {
-      m_pCallPendingTransfer->actionPerformed(CALL_ACTION_TRANSFER);
    }
+   
+   m_pActiveOverlay = 0;
    
    m_pCallPendingTransfer = 0;
 } //hideOverlay
@@ -484,6 +488,8 @@ QTreeWidgetItem* CallView::extractItem(const QString& callId)
 ///Extract an item from the TreeView and return it, the item is -not- deleted
 QTreeWidgetItem* CallView::extractItem(QTreeWidgetItem* item)
 {
+   if (!item)
+      return nullptr;
    QTreeWidgetItem* parentItem = item->parent();
 
    if (parentItem) {
@@ -509,7 +515,7 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, Call* parent)
 ///Insert a TreeView item in the TreeView as child of parent or as a top level item, also restore the item Widget
 CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* parent)
 {
-   if (!dynamic_cast<QTreeWidgetItem*>(item) && !dynamic_cast<QTreeWidgetItem*>(parent))
+   if (!dynamic_cast<QTreeWidgetItem*>(item) && SFLPhone::model()->getCall(item) && !dynamic_cast<QTreeWidgetItem*>(parent))
       return nullptr;
    
    if (!item) {
@@ -523,10 +529,9 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
       parent->addChild(item);
 
    CallTreeItem* callItem = new CallTreeItem();
-   connect(callItem, SIGNAL(showChilds(CallTreeItem*)), this, SLOT(showDropOptions(CallTreeItem*)));
-   connect(callItem, SIGNAL(askTransfer(Call*)), this, SLOT(showTransferOverlay(Call*)));
-   connect(callItem, SIGNAL(transferDropEvent(Call*,QMimeData*)), this, SLOT(transferDropEvent(Call*,QMimeData*)));
-   connect(callItem, SIGNAL(conversationDropEvent(Call*,QMimeData*)), this, SLOT(conversationDropEvent(Call*,QMimeData*)));
+   connect(callItem, SIGNAL(askTransfer(Call*))                     , this, SLOT(showTransferOverlay(Call*)              ));
+   connect(callItem, SIGNAL(transferDropEvent(Call*,QMimeData*))    , this, SLOT(transferDropEvent(Call*,QMimeData*)     ));
+   connect(callItem, SIGNAL(conversationDropEvent(Call*,QMimeData*)), this, SLOT(conversationDropEvent(Call*,QMimeData*) ));
 
    SFLPhone::model()->updateWidget(SFLPhone::model()->getCall(item), callItem);
    callItem->setCall(SFLPhone::model()->getCall(item));
@@ -617,7 +622,7 @@ void CallView::itemClicked(QTreeWidgetItem* item, int column) {
 Call* CallView::addConference(Call* conf)
 {
    kDebug() << "Conference created";
-   Call* newConf =  conf;//SFLPhone::model()->addConference(confID);//TODO ELV?
+   Call* newConf =  conf;
 
    QTreeWidgetItem* confItem = new QTreeWidgetItem();
    SFLPhone::model()->updateIndex(conf,confItem);

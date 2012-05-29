@@ -109,10 +109,9 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     if (!gtk_tree_selection_get_selected(sel, &model, &iter))
         return;
 
-    if (active_calltree_tab == history_tab)
-        DEBUG("Current call tree is history");
-    else if (active_calltree_tab == current_calls_tab)
-        DEBUG("Current call tree is current calls");
+    if (active_calltree_tab == history_tab) {
+        main_window_reset_playback_scale();
+    }
 
     /* Get ID of selected object, may be a call or a conference */
     gchar *id;
@@ -489,8 +488,10 @@ calltree_create(calltab_t* tab, int searchbar_type)
     if (searchbar_type) {
         calltab_create_searchbar(tab);
 
-        if (tab->searchbar != NULL)
-            gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
+        GtkWidget *alignment =  gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+        gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 3, 6, 6);
+        gtk_container_add(GTK_CONTAINER(alignment), tab->searchbar);
+        gtk_box_pack_start(GTK_BOX(tab->tree), alignment, FALSE, TRUE, 0);
     }
 
     gtk_widget_show(tab->tree);
