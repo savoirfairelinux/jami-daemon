@@ -295,7 +295,6 @@ on_playback_scale_scrolled_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G
 
 static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
-    DEBUG("Start playback button pressed");
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
@@ -311,7 +310,6 @@ static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNU
 
 static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
-    DEBUG("Stop playback button pressed");
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
@@ -320,8 +318,7 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
     }
 
     if (selectedCall) {
-        if (selectedCall->_recordfile == NULL) {
-            ERROR("Record file is NULL");
+        if (selectedCall->_recordfile == NULL || strlen(selectedCall->_recordfile) == 0) {
             return;
         }
 
