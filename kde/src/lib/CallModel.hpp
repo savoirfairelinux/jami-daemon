@@ -322,8 +322,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::transfer(Call* toTransfer, QString target)
 {
    qDebug() << "Transferring call " << toTransfer->getCallId() << "to" << target;
    toTransfer->setTransferNumber(target);
-   toTransfer->changeCurrentState(CALL_STATE_TRANSFER);
-   toTransfer->actionPerformed(CALL_ACTION_ACCEPT);
+   toTransfer->actionPerformed(CALL_ACTION_TRANSFER);
    toTransfer->changeCurrentState(CALL_STATE_OVER);
 } //transfer
 
@@ -345,7 +344,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
       qDebug() << "This conference (" + confID + ") contain no call";
       return 0;
    }
-
+   
    if (!m_sPrivateCallList_callId[callList[0]]) {
       qDebug() << "Invalid call";
       return 0;

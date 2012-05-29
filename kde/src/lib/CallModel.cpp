@@ -136,7 +136,6 @@ Call* CallModelBase::addCall(Call* call, Call* parent)
 
 Call* CallModelBase::addConferenceS(Call* conf)
 {
-   qDebug() << "-----Emitting conference" << conf->getConfId();
    emit conferenceCreated(conf);
    return conf;
 }
