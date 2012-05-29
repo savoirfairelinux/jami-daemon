@@ -245,7 +245,6 @@ create_main_window()
     if(seekslider == NULL)
         WARN("Error could not create widget\n");
 
-
     /* Add tree views */
     gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);

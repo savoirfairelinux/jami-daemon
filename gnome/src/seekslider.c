@@ -330,8 +330,10 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
             return;
         }
 
-        dbus_stop_recorded_file_playback(selectedCall->_recordfile);
-        DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
+        if(selectedCall->_record_is_playing) {
+            dbus_stop_recorded_file_playback(selectedCall->_recordfile);
+            DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
+        }
         selectedCall->_record_is_playing = FALSE;
     }
 
@@ -380,8 +382,9 @@ void sfl_seekslider_reset(SFLSeekSlider *seekslider) {
     if(seekslider == NULL)
         return;
 
-    seekslider->priv->can_update_scale = TRUE;
+    seekslider->priv->can_update_scale = FALSE;
     gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), 0.0);
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
     sfl_seekslider_stop_playback_record_cb (NULL, seekslider);
+    seekslider->priv->can_update_scale = TRUE;
 }

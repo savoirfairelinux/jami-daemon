@@ -109,10 +109,9 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     if (!gtk_tree_selection_get_selected(sel, &model, &iter))
         return;
 
-    if (active_calltree_tab == history_tab)
-        DEBUG("Current call tree is history");
-    else if (active_calltree_tab == current_calls_tab)
-        DEBUG("Current call tree is current calls");
+    if (active_calltree_tab == history_tab) {
+        main_window_reset_playback_scale();
+    }
 
     /* Get ID of selected object, may be a call or a conference */
     gchar *id;
