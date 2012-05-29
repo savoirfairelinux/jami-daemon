@@ -59,7 +59,6 @@ class HistoryItem {
         bool youngerThan(unsigned long otherTime) const;
 
         std::map<std::string, std::string> toMap() const;
-        bool fexist(const std::string &str) const;
         void print(std::ostream &o) const;
         bool operator< (const HistoryItem &other) const {
                 return timestampStart_ > other.timestampStart_;
