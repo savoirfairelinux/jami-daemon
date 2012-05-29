@@ -98,9 +98,6 @@ static GtkWidget * muteWidget_;
 static GtkWidget * voicemailToolbar_;
 static GtkWidget * imToolbar_;
 
-static GtkWidget * playRecordWidget_;
-static GtkWidget * stopRecordWidget_;
-
 static GtkWidget * editable_num_;
 static GtkWidget * edit_dialog_;
 
@@ -222,10 +219,6 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 else if (active_calltree_tab == history_tab) {
                     if (is_non_empty(selectedCall->_recordfile)) {
                         main_window_show_playback_scale();
-                        if (selectedCall->_record_is_playing)
-                            add_to_toolbar(toolbar_, stopRecordWidget_, pos++);
-                        else
-                            add_to_toolbar(toolbar_, playRecordWidget_, pos++);
                     }
                     else {
                         main_window_hide_playback_scale();
@@ -369,11 +362,6 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
             } else if (active_calltree_tab == history_tab) {
                 if (is_non_empty(selectedConf->_recordfile)) {
                     main_window_show_playback_scale();
-                    pos = 2;
-                    if (selectedConf->_record_is_playing)
-                        add_to_toolbar(toolbar_, stopRecordWidget_, pos);
-                    else
-                        add_to_toolbar(toolbar_, playRecordWidget_, pos);
                 }
                 else {
                     main_window_hide_playback_scale();
@@ -476,8 +464,6 @@ update_actions()
     remove_from_toolbar(offHoldToolbar_);
     remove_from_toolbar(newCallWidget_);
     remove_from_toolbar(pickUpWidget_);
-    remove_from_toolbar(playRecordWidget_);
-    remove_from_toolbar(stopRecordWidget_);
 
     if (addrbook) {
         remove_from_toolbar(contactButton_);
@@ -1111,11 +1097,12 @@ static const GtkActionEntry menu_entries[] = {
         N_("Quit the program"), G_CALLBACK(call_quit)
     },
     {
-        "StartPlaybackRecord", GTK_STOCK_MEDIA_PLAY,  N_("_Playback record"), NULL,
+        // "StartPlaybackRecord", GTK_STOCK_MEDIA_PLAY,  N_("_Playback record"), NULL,
+        "StartPlaybackRecord", "OK",  N_("_Playback record"), NULL,
         N_("Playback recorded file"), G_CALLBACK(start_playback_record_cb)
     },
     {
-        "StopPlaybackRecord", GTK_STOCK_MEDIA_PAUSE, N_("_Stop playback"), NULL,
+        "StopPlaybackRecord", "AH", N_("_Stop playback"), NULL,
         N_("Stop recorded file playback"), G_CALLBACK(stop_playback_record_cb)
     },
 
@@ -1783,8 +1770,6 @@ create_toolbar_actions(GtkUIManager *ui)
     muteWidget_ = get_widget(ui, "/ToolbarActions/MuteToolbar");
     imToolbar_ = get_widget(ui, "/ToolbarActions/InstantMessagingToolbar");
     historyButton_ = get_widget(ui, "/ToolbarActions/HistoryToolbar");
-    playRecordWidget_ = get_widget(ui, "/ToolbarActions/StartPlaybackRecordToolbar");
-    stopRecordWidget_ = get_widget(ui, "/ToolbarActions/StopPlaybackRecordToolbar");
     if (addrbook)
         contactButton_ = get_widget(ui, "/ToolbarActions/AddressbookToolbar");
 

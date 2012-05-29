@@ -55,11 +55,18 @@ struct _SFLSeekSliderClass
     GtkHBoxClass parent;
 };
 
+typedef enum {
+    SFL_SEEKSLIDER_DISPLAY_PAUSE,
+    SFL_SEEKSLIDER_DISPLAY_PLAY,
+} SFLSeekSliderDisplay;
+
 GType sfl_seekslider_get_type(void);
 
 SFLSeekSlider *sfl_seekslider_new(void);
 
 void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint size);
+
+void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display);
 
 G_END_DECLS
 

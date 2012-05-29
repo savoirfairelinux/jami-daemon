@@ -244,6 +244,7 @@ create_main_window()
     seekslider = GTK_WIDGET(sfl_seekslider_new());
     if(seekslider == NULL)
         WARN("Error could not create widget\n");
+
     gtk_box_pack_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
 
     /* Add tree views */
@@ -293,6 +294,7 @@ create_main_window()
     gtk_widget_hide(contacts_tab->tree);
 
     /* show playback scale only if a recorded call is selected */
+    sfl_seekslider_set_display(SFL_SEEKSLIDER(seekslider), SFL_SEEKSLIDER_DISPLAY_PLAY);
     gtk_widget_set_sensitive(seekslider, FALSE);
 
     /* don't show waiting layer */
