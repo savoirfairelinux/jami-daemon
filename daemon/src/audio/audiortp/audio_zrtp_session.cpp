@@ -133,7 +133,7 @@ void AudioZrtpSession::run()
             timeout = getSchedulingTimeout();
 
         // Send session
-        if (DtmfPending())
+        if (hasDTMFPending())
             sendDtmfEvent();
         else
             sendMicData();
@@ -162,9 +162,9 @@ void AudioZrtpSession::run()
     DEBUG("Left main loop for call %s", call_.getCallId().c_str());
 }
 
-void AudioZrtpSession::incrementTimestampForDTMF()
+int AudioZrtpSession::getIncrementForDTMF() const
 {
-    timestamp_ += 160;
+    return 160;
 }
 
 void AudioZrtpSession::setSessionMedia(AudioCodec &audioCodec)
