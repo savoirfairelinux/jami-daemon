@@ -245,12 +245,13 @@ create_main_window()
     if(seekslider == NULL)
         WARN("Error could not create widget\n");
 
-    gtk_box_pack_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
 
     /* Add tree views */
     gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
+
+    gtk_box_pack_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE, FALSE, 0);
 
