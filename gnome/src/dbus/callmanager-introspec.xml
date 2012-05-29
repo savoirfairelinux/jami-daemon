@@ -358,6 +358,13 @@
             </arg>
         </method>
 
+        <method name="recordPlaybackSeek" tp:name-for-bindings="setVolume">
+            <tp:docstring>
+              <p>Sets the playback position using a linear scale [0,100].</p>
+            </tp:docstring>
+            <arg type="d" name="value" direction="in"/>
+        </method>
+
         <signal name="recordPlaybackFilepath" tp:name-for-bindings="recordPlaybackFilepath">
             <tp:docstring>
               Once after starting recording for the first time, this signal is emited to
@@ -366,13 +373,6 @@
             <arg type="s" name="callID" />
             <arg type="s" name="filepath"/>
         </signal>
-
-        <method name="recordPlaybackSeek" tp:name-for-bindings="setVolume">
-            <tp:docstring>
-              <p>Sets the playback position using a linear scale [0,100].</p>
-            </tp:docstring>
-            <arg type="d" name="value" direction="in"/>
-        </method>
 
         <signal name="recordPlaybackStopped" tp:name-for-bindings="recordPlaybackStopped">
             <tp:docstring/>
@@ -800,12 +800,6 @@
             <tp:added version="0.9.7"/>
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="accepted" direction="in"/>
-        </method>
-
-        <method name="setPBXEnrollment" tp:name-for-bindings="setPBXEnrollment">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-            <arg type="b" name="yesNo" direction="in"/>
         </method>
 
     </interface>
