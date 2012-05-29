@@ -176,6 +176,11 @@ ManagerImpl::getCurrentCallId() const
     return currentCallId_;
 }
 
+void ManagerImpl::unsetCurrentCall()
+{
+    switchCall("");
+}
+
 void ManagerImpl::switchCall(const std::string& id)
 {
     ost::MutexLock m(currentCallMutex_);
@@ -352,7 +357,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     } else {
         // we are not participating in a conference, current call switched to ""
         if (not isConference(currentCallId))
-            switchCall("");
+            unsetCurrentCall();
     }
 
     if (isIPToIP(callId)) {
@@ -399,7 +404,7 @@ bool ManagerImpl::hangupConference(const std::string& id)
         }
     }
 
-    switchCall("");
+    unsetCurrentCall();
 
     getMainBuffer()->stateInfo();
 
@@ -443,7 +448,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
     // keeps current call id if the action is not holding this call or a new outgoing call
     // this could happen in case of a conference
     if (current_call_id == callId)
-        switchCall("");
+        unsetCurrentCall();
 
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
 
@@ -511,7 +516,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
         Conference *conf = getConferenceFromCallID(callId);
         processRemainingParticipants(callId, conf);
     } else if (not isConference(getCurrentCallId()))
-        switchCall("");
+        unsetCurrentCall();
 
     // Direct IP to IP call
     if (isIPToIP(callId)) {
@@ -764,7 +769,7 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
     // toconference
-    switchCall("");
+    unsetCurrentCall();
 
     // Add main participant
     addMainParticipant(conferenceId);
@@ -985,7 +990,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
         // Manager methods may behave differently if the call id participates in a conference
         conf->add(generatedCallID);
 
-        switchCall("");
+        unsetCurrentCall();
 
         // Create call
         bool callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
@@ -1088,7 +1093,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         dbus_.getCallManager()->conferenceChanged(conf->getConfID(),
                                                   conf->getStateStr());
 
-        switchCall("");
+        unsetCurrentCall();
     }
 }
 
@@ -1156,7 +1161,7 @@ void ManagerImpl::processRemainingParticipants(const std::string &current_call_i
         DEBUG("No remaining participants, remove conference");
         removeConference(conf->getConfID());
         conf = 0;
-        switchCall("");
+        unsetCurrentCall();
     }
 }
 
@@ -1548,7 +1553,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     } else {
         if (isCurrentCall(call_id)) {
             stopTone();
-            switchCall("");
+            unsetCurrentCall();
         }
     }
 
@@ -1590,7 +1595,7 @@ void ManagerImpl::callBusy(const std::string& id)
 
     if (isCurrentCall(id)) {
         playATone(Tone::TONE_BUSY);
-        switchCall("");
+        unsetCurrentCall();
     }
 
     removeCallAccount(id);
@@ -1604,7 +1609,7 @@ void ManagerImpl::callFailure(const std::string& call_id)
 
     if (isCurrentCall(call_id)) {
         playATone(Tone::TONE_BUSY);
-        switchCall("");
+        unsetCurrentCall();
     }
 
     if (isConferenceParticipant(call_id)) {
