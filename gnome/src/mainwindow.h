@@ -110,6 +110,10 @@ void focus_on_searchbar_in();
  */
 void main_window_update_playback_scale(guint current, guint size);
 
+void main_window_set_playback_scale_sensitive();
+
+void main_window_set_playback_scale_unsensitive();
+
 /**
  * Show the playback scale, (should occur if the user selected an history entry witch has been recorded)
  */

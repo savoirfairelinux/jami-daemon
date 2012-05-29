@@ -217,11 +217,12 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                     main_window_hide_playback_scale();
                 }
                 else if (active_calltree_tab == history_tab) {
+                    main_window_show_playback_scale();
                     if (is_non_empty(selectedCall->_recordfile)) {
-                        main_window_show_playback_scale();
+                        main_window_set_playback_scale_sensitive();
                     }
                     else {
-                        main_window_hide_playback_scale();
+                        main_window_set_playback_scale_unsensitive();
                     }
 
                 }
@@ -360,11 +361,12 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
                 }
                 main_window_hide_playback_scale();
             } else if (active_calltree_tab == history_tab) {
+                main_window_show_playback_scale();
                 if (is_non_empty(selectedConf->_recordfile)) {
-                    main_window_show_playback_scale();
+                    main_window_set_playback_scale_sensitive();
                 }
                 else {
-                    main_window_hide_playback_scale();
+                    main_window_set_playback_scale_unsensitive();
                 }
             }
             else {
@@ -1038,19 +1040,27 @@ call_mailbox_cb(void)
 static void
 toggle_history_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
-    if (gtk_toggle_action_get_active(action))
+    if (gtk_toggle_action_get_active(action)) {
         calltree_display(history_tab);
-    else
+        main_window_show_playback_scale();
+    }
+    else {
         calltree_display(current_calls_tab);
+        main_window_hide_playback_scale();
+    }
 }
 
 static void
 toggle_addressbook_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
-    if (gtk_toggle_action_get_active(action))
+    if (gtk_toggle_action_get_active(action)) {
         calltree_display(contacts_tab);
-    else
+        main_window_show_playback_scale();
+    }
+    else {
         calltree_display(current_calls_tab);
+        main_window_show_playback_scale();
+    }
 }
 
 static const GtkActionEntry menu_entries[] = {
