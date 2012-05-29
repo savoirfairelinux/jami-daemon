@@ -2658,10 +2658,10 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
 
-    using namespace std::tr1; // for std::tr1::bind and std::tr1::ref
-    using namespace std::tr1::placeholders;
+    using std::tr1::placeholders::_1;
     // Each valid account element in sequence is a new account to load
-    std::for_each(seq->begin(), seq->end(), bind(loadAccount, _1, ref(accountMap_)));
+    std::for_each(seq->begin(), seq->end(),
+            std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
 }
 
 void ManagerImpl::unregisterAllAccounts()
