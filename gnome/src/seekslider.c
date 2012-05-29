@@ -330,8 +330,10 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
             return;
         }
 
-        dbus_stop_recorded_file_playback(selectedCall->_recordfile);
-        DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
+        if(selectedCall->_record_is_playing) {
+            dbus_stop_recorded_file_playback(selectedCall->_recordfile);
+            DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
+        }
         selectedCall->_record_is_playing = FALSE;
     }
 
