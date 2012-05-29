@@ -195,6 +195,7 @@ public slots:
    void transfer ();
    void record   ();
    void mailBox  ();
+   void paste    ();
 
    void on_widget_dialpad_typed(QString text);
 

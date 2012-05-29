@@ -84,7 +84,7 @@ ManagerImpl::ManagerImpl() :
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
     callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
-    mainBuffer_(), conferenceMap_(), history_()
+    mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
     // initialize random generator for call id
     srand(time(NULL));
@@ -129,8 +129,14 @@ void ManagerImpl::run()
 
 void ManagerImpl::finish()
 {
-    terminate();
-    dbus_.exit();
+    if (!finished_) {
+        finished_ = true;
+        // Unset signal handlers
+        signal(SIGTERM, SIG_DFL);
+        signal(SIGINT, SIG_DFL);
+        terminate();
+        dbus_.exit();
+    }
 }
 
 void ManagerImpl::terminate()

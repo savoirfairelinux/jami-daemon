@@ -161,19 +161,19 @@ void SFLPhone::setupActions()
 {
    kDebug() << "setupActions";
 
-   action_accept   = new KAction(this);
-   action_refuse   = new KAction(this);
-   action_hold     = new KAction(this);
-   action_transfer = new KAction(this);
-   action_record   = new KAction(this);
-   action_mailBox  = new KAction(this);
+   action_accept      = new KAction(this);
+   action_refuse      = new KAction(this);
+   action_hold        = new KAction(this);
+   action_transfer    = new KAction(this);
+   action_record      = new KAction(this);
+   action_mailBox     = new KAction(this);
 
-   action_accept->setShortcut   ( Qt::CTRL + Qt::Key_A );
-   action_refuse->setShortcut   ( Qt::CTRL + Qt::Key_D );
-   action_hold->setShortcut     ( Qt::CTRL + Qt::Key_H );
-   action_transfer->setShortcut ( Qt::CTRL + Qt::Key_T );
-   action_record->setShortcut   ( Qt::CTRL + Qt::Key_R );
-   action_mailBox->setShortcut  ( Qt::CTRL + Qt::Key_M );
+   action_accept->setShortcut      ( Qt::CTRL + Qt::Key_A );
+   action_refuse->setShortcut      ( Qt::CTRL + Qt::Key_D );
+   action_hold->setShortcut        ( Qt::CTRL + Qt::Key_H );
+   action_transfer->setShortcut    ( Qt::CTRL + Qt::Key_T );
+   action_record->setShortcut      ( Qt::CTRL + Qt::Key_R );
+   action_mailBox->setShortcut     ( Qt::CTRL + Qt::Key_M );
 
    action_screen = new QActionGroup(this);
    action_screen->setExclusive(true);
@@ -197,6 +197,9 @@ void SFLPhone::setupActions()
    action_displayVolumeControls->setCheckable( true );
    action_displayVolumeControls->setChecked  ( ConfigurationSkeleton::displayVolume() );
 
+   action_pastenumber = new KAction(KIcon("edit-paste"), i18n("Paste"), this);
+   action_pastenumber->setShortcut ( Qt::CTRL + Qt::Key_V );
+
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
 
 
@@ -212,6 +215,7 @@ void SFLPhone::setupActions()
    /**/connect(action_displayDialpad,        SIGNAL(toggled(bool)),         m_pView , SLOT(displayDialpad(bool)        ));
    /**/connect(action_displayMessageBox,     SIGNAL(toggled(bool)),         m_pView , SLOT(displayMessageBox(bool)     ));
    /**/connect(action_accountCreationWizard, SIGNAL(triggered()),           m_pView , SLOT(accountCreationWizard()     ));
+   /**/connect(action_pastenumber,           SIGNAL(triggered()),           m_pView , SLOT(paste()                     ));
    /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
    /*                                                                                                                   */
 
@@ -230,6 +234,7 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_configureSflPhone"     , action_configureSflPhone     );
    actionCollection()->addAction("action_accountCreationWizard" , action_accountCreationWizard );
    actionCollection()->addAction("action_configureShortcut"     , action_configureShortcut     );
+   actionCollection()->addAction("action_pastenumber"           , action_pastenumber           );
 
    QList<KAction*> acList = *SFLPhoneAccessibility::getInstance();
    

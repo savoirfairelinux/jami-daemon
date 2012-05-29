@@ -37,6 +37,8 @@
 #include "seekslider.h"
 #include "dbus.h"
 #include "logger.h"
+#include "calltab.h"
+// #include "uimanager.h"
 
 /**
  * SECTION:sfl-seekslider
@@ -70,11 +72,19 @@ static gboolean on_playback_scale_pressed_cb(GtkWidget *widget, GdkEventButton *
 static gboolean on_playback_scale_released_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
 static gboolean on_playback_scale_moved_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data);
 static gboolean on_playback_scale_scrolled_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data);
+static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data);
 
 struct SFLSeekSliderPrivate
 {
     GtkWidget *hbox;
     GtkWidget *hscale;
+    GtkWidget *playRecordWidget;
+    GtkWidget *stopRecordWidget;
+    GtkWidget *playRecordImage;
+    GtkWidget *stopRecordImage;
+    GtkWidget *separator;
+    GtkWidget *separatorAlign;
     gboolean can_update_scale;
 };
 
@@ -118,9 +128,29 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
     if (seekslider->priv->hscale == NULL)
         WARN("Could not create new horizontal scale for seekslider");
 
-    seekslider->priv->hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    seekslider->priv->hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     if(seekslider->priv->hbox == NULL)
         WARN("Could not create new horizontal box for seekslider");
+
+    seekslider->priv->playRecordImage = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_BUTTON);
+    seekslider->priv->playRecordWidget = gtk_button_new();
+    gtk_button_set_image(GTK_BUTTON(seekslider->priv->playRecordWidget), seekslider->priv->playRecordImage);
+    if(seekslider->priv->playRecordWidget == NULL)
+        WARN("Could not create new playback button for seekslider");
+
+    seekslider->priv->stopRecordImage = gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE, GTK_ICON_SIZE_BUTTON);
+    seekslider->priv->stopRecordWidget = gtk_button_new();
+    gtk_button_set_image(GTK_BUTTON(seekslider->priv->stopRecordWidget), seekslider->priv->stopRecordImage);
+    if(seekslider->priv->stopRecordWidget == NULL)
+        WARN("Could not create mew pause button for seekslider");
+
+    seekslider->priv->separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    if(seekslider->priv->separator == NULL)
+        WARN("Could not create the separator for seekslider");
+
+    seekslider->priv->separatorAlign = gtk_alignment_new(1.0, 0.75, 1.0, 1.0);
+    if(seekslider->priv->separatorAlign == NULL)
+        WARN("Could not create the separator's alignment");
 
     g_signal_connect(G_OBJECT(seekslider->priv->hscale), "change-value",
                      G_CALLBACK(on_playback_scale_value_changed_cb), seekslider);
@@ -139,10 +169,24 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
 
     g_object_set(G_OBJECT(seekslider->priv->hscale), "draw-value", FALSE, NULL);
 
+    g_signal_connect_object (G_OBJECT (seekslider->priv->playRecordWidget), "pressed",
+                     G_CALLBACK(sfl_seekslider_play_playback_record_cb), seekslider, 0);
+
+    g_signal_connect_object (G_OBJECT (seekslider->priv->stopRecordWidget), "pressed",
+                     G_CALLBACK(sfl_seekslider_stop_playback_record_cb), seekslider, 0);
+
+    gtk_container_add(GTK_CONTAINER(seekslider->priv->separatorAlign), seekslider->priv->separator);
+    gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->playRecordWidget, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->stopRecordWidget, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->separatorAlign, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->hscale, TRUE, TRUE, 0);
 
-    gtk_widget_show (seekslider->priv->hscale);
     gtk_widget_show (seekslider->priv->hbox);
+    gtk_widget_show (seekslider->priv->hscale);
+    gtk_widget_show (seekslider->priv->separatorAlign);
+    gtk_widget_show (seekslider->priv->separator);
+    gtk_widget_hide (seekslider->priv->playRecordWidget);
+    gtk_widget_hide (seekslider->priv->stopRecordWidget);
 
     gtk_box_pack_start(GTK_BOX(&seekslider->parent), seekslider->priv->hbox, TRUE, TRUE, 0);
 
@@ -249,6 +293,54 @@ on_playback_scale_scrolled_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G
     return TRUE;
 }
 
+static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
+{
+    DEBUG("Start playback button pressed");
+    SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
+
+    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
+    if (selectedCall == NULL) {
+        ERROR("No selected object in playback record callback");
+        return;
+    }
+
+    DEBUG("Start selected call file playback %s", selectedCall->_recordfile);
+    selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
+
+    // update_actions();
+
+    sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PAUSE);
+}
+
+static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
+{
+    DEBUG("Stop playback button pressed");
+    SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
+
+    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
+
+    if (selectedCall == NULL) {
+        ERROR("No selected object in history treeview");
+        return;
+    }
+
+    if (selectedCall) {
+        if (selectedCall->_recordfile == NULL) {
+            ERROR("Record file is NULL");
+            return;
+        }
+
+        dbus_stop_recorded_file_playback(selectedCall->_recordfile);
+        DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
+        selectedCall->_record_is_playing = FALSE;
+    }
+
+    // update_actions();
+
+    sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
+}
+
+
 void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint size)
 {
     if (size == 0)
@@ -261,4 +353,35 @@ void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint
 
     if (seekslider->priv->can_update_scale)
         gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), val);
+}
+
+void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display) {
+
+    // g_return_if_fail (SFL_IS_SEEKSLIDER (seekslider));
+    if(seekslider == NULL)
+        return;
+
+    switch(display) {
+    case SFL_SEEKSLIDER_DISPLAY_PAUSE:
+        gtk_widget_hide(seekslider->priv->playRecordWidget);
+        gtk_widget_show(seekslider->priv->stopRecordWidget);
+        break;
+    case SFL_SEEKSLIDER_DISPLAY_PLAY:
+        gtk_widget_hide(seekslider->priv->stopRecordWidget);
+        gtk_widget_show(seekslider->priv->playRecordWidget);
+        break;
+    default:
+        WARN("Unknown display option for seekslider");
+        break;
+    }
+}
+
+void sfl_seekslider_reset(SFLSeekSlider *seekslider) {
+    if(seekslider == NULL)
+        return;
+
+    seekslider->priv->can_update_scale = TRUE;
+    gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), 0.0);
+    sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
+    sfl_seekslider_stop_playback_record_cb (NULL, seekslider);
 }

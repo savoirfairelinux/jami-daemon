@@ -1112,5 +1112,6 @@ class ManagerImpl {
           * TODO: move this to ConfigurationManager
           */
         History history_;
+        bool finished_;
 };
 #endif // MANAGER_IMPL_H_

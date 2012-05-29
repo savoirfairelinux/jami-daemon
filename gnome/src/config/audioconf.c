@@ -780,10 +780,11 @@ GtkWidget* alsa_box()
     return alsa_hbox;
 }
 
-static void record_path_changed_cb(GtkFileChooser *chooser, GtkLabel *label UNUSED)
+static void record_path_changed(GtkFileChooserButton *chooser, gpointer data UNUSED)
 {
-    gchar* path = gtk_file_chooser_get_filename(chooser);
+    gchar* path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
     dbus_set_record_path(path);
+    g_free(path);
 }
 
 GtkWidget* create_audio_configuration()
@@ -841,7 +842,7 @@ GtkWidget* create_audio_configuration()
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(folderChooser), recordingPath);
     g_free(recordingPath);
 
-    g_signal_connect(G_OBJECT(folderChooser), "selection_changed", G_CALLBACK(record_path_changed_cb) , NULL);
+    g_signal_connect(G_OBJECT(folderChooser) , "selection-changed", G_CALLBACK(record_path_changed) , NULL);
     gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // isAlwaysRecording functionality checkbox
