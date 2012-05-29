@@ -110,25 +110,13 @@ void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
     }
 }
 
-void AudioRtpSession::incrementTimestampForDTMF()
-{
-    timestamp_ += timestampIncrement_;
-}
-
 void AudioRtpSession::sendDtmfEvent()
 {
-    ost::RTPPacket::RFC2833Payload payload;
+    DTMFEvent &dtmf(audioRtpRecord_.dtmfQueue_.front());
+    DEBUG("Send RTP Dtmf (%d)", dtmf.payload.event);
 
-    payload.event = audioRtpRecord_.dtmfQueue_.front();
-    payload.ebit = false; // end of event bit
-    payload.rbit = false; // reserved bit
-    payload.duration = 1; // duration for this event
-
-    audioRtpRecord_.dtmfQueue_.pop_front();
-
-    DEBUG("Send RTP Dtmf (%d)", payload.event);
-
-    incrementTimestampForDTMF();
+    const int increment = getIncrementForDTMF();
+    timestamp_ += increment;
 
     // discard equivalent size of audio
     processDataEncode();
@@ -136,13 +124,29 @@ void AudioRtpSession::sendDtmfEvent()
     // change Payload type for DTMF payload
     queue_.setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) getDtmfPayloadType(), 8000));
 
-    queue_.setMark(true);
-    queue_.sendImmediate(timestamp_, (const unsigned char *)(&payload), sizeof(payload));
-    queue_.setMark(false);
+    // Set marker in case this is a new Event
+    if (dtmf.newevent)
+        queue_.setMark(true);
+    queue_.sendImmediate(timestamp_, (const unsigned char *) (& (dtmf.payload)), sizeof (ost::RTPPacket::RFC2833Payload));
 
-    // get back the payload to audio
+    // This is no longer a new event
+    if (dtmf.newevent) {
+        dtmf.newevent = false;
+        queue_.setMark(false);
+    }
+
+    // restore the payload to audio
     const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getCodecPayloadType()));
     queue_.setPayloadFormat(pf);
+
+    // decrease length remaining to process for this event
+    dtmf.length -= increment;
+    dtmf.payload.duration++;
+    // next packet is going to be the last one
+    if ((dtmf.length - increment) < increment)
+        dtmf.payload.ebit = true;
+    if (dtmf.length < increment)
+        audioRtpRecord_.dtmfQueue_.pop_front();
 }
 
 
@@ -251,6 +255,11 @@ bool AudioRtpSession::onRTPPacketRecv(ost::IncomingRTPPkt&)
 {
     receiveSpeakerData();
     return true;
+}
+
+int AudioRtpSession::getIncrementForDTMF() const
+{
+    return timestampIncrement_;
 }
 
 }

@@ -295,38 +295,30 @@ on_playback_scale_scrolled_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G
 
 static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
-    DEBUG("Start playback button pressed");
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
     if (selectedCall == NULL) {
-        ERROR("No selected object in playback record callback");
         return;
     }
 
     DEBUG("Start selected call file playback %s", selectedCall->_recordfile);
     selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
 
-    // update_actions();
-
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PAUSE);
 }
 
 static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
-    DEBUG("Stop playback button pressed");
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-
     if (selectedCall == NULL) {
-        ERROR("No selected object in history treeview");
         return;
     }
 
     if (selectedCall) {
-        if (selectedCall->_recordfile == NULL) {
-            ERROR("Record file is NULL");
+        if (selectedCall->_recordfile == NULL || strlen(selectedCall->_recordfile) == 0) {
             return;
         }
 
@@ -336,8 +328,6 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
         }
         selectedCall->_record_is_playing = FALSE;
     }
-
-    // update_actions();
 
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
 }

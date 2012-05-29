@@ -67,6 +67,13 @@ timeval2microtimeout(const timeval& t)
     return ((t.tv_sec * 1000000ul) + t.tv_usec);
 }
 
+struct DTMFEvent {
+    DTMFEvent(int digit);
+    ost::RTPPacket::RFC2833Payload payload;
+    bool newevent;
+    int length;
+};
+
 /**
  * Class meant to store internal data in order to encode/decode,
  * resample, process, and packetize audio streams. This class should not be
@@ -90,7 +97,7 @@ class AudioRtpRecord {
         int codecSampleRate_;
         int codecFrameSize_;
         int converterSamplingRate_;
-        std::list<int> dtmfQueue_;
+        std::list<DTMFEvent> dtmfQueue_;
         SFLDataFormat fadeFactor_;
         NoiseSuppress *noiseSuppressEncode_;
         NoiseSuppress *noiseSuppressDecode_;
@@ -138,7 +145,7 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.hasDynamicPayloadType_;
         }
 
-        int DtmfPending() const {
+        bool hasDTMFPending() const {
             return not audioRtpRecord_.dtmfQueue_.empty();
         }
 

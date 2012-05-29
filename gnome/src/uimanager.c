@@ -798,50 +798,6 @@ call_record(void)
 }
 
 static void
-start_playback_record_cb(void)
-{
-    DEBUG("Start playback button pressed");
-
-    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-
-    if (selectedCall == NULL) {
-        ERROR("No selected object in playback record callback");
-        return;
-    }
-
-    DEBUG("Start selected call file playback %s", selectedCall->_recordfile);
-    selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
-
-    update_actions();
-}
-
-static void
-stop_playback_record_cb(void)
-{
-    DEBUG("Stop playback button pressed");
-
-    callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-
-    if (selectedCall == NULL) {
-        ERROR("No selected object in history treeview");
-        return;
-    }
-
-    if (selectedCall) {
-        if (selectedCall->_recordfile == NULL) {
-            ERROR("Record file is NULL");
-            return;
-        }
-
-        dbus_stop_recorded_file_playback(selectedCall->_recordfile);
-        DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
-        selectedCall->_record_is_playing = FALSE;
-    }
-
-    update_actions();
-}
-
-static void
 call_configuration_assistant(void * foo UNUSED)
 {
     build_wizard();
@@ -1105,15 +1061,6 @@ static const GtkActionEntry menu_entries[] = {
     {
         "Quit", GTK_STOCK_CLOSE, N_("_Quit"), "<control>Q",
         N_("Quit the program"), G_CALLBACK(call_quit)
-    },
-    {
-        // "StartPlaybackRecord", GTK_STOCK_MEDIA_PLAY,  N_("_Playback record"), NULL,
-        "StartPlaybackRecord", "OK",  N_("_Playback record"), NULL,
-        N_("Playback recorded file"), G_CALLBACK(start_playback_record_cb)
-    },
-    {
-        "StopPlaybackRecord", "AH", N_("_Stop playback"), NULL,
-        N_("Stop recorded file playback"), G_CALLBACK(stop_playback_record_cb)
     },
 
     // Edit Menu
