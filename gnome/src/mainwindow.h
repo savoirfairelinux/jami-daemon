@@ -123,4 +123,7 @@ void main_window_show_playback_scale();
  * Hide the playback scale
  */
 void main_window_hide_playback_scale();
+
+
+void main_window_reset_playback_scale();
 #endif

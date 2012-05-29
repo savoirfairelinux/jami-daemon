@@ -518,4 +518,11 @@ void
 main_window_hide_playback_scale()
 {
     gtk_widget_hide(seekslider);
+    main_window_reset_playback_scale();
+}
+
+void
+main_window_reset_playback_scale()
+{
+    sfl_seekslider_reset((SFLSeekSlider *)seekslider);
 }

@@ -68,6 +68,8 @@ void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint
 
 void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display);
 
+void sfl_seekslider_reset(SFLSeekSlider *seekslider);
+
 G_END_DECLS
 
 #endif /* __RB_SEEKSLIDER_H */
