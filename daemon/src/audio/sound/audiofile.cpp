@@ -109,7 +109,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 }
 
 
-WaveFile::WaveFile(const std::string &fileName, int sampleRate) : AudioFile(fileName, sampleRate)
+WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : AudioFile(fileName, sampleRate)
 {
     const std::fstream fs(fileName.c_str(), std::ios_base::in);
 
@@ -174,7 +174,8 @@ WaveFile::WaveFile(const std::string &fileName, int sampleRate) : AudioFile(file
         fileStream.read(data, sizeof data / sizeof *data);
 
     // Samplerate converter initialized with 88200 sample long
-    SamplerateConverter converter(std::max(fileRate, newRate));
+    const int rate = static_cast<SINT32>(sampleRate_);
+    SamplerateConverter converter(std::max(fileRate, rate));
 
     // Get length of data from the header.
     SINT32 bytes;
@@ -200,15 +201,13 @@ WaveFile::WaveFile(const std::string &fileName, int sampleRate) : AudioFile(file
         nbSamples *= 0.5;
     }
 
-    if (fileRate != newRate) {
-        const float ratio = newRate / (float) fileRate;
+    if (fileRate != rate) {
+        const float ratio = sampleRate_ / (float) fileRate;
         const int outSamples = ceil(nbSamples * ratio);
         size_ = outSamples;
         buffer_ = new SFLDataFormat[size_];
-        converter.resample(tempBuffer, buffer_, size_, fileRate, newRate, nbSamples);
+        converter.resample(tempBuffer, buffer_, size_, fileRate, sampleRate_, nbSamples);
         delete [] tempBuffer;
     } else
         buffer_ = tempBuffer;
-
-    sampleRate_ = newRate;
 }
