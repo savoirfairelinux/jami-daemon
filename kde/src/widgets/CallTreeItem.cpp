@@ -327,6 +327,19 @@ void CallTreeItem::resizeEvent ( QResizeEvent *e )
    e->accept();
 } //resizeEvent
 
+void CallTreeItem::mouseDoubleClickEvent(QMouseEvent *e )
+{
+   kDebug() << "\n\n\nHERE" << m_pItemCall << m_pItemCall->isConference() << m_pItemCall->toHumanStateName();
+   if (m_pItemCall && m_pItemCall->isConference() && m_pItemCall->getState() == CALL_STATE_CONFERENCE_HOLD) {
+      e->accept();
+      m_pItemCall->actionPerformed(CALL_ACTION_HOLD);
+   }
+   else {
+      kDebug() << "nope!";
+      e->ignore();
+   }
+}
+
 ///Called when a call is dropped on transfer
 void CallTreeItem::transferEvent(QMimeData* data)
 {
