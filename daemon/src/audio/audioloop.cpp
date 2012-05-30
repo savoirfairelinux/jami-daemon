@@ -52,9 +52,6 @@ AudioLoop::~AudioLoop()
 void
 AudioLoop::seek(double relative_position)
 {
-
-    DEBUG("seek relative position: %f", relative_position);
-
     size_t new_pos = (size_t)((double)size_ * (relative_position * 0.01));
 
     pos_ = new_pos;
@@ -100,10 +97,17 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
 
     pos_ = pos;
 
+    // We want to send values in milisecond
+    int divisor = sampleRate_ / 1000;
+    if(divisor == 0) {
+        ERROR("Error cannot update playback slider, sampling rate is 0");
+        return;
+    }
+
     if(isRecording_) {
         if((updatePlaybackScale % 5) == 0) {
             CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
-            cm->updatePlaybackScale("", (pos_ >> 8) + ((size_ >> 8) << 16));
+            cm->updatePlaybackScale(pos_ / divisor, size_ / divisor);
         }
         updatePlaybackScale++;
     }
