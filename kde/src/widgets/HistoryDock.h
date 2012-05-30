@@ -81,7 +81,7 @@ private:
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);
 
 public slots:
-   void enableDateRange(bool enable);
+   void enableDateRange(bool disable);
    virtual void keyPressEvent(QKeyEvent* event);
 
 private slots:

@@ -46,6 +46,7 @@
 #include "lib/sflphone_const.h"
 #include "lib/Contact.h"
 #include "lib/Call.h"
+#include "klib/ConfigurationSkeleton.h"
 
 //SFLPhone
 #include "klib/AkonadiBackend.h"
@@ -57,7 +58,7 @@ const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, IC
 
 ///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
-   : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0),m_pTimer(0)
+   : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0),m_pTimer(0),m_pPeerL(0),m_pIconL(0),m_pCallNumberL(0),m_pSecureL(0),m_pCodecL(0)
 {
    setMaximumSize(99999,50);
 }
@@ -110,14 +111,14 @@ void CallTreeItem::setCall(Call *call)
       return;
    }
 
-   m_pIconL            = new QLabel();
-   m_pCallNumberL      = new QLabel(m_pItemCall->getPeerPhoneNumber());
    m_pTransferPrefixL  = new QLabel(i18n("Transfer to : "));
    m_pTransferNumberL  = new QLabel();
-   m_pPeerL            = new QLabel();
    m_pElapsedL         = new QLabel();
    QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+   m_pTransferPrefixL->setVisible(false);
+   m_pTransferNumberL->setVisible(false);
+   
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
 
@@ -135,11 +136,6 @@ void CallTreeItem::setCall(Call *call)
    m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
    connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
 
-   m_pCodecL = new QLabel(this);
-   //m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
-
-   m_pSecureL = new QLabel(this);
-
    m_pElapsedL->setStyleSheet("margin-right:5px;");
 
    mainLayout->setSpacing(4);
@@ -149,16 +145,33 @@ void CallTreeItem::setCall(Call *call)
    QHBoxLayout* transfer = new QHBoxLayout();
    transfer->setMargin(0);
    transfer->setSpacing(0);
-   mainLayout->addWidget(m_pIconL);
+   
+   if (ConfigurationSkeleton::displayCallIcon()) {
+      m_pIconL = new QLabel();
+      mainLayout->addWidget(m_pIconL);
+   }
 
-   if(! m_pItemCall->getPeerName().isEmpty()) {
+   if(ConfigurationSkeleton::displayCallPeer()&& ! m_pItemCall->getPeerName().isEmpty()) {
+      m_pPeerL = new QLabel();
       m_pPeerL->setText(m_pItemCall->getPeerName());
       descr->addWidget(m_pPeerL);
    }
 
-   descr->addWidget(m_pCallNumberL);
-   descr->addWidget(m_pSecureL);
-   descr->addWidget(m_pCodecL);
+   if (ConfigurationSkeleton::displayCallNumber()) {
+      m_pCallNumberL = new QLabel(m_pItemCall->getPeerPhoneNumber());
+      descr->addWidget(m_pCallNumberL);
+   }
+
+   if (ConfigurationSkeleton::displayCallSecure()) {
+      m_pSecureL = new QLabel(this);
+      descr->addWidget(m_pSecureL);
+   }
+   
+   if (ConfigurationSkeleton::displayCallCodec()) {
+      m_pCodecL = new QLabel(this);
+      descr->addWidget(m_pCodecL);
+   }
+   
    transfer->addWidget(m_pTransferPrefixL);
    transfer->addWidget(m_pTransferNumberL);
    descr->addLayout(transfer);
@@ -167,7 +180,6 @@ void CallTreeItem::setCall(Call *call)
    mainLayout->addWidget(m_pElapsedL);
 
    setLayout(mainLayout);
-   setMinimumSize(QSize(50, 30));
 
    connect(m_pItemCall, SIGNAL(changed()), this,     SLOT(updated()));
 
@@ -181,17 +193,19 @@ void CallTreeItem::updated()
    kDebug() << "Updating tree item";
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
    if (contact) {
-      if (contact->getPhoto())
+      if (m_pIconL&&contact->getPhoto())
          m_pIconL->setPixmap(*contact->getPhoto());
-      m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
+      if (m_pPeerL)
+         m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
    }
    else {
-      m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      if (m_pIconL)
+         m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
 
-      if(! m_pItemCall->getPeerName().trimmed().isEmpty()) {
+      if(m_pPeerL && ! m_pItemCall->getPeerName().trimmed().isEmpty()) {
          m_pPeerL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
       }
-      else {
+      else if (m_pPeerL) {
          m_pPeerL->setText(i18n("<b>Unknown</b>"));
       }
    }
@@ -199,10 +213,10 @@ void CallTreeItem::updated()
    call_state state = m_pItemCall->getState();
    bool recording = m_pItemCall->getRecording();
    if(state != CALL_STATE_OVER) {
-      if(state == CALL_STATE_CURRENT && recording) {
+      if(m_pIconL && state == CALL_STATE_CURRENT && recording) {
          m_pIconL->setPixmap(QPixmap(ICON_CURRENT_REC));
       }
-      else {
+      else if (m_pIconL) {
          QString str = QString(callStateIcons[state]);
          m_pIconL->setPixmap(QPixmap(str));
       }
@@ -214,14 +228,17 @@ void CallTreeItem::updated()
          m_pTransferNumberL->setText("");
       }
       m_pTransferNumberL->setText(m_pItemCall->getTransferNumber());
-      m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
+      
+      if (m_pCallNumberL)
+         m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
 
-      if(state == CALL_STATE_DIALING) {
+      if(m_pCallNumberL && state == CALL_STATE_DIALING) {
          m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
       else {
-         m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
-         if (m_pItemCall->isSecure())
+         if (m_pCodecL)
+            m_pCodecL->setText("Codec: "+m_pItemCall->getCurrentCodecName());
+         if (m_pSecureL && m_pItemCall->isSecure())
             m_pSecureL->setText("⚷");
       }
    }
@@ -329,14 +346,11 @@ void CallTreeItem::resizeEvent ( QResizeEvent *e )
 
 void CallTreeItem::mouseDoubleClickEvent(QMouseEvent *e )
 {
-   kDebug() << "\n\n\nHERE" << m_pItemCall << m_pItemCall->isConference() << m_pItemCall->toHumanStateName() << (m_pItemCall->getState() == CALL_STATE_CONFERENCE_HOLD) << CALL_STATE_CONFERENCE_HOLD << m_pItemCall->getState();
    if (m_pItemCall && m_pItemCall->isConference() && m_pItemCall->getState() == CALL_STATE_CONFERENCE_HOLD) {
-      kDebug() << "Accepted!";
       e->accept();
       m_pItemCall->actionPerformed(CALL_ACTION_HOLD);
    }
    else {
-      kDebug() << "nope!";
       e->ignore();
    }
 }

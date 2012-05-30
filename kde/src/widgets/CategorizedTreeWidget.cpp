@@ -126,7 +126,6 @@ class KateColorTreeDelegate : public QStyledItemDelegate
       painter->setClipRect(option.rect);
       if (option.state & QStyle::State_Selected) {
          QStyledItemDelegate::paint(painter,option,index);
-         //return;
       }
     }
 
