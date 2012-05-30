@@ -1564,6 +1564,9 @@ msgstr "Veuillez entrer un numero pour vers lequel transferrer et appuiyez sur e
 msgid "You call have been transferred to "
 msgstr "Votre appel à été transferré au numéro "
 
+msgid "Visible call details"
+msgstr "Details d'appels visible"
+
 #. i18n: file: src/conf/dlgaddressbookbase.ui:27
 msgid "Display organisation"
 msgstr "Afficher l'organisation"

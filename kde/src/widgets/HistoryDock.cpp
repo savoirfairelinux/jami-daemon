@@ -100,8 +100,8 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pAllTimeCB  = new QCheckBox   ( i18n("Display all"));
    m_pLinkPB     = new QPushButton ( this               );
 
-   m_pAllTimeCB->setChecked(ConfigurationSkeleton::displayDataRange());
-   enableDateRange(ConfigurationSkeleton::displayDataRange());
+   m_pAllTimeCB->setChecked(!ConfigurationSkeleton::displayDataRange());
+   enableDateRange(!ConfigurationSkeleton::displayDataRange());
 
    m_pSortByL->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Preferred);
    m_pSortByCBB->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
@@ -281,15 +281,15 @@ void HistoryDock::reload()
 } //reload
 
 ///Enable the ability to set a date range like 1 month to limit history
-void HistoryDock::enableDateRange(bool enable)
+void HistoryDock::enableDateRange(bool disable)
 {
-   m_pFromL->setVisible(enable);
-   m_pToL->setVisible(enable);
-   m_pFromDW->setVisible(enable);
-   m_pToDW->setVisible(enable);
-   m_pLinkPB->setVisible(enable);
+   m_pFromL->setVisible(!disable);
+   m_pToL->setVisible(!disable);
+   m_pFromDW->setVisible(!disable);
+   m_pToDW->setVisible(!disable);
+   m_pLinkPB->setVisible(!disable);
 
-   ConfigurationSkeleton::setDisplayDataRange(enable);
+   ConfigurationSkeleton::setDisplayDataRange(!disable);
 }
 
 ///Filter the history

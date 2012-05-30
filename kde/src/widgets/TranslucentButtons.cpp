@@ -35,7 +35,7 @@ void TranslucentButtons::paintEvent(QPaintEvent* event)
    customPainter.setPen(m_Pen);
 
    if (m_pImg) {
-      customPainter.drawImage(QRect(QPoint(rect().x()+rect().width()-50,10),QSize(40,rect().height()-20)),*m_pImg, QRectF(m_pImg->rect()));
+      customPainter.drawImage(QRect(QPoint(rect().x()+rect().width()-parentWidget()->height(),10),QSize(parentWidget()->height()-10,rect().height()-20)),*m_pImg, QRectF(m_pImg->rect()));
    }
 
    QFont font = customPainter.font();
