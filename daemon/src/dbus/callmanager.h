@@ -121,7 +121,6 @@ class CallManager
         void setConfirmGoClear(const std::string& callID);
         void requestGoClear(const std::string& callID);
         void acceptEnrollment(const std::string& callID, const bool& accepted);
-        void setPBXEnrollment(const std::string& callID, const bool& yesNo);
 
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);

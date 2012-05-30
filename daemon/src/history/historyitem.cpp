@@ -31,6 +31,7 @@
  */
 
 #include "historyitem.h"
+#include <unistd.h>
 #include <cstdlib>
 #include <istream>
 

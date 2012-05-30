@@ -387,17 +387,6 @@ CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 }
 
 void
-CallManager::setPBXEnrollment(const std::string& callID, const bool& yesNo)
-{
-    try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
-        zSession->setPBXEnrollment(yesNo);
-    } catch (...) {
-    }
-}
-
-void
 CallManager::sendTextMessage(const std::string& callID, const std::string& message)
 {
     if (!Manager::instance().sendTextMessage(callID, message, "Me"))

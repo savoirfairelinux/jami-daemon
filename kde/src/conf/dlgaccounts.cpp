@@ -159,7 +159,7 @@ void DlgAccounts::saveAccountList()
       AccountView* current = (*accountList)[i];
       QString currentId;
       //if the account has no instanciated id, it has just been created in the client
-      if(current->isNew()) {
+      if(current && current->isNew()) {
          MapStringString details = current->getAccountDetails();
          currentId = configurationManager.addAccount(details);
          current->setAccountId(currentId);
@@ -176,13 +176,14 @@ void DlgAccounts::saveAccountList()
          }
       }
    }
+
    //remove accounts that are in the configurationManager but not in the client
    for (int i = 0; i < accountIds.size(); i++) {
-      if(! accountList->getAccountById(accountIds[i])) {
-         kDebug() << "remove account " << accountIds[i];
+      if(!accountList->getAccountById(accountIds[i])) {
          configurationManager.removeAccount(accountIds[i]);
       }
    }
+
    configurationManager.setAccountsOrder(accountList->getOrderedList());
    connectAccountsChangedSignal();
 } //saveAccountList

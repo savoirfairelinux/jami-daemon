@@ -2815,37 +2815,17 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
     const std::string accountid(getAccountFromCall(callID));
 
     // Then the VoIP link this account is linked with (IAX2 or SIP)
-    Call *call = NULL;
-
-    if (Account *account = getAccount(accountid)) {
-        VoIPLink *link = account->getVoIPLink();
-
-        if (link)
-            call = link->getCall(callID);
-    }
-
-    std::map<std::string, std::string> call_details;
+    Call *call = getCallFromCallID(callID);
 
     if (call) {
-        std::ostringstream type;
-        type << call->getCallType();
-        call_details["ACCOUNTID"] = accountid;
-        call_details["PEER_NUMBER"] = call->getPeerNumber();
-        call_details["DISPLAY_NAME"] = call->getDisplayName();
-        call_details["CALL_STATE"] = call->getStateStr();
-        call_details["CALL_TYPE"] = type.str();
-        call_details["CONF_ID"] = call->getConfId();
+        std::map<std::string, std::string> details(call->getDetails());
+        details["ACCOUNTID"] = accountid;
+        return details;
     } else {
         ERROR("Call is NULL");
-        call_details["ACCOUNTID"] = "";
-        call_details["PEER_NUMBER"] = "Unknown";
-        call_details["PEER_NAME"] = "Unknown";
-        call_details["DISPLAY_NAME"] = "Unknown";
-        call_details["CALL_STATE"] = "UNKNOWN";
-        call_details["CALL_TYPE"] = "0";
+        // FIXME: is this even useful?
+        return Call::getNullDetails();
     }
-
-    return call_details;
 }
 
 std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory()

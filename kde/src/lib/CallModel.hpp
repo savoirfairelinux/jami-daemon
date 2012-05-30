@@ -47,7 +47,7 @@ CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::m_spAccountList        = 0         
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sInstanceInit        = false     ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sCallInit            = false     ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sHistoryInit         = false     ;
-CALLMODEL_TEMPLATE CallMap      CALLMODEL_T::m_lConfList            = CallMap();
+CALLMODEL_TEMPLATE CallMap      CALLMODEL_T::m_lConfList            = CallMap() ;
 
 CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sHistoryCalls ;
 
