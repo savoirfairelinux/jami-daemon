@@ -26,19 +26,17 @@
  *
  */
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <gtk/gtk.h>
+#include <string.h>
 #include "gtk2_wrappers.h"
 #include "seekslider.h"
 #include "dbus.h"
 #include "logger.h"
 #include "calltab.h"
-// #include "uimanager.h"
 
 /**
  * SECTION:sfl-seekslider
@@ -318,9 +316,8 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
     }
 
     if (selectedCall) {
-        if (selectedCall->_recordfile == NULL || strlen(selectedCall->_recordfile) == 0) {
+        if (selectedCall->_recordfile == NULL || strlen(selectedCall->_recordfile) == 0)
             return;
-        }
 
         if(selectedCall->_record_is_playing) {
             dbus_stop_recorded_file_playback(selectedCall->_recordfile);
