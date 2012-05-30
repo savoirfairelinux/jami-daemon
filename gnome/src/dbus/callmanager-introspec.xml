@@ -381,8 +381,8 @@
 
         <signal name="updatePlaybackScale" tp:name-for-bindings="updatePlaybackScale">
             <tp:docstring/>
-            <arg type="s" name="callid" />
-            <arg type="i" name="value" />
+            <arg type="i" name="position" />
+            <arg type="i" name="size" />
         </signal>
 
         <method name="getCallDetails" tp:name-for-bindings="getCallDetails">

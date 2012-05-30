@@ -79,11 +79,12 @@ class CallTreeItem : public QWidget
 
   protected:
     //Reimplementation
-    virtual void dragEnterEvent ( QDragEnterEvent *e );
-    virtual void dragMoveEvent  ( QDragMoveEvent  *e );
-    virtual void dragLeaveEvent ( QDragLeaveEvent *e );
-    virtual void resizeEvent    ( QResizeEvent    *e );
-    virtual void dropEvent      ( QDropEvent      *e );
+    virtual void dragEnterEvent        ( QDragEnterEvent *e );
+    virtual void dragMoveEvent         ( QDragMoveEvent  *e );
+    virtual void dragLeaveEvent        ( QDragLeaveEvent *e );
+    virtual void resizeEvent           ( QResizeEvent    *e );
+    virtual void dropEvent             ( QDropEvent      *e );
+    virtual void mouseDoubleClickEvent ( QMouseEvent     *e );
 
 private slots:
    void transferEvent(QMimeData* data);

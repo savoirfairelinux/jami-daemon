@@ -142,8 +142,11 @@ Call::Call(QString confId, QString account)
    this->m_ConfId  = confId  ;
    this->m_Account = account ;
 
-   if (m_isConference)
-      m_CurrentState = CALL_STATE_CONFERENCE;
+   if (m_isConference) {
+      CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+      MapStringString details = callManager.getConferenceDetails(m_ConfId);
+      m_CurrentState = confStatetoCallState(details["CONF_STATE"]);
+   }
 }
 
 /*****************************************************************************
@@ -469,10 +472,7 @@ QString Call::getCurrentCodecName()  const
 ///Get the state
 call_state Call::getState()                 const
 {
-   if (!isConference())
-      return m_CurrentState;
-   else
-      return CALL_STATE_CONFERENCE;
+   return m_CurrentState;
 }
 
 ///Get the history state

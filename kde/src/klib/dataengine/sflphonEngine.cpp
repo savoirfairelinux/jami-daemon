@@ -288,10 +288,12 @@ void SFLPhoneEngine::updateAccounts()
 {
    const QVector<Account*>& list = m_pModel->getAccountList()->getAccounts();
    foreach(Account* a,list) {
-      QHash<QString,QVariant> acc;
-      acc[ "id"   ] = a->getAccountId()                 ;
-      acc[ "alias"] = a->getAccountDetail(ACCOUNT_ALIAS);
-      setData("accounts", QString::number(rand()) , acc);
+      if (dynamic_cast<Account*>(a)) {
+         QHash<QString,QVariant> acc;
+         acc[ "id"   ] = a->getAccountId()                 ;
+         acc[ "alias"] = a->getAccountDetail(ACCOUNT_ALIAS);
+         setData("accounts", QString::number(rand()) , acc);
+      }
    }
 }
 

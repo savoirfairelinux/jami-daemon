@@ -107,7 +107,7 @@ AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
     if(isRecording_) {
         if((updatePlaybackScale % 5) == 0) {
             CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
-            cm->updatePlaybackScale("", (pos_ / divisor) + ((size_ / divisor) << 16));
+            cm->updatePlaybackScale(pos_ / divisor, size_ / divisor);
         }
         updatePlaybackScale++;
     }
