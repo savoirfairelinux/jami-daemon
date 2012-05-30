@@ -21,6 +21,7 @@
 
 //System
 #include <unistd.h>
+#include <signal.h>
 
 //Qt
 #include <QtGui/QAction>
@@ -54,6 +55,13 @@ static const char description[] = "A KDE 4 Client for SFLphone";
 
 static const char version[] = "1.1.0";
 
+SFLPhoneApplication* app;
+void quitOnSignal(int signal)
+{
+   Q_UNUSED(signal);
+   app->quit();
+}
+
 int main(int argc, char **argv)
 {
    try
@@ -81,20 +89,25 @@ int main(int argc, char **argv)
       //configuration dbus
       TreeWidgetCallModel::init();
 
-      SFLPhoneApplication app;
-
+      app = new SFLPhoneApplication();
+      
       SFLPhone* sflphoneWindow_ = new SFLPhone();
       if( ! sflphoneWindow_->initialize() ) {
          exit(1);
          return 1;
       };
+
+      signal(SIGINT  , quitOnSignal);
+      signal(SIGTERM , quitOnSignal);
+
       sflphoneWindow_->show();
 
-      int retVal = app.exec();
+      int retVal = app->exec();
 
       ConfigurationSkeleton* conf = ConfigurationSkeleton::self();
       conf->writeConfig();
       delete sflphoneWindow_;
+      delete app;
       return retVal;
    }
    catch(const char * msg)

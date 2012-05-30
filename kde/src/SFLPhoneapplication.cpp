@@ -68,8 +68,6 @@ SFLPhoneApplication::~SFLPhoneApplication()
    instance.connection().disconnectFromBus(instance.connection().baseService());
 }
 
-
-
 /**
  * Return the sflphone window
  */

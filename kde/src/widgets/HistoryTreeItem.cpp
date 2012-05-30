@@ -244,6 +244,7 @@ void HistoryTreeItem::callAgain()
    }
    Call* call = SFLPhone::model()->addDialingCall(m_Name, SFLPhone::app()->model()->getCurrentAccountId());
    call->setCallNumber(m_PhoneNumber);
+   call->setPeerName(m_pPeerNameL->text());
    call->actionPerformed(CALL_ACTION_ACCEPT);
 }
 

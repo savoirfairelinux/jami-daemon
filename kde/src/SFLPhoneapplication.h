@@ -38,7 +38,7 @@ public:
    SFLPhoneApplication();
 
    // Destructor
-   virtual    ~SFLPhoneApplication();
+   virtual ~SFLPhoneApplication();
 
 private:
    //Constructor
