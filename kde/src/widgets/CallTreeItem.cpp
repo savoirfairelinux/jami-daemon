@@ -315,7 +315,6 @@ void CallTreeItem::dropEvent(QDropEvent *e)
 
 void CallTreeItem::resizeEvent ( QResizeEvent *e )
 {
-   kDebug() << "Resize";
    if (m_pBtnConf) {
       m_pBtnConf->setMinimumSize(width()/2-15,height()-4);
       m_pBtnConf->setMaximumSize(width()/2-15,height()-4);

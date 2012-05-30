@@ -336,11 +336,14 @@ void SFLPhoneView::updateWindowCallState()
       enabledActions[ SFLPhone::Record   ] = false;
       m_pMessageBoxW->setVisible(false);
    }
+   else if (call->isConference()) {
+      //TODO Something to do?
+   }
    else {
       call_state state = call->getState();
       recordActivated = call->getRecording();
 
-      kDebug() << "Reached  State" << state << " with call" << call->getCallId();
+      kDebug() << "Reached  State" << state << "(" << call->toHumanStateName() << ") with call" << call->getCallId();
 
       switch (state) {
          case CALL_STATE_INCOMING:
@@ -400,8 +403,14 @@ void SFLPhoneView::updateWindowCallState()
          case CALL_STATE_ERROR:
             kDebug() << "Error : Reached CALL_STATE_ERROR with call " << call->getCallId() << "!";
             break;
-         default:
-            kDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "!";
+         case CALL_STATE_CONFERENCE:
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            break;
+         case CALL_STATE_CONFERENCE_HOLD:
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            break;
+         default: 
+            kDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "(" << call->toHumanStateName() << "!";
             break;
       }
    }
