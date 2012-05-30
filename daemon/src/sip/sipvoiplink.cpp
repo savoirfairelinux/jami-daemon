@@ -38,11 +38,11 @@
 #include "sip_utils.h"
 
 #include "sipvoiplink.h"
+#include "array_size.h"
 #include "manager.h"
 #include "logger.h"
 
 #include "sip/sdp.h"
-#include "sip/pattern.h"
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
@@ -151,17 +151,18 @@ void handleIncomingOptions(pjsip_rx_data *rdata)
         pjsip_tx_data_dec_ref(tdata);
 }
 
+// Always return PJ_TRUE since we are the only module that will handle these requests
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 {
     pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
 
     if (!dlg)
-        return PJ_SUCCESS;
+        return PJ_TRUE;
 
     pjsip_transaction *tsx = pjsip_rdata_get_tsx(rdata);
 
     if (!tsx or tsx->method.id != PJSIP_INVITE_METHOD)
-        return PJ_SUCCESS;
+        return PJ_TRUE;
 
     if (tsx->status_code / 100 == 2) {
         /**
@@ -175,33 +176,34 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
         }
     }
 
-    return PJ_SUCCESS;
+    return PJ_TRUE;
 }
 
+// Always return PJ_TRUE since we are the only module that will handle these requests
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
     if (!rdata or !rdata->msg_info.msg) {
         ERROR("rx_data is NULL");
-        return false;
+        return PJ_TRUE;
     }
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
     if (!method) {
         ERROR("method is NULL");
-        return false;
+        return PJ_TRUE;
     }
 
     if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
-        return true;
+        return PJ_TRUE;
 
     if (!rdata->msg_info.to or !rdata->msg_info.from) {
         ERROR("NULL from/to fields");
-        return false;
+        return PJ_TRUE;
     }
     pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
     pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
     if (!sip_to_uri or !sip_from_uri) {
         ERROR("NULL uri");
-        return false;
+        return PJ_TRUE;
     }
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
@@ -224,17 +226,20 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
-
-        return true;
+        return PJ_TRUE;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
         handleIncomingOptions(rdata);
-        return true;
+        return PJ_TRUE;
     } else if (method->id != PJSIP_INVITE_METHOD && method->id != PJSIP_ACK_METHOD) {
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return true;
+        return PJ_TRUE;
     }
 
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+    if (!account) {
+        ERROR("Could not find account %s", account_id.c_str());
+        return PJ_TRUE;
+    }
 
     pjmedia_sdp_session *r_sdp;
 
@@ -245,7 +250,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         pjsip_endpt_respond_stateless(endpt_, rdata,
                                       PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
                                       NULL);
-        return false;
+        return PJ_TRUE;
     }
 
     // Verify that we can handle the request
@@ -253,7 +258,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return true;
+        return PJ_TRUE;
     }
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
@@ -292,20 +297,14 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     call->getAudioRtp().initConfig();
     call->getAudioRtp().initSession();
 
-    if (body) {
-        char sdpbuffer[1000];
-        int len = body->print_body(body, sdpbuffer, sizeof sdpbuffer);
-
-        if (len == -1) // error
-            len = 0;
-
-        std::string sdpoffer(sdpbuffer, std::min(len, (int) sizeof sdpbuffer));
-        size_t start = sdpoffer.find("a=crypto:");
+    if (body and body->len > 0) {
+        std::string sdpOffer(static_cast<const char*>(body->data), body->len);
+        size_t start = sdpOffer.find("a=crypto:");
 
         // Found crypto header in SDP
         if (start != std::string::npos) {
             CryptoOffer crypto_offer;
-            crypto_offer.push_back(std::string(sdpoffer.substr(start, (sdpoffer.size() - start) - 1)));
+            crypto_offer.push_back(std::string(sdpOffer.substr(start, (sdpOffer.size() - start) - 1)));
 
             const size_t size = ARRAYSIZE(sfl::CryptoSuites);
             std::vector<sfl::CryptoSuiteDefinition> localCapabilities(size);
@@ -332,26 +331,30 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (!ac) {
         ERROR("Could not instantiate codec");
         delete call;
-        return false;
+        return PJ_TRUE;
     }
     call->getAudioRtp().start(ac);
 
-    pjsip_dialog* dialog;
+    pjsip_dialog *dialog = 0;
 
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS) {
         delete call;
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
-        return false;
+        return PJ_TRUE;
     }
 
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
 
-    PJ_ASSERT_RETURN(pjsip_dlg_set_transport(dialog, tp) == PJ_SUCCESS, 1);
+    if (pjsip_dlg_set_transport(dialog, tp) != PJ_SUCCESS) {
+        ERROR("Could not set transport for dialog");
+        delete call;
+        return PJ_TRUE;
+    }
 
     if (!call->inv) {
         ERROR("Call invite is not initialized");
         delete call;
-        return false;
+        return PJ_TRUE;
     }
 
     call->inv->mod_data[mod_ua_.id] = call;
@@ -362,13 +365,15 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
         ERROR("Something wrong with Replaces request.");
+        delete call;
         pjsip_endpt_respond_stateless(endpt_, rdata, 500 /* internal server error */, NULL, NULL, NULL);
     }
 
     // Check if call has been transfered
-    pjsip_tx_data *tdata;
+    pjsip_tx_data *tdata = 0;
 
-    if (replaced_dlg) { // If Replace header present
+    // If Replace header present
+    if (replaced_dlg) {
         // Always answer the new INVITE with 200, regardless whether
         // the replaced call is in early or confirmed state.
         if (pjsip_inv_answer(call->inv, 200, NULL, NULL, &response) == PJ_SUCCESS)
@@ -381,8 +386,16 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
             pjsip_inv_send_msg(replaced_inv, tdata);
     } else { // Prooceed with normal call flow
-        PJ_ASSERT_RETURN(pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) == PJ_SUCCESS, 1);
-        PJ_ASSERT_RETURN(pjsip_inv_send_msg(call->inv, tdata) == PJ_SUCCESS, 1);
+        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+            ERROR("Could not answer invite");
+            delete call;
+            return PJ_TRUE;
+        }
+        if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+            ERROR("Could not send msg for invite");
+            delete call;
+            return PJ_TRUE;
+        }
 
         call->setConnectionState(Call::RINGING);
 
@@ -390,7 +403,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         Manager::instance().getAccountLink(account_id)->addCall(call);
     }
 
-    return true;
+    return PJ_TRUE;
 }
 } // end anonymous namespace
 
@@ -994,6 +1007,9 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
 bool
 SIPVoIPLink::transferCommon(SIPCall *call, pj_str_t *dst)
 {
+    if (!call or !call->inv)
+        return false;
+
     pjsip_evsub_user xfer_cb;
     pj_bzero(&xfer_cb, sizeof(xfer_cb));
     xfer_cb.on_evsub_state = &transfer_client_cb;
@@ -1096,7 +1112,6 @@ SIPVoIPLink::refuse(const std::string& id)
     call->getAudioRtp().stop();
 
     pjsip_tx_data *tdata;
-
     if (pjsip_inv_end_session(call->inv, PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
         return;
 
