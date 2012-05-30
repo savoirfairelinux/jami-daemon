@@ -131,8 +131,9 @@ int main(int argc, char *argv [])
 {
     // TODO: Block signals for all threads but the main thread, decide how/if we should
     // handle other signals
-    signal(SIGTERM, signal_handler);
     signal(SIGINT, signal_handler);
+    signal(SIGHUP, signal_handler);
+    signal(SIGTERM, signal_handler);
 
     fileutils::set_program_dir(argv[0]);
     print_title();
