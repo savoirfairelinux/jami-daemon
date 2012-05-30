@@ -423,7 +423,8 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::changeConference(const QString& confId, con
 ///Remove a conference from the model and the TreeView
 CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(const QString &confId)
 {
-   qDebug() << "Ending conversation containing " << m_sPrivateCallList_callId[confId]->children.size() << " participants";
+   if (m_sPrivateCallList_callId[confId])
+      qDebug() << "Ending conversation containing " << m_sPrivateCallList_callId[confId]->children.size() << " participants";
    removeConference(getCall(confId));
 }
 

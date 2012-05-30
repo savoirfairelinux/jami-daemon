@@ -114,7 +114,7 @@ void CallTreeItem::setCall(Call *call)
    m_pTransferPrefixL  = new QLabel(i18n("Transfer to : "));
    m_pTransferNumberL  = new QLabel();
    m_pElapsedL         = new QLabel();
-   QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
+   QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    m_pTransferPrefixL->setVisible(false);
    m_pTransferNumberL->setVisible(false);
