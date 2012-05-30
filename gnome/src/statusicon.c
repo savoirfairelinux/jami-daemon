@@ -76,7 +76,7 @@ hide_status_hangup_icon()
 void
 status_quit(void * foo UNUSED)
 {
-    sflphone_quit();
+    sflphone_quit(FALSE);
 }
 
 void

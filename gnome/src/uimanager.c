@@ -623,7 +623,7 @@ call_new_call(void * foo UNUSED)
 static void
 call_quit(void * foo UNUSED)
 {
-    sflphone_quit();
+    sflphone_quit(FALSE);
 }
 
 static void
@@ -633,7 +633,7 @@ call_minimize(void * foo UNUSED)
         gtk_widget_hide(get_main_window());
         set_minimized(TRUE);
     } else
-        sflphone_quit();
+        sflphone_quit(FALSE);
 }
 
 static void
