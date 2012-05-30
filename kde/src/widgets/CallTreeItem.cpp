@@ -329,8 +329,9 @@ void CallTreeItem::resizeEvent ( QResizeEvent *e )
 
 void CallTreeItem::mouseDoubleClickEvent(QMouseEvent *e )
 {
-   kDebug() << "\n\n\nHERE" << m_pItemCall << m_pItemCall->isConference() << m_pItemCall->toHumanStateName();
+   kDebug() << "\n\n\nHERE" << m_pItemCall << m_pItemCall->isConference() << m_pItemCall->toHumanStateName() << (m_pItemCall->getState() == CALL_STATE_CONFERENCE_HOLD) << CALL_STATE_CONFERENCE_HOLD << m_pItemCall->getState();
    if (m_pItemCall && m_pItemCall->isConference() && m_pItemCall->getState() == CALL_STATE_CONFERENCE_HOLD) {
+      kDebug() << "Accepted!";
       e->accept();
       m_pItemCall->actionPerformed(CALL_ACTION_HOLD);
    }

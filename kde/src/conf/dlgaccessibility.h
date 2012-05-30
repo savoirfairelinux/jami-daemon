@@ -36,8 +36,8 @@ public:
    ~DlgAccessibility();
 
 public slots:
-void updateSettings();
-void updateWidgets();
+   void updateSettings();
+   void updateWidgets();
 };
 
 #endif
