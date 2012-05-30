@@ -32,6 +32,9 @@
 #include "config.h"
 #endif
 
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include "gtk2_wrappers.h"
 #include "seekslider.h"
@@ -85,6 +88,10 @@ struct SFLSeekSliderPrivate
     GtkWidget *stopRecordImage;
     GtkWidget *separator;
     GtkWidget *separatorAlign;
+    GtkWidget *timeLabel;
+    guint current;
+    guint size;
+    gboolean is_dragging;
     gboolean can_update_scale;
 };
 
@@ -148,6 +155,10 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
     if(seekslider->priv->separator == NULL)
         WARN("Could not create the separator for seekslider");
 
+    seekslider->priv->timeLabel = gtk_label_new("");
+    if(seekslider->priv->timeLabel == NULL)
+        WARN("Could not create the time label");
+
     seekslider->priv->separatorAlign = gtk_alignment_new(1.0, 0.75, 1.0, 1.0);
     if(seekslider->priv->separatorAlign == NULL)
         WARN("Could not create the separator's alignment");
@@ -180,6 +191,7 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
     gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->stopRecordWidget, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->separatorAlign, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->hscale, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(seekslider->priv->hbox), seekslider->priv->timeLabel, FALSE, TRUE, 0);
 
     gtk_widget_show (seekslider->priv->hbox);
     gtk_widget_show (seekslider->priv->hscale);
@@ -191,6 +203,10 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
     gtk_box_pack_start(GTK_BOX(&seekslider->parent), seekslider->priv->hbox, TRUE, TRUE, 0);
 
     seekslider->priv->can_update_scale = TRUE;
+    seekslider->priv->is_dragging = FALSE;
+
+    seekslider->priv->current = 0;
+    seekslider->priv->size = 0;
 }
 
 static void
@@ -252,7 +268,12 @@ sfl_seekslider_new ()
 static gboolean
 on_playback_scale_value_changed_cb(GtkRange *range G_GNUC_UNUSED, GtkScrollType scroll G_GNUC_UNUSED, gdouble value, gpointer user_data G_GNUC_UNUSED)
 {
+    SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
+
     dbus_set_record_playback_seek(value);
+
+    guint updated_current = (guint)((seekslider->priv->size * value) / 100.0);
+    sfl_seekslider_update_timelabel(seekslider, updated_current, seekslider->priv->size);
 
     return FALSE;
 }
@@ -266,6 +287,8 @@ on_playback_scale_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *ev
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
     seekslider->priv->can_update_scale = FALSE;
 
+    seekslider->priv->is_dragging = TRUE;
+
     return FALSE;
 }
 
@@ -278,12 +301,24 @@ on_playback_scale_released_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *e
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
     seekslider->priv->can_update_scale = TRUE;
 
+    seekslider->priv->is_dragging = FALSE;
+
     return FALSE;
 }
 
 static gboolean
-on_playback_scale_moved_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+on_playback_scale_moved_cb(GtkWidget *widget, GdkEvent *event G_GNUC_UNUSED, gpointer user_data)
 {
+    SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
+
+    if(seekslider->priv->is_dragging == FALSE)
+        return FALSE;
+
+    gdouble value = gtk_range_get_value(GTK_RANGE(widget));
+
+    guint updated_current = (guint)(((gdouble)seekslider->priv->size * value) / 100.0);
+    seekslider->priv->current = updated_current;
+
     return FALSE;
 }
 
@@ -332,9 +367,32 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
 }
 
+void sfl_seekslider_update_timelabel(SFLSeekSlider *seekslider, guint current, guint size)
+{
+    gchar buf[20];
+    guint current_sec = current / 1000;
+    guint size_sec = size / 1000;
+    guint current_min = current_sec / 60;
+    guint size_min = size_sec / 60;
+    current_sec = current_sec % 60;
+    size_sec = size_sec % 60;
+
+    if(seekslider == NULL)
+        return;
+
+    if(size > 0)
+        g_snprintf(buf, 20, "%d:%02d / %d:%02d", current_min, current_sec, size_min, size_sec);
+    else
+        g_snprintf(buf, 20, "%s", "");
+
+    gtk_label_set_text(GTK_LABEL(seekslider->priv->timeLabel), buf);
+}
 
 void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint size)
 {
+    if(seekslider == NULL)
+        return;
+
     if (size == 0)
         size = 1;
 
@@ -343,8 +401,12 @@ void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint
 
     gdouble val = ((gdouble) current / (gdouble) size) * 100.0;
 
-    if (seekslider->priv->can_update_scale)
+    if (seekslider->priv->can_update_scale) {
         gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), val);
+        sfl_seekslider_update_timelabel(seekslider, current, size);
+        seekslider->priv->current = current;
+        seekslider->priv->size = size;
+    }
 }
 
 void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display) {
@@ -376,5 +438,8 @@ void sfl_seekslider_reset(SFLSeekSlider *seekslider) {
     gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), 0.0);
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
     sfl_seekslider_stop_playback_record_cb (NULL, seekslider);
+    gtk_label_set_text(GTK_LABEL(seekslider->priv->timeLabel), "");
+    seekslider->priv->current = 0;
+    seekslider->priv->size = 0;
     seekslider->priv->can_update_scale = TRUE;
 }
