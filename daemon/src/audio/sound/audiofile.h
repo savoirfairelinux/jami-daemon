@@ -52,7 +52,9 @@ class AudioFileException : public std::runtime_error {
  */
 class AudioFile : public AudioLoop {
     public:
-        AudioFile(const std::string &filepath) : filepath_(filepath) {}
+        AudioFile(const std::string &filepath, unsigned int sampleRate) : AudioLoop(sampleRate), filepath_(filepath)
+        {}
+
         std::string getFilePath() const {
             return filepath_;
         }
@@ -80,10 +82,10 @@ class WaveFile : public AudioFile {
     public:
         /**
          * Load a sound file in memory
-         * @param filename  The absolute path to the file
-         * @param sampleRate	The sample rate to read it
+         * @param filename      The absolute path to the file
+         * @param sampleRate    The sample rate to read it
          */
-        WaveFile(const std::string&, int);
+        WaveFile(const std::string&, unsigned int sampleRate);
 };
 
 #endif // __AUDIOFILE_H__

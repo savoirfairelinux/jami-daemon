@@ -43,7 +43,7 @@
 #include "logger.h"
 
 RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int sampleRate)
-    : AudioFile(name), audioCodec_(codec)
+    : AudioFile(name, sampleRate), audioCodec_(codec)
 {
     if (filepath_.empty())
         throw AudioFileException("Unable to open audio file: filename is empty");
@@ -109,7 +109,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 }
 
 
-WaveFile::WaveFile(const std::string &fileName, int newRate) : AudioFile(fileName)
+WaveFile::WaveFile(const std::string &fileName, int sampleRate) : AudioFile(fileName, sampleRate)
 {
     const std::fstream fs(fileName.c_str(), std::ios_base::in);
 
