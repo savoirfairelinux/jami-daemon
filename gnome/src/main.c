@@ -43,9 +43,20 @@
 #include "shortcuts.h"
 #include "history.h"
 
+static void
+signal_handler(int code)
+{
+    printf("Caught signal %s, terminating...\n", strsignal(code));
+    sflphone_quit(TRUE);
+}
+
 int
 main(int argc, char *argv[])
 {
+    signal(SIGINT, signal_handler);
+    signal(SIGHUP, signal_handler);
+    signal(SIGTERM, signal_handler);
+
     GError *error = NULL;
     // Handle logging
     int i;

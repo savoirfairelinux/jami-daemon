@@ -116,7 +116,7 @@ on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
         gtk_widget_hide(get_main_window());
         set_minimized(TRUE);
     } else
-        sflphone_quit();
+        sflphone_quit(FALSE);
 
     return TRUE;
 }

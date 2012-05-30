@@ -121,10 +121,12 @@ namespace {
     }
 }
 
-void signal_handler(int code)
-{
-    std::cerr << "Caught signal " << strsignal(code) << ", terminating..." << std::endl;
-    Manager::instance().finish();
+namespace {
+    void signal_handler(int code)
+    {
+        std::cerr << "Caught signal " << strsignal(code) << ", terminating..." << std::endl;
+        Manager::instance().finish();
+    }
 }
 
 int main(int argc, char *argv [])
