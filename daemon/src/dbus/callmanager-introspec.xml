@@ -802,11 +802,5 @@
             <arg type="b" name="accepted" direction="in"/>
         </method>
 
-        <method name="setPBXEnrollment" tp:name-for-bindings="setPBXEnrollment">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-            <arg type="b" name="yesNo" direction="in"/>
-        </method>
-
     </interface>
 </node>

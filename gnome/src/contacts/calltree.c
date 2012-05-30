@@ -479,10 +479,12 @@ calltree_create(calltab_t* tab, int searchbar_type)
     if (searchbar_type) {
         calltab_create_searchbar(tab);
 
-        GtkWidget *alignment =  gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
-        gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 3, 6, 6);
-        gtk_container_add(GTK_CONTAINER(alignment), tab->searchbar);
-        gtk_box_pack_start(GTK_BOX(tab->tree), alignment, FALSE, TRUE, 0);
+        if (tab->searchbar != NULL) {
+            GtkWidget *alignment =  gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+            gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 3, 6, 6);
+            gtk_container_add(GTK_CONTAINER(alignment), tab->searchbar);
+            gtk_box_pack_start(GTK_BOX(tab->tree), alignment, FALSE, TRUE, 0);
+        }
     }
 
     gtk_widget_show(tab->tree);

@@ -205,6 +205,7 @@ Account* AccountList::addAccount(QString & alias)
 ///Remove an account
 void AccountList::removeAccount(Account* account)
 {
+   qDebug() << "Removing" << m_pAccounts;
    m_pAccounts->remove(m_pAccounts->indexOf(account));
 }
 

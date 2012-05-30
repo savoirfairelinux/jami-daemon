@@ -61,7 +61,11 @@ class HistoryItem {
         std::map<std::string, std::string> toMap() const;
         void print(std::ostream &o) const;
         bool operator< (const HistoryItem &other) const {
-                return timestampStart_ > other.timestampStart_;
+            return timestampStart_ > other.timestampStart_;
+        }
+
+        bool operator> (const HistoryItem &other) const {
+            return not (*this < other);
         }
 
     private:
