@@ -345,7 +345,7 @@ void Sdp::addSdesAttribute(const std::vector<std::string>& crypto)
 {
     for (std::vector<std::string>::const_iterator iter = crypto.begin();
             iter != crypto.end(); ++iter) {
-        pj_str_t val = { (char*)(*iter).c_str(), (*iter).size() };
+        pj_str_t val = { (char*)(*iter).c_str(), static_cast<pj_ssize_t>((*iter).size()) };
         pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "crypto", &val);
 
         for (unsigned i = 0; i < localSession_->media_count; i++)
@@ -359,7 +359,7 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 {
     /* Format: ":version value" */
     std::string val = "1.10 " + hash;
-    pj_str_t value = { (char*)val.c_str(), val.size() };
+    pj_str_t value = { (char*)val.c_str(), static_cast<pj_ssize_t>(val.size()) };
     pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_, "zrtp-hash", &value);
 
     if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
