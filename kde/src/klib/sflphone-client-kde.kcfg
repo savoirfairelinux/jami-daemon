@@ -170,15 +170,15 @@
     <!-- Accessibility Settings -->
     <entry name="enableVoiceFeedback" type="bool">
       <label>Enable audio feedback from common actions</label>
-      <default> true </default>
+      <default> false </default>
     </entry>
     <entry name="enableReadLabel" type="bool">
       <label>Automatically read label when an overlay is being displayed</label>
-      <default> true </default>
+      <default> false </default>
     </entry>
     <entry name="enableReadDetails" type="bool">
       <label>Automattically read the call details when it is selected</label>
-      <default> true </default>
+      <default> false </default>
     </entry>
 
    <!-- Dock settings -->
