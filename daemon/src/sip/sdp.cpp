@@ -33,7 +33,6 @@
 #include "sdp.h"
 #include "logger.h"
 #include "manager.h"
-#include <cassert>
 
 Sdp::Sdp(pj_pool_t *pool)
     : memPool_(pool)
@@ -137,19 +136,19 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine()
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
 
-    med->desc.media = pj_str((char*)"audio");
+    med->desc.media = pj_str((char*) "audio");
     med->desc.port_count = 1;
     med->desc.port = localAudioPort_;
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
-    med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*)"RTP/AVP" : (char*)"RTP/SAVP");
+    med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*) "RTP/AVP" : (char*) "RTP/SAVP");
 
     med->desc.fmt_count = codec_list_.size();
 
-    for (unsigned i=0; i<med->desc.fmt_count; i++) {
+    for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
         sfl::Codec *codec = codec_list_[i];
 
         std::ostringstream result;
-        result << (int)codec->getPayloadType();
+        result << static_cast<int>(codec->getPayloadType());
 
         pj_strdup2(memPool_, &med->desc.fmt[i], result.str().c_str());
 
@@ -189,16 +188,13 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine()
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
-    pjmedia_sdp_attr *attr_rtpmap = NULL;
-    pjmedia_sdp_attr *attr_fmtp = NULL;
-
-    attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_rtpmap->name = pj_str((char *) "rtpmap");
     attr_rtpmap->value = pj_str((char *) "101 telephone-event/8000");
 
     med->attr[med->attr_count++] = attr_rtpmap;
 
-    attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_fmtp->name = pj_str((char *) "fmtp");
     attr_fmtp->value = pj_str((char *) "101 0-15");
 
@@ -364,10 +360,6 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 
     if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
         throw SdpException("Could not add zrtp attribute to media");
-}
-
-Sdp::~Sdp()
-{
 }
 
 void Sdp::addAttributeToLocalAudioMedia(const char *attr)
