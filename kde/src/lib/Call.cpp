@@ -227,7 +227,7 @@ Call* Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint s
    Call* call            = new Call(CALL_STATE_OVER, callId, name, number, account );
 
    QDateTime* start = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
-   QDateTime* stop  = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+   QDateTime* stop  = new QDateTime(QDateTime::fromTime_t(stopTimeStamp));
 
    if (start){
       call->m_pStartTime    = start;
@@ -634,7 +634,7 @@ void Call::changeCurrentState(call_state newState)
 void Call::sendTextMessage(QString message)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   callManager.sendTextMessage(m_CallId,message);
+   Q_NOREPLY callManager.sendTextMessage(m_CallId,message);
 }
 
 QDateTime* Call::setStartTime_private(QDateTime* time)
@@ -670,7 +670,7 @@ void Call::accept()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Accepting call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   callManager.accept(m_CallId);
+   Q_NOREPLY callManager.accept(m_CallId);
    setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    this->m_HistoryState = INCOMING;
 }
@@ -680,7 +680,7 @@ void Call::refuse()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Refusing call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   callManager.refuse(m_CallId);
+   Q_NOREPLY callManager.refuse(m_CallId);
    setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    this->m_HistoryState = MISSED;
 }
@@ -691,7 +691,7 @@ void Call::acceptTransf()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Accepting call and transferring it to number : " << m_TransferNumber << ". callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.accept(m_CallId);
-   callManager.transfer(m_CallId, m_TransferNumber);
+   Q_NOREPLY callManager.transfer(m_CallId, m_TransferNumber);
 //   m_HistoryState = TRANSFERED;
 }
 
@@ -701,7 +701,7 @@ void Call::acceptHold()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Accepting call and holding it. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.accept(m_CallId);
-   callManager.hold(m_CallId);
+   Q_NOREPLY callManager.hold(m_CallId);
    this->m_HistoryState = INCOMING;
 }
 
@@ -712,9 +712,9 @@ void Call::hangUp()
    setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
    qDebug() << "Hanging up call. callId : " << m_CallId << "ConfId:" << m_ConfId;
    if (!isConference())
-      callManager.hangUp(m_CallId);
+      Q_NOREPLY callManager.hangUp(m_CallId);
    else
-      callManager.hangUpConference(m_ConfId);
+      Q_NOREPLY callManager.hangUpConference(m_ConfId);
 }
 
 ///Cancel this call
@@ -722,7 +722,7 @@ void Call::cancel()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Canceling call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   callManager.hangUp(m_CallId);
+   Q_NOREPLY callManager.hangUp(m_CallId);
 }
 
 ///Put on hold
@@ -731,9 +731,9 @@ void Call::hold()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Holding call. callId : " << m_CallId << "ConfId:" << m_ConfId;
    if (!isConference())
-      callManager.hold(m_CallId);
+      Q_NOREPLY callManager.hold(m_CallId);
    else
-      callManager.holdConference(m_ConfId);
+      Q_NOREPLY callManager.holdConference(m_ConfId);
 }
 
 ///Start the call
@@ -769,8 +769,8 @@ void Call::call()
 void Call::transfer()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "\n\n\nTransferring call to number : " << m_TransferNumber << ". callId : " << m_CallId << "\n\n\n";
-   callManager.transfer(m_CallId, m_TransferNumber);
+   qDebug() << "Transferring call to number : " << m_TransferNumber << ". callId : " << m_CallId;
+   Q_NOREPLY callManager.transfer(m_CallId, m_TransferNumber);
    setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
@@ -779,9 +779,9 @@ void Call::unhold()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Unholding call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    if (!isConference())
-      callManager.unhold(m_CallId);
+      Q_NOREPLY callManager.unhold(m_CallId);
    else
-      callManager.unholdConference(m_ConfId);
+      Q_NOREPLY callManager.unholdConference(m_ConfId);
 }
 
 /*
@@ -797,7 +797,7 @@ void Call::setRecord()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Setting record " << !m_Recording << " for call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   callManager.setRecording((!m_isConference)?m_CallId:m_ConfId);
+   Q_NOREPLY callManager.setRecording((!m_isConference)?m_CallId:m_ConfId);
    m_Recording = !m_Recording;
 }
 
@@ -846,7 +846,7 @@ void Call::warning()
 ///Input text on the call item
 void Call::appendText(const QString& str)
 {
-   QString * editNumber;
+   QString* editNumber;
    
    switch (m_CurrentState) {
    case CALL_STATE_TRANSFER    :
@@ -869,7 +869,7 @@ void Call::appendText(const QString& str)
 ///Remove the last character
 void Call::backspaceItemText()
 {
-   QString * editNumber;
+   QString* editNumber;
 
    switch (m_CurrentState) {
       case CALL_STATE_TRANSFER         :
@@ -887,7 +887,6 @@ void Call::backspaceItemText()
    int textSize = text.size();
    if(textSize > 0) {
       *editNumber = text.remove(textSize-1, 1);
-
       emit changed();
    }
    else {
