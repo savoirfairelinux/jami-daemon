@@ -92,6 +92,9 @@ Call* CallTreeItem::call() const
 ///Set the call item
 void CallTreeItem::setCall(Call *call)
 {
+   if (!call)
+      return;
+   
    m_pItemCall = call;
    setAcceptDrops(true);
 

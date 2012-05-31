@@ -71,7 +71,12 @@ SFLPhone::SFLPhone(QWidget *parent)
 ///Destructor
 SFLPhone::~SFLPhone()
 {
-   //saveState();
+   ConfigurationSkeleton::setDisplayContactDock ( m_pContactCD->isVisible()  );
+   ConfigurationSkeleton::setDisplayHistoryDock ( m_pHistoryDW->isVisible()  );
+   ConfigurationSkeleton::setDisplayBookmarkDock( m_pBookmarkDW->isVisible() );
+   delete m_pContactCD;
+   delete m_pHistoryDW;
+   delete m_pBookmarkDW;
 }
 
 ///Init everything
@@ -94,6 +99,7 @@ bool SFLPhone::initialize()
 
    m_pContactCD = new ContactDock(this);
    addDockWidget(Qt::TopDockWidgetArea,m_pContactCD);
+   m_pContactCD->setVisible(ConfigurationSkeleton::displayContactDock());
 
    // tell the KXmlGuiWindow that this is indeed the main widget
    m_pCentralDW = new QDockWidget(this);
@@ -128,10 +134,15 @@ bool SFLPhone::initialize()
    addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
    tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
 
+   m_pHistoryDW->setVisible(ConfigurationSkeleton::displayHistoryDock());
+   m_pBookmarkDW->setVisible(ConfigurationSkeleton::displayBookmarkDock());
+
+   connect(action_showContactDock, SIGNAL(toggled(bool)),m_pContactCD, SLOT(setVisible(bool)));
+   connect(action_showHistoryDock, SIGNAL(toggled(bool)),m_pHistoryDW, SLOT(setVisible(bool)));
+   connect(action_showBookmarkDock,SIGNAL(toggled(bool)),m_pBookmarkDW,SLOT(setVisible(bool)));
+
    setWindowIcon (QIcon(ICON_SFLPHONE) );
    setWindowTitle(i18n("SFLphone")     );
-
-   setupActions();
 
    statusBar()->addWidget(m_pStatusBarWidget);
 
@@ -200,11 +211,22 @@ void SFLPhone::setupActions()
    action_pastenumber = new KAction(KIcon("edit-paste"), i18n("Paste"), this);
    action_pastenumber->setShortcut ( Qt::CTRL + Qt::Key_V );
 
+   action_showContactDock  = new KAction(KIcon("edit-find-user")   , i18n("Display Contact") , this);
+   action_showContactDock->setCheckable( true );
+   action_showContactDock->setChecked(ConfigurationSkeleton::displayContactDock());
+   
+   action_showHistoryDock  = new KAction(KIcon("view-history")     , i18n("Display history") , this);
+   action_showHistoryDock->setCheckable( true );
+   action_showHistoryDock->setChecked(ConfigurationSkeleton::displayHistoryDock());
+   
+   action_showBookmarkDock = new KAction(KIcon("bookmark-new-list"), i18n("Display bookmark"), this);
+   action_showBookmarkDock->setCheckable( true );
+   action_showBookmarkDock->setChecked(ConfigurationSkeleton::displayBookmarkDock());
+   
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
 
-
    action_configureShortcut = new KAction(KIcon(KIcon("configure-shortcuts")), i18n("Configure Shortcut"), this);
-   //                    SENDER                        SIGNAL               RECEIVER                 SLOT               /
+   //                    SENDER                        SIGNAL               RECEIVER                 SLOT                /
    /**/connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept()                    ));
    /**/connect(action_refuse,                SIGNAL(triggered()),           m_pView , SLOT(refuse()                    ));
    /**/connect(action_hold,                  SIGNAL(triggered()),           m_pView , SLOT(hold()                      ));
@@ -218,7 +240,6 @@ void SFLPhone::setupActions()
    /**/connect(action_pastenumber,           SIGNAL(triggered()),           m_pView , SLOT(paste()                     ));
    /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
    /*                                                                                                                   */
-
 
    actionCollection()->addAction("action_accept"                , action_accept                );
    actionCollection()->addAction("action_refuse"                , action_refuse                );
@@ -235,6 +256,9 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_accountCreationWizard" , action_accountCreationWizard );
    actionCollection()->addAction("action_configureShortcut"     , action_configureShortcut     );
    actionCollection()->addAction("action_pastenumber"           , action_pastenumber           );
+   actionCollection()->addAction("action_showContactDock"       , action_showContactDock       );
+   actionCollection()->addAction("action_showHistoryDock"       , action_showHistoryDock       );
+   actionCollection()->addAction("action_showBookmarkDock"      , action_showBookmarkDock      );
 
    QList<KAction*> acList = *SFLPhoneAccessibility::getInstance();
    

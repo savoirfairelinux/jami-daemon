@@ -180,5 +180,19 @@
       <label>Automattically read the call details when it is selected</label>
       <default> false </default>
     </entry>
+
+   <!-- Dock settings -->
+    <entry name="displayContactDock" type="bool">
+      <label>Enable audio feedback from common actions</label>
+      <default> true </default>
+    </entry>
+    <entry name="displayHistoryDock" type="bool">
+      <label>Enable audio feedback from common actions</label>
+      <default> true </default>
+    </entry>
+    <entry name="displayBookmarkDock" type="bool">
+      <label>Enable audio feedback from common actions</label>
+      <default> true </default>
+    </entry>
   </group>
 </kcfg>

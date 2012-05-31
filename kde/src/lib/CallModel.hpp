@@ -785,6 +785,8 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::updateWidget     (Call* call, CallWidget va
 CALLMODEL_TEMPLATE bool CALLMODEL_T::updateIndex      (Call* call, Index value      )
 {
    updateCommon(call);
+   if (!m_sPrivateCallList_call[call])
+      return false;
    m_sPrivateCallList_call[call]->index = value                         ;
    m_sPrivateCallList_index[value]      = m_sPrivateCallList_call[call] ;
    return true;
