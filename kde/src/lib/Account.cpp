@@ -108,6 +108,7 @@ Account* Account::buildNewAccountFromAlias(const QString& alias)
 Account::~Account()
 {
    delete m_pAccountId;
+   delete m_pAccountDetails;
 }
 
 

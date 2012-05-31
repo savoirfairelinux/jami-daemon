@@ -255,6 +255,9 @@ private:
    void startWeird   ();
    void warning      ();
 
+   QDateTime* setStartTime_private(QDateTime* time);
+   QDateTime* setStopTime_private(QDateTime* time);
+
 signals:
    void changed();
    void isOver(Call*);
