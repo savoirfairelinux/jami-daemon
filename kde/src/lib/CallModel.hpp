@@ -90,17 +90,28 @@ CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
    init();
 }
 
+///Destructor
+CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
+{
+   //Unregister self
+   InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
+   Q_NOREPLY instance.Unregister(getpid());
+}
+
 ///Open the connection to the daemon and register this client
 CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
 {
    if (!m_sInstanceInit) {
       registerCommTypes();
       InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
+
       instance.Register(getpid(), APP_NAME);
       
       //Setup accounts
       if (m_spAccountList == NULL)
          m_spAccountList = new AccountList(true);
+
+      initHistory();
    }
    m_sInstanceInit = true;
    return true;
@@ -156,7 +167,13 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
          }
          pastCall->setRecordingPath(hc[ RECORDING_PATH_KEY ]);
          m_sHistoryCalls[ hc[TIMESTAMP_START_KEY ]] = pastCall;
-         addCall(pastCall);
+         
+         InternalStruct* aNewStruct = new InternalStruct;
+         aNewStruct->call_real  = pastCall;
+         aNewStruct->conference = false;
+
+         m_sPrivateCallList_call[pastCall]                = aNewStruct;
+         m_sPrivateCallList_callId[pastCall->getCallId()] = aNewStruct;
       }
       qDebug() << "There is " << m_sHistoryCalls.count() << "in history";
    }

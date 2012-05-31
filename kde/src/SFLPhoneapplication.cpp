@@ -63,8 +63,7 @@ SFLPhoneApplication::~SFLPhoneApplication()
    // automatically destroyed
    //sflphoneWindow_ = 0;
    disableSessionManagement();
-   InstanceInterface& instance              = InstanceInterfaceSingleton::getInstance();
-   Q_NOREPLY instance.Unregister(getpid());
+   InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
    instance.connection().disconnectFromBus(instance.connection().baseService());
 }
 

@@ -75,7 +75,7 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 ///Destructor
 AkonadiBackend::~AkonadiBackend()
 {
-
+   delete m_pModel;
 }
 
 
