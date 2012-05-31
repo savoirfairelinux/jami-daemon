@@ -100,8 +100,9 @@ int main(int argc, char **argv)
       int retVal = app->exec();
 
       delete sflphoneWindow_;
-      delete app;
       ConfigurationSkeleton::self()->writeConfig();
+      
+      delete app;
       return retVal;
    }
    catch(const char * msg)

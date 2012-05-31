@@ -77,6 +77,11 @@ SFLPhone::~SFLPhone()
    delete m_pContactCD;
    delete m_pHistoryDW;
    delete m_pBookmarkDW;
+
+   if (m_pModel) {
+      delete m_pModel;
+   }
+   delete AkonadiBackend::getInstance();
 }
 
 ///Init everything
@@ -88,10 +93,6 @@ bool SFLPhone::initialize()
    }
 
    ConfigurationSkeleton::self();
-
-   //Keep these template paramater or the static attribute wont be share between this and the call view, they need to be
-   CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
-   histoModel->initHistory();
 
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    // accept dnd

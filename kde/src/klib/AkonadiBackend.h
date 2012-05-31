@@ -56,10 +56,10 @@ public:
    
    virtual void     editContact   ( Contact*   contact                              );
    virtual void     addNewContact ( Contact*   contact                              );
+   virtual ~AkonadiBackend        (                                                 );
 
 private:
    AkonadiBackend(QObject* parent);
-   virtual ~AkonadiBackend();
 
    //Helper
    QString getUserFromPhone(QString phoneNumber);
