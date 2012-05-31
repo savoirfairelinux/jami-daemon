@@ -79,34 +79,22 @@ void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
 {
     setRtpMedia(&audioCodec);
 
-    // store codec info locally
-    int payloadType = getCodecPayloadType();
-    int frameSize = getCodecFrameSize();
-    int smplRate = getCodecSampleRate();
-    bool dynamic = getHasDynamicPayload();
-
     // G722 requires timestamp to be incremented at 8kHz
-    if (payloadType == g722PayloadType)
-        timestampIncrement_ = g722RtpTimeincrement;
-    else
-        timestampIncrement_ = frameSize;
+    const ost::PayloadType payloadType = getCodecPayloadType();
+    if (payloadType == ost::sptG722) {
+        const int G722_RTP_TIME_INCREMENT = 160;
+        timestampIncrement_ = G722_RTP_TIME_INCREMENT;
+    } else
+        timestampIncrement_ = getCodecFrameSize();
 
-    DEBUG("Codec payload: %d", payloadType);
-    DEBUG("Codec sampling rate: %d", smplRate);
-    DEBUG("Codec frame size: %d", frameSize);
-    DEBUG("RTP timestamp increment: %d", timestampIncrement_);
-
-    if (payloadType == g722PayloadType) {
-        DEBUG("Setting G722 payload format");
-        queue_.setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, g722RtpClockRate));
+    if (payloadType == ost::sptG722) {
+        const int G722_RTP_CLOCK_RATE = 8000;
+        queue_.setPayloadFormat(ost::DynamicPayloadFormat( payloadType, G722_RTP_CLOCK_RATE));
     } else {
-        if (dynamic) {
-            DEBUG("Setting dynamic payload format");
-            queue_.setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) payloadType, smplRate));
-        } else {
-            DEBUG("Setting static payload format");
-            queue_.setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) payloadType));
-        }
+        if (getHasDynamicPayload())
+            queue_.setPayloadFormat(ost::DynamicPayloadFormat(payloadType, getCodecSampleRate()));
+        else
+            queue_.setPayloadFormat(ost::StaticPayloadFormat(static_cast<ost::StaticPayloadType>(payloadType)));
     }
 }
 
@@ -186,11 +174,13 @@ void AudioRtpSession::sendMicData()
 
 void AudioRtpSession::setSessionTimeouts()
 {
+    const int schedulingTimeout = 4000;
+    const int expireTimeout = 1000000;
     DEBUG("Set session scheduling timeout (%d) and expireTimeout (%d)",
-            sfl::schedulingTimeout, sfl::expireTimeout);
+          schedulingTimeout, expireTimeout);
 
-    queue_.setSchedulingTimeout(sfl::schedulingTimeout);
-    queue_.setExpireTimeout(sfl::expireTimeout);
+    queue_.setSchedulingTimeout(schedulingTimeout);
+    queue_.setExpireTimeout(expireTimeout);
 }
 
 void AudioRtpSession::setDestinationIpAddress()

@@ -34,8 +34,6 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <cassert>
-
 // Application import
 #include "noncopyable.h"
 
