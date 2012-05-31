@@ -93,9 +93,7 @@ CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
 ///Destructor
 CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
 {
-   //Unregister self
-   InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
-   Q_NOREPLY instance.Unregister(getpid());
+   
 }
 
 ///Open the connection to the daemon and register this client
@@ -104,8 +102,6 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
    if (!m_sInstanceInit) {
       registerCommTypes();
       InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
-
-      instance.Register(getpid(), APP_NAME);
       
       //Setup accounts
       if (m_spAccountList == NULL)

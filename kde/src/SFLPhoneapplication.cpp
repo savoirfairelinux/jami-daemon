@@ -43,14 +43,13 @@
  */
 SFLPhoneApplication::SFLPhoneApplication()
   : KApplication()
-  //, sflphoneWindow_(0)
 {
-  // SFLPhoneApplication is created from main.cpp.
+   InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
+   instance.Register(getpid(), APP_NAME);
 
   // Start remaining initialisation
   initializePaths();
   initializeMainWindow();
-  connect(this,SIGNAL(aboutToQuit()),this,SLOT(quit2()));
 }
 
 
@@ -61,20 +60,11 @@ SFLPhoneApplication::SFLPhoneApplication()
 SFLPhoneApplication::~SFLPhoneApplication()
 {
    // automatically destroyed
-   //sflphoneWindow_ = 0;
    disableSessionManagement();
    InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
+   Q_NOREPLY instance.Unregister(getpid());
    instance.connection().disconnectFromBus(instance.connection().baseService());
 }
-
-/**
- * Return the sflphone window
- */
-// SFLPhone* SFLPhoneApplication::getSFLPhoneWindow() const
-// {
-//   return sflphoneWindow_;
-// }
-
 
 /**
  * Initialisation of the main window.
@@ -122,10 +112,4 @@ void SFLPhoneApplication::initializePaths()
   KIconLoader::global() -> addAppDir( QString(DATA_INSTALL_DIR) + "/share" );
 
 }
-
-Q_NOREPLY void SFLPhoneApplication::quit2()
-{
-
-}
-
 #include "SFLPhoneapplication.moc"
