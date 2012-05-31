@@ -231,7 +231,8 @@ void HistoryDock::reload()
    switch (m_pSortByCBB->currentIndex()) {
       case Date:
          foreach(HistoryTreeItem* hitem, m_History) {
-            QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(timeToHistoryCategory(QDateTime::fromTime_t(hitem->call()->getStartTimeStamp().toUInt()).date()));
+            QString category = timeToHistoryCategory(QDateTime::fromTime_t(hitem->call()->getStartTimeStamp().toUInt()).date());
+            QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(category);
             item->widget = hitem;
             hitem->setItem(item);
             m_pItemView->setItemWidget(item,0,hitem);
