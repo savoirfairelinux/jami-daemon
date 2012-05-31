@@ -115,7 +115,7 @@ void Call::setContactBackend(ContactBackend* be)
 
 ///Constructor
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
-   : m_isConference(false)
+   : m_isConference(false),m_pStopTime(nullptr),m_pStartTime(nullptr)
 {
    this->m_CallId          = callId     ;
    this->m_PeerPhoneNumber = peerNumber ;
@@ -131,8 +131,8 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 ///Destructor
 Call::~Call()
 {
-   delete m_pStartTime ;
-   delete m_pStopTime  ;
+   //if (m_pStartTime) delete m_pStartTime ;
+   //if (m_pStopTime)  delete m_pStopTime  ;
 }
 
 ///Constructor
@@ -225,9 +225,16 @@ Call* Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint s
 {
    if(name == "empty") name = "";
    Call* call            = new Call(CALL_STATE_OVER, callId, name, number, account );
-   call->m_pStartTime    = new QDateTime(QDateTime::fromTime_t(startTimeStamp)     );
-   call->m_pStopTime     = new QDateTime(QDateTime::fromTime_t(stopTimeStamp)      );
-   call->m_HistoryState  = getHistoryStateFromType(type                            );
+
+   QDateTime* start = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+   QDateTime* stop  = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+
+   if (start){
+      call->m_pStartTime    = start;
+      call->m_pStopTime     = stop;
+   }
+   
+   call->m_HistoryState  = getHistoryStateFromType(type);
    return call;
 }
 
@@ -603,8 +610,7 @@ call_state Call::actionPerformed(call_action action)
    return m_CurrentState;
 } //actionPerformed
 
-/*
-void Call::putRecording()
+/*void Call::putRecording()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    bool daemonRecording = callManager.getIsRecording(this -> m_CallId);
@@ -612,8 +618,8 @@ void Call::putRecording()
    {
       callManager.setRecording(this->m_CallId);
    }
-}
-*/
+}*/
+
 ///Change the state
 void Call::changeCurrentState(call_state newState)
 {
@@ -629,6 +635,21 @@ void Call::sendTextMessage(QString message)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    callManager.sendTextMessage(m_CallId,message);
+}
+
+QDateTime* Call::setStartTime_private(QDateTime* time)
+{
+   //if (m_pStartTime && time)
+   //   delete m_pStartTime;
+   
+   return m_pStartTime = time;
+}
+
+QDateTime* Call::setStopTime_private(QDateTime* time)
+{
+   //if (m_pStopTime && time)
+   //   delete m_pStopTime;
+   return m_pStopTime  = time;
 }
 
 /*****************************************************************************
@@ -650,7 +671,7 @@ void Call::accept()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Accepting call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.accept(m_CallId);
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    this->m_HistoryState = INCOMING;
 }
 
@@ -660,7 +681,7 @@ void Call::refuse()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Refusing call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.refuse(m_CallId);
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    this->m_HistoryState = MISSED;
 }
 
@@ -688,7 +709,7 @@ void Call::acceptHold()
 void Call::hangUp()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
    qDebug() << "Hanging up call. callId : " << m_CallId << "ConfId:" << m_ConfId;
    if (!isConference())
       callManager.hangUp(m_CallId);
@@ -734,7 +755,7 @@ void Call::call()
          if (contact)
             m_PeerName = contact->getFormattedName();
       }
-      this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+      setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
       this->m_HistoryState = OUTGOING;
    }
    else {
@@ -750,7 +771,7 @@ void Call::transfer()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "\n\n\nTransferring call to number : " << m_TransferNumber << ". callId : " << m_CallId << "\n\n\n";
    callManager.transfer(m_CallId, m_TransferNumber);
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 void Call::unhold()
@@ -784,29 +805,29 @@ void Call::setRecord()
 void Call::start()
 {
    qDebug() << "Starting call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 ///Toggle the timer
 void Call::startStop()
 {
    qDebug() << "Starting and stoping call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 ///Stop the timer
 void Call::stop()
 {
    qDebug() << "Stoping call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 ///Handle error instead of crashing
 void Call::startWeird()
 {
    qDebug() << "Starting call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    qDebug() << "Warning : call " << m_CallId << " had an unexpected transition of state at its start.";
 }
 

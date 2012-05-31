@@ -150,7 +150,16 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 ///Destructor
 ContactDock::~ContactDock()
 {
-
+   /*foreach (ContactItemWidget* w, m_Contacts) {
+      delete w;
+   }
+   
+   delete m_pFilterLE   ;
+   delete m_pSplitter   ;
+   delete m_pContactView;
+   delete m_pCallView   ;
+   delete m_pSortByCBB  ;
+   delete m_pShowHistoCK;*/
 }
 
 

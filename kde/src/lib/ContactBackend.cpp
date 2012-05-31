@@ -33,6 +33,13 @@ ContactBackend::ContactBackend(QObject* parent) : QObject(parent)
    
 }
 
+ContactBackend::~ContactBackend()
+{
+   foreach (Contact* c,m_ContactByUid) {
+      delete c;
+   }
+}
+
 ///Update slot
 ContactList ContactBackend::update()
 {

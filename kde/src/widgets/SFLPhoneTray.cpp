@@ -41,6 +41,7 @@ SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)
 ///Destructor
 SFLPhoneTray::~SFLPhoneTray()
 {
+   if (m_pTrayIconMenu) delete m_pTrayIconMenu;
 }
 
 ///Initializer

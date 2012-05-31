@@ -90,10 +90,26 @@ CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
    init();
 }
 
+///Static destructor
+CALLMODEL_TEMPLATE void CALLMODEL_T::destroy()
+{
+   /*foreach (InternalStruct* s,  m_sPrivateCallList_call.values()) {
+      delete s;
+   }
+   foreach (Call* call,  m_sPrivateCallList_call.keys()) {
+      delete call;
+   }*/
+   m_sPrivateCallList_call.clear();
+   m_sPrivateCallList_callId.clear();
+   m_sPrivateCallList_widget.clear();
+   m_sPrivateCallList_index.clear();
+   m_sHistoryCalls.clear();
+}
+
 ///Destructor
 CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
 {
-   
+   if (m_spAccountList) delete m_spAccountList;
 }
 
 ///Open the connection to the daemon and register this client
@@ -101,7 +117,6 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
 {
    if (!m_sInstanceInit) {
       registerCommTypes();
-      InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
       
       //Setup accounts
       if (m_spAccountList == NULL)

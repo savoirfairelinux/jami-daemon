@@ -74,14 +74,39 @@ SFLPhone::~SFLPhone()
    ConfigurationSkeleton::setDisplayContactDock ( m_pContactCD->isVisible()  );
    ConfigurationSkeleton::setDisplayHistoryDock ( m_pHistoryDW->isVisible()  );
    ConfigurationSkeleton::setDisplayBookmarkDock( m_pBookmarkDW->isVisible() );
-   delete m_pContactCD;
-   delete m_pHistoryDW;
-   delete m_pBookmarkDW;
+   
+   delete action_accept                ;
+   delete action_refuse                ;
+   delete action_hold                  ;
+   delete action_transfer              ;
+   delete action_record                ;
+   delete action_mailBox               ;
+   delete action_close                 ;
+   delete action_quit                  ;
+   delete action_displayVolumeControls ;
+   delete action_displayDialpad        ;
+   delete action_displayMessageBox     ;
+   delete action_configureSflPhone     ;
+   delete action_configureShortcut     ;
+   delete action_accountCreationWizard ;
+   delete action_pastenumber           ;
+   delete action_showContactDock       ;
+   delete action_showHistoryDock       ;
+   delete action_showBookmarkDock      ;
+
+   delete m_pView            ;
+   delete m_pTrayIcon        ;
+   delete m_pStatusBarWidget ;
+   delete m_pContactCD       ;
+   delete m_pCentralDW       ;
+   delete m_pHistoryDW       ;
+   delete m_pBookmarkDW      ;
 
    if (m_pModel) {
       delete m_pModel;
    }
    delete AkonadiBackend::getInstance();
+   TreeWidgetCallModel::destroy();
 }
 
 ///Init everything

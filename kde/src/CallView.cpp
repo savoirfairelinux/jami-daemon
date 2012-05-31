@@ -105,6 +105,15 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
 
 } //CallView
 
+///Destructor
+CallView::~CallView()
+{
+   delete m_pTransferB;
+   delete m_pTransferLE;
+   if (m_pTransferOverlay) delete m_pTransferOverlay;
+   if (m_pActiveOverlay)   delete m_pActiveOverlay;
+}
+
 
 /*****************************************************************************
  *                                                                           *
@@ -730,6 +739,11 @@ void CallView::moveSelectedItem( Qt::Key direction )
 CallViewOverlay::CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m_pTimer(0),m_enabled(true),m_black("black")
 {
    m_black.setAlpha(75);
+}
+
+CallViewOverlay::~CallViewOverlay()
+{
+   
 }
 
 ///Add a widget (usually an icon) in the corner

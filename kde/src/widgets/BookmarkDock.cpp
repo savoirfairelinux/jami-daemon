@@ -106,7 +106,14 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
 ///Destructor
 BookmarkDock::~BookmarkDock()
 {
-
+   foreach (HistoryTreeItem* hti,m_pBookmark) {
+      delete hti;
+   }
+   delete m_pItemView  ;
+   delete m_pFilterLE  ;
+   delete m_pSplitter  ;
+   delete m_pMostUsedCK;
+   delete m_pTest      ;
 }
 
 

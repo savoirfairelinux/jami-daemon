@@ -56,6 +56,7 @@ enum HistorySortingMode {
    Length     = 3,
 };
 
+///@class SortableDockCommon Common code for filtering
 template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
 class LIB_EXPORT SortableDockCommon {
    public:

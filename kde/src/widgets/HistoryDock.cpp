@@ -115,8 +115,8 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    //m_pItemView->setAlternatingRowColors(true             );
    m_pItemView->setAcceptDrops( true                     );
    m_pItemView->setDragEnabled( true                     );
-   KeyPressEater *keyPressEater = new KeyPressEater(this);
-   m_pItemView->installEventFilter(keyPressEater);
+   m_pKeyPressEater = new KeyPressEater(this);
+   m_pItemView->installEventFilter(m_pKeyPressEater);
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
@@ -165,6 +165,20 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
 ///Destructor
 HistoryDock::~HistoryDock()
 {
+   /*foreach (HistoryTreeItem* w, m_History) {
+      delete w;
+   }
+   delete m_pItemView     ;
+   delete m_pFilterLE     ;
+   delete m_pSortByCBB    ;
+   delete m_pSortByL      ;
+   delete m_pFromL        ;
+   delete m_pToL          ;
+   delete m_pFromDW       ;
+   delete m_pToDW         ;
+   delete m_pAllTimeCB    ;
+   delete m_pLinkPB       ;
+   delete m_pKeyPressEater;*/
 }
 
 

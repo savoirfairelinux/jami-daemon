@@ -45,6 +45,7 @@ class KDateWidget;
 //SFLPhone
 class HistoryTreeItem;
 class HistoryTree;
+class KeyPressEater;
 
 //Typedef
 typedef QList<HistoryTreeItem*> HistoryList;
@@ -63,19 +64,20 @@ public:
 
 private:
    //Attributes
-   HistoryTree*  m_pItemView        ;
-   KLineEdit*    m_pFilterLE        ;
-   QComboBox*    m_pSortByCBB       ;
-   QLabel*       m_pSortByL         ;
-   QLabel*       m_pFromL           ;
-   QLabel*       m_pToL             ;
-   KDateWidget*  m_pFromDW          ;
-   KDateWidget*  m_pToDW            ;
-   QCheckBox*    m_pAllTimeCB       ;
-   QPushButton*  m_pLinkPB          ;
-   HistoryList   m_History          ;
-   QDate         m_CurrentFromDate  ;
-   QDate         m_CurrentToDate    ;
+   HistoryTree*   m_pItemView        ;
+   KLineEdit*     m_pFilterLE        ;
+   QComboBox*     m_pSortByCBB       ;
+   QLabel*        m_pSortByL         ;
+   QLabel*        m_pFromL           ;
+   QLabel*        m_pToL             ;
+   KDateWidget*   m_pFromDW          ;
+   KDateWidget*   m_pToDW            ;
+   QCheckBox*     m_pAllTimeCB       ;
+   QPushButton*   m_pLinkPB          ;
+   HistoryList    m_History          ;
+   QDate          m_CurrentFromDate  ;
+   QDate          m_CurrentToDate    ;
+   KeyPressEater* m_pKeyPressEater   ;
 
    //Mutator
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);
@@ -102,6 +104,7 @@ public:
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };
 
+///@class KeyPressEater Intercept each keypress to manage it globally
 class KeyPressEater : public QObject
 {
    Q_OBJECT

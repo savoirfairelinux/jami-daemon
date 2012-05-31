@@ -75,7 +75,8 @@ protected:
 
 ///Constructor
 HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
-   : QWidget(parent), m_pItemCall(0),m_pMenu(0),m_pAudioSlider(0),m_pTimeLeftL(0),m_pTimePlayedL(0),m_pPlayer(0),m_pContact(0)
+   : QWidget(parent), m_pItemCall(0),m_pMenu(0),m_pAudioSlider(0),m_pTimeLeftL(0),m_pTimePlayedL(0),m_pPlayer(0),m_pContact(0),
+   m_pPause(0), m_pStop(0), m_pNote(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -172,7 +173,30 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
 ///Destructor
 HistoryTreeItem::~HistoryTreeItem()
 {
+   delete m_pIconL         ;
+   delete m_pPeerNameL     ;
+   delete m_pCallNumberL   ;
+   delete m_pTimeL         ;
+   delete m_pLengthL       ;
 
+   delete m_pCallAgain     ;
+   delete m_pAddContact    ;
+   delete m_pAddToContact  ;
+   delete m_pCopy          ;
+   delete m_pEmail         ;
+   delete m_pBookmark      ;
+   delete m_pMenu          ;
+
+   delete m_pPlay          ;
+   delete m_pRemove        ;
+   delete m_pAudioSlider   ;
+   delete m_pTimeLeftL     ;
+   delete m_pTimePlayedL   ;
+   delete m_pPlayer        ;
+
+   delete m_pPause         ;
+   delete m_pStop          ;
+   delete m_pNote          ;
 }
 
 
