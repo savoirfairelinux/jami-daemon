@@ -60,17 +60,6 @@ function gen_doxygen {
 	fi
 }
 
-
-function launch_unit_test_daemon {
-        # Run the unit tests for the daemon
-        pushd daemon/test
-        # Remove the previous XML test file
-        rm -rf $XML_RESULTS
-        ./run_tests.sh || exit 1
-        popd
-}
-
-
 function launch_functional_test_daemon {
         # Run the python functional tests for the daemon
 
@@ -136,6 +125,8 @@ function build_daemon {
 	if [ $DOXYGEN == 1 ]; then
 		gen_doxygen
 	fi
+	# Remove the previous XML test file
+	rm -rf $XML_RESULTS
 	# Compile unit tests
 	make check
 	popd
@@ -204,7 +195,6 @@ done
 build_$BUILD
 
 if [ $TEST == 1 ]; then
-    # launch_unit_test_daemon
     launch_functional_test_daemon
 fi
 
