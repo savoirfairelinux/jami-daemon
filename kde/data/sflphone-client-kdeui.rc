@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-   <!--<gui name="tutorial3"
-      version="1"
-      xmlns="http://www.kde.org/standards/kxmlgui/1.0"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.kde.org/standards/kxmlgui/1.0
-      http://www.kde.org/standards/kxmlgui/1.0/kxmlgui.xsd" >
-   -->
 <gui name="sflphone-client-kde" version="1">
    <MenuBar>
       <Menu name="Actions" >
@@ -21,25 +14,30 @@
          <Separator />
          <Action name="action_quit" />
       </Menu>
-      <Menu name="Settings" >
-         <text>Settings</text>
+      <Menu name="View">
+         <text>View</text>
+         <Action name="action_showContactDock" />
+         <Action name="action_showHistoryDock" />
+         <Action name="action_showBookmarkDock" />
+         <Separator />
          <Action name="action_displayVolumeControls" />
          <Action name="action_displayDialpad" />
          <Action name="action_displayMessageBox" />
-         <Separator />
+      </Menu>
+      <Menu name="Settings" >
+         <text>Settings</text>
          <Action name="action_configureShortcut" />
          <Action name="action_configureSflPhone" />
          <Separator />
          <Action name="action_accountCreationWizard" />
       </Menu>
    </MenuBar>
-
-         <ToolBar name="mainToolBar" iconText="icononly" position="Top" noMerge="1" fullWidth="false" newline="true" >
-                  <Action name="action_accept" />
-                  <Action name="action_mailBox" />
-                  <Action name="action_refuse" />
-                  <Action name="action_hold" />
-                  <Action name="action_transfer" />
-                  <Action name="action_record" />
+   <ToolBar name="mainToolBar" iconText="icononly" position="Top" noMerge="1" fullWidth="false" newline="true" >
+      <Action name="action_accept" />
+      <Action name="action_mailBox" />
+      <Action name="action_refuse" />
+      <Action name="action_hold" />
+      <Action name="action_transfer" />
+      <Action name="action_record" />
    </ToolBar>
 </gui>

@@ -24,19 +24,14 @@
 #include <signal.h>
 
 //Qt
-#include <QtGui/QAction>
 #include <QApplication>
 #include <QtCore/QString>
-#include <QtGui/QMenu>
-#include <QTableView>
-#include <QListView>
 
 //KDE
 #include <KDebug>
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
 #include <klocale.h>
-#include <KNotification>
 
 //SFLPhone
 #include "AccountWizard.h"
@@ -104,10 +99,9 @@ int main(int argc, char **argv)
 
       int retVal = app->exec();
 
-      ConfigurationSkeleton* conf = ConfigurationSkeleton::self();
-      conf->writeConfig();
       delete sflphoneWindow_;
       delete app;
+      ConfigurationSkeleton::self()->writeConfig();
       return retVal;
    }
    catch(const char * msg)
