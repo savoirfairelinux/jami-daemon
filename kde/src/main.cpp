@@ -97,6 +97,8 @@ int main(int argc, char **argv)
 
       if (ConfigurationSkeleton::displayOnStart())
          sflphoneWindow_->show();
+      else
+         sflphoneWindow_->hide();
       
 
       int retVal = app->exec();
