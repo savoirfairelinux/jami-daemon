@@ -251,7 +251,7 @@ create_main_window()
 
     /* Populate the main window */
     GtkWidget *widget = create_menus(ui_manager);
-    pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
     widget = create_toolbar_actions(ui_manager);
     pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);

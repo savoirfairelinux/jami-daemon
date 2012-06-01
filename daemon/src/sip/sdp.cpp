@@ -33,7 +33,6 @@
 #include "sdp.h"
 #include "logger.h"
 #include "manager.h"
-#include <cassert>
 
 Sdp::Sdp(pj_pool_t *pool)
     : memPool_(pool)
@@ -126,7 +125,7 @@ std::string Sdp::getCodecName()
 
 sfl::AudioCodec* Sdp::getSessionMedia()
 {
-    if (sessionAudioMedia_.size() < 1)
+    if (sessionAudioMedia_.empty())
         throw SdpException("No codec description for this media");
 
     return dynamic_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
@@ -137,19 +136,19 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine()
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
 
-    med->desc.media = pj_str((char*)"audio");
+    med->desc.media = pj_str((char*) "audio");
     med->desc.port_count = 1;
     med->desc.port = localAudioPort_;
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
-    med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*)"RTP/AVP" : (char*)"RTP/SAVP");
+    med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*) "RTP/AVP" : (char*) "RTP/SAVP");
 
     med->desc.fmt_count = codec_list_.size();
 
-    for (unsigned i=0; i<med->desc.fmt_count; i++) {
+    for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
         sfl::Codec *codec = codec_list_[i];
 
         std::ostringstream result;
-        result << (int)codec->getPayloadType();
+        result << static_cast<int>(codec->getPayloadType());
 
         pj_strdup2(memPool_, &med->desc.fmt[i], result.str().c_str());
 
@@ -189,16 +188,13 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine()
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
-    pjmedia_sdp_attr *attr_rtpmap = NULL;
-    pjmedia_sdp_attr *attr_fmtp = NULL;
-
-    attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_rtpmap = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_rtpmap->name = pj_str((char *) "rtpmap");
     attr_rtpmap->value = pj_str((char *) "101 telephone-event/8000");
 
     med->attr[med->attr_count++] = attr_rtpmap;
 
-    attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
+    pjmedia_sdp_attr *attr_fmtp = static_cast<pjmedia_sdp_attr *>(pj_pool_zalloc(memPool_, sizeof(pjmedia_sdp_attr)));
     attr_fmtp->name = pj_str((char *) "fmtp");
     attr_fmtp->value = pj_str((char *) "101 0-15");
 
@@ -256,7 +252,7 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs)
     localSession_->origin.addr_type = pj_str((char*)"IP4");
     localSession_->origin.addr = pj_str((char*)localIpAddr_.c_str());
 
-    localSession_->name = pj_str((char*)"sflphone");
+    localSession_->name = pj_str((char*) PACKAGE);
 
     localSession_->conn->net_type = localSession_->origin.net_type;
     localSession_->conn->addr_type = localSession_->origin.addr_type;
@@ -300,7 +296,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     DEBUG("Remote SDP Session:");
     printSession(remote);
 
-    if (localSession_ == NULL && createLocalSession(selectedCodecs) != PJ_SUCCESS) {
+    if (localSession_ == NULL and createLocalSession(selectedCodecs) != PJ_SUCCESS) {
         ERROR("Failed to create initial offer");
         return;
     }
@@ -366,10 +362,6 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
         throw SdpException("Could not add zrtp attribute to media");
 }
 
-Sdp::~Sdp()
-{
-}
-
 void Sdp::addAttributeToLocalAudioMedia(const char *attr)
 {
     if (localSession_)
@@ -391,8 +383,8 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
 
     for (unsigned i = 0; i < activeRemoteSession_->media_count; ++i)
         if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "audio") == 0) {
-            setRemoteAudioPort(activeRemoteSession_->media[i]->desc.port);
-            setRemoteIP(std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen));
+            remoteAudioPort_ = activeRemoteSession_->media[i]->desc.port;
+            remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
             return;
         }
 
