@@ -37,6 +37,9 @@ Contact::Contact():m_pPhoto(0)
 Contact::~Contact()
 {
    delete m_pPhoto;
+   foreach (Contact::PhoneNumber* ph, m_Numbers) {
+      delete ph;
+   }
 }
 
 ///May be used in extended classes

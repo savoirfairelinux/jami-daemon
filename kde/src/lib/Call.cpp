@@ -133,6 +133,7 @@ Call::~Call()
 {
    //if (m_pStartTime) delete m_pStartTime ;
    //if (m_pStopTime)  delete m_pStopTime  ;
+   this->disconnect();
 }
 
 ///Constructor
