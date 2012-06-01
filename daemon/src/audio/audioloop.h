@@ -44,7 +44,7 @@
 
 class AudioLoop {
     public:
-        AudioLoop();
+        AudioLoop(unsigned int sampleRate);
 
         virtual ~AudioLoop();
 

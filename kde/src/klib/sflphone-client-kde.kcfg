@@ -21,6 +21,26 @@
       <max> 99 </max>
       <default> 30 </default>
     </entry>
+   <entry name="displayCallIcon" type="Bool">
+      <label>Should CallIcon be visible by default for calls</label>
+      <default> true </default>
+   </entry>
+   <entry name="displayCallPeer" type="Bool">
+      <label>Should CallPeer be visible by default for calls</label>
+      <default> true </default>
+   </entry>
+   <entry name="displayCallNumber" type="Bool">
+      <label>Should CallNumber be visible by default for calls</label>
+      <default> true </default>
+   </entry>
+   <entry name="displayCallSecure" type="Bool">
+      <label>Should CallSecure be visible by default for calls</label>
+      <default> false </default>
+   </entry>
+   <entry name="displayCallCodec" type="Bool">
+      <label>Should CallCodec be visible by default for calls</label>
+      <default> false </default>
+   </entry>
 
     <!-- Display Settings -->
 
@@ -159,6 +179,20 @@
     <entry name="enableReadDetails" type="bool">
       <label>Automattically read the call details when it is selected</label>
       <default> false </default>
+    </entry>
+
+   <!-- Dock settings -->
+    <entry name="displayContactDock" type="bool">
+      <label>Enable audio feedback from common actions</label>
+      <default> true </default>
+    </entry>
+    <entry name="displayHistoryDock" type="bool">
+      <label>Enable audio feedback from common actions</label>
+      <default> true </default>
+    </entry>
+    <entry name="displayBookmarkDock" type="bool">
+      <label>Enable audio feedback from common actions</label>
+      <default> true </default>
     </entry>
   </group>
 </kcfg>

@@ -57,7 +57,7 @@ gboolean sflphone_init(GError **error);
 /**
  * Steps when closing the application.  Will ask for confirmation if a call is in progress.
  */
-void sflphone_quit();
+void sflphone_quit(gboolean force_quit);
 
 /**
  * Hang up / refuse the current call

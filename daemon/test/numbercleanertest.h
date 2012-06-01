@@ -34,8 +34,6 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <assert.h>
-
 // Application import
 #include "numbercleaner.h"
 // #include "../src/conference.h"

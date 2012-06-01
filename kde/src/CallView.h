@@ -58,6 +58,7 @@ class CallViewOverlay : public QWidget {
 public:
    //Constructor
    CallViewOverlay(QWidget* parent);
+   ~CallViewOverlay();
 
    //Setters
    void setCornerWidget(QWidget* wdg);
@@ -85,6 +86,7 @@ class CallView : public QTreeWidget {
    Q_OBJECT
    public:
       CallView                    ( QWidget* parent = 0                                                               );
+      ~CallView                   (                                                                                   );
 
       //Getters
       Call* getCurrentItem        (                                                                                   );

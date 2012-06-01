@@ -426,16 +426,10 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath)
     update_actions();
 }
 
-#define POSITION_MASK 0x0000FFFF
-#define SIZE_MASK 0xFFFF0000
-
 static void
-update_playback_scale_cb(DBusGProxy *proxy UNUSED, const gchar *callid, guint value)
+update_playback_scale_cb(DBusGProxy *proxy UNUSED, guint position, guint size)
 {
-    guint size = (value & SIZE_MASK);
-    guint position = (value & POSITION_MASK);
-
-    main_window_update_playback_scale(position, (size >> 16));
+    main_window_update_playback_scale(position, size);
 }
 
 static void
@@ -726,6 +720,10 @@ gboolean dbus_connect(GError **error)
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_INT,
                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
 
+    /* Register INT INT Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
+                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+
     /* Register STRING DOUBLE Marshaller */
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_DOUBLE, G_TYPE_NONE, G_TYPE_STRING,
@@ -822,7 +820,7 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(call_proxy, "recordPlaybackStopped",
                                 G_CALLBACK(record_playback_stopped_cb), NULL, NULL);
 
-    dbus_g_proxy_add_signal(call_proxy, "updatePlaybackScale", G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal(call_proxy, "updatePlaybackScale", G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "updatePlaybackScale",
                                 G_CALLBACK(update_playback_scale_cb), NULL, NULL);
 

@@ -38,7 +38,7 @@ public:
    SFLPhoneApplication();
 
    // Destructor
-   virtual    ~SFLPhoneApplication();
+   virtual ~SFLPhoneApplication();
 
 private:
    //Constructor
@@ -49,8 +49,6 @@ private:
    // Reference to the sflphone window
    //SFLPhone       *sflphoneWindow_;
 
-private slots:
-   Q_NOREPLY void quit2();
 };
 
 #endif // SFLPHONEAPPLICATION_H

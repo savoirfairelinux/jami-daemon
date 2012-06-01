@@ -147,9 +147,9 @@ status_bar_display_account()
 
 
 void
-sflphone_quit()
+sflphone_quit(gboolean force_quit)
 {
-    if (calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
+    if (force_quit || calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
         dbus_unregister(getpid());
         dbus_clean();
         account_list_free();

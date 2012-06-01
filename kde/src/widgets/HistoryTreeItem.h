@@ -87,7 +87,7 @@ class HistoryTreeItem : public QWidget
     QLabel*      m_pPeerNameL     ;
     QLabel*      m_pCallNumberL   ;
     QLabel*      m_pTimeL         ;
-    QLabel*      m_pLengthL     ;
+    QLabel*      m_pLengthL       ;
 
     KAction*     m_pCallAgain     ;
     KAction*     m_pAddContact    ;

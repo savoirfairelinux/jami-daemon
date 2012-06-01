@@ -69,7 +69,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
    setPalette(pal);
 
-   m_pMessageBoxW->setVisible(ConfigurationSkeleton::displayMessageBox());
+   m_pMessageBoxW->setVisible(false);
 
    //                SENDER                                        SIGNAL                             RECEIVER                                            SLOT                                  /
    /**/connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
@@ -336,11 +336,14 @@ void SFLPhoneView::updateWindowCallState()
       enabledActions[ SFLPhone::Record   ] = false;
       m_pMessageBoxW->setVisible(false);
    }
+   else if (call->isConference()) {
+      //TODO Something to do?
+   }
    else {
       call_state state = call->getState();
       recordActivated = call->getRecording();
 
-      kDebug() << "Reached  State" << state << " with call" << call->getCallId();
+      kDebug() << "Reached  State" << state << "(" << call->toHumanStateName() << ") with call" << call->getCallId();
 
       switch (state) {
          case CALL_STATE_INCOMING:
@@ -348,14 +351,16 @@ void SFLPhoneView::updateWindowCallState()
             buttonIconFiles [ SFLPhone::Refuse   ] = ICON_REFUSE                 ;
             actionTexts     [ SFLPhone::Accept   ] = ACTION_LABEL_ACCEPT         ;
             actionTexts     [ SFLPhone::Refuse   ] = ACTION_LABEL_REFUSE         ;
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_RINGING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_CURRENT:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
-            m_pMessageBoxW->setVisible(true)                                     ;
+            m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
             break;
          case CALL_STATE_DIALING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -363,28 +368,32 @@ void SFLPhoneView::updateWindowCallState()
             enabledActions  [ SFLPhone::Record   ] = false                       ;
             actionTexts     [ SFLPhone::Accept   ] = ACTION_LABEL_ACCEPT         ;
             buttonIconFiles [ SFLPhone::Accept   ] = ICON_ACCEPT                 ;
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_HOLD:
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
-            m_pMessageBoxW->setVisible(true)                                     ;
+            m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
             break;
          case CALL_STATE_FAILURE:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
             enabledActions  [ SFLPhone::Record   ] = false                       ;
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_BUSY:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
             enabledActions  [ SFLPhone::Record   ] = false                       ;
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_TRANSFER:
             buttonIconFiles [ SFLPhone::Accept   ] = ICON_EXEC_TRANSF            ;
             actionTexts     [ SFLPhone::Transfer ] = ACTION_LABEL_GIVE_UP_TRANSF ;
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
+            m_pMessageBoxW->setVisible(false)                                    ;
             transfer = true;
             break;
          case CALL_STATE_TRANSF_HOLD:
@@ -392,6 +401,7 @@ void SFLPhoneView::updateWindowCallState()
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Transfer ] = ACTION_LABEL_GIVE_UP_TRANSF ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
+            m_pMessageBoxW->setVisible(false)                                    ;
             transfer = true;
             break;
          case CALL_STATE_OVER:
@@ -400,8 +410,16 @@ void SFLPhoneView::updateWindowCallState()
          case CALL_STATE_ERROR:
             kDebug() << "Error : Reached CALL_STATE_ERROR with call " << call->getCallId() << "!";
             break;
-         default:
-            kDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "!";
+         case CALL_STATE_CONFERENCE:
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            m_pMessageBoxW->setVisible(false)                                    ;
+            break;
+         case CALL_STATE_CONFERENCE_HOLD:
+            enabledActions  [ SFLPhone::Transfer ] = false                       ;
+            m_pMessageBoxW->setVisible(false)                                    ;
+            break;
+         default: 
+            kDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "(" << call->toHumanStateName() << "!";
             break;
       }
    }
@@ -535,8 +553,7 @@ void SFLPhoneView::updateStatusMessage()
    else {
       emit statusMessageChangeAsked(i18n("Using account")
                      + " \'" + account->getAlias()
-                     + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ", "
-                     + account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) + ")");
+                     + "\' (" + account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) + ")");
    }
 }
 
@@ -567,7 +584,13 @@ void SFLPhoneView::displayDialpad(bool checked)
 void SFLPhoneView::displayMessageBox(bool checked)
 {
    ConfigurationSkeleton::setDisplayMessageBox(checked);
-   m_pMessageBoxW->setVisible(checked);
+   Call* call = callView->getCurrentItem();
+   m_pMessageBoxW->setVisible(checked
+      && call
+      && (call->getState() == CALL_STATE_CURRENT
+         || call->getState() == CALL_STATE_HOLD
+      )
+   );
 }
 
 ///Input grabber

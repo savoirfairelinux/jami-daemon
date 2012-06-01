@@ -95,7 +95,20 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
 ///Destructor
 ContactItemWidget::~ContactItemWidget()
 {
-
+   /*delete m_pIconL        ;
+   delete m_pContactNameL ;
+   delete m_pCallNumberL  ;
+   delete m_pOrganizationL;
+   delete m_pEmailL       ;
+   delete m_pItem         ;
+   
+   delete m_pCallAgain   ;
+   delete m_pEditContact ;
+   delete m_pCopy        ;
+   delete m_pEmail       ;
+   delete m_pAddPhone    ;
+   delete m_pBookmark    ;
+   delete m_pMenu        ;*/
 }
 
 

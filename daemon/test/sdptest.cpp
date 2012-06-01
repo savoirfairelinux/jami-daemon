@@ -117,7 +117,7 @@ static const char *sdp_reinvite = "v=0\r\n"
 #endif
                                   ;
 
-static const char *const LOCALHOST = "localhost";
+static const char *const LOCALHOST = "127.0.0.1";
 
 void SDPTest::setUp()
 {
@@ -136,9 +136,9 @@ void SDPTest::tearDown()
 
 void SDPTest::receiveAnswerAfterInitialOffer(const pjmedia_sdp_session* remote)
 {
-    assert(pjmedia_sdp_neg_get_state(session_->negotiator_) == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER);
-    assert(pjmedia_sdp_neg_set_remote_answer(session_->memPool_, session_->negotiator_, remote) == PJ_SUCCESS);
-    assert(pjmedia_sdp_neg_get_state(session_->negotiator_) == PJMEDIA_SDP_NEG_STATE_WAIT_NEGO);
+    CPPUNIT_ASSERT(pjmedia_sdp_neg_get_state(session_->negotiator_) == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER);
+    CPPUNIT_ASSERT(pjmedia_sdp_neg_set_remote_answer(session_->memPool_, session_->negotiator_, remote) == PJ_SUCCESS);
+    CPPUNIT_ASSERT(pjmedia_sdp_neg_get_state(session_->negotiator_) == PJMEDIA_SDP_NEG_STATE_WAIT_NEGO);
 }
 
 void SDPTest::testInitialOfferFirstCodec()
@@ -160,7 +160,8 @@ void SDPTest::testInitialOfferFirstCodec()
     videoCodecs.push_back("H263");
 #endif
 
-	session_->setLocalIP(LOCALHOST);
+    session_->setLocalIP(LOCALHOST);
+    session_->setLocalPublishedAudioPort(49567);
 
 #ifdef SFL_VIDEO
     session_->createOffer(codecSelection, videoCodecs);
@@ -203,6 +204,7 @@ void SDPTest::testInitialAnswerFirstCodec()
     pjmedia_sdp_parse(testPool_, (char*) sdp_offer1, strlen(sdp_offer1), &remoteOffer);
 
     session_->setLocalIP(LOCALHOST);
+    session_->setLocalPublishedAudioPort(49567);
 
 #ifdef SFL_VIDEO
     session_->receiveOffer(remoteOffer, codecSelection, videoCodecs);
@@ -237,7 +239,8 @@ void SDPTest::testInitialOfferLastCodec()
     videoCodecs.push_back("H263");
 #endif
 
-	session_->setLocalIP(LOCALHOST);
+    session_->setLocalIP(LOCALHOST);
+    session_->setLocalPublishedAudioPort(49567);
 
 #ifdef SFL_VIDEO
     session_->createOffer(codecSelection, videoCodecs);
@@ -280,6 +283,7 @@ void SDPTest::testInitialAnswerLastCodec()
     pjmedia_sdp_parse(testPool_, (char*)sdp_offer2, strlen(sdp_offer2), &remoteOffer);
 
     session_->setLocalIP(LOCALHOST);
+    session_->setLocalPublishedAudioPort(49567);
 
 #ifdef SFL_VIDEO
     session_->receiveOffer(remoteOffer, codecSelection, videoCodecs);
@@ -304,9 +308,9 @@ void SDPTest::testReinvite()
     CPPUNIT_ASSERT(session_->getRemoteIP().empty());
 
     std::vector<int> codecSelection;
-	codecSelection.push_back(PAYLOAD_CODEC_ULAW);
-	codecSelection.push_back(PAYLOAD_CODEC_ALAW);
-	codecSelection.push_back(PAYLOAD_CODEC_G722);
+    codecSelection.push_back(PAYLOAD_CODEC_ULAW);
+    codecSelection.push_back(PAYLOAD_CODEC_ALAW);
+    codecSelection.push_back(PAYLOAD_CODEC_G722);
 
 #ifdef SFL_VIDEO
     std::vector<std::string> videoCodecs;
@@ -314,7 +318,8 @@ void SDPTest::testReinvite()
     videoCodecs.push_back("H263");
 #endif
 
-	session_->setLocalIP(LOCALHOST);
+    session_->setLocalIP(LOCALHOST);
+    session_->setLocalPublishedAudioPort(49567);
 
 #ifdef SFL_VIDEO
     session_->createOffer(codecSelection, videoCodecs);

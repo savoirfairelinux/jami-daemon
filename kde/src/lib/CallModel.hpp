@@ -90,17 +90,39 @@ CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
    init();
 }
 
+///Static destructor
+CALLMODEL_TEMPLATE void CALLMODEL_T::destroy()
+{
+   /*foreach (InternalStruct* s,  m_sPrivateCallList_call.values()) {
+      delete s;
+   }
+   foreach (Call* call,  m_sPrivateCallList_call.keys()) {
+      delete call;
+   }*/
+   m_sPrivateCallList_call.clear();
+   m_sPrivateCallList_callId.clear();
+   m_sPrivateCallList_widget.clear();
+   m_sPrivateCallList_index.clear();
+   m_sHistoryCalls.clear();
+}
+
+///Destructor
+CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
+{
+   if (m_spAccountList) delete m_spAccountList;
+}
+
 ///Open the connection to the daemon and register this client
 CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
 {
    if (!m_sInstanceInit) {
       registerCommTypes();
-      InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
-      instance.Register(getpid(), APP_NAME);
       
       //Setup accounts
       if (m_spAccountList == NULL)
          m_spAccountList = new AccountList(true);
+
+      initHistory();
    }
    m_sInstanceInit = true;
    return true;
@@ -156,7 +178,13 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
          }
          pastCall->setRecordingPath(hc[ RECORDING_PATH_KEY ]);
          m_sHistoryCalls[ hc[TIMESTAMP_START_KEY ]] = pastCall;
-         addCall(pastCall);
+         
+         InternalStruct* aNewStruct = new InternalStruct;
+         aNewStruct->call_real  = pastCall;
+         aNewStruct->conference = false;
+
+         m_sPrivateCallList_call[pastCall]                = aNewStruct;
+         m_sPrivateCallList_callId[pastCall->getCallId()] = aNewStruct;
       }
       qDebug() << "There is " << m_sHistoryCalls.count() << "in history";
    }
@@ -423,7 +451,8 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::changeConference(const QString& confId, con
 ///Remove a conference from the model and the TreeView
 CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(const QString &confId)
 {
-   qDebug() << "Ending conversation containing " << m_sPrivateCallList_callId[confId]->children.size() << " participants";
+   if (m_sPrivateCallList_callId[confId])
+      qDebug() << "Ending conversation containing " << m_sPrivateCallList_callId[confId]->children.size() << " participants";
    removeConference(getCall(confId));
 }
 
@@ -784,6 +813,8 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::updateWidget     (Call* call, CallWidget va
 CALLMODEL_TEMPLATE bool CALLMODEL_T::updateIndex      (Call* call, Index value      )
 {
    updateCommon(call);
+   if (!m_sPrivateCallList_call[call])
+      return false;
    m_sPrivateCallList_call[call]->index = value                         ;
    m_sPrivateCallList_index[value]      = m_sPrivateCallList_call[call] ;
    return true;

@@ -86,7 +86,8 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    }
 
    foreach(Call* active, SFLPhone::model()->getConferenceList()) {
-      addConference(active);
+      if (qobject_cast<Call*>(active)) //As of May 2012, the deamon still produce fake conferences
+         addConference(active);
    }
 
    //User Interface even
@@ -103,6 +104,15 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    /*                                                                                                                                                   */
 
 } //CallView
+
+///Destructor
+CallView::~CallView()
+{
+   delete m_pTransferB;
+   delete m_pTransferLE;
+   if (m_pTransferOverlay) delete m_pTransferOverlay;
+   if (m_pActiveOverlay)   delete m_pActiveOverlay;
+}
 
 
 /*****************************************************************************
@@ -557,10 +567,6 @@ void CallView::destroyCall(Call* toDestroy)
       SFLPhone::model()->getIndex(toDestroy)->parent()->removeChild(SFLPhone::model()->getIndex(toDestroy));
       if (parent->childCount() == 0) /*This should never happen, but it does*/
          takeTopLevelItem(indexOfTopLevelItem(parent));
-      else if (parent->childCount() == 1) {
-         addTopLevelItem(extractItem(parent->child(0)));
-         takeTopLevelItem(indexOfTopLevelItem(parent));
-      } //TODO make sure it just never happen and remove this logic code
    }
    else
       kDebug() << "Call not found";
@@ -649,8 +655,6 @@ bool CallView::conferenceChanged(Call* conf)
 {
    if (!dynamic_cast<Call*>(conf)) return false;
    kDebug() << "Conference changed";
-   //if (!SFLPhone::model()->conferenceChanged(confId, state))
-   //  return false;
 
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    QStringList callList = callManager.getParticipantList(conf->getConfId());
@@ -666,10 +670,11 @@ bool CallView::conferenceChanged(Call* conf)
          kDebug() << "Call " << callId << " does not exist";
    }
 
-   if (SFLPhone::model()->getIndex(conf)) /*Can happen is the daemon crashed*/
-      for (int j =0; j < SFLPhone::model()->getIndex(conf)->childCount();j++) {
-         if (buffer.indexOf(SFLPhone::model()->getIndex(conf)->child(j)) == -1)
-            insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(j)));
+   QTreeWidgetItem* item = SFLPhone::model()->getIndex(conf);
+   if (item) /*Can happen if the daemon crashed*/
+      for (int j =0; j < item->childCount();j++) {
+         if (buffer.indexOf(item->child(j)) == -1)
+            insertItem(extractItem(item->child(j)));
       }
 
    Q_ASSERT_X(SFLPhone::model()->getIndex(conf)->childCount() == 0,"changing conference","A conference can't have no participants");
@@ -734,6 +739,11 @@ void CallView::moveSelectedItem( Qt::Key direction )
 CallViewOverlay::CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m_pTimer(0),m_enabled(true),m_black("black")
 {
    m_black.setAlpha(75);
+}
+
+CallViewOverlay::~CallViewOverlay()
+{
+   
 }
 
 ///Add a widget (usually an icon) in the corner

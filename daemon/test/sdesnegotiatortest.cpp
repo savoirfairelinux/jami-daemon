@@ -33,7 +33,6 @@
 #include <sstream>
 #include <cstddef>
 #include <ccrtp/rtp.h>
-#include <assert.h>
 #include <string>
 #include <cstring>
 #include <math.h>

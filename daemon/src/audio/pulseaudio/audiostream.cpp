@@ -33,7 +33,7 @@
 #include "logger.h"
 #include <stdexcept>
 
-AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, int smplrate, std::string& deviceName)
+AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *desc, int type, unsigned samplrate, std::string& deviceName)
     : audiostream_(0), mainloop_(m)
 {
     static const pa_channel_map channel_map = {
@@ -43,7 +43,7 @@ AudioStream::AudioStream(pa_context *c, pa_threaded_mainloop *m, const char *des
 
     pa_sample_spec sample_spec = {
         PA_SAMPLE_S16LE, // PA_SAMPLE_FLOAT32LE,
-        smplrate,
+        samplrate,
         1
     };
 

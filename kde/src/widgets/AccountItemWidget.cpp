@@ -37,7 +37,7 @@
 
 ///Constructor
 AccountItemWidget::AccountItemWidget(QWidget *parent)
- : QWidget(parent)
+ : QWidget(parent),m_pLed(nullptr),m_pCheckBox(nullptr),m_pTextLabel(nullptr)
 {
    m_pCheckBox = new QCheckBox(this);
    m_pCheckBox->setObjectName("m_pCheckBox");
@@ -65,9 +65,9 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
 ///Destructor
 AccountItemWidget::~AccountItemWidget()
 {
-   delete m_pLed;
-   delete m_pCheckBox;
-   delete m_pTextLabel;
+   if (m_pLed)       delete m_pLed      ;
+   if (m_pCheckBox)  delete m_pCheckBox ;
+   if (m_pTextLabel) delete m_pTextLabel;
 }
 
 

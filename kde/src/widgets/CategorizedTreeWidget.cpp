@@ -124,6 +124,9 @@ class KateColorTreeDelegate : public QStyledItemDelegate
       //END: draw background of category for all other items
 
       painter->setClipRect(option.rect);
+      if (option.state & QStyle::State_Selected) {
+         QStyledItemDelegate::paint(painter,option,index);
+      }
     }
 
   private:

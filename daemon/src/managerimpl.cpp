@@ -132,8 +132,9 @@ void ManagerImpl::finish()
     if (!finished_) {
         finished_ = true;
         // Unset signal handlers
-        signal(SIGTERM, SIG_DFL);
+        signal(SIGHUP, SIG_DFL);
         signal(SIGINT, SIG_DFL);
+        signal(SIGTERM, SIG_DFL);
         terminate();
         dbus_.exit();
     }

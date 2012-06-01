@@ -29,7 +29,7 @@
 #include "Contact.h"
 
 
-const call_state Call::actionPerformedStateMap [11][5] = 
+const call_state Call::actionPerformedStateMap [13][5] =
 {
 //                      ACCEPT                  REFUSE                  TRANSFER                   HOLD                           RECORD            /**/
 /*INCOMING     */  {CALL_STATE_INCOMING   , CALL_STATE_INCOMING    , CALL_STATE_ERROR        , CALL_STATE_INCOMING     ,  CALL_STATE_INCOMING     },/**/
@@ -42,11 +42,13 @@ const call_state Call::actionPerformedStateMap [11][5] =
 /*TRANSFER     */  {CALL_STATE_TRANSFER   , CALL_STATE_TRANSFER    , CALL_STATE_CURRENT      , CALL_STATE_TRANSFER     ,  CALL_STATE_TRANSFER     },/**/
 /*TRANSF_HOLD  */  {CALL_STATE_TRANSF_HOLD, CALL_STATE_TRANSF_HOLD , CALL_STATE_HOLD         , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_TRANSF_HOLD  },/**/
 /*OVER         */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        },/**/
-/*ERROR        */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        } /**/
+/*ERROR        */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        },/**/
+/*CONF         */  {CALL_STATE_ERROR      , CALL_STATE_CURRENT     , CALL_STATE_TRANSFER     , CALL_STATE_CURRENT      ,  CALL_STATE_CURRENT      },/**/
+/*CONF_HOLD    */  {CALL_STATE_ERROR      , CALL_STATE_HOLD        , CALL_STATE_TRANSF_HOLD  , CALL_STATE_HOLD         ,  CALL_STATE_HOLD         } /**/
 };//                                                                                                                                                    
 
 
-const function Call::actionPerformedFunctionMap[11][5] = 
+const function Call::actionPerformedFunctionMap[13][5] =
 { 
 //                      ACCEPT               REFUSE            TRANSFER                 HOLD                  RECORD             /**/
 /*INCOMING       */  {&Call::accept     , &Call::refuse   , &Call::acceptTransf   , &Call::acceptHold  ,  &Call::setRecord     },/**/
@@ -59,11 +61,13 @@ const function Call::actionPerformedFunctionMap[11][5] =
 /*TRANSFERT      */  {&Call::transfer   , &Call::hangUp   , &Call::transfer       , &Call::hold        ,  &Call::setRecord     },/**/
 /*TRANSFERT_HOLD */  {&Call::transfer   , &Call::hangUp   , &Call::transfer       , &Call::unhold      ,  &Call::setRecord     },/**/
 /*OVER           */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
-/*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       } /**/
+/*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
+/*CONF           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },/**/
+/*CONF_HOLD      */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     } /**/
 };//                                                                                                                                 
 
 
-const call_state Call::stateChangedStateMap [11][6] = 
+const call_state Call::stateChangedStateMap [13][6] =
 {
 //                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE             /**/
 /*INCOMING     */ {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
@@ -76,10 +80,12 @@ const call_state Call::stateChangedStateMap [11][6] =
 /*TRANSFER     */ {CALL_STATE_TRANSFER    , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
 /*TRANSF_HOLD  */ {CALL_STATE_TRANSF_HOLD , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
 /*OVER         */ {CALL_STATE_OVER        , CALL_STATE_OVER     , CALL_STATE_OVER   , CALL_STATE_OVER         ,  CALL_STATE_OVER  ,  CALL_STATE_OVER     },/**/
-/*ERROR        */ {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    } /**/
+/*ERROR        */ {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    },/**/
+/*CONF         */ {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
+/*CONF_HOLD    */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  } /**/
 };//                                                                                                                                                           
 
-const function Call::stateChangedFunctionMap[11][6] = 
+const function Call::stateChangedFunctionMap[13][6] =
 { 
 //                      RINGING                  CURRENT             BUSY              HOLD                    HUNGUP           FAILURE            /**/
 /*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::startWeird     , &Call::startWeird   ,  &Call::startStop    , &Call::start   },/**/
@@ -92,7 +98,9 @@ const function Call::stateChangedFunctionMap[11][6] =
 /*TRANSFERT      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
 /*TRANSFERT_HOLD */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
 /*OVER           */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::stop         , &Call::warning },/**/
-/*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::stop         , &Call::nothing } /**/
+/*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
+/*CONF           */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
+/*CONF_HOLD      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing } /**/
 };//                                                                                                                                                   
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
@@ -107,7 +115,7 @@ void Call::setContactBackend(ContactBackend* be)
 
 ///Constructor
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
-   : m_isConference(false)
+   : m_isConference(false),m_pStopTime(nullptr),m_pStartTime(nullptr)
 {
    this->m_CallId          = callId     ;
    this->m_PeerPhoneNumber = peerNumber ;
@@ -123,16 +131,22 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 ///Destructor
 Call::~Call()
 {
-   delete m_pStartTime ;
-   delete m_pStopTime  ;
+   //if (m_pStartTime) delete m_pStartTime ;
+   //if (m_pStopTime)  delete m_pStopTime  ;
 }
 
 ///Constructor
-Call::Call(QString confId, QString account) 
-   : m_isConference(true)
+Call::Call(QString confId, QString account)
 {
+   m_isConference  = m_ConfId.isEmpty();
    this->m_ConfId  = confId  ;
    this->m_Account = account ;
+
+   if (m_isConference) {
+      CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+      MapStringString details = callManager.getConferenceDetails(m_ConfId);
+      m_CurrentState = confStatetoCallState(details["CONF_STATE"]);
+   }
 }
 
 /*****************************************************************************
@@ -211,9 +225,16 @@ Call* Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint s
 {
    if(name == "empty") name = "";
    Call* call            = new Call(CALL_STATE_OVER, callId, name, number, account );
-   call->m_pStartTime    = new QDateTime(QDateTime::fromTime_t(startTimeStamp)     );
-   call->m_pStopTime     = new QDateTime(QDateTime::fromTime_t(stopTimeStamp)      );
-   call->m_HistoryState  = getHistoryStateFromType(type                            );
+
+   QDateTime* start = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+   QDateTime* stop  = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+
+   if (start){
+      call->m_pStartTime    = start;
+      call->m_pStopTime     = stop;
+   }
+   
+   call->m_HistoryState  = getHistoryStateFromType(type);
    return call;
 }
 
@@ -286,7 +307,7 @@ call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QStri
  ****************************************************************************/
 
 ///Transfer state from internal to daemon internal syntaz
-daemon_call_state Call::toDaemonCallState(const QString & stateName)
+daemon_call_state Call::toDaemonCallState(const QString& stateName)
 {
    if(stateName == QString(CALL_STATE_CHANGE_HUNG_UP)        )
       return DAEMON_CALL_STATE_HUNG_UP ;
@@ -309,43 +330,58 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
    return DAEMON_CALL_STATE_FAILURE    ;
 } //toDaemonCallState
 
+call_state Call::confStatetoCallState(const QString& stateName)
+{
+   if      ( stateName == CONF_STATE_CHANGE_HOLD   )
+      return CALL_STATE_CONFERENCE_HOLD;
+   else if ( stateName == CONF_STATE_CHANGE_ACTIVE )
+      return CALL_STATE_CONFERENCE;
+   else
+      return CALL_STATE_ERROR; //Well, this may bug a little
+}
+
 ///Transform a backend state into a translated string
 const QString Call::toHumanStateName() const
 {
    switch (m_CurrentState) {
       case CALL_STATE_INCOMING:
-         return ( "Ringing (in)"  );
+         return ( "Ringing (in)"      );
          break;
       case CALL_STATE_RINGING:
-         return ( "Ringing (out)" );
+         return ( "Ringing (out)"     );
          break;
       case CALL_STATE_CURRENT:
-         return ( "Talking"       );
+         return ( "Talking"           );
          break;
       case CALL_STATE_DIALING:
-         return ( "Dialing"       );
+         return ( "Dialing"           );
          break;
       case CALL_STATE_HOLD:
-         return ( "Hold"          );
+         return ( "Hold"              );
          break;
       case CALL_STATE_FAILURE:
-         return ( "Failed"        );
+         return ( "Failed"            );
          break;
       case CALL_STATE_BUSY:
-         return ( "Busy"          );
+         return ( "Busy"              );
          break;
       case CALL_STATE_TRANSFER:
-         return ( "Transfer"      );
+         return ( "Transfer"          );
          break;
       case CALL_STATE_TRANSF_HOLD:
-         return ( "Transfer hold" );
+         return ( "Transfer hold"     );
          break;
       case CALL_STATE_OVER:
-         return ( "Over"          );
+         return ( "Over"              );
          break;
       case CALL_STATE_ERROR:
-         return ( "Error"         );
+         return ( "Error"             );
          break;
+      case CALL_STATE_CONFERENCE:
+         return ( "Conference"        );
+         break;
+      case CALL_STATE_CONFERENCE_HOLD:
+         return ( "Conference (hold)" );
       default:
          return "";
    }
@@ -542,18 +578,18 @@ void Call::setSelected(const bool value)
 ///The call state just changed
 call_state Call::stateChanged(const QString& newStateName)
 {
+   call_state previousState = m_CurrentState;
    if (!m_isConference) {
-      call_state previousState = m_CurrentState;
       daemon_call_state dcs = toDaemonCallState(newStateName);
       changeCurrentState(stateChangedStateMap[m_CurrentState][dcs]);
       (this->*(stateChangedFunctionMap[previousState][dcs]))();
-      qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << m_CurrentState;
-      return m_CurrentState;
    }
    else {
-      qDebug() << "A conference have no call state";
-      return CALL_STATE_ERROR;
+      //Until now, it does not worth using stateChangedStateMap, conferences are quite simple
+      m_CurrentState = confStatetoCallState(newStateName);
    }
+   qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << m_CurrentState;
+   return m_CurrentState;
 } //stateChanged
 
 ///An acount have been performed
@@ -564,7 +600,7 @@ call_state Call::actionPerformed(call_action action)
    Q_ASSERT_X((state>4) || (state < 0),"perform action","Invalid action ("+QString::number(action)+")");
    Q_ASSERT_X((action>5) || (action < 0),"perform action","Invalid action ("+QString::number(action)+")");
    //update the state
-   if (previousState < 11 && action < 5) {
+   if (previousState < 13 && action < 5) {
       changeCurrentState(actionPerformedStateMap[previousState][action]);
       //execute the action associated with this transition
       (this->*(actionPerformedFunctionMap[previousState][action]))();
@@ -574,8 +610,7 @@ call_state Call::actionPerformed(call_action action)
    return m_CurrentState;
 } //actionPerformed
 
-/*
-void Call::putRecording()
+/*void Call::putRecording()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    bool daemonRecording = callManager.getIsRecording(this -> m_CallId);
@@ -583,8 +618,8 @@ void Call::putRecording()
    {
       callManager.setRecording(this->m_CallId);
    }
-}
-*/
+}*/
+
 ///Change the state
 void Call::changeCurrentState(call_state newState)
 {
@@ -602,6 +637,21 @@ void Call::sendTextMessage(QString message)
    callManager.sendTextMessage(m_CallId,message);
 }
 
+QDateTime* Call::setStartTime_private(QDateTime* time)
+{
+   //if (m_pStartTime && time)
+   //   delete m_pStartTime;
+   
+   return m_pStartTime = time;
+}
+
+QDateTime* Call::setStopTime_private(QDateTime* time)
+{
+   //if (m_pStopTime && time)
+   //   delete m_pStopTime;
+   return m_pStopTime  = time;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                              Automate function                            *
@@ -612,15 +662,16 @@ void Call::sendTextMessage(QString message)
 ///Do nothing (literally)
 void Call::nothing()
 {
+   
 }
 
 ///Accept the call
 void Call::accept()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call. callId : " << m_CallId;
+   qDebug() << "Accepting call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.accept(m_CallId);
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    this->m_HistoryState = INCOMING;
 }
 
@@ -628,9 +679,9 @@ void Call::accept()
 void Call::refuse()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Refusing call. callId : " << m_CallId;
+   qDebug() << "Refusing call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.refuse(m_CallId);
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    this->m_HistoryState = MISSED;
 }
 
@@ -638,7 +689,7 @@ void Call::refuse()
 void Call::acceptTransf()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call and transferring it to number : " << m_TransferNumber << ". callId : " << m_CallId;
+   qDebug() << "Accepting call and transferring it to number : " << m_TransferNumber << ". callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.accept(m_CallId);
    callManager.transfer(m_CallId, m_TransferNumber);
 //   m_HistoryState = TRANSFERED;
@@ -648,7 +699,7 @@ void Call::acceptTransf()
 void Call::acceptHold()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Accepting call and holding it. callId : " << m_CallId;
+   qDebug() << "Accepting call and holding it. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.accept(m_CallId);
    callManager.hold(m_CallId);
    this->m_HistoryState = INCOMING;
@@ -658,16 +709,19 @@ void Call::acceptHold()
 void Call::hangUp()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
-   qDebug() << "Hanging up call. callId : " << m_CallId;
-   callManager.hangUp(m_CallId);
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
+   qDebug() << "Hanging up call. callId : " << m_CallId << "ConfId:" << m_ConfId;
+   if (!isConference())
+      callManager.hangUp(m_CallId);
+   else
+      callManager.hangUpConference(m_ConfId);
 }
 
 ///Cancel this call
 void Call::cancel()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Canceling call. callId : " << m_CallId;
+   qDebug() << "Canceling call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    callManager.hangUp(m_CallId);
 }
 
@@ -675,8 +729,11 @@ void Call::cancel()
 void Call::hold()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Holding call. callId : " << m_CallId;
-   callManager.hold(m_CallId);
+   qDebug() << "Holding call. callId : " << m_CallId << "ConfId:" << m_ConfId;
+   if (!isConference())
+      callManager.hold(m_CallId);
+   else
+      callManager.holdConference(m_ConfId);
 }
 
 ///Start the call
@@ -689,7 +746,7 @@ void Call::call()
       this->m_Account = CallModel<>::getCurrentAccountId();
    }
    if(!m_Account.isEmpty()) {
-      qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId;
+      qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId  << "ConfId:" << m_ConfId;
       callManager.placeCall(m_Account, m_CallId, m_CallNumber);
       this->m_Account = m_Account;
       this->m_PeerPhoneNumber = m_CallNumber;
@@ -698,11 +755,11 @@ void Call::call()
          if (contact)
             m_PeerName = contact->getFormattedName();
       }
-      this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+      setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
       this->m_HistoryState = OUTGOING;
    }
    else {
-      qDebug() << "Trying to call " << m_TransferNumber << " with no account registered . callId : " << m_CallId;
+      qDebug() << "Trying to call " << m_TransferNumber << " with no account registered . callId : " << m_CallId  << "ConfId:" << m_ConfId;
       this->m_HistoryState = NONE;
       throw "No account registered!";
    }
@@ -714,14 +771,17 @@ void Call::transfer()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "\n\n\nTransferring call to number : " << m_TransferNumber << ". callId : " << m_CallId << "\n\n\n";
    callManager.transfer(m_CallId, m_TransferNumber);
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 void Call::unhold()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Unholding call. callId : " << m_CallId;
-   callManager.unhold(m_CallId);
+   qDebug() << "Unholding call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
+   if (!isConference())
+      callManager.unhold(m_CallId);
+   else
+      callManager.unholdConference(m_ConfId);
 }
 
 /*
@@ -736,38 +796,38 @@ void Call::switchRecord()
 void Call::setRecord()
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Setting record " << !m_Recording << " for call. callId : " << m_CallId;
-   callManager.setRecording(m_CallId);
+   qDebug() << "Setting record " << !m_Recording << " for call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
+   callManager.setRecording((!m_isConference)?m_CallId:m_ConfId);
    m_Recording = !m_Recording;
 }
 
 ///Start the timer
 void Call::start()
 {
-   qDebug() << "Starting call. callId : " << m_CallId;
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   qDebug() << "Starting call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 ///Toggle the timer
 void Call::startStop()
 {
-   qDebug() << "Starting and stoping call. callId : " << m_CallId;
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
+   qDebug() << "Starting and stoping call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 ///Stop the timer
 void Call::stop()
 {
-   qDebug() << "Stoping call. callId : " << m_CallId;
-   this->m_pStopTime = new QDateTime(QDateTime::currentDateTime());
+   qDebug() << "Stoping call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
+   setStopTime_private(new QDateTime(QDateTime::currentDateTime()));
 }
 
 ///Handle error instead of crashing
 void Call::startWeird()
 {
-   qDebug() << "Starting call. callId : " << m_CallId;
-   this->m_pStartTime = new QDateTime(QDateTime::currentDateTime());
+   qDebug() << "Starting call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
+   setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
    qDebug() << "Warning : call " << m_CallId << " had an unexpected transition of state at its start.";
 }
 

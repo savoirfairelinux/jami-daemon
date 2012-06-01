@@ -195,14 +195,6 @@ class Sdp {
         }
 
         /**
-         * Set remote's audio port. [not protected]
-         * @param port  The remote audio port
-         */
-        void setRemoteAudioPort(unsigned int port) {
-            remoteAudioPort_ = port;
-        }
-
-        /**
          * Return audio port at destination [mutex protected]
          * @return unsigned int The remote audio port
          */

@@ -105,10 +105,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
 
       //Constructors, initializer and destructors
       CallModel                ( ModelType type     );
-      virtual ~CallModel       (                    ) {}
+      virtual ~CallModel       (                    );
       virtual bool initCall    (                    );
-      virtual bool initHistory (                    );
       virtual void initContact ( ContactBackend* be );
+      static  bool initHistory (                    );
+      static  void destroy     (                    );
 
       //Call related
       virtual Call*  addCall          ( Call* call                , Call* parent =0    );
