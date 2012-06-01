@@ -48,7 +48,7 @@
 #include <string>
 #include <stdexcept>
 
-#include "global.h" // for std::vector<int>
+#include "global.h"
 #include "noncopyable.h"
 
 namespace sfl {
@@ -192,6 +192,14 @@ class Sdp {
          */
         const std::string& getRemoteIP() {
             return remoteIpAddr_;
+        }
+
+        /**
+         * Set remote's audio port. [not protected]
+         * @param port  The remote audio port
+         */
+        void setRemoteAudioPort(unsigned int port) {
+            remoteAudioPort_ = port;
         }
 
         /**
