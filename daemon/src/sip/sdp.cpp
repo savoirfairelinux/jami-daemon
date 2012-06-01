@@ -125,7 +125,7 @@ std::string Sdp::getCodecName()
 
 sfl::AudioCodec* Sdp::getSessionMedia()
 {
-    if (sessionAudioMedia_.size() < 1)
+    if (sessionAudioMedia_.empty())
         throw SdpException("No codec description for this media");
 
     return dynamic_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
@@ -252,7 +252,7 @@ int Sdp::createLocalSession(const CodecOrder &selectedCodecs)
     localSession_->origin.addr_type = pj_str((char*)"IP4");
     localSession_->origin.addr = pj_str((char*)localIpAddr_.c_str());
 
-    localSession_->name = pj_str((char*)"sflphone");
+    localSession_->name = pj_str((char*) PACKAGE);
 
     localSession_->conn->net_type = localSession_->origin.net_type;
     localSession_->conn->addr_type = localSession_->origin.addr_type;
@@ -296,7 +296,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     DEBUG("Remote SDP Session:");
     printSession(remote);
 
-    if (localSession_ == NULL && createLocalSession(selectedCodecs) != PJ_SUCCESS) {
+    if (localSession_ == NULL and createLocalSession(selectedCodecs) != PJ_SUCCESS) {
         ERROR("Failed to create initial offer");
         return;
     }
@@ -383,8 +383,8 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
 
     for (unsigned i = 0; i < activeRemoteSession_->media_count; ++i)
         if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "audio") == 0) {
-            setRemoteAudioPort(activeRemoteSession_->media[i]->desc.port);
-            setRemoteIP(std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen));
+            remoteAudioPort_ = activeRemoteSession_->media[i]->desc.port;
+            remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
             return;
         }
 

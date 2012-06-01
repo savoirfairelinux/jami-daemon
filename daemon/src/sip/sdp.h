@@ -198,27 +198,11 @@ class Sdp {
         }
 
         /**
-         * Set remote's IP addr. [not protected]
-         * @param ip  The remote IP address
-         */
-        void setRemoteIP(const std::string& ip) {
-            remoteIpAddr_ = ip;
-        }
-
-        /**
          * Return IP of destination [mutex protected]
          * @return const std:string	The remote IP address
          */
         const std::string& getRemoteIP() {
             return remoteIpAddr_;
-        }
-
-        /**
-         * Set remote's audio port. [not protected]
-         * @param port  The remote audio port
-         */
-        void setRemoteAudioPort(unsigned int port) {
-            remoteAudioPort_ = port;
         }
 
         /**
