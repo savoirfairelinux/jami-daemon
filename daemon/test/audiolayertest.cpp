@@ -85,7 +85,6 @@ void AudioLayerTest::testAudioLayerSwitch()
     }
 }
 
-/*
 void AudioLayerTest::testPulseConnect()
 {
     TITLE();
@@ -99,4 +98,4 @@ void AudioLayerTest::testPulseConnect()
     pulselayer_ = dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver());
 
     CPPUNIT_ASSERT(pulselayer_);
-}*/
+}
