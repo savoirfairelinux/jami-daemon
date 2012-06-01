@@ -49,6 +49,9 @@ AccountList::AccountList(bool fill)
 ///Destructor
 AccountList::~AccountList()
 {
+   foreach(Account* a,*m_pAccounts) {
+      delete a;
+   }
    delete m_pAccounts;
 }
 

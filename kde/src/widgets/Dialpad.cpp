@@ -59,6 +59,13 @@ Dialpad::Dialpad(QWidget *parent)
    }
 } //Dialpad
 
+///Destructor
+Dialpad::~Dialpad()
+{
+   delete[] m_pButtons;
+   delete gridLayout;
+}
+
 ///Proxy to make the view more convinient to use
 void Dialpad::clicked(QString& text)
 {

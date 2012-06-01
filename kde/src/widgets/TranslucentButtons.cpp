@@ -21,6 +21,7 @@ TranslucentButtons::TranslucentButtons(QWidget* parent):QPushButton(parent),m_en
 TranslucentButtons::~TranslucentButtons()
 {
    if (m_pTimer) delete m_pTimer;
+   if (m_pImg) delete m_pImg;
 }
 
 ///How to paint

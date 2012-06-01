@@ -62,6 +62,7 @@ private:
 
 public:
     Dialpad(QWidget *parent = 0);
+    ~Dialpad();
 
 private slots:
    void clicked(QString& text);

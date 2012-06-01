@@ -95,7 +95,9 @@ int main(int argc, char **argv)
       signal(SIGINT  , quitOnSignal);
       signal(SIGTERM , quitOnSignal);
 
-      sflphoneWindow_->show();
+      if (ConfigurationSkeleton::displayOnStart())
+         sflphoneWindow_->show();
+      
 
       int retVal = app->exec();
 
