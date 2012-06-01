@@ -109,6 +109,8 @@ SIPAccount::SIPAccount(const std::string& accountID)
 void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 {
     using namespace Conf;
+    using std::vector;
+    using std::string;
     MappingNode accountmap(NULL);
     MappingNode srtpmap(NULL);
     MappingNode zrtpmap(NULL);
@@ -135,9 +137,17 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode publishAddr(publishedIpAddress_);
     std::stringstream publicportstr;
     publicportstr << publishedPort_;
+
     ScalarNode publishPort(publicportstr.str());
+
     ScalarNode sameasLocal(publishedSameasLocal_);
-    ScalarNode codecs(codecStr_);
+    DEBUG("%s", audioCodecStr_.c_str());
+    ScalarNode audioCodecs(audioCodecStr_);
+#ifdef SFL_VIDEO
+    DEBUG("%s", videoCodecStr_.c_str());
+    ScalarNode videoCodecs(videoCodecStr_);
+#endif
+
     ScalarNode ringtonePath(ringtonePath_);
     ScalarNode ringtoneEnabled(ringtoneEnabled_);
     ScalarNode stunServer(stunServer_);
@@ -193,7 +203,10 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled);
     accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
     accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
-    accountmap.setKeyValue(CODECS_KEY, &codecs);
+    accountmap.setKeyValue(AUDIO_CODECS_KEY, &audioCodecs);
+#ifdef SFL_VIDEO
+    accountmap.setKeyValue(VIDEO_CODECS_KEY, &videoCodecs);
+#endif
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
     accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
@@ -263,16 +276,20 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(ALIAS_KEY, &alias_);
     map.getValue(TYPE_KEY, &type_);
     map.getValue(USERNAME_KEY, &username_);
-    map.getValue(HOSTNAME_KEY, &hostname_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(HOSTNAME_KEY, &hostname_);
     map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
-    map.getValue(MAILBOX_KEY, &mailBox_);
-    map.getValue(CODECS_KEY, &codecStr_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(MAILBOX_KEY, &mailBox_);
+    map.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
     // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::unserialize(codecStr_));
+    setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
+#ifdef SFL_VIDEO
+    map.getValue(VIDEO_CODECS_KEY, &videoCodecStr_);
+    setActiveVideoCodecs(ManagerImpl::split_string(videoCodecStr_));
+#endif
 
     map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
     map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
-    map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
     map.getValue(INTERFACE_KEY, &interface_);
     int port = DEFAULT_SIP_PORT;
     map.getValue(PORT_KEY, &port);
@@ -281,18 +298,18 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
     map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
-    map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
     map.getValue(DTMF_TYPE_KEY, &dtmfType);
     dtmfType_ = dtmfType;
 
-    map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
     map.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
-    map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
-    map.getValue(STUN_SERVER_KEY, &stunServer_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
+    if(alias_ != IP2IP_PROFILE) map.getValue(STUN_SERVER_KEY, &stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());

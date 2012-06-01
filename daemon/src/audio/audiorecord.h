@@ -150,7 +150,7 @@ class AudioRecord {
         /**
          * Number of channels
          */
-        int channels_;
+        SINT16 channels_;
 
         /**
          * Number of byte recorded

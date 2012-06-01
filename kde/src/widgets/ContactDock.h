@@ -23,7 +23,9 @@
 #include <QtCore/QHash>
 #include <QtGui/QDockWidget>
 #include "CategorizedTreeWidget.h"
-#include "SortableDockCommon.h"
+#include "../klib/SortableDockCommon.h"
+#include "CallTreeItem.h"
+#include <QtGui/QTreeWidgetItem>
 
 //Qt
 class QSplitter;
@@ -57,7 +59,7 @@ class StaticEventHandler;
 class Contact;
 
 ///@class ContactDock Dock to access contacts
-class ContactDock : public QDockWidget, public SortableDockCommon
+class ContactDock : public QDockWidget, public SortableDockCommon<CallTreeItem*,QTreeWidgetItem*>
 {
    Q_OBJECT
 public:
@@ -73,10 +75,7 @@ private:
    QListWidget*                 m_pCallView   ;
    QComboBox*                   m_pSortByCBB  ;
    QCheckBox*                   m_pShowHistoCK;
-   QList<ContactItemWidget*>    m_Contacts;
-
-   //Helpers
-   int usableNumberCount(Contact* cont);
+   QList<ContactItemWidget*>    m_Contacts    ;
 
 public slots:
    virtual void keyPressEvent(QKeyEvent* event);
@@ -115,4 +114,4 @@ private:
 
 };
 
-#endif
+#endif //CONTACT_DOCK_H

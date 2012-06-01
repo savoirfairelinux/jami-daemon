@@ -1,1 +1,0 @@
-cp *.po ../gnome/po

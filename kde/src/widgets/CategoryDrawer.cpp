@@ -14,7 +14,7 @@
  * along with this library; see the file COPYING.LIB.  If not, write to    *
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,    *
  * Boston, MA 02110-1301, USA.                                             *
- ***************************************************************************/
+ **************************************************************************/
 
 // this code is taken from SystemSettings/icons/CategoryDrawer.{h,cpp}
 // Rafael agreet to relicense it under LGPLv2 or LGPLv3, just as we need it,
@@ -28,7 +28,7 @@
 
 CategoryDrawer::CategoryDrawer()
 {
-    setLeftMargin( 7 );
+    setLeftMargin ( 7 );
     setRightMargin( 7 );
 }
 
@@ -245,7 +245,7 @@ void CategoryDrawer::drawCategory(const QModelIndex &index,
 
     //BEGIN: draw text
     {
-        const QString category = index.model()->data(index, Qt::DisplayRole).toString(); // KCategorizedSortFilterProxyModel::CategoryDisplayRole).toString();
+        const QString category = index.model()->data(index, Qt::DisplayRole).toString();
         QRect textRect = QRect(option.rect.topLeft(), QSize(option.rect.width() - 2 - 3 - 3, height));
         textRect.setTop(textRect.top() + 2 + 3 /* corner */);
         textRect.setLeft(textRect.left() + 2 + 3 /* corner */ + 3 /* a bit of margin */);

@@ -1,23 +1,22 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 
 #ifndef CALL_H
@@ -148,21 +147,25 @@ public:
    QString              getCurrentCodecName () const;
    bool                 isSecure            () const;
    bool                 isConference        () const;
+   bool                 isSelected          () const;
    const QString&       getConfId           () const;
    const QString&       getTransferNumber   () const;
    const QString&       getCallNumber       () const;
    const QString&       getRecordingPath    () const;
+   const QString        toHumanStateName    () const;
 
    //Automated function
    call_state stateChanged(const QString & newState);
    call_state actionPerformed(call_action action);
    
    //Setters
-   void setConference(bool value);
-   void setConfId(QString value);
-   void setTransferNumber(const QString& number);
-   void setCallNumber(const QString& number);
-   void setRecordingPath(const QString& path);
+   void setConference     ( bool value            );
+   void setConfId         ( QString value         );
+   void setTransferNumber ( const QString& number );
+   void setCallNumber     ( const QString& number );
+   void setRecordingPath  ( const QString& path   );
+   void setPeerName       ( const QString& name   );
+   void setSelected       ( const bool     value  );
    
    //Mutators
    void appendText(const QString& str);
@@ -188,21 +191,22 @@ private:
    bool                   m_isConference   ;
    call_state             m_CurrentState   ;
    bool                   m_Recording      ;
+   static Call*           m_sSelectedCall  ;
    
-   //Automate attributes
+   //State machine
    /**
     *  actionPerformedStateMap[orig_state][action]
     *  Map of the states to go to when the action action is 
     *  performed on a call in state orig_state.
    **/
-   static const call_state actionPerformedStateMap [11][5];
+   static const call_state actionPerformedStateMap [13][5];
    
    /**
     *  actionPerformedFunctionMap[orig_state][action]
     *  Map of the functions to call when the action action is 
     *  performed on a call in state orig_state.
    **/
-   static const function actionPerformedFunctionMap [11][5];
+   static const function actionPerformedFunctionMap [13][5];
    
    /**
     *  stateChangedStateMap[orig_state][daemon_new_state]
@@ -210,7 +214,7 @@ private:
     *  callStateChanged with arg daemon_new_state
     *  on a call in state orig_state.
    **/
-   static const call_state stateChangedStateMap [11][6];
+   static const call_state stateChangedStateMap [13][6];
    
    /**
     *  stateChangedFunctionMap[orig_state][daemon_new_state]
@@ -218,7 +222,7 @@ private:
     *  callStateChanged with arg daemon_new_state
     *  on a call in state orig_state.
    **/
-   static const function stateChangedFunctionMap [11][6];
+   static const function stateChangedFunctionMap [13][6];
    
    static const char * historyIcons[3];
    
@@ -226,7 +230,8 @@ private:
 
    Call(call_state startState, QString callId, QString peerNumber = "", QString account = "", QString peerName = "");
    
-   static daemon_call_state toDaemonCallState(const QString & stateName);
+   static daemon_call_state toDaemonCallState   (const QString& stateName);
+   static call_state        confStatetoCallState(const QString& stateName);
    
    //Automate functions
    // See actionPerformedFunctionMap and stateChangedFunctionMap
@@ -249,6 +254,9 @@ private:
    void stop         ();
    void startWeird   ();
    void warning      ();
+
+   QDateTime* setStartTime_private(QDateTime* time);
+   QDateTime* setStopTime_private(QDateTime* time);
 
 signals:
    void changed();

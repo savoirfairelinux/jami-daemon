@@ -1,23 +1,22 @@
-/***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 //Qt
 #include <QtCore/QHash>
@@ -38,20 +37,24 @@
 //System
 #include "unistd.h"
 
+//Define
+#define CALLMODEL_TEMPLATE template<typename CallWidget, typename Index>
+#define CALLMODEL_T CallModel<CallWidget,Index>
+
 //Static member
-template  <typename CallWidget, typename Index> QString CallModel<CallWidget,Index>::m_sPriorAccountId   = ""    ;
-template  <typename CallWidget, typename Index> AccountList* CallModel<CallWidget,Index>::m_spAccountList = 0    ;
-template  <typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::m_sInstanceInit        = false ;
-template  <typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::m_sCallInit            = false ;
-template  <typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::m_sHistoryInit         = false ;
+CALLMODEL_TEMPLATE QString      CALLMODEL_T::m_sPriorAccountId      = ""        ;
+CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::m_spAccountList        = 0         ;
+CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sInstanceInit        = false     ;
+CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sCallInit            = false     ;
+CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sHistoryInit         = false     ;
+CALLMODEL_TEMPLATE CallMap      CALLMODEL_T::m_lConfList            = CallMap() ;
 
-template  <typename CallWidget, typename Index> CallMap CallModel<CallWidget,Index>::m_sActiveCalls  ;
-template  <typename CallWidget, typename Index> CallMap CallModel<CallWidget,Index>::m_sHistoryCalls ;
+CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sHistoryCalls ;
 
-template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalCall   CallModel<CallWidget,Index>::m_sPrivateCallList_call   ;
-template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalCallId CallModel<CallWidget,Index>::m_sPrivateCallList_callId ;
-template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalIndex  CallModel<CallWidget,Index>::m_sPrivateCallList_index  ;
-template  <typename CallWidget, typename Index> typename CallModel<CallWidget,Index>::InternalWidget CallModel<CallWidget,Index>::m_sPrivateCallList_widget ;
+CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalCall   CALLMODEL_T::m_sPrivateCallList_call   ;
+CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalCallId CALLMODEL_T::m_sPrivateCallList_callId ;
+CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalIndex  CALLMODEL_T::m_sPrivateCallList_index  ;
+CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalWidget CALLMODEL_T::m_sPrivateCallList_widget ;
 
 /*****************************************************************************
  *                                                                           *
@@ -81,32 +84,53 @@ inline bool operator< (const SortableCallSource & s1, const SortableCallSource &
  ****************************************************************************/
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-template<typename CallWidget, typename Index> CallModel<CallWidget,Index>::CallModel(ModelType type) : CallModelBase(0)
+CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
 {
    Q_UNUSED(type)
    init();
+}
 
+///Static destructor
+CALLMODEL_TEMPLATE void CALLMODEL_T::destroy()
+{
+   foreach (InternalStruct* s,  m_sPrivateCallList_call.values()) {
+      delete s;
+   }
+   foreach (Call* call,  m_sPrivateCallList_call.keys()) {
+      delete call;
+   }
+   m_sPrivateCallList_call.clear();
+   m_sPrivateCallList_callId.clear();
+   m_sPrivateCallList_widget.clear();
+   m_sPrivateCallList_index.clear();
+   m_sHistoryCalls.clear();
+}
+
+///Destructor
+CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
+{
+   if (m_spAccountList) delete m_spAccountList;
 }
 
 ///Open the connection to the daemon and register this client
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::init() 
+CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
 {
    if (!m_sInstanceInit) {
       registerCommTypes();
-      InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
-      instance.Register(getpid(), APP_NAME);
       
       //Setup accounts
       if (m_spAccountList == NULL)
          m_spAccountList = new AccountList(true);
+
+      initHistory();
    }
    m_sInstanceInit = true;
    return true;
-}
+} //init
 
 ///Fill the call list
 ///@warning This solution wont scale to multiple call or history model implementation. Some static addCall + foreach for each call would be needed if this case ever become unavoidable
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::initCall()
+CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
 {
    if (!m_sCallInit) {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
@@ -119,22 +143,22 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
    
       QStringList confList = callManager.getConferenceList();
       foreach (QString confId, confList) {
-          addConference(confId);
+          CallModelBase::addConferenceS(addConference(confId));
       }
    }
    m_sCallInit = true;
    return true;
-}
+} //initCall
 
 ///Set how the call can find more informations about the call it receive
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::initContact ( ContactBackend* be )
+CALLMODEL_TEMPLATE void CALLMODEL_T::initContact ( ContactBackend* be )
 {
    Call::setContactBackend(be);
 }
 
 ///Fill the history list
 ///@warning This solution wont scale to multiple call or history model implementation. Some static addCall + foreach for each call would be needed if this case ever become unavoidable
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::initHistory()
+CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
 {
    if (!m_sHistoryInit) {
       ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -149,15 +173,24 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
                   hc[ PEER_NUMBER_KEY     ]         ,
                   hc[ STATE_KEY           ]
          );
+         if (pastCall->getPeerName().isEmpty()) {
+            pastCall->setPeerName("Unknown");
+         }
          pastCall->setRecordingPath(hc[ RECORDING_PATH_KEY ]);
          m_sHistoryCalls[ hc[TIMESTAMP_START_KEY ]] = pastCall;
-         addCall(pastCall);
+         
+         InternalStruct* aNewStruct = new InternalStruct;
+         aNewStruct->call_real  = pastCall;
+         aNewStruct->conference = false;
+
+         m_sPrivateCallList_call[pastCall]                = aNewStruct;
+         m_sPrivateCallList_callId[pastCall->getCallId()] = aNewStruct;
       }
       qDebug() << "There is " << m_sHistoryCalls.count() << "in history";
    }
    m_sHistoryInit = true;
    return true;
-}
+} //initHistory
 
 
 /*****************************************************************************
@@ -167,25 +200,42 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
  ****************************************************************************/
 
 ///Return the active call count
-template<typename CallWidget, typename Index> int CallModel<CallWidget,Index>::size() 
+CALLMODEL_TEMPLATE int CALLMODEL_T::size()
 {
    return m_sActiveCalls.size();
 }
 
 ///Return a call corresponding to this ID or NULL
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::findCallByCallId(const QString& callId)
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::findCallByCallId(const QString& callId)
 {
    return m_sActiveCalls[callId];
 }
 
 ///Return the action call list
-template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,Index>::getCallList() 
+CALLMODEL_TEMPLATE CallList CALLMODEL_T::getCallList()
 {
-   QList<Call*> callList;
+   CallList callList;
    foreach(Call* call, m_sActiveCalls) {
-      callList.push_back(call);
+      if (dynamic_cast<Call*>(call) && call->getState() != CALL_STATE_OVER) //Prevent a race
+         callList.push_back(call);
    }
    return callList;
+}
+
+///Return all conferences
+CALLMODEL_TEMPLATE CallList CALLMODEL_T::getConferenceList()
+{
+   CallList confList;
+
+   //That way it can not be invalid
+   QStringList confListS = CallManagerInterfaceSingleton::getInstance().getConferenceList();
+   foreach (QString confId, confListS) {
+        if (m_lConfList[confId] != nullptr)
+           confList << m_lConfList[confId];
+        else
+           confList << addConference(confId);
+   }
+   return confList;
 }
 
 
@@ -196,7 +246,7 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
  ****************************************************************************/
 
 ///Add a call in the model structure, the call must exist before being added to the model
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addCall(Call* call, Call* parent) 
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCall(Call* call, Call* parent)
 {
    Q_UNUSED(parent)
    if (!call)
@@ -215,16 +265,16 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
 }
 
 ///Common set of instruction shared by all call adder
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addCallCommon(Call* call)
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
 {
    m_sActiveCalls[call->getCallId()] = call;
    addCall(call);
    selectItem(call);
    return call;
-}
+} //addCallCommon
 
 ///Create a new dialing call from peer name and the account ID
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addDialingCall(const QString& peerName, QString account)
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, QString account)
 {
    QString account2 = account;
    if (account2.isEmpty()) {
@@ -233,24 +283,24 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
    
    Call* call = Call::buildDialingCall(generateCallId(), peerName, account2);
    return addCallCommon(call);
-}
+}  //addDialingCall
 
 ///Create a new incomming call when the daemon is being called
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addIncomingCall(const QString& callId)
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addIncomingCall(const QString& callId)
 {
    Call* call = Call::buildIncomingCall(callId);
    return addCallCommon(call);
 }
 
 ///Create a ringing call
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addRingingCall(const QString& callId)
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addRingingCall(const QString& callId)
 {
    Call* call = Call::buildRingingCall(callId);
    return addCallCommon(call);
 }
 
 ///Generate a new random call unique identifier (callId)
-template<typename CallWidget, typename Index> QString CallModel<CallWidget,Index>::generateCallId()
+CALLMODEL_TEMPLATE QString CALLMODEL_T::generateCallId()
 {
    int id = qrand();
    QString res = QString::number(id);
@@ -258,7 +308,7 @@ template<typename CallWidget, typename Index> QString CallModel<CallWidget,Index
 }
 
 ///Remove a call and update the internal structure
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::removeCall(Call* call)
+CALLMODEL_TEMPLATE void CALLMODEL_T::removeCall(Call* call)
 {
    InternalStruct* internal = m_sPrivateCallList_call[call];
 
@@ -282,10 +332,10 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
    if (m_sPrivateCallList_index[m_sPrivateCallList_index.key(internal)] == internal) {
       m_sPrivateCallList_index.remove(m_sPrivateCallList_index.key(internal));
    }
-}
+} //removeCall
 
 ///Transfer "toTransfer" to "target" and wait to see it it succeeded
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::attendedTransfer(Call* toTransfer, Call* target)
+CALLMODEL_TEMPLATE void CALLMODEL_T::attendedTransfer(Call* toTransfer, Call* target)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    callManager.attendedTransfer(toTransfer->getCallId(),target->getCallId());
@@ -293,17 +343,16 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
    //TODO [Daemon] Implement this correctly
    toTransfer->changeCurrentState(CALL_STATE_OVER);
    target->changeCurrentState(CALL_STATE_OVER);
-}
+} //attendedTransfer
 
 ///Transfer this call to  "target" number
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::transfer(Call* toTransfer, QString target)
+CALLMODEL_TEMPLATE void CALLMODEL_T::transfer(Call* toTransfer, QString target)
 {
    qDebug() << "Transferring call " << toTransfer->getCallId() << "to" << target;
    toTransfer->setTransferNumber(target);
-   toTransfer->changeCurrentState(CALL_STATE_TRANSFER);
-   toTransfer->actionPerformed(CALL_ACTION_ACCEPT);
+   toTransfer->actionPerformed(CALL_ACTION_TRANSFER);
    toTransfer->changeCurrentState(CALL_STATE_OVER);
-}
+} //transfer
 
 /*****************************************************************************
  *                                                                           *
@@ -312,7 +361,7 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
  ****************************************************************************/
 
 ///Add a new conference, get the call list and update the interface as needed
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::addConference(const QString & confID) 
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
 {
    qDebug() << "Notified of a new conference " << confID;
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
@@ -323,7 +372,7 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
       qDebug() << "This conference (" + confID + ") contain no call";
       return 0;
    }
-
+   
    if (!m_sPrivateCallList_callId[callList[0]]) {
       qDebug() << "Invalid call";
       return 0;
@@ -336,21 +385,23 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
    
    m_sPrivateCallList_call[newConf]  = aNewStruct;
    m_sPrivateCallList_callId[confID] = aNewStruct;
+
+   m_lConfList[newConf->getConfId()] = newConf;
    
    return newConf;
-}
+} //addConference
 
 ///Join two call to create a conference, the conference will be created later (see addConference)
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::createConferenceFromCall(Call* call1, Call* call2) 
+CALLMODEL_TEMPLATE bool CALLMODEL_T::createConferenceFromCall(Call* call1, Call* call2)
 {
   qDebug() << "Joining call: " << call1->getCallId() << " and " << call2->getCallId();
   CallManagerInterface &callManager = CallManagerInterfaceSingleton::getInstance();
   callManager.joinParticipant(call1->getCallId(),call2->getCallId());
   return true;
-}
+} //createConferenceFromCall
 
 ///Add a new participant to a conference
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::addParticipant(Call* call2, Call* conference) 
+CALLMODEL_TEMPLATE bool CALLMODEL_T::addParticipant(Call* call2, Call* conference)
 {
    if (conference->isConference()) {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
@@ -361,10 +412,10 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
       qDebug() << "This is not a conference";
       return false;
    }
-}
+} //addParticipant
 
 ///Remove a participant from a conference
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::detachParticipant(Call* call) 
+CALLMODEL_TEMPLATE bool CALLMODEL_T::detachParticipant(Call* call)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    callManager.detachParticipant(call->getCallId());
@@ -372,7 +423,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Merge two conferences
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::mergeConferences(Call* conf1, Call* conf2) 
+CALLMODEL_TEMPLATE bool CALLMODEL_T::mergeConferences(Call* conf1, Call* conf2)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    callManager.joinConference(conf1->getConfId(),conf2->getConfId());
@@ -380,7 +431,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Executed when the daemon signal a modification in an existing conference. Update the call list and update the TreeView
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::changeConference(const QString& confId, const QString& state)
+CALLMODEL_TEMPLATE bool CALLMODEL_T::changeConference(const QString& confId, const QString& state)
 {
    qDebug() << "Conf changed";
    Q_UNUSED(state)
@@ -395,17 +446,18 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
       return false;
    }
    return true;
-}
+} //changeConference
 
 ///Remove a conference from the model and the TreeView
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::removeConference(const QString &confId)
+CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(const QString &confId)
 {
-   qDebug() << "Ending conversation containing " << m_sPrivateCallList_callId[confId]->children.size() << " participants";
+   if (m_sPrivateCallList_callId[confId])
+      qDebug() << "Ending conversation containing " << m_sPrivateCallList_callId[confId]->children.size() << " participants";
    removeConference(getCall(confId));
 }
 
 ///Remove a conference using it's call object
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::removeConference(Call* call)
+CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(Call* call)
 {
    InternalStruct* internal = m_sPrivateCallList_call[call];
    
@@ -414,6 +466,8 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
       return;
    }
    removeCall(call);
+
+   m_lConfList[call->getConfId()] = nullptr;
 }
 
 
@@ -424,7 +478,7 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
  ****************************************************************************/
 
 ///Return a list of all previous calls
-template<typename CallWidget, typename Index> const QStringList CallModel<CallWidget,Index>::getHistoryCallId() 
+CALLMODEL_TEMPLATE const QStringList CALLMODEL_T::getHistoryCallId()
 {
    QStringList toReturn;
    foreach(Call* call, m_sHistoryCalls) {
@@ -434,13 +488,13 @@ template<typename CallWidget, typename Index> const QStringList CallModel<CallWi
 }
 
 ///Return the history list
-template<typename CallWidget, typename Index> const CallMap& CallModel<CallWidget,Index>::getHistory()
+CALLMODEL_TEMPLATE const CallMap& CALLMODEL_T::getHistory()
 {
    return m_sHistoryCalls;
 }
 
 ///Add to history
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::addToHistory(Call* call)
+CALLMODEL_TEMPLATE void CALLMODEL_T::addToHistory(Call* call)
 {
    if (call) {
       m_sHistoryCalls[call->getStartTimeStamp()] = call;
@@ -448,7 +502,7 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
 }
 
 ///Sort all history call by popularity and return the result (most popular first)
-template<typename CallWidget, typename Index> const QStringList CallModel<CallWidget,Index>::getNumbersByPopularity()
+CALLMODEL_TEMPLATE const QStringList CALLMODEL_T::getNumbersByPopularity()
 {
    QHash<QString,SortableCallSource*> hc;
    foreach (Call* call, getHistory()) {
@@ -471,7 +525,7 @@ template<typename CallWidget, typename Index> const QStringList CallModel<CallWi
    }
    
    return cl;
-}
+} //getNumbersByPopularity
 
 
 /*****************************************************************************
@@ -481,7 +535,7 @@ template<typename CallWidget, typename Index> const QStringList CallModel<CallWi
  ****************************************************************************/
 
 ///Return the current account id (do not put in the cpp file)
-template<typename CallWidget, typename Index> QString CallModel<CallWidget,Index>::getCurrentAccountId()
+CALLMODEL_TEMPLATE QString CALLMODEL_T::getCurrentAccountId()
 {
    Account* firstRegistered = getCurrentAccount();
    if(firstRegistered == NULL) {
@@ -490,11 +544,11 @@ template<typename CallWidget, typename Index> QString CallModel<CallWidget,Index
    else {
       return firstRegistered->getAccountId();
    }
-}
+} //getCurrentAccountId
 
 
 ///Return the current account
-template<typename CallWidget, typename Index> Account* CallModel<CallWidget,Index>::getCurrentAccount()
+CALLMODEL_TEMPLATE Account* CALLMODEL_T::getCurrentAccount()
 {
    Account* priorAccount = getAccountList()->getAccountById(m_sPriorAccountId);
    if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
@@ -504,10 +558,10 @@ template<typename CallWidget, typename Index> Account* CallModel<CallWidget,Inde
       qDebug() << "Returning the first account" << getAccountList()->size();
       return getAccountList()->firstRegisteredAccount();
    }
-}
+} //getCurrentAccount
 
 ///Return a list of registered accounts
-template<typename CallWidget, typename Index> AccountList* CallModel<CallWidget,Index>::getAccountList()
+CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::getAccountList()
 {
    if (m_spAccountList == NULL) {
       m_spAccountList = new AccountList(true);
@@ -516,13 +570,13 @@ template<typename CallWidget, typename Index> AccountList* CallModel<CallWidget,
 }
 
 ///Return the previously used account ID
-template<typename CallWidget, typename Index> QString CallModel<CallWidget,Index>::getPriorAccoundId() 
+CALLMODEL_TEMPLATE QString CALLMODEL_T::getPriorAccoundId()
 {
    return m_sPriorAccountId;
 }
 
 ///Set the previous account used
-template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::setPriorAccountId(const QString& value) {
+CALLMODEL_TEMPLATE void CALLMODEL_T::setPriorAccountId(const QString& value) {
    m_sPriorAccountId = value;
 }
 
@@ -533,7 +587,7 @@ template<typename CallWidget, typename Index> void CallModel<CallWidget,Index>::
  ****************************************************************************/
 
 ///Get a call from it's widget                                     
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::getCall         ( const CallWidget widget     ) const
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const CallWidget widget     ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->call_real;
@@ -542,7 +596,7 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
 }
 
 ///Get a call list from a conference                               
-template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,Index>::getCalls ( const CallWidget widget     ) const
+CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const CallWidget widget     ) const
 {
    QList<Call*> toReturn;
    if (m_sPrivateCallList_widget[widget] && m_sPrivateCallList_widget[widget]->conference) {
@@ -554,7 +608,7 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
 }
 
 ///Get a list of every call                                        
-template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,Index>::getCalls (                             )
+CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls (                             )
 {
    QList<Call*> toReturn;
    foreach (InternalStruct* child, m_sPrivateCallList_call) {
@@ -564,7 +618,7 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
 }
 
 ///Is the call associated with that widget a conference            
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::isConference     ( const CallWidget widget      ) const
+CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const CallWidget widget      ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->conference;
@@ -573,7 +627,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Is that call a conference                                       
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::isConference     ( const Call* call             ) const
+CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const Call* call             ) const
 {
    if (m_sPrivateCallList_call[(Call*)call]) {
       return m_sPrivateCallList_call[(Call*)call]->conference;
@@ -582,13 +636,13 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Do nothing, provided for API consistency                        
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::getCall         ( const Call* call             ) const
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const Call* call             ) const
 { 
    return call;
 }
 
 ///Return the calls from the "call" conference                     
-template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,Index>::getCalls ( const Call* call             ) const
+CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const Call* call             ) const
 { 
    QList<Call*> toReturn;
    if (m_sPrivateCallList_call[call] && m_sPrivateCallList_call[call]->conference) {
@@ -600,7 +654,7 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
 }
 
 ///Is the call associated with that Index a conference             
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::isConference     ( const Index idx              ) const
+CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const Index idx              ) const
 { 
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->conference;
@@ -609,7 +663,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Get the call associated with this index                         
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::getCall         ( const Index idx              ) const
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const Index idx              ) const
 { 
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->call_real;
@@ -619,7 +673,7 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
 }
 
 ///Get the call associated with that conference index              
-template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,Index>::getCalls ( const Index idx              ) const
+CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const Index idx              ) const
 { 
    QList<Call*> toReturn;
    if (m_sPrivateCallList_index[idx] && m_sPrivateCallList_index[idx]->conference) {
@@ -631,7 +685,7 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
 }
 
 ///Is the call associated with that ID a conference                
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::isConference     ( const QString& callId        ) const
+CALLMODEL_TEMPLATE bool CALLMODEL_T::isConference     ( const QString& callId        ) const
 { 
    if (m_sPrivateCallList_callId[callId]) {
       return m_sPrivateCallList_callId[callId]->conference;
@@ -640,7 +694,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Get the call associated with this ID                            
-template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>::getCall         ( const QString& callId        ) const
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const QString& callId        ) const
 { 
    if (m_sPrivateCallList_callId[callId]) {
       return m_sPrivateCallList_callId[callId]->call_real;
@@ -649,7 +703,7 @@ template<typename CallWidget, typename Index> Call* CallModel<CallWidget,Index>:
 }
 
 ///Get the calls associated with this ID                           
-template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,Index>::getCalls ( const QString& callId        ) const
+CALLMODEL_TEMPLATE QList<Call*> CALLMODEL_T::getCalls ( const QString& callId        ) const
 {
    QList<Call*> toReturn;
    if (m_sPrivateCallList_callId[callId] && m_sPrivateCallList_callId[callId]->conference) {
@@ -661,7 +715,7 @@ template<typename CallWidget, typename Index> QList<Call*> CallModel<CallWidget,
 }
 
 ///Get the index associated with this call                         
-template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>::getIndex        ( const Call* call             ) const
+CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Call* call             ) const
 {
    if (m_sPrivateCallList_call[(Call*)call]) {
       return m_sPrivateCallList_call[(Call*)call]->index;
@@ -670,7 +724,7 @@ template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>:
 }
 
 ///Get the index associated with this index (dummy implementation) 
-template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>::getIndex        ( const Index idx              ) const
+CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Index idx              ) const
 {
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->index;
@@ -679,7 +733,7 @@ template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>:
 }
 
 ///Get the index associated with this call                         
-template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>::getIndex        ( const CallWidget widget      ) const
+CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const CallWidget widget      ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->index;
@@ -688,7 +742,7 @@ template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>:
 }
 
 ///Get the index associated with this ID                           
-template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>::getIndex        ( const QString& callId        ) const
+CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const QString& callId        ) const
 {
    if (m_sPrivateCallList_callId[callId]) {
       return m_sPrivateCallList_callId[callId]->index;
@@ -697,7 +751,7 @@ template<typename CallWidget, typename Index> Index CallModel<CallWidget,Index>:
 }
 
 ///Get the widget associated with this call                        
-template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,Index>::getWidget  ( const Call* call             ) const
+CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Call* call             ) const
 {
    if (m_sPrivateCallList_call[call]) {
       return m_sPrivateCallList_call[call]->call;
@@ -706,7 +760,7 @@ template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,In
 }
 
 ///Get the widget associated with this ID                          
-template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,Index>::getWidget  ( const Index idx              ) const
+CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Index idx              ) const
 {
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->call;
@@ -715,7 +769,7 @@ template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,In
 }
 
 ///Get the widget associated with this widget (dummy)              
-template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,Index>::getWidget  ( const CallWidget widget      ) const
+CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const CallWidget widget      ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->call;
@@ -724,7 +778,7 @@ template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,In
 }
 
 ///Get the widget associated with this ID                          
-template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,Index>::getWidget  ( const QString& widget        ) const
+CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const QString& widget        ) const
 {
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->call;
@@ -733,7 +787,7 @@ template<typename CallWidget, typename Index> CallWidget CallModel<CallWidget,In
 }
 
 ///Common set of instruction shared by all gui updater
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::updateCommon(Call* call)
+CALLMODEL_TEMPLATE bool CALLMODEL_T::updateCommon(Call* call)
 {
    if (!m_sPrivateCallList_call[call] && dynamic_cast<Call*>(call)) {
       m_sPrivateCallList_call   [ call              ]             = new InternalStruct            ;
@@ -747,7 +801,7 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Update the widget associated with this call                     
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::updateWidget     (Call* call, CallWidget value )
+CALLMODEL_TEMPLATE bool CALLMODEL_T::updateWidget     (Call* call, CallWidget value )
 {
    if (!updateCommon(call)) return false;
    m_sPrivateCallList_call[call]->call = value                         ;
@@ -756,9 +810,11 @@ template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::
 }
 
 ///Update the index associated with this call
-template<typename CallWidget, typename Index> bool CallModel<CallWidget,Index>::updateIndex      (Call* call, Index value      )
+CALLMODEL_TEMPLATE bool CALLMODEL_T::updateIndex      (Call* call, Index value      )
 {
    updateCommon(call);
+   if (!m_sPrivateCallList_call[call])
+      return false;
    m_sPrivateCallList_call[call]->index = value                         ;
    m_sPrivateCallList_index[value]      = m_sPrivateCallList_call[call] ;
    return true;

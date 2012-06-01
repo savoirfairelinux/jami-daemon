@@ -19,7 +19,7 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+ **************************************************************************/
 
 /**
  * http://doc.trolltech.com/4.5/itemviews-editabletreemodel.html
@@ -65,7 +65,7 @@ class HistoryTreeItem : public QWidget
     //Getters
     Call*            call           () const;
     uint             getTimeStamp   ();
-    uint             getDuration    ();
+    uint             getLength      ();
     QString          getName        ();
     QString          getPhoneNumber ();
     QTreeWidgetItem* getItem        ();
@@ -87,7 +87,7 @@ class HistoryTreeItem : public QWidget
     QLabel*      m_pPeerNameL     ;
     QLabel*      m_pCallNumberL   ;
     QLabel*      m_pTimeL         ;
-    QLabel*      m_pDurationL     ;
+    QLabel*      m_pLengthL       ;
 
     KAction*     m_pCallAgain     ;
     KAction*     m_pAddContact    ;
@@ -101,11 +101,11 @@ class HistoryTreeItem : public QWidget
     QToolButton* m_pRemove        ;
 
     uint         m_TimeStamp      ;
-    uint         m_Duration       ;
+    uint         m_Length         ;
     QString      m_Name           ;
     QString      m_PhoneNumber    ;
     QGridLayout* m_pMainLayout    ;
-    Contact*     m_pContact;
+    Contact*     m_pContact       ;
 
     QTreeWidgetItem* m_pItem;
 
@@ -125,26 +125,27 @@ class HistoryTreeItem : public QWidget
 
 protected:
    virtual void resizeEvent(QResizeEvent* event);
+   virtual void mouseDoubleClickEvent(QMouseEvent* event);
 
 public slots:
    void updated();
    bool getContactInfo(QString phone);
 
 private slots:
-   void showContext(const QPoint& pos);
-   void sendEmail();
-   void callAgain();
-   void copy();
-   void addContact();
-   void addToContact();
-   void bookmark();
-   void removeRecording();
-   void showRecordPlayer();
-   void stopPlayer();
-   void playPausePlayer();
-   void editNote();
-   void metaStateChanged(Phonon::State newState, Phonon::State oldState);
+   void sendEmail        ();
+   void callAgain        ();
+   void copy             ();
+   void addContact       ();
+   void addToContact     ();
+   void bookmark         ();
+   void removeRecording  ();
+   void showRecordPlayer ();
+   void stopPlayer       ();
+   void playPausePlayer  ();
+   void editNote         ();
    void tick(qint64 time);
+   void showContext(const QPoint& pos);
+   void metaStateChanged(Phonon::State newState, Phonon::State oldState);
    void stateChanged(Phonon::State newState, Phonon::State /* oldState */);
 
 signals:

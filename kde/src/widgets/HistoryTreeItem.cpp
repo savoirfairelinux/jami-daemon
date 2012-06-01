@@ -45,6 +45,7 @@
 #include <KAction>
 #include <KIcon>
 #include <KMessageBox>
+#include <KStandardDirs>
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -52,7 +53,7 @@
 #include "lib/Call.h"
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
 
@@ -74,7 +75,8 @@ protected:
 
 ///Constructor
 HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
-   : QWidget(parent), m_pItemCall(0),m_pMenu(0),m_pAudioSlider(0),m_pTimeLeftL(0),m_pTimePlayedL(0),m_pPlayer(0),m_pContact(0)
+   : QWidget(parent), m_pItemCall(0),m_pMenu(0),m_pAudioSlider(0),m_pTimeLeftL(0),m_pTimePlayedL(0),m_pPlayer(0),m_pContact(0),
+   m_pPause(0), m_pStop(0), m_pNote(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -140,7 +142,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pIconL         = new QLabel( this );
    m_pPeerNameL     = new QLabel( this );
    m_pCallNumberL   = new QLabel( this );
-   m_pDurationL     = new QLabel( this );
+   m_pLengthL       = new QLabel( this );
    m_pTimeL         = new QLabel( this );
 
    m_pIconL->setMinimumSize(70,0);
@@ -155,7 +157,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pMainLayout->addItem   ( verticalSpacer , 4 , 1         );
    m_pMainLayout->addWidget ( m_pPlay        , 0 , 2 , 4 , 1 );
    m_pMainLayout->addWidget ( m_pRemove      , 0 , 3 , 4 , 1 );
-   m_pMainLayout->addWidget ( m_pDurationL   , 0 , 4 , 4 , 1 );
+   m_pMainLayout->addWidget ( m_pLengthL     , 0 , 4 , 4 , 1 );
    setLayout(m_pMainLayout);
    setMinimumSize(QSize(50, 30));
    setMaximumSize(QSize(300,99999));
@@ -166,12 +168,35 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
       m_pCallNumberL->setText(phone);
       m_PhoneNumber = phone;
    }
-}
+} //HistoryTreeItem
 
 ///Destructor
 HistoryTreeItem::~HistoryTreeItem()
 {
+   delete m_pIconL         ;
+   delete m_pPeerNameL     ;
+   delete m_pCallNumberL   ;
+   delete m_pTimeL         ;
+   delete m_pLengthL       ;
 
+   delete m_pCallAgain     ;
+   delete m_pAddContact    ;
+   delete m_pAddToContact  ;
+   delete m_pCopy          ;
+   delete m_pEmail         ;
+   delete m_pBookmark      ;
+   delete m_pMenu          ;
+
+   delete m_pPlay          ;
+   delete m_pRemove        ;
+   delete m_pAudioSlider   ;
+   delete m_pTimeLeftL     ;
+   delete m_pTimePlayedL   ;
+   delete m_pPlayer        ;
+
+   delete m_pPause         ;
+   delete m_pStop          ;
+   delete m_pNote          ;
 }
 
 
@@ -211,8 +236,7 @@ void HistoryTreeItem::updated()
          m_pCallNumberL->setText(m_pItemCall->getCallNumber());
       }
    }
-
-}
+} //updated
 
 ///Show the context menu
 void HistoryTreeItem::showContext(const QPoint& pos)
@@ -242,7 +266,10 @@ void HistoryTreeItem::callAgain()
    if (m_pItemCall) {
       kDebug() << "Calling "<< m_pItemCall->getPeerPhoneNumber();
    }
-   SFLPhone::model()->addDialingCall(m_Name, SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(m_PhoneNumber);
+   Call* call = SFLPhone::model()->addDialingCall(m_Name, SFLPhone::app()->model()->getCurrentAccountId());
+   call->setCallNumber(m_PhoneNumber);
+   call->setPeerName(m_pPeerNameL->text());
+   call->actionPerformed(CALL_ACTION_ACCEPT);
 }
 
 ///Copy the call
@@ -277,7 +304,7 @@ void HistoryTreeItem::bookmark()
 
 void HistoryTreeItem::removeRecording()
 {
-   int ret = KMessageBox::questionYesNo(this, "Are you sure you want to delete this recording?", "Delete recording");
+   int ret = KMessageBox::questionYesNo(this, i18n("Are you sure you want to delete this recording?"), i18n("Delete recording"));
    if (ret == KMessageBox::Yes) {
       kDebug() << "Deleting file";
       QFile::remove(m_pItemCall->getRecordingPath());
@@ -350,7 +377,7 @@ void HistoryTreeItem::showRecordPlayer()
       connect( m_pMediaObject , SIGNAL(tick(qint64) ) , this , SLOT( tick(qint64)      ));
 
       connect(m_pMediaObject  , SIGNAL(stateChanged(Phonon::State,Phonon::State)),
-              this, SLOT(stateChanged(Phonon::State,Phonon::State)));
+         this, SLOT(stateChanged(Phonon::State,Phonon::State)));
 
    }
    kDebug() << "Path:" << m_pItemCall->getRecordingPath();
@@ -361,7 +388,7 @@ void HistoryTreeItem::showRecordPlayer()
       m_pMetaInformationResolver->setCurrentSource(m_lSources.first());
    m_pMediaObject->play();
 
-}
+} //showRecordPlayer
 
 ///Called when the user press the stop button
 void HistoryTreeItem::stopPlayer()
@@ -399,10 +426,10 @@ void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldS
    switch (newState) {
       case Phonon::ErrorState:
             if (m_pMediaObject->errorType() == Phonon::FatalError) {
-               QMessageBox::warning(this, tr("Fatal Error"),
+               QMessageBox::warning(this, i18n("Fatal Error"),
                m_pMediaObject->errorString());
             } else {
-               QMessageBox::warning(this, tr("Error"),
+               QMessageBox::warning(this, i18n("Error"),
                m_pMediaObject->errorString());
             }
             break;
@@ -410,25 +437,25 @@ void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldS
                m_pPause->setIcon(KIcon("media-playback-pause"));
                break;
       case Phonon::StoppedState:
-               m_pPause->setIcon(KIcon("media-playback-play"));
+               m_pPause->setIcon(KIcon("media-playback-play" ));
                m_pTimePlayedL->setText("00:00");
                break;
       case Phonon::PausedState:
-               m_pPause->setIcon(KIcon("media-playback-play"));
+               m_pPause->setIcon(KIcon("media-playback-play" ));
                break;
       case Phonon::BufferingState:
                break;
       default:
             ;
    }
-}
+} //stateChanged
 
 ///Reference code for metastate change
 void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State oldState)
 {
    Q_UNUSED(oldState);
    if (newState == Phonon::ErrorState) {
-      QMessageBox::warning(this, tr("Error opening files"),
+      QMessageBox::warning(this, i18n("Error opening files"),
             m_pMetaInformationResolver->errorString());
       while (!m_lSources.isEmpty() &&
          !(m_lSources.takeLast() == m_pMetaInformationResolver->currentSource())) {}  /* loop */;
@@ -439,7 +466,7 @@ void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State old
       return;
 
    if (m_pMetaInformationResolver->currentSource().type() == Phonon::MediaSource::Invalid)
-            return;
+      return;
 
    QMap<QString, QString> metaData = m_pMetaInformationResolver->metaData();
 
@@ -450,7 +477,7 @@ void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State old
    if (m_lSources.size() > index) {
       m_pMetaInformationResolver->setCurrentSource(m_lSources.at(index));
    }
-}
+} //metaStateChanged
 
 ///Resize the player
 void HistoryTreeItem::resizeEvent(QResizeEvent* event)
@@ -460,6 +487,12 @@ void HistoryTreeItem::resizeEvent(QResizeEvent* event)
       m_pPlayer->setMinimumSize(width(),height());
       m_pPlayer->setMaximumSize(width(),height());
    }
+}
+
+void HistoryTreeItem::mouseDoubleClickEvent(QMouseEvent* event)
+{
+   Q_UNUSED(event);
+   callAgain();
 }
 
 /*****************************************************************************
@@ -483,19 +516,20 @@ void HistoryTreeItem::setCall(Call *call)
    m_pTimeL->setText(QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toUInt()).toString());
 
    int dur = m_pItemCall->getStopTimeStamp().toInt() - m_pItemCall->getStartTimeStamp().toInt();
-   m_pDurationL->setText(QString("%1").arg(dur/3600,2).trimmed()+":"+QString("%1").arg((dur%3600)/60,2).trimmed()+":"+QString("%1").arg((dur%3600)%60,2).trimmed()+" ");
+   m_pLengthL->setText(QString("%1").arg(dur/3600,2).trimmed()+":"+QString("%1").arg((dur%3600)/60,2).trimmed()+":"+QString("%1").arg((dur%3600)%60,2).trimmed()+" ");
 
    connect(m_pItemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
    updated();
 
    m_TimeStamp   = m_pItemCall->getStartTimeStamp().toUInt();
-   m_Duration    = dur;
+   m_Length    = dur;
    m_Name        = m_pItemCall->getPeerName();
    m_PhoneNumber = m_pItemCall->getPeerPhoneNumber();
 
    m_pPlay->  setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
    m_pRemove->setVisible(!m_pItemCall->getRecordingPath().isEmpty() && QFile::exists(m_pItemCall->getRecordingPath()));
-}
+   getContactInfo(m_PhoneNumber);
+} //setCall
 
 ///Set the index associed with this widget
 void HistoryTreeItem::setItem(QTreeWidgetItem* item)
@@ -505,8 +539,8 @@ void HistoryTreeItem::setItem(QTreeWidgetItem* item)
 
 void HistoryTreeItem::setDurWidth(uint width)
 {
-   m_pDurationL->setMaximumSize(width, 9999 );
-   m_pDurationL->setMinimumSize(width, 0    );
+   m_pLengthL->setMaximumSize(width, 9999 );
+   m_pLengthL->setMinimumSize(width, 0    );
 }
 
 
@@ -523,18 +557,26 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    if (contact) {
       if (contact->getPhoto() != NULL)
          m_pIconL->setPixmap(*contact->getPhoto());
+      else if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())
+         m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
       else
          m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
       m_pPeerNameL->setText("<b>"+contact->getFormattedName()+"</b>");
       m_pContact = contact;
    }
    else {
-      m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      m_pPeerNameL->setText(i18n("<b>Unknow</b>"));
+      if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())
+         m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
+      else
+         m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      if (!phoneNumber.isEmpty())
+         m_pPeerNameL->setText("<b>"+phoneNumber+"</b>");
+      else
+         m_pPeerNameL->setText(i18n("<b>Unknown</b>"));
       return false;
    }
    return true;
-}
+} //getContactInfo
 
 ///Return the time stamp
 uint HistoryTreeItem::getTimeStamp()
@@ -543,9 +585,9 @@ uint HistoryTreeItem::getTimeStamp()
 }
 
 ///Return the duration
-uint HistoryTreeItem::getDuration()
+uint HistoryTreeItem::getLength()
 {
-   return m_Duration;
+   return m_Length;
 }
 
 ///Return the caller name
@@ -557,7 +599,7 @@ QString HistoryTreeItem::getName()
    else if (!m_Name.isEmpty()){
       return m_Name;
    }
-   return "Unknow";
+   return i18n("Unknown");
 }
 
 ///Return the caller peer number
@@ -575,6 +617,6 @@ QTreeWidgetItem* HistoryTreeItem::getItem()
 ///Get the width of the durationWidget
 uint HistoryTreeItem::getDurWidth()
 {
-   QFontMetrics fm(m_pDurationL->font());
-   return fm.width(m_pDurationL->text());
+   QFontMetrics fm(m_pLengthL->font());
+   return fm.width(m_pLengthL->text());
 }

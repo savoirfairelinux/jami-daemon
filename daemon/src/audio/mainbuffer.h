@@ -40,11 +40,7 @@
 
 class RingBuffer;
 
-typedef std::map<std::string, RingBuffer*> RingBufferMap;
-
 typedef std::set<std::string> CallIDSet;
-
-typedef std::map<std::string, CallIDSet*> CallIDMap;
 
 class MainBuffer {
 
@@ -98,8 +94,6 @@ class MainBuffer {
 
         void flushAllBuffers();
 
-        void syncBuffers(const std::string &call_id);
-
         void stateInfo();
 
     private:
@@ -108,7 +102,7 @@ class MainBuffer {
 
         void createCallIDSet(const std::string &set_id);
 
-        bool removeCallIDSet(const std::string &set_id);
+        void removeCallIDSet(const std::string &set_id);
 
         /**
          * Add a new call id to this set
@@ -120,9 +114,9 @@ class MainBuffer {
         /**
          * Create a new ringbuffer with default readpointer
          */
-        RingBuffer* createRingBuffer(const std::string &call_id);
+        void createRingBuffer(const std::string &call_id);
 
-        bool removeRingBuffer(const std::string &call_id);
+        void removeRingBuffer(const std::string &call_id);
 
         RingBuffer* getRingBuffer(const std::string &call_id);
 
@@ -134,8 +128,10 @@ class MainBuffer {
 
         void flushByID(const std::string &call_id, const std::string &reader_id);
 
+        typedef std::map<std::string, RingBuffer*> RingBufferMap;
         RingBufferMap ringBufferMap_;
 
+        typedef std::map<std::string, CallIDSet*> CallIDMap;
         CallIDMap callIDMap_;
 
         ost::Mutex mutex_;

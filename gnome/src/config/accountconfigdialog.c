@@ -31,6 +31,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <glib/gi18n.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -47,6 +51,7 @@
 #include "mainwindow.h"
 #include "accountlist.h"
 #include "audioconf.h"
+#include "videoconf.h"
 #include "accountconfigdialog.h"
 #include "zrtpadvanceddialog.h"
 #include "tlsadvanceddialog.h"
@@ -257,7 +262,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     else if (account_is_IAX(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 1);
     else {
-        DEBUG("Config: Error: Account protocol not valid");
+        ERROR("Account protocol not valid");
         /* Should never come here, add debug message. */
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), _("Unknown"));
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 2);
@@ -430,7 +435,7 @@ cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gchar *text,
     GtkTreePath *path = gtk_tree_path_new_from_string(path_desc);
 
     gint column = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(renderer), "column"));
-    DEBUG("path desc in cell_edited_cb: %s\n", text);
+    DEBUG("path desc: %s\n", text);
 
     if ((utf8_case_equal(path_desc, "0")) &&
         !utf8_case_equal(text, gtk_entry_get_text(GTK_ENTRY(entry_username))))
@@ -448,8 +453,7 @@ static void
 editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * editable,
                    const gchar * path, gpointer data UNUSED)
 {
-    DEBUG("Editing started");
-    DEBUG("path desc in editing_started_cb: %s\n", path);
+    DEBUG("path desc: %s\n", path);
 
     // If we are dealing the first row
     if (utf8_case_equal(path, "0"))
@@ -584,13 +588,13 @@ static void local_interface_changed_cb(GtkWidget * widget UNUSED, gpointer data 
 static void set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Config: Showing manual publishing options");
+        DEBUG("Showing manual publishing options");
         gtk_widget_show(published_port_label);
         gtk_widget_show(published_port_spin_box);
         gtk_widget_show(published_address_label);
         gtk_widget_show(published_address_entry);
     } else {
-        DEBUG("Config: Hiding manual publishing options");
+        DEBUG("Hiding manual publishing options");
         gtk_widget_hide(published_port_label);
         gtk_widget_hide(published_port_spin_box);
         gtk_widget_hide(published_address_label);
@@ -605,7 +609,7 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
         return;
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Config: Showing stun options, hiding Local/Published info");
+        DEBUG("Showing stun options, hiding Local/Published info");
         gtk_widget_show(stun_server_label);
         gtk_widget_show(stun_server_entry);
         gtk_widget_set_sensitive(stun_server_entry, TRUE);
@@ -617,7 +621,7 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
         gtk_widget_hide(published_address_entry);
         gtk_widget_hide(published_port_spin_box);
     } else {
-        DEBUG("Config: disabling stun options, showing Local/Published info");
+        DEBUG("disabling stun options, showing Local/Published info");
         gtk_widget_set_sensitive(stun_server_entry, FALSE);
         gtk_widget_set_sensitive(same_as_local_radio_button, TRUE);
         gtk_widget_set_sensitive(published_addr_radio_button, TRUE);
@@ -1010,7 +1014,7 @@ GtkWidget* create_published_address(const account_t *account)
 GtkWidget* create_advanced_tab(const account_t *account)
 {
     // Build the advanced tab, to appear on the account configuration panel
-    DEBUG("Config: Build advanced tab");
+    DEBUG("Build advanced tab");
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
@@ -1113,6 +1117,29 @@ create_audiocodecs_configuration(const account_t *account)
     return vbox;
 }
 
+#ifdef SFL_VIDEO
+static GtkWidget *
+create_videocodecs_configuration(const account_t *a)
+{
+    // Main widget
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+
+    GtkWidget *box = videocodecs_box(a);
+
+    // Box for the videocodecs
+    GtkWidget *videocodecs = gnome_main_section_new(_("Video"));
+    gtk_box_pack_start(GTK_BOX (vbox), videocodecs, FALSE, FALSE, 0);
+    gtk_widget_set_size_request(GTK_WIDGET (videocodecs), -1, 200);
+    gtk_widget_show(videocodecs);
+    gtk_container_add(GTK_CONTAINER (videocodecs) , box);
+
+    gtk_widget_show_all(vbox);
+
+    return vbox;
+}
+#endif
+
 static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
 {
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -1192,10 +1219,10 @@ static void update_account_from_basic_tab(account_t *account)
         }
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
-            DEBUG("Config: Set dtmf over rtp");
+            DEBUG("Set dtmf over rtp");
             account_replace(account, ACCOUNT_DTMF_TYPE, OVERRTP);
         } else {
-            DEBUG("Config: Set dtmf over sip");
+            DEBUG("Set dtmf over sip");
             account_replace(account, ACCOUNT_DTMF_TYPE, SIPINFO);
         }
 
@@ -1219,8 +1246,9 @@ static void update_account_from_basic_tab(account_t *account)
         const gboolean tone_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enable_tone));
         account_replace(account, CONFIG_RINGTONE_ENABLED, bool_to_string(tone_enabled));
 
-        account_replace(account, CONFIG_RINGTONE_PATH,
-                        gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser)));
+        gchar *ringtone_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_chooser));
+        account_replace(account, CONFIG_RINGTONE_PATH, ringtone_path);
+        g_free(ringtone_path);
 
         gchar *address_combo_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
         account_replace(account, LOCAL_INTERFACE, address_combo_text);
@@ -1310,6 +1338,13 @@ GtkWidget *show_account_window(const account_t *account)
     GtkWidget *audiocodecs_tab = create_audiocodecs_configuration(account);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
+    
+#ifdef SFL_VIDEO
+    /* Video Codecs */
+    GtkWidget *videocodecs_tab = create_videocodecs_configuration(account);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), videocodecs_tab, gtk_label_new(_("Video")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), videocodecs_tab);
+#endif
 
     // Do not need advanced or security one for the IP2IP account
     if (!IS_IP2IP) {

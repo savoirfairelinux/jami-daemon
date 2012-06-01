@@ -2,7 +2,7 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([sflphone],[1.0.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([sflphone],[1.1.0],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012]])
 AC_REVISION([$Revision$])
 
@@ -112,6 +112,34 @@ dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
 
+dnl Video is default-disabled
+AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
+
+AS_IF([test "x$enable_video" = "xyes"], [
+        AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
+
+        dnl The libav versions correspond to the last libav release: 0.7
+        dnl Check for libavcodec development package - name: libavcodec-dev
+        PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec package: libavcodec-dev]))
+        LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
+
+        dnl Check for libavformat development package - name: libavformat-dev
+        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat package: libavformat-dev]))
+
+        dnl Check for libswscale development package - name: libswcale-dev
+        PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale package: libswscale-dev]))
+
+        dnl Check for libavdevice development package - name: libavdevice-dev
+        PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
+
+        dnl Check for libavutil development package - name: libavutil-dev
+        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil package: libavutil-dev]))
+
+        PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev package: libudev-dev]))
+    ]);
+
+AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
+
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([COMMONCPP_PREFIX], [1], [Use commoncpp include prefix]), [
         PKG_CHECK_MODULES([CCGNU2], [libccgnu2] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([CCPP_PREFIX], [1], [Use cc++ include prefix]),
@@ -137,7 +165,8 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-AX_LIB_EXPAT
+AX_LIB_EXPAT([2.0.1])
+AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
 
 AX_PTHREAD
 
@@ -237,7 +266,9 @@ AC_CONFIG_FILES([src/Makefile \
         src/config/Makefile \
         src/dbus/Makefile \
         src/hooks/Makefile \
-        src/history/Makefile])
+        src/history/Makefile \
+        src/video/Makefile \
+        src/video/test/Makefile])
 
 
 # Go!

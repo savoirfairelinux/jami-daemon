@@ -62,5 +62,4 @@ class Instance
 
 };
 
-
-#endif//INSTANCE_H
+#endif // INSTANCE_H

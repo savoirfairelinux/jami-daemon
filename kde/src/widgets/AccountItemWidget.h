@@ -22,10 +22,13 @@
 #ifndef ACCOUNTITEMWIDGET_H
 #define ACCOUNTITEMWIDGET_H
 
+//Base
 #include <QWidget>
-#include <QCheckBox>
-#include <QLabel>
-#include <kled.h>
+
+//Qt
+class QCheckBox;
+class QLabel;
+
 
 ///@class AccountItemWidget Widget for the config dialog account list
 class AccountItemWidget : public QWidget

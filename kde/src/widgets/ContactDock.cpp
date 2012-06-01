@@ -40,10 +40,10 @@
 #include <KIcon>
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "CallView.h"
 #include "SFLPhoneView.h"
 
@@ -64,23 +64,8 @@ class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    private:
       bool operator<(const QTreeWidgetItem & other) const {
          int column = treeWidget()->sortColumn();
-         //if (dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)) {
-            //if (widget !=0 && dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->widget != 0)
-            //   return widget->getTimeStamp() < dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->widget->getTimeStamp();
-            //else if (weight > 0 && dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->weight > 0)
-            //   return weight > dynamic_cast<QNumericTreeWidgetItem_hist*>((QTreeWidgetItem*)&other)->weight;
-         //}
          return text(column) < other.text(column);
       }
-};
-
-///@enum SortingMode Available sorting mode
-enum SortingMode {
-   Name              ,
-   Organisation      ,
-   Recently_used     ,
-   Group             ,
-   Department
 };
 
 ///Forward keypresses to the filter line edit
@@ -93,7 +78,7 @@ bool KeyPressEaterC::eventFilter(QObject *obj, QEvent *event)
       // standard event processing
       return QObject::eventFilter(obj, event);
    }
-}
+} //eventFilter
 
 ///Constructor
 ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
@@ -108,7 +93,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 
 
    QStringList sortType;
-   sortType << "Name" << "Organisation" << "Recently used" << "Group" << "Department";
+   sortType << i18n("Name") << i18n("Organisation") << i18n("Recently used") << i18n("Group") << i18n("Department");
 
    m_pSortByCBB->addItems(sortType);
    //m_pSortByCBB->setDisabled(true);
@@ -156,16 +141,25 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
    connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         this,        SLOT(setHistoryVisible(bool)              ));
    connect (timer                        ,SIGNAL(timeout()),                                             this,        SLOT(reloadHistoryConst()                 ));
+   connect(ConfigurationSkeleton::self() ,SIGNAL(configChanged()),                                       this,        SLOT(reloadContact()                      ));
    timer->start(1800*1000); //30 minutes
    setWindowTitle(i18n("Contact"));
 
-   
-}
+} //ContactDock
 
 ///Destructor
 ContactDock::~ContactDock()
 {
-
+   /*foreach (ContactItemWidget* w, m_Contacts) {
+      delete w;
+   }
+   
+   delete m_pFilterLE   ;
+   delete m_pSplitter   ;
+   delete m_pContactView;
+   delete m_pCallView   ;
+   delete m_pSortByCBB  ;
+   delete m_pShowHistoCK;*/
 }
 
 
@@ -200,10 +194,10 @@ void ContactDock::reloadContact()
          QString category;
          switch (CURRENT_SORTING_MODE) {
             case Name:
-               category = QString(cont->getFormattedName()[0]);
+               category = HelperFunctions::normStrippped(QString(cont->getFormattedName()[0])).toUpper();
                break;
             case Organisation:
-               category = (cont->getOrganization().isEmpty())?"Unknow":cont->getOrganization();
+               category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
                break;
             case Recently_used:
                if (recentlyUsed.find(cont) != recentlyUsed.end())
@@ -212,10 +206,10 @@ void ContactDock::reloadContact()
                   category = m_slHistoryConst[Never];
                break;
             case Group:
-               category = "TODO";
+               category = i18n("TODO");
                break;
             case Department:
-               category = (cont->getDepartment().isEmpty())?"Unknow":cont->getDepartment();;
+               category = (cont->getDepartment().isEmpty())?i18n("Unknown"):cont->getDepartment();;
                break;
          }
          QNumericTreeWidgetItem_hist* item = m_pContactView->addItem<QNumericTreeWidgetItem_hist>(category);
@@ -248,7 +242,7 @@ void ContactDock::reloadContact()
    }
 
    ConfigurationSkeleton::setContactSortMode(m_pSortByCBB->currentIndex());
-}
+} //reloadContact
 
 ///Query the call history for all items related to this contact
 void ContactDock::loadContactHistory(QTreeWidgetItem* item)
@@ -268,7 +262,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
          }
       }
    }
-}
+} //loadContactHistory
 
 ///Filter contact
 void ContactDock::filter(const QString& text)
@@ -278,15 +272,17 @@ void ContactDock::filter(const QString& text)
       foreach (Contact::PhoneNumber* number, item->getContact()->getPhoneNumbers()) {
          foundNumber |= number->getNumber().toLower().indexOf(text.toLower()) != -1;
       }
-      bool visible = (item->getContact()->getFormattedName  ().toLower().indexOf(text.toLower()) != -1)
-                  || (item->getContact()->getOrganization   ().toLower().indexOf(text.toLower()) != -1)
-                  || (item->getContact()->getPreferredEmail ().toLower().indexOf(text.toLower()) != -1)
-                  || (item->getContact()->getDepartment     ().toLower().indexOf(text.toLower()) != -1)
+      bool visible = (HelperFunctions::normStrippped(item->getContact()->getFormattedName  ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getOrganization   ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getPreferredEmail ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
+                  || (HelperFunctions::normStrippped(item->getContact()->getDepartment     ()).indexOf(HelperFunctions::normStrippped(text)) != -1)
                   || foundNumber;
       item->getItem()->setHidden(!visible);
+
    }
+
    //m_pContactView->expandAll();
-}
+} //filter
 
 void ContactDock::reloadHistoryConst()
 {
@@ -327,7 +323,7 @@ QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
       kDebug() << "the item is not a call";
    }
    return mimeData;
-}
+} //mimeData
 
 ///Handle data being dropped on the widget
 bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
@@ -383,20 +379,10 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
       m_pFilterLE->setText(m_pFilterLE->text().left( m_pFilterLE->text().size()-1 ));
    else if (!event->text().isEmpty() && !(key == Qt::Key_Backspace))
       m_pFilterLE->setText(m_pFilterLE->text()+event->text());
-}
+} //keyPressEvent
 
 /*****************************************************************************
  *                                                                           *
  *                                  Helpers                                  *
  *                                                                           *
  ****************************************************************************/
-
-int ContactDock::usableNumberCount(Contact* cont)
-{
-   uint result =0;
-   QStringList list = ConfigurationSkeleton::phoneTypeList();
-   foreach (Contact::PhoneNumber* pn,cont->getPhoneNumbers()) {
-      result += list.indexOf(pn->getType()) != -1;
-   }
-   return result;
-}

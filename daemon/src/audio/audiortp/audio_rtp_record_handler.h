@@ -48,24 +48,22 @@ class SIPCall;
 
 namespace sfl {
 
-// Frequency (in packet number)
-#define RTP_TIMESTAMP_RESET_FREQ 100
-
-static const int schedulingTimeout = 4000;
-static const int expireTimeout = 1000000;
-
 // G.722 VoIP is typically carried in RTP payload type 9.[2] Note that IANA records the clock rate for type 9 G.722 as 8 kHz
 // (instead of 16 kHz), RFC3551[3]  clarifies that this is due to a historical error and is retained in order to maintain backward
 // compatibility. Consequently correct implementations represent the value 8,000 where required but encode and decode audio at 16 kHz.
-static const int g722PayloadType = 9;
-static const int g722RtpClockRate = 8000;
-static const int g722RtpTimeincrement = 160;
 
 inline uint32
 timeval2microtimeout(const timeval& t)
 {
     return ((t.tv_sec * 1000000ul) + t.tv_usec);
 }
+
+struct DTMFEvent {
+    DTMFEvent(int digit);
+    ost::RTPPacket::RFC2833Payload payload;
+    bool newevent;
+    int length;
+};
 
 /**
  * Class meant to store internal data in order to encode/decode,
@@ -90,7 +88,7 @@ class AudioRtpRecord {
         int codecSampleRate_;
         int codecFrameSize_;
         int converterSamplingRate_;
-        std::list<int> dtmfQueue_;
+        std::list<DTMFEvent> dtmfQueue_;
         SFLDataFormat fadeFactor_;
         NoiseSuppress *noiseSuppressEncode_;
         NoiseSuppress *noiseSuppressDecode_;
@@ -138,7 +136,7 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.hasDynamicPayloadType_;
         }
 
-        int DtmfPending() const {
+        bool hasDTMFPending() const {
             return not audioRtpRecord_.dtmfQueue_.empty();
         }
 

@@ -1,23 +1,22 @@
-/***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 //Parent
 #include "Account.h"
@@ -65,7 +64,7 @@ const QString& account_state_name(const QString& s)
    if(s == QString(ACCOUNT_STATE_ERROR_EXIST_STUN) )
       return stunServerInvalid      ;
    return invalid                   ;
-}
+} //account_state_name
 
 ///Constructors
 Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
@@ -93,7 +92,7 @@ Account* Account::buildExistingAccountFromId(const QString& _accountId)
    //    }
 
    return a;
-}
+} //buildExistingAccountFromId
 
 ///Build an account from it's name / alias
 Account* Account::buildNewAccountFromAlias(const QString& alias)
@@ -109,6 +108,7 @@ Account* Account::buildNewAccountFromAlias(const QString& alias)
 Account::~Account()
 {
    delete m_pAccountId;
+   delete m_pAccountDetails;
 }
 
 
@@ -166,7 +166,7 @@ const QString& Account::getAccountDetail(const QString& param) const
       qDebug() << "Account details not found, there is " << m_pAccountDetails->count() << " details available";
       return EMPTY_STRING;
    }
-}
+} //getAccountDetail
 
 ///Get the alias
 const QString& Account::getAlias() const

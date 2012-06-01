@@ -31,6 +31,9 @@
 #ifndef __DBUSMANAGERIMPL_H__
 #define __DBUSMANAGERIMPL_H__
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "dbus_cpp.h"
 #include "noncopyable.h"
 
@@ -38,6 +41,7 @@ class ConfigurationManager;
 class CallManager;
 class NetworkManager;
 class Instance;
+class VideoControls;
 
 class DBusManager {
     public:
@@ -46,10 +50,15 @@ class DBusManager {
 
         CallManager * getCallManager() {
             return callManager_;
-        };
+        }
         ConfigurationManager * getConfigurationManager() {
             return configurationManager_;
-        };
+        }
+#ifdef SFL_VIDEO
+        VideoControls* getVideoControls() {
+            return videoControls_;
+        }
+#endif
 
         void exec();
         void exit();
@@ -60,6 +69,9 @@ class DBusManager {
         ConfigurationManager* configurationManager_;
         Instance*             instanceManager_;
         DBus::BusDispatcher   dispatcher_;
+#ifdef SFL_VIDEO
+        VideoControls *videoControls_;
+#endif
 #if USE_NETWORKMANAGER
         NetworkManager* networkManager_;
 #endif

@@ -18,6 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+
 #ifndef ACCOUNTWIZARD_H
 #define ACCOUNTWIZARD_H
 
@@ -80,8 +81,8 @@ public:
    int nextId() const;
 
 private:
-   QRadioButton * radioButton_SFL;
-   QRadioButton * radioButton_manual;
+   QRadioButton* radioButton_SFL;
+   QRadioButton* radioButton_manual;
 };
 
 /***************************************************************************
@@ -99,8 +100,8 @@ public:
    int nextId() const;
 
 private:
-   QRadioButton * radioButton_SIP;
-   QRadioButton * radioButton_IAX;
+   QRadioButton* radioButton_SIP;
+   QRadioButton* radioButton_IAX;
 };
 
 /***************************************************************************
@@ -142,19 +143,19 @@ public:
 private:
    int type;
 
-   QLabel * label_alias;
-   QLabel * label_server;
-   QLabel * label_user;
-   QLabel * label_password;
-   QLabel * label_voicemail;
-   QLabel * label_enableZrtp;
+   QLabel* label_alias           ;
+   QLabel* label_server          ;
+   QLabel* label_user            ;
+   QLabel* label_password        ;
+   QLabel* label_voicemail       ;
+   QLabel* label_enableZrtp      ;
 
-   QLineEdit * lineEdit_alias;
-   QLineEdit * lineEdit_server;
-   QLineEdit * lineEdit_user;
-   QLineEdit * lineEdit_password;
-   QLineEdit * lineEdit_voicemail;
-   QCheckBox * checkBox_enableZrtp;
+   QLineEdit* lineEdit_alias     ;
+   QLineEdit* lineEdit_server    ;
+   QLineEdit* lineEdit_user      ;
+   QLineEdit* lineEdit_password  ;
+   QLineEdit* lineEdit_voicemail ;
+   QCheckBox* checkBox_enableZrtp;
 };
 
 /***************************************************************************
@@ -175,17 +176,17 @@ public:
 private:
    int type;
 
-   QLabel * label_alias;
-   QLabel * label_server;
-   QLabel * label_user;
-   QLabel * label_password;
-   QLabel * label_voicemail;
+   QLabel* label_alias          ;
+   QLabel* label_server         ;
+   QLabel* label_user           ;
+   QLabel* label_password       ;
+   QLabel* label_voicemail      ;
 
-   QLineEdit * lineEdit_alias;
-   QLineEdit * lineEdit_server;
-   QLineEdit * lineEdit_user;
-   QLineEdit * lineEdit_password;
-   QLineEdit * lineEdit_voicemail;
+   QLineEdit* lineEdit_alias    ;
+   QLineEdit* lineEdit_server   ;
+   QLineEdit* lineEdit_user     ;
+   QLineEdit* lineEdit_password ;
+   QLineEdit* lineEdit_voicemail;
 };
 
 /***************************************************************************
@@ -203,9 +204,9 @@ public:
    int nextId() const;
 
 private:
-   QCheckBox * checkBox_enableStun;
-   QLabel * label_StunServer;
-   QLineEdit * lineEdit_StunServer;
+   QCheckBox* checkBox_enableStun;
+   QLabel*    label_StunServer   ;
+   QLineEdit* lineEdit_StunServer;
 };
 
 /***************************************************************************

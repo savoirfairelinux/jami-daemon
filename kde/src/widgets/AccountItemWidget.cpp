@@ -24,16 +24,20 @@
 
 //Qt
 #include <QtGui/QHBoxLayout>
+#include <QtGui/QCheckBox>
+#include <QtGui/QLabel>
+#include <QtGui/QIcon>
 
 //KDE
 #include <KDebug>
+#include <KLed>
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
 
 ///Constructor
 AccountItemWidget::AccountItemWidget(QWidget *parent)
- : QWidget(parent)
+ : QWidget(parent),m_pLed(nullptr),m_pCheckBox(nullptr),m_pTextLabel(nullptr)
 {
    m_pCheckBox = new QCheckBox(this);
    m_pCheckBox->setObjectName("m_pCheckBox");
@@ -56,14 +60,14 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
    updateDisplay();
 
    QMetaObject::connectSlotsByName(this);
-}
+} //AccountItemWidget
 
 ///Destructor
 AccountItemWidget::~AccountItemWidget()
 {
-   delete m_pLed;
-   delete m_pCheckBox;
-   delete m_pTextLabel;
+   if (m_pLed)       delete m_pLed      ;
+   if (m_pCheckBox)  delete m_pCheckBox ;
+   if (m_pTextLabel) delete m_pTextLabel;
 }
 
 
@@ -89,7 +93,7 @@ void AccountItemWidget::updateStateDisplay()
       default:
          kDebug() << "Calling AccountItemWidget::setState with value " << m_State << ", not part of enum AccountItemWidget::State.";
    }
-}
+} //updateStateDisplay
 
 ///If this item is enable or not
 void AccountItemWidget::updateEnabledDisplay()

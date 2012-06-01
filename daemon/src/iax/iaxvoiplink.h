@@ -32,6 +32,10 @@
 #ifndef IAXVOIPLINK_H
 #define IAXVOIPLINK_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "voiplink.h"
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "sfl_types.h"
@@ -169,6 +173,9 @@ class IAXVoIPLink : public VoIPLink {
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
+#ifdef SFL_VIDEO
+        virtual std::string getCurrentVideoCodecName(const std::string& id);
+#endif
         virtual std::string getCurrentCodecName(Call *c) const;
 
     private:

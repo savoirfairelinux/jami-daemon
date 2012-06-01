@@ -48,7 +48,7 @@ public:
    void setFrequency ( const QString& frequency );
    void setBitrate   ( const QString& bitrate   );
    void setBandwidth ( const QString& bandwidth );
-   void setEnabled   ( bool enabled      );
+   void setEnabled   ( bool  enabled            );
 
 private:
    //Attributes

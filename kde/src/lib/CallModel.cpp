@@ -1,26 +1,28 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
+
 //Parent
 #include <CallModel.h>
 
 bool CallModelBase::dbusInit = false;
+CallMap CallModelBase::m_sActiveCalls;
 
 CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 {
@@ -98,6 +100,7 @@ void CallModelBase::on1_changingConference(const QString &confID, const QString 
    qDebug() << "Changing conference state" << conf << confID;
    if (conf && dynamic_cast<Call*>(conf)) { //Prevent a race condition between call and conference
       changeConference(confID, state);
+      conf->stateChanged(state);
       emit conferenceChanged(conf);
    }
    else {
@@ -121,18 +124,29 @@ void CallModelBase::on1_voiceMailNotify(const QString &accountID, int count)
 
 void CallModelBase::on1_volumeChanged(const QString & device, double value)
 {
-//    qDebug() << "Signal : Volume Changed !";
-//    if(! (toolButton_recVol->isChecked() && value == 0.0))
-//       updateRecordBar();
-//    if(! (toolButton_sndVol->isChecked() && value == 0.0))
-//       updateVolumeBar();
    emit volumeChanged(device,value);
 }
 
 Call* CallModelBase::addCall(Call* call, Call* parent)
 {
    emit callAdded(call,parent);
+
+   connect(call, SIGNAL(isOver(Call*)), this, SLOT(removeActiveCall(Call*)));
    return call;
+}
+
+Call* CallModelBase::addConferenceS(Call* conf)
+{
+   emit conferenceCreated(conf);
+   return conf;
+}
+
+///Remove it from active calls
+void CallModelBase::removeActiveCall(Call* call)
+{
+   Q_UNUSED(call);
+   //There is a race condition
+   //m_sActiveCalls[call->getCallId()] = nullptr;
 }
 
 //More code in CallModel.hpp

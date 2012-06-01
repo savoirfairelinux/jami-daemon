@@ -35,12 +35,10 @@
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
   */
-
 typedef enum {
     A_CALL,
     A_CONFERENCE,
-    A_INVALID
-} CallType;
+    } CallType;
 
 /**
  * Tags used to identify display type in calltree
@@ -80,10 +78,10 @@ calltree_update_call (calltab_t *, callable_obj_t *);
 
 /**
  * Remove a call from the call tree
- * @param c The call to remove
+ * @param c The ID of the call to remove
  */
 void
-calltree_remove_call(calltab_t *, callable_obj_t *);
+calltree_remove_call(calltab_t *, const gchar*);
 
 /**
  * Add a callable object to history treeview
@@ -102,21 +100,22 @@ calltree_remove_conference(calltab_t *, const conference_obj_t *);
 void
 calltree_display (calltab_t *);
 
-void
-row_activated (GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
-
 /**
  * Update elapsed time based on selected calltree's call
  */
 gboolean
 calltree_update_clock(gpointer);
 
-/**
- * @param The calltab (current_calls, history, contacts)
- * @param The call
- * @param The callID/confID
- */
-void
-calltree_(calltab_t *, callable_obj_t *, const gchar * const);
+gboolean
+is_conference(GtkTreeModel *model, GtkTreeIter *iter);
+
+enum {
+    COLUMN_ACCOUNT_PIXBUF = 0,
+    COLUMN_ACCOUNT_DESC,
+    COLUMN_ACCOUNT_SECURITY_PIXBUF,
+    COLUMN_ID,
+    COLUMN_IS_CONFERENCE,
+    COLUMNS_IN_TREE_STORE
+};
 
 #endif

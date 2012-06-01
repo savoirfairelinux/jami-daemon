@@ -31,6 +31,7 @@
  */
 
 #include "historyitem.h"
+#include <unistd.h>
 #include <cstdlib>
 #include <istream>
 
@@ -51,6 +52,13 @@ const char * const HistoryItem::OUTGOING_STRING =       "outgoing";
 using std::map;
 using std::string;
 
+namespace {
+    bool file_exists(const std::string &str)
+    {
+        return access(str.c_str(), F_OK) != -1;
+    }
+}
+
 HistoryItem::HistoryItem(const map<string, string> &args) : entryMap_(args),
     timestampStart_(std::atol(entryMap_[TIMESTAMP_START_KEY].c_str()))
 {}
@@ -65,6 +73,8 @@ HistoryItem::HistoryItem(std::istream &entry) : entryMap_(), timestampStart_(0)
         else if (pos < tmp.length() - 1) {
             string key(tmp.substr(0, pos));
             string val(tmp.substr(pos + 1, tmp.length() - pos - 1));
+            if (key == RECORDING_PATH_KEY and not file_exists(val))
+                val = "";
             entryMap_[key] = val;
         }
     }
@@ -90,8 +100,13 @@ void HistoryItem::print(std::ostream &o) const
 {
     // every entry starts with "[" + random integer = "]"
     for (map<string, string>::const_iterator iter = entryMap_.begin();
-         iter != entryMap_.end(); ++iter)
-        o << iter->first << "=" << iter->second << std::endl;
+         iter != entryMap_.end(); ++iter) {
+        // if the file does not exist anymore, we do not save it
+        if (iter->first == RECORDING_PATH_KEY and not file_exists(iter->second))
+            o << iter->first << "=" << "" << std::endl;
+        else
+            o << iter->first << "=" << iter->second << std::endl;
+    }
 }
 
 std::ostream& operator << (std::ostream& o, const HistoryItem& item)

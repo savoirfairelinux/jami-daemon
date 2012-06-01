@@ -37,6 +37,7 @@ Call::Call(const std::string& id, Call::CallType type)
     : callMutex_()
     , localIPAddress_("")
     , localAudioPort_(0)
+    , localVideoPort_(0)
     , id_(id)
     , confID_()
     , type_(type)
@@ -134,6 +135,13 @@ Call::getLocalAudioPort()
     return localAudioPort_;
 }
 
+unsigned int
+Call::getLocalVideoPort()
+{
+    ost::MutexLock m (callMutex_);
+    return localVideoPort_;
+}
+
 bool
 Call::setRecording()
 {
@@ -177,6 +185,15 @@ std::string Call::getTypeStr() const
     }
 }
 
+namespace {
+    std::string timestamp_to_string(const time_t &timestamp)
+    {
+        std::stringstream time_str;
+        time_str << timestamp;
+        return time_str.str();
+    }
+}
+
 std::map<std::string, std::string> Call::createHistoryEntry() const
 {
     std::map<std::string, std::string> result;
@@ -186,15 +203,39 @@ std::map<std::string, std::string> Call::createHistoryEntry() const
     result[HistoryItem::DISPLAY_NAME_KEY] = displayName_;
     result[HistoryItem::PEER_NUMBER_KEY] = peerNumber_;
     result[HistoryItem::RECORDING_PATH_KEY] = recAudio_.fileExists() ? getFilename() : "";
-    std::stringstream time_str;
-    time_str << timestamp_start_;
-    result[HistoryItem::TIMESTAMP_START_KEY] = time_str.str();
-    time_str.str("");
-    time_str << timestamp_stop_;
-    result[HistoryItem::TIMESTAMP_STOP_KEY] = time_str.str();
+    result[HistoryItem::TIMESTAMP_START_KEY] = timestamp_to_string(timestamp_start_);
+    result[HistoryItem::TIMESTAMP_STOP_KEY] = timestamp_to_string(timestamp_stop_);
     if (connectionState_ == RINGING)
         result[HistoryItem::STATE_KEY] = HistoryItem::MISSED_STRING;
     else
         result[HistoryItem::STATE_KEY] = getTypeStr();
     return result;
+}
+
+std::map<std::string, std::string>
+Call::getDetails()
+{
+    std::map<std::string, std::string> details;
+    std::ostringstream type;
+    type << type_;
+    details["CALL_TYPE"] = type.str();
+    details["PEER_NUMBER"] = peerNumber_;
+    details["DISPLAY_NAME"] = displayName_;
+    details["CALL_STATE"] = getStateStr();
+    details["CONF_ID"] = confID_;
+    details["TIMESTAMP_START"] = timestamp_to_string(timestamp_start_);
+    return details;
+}
+
+std::map<std::string, std::string>
+Call::getNullDetails()
+{
+    std::map<std::string, std::string> details;
+    details["ACCOUNTID"] = "";
+    details["PEER_NUMBER"] = "Unknown";
+    details["PEER_NAME"] = "Unknown";
+    details["DISPLAY_NAME"] = "Unknown";
+    details["CALL_STATE"] = "UNKNOWN";
+    details["CALL_TYPE"] = "0";
+    return details;
 }

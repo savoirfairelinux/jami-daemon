@@ -1,5 +1,3 @@
-#ifndef CALL_VIEW
-#define CALL_VIEW
 /***************************************************************************
  *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
@@ -19,6 +17,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+#ifndef CALL_VIEW
+#define CALL_VIEW
 
 #include <QtGui/QItemDelegate>
 #include <QtGui/QTreeWidget>
@@ -58,21 +58,24 @@ class CallViewOverlay : public QWidget {
 public:
    //Constructor
    CallViewOverlay(QWidget* parent);
+   ~CallViewOverlay();
 
    //Setters
    void setCornerWidget(QWidget* wdg);
    void setVisible(bool enabled);
+   void setAccessMessage(QString message);
 
 protected:
    virtual void paintEvent  (QPaintEvent*  event );
    virtual void resizeEvent (QResizeEvent* e     );
 
 private:
-   QWidget* m_pIcon  ;
-   uint     m_step   ;
-   QTimer*  m_pTimer ;
-   bool     m_enabled;
-   QColor   m_black  ;
+   QWidget* m_pIcon        ;
+   uint     m_step         ;
+   QTimer*  m_pTimer       ;
+   bool     m_enabled      ;
+   QColor   m_black        ;
+   QString  m_accessMessage;
 
 private slots:
    void changeVisibility();
@@ -83,22 +86,35 @@ class CallView : public QTreeWidget {
    Q_OBJECT
    public:
       CallView                    ( QWidget* parent = 0                                                               );
+      ~CallView                   (                                                                                   );
+
+      //Getters
       Call* getCurrentItem        (                                                                                   );
       QWidget* getWidget          (                                                                                   );
+      bool haveOverlay            (                                                                                   );
+      virtual QMimeData* mimeData ( const QList<QTreeWidgetItem *> items                                              ) const;
+
+      //Setters
       void setTitle               ( const QString& title                                                              );
+
+      //Mutator
       bool selectItem             ( Call* item                                                                        );
       bool removeItem             ( Call* item                                                                        );
       bool dropMimeData           ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
-      virtual QMimeData* mimeData ( const QList<QTreeWidgetItem *> items                                              ) const;
-      bool haveOverlay();
+      bool callToCall             ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
+      bool phoneNumberToCall      ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
+      bool contactToCall          ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
+      void moveSelectedItem       ( Qt::Key direction                                                                 );
 
    private:
+      //Mutator
       QTreeWidgetItem* extractItem ( const QString& callId                             );
       QTreeWidgetItem* extractItem ( QTreeWidgetItem* item                             );
       CallTreeItem* insertItem     ( QTreeWidgetItem* item, QTreeWidgetItem* parent=0  );
       CallTreeItem* insertItem     ( QTreeWidgetItem* item, Call* parent               );
       void clearArtefact           ( QTreeWidgetItem* item                             );
 
+      //Attributes
       QPushButton*     m_pTransferB;
       KLineEdit*       m_pTransferLE;
       CallViewOverlay* m_pTransferOverlay;
@@ -106,13 +122,11 @@ class CallView : public QTreeWidget {
       Call*            m_pCallPendingTransfer;
 
    protected:
+      //Reimlementation
       virtual void dragEnterEvent ( QDragEnterEvent *e );
       virtual void dragMoveEvent  ( QDragMoveEvent  *e );
       virtual void dragLeaveEvent ( QDragLeaveEvent *e );
       virtual void resizeEvent    ( QResizeEvent    *e );
-      bool callToCall        ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
-      bool phoneNumberToCall ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
-      bool contactToCall     ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action );
 
    public slots:
       void destroyCall        ( Call* toDestroy);

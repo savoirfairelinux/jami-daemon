@@ -28,6 +28,12 @@
 //SFLPhone
 #include "conf/ConfigAccountList.h"
 
+//Qt
+#include <QtGui/QIcon>
+
+//KDE
+#include <KLed>
+
 ///Constructor
 AccountListModel::AccountListModel(QObject *parent)
  : QAbstractListModel(parent)
@@ -38,6 +44,7 @@ AccountListModel::AccountListModel(QObject *parent)
 ///Destructor
 AccountListModel::~AccountListModel()
 {
+   
 }
 
 
@@ -60,14 +67,14 @@ QVariant AccountListModel::data ( const QModelIndex& index, int role) const
       return QVariant(account->isEnabled() ? Qt::Checked : Qt::Unchecked);
    else if(index.column() == 0 && role == Qt::DecorationRole) {
       if(! account->isEnabled())
-         return QVariant(QIcon(ICON_ACCOUNT_LED_GRAY));
+         return QVariant( QIcon( ICON_ACCOUNT_LED_GRAY  ));
       else if(account->isRegistered())
-         return QVariant(QIcon(ICON_ACCOUNT_LED_GREEN));
+         return QVariant( QIcon( ICON_ACCOUNT_LED_GREEN ));
       else
-         return QVariant(QIcon(ICON_ACCOUNT_LED_RED));
+         return QVariant( QIcon( ICON_ACCOUNT_LED_RED   ));
    }
    return QVariant();
-}
+} //data
 
 ///Flags for "index"
 Qt::ItemFlags AccountListModel::flags(const QModelIndex & index) const

@@ -31,6 +31,7 @@
 class QLabel;
 class QPushButton;
 class QMimeData;
+class QTimer;
 
 //KDE
 class KIcon;
@@ -59,32 +60,37 @@ class CallTreeItem : public QWidget
 
  private:
     //Attributes
-    Call*    m_pItemCall;
-    bool     m_Init;
-    bool     m_isHover;
-    QLabel*  m_pIconL;
-    QLabel*  m_pPeerL;
-    QLabel*  m_pCallNumberL;
-    QLabel*  m_pTransferPrefixL;
-    QLabel*  m_pTransferNumberL;
-    QLabel*  m_pCodecL;
-    QLabel*  m_pSecureL;
-    QLabel*  m_pHistoryPeerL;
-    TranslucentButtons* m_pBtnConf;
+    Call*    m_pItemCall        ;
+    bool     m_Init             ;
+    bool     m_isHover          ;
+    QLabel*  m_pIconL           ;
+    QLabel*  m_pPeerL           ;
+    QLabel*  m_pCallNumberL     ;
+    QLabel*  m_pTransferPrefixL ;
+    QLabel*  m_pTransferNumberL ;
+    QLabel*  m_pCodecL          ;
+    QLabel*  m_pSecureL         ;
+    QLabel*  m_pHistoryPeerL    ;
+    QLabel*  m_pElapsedL        ;
+    QTimer*  m_pTimer           ;
+    
+    TranslucentButtons* m_pBtnConf ;
     TranslucentButtons* m_pBtnTrans;
 
   protected:
     //Reimplementation
-    virtual void dragEnterEvent ( QDragEnterEvent *e );
-    virtual void dragMoveEvent  ( QDragMoveEvent  *e );
-    virtual void dragLeaveEvent ( QDragLeaveEvent *e );
-    virtual void resizeEvent    ( QResizeEvent    *e );
-    virtual void dropEvent      ( QDropEvent      *e );
+    virtual void dragEnterEvent        ( QDragEnterEvent *e );
+    virtual void dragMoveEvent         ( QDragMoveEvent  *e );
+    virtual void dragLeaveEvent        ( QDragLeaveEvent *e );
+    virtual void resizeEvent           ( QResizeEvent    *e );
+    virtual void dropEvent             ( QDropEvent      *e );
+    virtual void mouseDoubleClickEvent ( QMouseEvent     *e );
 
 private slots:
    void transferEvent(QMimeData* data);
    void conversationEvent(QMimeData* data);
    void hide();
+   void incrementTimer();
 
 public slots:
    void updated();

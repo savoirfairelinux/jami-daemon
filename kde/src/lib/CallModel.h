@@ -1,28 +1,30 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
 
 #ifndef CALL_MODEL_H
 #define CALL_MODEL_H
 
 #include <QObject>
 #include <QVector>
+#include <QWidget>
+#include <QModelIndex>
 #include <QMap>
 #include "typedefs.h"
 
@@ -57,6 +59,7 @@ public:
    virtual void  addToHistory     ( Call* call                                  ) = 0;
    virtual Call* addCall          ( Call* call           , Call* parent =0      );
    virtual Call* getCall          ( const QString& callId                       ) const = 0;
+   Call*   addConferenceS         ( Call* conf                                  );
 public slots:
    void on1_callStateChanged   ( const QString& callID    , const QString &state   );
    void on1_incomingCall       ( const QString& accountID , const QString & callID );
@@ -65,6 +68,12 @@ public slots:
    void on1_conferenceRemoved  ( const QString& confId                             );
    void on1_voiceMailNotify    ( const QString& accountID , int count              );
    void on1_volumeChanged      ( const QString& device    , double value           );
+
+protected:
+   static CallMap m_sActiveCalls;
+
+private slots:
+  void removeActiveCall(Call*);
 private:
    static bool dbusInit;
 signals:
@@ -81,12 +90,11 @@ signals:
 };
 
 /**
- * Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible  
- *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The Mirror model  
- *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).      
+ * Using QAbstractModel resulted in a failure. Managing all corner case bloated the code to the point of no
+ * return. This frontend may not be cleaner from a design point of view, but it is from a code point of view
  */
 ///@class CallModel Central model/frontend to deal with sflphoned
-template  <typename CallWidget, typename Index>
+template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
 class LIB_EXPORT CallModel : public CallModelBase {
    public:
       enum ModelType {
@@ -97,10 +105,11 @@ class LIB_EXPORT CallModel : public CallModelBase {
 
       //Constructors, initializer and destructors
       CallModel                ( ModelType type     );
-      virtual ~CallModel       (                    ) {}
+      virtual ~CallModel       (                    );
       virtual bool initCall    (                    );
-      virtual bool initHistory (                    );
       virtual void initContact ( ContactBackend* be );
+      static  bool initHistory (                    );
+      static  void destroy     (                    );
 
       //Call related
       virtual Call*  addCall          ( Call* call                , Call* parent =0    );
@@ -126,11 +135,12 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void removeConference          ( Call* call                                  );
 
       //Getters
-      int size                                                     ();
-      CallList                              getCallList            ();
-      static const CallMap&                getHistory             ();
-      static const QStringList              getNumbersByPopularity ();
-      static const QStringList getHistoryCallId                    ();
+      int size                                        ();
+      CallList                 getCallList            ();
+      CallList                 getConferenceList      ();
+      static const CallMap&    getHistory             ();
+      static const QStringList getNumbersByPopularity ();
+      static const QStringList getHistoryCallId       ();
 
       //Account related
       static Account* getCurrentAccount  (                     );
@@ -191,13 +201,14 @@ class LIB_EXPORT CallModel : public CallModelBase {
       typedef QHash< Index      , InternalStruct* > InternalIndex ;
 
       //Static attributes
-      static CallMap m_sActiveCalls ;
       static CallMap m_sHistoryCalls;
       
       static InternalCall   m_sPrivateCallList_call  ;
       static InternalCallId m_sPrivateCallList_callId;
       static InternalWidget m_sPrivateCallList_widget;
       static InternalIndex  m_sPrivateCallList_index ;
+
+      static CallMap        m_lConfList;
       
       static QString      m_sPriorAccountId;
       static AccountList* m_spAccountList  ;
@@ -211,13 +222,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       Call* addCallCommon(Call* call);
       bool  updateCommon (Call* call);
 };
-
-class CallModelConvenience : public CallModel<QWidget*,QModelIndex*>
-{
-   public:
-      CallModelConvenience(ModelType type) : CallModel<QWidget*,QModelIndex*>(type) {}
-};
-
 #include "CallModel.hpp"
 
 #endif

@@ -20,7 +20,9 @@ buttons_DATA = current.svg \
 				speaker_75.svg \
 				fail.svg \
 				incoming.svg \
+				incoming_rec.svg \
 				outgoing.svg \
+				outgoing_rec.svg \
 				missed.svg \
 				busy.svg \
 				sflphone.svg \

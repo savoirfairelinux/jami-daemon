@@ -21,27 +21,23 @@
 
 //System
 #include <unistd.h>
+#include <signal.h>
 
 //Qt
-#include <QtGui/QAction>
 #include <QApplication>
 #include <QtCore/QString>
-#include <QtGui/QMenu>
-#include <QTableView>
-#include <QListView>
 
 //KDE
 #include <KDebug>
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
 #include <klocale.h>
-#include <KNotification>
 
 //SFLPhone
 #include "AccountWizard.h"
 #include "SFLPhoneapplication.h"
 #include "conf/ConfigurationDialog.h"
-#include "conf/ConfigurationSkeleton.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "CallView.h"
 #include "SFLPhone.h"
 #include "AccountListModel.h"
@@ -52,11 +48,17 @@
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
-static const char version[] = "1.0.2";
+static const char version[] = "1.1.0";
+
+SFLPhoneApplication* app;
+void quitOnSignal(int signal)
+{
+   Q_UNUSED(signal);
+   app->quit();
+}
 
 int main(int argc, char **argv)
 {
-
    try
    {
       KLocale::setMainCatalog("sflphone-client-kde");
@@ -75,7 +77,6 @@ int main(int argc, char **argv)
       );
       about.addAuthor( ki18n( "Jérémy Quentin"         ), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com"  );
       about.addAuthor( ki18n( "Emmanuel Lepage Vallee" ), KLocalizedString(), "emmanuel.lepage@savoirfairelinux.com" );
-      //about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
       KCmdLineArgs::init(argc, argv, &about);
       KCmdLineOptions options;
       KCmdLineArgs::addCmdLineOptions(options);
@@ -83,20 +84,29 @@ int main(int argc, char **argv)
       //configuration dbus
       TreeWidgetCallModel::init();
 
-      SFLPhoneApplication app;
-
+      app = new SFLPhoneApplication();
+      
       SFLPhone* sflphoneWindow_ = new SFLPhone();
       if( ! sflphoneWindow_->initialize() ) {
          exit(1);
          return 1;
       };
-      sflphoneWindow_->show();
 
-      int retVal = app.exec();
+      signal(SIGINT  , quitOnSignal);
+      signal(SIGTERM , quitOnSignal);
 
-      ConfigurationSkeleton* conf = ConfigurationSkeleton::self();
-      conf->writeConfig();
+      if (ConfigurationSkeleton::displayOnStart())
+         sflphoneWindow_->show();
+      else
+         sflphoneWindow_->hide();
+      
+
+      int retVal = app->exec();
+
       delete sflphoneWindow_;
+      ConfigurationSkeleton::self()->writeConfig();
+      
+      delete app;
       return retVal;
    }
    catch(const char * msg)

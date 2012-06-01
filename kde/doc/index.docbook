@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.2-Based Variant V1.1//EN" "dtd/kdex.dtd" [
   <!ENTITY sflphone-client-kde "SFLPhone KDE Client">
   <!ENTITY kappname "&sflphone-client-kde;">
-  <!ENTITY sflphonerelease "0.9.6">
+  <!ENTITY sflphonerelease "1.1.0">
   <!ENTITY current-w "Current calls window">
   <!ENTITY history-w "Call history window">
   <!ENTITY address-w "Address book window">

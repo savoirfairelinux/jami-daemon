@@ -20,7 +20,8 @@ TranslucentButtons::TranslucentButtons(QWidget* parent):QPushButton(parent),m_en
 ///Destructor
 TranslucentButtons::~TranslucentButtons()
 {
-
+   if (m_pTimer) delete m_pTimer;
+   if (m_pImg) delete m_pImg;
 }
 
 ///How to paint
@@ -35,7 +36,7 @@ void TranslucentButtons::paintEvent(QPaintEvent* event)
    customPainter.setPen(m_Pen);
 
    if (m_pImg) {
-      customPainter.drawImage(QRect(QPoint(rect().x()+rect().width()-50,10),QSize(40,rect().height()-20)),*m_pImg, QRectF(m_pImg->rect()));
+      customPainter.drawImage(QRect(QPoint(rect().x()+rect().width()-parentWidget()->height(),10),QSize(parentWidget()->height()-10,rect().height()-20)),*m_pImg, QRectF(m_pImg->rect()));
    }
 
    QFont font = customPainter.font();
@@ -47,7 +48,6 @@ void TranslucentButtons::paintEvent(QPaintEvent* event)
 ///Override the visibility toggler
 void TranslucentButtons::setVisible(bool enabled)
 {
-   kDebug() << "Enabling!";
    if (m_enabled != enabled) {
       if (m_pTimer) {
          m_pTimer->stop();

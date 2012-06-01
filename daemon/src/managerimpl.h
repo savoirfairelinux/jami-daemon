@@ -131,9 +131,19 @@ class ManagerImpl {
         void init(const std::string &config_file);
 
         /**
+         * Enter Dbus mainloop
+         */
+        void run();
+
+        /**
          * Terminate all thread (sound, link) and unload AccountMap
          */
         void terminate();
+
+        /*
+         * Terminate all threads and exit DBus loop
+         */
+        void finish();
 
         /**
          * Accessor to audiodriver.
@@ -458,6 +468,8 @@ class ManagerImpl {
          */
         std::vector<std::string> getParticipantList(const std::string& confID) const;
 
+        std::string getConferenceId(const std::string& callID);
+
         /**
          * Save the details of an existing account, given the account ID
          * This will load the configuration map with the given data.
@@ -488,6 +500,9 @@ class ManagerImpl {
          * @return std::string The codec name
          */
         std::string getCurrentCodecName(const std::string& id);
+#ifdef SFL_VIDEO
+        std::string getCurrentVideoCodecName(const std::string& id);
+#endif
 
         /**
          * Set input audio plugin
@@ -569,9 +584,9 @@ class ManagerImpl {
          * Required format: payloads separated with one slash.
          * @return std::string The serializabled string
          */
-        static std::string serialize(const std::vector<std::string> &v);
+        static std::string join_string(const std::vector<std::string> &v);
 
-        static std::vector<std::string> unserialize(std::string v);
+        static std::vector<std::string> split_string(std::string v);
 
         /**
          * Ringtone option.
@@ -627,6 +642,8 @@ class ManagerImpl {
          * @param File path of the file to play
              */
         bool startRecordedFilePlayback(const std::string&);
+
+        void recordingPlaybackSeek(const double value);
 
         /**
          * Stop playback of recorded file
@@ -711,12 +728,6 @@ class ManagerImpl {
          * @return int The mail notification level
          */
         int32_t getMailNotify() const;
-
-        /**
-         * Get the list of the active codecs
-         * @return std::vector< ::std::string >  The list of active codecs
-         */
-        std::vector<std::string> getActiveCodecList() const;
 
         /**
          * Change a specific value in the configuration tree.
@@ -839,6 +850,12 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+
+        /**
+         * Get the Call referred to by callID. If the Call does not exist, return NULL
+         */
+        Call *getCallFromCallID(const std::string &callID);
+
         /**
          * Play the dtmf-associated sound
          * @param code  The pressed key
@@ -862,6 +879,11 @@ class ManagerImpl {
          * Initialize zeroconf module and scanning
          */
         void initZeroconf();
+
+        /**
+         * Set current call ID to empty string
+         */
+        void unsetCurrentCall();
 
         /**
          * Switch of current call id
@@ -1045,7 +1067,7 @@ class ManagerImpl {
         */
         bool accountExists(const std::string& accountID);
 
-        std::vector<std::map<std::string, std::string> > getHistory() const;
+        std::vector<std::map<std::string, std::string> > getHistory();
         void clearHistory();
 
         /**
@@ -1068,7 +1090,7 @@ class ManagerImpl {
          * @param accountID	  Account ID to get
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
-        VoIPLink* getAccountLink(const std::string& accountID="");
+        VoIPLink* getAccountLink(const std::string& accountID);
 
         std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
 
@@ -1095,5 +1117,6 @@ class ManagerImpl {
           * TODO: move this to ConfigurationManager
           */
         History history_;
+        bool finished_;
 };
 #endif // MANAGER_IMPL_H_

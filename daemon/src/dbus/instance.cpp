@@ -49,8 +49,6 @@ Instance::Unregister(const int32_t& pid UNUSED)
 {
     --count;
 
-    if (count <= 0) {
-        Manager::instance().terminate();
-        Manager::instance().getDbusManager()->exit();
-    }
+    if (count <= 0)
+        Manager::instance().finish();
 }

@@ -1,23 +1,23 @@
-/***************************************************************************
- *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- **************************************************************************/
+/************************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *                                                                                  *
+ *   This library is free software; you can redistribute it and/or                  *
+ *   modify it under the terms of the GNU Lesser General Public                     *
+ *   License as published by the Free Software Foundation; either                   *
+ *   version 2.1 of the License, or (at your option) any later version.             *
+ *                                                                                  *
+ *   This library is distributed in the hope that it will be useful,                *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of                 *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU              *
+ *   Lesser General Public License for more details.                                *
+ *                                                                                  *
+ *   You should have received a copy of the GNU Lesser General Public               *
+ *   License along with this library; if not, write to the Free Software            *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
+ ***********************************************************************************/
+
 #include "dlgaccounts.h"
 
 #include <QtGui/QInputDialog>
@@ -68,7 +68,7 @@ Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QSt
       resize(550,300);
 
       connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
-}
+} //Private_AddCodecDialog
 
 void Private_AddCodecDialog::emitNewCodec() {
    if (codecTable->currentRow() >= 0)
@@ -141,7 +141,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
    connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
-}
+} //DlgAccounts
 
 void DlgAccounts::saveAccountList()
 {
@@ -159,7 +159,7 @@ void DlgAccounts::saveAccountList()
       AccountView* current = (*accountList)[i];
       QString currentId;
       //if the account has no instanciated id, it has just been created in the client
-      if(current->isNew()) {
+      if(current && current->isNew()) {
          MapStringString details = current->getAccountDetails();
          currentId = configurationManager.addAccount(details);
          current->setAccountId(currentId);
@@ -176,16 +176,17 @@ void DlgAccounts::saveAccountList()
          }
       }
    }
+
    //remove accounts that are in the configurationManager but not in the client
    for (int i = 0; i < accountIds.size(); i++) {
-      if(! accountList->getAccountById(accountIds[i])) {
-         kDebug() << "remove account " << accountIds[i];
+      if(!accountList->getAccountById(accountIds[i])) {
          configurationManager.removeAccount(accountIds[i]);
       }
    }
+
    configurationManager.setAccountsOrder(accountList->getOrderedList());
    connectAccountsChangedSignal();
-}
+} //saveAccountList
 
 void DlgAccounts::connectAccountsChangedSignal()
 {
@@ -273,7 +274,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    kDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
 
    saveCredential(account->getAccountDetail(ACCOUNT_ID));
-}
+} //saveAccount
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
 {
@@ -372,7 +373,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/combo_security_STRP->setCurrentIndex     ( account->getAccountDetail(   TLS_METHOD                    ).toInt()         );
    /*                                                                                                                          */
 
-   if (account->getAccountDetail(ACCOUNT_USERNAME).isEmpty()) {
+   if (account->getAccountDetail(ACCOUNT_ALIAS) == "IP2IP") {
       frame2_editAccounts->setTabEnabled(0,false);
       frame2_editAccounts->setTabEnabled(1,false);
       frame2_editAccounts->setTabEnabled(3,false);
@@ -429,7 +430,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    updateStatusLabel(account);
    enablePublished();
    frame2_editAccounts->setEnabled(true);
-}
+} //loadAccount
 
 void DlgAccounts::loadAccountList()
 {
@@ -483,7 +484,7 @@ void DlgAccounts::on_button_accountUp_clicked()
    listWidget_accountList->insertItem     ( currentRow - 1 , item );
    listWidget_accountList->setItemWidget  ( item, widget          );
    listWidget_accountList->setCurrentItem ( item                  );
-}
+} //on_button_accountUp_clicked
 
 void DlgAccounts::on_button_accountDown_clicked()
 {
@@ -499,7 +500,7 @@ void DlgAccounts::on_button_accountDown_clicked()
    listWidget_accountList->insertItem     ( currentRow + 1 , item );
    listWidget_accountList->setItemWidget  ( item, widget          );
    listWidget_accountList->setCurrentItem ( item                  );
-}
+} //on_button_accountDown_clicked
 
 void DlgAccounts::on_button_accountAdd_clicked()
 {
@@ -513,7 +514,7 @@ void DlgAccounts::on_button_accountAdd_clicked()
       listWidget_accountList->setCurrentRow(r);
       frame2_editAccounts->setEnabled(true);
    }
-}
+} //on_button_accountAdd_clicked
 
 void DlgAccounts::on_button_accountRemove_clicked()
 {
@@ -632,7 +633,7 @@ void DlgAccounts::loadCodecList()
       codecList[i]["alias"] = codecList[i]["name"] + " (" + codecList[i]["frequency"] + ")";
     }
   }
-}
+} //loadCodecList
 
 
 void DlgAccounts::codecClicked(const QModelIndex& model)
@@ -648,7 +649,7 @@ void DlgAccounts::codecClicked(const QModelIndex& model)
       keditlistbox_codec->addButton()->setEnabled(false);
    else
       keditlistbox_codec->addButton()->setEnabled(true);
-}
+} //codecClicked
 
 void DlgAccounts::addCodec(QString name)
 {
@@ -662,7 +663,7 @@ void DlgAccounts::addCodec(QString name)
     accountListHasChanged = true;
     emit updateButtons();
   }
-}
+} //addCodec
 
 void DlgAccounts::codecChanged()
 {
@@ -701,7 +702,7 @@ void DlgAccounts::updateCombo(int value)
          checkbox_ZTRP_send_hello->setVisible     ( false );
          break;
    }
-}
+} //updateCombo
 
 
 void DlgAccounts::loadCredentails(QString accountId) {
@@ -721,7 +722,7 @@ void DlgAccounts::loadCredentails(QString accountId) {
       credentialList << data;
       list_credential->addItem(newItem);
    }
-}
+} //loadCredentails
 
 void DlgAccounts::saveCredential(QString accountId) {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -737,17 +738,17 @@ void DlgAccounts::saveCredential(QString accountId) {
       toReturn << credentialData;
    }
    configurationManager.setCredentials(accountId,toReturn);
-}
+} //saveCredential
 
 void DlgAccounts::addCredential() {
    QListWidgetItem* newItem = new QListWidgetItem();
-   newItem->setText("New credential");
-   credentialInfo[newItem] = {newItem, "New credential", "",""};
+   newItem->setText(i18n("New credential"));
+   credentialInfo[newItem] = {newItem, i18n("New credential"), "",""};
 
    selectCredential(newItem,list_credential->currentItem());
    list_credential->addItem(newItem);
    list_credential->setCurrentItem(newItem);
-}
+} //addCredential
 
 void DlgAccounts::selectCredential(QListWidgetItem* item, QListWidgetItem* previous) {
    if (previous) {
@@ -763,7 +764,7 @@ void DlgAccounts::selectCredential(QListWidgetItem* item, QListWidgetItem* previ
    edit_credential_realm->setEnabled    ( true                          );
    edit_credential_auth->setEnabled     ( true                          );
    edit_credential_password->setEnabled ( true                          );
-}
+} //selectCredential
 
 void DlgAccounts::removeCredential() {
    list_credential->takeItem(list_credential->currentRow());

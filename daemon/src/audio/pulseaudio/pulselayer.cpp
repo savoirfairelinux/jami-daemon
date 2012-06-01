@@ -334,7 +334,7 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
         urgentRingBuffer_.Get(data, urgentBytes, MainBuffer::DEFAULT_ID);
-        applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());  
+        applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
         Manager::instance().getMainBuffer()->discard(urgentBytes, MainBuffer::DEFAULT_ID);

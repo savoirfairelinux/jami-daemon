@@ -139,7 +139,7 @@ void CallManager::setVolume(const std::string& device, const double& value)
 
     DEBUG("DBUS set volume for %s: %f", device.c_str(), value);
 
-    if (device == "speaker") { 
+    if (device == "speaker") {
         audiolayer->setPlaybackGain((int)(value * 100.0));
     } else if (device == "mic") {
         audiolayer->setCaptureGain((int)(value * 100.0));
@@ -173,7 +173,7 @@ CallManager::joinParticipant(const std::string& sel_callID, const std::string& d
 }
 
 void
-CallManager::createConfFromParticipantList(const std::vector< std::string >& participants)
+CallManager::createConfFromParticipantList(const std::vector<std::string>& participants)
 {
     Manager::instance().createConfFromParticipantList(participants);
 }
@@ -214,22 +214,28 @@ CallManager::unholdConference(const std::string& confID)
     Manager::instance().unHoldConference(confID);
 }
 
-std::map< std::string, std::string >
+std::map<std::string, std::string>
 CallManager::getConferenceDetails(const std::string& callID)
 {
     return Manager::instance().getConferenceDetails(callID);
 }
 
-std::vector< std::string >
+std::vector<std::string>
 CallManager::getConferenceList()
 {
     return Manager::instance().getConferenceList();
 }
 
-std::vector< std::string >
+std::vector<std::string>
 CallManager::getParticipantList(const std::string& confID)
 {
     return Manager::instance().getParticipantList(confID);
+}
+
+std::string
+CallManager::getConferenceId(const std::string& callID)
+{
+    return Manager::instance().getConferenceId(callID);
 }
 
 bool
@@ -248,6 +254,12 @@ void
 CallManager::setRecording(const std::string& callID)
 {
     Manager::instance().setRecordingCall(callID);
+}
+
+void
+CallManager::recordPlaybackSeek(const double& value)
+{
+    Manager::instance().recordingPlaybackSeek(value);
 }
 
 bool
@@ -370,17 +382,6 @@ CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->acceptEnrollment(accepted);
-    } catch (...) {
-    }
-}
-
-void
-CallManager::setPBXEnrollment(const std::string& callID, const bool& yesNo)
-{
-    try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
-        zSession->setPBXEnrollment(yesNo);
     } catch (...) {
     }
 }

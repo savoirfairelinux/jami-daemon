@@ -57,7 +57,8 @@ typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
  *
  * @short Main window
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
- * @version 0.9.6
+ * @author Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
+ * @version 1.1.0
 **/
 class SFLPhone : public KXmlGuiWindow
 {
@@ -91,6 +92,10 @@ private:
    KAction* action_configureSflPhone     ;
    KAction* action_configureShortcut     ;
    KAction* action_accountCreationWizard ;
+   KAction* action_pastenumber           ;
+   KAction* action_showContactDock       ;
+   KAction* action_showHistoryDock       ;
+   KAction* action_showBookmarkDock      ;
    QActionGroup* action_screen           ;
 
    SFLPhoneView*  m_pView            ;
@@ -127,8 +132,8 @@ public:
    static TreeWidgetCallModel* model ();
    SFLPhoneView*               view  ();
 
-   ContactDock*  contactDock();
-   HistoryDock*  historyDock();
+   ContactDock*  contactDock ();
+   HistoryDock*  historyDock ();
    BookmarkDock* bookmarkDock();
 
 private slots:

@@ -59,7 +59,7 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode type(type_);
     Conf::ScalarNode mailbox(mailBox_);
 
-    Conf::ScalarNode codecs(codecStr_);
+    Conf::ScalarNode codecs(audioCodecStr_);
     Conf::ScalarNode displayName(displayName_);
 
     accountmap.setKeyValue(ALIAS_KEY, &alias);
@@ -72,7 +72,7 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
 
     accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
-    accountmap.setKeyValue(CODECS_KEY, &codecs);
+    accountmap.setKeyValue(AUDIO_CODECS_KEY, &codecs);
 
     try {
         emitter.serializeAccount(&accountmap);
@@ -90,10 +90,10 @@ void IAXAccount::unserialize(const Conf::MappingNode &map)
     map.getValue(HOSTNAME_KEY, &hostname_);
     map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
     map.getValue(MAILBOX_KEY, &mailBox_);
-    map.getValue(CODECS_KEY, &codecStr_);
+    map.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveCodecs(ManagerImpl::unserialize(codecStr_));
+    setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
     map.getValue(DISPLAY_NAME_KEY, &displayName_);
 }
 

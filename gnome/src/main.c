@@ -43,9 +43,20 @@
 #include "shortcuts.h"
 #include "history.h"
 
+static void
+signal_handler(int code)
+{
+    printf("Caught signal %s, terminating...\n", strsignal(code));
+    sflphone_quit(TRUE);
+}
+
 int
 main(int argc, char *argv[])
 {
+    signal(SIGINT, signal_handler);
+    signal(SIGHUP, signal_handler);
+    signal(SIGTERM, signal_handler);
+
     GError *error = NULL;
     // Handle logging
     int i;
@@ -86,7 +97,7 @@ main(int argc, char *argv[])
     textdomain("sflphone-client-gnome");
 
     if (!sflphone_init(&error)) {
-        ERROR(error->message);
+        ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
                                 GTK_WINDOW(get_main_window()),
                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -115,8 +126,8 @@ main(int argc, char *argv[])
     status_bar_display_account();
 
     sflphone_fill_history();
-    sflphone_fill_call_list();
     sflphone_fill_conference_list();
+    sflphone_fill_call_list();
     history_search_init();
 
     // Update the GUI
@@ -126,6 +137,7 @@ main(int argc, char *argv[])
 
     gtk_main();
 
+    codecs_unload();
     shortcuts_destroy_bindings();
 
     eel_gconf_global_client_free();

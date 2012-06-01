@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE kcfg SYSTEM
+    "http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+<kcfg>
+  <group name="Call">
+    <entry name="AccountId" type="String">
+      <label>Account id to make this call</label>
+    </entry>
+    <entry name="Number" type="String">
+      <label>Number to call</label>
+    </entry>
+  </group>
+  <group name="DMTF"> 
+    <entry name="str" type="String">
+      <label>Right sound for a key</label>
+    </entry>
+  </group>
+  <group name="Transfer">
+    <entry name="callid" type="String">
+      <label>A valid call identifier number</label>
+    </entry>
+    <entry name="transfernumber" type="String">
+      <label>Number to transfer too</label>
+    </entry>
+  </group>
+  <group name="Hangup">
+    <entry name="callid" type="String">
+      <label>A valid call identifier number</label>
+    </entry>
+  </group>
+  <group name="Hold">
+    <entry name="callid" type="String">
+      <label>A valid call identifier number</label>
+    </entry>
+  </group>
+  <group name="Record">
+    <entry name="callid" type="String">
+      <label>A valid call identifier number</label>
+    </entry>
+  </group>
+</kcfg>

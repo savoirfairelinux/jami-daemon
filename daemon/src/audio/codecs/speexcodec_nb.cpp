@@ -33,7 +33,7 @@
 #include "speexcodec.h"
 
 // cppcheck-suppress unusedFunction
-extern "C" sfl::Codec* create()
+extern "C" sfl::Codec* CODEC_ENTRY()
 {
     return new Speex(110, 8000, 160, 24, true, &speex_nb_mode);
 }

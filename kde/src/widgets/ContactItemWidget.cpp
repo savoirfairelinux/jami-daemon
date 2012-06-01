@@ -40,8 +40,9 @@
 #include <unistd.h>
 
 //SFLPhone
-#include "AkonadiBackend.h"
+#include "klib/AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
+#include "klib/ConfigurationSkeleton.h"
 #include "SFLPhone.h"
 
 //SFLPhone library
@@ -50,7 +51,7 @@
 
 ///Constructor
 ContactItemWidget::ContactItemWidget(QWidget *parent)
-   : QWidget(parent), m_pMenu(0)
+   : QWidget(parent), m_pMenu(0),m_pOrganizationL(0),m_pEmailL(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
    m_pCallAgain  = new KAction(this);
@@ -89,12 +90,25 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    connect(m_pEmail        , SIGNAL(triggered()) , this,SLOT(sendEmail()      ));
    connect(m_pAddPhone     , SIGNAL(triggered()) , this,SLOT(addPhone()       ));
    connect(m_pBookmark     , SIGNAL(triggered()) , this,SLOT(bookmark()       ));
-}
+} //ContactItemWidget
 
 ///Destructor
 ContactItemWidget::~ContactItemWidget()
 {
-
+   /*delete m_pIconL        ;
+   delete m_pContactNameL ;
+   delete m_pCallNumberL  ;
+   delete m_pOrganizationL;
+   delete m_pEmailL       ;
+   delete m_pItem         ;
+   
+   delete m_pCallAgain   ;
+   delete m_pEditContact ;
+   delete m_pCopy        ;
+   delete m_pEmail       ;
+   delete m_pAddPhone    ;
+   delete m_pBookmark    ;
+   delete m_pMenu        ;*/
 }
 
 
@@ -110,8 +124,6 @@ void ContactItemWidget::setContact(Contact* contact)
    m_pContactKA     = contact;
    m_pIconL         = new QLabel ( this );
    m_pContactNameL  = new QLabel (      );
-   m_pOrganizationL = new QLabel ( this );
-   m_pEmailL        = new QLabel (      );
    m_pCallNumberL   = new QLabel ( this );
 
    m_pIconL->setMinimumSize(70,48);
@@ -128,17 +140,31 @@ void ContactItemWidget::setContact(Contact* contact)
    mainLayout->setContentsMargins(0,0,0,0);
    mainLayout->addWidget( m_pIconL        , 0 , 0 , 4 , 1 );
    mainLayout->addWidget( m_pContactNameL , 0 , 1         );
-   mainLayout->addWidget( m_pOrganizationL, 1 , 1         );
-   mainLayout->addWidget( m_pCallNumberL  , 2 , 1         );
-   mainLayout->addWidget( m_pEmailL       , 3 , 1         );
-   mainLayout->addItem(verticalSpacer     , 4 , 1         );
+
+   uint row = 1;
+
+   if (ConfigurationSkeleton::displayOrganisation()) {
+      m_pOrganizationL = new QLabel ( this );
+      mainLayout->addWidget( m_pOrganizationL, row , 1);
+      row++;
+   }
+   mainLayout->addWidget( m_pCallNumberL  , row , 1       );
+   row++;
+
+   if (ConfigurationSkeleton::displayEmail()) {
+      m_pEmailL        = new QLabel (      );
+      mainLayout->addWidget( m_pEmailL       , row , 1    );
+      row++;
+   }
+   
+   mainLayout->addItem(verticalSpacer     , row , 1       );
 
    setLayout(mainLayout);
    setMinimumSize(QSize(50, 30));
 
    updated();
    connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
-}
+} //setContact
 
 ///Set the model index
 void ContactItemWidget::setItem(QTreeWidgetItem* item)
@@ -157,24 +183,21 @@ void ContactItemWidget::setItem(QTreeWidgetItem* item)
 void ContactItemWidget::updated()
 {
    m_pContactNameL->setText("<b>"+m_pContactKA->getFormattedName()+"</b>");
-   if (!m_pContactKA->getOrganization().isEmpty()) {
+   if (m_pOrganizationL && !m_pContactKA->getOrganization().isEmpty()) {
       m_pOrganizationL->setText(m_pContactKA->getOrganization());
    }
-   else {
+   else if (m_pOrganizationL) {
       m_pOrganizationL->setVisible(false);
    }
 
-   if (!getEmail().isEmpty()) {
+   if (m_pEmailL && !getEmail().isEmpty()) {
       m_pEmailL->setText(getEmail());
    }
-   else {
+   else if (m_pEmailL) {
       m_pEmailL->setVisible(false);
    }
 
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
-   foreach (Contact::PhoneNumber* number, numbers) {
-      kDebug() << "Phone:" << number->getNumber() << number->getType();
-   }
 
    if (getCallNumbers().count() == 1)
       m_pCallNumberL->setText(getCallNumbers()[0]->getNumber());
@@ -185,7 +208,7 @@ void ContactItemWidget::updated()
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
    else
       m_pIconL->setPixmap(*m_pContactKA->getPhoto());
-}
+} //updated
 
 
 /*****************************************************************************
@@ -258,7 +281,7 @@ void ContactItemWidget::showContext(const QPoint& pos)
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
    m_pBookmark->setEnabled(numbers.count() == 1);
    m_pMenu->exec(mapToGlobal(pos));
-}
+} //showContext
 
 ///Send an email
 //TODO

@@ -44,7 +44,7 @@ using std::map;
 using std::string;
 using std::vector;
 
-History::History() : items_(), path_("")
+History::History() : historyItemsMutex_(), items_(), path_("")
 {}
 
 bool History::load(int limit)
@@ -64,6 +64,7 @@ bool History::load(int limit)
 
 bool History::save()
 {
+    ost::MutexLock lock(historyItemsMutex_);
     DEBUG("Saving history in XDG directory: %s", path_.c_str());
     ensurePath();
     std::sort(items_.begin(), items_.end());
@@ -78,6 +79,7 @@ bool History::save()
 
 void History::addEntry(const HistoryItem &item, int oldest)
 {
+    ost::MutexLock lock(historyItemsMutex_);
     if (item.hasPeerNumber() and item.youngerThan(oldest))
         items_.push_back(item);
 }
@@ -108,8 +110,9 @@ void History::ensurePath()
     }
 }
 
-vector<map<string, string> > History::getSerialized() const
+vector<map<string, string> > History::getSerialized()
 {
+    ost::MutexLock lock(historyItemsMutex_);
     vector<map<string, string> > result;
     for (vector<HistoryItem>::const_iterator iter = items_.begin();
          iter != items_.end(); ++iter)
@@ -136,5 +139,19 @@ void History::addCall(Call *call, int limit)
 
 void History::clear()
 {
+    ost::MutexLock lock(historyItemsMutex_);
     items_.clear();
+}
+
+bool History::empty()
+{
+    ost::MutexLock lock(historyItemsMutex_);
+    return items_.empty();
+}
+
+
+size_t History::numberOfItems()
+{
+    ost::MutexLock lock(historyItemsMutex_);
+    return items_.size();
 }

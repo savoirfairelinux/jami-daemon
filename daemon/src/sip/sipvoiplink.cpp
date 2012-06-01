@@ -57,6 +57,10 @@
 
 #include "audio/audiolayer.h"
 
+#ifdef SFL_VIDEO
+#include "video/video_rtp_session.h"
+#endif
+
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_uri.h"
@@ -85,7 +89,7 @@ static std::map<std::string, std::string> transferCallID;
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
 /**
- * Set audio (SDP) configuration for a call
+ * Set audio and video (SDP) configuration for a call
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
@@ -147,17 +151,18 @@ void handleIncomingOptions(pjsip_rx_data *rdata)
         pjsip_tx_data_dec_ref(tdata);
 }
 
+// Always return PJ_TRUE since we are the only module that will handle these requests
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 {
     pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
 
     if (!dlg)
-        return PJ_SUCCESS;
+        return PJ_TRUE;
 
     pjsip_transaction *tsx = pjsip_rdata_get_tsx(rdata);
 
     if (!tsx or tsx->method.id != PJSIP_INVITE_METHOD)
-        return PJ_SUCCESS;
+        return PJ_TRUE;
 
     if (tsx->status_code / 100 == 2) {
         /**
@@ -171,33 +176,34 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
         }
     }
 
-    return PJ_SUCCESS;
+    return PJ_TRUE;
 }
 
+// Always return PJ_TRUE since we are the only module that will handle these requests
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
     if (!rdata or !rdata->msg_info.msg) {
         ERROR("rx_data is NULL");
-        return false;
+        return PJ_TRUE;
     }
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
     if (!method) {
         ERROR("method is NULL");
-        return false;
+        return PJ_TRUE;
     }
 
     if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
-        return true;
+        return PJ_TRUE;
 
     if (!rdata->msg_info.to or !rdata->msg_info.from) {
         ERROR("NULL from/to fields");
-        return false;
+        return PJ_TRUE;
     }
     pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
     pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
     if (!sip_to_uri or !sip_from_uri) {
         ERROR("NULL uri");
-        return false;
+        return PJ_TRUE;
     }
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
@@ -220,27 +226,31 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
-        return true;
+        return PJ_TRUE;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
         handleIncomingOptions(rdata);
-        return true;
+        return PJ_TRUE;
     } else if (method->id != PJSIP_INVITE_METHOD && method->id != PJSIP_ACK_METHOD) {
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return true;
+        return PJ_TRUE;
     }
 
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+    if (!account) {
+        ERROR("Could not find account %s", account_id.c_str());
+        return PJ_TRUE;
+    }
 
     pjmedia_sdp_session *r_sdp;
 
     if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
         r_sdp = NULL;
 
-    if (account->getActiveCodecs().empty()) {
+    if (account->getActiveAudioCodecs().empty()) {
         pjsip_endpt_respond_stateless(endpt_, rdata,
                                       PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
                                       NULL);
-        return false;
+        return PJ_TRUE;
     }
 
     // Verify that we can handle the request
@@ -248,7 +258,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return true;
+        return PJ_TRUE;
     }
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
@@ -287,20 +297,14 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     call->getAudioRtp().initConfig();
     call->getAudioRtp().initSession();
 
-    if (body) {
-        char sdpbuffer[1000];
-        int len = body->print_body(body, sdpbuffer, sizeof sdpbuffer);
-
-        if (len == -1) // error
-            len = 0;
-
-        std::string sdpoffer(sdpbuffer, std::min(len, (int) sizeof sdpbuffer));
-        size_t start = sdpoffer.find("a=crypto:");
+    if (body and body->len > 0) {
+        std::string sdpOffer(static_cast<const char*>(body->data), body->len);
+        size_t start = sdpOffer.find("a=crypto:");
 
         // Found crypto header in SDP
         if (start != std::string::npos) {
             CryptoOffer crypto_offer;
-            crypto_offer.push_back(std::string(sdpoffer.substr(start, (sdpoffer.size() - start) - 1)));
+            crypto_offer.push_back(std::string(sdpOffer.substr(start, (sdpOffer.size() - start) - 1)));
 
             const size_t size = ARRAYSIZE(sfl::CryptoSuites);
             std::vector<sfl::CryptoSuiteDefinition> localCapabilities(size);
@@ -317,32 +321,40 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs());
+#endif
 
     sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
     if (!ac) {
         ERROR("Could not instantiate codec");
         delete call;
-        return false;
+        return PJ_TRUE;
     }
     call->getAudioRtp().start(ac);
 
-    pjsip_dialog* dialog;
+    pjsip_dialog *dialog = 0;
 
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS) {
         delete call;
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
-        return false;
+        return PJ_TRUE;
     }
 
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
 
-    PJ_ASSERT_RETURN(pjsip_dlg_set_transport(dialog, tp) == PJ_SUCCESS, 1);
+    if (pjsip_dlg_set_transport(dialog, tp) != PJ_SUCCESS) {
+        ERROR("Could not set transport for dialog");
+        delete call;
+        return PJ_TRUE;
+    }
 
     if (!call->inv) {
         ERROR("Call invite is not initialized");
         delete call;
-        return false;
+        return PJ_TRUE;
     }
 
     call->inv->mod_data[mod_ua_.id] = call;
@@ -353,13 +365,15 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
         ERROR("Something wrong with Replaces request.");
+        delete call;
         pjsip_endpt_respond_stateless(endpt_, rdata, 500 /* internal server error */, NULL, NULL, NULL);
     }
 
     // Check if call has been transfered
-    pjsip_tx_data *tdata;
+    pjsip_tx_data *tdata = 0;
 
-    if (replaced_dlg) { // If Replace header present
+    // If Replace header present
+    if (replaced_dlg) {
         // Always answer the new INVITE with 200, regardless whether
         // the replaced call is in early or confirmed state.
         if (pjsip_inv_answer(call->inv, 200, NULL, NULL, &response) == PJ_SUCCESS)
@@ -372,8 +386,16 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
             pjsip_inv_send_msg(replaced_inv, tdata);
     } else { // Prooceed with normal call flow
-        PJ_ASSERT_RETURN(pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) == PJ_SUCCESS, 1);
-        PJ_ASSERT_RETURN(pjsip_inv_send_msg(call->inv, tdata) == PJ_SUCCESS, 1);
+        if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+            ERROR("Could not answer invite");
+            delete call;
+            return PJ_TRUE;
+        }
+        if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
+            ERROR("Could not send msg for invite");
+            delete call;
+            return PJ_TRUE;
+        }
 
         call->setConnectionState(Call::RINGING);
 
@@ -381,7 +403,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         Manager::instance().getAccountLink(account_id)->addCall(call);
     }
 
-    return true;
+    return PJ_TRUE;
 }
 } // end anonymous namespace
 
@@ -667,8 +689,14 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 
 bool isValidIpAddress(const std::string &address)
 {
+    size_t pos = address.find(":");
+    std::string address_without_port(address);
+    if (pos != std::string::npos)
+        address_without_port = address.substr(0, pos);
+
+    DEBUG("Testing address %s", address_without_port.c_str());
     struct sockaddr_in sa;
-    int result = inet_pton(AF_INET, address.data(), &(sa.sin_addr));
+    int result = inet_pton(AF_INET, address_without_port.data(), &(sa.sin_addr));
     return result != 0;
 }
 
@@ -735,7 +763,11 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     // Building the local SDP offer
     call->getLocalSDP()->setLocalIP(localAddress);
-    call->getLocalSDP()->createOffer(account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
+#endif
 
     if (!SIPStartCall(call)) {
         delete call;
@@ -804,7 +836,11 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     call->initRecFilename(toUrl);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
+#endif
 
     if (!SIPStartCall(call)) {
         delete call;
@@ -917,7 +953,7 @@ SIPVoIPLink::offhold(const std::string& id)
 
     try {
         int pl = PAYLOAD_CODEC_ULAW;
-        sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
+        sfl::Codec *sessionMedia = sdpSession->getSessionAudioMedia();
 
         if (sessionMedia)
             pl = sessionMedia->getPayloadType();
@@ -1088,10 +1124,24 @@ SIPVoIPLink::refuse(const std::string& id)
     removeCall(id);
 }
 
+#ifdef SFL_VIDEO
+std::string
+SIPVoIPLink::getCurrentVideoCodecName(const std::string& id)
+{
+    SIPCall *call = getSIPCall(id);
+    if (call) {
+        Call::CallState state = call->getState();
+        if (state == Call::ACTIVE or state == Call::CONFERENCING)
+            return call->getLocalSDP()->getSessionVideoCodec();
+    }
+    return "";
+}
+#endif
+
 std::string
 SIPVoIPLink::getCurrentCodecName(Call *call) const
 {
-    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getCodecName();
+    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
 }
 
 void
@@ -1349,7 +1399,11 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
     if (!account)
         return;
 
-    call->getLocalSDP()->receiveOffer(offer, account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->receiveOffer(offer, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->receiveOffer(offer, account->getActiveAudioCodecs());
+#endif
     call->getLocalSDP()->startNegotiation();
 
     pjsip_inv_set_sdp_answer(call->inv, call->getLocalSDP()->getLocalSdpSession());
@@ -1378,7 +1432,11 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     setCallMediaLocal(call, localAddress);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
+#endif
 
     *p_offer = call->getLocalSDP()->getLocalSdpSession();
 }
@@ -1437,8 +1495,13 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update internal field for
     sdpSession->setMediaTransportInfoFromRemoteSdp();
 
-    call->getAudioRtp().updateDestinationIpAddress();
-    call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
+	call->getAudioRtp().updateDestinationIpAddress();
+	call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
+#ifdef SFL_VIDEO
+    call->getVideoRtp()->updateSDP(*call->getLocalSDP());
+    call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
+    call->getVideoRtp()->start();
+#endif
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
@@ -1483,7 +1546,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp().initSession();
     }
 
-    sfl::AudioCodec *sessionMedia = sdpSession->getSessionMedia();
+    sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
 
     if (!sessionMedia)
         return;
@@ -1629,8 +1692,10 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 
     // TODO: make this based on transport type
     // with pjsip_transport_get_default_port_for_type(tp_type);
-    if (uri->port == 0)
+    if (uri->port == 0) {
+        ERROR("Port is 0 in uri");
         uri->port = DEFAULT_SIP_PORT;
+    }
 
     std::string recvContactHost(uri->host.ptr, uri->host.slen);
     std::stringstream ss;
@@ -1883,5 +1948,11 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     call->setLocalIp(localIP);
     call->setLocalAudioPort(callLocalAudioPort);
     call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
+#ifdef SFL_VIDEO
+    unsigned int callLocalVideoPort = ((rand() % 27250) + 5250) * 2;
+    assert(callLocalAudioPort != callLocalVideoPort);
+    call->setLocalVideoPort(callLocalVideoPort);
+    call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
+#endif
 }
 } // end anonymous namespace

@@ -51,6 +51,8 @@ GtkWidget *
 gtk_scale_new_with_range(GtkOrientation orientation, gdouble min, gdouble max,
                          gdouble step);
 
+GtkWidget *
+gtk_scale_new(GtkOrientation orientation, GtkAdjustment *adjustment);
 #endif
 
 #endif // BOX_H_

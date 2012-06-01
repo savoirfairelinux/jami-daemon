@@ -39,11 +39,18 @@
 #include "configurationmanager.h"
 #include "networkmanager.h"
 
+#ifdef SFL_VIDEO
+#include "dbus/video_controls.h"
+#endif
+
 DBusManager::DBusManager() : callManager_(0)
     , configurationManager_(0)
     , instanceManager_(0)
     , dispatcher_()
-#if USE_NETWORKMANAGER
+#ifdef SFL_VIDEO
+    , videoControls_(0)
+#endif
+#ifdef USE_NETWORKMANAGER
     , networkManager_(0)
 #endif
 {
@@ -57,6 +64,10 @@ DBusManager::DBusManager() : callManager_(0)
         callManager_ = new CallManager(sessionConnection);
         configurationManager_ = new ConfigurationManager(sessionConnection);
         instanceManager_ = new Instance(sessionConnection);
+
+#ifdef SFL_VIDEO
+        videoControls_ = new VideoControls(sessionConnection);
+#endif
 
 #ifdef USE_NETWORKMANAGER
         DBus::Connection systemConnection(DBus::Connection::SystemBus());
@@ -73,6 +84,9 @@ DBusManager::~DBusManager()
 {
 #ifdef USE_NETWORKMANAGER
     delete networkManager_;
+#endif
+#ifdef SFL_VIDEO
+    delete videoControls_;
 #endif
     delete instanceManager_;
     delete configurationManager_;
@@ -92,8 +106,7 @@ void DBusManager::exec()
     }
 }
 
-void
-DBusManager::exit()
+void DBusManager::exit()
 {
     try {
         dispatcher_.leave();

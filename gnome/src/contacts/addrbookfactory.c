@@ -39,7 +39,6 @@
 
 AddrBookHandle *addrbook = NULL;
 
-
 /**
  * Callback called after all book have been processed
  */
@@ -93,7 +92,7 @@ void abook_init()
     void *handle = dlopen(PLUGINS_DIR"/libevladdrbook.so", RTLD_LAZY);
 
     if (handle == NULL) {
-        ERROR("Addressbook: Error: Could not load addressbook");
+        DEBUG("Did not load addressbook");
         return;
     }
 
@@ -102,7 +101,7 @@ void abook_init()
 #define LOAD(func) do { \
         addrbook-> func = dlsym(handle, "addressbook_" #func); \
         if (addrbook-> func == NULL) \
-            ERROR("Addressbook: Couldn't load " # func); \
+            ERROR("Couldn't load " # func); \
     } while(0)
 
 

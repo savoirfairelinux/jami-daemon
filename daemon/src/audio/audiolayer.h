@@ -123,7 +123,7 @@ class AudioLayer {
         static double ampluitudeDBToLinear(double value) {
             return pow(10.0, value / 20.0);
         }
- 
+
         /**
          * Set capture stream gain (microphone)
          */
@@ -132,7 +132,7 @@ class AudioLayer {
         }
 
         /**
-         * Set capture stream gain (microphone) 
+         * Set capture stream gain (microphone)
          */
        unsigned int getCaptureGain(void) {
             return captureGain_;
@@ -146,7 +146,7 @@ class AudioLayer {
         }
 
         /**
-         * Get playback stream gain (speaker) 
+         * Get playback stream gain (speaker)
          */
         unsigned int getPlaybackGain(void) {
             return playbackGain_;
@@ -212,7 +212,7 @@ class AudioLayer {
         DcBlocker dcblocker_;
 
         /**
-         * Configuration file for this 
+         * Configuration file for this
          */
         AudioPreference &audioPref;
 

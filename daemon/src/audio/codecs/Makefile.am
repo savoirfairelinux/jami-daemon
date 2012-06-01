@@ -21,18 +21,14 @@ libcodec_speex_nb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_nb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_nb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_NB_RULE = install-libcodec_speex_nb_so
-endif
 
-if BUILD_SPEEX
 SPEEX_WB_LIB = libcodec_speex_wb.so
 libcodec_speex_wb_so_SOURCES = speexcodec_wb.cpp
 libcodec_speex_wb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_wb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_wb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_WB_RULE = install-libcodec_speex_wb_so
-endif
 
-if BUILD_SPEEX
 SPEEX_UB_LIB = libcodec_speex_ub.so
 libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp
 libcodec_speex_ub_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)

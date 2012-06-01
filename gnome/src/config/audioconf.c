@@ -31,6 +31,7 @@
 #include <glib/gi18n.h>
 #include "gtk2_wrappers.h"
 #include "str_utils.h"
+#include "codeclist.h"
 #include "audioconf.h"
 #include "utils.h"
 #include "logger.h"
@@ -66,6 +67,8 @@ enum {
     CODEC_COLUMN_COUNT
 };
 
+static void codec_move_up(GtkButton *button UNUSED, gpointer data);
+static void codec_move_down(GtkButton *button UNUSED, gpointer data);
 static void active_is_always_recording(void);
 
 /**
@@ -78,24 +81,33 @@ preferences_dialog_fill_codec_list(const account_t *account)
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
 
-    GQueue *current = account ? account->codecs : get_system_codec_list();
-
-    if (!account) DEBUG("Using system codec list");
+    GQueue *list;
+    if (!account) {
+        DEBUG("Account is NULL, using global codec list");
+        list = get_audio_codecs_list();
+    } else {
+        list = account->acodecs;
+    }
 
     // Insert codecs
-    for (guint i = 0; i < g_queue_get_length(current); i++) {
-        codec_t *c = codec_list_get_nth(i, current);
+    for (size_t i = 0; i < list->length; ++i) {
+        codec_t *c = g_queue_peek_nth(list, i);
 
         if (c) {
-            DEBUG("%s", c->name);
+            DEBUG("%s is %sactive", c->name, c->is_active ? "" : "not ");
             GtkTreeIter iter;
             gtk_list_store_append(codecStore, &iter);
+            gchar *samplerate = g_strdup_printf("%d kHz", c->sample_rate);
+            gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
+
             gtk_list_store_set(codecStore, &iter,
                                COLUMN_CODEC_ACTIVE, c->is_active,
                                COLUMN_CODEC_NAME, c->name,
-                               COLUMN_CODEC_FREQUENCY,	g_strdup_printf("%d kHz", (gint)(c->sample_rate * 0.001)),
-                               COLUMN_CODEC_BITRATE, g_strdup_printf("%.1f kbps", c->_bitrate),
+                               COLUMN_CODEC_FREQUENCY, samplerate,
+                               COLUMN_CODEC_BITRATE, bitrate,
                                -1);
+            g_free(samplerate);
+            g_free(bitrate);
         }
     }
 }
@@ -184,7 +196,7 @@ select_active_output_audio_device()
     } while (gtk_tree_model_iter_next(model, &iter));
 
     // No index was found, select first one
-    WARN("Warning : No active output device found");
+    WARN("No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
 }
 
@@ -421,16 +433,16 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
 
     DEBUG("Selected Codec: %s, %s", name, srate);
 
-    codec_t* codec;
+    codec_t* codec = NULL;
 
-    if (utf8_case_equal(name,"speex") && utf8_case_equal(srate,"8 kHz"))
-        codec = codec_list_get_by_payload((gconstpointer) 110, acc->codecs);
+    if (utf8_case_equal(name,"speex") && utf8_case_equal(srate, "8 kHz"))
+        codec = codec_list_get_by_payload(110, acc->acodecs);
     else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate,"16 kHz"))
-        codec = codec_list_get_by_payload((gconstpointer) 111, acc->codecs);
+        codec = codec_list_get_by_payload(111, acc->acodecs);
     else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate, "32 kHz"))
-        codec = codec_list_get_by_payload((gconstpointer) 112, acc->codecs);
+        codec = codec_list_get_by_payload(112, acc->acodecs);
     else
-        codec = codec_list_get_by_name((gconstpointer) name, acc->codecs);
+        codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
 
     // Toggle active value
     active = !active;
@@ -494,9 +506,9 @@ static void codec_move(gboolean moveUp, gpointer data)
     if (acc) {
         // propagate changes in codec queue
         if (moveUp)
-            codec_list_move_codec_up(indice, &acc->codecs);
+            codec_list_move_codec_up(indice, &acc->acodecs);
         else
-            codec_list_move_codec_down(indice, &acc->codecs);
+            codec_list_move_codec_down(indice, &acc->acodecs);
     }
 }
 
@@ -530,11 +542,10 @@ GtkWidget* audiocodecs_box(const account_t *account)
     gtk_box_pack_start(GTK_BOX(audiocodecs_hbox), scrolledWindow, TRUE, TRUE, 0);
     GtkListStore *codecStore = gtk_list_store_new(CODEC_COLUMN_COUNT,
                                G_TYPE_BOOLEAN, /* Active */
-                               G_TYPE_STRING,	 /* Name */
-                               G_TYPE_STRING,	 /* Frequency */
-                               G_TYPE_STRING,	 /* Bit rate */
-                               G_TYPE_STRING	 /* Bandwith */
-                               );
+                               G_TYPE_STRING, /* Name */
+                               G_TYPE_STRING, /* Frequency */
+                               G_TYPE_STRING, /* Bitrate */
+                               G_TYPE_STRING  /* Bandwidth */);
 
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));
@@ -607,7 +618,7 @@ select_audio_manager(void)
         dbus_set_audio_manager(PULSEAUDIO_API_STR);
         gtk_container_remove(GTK_CONTAINER(alsa_conf) , alsabox);
         gtk_widget_hide(alsa_conf);
-    
+
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
             main_window_volume_controls(FALSE);
             eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
@@ -677,7 +688,7 @@ GtkWidget* alsa_box()
     GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
     gtk_table_attach(GTK_TABLE(table), info_bar, 1, 3, 1, 2, GTK_FILL, GTK_SHRINK, 10, 10);
 
-    DEBUG("Audio: Configuration plugin");
+    DEBUG("Configuration plugin");
     GtkWidget *label = gtk_label_new(_("ALSA plugin"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -699,7 +710,7 @@ GtkWidget* alsa_box()
 
     // Device : Output device
     // Create title label
-    DEBUG("Audio: Configuration output");
+    DEBUG("Configuration output");
     label = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -721,7 +732,7 @@ GtkWidget* alsa_box()
 
     // Device : Input device
     // Create title label
-    DEBUG("Audio: Configuration input");
+    DEBUG("Configuration input");
     label = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -742,7 +753,7 @@ GtkWidget* alsa_box()
     gtk_table_attach(GTK_TABLE(table), input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(input);
 
-    DEBUG("Audio: Configuration rintgtone");
+    DEBUG("Configuration rintgtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -769,11 +780,11 @@ GtkWidget* alsa_box()
     return alsa_hbox;
 }
 
-static void record_path_changed(GtkFileChooser *chooser , GtkLabel *label UNUSED)
+static void record_path_changed(GtkFileChooserButton *chooser, gpointer data UNUSED)
 {
-    gchar* path;
-    path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
+    gchar* path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
     dbus_set_record_path(path);
+    g_free(path);
 }
 
 GtkWidget* create_audio_configuration()
@@ -827,11 +838,11 @@ GtkWidget* create_audio_configuration()
     GtkWidget *folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
     /* Get the path where to save audio files */
     gchar *recordingPath = dbus_get_record_path();
-    DEBUG("AudioConf: Load recording path %s", recordingPath);
+    DEBUG("Load recording path %s", recordingPath);
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(folderChooser), recordingPath);
     g_free(recordingPath);
 
-    g_signal_connect(G_OBJECT(folderChooser) , "selection_changed" , G_CALLBACK(record_path_changed) , NULL);
+    g_signal_connect(G_OBJECT(folderChooser) , "selection-changed", G_CALLBACK(record_path_changed) , NULL);
     gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // isAlwaysRecording functionality checkbox

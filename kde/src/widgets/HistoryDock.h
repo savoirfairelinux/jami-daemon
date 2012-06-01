@@ -23,8 +23,10 @@
 #include <QtGui/QDockWidget>
 #include <QtGui/QTreeWidget>
 #include <QtCore/QDate>
-#include "SortableDockCommon.h"
+#include "../klib/SortableDockCommon.h"
 #include "CategorizedTreeWidget.h"
+#include "CallTreeItem.h"
+#include <QtGui/QTreeWidgetItem>
 
 //Qt
 class QTreeWidgetItem;
@@ -43,12 +45,13 @@ class KDateWidget;
 //SFLPhone
 class HistoryTreeItem;
 class HistoryTree;
+class KeyPressEater;
 
 //Typedef
 typedef QList<HistoryTreeItem*> HistoryList;
 
 ///@class HistoryDock Dock to see the previous SFLPhone calls
-class HistoryDock : public QDockWidget, public SortableDockCommon {
+class HistoryDock : public QDockWidget, public SortableDockCommon<CallTreeItem*,QTreeWidgetItem*> {
    Q_OBJECT
 
 public:
@@ -60,45 +63,35 @@ public:
    virtual ~HistoryDock();
 
 private:
-   //Enum
-   enum SortBy {
-      Date       = 0,
-      Name       = 1,
-      Popularity = 2,
-      Duration   = 3
-   };
-
-   //Getters
-   QString getIdentity(HistoryTreeItem* item);
-
    //Attributes
-   HistoryTree*  m_pItemView        ;
-   KLineEdit*    m_pFilterLE        ;
-   QComboBox*    m_pSortByCBB       ;
-   QLabel*       m_pSortByL         ;
-   QLabel*       m_pFromL           ;
-   QLabel*       m_pToL             ;
-   KDateWidget*  m_pFromDW          ;
-   KDateWidget*  m_pToDW            ;
-   QCheckBox*    m_pAllTimeCB       ;
-   QPushButton*  m_pLinkPB          ;
-   HistoryList   m_History          ;
-   QDate         m_CurrentFromDate  ;
-   QDate         m_CurrentToDate    ;
+   HistoryTree*   m_pItemView        ;
+   KLineEdit*     m_pFilterLE        ;
+   QComboBox*     m_pSortByCBB       ;
+   QLabel*        m_pSortByL         ;
+   QLabel*        m_pFromL           ;
+   QLabel*        m_pToL             ;
+   KDateWidget*   m_pFromDW          ;
+   KDateWidget*   m_pToDW            ;
+   QCheckBox*     m_pAllTimeCB       ;
+   QPushButton*   m_pLinkPB          ;
+   HistoryList    m_History          ;
+   QDate          m_CurrentFromDate  ;
+   QDate          m_CurrentToDate    ;
+   KeyPressEater* m_pKeyPressEater   ;
 
    //Mutator
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);
 
 public slots:
-   void enableDateRange(bool enable);
+   void enableDateRange(bool disable);
    virtual void keyPressEvent(QKeyEvent* event);
 
 private slots:
-   void filter               (QString text );
-   void updateLinkedFromDate (QDate   date );
-   void updateLinkedToDate   (QDate   date );
-   void reload               (             );
-   void updateContactInfo    (             );
+   void filter               ( QString text );
+   void updateLinkedFromDate ( QDate   date );
+   void updateLinkedToDate   ( QDate   date );
+   void reload               (              );
+   void updateContactInfo    (              );
 };
 
 
@@ -111,6 +104,7 @@ public:
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };
 
+///@class KeyPressEater Intercept each keypress to manage it globally
 class KeyPressEater : public QObject
 {
    Q_OBJECT
