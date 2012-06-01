@@ -14,6 +14,8 @@ Makefile
 *.so
 *.raw
 *.pod
+.libs
+.deps
 
 autom4te.cache
 config.guess
@@ -39,10 +41,6 @@ libtool
 doc/doxygen/core-doc
 doc/doxygen/gtk-gui-doc
 doc/*.html
-
-# Ignore built stuff
-.libs
-.deps
 
 # PJSIP files
 *.depend

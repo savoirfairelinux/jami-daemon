@@ -43,8 +43,9 @@
 #include "logger.h"
 #include "sip/sipaccount.h"
 
-const char* ConfigurationManager::SERVER_PATH =
-    "/org/sflphone/SFLphone/ConfigurationManager";
+namespace {
+    const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
+}
 
 ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
@@ -190,14 +191,14 @@ std::vector<std::string> ConfigurationManager::getAudioCodecDetails(const int32_
 
 std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
 {
-    std::vector<int32_t> v;
-
     Account *acc = Manager::instance().getAccount(accountID);
 
     if (acc)
-        return acc->getActiveCodecs();
-
-    return v;
+        return acc->getActiveAudioCodecs();
+    else {
+        ERROR("Could not find account %s", accountID.c_str());
+        return std::vector<int32_t>();
+    }
 }
 
 void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID)
@@ -205,11 +206,10 @@ void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string
     Account *acc = Manager::instance().getAccount(accountID);
 
     if (acc) {
-        acc->setActiveCodecs(list);
+        acc->setActiveAudioCodecs(list);
         Manager::instance().saveConfig();
     }
 }
-
 
 std::vector<std::string> ConfigurationManager::getAudioPluginList()
 {
@@ -220,7 +220,6 @@ std::vector<std::string> ConfigurationManager::getAudioPluginList()
 
     return v;
 }
-
 
 void ConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 {
@@ -384,8 +383,7 @@ std::vector<std::string> ConfigurationManager::getAddressbookList()
     return Manager::instance().getAddressbookList();
 }
 
-void ConfigurationManager::setAddressbookList(
-    const std::vector<std::string>& list)
+void ConfigurationManager::setAddressbookList(const std::vector<std::string>& list)
 {
     Manager::instance().setAddressbookList(list);
 }

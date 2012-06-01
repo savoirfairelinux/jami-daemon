@@ -39,7 +39,7 @@
 namespace Conf {
 
 YamlParser::YamlParser(const char *file) : filename_(file)
-    , fd_(fopen(filename_.c_str(), "rb"))
+    , fd_(0)
     , parser_()
     , events_()
     , eventNumber_(0)
@@ -49,10 +49,14 @@ YamlParser::YamlParser(const char *file) : filename_(file)
     , preferenceNode_(NULL)
     , addressbookNode_(NULL)
     , audioNode_(NULL)
+#ifdef SFL_VIDEO
+    , videoNode_(NULL)
+#endif
     , hooksNode_(NULL)
     , voiplinkNode_(NULL)
     , shortcutNode_(NULL)
 {
+    fd_ = fopen(filename_.c_str(), "rb");
     if (!fd_)
         throw YamlParserException("Could not open file descriptor");
 
@@ -89,6 +93,14 @@ YamlParser::getAudioNode()
 {
     CHECK_AND_RETURN(audioNode_);
 }
+
+#ifdef SFL_VIDEO
+MappingNode *
+YamlParser::getVideoNode()
+{
+    CHECK_AND_RETURN(videoNode_);
+}
+#endif
 
 MappingNode *
 YamlParser::getHookNode()
@@ -441,13 +453,16 @@ void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
     std::map<std::string, YamlNode*> *mapping = map->getMapping();
 
-    accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
+	accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
     addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];
-    audioNode_          = (MappingNode*)(*mapping)["audio"];
-    hooksNode_          = (MappingNode*)(*mapping)["hooks"];
-    preferenceNode_     = (MappingNode*)(*mapping)["preferences"];
-    voiplinkNode_       = (MappingNode*)(*mapping)["voipPreferences"];
-    shortcutNode_       = (MappingNode*)(*mapping)["shortcuts"];
+	audioNode_          = (MappingNode*)(*mapping)["audio"];
+#ifdef SFL_VIDEO
+	videoNode_          = (MappingNode*)(*mapping)["video"];
+#endif
+	hooksNode_          = (MappingNode*)(*mapping)["hooks"];
+	preferenceNode_     = (MappingNode*)(*mapping)["preferences"];
+	voiplinkNode_       = (MappingNode*)(*mapping)["voipPreferences"];
+	shortcutNode_       = (MappingNode*)(*mapping)["shortcuts"];
 }
 }
 

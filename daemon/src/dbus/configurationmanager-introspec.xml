@@ -359,6 +359,7 @@
            </arg>
        </method>
 
+       <!--    General Settings Panel         -->
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
            <arg type="s" name="state" direction="out">
@@ -384,6 +385,7 @@
            <arg type="i" name="level" direction="out">
            </arg>
        </method>
+
 
        <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
            <arg type="i" name="days" direction="out">

@@ -500,7 +500,6 @@ std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
     return shortcutsMap;
 }
 
-
 void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 {
     hangup_ = map[HANGUP_SHORT_KEY];

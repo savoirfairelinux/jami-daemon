@@ -58,6 +58,9 @@
 #include "manager.h"
 
 #include "dbus/configurationmanager.h"
+#ifdef SFL_VIDEO
+#include "dbus/video_controls.h"
+#endif
 
 #include "conference.h"
 
@@ -1866,6 +1869,15 @@ std::string ManagerImpl::getCurrentCodecName(const std::string& id)
     return codecName;
 }
 
+#ifdef SFL_VIDEO
+std::string ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
+{
+    std::string accountID = getAccountFromCall(ID);
+    VoIPLink* link = getAccountLink(accountID);
+    return link->getCurrentVideoCodecName(ID);
+}
+#endif
+
 /**
  * Set input audio plugin
  */
@@ -2664,6 +2676,12 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     hookPreference.unserialize(*parser.getHookNode());
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
+#ifdef SFL_VIDEO
+    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
+    MappingNode *videoNode = parser.getVideoNode();
+    if (videoNode)
+        controls->getVideoPreferences().unserialize(*videoNode);
+#endif
 
     using std::tr1::placeholders::_1;
     // Each valid account element in sequence is a new account to load

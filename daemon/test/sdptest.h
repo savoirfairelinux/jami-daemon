@@ -44,8 +44,6 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
-#include <cassert>
-
 #include <exception>
 #include <string>
 

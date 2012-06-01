@@ -9,6 +9,12 @@ BUILT_SOURCES=                      \
     marshaller.c                    \
     marshaller.h
 
+if SFL_VIDEO
+BUILT_SOURCES+=video_controls-glue.h
+video_controls-glue.h: video_controls-introspec.xml Makefile.am
+	dbus-binding-tool --mode=glib-client $< > $@
+endif
+
 # Rule to generate the binding headers
 %-glue.h: %-introspec.xml Makefile.am
 	dbus-binding-tool --mode=glib-client $< > $@
@@ -34,5 +40,4 @@ libdbus_la_CFLAGS= $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
 				   $(GCONF_CFLAGS)
 
 EXTRA_DIST= marshaller.list
-
 CLEANFILES= $(BUILT_SOURCES)

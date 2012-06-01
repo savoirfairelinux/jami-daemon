@@ -139,7 +139,8 @@ static const char * const HOSTNAME_KEY = "hostname";
 static const char * const ACCOUNT_ENABLE_KEY = "enable";
 static const char * const MAILBOX_KEY = "mailbox";
 
-static const char * const CODECS_KEY = "codecs";  // 0/9/110/111/112/
+static const char * const AUDIO_CODECS_KEY = "audioCodecs";  // 0/9/110/111/112/
+static const char * const VIDEO_CODECS_KEY = "videoCodecs";
 static const char * const RINGTONE_PATH_KEY = "ringtonePath";
 static const char * const RINGTONE_ENABLED_KEY = "ringtoneEnabled";
 static const char * const DISPLAY_NAME_KEY = "displayName";
@@ -230,17 +231,25 @@ class Account : public Serializable {
 
         /**
          * Accessor to data structures
+         * @return std::vector<std::string>& The list that reflects the user's choice
+         */
+        std::vector<std::string> getActiveVideoCodecs() const {
+            return videoCodecList_;
+        }
+
+         /* Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
          */
-        const CodecOrder& getActiveCodecs() const {
-            return codecOrder_;
+        std::vector<int> getActiveAudioCodecs() const {
+            return audioCodecList_;
         }
 
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
          */
-        void setActiveCodecs(const std::vector <std::string>& list);
+        void setActiveAudioCodecs(const std::vector<std::string>& list);
+        void setActiveVideoCodecs(const std::vector<std::string>& list);
 
         std::string getRingtonePath() const {
             return ringtonePath_;
@@ -276,7 +285,6 @@ class Account : public Serializable {
 
         /**
          * Helper function used to load the default codec order from the codec factory
-         * setActiveCodecs is called to sync both codecOrder_ and codecStr_
          */
         void loadDefaultCodecs();
 
@@ -325,13 +333,24 @@ class Account : public Serializable {
         /**
          * Vector containing the order of the codecs
          */
-        CodecOrder codecOrder_;
+        std::vector<int> audioCodecList_;
 
         /**
-         * List of codec obtained when parsing configuration and used
+         * Vector containing the order of the video codecs
+         */
+        std::vector<std::string> videoCodecList_;
+
+        /**
+         * List of audio codecs obtained when parsing configuration and used
          * to generate codec order list
          */
-        std::string codecStr_;
+        std::string audioCodecStr_;
+
+        /**
+         * List of video codecs obtained when parsing configuration and used
+         * to generate codec order list
+         */
+        std::string videoCodecStr_;
 
         /**
          * Ringtone .au file used for this account

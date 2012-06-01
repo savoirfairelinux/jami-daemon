@@ -412,6 +412,14 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
     }
 }
 
+#ifdef SFL_VIDEO
+std::string
+IAXVoIPLink::getCurrentVideoCodecName(const std::string& /*id*/)
+{
+    return "";
+}
+#endif
+
 std::string
 IAXVoIPLink::getCurrentCodecName(Call *c) const
 {

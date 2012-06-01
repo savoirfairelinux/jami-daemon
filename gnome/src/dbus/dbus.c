@@ -39,6 +39,9 @@
 #include "calltab.h"
 #include "callmanager-glue.h"
 #include "configurationmanager-glue.h"
+#ifdef SFL_VIDEO
+#include "video_controls-glue.h"
+#endif
 #include "instance-glue.h"
 #include "preferencesdialog.h"
 #include "mainwindow.h"
@@ -55,9 +58,14 @@
 
 #include "widget/imwidget.h"
 
+#include "video/video_renderer.h"
+#include "config/videoconf.h"
 #include "eel-gconf-extensions.h"
 #include "mainwindow.h"
 
+#ifdef SFL_VIDEO
+static DBusGProxy *video_proxy;
+#endif
 static DBusGProxy *call_proxy;
 static DBusGProxy *config_proxy;
 static DBusGProxy *instance_proxy;
@@ -877,12 +885,54 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(config_proxy, "errorAlert",
                                 G_CALLBACK(error_alert), NULL, NULL);
 
+#ifdef SFL_VIDEO
+    const gchar *videocontrols_object_instance = "/org/sflphone/SFLphone/VideoControls";
+    const gchar *videocontrols_interface = "org.sflphone.SFLphone.VideoControls";
+    video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
+            videocontrols_object_instance, videocontrols_interface);
+    g_assert(video_proxy != NULL);
+    if (video_proxy == NULL) {
+        ERROR("Error: Failed to connect to %s", videocontrols_object_instance);
+        return FALSE;
+    }
+    /* Video related signals */
+    dbus_g_proxy_add_signal(video_proxy, "deviceEvent", G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "deviceEvent",
+            G_CALLBACK(video_device_event_cb), NULL, NULL);
+
+    /* Marshaller for INT INT INT INT INT */
+    dbus_g_object_register_marshaller(
+            g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+
+    dbus_g_proxy_add_signal(video_proxy, "receivingEvent", G_TYPE_INT,
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
+            G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "receivingEvent",
+            G_CALLBACK(receiving_video_event_cb), NULL,
+            NULL);
+
+    /* Marshaller for INT INT */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
+                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT,
+                                      G_TYPE_INVALID);
+
+    dbus_g_proxy_add_signal(video_proxy, "stoppedReceivingEvent",
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "stoppedReceivingEvent",
+            G_CALLBACK(stopped_receiving_video_event_cb),
+            NULL, NULL);
+#endif
+
     /* Defines a default timeout for the proxies */
 #if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT
     static const int DEFAULT_DBUS_TIMEOUT = 30000;
     dbus_g_proxy_set_default_timeout(call_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(instance_proxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(config_proxy, DEFAULT_DBUS_TIMEOUT);
+#ifdef SFL_VIDEO
+    dbus_g_proxy_set_default_timeout(video_proxy, DEFAULT_DBUS_TIMEOUT);
+#endif
 #endif
 
     gboolean status = dbus_connect_session_manager(connection);
@@ -896,6 +946,9 @@ gboolean dbus_connect(GError **error)
 
 void dbus_clean()
 {
+#ifdef SFL_VIDEO
+        g_object_unref(video_proxy);
+#endif
     g_object_unref(call_proxy);
     g_object_unref(config_proxy);
     g_object_unref(instance_proxy);
@@ -1200,6 +1253,38 @@ dbus_audio_codec_list()
     return array;
 }
 
+#ifdef SFL_VIDEO
+gchar **
+dbus_video_codec_list()
+{
+    GError *error = NULL;
+    gchar **array = NULL;
+    org_sflphone_SFLphone_VideoControls_get_codec_list(video_proxy, &array, &error);
+    check_error(error);
+
+    return array;
+}
+
+gchar **
+dbus_get_active_video_codec_list(const gchar *accountID)
+{
+    gchar **array = NULL;
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_get_active_codec_list(video_proxy, accountID, &array, &error);
+    check_error(error);
+
+    return array;
+}
+
+void
+dbus_set_active_video_codec_list(const gchar** list, const gchar *accountID)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_set_active_codec_list(video_proxy, list, accountID, &error);
+    check_error(error);
+}
+#endif
+
 gchar **
 dbus_audio_codec_details(int payload)
 {
@@ -1209,6 +1294,38 @@ dbus_audio_codec_details(int payload)
     check_error(error);
     return array;
 }
+
+#ifdef SFL_VIDEO
+gchar**
+dbus_video_codec_details(const gchar *codec)
+{
+    GError *error = NULL;
+    gchar **array = NULL;
+    org_sflphone_SFLphone_VideoControls_get_codec_details(video_proxy,
+                                                          codec, &array, &error);
+    check_error(error);
+    return array;
+}
+
+gchar *
+dbus_get_current_video_codec_name(const callable_obj_t *c)
+{
+    gchar *codecName = NULL;
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_VideoControls_get_current_codec_name(video_proxy,
+            c->_callID, &codecName, &error);
+
+    if (check_error(error)) {
+        g_free(codecName);
+        codecName = g_strdup("");
+    }
+
+    DEBUG("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
+
+    return codecName;
+}
+#endif
 
 gchar *
 dbus_get_current_audio_codec_name(const callable_obj_t *c)
@@ -1637,6 +1754,184 @@ dbus_get_audio_manager(void)
     return api;
 }
 
+#ifdef SFL_VIDEO
+gchar *
+dbus_get_video_input_device_channel()
+{
+    gchar *str = NULL;
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_VideoControls_get_input_device_channel(video_proxy, &str, &error);
+    check_error(error);
+
+    return str;
+}
+
+gchar *
+dbus_get_video_input_device_size()
+{
+    gchar *str = NULL;
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_VideoControls_get_input_device_size(video_proxy, &str, &error);
+    check_error(error);
+
+    return str;
+}
+
+gchar *
+dbus_get_video_input_device_rate()
+{
+    gchar *str = NULL;
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_VideoControls_get_input_device_rate(video_proxy, &str, &error);
+    check_error(error);
+
+    return str;
+}
+
+gchar *
+dbus_get_video_input_device()
+{
+    gchar *str = NULL;
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_VideoControls_get_input_device(video_proxy, &str, &error);
+    check_error(error);
+
+    return str;
+}
+
+/**
+ * Set video input device
+ */
+void
+dbus_set_video_input_device(const gchar *device)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_set_input_device(video_proxy, device, &error);
+    check_error(error);
+}
+
+/**
+ * Set video input device channel
+ */
+void
+dbus_set_video_input_device_channel(const gchar *channel)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_set_input_device_channel(video_proxy, channel, &error);
+    check_error(error);
+}
+
+/**
+ * Set video input size
+ */
+void
+dbus_set_video_input_size(const gchar *size)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_set_input_device_size(video_proxy, size, &error);
+    check_error(error);
+}
+
+/**
+ * Set video input rate
+ */
+void
+dbus_set_video_input_rate(const gchar *rate)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_set_input_device_rate(video_proxy, rate, &error);
+    check_error(error);
+}
+
+/**
+ * Get a list of video input devices
+ */
+gchar **
+dbus_get_video_input_device_list()
+{
+    gchar **array = NULL;
+    GError *error = NULL;
+
+    if (!org_sflphone_SFLphone_VideoControls_get_input_device_list(video_proxy, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            ERROR("Caught remote method (get_video_input_device_list) exception  %s: %s", dbus_g_error_get_name(error), error->message);
+        else
+            ERROR("Error while calling get_video_input_device_list: %s", error->message);
+
+        g_error_free (error);
+    }
+
+    return array;
+}
+
+/**
+ * Get a list of inputs supported by the video input device
+ */
+gchar **
+dbus_get_video_input_device_channel_list(const gchar *dev)
+{
+    gchar **array = NULL;
+    GError *error = NULL;
+
+    if (!org_sflphone_SFLphone_VideoControls_get_input_device_channel_list(
+                video_proxy, dev, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            ERROR("Caught remote method (get_video_input_device_channel_list) exception  %s: %s",
+                  dbus_g_error_get_name (error), error->message);
+        else
+            ERROR("Error while calling get_video_input_device_channel_list: %s", error->message);
+
+        g_error_free(error);
+    }
+    return array;
+}
+
+/**
+ * Get a list of resolutions supported by the video input
+ */
+gchar **
+dbus_get_video_input_device_size_list(const gchar *dev, const gchar *channel)
+{
+    gchar **array = NULL;
+    GError *error = NULL;
+
+    if (!org_sflphone_SFLphone_VideoControls_get_input_device_size_list(video_proxy, dev, channel, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            ERROR("Caught remote method (get_video_input_device_size_list) exception  %s: %s", dbus_g_error_get_name(error), error->message);
+        else
+            ERROR("Error while calling get_video_input_device_size_list: %s", error->message);
+
+        g_error_free (error);
+        return NULL;
+    } else
+        return array;
+}
+
+/**
+ * Get a list of frame rates supported by the video input resolution
+ */
+gchar **
+dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size)
+{
+    gchar **array = NULL;
+    GError *error = NULL;
+
+    if (!org_sflphone_SFLphone_VideoControls_get_input_device_rate_list(video_proxy, dev, channel, size, &array, &error)) {
+        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            ERROR("Caught remote method (get_video_input_device_rate_list) exception  %s: %s",
+                  dbus_g_error_get_name(error), error->message);
+        else
+            ERROR("Error while calling get_video_input_device_rate_list: %s", error->message);
+        g_error_free(error);
+        return NULL;
+    } else
+        return array;
+}
+#endif
 
 GHashTable *
 dbus_get_addressbook_settings(void)
@@ -1920,6 +2215,33 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
     org_sflphone_SFLphone_CallManager_send_text_message(call_proxy, callID, message, &error);
     check_error(error);
 }
+
+#ifdef SFL_VIDEO
+void
+dbus_start_video_preview()
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy,
+                                                            video_preview_started_cb,
+                                                            &error);
+    check_error(error);
+}
+
+static void preview_stopped_cb()
+{
+    DEBUG("Video preview has stopped");
+}
+
+void
+dbus_stop_video_preview()
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy,
+                                                           preview_stopped_cb,
+                                                           &error);
+    check_error(error);
+}
+#endif
 
 static guint cookie;
 #define GNOME_SESSION_NO_IDLE_FLAG 8

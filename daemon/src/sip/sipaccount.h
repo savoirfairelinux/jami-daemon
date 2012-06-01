@@ -534,11 +534,11 @@ class SIPAccount : public Account {
         NON_COPYABLE(SIPAccount);
 
         /**
-         * Map of credential for this account 
+         * Map of credential for this account
          */
         std::vector< std::map<std::string, std::string > > credentials_;
 
-        /** 
+        /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation
@@ -574,12 +574,12 @@ class SIPAccount : public Account {
          */
         bool bRegister_;
 
-        /** 
+        /**
          * Network settings
          */
         int registrationExpire_;
 
-        /** 
+        /**
          * interface name on which this account is bound
          */
         std::string interface_;
@@ -607,7 +607,7 @@ class SIPAccount : public Account {
         pj_uint16_t publishedPort_;
 
         /**
-         * Optional list of SIP service this  
+         * Optional list of SIP service this
          */
         std::string serviceRoute_;
 

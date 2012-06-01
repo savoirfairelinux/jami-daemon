@@ -500,6 +500,9 @@ class ManagerImpl {
          * @return std::string The codec name
          */
         std::string getCurrentCodecName(const std::string& id);
+#ifdef SFL_VIDEO
+        std::string getCurrentVideoCodecName(const std::string& id);
+#endif
 
         /**
          * Set input audio plugin
@@ -725,12 +728,6 @@ class ManagerImpl {
          * @return int The mail notification level
          */
         int32_t getMailNotify() const;
-
-        /**
-         * Get the list of the active codecs
-         * @return std::vector< ::std::string >  The list of active codecs
-         */
-        std::vector<std::string> getActiveCodecList() const;
 
         /**
          * Change a specific value in the configuration tree.

@@ -57,7 +57,7 @@ class CallManagerException: public std::runtime_error {
 };
 
 namespace sfl {
-class AudioZrtpSession;
+    class AudioZrtpSession;
 }
 
 class CallManager
@@ -67,7 +67,6 @@ class CallManager
     public:
 
         CallManager(DBus::Connection& connection);
-        static const char* SERVER_PATH;
 
         /* methods exported by this interface,
          * you will have to implement them in your ObjectAdaptor
@@ -97,10 +96,10 @@ class CallManager
         void hangUpConference(const std::string& confID);
         void holdConference(const std::string& confID);
         void unholdConference(const std::string& confID);
-        std::vector< std::string > getConferenceList();
-        std::vector< std::string > getParticipantList(const std::string& confID);
+        std::vector<std::string> getConferenceList();
+        std::vector<std::string> getParticipantList(const std::string& confID);
         std::string getConferenceId(const std::string& callID);
-        std::map< std::string, std::string > getConferenceDetails(const std::string& callID);
+        std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
         /* File Playback methods */
         bool startRecordedFilePlayback(const std::string& filepath);
@@ -130,6 +129,5 @@ class CallManager
 
         sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
 };
-
 
 #endif//CALLMANAGER_H

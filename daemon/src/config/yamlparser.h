@@ -31,6 +31,10 @@
 #ifndef __YAMLPARSER_H__
 #define __YAMLPARSER_H__
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "yamlnode.h"
 #include <yaml.h>
 #include <cstdio>
@@ -74,6 +78,9 @@ class YamlParser {
 
         MappingNode *getAudioNode();
 
+#ifdef SFL_VIDEO
+        MappingNode *getVideoNode();
+#endif
         MappingNode *getHookNode();
 
         MappingNode *getVoipPreferenceNode();
@@ -133,6 +140,9 @@ class YamlParser {
         MappingNode *preferenceNode_;
         MappingNode *addressbookNode_;
         MappingNode *audioNode_;
+#ifdef SFL_VIDEO
+        MappingNode *videoNode_;
+#endif
         MappingNode *hooksNode_;
         MappingNode *voiplinkNode_;
         MappingNode *shortcutNode_;

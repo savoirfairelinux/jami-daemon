@@ -32,6 +32,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -50,6 +54,9 @@
 #include "shortcuts-config.h"
 #include "hooks-config.h"
 #include "audioconf.h"
+#ifdef SFL_VIDEO
+#include "videoconf.h"
+#endif
 #include "uimanager.h"
 #include "unused.h"
 #include "mainwindow.h"
@@ -57,8 +64,6 @@
 /**
  * Local variables
  */
-static gboolean dialogOpen = FALSE;
-
 static GtkWidget * history_value;
 
 static GtkWidget *starthidden;
@@ -67,7 +72,6 @@ static GtkWidget *neverpopupwindow;
 
 static GtkWidget *iconview;
 static GtkWidget * notebook;
-
 
 enum {
     PIXBUF_COL,
@@ -276,7 +280,6 @@ save_configuration_parameters(void)
 
     hooks_save_parameters();
 
-    // History config
     dbus_set_history_limit(history_limit);
 }
 
@@ -342,9 +345,16 @@ static GtkTreeModel* create_model(GtkWidget *widget)
     } browser_entries_full[] = {
         {"General", GTK_STOCK_PREFERENCES, 0},
         {"Audio", GTK_STOCK_AUDIO_CARD, 1},
+#ifdef SFL_VIDEO
+        {"Video", "camera-web", 2},
+        {"Hooks", "applications-development", 3},
+        {"Shortcuts", "preferences-desktop-keyboard", 4},
+        {"Address Book", GTK_STOCK_ADDRESSBOOK, 5},
+#else
         {"Hooks", "applications-development", 2},
         {"Shortcuts", "preferences-desktop-keyboard", 3},
         {"Address Book", GTK_STOCK_ADDRESSBOOK, 4},
+#endif
     };
     GdkPixbuf *pixbuf;
     GtkTreeIter iter;
@@ -377,7 +387,6 @@ static GtkTreeModel* create_model(GtkWidget *widget)
 guint
 show_preferences_dialog()
 {
-    dialogOpen = TRUE;
     GtkDialog *dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Preferences"),
                                    GTK_WINDOW(get_main_window()),
                                    GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -426,6 +435,13 @@ show_preferences_dialog()
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
+#ifdef SFL_VIDEO
+    // Video tab
+    tab = create_video_configuration();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Video")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+#endif
+
     // Hooks tab
     tab = create_hooks_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
@@ -452,8 +468,6 @@ show_preferences_dialog()
 
     save_configuration_parameters();
     update_actions();
-
-    dialogOpen = FALSE;
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
     return result;

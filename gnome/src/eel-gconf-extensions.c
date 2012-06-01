@@ -73,11 +73,9 @@ eel_gconf_client_get_global(void)
                                               "Check your gconf setup, look at gpdf FAQ for \n"
                                               "more info"));
             gtk_dialog_run(GTK_DIALOG(dialog));
-            exit(0);
-        } else {
+            exit(EXIT_SUCCESS);
+        } else
             g_free(teststr);
-        }
-
     }
 
     if (global_gconf_client == NULL)

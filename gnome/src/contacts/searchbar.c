@@ -95,6 +95,7 @@ static void cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
         addrbook->set_current_book(string);
         g_free(string);
     }
+
     AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
     addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
@@ -126,6 +127,7 @@ void update_searchbar_addressbook_list()
 
     // store the current active text
     gchar *activeText = get_combobox_active_text(cbox);
+
 
     if (activeText == NULL)
         activeText = g_strdup("");

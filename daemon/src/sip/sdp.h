@@ -29,8 +29,12 @@
  *  as that of the covered work.
  */
 
-#ifndef _SDP_H
-#define _SDP_H
+#ifndef SDP_H_
+#define SDP_H_
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -44,7 +48,7 @@
 #include <string>
 #include <stdexcept>
 
-#include "global.h" // for CodecOrder
+#include "global.h"
 #include "noncopyable.h"
 
 namespace sfl {
@@ -103,47 +107,30 @@ class Sdp {
         void setActiveLocalSdpSession(const pjmedia_sdp_session *sdp);
 
         /**
-         * read accessor. Return the negotiated local session
-         *
-         * @return pjmedia_sdp_session  The negotiated offer
-         */
-        pjmedia_sdp_session* getActiveLocalSdpSession() {
-            return activeLocalSession_;
-        }
-
-        /**
          * Retrieve the negotiated sdp offer from the sip payload.
          *
          * @param sdp   the negotiated offer
          */
         void setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp);
 
+#ifdef SFL_VIDEO
         /**
-         * read accessor. Return the negotiated offer
-         *
-         * @return pjmedia_sdp_session  The negotiated offer
+         * Returns a string version of the negotiated SDP fields which pertain
+         * to video.
+         * Second member of the vector is the video codec rtp name
          */
-        pjmedia_sdp_session* getActiveRemoteSdpSession() {
-            return activeRemoteSession_;
-        }
-
-
-        /**
-         * Return whether or not the media have been determined for this sdp session
-         */
-        bool hasSessionMedia() const;
-
-        /**
-         * Return the codec of the first media after negotiation
-         * @throw SdpException
-         */
-        sfl::AudioCodec* getSessionMedia();
+        std::vector<std::string> getActiveVideoDescription() const;
+#endif
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
          */
-        void createOffer(const CodecOrder &selectedCodecs);
+#ifdef SFL_VIDEO
+        void createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs);
+#else
+        void createOffer(const std::vector<int> &selectedCodecs);
+#endif
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -151,8 +138,14 @@ class Sdp {
         *
         * @param remote    The remote offer
         */
+#ifdef SFL_VIDEO
         void receiveOffer(const pjmedia_sdp_session* remote,
-                          const CodecOrder &selectedCodecs);
+                          const std::vector<int> &selectedCodecs,
+                          const std::vector<std::string> &videoCodecs);
+#else
+        void receiveOffer(const pjmedia_sdp_session* remote,
+                          const std::vector<int> &selectedCodecs);
+#endif
 
         /**
          * Start the sdp negotiation.
@@ -183,26 +176,30 @@ class Sdp {
             return localIpAddr_;
         }
 
-        /**
-         * @param Set the published audio port
-         */
-        void  setLocalPublishedAudioPort(int port) {
-            localAudioPort_ = port;
+        void setLocalPublishedAudioPort(int port) {
+        	localAudioPort_ = port;
         }
 
-        /**
-         * @return The published audio port
-         */
-        int  getLocalPublishedAudioPort() const {
-            return localAudioPort_;
+#ifdef SFL_VIDEO
+        void setLocalPublishedVideoPort (int port) {
+            localVideoPort_ = port;
         }
+#endif
 
         /**
-         * Return IP of destination [mutex protected]
+         * Return IP of destination
          * @return const std:string	The remote IP address
          */
         const std::string& getRemoteIP() {
             return remoteIpAddr_;
+        }
+
+        /**
+         * Set remote's audio port. [not protected]
+         * @param port  The remote audio port
+         */
+        void setRemoteAudioPort(unsigned int port) {
+            remoteAudioPort_ = port;
         }
 
         /**
@@ -213,15 +210,22 @@ class Sdp {
             return remoteAudioPort_;
         }
 
+#ifdef SFL_VIDEO
         /**
-         *
+         * Return video port at destination
+         * @return unsigned int The remote video port
          */
-        void addAttributeToLocalAudioMedia(const char *);
+        unsigned int getRemoteVideoPort() const {
+            return remoteVideoPort_;
+        }
+#endif
 
-        /**
-         *
-         */
-        void removeAttributeFromLocalAudioMedia(const char *);
+        void addAttributeToLocalAudioMedia(const char *attr);
+        void removeAttributeFromLocalAudioMedia(const char *attr);
+#ifdef SFL_VIDEO
+        void addAttributeToLocalVideoMedia(const char *attr);
+        void removeAttributeFromLocalVideoMedia(const char *attr);
+#endif
 
         /**
          * Get SRTP master key
@@ -254,11 +258,17 @@ class Sdp {
 
         void setMediaTransportInfoFromRemoteSdp();
 
-        std::string getCodecName();
+        std::string getAudioCodecName() const;
+#ifdef SFL_VIDEO
+        std::string getSessionVideoCodec() const;
+#endif
+        sfl::AudioCodec* getSessionAudioMedia() const;
 
     private:
         NON_COPYABLE(Sdp);
         friend class SDPTest;
+
+        std::string getLineFromLocalSDP(const std::string &keyword) const;
 
         /**
          * The pool to allocate memory, ownership to SipCall
@@ -296,36 +306,31 @@ class Sdp {
         /**
          * Codec Map used for offer
          */
-        std::vector< sfl::Codec* > codec_list_;
+        std::vector<sfl::Codec *> audio_codec_list_;
+#ifdef SFL_VIDEO
+		std::vector<std::string> video_codec_list_;
+#endif
 
         /**
-         * The media that will be used by the session (after the SDP negotiation)
+         * The codecs that will be used by the session (after the SDP negotiation)
          */
-        std::vector< sfl::Codec* > sessionAudioMedia_;
+        std::vector<sfl::Codec *> sessionAudioMedia_;
+#ifdef SFL_VIDEO
+        std::vector<std::string> sessionVideoMedia_;
+#endif
 
-        /**
-         * IP address
-         */
         std::string localIpAddr_;
+        std::string remoteIpAddr_;
 
-        /**
-         * Remote's IP address
-         */
-        std::string  remoteIpAddr_;
-
-        /**
-         * Local audio port
-         */
         int localAudioPort_;
-
-        /**
-         * Remote audio port
-         */
+#ifdef SFL_VIDEO
+        int localVideoPort_;
+#endif
         unsigned int remoteAudioPort_;
+#ifdef SFL_VIDEO
+        unsigned int remoteVideoPort_;
+#endif
 
-        /**
-         * Zrtp hello hash
-         */
         std::string zrtpHelloHash_;
 
         /**
@@ -333,16 +338,13 @@ class Sdp {
          */
         std::vector<std::string> srtpCrypto_;
 
-        /**
-         * Payload type for dtmf telephone event
-         */
         unsigned int telephoneEventPayload_;
 
         /*
          * Build the sdp media section
          * Add rtpmap field if necessary
          */
-        pjmedia_sdp_media *setMediaDescriptorLine();
+        pjmedia_sdp_media *setMediaDescriptorLine(bool audio);
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 
@@ -350,12 +352,19 @@ class Sdp {
          * Build the local media capabilities for this session
          * @param List of codec in preference order
          */
-        void setLocalMediaCapabilities(const CodecOrder &selectedCodecs);
+        void setLocalMediaCapabilities(const std::vector<int> &selectedCodecs);
+#ifdef SFL_VIDEO
+        void setLocalMediaVideoCapabilities(const std::vector<std::string> &videoCodecs);
+#endif
 
         /*
          * Build the local SDP offer
          */
-        int createLocalSession(const CodecOrder &selectedCodecs);
+#ifdef SFL_VIDEO
+        int createLocalSession(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs);
+#else
+        int createLocalSession(const std::vector<int> &selectedCodecs);
+#endif
         /*
          * Adds a sdes attribute to the given media section.
          *

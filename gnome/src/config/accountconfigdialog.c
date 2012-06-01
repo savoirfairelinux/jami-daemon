@@ -31,6 +31,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <glib/gi18n.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -47,6 +51,7 @@
 #include "mainwindow.h"
 #include "accountlist.h"
 #include "audioconf.h"
+#include "videoconf.h"
 #include "accountconfigdialog.h"
 #include "zrtpadvanceddialog.h"
 #include "tlsadvanceddialog.h"
@@ -1112,6 +1117,29 @@ create_audiocodecs_configuration(const account_t *account)
     return vbox;
 }
 
+#ifdef SFL_VIDEO
+static GtkWidget *
+create_videocodecs_configuration(const account_t *a)
+{
+    // Main widget
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+
+    GtkWidget *box = videocodecs_box(a);
+
+    // Box for the videocodecs
+    GtkWidget *videocodecs = gnome_main_section_new(_("Video"));
+    gtk_box_pack_start(GTK_BOX (vbox), videocodecs, FALSE, FALSE, 0);
+    gtk_widget_set_size_request(GTK_WIDGET (videocodecs), -1, 200);
+    gtk_widget_show(videocodecs);
+    gtk_container_add(GTK_CONTAINER (videocodecs) , box);
+
+    gtk_widget_show_all(vbox);
+
+    return vbox;
+}
+#endif
+
 static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
 {
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -1310,6 +1338,13 @@ GtkWidget *show_account_window(const account_t *account)
     GtkWidget *audiocodecs_tab = create_audiocodecs_configuration(account);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
+    
+#ifdef SFL_VIDEO
+    /* Video Codecs */
+    GtkWidget *videocodecs_tab = create_videocodecs_configuration(account);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), videocodecs_tab, gtk_label_new(_("Video")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), videocodecs_tab);
+#endif
 
     // Do not need advanced or security one for the IP2IP account
     if (!IS_IP2IP) {

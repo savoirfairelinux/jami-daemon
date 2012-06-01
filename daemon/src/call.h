@@ -29,8 +29,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef CALL_H
-#define CALL_H
+#ifndef __CALL_H__
+#define __CALL_H__
 
 #include <sstream>
 #include <map>
@@ -192,6 +192,14 @@ class Call : public Recordable {
         }
 
         /**
+         * Set local video port, as seen by me [not protected]
+         * @param port  The local video port
+         */
+        void setLocalVideoPort (unsigned int port)  {
+            localVideoPort_ = port;
+        }
+
+        /**
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
@@ -202,6 +210,12 @@ class Call : public Recordable {
          * @return unsigned int  The local audio port
          */
         unsigned int getLocalAudioPort();
+
+        /**
+         * Return port used locally (for my machine) [mutex protected]
+         * @return unsigned int  The local video port
+         */
+        unsigned int getLocalVideoPort();
 
         void time_stop();
         std::map<std::string, std::string> getDetails();
@@ -221,6 +235,9 @@ class Call : public Recordable {
 
         /** Local audio port, as seen by me. */
         unsigned int localAudioPort_;
+
+        /** Local video port, as seen by me. */
+        unsigned int localVideoPort_;
 
         /** Unique ID of the call */
         std::string id_;
@@ -250,4 +267,4 @@ class Call : public Recordable {
         time_t timestamp_stop_;
 };
 
-#endif
+#endif // __CALL_H__

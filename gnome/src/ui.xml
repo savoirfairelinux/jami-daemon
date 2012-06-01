@@ -25,7 +25,7 @@
       <menuitem action="Accounts"/>
       <menuitem action="Preferences"/>
     </menu>
-	
+
     <menu name="ViewMenu" action="View">
       <menuitem action="Toolbar"/>
       <separator/>
@@ -53,7 +53,7 @@
     <toolitem name="MuteToolbar" action="Mute"/>
     <!-- FIXME: commented out because it is responsible for #7495 -->
     <!-- separator/-->
-    
+
     <toolitem name="VoicemailToolbar" action="Voicemail"/>
     <toolitem name="HistoryToolbar" action="History"/>
   </toolbar>

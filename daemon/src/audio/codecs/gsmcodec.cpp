@@ -86,7 +86,7 @@ class Gsm : public sfl::AudioCodec {
 };
 
 // cppcheck-suppress unusedFunction
-extern "C" sfl::Codec* create()
+extern "C" sfl::Codec* CODEC_ENTRY()
 {
     return new Gsm;
 }

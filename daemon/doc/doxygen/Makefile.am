@@ -54,4 +54,4 @@ maintainer-clean-local: clean-local
 	rm $@.tmp3
 	mv $@.tmp4 $@
 
-endif
+endif # ENABLE_DOXYGEN

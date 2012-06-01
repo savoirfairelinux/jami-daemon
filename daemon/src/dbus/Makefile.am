@@ -7,6 +7,12 @@ BUILT_SOURCES=                      \
     configurationmanager-glue.h     \
     instance-glue.h
 
+if SFL_VIDEO
+BUILT_SOURCES+=video_controls-glue.h
+video_controls-glue.h: video_controls-introspec.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
+endif
+
 # Rule to generate the binding headers
 %-glue.h: %-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
@@ -16,6 +22,10 @@ libdbus_la_SOURCES = \
     configurationmanager.cpp  \
     instance.cpp  \
     dbusmanager.cpp
+
+if SFL_VIDEO
+libdbus_la_SOURCES+=video_controls.cpp
+endif
 
 if USE_NETWORKMANAGER
 libdbus_la_SOURCES += networkmanager.cpp
@@ -40,6 +50,10 @@ noinst_HEADERS =            \
     dbus_cpp.h        		\
     $(BUILT_SOURCES)
 
+if SFL_VIDEO
+noinst_HEADERS+=video_controls.h
+endif
+
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
 service_in_files = org.sflphone.SFLphone.service.in
@@ -54,6 +68,10 @@ EXTRA_DIST = README $(service_in_files) \
 			 configurationmanager-introspec.xml \
 			 instance-introspec.xml \
 			 org.freedesktop.NetworkManager.xml
+
+if SFL_VIDEO
+EXTRA_DIST += video_controls-introspec.xml
+endif
 
 CLEANFILES= \
     $(BUILT_SOURCES) \

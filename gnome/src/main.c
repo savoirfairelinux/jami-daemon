@@ -137,6 +137,7 @@ main(int argc, char *argv[])
 
     gtk_main();
 
+    codecs_unload();
     shortcuts_destroy_bindings();
 
     eel_gconf_global_client_free();

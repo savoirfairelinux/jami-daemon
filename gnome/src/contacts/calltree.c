@@ -306,7 +306,9 @@ static gchar *clean_display_number(gchar *name)
 }
 
 static gchar *
-calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type, const gchar *const audio_codec)
+calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
+                           const gchar *const audio_codec,
+                           const gchar *const video_codec)
 {
     gchar display_number[strlen(call->_peer_number) + 1];
     strcpy(display_number, call->_peer_number);
@@ -335,6 +337,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type, 
 
     gchar *desc = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>   ", name, details);
     gchar *suffix = NULL;
+    gchar *codec = NULL;
 
     switch (display_type) {
         case DISPLAY_TYPE_CALL:
@@ -342,14 +345,19 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type, 
                 suffix = g_markup_printf_escaped("\n<i>%s (%d)</i>", call->_state_code_description, call->_state_code);
             break;
         case DISPLAY_TYPE_STATE_CODE :
+            if (video_codec && *video_codec)
+                codec = g_strconcat(audio_codec, "/", video_codec, NULL);
+            else
+                codec = g_strdup(audio_codec);
 
             if (call->_state_code)
                 suffix = g_markup_printf_escaped("\n<i>%s (%d)</i>  <i>%s</i>",
                                                  call->_state_code_description, call->_state_code,
-                                                 audio_codec);
+                                                 codec);
             else
-                suffix = g_markup_printf_escaped("\n<i>%s</i>", audio_codec);
+                suffix = g_markup_printf_escaped("\n<i>%s</i>", codec);
 
+            g_free(codec);
             break;
         case DISPLAY_TYPE_CALL_TRANSFER:
             suffix = g_markup_printf_escaped("\n<i>Transfer to:%s</i> ", call->_trsft_to);
@@ -440,6 +448,7 @@ calltree_create(calltab_t* tab, int searchbar_type)
     GtkCellRenderer *calltree_rend = gtk_cell_renderer_pixbuf_new();
     GtkTreeViewColumn *calltree_col = gtk_tree_view_column_new_with_attributes("Icon", calltree_rend, "pixbuf", COLUMN_ACCOUNT_PIXBUF, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tab->view), calltree_col);
+
     calltree_rend = gtk_cell_renderer_text_new();
     calltree_col = gtk_tree_view_column_new_with_attributes("Description", calltree_rend,
                    "markup", COLUMN_ACCOUNT_DESC,
@@ -607,17 +616,23 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
         return FALSE;
 
     /* Update text */
-    gchar * description = NULL;
-    gchar * audio_codec = call_get_audio_codec(call);
+    gchar *description = NULL;
+    gchar *audio_codec = call_get_audio_codec(call);
+#ifdef SFL_VIDEO
+    gchar *video_codec = call_get_video_codec(call);
+#else
+    gchar *video_codec = g_strdup("");
+#endif
 
     if (call->_state == CALL_STATE_TRANSFER)
-        description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "");
+        description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "", "");
     else
         if (call->_sas && display_sas && call->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !call->_zrtp_confirmed)
-            description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "");
+            description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "", "");
         else
-            description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec);
+            description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec, video_codec);
 
+    g_free(video_codec);
     g_free(audio_codec);
 
     /* Update icons */
@@ -683,7 +698,7 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
         pixbuf = history_state_to_pixbuf(call);
 
         g_free(description);
-        description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
+        description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "", "");
         gchar *date = get_formatted_start_timestamp(call->_time_start);
         gchar *duration = get_call_duration(call);
         gchar *full_duration = g_strconcat(date , duration , NULL);
@@ -740,7 +755,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
 
     // New call in the list
 
-    gchar *description = calltree_display_call_info(call, DISPLAY_TYPE_CALL, "");
+    gchar *description = calltree_display_call_info(call, DISPLAY_TYPE_CALL, "", "");
 
     gtk_tree_store_prepend(tab->store, &iter, parent);
 
@@ -833,7 +848,7 @@ void calltree_add_history_entry(callable_obj_t *call)
         return;
 
     // New call in the list
-    gchar * description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
+    gchar * description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "", "");
 
     GtkTreeIter iter;
     gtk_tree_store_prepend(history_tab->store, &iter, NULL);

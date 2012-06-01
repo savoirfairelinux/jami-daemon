@@ -57,6 +57,10 @@
 
 #include "audio/audiolayer.h"
 
+#ifdef SFL_VIDEO
+#include "video/video_rtp_session.h"
+#endif
+
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_uri.h"
@@ -85,7 +89,7 @@ static std::map<std::string, std::string> transferCallID;
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
 /**
- * Set audio (SDP) configuration for a call
+ * Set audio and video (SDP) configuration for a call
  * localport, localip, localexternalport
  * @param call a SIPCall valid pointer
  */
@@ -242,7 +246,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
         r_sdp = NULL;
 
-    if (account->getActiveCodecs().empty()) {
+    if (account->getActiveAudioCodecs().empty()) {
         pjsip_endpt_respond_stateless(endpt_, rdata,
                                       PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
                                       NULL);
@@ -317,7 +321,11 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs());
+#endif
 
     sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
     if (!ac) {
@@ -755,7 +763,11 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     // Building the local SDP offer
     call->getLocalSDP()->setLocalIP(localAddress);
-    call->getLocalSDP()->createOffer(account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
+#endif
 
     if (!SIPStartCall(call)) {
         delete call;
@@ -824,7 +836,11 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     call->initRecFilename(toUrl);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
+#endif
 
     if (!SIPStartCall(call)) {
         delete call;
@@ -937,7 +953,7 @@ SIPVoIPLink::offhold(const std::string& id)
 
     try {
         int pl = PAYLOAD_CODEC_ULAW;
-        sfl::Codec *sessionMedia = sdpSession->getSessionMedia();
+        sfl::Codec *sessionMedia = sdpSession->getSessionAudioMedia();
 
         if (sessionMedia)
             pl = sessionMedia->getPayloadType();
@@ -1108,10 +1124,24 @@ SIPVoIPLink::refuse(const std::string& id)
     removeCall(id);
 }
 
+#ifdef SFL_VIDEO
+std::string
+SIPVoIPLink::getCurrentVideoCodecName(const std::string& id)
+{
+    SIPCall *call = getSIPCall(id);
+    if (call) {
+        Call::CallState state = call->getState();
+        if (state == Call::ACTIVE or state == Call::CONFERENCING)
+            return call->getLocalSDP()->getSessionVideoCodec();
+    }
+    return "";
+}
+#endif
+
 std::string
 SIPVoIPLink::getCurrentCodecName(Call *call) const
 {
-    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getCodecName();
+    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
 }
 
 void
@@ -1369,7 +1399,11 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
     if (!account)
         return;
 
-    call->getLocalSDP()->receiveOffer(offer, account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->receiveOffer(offer, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->receiveOffer(offer, account->getActiveAudioCodecs());
+#endif
     call->getLocalSDP()->startNegotiation();
 
     pjsip_inv_set_sdp_answer(call->inv, call->getLocalSDP()->getLocalSdpSession());
@@ -1398,7 +1432,11 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     setCallMediaLocal(call, localAddress);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveCodecs());
+#ifdef SFL_VIDEO
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+#else
+    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
+#endif
 
     *p_offer = call->getLocalSDP()->getLocalSdpSession();
 }
@@ -1457,8 +1495,13 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update internal field for
     sdpSession->setMediaTransportInfoFromRemoteSdp();
 
-    call->getAudioRtp().updateDestinationIpAddress();
-    call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
+	call->getAudioRtp().updateDestinationIpAddress();
+	call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
+#ifdef SFL_VIDEO
+    call->getVideoRtp()->updateSDP(*call->getLocalSDP());
+    call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
+    call->getVideoRtp()->start();
+#endif
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
@@ -1503,7 +1546,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             call->getAudioRtp().initSession();
     }
 
-    sfl::AudioCodec *sessionMedia = sdpSession->getSessionMedia();
+    sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
 
     if (!sessionMedia)
         return;
@@ -1905,5 +1948,11 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     call->setLocalIp(localIP);
     call->setLocalAudioPort(callLocalAudioPort);
     call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
+#ifdef SFL_VIDEO
+    unsigned int callLocalVideoPort = ((rand() % 27250) + 5250) * 2;
+    assert(callLocalAudioPort != callLocalVideoPort);
+    call->setLocalVideoPort(callLocalVideoPort);
+    call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
+#endif
 }
 } // end anonymous namespace
