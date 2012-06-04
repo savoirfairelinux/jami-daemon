@@ -28,6 +28,7 @@
 class QLabel;
 class QTreeWidgetItem;
 class QMenu;
+class QMimeData;
 
 //KDE
 class KAction;
@@ -39,6 +40,7 @@ namespace KABC {
 
 //SFLPhone
 class Contact;
+class TranslucentButtons;
 
 ///@class ContactItemWidget Item for the contact tree
 class ContactItemWidget : public QWidget
@@ -65,6 +67,12 @@ class ContactItemWidget : public QWidget
 
     //Const
     static const char * callStateIcons[12];
+    
+protected:
+   virtual void dragEnterEvent ( QDragEnterEvent *e );
+   virtual void dragMoveEvent  ( QDragMoveEvent  *e );
+   virtual void dragLeaveEvent ( QDragLeaveEvent *e );
+   virtual void dropEvent      ( QDropEvent      *e );
 
  private:
     //Attributes
@@ -84,6 +92,8 @@ class ContactItemWidget : public QWidget
     KAction* m_pAddPhone    ;
     KAction* m_pBookmark    ;
     QMenu*   m_pMenu        ;
+    
+    TranslucentButtons* m_pBtnTrans;
 
 public slots:
    void updated();
@@ -96,6 +106,7 @@ private slots:
    void editContact ();
    void addPhone    ();
    void bookmark    ();
+   void transferEvent( QMimeData* data   );
  };
 
-#endif // CALLTREE_ITEM_H
+#endif // CONTACTITEMWIDGET_H

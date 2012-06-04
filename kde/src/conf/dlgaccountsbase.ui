@@ -240,6 +240,9 @@
           <string>Basic</string>
          </attribute>
          <layout class="QFormLayout" name="formLayout">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::ExpandingFieldsGrow</enum>
+          </property>
           <item row="0" column="0">
            <widget class="QLabel" name="label1_alias">
             <property name="text">
@@ -377,6 +380,32 @@
             <property name="text">
              <string/>
             </property>
+           </widget>
+          </item>
+          <item row="7" column="0" colspan="2">
+           <widget class="QGroupBox" name="m_pEnableRingtoneGB">
+            <property name="title">
+             <string>Ringtone</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <layout class="QFormLayout" name="formLayout_2">
+             <item row="0" column="1">
+              <widget class="KUrlRequester" name="m_pRingTonePath">
+               <property name="filter">
+                <string notr="true">*.ul *.au *.wav</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>File</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>

@@ -35,6 +35,7 @@
 //SFLPhone
 class Call;
 class Contact;
+class TranslucentButtons;
 
 //Qt
 class QTreeWidgetItem;
@@ -43,6 +44,7 @@ class QLabel;
 class QToolButton;
 class QGridLayout;
 class QSlider;
+class QMimeData;
 
 //KDE
 class KAction;
@@ -114,9 +116,15 @@ class HistoryTreeItem : public QWidget
     QToolButton* m_pNote        ;
     QWidget*     m_pPlayer      ;
 
+    TranslucentButtons* m_pBtnTrans;
+
 protected:
    virtual void resizeEvent(QResizeEvent* event);
    virtual void mouseDoubleClickEvent(QMouseEvent* event);
+   virtual void dragEnterEvent ( QDragEnterEvent *e );
+   virtual void dragMoveEvent  ( QDragMoveEvent  *e );
+   virtual void dragLeaveEvent ( QDragLeaveEvent *e );
+   virtual void dropEvent      ( QDropEvent      *e );
 
 public slots:
    void updated();
@@ -137,8 +145,9 @@ private slots:
    void playPausePlayer  ();
    void editNote         ();
    void tick(qint64 time);
-   void updateSlider( int pos, int size );
-   void showContext ( const QPoint& pos );
+   void updateSlider ( int pos, int size );
+   void showContext  ( const QPoint& pos );
+   void transferEvent( QMimeData* data   );
 
 signals:
    void over(Call*);

@@ -50,20 +50,6 @@
         </item>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="kcfg_enableRingtones">
-        <property name="text">
-         <string>Enable ringtones</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="KUrlRequester" name="KUrlRequester_ringtone">
-        <property name="filter">
-         <string notr="true">*.ul *.au *.wav</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -237,14 +223,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KUrlRequester</class>
-   <extends>QFrame</extends>
-   <header>kurlrequester.h</header>
-  </customwidget>
-  <customwidget>
    <class>KComboBox</class>
    <extends>QComboBox</extends>
    <header>kcombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KUrlRequester</class>
+   <extends>QFrame</extends>
+   <header>kurlrequester.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

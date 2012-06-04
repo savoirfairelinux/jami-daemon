@@ -53,6 +53,7 @@
 #include "klib/AkonadiBackend.h"
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
+#include "widgets/TranslucentButtons.h"
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
@@ -76,6 +77,7 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pContact(0)    , m_pPause(0)   , m_pStop(0) , m_pNote(0)        , m_SeekPos(0)    , m_Paused(false)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
+   setAcceptDrops(true);
 
    m_pCallAgain    = new KAction(this);
    m_pAddContact   = new KAction(this);
@@ -164,6 +166,12 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
       m_pCallNumberL->setText(phone);
       m_PhoneNumber = phone;
    }
+
+   m_pBtnTrans = new TranslucentButtons(this);
+   m_pBtnTrans->setText(i18n("Transfer"));
+   m_pBtnTrans->setVisible(false);
+   m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
+   connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
 } //HistoryTreeItem
 
 ///Destructor
@@ -578,4 +586,67 @@ uint HistoryTreeItem::getDurWidth()
 {
    QFontMetrics fm(m_pLengthL->font());
    return fm.width(m_pLengthL->text());
+}
+
+///Called when a drag and drop occure while the item have not been dropped yet
+void HistoryTreeItem::dragEnterEvent ( QDragEnterEvent *e )
+{
+   kDebug() << "Drag enter";
+   if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans && (e->mimeData()->data( MIME_CALLID) != m_pItemCall->getCallId())) {
+      m_pBtnTrans->setHoverState(true);
+      m_pBtnTrans->setMinimumSize(width()-16,height()-4);
+      m_pBtnTrans->setMaximumSize(width()-16,height()-4);
+      m_pBtnTrans->move(8,2);
+      m_pBtnTrans->setVisible(true);
+      m_pBtnTrans->setHoverState(true);
+      e->accept();
+   }
+   else
+      e->ignore();
+} //dragEnterEvent
+
+///The cursor move on a potential drag event
+void HistoryTreeItem::dragMoveEvent  ( QDragMoveEvent  *e )
+{
+   m_pBtnTrans->setHoverState(true);
+   e->accept();
+}
+
+///A potential drag event is cancelled
+void HistoryTreeItem::dragLeaveEvent ( QDragLeaveEvent *e )
+{
+   m_pBtnTrans->setHoverState(false);
+   m_pBtnTrans->setVisible(false);
+   kDebug() << "Drag leave";
+   e->accept();
+}
+
+///Called when a call is dropped on transfer
+void HistoryTreeItem::transferEvent(QMimeData* data)
+{
+   if (data->hasFormat( MIME_CALLID)) {
+      Call* call = SFLPhone::model()->getCall(data->data(MIME_CALLID));
+      if (dynamic_cast<Call*>(call)) {
+         call->changeCurrentState(CALL_STATE_TRANSFER);
+         SFLPhone::model()->transfer(call, m_pItemCall->getPeerPhoneNumber());
+      }
+   }
+   else
+      kDebug() << "Invalid mime data";
+   m_pBtnTrans->setHoverState(false);
+   m_pBtnTrans->setVisible(false);
+}
+
+///On data drop
+void HistoryTreeItem::dropEvent(QDropEvent *e)
+{
+   kDebug() << "Drop accepted";
+   if (dynamic_cast<const QMimeData*>(e->mimeData()) && e->mimeData()->hasFormat( MIME_CALLID)) {
+      transferEvent((QMimeData*)e->mimeData());
+      e->accept();
+   }
+   else {
+      kDebug() << "Invalid drop data";
+      e->ignore();
+   }
 }

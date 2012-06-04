@@ -102,7 +102,7 @@ class KateColorTreeDelegate : public QStyledItemDelegate
       //END: draw toplevel items
       
       //BEGIN: draw background of category for all other items
-      {
+      if (!index.parent().parent().isValid()) {
         QStyleOptionViewItem opt(option);
         opt.rect = fullCategoryRect(option, index);
         const QRegion cl = painter->clipRegion();

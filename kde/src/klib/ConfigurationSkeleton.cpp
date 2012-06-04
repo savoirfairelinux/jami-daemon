@@ -83,12 +83,12 @@ void ConfigurationSkeleton::readConfig()
    kDebug() << "audioManager = " << audioManager;
    //setInterface(audioManager); //TODO
 
-   //ringtones settings
-   setEnableRingtones(true);
-   //QString ringtone = "";
-   if(ringtone().isEmpty()) {
-      setRingtone(QString(SHARE_INSTALL_PREFIX) + "/sflphone/ringtones/konga.ul");
-   }
+//    //ringtones settings
+//    setEnableRingtones(true);
+//    //QString ringtone = "";
+//    if(ringtone().isEmpty()) {
+//       setRingtone(QString(SHARE_INSTALL_PREFIX) + "/sflphone/ringtones/konga.ul");
+//    }
 
    //codecs settings
    //setActiveCodecList(configurationManager.getActiveCodecList()); //Outdated

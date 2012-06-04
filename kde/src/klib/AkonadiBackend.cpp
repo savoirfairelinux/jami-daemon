@@ -35,6 +35,7 @@
 #include <akonadi/collectionfetchjob.h>
 #include <akonadi/collectionfetchscope.h>
 #include <akonadi/contact/contacteditor.h>
+#include <akonadi/contact/contacteditordialog.h>
 #include <akonadi/session.h>
 #include <kabc/addressee.h>
 #include <kabc/addresseelist.h>
@@ -146,7 +147,6 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
          if ( item.hasPayload<KABC::Addressee>() ) {
             KABC::Addressee tmp = item.payload<KABC::Addressee>();
             Contact* aContact   = new Contact();
-            m_AddrHash[tmp.uid()] = tmp;
 
             KABC::PhoneNumber::List numbers = tmp.phoneNumbers();
             PhoneNumbers newNumbers;
@@ -170,6 +170,8 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                aContact->setPhoto(new QPixmap(QPixmap::fromImage( tmp.photo().data()).scaled(QSize(48,48))));
             else
                aContact->setPhoto(0);
+            
+            m_AddrHash[tmp.uid()] = tmp;
          }
       }
       m_pContacts = m_ContactByUid.values();
@@ -185,13 +187,14 @@ void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
       kDebug() << "Contact not found";
       return;
    }
-   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
-   Akonadi::Item item;
+   
+   Akonadi::ContactEditorDialog *editor = new Akonadi::ContactEditorDialog( Akonadi::ContactEditorDialog::EditMode, parent );
+   Akonadi::Item item(rand());
    item.setPayload<KABC::Addressee>(ct);
-   editor->loadContact(item);
-   KDialog* dlg = new KDialog(parent);
-   dlg->setMainWidget(editor);
-   dlg->exec();
+   if ( item.isValid() ) {
+      editor->setContact(item);
+      editor->exec();
+   }
 } //editContact
 
 ///Add a new contact
