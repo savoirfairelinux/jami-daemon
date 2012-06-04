@@ -31,43 +31,44 @@
 #include <QListWidgetItem>
 #include "conf/ConfigurationDialog.h"
 #include <QWidget>
+#include <KStandardDirs>
 //KDE
 #include <KDebug>
 
-Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent) {
-      codecTable = new QTableWidget(this);
-      codecTable->verticalHeader()->setVisible(false);
-      codecTable->setColumnCount(4);
-      for (int i=0;i<4;i++) {
-         codecTable->setHorizontalHeaderItem( i, new QTableWidgetItem(0));
-         codecTable->horizontalHeader()->setResizeMode(i,QHeaderView::ResizeToContents);
-      }
+Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent)
+{
+   codecTable = new QTableWidget(this);
+   codecTable->verticalHeader()->setVisible(false);
+   codecTable->setColumnCount(4);
+   for (int i=0;i<4;i++) {
+      codecTable->setHorizontalHeaderItem( i, new QTableWidgetItem(0));
+      codecTable->horizontalHeader()->setResizeMode(i,QHeaderView::ResizeToContents);
+   }
 
-      codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-      codecTable->horizontalHeader()->setResizeMode(0,QHeaderView::Stretch);
-      codecTable->horizontalHeaderItem(0)->setText( "Name"      );
-      codecTable->horizontalHeaderItem(1)->setText( "Bitrate"   );
-      codecTable->horizontalHeaderItem(2)->setText( "Frequency" );
-      codecTable->horizontalHeaderItem(3)->setText( "Alias"     );
-      int i =0;
-      foreach (StringHash aCodec, itemList) {
-         if ( currentItems.indexOf(aCodec["alias"]) == -1) {
-            codecTable->setRowCount(i+1);
-            QTableWidgetItem* cName       = new QTableWidgetItem( aCodec["name"]      );
-            codecTable->setItem( i,0,cName      );
-            QTableWidgetItem* cBitrate    = new QTableWidgetItem( aCodec["bitrate"]   );
-            codecTable->setItem( i,1,cBitrate   );
-            QTableWidgetItem* cFrequency  = new QTableWidgetItem( aCodec["frequency"] );
-            codecTable->setItem( i,2,cFrequency );
-            QTableWidgetItem* cAlias      = new QTableWidgetItem( aCodec["alias"]     );
-            codecTable->setItem( i,3,cAlias     );
-            i++;
-         }
+   codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+   codecTable->horizontalHeader()->setResizeMode(0,QHeaderView::Stretch);
+   codecTable->horizontalHeaderItem(0)->setText( "Name"      );
+   codecTable->horizontalHeaderItem(1)->setText( "Bitrate"   );
+   codecTable->horizontalHeaderItem(2)->setText( "Frequency" );
+   codecTable->horizontalHeaderItem(3)->setText( "Alias"     );
+   int i =0;
+   foreach (StringHash aCodec, itemList) {
+      if ( currentItems.indexOf(aCodec["alias"]) == -1) {
+         codecTable->setRowCount(i+1);
+         QTableWidgetItem* cName       = new QTableWidgetItem( aCodec["name"]      );
+         codecTable->setItem( i,0,cName      );
+         QTableWidgetItem* cBitrate    = new QTableWidgetItem( aCodec["bitrate"]   );
+         codecTable->setItem( i,1,cBitrate   );
+         QTableWidgetItem* cFrequency  = new QTableWidgetItem( aCodec["frequency"] );
+         codecTable->setItem( i,2,cFrequency );
+         QTableWidgetItem* cAlias      = new QTableWidgetItem( aCodec["alias"]     );
+         codecTable->setItem( i,3,cAlias     );
+         i++;
       }
-      setMainWidget(codecTable);
-      resize(550,300);
-
-      connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
+   }
+   setMainWidget(codecTable);
+   resize(550,300);
+   connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
 } //Private_AddCodecDialog
 
 void Private_AddCodecDialog::emitNewCodec() {
@@ -87,6 +88,10 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    button_accountRemove->setIcon     ( KIcon( "list-remove" ) );
    button_add_credential->setIcon    ( KIcon( "list-add"    ) );
    button_remove_credential->setIcon ( KIcon( "list-remove" ) );
+
+   m_pRingTonePath->setMode(KFile::File | KFile::ExistingOnly);
+   m_pRingTonePath->lineEdit()->setObjectName("kcfg_ringtone");
+   m_pRingTonePath->lineEdit()->setReadOnly(true);
 
    accountList = new ConfigAccountList(false);
    loadAccountList();
@@ -258,6 +263,8 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountDetail( PUBLISHED_ADDRESS              , lineEdit_pa_published_address ->text()                                   );
    /**/account->setAccountDetail( LOCAL_PORT                     , QString::number(spinBox_pa_published_port->value())                      );
    /**/account->setAccountDetail( LOCAL_INTERFACE                , comboBox_ni_local_address->currentText()                                 );
+   /**/account->setAccountDetail( CONFIG_RINGTONE_ENABLED        , m_pEnableRingtoneGB->isChecked()                         ?"true":"false" );
+   /**/account->setAccountDetail( CONFIG_RINGTONE_PATH           , m_pRingTonePath->url().path()                                            );
    //                                                                                                                                        /
 
    QStringList _codecList;
@@ -386,6 +393,9 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       frame2_editAccounts->setTabEnabled(4,true);
       frame2_editAccounts->setCurrentIndex(0);
    }
+
+   m_pEnableRingtoneGB->setChecked((account->getAccountDetail(CONFIG_RINGTONE_ENABLED)=="false")?false:true);
+   m_pRingTonePath->setUrl( KStandardDirs::realFilePath(account->getAccountDetail(CONFIG_RINGTONE_PATH)));
 
    combo_tls_method->setCurrentIndex        ( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
