@@ -95,6 +95,9 @@ protected:
     
     TranslucentButtons* m_pBtnTrans;
 
+    //Helper
+    QString showNumberSelector(bool& ok);
+
 public slots:
    void updated();
 
