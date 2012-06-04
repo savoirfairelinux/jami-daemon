@@ -63,7 +63,7 @@ namespace { // anonymous namespace
 
 int getBufferSize(int width, int height, int format)
 {
-	enum PixelFormat fmt = (enum PixelFormat) format;
+    enum PixelFormat fmt = (enum PixelFormat) format;
     // determine required buffer size and allocate buffer
     return sizeof(uint8_t) * avpicture_get_size(fmt, width, height);
 }
