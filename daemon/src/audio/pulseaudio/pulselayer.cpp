@@ -326,7 +326,7 @@ void PulseLayer::writeToSpeaker()
 
     notifyIncomingCall();
 
-    size_t urgentBytes = urgentRingBuffer_.AvailForGet(MainBuffer::DEFAULT_ID);
+    size_t urgentBytes = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
     if (urgentBytes > writableBytes)
         urgentBytes = writableBytes;
@@ -334,7 +334,7 @@ void PulseLayer::writeToSpeaker()
     void *data = 0;
     if (urgentBytes) {
         pa_stream_begin_write(s, &data, &urgentBytes);
-        urgentRingBuffer_.Get(data, urgentBytes, MainBuffer::DEFAULT_ID);
+        urgentRingBuffer_.get(data, urgentBytes, MainBuffer::DEFAULT_ID);
         applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
@@ -357,7 +357,7 @@ void PulseLayer::writeToSpeaker()
 
     flushUrgent(); // flush remaining samples in _urgentRingBuffer
 
-    size_t availSamples = Manager::instance().getMainBuffer()->availForGet(MainBuffer::DEFAULT_ID) / sizeof(SFLDataFormat);
+    size_t availSamples = Manager::instance().getMainBuffer()->availableForGet(MainBuffer::DEFAULT_ID) / sizeof(SFLDataFormat);
 
     if (availSamples == 0) {
         pa_stream_begin_write(s, &data, &writableBytes);

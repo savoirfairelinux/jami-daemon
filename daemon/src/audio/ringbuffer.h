@@ -23,10 +23,11 @@
 #define __RING_BUFFER__
 
 #include <fstream>
+#include <vector>
 #include <map>
 #include "noncopyable.h"
 
-typedef std::map<std::string, int> ReadPointer;
+typedef std::map<std::string, size_t> ReadPointer;
 
 class RingBuffer {
     public:
@@ -34,12 +35,7 @@ class RingBuffer {
          * Constructor
          * @param size  Size of the buffer to create
          */
-        RingBuffer(int size, const std::string &call_id);
-
-        /**
-         * Destructor
-         */
-        ~RingBuffer();
+        RingBuffer(size_t size, const std::string &call_id);
 
         std::string getBufferId() const {
             return buffer_id_;
@@ -55,24 +51,24 @@ class RingBuffer {
         /**
          * Get read pointer coresponding to this call
          */
-        int getReadPointer(const std::string &call_id);
+        size_t getReadPointer(const std::string &call_id) const;
 
         /**
          * Get the whole readpointer list for this ringbuffer
          */
         ReadPointer* getReadPointerList() {
-            return &readpointer_;
+            return &readpointers_;
         }
 
         /**
          * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
          */
-        int getSmallestReadPointer();
+        size_t getSmallestReadPointer() const;
 
         /**
          * Move readpointer forward by pointer_value
          */
-        void storeReadPointer(int pointer_value, const std::string &call_id);
+        void storeReadPointer(size_t pointer_value, const std::string &call_id);
 
         /**
          * Add a new readpointer for this ringbuffer
@@ -87,45 +83,45 @@ class RingBuffer {
         /**
          * Test if readpointer coresponding to this call is still active
          */
-        bool hasThisReadPointer(const std::string &call_id);
+        bool hasThisReadPointer(const std::string &call_id) const;
 
-        int getNbReadPointer();
+        bool hasNoReadPointers() const;
 
         /**
          * Write data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
          */
-        void Put(void* buffer, int toCopy);
+        void put(void* buffer, size_t toCopy);
 
         /**
          * To get how much space is available in the buffer to read in
          * @return int The available size
          */
-        int AvailForGet(const std::string &call_id);
+        size_t availableForGet(const std::string &call_id) const;
 
         /**
          * Get data in the ring buffer
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
-         * @return int Number of bytes copied
+         * @return size_t Number of bytes copied
          */
-        int Get(void* buffer, int toCopy, const std::string &call_id);
+        size_t get(void* buffer, size_t toCopy, const std::string &call_id);
 
         /**
          * Discard data from the buffer
          * @param toDiscard Number of bytes to discard
-         * @return int Number of bytes discarded
+         * @return size_t Number of bytes discarded
          */
-        int Discard(int toDiscard, const std::string &call_id);
+        size_t discard(size_t toDiscard, const std::string &call_id);
 
         /**
-         * Total length of the ring buffer
+         * Total length of the ring buffer which is available for "putting"
          * @return int
          */
-        int putLen();
+        size_t putLength() const;
 
-        int getLen(const std::string &call_id);
+        size_t getLength(const std::string &call_id) const;
 
         /**
          * Debug function print mEnd, mStart, mBufferSize
@@ -136,23 +132,16 @@ class RingBuffer {
         NON_COPYABLE(RingBuffer);
 
         /** Pointer on the last data */
-        int           endPos_;
+        size_t endPos_;
         /** Buffer size */
-        int           bufferSize_;
+        size_t bufferSize_;
         /** Data */
-        unsigned char *buffer_;
+        std::vector<unsigned char> buffer_;
 
-        ReadPointer readpointer_;
+        ReadPointer readpointers_;
         std::string buffer_id_;
 
         friend class MainBufferTest;
-
-    public:
-
-        std::fstream *buffer_input_rec;
-        std::fstream *buffer_output_rec;
-
-        static int count_rb;
 };
 
 

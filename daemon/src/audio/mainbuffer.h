@@ -82,13 +82,13 @@ class MainBuffer {
 
         void unBindAll(const std::string &call_id);
 
-        void putData(void *buffer, int toCopy, const std::string &call_id);
+        void putData(void *buffer, size_t toCopy, const std::string &call_id);
 
-        int getData(void *buffer, int toCopy, const std::string &call_id);
+        size_t getData(void *buffer, size_t toCopy, const std::string &call_id);
 
-        int availForGet(const std::string &call_id);
+        size_t availableForGet(const std::string &call_id);
 
-        int discard(int toDiscard, const std::string &call_id);
+        size_t discard(size_t toDiscard, const std::string &call_id);
 
         void flush(const std::string &call_id);
 
@@ -119,12 +119,13 @@ class MainBuffer {
         void removeRingBuffer(const std::string &call_id);
 
         RingBuffer* getRingBuffer(const std::string &call_id);
+        const RingBuffer* getRingBuffer(const std::string & call_id) const;
 
-        int getDataByID(void *buffer, int toCopy, const std::string &call_id, const std::string &reader_id);
+        size_t getDataByID(void *buffer, size_t toCopy, const std::string &call_id, const std::string &reader_id);
 
-        int availForGetByID(const std::string &call_id, const std::string &reader_id);
+        size_t availableForGetByID(const std::string &call_id, const std::string &reader_id) const;
 
-        void discardByID(int toDiscard, const std::string &call_id, const std::string &reader_id);
+        void discardByID(size_t toDiscard, const std::string &call_id, const std::string &reader_id);
 
         void flushByID(const std::string &call_id, const std::string &reader_id);
 

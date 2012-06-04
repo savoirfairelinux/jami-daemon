@@ -152,13 +152,13 @@ int AudioRtpRecordHandler::processDataEncode()
 
     // compute nb of byte to get coresponding to 1 audio frame
     int samplesToGet = resampleFactor * getCodecFrameSize();
-    int bytesToGet = samplesToGet * sizeof(SFLDataFormat);
+    const size_t bytesToGet = samplesToGet * sizeof(SFLDataFormat);
 
-    if (Manager::instance().getMainBuffer()->availForGet(id_) < bytesToGet)
+    if (Manager::instance().getMainBuffer()->availableForGet(id_) < bytesToGet)
         return 0;
 
     SFLDataFormat *micData = audioRtpRecord_.decData_.data();
-    int bytes = Manager::instance().getMainBuffer()->getData(micData, bytesToGet, id_);
+    const size_t bytes = Manager::instance().getMainBuffer()->getData(micData, bytesToGet, id_);
 
 #ifdef RECTODISK
     rtpNotResampled.write((const char *)micData, bytes);

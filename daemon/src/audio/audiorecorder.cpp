@@ -65,11 +65,11 @@ void AudioRecorder::run()
     buffer.assign(0);
 
     while (running_) {
-        size_t availBytes = mbuffer_->availForGet(recorderId_);
-        mbuffer_->getData(buffer.data(), std::min(availBytes, buffer.size()), recorderId_);
+        const size_t availableBytes = mbuffer_->availableForGet(recorderId_);
+        mbuffer_->getData(buffer.data(), std::min(availableBytes, buffer.size()), recorderId_);
 
-        if (availBytes > 0)
-            arecord_->recData(buffer.data(), availBytes / sizeof(SFLDataFormat));
+        if (availableBytes > 0)
+            arecord_->recData(buffer.data(), availableBytes / sizeof(SFLDataFormat));
 
         Thread::sleep(20);
     }

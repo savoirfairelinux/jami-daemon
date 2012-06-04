@@ -588,14 +588,14 @@ void AlsaLayer::playback(int maxSamples)
     unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
-    int toGet = Manager::instance().getMainBuffer()->availForGet(MainBuffer::DEFAULT_ID);
-    int toPut = maxSamples * sizeof(SFLDataFormat);
+    size_t toGet = Manager::instance().getMainBuffer()->availableForGet(MainBuffer::DEFAULT_ID);
+    const size_t toPut = maxSamples * sizeof(SFLDataFormat);
 
     if (toGet <= 0) {    	// no audio available, play tone or silence
         AudioLoop *tone = Manager::instance().getTelephoneTone();
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
-        SFLDataFormat *out = (SFLDataFormat *) malloc(toPut);
+        SFLDataFormat *out = static_cast<SFLDataFormat *>(malloc(toPut));
 
         if (tone) {
             tone->getNext(out, maxSamples, getPlaybackGain());
@@ -613,7 +613,7 @@ void AlsaLayer::playback(int maxSamples)
 
     // play the regular sound samples
 
-    int maxNbBytesToGet = toPut;
+    size_t maxNbBytesToGet = toPut;
     // Compute maximal value to get from the ring buffer
     double resampleFactor = 1.0;
 
@@ -655,7 +655,7 @@ void AlsaLayer::audioCallback()
     int playbackAvailSmpl = snd_pcm_avail_update(playbackHandle_);
     int playbackAvailBytes = playbackAvailSmpl * sizeof(SFLDataFormat);
 
-    int toGet = urgentRingBuffer_.AvailForGet(MainBuffer::DEFAULT_ID);
+    int toGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
     if (toGet > 0) {
         // Urgent data (dtmf, incoming call signal) come first.
@@ -663,7 +663,7 @@ void AlsaLayer::audioCallback()
             toGet = playbackAvailBytes;
 
         SFLDataFormat *out = (SFLDataFormat*) malloc(toGet);
-        urgentRingBuffer_.Get(out, toGet, MainBuffer::DEFAULT_ID);
+        urgentRingBuffer_.get(out, toGet, MainBuffer::DEFAULT_ID);
         AudioLayer::applyGain(out, toGet / sizeof(SFLDataFormat), getPlaybackGain());
 
         write(out, toGet, playbackHandle_);
