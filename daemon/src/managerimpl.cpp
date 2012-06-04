@@ -632,7 +632,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
     if (iter != conferenceMap_.end())
         conf = iter->second;
 
-    if (conf == NULL) {
+    if (conf == 0) {
         ERROR("Conference not found");
         return;
     }
@@ -1129,6 +1129,10 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
 
 void ManagerImpl::processRemainingParticipants(const std::string &current_call_id, Conference * &conf)
 {
+    if (!conf) {
+        ERROR("Cannot process conference that is NULL");
+        return;
+    }
     ParticipantSet participants(conf->getParticipantList());
     size_t n = participants.size();
     DEBUG("Process remaining %d participant(s) from conference %s",
@@ -1621,7 +1625,7 @@ void ManagerImpl::callFailure(const std::string& call_id)
         Conference *conf = getConferenceFromCallID(call_id);
 
         if (conf == NULL) {
-            ERROR("Could not retreive conference from call id %s", call_id.c_str());
+            ERROR("Could not retrieve conference from call id %s", call_id.c_str());
             return;
         }
 
