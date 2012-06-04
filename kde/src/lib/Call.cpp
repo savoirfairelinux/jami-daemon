@@ -174,10 +174,15 @@ Call* Call::buildExistingCall(QString callId)
    QString    account    = details[ CALL_ACCOUNTID   ];
    call_state startState = getStartStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
    
-   Call* call            = new Call(startState, callId, peerName, peerNumber, account)                 ;
-   call->m_pStartTime    = new QDateTime(QDateTime::currentDateTime())                                 ;
-   call->m_Recording     = callManager.getIsRecording(callId)                                          ;
-   call->m_HistoryState  = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]) ;
+   Call* call            = new Call(startState, callId, peerName, peerNumber, account)                   ;
+   
+   if (!details[ CALL_TIMESTAMP_START ].isEmpty())
+      call->m_pStartTime = new QDateTime(QDateTime::fromTime_t(details[ CALL_TIMESTAMP_START ].toInt())) ;
+   else
+      call->m_pStartTime = new QDateTime(QDateTime::currentDateTime())                                   ;
+   
+   call->m_Recording     = callManager.getIsRecording(callId)                                            ;
+   call->m_HistoryState  = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE])   ;
    
    return call;
 } //buildExistingCall
