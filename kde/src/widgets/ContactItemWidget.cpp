@@ -271,6 +271,32 @@ Contact* ContactItemWidget::getContact() const
    return m_pContactKA;
 }
 
+///Select a number
+QString ContactItemWidget::showNumberSelector(bool& ok)
+{
+   if (m_pContactKA->getPhoneNumbers().size() > 1) {
+      QStringList list;
+      QHash<QString,QString> map;
+      foreach (Contact::PhoneNumber* number, m_pContactKA->getPhoneNumbers()) {
+         map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
+         list << number->getType()+" ("+number->getNumber()+")";
+      }
+      QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
+
+      if (!ok) {
+         kDebug() << "Operation cancelled";
+      }
+      return map[result];
+   }
+   else if (m_pContactKA->getPhoneNumbers().size() == 1) {
+      ok = true;
+      return m_pContactKA->getPhoneNumbers()[1]->getNumber();
+   }
+   else {
+      ok = false;
+      return "";
+   }
+}
 
 /*****************************************************************************
  *                                                                           *
@@ -307,6 +333,14 @@ void ContactItemWidget::sendEmail()
 void ContactItemWidget::callAgain()
 {
    kDebug() << "Calling ";
+   bool ok;
+   QString number = showNumberSelector(ok);
+   if (ok) {
+      Call* call = SFLPhone::model()->addDialingCall(m_pContactKA->getFormattedName(), SFLPhone::app()->model()->getCurrentAccountId());
+      call->setCallNumber(number);
+      call->setPeerName(m_pContactKA->getFormattedName());
+      call->actionPerformed(CALL_ACTION_ACCEPT);
+   }
 }
 
 ///Copy contact to clipboard
@@ -385,23 +419,14 @@ void ContactItemWidget::dragLeaveEvent ( QDragLeaveEvent *e )
 void ContactItemWidget::transferEvent(QMimeData* data)
 {
    if (data->hasFormat( MIME_CALLID)) {
-      QStringList list;
-      QHash<QString,QString> map;
-      foreach (Contact::PhoneNumber* number, m_pContactKA->getPhoneNumbers()) {
-         map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
-         list << number->getType()+" ("+number->getNumber()+")";
-      }
       bool ok;
-      QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
+      QString result = showNumberSelector(ok);
       if (ok) {
          Call* call = SFLPhone::model()->getCall(data->data(MIME_CALLID));
          if (dynamic_cast<Call*>(call)) {
             call->changeCurrentState(CALL_STATE_TRANSFER);
-            SFLPhone::model()->transfer(call, map[result]);
+            SFLPhone::model()->transfer(call, result);
          }
-      }
-      else {
-         kDebug() << "Operation cancelled";
       }
    }
    else

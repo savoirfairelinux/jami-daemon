@@ -394,5 +394,8 @@ void CallTreeItem::hide()
 void CallTreeItem::incrementTimer()
 {
    int nsec = QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toInt()).time().secsTo( QTime::currentTime() );
-   m_pElapsedL->setText(QString("%1:%2").arg(nsec/60,2).arg(nsec%60,2));
+   if (nsec/3600)
+      m_pElapsedL->setText(QString("%1").arg(nsec/3600).trimmed()+":"+QString("%1").arg((nsec%3600)/60,2,10,QChar('0')).trimmed()+":"+QString("%1").arg((nsec%3600)%60,2,10,QChar('0')).trimmed()+" ");
+   else
+      m_pElapsedL->setText(QString("%1").arg((nsec)/60).trimmed()+":"+QString("%1").arg((nsec)%60,2,10,QChar('0')).trimmed()+" ");
 }
