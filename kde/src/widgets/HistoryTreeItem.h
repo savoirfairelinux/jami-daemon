@@ -42,13 +42,7 @@ class QMenu;
 class QLabel;
 class QToolButton;
 class QGridLayout;
-
-namespace Phonon{
-   class SeekSlider;
-   class MediaObject;
-   class AudioOutput;
-   class MediaSource;
-}
+class QSlider;
 
 //KDE
 class KAction;
@@ -102,6 +96,8 @@ class HistoryTreeItem : public QWidget
 
     uint         m_TimeStamp      ;
     uint         m_Length         ;
+    uint         m_SeekPos        ;
+    bool         m_Paused         ;
     QString      m_Name           ;
     QString      m_PhoneNumber    ;
     QGridLayout* m_pMainLayout    ;
@@ -109,19 +105,14 @@ class HistoryTreeItem : public QWidget
 
     QTreeWidgetItem* m_pItem;
 
-    Phonon::MediaObject*       m_pMediaObject             ;
-    Phonon::MediaObject*       m_pMetaInformationResolver ;
-    Phonon::AudioOutput*       m_pAudioOutput             ;
-    QList<Phonon::MediaSource> m_lSources                 ;
-
     //Recorded call player
-    Phonon::SeekSlider* m_pAudioSlider ;
-    QLabel*             m_pTimeLeftL   ;
-    QLabel*             m_pTimePlayedL ;
-    QToolButton*        m_pPause       ;
-    QToolButton*        m_pStop        ;
-    QToolButton*        m_pNote        ;
-    QWidget*            m_pPlayer      ;
+    QSlider*     m_pAudioSlider ;
+    QLabel*      m_pTimeLeftL   ;
+    QLabel*      m_pTimePlayedL ;
+    QToolButton* m_pPause       ;
+    QToolButton* m_pStop        ;
+    QToolButton* m_pNote        ;
+    QWidget*     m_pPlayer      ;
 
 protected:
    virtual void resizeEvent(QResizeEvent* event);
@@ -141,12 +132,13 @@ private slots:
    void removeRecording  ();
    void showRecordPlayer ();
    void stopPlayer       ();
+   void disconnectSlider ();
+   void connectSlider    ();
    void playPausePlayer  ();
    void editNote         ();
    void tick(qint64 time);
-   void showContext(const QPoint& pos);
-   void metaStateChanged(Phonon::State newState, Phonon::State oldState);
-   void stateChanged(Phonon::State newState, Phonon::State /* oldState */);
+   void updateSlider( int pos, int size );
+   void showContext ( const QPoint& pos );
 
 signals:
    void over(Call*);

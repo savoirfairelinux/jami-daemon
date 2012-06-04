@@ -125,6 +125,11 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
    this->m_Recording       = false      ;
    this->m_pStartTime      = NULL       ;
    this->m_pStopTime       = NULL       ;
+
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   connect(&callManager,SIGNAL(recordPlaybackStopped(QString) ), this, SLOT(stopPlayback(QString)   ));
+   connect(&callManager,SIGNAL(updatePlaybackScale(int,int)   ), this, SLOT(updatePlayback(int,int) ));
+
    emit changed();
 }
 
@@ -893,4 +898,49 @@ void Call::backspaceItemText()
    else {
       changeCurrentState(CALL_STATE_OVER);
    }
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                   SLOTS                                   *
+ *                                                                           *
+ ****************************************************************************/
+
+///Play the record, if any
+void Call::playRecording()
+{
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   bool retval = callManager.startRecordedFilePlayback(getRecordingPath());
+   if (retval)
+      emit playbackStarted();
+}
+
+///Stop the record, if any
+void Call::stopRecording()
+{
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   callManager.stopRecordedFilePlayback(getRecordingPath());
+   emit playbackStopped(); //TODO remove this, it is a workaround for bug #11942
+}
+
+///seek the record, if any
+void Call::seekRecording(double position)
+{
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   callManager.recordPlaybackSeek(position);
+}
+
+///Daemon record playback stopped
+void Call::stopPlayback(QString filePath)
+{
+   if (filePath == getRecordingPath()) {
+      emit playbackStopped();
+   }
+}
+
+///Daemon playback position chnaged
+void Call::updatePlayback(int position,int size)
+{
+   emit playbackPositionChanged(position,size);
 }

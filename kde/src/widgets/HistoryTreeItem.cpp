@@ -30,14 +30,11 @@
 #include <QtGui/QToolButton>
 #include <QtGui/QMessageBox>
 #include <QtGui/QPainter>
+#include <QtGui/QSlider>
 #include <QtGui/QColor>
 #include <QtGui/QFontMetrics>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
-#include <Phonon/MediaObject>
-#include <Phonon/BackendCapabilities>
-#include <Phonon/AudioOutput>
-#include <Phonon/SeekSlider>
 
 //KDE
 #include <KLocale>
@@ -75,8 +72,8 @@ protected:
 
 ///Constructor
 HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
-   : QWidget(parent), m_pItemCall(0),m_pMenu(0),m_pAudioSlider(0),m_pTimeLeftL(0),m_pTimePlayedL(0),m_pPlayer(0),m_pContact(0),
-   m_pPause(0), m_pStop(0), m_pNote(0)
+   : QWidget(parent), m_pItemCall(0), m_pMenu(0) , m_pAudioSlider(0) , m_pTimeLeftL(0) , m_pTimePlayedL(0),m_pPlayer(0),
+   m_pContact(0)    , m_pPause(0)   , m_pStop(0) , m_pNote(0)        , m_SeekPos(0)    , m_Paused(false)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -129,15 +126,14 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pRemove->setSizePolicy(QSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed));
    m_pRemove->setVisible(false);
 
-   connect(m_pCallAgain    , SIGNAL(triggered())                        , this , SLOT(callAgain()         ));
-   connect(m_pAddContact   , SIGNAL(triggered())                        , this , SLOT(addContact()        ));
-   connect(m_pCopy         , SIGNAL(triggered())                        , this , SLOT(copy()              ));
-   connect(m_pEmail        , SIGNAL(triggered())                        , this , SLOT(sendEmail()         ));
-   connect(m_pAddToContact , SIGNAL(triggered())                        , this , SLOT(addToContact()      ));
-   connect(m_pBookmark     , SIGNAL(triggered())                        , this , SLOT(bookmark()          ));
-   connect(m_pPlay         , SIGNAL(clicked()  )                        , this , SLOT(showRecordPlayer()  ));
-   connect(m_pRemove       , SIGNAL(clicked()  )                        , this , SLOT(removeRecording()   ));
-   connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this , SLOT(showContext(QPoint) ));
+   connect(m_pCallAgain    , SIGNAL(triggered())                        , this        , SLOT(callAgain()         ));
+   connect(m_pAddContact   , SIGNAL(triggered())                        , this        , SLOT(addContact()        ));
+   connect(m_pCopy         , SIGNAL(triggered())                        , this        , SLOT(copy()              ));
+   connect(m_pEmail        , SIGNAL(triggered())                        , this        , SLOT(sendEmail()         ));
+   connect(m_pAddToContact , SIGNAL(triggered())                        , this        , SLOT(addToContact()      ));
+   connect(m_pBookmark     , SIGNAL(triggered())                        , this        , SLOT(bookmark()          ));
+   connect(m_pRemove       , SIGNAL(clicked()  )                        , this        , SLOT(removeRecording()   ));
+   connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this        , SLOT(showContext(QPoint) ));
 
    m_pIconL         = new QLabel( this );
    m_pPeerNameL     = new QLabel( this );
@@ -187,16 +183,12 @@ HistoryTreeItem::~HistoryTreeItem()
    delete m_pBookmark      ;
    delete m_pMenu          ;
 
-   delete m_pPlay          ;
-   delete m_pRemove        ;
-   delete m_pAudioSlider   ;
-   delete m_pTimeLeftL     ;
-   delete m_pTimePlayedL   ;
-   delete m_pPlayer        ;
-
-   delete m_pPause         ;
-   delete m_pStop          ;
-   delete m_pNote          ;
+   if (m_pPlay)        delete m_pPlay        ;
+   if (m_pRemove)      delete m_pRemove      ;
+   if (m_pAudioSlider) delete m_pAudioSlider ;
+   if (m_pTimeLeftL)   delete m_pTimeLeftL   ;
+   if (m_pTimePlayedL) delete m_pTimePlayedL ;
+   if (m_pPlayer)      delete m_pPlayer      ;
 }
 
 
@@ -315,18 +307,18 @@ void HistoryTreeItem::removeRecording()
 void HistoryTreeItem::showRecordPlayer()
 {
    if (!m_pAudioSlider) {
-      m_pPlayer      = new PlayerWidget       ( this      );
-      QWidget* r1w   = new QWidget            ( this      );
-      QWidget* r2w   = new QWidget            ( this      );
-      QVBoxLayout* l = new QVBoxLayout        ( m_pPlayer );
-      QHBoxLayout* r1= new QHBoxLayout        ( r1w       );
-      QHBoxLayout* r2= new QHBoxLayout        ( r2w       );
-      m_pAudioSlider = new Phonon::SeekSlider ( this      );
-      m_pTimeLeftL   = new QLabel             ( "00:00"   );
-      m_pTimePlayedL = new QLabel             ( "00:00"   );
-      m_pPause       = new QToolButton        (           );
-      m_pStop        = new QToolButton        (           );
-      m_pNote        = new QToolButton        (           );
+      m_pPlayer       = new PlayerWidget       ( this                 );
+      QWidget* r1w    = new QWidget            ( this                 );
+      QWidget* r2w    = new QWidget            ( this                 );
+      QVBoxLayout* l  = new QVBoxLayout        ( m_pPlayer            );
+      QHBoxLayout* r1 = new QHBoxLayout        ( r1w                  );
+      QHBoxLayout* r2 = new QHBoxLayout        ( r2w                  );
+      m_pAudioSlider  = new QSlider            ( Qt::Horizontal, this );
+      m_pTimeLeftL    = new QLabel             ( "00:00"              );
+      m_pTimePlayedL  = new QLabel             ( "00:00"              );
+      m_pPause        = new QToolButton        (                      );
+      m_pStop         = new QToolButton        (                      );
+      m_pNote         = new QToolButton        (                      );
 
       l->addWidget(r1w);
       l->addWidget(r2w);
@@ -362,31 +354,23 @@ void HistoryTreeItem::showRecordPlayer()
       l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
       m_pPlayer->setVisible(true);
 
-      m_pAudioOutput             = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-      m_pMediaObject             = new Phonon::MediaObject(this);
-      m_pMetaInformationResolver = new Phonon::MediaObject(this);
-      Phonon::createPath(m_pMediaObject, m_pAudioOutput);
 
-      m_pAudioSlider->setMediaObject(m_pMediaObject);
 
-      m_pMediaObject->setTickInterval(1000);
-
-      connect( m_pStop        , SIGNAL(clicked()    ) , this , SLOT( stopPlayer()      ));
-      connect( m_pPause       , SIGNAL(clicked()    ) , this , SLOT( playPausePlayer() ));
-      connect( m_pNote        , SIGNAL(clicked()    ) , this , SLOT( editNote()        ));
-      connect( m_pMediaObject , SIGNAL(tick(qint64) ) , this , SLOT( tick(qint64)      ));
-
-      connect(m_pMediaObject  , SIGNAL(stateChanged(Phonon::State,Phonon::State)),
-         this, SLOT(stateChanged(Phonon::State,Phonon::State)));
+      connect( m_pStop        , SIGNAL(clicked()                        ) , m_pItemCall    , SLOT( stopRecording()       ));
+      connect( m_pItemCall    , SIGNAL(playbackStopped()                ) , this           , SLOT( stopPlayer()          ));
+      connect( m_pItemCall    , SIGNAL(playbackPositionChanged(int,int) ) , this           , SLOT( updateSlider(int,int) ));
+      connect( m_pPause       , SIGNAL(clicked()                        ) , this           , SLOT( playPausePlayer()     ));
+      connect( m_pNote        , SIGNAL(clicked()                        ) , this           , SLOT( editNote()            ));
+      connect( m_pAudioSlider , SIGNAL(sliderPressed()                  ) , this           , SLOT( disconnectSlider()    ));
+      connect( m_pAudioSlider , SIGNAL(sliderReleased()                 ) , this           , SLOT( connectSlider()       ));
 
    }
    kDebug() << "Path:" << m_pItemCall->getRecordingPath();
    m_pPlayer->setVisible(true);
-   Phonon::MediaSource source(m_pItemCall->getRecordingPath());
-   m_lSources.append(source);
-   if (m_lSources.size() > 0)
-      m_pMetaInformationResolver->setCurrentSource(m_lSources.first());
-   m_pMediaObject->play();
+   //Phonon::MediaSource source(m_pItemCall->getRecordingPath());
+   //m_lSources.append(source);
+   //if (m_lSources.size() > 0)
+   //   m_pMetaInformationResolver->setCurrentSource(m_lSources.first());
 
 } //showRecordPlayer
 
@@ -394,22 +378,50 @@ void HistoryTreeItem::showRecordPlayer()
 void HistoryTreeItem::stopPlayer()
 {
    m_pPlayer->setVisible(false);
-   m_pMediaObject->stop();
 }
 
 ///Called then the user press the Play/Pause button
 void HistoryTreeItem::playPausePlayer()
 {
-   if (m_pMediaObject->state() == Phonon::PlayingState)
-      m_pMediaObject->pause();
-   else
-      m_pMediaObject->play();
+   if (!m_Paused) {
+      m_SeekPos = m_pAudioSlider->value();
+      m_pItemCall->stopRecording();
+      m_pPause->setIcon  ( KIcon( "media-playback-start"  ));
+   }
+   else {
+      m_pItemCall->playRecording();
+      m_pItemCall->seekRecording(((double)m_SeekPos)/((double)m_SeekPos) * 100);
+      m_pPause->setIcon  ( KIcon( "media-playback-pause"  ));
+   }
+   m_Paused = !m_Paused;
 }
+
+///Prevent the user from fighting against the automatic progression
+void HistoryTreeItem::disconnectSlider()
+{
+   disconnect(m_pItemCall,SIGNAL(playbackPositionChanged(int,int)),this,SLOT(updateSlider(int,int)));
+}
+
+///Prevent the user from fighting against the automatic progression
+void HistoryTreeItem::connectSlider()
+{
+   m_pItemCall->seekRecording(((double)m_pAudioSlider->value())/((double)m_pAudioSlider->maximum()) * 100);
+   connect(m_pItemCall,SIGNAL(playbackPositionChanged(int,int)),this,SLOT(updateSlider(int,int)));
+}
+
 
 ///Add or edit the note associated with this call
 void HistoryTreeItem::editNote()
 {
 
+}
+
+void HistoryTreeItem::updateSlider(int pos, int size)
+{
+   m_pTimeLeftL->setText(QString("%1").arg((size/1000-pos/1000)/60,2,10,QChar('0'))+":"+QString("%1").arg((size/1000-pos/1000)%60,2,10,QChar('0')));
+   m_pTimePlayedL->setText(QString("%1").arg((pos/1000)/60,2,10,QChar('0'))+":"+QString("%1").arg((pos/1000)%60,2,10,QChar('0')));
+   m_pAudioSlider->setMaximum(size);
+   m_pAudioSlider->setValue(pos);
 }
 
 ///Update player labels
@@ -419,65 +431,65 @@ void HistoryTreeItem::tick(qint64 time)
    m_pTimePlayedL->setText(displayTime.toString("mm:ss"));
 }
 
-///Called on player state change
-void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldState */)
-{
-   kDebug() << "Player state changed";
-   switch (newState) {
-      case Phonon::ErrorState:
-            if (m_pMediaObject->errorType() == Phonon::FatalError) {
-               QMessageBox::warning(this, i18n("Fatal Error"),
-               m_pMediaObject->errorString());
-            } else {
-               QMessageBox::warning(this, i18n("Error"),
-               m_pMediaObject->errorString());
-            }
-            break;
-      case Phonon::PlayingState:
-               m_pPause->setIcon(KIcon("media-playback-pause"));
-               break;
-      case Phonon::StoppedState:
-               m_pPause->setIcon(KIcon("media-playback-play" ));
-               m_pTimePlayedL->setText("00:00");
-               break;
-      case Phonon::PausedState:
-               m_pPause->setIcon(KIcon("media-playback-play" ));
-               break;
-      case Phonon::BufferingState:
-               break;
-      default:
-            ;
-   }
-} //stateChanged
+/////Called on player state change
+//void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldState */)
+//{
+//    kDebug() << "Player state changed";
+//    switch (newState) {
+//       case Phonon::ErrorState:
+//             if (m_pMediaObject->errorType() == Phonon::FatalError) {
+//                QMessageBox::warning(this, i18n("Fatal Error"),
+//                m_pMediaObject->errorString());
+//             } else {
+//                QMessageBox::warning(this, i18n("Error"),
+//                m_pMediaObject->errorString());
+//             }
+//             break;
+//       case Phonon::PlayingState:
+//                m_pPause->setIcon(KIcon("media-playback-pause"));
+//                break;
+//       case Phonon::StoppedState:
+//                m_pPause->setIcon(KIcon("media-playback-play" ));
+//                m_pTimePlayedL->setText("00:00");
+//                break;
+//       case Phonon::PausedState:
+//                m_pPause->setIcon(KIcon("media-playback-play" ));
+//                break;
+//       case Phonon::BufferingState:
+//                break;
+//       default:
+//             ;
+//    }
+// } //stateChanged*/
 
-///Reference code for metastate change
-void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State oldState)
-{
-   Q_UNUSED(oldState);
-   if (newState == Phonon::ErrorState) {
-      QMessageBox::warning(this, i18n("Error opening files"),
-            m_pMetaInformationResolver->errorString());
-      while (!m_lSources.isEmpty() &&
-         !(m_lSources.takeLast() == m_pMetaInformationResolver->currentSource())) {}  /* loop */;
-      return;
-   }
-
-   if (newState != Phonon::StoppedState && newState != Phonon::PausedState)
-      return;
-
-   if (m_pMetaInformationResolver->currentSource().type() == Phonon::MediaSource::Invalid)
-      return;
-
-   QMap<QString, QString> metaData = m_pMetaInformationResolver->metaData();
-
-   m_pMediaObject->setCurrentSource(m_pMetaInformationResolver->currentSource());
-
-   Phonon::MediaSource source = m_pMetaInformationResolver->currentSource();
-   int index = m_lSources.indexOf(m_pMetaInformationResolver->currentSource()) + 1;
-   if (m_lSources.size() > index) {
-      m_pMetaInformationResolver->setCurrentSource(m_lSources.at(index));
-   }
-} //metaStateChanged
+/////Reference code for metastate change
+// void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State oldState)
+// {
+//    Q_UNUSED(oldState);
+//    if (newState == Phonon::ErrorState) {
+//       QMessageBox::warning(this, i18n("Error opening files"),
+//             m_pMetaInformationResolver->errorString());
+//       while (!m_lSources.isEmpty() &&
+//          !(m_lSources.takeLast() == m_pMetaInformationResolver->currentSource())) {}  /* loop */;
+//       return;
+//    }
+// 
+//    if (newState != Phonon::StoppedState && newState != Phonon::PausedState)
+//       return;
+// 
+//    if (m_pMetaInformationResolver->currentSource().type() == Phonon::MediaSource::Invalid)
+//       return;
+// 
+//    QMap<QString, QString> metaData = m_pMetaInformationResolver->metaData();
+// 
+//    m_pMediaObject->setCurrentSource(m_pMetaInformationResolver->currentSource());
+// 
+//    Phonon::MediaSource source = m_pMetaInformationResolver->currentSource();
+//    int index = m_lSources.indexOf(m_pMetaInformationResolver->currentSource()) + 1;
+//    if (m_lSources.size() > index) {
+//       m_pMetaInformationResolver->setCurrentSource(m_lSources.at(index));
+//    }
+// } //metaStateChanged
 
 ///Resize the player
 void HistoryTreeItem::resizeEvent(QResizeEvent* event)
@@ -504,7 +516,15 @@ void HistoryTreeItem::mouseDoubleClickEvent(QMouseEvent* event)
 ///Set the call to be handled by this item
 void HistoryTreeItem::setCall(Call *call)
 {
+   if (!call) return;
+   if (m_pItemCall) {
+      m_pPlay->disconnect();
+      disconnect(m_pItemCall,SIGNAL(playbackStarted()),this,SLOT(showRecordPlayer()));
+   }
+
    m_pItemCall = call;
+   connect(m_pPlay         , SIGNAL(clicked()  )         , m_pItemCall , SLOT(playRecording()     ));
+   connect(m_pItemCall     , SIGNAL(playbackStarted()  ) , this        , SLOT(showRecordPlayer()  ));
 
    if (m_pItemCall->isConference()) {
       m_pIconL->setVisible(true);
@@ -516,7 +536,10 @@ void HistoryTreeItem::setCall(Call *call)
    m_pTimeL->setText(QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toUInt()).toString());
 
    int dur = m_pItemCall->getStopTimeStamp().toInt() - m_pItemCall->getStartTimeStamp().toInt();
-   m_pLengthL->setText(QString("%1").arg(dur/3600,2).trimmed()+":"+QString("%1").arg((dur%3600)/60,2).trimmed()+":"+QString("%1").arg((dur%3600)%60,2).trimmed()+" ");
+   if (dur/3600)
+      m_pLengthL->setText(QString("%1").arg(dur/3600).trimmed()+":"+QString("%1").arg((dur%3600)/60,2,10,QChar('0')).trimmed()+":"+QString("%1").arg((dur%3600)%60,2,10,QChar('0')).trimmed()+" ");
+   else
+      m_pLengthL->setText(QString("%1").arg((dur%3600)/60).trimmed()+":"+QString("%1").arg((dur%3600)%60,2,10,QChar('0')).trimmed()+" ");
 
    connect(m_pItemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
    updated();

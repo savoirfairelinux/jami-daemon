@@ -313,6 +313,24 @@
             </arg>
         </method>
 
+        <method name="getConferenceId" tp:name-for-bindings="getConferenceId">
+            <tp:added version="1.1.0"/>
+            <tp:docstring>
+                If thsi call participate to a conference, return the conference id.
+                Return an empty string elsewhere.
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The call id.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="confID" direction="out">
+              <tp:docstring>
+                A string containing the conference ID, or an empty string.
+              </tp:docstring>
+            </arg>
+        </method>
+
         <method name="setRecording" tp:name-for-bindings="setRecording">
             <tp:docstring>
               Start recording a call.
@@ -340,6 +358,13 @@
             </arg>
         </method>
 
+        <method name="recordPlaybackSeek" tp:name-for-bindings="setVolume">
+            <tp:docstring>
+              <p>Sets the playback position using a linear scale [0,100].</p>
+            </tp:docstring>
+            <arg type="d" name="value" direction="in"/>
+        </method>
+
         <signal name="recordPlaybackFilepath" tp:name-for-bindings="recordPlaybackFilepath">
             <tp:docstring>
               Once after starting recording for the first time, this signal is emited to
@@ -354,6 +379,11 @@
             <arg type="s" name="filepath" />
         </signal>
 
+        <signal name="updatePlaybackScale" tp:name-for-bindings="updatePlaybackScale">
+            <tp:docstring/>
+            <arg type="i" name="position" />
+            <arg type="i" name="size" />
+        </signal>
 
         <method name="getCallDetails" tp:name-for-bindings="getCallDetails">
             <tp:docstring>
@@ -375,6 +405,7 @@
                   <li>DISPLAY_NAME</li>
                   <li>CALL_STATE</li>
                   <li>CALL_TYPE</li>
+                  <li>CONF_ID</li>
                 </ul>
               </tp:docstring>
             </arg>
@@ -769,12 +800,6 @@
             <tp:added version="0.9.7"/>
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="accepted" direction="in"/>
-        </method>
-
-        <method name="setPBXEnrollment" tp:name-for-bindings="setPBXEnrollment">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-            <arg type="b" name="yesNo" direction="in"/>
         </method>
 
     </interface>

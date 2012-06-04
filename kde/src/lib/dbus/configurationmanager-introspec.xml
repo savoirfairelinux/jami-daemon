@@ -37,9 +37,9 @@
                         <li>DISPLAY_NAMEL: The display name</li>
                         <li>STUN_ENABLE: True or False (Default: False)</li>
                         <li>STUN_SERVER: The STUN server address</li>
-                        <li>REGISTRATION_STATUS: The account registration status. Should be Registered to make calls.</li>
-                        <li>REGISTRATION_STATE_CODE</li>
-                        <li>REGISTRATION_STATE_DESCRIPTION</li>
+                        <li>ACCOUNT_REGISTRATION_STATUS: The account registration status. Should be Registered to make calls.</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_CODE</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_DESC</li>
                         <li>SRTP_KEY_EXCHANGE</li>
                         <li>SRTP_ENABLE: Whether or not voice communication are encrypted - True or False (Default: False)</li>
                         <li>SRTP_RTP_FALLBACK</li>
@@ -91,7 +91,6 @@
             Get configuration settings of the IP2IP_PROFILE. They are sligthly different from account settings since no VoIP accounts are involved.
             </tp:docstring>
             <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <!--<annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>-->
             <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
             <tp:docstring>
             Available parameters are:
@@ -360,6 +359,7 @@
            </arg>
        </method>
 
+       <!--    General Settings Panel         -->
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
            <arg type="s" name="state" direction="out">
@@ -385,6 +385,7 @@
            <arg type="i" name="level" direction="out">
            </arg>
        </method>
+
 
        <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
            <arg type="i" name="days" direction="out">
@@ -445,6 +446,24 @@
        </method>
 
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
+       </signal>
+
+       <signal name="historyChanged" tp:name-for-bindings="historyChanged">
+       </signal>
+
+       <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="registration_state"/>
+       </signal>
+
+       <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
+           <arg type="s" name="reason">
+           </arg>
+       </signal>
+
+       <signal name="stunStatusSuccess" tp:name-for_bindings="stunStatusSuccess">
+           <arg type="s" name="message">
+           </arg>
        </signal>
 
        <signal name="errorAlert" tp:name-for-bindings="errorAlert">
