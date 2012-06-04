@@ -33,7 +33,7 @@
 
 #include <string>
 #include <vector>
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include <libudev.h>
 
 #include "video_v4l2.h"
@@ -47,7 +47,6 @@ class VideoV4l2ListThread : public ost::Thread {
         ~VideoV4l2ListThread();
 
         virtual void run();
-        virtual void finalize() {}
 
         std::vector<std::string> getDeviceList();
         std::vector<std::string> getChannelList(const std::string &dev);
@@ -67,6 +66,7 @@ class VideoV4l2ListThread : public ost::Thread {
 
         udev *udev_;
         udev_monitor *udev_mon_;
+        bool probing_;
 };
 
 } // namespace sfl_video

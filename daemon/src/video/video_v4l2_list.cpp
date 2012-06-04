@@ -34,7 +34,7 @@
 #include <stdexcept> // for std::runtime_error
 #include <sstream>
 #include <algorithm>
-#include <cc++/thread.h>
+#include "cc_thread.h"
 
 #include "logger.h"
 
@@ -65,7 +65,7 @@ static int is_v4l2(struct udev_device *dev)
     return version and strcmp(version, "1");
 }
 
-VideoV4l2ListThread::VideoV4l2ListThread() : devices_(), mutex_(), udev_(0), udev_mon_(0)
+VideoV4l2ListThread::VideoV4l2ListThread() : devices_(), mutex_(), udev_(0), udev_mon_(0), probing_(false)
 {
     udev_list_entry *devlist;
     udev_enumerate *devenum;
@@ -193,6 +193,7 @@ start:
 
 VideoV4l2ListThread::~VideoV4l2ListThread()
 {
+    probing_ = false;
     ost::Thread::terminate();
     if (udev_mon_)
         udev_monitor_unref(udev_mon_);
@@ -202,23 +203,30 @@ VideoV4l2ListThread::~VideoV4l2ListThread()
 
 void VideoV4l2ListThread::run()
 {
-    if (!udev_mon_)
+    if (!udev_mon_) {
+        probing_ = false;
+        ost::Thread::exit();
         return;
+    }
 
     int fd = udev_monitor_get_fd(udev_mon_);
     fd_set set;
     FD_ZERO(&set);
     FD_SET(fd, &set);
-    while (not testCancel()) {
+    probing_ = true;
+    while (probing_) {
         struct udev_device *dev;
         const char *node, *action;
-        int ret = select(fd + 1, &set, NULL, NULL, NULL);
+        timeval timeout = {0 /* sec */, 500000 /* usec */};
+        int ret = select(fd + 1, &set, NULL, NULL, &timeout);
         switch(ret) {
+            case 0:
+                break;
             case 1:
                 dev = udev_monitor_receive_device(udev_mon_);
                 if (!is_v4l2(dev)) {
                     udev_device_unref(dev);
-                    continue;
+                    break;;
                 }
 
                 node = udev_device_get_devnode(dev);
@@ -236,18 +244,23 @@ void VideoV4l2ListThread::run()
                     delDevice(string(node));
                 }
                 udev_device_unref(dev);
-                continue;
+                break;
 
             case -1:
                 if (errno == EAGAIN)
                     continue;
                 ERROR("udev monitoring thread: select failed (%m)");
+                probing_ = false;
+                ost::Thread::exit();
                 return;
 
             default:
                 ERROR("select() returned %d (%m)", ret);
+                probing_ = false;
+                ost::Thread::exit();
                 return;
         }
+        yield();
     }
 }
 

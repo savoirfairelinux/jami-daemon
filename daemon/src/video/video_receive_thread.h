@@ -31,7 +31,7 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include <map>
 #include <string>
 #include <climits>
@@ -72,6 +72,7 @@ class VideoReceiveThread : public ost::Thread {
         void loadSDP();
 
     public:
+        bool receiving_;
         VideoReceiveThread(const std::map<std::string, std::string> &args,
                            SharedMemory &handle);
         virtual ~VideoReceiveThread();

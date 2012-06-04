@@ -31,7 +31,7 @@
 #ifndef SHARED_MEMORY_H_
 #define SHARED_MEMORY_H_
 
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include "noncopyable.h"
 
 class VideoControls;

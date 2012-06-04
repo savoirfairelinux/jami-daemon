@@ -34,7 +34,7 @@
 #include <string>
 #include <iostream>
 #include <assert.h>
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include "logger.h"
 
 extern "C" {

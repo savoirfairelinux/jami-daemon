@@ -51,7 +51,7 @@ int getBitRate(const std::string & /*codec*/)
 
 std::vector<std::string> getCodecList()
 {
-	return libav_utils::getVideoCodecList();
+    return libav_utils::getVideoCodecList();
 }
 
 std::vector<std::string> getCodecSpecifications(const std::string &codec)

@@ -44,8 +44,10 @@ extern "C" {
 }
 
 #include <stdexcept>
+#include <map>
 #include <ctime>
 #include <cstdlib>
+#include <fstream>
 
 #include "manager.h"
 #include "dbus/video_controls.h"
@@ -55,7 +57,6 @@ static const enum PixelFormat VIDEO_RGB_FORMAT = PIX_FMT_BGRA;
 
 namespace sfl_video {
 
-using std::map;
 using std::string;
 
 namespace { // anonymous namespace
@@ -178,21 +179,20 @@ void VideoReceiveThread::createScalingContext()
     CHECK(imgConvertCtx_, "Cannot init the conversion context!");
 }
 
-VideoReceiveThread::VideoReceiveThread(const map<string, string> &args,
+VideoReceiveThread::VideoReceiveThread(const std::map<string, string> &args,
                                        sfl_video::SharedMemory &handle) :
     args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
-    dstWidth_(-1), dstHeight_(-1), sharedMemory_(handle)
-{
-    setCancel(cancelDeferred);
-}
+    dstWidth_(-1), dstHeight_(-1), sharedMemory_(handle), receiving_(false)
+{}
 
 void VideoReceiveThread::run()
 {
     setup();
 
     createScalingContext();
-    while (not testCancel()) {
+    receiving_ = true;
+    while (receiving_) {
         AVPacket inpacket;
 
         int ret = 0;
@@ -219,11 +219,13 @@ void VideoReceiveThread::run()
                 sharedMemory_.frameUpdatedCallback();
             }
         }
+        yield();
     }
 }
 
 VideoReceiveThread::~VideoReceiveThread()
 {
+    receiving_ = false;
     ost::Thread::terminate();
 
     if (imgConvertCtx_)
