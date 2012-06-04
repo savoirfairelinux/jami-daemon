@@ -198,8 +198,9 @@ std::vector<std::string> PulseLayer::getAudioDeviceList(AudioStreamDirection dir
 {
     if (AUDIO_STREAM_CAPTURE == dir)
         return sinkList_;
-    else if (AUDIO_STREAM_PLAYBACK)
+    else if (AUDIO_STREAM_PLAYBACK == dir)
         return sourceList_;
+    return std::vector<std::string>();
 }
 
 void PulseLayer::createStreams(pa_context* c)

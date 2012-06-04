@@ -31,7 +31,7 @@
 #ifndef _VIDEO_SEND_THREAD_H_
 #define _VIDEO_SEND_THREAD_H_
 
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include <map>
 #include <string>
 #include "noncopyable.h"
@@ -72,6 +72,7 @@ class VideoSendThread : public ost::Thread {
         AVFormatContext *outputCtx_;
         SwsContext *imgConvertCtx_;
         std::string sdp_;
+        bool sending_;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
         virtual ~VideoSendThread();

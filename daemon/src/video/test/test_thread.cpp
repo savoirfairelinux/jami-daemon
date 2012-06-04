@@ -1,30 +1,20 @@
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include <memory>
 #include <iostream>
 #include "noncopyable.h"
 
 class CancellableBusyThread : public ost::Thread {
     public:
-        CancellableBusyThread() : x_(0)
-        {
-            setCancel(cancelImmediate);
-        }
+        CancellableBusyThread() : started_(true), x_(0)
+        {}
 
         virtual void run()
         {
             x_ = new int(0);
-            while (true)
-            {
+            while (started_) {
                 (*x_) += 1;
                 yield();
             }
-        }
-
-        virtual void final()
-        {
-            delete x_;
-            x_ = 0;
-            std::cout << __PRETTY_FUNCTION__ << std::endl;
         }
 
         /* terminate() should always be called at the start of any
@@ -33,9 +23,13 @@ class CancellableBusyThread : public ost::Thread {
          */
         virtual ~CancellableBusyThread()
         {
-            terminate();
+            std::cout << __PRETTY_FUNCTION__ << std::endl;
+            ost::Thread::terminate();
+            delete x_;
+            x_ = 0;
         }
 
+        bool started_;
     private:
         int *x_;
         NON_COPYABLE(CancellableBusyThread);
@@ -51,10 +45,6 @@ class EventThread : public ost::Thread {
             event_.signal();
         }
 
-        virtual void final()
-        {
-        }
-
         // called from other threads
         void waitForEvent()
         {
@@ -67,8 +57,9 @@ class EventThread : public ost::Thread {
          */
         virtual ~EventThread()
         {
-            terminate();
+            ost::Thread::terminate();
             std::cout << __PRETTY_FUNCTION__ << std::endl;
+            assert(!isRunning());
         }
     private:
         int x_;
@@ -81,13 +72,13 @@ int main()
     th->start();
     th->waitForEvent();
     std::cout << "event has happened..." << std::endl;
-    th->waitForEvent(); // this should not block since it's been signalled and not reset
-    std::cout << "yup, event has happened..." << std::endl;
     th->join();
     delete th;
 
     std::auto_ptr<CancellableBusyThread> busy(new CancellableBusyThread);
+    std::cout << "Starting busy thread" << std::endl;
     busy->start();
+    busy->started_ = false;
     busy.reset();
     std::cout << "Finished busy thread" << std::endl;
 

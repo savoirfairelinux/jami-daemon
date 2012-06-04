@@ -34,7 +34,7 @@
 #include <string>
 #include <iostream>
 #include <assert.h>
-#include <cc++/thread.h>
+#include "cc_thread.h"
 #include "logger.h"
 
 extern "C" {
@@ -43,14 +43,13 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 }
 
-
+namespace {
 
 static std::map<std::string, std::string> encoders;
 static std::vector<std::string> video_codecs;
 /* application wide mutex to protect concurrent access to avcodec */
 static ost::Mutex avcodec_lock;
 
-namespace {
 
 void findInstalledVideoCodecs()
 {
@@ -77,23 +76,22 @@ namespace libav_utils {
 
 std::vector<std::string> getVideoCodecList()
 {
-	return video_codecs;
+    return video_codecs;
 }
 
-static int avcodecManageMutex(void **mutex, enum AVLockOp op)
+static int avcodecManageMutex(void ** /*mutex*/, enum AVLockOp op)
 {
-    (void)mutex; // no need to store our mutex in ffmpeg
     switch(op) {
-    case AV_LOCK_CREATE:
-        break; // our mutex is already created
-    case AV_LOCK_DESTROY:
-        break; // our mutex doesn't need to be destroyed
-    case AV_LOCK_OBTAIN:
-        avcodec_lock.enter();
-        break;
-    case AV_LOCK_RELEASE:
-        avcodec_lock.leave();
-        break;
+        case AV_LOCK_CREATE:
+            break; // our mutex is already created
+        case AV_LOCK_DESTROY:
+            break; // our mutex doesn't need to be destroyed
+        case AV_LOCK_OBTAIN:
+            avcodec_lock.enter();
+            break;
+        case AV_LOCK_RELEASE:
+            avcodec_lock.leave();
+            break;
     }
 
     return 0;
@@ -101,7 +99,7 @@ static int avcodecManageMutex(void **mutex, enum AVLockOp op)
 
 std::map<std::string, std::string> encodersMap()
 {
-	return encoders;
+    return encoders;
 }
 
 void sfl_avcodec_init()
@@ -119,19 +117,18 @@ void sfl_avcodec_init()
     av_lockmgr_register(avcodecManageMutex);
 
     /* list of codecs tested and confirmed to work */
-    encoders["H264"] 		    = "libx264";
-    encoders["H263-2000"]		= "h263p";
-    encoders["VP8"]			    = "libvpx";
-    encoders["MP4V-ES"]         = "mpeg4";
-
+    encoders["H264"]        = "libx264";
+    encoders["H263-2000"]   = "h263p";
+    encoders["VP8"]         = "libvpx";
+    encoders["MP4V-ES"]     = "mpeg4";
 
     //FFmpeg needs to be modified to allow us to send configuration
     //inline, with CODEC_FLAG_GLOBAL_HEADER
-    //encoders["THEORA"]		= "libtheora";
+    //encoders["THEORA"]        = "libtheora";
 
     // ffmpeg hardcodes RTP output format to H263-2000
     // but it can receive H263-1998
-    //encoders["H263-1998"]		= "h263p";
+    // encoders["H263-1998"]        = "h263p";
 
     // ffmpeg doesn't know RTP format for H263 (payload type = 34)
     //encoders["H263"]          = "h263";

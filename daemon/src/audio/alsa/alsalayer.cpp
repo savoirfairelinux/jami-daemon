@@ -43,7 +43,7 @@ class AlsaThread : public ost::Thread {
     public:
         AlsaThread(AlsaLayer *alsa);
 
-        ~AlsaThread() { terminate(); }
+        ~AlsaThread() { ost::Thread::terminate(); }
 
         virtual void run();
 
@@ -63,7 +63,7 @@ void AlsaThread::run()
 {
     while (alsa_->isStarted_) {
         alsa_->audioCallback();
-        Thread::sleep(20);
+        ost::Thread::sleep(20 /* ms */);
     }
 }
 

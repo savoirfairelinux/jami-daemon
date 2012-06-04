@@ -43,12 +43,12 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include <map>
 #include "manager.h"
 #include "libx264-ultrafast.ffpreset.h"
 
 namespace sfl_video {
 
-using std::map;
 using std::string;
 
 void VideoSendThread::print_and_save_sdp()
@@ -187,7 +187,7 @@ void VideoSendThread::setup()
     scaledPicture_ = avcodec_alloc_frame();
 
     // open encoder
-    
+
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     CHECK(avcodec_open(encoderCtx_, encoder) >= 0, "Could not open encoder")
 #else
@@ -249,14 +249,12 @@ void VideoSendThread::createScalingContext()
     CHECK(imgConvertCtx_, "Cannot init the conversion context");
 }
 
-VideoSendThread::VideoSendThread(const map<string, string> &args) :
+VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     sdpReady_(), args_(args), scaledPictureBuf_(0), outbuf_(0),
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
-    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_()
-{
-    setCancel(cancelDeferred);
-}
+    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), sending_(false)
+{}
 
 void VideoSendThread::run()
 {
@@ -265,7 +263,8 @@ void VideoSendThread::run()
     createScalingContext();
 
     int frameNumber = 0;
-    while (not testCancel()) {
+    sending_ = true;
+    while (sending_) {
         AVPacket inpacket;
         if (av_read_frame(inputCtx_, &inpacket) < 0)
             break;
@@ -322,11 +321,14 @@ void VideoSendThread::run()
         // write the compressed frame in the media file
         int ret = av_interleaved_write_frame(outputCtx_, &opkt);
         CHECK(ret >= 0, "av_interleaved_write_frame() error");
+        yield();
     }
 }
 
 VideoSendThread::~VideoSendThread()
 {
+    // FIXME
+    sending_ = false;
     ost::Thread::terminate();
     // make sure no one is waiting for the SDP which will never come if we've
     // error'd out
