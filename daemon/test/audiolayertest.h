@@ -51,7 +51,7 @@ class AudioLayerTest: public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(AudioLayerTest);
         CPPUNIT_TEST(testAudioLayerConfig);
-        //CPPUNIT_TEST(testPulseConnect);
+        CPPUNIT_TEST(testPulseConnect);
         //TODO: this test ends the test sequence when using on a alsa only system
         //CPPUNIT_TEST(testAudioLayerSwitch);
         CPPUNIT_TEST_SUITE_END();
