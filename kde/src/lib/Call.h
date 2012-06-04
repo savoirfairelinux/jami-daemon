@@ -258,9 +258,21 @@ private:
    QDateTime* setStartTime_private(QDateTime* time);
    QDateTime* setStopTime_private(QDateTime* time);
 
+public slots:
+   void playRecording();
+   void stopRecording();
+   void seekRecording(double position);
+
+private slots:
+   void stopPlayback(QString filePath);
+   void updatePlayback(int position,int size);
+
 signals:
    void changed();
    void isOver(Call*);
+   void playbackPositionChanged(int,int);
+   void playbackStopped();
+   void playbackStarted();
 };
 
 #endif
