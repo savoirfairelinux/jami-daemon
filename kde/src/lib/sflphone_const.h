@@ -212,6 +212,7 @@
 #define CALL_ACCOUNTID                    "ACCOUNTID"
 #define CALL_STATE                        "CALL_STATE"
 #define CALL_TYPE                         "CALL_TYPE"
+#define CALL_TIMESTAMP_START              "TIMESTAMP_START"
 
 /** Call States */
 #define CALL_STATE_CHANGE_HUNG_UP         "HUNGUP"
