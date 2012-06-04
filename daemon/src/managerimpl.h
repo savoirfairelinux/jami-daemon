@@ -868,7 +868,7 @@ class ManagerImpl {
          * @param current call id
          * @param conference pointer
          */
-        void processRemainingParticipants(const std::string &current_call_id, Conference * &conf);
+        void processRemainingParticipants(const std::string &current_call_id, Conference &conf);
 
         /**
          * Create config directory in home user and return configuration file path
