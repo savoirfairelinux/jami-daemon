@@ -103,6 +103,12 @@ RingBuffer* MainBuffer::getRingBuffer(const std::string & call_id)
     return (iter != ringBufferMap_.end()) ? iter->second : NULL;
 }
 
+const RingBuffer* MainBuffer::getRingBuffer(const std::string & call_id) const
+{
+    RingBufferMap::const_iterator iter = ringBufferMap_.find(call_id);
+    return (iter != ringBufferMap_.end()) ? iter->second : NULL;
+}
+
 void MainBuffer::createRingBuffer(const std::string &call_id)
 {
     if (!getRingBuffer(call_id))
@@ -162,7 +168,7 @@ void MainBuffer::unBindCallID(const std::string & call_id1, const std::string & 
     if (ringbuffer) {
         ringbuffer->removeReadPointer(call_id1);
 
-        if (ringbuffer->getNbReadPointer() == 0) {
+        if (ringbuffer->hasNoReadPointers()) {
             removeCallIDSet(call_id2);
             removeRingBuffer(call_id2);
         }
@@ -173,7 +179,7 @@ void MainBuffer::unBindCallID(const std::string & call_id1, const std::string & 
     if (ringbuffer) {
         ringbuffer->removeReadPointer(call_id2);
 
-        if (ringbuffer->getNbReadPointer() == 0) {
+        if (ringbuffer->hasNoReadPointers()) {
             removeCallIDSet(call_id1);
             removeRingBuffer(call_id1);
         }
@@ -191,7 +197,7 @@ void MainBuffer::unBindHalfDuplexOut(const std::string & process_id, const std::
     if (ringbuffer) {
         ringbuffer->removeReadPointer(process_id);
 
-        if (ringbuffer->getNbReadPointer() == 0) {
+        if (ringbuffer->hasNoReadPointers()) {
             removeCallIDSet(call_id);
             removeRingBuffer(call_id);
         }
@@ -222,17 +228,17 @@ void MainBuffer::unBindAll(const std::string & call_id)
     }
 }
 
-void MainBuffer::putData(void *buffer, int toCopy, const std::string &call_id)
+void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
 {
     ost::MutexLock guard(mutex_);
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
 
     if (ring_buffer)
-        ring_buffer->Put(buffer, toCopy);
+        ring_buffer->put(buffer, toCopy);
 }
 
-int MainBuffer::getData(void *buffer, int toCopy, const std::string &call_id)
+size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_id)
 {
     ost::MutexLock guard(mutex_);
 
@@ -252,18 +258,18 @@ int MainBuffer::getData(void *buffer, int toCopy, const std::string &call_id)
     } else {
         memset(buffer, 0, toCopy);
 
-        int size = 0;
+        size_t size = 0;
 
         for (CallIDSet::iterator iter_id = callid_set->begin();
              iter_id != callid_set->end(); ++iter_id) {
-            int nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
+            size_t nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
             SFLDataFormat mixBuffer[nbSmplToCopy];
             memset(mixBuffer, 0, toCopy);
             size = getDataByID(mixBuffer, toCopy, *iter_id, call_id);
 
             if (size > 0) {
                 SFLDataFormat *dest = static_cast<SFLDataFormat*>(buffer);
-                for (int k = 0; k < nbSmplToCopy; ++k)
+                for (size_t k = 0; k < nbSmplToCopy; ++k)
                     dest[k] += mixBuffer[k];
             }
         }
@@ -272,13 +278,13 @@ int MainBuffer::getData(void *buffer, int toCopy, const std::string &call_id)
     }
 }
 
-int MainBuffer::getDataByID(void *buffer, int toCopy, const std::string & call_id, const std::string & reader_id)
+size_t MainBuffer::getDataByID(void *buffer, size_t toCopy, const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer(call_id);
-    return ring_buffer ? ring_buffer->Get(buffer, toCopy, reader_id) : 0;
+    return ring_buffer ? ring_buffer->get(buffer, toCopy, reader_id) : 0;
 }
 
-int MainBuffer::availForGet(const std::string & call_id)
+size_t MainBuffer::availableForGet(const std::string &call_id)
 {
     ost::MutexLock guard(mutex_);
 
@@ -293,39 +299,39 @@ int MainBuffer::availForGet(const std::string & call_id)
         if ((call_id != DEFAULT_ID) && (*iter_id == call_id))
             DEBUG("This problem should not occur since we have %ld elements", callid_set->size());
 
-        return availForGetByID(*iter_id, call_id);
+        return availableForGetByID(*iter_id, call_id);
 
     } else {
 
-        int avail_bytes = INT_MAX;
+        size_t availableBytes = INT_MAX;
         for (CallIDSet::iterator i = callid_set->begin(); i != callid_set->end(); ++i) {
-            const int nb_bytes = availForGetByID(*i, call_id);
+            const size_t nbBytes = availableForGetByID(*i, call_id);
 
-            if (nb_bytes != 0)
-                avail_bytes = std::min(avail_bytes, nb_bytes);
+            if (nbBytes != 0)
+                availableBytes = std::min(availableBytes, nbBytes);
         }
 
-        return avail_bytes != INT_MAX ? avail_bytes : 0;
+        return availableBytes != INT_MAX ? availableBytes : 0;
     }
 }
 
-int MainBuffer::availForGetByID(const std::string &call_id,
-                                const std::string &reader_id)
+size_t MainBuffer::availableForGetByID(const std::string &call_id,
+                                const std::string &reader_id) const
 {
     if (call_id != DEFAULT_ID and reader_id == call_id)
         ERROR("RingBuffer has a readpointer on itself");
 
-    RingBuffer* ringbuffer = getRingBuffer(call_id);
+    const RingBuffer* ringbuffer = getRingBuffer(call_id);
 
     if (ringbuffer == NULL) {
         ERROR("RingBuffer does not exist");
         return 0;
     } else
-        return ringbuffer->AvailForGet(reader_id);
+        return ringbuffer->availableForGet(reader_id);
 
 }
 
-int MainBuffer::discard(int toDiscard, const std::string &call_id)
+size_t MainBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
     ost::MutexLock guard(mutex_);
 
@@ -340,12 +346,12 @@ int MainBuffer::discard(int toDiscard, const std::string &call_id)
     return toDiscard;
 }
 
-void MainBuffer::discardByID(int toDiscard, const std::string & call_id, const std::string & reader_id)
+void MainBuffer::discardByID(size_t toDiscard, const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ringbuffer = getRingBuffer(call_id);
 
     if (ringbuffer)
-        ringbuffer->Discard(toDiscard, reader_id);
+        ringbuffer->discard(toDiscard, reader_id);
 }
 
 void MainBuffer::flush(const std::string & call_id)

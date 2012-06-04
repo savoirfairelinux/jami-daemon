@@ -1475,17 +1475,32 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Get active session sessions
     const pjmedia_sdp_session *remote_sdp;
     pjmedia_sdp_neg_get_active_remote(inv->neg, &remote_sdp);
+
+    if (pjmedia_sdp_validate(remote_sdp) != PJ_SUCCESS) {
+        ERROR("Invalid remote SDP session");
+        return;
+    }
     const pjmedia_sdp_session *local_sdp;
     pjmedia_sdp_neg_get_active_local(inv->neg, &local_sdp);
+    if (pjmedia_sdp_validate(local_sdp) != PJ_SUCCESS) {
+        ERROR("Invalid local SDP session");
+        return;
+    }
 
     // Print SDP session
-    char buffer[1000];
+    char buffer[4096];
     memset(buffer, 0, sizeof buffer);
-    pjmedia_sdp_print(remote_sdp, buffer, sizeof buffer);
+    if (pjmedia_sdp_print(remote_sdp, buffer, sizeof buffer) == -1) {
+        ERROR("SDP was too big for buffer");
+        return;
+    }
     DEBUG("Remote active SDP Session:\n%s", buffer);
 
     memset(buffer, 0, sizeof buffer);
-    pjmedia_sdp_print(local_sdp, buffer, sizeof buffer);
+    if (pjmedia_sdp_print(local_sdp, buffer, sizeof buffer) == -1) {
+        ERROR("SDP was too big for buffer");
+        return;
+    }
     DEBUG("Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
@@ -1495,8 +1510,8 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update internal field for
     sdpSession->setMediaTransportInfoFromRemoteSdp();
 
-	call->getAudioRtp().updateDestinationIpAddress();
-	call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
+    call->getAudioRtp().updateDestinationIpAddress();
+    call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
 #ifdef SFL_VIDEO
     call->getVideoRtp()->updateSDP(*call->getLocalSDP());
     call->getVideoRtp()->updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());

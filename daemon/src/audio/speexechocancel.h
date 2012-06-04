@@ -39,20 +39,20 @@ class SpeexEchoCancel {
          * Add speaker data into internal buffer
          * \param inputData containing far-end voice data to be sent to speakers
          */
-        void putData(SFLDataFormat *, int samples);
+        void putData(SFLDataFormat *, size_t samples);
 
         /**
          * Perform echo cancellation using internal buffers
          * \param inputData containing mixed echo and voice data
          * \param outputData containing
          */
-        int process(SFLDataFormat *, SFLDataFormat *, int samples);
+        int process(SFLDataFormat *, SFLDataFormat *, size_t samples);
 
     private:
         NON_COPYABLE(SpeexEchoCancel);
 
-        int echoDelay_;
-        int echoTailLength_;
+        size_t echoDelay_;
+        size_t echoTailLength_;
 
         SpeexEchoState *echoState_;
         SpeexPreprocessState *preState_;

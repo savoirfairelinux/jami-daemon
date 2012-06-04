@@ -166,9 +166,9 @@ IAXVoIPLink::sendAudioFromMic()
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
-        int bytesNeeded = mainBufferSampleRate * 20 / 1000 * sizeof(SFLDataFormat);
+        const size_t bytesNeeded = mainBufferSampleRate * 20 / 1000 * sizeof(SFLDataFormat);
 
-        if (Manager::instance().getMainBuffer()->availForGet(currentCall->getCallId()) < bytesNeeded)
+        if (Manager::instance().getMainBuffer()->availableForGet(currentCall->getCallId()) < bytesNeeded)
             continue;
 
         // Get bytes from micRingBuffer to data_from_mic

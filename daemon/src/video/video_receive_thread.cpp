@@ -241,6 +241,10 @@ VideoReceiveThread::~VideoReceiveThread()
         avcodec_close(decoderCtx_);
 
     if (inputCtx_)
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
         av_close_input_file(inputCtx_);
+#else
+        avformat_close_input(&inputCtx_);
+#endif
 }
 } // end namespace sfl_video

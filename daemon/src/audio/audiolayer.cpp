@@ -66,7 +66,7 @@ void AudioLayer::flushUrgent()
 void AudioLayer::putUrgent(void* buffer, int toCopy)
 {
     ost::MutexLock guard(mutex_);
-    urgentRingBuffer_.Put(buffer, toCopy);
+    urgentRingBuffer_.put(buffer, toCopy);
 }
 
 void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)

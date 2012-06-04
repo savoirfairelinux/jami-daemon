@@ -196,7 +196,11 @@ void VideoSendThread::setup()
 #endif
 
     // add video stream to outputformat context
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     stream_ = av_new_stream(outputCtx_, 0);
+#else
+    stream_ = avformat_new_stream(outputCtx_, 0);
+#endif
     CHECK(stream_ != 0, "Could not allocate stream.");
     stream_->codec = encoderCtx_;
 
@@ -370,6 +374,10 @@ VideoSendThread::~VideoSendThread()
 
     // close the video file
     if (inputCtx_)
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
         av_close_input_file(inputCtx_);
+#else
+        avformat_close_input(&inputCtx_);
+#endif
 }
 } // end namespace sfl_video

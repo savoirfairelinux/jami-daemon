@@ -489,8 +489,8 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     remoteSession_ = pjmedia_sdp_session_clone(memPool_, remote);
 
-    pj_status_t status = pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
-                         remoteSession_, &negotiator_);
+    pjmedia_sdp_neg_create_w_remote_offer(memPool_, localSession_,
+                                          remoteSession_, &negotiator_);
 }
 #else
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
