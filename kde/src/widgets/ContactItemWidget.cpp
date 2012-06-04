@@ -29,12 +29,14 @@
 #include <QtGui/QMenu>
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
+#include <QtGui/QInputDialog>
 
 //KDE
 #include <KIcon>
 #include <KLocale>
 #include <KDebug>
 #include <KAction>
+#include <KStandardDirs>
 
 //System
 #include <unistd.h>
@@ -43,6 +45,7 @@
 #include "klib/AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "widgets/TranslucentButtons.h"
 #include "SFLPhone.h"
 
 //SFLPhone library
@@ -54,6 +57,8 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    : QWidget(parent), m_pMenu(0),m_pOrganizationL(0),m_pEmailL(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
+   setAcceptDrops(true);
+   
    m_pCallAgain  = new KAction(this);
    m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
    m_pCallAgain->setText       ( i18n("Call Again")         );
@@ -90,6 +95,13 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    connect(m_pEmail        , SIGNAL(triggered()) , this,SLOT(sendEmail()      ));
    connect(m_pAddPhone     , SIGNAL(triggered()) , this,SLOT(addPhone()       ));
    connect(m_pBookmark     , SIGNAL(triggered()) , this,SLOT(bookmark()       ));
+
+   //Overlay
+   m_pBtnTrans = new TranslucentButtons(this);
+   m_pBtnTrans->setText(i18n("Transfer"));
+   m_pBtnTrans->setVisible(false);
+   m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
+   connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
 } //ContactItemWidget
 
 ///Destructor
@@ -327,4 +339,87 @@ void ContactItemWidget::bookmark()
    PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
    if (numbers.count() == 1)
       SFLPhone::app()->bookmarkDock()->addBookmark(numbers[0]->getNumber());
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                 Drag&Dop                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Called when a drag and drop occure while the item have not been dropped yet
+void ContactItemWidget::dragEnterEvent ( QDragEnterEvent *e )
+{
+   kDebug() << "Drag enter";
+   if (e->mimeData()->hasFormat( MIME_CALLID) && m_pBtnTrans) {
+      m_pBtnTrans->setHoverState(true);
+      m_pBtnTrans->setMinimumSize(width()-16,height()-4);
+      m_pBtnTrans->setMaximumSize(width()-16,height()-4);
+      m_pBtnTrans->move(8,2);
+      m_pBtnTrans->setVisible(true);
+      m_pBtnTrans->setHoverState(true);
+      e->accept();
+   }
+   else
+      e->ignore();
+} //dragEnterEvent
+
+///The cursor move on a potential drag event
+void ContactItemWidget::dragMoveEvent  ( QDragMoveEvent  *e )
+{
+   m_pBtnTrans->setHoverState(true);
+   e->accept();
+}
+
+///A potential drag event is cancelled
+void ContactItemWidget::dragLeaveEvent ( QDragLeaveEvent *e )
+{
+   m_pBtnTrans->setHoverState(false);
+   m_pBtnTrans->setVisible(false);
+   kDebug() << "Drag leave";
+   e->accept();
+}
+
+///Called when a call is dropped on transfer
+void ContactItemWidget::transferEvent(QMimeData* data)
+{
+   if (data->hasFormat( MIME_CALLID)) {
+      QStringList list;
+      QHash<QString,QString> map;
+      foreach (Contact::PhoneNumber* number, m_pContactKA->getPhoneNumbers()) {
+         map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
+         list << number->getType()+" ("+number->getNumber()+")";
+      }
+      bool ok;
+      QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
+      if (ok) {
+         Call* call = SFLPhone::model()->getCall(data->data(MIME_CALLID));
+         if (dynamic_cast<Call*>(call)) {
+            call->changeCurrentState(CALL_STATE_TRANSFER);
+            SFLPhone::model()->transfer(call, map[result]);
+         }
+      }
+      else {
+         kDebug() << "Operation cancelled";
+      }
+   }
+   else
+      kDebug() << "Invalid mime data";
+   m_pBtnTrans->setHoverState(false);
+   m_pBtnTrans->setVisible(false);
+}
+
+///On data drop
+void ContactItemWidget::dropEvent(QDropEvent *e)
+{
+   kDebug() << "Drop accepted";
+   if (dynamic_cast<const QMimeData*>(e->mimeData()) && e->mimeData()->hasFormat( MIME_CALLID)) {
+      transferEvent((QMimeData*)e->mimeData());
+      e->accept();
+   }
+   else {
+      kDebug() << "Invalid drop data";
+      e->ignore();
+   }
 }
