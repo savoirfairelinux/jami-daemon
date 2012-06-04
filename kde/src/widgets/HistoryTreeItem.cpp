@@ -367,10 +367,6 @@ void HistoryTreeItem::showRecordPlayer()
    }
    kDebug() << "Path:" << m_pItemCall->getRecordingPath();
    m_pPlayer->setVisible(true);
-   //Phonon::MediaSource source(m_pItemCall->getRecordingPath());
-   //m_lSources.append(source);
-   //if (m_lSources.size() > 0)
-   //   m_pMetaInformationResolver->setCurrentSource(m_lSources.first());
 
 } //showRecordPlayer
 
@@ -430,66 +426,6 @@ void HistoryTreeItem::tick(qint64 time)
    QTime displayTime(0, (time / 60000) % 60, (time / 1000) % 60);
    m_pTimePlayedL->setText(displayTime.toString("mm:ss"));
 }
-
-/////Called on player state change
-//void HistoryTreeItem::stateChanged(Phonon::State newState, Phonon::State /* oldState */)
-//{
-//    kDebug() << "Player state changed";
-//    switch (newState) {
-//       case Phonon::ErrorState:
-//             if (m_pMediaObject->errorType() == Phonon::FatalError) {
-//                QMessageBox::warning(this, i18n("Fatal Error"),
-//                m_pMediaObject->errorString());
-//             } else {
-//                QMessageBox::warning(this, i18n("Error"),
-//                m_pMediaObject->errorString());
-//             }
-//             break;
-//       case Phonon::PlayingState:
-//                m_pPause->setIcon(KIcon("media-playback-pause"));
-//                break;
-//       case Phonon::StoppedState:
-//                m_pPause->setIcon(KIcon("media-playback-play" ));
-//                m_pTimePlayedL->setText("00:00");
-//                break;
-//       case Phonon::PausedState:
-//                m_pPause->setIcon(KIcon("media-playback-play" ));
-//                break;
-//       case Phonon::BufferingState:
-//                break;
-//       default:
-//             ;
-//    }
-// } //stateChanged*/
-
-/////Reference code for metastate change
-// void HistoryTreeItem::metaStateChanged(Phonon::State newState, Phonon::State oldState)
-// {
-//    Q_UNUSED(oldState);
-//    if (newState == Phonon::ErrorState) {
-//       QMessageBox::warning(this, i18n("Error opening files"),
-//             m_pMetaInformationResolver->errorString());
-//       while (!m_lSources.isEmpty() &&
-//          !(m_lSources.takeLast() == m_pMetaInformationResolver->currentSource())) {}  /* loop */;
-//       return;
-//    }
-// 
-//    if (newState != Phonon::StoppedState && newState != Phonon::PausedState)
-//       return;
-// 
-//    if (m_pMetaInformationResolver->currentSource().type() == Phonon::MediaSource::Invalid)
-//       return;
-// 
-//    QMap<QString, QString> metaData = m_pMetaInformationResolver->metaData();
-// 
-//    m_pMediaObject->setCurrentSource(m_pMetaInformationResolver->currentSource());
-// 
-//    Phonon::MediaSource source = m_pMetaInformationResolver->currentSource();
-//    int index = m_lSources.indexOf(m_pMetaInformationResolver->currentSource()) + 1;
-//    if (m_lSources.size() > index) {
-//       m_pMetaInformationResolver->setCurrentSource(m_lSources.at(index));
-//    }
-// } //metaStateChanged
 
 ///Resize the player
 void HistoryTreeItem::resizeEvent(QResizeEvent* event)
