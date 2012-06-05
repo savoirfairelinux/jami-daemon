@@ -44,7 +44,7 @@ Conference::Conference()
     Recordable::initRecFilename(id_);
 }
 
-int Conference::getState() const
+Conference::ConferenceState Conference::getState() const
 {
     return confState_;
 }

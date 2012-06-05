@@ -351,13 +351,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     removeStream(callId);
 
     if (isConferenceParticipant(callId)) {
-        Conference *conf = getConferenceFromCallID(callId);
-
-        if (conf) {
-            // remove this participant
-            removeParticipant(callId);
-            processRemainingParticipants(currentCallId, *conf);
-        }
+        removeParticipant(callId);
     } else {
         // we are not participating in a conference, current call switched to ""
         if (not isConference(currentCallId))
@@ -516,14 +510,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 {
     if (isConferenceParticipant(callId)) {
-        Conference *conf = getConferenceFromCallID(callId);
-        // You have to retrieve the conference pointer first,
-        // you can't find it after calling removeParticipant
         removeParticipant(callId);
-        if (conf)
-            processRemainingParticipants(callId, *conf);
-        else
-            ERROR("Conference was NULL");
     } else if (not isConference(getCurrentCallId()))
         unsetCurrentCall();
 
@@ -1036,8 +1023,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
     std::string current_call_id(getCurrentCallId());
 
     if (call_id != MainBuffer::DEFAULT_ID) {
-        std::string currentAccountId(getAccountFromCall(call_id));
-        Call *call = getAccountLink(currentAccountId)->getCall(call_id);
+        Call *call = getCallFromCallID(call_id);
 
         if (call == NULL) {
             ERROR("Could not find call %s", call_id.c_str());
@@ -1060,11 +1046,12 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         }
 
         if (iter_details->second == "RINGING") {
+            // You've dragged a ringing call into the conference, and now
+            // you're detaching it but haven't answered it yet, so you shouldn't put it on hold
             removeParticipant(call_id);
         } else {
             onHoldCall(call_id);
             removeParticipant(call_id);
-            processRemainingParticipants(current_call_id, *conf);
         }
     } else {
         DEBUG("Unbind main participant from conference %d");
@@ -1110,22 +1097,24 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
 
     ConferenceMap::const_iterator iter = conferenceMap_.find(call->getConfId());
 
-    if (iter == conferenceMap_.end() or iter->second == 0) {
+    Conference *conf = iter->second;
+    if (iter == conferenceMap_.end() or conf == 0) {
         ERROR("No conference with id %s, cannot remove participant", call->getConfId().c_str());
         return;
     }
 
-    Conference *conf = iter->second;
     conf->remove(call_id);
     call->setConfId("");
 
     removeStream(call_id);
     getMainBuffer()->stateInfo();
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    processRemainingParticipants(*conf);
 }
 
-void ManagerImpl::processRemainingParticipants(const std::string &current_call_id, Conference &conf)
+void ManagerImpl::processRemainingParticipants(Conference &conf)
 {
+    const std::string current_call_id(getCurrentCallId());
     ParticipantSet participants(conf.getParticipantList());
     const size_t n = participants.size();
     DEBUG("Process remaining %d participant(s) from conference %s",
@@ -1539,17 +1528,10 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     DEBUG("Peer hungup call %s", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
-        Conference *conf = getConferenceFromCallID(call_id);
-
-        if (conf) {
-            removeParticipant(call_id);
-            processRemainingParticipants(getCurrentCallId(), *conf);
-        }
-    } else {
-        if (isCurrentCall(call_id)) {
-            stopTone();
-            unsetCurrentCall();
-        }
+        removeParticipant(call_id);
+    } else if (isCurrentCall(call_id)) {
+        stopTone();
+        unsetCurrentCall();
     }
 
     /* Direct IP to IP call */
@@ -1558,8 +1540,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         history_.addCall(call, preferences.getHistoryLimit());
         SIPVoIPLink::instance()->hangup(call_id);
         saveHistory();
-    }
-    else {
+    } else {
         const std::string account_id(getAccountFromCall(call_id));
         VoIPLink *link = getAccountLink(account_id);
         Call * call = link->getCall(call_id);
@@ -1609,16 +1590,8 @@ void ManagerImpl::callFailure(const std::string& call_id)
 
     if (isConferenceParticipant(call_id)) {
         DEBUG("Call %s participating in a conference failed", call_id.c_str());
-        Conference *conf = getConferenceFromCallID(call_id);
-
-        if (conf == 0) {
-            ERROR("Could not retrieve conference from call id %s", call_id.c_str());
-            return;
-        }
-
         // remove this participant
         removeParticipant(call_id);
-        processRemainingParticipants(getCurrentCallId(), *conf);
     }
 
     removeCallAccount(call_id);
@@ -2862,8 +2835,7 @@ std::vector<std::string> ManagerImpl::getParticipantList(const std::string& conf
 
 std::string ManagerImpl::getConferenceId(const std::string& callID)
 {
-    std::string account_id = getAccountFromCall(callID);
-    Call *call = getAccountLink(account_id)->getCall(callID);
+    Call *call = getCallFromCallID(callID);
     if (call == NULL) {
         ERROR("Call is NULL");
         return "";
