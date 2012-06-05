@@ -67,7 +67,7 @@ void MainBuffer::createCallIDSet(const std::string &set_id)
     if (getCallIDSet(set_id) == NULL)
         callIDMap_[set_id] = new CallIDSet;
     else
-        ERROR("CallID set %s already exists, ignoring", set_id.c_str());
+        DEBUG("CallID set %s already exists, ignoring", set_id.c_str());
 }
 
 void MainBuffer::removeCallIDSet(const std::string &set_id)
@@ -114,7 +114,7 @@ void MainBuffer::createRingBuffer(const std::string &call_id)
     if (!getRingBuffer(call_id))
         ringBufferMap_[call_id] = new RingBuffer(SIZEBUF, call_id);
     else
-        ERROR("Ringbuffer already exists for call_id %s", call_id.c_str());
+        DEBUG("Ringbuffer already exists for call_id %s", call_id.c_str());
 }
 
 void MainBuffer::removeRingBuffer(const std::string &call_id)
