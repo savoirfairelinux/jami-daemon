@@ -130,7 +130,8 @@ class KateColorTreeDelegate : public QStyledItemDelegate
       if (item) {
          QWidget* widget = m_tree->itemWidget(item,0);
          if (widget) {
-            widget->setMinimumSize((m_tree->viewport()->width() - m_categoryDrawer.leftMargin() - m_categoryDrawer.rightMargin()),10);
+            widget->setMinimumSize((m_tree->viewport()->width() - m_categoryDrawer.leftMargin() - m_categoryDrawer.rightMargin())-m_categoryDrawer.leftMargin(),10);
+            widget->setMaximumSize((m_tree->viewport()->width() - m_categoryDrawer.leftMargin() - m_categoryDrawer.rightMargin())-m_categoryDrawer.leftMargin(),99999);
          }
       }
     }

@@ -290,9 +290,6 @@ void HistoryDock::reload()
    foreach(HistoryTreeItem* item, m_History) {
       maxWidth = ((uint)item->getDurWidth() > (uint)maxWidth)?item->getDurWidth():maxWidth;
    }
-   foreach(HistoryTreeItem* item, m_History) {
-      item->setDurWidth(maxWidth);
-   }
 } //reload
 
 ///Enable the ability to set a date range like 1 month to limit history

@@ -497,12 +497,6 @@ void HistoryTreeItem::setItem(QTreeWidgetItem* item)
    m_pItem = item;
 }
 
-void HistoryTreeItem::setDurWidth(uint width)
-{
-   m_pLengthL->setMaximumSize(width, 9999 );
-   m_pLengthL->setMinimumSize(width, 0    );
-}
-
 
 /*****************************************************************************
  *                                                                           *
