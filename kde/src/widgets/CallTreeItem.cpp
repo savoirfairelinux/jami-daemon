@@ -25,6 +25,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QMimeData>
 #include <QtCore/QTimer>
+#include <QtGui/QPainter>
 #include <QtGui/QClipboard>
 #include <QtGui/QApplication>
 #include <QtGui/QWidget>
@@ -37,6 +38,7 @@
 #include <QtGui/QDragLeaveEvent>
 #include <QtGui/QPushButton>
 #include <QtGui/QTreeWidgetItem>
+#include <QtGui/QFontMetrics>
 
 //KDE
 #include <KLocale>
@@ -61,9 +63,10 @@ const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, IC
 ///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
    : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0),m_pTimer(0),m_pPeerL(0),m_pIconL(0),m_pCallNumberL(0),m_pSecureL(0),m_pCodecL(0),m_pHistoryPeerL(0)
-   , m_pTransferPrefixL(0),m_pTransferNumberL(0),m_pElapsedL(0)
+   , m_pTransferPrefixL(0),m_pTransferNumberL(0),m_pElapsedL(0),m_Height(0)
 {
-   setMaximumSize(99999,50);
+   setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+   connect(AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),this,SLOT(updated()));
 }
 
 ///Destructor
@@ -94,6 +97,47 @@ Call* CallTreeItem::call() const
    return m_pItemCall;
 }
 
+///Return the real size hint
+QSize CallTreeItem::sizeHint () const
+{
+   uint height =0;
+   if (m_pItemCall && !m_pItemCall->isConference()) {
+      if ( m_pPeerL       ) {
+         QFontMetrics fm(m_pPeerL->font());
+         height += fm.height();
+      }
+      if ( m_pCallNumberL ) {
+         QFontMetrics fm(m_pCallNumberL->font());
+         height += fm.height();
+      }
+      if ( m_pSecureL     ) {
+         QFontMetrics fm(m_pSecureL->font());
+         height += fm.height();
+      }
+      if ( m_pCodecL      ) {
+         QFontMetrics fm(m_pCodecL->font());
+         height += fm.height();
+      }
+   }
+   else {
+      height = 32;
+   }
+
+   if (ConfigurationSkeleton::limitMinimumRowHeight() && height < (uint)ConfigurationSkeleton::minimumRowHeight()) {
+      height = (uint)ConfigurationSkeleton::minimumRowHeight();
+   }
+
+   if (height != m_Height) {
+      ((CallTreeItem*)this)->m_Height=height;
+      if (m_pIconL && height) {
+         m_pIconL->setMinimumSize(m_Height,m_Height);
+         m_pIconL->setMaximumSize(m_Height,m_Height);
+         m_pIconL->resize(m_Height,m_Height);
+         ((CallTreeItem*)this)->updated();
+      }
+   }
+   return QSize(0,height);
+}
 
 /*****************************************************************************
  *                                                                           *
@@ -113,22 +157,22 @@ void CallTreeItem::setCall(Call *call)
    if (m_pItemCall->isConference()) {
       if (!m_Init) {
          m_pHistoryPeerL = new QLabel(i18n("Conference"),this);
-         m_pIconL = new QLabel("",this);
+         m_pIconL = new QLabel(" ",this);
          QHBoxLayout* mainLayout = new QHBoxLayout();
          mainLayout->addWidget(m_pIconL);
          mainLayout->addWidget(m_pHistoryPeerL);
          setLayout(mainLayout);
          m_Init = true;
       }
-      m_pIconL->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(48,48)));
       m_pIconL->setVisible(true);
+      m_pIconL->setStyleSheet("margin-top:"+(height()-32)/2);
       m_pHistoryPeerL->setVisible(true);
       return;
    }
 
    m_pTransferPrefixL  = new QLabel(i18n("Transfer to : "));
-   m_pTransferNumberL  = new QLabel();
-   m_pElapsedL         = new QLabel();
+   m_pTransferNumberL  = new QLabel(" ");
+   m_pElapsedL         = new QLabel(" ");
    QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    m_pTransferPrefixL->setVisible(false);
@@ -162,13 +206,16 @@ void CallTreeItem::setCall(Call *call)
    transfer->setSpacing(0);
    
    if (ConfigurationSkeleton::displayCallIcon()) {
-      m_pIconL = new QLabel();
+      m_pIconL = new QLabel(" ");
       mainLayout->addWidget(m_pIconL);
    }
 
-   if(ConfigurationSkeleton::displayCallPeer()&& ! m_pItemCall->getPeerName().isEmpty()) {
-      m_pPeerL = new QLabel();
+   if(ConfigurationSkeleton::displayCallPeer()/*&& ! m_pItemCall->getPeerName().isEmpty()*/) {
+      m_pPeerL = new QLabel(" ");
       m_pPeerL->setText(m_pItemCall->getPeerName());
+      if (m_pItemCall->getPeerName().isEmpty()) {
+         m_pPeerL->setVisible(true);
+      }
       descr->addWidget(m_pPeerL);
    }
 
@@ -178,12 +225,12 @@ void CallTreeItem::setCall(Call *call)
    }
 
    if (ConfigurationSkeleton::displayCallSecure()) {
-      m_pSecureL = new QLabel(this);
+      m_pSecureL = new QLabel(" ",this);
       descr->addWidget(m_pSecureL);
    }
    
    if (ConfigurationSkeleton::displayCallCodec()) {
-      m_pCodecL = new QLabel(this);
+      m_pCodecL = new QLabel(" ",this);
       descr->addWidget(m_pCodecL);
    }
    
@@ -196,53 +243,78 @@ void CallTreeItem::setCall(Call *call)
 
    setLayout(mainLayout);
 
-   connect(m_pItemCall, SIGNAL(changed()), this,     SLOT(updated()));
-
-   updated();
+   connect(m_pItemCall, SIGNAL(changed()), this, SLOT(updated()));
+   sizeHint();
    
 } //setCall
 
 ///Update data
 void CallTreeItem::updated()
 {
-   kDebug() << "Updating tree item";
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber());
-   if (contact) {
-      if (m_pIconL&&contact->getPhoto())
-         m_pIconL->setPixmap(*contact->getPhoto());
-      if (m_pPeerL)
-         m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
-   }
-   else {
-      if (m_pIconL)
-         m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-
-      if(m_pPeerL && ! m_pItemCall->getPeerName().trimmed().isEmpty()) {
-         m_pPeerL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
-      }
-      else if (m_pPeerL) {
-         m_pPeerL->setText(i18n("<b>Unknown</b>"));
-      }
-   }
-
    call_state state = m_pItemCall->getState();
    bool recording = m_pItemCall->getRecording();
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber(),true);
+   if (contact && m_pPeerL) {
+      m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
+      m_pPeerL->setVisible(true);
+   }
+   else {
+      if( m_pPeerL && ! m_pItemCall->getPeerName().trimmed().isEmpty()) {
+         m_pPeerL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
+         m_pPeerL->setVisible(true);
+      }
+      else if (m_pPeerL && !(state == CALL_STATE_RINGING || state == CALL_STATE_DIALING)) {
+         m_pPeerL->setText(i18n("<b>Unknown</b>"));
+         m_pPeerL->setVisible(true);
+      }
+      else if (m_pPeerL) {
+         m_pPeerL->setText(i18n(""));
+         m_pPeerL->setVisible(false);
+      }
+   }
+
    if(state != CALL_STATE_OVER) {
       if(m_pIconL && state == CALL_STATE_CURRENT && recording) {
-         m_pIconL->setPixmap(QPixmap(ICON_CURRENT_REC));
+         if (contact && !m_pItemCall->isConference()) {
+            QPixmap pxm = (*contact->getPhoto()).scaled(QSize(m_Height,m_Height));
+            QPainter painter(&pxm);
+            QPixmap status(ICON_CURRENT_REC);
+            painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
+            m_pIconL->setPixmap(pxm);
+         }
+         else if (!m_pItemCall->isConference()) {
+            m_pIconL->setPixmap(QPixmap(ICON_CURRENT_REC));
+         }
       }
       else if (m_pIconL) {
          QString str = QString(callStateIcons[state]);
-         m_pIconL->setPixmap(QPixmap(str));
+         if (contact && !m_pItemCall->isConference()) {
+            QPixmap pxm = (*contact->getPhoto()).scaled(QSize(m_Height,m_Height));
+            QPainter painter(&pxm);
+            QPixmap status(str);
+            painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
+            m_pIconL->setPixmap(pxm);
+         }
+         else if (!m_pItemCall->isConference()) {
+            m_pIconL->setPixmap(QPixmap(str));
+         }
       }
-      bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
-      m_pTransferPrefixL->setVisible(transfer);
-      m_pTransferNumberL->setVisible(transfer);
 
-      if(!transfer) {
+      if (m_pIconL && m_pItemCall->isConference()) {
+         m_pIconL->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(m_Height,m_Height)));
+      }
+
+      bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
+      if (m_pTransferPrefixL && m_pTransferNumberL) {
+         m_pTransferPrefixL->setVisible(transfer);
+         m_pTransferNumberL->setVisible(transfer);
+      }
+
+      if(!transfer && m_pTransferNumberL) {
          m_pTransferNumberL->setText("");
       }
-      m_pTransferNumberL->setText(m_pItemCall->getTransferNumber());
+      if (m_pTransferNumberL)
+         m_pTransferNumberL->setText(m_pItemCall->getTransferNumber());
       
       if (m_pCallNumberL)
          m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());

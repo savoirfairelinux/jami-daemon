@@ -125,6 +125,14 @@ class KateColorTreeDelegate : public QStyledItemDelegate
       if (option.state & QStyle::State_Selected) {
          QStyledItemDelegate::paint(painter,option,index);
       }
+
+      QTreeWidgetItem* item = m_tree->itemFromIndex(index);
+      if (item) {
+         QWidget* widget = m_tree->itemWidget(item,0);
+         if (widget) {
+            widget->setMinimumSize((m_tree->viewport()->width() - m_categoryDrawer.leftMargin() - m_categoryDrawer.rightMargin()),10);
+         }
+      }
     }
 
   private:
@@ -139,6 +147,7 @@ CategorizedTreeWidget::CategorizedTreeWidget(QWidget *parent)
   setItemDelegate(new KateColorTreeDelegate(this));
   setHeaderHidden(true);
   setRootIsDecorated(false);
+  //setUniformRowHeights(false);
   setIndentation(25);
   setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   setHorizontalScrollMode(QAbstractItemView::ScrollPerItem);

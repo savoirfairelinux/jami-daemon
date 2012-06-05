@@ -50,7 +50,8 @@ class CallTreeItem : public QWidget
     ~CallTreeItem();
 
     //Getters
-    Call* call() const;
+    Call*         call()      const;
+    virtual QSize sizeHint () const;
 
     //Setters
     void setCall(Call *call);
@@ -73,6 +74,7 @@ class CallTreeItem : public QWidget
     QLabel*  m_pHistoryPeerL    ;
     QLabel*  m_pElapsedL        ;
     QTimer*  m_pTimer           ;
+    uint     m_Height           ;
     
     TranslucentButtons* m_pBtnConf ;
     TranslucentButtons* m_pBtnTrans;
