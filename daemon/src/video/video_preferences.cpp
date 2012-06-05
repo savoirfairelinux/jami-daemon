@@ -46,15 +46,17 @@ VideoPreference::VideoPreference() :
 std::map<std::string, std::string> VideoPreference::getSettings()
 {
     std::map<std::string, std::string> args;
-    std::stringstream ss;
-    args["input"] = v4l2_list_->getDeviceNode(device_);
-    ss << v4l2_list_->getChannelNum(device_, channel_);
-    args["channel"] = ss.str();
-    args["video_size"] = size_;
-    size_t x_pos = size_.find("x");
-    args["width"] = size_.substr(0, x_pos);
-    args["height"] = size_.substr(x_pos + 1);
-    args["framerate"] = rate_;
+    if (not device_.empty()) {
+        args["input"] = v4l2_list_->getDeviceNode(device_);
+        std::stringstream ss;
+        ss << v4l2_list_->getChannelNum(device_, channel_);
+        args["channel"] = ss.str();
+        args["video_size"] = size_;
+        size_t x_pos = size_.find("x");
+        args["width"] = size_.substr(0, x_pos);
+        args["height"] = size_.substr(x_pos + 1);
+        args["framerate"] = rate_;
+    }
 
     return args;
 }
@@ -73,7 +75,7 @@ void VideoPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(videoSizeKey, &size);
     preferencemap.setKeyValue(videoRateKey, &rate);
 
-    emitter.serializePreference(&preferencemap, "videoPreferences");
+    emitter.serializePreference(&preferencemap, "video");
 }
 
 void VideoPreference::unserialize(const Conf::MappingNode &map)

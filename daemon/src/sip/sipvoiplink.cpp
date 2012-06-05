@@ -707,20 +707,14 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
     sip_utils::stripSipUriPrefix(toCpy);
 
-    bool IPToIP = isValidIpAddress(toCpy);
+    const bool IPToIP = isValidIpAddress(toCpy);
     Manager::instance().setIPToIPForCall(id, IPToIP);
 
-    try {
-        if (IPToIP) {
-            Manager::instance().associateCallToAccount(id, SIPAccount::IP2IP_PROFILE);
-            return SIPNewIpToIpCall(id, toUrl);
-        }
-        else {
-            return newRegisteredAccountCall(id, toUrl);
-        }
-    }
-    catch(...) {
-        throw;
+    if (IPToIP) {
+        Manager::instance().associateCallToAccount(id, SIPAccount::IP2IP_PROFILE);
+        return SIPNewIpToIpCall(id, toUrl);
+    } else {
+        return newRegisteredAccountCall(id, toUrl);
     }
 }
 
@@ -1237,7 +1231,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 
     if (pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initiaize credential for invite session  authentication");
+        ERROR("Could not initialize credential for invite session authentication");
         return false;
     }
 

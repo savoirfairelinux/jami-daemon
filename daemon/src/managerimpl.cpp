@@ -1244,6 +1244,10 @@ void ManagerImpl::saveConfig()
         addressbookPreference.serialize(emitter);
         hookPreference.serialize(emitter);
         audioPreference.serialize(emitter);
+#ifdef SFL_VIDEO
+        VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
+        controls->getVideoPreferences().serialize(emitter);
+#endif
         shortcutPreferences.serialize(emitter);
 
         emitter.serializeData();

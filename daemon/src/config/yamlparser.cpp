@@ -67,7 +67,10 @@ YamlParser::YamlParser(const char *file) : filename_(file)
 }
 
 #define CHECK_AND_RETURN(x) \
-    if (!x) throw YamlParserException("Invalid node"); \
+    if (!x) { \
+        ERROR("%s", __PRETTY_FUNCTION__); \
+        throw YamlParserException("Invalid node"); \
+    } \
     return x
 
 SequenceNode *
@@ -453,16 +456,16 @@ void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
     std::map<std::string, YamlNode*> *mapping = map->getMapping();
 
-	accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
+    accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
     addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];
-	audioNode_          = (MappingNode*)(*mapping)["audio"];
+    audioNode_          = (MappingNode*)(*mapping)["audio"];
 #ifdef SFL_VIDEO
-	videoNode_          = (MappingNode*)(*mapping)["video"];
+    videoNode_          = (MappingNode*)(*mapping)["video"];
 #endif
-	hooksNode_          = (MappingNode*)(*mapping)["hooks"];
-	preferenceNode_     = (MappingNode*)(*mapping)["preferences"];
-	voiplinkNode_       = (MappingNode*)(*mapping)["voipPreferences"];
-	shortcutNode_       = (MappingNode*)(*mapping)["shortcuts"];
+    hooksNode_          = (MappingNode*)(*mapping)["hooks"];
+    preferenceNode_     = (MappingNode*)(*mapping)["preferences"];
+    voiplinkNode_       = (MappingNode*)(*mapping)["voipPreferences"];
+    shortcutNode_       = (MappingNode*)(*mapping)["shortcuts"];
 }
 }
 
