@@ -54,8 +54,6 @@ namespace ost {
 class Time;
 }
 
-enum AudioStreamDirection { AUDIO_STREAM_CAPTURE, AUDIO_STREAM_PLAYBACK };
-
 class AudioLayer {
     private:
         NON_COPYABLE(AudioLayer);
@@ -64,7 +62,8 @@ class AudioLayer {
         AudioLayer();
         virtual ~AudioLayer() {}
 
-        virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const = 0;
+        virtual std::vector<std::string> getCaptureDeviceList() const = 0;
+        virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.

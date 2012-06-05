@@ -84,18 +84,10 @@ class AlsaLayer : public AudioLayer {
 
         /**
          * Scan the sound card available on the system
-         * @param stream To indicate whether we are looking for capture devices or playback devices
-         *		   SFL_PCM_CAPTURE
-         *		   SFL_PCM_PLAYBACK
-         *		   SFL_PCM_BOTH
          * @return std::vector<std::string> The vector containing the string description of the card
          */
-        virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const;
-
-        /**
-         * Returns a map of audio device hardware description and index
-         */
-        std::vector<HwIDPair> getAudioDeviceIndexMap(AudioStreamDirection dir) const;
+        virtual std::vector<std::string> getCaptureDeviceList() const;
+        virtual std::vector<std::string> getPlaybackDeviceList() const;
 
         /**
          * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
@@ -150,6 +142,10 @@ class AlsaLayer : public AudioLayer {
 
     private:
         friend class AlsaThread;
+        /**
+         * Returns a map of audio device hardware description and index
+         */
+        std::vector<HwIDPair> getAudioDeviceIndexMap(bool getCapture) const;
 
         /**
          * Calls snd_pcm_open and retries if device is busy, since dmix plugin

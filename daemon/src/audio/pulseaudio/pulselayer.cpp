@@ -194,13 +194,14 @@ bool PulseLayer::inSourceList(const std::string &deviceName) const
     return std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
 }
 
-std::vector<std::string> PulseLayer::getAudioDeviceList(AudioStreamDirection dir) const
+std::vector<std::string> PulseLayer::getCaptureDeviceList() const
 {
-    if (AUDIO_STREAM_CAPTURE == dir)
-        return sinkList_;
-    else if (AUDIO_STREAM_PLAYBACK == dir)
-        return sourceList_;
-    return std::vector<std::string>();
+    return sourceList_;
+}
+
+std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
+{
+    return sinkList_;
 }
 
 void PulseLayer::createStreams(pa_context* c)

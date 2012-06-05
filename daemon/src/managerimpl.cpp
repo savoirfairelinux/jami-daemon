@@ -1943,16 +1943,8 @@ void ManagerImpl::setAudioDevice(const int index, int streamType)
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
 {
-    std::vector<std::string> devices;
-
     ost::MutexLock lock(audioLayerMutex_);
-
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (alsalayer)
-        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_PLAYBACK);
-
-    return devices;
+    return audiodriver_->getPlaybackDeviceList();
 }
 
 
@@ -1961,16 +1953,8 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
  */
 std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
 {
-    std::vector<std::string> devices;
-
     ost::MutexLock lock(audioLayerMutex_);
-
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
-
-    if (alsalayer)
-        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_CAPTURE);
-
-    return devices;
+    return audiodriver_->getCaptureDeviceList();
 }
 
 /**
