@@ -53,9 +53,9 @@ using std::string;
 
 void VideoSendThread::print_and_save_sdp()
 {
-    size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
-    char *sdp = new char[sdp_size]; /* theora sdp can be huge */
-    av_sdp_create(&outputCtx_, 1, sdp, sdp_size);
+    const size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
+    std::string sdp(sdp_size, 0); /* theora sdp can be huge */
+    av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
     std::istringstream iss(sdp);
     string line;
     sdp_ = "";
@@ -65,7 +65,6 @@ void VideoSendThread::print_and_save_sdp()
         sdp_ += line + "\n";
     }
     DEBUG("%s", sdp_.c_str());
-    delete [] sdp;
     sdpReady_.signal();
 }
 
@@ -119,11 +118,10 @@ void VideoSendThread::setup()
 {
     AVInputFormat *file_iformat = 0;
     const char *enc_name = args_["codec"].c_str();
-    int ret;
     // it's a v4l device if starting with /dev/video
     static const char * const V4L_PATH = "/dev/video";
-    if (args_["input"].substr(0, sizeof(V4L_PATH) - 1) == V4L_PATH) {
-        DEBUG("%s:Using v4l2 format", __PRETTY_FUNCTION__);
+    if (args_["input"].find(V4L_PATH) != std::string::npos) {
+        DEBUG("Using v4l2 format");
         file_iformat = av_find_input_format("video4linux2");
         CHECK(file_iformat, "Could not find format video4linux2");
     }
@@ -137,7 +135,7 @@ void VideoSendThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
-    ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
+    int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                   file_iformat, &options);
     CHECK(ret == 0, "Could not open input file %s", args_["input"].c_str());
 

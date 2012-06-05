@@ -113,6 +113,7 @@ void sfl_avcodec_init()
 
     av_register_all();
     avdevice_register_all();
+    avformat_network_init();
 
     av_lockmgr_register(avcodecManageMutex);
 

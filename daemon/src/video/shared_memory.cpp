@@ -95,7 +95,7 @@ int createShmID(int key, int numBytes)
     int shm_id = shmget(key, numBytes, 0644 | IPC_CREAT);
 
     if (shm_id == -1)
-        ERROR("%s:shmget:%m", __PRETTY_FUNCTION__);
+        ERROR("shmget:%m");
 
     return shm_id;
 }
@@ -106,7 +106,7 @@ uint8_t *attachShm(int shm_id)
     /* attach to the segment and get a pointer to it */
     uint8_t *data = reinterpret_cast<uint8_t*>(shmat(shm_id, (void *) 0, 0));
     if (data == reinterpret_cast<uint8_t *>(-1)) {
-        ERROR("%s:shmat:%m", __PRETTY_FUNCTION__);
+        ERROR("shmat:%m");
         data = NULL;
     }
     return data;
@@ -116,7 +116,7 @@ void detachShm(uint8_t *data)
 {
     /* detach from the segment: */
     if (data and shmdt(data) == -1)
-        ERROR("%s:shmdt:%m", __PRETTY_FUNCTION__);
+        ERROR("shmdt:%m");
 }
 
 void destroyShm(int shm_id)
@@ -146,7 +146,7 @@ int createSemaphoreSetID(int semaphoreKey)
        whose counter is initialized to '0'. */
     int semaphoreSetID = semget(semaphoreKey, 1, 0600 | IPC_CREAT);
     if (semaphoreSetID == -1) {
-        ERROR("%s:semget:%m", __PRETTY_FUNCTION__);
+        ERROR("semget:%m");
         throw std::runtime_error("Could not create semaphore set");
     }
 

@@ -39,6 +39,7 @@
 #include "manager.h"
 
 #ifdef SFL_VIDEO
+#include <algorithm>
 #include "video/video_endpoint.h"
 #endif
 
@@ -206,7 +207,7 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
 
         std::ostringstream s;
         s << payload;
-        pj_strdup2 (memPool_, &med->desc.fmt[i], s.str().c_str());
+        pj_strdup2(memPool_, &med->desc.fmt[i], s.str().c_str());
 
         // Add a rtpmap field for each codec
         // We could add one only for dynamic payloads because the codecs with static RTP payloads
@@ -307,26 +308,20 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 }
 
 #ifdef SFL_VIDEO
-void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::string> &videoCodecs)
+void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::string> &selectedCodecs)
 {
-    if (videoCodecs.empty())
-        throw SdpException ("No selected video codec while building local SDP offer");
+    if (selectedCodecs.empty())
+        throw SdpException("No selected video codec while building local SDP offer");
 
     video_codec_list_.clear();
     const std::vector<std::string> &codecs_list = sfl_video::getCodecList();
-    for (unsigned i = 0; i < videoCodecs.size(); ++i) {
-        const std::string &codec = videoCodecs[i];
-        for (unsigned j = 0; j < codecs_list.size(); ++j) {
-            if (codecs_list[j] == codec) {
-                video_codec_list_.push_back(codec);
-                break;
-            }
-        }
-    }
+    for (std::vector<std::string>::const_iterator i = selectedCodecs.begin(); i != selectedCodecs.end(); ++i)
+        if (std::find(codecs_list.begin(), codecs_list.end(), *i) != codecs_list.end())
+            video_codec_list_.push_back(*i);
 }
 #endif
 
-void Sdp::setLocalMediaCapabilities(const std::vector<int> &selectedCodecs)
+void Sdp::setLocalMediaAudioCapabilities(const std::vector<int> &selectedCodecs)
 {
     if (selectedCodecs.empty())
         WARN("No selected codec while building local SDP offer");
@@ -338,7 +333,7 @@ void Sdp::setLocalMediaCapabilities(const std::vector<int> &selectedCodecs)
         if (codec)
             audio_codec_list_.push_back(codec);
         else
-            WARN("SDP: Couldn't find audio codec");
+            WARN("Couldn't find audio codec");
     }
 }
 
@@ -353,10 +348,10 @@ namespace {
 }
 
 #ifdef SFL_VIDEO
-int Sdp::createLocalSession(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs)
+int Sdp::createLocalSession(const std::vector<int> &selectedAudioCodecs, const std::vector<std::string> &selectedVideoCodecs)
 {
-    setLocalMediaCapabilities(selectedCodecs);
-    setLocalMediaVideoCapabilities(videoCodecs);
+    setLocalMediaAudioCapabilities(selectedAudioCodecs);
+    setLocalMediaVideoCapabilities(selectedVideoCodecs);
 
     localSession_ = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_session);
     localSession_->conn = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_conn);
@@ -402,7 +397,7 @@ int Sdp::createLocalSession(const std::vector<int> &selectedCodecs, const std::v
 #else
 int Sdp::createLocalSession(const std::vector<int> &selectedCodecs)
 {
-    setLocalMediaCapabilities(selectedCodecs);
+    setLocalMediaAudioCapabilities(selectedCodecs);
 
     localSession_ = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_session);
     if (!localSession_) {
@@ -455,9 +450,9 @@ int Sdp::createLocalSession(const std::vector<int> &selectedCodecs)
 void Sdp::createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs)
 {
     if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS)
-        ERROR("SDP: Error: Failed to create initial offer");
-    else if (pjmedia_sdp_neg_create_w_local_offer (memPool_, localSession_, &negotiator_) != PJ_SUCCESS)
-        ERROR("SDP: Error: Failed to create an initial SDP negotiator");
+        ERROR("Failed to create initial offer");
+    else if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS)
+        ERROR("Failed to create an initial SDP negotiator");
 }
 #else
 void Sdp::createOffer(const std::vector<int> &selectedCodecs)
@@ -475,15 +470,15 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        const std::vector<std::string> &videoCodecs)
 {
     if (!remote) {
-        ERROR("SDP: Remote session is NULL");
+        ERROR("Remote session is NULL");
         return;
     }
 
-    DEBUG("SDP: Remote SDP Session:");
+    DEBUG("Remote SDP Session:");
     printSession(remote);
 
     if (!localSession_ and createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
-        ERROR("SDP: Failed to create initial offer");
+        ERROR("Failed to create initial offer");
         return;
     }
 
