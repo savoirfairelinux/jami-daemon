@@ -353,10 +353,10 @@ void ManagerImpl::hangupCall(const std::string& callId)
     if (isConferenceParticipant(callId)) {
         Conference *conf = getConferenceFromCallID(callId);
 
-        if (conf != NULL) {
+        if (conf) {
             // remove this participant
             removeParticipant(callId);
-            processRemainingParticipants(currentCallId, conf);
+            processRemainingParticipants(currentCallId, *conf);
         }
     } else {
         // we are not participating in a conference, current call switched to ""
@@ -518,7 +518,8 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     if (isConferenceParticipant(callId)) {
         removeParticipant(callId);
         Conference *conf = getConferenceFromCallID(callId);
-        processRemainingParticipants(callId, conf);
+        if (conf)
+            processRemainingParticipants(callId, *conf);
     } else if (not isConference(getCurrentCallId()))
         unsetCurrentCall();
 
@@ -1056,20 +1057,18 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
             return;
         }
 
+        const std::string oldConfID(conf->getConfID());
+        const std::string oldStateStr(conf->getStateStr());
+
         if (iter_details->second == "RINGING")
             removeParticipant(call_id);
         else {
             onHoldCall(call_id);
             removeParticipant(call_id);
-            // Conference may have been deleted and set to 0 above
-            processRemainingParticipants(current_call_id, conf);
-            if (conf == 0) {
-                ERROR("Call is not conferencing, cannot detach");
-                return;
-            }
+            processRemainingParticipants(current_call_id, *conf);
         }
 
-        dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+        dbus_.getCallManager()->conferenceChanged(oldConfID, oldStateStr);
     } else {
         DEBUG("Unbind main participant from conference %d");
         getMainBuffer()->unBindAll(MainBuffer::DEFAULT_ID);
@@ -1118,7 +1117,6 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     }
 
     Conference *conf = iter->second;
-    DEBUG("Remove participant %s", call_id.c_str());
     conf->remove(call_id);
     call->setConfId("");
 
@@ -1127,16 +1125,12 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 }
 
-void ManagerImpl::processRemainingParticipants(const std::string &current_call_id, Conference * &conf)
+void ManagerImpl::processRemainingParticipants(const std::string &current_call_id, Conference &conf)
 {
-    if (!conf) {
-        ERROR("Cannot process conference that is NULL");
-        return;
-    }
-    ParticipantSet participants(conf->getParticipantList());
+    ParticipantSet participants(conf.getParticipantList());
     size_t n = participants.size();
     DEBUG("Process remaining %d participant(s) from conference %s",
-           n, conf->getConfID().c_str());
+           n, conf.getConfID().c_str());
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
@@ -1156,19 +1150,17 @@ void ManagerImpl::processRemainingParticipants(const std::string &current_call_i
             if (call) {
                 call->setConfId("");
                 // if we are not listening to this conference
-                if (current_call_id != conf->getConfID())
+                if (current_call_id != conf.getConfID())
                     onHoldCall(call->getCallId());
                 else
                     switchCall(*p);
             }
         }
 
-        removeConference(conf->getConfID());
-        conf = 0;
+        removeConference(conf.getConfID());
     } else {
         DEBUG("No remaining participants, remove conference");
-        removeConference(conf->getConfID());
-        conf = 0;
+        removeConference(conf.getConfID());
         unsetCurrentCall();
     }
 }
@@ -1554,9 +1546,9 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     if (isConferenceParticipant(call_id)) {
         Conference *conf = getConferenceFromCallID(call_id);
 
-        if (conf != 0) {
+        if (conf) {
             removeParticipant(call_id);
-            processRemainingParticipants(getCurrentCallId(), conf);
+            processRemainingParticipants(getCurrentCallId(), *conf);
         }
     } else {
         if (isCurrentCall(call_id)) {
@@ -1624,14 +1616,14 @@ void ManagerImpl::callFailure(const std::string& call_id)
         DEBUG("Call %s participating in a conference failed", call_id.c_str());
         Conference *conf = getConferenceFromCallID(call_id);
 
-        if (conf == NULL) {
+        if (conf == 0) {
             ERROR("Could not retrieve conference from call id %s", call_id.c_str());
             return;
         }
 
         // remove this participant
         removeParticipant(call_id);
-        processRemainingParticipants(getCurrentCallId(), conf);
+        processRemainingParticipants(getCurrentCallId(), *conf);
     }
 
     removeCallAccount(call_id);
@@ -1951,16 +1943,8 @@ void ManagerImpl::setAudioDevice(const int index, int streamType)
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
 {
-    std::vector<std::string> devices;
-
     ost::MutexLock lock(audioLayerMutex_);
-
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (alsalayer)
-        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_PLAYBACK);
-
-    return devices;
+    return audiodriver_->getPlaybackDeviceList();
 }
 
 
@@ -1969,16 +1953,8 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
  */
 std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
 {
-    std::vector<std::string> devices;
-
     ost::MutexLock lock(audioLayerMutex_);
-
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
-
-    if (alsalayer)
-        devices = alsalayer->getAudioDeviceList(AUDIO_STREAM_CAPTURE);
-
-    return devices;
+    return audiodriver_->getCaptureDeviceList();
 }
 
 /**

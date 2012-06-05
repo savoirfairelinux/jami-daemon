@@ -194,13 +194,14 @@ bool PulseLayer::inSourceList(const std::string &deviceName) const
     return std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
 }
 
-std::vector<std::string> PulseLayer::getAudioDeviceList(AudioStreamDirection dir) const
+std::vector<std::string> PulseLayer::getCaptureDeviceList() const
 {
-    if (AUDIO_STREAM_CAPTURE == dir)
-        return sinkList_;
-    else if (AUDIO_STREAM_PLAYBACK == dir)
-        return sourceList_;
-    return std::vector<std::string>();
+    return sourceList_;
+}
+
+std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
+{
+    return sinkList_;
 }
 
 void PulseLayer::createStreams(pa_context* c)
@@ -214,19 +215,19 @@ void PulseLayer::createStreams(pa_context* c)
            playbackDevice.c_str(), captureDevice.c_str(), ringtoneDevice.c_str());
 
     playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_,
-                                inSourceList(playbackDevice) ? playbackDevice : defaultDevice);
+                                inSinkList(playbackDevice) ? playbackDevice : defaultDevice);
 
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback(playback_->pulseStream(), stream_moved_callback, this);
 
     record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, sampleRate_,
-                              inSinkList(captureDevice) ? captureDevice : defaultDevice);
+                              inSourceList(captureDevice) ? captureDevice : defaultDevice);
 
     pa_stream_set_read_callback(record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback(record_->pulseStream(), stream_moved_callback, this);
 
     ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, sampleRate_,
-                                inSourceList(ringtoneDevice) ? ringtoneDevice : defaultDevice);
+                                inSinkList(ringtoneDevice) ? ringtoneDevice : defaultDevice);
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone_->pulseStream(), stream_moved_callback, this);

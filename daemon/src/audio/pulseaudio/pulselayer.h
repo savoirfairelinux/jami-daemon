@@ -62,7 +62,8 @@ class PulseLayer : public AudioLayer {
 
         bool inSourceList(const std::string &deviceName) const;
 
-        virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const;
+        virtual std::vector<std::string> getCaptureDeviceList() const;
+        virtual std::vector<std::string> getPlaybackDeviceList() const;
 
         virtual void startStream();
 
