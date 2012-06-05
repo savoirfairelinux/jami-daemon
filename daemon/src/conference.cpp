@@ -66,7 +66,7 @@ void Conference::remove(const std::string &participant_id)
 
 void Conference::bindParticipant(const std::string &participant_id)
 {
-    for (ParticipantSet::iterator iter = participants_.begin();
+    for (ParticipantSet::const_iterator iter = participants_.begin();
             iter != participants_.end(); ++iter)
         if (participant_id != *iter)
             Manager::instance().getMainBuffer()->bindCallID(participant_id, *iter);
