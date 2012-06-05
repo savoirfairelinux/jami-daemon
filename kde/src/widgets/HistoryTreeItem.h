@@ -70,7 +70,6 @@ class HistoryTreeItem : public QWidget
     //Setters
     void setCall     ( Call*            call  );
     void setItem     ( QTreeWidgetItem* item  );
-    void setDurWidth ( uint             width );
 
     //Const
     static const char * callStateIcons[12];

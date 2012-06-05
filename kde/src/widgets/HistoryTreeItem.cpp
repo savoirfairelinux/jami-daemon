@@ -354,8 +354,8 @@ void HistoryTreeItem::showRecordPlayer()
       r2->addItem  ( hSpacer        );
       r2->addWidget( m_pNote        );
 
-      m_pPlayer->setMinimumSize(width(),height());
-      m_pPlayer->setMaximumSize(width(),height());
+      m_pPlayer->setMinimumSize(width()-14,height());
+      m_pPlayer->setMaximumSize(width()-14,height());
 
       l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
       m_pPlayer->setVisible(true);
@@ -438,8 +438,8 @@ void HistoryTreeItem::resizeEvent(QResizeEvent* event)
 {
    Q_UNUSED(event);
    if (m_pPlayer) {
-      m_pPlayer->setMinimumSize(width(),height());
-      m_pPlayer->setMaximumSize(width(),height());
+      m_pPlayer->setMinimumSize(width()-14,height());
+      m_pPlayer->setMaximumSize(width()-14,height());
    }
 }
 
@@ -495,12 +495,6 @@ void HistoryTreeItem::setCall(Call *call)
 void HistoryTreeItem::setItem(QTreeWidgetItem* item)
 {
    m_pItem = item;
-}
-
-void HistoryTreeItem::setDurWidth(uint width)
-{
-   m_pLengthL->setMaximumSize(width, 9999 );
-   m_pLengthL->setMinimumSize(width, 0    );
 }
 
 

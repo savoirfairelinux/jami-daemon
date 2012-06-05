@@ -32,6 +32,7 @@ DlgGeneral::DlgGeneral(QWidget *parent)
    connect(toolButton_historyClear, SIGNAL(clicked()), this, SIGNAL(clearCallHistoryAsked()));
 
    kcfg_historyMax->setValue(ConfigurationSkeleton::historyMax());
+   kcfg_minimumRowHeight->setEnabled(ConfigurationSkeleton::limitMinimumRowHeight());
 }
 
 DlgGeneral::~DlgGeneral()

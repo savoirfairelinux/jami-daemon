@@ -48,6 +48,43 @@
 #include "klib/ConfigurationSkeleton.h"
 #include "SFLPhoneAccessibility.h"
 
+///@class CallTreeItemDelegate Delegates for CallTreeItem
+class CallTreeItemDelegate : public QStyledItemDelegate
+{
+public:
+CallTreeItemDelegate(CallView* widget)
+      : QStyledItemDelegate(widget)
+      , m_tree(widget)
+    {
+    }
+
+    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
+      QSize sh = QStyledItemDelegate::sizeHint(option, index);
+      /*if (!index.parent().isValid()) {
+        sh.rheight() += 2 * m_categoryDrawer.leftMargin();
+      } else {
+        sh.rheight() += m_categoryDrawer.leftMargin();
+      }
+      if (index.column() == 0) {
+        sh.rwidth() += m_categoryDrawer.leftMargin();
+      } else if (index.column() == 1) {
+        sh.rwidth() = 150;
+      } else {
+        sh.rwidth() += m_categoryDrawer.leftMargin();
+      }*/
+      QTreeWidgetItem* item = (m_tree)->itemFromIndex(index);
+      if (item) {
+         CallTreeItem* widget = (CallTreeItem*)m_tree->itemWidget(item,0);
+         if (widget)
+            sh.rheight() = widget->sizeHint().height()+4;
+      }
+
+      return sh;
+    }
+private:
+   CallView* m_tree;
+};
+
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
 CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_pCallPendingTransfer(0)
@@ -56,7 +93,9 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    setAcceptDrops(true);
    setDragEnabled(true);
    setAnimated   (true);
-   CallTreeItemDelegate *delegate = new CallTreeItemDelegate();
+   setUniformRowHeights(false);
+   
+   CallTreeItemDelegate *delegate = new CallTreeItemDelegate(this);
    setItemDelegate(delegate);
    setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
 

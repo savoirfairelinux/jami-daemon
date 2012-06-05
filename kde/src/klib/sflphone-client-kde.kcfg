@@ -41,6 +41,14 @@
       <label>Should CallCodec be visible by default for calls</label>
       <default> false </default>
    </entry>
+   <entry name="limitMinimumRowHeight" type="Bool">
+      <label>The minimum number of pixel for a call item</label>
+      <default> false </default>
+   </entry>
+   <entry name="minimumRowHeight" type="int">
+      <label>The minimum number of pixel for a call item</label>
+      <default> 48 </default>
+   </entry>
 
     <!-- Display Settings -->
 

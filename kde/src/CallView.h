@@ -20,9 +20,9 @@
 #ifndef CALL_VIEW
 #define CALL_VIEW
 
-#include <QtGui/QItemDelegate>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QPainter>
+#include <QtGui/QStyledItemDelegate>
 #include <QtCore/QTimer>
 #include "lib/CallModel.h"
 
@@ -35,26 +35,15 @@ class KLineEdit;
 
 //SFLPhone
 class CallTreeItem;
+class CallTreeItemDelegate;
 
 //Typedef
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
-///@class CallTreeItemDelegate Delegates for CallTreeItem
-class CallTreeItemDelegate : public QItemDelegate
-{
-   public:
-      CallTreeItemDelegate() { }
-      QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index ) const
-      {
-         Q_UNUSED(option)
-         Q_UNUSED(index)
-         return QSize(0,60);
-      }
-};
-
 ///@class CallViewOverlay Display overlay on top of the call tree
 class CallViewOverlay : public QWidget {
    Q_OBJECT
+   
 public:
    //Constructor
    CallViewOverlay(QWidget* parent);
@@ -84,6 +73,8 @@ private slots:
 ///@class CallView Central tree widget managing active calls
 class CallView : public QTreeWidget {
    Q_OBJECT
+   friend class CallTreeItemDelegate;
+   
    public:
       CallView                    ( QWidget* parent = 0                                                               );
       ~CallView                   (                                                                                   );

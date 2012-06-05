@@ -150,40 +150,71 @@
       <string>Visible call details</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
+      <item row="1" column="0">
        <widget class="QCheckBox" name="kcfg_displayCallIcon">
         <property name="text">
          <string>Display Icon</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
+      <item row="1" column="1">
        <widget class="QCheckBox" name="kcfg_displayCallNumber">
         <property name="text">
          <string>DisplayCallNumber</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QCheckBox" name="kcfg_displayCallSecure">
         <property name="text">
          <string>Display Security</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <widget class="QCheckBox" name="kcfg_displayCallPeer">
         <property name="text">
          <string>Display Peer name</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QCheckBox" name="kcfg_displayCallCodec">
         <property name="text">
          <string>Display Codec</string>
         </property>
        </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QCheckBox" name="kcfg_limitMinimumRowHeight">
+          <property name="text">
+           <string>Minimum item height</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="kcfg_minimumRowHeight">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -213,5 +244,22 @@
  <resources>
   <include location="../qrc/resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>kcfg_limitMinimumRowHeight</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>kcfg_minimumRowHeight</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>131</x>
+     <y>213</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>203</x>
+     <y>214</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
