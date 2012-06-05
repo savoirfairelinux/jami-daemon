@@ -62,3 +62,15 @@ QString HelperFunctions::normStrippped(QString str)
    }
    return normStripppedC;
 }
+
+///Escape lesser and greater
+QString HelperFunctions::escapeHtmlEntities(QString str)
+{
+   while (str.indexOf('<') != -1) {
+      str = str.replace("<","&lt;");
+   }
+   while (str.indexOf('>') != -1) {
+      str = str.replace(">","&gt;");
+   }
+   return str;
+}

@@ -32,6 +32,8 @@
 #include <QtGui/QPainter>
 #include <QtGui/QSlider>
 #include <QtGui/QColor>
+#include <QtGui/QClipboard>
+#include <QtGui/QApplication>
 #include <QtGui/QFontMetrics>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
@@ -51,6 +53,7 @@
 
 //SFLPhone
 #include "klib/AkonadiBackend.h"
+#include "klib/HelperFunctions.h"
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
 #include "widgets/TranslucentButtons.h"
@@ -86,9 +89,9 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pAddToContact = new KAction(this);
    m_pBookmark     = new KAction(this);
 
-   m_pCallAgain->setShortcut    ( Qt::Key_Enter       );
+   m_pCallAgain->setShortcut    ( Qt::Key_Enter                  );
    m_pCallAgain->setText        ( i18n("Call Again")             );
-   m_pCallAgain->setIcon        ( KIcon(ICON_DIALING)            );
+   m_pCallAgain->setIcon        ( KIcon("call-start")            );
 
    m_pAddToContact->setShortcut ( Qt::CTRL + Qt::Key_E           );
    m_pAddToContact->setText     ( i18n("Add Number to Contact")  );
@@ -102,7 +105,6 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
    m_pCopy->setShortcut         ( Qt::CTRL + Qt::Key_C           );
    m_pCopy->setText             ( i18n("Copy")                   );
    m_pCopy->setIcon             ( KIcon("edit-copy")             );
-   m_pCopy->setDisabled         ( true                           );
 
    m_pEmail->setShortcut        ( Qt::CTRL + Qt::Key_M           );
    m_pEmail->setText            ( i18n("Send Email")             );
@@ -191,12 +193,12 @@ HistoryTreeItem::~HistoryTreeItem()
    delete m_pBookmark      ;
    delete m_pMenu          ;
 
-   if (m_pPlay)        delete m_pPlay        ;
-   if (m_pRemove)      delete m_pRemove      ;
-   if (m_pAudioSlider) delete m_pAudioSlider ;
-   if (m_pTimeLeftL)   delete m_pTimeLeftL   ;
-   if (m_pTimePlayedL) delete m_pTimePlayedL ;
-   if (m_pPlayer)      delete m_pPlayer      ;
+   if ( m_pPlay        ) delete m_pPlay        ;
+   if ( m_pRemove      ) delete m_pRemove      ;
+   if ( m_pAudioSlider ) delete m_pAudioSlider ;
+   if ( m_pTimeLeftL   ) delete m_pTimeLeftL   ;
+   if ( m_pTimePlayedL ) delete m_pTimePlayedL ;
+   if ( m_pPlayer      ) delete m_pPlayer      ;
 }
 
 
@@ -215,27 +217,7 @@ Call* HistoryTreeItem::call() const
 ///The item have to be updated
 void HistoryTreeItem::updated()
 {
-   if (!getContactInfo(m_pItemCall->getPeerPhoneNumber()),true) {
-      if(! m_pItemCall->getPeerName().trimmed().isEmpty()) {
-         m_pPeerNameL->setText("<b>"+m_pItemCall->getPeerName()+"</b>");
-      }
-   }
-   call_state state = m_pItemCall->getState();
-   bool recording = m_pItemCall->getRecording();
-   if(state != CALL_STATE_OVER) {
-      if(state == CALL_STATE_CURRENT && recording) {
-         m_pIconL->setPixmap(QPixmap(ICON_CURRENT_REC));
-      }
-      else {
-         QString str = QString(callStateIcons[state]);
-         m_pIconL->setPixmap(QPixmap(str));
-      }
-      m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
-
-      if(state == CALL_STATE_DIALING) {
-         m_pCallNumberL->setText(m_pItemCall->getCallNumber());
-      }
-   }
+   getContactInfo(m_pItemCall->getPeerPhoneNumber());
 } //updated
 
 ///Show the context menu
@@ -266,7 +248,7 @@ void HistoryTreeItem::callAgain()
    if (m_pItemCall) {
       kDebug() << "Calling "<< m_pItemCall->getPeerPhoneNumber();
    }
-   Call* call = SFLPhone::model()->addDialingCall(m_Name, SFLPhone::app()->model()->getCurrentAccountId());
+   Call* call = SFLPhone::model()->addDialingCall(getName(), SFLPhone::app()->model()->getCurrentAccountId());
    call->setCallNumber(m_PhoneNumber);
    call->setPeerName(m_pPeerNameL->text());
    call->actionPerformed(CALL_ACTION_ACCEPT);
@@ -275,9 +257,25 @@ void HistoryTreeItem::callAgain()
 ///Copy the call
 void HistoryTreeItem::copy()
 {
-   //TODO
    kDebug() << "Copying contact";
+   QMimeData* mimeData = new QMimeData();
+   mimeData->setData(MIME_CALLID, m_pItemCall->getCallId().toUtf8());
+   QString numbers;
+   QString numbersHtml;
+   if (m_pContact) {
+      numbers     = m_pContact->getFormattedName()+": "+m_PhoneNumber;
+      numbersHtml = "<b>"+m_pContact->getFormattedName()+"</b><br />"+HelperFunctions::escapeHtmlEntities(m_PhoneNumber);
+   }
+   else {
+      numbers     = m_pItemCall->getPeerName()+": "+m_PhoneNumber;
+      numbersHtml = "<b>"+m_pItemCall->getPeerName()+"</b><br />"+HelperFunctions::escapeHtmlEntities(m_PhoneNumber);
+   }
+   mimeData->setData("text/plain", numbers.toUtf8());
+   mimeData->setData("text/html", numbersHtml.toUtf8());
+   QClipboard* clipboard = QApplication::clipboard();
+   clipboard->setMimeData(mimeData);
 }
+
 
 ///Create a contact from those informations
 void HistoryTreeItem::addContact()
@@ -470,11 +468,6 @@ void HistoryTreeItem::setCall(Call *call)
    connect(m_pPlay         , SIGNAL(clicked()  )         , m_pItemCall , SLOT(playRecording()     ));
    connect(m_pItemCall     , SIGNAL(playbackStarted()  ) , this        , SLOT(showRecordPlayer()  ));
 
-   if (m_pItemCall->isConference()) {
-      m_pIconL->setVisible(true);
-      return;
-   }
-
    m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
 
    m_pTimeL->setText(QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toUInt()).toString());
@@ -489,7 +482,7 @@ void HistoryTreeItem::setCall(Call *call)
    updated();
 
    m_TimeStamp   = m_pItemCall->getStartTimeStamp().toUInt();
-   m_Length    = dur;
+   m_Length      = dur;
    m_Name        = m_pItemCall->getPeerName();
    m_PhoneNumber = m_pItemCall->getPeerPhoneNumber();
 
@@ -522,13 +515,13 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 {
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber,true);
    if (contact) {
+      m_pPeerNameL->setText("<b>"+contact->getFormattedName()+"</b>");
       if (contact->getPhoto() != NULL)
          m_pIconL->setPixmap(*contact->getPhoto());
       else if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())
          m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
       else
          m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      m_pPeerNameL->setText("<b>"+contact->getFormattedName()+"</b>");
       m_pContact = contact;
    }
    else {

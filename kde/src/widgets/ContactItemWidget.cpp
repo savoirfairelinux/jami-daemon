@@ -62,7 +62,7 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pCallAgain  = new KAction(this);
    m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
    m_pCallAgain->setText       ( i18n("Call Again")         );
-   m_pCallAgain->setIcon       ( KIcon(ICON_DIALING)        );
+   m_pCallAgain->setIcon       ( KIcon("call-start")        );
 
    m_pEditContact = new KAction(this);
    m_pEditContact->setShortcut ( Qt::CTRL + Qt::Key_E       );
@@ -349,6 +349,14 @@ void ContactItemWidget::copy()
    kDebug() << "Copying contact";
    QMimeData* mimeData = new QMimeData();
    mimeData->setData(MIME_CONTACT, m_pContactKA->getUid().toUtf8());
+   QString numbers(m_pContactKA->getFormattedName()+": ");
+   QString numbersHtml("<b>"+m_pContactKA->getFormattedName()+"</b><br />");
+   foreach (Contact::PhoneNumber* number, m_pContactKA->getPhoneNumbers()) {
+      numbers     += number->getNumber()+" ("+number->getType()+")  ";
+      numbersHtml += number->getNumber()+" ("+number->getType()+")  <br />";
+   }
+   mimeData->setData("text/plain", numbers.toUtf8());
+   mimeData->setData("text/html", numbersHtml.toUtf8());
    QClipboard* clipboard = QApplication::clipboard();
    clipboard->setMimeData(mimeData);
 }

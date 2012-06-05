@@ -310,8 +310,10 @@ void HistoryDock::enableDateRange(bool disable)
 ///Filter the history
 void HistoryDock::filter(QString text)
 {
+   QString lower = text.toLower();
    foreach(HistoryTreeItem* item, m_History) {
-      bool visible = (HelperFunctions::normStrippped(item->getName()).indexOf(text) != -1) || (HelperFunctions::normStrippped(item->getPhoneNumber()).indexOf(text) != -1);
+      bool visible = ( HelperFunctions::normStrippped( item->getName()        ).indexOf( lower ) != -1)
+                  || ( HelperFunctions::normStrippped( item->getPhoneNumber() ).indexOf( lower ) != -1);
       item->getItem()-> setHidden(!visible);
    }
    m_pItemView->expandAll();
