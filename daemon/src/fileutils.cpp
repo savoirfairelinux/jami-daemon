@@ -69,6 +69,13 @@ const char *get_program_dir()
     return program_dir;
 }
 
+//TODO it is faking this, implement proper system 
+const char *get_data_dir()
+{
+    std::string path = std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
+    return path.c_str();
+}
+
 bool create_pidfile()
 {
     const char * const xdg_env = XDG_CACHE_HOME;

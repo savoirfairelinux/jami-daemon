@@ -334,6 +334,15 @@
            </arg>
        </method>
 
+       <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
+           <tp:added version="1.1.1"/>
+           <tp:docstring>
+                Get a map [Path,Filename] of available ringtone. Note, set the ringtone with the complete path
+           </tp:docstring>
+           <arg type="a{ss}" name="state" direction="out">
+           </arg>
+       </method>
+
        <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
                <arg type="s" name="state" direction="in">
                </arg>
