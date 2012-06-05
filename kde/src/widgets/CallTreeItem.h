@@ -91,6 +91,7 @@ private slots:
    void conversationEvent(QMimeData* data);
    void hide();
    void incrementTimer();
+   void copy();
 
 public slots:
    void updated();

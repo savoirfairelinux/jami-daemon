@@ -39,5 +39,6 @@ class LIB_EXPORT HelperFunctions {
 public:
    static ContactHash toHash(QList<Contact*> contacts);
    static QString normStrippped(QString str);
+   static QString escapeHtmlEntities(QString str);
 };
 #endif

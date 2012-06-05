@@ -25,6 +25,8 @@
 #include <QtCore/QStringList>
 #include <QtCore/QMimeData>
 #include <QtCore/QTimer>
+#include <QtGui/QClipboard>
+#include <QtGui/QApplication>
 #include <QtGui/QWidget>
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
@@ -379,6 +381,20 @@ void CallTreeItem::conversationEvent(QMimeData* data)
 {
    kDebug() << "Proxying conversation mime";
    emit conversationDropEvent(m_pItemCall,data);
+}
+
+///Copy
+void CallTreeItem::copy()
+{
+   kDebug() << "Copying contact";
+   QMimeData* mimeData = new QMimeData();
+   mimeData->setData(MIME_CALLID, m_pItemCall->getCallId().toUtf8());
+   QString numbers(m_pItemCall->getPeerName()+": "+m_pItemCall->getPeerPhoneNumber());
+   QString numbersHtml("<b>"+m_pItemCall->getPeerName()+"</b><br />"+m_pItemCall->getPeerPhoneNumber());
+   mimeData->setData("text/plain", numbers.toUtf8());
+   mimeData->setData("text/html", numbersHtml.toUtf8());
+   QClipboard* clipboard = QApplication::clipboard();
+   clipboard->setMimeData(mimeData);
 }
 
 ///Called when the overlay need to be hidden
