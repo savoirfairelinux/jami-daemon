@@ -60,18 +60,6 @@ CallTreeItemDelegate(CallView* widget)
 
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
       QSize sh = QStyledItemDelegate::sizeHint(option, index);
-      /*if (!index.parent().isValid()) {
-        sh.rheight() += 2 * m_categoryDrawer.leftMargin();
-      } else {
-        sh.rheight() += m_categoryDrawer.leftMargin();
-      }
-      if (index.column() == 0) {
-        sh.rwidth() += m_categoryDrawer.leftMargin();
-      } else if (index.column() == 1) {
-        sh.rwidth() = 150;
-      } else {
-        sh.rwidth() += m_categoryDrawer.leftMargin();
-      }*/
       QTreeWidgetItem* item = (m_tree)->itemFromIndex(index);
       if (item) {
          CallTreeItem* widget = (CallTreeItem*)m_tree->itemWidget(item,0);
