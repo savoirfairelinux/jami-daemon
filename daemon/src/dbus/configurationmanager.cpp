@@ -43,6 +43,7 @@
 #include "logger.h"
 #include "fileutils.h"
 #include "sip/sipaccount.h"
+#include "../history/historynamecache.h"
 
 namespace {
     const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";

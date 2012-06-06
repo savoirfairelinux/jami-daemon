@@ -55,6 +55,7 @@
 #include "audio/sound/dtmf.h"
 #include "sip/sipvoiplink.h"
 #include "iax/iaxvoiplink.h"
+#include "history/historynamecache.h"
 #include "manager.h"
 
 #include "dbus/configurationmanager.h"
@@ -250,6 +251,13 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 
     try {
         Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned);
+
+        // try to reverse match the peer name using the cache
+        if (call->getDisplayName() == "") {
+            std::string pseudo_contact_name = HistoryNameCache::getInstance()->getNameFromHistory(call->getPeerNumber(),getAccountFromCall(call_id));
+            if (pseudo_contact_name != "" )
+                call->setDisplayName(pseudo_contact_name);
+        }
         switchCall(call_id);
         call->setConfId(conf_id);
     } catch (const VoipLinkException &e) {
