@@ -1338,7 +1338,7 @@ GtkWidget *show_account_window(const account_t *account)
     GtkWidget *audiocodecs_tab = create_audiocodecs_configuration(account);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), audiocodecs_tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), audiocodecs_tab);
-    
+
 #ifdef SFL_VIDEO
     /* Video Codecs */
     GtkWidget *videocodecs_tab = create_videocodecs_configuration(account);
