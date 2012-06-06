@@ -241,7 +241,7 @@ void HistoryDock::reload()
       case Name2: {
          QHash<QString,QTreeWidgetItem*> group;
          foreach(HistoryTreeItem* item, m_History) {
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(getIdentity(item->call()));
+            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(item->getName());
             item->setItem(twItem);
             twItem->widget = item;
             m_pItemView->setItemWidget(twItem,0,item);
@@ -251,17 +251,23 @@ void HistoryDock::reload()
       case Popularity: {
          QHash<QString,QNumericTreeWidgetItem*> group;
          foreach(HistoryTreeItem* item, m_History) {
-            if (!group[getIdentity(item->call())]) {
-               group[getIdentity(item->call())] = m_pItemView->addCategory<QNumericTreeWidgetItem>(getIdentity(item->call()));
-               group[getIdentity(item->call())]->weight = 0;
-               m_pItemView->addTopLevelItem(group[getIdentity(item->call())]);
+            QString name = item->getName().trimmed();
+            if (!group[name]) {
+               group[name] = m_pItemView->addCategory<QNumericTreeWidgetItem>(name);
+               group[name]->weight = 0;
+               m_pItemView->addTopLevelItem(group[name]);
             }
-            group[getIdentity(item->call())]->weight++;
-            group[getIdentity(item->call())]->setText(0,getIdentity(item->call())+" ("+QString::number(group[getIdentity(item->call())]->weight)+")");
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(getIdentity(item->call()));
+            group[name]->weight++;
+            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(name);
             item->setItem(twItem);
             twItem->widget = item;
             m_pItemView->setItemWidget(twItem,0,item);
+         }
+         QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(group);
+         while (iter.hasNext()) {
+            iter.next();
+            QNumericTreeWidgetItem* item = iter.value();
+            item->setText(0,iter.key()+" ("+QString::number(item->weight)+")");
          }
          break;
       }

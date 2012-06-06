@@ -93,11 +93,11 @@ CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
 ///Static destructor
 CALLMODEL_TEMPLATE void CALLMODEL_T::destroy()
 {
-   foreach (InternalStruct* s,  m_sPrivateCallList_call.values()) {
-      delete s;
-   }
    foreach (Call* call,  m_sPrivateCallList_call.keys()) {
       delete call;
+   }
+   foreach (InternalStruct* s,  m_sPrivateCallList_call.values()) {
+      delete s;
    }
    m_sPrivateCallList_call.clear();
    m_sPrivateCallList_callId.clear();

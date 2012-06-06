@@ -263,7 +263,7 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
     if (c)
         process_existing_call_state_change(c, state);
     else {
-        WARN("Call does not exist in %s", __func__);
+        WARN("Call does not exist");
         process_nonexisting_call_state_change(callID, state);
     }
 }

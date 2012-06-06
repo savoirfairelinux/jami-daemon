@@ -61,8 +61,13 @@ static codec_t *codec_create(gint payload, gchar **specs)
 
     codec->payload = payload;
     codec->name = g_strdup(specs[0]);
-    codec->sample_rate = specs[1] ? atoi(specs[1]) : 0;
-    codec->bitrate = g_strdup(specs[2]);
+    if (specs[1]) {
+        if (specs[2]) {
+            codec->bitrate = g_strdup(specs[2]);
+            codec->sample_rate = atoi(specs[1]);
+        } else
+            codec->bitrate = g_strdup(specs[1]);
+    }
     codec->is_active = TRUE;
 
     g_strfreev(specs);

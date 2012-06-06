@@ -509,7 +509,8 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 {
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber,true);
    if (contact) {
-      m_pPeerNameL->setText("<b>"+contact->getFormattedName()+"</b>");
+      m_Name = contact->getFormattedName();
+      m_pPeerNameL->setText("<b>"+m_Name+"</b>");
       if (contact->getPhoto() != NULL) {
          QPixmap pxm = (*contact->getPhoto());
          if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty()) {
@@ -531,10 +532,12 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
          m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
       else
          m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      if (!phoneNumber.isEmpty())
-         m_pPeerNameL->setText("<b>"+phoneNumber+"</b>");
-      else
-         m_pPeerNameL->setText(i18n("<b>Unknown</b>"));
+      if (!phoneNumber.isEmpty() && m_Name.isEmpty())
+         m_Name = phoneNumber;
+      else if (m_Name.isEmpty())
+         m_Name = i18n("Unknown");
+      
+      m_pPeerNameL->setText("<b>"+m_Name+"</b>");
       return false;
    }
    return true;
