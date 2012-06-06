@@ -185,7 +185,7 @@ static void preferences_dialog_fill_codec_list(account_t *a)
         codec_t *c = g_queue_peek_nth(list, i);
 
         if (c) {
-            g_print("%s", c->name);
+            DEBUG("%s", c->name);
             gtk_list_store_append(codecStore, &iter);
             gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
 
@@ -226,8 +226,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
     gtk_tree_model_get(model, &iter, COLUMN_CODEC_ACTIVE, &active,
                        COLUMN_CODEC_NAME, &name, -1);
 
-    g_print("%s\n", name);
-    g_print("%i\n", g_queue_get_length (acc->vcodecs));
+    DEBUG("%s", name);
+    DEBUG("video codecs length %i", g_queue_get_length(acc->vcodecs));
 
     codec_t *codec = codec_list_get_by_name((gconstpointer) name, acc->vcodecs);
 

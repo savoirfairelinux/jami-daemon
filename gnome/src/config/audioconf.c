@@ -53,7 +53,7 @@ static GtkWidget *ringtone;
 static GtkWidget *plugin;
 static GtkWidget *codecMoveUpButton;
 static GtkWidget *codecMoveDownButton;
-static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
+static GtkWidget *codecTreeView; // View used instead of store to get access to selection
 static GtkWidget *pulse;
 static GtkWidget *alsabox;
 static GtkWidget *alsa_conf;
@@ -66,6 +66,9 @@ enum {
     COLUMN_CODEC_BITRATE,
     CODEC_COLUMN_COUNT
 };
+
+#define KBPS "kbps"
+#define KHZ "kHz"
 
 static void codec_move_up(GtkButton *button UNUSED, gpointer data);
 static void codec_move_down(GtkButton *button UNUSED, gpointer data);
@@ -97,8 +100,8 @@ preferences_dialog_fill_codec_list(const account_t *account)
             DEBUG("%s is %sactive", c->name, c->is_active ? "" : "not ");
             GtkTreeIter iter;
             gtk_list_store_append(codecStore, &iter);
-            gchar *samplerate = g_strdup_printf("%d kHz", c->sample_rate);
-            gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
+            gchar *samplerate = g_strdup_printf("%d " KHZ, (gint) (c->sample_rate * 0.001));
+            gchar *bitrate = g_strdup_printf("%s " KBPS, c->bitrate);
 
             gtk_list_store_set(codecStore, &iter,
                                COLUMN_CODEC_ACTIVE, c->is_active,
@@ -426,23 +429,28 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     // Get active value and name at iteration
     gboolean active;
     gchar* name;
-    gchar* srate;
+    gchar* samplerate;
     gtk_tree_model_get(model, &iter, COLUMN_CODEC_ACTIVE, &active,
                        COLUMN_CODEC_NAME, &name, COLUMN_CODEC_FREQUENCY,
-                       &srate, -1);
+                       &samplerate, -1);
 
-    DEBUG("Selected Codec: %s, %s", name, srate);
+    DEBUG("Selected Codec: %s, %s", name, samplerate);
 
     codec_t* codec = NULL;
 
-    if (utf8_case_equal(name,"speex") && utf8_case_equal(srate, "8 kHz"))
-        codec = codec_list_get_by_payload(110, acc->acodecs);
-    else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate,"16 kHz"))
-        codec = codec_list_get_by_payload(111, acc->acodecs);
-    else if (utf8_case_equal(name,"speex") && utf8_case_equal(srate, "32 kHz"))
-        codec = codec_list_get_by_payload(112, acc->acodecs);
-    else
+    const gboolean is_speex = utf8_case_equal(name, "speex");
+    if (is_speex) {
+        if (utf8_case_equal(samplerate, "8 " KHZ))
+            codec = codec_list_get_by_payload(110, acc->acodecs);
+        else if (utf8_case_equal(samplerate, "16 " KHZ))
+            codec = codec_list_get_by_payload(111, acc->acodecs);
+        else if (utf8_case_equal(samplerate, "32 " KHZ))
+            codec = codec_list_get_by_payload(112, acc->acodecs);
+        else
+            codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
+    } else {
         codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
+    }
 
     // Toggle active value
     active = !active;
