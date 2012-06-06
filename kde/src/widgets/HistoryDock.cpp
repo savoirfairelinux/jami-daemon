@@ -241,7 +241,7 @@ void HistoryDock::reload()
       case Name2: {
          QHash<QString,QTreeWidgetItem*> group;
          foreach(HistoryTreeItem* item, m_History) {
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>((item->getName()));
+            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(item->getName());
             item->setItem(twItem);
             twItem->widget = item;
             m_pItemView->setItemWidget(twItem,0,item);

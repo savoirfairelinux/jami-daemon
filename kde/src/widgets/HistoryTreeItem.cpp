@@ -532,9 +532,9 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
          m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
       else
          m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      if (!phoneNumber.isEmpty())
+      if (!phoneNumber.isEmpty() && m_Name.isEmpty())
          m_Name = phoneNumber;
-      else
+      else if (m_Name.isEmpty())
          m_Name = i18n("Unknown");
       
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
