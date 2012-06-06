@@ -94,7 +94,7 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    setDragEnabled(true);
    setAnimated   (true);
    setUniformRowHeights(false);
-   
+
    CallTreeItemDelegate *delegate = new CallTreeItemDelegate(this);
    setItemDelegate(delegate);
    setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
@@ -106,7 +106,7 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    m_pTransferLE      = new KLineEdit       ( m_pTransferOverlay );
    QGridLayout* gl    = new QGridLayout     ( m_pTransferOverlay );
    QLabel* lblImg     = new QLabel          ( image              );
-   
+
    m_pTransferOverlay->setVisible(false);
    m_pTransferOverlay->resize(size());
    m_pTransferOverlay->setCornerWidget(lblImg);
@@ -114,7 +114,7 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
 
    m_pTransferB->setText(i18n("Transfer"));
    m_pTransferB->setMaximumSize(70,9000);
-   
+
    gl->addItem  (new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum), 0 , 0 , 1 , 3 );
    gl->addWidget(m_pTransferLE                                                   , 1 , 1 , 1 , 2 );
    gl->addWidget(m_pTransferB                                                    , 1 , 4 , 1 , 2 );
@@ -428,7 +428,7 @@ void CallView::transfer()
          SFLPhoneAccessibility::getInstance()->say(i18n("You call have been transferred to ")+m_pTransferLE->text());
       }
    }
-   
+
    m_pCallPendingTransfer = 0;
    m_pTransferLE->clear();
 
@@ -467,9 +467,9 @@ void CallView::hideOverlay()
       disconnect(m_pCallPendingTransfer,SIGNAL(changed()),this,SLOT(hideOverlay()));
       m_pActiveOverlay->setVisible(false);
    }
-   
+
    m_pActiveOverlay = 0;
-   
+
    m_pCallPendingTransfer = 0;
 } //hideOverlay
 
@@ -566,7 +566,7 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
 {
    if (!dynamic_cast<QTreeWidgetItem*>(item) && SFLPhone::model()->getCall(item) && !dynamic_cast<QTreeWidgetItem*>(parent))
       return nullptr;
-   
+
    if (!item) {
       kDebug() << "This is not a valid call";
       return 0;
@@ -782,7 +782,7 @@ CallViewOverlay::CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m
 
 CallViewOverlay::~CallViewOverlay()
 {
-   
+
 }
 
 ///Add a widget (usually an icon) in the corner
