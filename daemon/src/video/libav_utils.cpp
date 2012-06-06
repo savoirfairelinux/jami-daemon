@@ -113,7 +113,9 @@ void sfl_avcodec_init()
 
     av_register_all();
     avdevice_register_all();
+#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(53, 13, 0)
     avformat_network_init();
+#endif
 
     av_lockmgr_register(avcodecManageMutex);
 

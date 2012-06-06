@@ -281,7 +281,13 @@ void ContactDock::filter(const QString& text)
 
    }
 
-   //m_pContactView->expandAll();
+   for (int i=0;i< m_pContactView->topLevelItemCount();i++) {
+      bool visible = false;
+      QTreeWidgetItem* item = m_pContactView->topLevelItem(i);
+      int count  = item->childCount();
+      for (int j=0;j<count;j++) visible |= !item->child(j)->isHidden();
+      m_pContactView->topLevelItem(i)->setHidden(!visible);
+   }
 } //filter
 
 void ContactDock::reloadHistoryConst()

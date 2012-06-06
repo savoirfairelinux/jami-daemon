@@ -43,7 +43,7 @@ typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 ///@class CallViewOverlay Display overlay on top of the call tree
 class CallViewOverlay : public QWidget {
    Q_OBJECT
-   
+
 public:
    //Constructor
    CallViewOverlay(QWidget* parent);
@@ -74,7 +74,7 @@ private slots:
 class CallView : public QTreeWidget {
    Q_OBJECT
    friend class CallTreeItemDelegate;
-   
+
    public:
       CallView                    ( QWidget* parent = 0                                                               );
       ~CallView                   (                                                                                   );
