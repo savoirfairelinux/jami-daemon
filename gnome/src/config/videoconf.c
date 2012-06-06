@@ -185,7 +185,7 @@ static void preferences_dialog_fill_codec_list(account_t *a)
         codec_t *c = g_queue_peek_nth(list, i);
 
         if (c) {
-            DEBUG("%s", c->name);
+            DEBUG("%s is %sactive", c->name, c->is_active ? "" : "not ");
             gtk_list_store_append(codecStore, &iter);
             gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
 
