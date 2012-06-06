@@ -24,6 +24,7 @@
 #include "ui_dlgaccountsbase.h"
 #include "AccountView.h"
 #include "ConfigAccountList.h"
+#include "../lib/callmanager_interface_singleton.h"
 
 //Qt
 class QTableWidget;
@@ -62,6 +63,43 @@ class Private_AddCodecDialog : public KDialog {
     void addCodec(QString alias);
 };
 
+///@class RingToneListItem Ringtone list widget
+class RingToneListItem : public QWidget
+{
+   Q_OBJECT
+   friend class DlgAccounts;
+   RingToneListItem(QString path, QString name) : QWidget(0),m_Path(path) {
+      QHBoxLayout* l = new QHBoxLayout(this);
+      l->setContentsMargins(0,0,0,0);
+      m_pPlayPB = new QPushButton(this);
+      m_pPlayPB->setIcon(KIcon("media-playback-start"));
+      m_pPlayPB->setVisible(false);
+      QLabel* lblName = new QLabel(name,this);
+      lblName->setStyleSheet("padding-left:5px;");
+      lblName->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+      l->addWidget(lblName);
+      l->addWidget(m_pPlayPB);
+      connect(m_pPlayPB,SIGNAL(clicked()),this,SLOT(playRingtone()));
+   }
+protected:
+   virtual void enterEvent ( QEvent * event ) {
+      Q_UNUSED(event)
+      m_pPlayPB->setVisible(true);
+   }
+   virtual void leaveEvent ( QEvent * event ) {
+      Q_UNUSED(event)
+      m_pPlayPB->setVisible(false);
+   }
+private slots:
+   void playRingtone() {
+      CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+      callManager.startRecordedFilePlayback(m_Path);
+   }
+private:
+   QString m_Path;
+   QPushButton* m_pPlayPB;
+};
+
 /**
  *  @author Jérémy Quentin <jeremy.quentin@gmail.com>
  *
@@ -93,11 +131,12 @@ public:
 
 private:
    ///Attributes
-   ConfigAccountList*  accountList           ;
-   QList<StringHash>   codecList             ;
-   QListWidgetItemHash credentialInfo        ;
-   CredentialList      credentialList        ;
-   bool                accountListHasChanged ;
+   ConfigAccountList*    accountList           ;
+   QList<StringHash>     codecList             ;
+   QListWidgetItemHash   credentialInfo        ;
+   CredentialList        credentialList        ;
+   bool                  accountListHasChanged ;
+   QMap<QString,QString> m_hRingtonePath;
 
    ///Mutators
    void loadCodecList();

@@ -95,6 +95,8 @@ class ConfigurationManager
         void setEchoCancelDelay(const int32_t& length);
         int getEchoCancelDelay();
 
+        std::map<std::string, std::string> getRingtoneList();
+
         std::string getAudioManager();
         void setAudioManager(const std::string& api);
 
