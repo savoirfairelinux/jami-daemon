@@ -1157,36 +1157,26 @@
             <property name="checkable">
              <bool>true</bool>
             </property>
-            <layout class="QFormLayout" name="formLayout_2">
-             <item row="0" column="1">
+            <layout class="QGridLayout" name="gridLayout_6">
+             <item row="0" column="0" colspan="2">
+              <widget class="QListWidget" name="m_pRingtoneListLW"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QCheckBox" name="m_pUseCustomFileCK">
+               <property name="text">
+                <string>Use custom file</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
               <widget class="KUrlRequester" name="m_pRingTonePath">
                <property name="filter">
                 <string notr="true">*.ul *.au *.wav</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label">
-               <property name="text">
-                <string>File</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>437</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
         </widget>
@@ -1268,6 +1258,38 @@
     <hint type="destinationlabel">
      <x>622</x>
      <y>264</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_pUseCustomFileCK</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>m_pRingTonePath</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>390</x>
+     <y>519</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>469</x>
+     <y>519</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_pUseCustomFileCK</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>m_pRingtoneListLW</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>340</x>
+     <y>520</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>365</x>
+     <y>394</y>
     </hint>
    </hints>
   </connection>

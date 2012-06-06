@@ -28,6 +28,7 @@
 #include "lib/sflphone_const.h"
 #include <kconfigdialog.h>
 #include <QTableWidget>
+#include <QString>
 #include <QListWidgetItem>
 #include "conf/ConfigurationDialog.h"
 #include <QWidget>
@@ -129,6 +130,8 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /**/connect(group_security_tls,             SIGNAL(clicked(bool))               , this      , SLOT(changedAccountList()      ));
    /**/connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this      , SLOT(changedAccountList()      ));
    /**/connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this      , SLOT(changedAccountList()      ));
+   /**/connect(m_pRingtoneListLW,              SIGNAL(currentRowChanged(int))      , this      , SLOT(changedAccountList()      ));
+   /**/connect(m_pUseCustomFileCK,             SIGNAL(clicked(bool))               , this      , SLOT(changedAccountList()      ));
    /**/connect(&configurationManager,          SIGNAL(accountsChanged())           , this      , SLOT(updateAccountStates()     ));
    /**/connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &)) , this      , SLOT(changedAccountList()      ));
    /**/connect(this,                           SIGNAL(updateButtons())             , parent    , SLOT(updateButtons()           ));
@@ -280,6 +283,14 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    configurationManager.setActiveAudioCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
    kDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
 
+   if (m_pRingtoneListLW->selectedItems().size() == 1 && m_pRingtoneListLW->currentItem() ) {
+      QListWidgetItem* selectedRingtone = m_pRingtoneListLW->currentItem();
+      RingToneListItem* ringtoneWidget = qobject_cast<RingToneListItem*>(m_pRingtoneListLW->itemWidget(selectedRingtone));
+      if (ringtoneWidget) {
+         account->setAccountDetail( CONFIG_RINGTONE_PATH, ringtoneWidget->m_Path);
+      }
+   }
+
    saveCredential(account->getAccountDetail(ACCOUNT_ID));
 } //saveAccount
 
@@ -395,12 +406,32 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    }
 
    m_pEnableRingtoneGB->setChecked((account->getAccountDetail(CONFIG_RINGTONE_ENABLED)=="false")?false:true);
-   m_pRingTonePath->setUrl( KStandardDirs::realFilePath(account->getAccountDetail(CONFIG_RINGTONE_PATH)));
+   QString ringtonePath = KStandardDirs::realFilePath(account->getAccountDetail(CONFIG_RINGTONE_PATH));
+   m_pRingTonePath->setUrl( ringtonePath );
+
 
    combo_tls_method->setCurrentIndex        ( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
-
+   m_pRingtoneListLW->clear();
+   m_hRingtonePath = configurationManager.getRingtoneList();
+   QMutableMapIterator<QString, QString> iter(m_hRingtonePath);
+   bool found = false;
+   while (iter.hasNext()) {
+      iter.next();
+      QListWidgetItem* item = new QListWidgetItem();
+      RingToneListItem* item_widget = new RingToneListItem(iter.key(),iter.value());
+      m_pRingtoneListLW->addItem(item);
+      m_pRingtoneListLW->setItemWidget(item,item_widget);
+      if (KStandardDirs::realFilePath(iter.key()) == ringtonePath) {
+         m_pUseCustomFileCK->setChecked(false);
+         m_pRingTonePath->setDisabled(true);
+         item->setSelected(true);
+         found = true;
+      }
+   }
+   if (!found) m_pRingtoneListLW->setDisabled(true);
+   
    comboBox_ni_local_address->clear();
    QStringList interfaceList = configurationManager.getAllIpInterfaceByName();
    comboBox_ni_local_address->addItems(interfaceList);
@@ -785,3 +816,5 @@ void DlgAccounts::enablePublished()
    lineEdit_pa_published_address->setDisabled(radioButton_pa_same_as_local->isChecked());
    spinBox_pa_published_port->setDisabled(radioButton_pa_same_as_local->isChecked());
 }
+
+//#include <dlgaccount.moc>
