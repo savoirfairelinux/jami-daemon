@@ -253,9 +253,9 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned);
 
         // try to reverse match the peer name using the cache
-        if (call->getDisplayName() == "") {
-            std::string pseudo_contact_name = HistoryNameCache::getInstance()->getNameFromHistory(call->getPeerNumber(),getAccountFromCall(call_id));
-            if (pseudo_contact_name != "" )
+        if (call->getDisplayName().empty()) {
+            const std::string pseudo_contact_name(HistoryNameCache::getInstance().getNameFromHistory(call->getPeerNumber(), getAccountFromCall(call_id)));
+            if (not pseudo_contact_name.empty())
                 call->setDisplayName(pseudo_contact_name);
         }
         switchCall(call_id);

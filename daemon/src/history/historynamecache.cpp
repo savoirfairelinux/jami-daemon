@@ -31,27 +31,29 @@
 #include "historynamecache.h"
 #include "../manager.h"
 
-HistoryNameCache* HistoryNameCache::m_pInstance = NULL;
-
-HistoryNameCache::HistoryNameCache():m_hNameCache(),m_Init(false)
+HistoryNameCache::HistoryNameCache() : hNameCache_()
 {
-   if (!m_Init) {
-      std::vector<std::map<std::string, std::string> > history = Manager::instance().getHistory();
-      for (unsigned int i=0;i<history.size();i++) {
-         std::string name(history[i]["display_name"]),account(history[i]["accountid"]),number(history[i]["peer_number"]);
-         if (m_hNameCache[account][number] == "" && name != "" && number != "")
-            m_hNameCache[account][number] = name;
-      }
-   }
-   getNameFromHistory("","");
-   m_Init = true;
+    using std::vector;
+    using std::map;
+    using std::string;
+
+    typedef vector<map<string, string> > HistoryList;
+    HistoryList history(Manager::instance().getHistory());
+    for (HistoryList::iterator i = history.begin(); i != history.end(); ++i) {
+        string name((*i)["display_name"]);
+        string account((*i)["accountid"]);
+        string number((*i)["peer_number"]);
+        if (hNameCache_[account][number].empty() and not name.empty() and not number.empty())
+            hNameCache_[account][number] = name;
+    }
+    getNameFromHistory("", "");
 }
 
-HistoryNameCache* HistoryNameCache::getInstance()
+HistoryNameCache& HistoryNameCache::getInstance()
 {
-   if (!m_pInstance)
-      m_pInstance = new HistoryNameCache();
-   return m_pInstance;
+    // Meyer singleton
+    static HistoryNameCache instance_;
+    return instance_;
 }
 
 void HistoryNameCache::serialize(Conf::YamlEmitter &emitter UNUSED)
@@ -64,7 +66,7 @@ void HistoryNameCache::unserialize(const Conf::MappingNode &map UNUSED)
     //TODO
 }
 
-std::string HistoryNameCache::getNameFromHistory(std::string number, std::string accountid)
+std::string HistoryNameCache::getNameFromHistory(const std::string &number, const std::string &accountid)
 {
-   return m_hNameCache[accountid][number];
+    return hNameCache_[accountid][number];
 }

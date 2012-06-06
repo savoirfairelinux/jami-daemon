@@ -34,22 +34,17 @@
 #include "config/serializable.h"
 #include <iostream>
 #include <map>
-#include <vector>
 
 class HistoryNameCache : public Serializable {
 public:
-   virtual ~HistoryNameCache() {};
    virtual void serialize(Conf::YamlEmitter &emitter);
    virtual void unserialize(const Conf::MappingNode &map);
-   static HistoryNameCache* getInstance();
-   std::string getNameFromHistory(std::string number, std::string accountid);
+   static HistoryNameCache& getInstance();
+   std::string getNameFromHistory(const std::string &number, const std::string &accountid);
 private:
-   explicit HistoryNameCache();
-   
+   HistoryNameCache();
    ///@brief [accountid][callnumber]
-   std::map<std::string, std::map<std::string, std::string> > m_hNameCache;
-   bool m_Init;
-   static HistoryNameCache* m_pInstance;
+   std::map<std::string, std::map<std::string, std::string> > hNameCache_;
 };
 
 #endif   // HISTORYNAMECACHE_H_
