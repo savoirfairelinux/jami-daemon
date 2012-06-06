@@ -67,12 +67,13 @@ class VideoReceiveThread : public ost::Thread {
         int dstHeight_;
 
         SharedMemory &sharedMemory_;
+        bool receiving_;
+        std::string sdpFilename_;
         void setup();
         void createScalingContext();
         void loadSDP();
 
     public:
-        bool receiving_;
         VideoReceiveThread(const std::map<std::string, std::string> &args,
                            SharedMemory &handle);
         virtual ~VideoReceiveThread();

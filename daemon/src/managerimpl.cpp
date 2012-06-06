@@ -2630,9 +2630,13 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     shortcutPreferences.unserialize(*parser.getShortcutNode());
 #ifdef SFL_VIDEO
     VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-    MappingNode *videoNode = parser.getVideoNode();
-    if (videoNode)
-        controls->getVideoPreferences().unserialize(*videoNode);
+    try {
+        MappingNode *videoNode = parser.getVideoNode();
+        if (videoNode)
+            controls->getVideoPreferences().unserialize(*videoNode);
+    } catch (const YamlParserException &e) {
+        ERROR("No video node in config file");
+    }
 #endif
 
     using std::tr1::placeholders::_1;

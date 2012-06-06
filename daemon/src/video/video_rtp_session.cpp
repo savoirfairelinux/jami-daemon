@@ -67,7 +67,7 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
-        DEBUG("%s:Updated incoming SDP to:\n %s", __PRETTY_FUNCTION__,
+        DEBUG("Updated incoming SDP to:\n %s",
               rxArgs_["receiving_sdp"].c_str());
     }
 
@@ -117,8 +117,7 @@ void VideoRtpSession::updateDestination(const string &destination,
     if (tmp.str() != txArgs_["destination"]) {
         assert(sendThread_.get() == 0);
         txArgs_["destination"] = tmp.str();
-        DEBUG("%s updated dest to %s",  __PRETTY_FUNCTION__,
-              txArgs_["destination"].c_str());
+        DEBUG("updated dest to %s",  txArgs_["destination"].c_str());
     }
 
     if (port == 0) {
@@ -180,7 +179,6 @@ void VideoRtpSession::start()
 
 void VideoRtpSession::stop()
 {
-    DEBUG("%s", __PRETTY_FUNCTION__);
     receiveThread_.reset();
     sendThread_.reset();
 }

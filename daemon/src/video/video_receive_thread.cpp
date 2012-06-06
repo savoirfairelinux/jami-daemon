@@ -68,6 +68,22 @@ int getBufferSize(int width, int height, int format)
     return sizeof(uint8_t) * avpicture_get_size(fmt, width, height);
 }
 
+string openTemp(string path, std::ofstream& f)
+{
+    path += "/XXXXXX";
+    std::vector<char> dst_path(path.begin(), path.end());
+    dst_path.push_back('\0');
+    int fd = -1;
+    while (fd == -1) {
+        fd = mkstemp(&dst_path[0]);
+        if (fd != -1) {
+            path.assign(dst_path.begin(), dst_path.end() - 1);
+            f.open(path.c_str(), std::ios_base::trunc | std::ios_base::out);
+            close(fd);
+        }
+    }
+    return path;
+}
 } // end anonymous namespace
 
 void VideoReceiveThread::loadSDP()
@@ -75,9 +91,9 @@ void VideoReceiveThread::loadSDP()
     assert(not args_["receiving_sdp"].empty());
 
     std::ofstream os;
+    sdpFilename_ = openTemp("/tmp", os);
     os << args_["receiving_sdp"];
-    DEBUG("%s:loaded SDP %s", __PRETTY_FUNCTION__,
-          args_["receiving_sdp"].c_str());
+    DEBUG("loaded SDP %s", args_["receiving_sdp"].c_str());
 
     os.close();
 }
@@ -92,14 +108,17 @@ void VideoReceiveThread::setup()
     AVInputFormat *file_iformat = 0;
 
     std::string format_str;
+    std::string input;
     if (args_["input"].empty()) {
         loadSDP();
         format_str = "sdp";
+        input = sdpFilename_;
     } else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
         // FIXME: This is not a robust way of checking if we mean to use a
         // v4l2 device
         format_str = "video4linux2";
+        input = args_["input"];
     }
 
     DEBUG("Using %s format", format_str.c_str());
@@ -115,16 +134,16 @@ void VideoReceiveThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
-    int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(), file_iformat,
-                            &options);
-    CHECK(ret == 0, "Could not open input \"%s\"", args_["input"].c_str());
+    int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, &options);
+    CHECK(ret == 0, "Could not open input \"%s\"", input.c_str());
 
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
     ret = avformat_find_stream_info(inputCtx_, NULL);
 #endif
-    CHECK(ret >= 0, "Could not find stream info!");
+    if (ret < 0)
+        DEBUG("Could not find stream info!");
 
     // find the first video stream from the input
     streamIndex_ = -1;
@@ -146,7 +165,7 @@ void VideoReceiveThread::setup()
 #else
     ret = avcodec_open2(decoderCtx_, inputDecoder, NULL);
 #endif
-    CHECK(ret >= 0, "Could not open codec");
+    CHECK(ret == 0, "Could not open codec");
 
     scaledPicture_ = avcodec_alloc_frame();
     CHECK(scaledPicture_, "Could not allocate output frame");
@@ -183,7 +202,8 @@ VideoReceiveThread::VideoReceiveThread(const std::map<string, string> &args,
                                        sfl_video::SharedMemory &handle) :
     args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
-    dstWidth_(-1), dstHeight_(-1), sharedMemory_(handle), receiving_(false)
+    dstWidth_(0), dstHeight_(0), sharedMemory_(handle), receiving_(false),
+    sdpFilename_()
 {}
 
 void VideoReceiveThread::run()

@@ -308,7 +308,7 @@ class Sdp {
          */
         std::vector<sfl::Codec *> audio_codec_list_;
 #ifdef SFL_VIDEO
-		std::vector<std::string> video_codec_list_;
+        std::vector<std::string> video_codec_list_;
 #endif
 
         /**
@@ -352,18 +352,18 @@ class Sdp {
          * Build the local media capabilities for this session
          * @param List of codec in preference order
          */
-        void setLocalMediaCapabilities(const std::vector<int> &selectedCodecs);
+        void setLocalMediaAudioCapabilities(const std::vector<int> &selected);
 #ifdef SFL_VIDEO
-        void setLocalMediaVideoCapabilities(const std::vector<std::string> &videoCodecs);
+        void setLocalMediaVideoCapabilities(const std::vector<std::string> &selected);
 #endif
 
         /*
          * Build the local SDP offer
          */
 #ifdef SFL_VIDEO
-        int createLocalSession(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs);
+        int createLocalSession(const std::vector<int> &selectedAudio, const std::vector<std::string> &selectedVideo);
 #else
-        int createLocalSession(const std::vector<int> &selectedCodecs);
+        int createLocalSession(const std::vector<int> &selectedAudio);
 #endif
         /*
          * Adds a sdes attribute to the given media section.
