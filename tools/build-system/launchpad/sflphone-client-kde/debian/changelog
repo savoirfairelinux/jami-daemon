@@ -1,11 +1,9 @@
-sflphone-client-kde (1.1) unstable; urgency=low
+sflphone-client-kde (1.1.1) SYSTEM; urgency=low
 
-  * KDE client now work with sflphone-daemon 1.1
-  * Improved contact integration
-  * Improved history
-  * Attended transfer support
-  * Improved libraries (under the hood)
-  * Configuration cleanup
-  * Tons of bug fixes
+    ** SNAPSHOT 1.0.0-rc20110930~ppa1~SYSTEM **
 
-   -- Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>  Thu May 17 15:14:46 EDT 2012
+  * Improve accessibility
+  * Improve usability/UX
+  * Fix all know bugs
+
+ -- Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>  Tue, 7 Jun 2012 11:38:30 -0500
