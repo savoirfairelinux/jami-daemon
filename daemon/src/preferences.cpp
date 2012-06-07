@@ -351,7 +351,7 @@ AudioPreference::AudioPreference() :
 {}
 
 namespace {
-void checkSoundCard(int &card, int stream)
+void checkSoundCard(int &card, AudioLayer::PCMType stream)
 {
     if (not AlsaLayer::soundCardIndexExists(card, stream)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
@@ -363,13 +363,13 @@ void checkSoundCard(int &card, int stream)
 AudioLayer* AudioPreference::createAudioLayer()
 {
     if (audioApi_ == PULSEAUDIO_API_STR and system("ps -C pulseaudio > /dev/null") == 0)
-        return new PulseLayer;
+        return new PulseLayer(*this);
     else {
         audioApi_ = ALSA_API_STR;
-        checkSoundCard(cardin_, SFL_PCM_CAPTURE);
-        checkSoundCard(cardout_, SFL_PCM_PLAYBACK);
-        checkSoundCard(cardring_, SFL_PCM_RINGTONE);
-        return new AlsaLayer;
+        checkSoundCard(cardin_, AudioLayer::SFL_PCM_CAPTURE);
+        checkSoundCard(cardout_, AudioLayer::SFL_PCM_PLAYBACK);
+        checkSoundCard(cardring_, AudioLayer::SFL_PCM_RINGTONE);
+        return new AlsaLayer(*this);
     }
 }
 

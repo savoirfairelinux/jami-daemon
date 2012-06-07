@@ -1883,32 +1883,17 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 /**
  * Set audio output device
  */
-void ManagerImpl::setAudioDevice(const int index, int streamType)
+void ManagerImpl::setAudioDevice(int index, AudioLayer::PCMType type)
 {
     ost::MutexLock lock(audioLayerMutex_);
 
-    AlsaLayer *alsaLayer = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (!alsaLayer) {
-        ERROR("Can't find alsa device");
+    if (!audiodriver_) {
+        ERROR("Audio driver not initialized");
         return ;
     }
 
-    bool wasStarted = audiodriver_->isStarted();
-
-    switch (streamType) {
-        case SFL_PCM_PLAYBACK:
-            audioPreference.setCardout(index);
-            break;
-        case SFL_PCM_CAPTURE:
-            audioPreference.setCardin(index);
-            break;
-        case SFL_PCM_RINGTONE:
-            audioPreference.setCardring(index);
-            break;
-        default:
-            break;
-    }
+    const bool wasStarted = audiodriver_->isStarted();
+    audiodriver_->updatePreference(audioPreference, index, type);
 
     // Recreate audio driver with new settings
     delete audiodriver_;
@@ -2165,12 +2150,7 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
         return soundCardIndex;
     }
 
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
-
-    if (alsalayer)
-        soundCardIndex = alsalayer -> getAudioDeviceIndex(name);
-
-    return soundCardIndex;
+    return audiodriver_->getAudioDeviceIndex(name);
 }
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin() const

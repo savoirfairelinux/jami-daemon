@@ -38,7 +38,7 @@
 #include "logger.h"
 #include "manager.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <fstream>
 
 namespace {
@@ -70,7 +70,7 @@ std::ofstream outfileResampled ("testMicOuputResampled.raw", std::ifstream::bina
 std::ofstream outfile("testMicOuput.raw", std::ifstream::binary);
 #endif
 
-PulseLayer::PulseLayer()
+PulseLayer::PulseLayer(AudioPreference &pref)
     : playback_(0)
     , record_(0)
     , ringtone_(0)
@@ -80,9 +80,11 @@ PulseLayer::PulseLayer()
     , mic_buf_size_(0)
     , context_(0)
     , mainloop_(pa_threaded_mainloop_new())
+    , enumeratingSinks_(false)
+    , enumeratingSources_(false)
+    , preference_(pref)
 {
     setenv("PULSE_PROP_media.role", "phone", 1);
-
 
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
@@ -174,24 +176,30 @@ void PulseLayer::context_state_callback(pa_context* c, void *user_data)
 void PulseLayer::updateSinkList()
 {
     sinkList_.clear();
+    enumeratingSinks_ = true;
     pa_context_get_sink_info_list(context_, sink_input_info_callback, this);
 }
 
 void PulseLayer::updateSourceList()
 {
     sourceList_.clear();
+    enumeratingSources_ = true;
     pa_context_get_source_info_list(context_, source_input_info_callback, this);
 }
 
 bool PulseLayer::inSinkList(const std::string &deviceName) const
 {
-    return std::find(sinkList_.begin(), sinkList_.end(), deviceName) != sinkList_.end();
+    bool found = std::find(sinkList_.begin(), sinkList_.end(), deviceName) != sinkList_.end();
+    DEBUG("seeking for %s in sinks. %s found", deviceName.c_str(), found?"":"NOT");
+    return found;
 }
 
 
 bool PulseLayer::inSourceList(const std::string &deviceName) const
 {
-    return std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
+    bool found = std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
+    DEBUG("seeking for %s in sources. %s found", deviceName.c_str(), found?"":"NOT");
+    return found;
 }
 
 std::vector<std::string> PulseLayer::getCaptureDeviceList() const
@@ -204,11 +212,37 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
     return sinkList_;
 }
 
+int PulseLayer::getAudioDeviceIndex(const std::string& name) const
+{
+    int index = std::distance(sourceList_.begin(), std::find(sourceList_.begin(), sourceList_.end(), name));
+    if (index == std::distance(sourceList_.begin(), sourceList_.end())) {
+        // not found in sources, search in sinks then
+        index = std::distance(sinkList_.begin(), std::find(sinkList_.begin(), sinkList_.end(), name));
+    }
+    return index;
+}
+
+std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
+{
+    switch (type) {
+        case SFL_PCM_PLAYBACK:
+        case SFL_PCM_RINGTONE:
+            return sinkList_.at(index);
+        case SFL_PCM_CAPTURE:
+            return sourceList_.at(index);
+        default:
+            return "";
+    }
+}
+
 void PulseLayer::createStreams(pa_context* c)
 {
-    std::string playbackDevice(audioPref.getDevicePlayback());
-    std::string captureDevice(audioPref.getDeviceRecord());
-    std::string ringtoneDevice(audioPref.getDeviceRingtone());
+    while (enumeratingSinks_ or enumeratingSources_)
+        ost::Thread::sleep(20 /* ms */);
+
+    std::string playbackDevice(preference_.getDevicePlayback());
+    std::string captureDevice(preference_.getDeviceRecord());
+    std::string ringtoneDevice(preference_.getDeviceRingtone());
     std::string defaultDevice = "";
 
     DEBUG("Devices:\n   playback: %s\n   record: %s\n   ringtone: %s",
@@ -246,7 +280,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(playback_->pulseStream());
 
             if (name && *name)
-                audioPref.setDevicePlayback(name);
+                preference_.setDevicePlayback(name);
         }
 
         delete playback_;
@@ -258,7 +292,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(ringtone_->pulseStream());
 
             if (name && *name)
-                audioPref.setDeviceRingtone(name);
+                preference_.setDeviceRingtone(name);
         }
 
         delete ringtone_;
@@ -270,7 +304,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(record_->pulseStream());
 
             if (name && *name)
-                audioPref.setDeviceRecord(name);
+                preference_.setDeviceRecord(name);
         }
 
         delete record_;
@@ -533,7 +567,7 @@ void PulseLayer::context_changed_callback(pa_context* c, pa_subscription_event_t
             DEBUG("PA_SUBSCRIPTION_EVENT_TYPE_MASK");
             break;
         default:
-            DEBUG("Unknown event type %d", t);
+            DEBUG("Unknown event type 0x%x", t);
 
     }
 }
@@ -542,10 +576,12 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
-    if (eol)
+    if (eol) {
+        static_cast<PulseLayer *>(userdata)->enumeratingSources_ = false;
         return;
+    }
 
-    DEBUG("Sink %u\n"
+    DEBUG("Source %u\n"
            "    Name: %s\n"
            "    Driver: %s\n"
            "    Description: %s\n"
@@ -577,8 +613,10 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
-    if (eol)
+    if (eol) {
+        static_cast<PulseLayer *>(userdata)->enumeratingSinks_ = false;
         return;
+    }
 
     DEBUG("Sink %u\n"
           "    Name: %s\n"
@@ -608,3 +646,23 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
     static_cast<PulseLayer *>(userdata)->sinkList_.push_back(i->name);
 }
 
+void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
+{
+    const std::string devName(getAudioDeviceName(index, type));
+    switch (type) {
+        case SFL_PCM_PLAYBACK:
+            DEBUG("setting %s for playback", devName.c_str());
+            preference.setDevicePlayback(devName);
+            break;
+        case SFL_PCM_CAPTURE:
+            DEBUG("setting %s for capture", devName.c_str());
+            preference.setDeviceRecord(devName);
+            break;
+        case SFL_PCM_RINGTONE:
+            DEBUG("setting %s for ringer", devName.c_str());
+            preference.setDeviceRingtone(devName);
+            break;
+        default:
+            break;
+    }
+}

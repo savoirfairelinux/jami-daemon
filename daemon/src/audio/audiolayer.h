@@ -55,15 +55,26 @@ class Time;
 }
 
 class AudioLayer {
+
     private:
         NON_COPYABLE(AudioLayer);
 
     public:
+        enum PCMType {
+            SFL_PCM_BOTH = 0x0021,          /** To open both playback and capture devices */
+            SFL_PCM_PLAYBACK = 0x0022,      /** To open playback device only */
+            SFL_PCM_CAPTURE = 0x0023,       /** To open capture device only */
+            SFL_PCM_RINGTONE = 0x0024       /** To open the ringtone device only */
+        };
+
         AudioLayer();
         virtual ~AudioLayer() {}
 
         virtual std::vector<std::string> getCaptureDeviceList() const = 0;
         virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
+
+        virtual int getAudioDeviceIndex(const std::string& name) const = 0;
+        virtual std::string getAudioDeviceName(int index, PCMType type) const = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -167,7 +178,7 @@ class AudioLayer {
             return &mutex_;
         }
 
-	/**
+        /**
          * Emit an audio notification on incoming calls
          */
         void notifyIncomingCall();
@@ -182,10 +193,11 @@ class AudioLayer {
          */
         static unsigned int playbackGain_;
 
-    protected:
+        virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
 
+    protected:
         /**
-         * Wether or not the audio layer stream is started
+         * Whether or not the audio layer stream is started
          */
         bool isStarted_;
 
@@ -209,11 +221,6 @@ class AudioLayer {
          * Remove audio offset that can be introduced by certain cheap audio device
          */
         DcBlocker dcblocker_;
-
-        /**
-         * Configuration file for this
-         */
-        AudioPreference &audioPref;
 
         /**
          * Manage sampling rate conversion

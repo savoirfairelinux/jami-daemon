@@ -44,6 +44,7 @@
 #include "fileutils.h"
 #include "sip/sipaccount.h"
 #include "../history/historynamecache.h"
+#include "../audio/audiolayer.h"
 
 namespace {
     const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
@@ -240,17 +241,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
 
 void ConfigurationManager::setAudioOutputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, SFL_PCM_PLAYBACK);
+    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_PLAYBACK);
 }
 
 void ConfigurationManager::setAudioInputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, SFL_PCM_CAPTURE);
+    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_CAPTURE);
 }
 
 void ConfigurationManager::setAudioRingtoneDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, SFL_PCM_RINGTONE);
+    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()

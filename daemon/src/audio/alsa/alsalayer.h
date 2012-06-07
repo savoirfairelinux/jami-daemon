@@ -53,7 +53,7 @@ class AlsaLayer : public AudioLayer {
         /**
          * Constructor
          */
-        AlsaLayer();
+        AlsaLayer(const AudioPreference &pref);
 
         /**
          * Destructor
@@ -99,7 +99,7 @@ class AlsaLayer : public AudioLayer {
          * @return bool True if it exists and supports the mode
          *		    false otherwise
          */
-        static bool soundCardIndexExists(int card, int stream);
+        static bool soundCardIndexExists(int card, PCMType stream);
 
         /**
          * An index is associated with its string description
@@ -107,6 +107,7 @@ class AlsaLayer : public AudioLayer {
          * @return	int	  Its index
          */
         int getAudioDeviceIndex(const std::string &description) const;
+        std::string getAudioDeviceName(int index, PCMType type) const;
 
         void playback(int maxSamples);
         void capture();
@@ -203,6 +204,8 @@ class AlsaLayer : public AudioLayer {
          * @return int The number of frames actually read
          */
         int read(void* buffer, int toCopy);
+
+        virtual void updatePreference(AudioPreference &pref, int index, PCMType type);
 
         /**
          * Handles to manipulate playback stream
