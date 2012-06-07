@@ -1595,8 +1595,11 @@ msgstr "Afficher la sécurité"
 msgid "Display Codec"
 msgstr "Afficher le codec"
 
-msgid "Display Peer name"
+msgid "Display Peer Name"
 msgstr "Afficher le nom"
+
+msgid "Display Call Number"
+msgstr "Afficher le numero"
 
 msgid "Minimum item height"
 msgstr "Hauteur minimale"
@@ -1613,7 +1616,14 @@ msgstr "Automatiquement lire les champs textes des boîtes de dialogue interne"
 msgid "Automattically read the call details when it is selected"
 msgstr "Automatiquement lire les informations de l'appel sélectionne"
 
+msgid "View"
+msgstr "Affichage"
 
+msgid "Display e-mail"
+msgstr "Afficher le courriel"
+
+msgid "Display department"
+msgstr "Afficher le departement"
 
 #: rc.cpp:467
 msgctxt "NAME OF TRANSLATORS"
