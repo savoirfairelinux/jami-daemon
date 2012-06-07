@@ -63,7 +63,7 @@ const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, IC
 ///Constructor
 CallTreeItem::CallTreeItem(QWidget *parent)
    : QWidget(parent), m_pItemCall(0), m_Init(false),m_pBtnConf(0), m_pBtnTrans(0),m_pTimer(0),m_pPeerL(0),m_pIconL(0),m_pCallNumberL(0),m_pSecureL(0),m_pCodecL(0),m_pHistoryPeerL(0)
-   , m_pTransferPrefixL(0),m_pTransferNumberL(0),m_pElapsedL(0),m_Height(0)
+   , m_pTransferPrefixL(0),m_pTransferNumberL(0),m_pElapsedL(0),m_Height(0),m_pContact(0),m_pDepartment(0),m_pOrganisation(0),m_pEmail(0)
 {
    setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
    connect(AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),this,SLOT(updated()));
@@ -116,6 +116,18 @@ QSize CallTreeItem::sizeHint () const
       }
       if ( m_pCodecL      ) {
          QFontMetrics fm(m_pCodecL->font());
+         height += fm.height();
+      }
+      if ( m_pDepartment  ) {
+         QFontMetrics fm(m_pDepartment->font());
+         height += fm.height();
+      }
+      if ( m_pOrganisation) {
+         QFontMetrics fm(m_pOrganisation->font());
+         height += fm.height();
+      }
+      if ( m_pEmail       ) {
+         QFontMetrics fm(m_pEmail->font());
          height += fm.height();
       }
    }
@@ -233,6 +245,21 @@ void CallTreeItem::setCall(Call *call)
       m_pCodecL = new QLabel(" ",this);
       descr->addWidget(m_pCodecL);
    }
+
+   if (ConfigurationSkeleton::displayCallOrganisation()) {
+      m_pOrganisation = new QLabel(" ",this);
+      descr->addWidget(m_pOrganisation);
+   }
+
+   if (ConfigurationSkeleton::displayCallDepartment()) {
+      m_pDepartment = new QLabel(" ",this);
+      descr->addWidget(m_pDepartment);
+   }
+
+   if (ConfigurationSkeleton::displayCallEmail()) {
+      m_pEmail = new QLabel(" ",this);
+      descr->addWidget(m_pEmail);
+   }
    
    transfer->addWidget(m_pTransferPrefixL);
    transfer->addWidget(m_pTransferNumberL);
@@ -253,10 +280,23 @@ void CallTreeItem::updated()
 {
    call_state state = m_pItemCall->getState();
    bool recording = m_pItemCall->getRecording();
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber(),true);
-   if (contact && m_pPeerL) {
-      m_pPeerL->setText("<b>"+contact->getFormattedName()+"</b>");
-      m_pPeerL->setVisible(true);
+   if (!m_pContact)
+      m_pContact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber(),true);
+   
+   if (m_pContact) {
+      if (m_pPeerL) {
+         m_pPeerL->setText("<b>"+m_pContact->getFormattedName()+"</b>");
+         m_pPeerL->setVisible(true);
+      }
+      if (m_pOrganisation) {
+         m_pOrganisation->setText(m_pContact->getOrganization());
+      }
+      if (m_pDepartment) {
+         m_pDepartment->setText(m_pContact->getDepartment());
+      }
+      if (m_pEmail) {
+         m_pEmail->setText(m_pContact->getPreferredEmail());
+      }
    }
    else {
       if( m_pPeerL && ! m_pItemCall->getPeerName().trimmed().isEmpty()) {
@@ -275,8 +315,8 @@ void CallTreeItem::updated()
 
    if(state != CALL_STATE_OVER) {
       if(m_pIconL && state == CALL_STATE_CURRENT && recording) {
-         if (contact && !m_pItemCall->isConference()) {
-            QPixmap pxm = (*contact->getPhoto()).scaled(QSize(m_Height,m_Height));
+         if (m_pContact && !m_pItemCall->isConference()) {
+            QPixmap pxm = (*m_pContact->getPhoto()).scaled(QSize(m_Height,m_Height));
             QPainter painter(&pxm);
             QPixmap status(ICON_CURRENT_REC);
             painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
@@ -288,8 +328,8 @@ void CallTreeItem::updated()
       }
       else if (m_pIconL) {
          QString str = QString(callStateIcons[state]);
-         if (contact && !m_pItemCall->isConference()) {
-            QPixmap pxm = (*contact->getPhoto()).scaled(QSize(m_Height,m_Height));
+         if (m_pContact && !m_pItemCall->isConference()) {
+            QPixmap pxm = (*m_pContact->getPhoto()).scaled(QSize(m_Height,m_Height));
             QPainter painter(&pxm);
             QPixmap status(str);
             painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);

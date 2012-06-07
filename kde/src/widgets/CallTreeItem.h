@@ -39,6 +39,7 @@ class KIcon;
 //SFLPhone
 class Call;
 class TranslucentButtons;
+class Contact;
 
 ///@class CallTreeItem Widget for the central call treeview
 class CallTreeItem : public QWidget
@@ -73,8 +74,13 @@ class CallTreeItem : public QWidget
     QLabel*  m_pSecureL         ;
     QLabel*  m_pHistoryPeerL    ;
     QLabel*  m_pElapsedL        ;
+    QLabel*  m_pDepartment      ;
+    QLabel*  m_pOrganisation    ;
+    QLabel*  m_pEmail           ;
     QTimer*  m_pTimer           ;
     uint     m_Height           ;
+
+    Contact* m_pContact;
     
     TranslucentButtons* m_pBtnConf ;
     TranslucentButtons* m_pBtnTrans;

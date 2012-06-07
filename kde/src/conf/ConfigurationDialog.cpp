@@ -87,7 +87,7 @@ void ConfigurationDialog::updateSettings()
 
 bool ConfigurationDialog::hasChanged()
 {
-   bool res = dlgAudio->hasChanged() || dlgAccounts->hasChanged();
+   bool res = dlgAudio->hasChanged() || dlgAccounts->hasChanged() || dlgGeneral->hasChanged();
    kDebug() << "Config has Changed" << res;
    return res;
 }
