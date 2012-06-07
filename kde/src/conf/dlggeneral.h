@@ -22,6 +22,7 @@
 #define DLGGENERAL_H
 
 #include <QWidget>
+#include <kconfigdialog.h>
 
 #include "ui_dlggeneralbase.h"
 
@@ -33,18 +34,29 @@ class DlgGeneral : public QWidget, public Ui_DlgGeneralBase
 Q_OBJECT
 public:
    //Constructor
-   DlgGeneral(QWidget *parent = 0);
+   DlgGeneral(KConfigDialog *parent = 0);
 
    //Destructor
    ~DlgGeneral();
+
+   bool hasChanged();
+
+private:
+   QMap<QString,QString>          m_lCallDetails;
+   QMap<QString,QListWidgetItem*> m_lItemList   ;
+   bool m_HasChanged;
 
 public slots:
    //Mutator
    void updateWidgets();
    void updateSettings();
 
+private slots:
+   void changed();
+
 signals:
    void clearCallHistoryAsked();
+   void updateButtons();
 
 };
 

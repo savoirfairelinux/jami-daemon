@@ -3,11 +3,11 @@ Section: kde
 Priority: optional
 Maintainer: Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>
 Uploaders: Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>
-Standards-Version: 1.1
-Build-Depends: debhelper (>= 5.0), cdbs, kdelibs5-dev, cmake, libphonon-dev, kdepimlibs5-dev
+Standards-Version: 1.1.0
+Build-Depends: debhelper (>= 5.0), cdbs, kdelibs5-dev, cmake, kdepimlibs5-dev,
 Homepage: http://www.sfphone.org/
 
 Package: sflphone-client-kde
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, libqt4-dbus, kdelibs5, kdepimlibs5
 Description:KDE client for the sflphone-daemon SIP/AiX softphone

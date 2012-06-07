@@ -1861,14 +1861,7 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 {
     ost::MutexLock lock(audioLayerMutex_);
 
-    audioPreference.setPlugin(audioPlugin);
-
-    AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (!alsa) {
-        ERROR("Can't find alsa device");
-        return;
-    }
+    audioPreference.setAlsaPlugin(audioPlugin);
 
     bool wasStarted = audiodriver_->isStarted();
 
@@ -2155,7 +2148,7 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin() const
 {
-    return audioPreference.getPlugin();
+    return audioPreference.getAlsaPlugin();
 }
 
 

@@ -41,6 +41,18 @@
       <label>Should CallCodec be visible by default for calls</label>
       <default> false </default>
    </entry>
+   <entry name="displayCallOrganisation" type="Bool">
+      <label>If a contact is present, display the organisation</label>
+      <default> false </default>
+   </entry>
+   <entry name="displayCallDepartment" type="Bool">
+      <label>If a contact is present, display the department</label>
+      <default> false </default>
+   </entry>
+   <entry name="displayCallEmail" type="Bool">
+      <label>If a contact is present, display the e-mail</label>
+      <default> false </default>
+   </entry>
    <entry name="limitMinimumRowHeight" type="Bool">
       <label>The minimum number of pixel for a call item</label>
       <default> false </default>

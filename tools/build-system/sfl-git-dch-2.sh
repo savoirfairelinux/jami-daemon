@@ -28,7 +28,7 @@ fi
 cd ${WORKING_DIR}
 
 # use git log to retrieve changelog content
-CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${COMMIT_HASH_BEGIN}..${COMMIT_HASH_END} | grep -v "\[\#1262\]"`
+CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${COMMIT_HASH_BEGIN}..${COMMIT_HASH_END} $2 | grep -v "\[\#1262\]"`
 
 if [ "$?" -eq "1" ]; then
         echo " !! No new commit since last release"

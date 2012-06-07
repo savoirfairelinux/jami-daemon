@@ -240,9 +240,9 @@ void PulseLayer::createStreams(pa_context* c)
     while (enumeratingSinks_ or enumeratingSources_)
         ost::Thread::sleep(20 /* ms */);
 
-    std::string playbackDevice(preference_.getDevicePlayback());
-    std::string captureDevice(preference_.getDeviceRecord());
-    std::string ringtoneDevice(preference_.getDeviceRingtone());
+    std::string playbackDevice(preference_.getPulseDevicePlayback());
+    std::string captureDevice(preference_.getPulseDeviceRecord());
+    std::string ringtoneDevice(preference_.getPulseDeviceRingtone());
     std::string defaultDevice = "";
 
     DEBUG("Devices:\n   playback: %s\n   record: %s\n   ringtone: %s",
@@ -280,7 +280,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(playback_->pulseStream());
 
             if (name && *name)
-                preference_.setDevicePlayback(name);
+                preference_.setPulseDevicePlayback(name);
         }
 
         delete playback_;
@@ -292,7 +292,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(ringtone_->pulseStream());
 
             if (name && *name)
-                preference_.setDeviceRingtone(name);
+                preference_.setPulseDeviceRingtone(name);
         }
 
         delete ringtone_;
@@ -304,7 +304,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(record_->pulseStream());
 
             if (name && *name)
-                preference_.setDeviceRecord(name);
+                preference_.setPulseDeviceRecord(name);
         }
 
         delete record_;
@@ -652,15 +652,15 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMTyp
     switch (type) {
         case SFL_PCM_PLAYBACK:
             DEBUG("setting %s for playback", devName.c_str());
-            preference.setDevicePlayback(devName);
+            preference.setPulseDevicePlayback(devName);
             break;
         case SFL_PCM_CAPTURE:
             DEBUG("setting %s for capture", devName.c_str());
-            preference.setDeviceRecord(devName);
+            preference.setPulseDeviceRecord(devName);
             break;
         case SFL_PCM_RINGTONE:
             DEBUG("setting %s for ringer", devName.c_str());
-            preference.setDeviceRingtone(devName);
+            preference.setPulseDeviceRingtone(devName);
             break;
         default:
             break;
