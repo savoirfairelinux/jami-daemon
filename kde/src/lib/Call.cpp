@@ -593,6 +593,12 @@ call_state Call::stateChanged(const QString& newStateName)
    if (!m_isConference) {
       daemon_call_state dcs = toDaemonCallState(newStateName);
       changeCurrentState(stateChangedStateMap[m_CurrentState][dcs]);
+      
+      CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+      MapStringString details = callManager.getCallDetails(m_CallId).value();
+      if (details[CALL_PEER_NAME] != m_PeerName)
+         m_PeerName = details[CALL_PEER_NAME];
+      
       (this->*(stateChangedFunctionMap[previousState][dcs]))();
    }
    else {

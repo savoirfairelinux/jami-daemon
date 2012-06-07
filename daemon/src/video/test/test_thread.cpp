@@ -59,7 +59,6 @@ class EventThread : public ost::Thread {
         {
             ost::Thread::terminate();
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            assert(!isRunning());
         }
     private:
         int x_;
