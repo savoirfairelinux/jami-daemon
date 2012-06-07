@@ -175,7 +175,7 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-AX_LIB_EXPAT([2.0.1])
+AX_LIB_EXPAT([1.95.8])
 AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
 
 AX_PTHREAD
