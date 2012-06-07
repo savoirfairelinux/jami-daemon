@@ -221,7 +221,7 @@ END
 	if [ "${LAUNCHPAD_PACKAGE}"  == "sflphone-client-kde" ]; then
 		version_kde=$(echo ${VERSION}  | grep -e '[0-9]*\.[0-9.]*' -o | head -n1)
 		sed -i -e "s/Standards-Version: [0-9.A-Za-z]*/Standards-Version: ${version_kde}/" ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian/control
-		tar -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/
+		tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
 	fi
 
 	rm -f ${WORKING_DIR}/sfl-git-dch.conf >/dev/null 2>&1
