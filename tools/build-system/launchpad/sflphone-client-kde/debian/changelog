@@ -21,12 +21,18 @@ sflphone-client-kde (1.1.0-rc20120607~ppa1~SYSTEM) SYSTEM; urgency=low
   * [ #7003 ] Implement more drag and drop
   * [ #11888 ] Add support for previous timestamp
   * [ #11887 ] Drop phonon dependency
+  * [ #11887 ] Use daemon player instead of phonon
+  * [ #11889 ] Fix a regression
+  * [ #11889 ] Fix a regression
+  * [ #11861 ] Fix memory leak
+  * [ #11861 ] Little profiling
+  * [ #11850 ] Reimplement most destructor
 
- -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Thu, 07 Jun 2012 15:37:31 -0400
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Thu, 07 Jun 2012 15:42:19 -0400
 
 sflphone-client-kde (1.1.0) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1.0.0 **
+    ** SNAPSHOT 1.0.0-rc20110930~ppa1~SYSTEM **
 
   * Improve accessibility
   * Improve usability/UX
