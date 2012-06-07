@@ -662,7 +662,14 @@ void AlsaLayer::audioCallback()
     snd_pcm_wait(playbackHandle_, 20);
 
     int playbackAvailSmpl = snd_pcm_avail_update(playbackHandle_);
-    int playbackAvailBytes = playbackAvailSmpl * sizeof(SFLDataFormat);
+    if (playbackAvailSmpl < 0) {
+        playbackAvailSmpl = snd_pcm_recover(playbackHandle_, playbackAvailSmpl, 0);
+        if (playbackAvailSmpl < 0) {
+            ERROR("Got error from snd_pcm_avail_update: %s", snd_strerror(playbackAvailSmpl));
+            return;
+        }
+    }
+    const int playbackAvailBytes = playbackAvailSmpl * sizeof(SFLDataFormat);
 
     int toGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
