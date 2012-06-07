@@ -233,7 +233,9 @@ END
 		sed -i "s/SYSTEM/${LAUNCHPAD_DISTRIBUTION}/g" ${DEBIAN_DIR}/changelog
 
 		cd ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
-		./autogen.sh
+		if [ "$IS_KDE_CLIEN" != "1" ]; then
+			./autogen.sh
+		fi
 		debuild -S -sa -kFDFE4451
 		cd ${LAUNCHPAD_DIR}
 
