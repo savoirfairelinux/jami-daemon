@@ -3,7 +3,7 @@ Section: kde
 Priority: optional
 Maintainer: Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>
 Uploaders: Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>
-Standards-Version: 1.1.1
+Standards-Version: 1.1.2
 Build-Depends: debhelper (>= 5.0), cdbs, kdelibs5-dev, cmake, kdepimlibs5-dev,
 Homepage: http://www.sfphone.org/
 
