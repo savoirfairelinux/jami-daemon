@@ -190,7 +190,7 @@ msgstr "Statut"
 #. i18n: ectx: attribute (title), widget (QWidget, tab_basic)
 #: build/src/ui_dlgaccountsbase.h:926 rc.cpp:48
 msgid "Basic"
-msgstr "Basic"
+msgstr "Simple"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:392
 #. i18n: ectx: property (title), widget (QGroupBox, groupBox)
@@ -214,7 +214,7 @@ msgstr "Interface réseau"
 #. i18n: ectx: property (text), widget (QLabel, label_ni_local_address)
 #: build/src/ui_dlgaccountsbase.h:930 rc.cpp:90
 msgid "Local address"
-msgstr "Addresse locale"
+msgstr "Adresse locale"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:447
 #. i18n: ectx: property (text), widget (QLabel, label_ni_local_port)
@@ -229,19 +229,19 @@ msgstr "Port locale"
 #: build/src/ui_dlgaccountsbase.h:932 build/src/ui_dlgaccountsbase.h:935
 #: rc.cpp:96 rc.cpp:105
 msgid "Published address"
-msgstr "Addresse de publication"
+msgstr "Adresse de publication"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:483
 #. i18n: ectx: property (text), widget (QRadioButton, radioButton_pa_same_as_local)
 #: build/src/ui_dlgaccountsbase.h:933 rc.cpp:99
 msgid "Same as local parameters"
-msgstr "Même que les paramêtres locaux"
+msgstr "Même que les paramètres locaux"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:490
 #. i18n: ectx: property (text), widget (QRadioButton, radioButton_pa_custom)
 #: build/src/ui_dlgaccountsbase.h:934 rc.cpp:102
 msgid "Set published address and port"
-msgstr "Configurer l'addresse et le port de publication"
+msgstr "Configurer l’adresse et le port de publication"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:504
 #. i18n: ectx: property (text), widget (QLabel, label_pa_published_port)
@@ -300,7 +300,7 @@ msgstr "-"
 #. i18n: ectx: property (text), widget (QLabel, label_bitrate)
 #: build/src/ui_dlgaccountsbase.h:944 rc.cpp:132
 msgid "Bitrate:"
-msgstr "Bébit:"
+msgstr "Débit:"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:641
 #. i18n: ectx: property (text), widget (QLabel, label_bandwidth)
@@ -367,7 +367,7 @@ msgstr "Auditeur TLS globale"
 #. i18n: ectx: property (text), widget (QLabel, label_tls_authority)
 #: build/src/ui_dlgaccountsbase.h:959 rc.cpp:177
 msgid "Authority certificate list"
-msgstr "Liste de crédentiaux d'authorité"
+msgstr "Liste de crédentiaux d’autorité"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:852
 #. i18n: ectx: property (text), widget (QLabel, label_tls_endpoint)
@@ -439,7 +439,7 @@ msgstr "Serveur TLS sortant"
 #. i18n: ectx: property (text), widget (QLabel, label_tls_timeout)
 #: build/src/ui_dlgaccountsbase.h:974 rc.cpp:213
 msgid "Negotiation timeout (s:ms)"
-msgstr "Délais de négotiation maximale (s:ms)"
+msgstr "Délais de négociation maximale (s:ms)"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:974
 #. i18n: ectx: property (text), widget (QCheckBox, check_tls_incoming)
@@ -457,7 +457,7 @@ msgstr "Vérifier les réponses des certificats (coté client)"
 #. i18n: ectx: property (text), widget (QCheckBox, check_tls_requier_cert)
 #: build/src/ui_dlgaccountsbase.h:977 rc.cpp:222
 msgid "Require a certificate for incoming TLS connections"
-msgstr "Exgiger un certificat pour les connexions entrantes"
+msgstr "Exiger un certificat pour les connexions entrantes"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:995
 #. i18n: ectx: property (text), widget (QLabel, label_tls_details)
@@ -523,13 +523,13 @@ msgstr "Afficher SAS une seule fois pour les mises en attentes"
 #. i18n: ectx: property (text), widget (QCheckBox, checkbox_SDES_fallback_rtp)
 #: build/src/ui_dlgaccountsbase.h:991 rc.cpp:255
 msgid "Fallback on RTP on SDES failure"
-msgstr "Retourner sur RTP si echec de SDES"
+msgstr "Retourner sur RTP si échec de SDES"
 
 #. i18n: file: src/conf/dlgaccountsbase.ui:760
 #. i18n: ectx: attribute (title), widget (QWidget, tab_2)
 #: build/src/ui_dlgaccountsbase.h:992 rc.cpp:165
 msgid "Security"
-msgstr "Securité"
+msgstr "Sécurité"
 
 #. i18n: file: src/conf/dlgaddressbookbase.ui:20
 #. i18n: ectx: property (text), widget (QCheckBox, kcfg_enableAddressBook)
@@ -595,7 +595,7 @@ msgstr "Sortie"
 #. i18n: ectx: property (title), widget (QGroupBox, groupBox_pulseAudio)
 #: build/src/ui_dlgaudiobase.h:246 rc.cpp:288
 msgid "PulseAudio settings"
-msgstr "PulseAudio settings"
+msgstr "Configuration PulseAudio"
 
 #. i18n: file: src/conf/dlgaudiobase.ui:177
 #. i18n: ectx: property (text), widget (QCheckBox, kcfg_pulseAudioVolumeAlter)
@@ -825,11 +825,11 @@ msgstr ""
 
 #: src/AccountWizard.cpp:464
 msgid "Email address"
-msgstr "Addresses de courriel"
+msgstr "Adresses de courriel"
 
 #: src/AccountWizard.cpp:466 src/AccountWizard.cpp:513
 msgid "Secure with ZRTP"
-msgstr "Securisé avec ZRTP"
+msgstr "Sécurise avec ZRTP"
 
 #: src/AccountWizard.cpp:505
 msgid "SIP account settings"
@@ -901,7 +901,7 @@ msgstr "Audio"
 
 #: src/conf/ConfigurationDialog.cpp:53
 msgid "Address Book"
-msgstr "Carnet d'addresses"
+msgstr "Carnet d’adresses"
 
 #: src/conf/ConfigurationDialog.cpp:54
 msgid "Hooks"
@@ -909,7 +909,7 @@ msgstr "Ancrage"
 
 #: src/conf/dlgaccounts.cpp:744 src/conf/dlgaccounts.cpp:745
 msgid "New credential"
-msgstr "Nouvreau crédentiaux"
+msgstr "Nouveau crédentiaux"
 
 #: src/klib/dataengine/sflphonEngine.cpp:134
 msgid "Sonnerie (entrante)"
@@ -1144,7 +1144,7 @@ msgstr "Afficher la boîte de message"
 
 #: src/SFLPhone.cpp:195
 msgid "Display volume controls"
-msgstr "Afficher les controles du volume"
+msgstr "Afficher les contrôles du volume"
 
 #: src/SFLPhone.cpp:202
 msgid "Configure Shortcut"
@@ -1170,7 +1170,7 @@ msgstr "Sélectionner un numéro"
 msgid ""
 "This contact have many phone number, please select the one you wish to call"
 msgstr ""
-"Ce contacte a plusieurs numéro de téléhphone, veuillez en choisir un"
+"Ce contacte a plusieurs numéro de téléphone, veuillez en choisir un"
 
 #: src/SFLPhoneView.cpp:503
 msgid "No registered accounts"
@@ -1392,7 +1392,7 @@ msgstr "Définir si le clavier doit être affiché par défaut"
 #. i18n: ectx: label, entry (displayMessageBox), group (main)
 #: rc.cpp:385
 msgid "Defines whether the text message box is visible"
-msgstr "Definir si la boîte à message texte doit être affiché par défaut"
+msgstr "Définir si la boîte à message texte doit être affiché par défaut"
 
 #. i18n: file: src/klib/sflphone-client-kde.kcfg:52
 #. i18n: ectx: label, entry (displayVolume), group (main)
@@ -1412,7 +1412,7 @@ msgstr ""
 #. i18n: ectx: label, entry (displayDataRange), group (main)
 #: rc.cpp:394
 msgid "Defines whether call history is restricted to a specific date range"
-msgstr "Définir si l'historique est restrinte par défaut"
+msgstr "Définir si l'historique est restreinte par défaut"
 
 #. i18n: file: src/klib/sflphone-client-kde.kcfg:62
 #. i18n: ectx: label, entry (displayPopularAsBookmark), group (main)
@@ -1470,13 +1470,13 @@ msgstr "Définir les greffons ALSA utilisés"
 #. i18n: ectx: label, entry (alsaInputDevice), group (main)
 #: rc.cpp:421
 msgid "Defines which ALSA Input device to use."
-msgstr "Définir quel périfiérique d'entrée ALSA est utilisé"
+msgstr "Définir quel périphérique d'entrée ALSA est utilisé"
 
 #. i18n: file: src/klib/sflphone-client-kde.kcfg:97
 #. i18n: ectx: label, entry (alsaOutputDevice), group (main)
 #: rc.cpp:424
 msgid "Defines which ALSA Output device to use."
-msgstr "Définir quel périfiérique de sortie alsa est utilisé"
+msgstr "Définir quel périphérique de sortie alsa est utilisé"
 
 #. i18n: file: src/klib/sflphone-client-kde.kcfg:100
 #. i18n: ectx: label, entry (pulseAudioVolumeAlter), group (main)
@@ -1490,7 +1490,7 @@ msgstr "Définir si pulseaudio peut mettre en sourdine les autres applications p
 #. i18n: ectx: label, entry (phoneTypeList), group (main)
 #: rc.cpp:430 rc.cpp:433
 msgid "Defines whether the search in KDE Address Book is enabled"
-msgstr "Définir si le carnet d'addresse est utilisé"
+msgstr "Définir si le carnet d’adresse est utilisé"
 
 #. i18n: file: src/klib/sflphone-client-kde.kcfg:116
 #. i18n: ectx: label, entry (bookmarkList), group (main)
@@ -1526,13 +1526,13 @@ msgstr "Définir quel commande exécuter"
 #. i18n: ectx: label, entry (addPrefix), group (main)
 #: rc.cpp:451
 msgid "Defines whether to add a prefix for outgoing calls."
-msgstr "Définir si il faut ajouter un préfix pour les appels sortants"
+msgstr "Définir si il faut ajouter un préfixe pour les appels sortants"
 
 #. i18n: file: src/klib/sflphone-client-kde.kcfg:137
 #. i18n: ectx: label, entry (prepend), group (main)
 #: rc.cpp:454
 msgid "Defines the prefix to add."
-msgstr "Définir le préfix à ajouter"
+msgstr "Définir le préfixe à ajouter"
 
 #: src/SFLPhoneAccessibility.cpp:30
 msgid "You currently have %1 calls"
@@ -1553,16 +1553,16 @@ msgid ",Your peer is %1"
 msgstr ", votre interlocuteur est %1"
 
 msgid ", the peer phone number is %1 "
-msgstr ", le numero de votre interlocuteur est %1"
+msgstr ", le numéro de votre interlocuteur est %1"
 
 msgid " and you have been talking since %1 seconds"
 msgstr " et vous parlez depuis %1 seconde"
 
 msgid "Please enter a transfer number and press enter, press escape to cancel"
-msgstr "Veuillez entrer un numero pour vers lequel transferrer et appuiyez sur entrer, appuiyez sur echape pour annuler"
+msgstr "Veuillez entrer un numéro pour vers lequel transférer et appuyiez sur entrer, appuyiez sur echape pour annuler"
 
 msgid "You call have been transferred to "
-msgstr "Votre appel à été transferré au numéro "
+msgstr "Votre appel à été transférée au numéro "
 
 msgid "Visible call details"
 msgstr "Details d'appels visible"
@@ -1575,7 +1575,45 @@ msgid "Display e-mail address"
 msgstr "Afficher le courriel"
 
 msgid "Contact list details"
-msgstr "Detaisl d'affichage des contacts"
+msgstr "Details d'affichage des contacts"
+
+msgid "Display bookmark"
+msgstr "Afficher les favoris"
+
+msgid "Display Contact"
+msgstr "Afficher les contactes"
+
+msgid "Ringtone"
+msgstr "Sonnerie"
+
+msgid "Display Icon"
+msgstr "Afficher l'icône"
+
+msgid "Display Security"
+msgstr "Afficher la sécurité"
+
+msgid "Display Codec"
+msgstr "Afficher le codec"
+
+msgid "Display Peer name"
+msgstr "Afficher le nom"
+
+msgid "Minimum item height"
+msgstr "Hauteur minimale"
+
+msgid "Use custom file"
+msgstr "Utiliser un fichier personnalisé"
+
+msgid "Enable audio feedback from common actions"
+msgstr "Activer le retour vocale des opérations communes"
+
+msgid "Automatically read label when an overlay is being displayed"
+msgstr "Automatiquement lire les champs textes des boîtes de dialogue interne"
+
+msgid "Automattically read the call details when it is selected"
+msgstr "Automatiquement lire les informations de l'appel sélectionne"
+
+
 
 #: rc.cpp:467
 msgctxt "NAME OF TRANSLATORS"
