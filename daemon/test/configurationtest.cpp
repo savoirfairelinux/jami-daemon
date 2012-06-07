@@ -43,10 +43,10 @@ void ConfigurationTest::testDefaultValueAudio()
 {
     TITLE();
 
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardin() == ALSA_DFT_CARD_ID);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardout() == ALSA_DFT_CARD_ID);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getPlugin() == PCM_DEFAULT);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardin() == ALSA_DFT_CARD_ID);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardout() == ALSA_DFT_CARD_ID);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaSmplrate() == 44100);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaPlugin() == PCM_DEFAULT);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 100);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 100);
 }

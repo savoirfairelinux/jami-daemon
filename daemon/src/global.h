@@ -76,7 +76,7 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 // Define the audio api
 #define PULSEAUDIO_API_STR          "pulseaudio"
 #define ALSA_API_STR                "alsa"
-#if HAVE_PULSE == 1
+#if HAVE_PULSE
 #define DEFAULT_AUDIO_API_STR PULSEAUDIO_API_STR
 #else
 #define DEFAULT_AUDIO_API_STR ALSA_API_STR

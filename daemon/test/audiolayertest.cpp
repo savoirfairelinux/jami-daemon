@@ -44,18 +44,18 @@ void AudioLayerTest::testAudioLayerConfig()
 {
     TITLE();
 
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaSmplrate() == 44100);
 
     // alsa preferences
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardin() == 0);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardout() == 0);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardring() == 0);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getPlugin() == "default");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardin() == 0);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardout() == 0);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardring() == 0);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaPlugin() == "default");
 
     // pulseaudio preferences
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getDevicePlayback() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getDeviceRecord() == "alsa_input.pci-0000_00_1b.0.analog-stereo");
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getDeviceRingtone() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getPulseDevicePlayback() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getPulseDeviceRecord() == "alsa_input.pci-0000_00_1b.0.analog-stereo");
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getPulseDeviceRingtone() == "alsa_output.pci-0000_00_1b.0.analog-stereo");
 
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 100);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 100);
