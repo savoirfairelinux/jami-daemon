@@ -1853,7 +1853,7 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 {
     ost::MutexLock lock(audioLayerMutex_);
 
-    audioPreference.setPlugin(audioPlugin);
+    audioPreference.setAlsaPlugin(audioPlugin);
 
     AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(audiodriver_);
 
@@ -1890,13 +1890,13 @@ void ManagerImpl::setAudioDevice(const int index, int streamType)
 
     switch (streamType) {
         case SFL_PCM_PLAYBACK:
-            audioPreference.setCardout(index);
+            audioPreference.setAlsaCardout(index);
             break;
         case SFL_PCM_CAPTURE:
-            audioPreference.setCardin(index);
+            audioPreference.setAlsaCardin(index);
             break;
         case SFL_PCM_RINGTONE:
-            audioPreference.setCardring(index);
+            audioPreference.setAlsaCardring(index);
             break;
         default:
             break;
@@ -2167,7 +2167,7 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin() const
 {
-    return audioPreference.getPlugin();
+    return audioPreference.getAlsaPlugin();
 }
 
 
