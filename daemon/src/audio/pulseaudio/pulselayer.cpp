@@ -206,9 +206,9 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
 
 void PulseLayer::createStreams(pa_context* c)
 {
-    std::string playbackDevice(audioPref.getDevicePlayback());
-    std::string captureDevice(audioPref.getDeviceRecord());
-    std::string ringtoneDevice(audioPref.getDeviceRingtone());
+    std::string playbackDevice(audioPref.getPulseDevicePlayback());
+    std::string captureDevice(audioPref.getPulseDeviceRecord());
+    std::string ringtoneDevice(audioPref.getPulseDeviceRingtone());
     std::string defaultDevice = "";
 
     DEBUG("Devices:\n   playback: %s\n   record: %s\n   ringtone: %s",
@@ -246,7 +246,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(playback_->pulseStream());
 
             if (name && *name)
-                audioPref.setDevicePlayback(name);
+                audioPref.setPulseDevicePlayback(name);
         }
 
         delete playback_;
@@ -258,7 +258,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(ringtone_->pulseStream());
 
             if (name && *name)
-                audioPref.setDeviceRingtone(name);
+                audioPref.setPulseDeviceRingtone(name);
         }
 
         delete ringtone_;
@@ -270,7 +270,7 @@ void PulseLayer::disconnectAudioStream()
             const char *name = pa_stream_get_device_name(record_->pulseStream());
 
             if (name && *name)
-                audioPref.setDeviceRecord(name);
+                audioPref.setPulseDeviceRecord(name);
         }
 
         delete record_;

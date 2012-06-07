@@ -2,7 +2,11 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libaudio.la
 
-SUBDIRS = codecs audiortp sound alsa pulseaudio
+SUBDIRS = codecs audiortp sound alsa
+
+if BUILD_PULSE
+SUBDIRS += pulseaudio
+endif
 
 libaudio_la_SOURCES = \
 		audioloop.cpp \
@@ -40,5 +44,8 @@ libaudio_la_LIBADD = \
 	./audiortp/libaudiortp.la \
 	./codecs/libcodecdescriptor.la \
 	./alsa/libalsalayer.la \
-	./pulseaudio/libpulselayer.la \
 	./sound/libsound.la
+
+if BUILD_PULSE
+libaudio_la_LIBADD += ./pulseaudio/libpulselayer.la
+endif

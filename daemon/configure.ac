@@ -106,7 +106,17 @@ PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa
 
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
-PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development package: libpulse-dev]))
+AC_ARG_WITH([pulse],
+	[ AS_HELP_STRING([--without-pulse], [disable support for pulseaudio]) ],
+	[],
+	[with_pulse=yes])
+
+AS_IF([test "x$with_pulse" = "xyes"], [
+	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development package: libpulse-dev]))
+      ]);
+
+AC_DEFINE_UNQUOTED([HAVE_PULSE], `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have pulseaudio])
+AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes" )
 
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
@@ -165,7 +175,7 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-AX_LIB_EXPAT([2.0.1])
+AX_LIB_EXPAT([1.95.8])
 AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
 
 AX_PTHREAD

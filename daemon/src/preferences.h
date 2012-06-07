@@ -312,66 +312,66 @@ class AudioPreference : public Serializable {
         virtual void unserialize(const Conf::MappingNode &map);
 
         // alsa preference
-        int getCardin() const {
-            return cardin_;
+        int getAlsaCardin() const {
+            return alsaCardin_;
         }
-        void setCardin(int c) {
-            cardin_ = c;
-        }
-
-        int getCardout() const {
-            return cardout_;
+        void setAlsaCardin(int c) {
+            alsaCardin_ = c;
         }
 
-        void setCardout(int c) {
-            cardout_ = c;
+        int getAlsaCardout() const {
+            return alsaCardout_;
         }
 
-        int getCardring() const {
-            return cardring_;
+        void setAlsaCardout(int c) {
+            alsaCardout_ = c;
         }
 
-        void setCardring(int c) {
-            cardring_ = c;
+        int getAlsaCardring() const {
+            return alsaCardring_;
         }
 
-        std::string getPlugin() const {
-            return plugin_;
+        void setAlsaCardring(int c) {
+            alsaCardring_ = c;
         }
 
-        void setPlugin(const std::string &p) {
-            plugin_ = p;
+        std::string getAlsaPlugin() const {
+            return alsaPlugin_;
         }
 
-        int getSmplrate() const {
-            return smplrate_;
+        void setAlsaPlugin(const std::string &p) {
+            alsaPlugin_ = p;
         }
-        void setSmplrate(int r) {
-            smplrate_ = r;
+
+        int getAlsaSmplrate() const {
+            return alsaSmplrate_;
+        }
+        void setAlsaSmplrate(int r) {
+            alsaSmplrate_ = r;
         }
 
         //pulseaudio preference
-        std::string getDevicePlayback() const {
-            return devicePlayback_;
+        std::string getPulseDevicePlayback() const {
+            return pulseDevicePlayback_;
         }
 
-        void setDevicePlayback(const std::string &p) {
-            devicePlayback_ = p;
+        void setPulseDevicePlayback(const std::string &p) {
+            pulseDevicePlayback_ = p;
         }
 
-        std::string getDeviceRecord() const {
-            return deviceRecord_;
+        std::string getPulseDeviceRecord() const {
+            return pulseDeviceRecord_;
         }
-        void setDeviceRecord(const std::string &r) {
-            deviceRecord_ = r;
-        }
-
-        std::string getDeviceRingtone() const {
-            return deviceRingtone_;
+        void setPulseDeviceRecord(const std::string &r) {
+            pulseDeviceRecord_ = r;
         }
 
-        void setDeviceRingtone(const std::string &r) {
-            deviceRingtone_ = r;
+        std::string getPulseDeviceRingtone() const {
+            return pulseDeviceRingtone_;
+        }
+
+        void setPulseDeviceRingtone(const std::string &r) {
+            pulseDeviceRingtone_ = r;
         }
 
         // general preference
@@ -440,16 +440,16 @@ class AudioPreference : public Serializable {
         std::string audioApi_;
 
         // alsa preference
-        int cardin_;
-        int cardout_;
-        int cardring_;
-        std::string plugin_;
-        int smplrate_;
+        int alsaCardin_;
+        int alsaCardout_;
+        int alsaCardring_;
+        std::string alsaPlugin_;
+        int alsaSmplrate_;
 
         //pulseaudio preference
-        std::string devicePlayback_;
-        std::string deviceRecord_;
-        std::string deviceRingtone_;
+        std::string pulseDevicePlayback_;
+        std::string pulseDeviceRecord_;
+        std::string pulseDeviceRingtone_;
 
         // general preference
         std::string recordpath_; //: /home/msavard/Bureau
