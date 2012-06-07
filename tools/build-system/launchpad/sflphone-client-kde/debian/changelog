@@ -28,7 +28,7 @@ sflphone-client-kde (1.1.0-rc20120607~ppa1~SYSTEM) SYSTEM; urgency=low
   * [ #11861 ] Little profiling
   * [ #11850 ] Reimplement most destructor
 
- -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Thu, 07 Jun 2012 15:42:19 -0400
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Thu, 07 Jun 2012 15:43:02 -0400
 
 sflphone-client-kde (1.1.0) SYSTEM; urgency=low
 
