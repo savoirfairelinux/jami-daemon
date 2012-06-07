@@ -42,6 +42,8 @@
 #include <map>
 #include <vector>
 
+#include "config.h"
+
 const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 
 #define ALSA_DFT_CARD_ID 0          /** Index of the default soundcard */
@@ -71,8 +73,15 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 #define PULSEAUDIO_NOT_RUNNING      0x0100  /** Pulseaudio is not running */
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
+// Define the audio api
 #define PULSEAUDIO_API_STR          "pulseaudio"
 #define ALSA_API_STR                "alsa"
+#if HAVE_PULSE == 1
+#define DEFAULT_AUDIO_API_STR PULSEAUDIO_API_STR
+#else
+#define DEFAULT_AUDIO_API_STR ALSA_API_STR
+#endif
+
 #define UNUSED          __attribute__((__unused__))
 
 #define DEFAULT_SIP_PORT    5060

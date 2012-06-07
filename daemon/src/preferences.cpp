@@ -38,6 +38,7 @@
 #include "sip/sip_utils.h"
 #include <sstream>
 #include "global.h"
+#include "config.h"
 
 const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
@@ -81,7 +82,9 @@ static const char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
 static const char * const ALSAMAP_KEY = "alsa";
+#if HAVE_PULSE == 1
 static const char * const PULSEMAP_KEY = "pulse";
+#endif
 static const char * const CARDIN_KEY = "cardIn";
 static const char * const CARDOUT_KEY = "cardOut";
 static const char * const CARDRING_KEY = "cardRing";
@@ -331,15 +334,15 @@ void HookPreference::runHook(pjsip_msg *msg)
 }
 
 AudioPreference::AudioPreference() :
-    audioApi_(PULSEAUDIO_API_STR)
-    , cardin_(atoi(ALSA_DFT_CARD))
-    , cardout_(atoi(ALSA_DFT_CARD))
-    , cardring_(atoi(ALSA_DFT_CARD))
-    , plugin_("default")
-    , smplrate_(44100)
-    , devicePlayback_("")
-    , deviceRecord_("")
-    , deviceRingtone_("")
+    audioApi_(DEFAULT_AUDIO_API_STR)
+    , alsaCardin_(atoi(ALSA_DFT_CARD))
+    , alsaCardout_(atoi(ALSA_DFT_CARD))
+    , alsaCardring_(atoi(ALSA_DFT_CARD))
+    , alsaPlugin_("default")
+    , alsaSmplrate_(44100)
+    , pulseDevicePlayback_("")
+    , pulseDeviceRecord_("")
+    , pulseDeviceRingtone_("")
     , recordpath_("")
     , alwaysRecording_(false)
     , volumemic_(atoi(DFT_VOL_SPKR_STR))
@@ -362,56 +365,57 @@ void checkSoundCard(int &card, int stream)
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
-    const bool pulseaudioRunning = system("ps -C pulseaudio > /dev/null") == 0;
+#if HAVE_PULSE == 1
     if (audioApi_ == PULSEAUDIO_API_STR) {
-        if (pulseaudioRunning)
+        if (system("ps -C pulseaudio > /dev/null") == 0)
             return new PulseLayer;
         else
             WARN("pulseaudio daemon not running, falling back to ALSA");
     }
+#endif
+
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(cardin_, SFL_PCM_CAPTURE);
-    checkSoundCard(cardout_, SFL_PCM_PLAYBACK);
-    checkSoundCard(cardring_, SFL_PCM_RINGTONE);
+    checkSoundCard(alsaCardin_, SFL_PCM_CAPTURE);
+    checkSoundCard(alsaCardout_, SFL_PCM_PLAYBACK);
+    checkSoundCard(alsaCardring_, SFL_PCM_RINGTONE);
+
     return new AlsaLayer;
 }
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()
 {
+#if HAVE_PULSE == 1
     if (audioApi_ == PULSEAUDIO_API_STR)
         audioApi_ = ALSA_API_STR;
     else
         audioApi_ = PULSEAUDIO_API_STR;
+#endif
 
     return createAudioLayer();
 }
 
 void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 {
-    Conf::MappingNode preferencemap(NULL);
-    Conf::MappingNode alsapreferencemap(NULL);
-    Conf::MappingNode pulsepreferencemap(NULL);
-
     // alsa preference
     std::stringstream instr;
-    instr << cardin_;
+    instr << alsaCardin_;
     Conf::ScalarNode cardin(instr.str());
     std::stringstream outstr;
-    outstr << cardout_;
+    outstr << alsaCardout_;
     Conf::ScalarNode cardout(outstr.str());
     std::stringstream ringstr;
-    ringstr << cardring_;
+    ringstr << alsaCardring_;
     Conf::ScalarNode cardring(ringstr.str());
-    Conf::ScalarNode plugin(plugin_);
+    Conf::ScalarNode plugin(alsaPlugin_);
 
     std::stringstream ratestr;
-    ratestr << smplrate_;
-    Conf::ScalarNode smplrate(ratestr.str());
+    ratestr << alsaSmplrate_;
+    Conf::ScalarNode alsaSmplrate(ratestr.str());
 
     //pulseaudio preference
-    Conf::ScalarNode devicePlayback(devicePlayback_);
-    Conf::ScalarNode deviceRecord(deviceRecord_);
-    Conf::ScalarNode deviceRingtone(deviceRingtone_);
+    Conf::ScalarNode pulseDevicePlayback(pulseDevicePlayback_);
+    Conf::ScalarNode pulseDeviceRecord(pulseDeviceRecord_);
+    Conf::ScalarNode pulseDeviceRingtone(pulseDeviceRingtone_);
 
     // general preference
     Conf::ScalarNode audioapi(audioApi_);
@@ -432,23 +436,28 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     delaystr << echoCancelDelay_;
     Conf::ScalarNode echodelay(delaystr.str());
 
+    Conf::MappingNode preferencemap(NULL);
     preferencemap.setKeyValue(AUDIO_API_KEY, &audioapi);
     preferencemap.setKeyValue(RECORDPATH_KEY, &recordpath);
     preferencemap.setKeyValue(ALWAYS_RECORDING_KEY, &alwaysRecording);
     preferencemap.setKeyValue(VOLUMEMIC_KEY, &volumemic);
     preferencemap.setKeyValue(VOLUMESPKR_KEY, &volumespkr);
 
+    Conf::MappingNode alsapreferencemap(NULL);
     preferencemap.setKeyValue(ALSAMAP_KEY, &alsapreferencemap);
     alsapreferencemap.setKeyValue(CARDIN_KEY, &cardin);
     alsapreferencemap.setKeyValue(CARDOUT_KEY, &cardout);
     alsapreferencemap.setKeyValue(CARDRING_KEY, &cardring);
     alsapreferencemap.setKeyValue(PLUGIN_KEY, &plugin);
-    alsapreferencemap.setKeyValue(SMPLRATE_KEY, &smplrate);
+    alsapreferencemap.setKeyValue(SMPLRATE_KEY, &alsaSmplrate);
 
+#if HAVE_PULSE == 1
+    Conf::MappingNode pulsepreferencemap(NULL);
     preferencemap.setKeyValue(PULSEMAP_KEY, &pulsepreferencemap);
-    pulsepreferencemap.setKeyValue(DEVICE_PLAYBACK_KEY, &devicePlayback);
-    pulsepreferencemap.setKeyValue(DEVICE_RECORD_KEY, &deviceRecord);
-    pulsepreferencemap.setKeyValue(DEVICE_RINGTONE_KEY, &deviceRingtone);
+    pulsepreferencemap.setKeyValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback);
+    pulsepreferencemap.setKeyValue(DEVICE_RECORD_KEY, &pulseDeviceRecord);
+    pulsepreferencemap.setKeyValue(DEVICE_RINGTONE_KEY, &pulseDeviceRingtone);
+#endif
 
     preferencemap.setKeyValue(NOISE_REDUCE_KEY, &noise);
     preferencemap.setKeyValue(ECHO_CANCEL_KEY, &echo);
@@ -471,20 +480,22 @@ void AudioPreference::unserialize(const Conf::MappingNode &map)
     Conf::MappingNode *alsamap =(Conf::MappingNode *) map.getValue("alsa");
 
     if (alsamap) {
-        alsamap->getValue(CARDIN_KEY, &cardin_);
-        alsamap->getValue(CARDOUT_KEY, &cardout_);
-        alsamap->getValue(CARDRING_KEY, &cardring_);
-        alsamap->getValue(SMPLRATE_KEY, &smplrate_);
-        alsamap->getValue(PLUGIN_KEY, &plugin_);
+        alsamap->getValue(CARDIN_KEY, &alsaCardin_);
+        alsamap->getValue(CARDOUT_KEY, &alsaCardout_);
+        alsamap->getValue(CARDRING_KEY, &alsaCardring_);
+        alsamap->getValue(SMPLRATE_KEY, &alsaSmplrate_);
+        alsamap->getValue(PLUGIN_KEY, &alsaPlugin_);
     }
 
+#if HAVE_PULSE == 1
     Conf::MappingNode *pulsemap =(Conf::MappingNode *)(map.getValue("pulse"));
 
     if (pulsemap) {
-        pulsemap->getValue(DEVICE_PLAYBACK_KEY, &devicePlayback_);
-        pulsemap->getValue(DEVICE_RECORD_KEY, &deviceRecord_);
-        pulsemap->getValue(DEVICE_RINGTONE_KEY, &deviceRingtone_);
+        pulsemap->getValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback_);
+        pulsemap->getValue(DEVICE_RECORD_KEY, &pulseDeviceRecord_);
+        pulsemap->getValue(DEVICE_RINGTONE_KEY, &pulseDeviceRingtone_);
     }
+#endif
 }
 
 ShortcutPreferences::ShortcutPreferences() : hangup_(), pickup_(), popup_(),
