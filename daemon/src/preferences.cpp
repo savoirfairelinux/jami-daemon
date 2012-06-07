@@ -362,15 +362,18 @@ void checkSoundCard(int &card, int stream)
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
-    if (audioApi_ == PULSEAUDIO_API_STR and system("ps -C pulseaudio > /dev/null") == 0)
-        return new PulseLayer;
-    else {
-        audioApi_ = ALSA_API_STR;
-        checkSoundCard(cardin_, SFL_PCM_CAPTURE);
-        checkSoundCard(cardout_, SFL_PCM_PLAYBACK);
-        checkSoundCard(cardring_, SFL_PCM_RINGTONE);
-        return new AlsaLayer;
+    const bool pulseaudioRunning = system("ps -C pulseaudio > /dev/null") == 0;
+    if (audioApi_ == PULSEAUDIO_API_STR) {
+        if (pulseaudioRunning)
+            return new PulseLayer;
+        else
+            WARN("pulseaudio daemon not running, falling back to ALSA");
     }
+    audioApi_ = ALSA_API_STR;
+    checkSoundCard(cardin_, SFL_PCM_CAPTURE);
+    checkSoundCard(cardout_, SFL_PCM_PLAYBACK);
+    checkSoundCard(cardring_, SFL_PCM_RINGTONE);
+    return new AlsaLayer;
 }
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()
