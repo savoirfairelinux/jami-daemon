@@ -86,6 +86,10 @@ class PulseLayer : public AudioLayer {
 
         virtual void updatePreference(AudioPreference &pref, int index, PCMType type);
 
+        virtual int getIndexCapture() const;
+        virtual int getIndexPlayback() const;
+        virtual int getIndexRingtone() const;
+
         NON_COPYABLE(PulseLayer);
 
         /**

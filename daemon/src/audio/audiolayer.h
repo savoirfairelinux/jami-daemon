@@ -75,6 +75,9 @@ class AudioLayer {
 
         virtual int getAudioDeviceIndex(const std::string& name) const = 0;
         virtual std::string getAudioDeviceName(int index, PCMType type) const = 0;
+        virtual int getIndexCapture() const = 0;
+        virtual int getIndexPlayback() const = 0;
+        virtual int getIndexRingtone() const = 0;
 
         /**
          * Start the capture stream and prepare the playback stream.

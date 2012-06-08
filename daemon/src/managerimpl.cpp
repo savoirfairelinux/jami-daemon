@@ -1924,17 +1924,13 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
 
     std::vector<std::string> v;
 
-    AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (alsa) {
-        std::stringstream ssi, sso, ssr;
-        sso << alsa->getIndexPlayback();
-        v.push_back(sso.str());
-        ssi << alsa->getIndexCapture();
-        v.push_back(ssi.str());
-        ssr << alsa->getIndexRingtone();
-        v.push_back(ssr.str());
-    }
+    std::stringstream ssi, sso, ssr;
+    sso << audiodriver_->getIndexPlayback();
+    v.push_back(sso.str());
+    ssi << audiodriver_->getIndexCapture();
+    v.push_back(ssi.str());
+    ssr << audiodriver_->getIndexRingtone();
+    v.push_back(ssr.str());
 
     return v;
 }

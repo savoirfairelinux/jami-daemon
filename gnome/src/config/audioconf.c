@@ -111,7 +111,6 @@ create_device_list_store(gchar **list)
 {
     GtkListStore *list_store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 
-    // Call dbus to retrieve output list
     for (gchar **tmp = list; tmp && *tmp; ++tmp) {
         gint device_index = dbus_get_audio_device_index(*tmp);
         GtkTreeIter iter;
@@ -146,16 +145,12 @@ create_alsa_plugin_list_store()
 static void
 select_active_output_audio_device(GtkWidget *output)
 {
-    const gboolean show_alsa = must_show_alsa_conf();
-
-    if (!show_alsa)
-        return;
-
     // Select active output device on server
     gchar **devices = dbus_get_current_audio_devices_index();
-    if (devices) {
+    if (devices && devices[0]) {
 
         int currentDeviceIndex = atoi(devices[0]);
+        g_strfreev(devices);
         DEBUG("audio device index for output = %d", currentDeviceIndex);
         GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
 
@@ -187,9 +182,9 @@ select_active_output_audio_device(GtkWidget *output)
 static void
 select_active_ringtone_audio_device(GtkWidget *ringtone)
 {
-    if (must_show_alsa_conf()) {
-        // Select active ringtone device on server
-        gchar **devices = dbus_get_current_audio_devices_index();
+    // Select active ringtone device on server
+    gchar **devices = dbus_get_current_audio_devices_index();
+    if (devices && devices[2]) {
         const gint currentDeviceIndex = atoi(devices[2]);
         g_strfreev(devices);
         DEBUG("audio device index for ringtone = %d", currentDeviceIndex);
@@ -209,11 +204,11 @@ select_active_ringtone_audio_device(GtkWidget *ringtone)
                 return;
             }
         } while (gtk_tree_model_iter_next(model, &iter));
-
-        // No index was found, select first one
-        WARN("No active ringtone device found");
-        gtk_combo_box_set_active(GTK_COMBO_BOX(ringtone), 0);
     }
+
+    // No index was found, select first one
+    WARN("No active ringtone device found");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(ringtone), 0);
 }
 
 static GtkListStore*
@@ -233,48 +228,48 @@ create_input_list_store()
 static void
 select_active_input_audio_device(GtkWidget *input)
 {
-    if (must_show_alsa_conf()) {
-        // Select active input device on server
-        gchar **devices = dbus_get_current_audio_devices_index();
-        if (devices) {
-            int currentDeviceIndex = atoi(devices[1]);
-            g_strfreev(devices);
-            GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(input));
+    // Select active input device on server
+    gchar **devices = dbus_get_current_audio_devices_index();
+    if (devices && devices[1]) {
+        int currentDeviceIndex = atoi(devices[1]);
+        g_strfreev(devices);
+        GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(input));
 
-            // Find the currently set input device
-            GtkTreeIter iter;
-            gtk_tree_model_get_iter_first(model, &iter);
+        // Find the currently set input device
+        GtkTreeIter iter;
+        gtk_tree_model_get_iter_first(model, &iter);
 
-            do {
-                int deviceIndex;
-                gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+        do {
+            int deviceIndex;
+            gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
 
-                if (deviceIndex == currentDeviceIndex) {
-                    // Set current iteration the active one
-                    gtk_combo_box_set_active_iter(GTK_COMBO_BOX(input), &iter);
-                    return;
-                }
-            } while (gtk_tree_model_iter_next(model, &iter));
-        }
-
-        // No index was found, select first one
-        WARN("Warning : No active input device found");
-        gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
+            if (deviceIndex == currentDeviceIndex) {
+                // Set current iteration the active one
+                gtk_combo_box_set_active_iter(GTK_COMBO_BOX(input), &iter);
+                return;
+            }
+        } while (gtk_tree_model_iter_next(model, &iter));
     }
+
+    // No index was found, select first one
+    WARN("No active input device found");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
 }
 
 static void
 update_device_widget(const gchar *pluginName, GtkWidget *output, GtkWidget *input, GtkWidget *ringtone)
 {
     const gboolean is_default = utf8_case_equal(pluginName, "default");
-    gtk_widget_set_sensitive(output, is_default);
-    gtk_widget_set_sensitive(input, is_default);
-    gtk_widget_set_sensitive(ringtone, is_default);
+    gtk_widget_set_sensitive(output, !is_default);
+    gtk_widget_set_sensitive(input, !is_default);
+    gtk_widget_set_sensitive(ringtone, !is_default);
 }
 
 static void
 select_output_alsa_plugin(GtkComboBox* widget, gpointer data UNUSED)
 {
+    if (!must_show_alsa_conf())
+        return;
     const gint comboBoxIndex = gtk_combo_box_get_active(widget);
 
     if (comboBoxIndex >= 0) {
@@ -291,6 +286,8 @@ select_output_alsa_plugin(GtkComboBox* widget, gpointer data UNUSED)
 static void
 select_active_output_alsa_plugin(GtkWidget *alsa_plugin)
 {
+    if (!must_show_alsa_conf())
+        return;
     // Select active output device on server
     GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(alsa_plugin));
 
@@ -314,53 +311,41 @@ select_active_output_alsa_plugin(GtkWidget *alsa_plugin)
     g_free(alsa_pluginname);
 
     // No index was found, select first one
-    WARN("Warning : No active output device found");
+    WARN("No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(alsa_plugin), 0);
 }
 
+static gint
+get_device_index_from_combobox(GtkComboBox* comboBox)
+{
+    GtkTreeModel* model = gtk_combo_box_get_model(comboBox);
+    GtkTreeIter iter;
+    gtk_combo_box_get_active_iter(comboBox, &iter);
+    gint deviceIndex;
+    gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+    return deviceIndex;
+}
 
 static void
 select_audio_output_device(GtkComboBox* comboBox, gpointer data UNUSED)
 {
-    gint comboBoxIndex = gtk_combo_box_get_active(comboBox);
-
-    if (comboBoxIndex >= 0) {
-        GtkTreeModel *model = gtk_combo_box_get_model(comboBox);
-        GtkTreeIter iter;
-        gtk_combo_box_get_active_iter(comboBox, &iter);
-        gint deviceIndex;
-        gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-        dbus_set_audio_output_device(deviceIndex);
-    }
+    if (gtk_combo_box_get_active(comboBox) >= 0)
+        dbus_set_audio_output_device(get_device_index_from_combobox(comboBox));
 }
 
 static void
 select_audio_input_device(GtkComboBox* comboBox, gpointer data UNUSED)
 {
-    if (gtk_combo_box_get_active(comboBox) >= 0) {
-        GtkTreeModel* model = gtk_combo_box_get_model(comboBox);
-        GtkTreeIter iter;
-        gtk_combo_box_get_active_iter(comboBox, &iter);
-        int deviceIndex;
-        gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-        dbus_set_audio_input_device(deviceIndex);
-    }
+    if (gtk_combo_box_get_active(comboBox) >= 0)
+       dbus_set_audio_input_device(get_device_index_from_combobox(comboBox));
 }
-
 
 static void
 select_audio_ringtone_device(GtkComboBox *comboBox, gpointer data UNUSED)
 {
-    if (gtk_combo_box_get_active(comboBox) >= 0) {
-        GtkTreeModel *model = gtk_combo_box_get_model(comboBox);
-        GtkTreeIter iter;
-        gtk_combo_box_get_active_iter(comboBox, &iter);
-        int deviceIndex;
-        gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-        dbus_set_audio_ringtone_device(deviceIndex);
-    }
+    if (gtk_combo_box_get_active(comboBox) >= 0)
+        dbus_set_audio_ringtone_device(get_device_index_from_combobox(comboBox));
 }
-
 
 /**
  * Toggle move buttons on if a codec is selected, off elsewise

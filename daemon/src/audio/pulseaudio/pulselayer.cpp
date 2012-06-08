@@ -666,3 +666,18 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMTyp
             break;
     }
 }
+
+int PulseLayer::getIndexCapture() const
+{
+    return getAudioDeviceIndex(preference_.getPulseDeviceRecord());
+}
+
+int PulseLayer::getIndexPlayback() const
+{
+    return getAudioDeviceIndex(preference_.getPulseDevicePlayback());
+}
+
+int PulseLayer::getIndexRingtone() const
+{
+    return getAudioDeviceIndex(preference_.getPulseDeviceRingtone());
+}

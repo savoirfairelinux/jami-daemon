@@ -119,7 +119,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for capture
          *                     0 for the first available card on the system, 1 ...
          */
-        int getIndexCapture() const {
+        virtual int getIndexCapture() const {
             return indexIn_;
         }
 
@@ -128,7 +128,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for playback
          *                     0 for the first available card on the system, 1 ...
          */
-        int getIndexPlayback() const {
+        virtual int getIndexPlayback() const {
             return indexOut_;
         }
 
@@ -137,7 +137,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for ringtone
          *                 0 for the first available card on the system, 1 ...
          */
-        int getIndexRingtone() const {
+        virtual int getIndexRingtone() const {
             return indexRing_;
         }
 
