@@ -28,20 +28,15 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIO_CONF_H
-#define __AUDIO_CONF_H
+#ifndef AUDIO_CONF_H_
+#define AUDIO_CONF_H_
 
-#include "actions.h"
+#include <gtk/gtk.h>
 
-GtkWidget* create_audio_configuration (void);
+GtkWidget* create_audio_configuration();
 
 GtkWidget* api_box();
-GtkWidget* alsa_box();
-GtkWidget* pulse_box();
 GtkWidget* audiocodecs_box(const account_t *a);
-GtkWidget* ringtone_box();
+gboolean must_show_alsa_conf();
 
-gboolean get_api();
-gboolean must_show_alsa_conf ();
-
-#endif // __AUDIO_CONF_H
+#endif // AUDIO_CONF_H_
