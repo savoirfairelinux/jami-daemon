@@ -51,22 +51,15 @@ static GQueue videoCodecs = G_QUEUE_INIT;
  * @param payload       The unique RTP payload
  * @return codec        The new codec instance, or NULL
  */
+/* FIXME: use GHashTable instead of list of details */
 static codec_t *codec_create(gint payload, gchar **specs)
 {
     codec_t *codec = g_new0(codec_t, 1);
-    if (!codec) {
-        g_strfreev(specs);
-        return NULL;
-    }
-
     codec->payload = payload;
     codec->name = g_strdup(specs[0]);
-    if (specs[1]) {
-        if (specs[2]) {
-            codec->bitrate = g_strdup(specs[2]);
-            codec->sample_rate = atoi(specs[1]);
-        } else
-            codec->bitrate = g_strdup(specs[1]);
+    if (specs[1] && specs[2]) {
+        codec->bitrate = g_strdup(specs[2]);
+        codec->sample_rate = atoi(specs[1]);
     }
     codec->is_active = TRUE;
 
@@ -98,8 +91,7 @@ static gboolean codecs_audio_load(void)
     for (guint i = 0; i < codecs->len; i++) {
         gint payload = g_array_index(codecs, gint, i);
         codec_t *c = codec_create(payload, dbus_audio_codec_details(payload));
-        if (c)
-            g_queue_push_tail(&audioCodecs, (gpointer*) c);
+        g_queue_push_tail(&audioCodecs, (gpointer*) c);
     }
 
     g_array_unref(codecs);
@@ -122,6 +114,20 @@ static void codecs_audio_unload(void)
 }
 
 #ifdef SFL_VIDEO
+static
+codec_t *
+codec_create_from_hash_table(gint payload, GHashTable *details)
+{
+    codec_t *codec = g_new0(codec_t, 1);
+
+    codec->payload = payload;
+    codec->name = g_strdup(g_hash_table_lookup(details, "name"));
+    codec->bitrate = g_strdup(g_hash_table_lookup(details, "bitrate"));
+    codec->is_active = TRUE;
+
+    return codec;
+}
+
 static gboolean codecs_video_load(void)
 {
     gchar **codecs = dbus_video_codec_list();
@@ -132,10 +138,10 @@ static gboolean codecs_video_load(void)
 
     int payload = 96; // dynamic payloads
     // Add the codecs in the list
-    for (; *codecs; codecs++) {
-        codec_t *c = codec_create(payload++, dbus_video_codec_details(*codecs));
-        if (c)
-            g_queue_push_tail(&videoCodecs, (gpointer*) c);
+    for (; codecs && *codecs; ++codecs) {
+        GHashTable *codec_details = dbus_video_codec_details(*codecs);
+        codec_t *c = codec_create_from_hash_table(payload++, codec_details);
+        g_queue_push_tail(&videoCodecs, c);
         g_free(*codecs);
     }
     g_free(codecs_orig);

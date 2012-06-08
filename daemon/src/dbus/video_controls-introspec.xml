@@ -90,8 +90,8 @@
        <method name="getCodecDetails" tp:name-for-bindings="getCodecDetails">
            <arg type="s" name="codec" direction="in">
            </arg>
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="as" name="details" direction="out">
+           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
            </arg>
        </method>
 

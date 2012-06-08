@@ -64,9 +64,9 @@ std::vector<std::string> VideoControls::getCodecList()
     return sfl_video::getCodecList();
 }
 
-std::vector<std::string> VideoControls::getCodecDetails(const std::string& codec)
+std::map<std::string, std::string> VideoControls::getCodecDetails(const std::string& name)
 {
-    return sfl_video::getCodecSpecifications(codec);
+    return sfl_video::getCodecSpecifications(name);
 }
 
 std::vector<std::string>

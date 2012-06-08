@@ -1296,15 +1296,15 @@ dbus_audio_codec_details(int payload)
 }
 
 #ifdef SFL_VIDEO
-gchar**
+GHashTable*
 dbus_video_codec_details(const gchar *codec)
 {
     GError *error = NULL;
-    gchar **array = NULL;
+    GHashTable *details = NULL;
     org_sflphone_SFLphone_VideoControls_get_codec_details(video_proxy,
-                                                          codec, &array, &error);
+                                                          codec, &details, &error);
     check_error(error);
-    return array;
+    return details;
 }
 
 gchar *
