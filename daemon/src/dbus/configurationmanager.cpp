@@ -35,6 +35,7 @@
 #endif
 
 #include "configurationmanager.h"
+#include <cerrno>
 #include <sstream>
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
@@ -289,19 +290,24 @@ std::string ConfigurationManager::getEchoCancelState()
 std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
 {
     std::map<std::string, std::string> ringToneList;
-    std::string r_path = fileutils::get_data_dir();
+    std::string r_path(fileutils::get_data_dir());
     struct dirent **namelist;
     int n = scandir(r_path.c_str(), &namelist, 0, alphasort);
-    while(n--) {
-        if (strcmp(namelist[n]->d_name,".") && strcmp(namelist[n]->d_name,"..")) {
-           std::string file(namelist[n]->d_name);
-        
-           if (file.find(".wav") != std::string::npos)
-              file.replace(file.find(".wav"),4,"");
-           else
-              file.replace(file.size()-3,3,"");
-           if (file[0] <= 0x7A && file[0] >= 0x61) file[0] = file[0]-32;
-           ringToneList[r_path+namelist[n]->d_name] = file;
+    if (n == -1) {
+        ERROR("%s", strerror(errno));
+        return ringToneList;
+    }
+
+    while (n--) {
+        if (strcmp(namelist[n]->d_name, ".") and strcmp(namelist[n]->d_name, "..")) {
+            std::string file(namelist[n]->d_name);
+
+            if (file.find(".wav") != std::string::npos)
+                file.replace(file.find(".wav"), 4, "");
+            else
+                file.replace(file.size() - 3, 3, "");
+            if (file[0] <= 0x7A and file[0] >= 0x61) file[0] = file[0] - 32;
+            ringToneList[r_path + namelist[n]->d_name] = file;
         }
         free(namelist[n]);
     }
