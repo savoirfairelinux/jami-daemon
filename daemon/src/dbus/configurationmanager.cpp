@@ -35,6 +35,7 @@
 #endif
 
 #include "configurationmanager.h"
+#include <cerrno>
 #include <sstream>
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
