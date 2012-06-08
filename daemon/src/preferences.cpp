@@ -84,7 +84,7 @@ static const char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
 static const char * const ALSAMAP_KEY = "alsa";
-#if HAVE_PULSE == 1
+#if HAVE_PULSE
 static const char * const PULSEMAP_KEY = "pulse";
 #endif
 static const char * const CARDIN_KEY = "cardIn";
@@ -367,7 +367,7 @@ void checkSoundCard(int &card, int stream)
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
-#if HAVE_PULSE == 1
+#if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR) {
         if (system("ps -C pulseaudio > /dev/null") == 0)
             return new PulseLayer;
@@ -386,7 +386,7 @@ AudioLayer* AudioPreference::createAudioLayer()
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()
 {
-#if HAVE_PULSE == 1
+#if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR)
         audioApi_ = ALSA_API_STR;
     else
@@ -453,7 +453,7 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     alsapreferencemap.setKeyValue(PLUGIN_KEY, &plugin);
     alsapreferencemap.setKeyValue(SMPLRATE_KEY, &alsaSmplrate);
 
-#if HAVE_PULSE == 1
+#if HAVE_PULSE
     Conf::MappingNode pulsepreferencemap(NULL);
     preferencemap.setKeyValue(PULSEMAP_KEY, &pulsepreferencemap);
     pulsepreferencemap.setKeyValue(DEVICE_PLAYBACK_KEY, &pulseDevicePlayback);
@@ -489,7 +489,7 @@ void AudioPreference::unserialize(const Conf::MappingNode &map)
         alsamap->getValue(PLUGIN_KEY, &alsaPlugin_);
     }
 
-#if HAVE_PULSE == 1
+#if HAVE_PULSE
     Conf::MappingNode *pulsemap =(Conf::MappingNode *)(map.getValue("pulse"));
 
     if (pulsemap) {

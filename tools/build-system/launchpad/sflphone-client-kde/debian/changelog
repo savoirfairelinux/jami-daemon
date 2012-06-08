@@ -1,3 +1,25 @@
+sflphone-client-kde (1.1.0-rc20120607~ppa1~SYSTEM) SYSTEM; urgency=low
+
+    ** SNAPSHOT 1.1.0-rc20120607~ppa1~SYSTEM **
+
+  * [ #12096 ] Implement more calls details, make it more scalable
+  * [ #11290 ] Update french translation
+  * [ #11859 ] Fix a regression in name conversion
+  * [ #11850 ] Fix a little regression
+  * [ #11859 ] Fix sorting by popularity
+  * [ #11569 ] Fix filter
+  * [ #12003  ] Add icon overlay for history item
+  * [ #11886 ] Add basic reverse peer naming support
+  * kde/callview: removed trailing whitespace
+  * [ #12008 ] Implement GUI part
+  * [ #11988 ] Move ringtone to a new tab
+  * [ #11990 ] Fix history delegate width
+  * [ #11990 ] Make call item height configurable
+  * [ #7007 ] Fix many history bugs and add 'copy' contextual menu
+  * [ #7007 ] Add more contextual options
+
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Thu, 07 Jun 2012 15:52:52 -0400
+
 sflphone-client-kde (1.1.0) SYSTEM; urgency=low
 
     ** SNAPSHOT 1.0.0-rc20110930~ppa1~SYSTEM **
