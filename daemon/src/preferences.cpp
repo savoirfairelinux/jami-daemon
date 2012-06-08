@@ -31,7 +31,9 @@
 #include "preferences.h"
 #include "logger.h"
 #include "audio/alsa/alsalayer.h"
+#if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
+#endif
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "hooks/urlhook.h"
