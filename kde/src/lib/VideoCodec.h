@@ -33,12 +33,14 @@ class LIB_EXPORT VideoCodec {
       static VideoCodec* getCodec(QString name);
       static VideoCodec* getCurrentCodec(Call* call);
       static QList<VideoCodec*> getCodecList();
-      QString getCodecName();
-      QString getCodecId(); //Is the second field the ID?
+      QString getName();
+      QString getBitrate(); //Is the second field the ID?
    private:
-      static QHash<QString,VideoCodec*> m_slCodecs;
       VideoCodec(QString codecName);
+      static void init();
+      static QHash<QString,VideoCodec*> m_slCodecs;
       QString m_Name;
-      QString m_Id;
+      QString m_Bitrate;
+      static bool m_sInit;
 };
 #endif

@@ -24,6 +24,8 @@
 
 #include "ui_dlgvideobase.h"
 
+class VideoDevice;
+
 ///@class DlgVideo video preferences for sflphone
 class DlgVideo : public QWidget, public Ui_DlgVideoBase
 {
@@ -34,6 +36,15 @@ public:
 
    //Destructor
    ~DlgVideo();
+
+private slots:
+   void loadDevice(QString device);
+   void loadResolution(QString channel);
+   void loadRate(QString resolution);
+
+private:
+   //Attribute
+   VideoDevice* m_pDevice;
 
 };
 
