@@ -177,7 +177,7 @@ class Sdp {
         }
 
         void setLocalPublishedAudioPort(int port) {
-        	localAudioPort_ = port;
+            localAudioPort_ = port;
         }
 
 #ifdef SFL_VIDEO
