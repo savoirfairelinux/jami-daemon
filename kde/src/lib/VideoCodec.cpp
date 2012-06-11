@@ -21,14 +21,27 @@
 #include "video_interface_singleton.h"
 
 QHash<QString,VideoCodec*> VideoCodec::m_slCodecs;
+bool VideoCodec::m_sInit = false;
 
 ///Private constructor
 VideoCodec::VideoCodec(QString codecName)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
-   QStringList details = interface.getCodecDetails(codecName);
-   m_Name = details[0];//TODO do not use stringlist
-   m_Id = details[1];//TODO do not use stringlist
+   QMap<QString,QString> details = interface.getCodecDetails(codecName);
+   m_Name    = details["name"];//TODO do not use stringlist
+   m_Bitrate = details["bitrate"];//TODO do not use stringlist
+}
+
+///Init the device list
+void VideoCodec::init()
+{
+   VideoInterface& interface = VideoInterfaceSingleton::getInstance();
+   QStringList codecs = interface.getCodecList();
+   foreach(QString codec,codecs) {
+      m_slCodecs[codec] = new VideoCodec(codec);
+   }
+   
+   m_sInit = true;
 }
 
 ///Get a codec from a name
@@ -41,6 +54,7 @@ VideoCodec* VideoCodec::getCodec(QString name)
 //TODO move to call.h?
 VideoCodec* VideoCodec::getCurrentCodec(Call* call)
 {
+   if (!m_sInit) init();
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    return getCodec(interface.getCurrentCodecName(call->getCallId()));
 }
@@ -48,17 +62,18 @@ VideoCodec* VideoCodec::getCurrentCodec(Call* call)
 ///Get the complete video codec list
 QList<VideoCodec*> VideoCodec::getCodecList()
 {
+   if (!m_sInit) init();
    return m_slCodecs.values();
 }
 
 ///Get the current codec name
-QString VideoCodec::getCodecName()
+QString VideoCodec::getName()
 {
    return m_Name;
 }
 
 ///Get the current codec id
-QString VideoCodec::getCodecId()
+QString VideoCodec::getBitrate()
 {
-   return m_Id;
+   return m_Bitrate;
 }

@@ -19,6 +19,16 @@
 #include "VideoDevice.h"
 #include "video_interface_singleton.h"
 
+QHash<QString,VideoDevice*> VideoDevice::m_slDevices;
+
+
+///Constructor
+VideoDevice::VideoDevice(QString id) : m_DeviceId(id)
+{
+   m_slDevices[id] = this;
+}
+
+///Get the video device list
 QList<VideoDevice*> VideoDevice::getDeviceList()
 {
    QList<VideoDevice*> list;
@@ -31,59 +41,63 @@ QList<VideoDevice*> VideoDevice::getDeviceList()
    return list;
 }
 
-VideoDevice::VideoDevice(QString id) : m_DeviceId(id)
-{
-   
-}
-
+///Get the valid rates for this device
 QStringList VideoDevice::getRateList(VideoChannel channel, Resolution resolution)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    return interface.getInputDeviceRateList(m_DeviceId,channel,resolution.toString());
 }
 
+///Get the valid channel list
 QList<VideoChannel> VideoDevice::getChannelList()
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    return interface.getInputDeviceChannelList(m_DeviceId);
 }
 
+///Set the current device rate
 void VideoDevice::setRate(VideoRate rate)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    interface.setInputDeviceRate(rate);
 }
 
+///Set the current resolution
 void VideoDevice::setResolution(Resolution resolution) //??? No device
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    interface.setInputDeviceSize(resolution.toString());
 }
 
+///Set the current device channel
 void VideoDevice::setChannel(VideoChannel channel) //??? No device
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    interface.setInputDeviceChannel(channel);
 }
 
+///Get the current resolution
 Resolution VideoDevice::getResolution()
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    return Resolution(interface.getInputDeviceSize());
 }
 
+///Get the current channel
 VideoChannel VideoDevice::getChannel() //??? No device
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    return interface.getInputDeviceChannel();
 }
 
+///Get the current rate
 VideoRate VideoDevice::getRate()
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    return interface.getInputDeviceRate();
 }
 
+///Get a list of valid resolution
 QList<Resolution> VideoDevice::getResolutionList(VideoChannel channel)
 {
    QList<Resolution> toReturn;
@@ -93,4 +107,9 @@ QList<Resolution> VideoDevice::getResolutionList(VideoChannel channel)
       toReturn << Resolution(res);
    }
    return toReturn;
+}
+
+QString VideoDevice::getDeviceId()
+{
+   return m_DeviceId;
 }

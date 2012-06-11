@@ -43,11 +43,7 @@ struct LIB_EXPORT Resolution {
 ///@class VideoDevice V4L devices used to record video for video call
 class LIB_EXPORT VideoDevice {
    public:
-      //Constructor
-      VideoDevice(QString id);
-      
-      //Static getter
-      static QList<VideoDevice*> getDeviceList();
+      static VideoDevice* getDevice(QString id);
 
       //Getter
       QStringList                getRateList(VideoChannel channel, Resolution resolution);
@@ -56,12 +52,21 @@ class LIB_EXPORT VideoDevice {
       Resolution                 getResolution  ();
       VideoChannel               getChannel     ();
       VideoRate                  getRate        ();
+      QString                    getDeviceId    ();
+      
+      //Static getter
+      static QList<VideoDevice*> getDeviceList();
 
       //Setter
       void setRate       ( VideoRate rate        );
       void setResolution ( Resolution resolution );
       void setChannel    ( VideoChannel channel  );
    private:
+      //Constructor
+      VideoDevice(QString id);
+
+      //Attributes
       QString m_DeviceId;
+      static QHash<QString,VideoDevice*> m_slDevices;
 };
 #endif

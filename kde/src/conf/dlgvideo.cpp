@@ -18,14 +18,35 @@
  ***********************************************************************************/
 
 #include "dlgvideo.h"
+#include "../lib/VideoDevice.h"
+#include "../lib/VideoCodec.h"
 
 DlgVideo::DlgVideo(QWidget *parent)
- : QWidget(parent)
+ : QWidget(parent),m_pDevice(NULL)
 {
    setupUi(this);
+   
+   QList<VideoDevice*> devices =  VideoDevice::getDeviceList();
+   foreach(VideoDevice* dev,devices) {
+      m_pDeviceCB->addItem(dev->getDeviceId());
+   }
+
+   connect(m_pDeviceCB,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadDevice(QString)));
+
+   QList<VideoCodec*> codecs = VideoCodec::getCodecList();
+   foreach(VideoCodec* codec,codecs) {
+      m_pCodecCB->addItem(codec->getName());
+   }
+
+   m_pConfGB->setEnabled(devices.size());
 }
 
 
 DlgVideo::~DlgVideo()
 {
+   
 }
+
+// DlgVideo::loadDevice(QString device) {
+//    m_pDevice = VideoDevice::
+// }

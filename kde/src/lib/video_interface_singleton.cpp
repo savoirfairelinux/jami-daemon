@@ -20,7 +20,7 @@
 #include "video_interface_singleton.h"
 
 VideoInterface* VideoInterfaceSingleton::interface
-    = new VideoInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/Instance", QDBusConnection::sessionBus());
+    = new VideoInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/VideoControls", QDBusConnection::sessionBus());
 
 VideoInterface& VideoInterfaceSingleton::getInstance()
 {
