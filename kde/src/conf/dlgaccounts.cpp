@@ -71,14 +71,13 @@ Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QSt
    resize(550,300);
    connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
 } //Private_AddCodecDialog
-
 void Private_AddCodecDialog::emitNewCodec() {
    if (codecTable->currentRow() >= 0)
    emit addCodec(codecTable->item(codecTable->currentRow(),3)->text());
 }
 
 DlgAccounts::DlgAccounts(KConfigDialog* parent)
- : QWidget(parent)
+ : QWidget(parent),accountList(NULL)
 {
    setupUi(this);
    disconnect(keditlistbox_codec->addButton(),SIGNAL(clicked()));
@@ -152,6 +151,12 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
    connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
 } //DlgAccounts
+
+DlgAccounts::~DlgAccounts()
+{
+   if (accountList) delete accountList;
+}
+
 
 void DlgAccounts::saveAccountList()
 {

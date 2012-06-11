@@ -112,6 +112,7 @@ Account* Account::buildNewAccountFromAlias(const QString& alias)
 ///Destructor
 Account::~Account()
 {
+   disconnect();
    delete m_pAccountId;
    delete m_pAccountDetails;
 }
@@ -127,7 +128,7 @@ Account::~Account()
 void Account::accountChanged(QString accountId,QString state,int)
 {
    if (accountId == *m_pAccountId) {
-      updateState();
+      Account::updateState();
       stateChanged(getStateName(state));
    }
 }

@@ -41,6 +41,14 @@ ConfigAccountList::ConfigAccountList(bool fill) : QObject()
       updateAccounts();
 }
 
+ConfigAccountList::~ConfigAccountList()
+{
+   foreach(Account* a, *accounts) {
+      delete a;
+   }
+   delete accounts;
+}
+
 AccountView* ConfigAccountList::getAccountByItem(QListWidgetItem * item)
 {
    for (int i = 0; i < accounts->size(); ++i) {
