@@ -19,10 +19,10 @@ libcontacts_la_SOURCES = \
   history.h \
   searchbar.h
 
-libcontacts_la_LDFLAGS = $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \
-						 $(GTK_LDFLAGS) $(GLIB_LDFLAGS) $(WEBKIT_LDFLAGS) \
-						 $(GCONF_LDFLAGS)
+libcontacts_la_LIBS = $(DBUSGLIB_LIBS) $(LIBNOTIFY_LIBS) \
+                      $(GTK_LIBS) $(GLIB_LIBS) $(WEBKIT_LIBS) \
+                      $(GCONF_LDFLAGS) -ldl
 
 libcontacts_la_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
-						$(GTK_CFLAGS) $(GLIB_CFLAGS) $(WEBKIT_CFLAGS) \
-						$(GCONF_CFLAGS)
+                        $(GTK_CFLAGS) $(GLIB_CFLAGS) $(WEBKIT_CFLAGS) \
+                        $(GCONF_CFLAGS)

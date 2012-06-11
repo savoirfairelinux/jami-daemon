@@ -58,8 +58,10 @@
 
 #include "widget/imwidget.h"
 
+#ifdef SFL_VIDEO
 #include "video/video_renderer.h"
 #include "config/videoconf.h"
+#endif
 #include "eel-gconf-extensions.h"
 #include "mainwindow.h"
 
