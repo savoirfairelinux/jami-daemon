@@ -50,16 +50,19 @@ class LIB_EXPORT CallModelBase : public QObject
    Q_OBJECT
 public:
    CallModelBase(QObject* parent = 0);
-   virtual bool changeConference  ( const QString &confId, const QString &state ) = 0;
-   virtual void removeConference  ( const QString &confId                       ) = 0;
-   virtual Call* addConference    ( const QString &confID                       ) = 0;
-   virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
-   virtual Call* addRingingCall   ( const QString& callId                       ) = 0;
-   virtual Call* addIncomingCall  ( const QString& callId                       ) = 0;
-   virtual void  addToHistory     ( Call* call                                  ) = 0;
-   virtual Call* addCall          ( Call* call           , Call* parent =0      );
-   virtual Call* getCall          ( const QString& callId                       ) const = 0;
-   Call*   addConferenceS         ( Call* conf                                  );
+   ~CallModelBase();
+   virtual bool changeConference      ( const QString &confId, const QString &state ) = 0;
+   virtual void removeConference      ( const QString &confId                       ) = 0;
+   virtual Call* addConference        ( const QString &confID                       ) = 0;
+   virtual Call* findCallByCallId     ( const QString& callId                       ) = 0;
+   virtual Call* addRingingCall       ( const QString& callId                       ) = 0;
+   virtual Call* addIncomingCall      ( const QString& callId                       ) = 0;
+   virtual void  addToHistory         ( Call* call                                  ) = 0;
+   virtual Call* addCall              ( Call* call           , Call* parent =0      );
+   virtual Call* getCall              ( const QString& callId                       ) const = 0;
+   Call*   addConferenceS             ( Call* conf                                  );
+   static AccountList* getAccountList (                                             );
+   
 public slots:
    void on1_callStateChanged   ( const QString& callID    , const QString &state   );
    void on1_incomingCall       ( const QString& accountID , const QString & callID );
@@ -71,11 +74,14 @@ public slots:
 
 protected:
    static CallMap m_sActiveCalls;
+   static AccountList* m_spAccountList;
 
 private slots:
-  void removeActiveCall(Call*);
+   void removeActiveCall(Call*);
+   void accountChanged(const QString& account,const QString& state, int code);
 private:
    static bool dbusInit;
+   
 signals:
    void callStateChanged        ( Call* call                              );
    void incomingCall            ( Call* call                              );
@@ -87,6 +93,7 @@ signals:
    void volumeChanged           ( const QString& device    , double value );
    void callAdded               ( Call* call               , Call* parent );
    void historyChanged          (                                         );
+   void accountStateChanged     ( Account* account, QString state         );
 };
 
 /**
@@ -145,7 +152,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       //Account related
       static Account* getCurrentAccount  (                     );
       static QString getCurrentAccountId (                     );
-      static AccountList* getAccountList (                     );
       static QString getPriorAccoundId   (                     );
       static void setPriorAccountId      (const QString& value );
 
@@ -211,7 +217,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       static CallMap        m_lConfList;
       
       static QString      m_sPriorAccountId;
-      static AccountList* m_spAccountList  ;
       static bool         m_sCallInit      ;
       static bool         m_sHistoryInit   ;
 

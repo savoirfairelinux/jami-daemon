@@ -31,6 +31,7 @@
 
 //SFLPhone lib
 #include "configurationmanager_interface_singleton.h"
+#include "callmanager_interface_singleton.h"
 #include "video_interface_singleton.h"
 
 ///Match state name to user readable string
@@ -71,6 +72,8 @@ const QString& account_state_name(const QString& s)
 ///Constructors
 Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
 {
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   connect(&callManager,SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
 }
 
 ///Build an account from it'id
@@ -111,6 +114,22 @@ Account::~Account()
 {
    delete m_pAccountId;
    delete m_pAccountDetails;
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                   Slots                                   *
+ *                                                                           *
+ ****************************************************************************/
+
+///Callback when the account state change
+void Account::accountChanged(QString accountId,QString state,int)
+{
+   if (accountId == *m_pAccountId) {
+      updateState();
+      stateChanged(getStateName(state));
+   }
 }
 
 
@@ -158,8 +177,9 @@ const QString& Account::getAccountDetail(const QString& param) const
       qDebug() << "The account list is not set";
       return EMPTY_STRING; //May crash, but better than crashing now
    }
-   if (m_pAccountDetails->find(param) != m_pAccountDetails->end())
+   if (m_pAccountDetails->find(param) != m_pAccountDetails->end()) {
       return (*m_pAccountDetails)[param];
+   }
    else if (m_pAccountDetails->count() > 0) {
       qDebug() << "Account paramater \"" << param << "\" not found";
       return EMPTY_STRING;
