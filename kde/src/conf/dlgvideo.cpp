@@ -35,11 +35,6 @@ DlgVideo::DlgVideo(QWidget *parent)
    connect(m_pChannelCB   ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadResolution(QString) ));
    connect(m_pResolutionCB,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadRate(QString)       ));
 
-   QList<VideoCodec*> codecs = VideoCodec::getCodecList();
-   foreach(VideoCodec* codec,codecs) {
-      m_pCodecCB->addItem(codec->getName());
-   }
-
    m_pConfGB->setEnabled(devices.size());
 
    if (devices.size())

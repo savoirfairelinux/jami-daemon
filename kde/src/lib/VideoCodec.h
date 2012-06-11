@@ -22,10 +22,11 @@
 #include "typedefs.h"
 
 //Qt
-class QString;
+class QStringList;
 
 //SFLPhone
 class Call;
+class Account;
 
 ///@class VideoCodec Codecs used for video calls
 class LIB_EXPORT VideoCodec {
@@ -33,10 +34,13 @@ class LIB_EXPORT VideoCodec {
       static VideoCodec* getCodec(QString name);
       static VideoCodec* getCurrentCodec(Call* call);
       static QList<VideoCodec*> getCodecList();
+      static QList<VideoCodec*> getActiveCodecList(Account* account);
+      static void setActiveCodecList(Account* account, QStringList codecs);
       QString getName();
       QString getBitrate(); //Is the second field the ID?
    private:
       VideoCodec(QString codecName);
+      ~VideoCodec(){};
       static void init();
       static QHash<QString,VideoCodec*> m_slCodecs;
       QString m_Name;
