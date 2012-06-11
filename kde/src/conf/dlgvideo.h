@@ -37,7 +37,13 @@ public:
    //Destructor
    ~DlgVideo();
 
+private slots:
+   void loadDevice(QString device);
+   void loadResolution(QString channel);
+   void loadRate(QString resolution);
+
 private:
+   //Attribute
    VideoDevice* m_pDevice;
 
 };

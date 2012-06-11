@@ -68,5 +68,6 @@ class LIB_EXPORT VideoDevice {
       //Attributes
       QString m_DeviceId;
       static QHash<QString,VideoDevice*> m_slDevices;
+      static bool m_sInit;
 };
 #endif

@@ -20,25 +20,38 @@
 #include "video_interface_singleton.h"
 
 QHash<QString,VideoDevice*> VideoDevice::m_slDevices;
-
+bool VideoDevice::m_sInit = false;
 
 ///Constructor
 VideoDevice::VideoDevice(QString id) : m_DeviceId(id)
 {
-   m_slDevices[id] = this;
 }
 
 ///Get the video device list
 QList<VideoDevice*> VideoDevice::getDeviceList()
 {
-   QList<VideoDevice*> list;
+   QHash<QString,VideoDevice*> devices;
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    QStringList deviceList = interface.getInputDeviceList();
    foreach(QString device,deviceList) {
-      VideoDevice* dev = new VideoDevice(device);
-      list << dev;
+      if (!m_slDevices[device])
+         devices[device] = new VideoDevice(device);
+      else
+         devices[device] = m_slDevices[device];
    }
-   return list;
+   foreach(VideoDevice* dev,m_slDevices) {
+      if (devices.key(dev).isEmpty())
+         delete dev;
+   }
+   m_slDevices = devices;
+   return m_slDevices.values();
+}
+
+///Return the device
+VideoDevice* VideoDevice::getDevice(QString name)
+{
+   if (!m_sInit) getDeviceList();
+   return m_slDevices[name];
 }
 
 ///Get the valid rates for this device
