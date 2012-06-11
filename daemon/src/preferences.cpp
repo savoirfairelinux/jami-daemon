@@ -369,7 +369,7 @@ AudioLayer* AudioPreference::createAudioLayer()
 {
 #if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR) {
-        if (system("ps -C pulseaudio > /dev/null") == 0)
+        if (system("pactl info > /dev/null") == 0)
             return new PulseLayer(*this);
         else
             WARN("pulseaudio daemon not running, falling back to ALSA");

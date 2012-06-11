@@ -134,25 +134,25 @@ std::string VideoControls::getInputDeviceRate()
     return videoPreference_.getRate();
 }
 
-void VideoControls::setInputDevice(const std::string& api)
+void VideoControls::setInputDevice(const std::string& device)
 {
-    DEBUG("Setting device to %s", api.c_str());
-    videoPreference_.setDevice(api);
+    DEBUG("Setting device to %s", device.c_str());
+    videoPreference_.setDevice(device);
 }
 
-void VideoControls::setInputDeviceChannel(const std::string& api)
+void VideoControls::setInputDeviceChannel(const std::string& channel)
 {
-    videoPreference_.setChannel(api);
+    videoPreference_.setChannel(channel);
 }
 
-void VideoControls::setInputDeviceSize(const std::string& api)
+void VideoControls::setInputDeviceSize(const std::string& size)
 {
-    videoPreference_.setSize(api);
+    videoPreference_.setSize(size);
 }
 
-void VideoControls::setInputDeviceRate(const std::string& api)
+void VideoControls::setInputDeviceRate(const std::string& rate)
 {
-    videoPreference_.setRate(api);
+    videoPreference_.setRate(rate);
 }
 
 std::map<std::string, std::string>
