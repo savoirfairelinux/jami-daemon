@@ -20,5 +20,5 @@ libsiplink_la_SOURCES = \
 		sip_utils.cpp \
 		sip_utils.h
 
-libsiplink_la_CXXFLAGS = \
-		@PCRE_LIBS@
+#libsiplink_la_CXXFLAGS = \
+#		@PCRE_LIBS@

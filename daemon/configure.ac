@@ -10,7 +10,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
-m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+#m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
@@ -63,29 +63,29 @@ AC_CHECK_TYPES([ptrdiff_t])
 dnl ********************************
 dnl Check for needed functions
 dnl ********************************
-AC_FUNC_CHOWN
-AC_FUNC_ERROR_AT_LINE
-AC_FUNC_FORK
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
-AC_FUNC_REALLOC
-AC_FUNC_SELECT_ARGTYPES
-AC_DIAGNOSE([obsolete],[your code may safely assume C89 semantics that RETSIGTYPE is void.
-Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
-AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
-[AC_LANG_PROGRAM([#include <sys/types.h>
-#include <signal.h>
-],
-         [return *(signal (0, 0)) (0) == 1;])],
-           [ac_cv_type_signal=int],
-           [ac_cv_type_signal=void])])
-AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
-            (`int' or `void').])
+#AC_FUNC_CHOWN
+#AC_FUNC_ERROR_AT_LINE
+#AC_FUNC_FORK
+#AC_PROG_GCC_TRADITIONAL
+#AC_FUNC_MALLOC
+#AC_FUNC_MEMCMP
+#AC_FUNC_REALLOC
+#AC_FUNC_SELECT_ARGTYPES
+#AC_DIAGNOSE([obsolete],[your code may safely assume C89 semantics that RETSIGTYPE is void.
+#Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
+#AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+#[AC_LANG_PROGRAM([#include <sys/types.h>
+##include <signal.h>
+#],
+#         [return *(signal (0, 0)) (0) == 1;])],
+#           [ac_cv_type_signal=int],
+#           [ac_cv_type_signal=void])])
+#AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+#            (`int' or `void').])
 
-AC_FUNC_STAT
-AC_FUNC_UTIME_NULL
-AC_FUNC_VPRINTF
+#AC_FUNC_STAT
+#AC_FUNC_UTIME_NULL
+#AC_FUNC_VPRINTF
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
@@ -175,12 +175,12 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-AX_LIB_EXPAT([1.95.8])
-AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
+#AX_LIB_EXPAT([1.95.0])
+#AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
 
 AX_PTHREAD
 
-AX_PATH_LIB_PCRE
+# AX_PATH_LIB_PCRE
 
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
