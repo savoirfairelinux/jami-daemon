@@ -72,8 +72,8 @@ class VideoPreference : public Serializable
             return channel_;
         }
 
-        void setChannel(const std::string & input) {
-            channel_ = input;
+        void setChannel(const std::string & channel) {
+            channel_ = channel;
         }
 
         std::string getSize() const {
