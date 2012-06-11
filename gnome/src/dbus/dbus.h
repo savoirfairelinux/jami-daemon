@@ -212,7 +212,7 @@ gchar **dbus_audio_codec_details(int payload);
  * @param codec The name of the video codec
  * @return gchar** The video codec details
  */
-gchar **dbus_video_codec_details(const gchar *codec);
+GHashTable *dbus_video_codec_details(const gchar *codec);
 
 /**
  * ConfigurationManager - Get the default audio codec list

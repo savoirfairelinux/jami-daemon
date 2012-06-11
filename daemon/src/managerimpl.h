@@ -48,6 +48,7 @@
 #include "call.h"
 #include "conference.h"
 
+#include "audio/audiolayer.h"
 #include "audio/sound/tone.h"  // for Tone::TONEID declaration
 #include "audio/codecs/audiocodecfactory.h"
 
@@ -515,7 +516,7 @@ class ManagerImpl {
              * @param index The index of the soundcard
              * @param the type of stream, either SFL_PCM_PLAYBACK, SFL_PCM_CAPTURE, SFL_PCM_RINGTONE
              */
-        void setAudioDevice(const int index, const int streamType);
+        void setAudioDevice(int index, AudioLayer::PCMType streamType);
 
         /**
          * Get list of supported audio output device

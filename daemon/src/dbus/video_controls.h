@@ -68,7 +68,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         VideoPreference &getVideoPreferences();
 
         std::vector<std::string> getCodecList();
-        std::vector<std::string> getCodecDetails(const std::string& payload);
+        std::map<std::string, std::string> getCodecDetails(const std::string& name);
         std::vector<std::string>
         getActiveCodecList(const std::string& accountID);
         void setActiveCodecList(const std::vector<std::string>& list,

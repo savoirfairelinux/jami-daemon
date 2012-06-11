@@ -43,7 +43,7 @@ DlgGeneral::DlgGeneral(KConfigDialog *parent)
    m_lCallDetails[ "Display organisation" ] = "displayCallOrganisation";
    m_lCallDetails[ "Display department"   ] = "displayCallDepartment"  ;
    m_lCallDetails[ "Display e-mail"       ] = "displayCallEmail"       ;
-   
+
    QMutableMapIterator<QString, QString> iter(m_lCallDetails);
    while (iter.hasNext()) {
       iter.next();

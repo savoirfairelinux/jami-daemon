@@ -2,6 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Андрей Лухнов <aol.nnov@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,7 +54,7 @@ class AlsaLayer : public AudioLayer {
         /**
          * Constructor
          */
-        AlsaLayer();
+        AlsaLayer(const AudioPreference &pref);
 
         /**
          * Destructor
@@ -99,7 +100,7 @@ class AlsaLayer : public AudioLayer {
          * @return bool True if it exists and supports the mode
          *		    false otherwise
          */
-        static bool soundCardIndexExists(int card, int stream);
+        static bool soundCardIndexExists(int card, PCMType stream);
 
         /**
          * An index is associated with its string description
@@ -107,6 +108,7 @@ class AlsaLayer : public AudioLayer {
          * @return	int	  Its index
          */
         int getAudioDeviceIndex(const std::string &description) const;
+        std::string getAudioDeviceName(int index, PCMType type) const;
 
         void playback(int maxSamples);
         void capture();
@@ -118,7 +120,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for capture
          *                     0 for the first available card on the system, 1 ...
          */
-        int getIndexCapture() const {
+        virtual int getIndexCapture() const {
             return indexIn_;
         }
 
@@ -127,7 +129,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for playback
          *                     0 for the first available card on the system, 1 ...
          */
-        int getIndexPlayback() const {
+        virtual int getIndexPlayback() const {
             return indexOut_;
         }
 
@@ -136,7 +138,7 @@ class AlsaLayer : public AudioLayer {
          * @return int The index of the card used for ringtone
          *                 0 for the first available card on the system, 1 ...
          */
-        int getIndexRingtone() const {
+        virtual int getIndexRingtone() const {
             return indexRing_;
         }
 
@@ -203,6 +205,8 @@ class AlsaLayer : public AudioLayer {
          * @return int The number of frames actually read
          */
         int read(void* buffer, int toCopy);
+
+        virtual void updatePreference(AudioPreference &pref, int index, PCMType type);
 
         /**
          * Handles to manipulate playback stream

@@ -1863,13 +1863,6 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 
     audioPreference.setAlsaPlugin(audioPlugin);
 
-    AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (!alsa) {
-        ERROR("Can't find alsa device");
-        return;
-    }
-
     bool wasStarted = audiodriver_->isStarted();
 
     // Recreate audio driver with new settings
@@ -1883,32 +1876,17 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 /**
  * Set audio output device
  */
-void ManagerImpl::setAudioDevice(const int index, int streamType)
+void ManagerImpl::setAudioDevice(int index, AudioLayer::PCMType type)
 {
     ost::MutexLock lock(audioLayerMutex_);
 
-    AlsaLayer *alsaLayer = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (!alsaLayer) {
-        ERROR("Can't find alsa device");
+    if (!audiodriver_) {
+        ERROR("Audio driver not initialized");
         return ;
     }
 
-    bool wasStarted = audiodriver_->isStarted();
-
-    switch (streamType) {
-        case SFL_PCM_PLAYBACK:
-            audioPreference.setAlsaCardout(index);
-            break;
-        case SFL_PCM_CAPTURE:
-            audioPreference.setAlsaCardin(index);
-            break;
-        case SFL_PCM_RINGTONE:
-            audioPreference.setAlsaCardring(index);
-            break;
-        default:
-            break;
-    }
+    const bool wasStarted = audiodriver_->isStarted();
+    audiodriver_->updatePreference(audioPreference, index, type);
 
     // Recreate audio driver with new settings
     delete audiodriver_;
@@ -1946,17 +1924,13 @@ std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
 
     std::vector<std::string> v;
 
-    AlsaLayer *alsa = dynamic_cast<AlsaLayer*>(audiodriver_);
-
-    if (alsa) {
-        std::stringstream ssi, sso, ssr;
-        sso << alsa->getIndexPlayback();
-        v.push_back(sso.str());
-        ssi << alsa->getIndexCapture();
-        v.push_back(ssi.str());
-        ssr << alsa->getIndexRingtone();
-        v.push_back(ssr.str());
-    }
+    std::stringstream ssi, sso, ssr;
+    sso << audiodriver_->getIndexPlayback();
+    v.push_back(sso.str());
+    ssi << audiodriver_->getIndexCapture();
+    v.push_back(ssi.str());
+    ssr << audiodriver_->getIndexRingtone();
+    v.push_back(ssr.str());
 
     return v;
 }
@@ -2165,12 +2139,7 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
         return soundCardIndex;
     }
 
-    AlsaLayer *alsalayer = dynamic_cast<AlsaLayer *>(audiodriver_);
-
-    if (alsalayer)
-        soundCardIndex = alsalayer -> getAudioDeviceIndex(name);
-
-    return soundCardIndex;
+    return audiodriver_->getAudioDeviceIndex(name);
 }
 
 std::string ManagerImpl::getCurrentAudioOutputPlugin() const

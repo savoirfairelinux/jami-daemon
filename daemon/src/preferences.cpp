@@ -336,7 +336,7 @@ void HookPreference::runHook(pjsip_msg *msg)
 }
 
 AudioPreference::AudioPreference() :
-    audioApi_(DEFAULT_AUDIO_API_STR)
+    audioApi_(PULSEAUDIO_API_STR)
     , alsaCardin_(atoi(ALSA_DFT_CARD))
     , alsaCardout_(atoi(ALSA_DFT_CARD))
     , alsaCardring_(atoi(ALSA_DFT_CARD))
@@ -356,7 +356,7 @@ AudioPreference::AudioPreference() :
 {}
 
 namespace {
-void checkSoundCard(int &card, int stream)
+void checkSoundCard(int &card, AudioLayer::PCMType stream)
 {
     if (not AlsaLayer::soundCardIndexExists(card, stream)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
@@ -370,28 +370,26 @@ AudioLayer* AudioPreference::createAudioLayer()
 #if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR) {
         if (system("ps -C pulseaudio > /dev/null") == 0)
-            return new PulseLayer;
+            return new PulseLayer(*this);
         else
             WARN("pulseaudio daemon not running, falling back to ALSA");
     }
 #endif
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, SFL_PCM_CAPTURE);
-    checkSoundCard(alsaCardout_, SFL_PCM_PLAYBACK);
-    checkSoundCard(alsaCardring_, SFL_PCM_RINGTONE);
+    checkSoundCard(alsaCardin_, AudioLayer::SFL_PCM_CAPTURE);
+    checkSoundCard(alsaCardout_, AudioLayer::SFL_PCM_PLAYBACK);
+    checkSoundCard(alsaCardring_, AudioLayer::SFL_PCM_RINGTONE);
 
-    return new AlsaLayer;
+    return new AlsaLayer(*this);
 }
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()
 {
-#if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR)
         audioApi_ = ALSA_API_STR;
     else
         audioApi_ = PULSEAUDIO_API_STR;
-#endif
 
     return createAudioLayer();
 }

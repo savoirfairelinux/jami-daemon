@@ -162,7 +162,7 @@ void CallTreeItem::setCall(Call *call)
 {
    if (!call)
       return;
-   
+
    m_pItemCall = call;
    setAcceptDrops(true);
 
@@ -189,7 +189,7 @@ void CallTreeItem::setCall(Call *call)
 
    m_pTransferPrefixL->setVisible(false);
    m_pTransferNumberL->setVisible(false);
-   
+
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
 
@@ -216,7 +216,7 @@ void CallTreeItem::setCall(Call *call)
    QHBoxLayout* transfer = new QHBoxLayout();
    transfer->setMargin(0);
    transfer->setSpacing(0);
-   
+
    if (ConfigurationSkeleton::displayCallIcon()) {
       m_pIconL = new QLabel(" ");
       mainLayout->addWidget(m_pIconL);
@@ -240,7 +240,7 @@ void CallTreeItem::setCall(Call *call)
       m_pSecureL = new QLabel(" ",this);
       descr->addWidget(m_pSecureL);
    }
-   
+
    if (ConfigurationSkeleton::displayCallCodec()) {
       m_pCodecL = new QLabel(" ",this);
       descr->addWidget(m_pCodecL);
@@ -260,7 +260,7 @@ void CallTreeItem::setCall(Call *call)
       m_pEmail = new QLabel(" ",this);
       descr->addWidget(m_pEmail);
    }
-   
+
    transfer->addWidget(m_pTransferPrefixL);
    transfer->addWidget(m_pTransferNumberL);
    descr->addLayout(transfer);
@@ -272,7 +272,7 @@ void CallTreeItem::setCall(Call *call)
 
    connect(m_pItemCall, SIGNAL(changed()), this, SLOT(updated()));
    sizeHint();
-   
+
 } //setCall
 
 ///Update data
@@ -282,7 +282,7 @@ void CallTreeItem::updated()
    bool recording = m_pItemCall->getRecording();
    if (!m_pContact)
       m_pContact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber(),true);
-   
+
    if (m_pContact) {
       if (m_pPeerL) {
          m_pPeerL->setText("<b>"+m_pContact->getFormattedName()+"</b>");
@@ -355,7 +355,7 @@ void CallTreeItem::updated()
       }
       if (m_pTransferNumberL)
          m_pTransferNumberL->setText(m_pItemCall->getTransferNumber());
-      
+
       if (m_pCallNumberL)
          m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
 

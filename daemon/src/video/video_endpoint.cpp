@@ -54,16 +54,19 @@ std::vector<std::string> getCodecList()
     return libav_utils::getVideoCodecList();
 }
 
-std::vector<std::string> getCodecSpecifications(const std::string &codec)
+std::map<std::string, std::string> getCodecSpecifications(const std::string &codec)
 {
-    std::vector<std::string> v(1, codec);
-    std::stringstream ss;
+    std::map<std::string, std::string> specs;
+    const char * const NAME_KEY = "name";
+    const char * const BITRATE_KEY = "bitrate";
 
     // Add the bit rate
+    specs[NAME_KEY] = codec;
+    std::stringstream ss;
     ss << getBitRate(codec);
-    v.push_back(ss.str());
+    specs[BITRATE_KEY] = ss.str();
 
-    return v;
+    return specs;
 }
 
 } // end namespace sfl_video

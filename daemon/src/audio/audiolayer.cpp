@@ -43,7 +43,6 @@ AudioLayer::AudioLayer()
     , sampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_()
     , dcblocker_()
-    , audioPref(Manager::instance().audioPreference)
     , converter_(sampleRate_)
     , lastNotificationTime_(0)
 {

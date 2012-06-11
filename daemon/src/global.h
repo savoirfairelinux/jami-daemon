@@ -54,11 +54,6 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 #define PCM_DSNOOP	"plug:dsnoop"		/** Alsa plugin for microphone sharing */
 #define PCM_DMIX_DSNOOP "dmix/dsnoop"           /** Audio profile using Alsa dmix/dsnoop */
 
-#define SFL_PCM_BOTH		0x0021		/** To open both playback and capture devices */
-#define SFL_PCM_PLAYBACK	0x0022		/** To open playback device only */
-#define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
-#define SFL_PCM_RINGTONE    0x0024
-
 #define RINGTONE_ENABLED	      TRUE_STR		/** Custom ringtone enable or not */
 #define DISPLAY_DIALPAD		      TRUE_STR		/** Display dialpad or not */
 #define DISPLAY_VOLUME_CONTROLS	  TRUE_STR		/** Display the volume controls or not */

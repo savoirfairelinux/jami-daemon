@@ -2,6 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Андрей Лухнов <aol.nnov@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,15 +69,14 @@ void AlsaThread::run()
 }
 
 // Constructor
-AlsaLayer::AlsaLayer()
-    : indexIn_(audioPref.getAlsaCardin())
-    , indexOut_(audioPref.getAlsaCardout())
-    , indexRing_(audioPref.getAlsaCardring())
+AlsaLayer::AlsaLayer(const AudioPreference &pref)
+    : indexIn_(pref.getAlsaCardin())
+    , indexOut_(pref.getAlsaCardout())
+    , indexRing_(pref.getAlsaCardring())
     , playbackHandle_(NULL)
     , ringtoneHandle_(NULL)
     , captureHandle_(NULL)
-    , audioPlugin_(audioPref.getAlsaPlugin())
-    // , IDSoundCards_()
+    , audioPlugin_(pref.getAlsaPlugin())
     , is_playback_prepared_(false)
     , is_capture_prepared_(false)
     , is_playback_running_(false)
@@ -85,8 +85,8 @@ AlsaLayer::AlsaLayer()
     , is_capture_open_(false)
     , audioThread_(NULL)
 {
-    setCaptureGain(Manager::instance().audioPreference.getVolumemic());
-    setPlaybackGain(Manager::instance().audioPreference.getVolumespkr());
+    setCaptureGain(pref.getVolumemic());
+    setPlaybackGain(pref.getVolumespkr());
 }
 
 // Destructor
@@ -523,9 +523,8 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
 
 bool
-AlsaLayer::soundCardIndexExists(int card, int stream)
+AlsaLayer::soundCardIndexExists(int card, PCMType stream)
 {
-    snd_ctl_t* handle;
     snd_pcm_info_t *pcminfo;
     snd_pcm_info_alloca(&pcminfo);
     std::string name("hw:");
@@ -533,6 +532,7 @@ AlsaLayer::soundCardIndexExists(int card, int stream)
     ss << card;
     name.append(ss.str());
 
+    snd_ctl_t* handle;
     if (snd_ctl_open(&handle, name.c_str(), 0) != 0)
         return false;
 
@@ -558,6 +558,24 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description) const
 
     // else return the default one
     return 0;
+}
+
+std::string
+AlsaLayer::getAudioDeviceName(int index, PCMType type) const
+{
+    // a bit ugly and wrong.. i do not know how to implement it better in alsalayer.
+    // in addition, for now it is used in pulselayer only due to alsa and pulse layers api differences.
+    // but after some tweaking in alsalayer, it could be used in it too.
+    switch (type) {
+        case SFL_PCM_PLAYBACK:
+        case SFL_PCM_RINGTONE:
+            return getPlaybackDeviceList().at(index);
+        case SFL_PCM_CAPTURE:
+            return getCaptureDeviceList().at(index);
+        default:
+            ERROR("Unexpected type %d", type);
+            return "";
+    }
 }
 
 void AlsaLayer::capture()
@@ -712,4 +730,21 @@ void AlsaLayer::audioCallback()
     // Additionally handle the mic's audio stream
     if (is_capture_running_)
         capture();
+}
+
+void AlsaLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
+{
+    switch (type) {
+        case SFL_PCM_PLAYBACK:
+            preference.setAlsaCardout(index);
+            break;
+        case AudioLayer::SFL_PCM_CAPTURE:
+            preference.setAlsaCardin(index);
+            break;
+        case AudioLayer::SFL_PCM_RINGTONE:
+            preference.setAlsaCardring(index);
+            break;
+        default:
+            break;
+    }
 }
