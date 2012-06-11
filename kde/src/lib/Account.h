@@ -21,8 +21,13 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
+#include <QtCore/QList>
+
 //Qt
 class QString;
+
+//SFLPhone
+#include "VideoCodec.h"
 
 #include "typedefs.h"
 
@@ -52,6 +57,10 @@ class LIB_EXPORT Account : public QObject {
       void setAccountId      (const QString& id                        );
       void setAccountDetails (const MapStringString& m                 );
       void setAccountDetail  (const QString& param, const QString& val );
+      #ifdef ENABLE_VIDEO
+      void setActiveVideoCodecList(QList<VideoCodec*> codecs);
+      QList<VideoCodec*> getActiveVideoCodecList();
+      #endif
    
       //Updates
       virtual void updateState();

@@ -613,9 +613,6 @@ call_state Call::stateChanged(const QString& newStateName)
 call_state Call::actionPerformed(call_action action)
 {
    call_state previousState = m_CurrentState;
-   Q_ASSERT_X((previousState>10) || (previousState<0),"perform action","Invalid previous state ("+QString::number(previousState)+")");
-   Q_ASSERT_X((state>4) || (state < 0),"perform action","Invalid action ("+QString::number(action)+")");
-   Q_ASSERT_X((action>5) || (action < 0),"perform action","Invalid action ("+QString::number(action)+")");
    //update the state
    if (previousState < 13 && action < 5) {
       changeCurrentState(actionPerformedStateMap[previousState][action]);

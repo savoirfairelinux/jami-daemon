@@ -33,9 +33,14 @@ set( qtsflphone_LIB_SRCS
   Contact.cpp
   ContactBackend.cpp
   Item.cpp
+  VideoCodec.cpp
+  VideoModel.cpp
+  VideoDevice.cpp
   configurationmanager_interface_singleton.cpp
   callmanager_interface_singleton.cpp
   instance_interface_singleton.cpp
+  video_interface_singleton.cpp
+  video_interface_singleton.cpp
   sflphone_const.h
 )
 
@@ -69,6 +74,20 @@ QT4_ADD_DBUS_INTERFACE(
    qtsflphone_LIB_SRCS
    ${callmanager_xml}
    callmanager_dbus_interface)
+
+# video manager interface
+SET ( video_xml  ${dbus_xml_introspecs_path}/video_controls-introspec.xml )
+
+SET_SOURCE_FILES_PROPERTIES(
+   ${video_xml}
+   PROPERTIES
+   CLASSNAME VideoInterface
+   INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/dbus/metatypes.h")
+
+QT4_ADD_DBUS_INTERFACE(
+   qtsflphone_LIB_SRCS
+   ${video_xml}
+   video_dbus_interface)
 
 # instance interface
 SET ( instance_xml  ${dbus_xml_introspecs_path}/instance-introspec.xml )

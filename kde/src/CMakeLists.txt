@@ -45,6 +45,7 @@ SET(
    conf/dlgaddressbook.cpp
    conf/dlghooks.cpp
    conf/dlgaccessibility.cpp
+   conf/dlgvideo.cpp
    conf/ConfigAccountList.cpp
    widgets/Dialpad.cpp
    widgets/ContactItemWidget.cpp
@@ -77,7 +78,14 @@ SET(
    conf/dlgaddressbookbase.ui
    conf/dlghooksbase.ui
    conf/dlgaccessibility.ui
+   conf/dlgvideobase.ui
 )
+
+IF(${ENABLE_VIDEO} MATCHES true)
+   MESSAGE("VIDEO enabled")
+   SET(ENABLE_VIDEO 1 CACHE BOOLEAN "Enable video")
+   add_definitions( -DENABLE_VIDEO=true )
+ENDIF(${ENABLE_VIDEO} MATCHES true)
 
 KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/SFLPhoneView_base.ui  ${config_ui_files}  )
 QT4_ADD_DBUS_INTERFACES(sflphone_client_kde_SRCS ${KDE4_DBUS_INTERFACES_DIR}/org.kde.KSpeech.xml)

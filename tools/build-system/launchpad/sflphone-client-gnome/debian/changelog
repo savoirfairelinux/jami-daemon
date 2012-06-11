@@ -1,3 +1,36 @@
+sflphone-client-gnome (1.1.0-rc20120607~ppa1~SYSTEM) SYSTEM; urgency=low
+
+    ** SNAPSHOT 1.1.0-rc20120607~ppa1~SYSTEM **
+
+  * gnome: cleanup logging
+  * * #12061: gnome: fix video codec list display
+  * * #12050: gnome: fixed regression in active codec handling
+  * #11732: Do not align menu with other interface component
+  * * #11818: gnome: stop daemon on SIGTERM, SIGINT or SIGHUP
+  * #10304: updatePlaybackScale dbus method uses int 32 bit for size and
+    position (allow for 24 days long recording playback)
+  * #10304: Add time lable for seekslider
+  * * #10725: gnome: seekslider: fixed compiler warning due to missing
+    header
+  * * #11732: gnome:calltree: fix warning when searchbar is not created
+  * * #11252: daemon: removed deprecated zrtp code
+  * #10725: Consolidate test to determine if there is a recording,
+    remove log on NULL pointer
+  * #10725: Remove logging from stop callback in seekslider
+  * #10725: No need of playback related callbacks in uimanager
+  * #10725: Remove logging in seekslider when no selected call
+  * #11732: Align Icons with dialpad in gnome client
+  * #10304: Make sure that the playback won't be updated after reset
+  * #10304: Prevent playback widget reset from stoping dtmf
+  * #10304: Move Playback widget at the bottom of the main window
+  * #10304: Fix logic to determine outgoing/incoming calls for recording
+    icon
+  * * #11685: gnome: fixed memory leaks in config menus
+  * #10304: Fix reset seekslider that prevent scale to be updated at
+    first read
+
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Thu, 07 Jun 2012 16:04:59 -0400
+
 sflphone-client-gnome (1.0.0-rc20110930~ppa1~SYSTEM) SYSTEM; urgency=low
 
     ** SNAPSHOT 1.0.0-rc20110930~ppa1~SYSTEM **
