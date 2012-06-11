@@ -672,8 +672,7 @@ Call* CallView::addConference(Call* conf)
       kDebug() << "Adding " << callId << "to the conversation";
       insertItem(extractItem(SFLPhone::model()->getIndex(callId)),confItem);
    }
-
-   Q_ASSERT_X(confItem->childCount() == 0, "add conference","Conference created, but without any participants");
+   
    return newConf;
 } //addConference
 

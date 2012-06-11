@@ -1,3 +1,483 @@
+sflphone-common (1.1.0-rc20120607~ppa1~SYSTEM) SYSTEM; urgency=low
+
+    ** SNAPSHOT 1.1.0-rc20120607~ppa1~SYSTEM **
+
+  * * #12071: audiopreferences: fix make check
+  * * #12071: cleanup
+  * #12071: Lower expat dependency version
+  * * #12085: alsa: fix ringtone update bug, cleanup
+  * #12071: Fix pulseaudio compilation error
+  * #12071: Make pulseaudio optional at configuration time
+  * * #12091: daemon: issue warning if falling back to ALSA
+  * video: fixed make check
+  * *#12085: alsa: don't segfault on snd_pcm_avail_update error
+  * #12070: Add --without-pulse option
+  * * #12055: video: fix build for older libav
+  * [ #11886 ] cleanup
+  * [ #11886 ] Add basic reverse peer naming support
+  * [ #12008 ] Implement GUI part
+  * * #12012: video: fix some regressions
+  * * #12002: yamlparser: don't wipe out config if going from normal
+    build to --enable-video
+  * [ #12008 ] Add ConfigurationManager::getRingtoneList()
+  * * #12002: video: fix config file serialization/deserialization
+  * * #11987: managerimpl: fix bugs in conference when removing
+    participants
+  * * #11987: manager: fixed transfer from conference
+  * * #11987: mainbuffer: cleanup logging
+  * * #11979: pulse: fixed mismatched device list
+  * * #11971: audiolayer: fix bugs with getDeviceList
+  * * #11960: manager: validate conference earlier when processing
+    participants
+  * * #11960: manager: fixed segfault on transfer from conference
+  * * #11966: IP2IP: make alias consistently IP2IP
+  * * #11965: sipvoiplink: add more error checking in SDP negotiation
+  * * #11964: mainbuffer/ringbuffer: cleanup API
+  * sdp: remove unused variable warning
+  * * #11941: video: fix deprecated libav_api warnings
+  * * #11949: pulselayer: fix bug in getDeviceList
+  * video: whitespace fixes
+  * * #11951: video: fixed threading issues for ucommon Thread
+  * [#11848] Properly disable testPulseConnect
+  * [#11848] Disable pulseConnect test
+  * sdp: cleanup
+  * sdp: cleanup
+  * * #11860: mainbuffer: remove dead and/or buggy code
+  * * #11851: sdp: fixed gcc type narrowing warnings
+  * * #11851: audiostream: fixed gcc type narrowing warnings
+  * * #11841: don't put code with side effects in assert()
+  * * #11840: audiortp: remove some global symbols/variables
+  * * #11828: audiofile: fix broken build
+  * * #11828: audioloop: don't shadow sampleRate variable in derived
+    classes
+  * * #11818: gnome: stop daemon on SIGTERM, SIGINT or SIGHUP
+  * * #11499: daemon should also quit gracefully on SIGHUP
+  * * #11813: daemon configure should fail if expat is not installed
+  * #10304: updatePlaybackScale dbus method uses int 32 bit for size and
+    position (allow for 24 days long recording playback)
+  * #10304: Add time lable for seekslider
+  * * #11780: sip: don't use abort or leak calls on error and don't
+    restrict SDP size to 1000 bytes in transaction_request_cb
+  * * #11735: daemon: added timestamp start to call details
+  * * #10304: historyitem: added operator > defined in terms of operator
+    <
+  * * #11252: historyitem: added missing unistd.h header
+  * * #11252: daemon: removed deprecated zrtp code
+  * * #11728: yaml: check that nodes are valid before using them.
+  * * #10797: send DTMF over RTP as per RFC2833
+  * * #11706: managerimpl: added unsetCurrentCall method
+  * * #11698: daemon: fix build for c++11
+  * * #10304: historyitem: file_exists need not be a member method
+  * * #11499: managerimpl: don't crash if signal and dbus try and finish
+    the manager at the same time
+  * #10304: Prevent from storing removed files in history
+  * * #11499: daemon: Exit cleanly on SIGINT or SIGTERM
+  * * #10226: audiocodecfactory: use array instead of vector for codec
+    name lookup
+  * * #10226: audiocodecfactory: make codec loading stricter
+  * #10304: RCecale positions and size values for playback recording
+  * #11530: Make sure that only appropriate configuration option are
+    parsed for IP2IP calls
+  * * 11480: video: disabled by default
+  * * #11459: history: protect historyitems vector with mutex
+  * * #11448: fix video preferences for empty camera list
+  * #10304: Implemented playback seek in gnome client
+  * * #11269: video: fix codec per account management
+  * #10304: Implemented playback scale in gnome client
+  * Fix includes for gcc 4.7
+  * * #11269: make clearer distinction between codecs and audiocodecs
+  * * #11269: merged master into video
+  * * #10296: managerimpl: more usage of getCallFromCallID
+  * * #10296: verify that calls exists before trying to join them in a
+    conference
+  * * #11208: bump version numbers for release 1.1.0
+  * managerimpl: rename ManagerImpl::serialize/unserialize ->
+    join_string/split_string
+  * Fix warnings in resampler test
+  * * #10732: sipvoiplink: fix code that validates IP address
+  * Add historyChanged signal, better than managing it client side
+  * #10795: fix sipaccount deserialisation broken
+  * #10736: implement getConferenceId dbus method given a call id
+  * #10736: do not use iterator in daemon when joining conferences
+  * #10736: Fix joining conferences in daemon
+  * * #10736: gnome: fix crash on restart with active conference
+  * managerimpl: removed unused pulselayer.h header
+  * Save history everytime it change, prevent the file never to be saved
+    in some senario (SIG, crash, ASSERT, etc)
+  * * #10320: manager: check that participants are unique before joining
+  * #10335: Add a noise suppressor for incoming rtp streams
+  * * #10322: sip: registration state should not be always set to
+    ErrorAuth on error
+  * #10220: Fix recording thread does not exit when hanging up while
+    recording
+  * * #9903: fix includes for new ccrtp
+  * #10230: Get back default mainbuffer sampling rate to 8kHz, no need
+    of decoding noise suppressor
+  * #10230: Use a different samplerate converter for rtp encoding and
+    decoding
+  * * #9903: create DynamicPayloadFormat on stack, initialize earlier
+  * * #9903: audiorecorder: initialize buffer to silence, not random
+    data
+  * #10230: Test for triangular and sine signals
+  * #10230: Add resampling unit test
+  * * #10230: DTMF sample rate should come from main buffer, it should
+    not be hardcoded
+  * * #10213: audiolayer: create samplerateconverter on the stack
+  * * #10213: audiolayer: cleanup
+  * * #10213: increase resample buffer size, and check output size when
+    resampling
+  * * #10095: sipvoiplink: check pointers before using them
+  * #9981: IP2IP calls based on ip address instead of sip:
+  * * #10213: speex codecs should initialize their own parameters
+  * * #10213: account: removed redundant cast
+  * * #9832: removed extra printf
+  * * #10172: include -sflphone in recording file name
+  * * #9832: cleanup logging in tests
+  * * #10096: srtp: use vectors to simplify key/salt manipulation
+  * #10096: add case for non-srtp calls
+  * [ #10121 ] Sync the KDE with daemon, fix a few issues and implement
+    a recorded call player
+  * #9980: make keep registration optional as there is different
+    behavior on different registrar
+  * #10096: use c++ arrays to store keys in srtp sesssion
+  * * #10018: renamed registration related keys in dbus
+  * #10096: Fix onhold/offhold srtp
+  * * #8586: fixed make distcheck
+  * * #9832: logger: don't hide logging if NDEBUG is present
+  * #10096: Reinit crypto context when required on INVITE request
+  * * #10111: Fixes segfault on empty config file
+  * #100096: Set in/out queue crypto context at initialization, not when
+    starting the thread
+  * #10096: Update srtp key generation when holding/unholding a call
+  * * #9831: logger: removed extraneous carriage-return character
+  * * #10095: sipvoiplink: validate pointers before using them
+  * * #10094: renamed config/config.{h,cpp} config/sfl_config.{h,cpp}
+  * * #10090: fix segfault in transaction_state_changed_cb
+  * * #9832: audio_rtp_record_handler: cleanup logging
+  * * #9832: pulse: cleanup logging
+  * * #9832: cleanup logging
+  * * #9832: cleanup logging
+  * * #9832: dbus: fix logging
+  * * #9832: config: cleanup logging
+  * * #9832: remove unused header
+  * * #9832: manager: fix logging
+  * * #9832: audio: fix logging
+  * * #9832: audio: fix logging
+  * * #9832: zrtp: cleanup logging
+  * * #9832: AudioZRTPSession: cleanup logging
+  * * #9832: AudioSRTPSession: fix logging
+  * * #9832: cleanup logging
+  * * #9832: AudioRtpSession: cleanup logging
+  * * #9832: AudioRtpFactory: cleanup logging
+  * * #9832: codecs: fix logging
+  * * #9832: alsa: fix logging
+  * * #9832: audio: clean up logging
+  * * #9832: AudioRecord: cleanup logging
+  * * #9832: Fix logging in Manager
+  * * #9832: new logging macros
+  * * #9979: ulaw: fixed unused var warning
+  * * #10039: sipvoiplink: use references to avoid unnecessary parameter
+    validation
+  * * #10039: Fixed segfault on failed registration
+  * * #9979: codecs: fixed unused variable warnings
+  * * #9979: Don't do runtime assertions on data.
+  * * #10016: SDP: removed verbose debuggin
+  * #10016: Crypto context deletion are now managed inside the library
+  * * #10016: srtp: cleanup
+  * * #10016: SDES: fix uninitialized value bug, use const char*
+  * * 100016: don't double free crypto contexts, and don't improperly
+    copy CryptoSuiteDefinitions
+  * * #100016: cleanup crypto contexts in audio_srtp_session
+  * * #9979: removed unused methods from audicodec
+  * * #9979: ulaw: normalize types
+  * * #9979: cleanup
+  * * #9979: Alaw: cleanup
+  * * #9979: removed duplicate/superfluous code and type issues from
+    g722
+  * * #9979: AudioRtpRecord: let AudioRtpRecord handle fadeIn internally
+  * #9980: Fix registration timer and transport shutdown on 401, default
+    registration timer to 3600
+  * * #9979: use std::tr1::array instead of plain array for audio
+    buffers
+  * * #9969: set loose routing param when creating route set
+  * #9975: Fix account registration status display
+  * * #9969: SIP: initialize body earlier
+  * * #9969: sip: get received and rport fields if present in OK
+  * * #9968: fixed segfault in transaction callback
+  * #9898: make sure account are unregistered when sflphone quit, add
+    timeout on pending transaction
+  * #9910: fix contact header in outgoing request if via parameter are
+    present
+  * * #9910: SIP: use rport from VIA header if present
+  * * #9910: SipTransport: pass parameters by const reference
+  * #9910: fix sending call with new transport
+  * yaml: remove verbose debug messages
+  * * #9911: sipvoiplink: fixed "unused variable" warning
+  * #9910: create new udp transport to fix registration failure with 606
+    error & received parameter
+  * * #9910: SIP: use pjsip error codes instead of magic numbers
+  * * #9911: SIP Transports must be cached by IP:port
+  * * #9910: SIP: cleanup
+  * * #9905: SipTransport: address has to stay on stack to be valid
+  * #9910: Update parse received parameter on 606 registration error
+  * * #9911: simplify network manager state reporting
+  * #9902: Fix SIPTest for IP to IP call
+  * #9911: Fix network manager crashes
+  * #9902: Move logic for ip2ip call in SIPVoIPLink
+  * #9902: Move logic for ip2ip call in SIPVoIPLink
+  * * #9910: fix 606 error code nomenclature
+  * * #9905: fixed address initialization in createUdpTransport
+  * * #9903: cleanup
+  * #9902: Log failure cause when new outgoing call fail
+  * * #9898: properly initialize ports
+  * #9898: Unregister account when leaving sflphone
+  * iax: create iaxvoiplink on stack
+  * account: removed unused methods
+  * * #9847: don't use assertions for input coming from DBus
+  * * #9897: audiorecord cleanup
+  * * #9897: audiorecord: cleanup, removed unused methods
+  * #9897: Initialize and fallback recording path in home directory if
+    not valid
+  * * #9871: SipTransport: hide more implementation
+  * * #9871: SipTransport: refactor SIP transport creation
+  * * #9871: disable STUN for account if STUN setup failed
+  * * #9847: check pointer before using it
+  * #9871: Fallback on normal upd transport when stun resolution fails
+  * Revert "#9871: Fallback on normal upd transport when stun resolution
+    fails"
+  * #9871: Fallback on normal upd transport when stun resolution fails
+  * pulse: cleanup
+  * * #9847: removed outdated README file
+  * * #9847: use references instead of pointers where possible
+  * * #9847: pass call by reference where possible
+  * * #9847: audiolayer: fixed typo
+  * * #9847: SIPVoipLink: gracefully handle invalid pointers
+  * * #9847: check that transport is initialized
+  * * #9847: SDP: avoid buffer overflow
+  * * #9847: fixed segfault on bad call invite
+  * * #9847: SDP: don't use assertions for runtime errors
+  * * #9847: handle invalid remote session gracefully
+  * * #9851: fixed segfault on stun socket cleanup
+  * * #8586: fixed warnings
+  * * #9849: added missing sstream header
+  * #9623: add required TLS certificates for testing purpose
+  * #9623: fixed tls registration
+  * #9623: fix storing tls port in config for normal account
+  * #9623: Allow all account to change tls listener port (not only
+    IP2IP)
+  * #9623: Allow for changing interface / port for tls transport
+  * #9623: Open TLS listener on selected interface
+  * #9833: remove unused debug
+  * #9833: handlingEvents_ must be initialized to true when starting iax
+    thread
+  * #9830: Remove create_route_set from sipvoiplink
+  * #9831: Fix sip transport port number
+  * #9830: move sip header parsing function in sip_utils
+  * Revert "* #8586: don't restore and save test files"
+  * * #8586: fixed make distcheck
+  * #9623: fixed tls registration
+  * * #8586: don't restore and save test files
+  * * #8586: refactored yaml code
+  * #9623: fix storing tls port in config for normal account
+  * #9623: Allow all account to change tls listener port (not only
+    IP2IP)
+  * #9623: Allow for changing interface / port for tls transport
+  * #9623: Open TLS listener on selected interface
+  * * #8586: added missing tests
+  * #9833: remove unused debug
+  * #9833: handlingEvents_ must be initialized to true when starting iax
+    thread
+  * #9830: Remove create_route_set from sipvoiplink
+  * #9831: Fix sip transport port number
+  * #9830: move sip header parsing function in sip_utils
+  * * #8977: removed unnecessary AC_CANONICAL macros from configure.ac
+  * * #8977: use actual PJSIP linking flags from pjproject/build.mak
+  * * #9774: sipvoiplink's destructor should not be public
+  * dbus: cleanup
+  * * #9774: make sure sipvoiplink is destroyed before accounts are
+    unloaded
+  * * #9777: don't use deprecated auto_ptr
+  * * #9778: removed AC_CHECK_FUNCS calls
+  * * #9782: fix warnings in tests
+  * * #9782: sip/sdp: fix emptiness checks
+  * * #9782: sdes_negotiator: fix iterator usage and set dangling
+    pointers to 0
+  * * #9782: initialize all vars in iaxvoiplink
+  * * #9782: use fstreams instead of fscanf
+  * * #9782: yamlnode: fixed iterator usage
+  * * #9782: yamlemitter: fix iterator usage
+  * * #9782: yamlnode: make some methods const
+  * * #9782: initialize all member vars in constructor
+  * * #9782: Tone::interpolate should be const
+  * * #9782: mainbuffer: get rid of unused vars
+  * * #9782: GainControl::limit should be const
+  * * #9782: fix ARRAYSIZE check
+  * * #9782: use nanosleep instead of usleep
+  * * #9782: fixed "inefficient emptiness test" cppcheck warning
+  * * #9782: initialize dcblockers vars in constructor
+  * * #9779: dropped CELT support
+  * * #9750: moved sfl_data_format.h -> sfl_types.h
+  * * #9750: refactored global.h
+  * * #9736: restored command line options to daemon
+  * tests: cleanup
+  * * #8586: make distcheck was missing a header
+  * tests: cleanup
+  * * #9731: use all caps for application-wide constants
+  * tests: cleanup
+  * * #9730: cc++: enforce better checks in headers
+  * * #9730: builds against libccrtp1
+  * * #9572: sipvoiplink: fixed typo
+  * * #9572: fixed threading issues with ccrtp2
+  * * #9572: manager: pass config filename by const reference
+  * * #9572: Replace utilspp singleton implementation
+  * * #9571: regenerated config.{guess,sub} file to fix FTBFS on
+    armel/armhf.
+  * * #9665: siptransport: fixed udp_transport_start calls
+  * #9620 Add test SIP account in configuration sample (test/sflphoned-
+    sample.yml)
+  * * #9641: audiortp: Fixed CryptoContext management
+  * * #9641: fixed another memory leak in audio_srtp_session
+  * * #9641: audiosrtpsession: fixed memory leak, simplified memory
+    management
+  * * #9641: avoid dynamic memory allocs/raw pointer usage in audio rtp
+    stack
+  * * #9641: get rid of getType/RtpMethod logic
+  * fixed typo
+  * #9572: make sflphone compile with libccrtp 2
+  * * #9490: fixed registration state change callback that was crashing
+    client
+  * * #9547: fixed warnings in SipTransport header
+  * #9547: Add SipTransport class
+  * #9547: Extract all the transport layer from SIPVoIPLink to new
+    SipTransport Class
+  * #9547: Destroy the STUN resolver in Transport shutdown
+  * sipvoiplink: removed erroneous FIXME
+  * sipvoiplink: cleanup
+  * #9547: Destroy the STUN resolver if server name change
+  * sipvoiplink: fix warning about variable shadowing
+  * #8320: Rename declared exception to avoid parameter shadowing
+  * #8320: Send signal to client on stun failure
+  * #8320: Use the same API for all transport creation (UDP, STUN, TLS)
+  * * #9509: use vector for credential info
+  * * #9508: fixes segfault in manager by changing order in which
+    destructors are called
+  * #8320: add dbus signal for stun failure
+  * #8320: Use two different variables for status and return statement
+    in stun's on_status_cb
+  * * #9490: removed resolve_once parameter that was causing a segfault
+  * #8320: make the retransmission callback to be rescheduled on error
+  * HookPreference: cleanup
+  * daemon: hookpreference: cleanup
+  * iaxvoiplink: terminate() doesn't have to be virtual
+  * sipvoiplink: functions need not be static if they are in an
+    anonymous namespace
+  * * #9037: moved CHECK macro into separate header
+  * * #9037: cleanup error handling/checking in video threads
+  * * #9037: video: cleanup
+  * * #9037: only signal receiving_video_event for rtp sessions
+  * * #9037: shared memory moved out of video_receive_thread
+  * * #9381: daemon: fixed make check for video
+  * * #9381: YAML_LIBS must be explicitly set in AC_SEARCH_LIBS macro
+  * * #9381: reverted yaml check
+  * * #9381: fix celt plugin compilation on fedora
+  * * #9381: use PKG_CHECK_MODULES to test for yaml
+  * * #9381: use autoconf macros and AC_SEARCH_LIBS
+  * * #9381: use AC_SEARCH_LIBS, AC_CHECK_LIB
+  * ringtonetest: cleanup
+  * configurationtest: cleanup
+  * instantmessagingtest.cpp: cleanup
+  * mainbuffertest: cleanup
+  * tests: cleanup
+  * #8320: Make sure stun keep alive is enabled
+  * call: push answer logic into call classes
+  * sipaccount: simplify IP2IP code
+  * sipaccount: avoid segfault if sipaccount is NULL
+  * sipaccount: cleanup
+  * #8084: Fix get sip header segfault when stun transport selected
+  * * #9037: created shared_memory class
+  * #8084: Init stun port with default valueas defined by RFC 3489
+  * #9046: Move IP2IP_PROFILE global definition inside SIPAccount class
+  * #9045: fix Changing the account expire is not taken applied in
+    daemon
+  * vidoe_receive_thread: cleanup
+  * * #8968: suppress unusedFunction warnings for functions that are
+    actually used
+  * * #8821: fixed unit tests
+  * #8821: Renamed account map keys for consistency
+  * * #8968: audiorecord: added debug, clarified wave header creation
+  * * #8968: added debug message to get rid of "unused struct member"
+    warning
+  * * #8968: manager: create History on the stack
+  * * #9026: sfl::InstantMessaging is now a namespace
+  * * #8698: managerimpl: removed unused method isWaitingCall
+  * * #9008: don't include yaml headers in serializable.h
+  * * #9008: cleanup account map initialization
+  * refactor accountmap initialization
+  * #9020: fix config file not generated when no account created
+  * * #8968: audiorecord: removed unused getSndSamplingRate
+  * * #8968: config: removed getConfigTreeItemIntValue
+  * * #8968: recordable: removed unused getRecFileId
+  * * #8968: removed unused Codec::getMimeType method
+  * * #8968: manage lifetime of IMModule with auto_ptr
+  * * #8968: history: removed unused method
+  * * #8968: managerimpl: removed unused method
+  * * #8968: config: removed unused methods
+  * * #8968: managerimpl: removed unused getConfigBool/Int methods
+  * * #8968: networkmanager: cleanup
+  * * #8968: managerimpl: removed unused getConfig
+  * * #8968: managerimpl: Manage telephoneTone_ with auto_ptr.
+  * * #8968: history: fix memory leak upon exception
+  * * #8968: AudioFile: initialize filepath earlier
+  * * #8968: audiofile: fix memory leak on exception
+  * * #8968: audiocodec: removed unused getChannel method
+  * * #8968: use auto_ptr for dtmfKey
+  * * #8968: use vector instead of dynamically allocated int array
+  * * #8968: sdp.h: pass paramter by reference
+  * * #8968: sipvoiplink: avoid C-style pointer casting
+  * * #8968: yaml: avoid C-style pointer casts
+  * * #8968: pulselayer: avoid C-style pointer casting
+  * * #8968: recordable: removed unused getRecordingSmplRate method
+  * * #8968: alsalayer: use preincrement for iterators
+  * * #8968: config: removed unused method saveConfigTree
+  * * #8968: mainbuffer: preincrement iterators
+  * * #8977: history: added #include <fstream>
+  * * #8968: don't leak memory on exception
+  * * #8968: pulselayer: avoid C-style pointer casting
+  * * #8968: Member variables must be initialized in AudioSrtpSession
+    constructor
+  * * #8968: fix potential memory leak in audiorecord
+  * * #8968: Pass function parameter 'item' by const reference.
+  * * #8969: fixed memory leaks in sdes_negotiator
+  * video: cleanup
+  * * #8940: removed video test source for now
+  * #8763 Fix doxygen generation
+  * #8763 Generate Doxygen with Hudson
+  * * #8940: videosendthread: cleanup
+  * sipvoiplink: cleanup
+  * fileutils: cleanup
+  * #8335 Fix default transport initialization on 5062, 5064
+  * #8762: update mute for mic only, fix remove slide for pulseaudio
+  * #8672: Add linear to decibel conversion functions in audio layer
+  * #8672: Implement audio gain management in pulseaudio
+  * #8671: Move audio gain management in audiolayer
+  * * #8542: create symbolic link properly
+  * * #8613: make check should fail early if another sflphone is running
+  * #8449: Update version 1.0.2
+  * * #8545: fixed error case
+  * * #8545: fixed broken ringtone
+  * * #8586: fixed make dist
+  * sipvoiplink: use static_cast instead of reinterpret_cast if possible
+  * * #8542: test for .git existence before moving pre-commit hook
+  * * #8542: autogen.sh should not require git
+  * eventthread: cleanup
+  * * #8542: removed trailing whitespace from tree
+  * * #8357: added disable video option to client
+  * siptest: cleanup
+  * * #8521: use avcodec_open2 instead of deprecated avcodec_open, if
+    available
+
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Thu, 07 Jun 2012 16:08:15 -0400
+
 sflphone-common (1.0.0-rc20110930~ppa1~SYSTEM) SYSTEM; urgency=low
 
     ** SNAPSHOT 1.0.0-rc20110930~ppa1~SYSTEM **

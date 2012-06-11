@@ -27,9 +27,11 @@
 
 //SFLPhone
 #include "sflphone_const.h"
+#include "VideoCodec.h"
 
 //SFLPhone lib
 #include "configurationmanager_interface_singleton.h"
+#include "video_interface_singleton.h"
 
 ///Match state name to user readable string
 const QString& account_state_name(const QString& s)
@@ -249,4 +251,29 @@ bool Account::operator==(const Account& a)const
    return *m_pAccountId == *a.m_pAccountId;
 }
 
+/*****************************************************************************
+ *                                                                           *
+ *                                   Video                                   *
+ *                                                                           *
+ ****************************************************************************/
+#ifdef ENABLE_VIDEO
+void Account::setActiveVideoCodecList(QList<VideoCodec*> codecs)
+{
+   QStringList codecs;
+   VideoInterface& interface = VideoInterfaceSingleton::getInstance();
+   foreach(VideoCodec* codec,codecs) {
+      codecs << codecs->getName();
+   }
+   interface.setActiveCodecList(codecs,m_pAccountId);
+}
 
+QList<VideoCodec*> Account::getActiveVideoCodecList()
+{
+   QList<VideoCodec*> codecs;
+   VideoInterface& interface = VideoInterfaceSingleton::getInstance();
+   foreach (QString codec, interface.getActiveCodecList(m_pAccountId)) {
+      codecs << VideoCodec::getCodec(codec);
+   }
+}
+
+#endif
