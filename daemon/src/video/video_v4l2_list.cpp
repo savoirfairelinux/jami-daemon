@@ -209,42 +209,43 @@ void VideoV4l2ListThread::run()
         return;
     }
 
-    int fd = udev_monitor_get_fd(udev_mon_);
-    fd_set set;
-    FD_ZERO(&set);
-    FD_SET(fd, &set);
+    const int udev_fd = udev_monitor_get_fd(udev_mon_);
     probing_ = true;
     while (probing_) {
-        struct udev_device *dev;
-        const char *node, *action;
         timeval timeout = {0 /* sec */, 500000 /* usec */};
-        int ret = select(fd + 1, &set, NULL, NULL, &timeout);
-        switch(ret) {
+        fd_set set;
+        FD_ZERO(&set);
+        FD_SET(udev_fd, &set);
+
+        int ret = select(udev_fd + 1, &set, NULL, NULL, &timeout);
+        switch (ret) {
             case 0:
                 break;
             case 1:
-                dev = udev_monitor_receive_device(udev_mon_);
-                if (!is_v4l2(dev)) {
-                    udev_device_unref(dev);
-                    break;;
-                }
-
-                node = udev_device_get_devnode(dev);
-                action = udev_device_get_action(dev);
-                if (!strcmp(action, "add")) {
-                    DEBUG("udev: adding %s", node);
-                    try {
-                        addDevice(node);
-                        Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
-                    } catch (const std::runtime_error &e) {
-                        ERROR("%s", e.what());
+                {
+                    udev_device *dev = udev_monitor_receive_device(udev_mon_);
+                    if (!is_v4l2(dev)) {
+                        udev_device_unref(dev);
+                        break;
                     }
-                } else if (!strcmp(action, "remove")) {
-                    DEBUG("udev: removing %s", node);
-                    delDevice(string(node));
+
+                    const char *node = udev_device_get_devnode(dev);
+                    const char *action = udev_device_get_action(dev);
+                    if (!strcmp(action, "add")) {
+                        DEBUG("udev: adding %s", node);
+                        try {
+                            addDevice(node);
+                            Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
+                        } catch (const std::runtime_error &e) {
+                            ERROR("%s", e.what());
+                        }
+                    } else if (!strcmp(action, "remove")) {
+                        DEBUG("udev: removing %s", node);
+                        delDevice(string(node));
+                    }
+                    udev_device_unref(dev);
+                    break;
                 }
-                udev_device_unref(dev);
-                break;
 
             case -1:
                 if (errno == EAGAIN)
@@ -268,10 +269,9 @@ void VideoV4l2ListThread::delDevice(const string &node)
 {
     ost::MutexLock lock(mutex_);
 
-    const size_t n = devices_.size();
-    for (size_t i = 0 ; i < n ; i++) {
-        if (devices_[i].device == node) {
-            devices_.erase(devices_.begin() + i);
+    for (std::vector<VideoV4l2Device>::iterator itr = devices_.begin(); itr != devices_.end(); ++itr) {
+        if (itr->device == node) {
+            devices_.erase(itr);
             Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
             return;
         }
@@ -333,17 +333,8 @@ vector<string> VideoV4l2ListThread::getDeviceList()
     ost::MutexLock lock(mutex_);
     vector<string> v;
 
-    size_t n = devices_.size();
-    for (size_t i = 0 ; i < n ; i++) {
-        std::string tmp;
-        VideoV4l2Device &dev = devices_[i];
-        if (!dev.name.empty())
-            tmp = dev.name;
-        else
-            tmp = dev.device;
-
-        v.push_back(tmp);
-    }
+    for (std::vector<VideoV4l2Device>::iterator itr = devices_.begin(); itr != devices_.end(); ++itr)
+       v.push_back(itr->name.empty() ? itr->device : itr->name);
 
     return v;
 }
