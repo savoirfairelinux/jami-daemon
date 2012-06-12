@@ -41,6 +41,7 @@
 #include "CallView.h"
 #include "SFLPhone.h"
 #include "AccountListModel.h"
+#include "lib/instance_interface_singleton.h"
 
 //SFLPhone library
 #include "lib/instance_interface_singleton.h"
@@ -81,10 +82,10 @@ int main(int argc, char **argv)
       KCmdLineOptions options;
       KCmdLineArgs::addCmdLineOptions(options);
 
+      app = new SFLPhoneApplication();
       //configuration dbus
       TreeWidgetCallModel::init();
 
-      app = new SFLPhoneApplication();
       
       SFLPhone* sflphoneWindow_ = new SFLPhone();
       if( ! sflphoneWindow_->initialize() ) {

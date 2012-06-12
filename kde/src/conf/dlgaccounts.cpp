@@ -90,7 +90,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    button_remove_credential->setIcon ( KIcon( "list-remove" ) );
 
    m_pRingTonePath->setMode(KFile::File | KFile::ExistingOnly);
-   m_pRingTonePath->lineEdit()->setObjectName("kcfg_ringtone");
+   m_pRingTonePath->lineEdit()->setObjectName("m_pRingTonePath");
    m_pRingTonePath->lineEdit()->setReadOnly(true);
 
    accountList = new ConfigAccountList(false);

@@ -185,7 +185,6 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
          m_sPrivateCallList_call[pastCall]                = aNewStruct;
          m_sPrivateCallList_callId[pastCall->getCallId()] = aNewStruct;
       }
-      qDebug() << "There is " << m_sHistoryCalls.count() << "in history";
    }
    m_sHistoryInit = true;
    return true;
@@ -554,7 +553,7 @@ CALLMODEL_TEMPLATE Account* CALLMODEL_T::getCurrentAccount()
       return priorAccount;
    }
    else {
-      qDebug() << "Returning the first account" << getAccountList()->size();
+      //qDebug() << "Returning the first account" << getAccountList()->size();
       return getAccountList()->firstRegisteredAccount();
    }
 } //getCurrentAccount

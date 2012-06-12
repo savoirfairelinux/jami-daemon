@@ -19,11 +19,13 @@
 
 #include "video_interface_singleton.h"
 
-VideoInterface* VideoInterfaceSingleton::interface
-    = new VideoInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/VideoControls", QDBusConnection::sessionBus());
+VideoInterface* VideoInterfaceSingleton::interface = NULL;
 
 VideoInterface& VideoInterfaceSingleton::getInstance()
 {
+   if (!interface)
+      interface = new VideoInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/VideoControls", QDBusConnection::sessionBus());
+   
    if(!interface->connection().isConnected()) {
       throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From instance interface.";
    }

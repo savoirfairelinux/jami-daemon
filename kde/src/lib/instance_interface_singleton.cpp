@@ -20,11 +20,12 @@
  
 #include "instance_interface_singleton.h"
 
-InstanceInterface* InstanceInterfaceSingleton::interface 
-    = new InstanceInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/Instance", QDBusConnection::sessionBus());
+InstanceInterface* InstanceInterfaceSingleton::interface = NULL;
 
 InstanceInterface& InstanceInterfaceSingleton::getInstance()
 {
+   if (!interface)
+      interface = new InstanceInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/Instance", QDBusConnection::sessionBus());
    if(!interface->connection().isConnected()) {
       throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From instance interface.";
    }
