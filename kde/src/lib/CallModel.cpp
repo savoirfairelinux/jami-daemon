@@ -155,7 +155,6 @@ void CallModelBase::accountChanged(const QString& account,const QString& state, 
    Q_UNUSED(code)
    Account* a = getAccountList()->getAccountById(account);
    if (a) {
-      qDebug() << "\n\n\nSTATE" << state;
       emit accountStateChanged(a,a->getStateName(state));
    }
 }

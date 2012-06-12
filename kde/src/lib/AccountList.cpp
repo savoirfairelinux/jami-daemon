@@ -173,10 +173,11 @@ Account* AccountList::firstRegisteredAccount() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current && current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current && current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED)
          return current;
-      }
-      else {
+      else if (current && (current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_READY) && m_pAccounts->count() == 1)
+         return current;
+      else if (current && !(current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_READY)) {
          qDebug() << "Account " << ((current)?current->getAccountId():"") << " is not registered ("
          << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"") << ") State:"
          << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"");

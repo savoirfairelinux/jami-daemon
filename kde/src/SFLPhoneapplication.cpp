@@ -31,8 +31,6 @@
 
 //SFLPhone library
 #include "lib/instance_interface_singleton.h"
-#include "lib/configurationmanager_interface_singleton.h"
-#include "lib/callmanager_interface_singleton.h"
 
 //SFLPhone
 #include "SFLPhone.h"
@@ -46,10 +44,9 @@ SFLPhoneApplication::SFLPhoneApplication()
 {
    InstanceInterface& instance = InstanceInterfaceSingleton::getInstance();
    instance.Register(getpid(), APP_NAME);
-
-  // Start remaining initialisation
-  initializePaths();
-  initializeMainWindow();
+   // Start remaining initialisation
+   initializePaths();
+   initializeMainWindow();
 }
 
 

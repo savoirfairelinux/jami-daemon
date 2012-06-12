@@ -77,7 +77,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    /**/connect(callView                              , SIGNAL(itemChanged(Call*))                    , this                                  , SLOT(updateWindowCallState()                    ));
    /**///connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                , SLOT(on1_volumeChanged(const QString &, double) ));
    /**/connect(SFLPhone::model()                     , SIGNAL(callStateChanged(Call*))               , this                                  , SLOT(updateWindowCallState()                    ));
-   /**/connect(SFLPhone::model()                     , SIGNAL(accountStateChanged(Account*,QString)) , this                                  , SLOT(updateWindowCallState()                    ));
    /**/connect(SFLPhone::model()                     , SIGNAL(accountStateChanged(Account*,QString)) , this                                  , SLOT(updateStatusMessage()                      ));
    /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
    /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
@@ -547,10 +546,9 @@ void SFLPhoneView::updateDialpad()
 ///Change the statusbar message
 void SFLPhoneView::updateStatusMessage()
 {
-   qDebug() << "UPDATING STAUSBAR";
    Account * account = SFLPhone::model()->getCurrentAccount();
 
-   if(account == NULL) {
+   if(!account) {
       emit statusMessageChangeAsked(i18n("No registered accounts"));
    }
    else {
