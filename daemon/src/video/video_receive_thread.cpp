@@ -123,7 +123,7 @@ void VideoReceiveThread::setup()
 
     DEBUG("Using %s format", format_str.c_str());
     file_iformat = av_find_input_format(format_str.c_str());
-    CHECK(file_iformat, "Could not find format \"%s\"", format_str.c_str());
+    RETURN_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
 
     AVDictionary *options = NULL;
     if (!args_["framerate"].empty())
@@ -134,16 +134,15 @@ void VideoReceiveThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
-    int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, &options);
-    CHECK(ret == 0, "Could not open input \"%s\"", input.c_str());
+    int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
+    RETURN_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
     ret = avformat_find_stream_info(inputCtx_, NULL);
 #endif
-    if (ret < 0)
-        DEBUG("Could not find stream info!");
+    RETURN_IF_FAIL(ret >= 0, "Could not find stream info!");
 
     // find the first video stream from the input
     streamIndex_ = -1;
@@ -151,24 +150,24 @@ void VideoReceiveThread::setup()
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
 
-    CHECK(streamIndex_ != -1, "Could not find video stream");
+    RETURN_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
 
     // find the decoder for the video stream
     AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
-    CHECK(inputDecoder, "Unsupported codec");
+    RETURN_IF_FAIL(inputDecoder, "Unsupported codec");
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     ret = avcodec_open(decoderCtx_, inputDecoder);
 #else
     ret = avcodec_open2(decoderCtx_, inputDecoder, NULL);
 #endif
-    CHECK(ret == 0, "Could not open codec");
+    RETURN_IF_FAIL(ret == 0, "Could not open codec");
 
     scaledPicture_ = avcodec_alloc_frame();
-    CHECK(scaledPicture_, "Could not allocate output frame");
+    RETURN_IF_FAIL(scaledPicture_, "Could not allocate output frame");
 
     if (dstWidth_ == 0 and dstHeight_ == 0) {
         dstWidth_ = decoderCtx_->width;
@@ -180,7 +179,7 @@ void VideoReceiveThread::setup()
     try {
         sharedMemory_.allocateBuffer(dstWidth_, dstHeight_, bufferSize);
     } catch (const std::runtime_error &e) {
-        CHECK(false, "%s", e.what());
+        RETURN_IF_FAIL(false, "%s", e.what());
     }
 
     // allocate video frame
@@ -195,7 +194,7 @@ void VideoReceiveThread::createScalingContext()
                                           decoderCtx_->pix_fmt, dstWidth_,
                                           dstHeight_, VIDEO_RGB_FORMAT,
                                           SWS_BICUBIC, NULL, NULL, NULL);
-    CHECK(imgConvertCtx_, "Cannot init the conversion context!");
+    RETURN_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::map<string, string> &args,
