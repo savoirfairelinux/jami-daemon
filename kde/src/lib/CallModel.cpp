@@ -23,6 +23,7 @@
 
 bool CallModelBase::dbusInit = false;
 CallMap CallModelBase::m_sActiveCalls;
+AccountList* CallModelBase::m_spAccountList=NULL;
 
 CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 {
@@ -39,8 +40,16 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
       /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( on1_voiceMailNotify   ( const QString &, int             ) ) );
       /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( on1_volumeChanged     ( const QString &, double          ) ) );
       /*                                                                                                                                                                                    */
+      
+      connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
       dbusInit = true;
    }
+}
+
+CallModelBase::~CallModelBase()
+{
+   if (m_spAccountList) delete m_spAccountList;
+   m_spAccountList = NULL;
 }
 
 void CallModelBase::on1_callStateChanged(const QString &callID, const QString &state)
@@ -139,6 +148,25 @@ Call* CallModelBase::addConferenceS(Call* conf)
 {
    emit conferenceCreated(conf);
    return conf;
+}
+
+void CallModelBase::accountChanged(const QString& account,const QString& state, int code)
+{
+   Q_UNUSED(code)
+   Account* a = getAccountList()->getAccountById(account);
+   if (a) {
+      qDebug() << "\n\n\nSTATE" << state;
+      emit accountStateChanged(a,a->getStateName(state));
+   }
+}
+
+///Return a list of registered accounts
+AccountList* CallModelBase::getAccountList()
+{
+   if (m_spAccountList == NULL) {
+      m_spAccountList = new AccountList(true);
+   }
+   return m_spAccountList;
 }
 
 ///Remove it from active calls

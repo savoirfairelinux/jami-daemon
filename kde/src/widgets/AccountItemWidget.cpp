@@ -65,6 +65,7 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
 ///Destructor
 AccountItemWidget::~AccountItemWidget()
 {
+   disconnect();
    if (m_pLed)       delete m_pLed      ;
    if (m_pCheckBox)  delete m_pCheckBox ;
    if (m_pTextLabel) delete m_pTextLabel;
@@ -82,13 +83,13 @@ void AccountItemWidget::updateStateDisplay()
 {
    switch(m_State) {
       case Registered:
-         m_pLed->setPixmap(QPixmap(ICON_ACCOUNT_LED_GREEN));
+         if (m_pLed) m_pLed->setPixmap(QPixmap(ICON_ACCOUNT_LED_GREEN));
          break;
       case Unregistered:
-         m_pLed->setPixmap(QPixmap(ICON_ACCOUNT_LED_GRAY));
+         if (m_pLed) m_pLed->setPixmap(QPixmap(ICON_ACCOUNT_LED_GRAY));
          break;
       case NotWorking:
-         m_pLed->setPixmap(QPixmap(ICON_ACCOUNT_LED_RED));
+         if (m_pLed) m_pLed->setPixmap(QPixmap(ICON_ACCOUNT_LED_RED));
          break;
       default:
          kDebug() << "Calling AccountItemWidget::setState with value " << m_State << ", not part of enum AccountItemWidget::State.";

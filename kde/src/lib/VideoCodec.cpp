@@ -18,6 +18,7 @@
  ***********************************************************************************/
 #include "VideoCodec.h"
 #include "Call.h"
+#include "Account.h"
 #include "video_interface_singleton.h"
 
 QHash<QString,VideoCodec*> VideoCodec::m_slCodecs;
@@ -64,6 +65,25 @@ QList<VideoCodec*> VideoCodec::getCodecList()
 {
    if (!m_sInit) init();
    return m_slCodecs.values();
+}
+
+///Get the list of active codecs
+QList<VideoCodec*> VideoCodec::getActiveCodecList(Account* account)
+{
+   VideoInterface& interface = VideoInterfaceSingleton::getInstance();
+   QStringList codecs = interface.getActiveCodecList(account->getAccountId());
+   QList<VideoCodec*> toReturn;
+   foreach(QString codec,codecs) {
+      toReturn << getCodec(codec);
+   }
+   return toReturn;
+}
+
+///Set active codecs
+void VideoCodec::setActiveCodecList(Account* account, QStringList codecs)
+{
+   VideoInterface& interface = VideoInterfaceSingleton::getInstance();
+   interface.setActiveCodecList(codecs,account->getAccountId());
 }
 
 ///Get the current codec name

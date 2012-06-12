@@ -32,6 +32,7 @@ class ConfigAccountList : public QObject {
       ///Constructor
       ConfigAccountList(bool fill = true);
       ConfigAccountList(QStringList &_accountIds);
+      ~ConfigAccountList();
 
       ///Getters
       const AccountView*      getAccountAt           ( int i                 ) const;

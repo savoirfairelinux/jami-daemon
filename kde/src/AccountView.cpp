@@ -38,6 +38,16 @@ AccountView::AccountView() : Account(), m_pItem(0), m_pWidget(0)
 
 }
 
+///Destructor
+AccountView::~AccountView()
+{
+   if (m_pWidget) {
+      delete m_pWidget;
+      m_pWidget = nullptr;
+   }
+   if (m_pItem) delete m_pItem;
+}
+
 ///Init
 void AccountView::initItem()
 {
@@ -156,15 +166,15 @@ void AccountView::updateState()
       AccountItemWidget * m_pWidget = getItemWidget();
       if(getAccountDetail(ACCOUNT_ENABLED) != REGISTRATION_ENABLED_TRUE ) {
          kDebug() << "Changing account state to Unregistered";
-         m_pWidget->setState(AccountItemWidget::Unregistered);
+         if (m_pWidget) m_pWidget->setState(AccountItemWidget::Unregistered);
       }
       else if(getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED || getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_READY) {
          kDebug() << "Changing account state to  Registered";
-         m_pWidget->setState(AccountItemWidget::Registered);
+         if (m_pWidget) m_pWidget->setState(AccountItemWidget::Registered);
       }
       else {
          kDebug() << "Changing account state to NotWorking";
-         m_pWidget->setState(AccountItemWidget::NotWorking);
+         if (m_pWidget) m_pWidget->setState(AccountItemWidget::NotWorking);
       }
    }
 } //updateState
