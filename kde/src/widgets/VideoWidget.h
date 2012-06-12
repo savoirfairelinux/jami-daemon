@@ -16,37 +16,24 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
+#ifndef VIDEO_WIDGET_H
+#define VIDEO_WIDGET_H
 
-#ifndef DLG_VIDEO_H
-#define DLG_VIDEO_H
+#include <QtGui/QWidget>
+#include <QtGui/QPainter>
 
-#include <QWidget>
+#include "../lib/VideoModel.h"
 
-#include "ui_dlgvideobase.h"
-
-class VideoDevice;
-
-///@class DlgVideo video preferences for sflphone
-class DlgVideo : public QWidget, public Ui_DlgVideoBase
-{
-Q_OBJECT
+class VideoWidget : public QWidget {
+   Q_OBJECT
 public:
-   //Constructor
-   DlgVideo(QWidget *parent = 0);
-
-   //Destructor
-   ~DlgVideo();
-
-private slots:
-   void loadDevice(QString device);
-   void loadResolution(QString channel);
-   void loadRate(QString resolution);
-   void startStopPreview();
-
+   VideoWidget(QWidget* parent =0 );
 private:
-   //Attribute
-   VideoDevice* m_pDevice;
-
+   QImage m_Image;
+protected:
+   virtual void paintEvent(QPaintEvent* event);
+private slots:
+   void update();
 };
 
 #endif

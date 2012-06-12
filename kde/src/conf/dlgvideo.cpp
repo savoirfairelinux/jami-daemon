@@ -20,6 +20,7 @@
 #include "dlgvideo.h"
 #include "../lib/VideoDevice.h"
 #include "../lib/VideoCodec.h"
+#include "../lib/VideoModel.h"
 
 DlgVideo::DlgVideo(QWidget *parent)
  : QWidget(parent),m_pDevice(NULL)
@@ -34,6 +35,8 @@ DlgVideo::DlgVideo(QWidget *parent)
    connect(m_pDeviceCB    ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadDevice(QString)     ));
    connect(m_pChannelCB   ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadResolution(QString) ));
    connect(m_pResolutionCB,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadRate(QString)       ));
+   connect(m_pPreviewPB   ,SIGNAL(clicked()                   ),this,SLOT(startStopPreview()      ));
+
 
    m_pConfGB->setEnabled(devices.size());
 
@@ -44,7 +47,7 @@ DlgVideo::DlgVideo(QWidget *parent)
 
 DlgVideo::~DlgVideo()
 {
-   
+   VideoModel::getInstance()->stopPreview();
 }
 
 void DlgVideo::loadDevice(QString device) {
@@ -70,5 +73,17 @@ void DlgVideo::loadRate(QString resolution)
    m_pRateCB->clear();
    foreach(QString rate,m_pDevice->getRateList(m_pChannelCB->currentText(),resolution)) {
       m_pRateCB->addItem(rate);
+   }
+}
+
+void DlgVideo::startStopPreview()
+{
+   if (VideoModel::getInstance()->isPreviewing()) {
+      m_pPreviewPB->setText(i18n("Start preview"));
+      VideoModel::getInstance()->stopPreview();
+   }
+   else {
+      m_pPreviewPB->setText(i18n("Stop preview"));
+      VideoModel::getInstance()->startPreview();
    }
 }

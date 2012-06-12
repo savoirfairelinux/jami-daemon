@@ -55,6 +55,7 @@ SET(
    widgets/TranslucentButtons.cpp
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
+   widgets/VideoWidget.cpp
    Codec.cpp
    AccountListModel.cpp
    CallView.cpp

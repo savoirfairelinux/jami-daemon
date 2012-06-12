@@ -16,37 +16,28 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
+#include "VideoWidget.h"
+#include <KDebug>
 
-#ifndef DLG_VIDEO_H
-#define DLG_VIDEO_H
+VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(QSize(VideoModel::getInstance()->getActiveResolution().width,
+   VideoModel::getInstance()->getActiveResolution().height),QImage::Format_ARGB32_Premultiplied) {
+   setMinimumSize(200,200);
+   connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(repaint()));
+}
 
-#include <QWidget>
+void VideoWidget::update() {
+   //if (m_Image.size() != QSize(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height))
+   m_Image = QImage(QSize(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height),QImage::Format_ARGB32);
+   m_Image.loadFromData(VideoModel::getInstance()->getCurrentFrame(),"BMP");
+   QPainter painter(this);
+   painter.drawImage(QRect(0,0,width(),height()),m_Image);
+   painter.end();
+}
 
-#include "ui_dlgvideobase.h"
-
-class VideoDevice;
-
-///@class DlgVideo video preferences for sflphone
-class DlgVideo : public QWidget, public Ui_DlgVideoBase
+void VideoWidget::paintEvent(QPaintEvent* event)
 {
-Q_OBJECT
-public:
-   //Constructor
-   DlgVideo(QWidget *parent = 0);
-
-   //Destructor
-   ~DlgVideo();
-
-private slots:
-   void loadDevice(QString device);
-   void loadResolution(QString channel);
-   void loadRate(QString resolution);
-   void startStopPreview();
-
-private:
-   //Attribute
-   VideoDevice* m_pDevice;
-
-};
-
-#endif
+   Q_UNUSED(event)
+   if (VideoModel::getInstance()->isPreviewing()) {
+      update();
+   }
+}

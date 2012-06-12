@@ -16,7 +16,7 @@ SET(LOCAL_CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 SET(CMAKE_MODULE_PATH "${LOCAL_CMAKE_MODULE_PATH}")
 
 FIND_PACKAGE ( KDE4 REQUIRED )
-FIND_PACKAGE ( Qt4 REQUIRED )
+FIND_PACKAGE ( Qt4  REQUIRED )
 
 INCLUDE ( KDE4Defaults )
 
@@ -117,11 +117,11 @@ set_target_properties( qtsflphone
 set( qtsflphone_LIB_HDRS
   Account.h
   AccountList.h
-  Call.h  
+  Call.h
   CallModel.h
   Contact.h
-  ContactBackend.h  
-  Item.h  
+  ContactBackend.h
+  Item.h
   configurationmanager_interface_singleton.h
   callmanager_interface_singleton.h
   instance_interface_singleton.h

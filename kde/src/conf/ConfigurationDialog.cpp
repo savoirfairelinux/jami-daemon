@@ -73,6 +73,16 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 
 ConfigurationDialog::~ConfigurationDialog()
 {
+   delete dlgGeneral;
+   delete dlgDisplay;
+   delete dlgAccounts;
+   delete dlgAudio;
+   delete dlgAddressBook;
+   delete dlgHooks;
+   delete dlgAccessibility;
+   #ifdef ENABLE_VIDEO
+   delete dlgVideo;
+   #endif
 }
 
 void ConfigurationDialog::updateWidgets()

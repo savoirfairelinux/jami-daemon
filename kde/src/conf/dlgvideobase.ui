@@ -106,7 +106,7 @@
        </layout>
       </item>
       <item row="0" column="1">
-       <widget class="QGraphicsView" name="m_pPreviewGV"/>
+       <widget class="VideoWidget" name="m_pPreviewGV"/>
       </item>
       <item row="1" column="1">
        <widget class="QPushButton" name="m_pPreviewPB">
@@ -133,6 +133,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+   <customwidget>
+   <class>VideoWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">widgets/VideoWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  </customwidgets>
  <resources/>
  <connections/>
 </ui>

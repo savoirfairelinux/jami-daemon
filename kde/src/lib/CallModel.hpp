@@ -536,7 +536,7 @@ CALLMODEL_TEMPLATE const QStringList CALLMODEL_T::getNumbersByPopularity()
 CALLMODEL_TEMPLATE QString CALLMODEL_T::getCurrentAccountId()
 {
    Account* firstRegistered = getCurrentAccount();
-   if(firstRegistered == NULL) {
+   if(!firstRegistered) {
       return QString();
    }
    else {
