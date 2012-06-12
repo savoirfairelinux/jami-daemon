@@ -95,12 +95,16 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
         receiving_ = false;
     }
 
-    const string codec = libav_utils::encodersMap()[v[1]];
-    if (codec.empty()) {
-        DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
-        sending_ = false;
+    if (not v[1].empty()) {
+        const string codec = libav_utils::encodersMap()[v[1]];
+        if (codec.empty()) {
+            DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
+            sending_ = false;
+        } else {
+            txArgs_["codec"] = codec;
+        }
     } else {
-        txArgs_["codec"] = codec;
+        sending_ = false;
     }
 
     txArgs_["payload_type"] = v[2];
