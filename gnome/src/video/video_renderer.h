@@ -73,6 +73,9 @@ void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId,
                               gpointer userdata);
 void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, GError *error, gpointer userdata);
 
+/* Try to init the gtk clutter backend, returns TRUE on success, FALSE otherwise */
+gboolean try_clutter_init();
+
 G_END_DECLS
 
 #endif // __VIDEO_RENDERER_H__

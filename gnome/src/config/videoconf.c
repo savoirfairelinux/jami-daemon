@@ -59,7 +59,6 @@ static GtkWidget *v4l2_nodev;
 static GtkWidget *preview_button = NULL;
 
 static GtkWidget *drawarea = NULL;
-static int using_clutter;
 static int drawWidth  = 352;
 static int drawHeight = 288;
 static VideoRenderer *preview = NULL;
@@ -782,21 +781,16 @@ GtkWidget* create_video_configuration()
     if (active_call)
         gtk_widget_set_sensitive(GTK_WIDGET(preview_button), FALSE);
 
-    using_clutter = gtk_clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
-    if (using_clutter) {
-        drawarea = gtk_clutter_embed_new();
-        gtk_widget_set_size_request(drawarea, drawWidth, drawHeight);
-        gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
-        if (!gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(drawarea))) {
-            DEBUG("Could not get stage, destroying");
-            gtk_widget_destroy(drawarea);
-            drawarea = NULL;
-            using_clutter = FALSE;
-        }
-    }
-    if (!using_clutter) {
-        drawarea = gtk_drawing_area_new();
-        gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
+    if (!try_clutter_init())
+        return NULL;
+
+    drawarea = gtk_clutter_embed_new();
+    gtk_widget_set_size_request(drawarea, drawWidth, drawHeight);
+    gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
+    if (!gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(drawarea))) {
+        DEBUG("Could not get stage, destroying");
+        gtk_widget_destroy(drawarea);
+        drawarea = NULL;
     }
     g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
                      NULL);
