@@ -202,9 +202,9 @@ vector<string> VideoV4l2Channel::getSizeList() const
 {
     vector<string> v;
 
-    for (size_t i = 0 ; i < sizes_.size(); ++i) {
+    for (vector<VideoV4l2Size>::const_iterator itr = sizes_.begin(); itr != sizes_.end(); ++itr) {
         std::stringstream ss;
-        ss << sizes_[i].width << "x" << sizes_[i].height;
+        ss << itr->width << "x" << itr->height;
         v.push_back(ss.str());
     }
 
@@ -307,7 +307,7 @@ VideoV4l2Size VideoV4l2Channel::getSize(const string &name) const
 
 
 VideoV4l2Device::VideoV4l2Device(int fd, const string &device) :
-    device(device), name(), channels()
+    device(device), name(), channels_()
 {
     v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
@@ -329,7 +329,7 @@ VideoV4l2Device::VideoV4l2Device(int fd, const string &device) :
         if (input.type & V4L2_INPUT_TYPE_CAMERA) {
             VideoV4l2Channel channel(idx, (const char*) input.name);
             channel.getFormat(fd);
-            channels.push_back(channel);
+            channels_.push_back(channel);
         }
 
         input.index = ++idx;
@@ -340,20 +340,20 @@ vector<string> VideoV4l2Device::getChannelList() const
 {
     vector<string> v;
 
-    const size_t n = channels.size();
-    for (size_t i = 0 ; i < n ; ++i)
-        v.push_back(channels[i].name);
+    for (vector<VideoV4l2Channel>::const_iterator itr = channels_.begin(); itr != channels_.end(); ++itr)
+        v.push_back(itr->name);
 
     return v;
 }
 
-const VideoV4l2Channel &VideoV4l2Device::getChannel(const string &name) const
+const VideoV4l2Channel &
+VideoV4l2Device::getChannel(const string &name) const
 {
-    for (size_t i = 0; i < channels.size(); ++i)
-        if (channels[i].name == name)
-            return channels[i];
+    for (vector<VideoV4l2Channel>::const_iterator itr = channels_.begin(); itr != channels_.end(); ++itr)
+        if (itr->name == name)
+            return *itr;
 
-    return channels.back();
+    return channels_.back();
 }
 
 } // end namespace sfl
