@@ -36,7 +36,7 @@
 
 ///Constructor
 AccountListModel::AccountListModel(QObject *parent)
- : QAbstractListModel(parent)
+ : QAbstractListModel(parent),accounts(NULL)
 {
    this->accounts = new ConfigAccountList();
 }
@@ -44,7 +44,7 @@ AccountListModel::AccountListModel(QObject *parent)
 ///Destructor
 AccountListModel::~AccountListModel()
 {
-   
+   if (accounts) delete accounts;
 }
 
 

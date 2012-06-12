@@ -78,5 +78,11 @@ class LIB_EXPORT Account : public QObject {
 
    public slots:
       void setEnabled(bool checked);
+
+   private slots:
+      void accountChanged(QString accountId,QString stateName, int state);
+
+   signals:
+      void stateChanged(QString state);
 };
 #endif

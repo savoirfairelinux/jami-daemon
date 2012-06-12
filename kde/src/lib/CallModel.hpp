@@ -43,7 +43,6 @@
 
 //Static member
 CALLMODEL_TEMPLATE QString      CALLMODEL_T::m_sPriorAccountId      = ""        ;
-CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::m_spAccountList        = 0         ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sInstanceInit        = false     ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sCallInit            = false     ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sHistoryInit         = false     ;
@@ -109,7 +108,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::destroy()
 ///Destructor
 CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
 {
-   if (m_spAccountList) delete m_spAccountList;
+   
 }
 
 ///Open the connection to the daemon and register this client
@@ -559,15 +558,6 @@ CALLMODEL_TEMPLATE Account* CALLMODEL_T::getCurrentAccount()
       return getAccountList()->firstRegisteredAccount();
    }
 } //getCurrentAccount
-
-///Return a list of registered accounts
-CALLMODEL_TEMPLATE AccountList* CALLMODEL_T::getAccountList()
-{
-   if (m_spAccountList == NULL) {
-      m_spAccountList = new AccountList(true);
-   }
-   return m_spAccountList;
-}
 
 ///Return the previously used account ID
 CALLMODEL_TEMPLATE QString CALLMODEL_T::getPriorAccoundId()

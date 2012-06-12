@@ -35,10 +35,9 @@ class AccountView : public Account, public Item<AccountItemWidget> {
    public:
       //Constructor
       AccountView   ();
+      ~AccountView  ();
       void initItem ();
 
-      //Destructor
-      ~AccountView(){};
 
       //Getters
       QListWidgetItem*   getItem           ()      ;

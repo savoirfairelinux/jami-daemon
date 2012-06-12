@@ -110,6 +110,7 @@ class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
 Q_OBJECT
 public:
    DlgAccounts(KConfigDialog *parent = 0);
+   ~DlgAccounts();
 
    void saveAccount(QListWidgetItem * item);
 
@@ -163,6 +164,7 @@ private slots:
    void updateAccountStates             ();
    void updateAccountListCommands       ();
 
+   void loadVidCodecDetails                          ( const QString& name                                      );
    void codecClicked                                 ( const QModelIndex& model                                 );
    void updateStatusLabel                            ( QListWidgetItem* item                                    );
    void on_listWidget_accountList_currentItemChanged ( QListWidgetItem* current , QListWidgetItem * previous    );

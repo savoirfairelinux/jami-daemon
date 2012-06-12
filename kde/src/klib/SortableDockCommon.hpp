@@ -186,7 +186,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
          QString category;
          switch (mode) {
             case ContactSortingMode::Name:
-               category = QString(cont->getFormattedName()[0]);
+               category = QString(cont->getFormattedName().trimmed()[0]);
                break;
             case ContactSortingMode::Organisation:
                category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
@@ -227,7 +227,7 @@ CALLMODEL_TEMPLATE int SORTABLE_T::usableNumberCount(Contact* cont)
    uint result =0;
    QStringList list = ConfigurationSkeleton::phoneTypeList();
    foreach (Contact::PhoneNumber* pn,cont->getPhoneNumbers()) {
-      result += list.indexOf(pn->getType()) != -1;
+      result += (list.indexOf(pn->getType()) != -1) || (pn->getType().isEmpty()); //Always allow empty because of LDAP, vcard
    }
    return result;
 }

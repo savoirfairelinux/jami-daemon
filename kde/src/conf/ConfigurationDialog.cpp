@@ -96,14 +96,12 @@ void ConfigurationDialog::updateSettings()
 bool ConfigurationDialog::hasChanged()
 {
    bool res = dlgAudio->hasChanged() || dlgAccounts->hasChanged() || dlgGeneral->hasChanged();
-   kDebug() << "Config has Changed" << res;
    return res;
 }
 
 void ConfigurationDialog::updateButtons()
 {
    bool changed = hasChanged();
-   kDebug() << "updateButtons , hasChanged = " << changed;
    enableButtonApply( changed );
 }
 

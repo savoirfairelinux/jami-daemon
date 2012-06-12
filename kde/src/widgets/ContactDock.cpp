@@ -194,7 +194,7 @@ void ContactDock::reloadContact()
          QString category;
          switch (CURRENT_SORTING_MODE) {
             case Name:
-               category = HelperFunctions::normStrippped(QString(cont->getFormattedName()[0])).toUpper();
+               category = HelperFunctions::normStrippped(QString(cont->getFormattedName().trimmed()[0])).toUpper();
                break;
             case Organisation:
                category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
