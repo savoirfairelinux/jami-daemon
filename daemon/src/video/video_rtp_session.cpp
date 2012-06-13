@@ -142,21 +142,6 @@ void VideoRtpSession::test()
     sendThread_->waitForSDP();
 }
 
-void VideoRtpSession::test_loopback()
-{
-    assert(sendThread_.get() == 0);
-
-    sendThread_.reset(new VideoSendThread(txArgs_));
-    sendThread_->start();
-
-    sendThread_->waitForSDP();
-    rxArgs_["input"] = "test.sdp";
-    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-    sharedMemory_.reset(new SharedMemory(*controls));
-    receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
-    receiveThread_->start();
-}
-
 void VideoRtpSession::start()
 {
     if (sending_) {
@@ -175,7 +160,6 @@ void VideoRtpSession::start()
         sharedMemory_.reset(new SharedMemory(*controls));
         receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
         receiveThread_->start();
-        sharedMemory_->publishShm();
     }
     else
         DEBUG("Video receiving disabled");

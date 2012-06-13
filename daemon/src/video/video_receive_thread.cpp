@@ -50,7 +50,6 @@ extern "C" {
 #include <fstream>
 
 #include "manager.h"
-#include "dbus/video_controls.h"
 #include "shared_memory.h"
 
 static const enum PixelFormat VIDEO_RGB_FORMAT = PIX_FMT_BGRA;
@@ -93,7 +92,7 @@ void VideoReceiveThread::loadSDP()
     std::ofstream os;
     sdpFilename_ = openTemp("/tmp", os);
     os << args_["receiving_sdp"];
-    DEBUG("loaded SDP %s", args_["receiving_sdp"].c_str());
+    DEBUG("loaded SDP\n%s", args_["receiving_sdp"].c_str());
 
     os.close();
 }
@@ -104,8 +103,6 @@ void VideoReceiveThread::setup()
 {
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
-
-    AVInputFormat *file_iformat = 0;
 
     std::string format_str;
     std::string input;
@@ -122,7 +119,7 @@ void VideoReceiveThread::setup()
     }
 
     DEBUG("Using %s format", format_str.c_str());
-    file_iformat = av_find_input_format(format_str.c_str());
+    AVInputFormat *file_iformat = av_find_input_format(format_str.c_str());
     RETURN_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
 
     AVDictionary *options = NULL;
@@ -134,13 +131,15 @@ void VideoReceiveThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
+    DEBUG("Opening input");
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
     RETURN_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
+    DEBUG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
-    ret = avformat_find_stream_info(inputCtx_, NULL);
+    ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
     RETURN_IF_FAIL(ret >= 0, "Could not find stream info!");
 
@@ -179,7 +178,8 @@ void VideoReceiveThread::setup()
     try {
         sharedMemory_.allocateBuffer(dstWidth_, dstHeight_, bufferSize);
     } catch (const std::runtime_error &e) {
-        RETURN_IF_FAIL(false, "%s", e.what());
+        ERROR("%s", e.what());
+        ost::Thread::exit();
     }
 
     // allocate video frame
@@ -211,6 +211,8 @@ void VideoReceiveThread::run()
 
     createScalingContext();
     receiving_ = true;
+    if (not args_["receiving_sdp"].empty())
+        sharedMemory_.publishShm();
     while (receiving_) {
         AVPacket inpacket;
 

@@ -52,7 +52,6 @@ class VideoRtpSession {
         void start();
         void stop();
         void test();
-        void test_loopback();
         void updateDestination(const std::string &destination,
                                unsigned int port);
         void updateSDP(const Sdp &sdp);

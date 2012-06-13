@@ -64,7 +64,7 @@ void VideoSendThread::print_and_save_sdp()
         line = line.substr(0, line.length() - 1);
         sdp_ += line + "\n";
     }
-    DEBUG("%s", sdp_.c_str());
+    DEBUG("sending\n%s", sdp_.c_str());
     sdpReady_.signal();
 }
 
