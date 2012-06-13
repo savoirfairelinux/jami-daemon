@@ -164,18 +164,18 @@ private slots:
    void updateAccountStates             ();
    void updateAccountListCommands       ();
 
-   void loadVidCodecDetails                          ( const QString& name                                      );
-   void codecClicked                                 ( const QModelIndex& model                                 );
-   void updateStatusLabel                            ( QListWidgetItem* item                                    );
-   void on_listWidget_accountList_currentItemChanged ( QListWidgetItem* current , QListWidgetItem * previous    );
-   void selectCredential                             ( QListWidgetItem* item    , QListWidgetItem* previous     );
-   void addAccountToAccountList                      ( AccountView*   account                                   );
-   void updateStatusLabel                            ( AccountView*   account                                   );
-   void addCodec                                     ( QString        name = ""                                 );
-   void updateCombo                                  ( int            value                                     );
-   void loadCredentails                              ( QString        accountId                                 );
-   void saveCredential                               ( QString        accountId                                 );
-   void on_edit1_alias_textChanged                   ( const QString& text                                      );
+   void loadVidCodecDetails        ( const QString& name                                      );
+   void codecClicked               ( const QModelIndex& model                                 );
+   void updateStatusLabel          ( QListWidgetItem* item                                    );
+   void accountListChanged         ( QListWidgetItem* current , QListWidgetItem * previous    );
+   void selectCredential           ( QListWidgetItem* item    , QListWidgetItem* previous     );
+   void addAccountToAccountList    ( AccountView*   account                                   );
+   void updateStatusLabel          ( AccountView*   account                                   );
+   void addCodec                   ( QString        name = ""                                 );
+   void updateCombo                ( int            value                                     );
+   void loadCredentails            ( QString        accountId                                 );
+   void saveCredential             ( QString        accountId                                 );
+   void on_edit1_alias_textChanged ( const QString& text                                      );
 
 
 signals:

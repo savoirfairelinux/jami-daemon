@@ -145,7 +145,8 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /*                                                                                                                               */
 
 
-   connect(list_credential,                SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this,SLOT( selectCredential(QListWidgetItem*, QListWidgetItem*)));
+   connect(accountList,    SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(accountListChanged(QListWidgetItem*,QListWidgetItem*)));
+   connect(list_credential,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
 
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
@@ -154,6 +155,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
 
 DlgAccounts::~DlgAccounts()
 {
+   accountList->disconnect();
    if (accountList) delete accountList;
 }
 
@@ -534,7 +536,7 @@ void DlgAccounts::changedAccountList()
 
 
 
-void DlgAccounts::on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous )
+void DlgAccounts::accountListChanged( QListWidgetItem * current, QListWidgetItem * previous )
 {
    kDebug() << "on_listWidget_accountList_currentItemChanged";
    saveAccount(previous);
