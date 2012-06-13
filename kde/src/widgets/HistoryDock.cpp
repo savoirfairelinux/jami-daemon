@@ -165,9 +165,10 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
 ///Destructor
 HistoryDock::~HistoryDock()
 {
-   /*foreach (HistoryTreeItem* w, m_History) {
+   foreach (HistoryTreeItem* w, m_History) {
       delete w;
    }
+   m_History.clear();
    delete m_pItemView     ;
    delete m_pFilterLE     ;
    delete m_pSortByCBB    ;
@@ -178,7 +179,7 @@ HistoryDock::~HistoryDock()
    delete m_pToDW         ;
    delete m_pAllTimeCB    ;
    delete m_pLinkPB       ;
-   delete m_pKeyPressEater;*/
+   delete m_pKeyPressEater;
 }
 
 
@@ -229,10 +230,13 @@ void HistoryDock::reload()
       newHistoryCall(call);
    }
    
-   ConfigurationSkeleton::setHistorySortMode(m_pSortByCBB->currentIndex());
+   ConfigurationSkeleton::setHistorySortMode(CURRENT_SORTING_MODE);
 
-   switch (m_pSortByCBB->currentIndex()) {
+   switch (CURRENT_SORTING_MODE) {
       case Date:
+         for (int i=0;i<m_pItemView->topLevelItemCount();i++) {
+            m_pItemView->topLevelItem(i)->sortChildren(0,Qt::DescendingOrder);
+         }
          break;
       case Popularity: {
          QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(m_hGroup);
@@ -246,13 +250,6 @@ void HistoryDock::reload()
       default:
          m_pItemView->sortItems(0,Qt::AscendingOrder);
    }
-
-   int maxWidth = 0;
-
-   //Align all durationwidget
-   foreach(HistoryTreeItem* item, m_History) {
-      maxWidth = ((uint)item->getDurWidth() > (uint)maxWidth)?item->getDurWidth():maxWidth;
-   }
 } //reload
 
 ///Faster way to sync the history than reloading it (2+ seconds)
@@ -264,10 +261,11 @@ void HistoryDock::newHistoryCall(Call* call)
       callItem->setCall(call);
       m_History << callItem;
    }
-   switch (m_pSortByCBB->currentIndex()) {
+   switch (CURRENT_SORTING_MODE) {
       case Date: {
          QString category = timeToHistoryCategory(QDateTime::fromTime_t(callItem->call()->getStartTimeStamp().toUInt()).date());
          QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(category);
+         item->weight = -callItem->call()->getStopTimeStamp().toUInt();
          item->widget = callItem;
          callItem->setItem(item);
          m_pItemView->setItemWidget(item,0,callItem);
@@ -292,12 +290,6 @@ void HistoryDock::newHistoryCall(Call* call)
          callItem->setItem(twItem);
          twItem->widget = callItem;
          m_pItemView->setItemWidget(twItem,0,callItem);
-//          QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(m_hGroup);
-//          while (iter.hasNext()) {
-//             iter.next();
-//             QNumericTreeWidgetItem* item = iter.value();
-//             item->setText(0,iter.key()+" ("+QString::number(item->weight)+")");
-//          }
          break;
       }
       case Length: {
@@ -314,10 +306,10 @@ void HistoryDock::newHistoryCall(Call* call)
 ///Enable the ability to set a date range like 1 month to limit history
 void HistoryDock::enableDateRange(bool disable)
 {
-   m_pFromL->setVisible(!disable);
-   m_pToL->setVisible(!disable);
+   m_pFromL->setVisible (!disable);
+   m_pToL->setVisible   (!disable);
    m_pFromDW->setVisible(!disable);
-   m_pToDW->setVisible(!disable);
+   m_pToDW->setVisible  (!disable);
    m_pLinkPB->setVisible(!disable);
 
    ConfigurationSkeleton::setDisplayDataRange(!disable);
@@ -407,9 +399,9 @@ QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 ///Handle what happen when serialized data is dropped
 bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
-   Q_UNUSED(index)
-   Q_UNUSED(action)
-   Q_UNUSED(parent)
+   Q_UNUSED( index  )
+   Q_UNUSED( action )
+   Q_UNUSED( parent )
 
    QByteArray encodedData = data->data(MIME_CALLID);
 
