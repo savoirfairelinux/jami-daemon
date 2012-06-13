@@ -46,9 +46,11 @@ class KDateWidget;
 class HistoryTreeItem;
 class HistoryTree;
 class KeyPressEater;
+class QNumericTreeWidgetItem;
 
 //Typedef
 typedef QList<HistoryTreeItem*> HistoryList;
+typedef QHash<QString,QNumericTreeWidgetItem*> GroupHash;
 
 ///@class HistoryDock Dock to see the previous SFLPhone calls
 class HistoryDock : public QDockWidget, public SortableDockCommon<CallTreeItem*,QTreeWidgetItem*> {
@@ -78,6 +80,7 @@ private:
    QDate          m_CurrentFromDate  ;
    QDate          m_CurrentToDate    ;
    KeyPressEater* m_pKeyPressEater   ;
+   GroupHash      m_hGroup           ;
 
    //Mutator
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);

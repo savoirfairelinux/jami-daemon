@@ -215,6 +215,10 @@ void HistoryDock::reload()
             m_pItemView->addCategory(i18n(cat.toAscii()));
          }
          break;
+      case Popularity: {
+         m_hGroup.clear();
+         break;
+      }
    }
    
    foreach(HistoryTreeItem* hitem, m_History) {
@@ -222,47 +226,16 @@ void HistoryDock::reload()
    }
    m_History.clear();
    foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
-      if (call != nullptr && (!m_pAllTimeCB->isChecked() || (QDateTime(m_pFromDW->date()).toTime_t() < call->getStartTimeStamp().toUInt() && QDateTime(m_pToDW->date().addDays(1)).toTime_t() > call->getStartTimeStamp().toUInt() ))) {
-         HistoryTreeItem* callItem = new HistoryTreeItem(m_pItemView);
-         callItem->setCall(call);
-         m_History << callItem;
-      }
+      newHistoryCall(call);
    }
+   
+   ConfigurationSkeleton::setHistorySortMode(m_pSortByCBB->currentIndex());
+
    switch (m_pSortByCBB->currentIndex()) {
       case Date:
-         foreach(HistoryTreeItem* hitem, m_History) {
-            QString category = timeToHistoryCategory(QDateTime::fromTime_t(hitem->call()->getStartTimeStamp().toUInt()).date());
-            QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(category);
-            item->widget = hitem;
-            hitem->setItem(item);
-            m_pItemView->setItemWidget(item,0,hitem);
-         }
          break;
-      case Name2: {
-         foreach(HistoryTreeItem* item, m_History) {
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(item->getName());
-            item->setItem(twItem);
-            twItem->widget = item;
-            m_pItemView->setItemWidget(twItem,0,item);
-         }
-         break;
-      }
       case Popularity: {
-         QHash<QString,QNumericTreeWidgetItem*> group;
-         foreach(HistoryTreeItem* item, m_History) {
-            QString name = item->getName().trimmed();
-            if (!group[name]) {
-               group[name] = m_pItemView->addCategory<QNumericTreeWidgetItem>(name);
-               group[name]->weight = 0;
-               m_pItemView->addTopLevelItem(group[name]);
-            }
-            group[name]->weight++;
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(name);
-            item->setItem(twItem);
-            twItem->widget = item;
-            m_pItemView->setItemWidget(twItem,0,item);
-         }
-         QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(group);
+         QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(m_hGroup);
          while (iter.hasNext()) {
             iter.next();
             QNumericTreeWidgetItem* item = iter.value();
@@ -270,21 +243,6 @@ void HistoryDock::reload()
          }
          break;
       }
-      case Length:
-         foreach(HistoryTreeItem* hitem, m_History) {
-            QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(" ");
-            item->weight = hitem->getLength();
-            hitem->setItem(item);
-            m_pItemView->addTopLevelItem(item);
-            m_pItemView->setItemWidget(item,0,hitem);
-         }
-         break;
-   }
-   ConfigurationSkeleton::setHistorySortMode(m_pSortByCBB->currentIndex());
-
-   switch (m_pSortByCBB->currentIndex()) {
-      case Date:
-         break;
       default:
          m_pItemView->sortItems(0,Qt::AscendingOrder);
    }
@@ -323,24 +281,23 @@ void HistoryDock::newHistoryCall(Call* call)
          break;
       }
       case Popularity: {
-         /*QHash<QString,QNumericTreeWidgetItem*> group;
          QString name = callItem->getName().trimmed();
-         if (!group[name]) {
-            group[name] = m_pItemView->addCategory<QNumericTreeWidgetItem>(name);
-            group[name]->weight = 0;
-            m_pItemView->addTopLevelItem(group[name]);
+         if (!m_hGroup[name]) {
+            m_hGroup[name] = m_pItemView->addCategory<QNumericTreeWidgetItem>(name);
+            m_hGroup[name]->weight = 0;
+            m_pItemView->addTopLevelItem(m_hGroup[name]);
          }
-         group[name]->weight++;
+         m_hGroup[name]->weight++;
          QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(name);
          callItem->setItem(twItem);
          twItem->widget = callItem;
          m_pItemView->setItemWidget(twItem,0,callItem);
-         QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(group);
-         while (iter.hasNext()) {
-            iter.next();
-            QNumericTreeWidgetItem* item = iter.value();
-            item->setText(0,iter.key()+" ("+QString::number(item->weight)+")");
-         }*///TODO
+//          QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(m_hGroup);
+//          while (iter.hasNext()) {
+//             iter.next();
+//             QNumericTreeWidgetItem* item = iter.value();
+//             item->setText(0,iter.key()+" ("+QString::number(item->weight)+")");
+//          }
          break;
       }
       case Length: {
