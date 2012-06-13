@@ -152,6 +152,16 @@ function build_gnome {
 	popd
 }
 
+function build_kde {
+   # Compile the KDE client
+   pushd kde
+   mkdir -p build
+   cd build
+   cmake ../
+   make -j
+   popd
+}
+
 
 if [ "$#" -eq 0 ]; then   # Script needs at least one command-line argument.
 	echo "Usage $0 -b select which one to build: daemon or gnome
