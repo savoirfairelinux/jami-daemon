@@ -242,6 +242,10 @@ void ContactDock::reloadContact()
    }
 
    ConfigurationSkeleton::setContactSortMode(m_pSortByCBB->currentIndex());
+
+   if (ConfigurationSkeleton::alwaysShowPhoneNumber()) {
+      m_pContactView->expandAll();
+   }
 } //reloadContact
 
 ///Query the call history for all items related to this contact

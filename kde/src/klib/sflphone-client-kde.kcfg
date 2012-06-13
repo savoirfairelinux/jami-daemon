@@ -155,6 +155,11 @@
       <default>false</default>
     </entry>
 
+    <entry name="alwaysShowPhoneNumber" type="bool">
+      <label>Defines if the contact tree should be expanded by default to show all numbers</label>
+      <default>false</default>
+    </entry>
+
     <!-- Bookmark -->
     <entry name="bookmarkList" type="StringList">
         <label>List of bookmarked clients</label>
