@@ -29,7 +29,7 @@ class VideoWidget : public QWidget {
 public:
    VideoWidget(QWidget* parent =0 );
 private:
-   QImage m_Image;
+   QImage* m_Image;
 protected:
    virtual void paintEvent(QPaintEvent* event);
 private slots:

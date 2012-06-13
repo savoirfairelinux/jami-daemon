@@ -19,15 +19,14 @@
 #include "VideoWidget.h"
 #include <KDebug>
 
-VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(QSize(VideoModel::getInstance()->getActiveResolution().width,
-   VideoModel::getInstance()->getActiveResolution().height),QImage::Format_ARGB32_Premultiplied) {
+VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(NULL) {
    setMinimumSize(200,200);
    connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(repaint2()));
 }
 
 void VideoWidget::update() {
    QPainter painter(this);
-   painter.drawImage(QRect(0,0,width(),height()),m_Image);
+   painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
    painter.end();
 }
 
@@ -44,7 +43,9 @@ void VideoWidget::repaint2()
    QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
-   m_Image = QImage(size,QImage::Format_ARGB32);
-   m_Image.loadFromData(VideoModel::getInstance()->getCurrentFrame(),"BMP");
+   //if (m_Image)
+   //   delete m_Image;
+   m_Image = new QImage(size,QImage::Format_ARGB32);
+   m_Image->loadFromData(VideoModel::getInstance()->getCurrentFrame(),"BMP");
    repaint();
 }

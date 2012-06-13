@@ -197,7 +197,7 @@ void VideoModel::timedEvents()
 {
    if ( !m_Attached ) {
       int shm_id = ShmManager::getShm(m_BufferSize, m_ShmKey);
-      m_pBuffer = ShmManager::attachShm(shm_id);
+      m_pBuffer  = ShmManager::attachShm(shm_id);
       m_Attached = true;
       m_SetSetId = ShmManager::get_sem_set(m_SemKey);
    }
@@ -206,6 +206,7 @@ void VideoModel::timedEvents()
    if (ret != -1) {
       qDebug() << "Updating frame" << m_pBuffer << m_Res.width << m_Res.height << m_BufferSize;;
       QByteArray array((char*)m_pBuffer,m_BufferSize);
+      m_Frame.resize(0);
       m_Frame = array;
       emit frameUpdated();
    }

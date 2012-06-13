@@ -624,16 +624,6 @@ call_state Call::actionPerformed(call_action action)
    return m_CurrentState;
 } //actionPerformed
 
-/*void Call::putRecording()
-{
-   CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   bool daemonRecording = callManager.getIsRecording(this -> m_CallId);
-   if(daemonRecording != m_Recording)
-   {
-      callManager.setRecording(this->m_CallId);
-   }
-}*/
-
 ///Change the state
 void Call::changeCurrentState(call_state newState)
 {
@@ -812,7 +802,10 @@ void Call::setRecord()
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    qDebug() << "Setting record " << !m_Recording << " for call. callId : " << m_CallId  << "ConfId:" << m_ConfId;
    Q_NOREPLY callManager.setRecording((!m_isConference)?m_CallId:m_ConfId);
+   bool oldRecStatus = m_Recording;
    m_Recording = !m_Recording;
+   if (oldRecStatus != m_Recording)
+      emit changed();
 }
 
 ///Start the timer
