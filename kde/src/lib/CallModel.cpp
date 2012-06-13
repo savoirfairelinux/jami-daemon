@@ -74,6 +74,7 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
 
    if (call->getCurrentState() == CALL_STATE_OVER) {
       addToHistory(call);
+      emit newHistoryCall(call);
       emit historyChanged();
    }
    

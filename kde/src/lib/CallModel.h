@@ -93,6 +93,7 @@ signals:
    void volumeChanged           ( const QString& device    , double value );
    void callAdded               ( Call* call               , Call* parent );
    void historyChanged          (                                         );
+   void newHistoryCall          ( Call* call                              );
    void accountStateChanged     ( Account* account, QString state         );
 };
 

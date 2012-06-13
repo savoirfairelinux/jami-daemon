@@ -92,6 +92,7 @@ private slots:
    void updateLinkedToDate   ( QDate   date );
    void reload               (              );
    void updateContactInfo    (              );
+   void newHistoryCall       ( Call*   call );
 };
 
 
