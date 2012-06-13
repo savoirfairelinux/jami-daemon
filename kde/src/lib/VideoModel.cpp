@@ -23,6 +23,7 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
+#include <unistd.h>
 
 VideoModel* VideoModel::m_spInstance = NULL;
 
@@ -126,6 +127,10 @@ void VideoModel::stopPreview()
    m_PreviewState = false;
    if (m_pTimer)
       m_pTimer->stop();
+   if (m_Attached) {
+      ShmManager::detachShm((char*)m_pBuffer);
+      m_Attached = false;
+   }
 }
 
 ///Start video preview
