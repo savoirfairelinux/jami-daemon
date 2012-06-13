@@ -28,21 +28,35 @@ class QStringList;
 class Call;
 class Account;
 
+//Typedef
+class VideoCodec;
+typedef QHash<QString,VideoCodec*> CodecHash;
+
 ///@class VideoCodec Codecs used for video calls
 class LIB_EXPORT VideoCodec {
    public:
+
+      //Static getter
       static VideoCodec* getCodec(QString name);
       static VideoCodec* getCurrentCodec(Call* call);
       static QList<VideoCodec*> getCodecList();
       static QList<VideoCodec*> getActiveCodecList(Account* account);
+
+      //Static setters
       static void setActiveCodecList(Account* account, QStringList codecs);
+
+      //Getters
       QString getName();
-      QString getBitrate(); //Is the second field the ID?
+      QString getBitrate();
+      
    private:
+      //Constructor
       VideoCodec(QString codecName);
       ~VideoCodec(){};
       static void init();
-      static QHash<QString,VideoCodec*> m_slCodecs;
+
+      //Attributes
+      static CodecHash m_slCodecs;
       QString m_Name;
       QString m_Bitrate;
       static bool m_sInit;

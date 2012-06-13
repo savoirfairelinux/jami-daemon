@@ -30,14 +30,20 @@ typedef QString VideoRate;
 
 ///@struct Resolution Equivalent of "640x480"
 struct LIB_EXPORT Resolution {
+   //Constructor
    explicit Resolution(uint _width, uint _height):width(_width),height(_height){}
    Resolution(QString size) {
       width=size.split("x")[0].toInt();
       height=size.split("x")[1].toInt();
    }
+   //Getter
+   QString toString() { return QString::number(width)+"x"+QString::number(height);}
+
+   //Attributes
    uint width;
    uint height;
-   QString toString() { return QString::number(width)+"x"+QString::number(height);}
+
+   //Operator
    bool operator==(const Resolution& other) {
       return (other.width == width && other.height == height);
    }
@@ -46,6 +52,7 @@ struct LIB_EXPORT Resolution {
 ///@class VideoDevice V4L devices used to record video for video call
 class LIB_EXPORT VideoDevice {
    public:
+      //Singleton
       static VideoDevice* getDevice(QString id);
 
       //Getter

@@ -10,7 +10,6 @@ SET(QT_USE_QT*)
 # --- custom targets: ---
 INCLUDE( ${LOCAL_CMAKE_MODULE_PATH}/TargetDistclean.cmake  REQUIRED)
 
-FIND_PACKAGE ( Kabc       REQUIRED            )
 FIND_PACKAGE ( KdepimLibs REQUIRED            )
 FIND_PACKAGE ( KDE4       REQUIRED            )
 FIND_PACKAGE ( Qt4        REQUIRED QtCore QtGui QtXml QtDBus QtTest QtSVG QT_USE_QT* )

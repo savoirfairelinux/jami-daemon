@@ -17,18 +17,27 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 #include "VideoModel.h"
-#include "video_interface_singleton.h"
-#include <QSharedMemory>
-#include <QDBusPendingReply>
+
+//Posix
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <unistd.h>
 
+//Qt
+#include <QSharedMemory>
+#include <QDBusPendingReply>
+
+//SFLPhone
+#include "video_interface_singleton.h"
+#include "VideoDevice.h"
+
+//Static member
 VideoModel* VideoModel::m_spInstance = NULL;
 
 ///@namespace ShmManager Low level function to access shared memory
 namespace ShmManager {
+   ///Get the shared memory key
    static int getShm(unsigned numBytes, int shmKey)
    {
       key_t key = shmKey;
@@ -40,7 +49,7 @@ namespace ShmManager {
       return shm_id;
    }
 
-
+   ///Get the shared buffer
    static void * attachShm(int shm_id)
    {
       void *data = shmat(shm_id, (void *)0, 0);
@@ -52,7 +61,7 @@ namespace ShmManager {
       return data;
    }
 
-
+   ///Detach shared ownership of the buffer
    static void detachShm(char *data)
    {
       /* detach from the segment: */
@@ -70,6 +79,7 @@ namespace ShmManager {
    };
    #endif
 
+   ///Get the sempahor key
    static int get_sem_set(int semKey)
    {
       int sem_set_id;
@@ -87,6 +97,7 @@ namespace ShmManager {
       return sem_set_id;
    }
 
+   ///Is a new frame ready to be fetched
    static int sem_wait(int sem_set_id)
    {
       /* structure for semaphore operations.   */
@@ -156,6 +167,7 @@ void VideoModel::startPreview()
    }
 }
 
+///Is the video model fetching preview from a camera
 bool VideoModel::isPreviewing()
 {
    return m_PreviewState;
@@ -170,11 +182,11 @@ void VideoModel::setBufferSize(uint size)
 ///Event callback
 void VideoModel::receivingEvent(int shmKey, int semKey, int videoBufferSize, int destWidth, int destHeight)
 {
-   m_ShmKey     = (uint)shmKey;
-   m_ShmKey     = (uint)semKey;
+   m_ShmKey     = (uint)shmKey   ;
+   m_ShmKey     = (uint)semKey   ;
    m_BufferSize = videoBufferSize;
-   m_Res.width  = destWidth;
-   m_Res.height = destHeight;
+   m_Res.width  = destWidth      ;
+   m_Res.height = destHeight     ;
 
 
 }
@@ -204,17 +216,14 @@ void VideoModel::timedEvents()
 
    int ret = ShmManager::sem_wait(m_SetSetId);
    if (ret != -1) {
-      qDebug() << "Updating frame" << m_pBuffer << m_Res.width << m_Res.height << m_BufferSize;;
       QByteArray array((char*)m_pBuffer,m_BufferSize);
       m_Frame.resize(0);
       m_Frame = array;
       emit frameUpdated();
    }
    else {
-      qDebug() << "Skipping" << ret;
       usleep(rand()%100000); //Be sure it can come back in sync
    }
-   qDebug() << "Ret" << ret;
 }
 
 ///Return the current framerate
