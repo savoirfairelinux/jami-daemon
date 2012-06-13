@@ -38,6 +38,9 @@ struct LIB_EXPORT Resolution {
    uint width;
    uint height;
    QString toString() { return QString::number(width)+"x"+QString::number(height);}
+   bool operator==(const Resolution& other) {
+      return (other.width == width && other.height == height);
+   }
 };
 
 ///@class VideoDevice V4L devices used to record video for video call

@@ -34,6 +34,7 @@ protected:
    virtual void paintEvent(QPaintEvent* event);
 private slots:
    void update();
+   void repaint2();
 };
 
 #endif

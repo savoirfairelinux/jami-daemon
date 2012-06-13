@@ -21,6 +21,7 @@
 #include "../lib/VideoDevice.h"
 #include "../lib/VideoCodec.h"
 #include "../lib/VideoModel.h"
+#include <KDebug>
 
 DlgVideo::DlgVideo(QWidget *parent)
  : QWidget(parent),m_pDevice(NULL)
@@ -35,6 +36,7 @@ DlgVideo::DlgVideo(QWidget *parent)
    connect(m_pDeviceCB    ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadDevice(QString)     ));
    connect(m_pChannelCB   ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadResolution(QString) ));
    connect(m_pResolutionCB,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadRate(QString)       ));
+   connect(m_pRateCB      ,SIGNAL(currentIndexChanged(QString)),this,SLOT(changeRate(QString)     ));
    connect(m_pPreviewPB   ,SIGNAL(clicked()                   ),this,SLOT(startStopPreview()      ));
 
 
@@ -52,28 +54,45 @@ DlgVideo::~DlgVideo()
 
 void DlgVideo::loadDevice(QString device) {
    m_pDevice = VideoDevice::getDevice(device);
+   QString curChan = m_pDevice->getChannel();
    if (m_pDevice) {
       m_pChannelCB->clear();
       foreach(VideoChannel channel,m_pDevice->getChannelList()) {
          m_pChannelCB->addItem(channel);
+         if (channel == curChan)
+            m_pChannelCB->setCurrentIndex(m_pChannelCB->count()-1);
       }
    }
 }
 
 void DlgVideo::loadResolution(QString channel)
 {
+   Resolution current = m_pDevice->getResolution();
    m_pResolutionCB->clear();
    foreach(Resolution res,m_pDevice->getResolutionList(channel)) {
       m_pResolutionCB->addItem(res.toString());
+      if (current == res) {
+         m_pResolutionCB->setCurrentIndex(m_pResolutionCB->count()-1);
+      }
    }
+   m_pDevice->setChannel(channel);
 }
 
 void DlgVideo::loadRate(QString resolution)
 {
    m_pRateCB->clear();
-   foreach(QString rate,m_pDevice->getRateList(m_pChannelCB->currentText(),resolution)) {
-      m_pRateCB->addItem(rate);
+   QString rate = m_pDevice->getRate();
+   foreach(QString r,m_pDevice->getRateList(m_pChannelCB->currentText(),resolution)) {
+      m_pRateCB->addItem(r);
+      if (r == rate)
+         m_pRateCB->setCurrentIndex(m_pRateCB->count()-1);
    }
+   m_pDevice->setResolution(resolution);
+}
+
+void DlgVideo::changeRate(QString rate)
+{
+   m_pDevice->setRate(rate);
 }
 
 void DlgVideo::startStopPreview()

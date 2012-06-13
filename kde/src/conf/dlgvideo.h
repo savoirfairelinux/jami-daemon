@@ -41,6 +41,7 @@ private slots:
    void loadDevice(QString device);
    void loadResolution(QString channel);
    void loadRate(QString resolution);
+   void changeRate(QString rate);
    void startStopPreview();
 
 private:

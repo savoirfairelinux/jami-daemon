@@ -22,13 +22,10 @@
 VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(QSize(VideoModel::getInstance()->getActiveResolution().width,
    VideoModel::getInstance()->getActiveResolution().height),QImage::Format_ARGB32_Premultiplied) {
    setMinimumSize(200,200);
-   connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(repaint()));
+   connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(repaint2()));
 }
 
 void VideoWidget::update() {
-   //if (m_Image.size() != QSize(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height))
-   m_Image = QImage(QSize(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height),QImage::Format_ARGB32);
-   m_Image.loadFromData(VideoModel::getInstance()->getCurrentFrame(),"BMP");
    QPainter painter(this);
    painter.drawImage(QRect(0,0,width(),height()),m_Image);
    painter.end();
@@ -40,4 +37,14 @@ void VideoWidget::paintEvent(QPaintEvent* event)
    if (VideoModel::getInstance()->isPreviewing()) {
       update();
    }
+}
+
+void VideoWidget::repaint2()
+{
+   QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
+   if (size != minimumSize())
+      setMinimumSize(size);
+   m_Image = QImage(size,QImage::Format_ARGB32);
+   m_Image.loadFromData(VideoModel::getInstance()->getCurrentFrame(),"BMP");
+   repaint();
 }

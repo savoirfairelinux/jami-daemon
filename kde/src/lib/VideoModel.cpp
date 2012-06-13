@@ -182,8 +182,8 @@ void VideoModel::receivingEvent(int shmKey, int semKey, int videoBufferSize, int
 ///Callback when video is stopped
 void VideoModel::stoppedReceivingEvent(int shmKey, int semKey)
 {
-   m_ShmKey     = (uint)shmKey;
-   m_ShmKey     = (uint)semKey;
+   m_ShmKey = (uint)shmKey;
+   m_ShmKey = (uint)semKey;
 }
 
 ///Event callback
@@ -211,7 +211,7 @@ void VideoModel::timedEvents()
    }
    else {
       qDebug() << "Skipping" << ret;
-      usleep(rand()%1100); //Be sure it can come back in sync
+      usleep(rand()%100000); //Be sure it can come back in sync
    }
    qDebug() << "Ret" << ret;
 }
