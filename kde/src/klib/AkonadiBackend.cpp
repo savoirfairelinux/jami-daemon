@@ -64,7 +64,7 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
    if ( not m_pModel ) {
       m_pModel = new CallModel<>(CallModel<>::ActiveCall);
       m_pModel->initCall();
-      m_pModel->initHistory();
+      //m_pModel->initHistory();
    }
 
    // fetching all collections containing emails recursively, starting at the root collection

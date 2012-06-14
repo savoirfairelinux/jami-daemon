@@ -2,7 +2,6 @@ build
 *.moc
 moc_*.cpp
 ui_*.h
-lib/
 *.gmo
 *_automoc.cpp
 *.files

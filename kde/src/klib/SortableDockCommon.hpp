@@ -31,6 +31,7 @@
 #include "../lib/Call.h"
 #include "../lib/Contact.h"
 #include "../lib/CallModel.h"
+#include "../lib/HistoryModel.h"
 #include "AkonadiBackend.h"
 #include "HelperFunctions.h"
 #include "ConfigurationSkeleton.h"
@@ -91,7 +92,7 @@ CALLMODEL_TEMPLATE QString SORTABLE_T::timeToHistoryCategory(QDate date)
 ///Return the list of contact from history (in order, most recently used first)
 CALLMODEL_TEMPLATE QHash<Contact*, QDateTime> SORTABLE_T::getContactListByTime(/*ContactList list*/)
 {
-   const CallMap& history= CallModel<CallWidget,Index>::getHistory();
+   const CallMap& history= HistoryModel::getHistory();
    QHash<Contact*, QDateTime> toReturn;
    QSet<QString> alreadyUsed;
    QMapIterator<QString, Call*> i(history);

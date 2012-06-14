@@ -373,11 +373,8 @@ void CallTreeItem::updated()
       //kDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
    if (state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
-      kDebug() << "emmiting tranfer signal";
+      kDebug() << "Transferring";
       emit askTransfer(m_pItemCall);
-   }
-   else {
-      kDebug() << "not emmiting tranfer signal";
    }
    changed();
 

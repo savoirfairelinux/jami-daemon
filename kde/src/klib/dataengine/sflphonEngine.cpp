@@ -38,6 +38,7 @@
 #include "../../klib/HelperFunctions.h"
 #include "../../klib/ConfigurationSkeleton.h"
 #include "../../lib/CallModel.h"
+#include "../../lib/HistoryModel.h"
 #include "sflphoneService.h"
 
 //Static
@@ -58,7 +59,7 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
    if (not m_pModel) {
       m_pModel = new CallModel<>(CallModel<>::ActiveCall);
       m_pModel->initCall();
-      m_pModel->initHistory();
+      //m_pModel->initHistory();
    }
 
    /*                SOURCE                             SIGNAL                 DESTINATION              SLOT                   */
@@ -143,7 +144,7 @@ CallModel<>* SFLPhoneEngine::getModel()
 ///Load/Update history
 void SFLPhoneEngine::updateHistory()
 {
-   CallList list = m_pModel->getHistory().values();
+   CallList list = HistoryModel::getHistory().values();
    setHistoryCategory(list,HistorySortingMode::Date);
 
    foreach (Call* oldCall, list) {
@@ -192,7 +193,7 @@ void SFLPhoneEngine::updateBookmarkList()
 {
    removeAllData("bookmark");
    int i=0;
-   QStringList cl = getModel()->getNumbersByPopularity();
+   QStringList cl = HistoryModel::getNumbersByPopularity();
    for (;i < ((cl.size() < 10)?cl.size():10);i++) {
       QHash<QString,QVariant> pop;
       Contact* cont = AkonadiBackend::getInstance()->getContactByPhone(cl[i],true);

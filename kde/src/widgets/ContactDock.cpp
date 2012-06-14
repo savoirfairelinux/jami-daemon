@@ -46,6 +46,7 @@
 #include "klib/ConfigurationSkeleton.h"
 #include "CallView.h"
 #include "SFLPhoneView.h"
+#include "lib/HistoryModel.h"
 
 //SFLPhone library
 #include "lib/Call.h"
@@ -255,7 +256,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
       m_pCallView->clear();
       if (dynamic_cast<QNumericTreeWidgetItem_hist*>(item) != NULL) {
          QNumericTreeWidgetItem_hist* realItem = dynamic_cast<QNumericTreeWidgetItem_hist*>(item);
-         foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
+         foreach (Call* call, HistoryModel::getHistory()) {
             if (realItem->widget != 0) {
                foreach (Contact::PhoneNumber* number, realItem->widget->getContact()->getPhoneNumbers()) {
                   if (number->getNumber() == call->getPeerPhoneNumber()) {

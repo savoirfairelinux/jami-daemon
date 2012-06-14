@@ -30,6 +30,7 @@ set( qtsflphone_LIB_SRCS
   Account.cpp
   AccountList.cpp
   CallModel.cpp
+  HistoryModel.cpp
   Contact.cpp
   ContactBackend.cpp
   Item.cpp
@@ -39,7 +40,6 @@ set( qtsflphone_LIB_SRCS
   configurationmanager_interface_singleton.cpp
   callmanager_interface_singleton.cpp
   instance_interface_singleton.cpp
-  video_interface_singleton.cpp
   video_interface_singleton.cpp
   sflphone_const.h
 )
@@ -119,12 +119,17 @@ set( qtsflphone_LIB_HDRS
   AccountList.h
   Call.h
   CallModel.h
+  HistoryModel.h
   Contact.h
   ContactBackend.h
   Item.h
+  VideoCodec.h
+  VideoModel.h
+  VideoDevice.h
   configurationmanager_interface_singleton.h
   callmanager_interface_singleton.h
   instance_interface_singleton.h
+  video_interface_singleton.h
   sflphone_const.h
 )
 

@@ -20,6 +20,7 @@
 
 //Parent
 #include <CallModel.h>
+#include <HistoryModel.h>
 
 bool CallModelBase::dbusInit = false;
 CallMap CallModelBase::m_sActiveCalls;
@@ -40,9 +41,15 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
       /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( on1_voiceMailNotify   ( const QString &, int             ) ) );
       /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( on1_volumeChanged     ( const QString &, double          ) ) );
       /*                                                                                                                                                                                    */
+
+      connect(HistoryModel::self(),SIGNAL(newHistoryCall(Call*)),this,SLOT(addPrivateCall(Call*)));
       
       connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
       dbusInit = true;
+
+      foreach(Call* call,HistoryModel::getHistory()){
+         addCall(call,0);
+      }
    }
 }
 
@@ -55,7 +62,7 @@ CallModelBase::~CallModelBase()
 void CallModelBase::on1_callStateChanged(const QString &callID, const QString &state)
 {
    //This code is part of the CallModel iterface too
-   qDebug() << "Signal : Call State Changed for call  " << callID << " . New state : " << state;
+   qDebug() << "Call State Changed for call  " << callID << " . New state : " << state;
    Call* call = findCallByCallId(callID);
    if(!call) {
       qDebug() << "Call not found";
@@ -73,9 +80,7 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
    }
 
    if (call->getCurrentState() == CALL_STATE_OVER) {
-      addToHistory(call);
-      emit newHistoryCall(call);
-      emit historyChanged();
+      HistoryModel::add(call);
    }
    
    emit callStateChanged(call);
@@ -88,12 +93,6 @@ void CallModelBase::on1_incomingCall(const QString & accountID, const QString & 
    qDebug() << "Signal : Incoming Call ! ID = " << callID;
    Call* call = addIncomingCall(callID);
 
-   //NEED_PORT
-//    SFLPhone::app()->activateWindow();
-//    SFLPhone::app()->raise();
-//    SFLPhone::app()->setVisible(true);
-
-   //emit incomingCall(call);
    emit incomingCall(call);
 }
 
@@ -139,7 +138,8 @@ void CallModelBase::on1_volumeChanged(const QString & device, double value)
 
 Call* CallModelBase::addCall(Call* call, Call* parent)
 {
-   emit callAdded(call,parent);
+   if (call->getCurrentState() != CALL_STATE_OVER)
+      emit callAdded(call,parent);
 
    connect(call, SIGNAL(isOver(Call*)), this, SLOT(removeActiveCall(Call*)));
    return call;
@@ -175,6 +175,10 @@ void CallModelBase::removeActiveCall(Call* call)
    Q_UNUSED(call);
    //There is a race condition
    //m_sActiveCalls[call->getCallId()] = nullptr;
+}
+
+void CallModelBase::addPrivateCall(Call* call) {
+   addCall(call,0);
 }
 
 //More code in CallModel.hpp

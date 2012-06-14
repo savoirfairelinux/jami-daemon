@@ -38,6 +38,7 @@ class Call;
 class AccountList;
 class Account;
 class ContactBackend;
+class HistoryModel;
 
 typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
@@ -57,7 +58,6 @@ public:
    virtual Call* findCallByCallId     ( const QString& callId                       ) = 0;
    virtual Call* addRingingCall       ( const QString& callId                       ) = 0;
    virtual Call* addIncomingCall      ( const QString& callId                       ) = 0;
-   virtual void  addToHistory         ( Call* call                                  ) = 0;
    virtual Call* addCall              ( Call* call           , Call* parent =0      );
    virtual Call* getCall              ( const QString& callId                       ) const = 0;
    Call*   addConferenceS             ( Call* conf                                  );
@@ -79,6 +79,7 @@ protected:
 private slots:
    void removeActiveCall(Call*);
    void accountChanged(const QString& account,const QString& state, int code);
+   void addPrivateCall(Call* call);
 private:
    static bool dbusInit;
    
@@ -92,8 +93,6 @@ signals:
    void voiceMailNotify         ( const QString& accountID , int    count );
    void volumeChanged           ( const QString& device    , double value );
    void callAdded               ( Call* call               , Call* parent );
-   void historyChanged          (                                         );
-   void newHistoryCall          ( Call* call                              );
    void accountStateChanged     ( Account* account, QString state         );
 };
 
@@ -107,8 +106,8 @@ class LIB_EXPORT CallModel : public CallModelBase {
    public:
       enum ModelType {
          ActiveCall,
-         History,
-         Address
+         //History,
+         //Address
       };
 
       //Constructors, initializer and destructors
@@ -116,7 +115,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       virtual ~CallModel       (                    );
       virtual bool initCall    (                    );
       virtual void initContact ( ContactBackend* be );
-      static  bool initHistory (                    );
       static  void destroy     (                    );
 
       //Call related
@@ -128,7 +126,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       void           removeCall       ( Call* call                                     );
       void           attendedTransfer ( Call* toTransfer           , Call* target      );
       void           transfer         ( Call* toTransfer           , QString target    );
-      void           addToHistory     ( Call* call                                     );
       
       virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
 
@@ -146,9 +143,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       int size                                        ();
       CallList                 getCallList            ();
       CallList                 getConferenceList      ();
-      static const CallMap&    getHistory             ();
-      static const QStringList getNumbersByPopularity ();
-      static const QStringList getHistoryCallId       ();
 
       //Account related
       static Account* getCurrentAccount  (                     );
@@ -208,8 +202,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       typedef QHash< Index      , InternalStruct* > InternalIndex ;
 
       //Static attributes
-      static CallMap m_sHistoryCalls;
-      
       static InternalCall   m_sPrivateCallList_call  ;
       static InternalCallId m_sPrivateCallList_callId;
       static InternalWidget m_sPrivateCallList_widget;
@@ -219,7 +211,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       
       static QString      m_sPriorAccountId;
       static bool         m_sCallInit      ;
-      static bool         m_sHistoryInit   ;
 
    private:
       static bool m_sInstanceInit;

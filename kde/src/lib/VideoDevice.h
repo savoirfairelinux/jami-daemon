@@ -33,8 +33,10 @@ struct LIB_EXPORT Resolution {
    //Constructor
    explicit Resolution(uint _width, uint _height):width(_width),height(_height){}
    Resolution(QString size) {
-      width=size.split("x")[0].toInt();
-      height=size.split("x")[1].toInt();
+      if (size.split("x").size() == 2) {
+         width=size.split("x")[0].toInt();
+         height=size.split("x")[1].toInt();
+      }
    }
    //Getter
    QString toString() { return QString::number(width)+"x"+QString::number(height);}

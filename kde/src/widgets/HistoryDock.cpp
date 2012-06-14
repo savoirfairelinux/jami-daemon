@@ -44,6 +44,7 @@
 #include "widgets/HistoryTreeItem.h"
 #include "klib/AkonadiBackend.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "lib/HistoryModel.h"
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -157,7 +158,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    connect(m_pToDW    ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedToDate(QDate)   ));
    connect(m_pSortByCBB,                   SIGNAL(currentIndexChanged(int)), this, SLOT(reload()                    ));
    connect(AkonadiBackend::getInstance(),  SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo()         ));
-   connect(SFLPhone::model()            ,  SIGNAL(newHistoryCall(Call*)),    this, SLOT(newHistoryCall(Call*)       ));
+   connect(HistoryModel::self()         ,  SIGNAL(newHistoryCall(Call*)),    this, SLOT(newHistoryCall(Call*)       ));
 
    reload();
 } //HistoryDock
@@ -226,7 +227,7 @@ void HistoryDock::reload()
       delete hitem;
    }
    m_History.clear();
-   foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
+   foreach (Call* call, HistoryModel::getHistory()) {
       newHistoryCall(call);
    }
    
@@ -303,7 +304,7 @@ void HistoryDock::newHistoryCall(Call* call)
          break;
       }
    }
-}
+} //newHistoryCall
 
 ///Enable the ability to set a date range like 1 month to limit history
 void HistoryDock::enableDateRange(bool disable)
