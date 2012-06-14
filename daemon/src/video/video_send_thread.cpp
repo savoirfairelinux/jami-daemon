@@ -89,10 +89,7 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 #endif
     // set some encoder settings here
     encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
-    // emit one intra frame every gop_size frames
-    encoderCtx_->gop_size = 15;
-    encoderCtx_->max_b_frames = 0;
-    encoderCtx_->rtp_payload_size = 0; // Target GOB length
+    encoderCtx_->bit_rate = 400000;
     // resolution must be a multiple of two
     if (args_["width"].empty() and inputDecoderCtx_)
         encoderCtx_->width = inputDecoderCtx_->width;
@@ -107,6 +104,10 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     const int DEFAULT_FPS = 30;
     const int fps = args_["framerate"].empty() ? DEFAULT_FPS : atoi(args_["framerate"].c_str());
     encoderCtx_->time_base = (AVRational) {1, fps};
+    // emit one intra frame every gop_size frames
+    encoderCtx_->gop_size = 10 * fps;
+    encoderCtx_->max_b_frames = 0;
+    encoderCtx_->rtp_payload_size = 0; // Target GOB length
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
@@ -179,8 +180,14 @@ void VideoSendThread::setup()
     prepareEncoderContext(encoder);
 
     /* let x264 preset override our encoder settings */
-    if (args_["codec"] == "libx264")
+    if (args_["codec"] == "libx264") {
         forcePresetX264();
+        // FIXME: this should be parsed from the fmtp:profile-level-id
+        // attribute of our peer, it will determine what profile and
+        // level we are sending (i.e. that they can accept).
+        encoderCtx_->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
+        encoderCtx_->level = 13;
+    }
 
     scaledPicture_ = avcodec_alloc_frame();
 
