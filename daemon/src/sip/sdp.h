@@ -294,14 +294,14 @@ class Sdp {
          * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
          * negotiation, with the compatible media from each part
          */
-        pjmedia_sdp_session *activeLocalSession_;
+        const pjmedia_sdp_session *activeLocalSession_;
 
         /**
          * The negotiated SDP remote session
          * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
          * negotiation, with the compatible media from each part
          */
-        pjmedia_sdp_session *activeRemoteSession_;
+        const pjmedia_sdp_session *activeRemoteSession_;
 
         /**
          * Codec Map used for offer

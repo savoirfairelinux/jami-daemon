@@ -1467,7 +1467,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     // Get active session sessions
-    const pjmedia_sdp_session *remote_sdp;
+    const pjmedia_sdp_session *remote_sdp = 0;
     pjmedia_sdp_neg_get_active_remote(inv->neg, &remote_sdp);
 
     if (pjmedia_sdp_validate(remote_sdp) != PJ_SUCCESS) {

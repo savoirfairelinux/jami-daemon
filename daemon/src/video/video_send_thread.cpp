@@ -51,10 +51,11 @@ namespace sfl_video {
 
 using std::string;
 
-void VideoSendThread::print_and_save_sdp()
+void VideoSendThread::print_sdp()
 {
+    /* theora sdp can be huge */
     const size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
-    std::string sdp(sdp_size, 0); /* theora sdp can be huge */
+    std::string sdp(sdp_size, 0);
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
     std::istringstream iss(sdp);
     string line;
@@ -64,7 +65,7 @@ void VideoSendThread::print_and_save_sdp()
         line = line.substr(0, line.length() - 1);
         sdp_ += line + "\n";
     }
-    DEBUG("%s", sdp_.c_str());
+    DEBUG("sending\n%s", sdp_.c_str());
     sdpReady_.signal();
 }
 
@@ -83,16 +84,18 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 {
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
     encoderCtx_ = avcodec_alloc_context();
-    (void) encoder; /* unused */
+    avcodec_get_context_defaults(encoderCtx_, encoder);
 #else
     encoderCtx_ = avcodec_alloc_context3(encoder);
 #endif
+
     // set some encoder settings here
     encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
-    // emit one intra frame every gop_size frames
-    encoderCtx_->gop_size = 15;
-    encoderCtx_->max_b_frames = 0;
-    encoderCtx_->rtp_payload_size = 0; // Target GOB length
+    encoderCtx_->bit_rate = 400000;
+    encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;
+    encoderCtx_->rc_min_rate = 0;
+    encoderCtx_->rc_buffer_size = encoderCtx_->rc_max_rate;
+
     // resolution must be a multiple of two
     if (args_["width"].empty() and inputDecoderCtx_)
         encoderCtx_->width = inputDecoderCtx_->width;
@@ -107,6 +110,11 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     const int DEFAULT_FPS = 30;
     const int fps = args_["framerate"].empty() ? DEFAULT_FPS : atoi(args_["framerate"].c_str());
     encoderCtx_->time_base = (AVRational) {1, fps};
+    // emit one intra frame every gop_size frames
+    encoderCtx_->gop_size = 10 * fps;
+    encoderCtx_->max_b_frames = 0;
+    const int MTU = 1500;
+    encoderCtx_->rtp_payload_size = MTU / 2; // Target GOB length
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
@@ -123,7 +131,7 @@ void VideoSendThread::setup()
     if (args_["input"].find(V4L_PATH) != std::string::npos) {
         DEBUG("Using v4l2 format");
         file_iformat = av_find_input_format("video4linux2");
-        CHECK(file_iformat, "Could not find format video4linux2");
+        RETURN_IF_FAIL(file_iformat, "Could not find format video4linux2");
     }
 
     AVDictionary *options = NULL;
@@ -137,7 +145,7 @@ void VideoSendThread::setup()
     // Open video file
     int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                   file_iformat, &options);
-    CHECK(ret == 0, "Could not open input file %s", args_["input"].c_str());
+    RETURN_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
 
     // find the first video stream from the input
     streamIndex_ = -1;
@@ -145,27 +153,27 @@ void VideoSendThread::setup()
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
 
-    CHECK(streamIndex_ != -1, "Could not find video stream");
+    RETURN_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
 
     // Get a pointer to the codec context for the video stream
     inputDecoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
-    CHECK(inputDecoderCtx_, "Could not get input codec context");
+    RETURN_IF_FAIL(inputDecoderCtx_, "Could not get input codec context");
 
     // find the decoder for the video stream
     AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
-    CHECK(inputDecoder, "Could not decode video stream");
+    RETURN_IF_FAIL(inputDecoder, "Could not decode video stream");
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     ret = avcodec_open(inputDecoderCtx_, inputDecoder);
 #else
     ret = avcodec_open2(inputDecoderCtx_, inputDecoder, NULL);
 #endif
-    CHECK(ret >= 0, "Could not open codec");
+    RETURN_IF_FAIL(ret >= 0, "Could not open codec");
 
     outputCtx_ = avformat_alloc_context();
 
     AVOutputFormat *file_oformat = av_guess_format("rtp", args_["destination"].c_str(), NULL);
-    CHECK(file_oformat, "Unable to find a suitable output format for %s",
+    RETURN_IF_FAIL(file_oformat, "Unable to find a suitable output format for %s",
           args_["destination"].c_str());
 
     outputCtx_->oformat = file_oformat;
@@ -174,22 +182,28 @@ void VideoSendThread::setup()
 
     /* find the video encoder */
     AVCodec *encoder = avcodec_find_encoder_by_name(enc_name);
-    CHECK(encoder != 0, "Encoder \"%s\" not found!", enc_name);
+    RETURN_IF_FAIL(encoder != 0, "Encoder \"%s\" not found!", enc_name);
 
     prepareEncoderContext(encoder);
 
     /* let x264 preset override our encoder settings */
-    if (args_["codec"] == "libx264")
+    if (args_["codec"] == "libx264") {
         forcePresetX264();
+        // FIXME: this should be parsed from the fmtp:profile-level-id
+        // attribute of our peer, it will determine what profile and
+        // level we are sending (i.e. that they can accept).
+        encoderCtx_->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
+        encoderCtx_->level = 0x0d; // => 13 aka 1.3
+    }
 
     scaledPicture_ = avcodec_alloc_frame();
 
     // open encoder
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-    CHECK(avcodec_open(encoderCtx_, encoder) >= 0, "Could not open encoder")
+    RETURN_IF_FAIL(avcodec_open(encoderCtx_, encoder) >= 0, "Could not open encoder")
 #else
-    CHECK(avcodec_open2(encoderCtx_, encoder, NULL) >= 0, "Could not open "
+    RETURN_IF_FAIL(avcodec_open2(encoderCtx_, encoder, NULL) >= 0, "Could not open "
           "encoder")
 #endif
 
@@ -199,13 +213,13 @@ void VideoSendThread::setup()
 #else
     stream_ = avformat_new_stream(outputCtx_, 0);
 #endif
-    CHECK(stream_ != 0, "Could not allocate stream.");
+    RETURN_IF_FAIL(stream_ != 0, "Could not allocate stream.");
     stream_->codec = encoderCtx_;
 
     // open the output file, if needed
     if (!(file_oformat->flags & AVFMT_NOFILE)) {
         ret = avio_open(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE);
-        CHECK(ret >= 0, "Could not open \"%s\"!", outputCtx_->filename);
+        RETURN_IF_FAIL(ret >= 0, "Could not open \"%s\"!", outputCtx_->filename);
     } else
         DEBUG("No need to open \"%s\"", outputCtx_->filename);
 
@@ -214,10 +228,10 @@ void VideoSendThread::setup()
     if (!args_["payload_type"].empty())
         av_dict_set(&options, "payload_type", args_["payload_type"].c_str(), 0);
 
-    CHECK(avformat_write_header(outputCtx_, &options) >= 0, "Could not write "
+    RETURN_IF_FAIL(avformat_write_header(outputCtx_, &options) >= 0, "Could not write "
           "header for output file...check codec parameters");
 
-    print_and_save_sdp();
+    print_sdp();
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
 
     // allocate video frame
@@ -248,7 +262,7 @@ void VideoSendThread::createScalingContext()
                                           encoderCtx_->height,
                                           encoderCtx_->pix_fmt, SWS_BICUBIC,
                                           NULL, NULL, NULL);
-    CHECK(imgConvertCtx_, "Cannot init the conversion context");
+    RETURN_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context");
 }
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
@@ -322,7 +336,7 @@ void VideoSendThread::run()
 
         // write the compressed frame in the media file
         int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-        CHECK(ret >= 0, "av_interleaved_write_frame() error");
+        RETURN_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
         yield();
     }
 }
