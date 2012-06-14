@@ -76,6 +76,7 @@ void Private_AddCodecDialog::emitNewCodec() {
    emit addCodec(codecTable->item(codecTable->currentRow(),3)->text());
 }
 
+///Constructor
 DlgAccounts::DlgAccounts(KConfigDialog* parent)
  : QWidget(parent),accountList(NULL)
 {
@@ -153,13 +154,14 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
 } //DlgAccounts
 
+///Destructor
 DlgAccounts::~DlgAccounts()
 {
    accountList->disconnect();
    if (accountList) delete accountList;
 }
 
-
+///Save the account list, necessary for new and removed accounts
 void DlgAccounts::saveAccountList()
 {
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -221,7 +223,7 @@ void DlgAccounts::disconnectAccountsChangedSignal()
            this,                  SLOT(updateAccountStates()));
 }
 
-
+///Save an account using the values from the widgets
 void DlgAccounts::saveAccount(QListWidgetItem * item)
 {
    QString protocolsTab[] = ACCOUNT_TYPES_TAB;
@@ -506,6 +508,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    frame2_editAccounts->setEnabled(true);
 } //loadAccount
 
+///Load an account
 void DlgAccounts::loadAccountList()
 {
    accountList->updateAccounts();
@@ -519,6 +522,7 @@ void DlgAccounts::loadAccountList()
       frame2_editAccounts->setEnabled(false);
 }
 
+///Add an account to the list
 void DlgAccounts::addAccountToAccountList(AccountView* account)
 {
    QListWidgetItem * item = account->getItem();
@@ -528,14 +532,14 @@ void DlgAccounts::addAccountToAccountList(AccountView* account)
    listWidget_accountList->setItemWidget(item, widget);
 }
 
+///Called when one of the child widget is modified
 void DlgAccounts::changedAccountList()
 {
    accountListHasChanged = true;
    emit updateButtons();
 }
 
-
-
+///Callback when the account change
 void DlgAccounts::accountListChanged( QListWidgetItem * current, QListWidgetItem * previous )
 {
    kDebug() << "on_listWidget_accountList_currentItemChanged";
@@ -663,13 +667,13 @@ void DlgAccounts::updateStatusLabel(AccountView* account)
    edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
 }
 
+///Have the account changed
 bool DlgAccounts::hasChanged()
 {
-   bool res = accountListHasChanged;
-   return res;
+   return accountListHasChanged;
 }
 
-
+///Save settings
 void DlgAccounts::updateSettings()
 {
    if(accountListHasChanged) {
@@ -679,6 +683,7 @@ void DlgAccounts::updateSettings()
    }
 }
 
+///Reload
 void DlgAccounts::updateWidgets()
 {
    loadAccountList();
@@ -686,6 +691,7 @@ void DlgAccounts::updateWidgets()
    accountListHasChanged = false;
 }
 
+///Get the codecs
 void DlgAccounts::loadCodecList()
 {
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();

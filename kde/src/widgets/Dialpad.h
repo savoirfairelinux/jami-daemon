@@ -32,14 +32,17 @@ class DialpadButton : public QPushButton
 {
    Q_OBJECT
 public:
+   ///Constructor
    DialpadButton(QWidget* parent, const QString& value): QPushButton(parent),m_Value(value) {
       connect(this,SIGNAL(clicked()),this,SLOT(sltClicked()));
    }
 private slots:
+   ///Called on button click
    void sltClicked() { emit typed(m_Value); }
 private:
    QString m_Value;
 signals:
+   ///Emmited to add a number/letter to the string
    void typed(QString&);
 };
 

@@ -61,17 +61,22 @@ public:
       // delete itemWidget;
    }
 
+   ///Return the QListWidgetItem
    QListWidgetItem* getItem() {
       return item;
    }
 
+   ///Return the Qwidget hosted by the QListWidgetItem
    WIDGET_TYPE* getItemWidget() {
       return itemWidget;
    }
 
+   ///Return the QListWidgetItem (const)
    const QListWidgetItem* getItem() const {
       return item;
    }
+
+   ///Return the Qwidget hosted by the QListWidgetItem (const)
    const WIDGET_TYPE* getItemWidget() const {
       return itemWidget;
    }

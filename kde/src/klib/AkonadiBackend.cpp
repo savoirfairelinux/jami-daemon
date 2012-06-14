@@ -279,33 +279,3 @@ ContactList AkonadiBackend::update_slot()
 {
    return m_pContacts;//update(m_Collection);
 }
-
-/*****************************************************************************
- *                                                                           *
- *                                  Helpers                                  *
- *                                                                           *
- ****************************************************************************/
-
-///Return the extension/user of an URI (<sip:12345@exemple.com>)
-QString AkonadiBackend::getUserFromPhone(QString phoneNumber)
-{
-   if (phoneNumber.indexOf("@") != -1) {
-      QString user = phoneNumber.split("@")[0];
-      if (user.indexOf(":") != -1) {
-         return user.split(":")[1];
-      }
-      else {
-         return user;
-      }
-   }
-   return phoneNumber;
-} //getUserFromPhone
-
-///Return the domaine of an URI (<sip:12345@exemple.com>)
-QString AkonadiBackend::getHostNameFromPhone(QString phoneNumber)
-{
-   if (phoneNumber.indexOf("@") != -1) {
-      return phoneNumber.split("@")[1].left(phoneNumber.split("@")[1].size()-1);
-   }
-   return "";
-}

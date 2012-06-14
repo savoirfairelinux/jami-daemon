@@ -566,7 +566,6 @@ void SFLPhoneView::updateStatusMessage()
  ****************************************************************************/
 
 ///Proxy to hide or show the volume control
-///@TODO is it still needed? <elepage 2011>
 void SFLPhoneView::displayVolumeControls(bool checked)
 {
    //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -575,13 +574,13 @@ void SFLPhoneView::displayVolumeControls(bool checked)
 }
 
 ///Proxy to hide or show the dialpad
-///@TODO is it still needed? <elepage 2011>
 void SFLPhoneView::displayDialpad(bool checked)
 {
    ConfigurationSkeleton::setDisplayDialpad(checked);
    updateDialpad();
 }
 
+///Display a notification popup (freedesktop notification)
 void SFLPhoneView::displayMessageBox(bool checked)
 {
    ConfigurationSkeleton::setDisplayMessageBox(checked);

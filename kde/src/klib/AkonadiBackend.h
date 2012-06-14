@@ -61,10 +61,6 @@ public:
 private:
    AkonadiBackend(QObject* parent);
 
-   //Helper
-   QString getUserFromPhone(QString phoneNumber);
-   QString getHostNameFromPhone(QString phoneNumber);
-
    //Attributes
    static AkonadiBackend*         m_pInstance  ;
    static CallModel<>*            m_pModel     ;

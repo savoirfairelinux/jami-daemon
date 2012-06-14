@@ -185,6 +185,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       //Struct
       struct InternalStruct;
       typedef QList<InternalStruct*> InternalCallList;
+      ///InternalStruct: internal representation of a call
       struct InternalStruct {
          CallWidget       call       ;
          Call*            call_real  ;

@@ -752,6 +752,7 @@ CallViewOverlay::CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m
    m_black.setAlpha(75);
 }
 
+///Destructor
 CallViewOverlay::~CallViewOverlay()
 {
 

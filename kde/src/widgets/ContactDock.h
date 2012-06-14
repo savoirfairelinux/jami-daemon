@@ -92,6 +92,7 @@ private slots:
 class ContactTree : public CategorizedTreeWidget {
    Q_OBJECT
 public:
+   ///Constructor
    ContactTree(QWidget* parent) : CategorizedTreeWidget(parent) {}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
