@@ -51,10 +51,11 @@ namespace sfl_video {
 
 using std::string;
 
-void VideoSendThread::print_and_save_sdp()
+void VideoSendThread::print_sdp()
 {
+    /* theora sdp can be huge */
     const size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
-    std::string sdp(sdp_size, 0); /* theora sdp can be huge */
+    std::string sdp(sdp_size, 0);
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
     std::istringstream iss(sdp);
     string line;
@@ -83,13 +84,18 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 {
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
     encoderCtx_ = avcodec_alloc_context();
-    (void) encoder; /* unused */
+    avcodec_get_context_defaults(encoderCtx_, encoder);
 #else
     encoderCtx_ = avcodec_alloc_context3(encoder);
 #endif
+
     // set some encoder settings here
     encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
     encoderCtx_->bit_rate = 400000;
+    encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;
+    encoderCtx_->rc_min_rate = 0;
+    encoderCtx_->rc_buffer_size = encoderCtx_->rc_max_rate;
+
     // resolution must be a multiple of two
     if (args_["width"].empty() and inputDecoderCtx_)
         encoderCtx_->width = inputDecoderCtx_->width;
@@ -107,7 +113,8 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     // emit one intra frame every gop_size frames
     encoderCtx_->gop_size = 10 * fps;
     encoderCtx_->max_b_frames = 0;
-    encoderCtx_->rtp_payload_size = 0; // Target GOB length
+    const int MTU = 1500;
+    encoderCtx_->rtp_payload_size = MTU / 2; // Target GOB length
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
@@ -186,7 +193,7 @@ void VideoSendThread::setup()
         // attribute of our peer, it will determine what profile and
         // level we are sending (i.e. that they can accept).
         encoderCtx_->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
-        encoderCtx_->level = 13;
+        encoderCtx_->level = 0x0d; // => 13 aka 1.3
     }
 
     scaledPicture_ = avcodec_alloc_frame();
@@ -224,7 +231,7 @@ void VideoSendThread::setup()
     RETURN_IF_FAIL(avformat_write_header(outputCtx_, &options) >= 0, "Could not write "
           "header for output file...check codec parameters");
 
-    print_and_save_sdp();
+    print_sdp();
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
 
     // allocate video frame
