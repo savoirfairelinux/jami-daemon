@@ -26,20 +26,21 @@ bool CallModelBase::dbusInit = false;
 CallMap CallModelBase::m_sActiveCalls;
 AccountList* CallModelBase::m_spAccountList=NULL;
 
+///Constructor
 CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 {
    if (!dbusInit) {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-
+      
       //SLOTS
       //             SENDER                                        SIGNAL                                      RECEIVER                             SLOT                                    /
-      /**/connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( on1_callStateChanged  ( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( on1_incomingCall      ( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( on1_incomingConference( const QString &                  ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceChanged (const QString &, const QString &                  ) ), this , SLOT( on1_changingConference( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( on1_conferenceRemoved ( const QString &                  ) ) );
-      /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( on1_voiceMailNotify   ( const QString &, int             ) ) );
-      /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( on1_volumeChanged     ( const QString &, double          ) ) );
+      /**/connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( callStateChanged  ( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( incomingCall      ( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( incomingConference( const QString &                  ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceChanged (const QString &, const QString &                  ) ), this , SLOT( changingConference( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( conferenceRemoved ( const QString &                  ) ) );
+      /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( voiceMailNotify   ( const QString &, int             ) ) );
+      /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( volumeChanged     ( const QString &, double          ) ) );
       /*                                                                                                                                                                                    */
 
       connect(HistoryModel::self(),SIGNAL(newHistoryCall(Call*)),this,SLOT(addPrivateCall(Call*)));
@@ -53,13 +54,15 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
    }
 }
 
+///Destructor
 CallModelBase::~CallModelBase()
 {
    if (m_spAccountList) delete m_spAccountList;
    m_spAccountList = NULL;
 }
 
-void CallModelBase::on1_callStateChanged(const QString &callID, const QString &state)
+///When a call state change
+void CallModelBase::callStateChanged(const QString &callID, const QString &state)
 {
    //This code is part of the CallModel iterface too
    qDebug() << "Call State Changed for call  " << callID << " . New state : " << state;
@@ -87,7 +90,15 @@ void CallModelBase::on1_callStateChanged(const QString &callID, const QString &s
    
 }
 
-void CallModelBase::on1_incomingCall(const QString & accountID, const QString & callID)
+
+/*****************************************************************************
+ *                                                                           *
+ *                                   Slots                                   *
+ *                                                                           *
+ ****************************************************************************/
+
+///When a new call is incoming
+void CallModelBase::incomingCall(const QString & accountID, const QString & callID)
 {
    Q_UNUSED(accountID)
    qDebug() << "Signal : Incoming Call ! ID = " << callID;
@@ -96,14 +107,16 @@ void CallModelBase::on1_incomingCall(const QString & accountID, const QString & 
    emit incomingCall(call);
 }
 
-void CallModelBase::on1_incomingConference(const QString &confID)
+///When a new conference is incoming
+void CallModelBase::incomingConference(const QString &confID)
 {
    Call* conf = addConference(confID);
    qDebug() << "---------------Adding conference" << conf << confID << "---------------";
    emit conferenceCreated(conf);
 }
 
-void CallModelBase::on1_changingConference(const QString &confID, const QString &state)
+///When a conference change
+void CallModelBase::changingConference(const QString &confID, const QString &state)
 {
    Call* conf = getCall(confID);
    qDebug() << "Changing conference state" << conf << confID;
@@ -117,7 +130,8 @@ void CallModelBase::on1_changingConference(const QString &confID, const QString 
    }
 }
 
-void CallModelBase::on1_conferenceRemoved(const QString &confId)
+///When a conference is removed
+void CallModelBase::conferenceRemoved(const QString &confId)
 {
    Call* conf = getCall(confId);
    emit aboutToRemoveConference(conf);
@@ -125,17 +139,20 @@ void CallModelBase::on1_conferenceRemoved(const QString &confId)
    emit conferenceRemoved(confId);
 }
 
-void CallModelBase::on1_voiceMailNotify(const QString &accountID, int count)
+///When a new voice mail is available
+void CallModelBase::voiceMailNotify(const QString &accountID, int count)
 {
    qDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
    emit voiceMailNotify(accountID,count);
 }
 
-void CallModelBase::on1_volumeChanged(const QString & device, double value)
+///When the daemon change the volume
+void CallModelBase::volumeChanged(const QString & device, double value)
 {
    emit volumeChanged(device,value);
 }
 
+///Add a call to the model (reimplemented in .hpp)
 Call* CallModelBase::addCall(Call* call, Call* parent)
 {
    if (call->getCurrentState() != CALL_STATE_OVER)
@@ -145,12 +162,14 @@ Call* CallModelBase::addCall(Call* call, Call* parent)
    return call;
 }
 
+///Emit conference created signal
 Call* CallModelBase::addConferenceS(Call* conf)
 {
    emit conferenceCreated(conf);
    return conf;
 }
 
+///Account status changed
 void CallModelBase::accountChanged(const QString& account,const QString& state, int code)
 {
    Q_UNUSED(code)
@@ -158,15 +177,6 @@ void CallModelBase::accountChanged(const QString& account,const QString& state, 
    if (a) {
       emit accountStateChanged(a,a->getStateName(state));
    }
-}
-
-///Return a list of registered accounts
-AccountList* CallModelBase::getAccountList()
-{
-   if (m_spAccountList == NULL) {
-      m_spAccountList = new AccountList(true);
-   }
-   return m_spAccountList;
 }
 
 ///Remove it from active calls
@@ -177,6 +187,30 @@ void CallModelBase::removeActiveCall(Call* call)
    //m_sActiveCalls[call->getCallId()] = nullptr;
 }
 
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Getter                                   *
+ *                                                                           *
+ ****************************************************************************/
+
+///Return a list of registered accounts
+AccountList* CallModelBase::getAccountList()
+{
+   if (m_spAccountList == NULL) {
+      m_spAccountList = new AccountList(true);
+   }
+   return m_spAccountList;
+}
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                  Setters                                  *
+ *                                                                           *
+ ****************************************************************************/
+
+///Add call slot
 void CallModelBase::addPrivateCall(Call* call) {
    addCall(call,0);
 }

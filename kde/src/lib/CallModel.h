@@ -40,6 +40,7 @@ class Account;
 class ContactBackend;
 class HistoryModel;
 
+//Typedef
 typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
 
@@ -64,13 +65,13 @@ public:
    static AccountList* getAccountList (                                             );
    
 public slots:
-   void on1_callStateChanged   ( const QString& callID    , const QString &state   );
-   void on1_incomingCall       ( const QString& accountID , const QString & callID );
-   void on1_incomingConference ( const QString& confID                             );
-   void on1_changingConference ( const QString& confID    , const QString &state   );
-   void on1_conferenceRemoved  ( const QString& confId                             );
-   void on1_voiceMailNotify    ( const QString& accountID , int count              );
-   void on1_volumeChanged      ( const QString& device    , double value           );
+   void callStateChanged   ( const QString& callID    , const QString &state   );
+   void incomingCall       ( const QString& accountID , const QString & callID );
+   void incomingConference ( const QString& confID                             );
+   void changingConference ( const QString& confID    , const QString &state   );
+   void conferenceRemoved  ( const QString& confId                             );
+   void voiceMailNotify    ( const QString& accountID , int count              );
+   void volumeChanged      ( const QString& device    , double value           );
 
 protected:
    static CallMap m_sActiveCalls;
@@ -209,8 +210,8 @@ class LIB_EXPORT CallModel : public CallModelBase {
 
       static CallMap        m_lConfList;
       
-      static QString      m_sPriorAccountId;
-      static bool         m_sCallInit      ;
+      static QString        m_sPriorAccountId;
+      static bool           m_sCallInit      ;
 
    private:
       static bool m_sInstanceInit;
