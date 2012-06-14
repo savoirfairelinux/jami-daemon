@@ -59,9 +59,8 @@ CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalWidget CALLMODEL_T::m_sPrivateC
  ****************************************************************************/
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
+CALLMODEL_TEMPLATE CALLMODEL_T::CallModel() : CallModelBase(0)
 {
-   Q_UNUSED(type)
    init();
 }
 
@@ -205,7 +204,6 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
 {
    m_sActiveCalls[call->getCallId()] = call;
    addCall(call);
-   selectItem(call);
    return call;
 } //addCallCommon
 

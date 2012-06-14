@@ -472,17 +472,6 @@ void CallView::setTitle(const QString& title)
    headerItem()->setText(0,title);
 }
 
-///Select an item in the TreeView
-bool CallView::selectItem(Call* item)
-{
-   if (SFLPhone::model()->getIndex(item)) {
-      setCurrentItem(SFLPhone::model()->getIndex(item));
-      return true;
-   }
-   else
-      return false;
-}
-
 ///Return the current item
 Call* CallView::getCurrentItem()
 {
@@ -715,7 +704,6 @@ void CallView::conferenceRemoved(Call* conf)
       insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(0)));
    }
    takeTopLevelItem(indexOfTopLevelItem(SFLPhone::model()->getIndex(conf)));
-   //SFLPhone::model()->conferenceRemoved(confId);
    kDebug() << "Conference removed";
    }
    else {

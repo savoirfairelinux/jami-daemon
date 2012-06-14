@@ -89,7 +89,6 @@ class CallView : public QTreeWidget {
       void setTitle               ( const QString& title                                                              );
 
       //Mutator
-      bool selectItem             ( Call* item                                                                        );
       bool removeItem             ( Call* item                                                                        );
       bool dropMimeData           ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
       bool callToCall             ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );

@@ -53,18 +53,12 @@ class LIB_EXPORT CallModelBase : public QObject
 public:
    CallModelBase(QObject* parent = 0);
    ~CallModelBase();
-   virtual bool changeConference      ( const QString &confId, const QString &state ) = 0;
-   virtual void removeConference      ( const QString &confId                       ) = 0;
-   virtual Call* addConference        ( const QString &confID                       ) = 0;
-   virtual Call* findCallByCallId     ( const QString& callId                       ) = 0;
-   virtual Call* addRingingCall       ( const QString& callId                       ) = 0;
-   virtual Call* addIncomingCall      ( const QString& callId                       ) = 0;
    virtual Call* addCall              ( Call* call           , Call* parent =0      );
    virtual Call* getCall              ( const QString& callId                       ) const = 0;
    Call*   addConferenceS             ( Call* conf                                  );
    static AccountList* getAccountList (                                             );
    
-public slots:
+private slots:
    void callStateChanged      ( const QString& callID    , const QString &state   );
    void incomingCall          ( const QString& accountID , const QString & callID );
    void incomingConference    ( const QString& confID                             );
@@ -74,6 +68,14 @@ public slots:
    void volumeChangedSlot     ( const QString& device    , double value           );
 
 protected:
+   virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
+   virtual bool changeConference  ( const QString &confId, const QString &state ) = 0;
+   virtual void removeConference  ( const QString &confId                       ) = 0;
+   virtual Call* addConference    ( const QString &confID                       ) = 0;
+   virtual Call* addRingingCall   ( const QString& callId                       ) = 0;
+   virtual Call* addIncomingCall  ( const QString& callId                       ) = 0;
+
+   //Attributes
    static CallMap m_sActiveCalls;
    static AccountList* m_spAccountList;
 
@@ -89,7 +91,7 @@ signals:
    void incomingCall            ( Call* call                              );
    void conferenceCreated       ( Call* conf                              );
    void conferenceChanged       ( Call* conf                              );
-   void conferenceRemoved       ( const QString& confId                   );
+   void conferenceRemoved       ( Call* conf                              );
    void aboutToRemoveConference ( Call* conf                              );
    void voiceMailNotify         ( const QString& accountID , int    count );
    void volumeChanged           ( const QString& device    , double value );
@@ -105,14 +107,9 @@ signals:
 template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
 class LIB_EXPORT CallModel : public CallModelBase {
    public:
-      enum ModelType {
-         ActiveCall,
-         //History,
-         //Address
-      };
 
       //Constructors, initializer and destructors
-      CallModel                ( ModelType type     );
+      CallModel                (                    );
       virtual ~CallModel       (                    );
       virtual bool initCall    (                    );
       virtual void initContact ( ContactBackend* be );
@@ -121,24 +118,17 @@ class LIB_EXPORT CallModel : public CallModelBase {
       //Call related
       virtual Call*  addCall          ( Call* call                , Call* parent =0          );
       Call*          addDialingCall   ( const QString& peerName="", Account* account=nullptr );
-      Call*          addIncomingCall  ( const QString& callId                                );
-      Call*          addRingingCall   ( const QString& callId                                );
       static QString generateCallId   (                                                      );
       void           removeCall       ( Call* call                                           );
-      void           attendedTransfer ( Call* toTransfer           , Call* target            );
-      void           transfer         ( Call* toTransfer           , QString target          );
-      
-      virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
+      void           attendedTransfer ( Call* toTransfer          , Call* target             );
+      void           transfer         ( Call* toTransfer          , QString target           );
 
-      //Comference related
+      //Conference related
       bool createConferenceFromCall  ( Call* call1, Call* call2                    );
       bool mergeConferences          ( Call* conf1, Call* conf2                    );
       bool addParticipant            ( Call* call2, Call* conference               );
       bool detachParticipant         ( Call* call                                  );
-      virtual bool changeConference  ( const QString &confId, const QString &state );
-      virtual void removeConference  ( const QString &confId                       );
-      virtual Call* addConference    ( const QString &confID                       );
-      void removeConference          ( Call* call                                  );
+      void removeConference          ( Call* conf                                  );
 
       //Getters
       int size                                        ();
@@ -155,7 +145,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       static bool init();
       
       //Magic dispatcher
-      Call* findCallByCallId( const QString& callId   );
       CallList getCalls     (                         );
       CallList getCalls     ( const CallWidget widget ) const;
       CallList getCalls     ( const QString& callId   ) const;
@@ -187,6 +176,12 @@ class LIB_EXPORT CallModel : public CallModelBase {
       
       
    protected:
+      virtual Call* findCallByCallId ( const QString& callId                       );
+      virtual Call* addConference    ( const QString& confID                       );
+      virtual bool  changeConference ( const QString& confId, const QString& state );
+      virtual void  removeConference ( const QString& confId                       );
+      Call*         addIncomingCall  ( const QString& callId                       );
+      Call*         addRingingCall   ( const QString& callId                       );
       //Struct
       struct InternalStruct;
       typedef QList<InternalStruct*> InternalCallList;

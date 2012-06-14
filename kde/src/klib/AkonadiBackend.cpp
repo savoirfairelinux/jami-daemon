@@ -62,7 +62,7 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
    m_pSession = new Akonadi::Session( "SFLPhone::instance" );
 
    if ( not m_pModel ) {
-      m_pModel = new CallModel<>(CallModel<>::ActiveCall);
+      m_pModel = new CallModel<>();
       m_pModel->initCall();
       //m_pModel->initHistory();
    }

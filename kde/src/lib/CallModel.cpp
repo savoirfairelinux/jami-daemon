@@ -136,7 +136,7 @@ void CallModelBase::conferenceRemovedSlot(const QString &confId)
    Call* conf = getCall(confId);
    emit aboutToRemoveConference(conf);
    removeConference(confId);
-   emit conferenceRemoved(confId);
+   emit conferenceRemoved(conf);
 }
 
 ///When a new voice mail is available

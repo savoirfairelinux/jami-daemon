@@ -57,7 +57,7 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
 {
    Q_UNUSED(args)
    if (not m_pModel) {
-      m_pModel = new CallModel<>(CallModel<>::ActiveCall);
+      m_pModel = new CallModel<>();
       m_pModel->initCall();
       //m_pModel->initHistory();
    }

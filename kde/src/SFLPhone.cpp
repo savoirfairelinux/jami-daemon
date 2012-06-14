@@ -319,7 +319,7 @@ SFLPhoneView* SFLPhone::view()
 TreeWidgetCallModel* SFLPhone::model()
 {
    if (!m_pModel) {
-      m_pModel = new TreeWidgetCallModel(TreeWidgetCallModel::ActiveCall);
+      m_pModel = new TreeWidgetCallModel();
       m_pModel->initCall();
       m_pModel->initContact(AkonadiBackend::getInstance());
     }
