@@ -261,6 +261,8 @@ void HistoryDock::newHistoryCall(Call* call)
       callItem->setCall(call);
       m_History << callItem;
    }
+   else
+      return;
    switch (CURRENT_SORTING_MODE) {
       case Date: {
          QString category = timeToHistoryCategory(QDateTime::fromTime_t(callItem->call()->getStartTimeStamp().toUInt()).date());

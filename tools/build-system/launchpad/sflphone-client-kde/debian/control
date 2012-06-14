@@ -9,4 +9,4 @@ Homepage: http://www.sfphone.org/
 Package: sflphone-client-kde
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libqt4-dbus, kdelibs5, kdepimlibs5, sflphone-common
-Description:KDE client for the sflphone-daemon SIP/AiX softphone
+Description:KDE client for the sflphone-daemon SIP/IAX softphone
