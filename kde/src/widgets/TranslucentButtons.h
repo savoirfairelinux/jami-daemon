@@ -7,7 +7,7 @@ class QTimer;
 class QMimeData;
 class QImage;
 
-///@class TranslucentButtons Fancy buttons for the call widget
+///TranslucentButtons: Fancy buttons for the call widget
 class TranslucentButtons : public QPushButton
 {
    Q_OBJECT

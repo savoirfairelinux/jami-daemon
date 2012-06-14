@@ -26,7 +26,7 @@
 
 #include "lib/Account.h"
 
-///@class ActionSetAccountFirst Set an account to be the first
+///ActionSetAccountFirst Set an account to be the first
 class ActionSetAccountFirst : public QAction
 {
 Q_OBJECT

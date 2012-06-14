@@ -33,7 +33,7 @@ class Call;
 typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
 
-///@class HistoryModel History call manager
+///HistoryModel: History call manager
 class LIB_EXPORT HistoryModel : public QObject {
    Q_OBJECT
 public:

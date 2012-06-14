@@ -33,7 +33,7 @@ class QString;
 
 const QString& account_state_name(const QString& s);
 
-///@class Account a daemon account (SIP or AIX)
+///Account: a daemon account (SIP or AIX)
 class LIB_EXPORT Account : public QObject {
    Q_OBJECT
 

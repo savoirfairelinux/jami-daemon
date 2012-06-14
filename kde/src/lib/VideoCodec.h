@@ -32,7 +32,7 @@ class Account;
 class VideoCodec;
 typedef QHash<QString,VideoCodec*> CodecHash;
 
-///@class VideoCodec Codecs used for video calls
+///VideoCodec: Codecs used for video calls
 class LIB_EXPORT VideoCodec {
    public:
 

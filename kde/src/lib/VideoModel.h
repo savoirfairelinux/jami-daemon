@@ -29,7 +29,7 @@ class QTimer;
 //SFLPhone
 #include "VideoDevice.h"
 
-///@class VideoModel Video event dispatcher
+///VideoModel: Video event dispatcher
 class LIB_EXPORT VideoModel : public QObject {
    Q_OBJECT
 public:

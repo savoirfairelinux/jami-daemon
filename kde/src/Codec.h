@@ -26,7 +26,7 @@
 //Qt
 class QString;
 
-///@class Codec A SIP codec
+///Codec: A SIP codec
 class Codec : public QObject
 {
 Q_OBJECT

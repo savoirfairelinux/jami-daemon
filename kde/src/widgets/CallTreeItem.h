@@ -41,7 +41,7 @@ class Call;
 class TranslucentButtons;
 class Contact;
 
-///@class CallTreeItem Widget for the central call treeview
+///CallTreeItem: Widget for the central call treeview
 class CallTreeItem : public QWidget
 {
    Q_OBJECT

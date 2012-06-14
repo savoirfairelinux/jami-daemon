@@ -96,7 +96,7 @@ ContactBackend* AkonadiBackend::getInstance()
    return m_pInstance;
 }
 
-///Find contact using a phone number,
+///Find contact using a phone number
 ///@param resolveDNS check if the DNS is used by an account, then assume contact with that phone number / extension is the same as the caller
 Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resolveDNS)
 {

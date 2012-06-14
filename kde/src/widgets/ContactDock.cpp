@@ -54,7 +54,7 @@
 
 #define CURRENT_SORTING_MODE m_pSortByCBB->currentIndex()
 
-///@class QNumericTreeWidgetItem_hist TreeWidget using different sorting criterias
+///QNumericTreeWidgetItem_hist: TreeWidget using different sorting criterias
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}

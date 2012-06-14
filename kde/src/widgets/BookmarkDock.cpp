@@ -44,7 +44,7 @@
 #include "klib/HelperFunctions.h"
 #include "lib/HistoryModel.h"
 
-///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
+///QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}

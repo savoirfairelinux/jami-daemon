@@ -49,7 +49,7 @@ class QMimeData;
 //KDE
 class KAction;
 
-///@class HistoryTreeItem Items for the history dock
+///HistoryTreeItem: Items for the history dock
 class HistoryTreeItem : public QWidget
 {
    Q_OBJECT

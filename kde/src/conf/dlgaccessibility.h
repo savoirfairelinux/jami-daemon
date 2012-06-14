@@ -24,7 +24,7 @@
 
 #include "ui_dlgaccessibility.h"
 
-///@class DlgAccessibility Display option for the visually impaired
+///DlgAccessibility: Display option for the visually impaired
 class DlgAccessibility : public QWidget, public Ui_DlgAccessibility
 {
 Q_OBJECT

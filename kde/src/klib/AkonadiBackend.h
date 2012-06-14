@@ -44,7 +44,7 @@ namespace Akonadi {
 //SFLPhone
 class Contact;
 
-///@class AkonadiBackend Implement a backend for Akonadi
+///AkonadiBackend: Implement a backend for Akonadi
 class LIB_EXPORT AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:

@@ -39,7 +39,7 @@ class CategorizedTreeWidget;
 //Typedef
 typedef QList<HistoryTreeItem*> BookmarkList;
 
-///@class BookmarkDock Dock for managing favorite contacts
+///BookmarkDock: Dock for managing favorite contacts
 class BookmarkDock : public QDockWidget {
    Q_OBJECT
 public:

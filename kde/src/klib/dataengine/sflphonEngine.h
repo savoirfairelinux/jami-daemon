@@ -41,6 +41,7 @@ typedef QHash<QString,QVariant>                 HashStringString;
 typedef QHash<QString,QHash<QString,QVariant> > ContactHash     ;
 class Call;
 
+///SFLPhoneEngine: SFLPhone KDE plasma dataengine
 class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
 {
    Q_OBJECT

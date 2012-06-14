@@ -28,6 +28,7 @@ class KConfigGroup;
 class KateColorTreeItem;
 class QTreeWidgetItem;
 
+///CategorizedTreeWidget: A better looking widget than the plain QListWidget
 class CategorizedTreeWidget : public QTreeWidget
 {
   Q_OBJECT

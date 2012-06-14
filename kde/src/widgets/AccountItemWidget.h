@@ -30,7 +30,7 @@ class QCheckBox;
 class QLabel;
 
 
-///@class AccountItemWidget Widget for the config dialog account list
+///AccountItemWidget: Widget for the config dialog account list
 class AccountItemWidget : public QWidget
 {
 Q_OBJECT

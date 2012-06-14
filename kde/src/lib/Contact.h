@@ -38,7 +38,7 @@ namespace KABC {
 
 #include "typedefs.h"
 
-///@class Contact Abstract version of a contact
+///Contact: Abstract version of a contact
 class LIB_EXPORT Contact : public QObject{
    Q_OBJECT
 public:

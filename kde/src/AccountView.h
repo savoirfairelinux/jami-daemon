@@ -30,7 +30,7 @@ class QListWidgetItem;
 //SFLPhone
 class AccountItemWidget;
 
-///@class AccountView List widgets displaying accounts
+///AccountView: List widgets displaying accounts
 class AccountView : public Account, public Item<AccountItemWidget> {
    public:
       //Constructor

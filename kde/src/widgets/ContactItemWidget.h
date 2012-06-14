@@ -42,7 +42,7 @@ namespace KABC {
 class Contact;
 class TranslucentButtons;
 
-///@class ContactItemWidget Item for the contact tree
+///ContactItemWidget: Item for the contact tree
 class ContactItemWidget : public QWidget
 {
    Q_OBJECT

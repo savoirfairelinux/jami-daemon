@@ -27,7 +27,7 @@
 //Qt
 class QGridLayout;
 
-///@class DialpadButton the 12 button of the dialpad
+///DialpadButton: the 12 button of the dialpad
 class DialpadButton : public QPushButton
 {
    Q_OBJECT
@@ -44,7 +44,7 @@ signals:
 };
 
 
-///@class Dialpad A widget that representing a phone dialpad with associated numbers and letters
+///Dialpad: A widget that representing a phone dialpad with associated numbers and letters
 class Dialpad : public QWidget
 {
 Q_OBJECT

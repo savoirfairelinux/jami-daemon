@@ -44,7 +44,7 @@ class HistoryModel;
 typedef QMap<QString, Call*>  CallMap;
 typedef QList<Call*>          CallList;
 
-///@class CallModelBase Base class for the central model/frontend          
+///CallModelBase: Base class for the central model/frontend
 ///This class need to exist because template classes can't have signals and
 ///slots because Qt MOC generator can't guess the type at precompilation   
 class LIB_EXPORT CallModelBase : public QObject
@@ -103,7 +103,7 @@ signals:
  * Using QAbstractModel resulted in a failure. Managing all corner case bloated the code to the point of no
  * return. This frontend may not be cleaner from a design point of view, but it is from a code point of view
  */
-///@class CallModel Central model/frontend to deal with sflphoned
+///CallModel: Central model/frontend to deal with sflphoned
 template  <typename CallWidget = QWidget*, typename Index = QModelIndex*>
 class LIB_EXPORT CallModel : public CallModelBase {
    public:

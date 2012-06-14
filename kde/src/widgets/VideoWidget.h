@@ -24,6 +24,7 @@
 
 #include "../lib/VideoModel.h"
 
+///VideoWidget: A widget to display video from a framebuffer
 class VideoWidget : public QWidget {
    Q_OBJECT
 public:

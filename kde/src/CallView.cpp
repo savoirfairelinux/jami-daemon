@@ -48,7 +48,7 @@
 #include "klib/ConfigurationSkeleton.h"
 #include "SFLPhoneAccessibility.h"
 
-///@class CallTreeItemDelegate Delegates for CallTreeItem
+///CallTreeItemDelegate: Delegates for CallTreeItem
 class CallTreeItemDelegate : public QStyledItemDelegate
 {
 public:

@@ -143,14 +143,6 @@ private slots:
    void enter();
 
    /**
-    *   Displays a message window with editable text of the selected
-    *   phone number in history or address book.
-    *   Once the user accepts, place a call with the chosen phone number.
-    *   Keeps the peer name of the contact or past call.
-    */
-   void editBeforeCall();
-
-   /**
     * Updates the history's search bar's display according to the current
     * text searched.
     * If empty, hide the search bar.

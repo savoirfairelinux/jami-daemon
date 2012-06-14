@@ -51,7 +51,7 @@ struct LIB_EXPORT Resolution {
    }
 };
 
-///@class VideoDevice V4L devices used to record video for video call
+///VideoDevice: V4L devices used to record video for video call
 class LIB_EXPORT VideoDevice {
    public:
       //Singleton

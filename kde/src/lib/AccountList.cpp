@@ -219,13 +219,13 @@ void AccountList::removeAccount(Account* account)
  *                                                                           *
  ****************************************************************************/
 
-///Get the accoutn from its index
+///Get the account from its index
 const Account* AccountList::operator[] (int i) const
 {
    return (*m_pAccounts)[i];
 }
 
-///Get the accoutn from its index
+///Get the account from its index
 Account* AccountList::operator[] (int i)
 {
    return (*m_pAccounts)[i];

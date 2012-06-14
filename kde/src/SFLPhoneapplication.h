@@ -28,7 +28,7 @@
 //SFLPhone
 class SFLPhone;
 
-///@class SFLPhoneApplication Main application
+///SFLPhoneApplication: Main application
 class SFLPhoneApplication : public KApplication
 {
   Q_OBJECT

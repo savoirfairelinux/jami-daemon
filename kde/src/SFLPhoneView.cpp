@@ -686,22 +686,6 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
    menu.exec(event->globalPos());
 }
 
-///
-void SFLPhoneView::editBeforeCall()
-{
-   QString name;
-   QString number;
-
-   bool ok;
-   QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number, &ok);
-   if(ok) {
-      Call* call = SFLPhone::model()->addDialingCall(name);
-      call->appendText(newNumber);
-      //callView->selectItem(addCallToCallList(call));
-      action(call, CALL_ACTION_ACCEPT);
-   }
-}
-
 ///Pick the default account and load it
 void SFLPhoneView::setAccountFirst(Account * account)
 {
@@ -729,7 +713,7 @@ void SFLPhoneView::configureSflPhone()
    configDialog->show();
 }
 
-///Show the accoutn creation wizard
+///Show the account creation wizard
 void SFLPhoneView::accountCreationWizard()
 {
    if (!wizard) {

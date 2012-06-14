@@ -52,7 +52,7 @@
 
 #define CURRENT_SORTING_MODE m_pSortByCBB->currentIndex()
 
-///@class QNumericTreeWidgetItem Qt lack official functional sorting algo, so this hack around it
+///QNumericTreeWidgetItem: Qt lack official functional sorting algo, so this hack around it
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent=0):QTreeWidgetItem(parent),widget(0),weight(-1){}

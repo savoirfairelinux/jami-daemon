@@ -24,8 +24,9 @@
 #include <KLocale>
 #include "SFLPhone.h"
 
-SFLPhoneAccessibility* SFLPhoneAccessibility::m_pInstance=0;
+SFLPhoneAccessibility* SFLPhoneAccessibility::m_pInstance=nullptr;
 
+///Constructor
 SFLPhoneAccessibility::SFLPhoneAccessibility() : QObject(0),QList<KAction*>()
 {
    KAction* action = new KAction(0);
@@ -45,6 +46,7 @@ SFLPhoneAccessibility::SFLPhoneAccessibility() : QObject(0),QList<KAction*>()
    connect(action,SIGNAL(triggered(bool)),this,SLOT(currentCallDetails()));
 }
 
+///Signleton
 SFLPhoneAccessibility* SFLPhoneAccessibility::getInstance()
 {
    if (not m_pInstance) {
@@ -53,6 +55,7 @@ SFLPhoneAccessibility* SFLPhoneAccessibility::getInstance()
    return m_pInstance;
 }
 
+///Use the speech daemon to read details about the current calls
 void SFLPhoneAccessibility::listCall()
 {
    if (SFLPhone::model()->getCallList().size()>0) {
@@ -66,6 +69,7 @@ void SFLPhoneAccessibility::listCall()
    }
 }
 
+///Convert number to digit so the speech daemon say "one two three" instead of "one hundred and twenty three"
 QString SFLPhoneAccessibility::numberToDigit(QString number)
 {
    QString toReturn;
@@ -78,6 +82,7 @@ QString SFLPhoneAccessibility::numberToDigit(QString number)
    return toReturn;
 }
 
+///Use the speech daemon to read the current call details
 void SFLPhoneAccessibility::currentCallDetails()
 {
    foreach (Call* call,SFLPhone::model()->getCallList()) {
@@ -99,6 +104,7 @@ void SFLPhoneAccessibility::currentCallDetails()
    }
 }
 
+///Helper function is make code shorter
 void SFLPhoneAccessibility::say(QString message)
 {
    KSpeechInterfaceSingleton::getInstance()->say(message, KSpeech::soPlainText);

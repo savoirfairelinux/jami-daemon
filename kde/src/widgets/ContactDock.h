@@ -58,7 +58,7 @@ class ContactItemWidget;
 class StaticEventHandler;
 class Contact;
 
-///@class ContactDock Dock to access contacts
+///ContactDock: Dock to access contacts
 class ContactDock : public QDockWidget, public SortableDockCommon<CallTreeItem*,QTreeWidgetItem*>
 {
    Q_OBJECT
@@ -88,7 +88,7 @@ private slots:
    void reloadHistoryConst (                       );
 };
 
-///@class ContactTree tree view with additinal drag and drop
+///ContactTree: tree view with additinal drag and drop
 class ContactTree : public CategorizedTreeWidget {
    Q_OBJECT
 public:
@@ -97,7 +97,7 @@ public:
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };
 
-///@class KeyPressEaterC keygrabber
+///KeyPressEaterC: keygrabber
 class KeyPressEaterC : public QObject
 {
    Q_OBJECT

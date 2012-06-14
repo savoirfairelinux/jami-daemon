@@ -27,6 +27,7 @@
  *                             Private classes                               *
  *                                                                           *
  ****************************************************************************/
+///SortableCallSource: helper class to make sorting possible
 class SortableCallSource {
 public:
    SortableCallSource(Call* call=0) : count(0),callInfo(call) {}

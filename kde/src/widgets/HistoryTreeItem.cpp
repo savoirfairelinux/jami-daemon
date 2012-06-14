@@ -60,6 +60,7 @@
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
+///PlayerWidget: A small widget to play call recording
 class PlayerWidget : public QWidget {
 public:
    PlayerWidget(QWidget* parent = 0) : QWidget(parent) {}
