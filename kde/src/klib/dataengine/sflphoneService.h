@@ -31,6 +31,8 @@
 
 using namespace Plasma;
 
+class Account;
+
 ///@class SFLPhoneService RPC between the plasmoid and the library
 class SFLPhoneService : public Plasma::Service
 {
@@ -54,8 +56,8 @@ public:
    void start();
 
 private:
-    QString m_AccountId;
-    QString m_Number   ;
+    Account* m_pAccount;
+    QString  m_Number  ;
 };
 
 ///@class DTMFJob Play a sound when called

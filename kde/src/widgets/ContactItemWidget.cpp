@@ -336,7 +336,7 @@ void ContactItemWidget::callAgain()
    bool ok;
    QString number = showNumberSelector(ok);
    if (ok) {
-      Call* call = SFLPhone::model()->addDialingCall(m_pContactKA->getFormattedName(), SFLPhone::app()->model()->getCurrentAccountId());
+      Call* call = SFLPhone::model()->addDialingCall(m_pContactKA->getFormattedName(), SFLPhone::app()->model()->getCurrentAccount());
       call->setCallNumber(number);
       call->setPeerName(m_pContactKA->getFormattedName());
       call->actionPerformed(CALL_ACTION_ACCEPT);

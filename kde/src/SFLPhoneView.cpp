@@ -278,7 +278,7 @@ void SFLPhoneView::action(Call* call, call_action action)
 bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
 {
    if (contact->getPhoneNumbers().count() == 1) {
-      call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+      call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccount());
       call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
    }
    else if (contact->getPhoneNumbers().count() > 1) {
@@ -291,7 +291,7 @@ bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
       }
       QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
       if (ok) {
-         call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+         call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccount());
          call2->appendText(map[result]);
       }
       else {

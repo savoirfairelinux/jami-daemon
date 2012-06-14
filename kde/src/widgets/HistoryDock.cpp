@@ -429,7 +429,7 @@ void HistoryDock::keyPressEvent(QKeyEvent* event) {
       if (m_pItemView->selectedItems()[0] && m_pItemView->itemWidget(m_pItemView->selectedItems()[0],0)) {
          QNumericTreeWidgetItem* item = dynamic_cast<QNumericTreeWidgetItem*>(m_pItemView->selectedItems()[0]);
          if (item) {
-            SFLPhone::model()->addDialingCall(item->widget->getName(), SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(item->widget->getPhoneNumber());
+            SFLPhone::model()->addDialingCall(item->widget->getName(), SFLPhone::app()->model()->getCurrentAccount())->setCallNumber(item->widget->getPhoneNumber());
          }
       }
    }

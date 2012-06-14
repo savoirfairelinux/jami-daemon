@@ -248,7 +248,7 @@ void HistoryTreeItem::callAgain()
    if (m_pItemCall) {
       kDebug() << "Calling "<< m_pItemCall->getPeerPhoneNumber();
    }
-   Call* call = SFLPhone::model()->addDialingCall(getName(), SFLPhone::app()->model()->getCurrentAccountId());
+   Call* call = SFLPhone::model()->addDialingCall(getName(), SFLPhone::app()->model()->getCurrentAccount());
    call->setCallNumber(m_PhoneNumber);
    call->setPeerName(m_pPeerNameL->text());
    call->actionPerformed(CALL_ACTION_ACCEPT);

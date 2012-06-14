@@ -34,13 +34,13 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
       
       //SLOTS
       //             SENDER                                        SIGNAL                                      RECEIVER                             SLOT                                    /
-      /**/connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( callStateChanged  ( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( incomingCall      ( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( incomingConference( const QString &                  ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceChanged (const QString &, const QString &                  ) ), this , SLOT( changingConference( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( conferenceRemoved ( const QString &                  ) ) );
-      /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( voiceMailNotify   ( const QString &, int             ) ) );
-      /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( volumeChanged     ( const QString &, double          ) ) );
+      /**/connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( callStateChanged      ( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( incomingCall          ( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( incomingConference    ( const QString &                  ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceChanged (const QString &, const QString &                  ) ), this , SLOT( changingConference    ( const QString &, const QString & ) ) );
+      /**/connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( conferenceRemovedSlot ( const QString &                  ) ) );
+      /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( voiceMailNotifySlot   ( const QString &, int             ) ) );
+      /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( volumeChangedSlot     ( const QString &, double          ) ) );
       /*                                                                                                                                                                                    */
 
       connect(HistoryModel::self(),SIGNAL(newHistoryCall(Call*)),this,SLOT(addPrivateCall(Call*)));
@@ -111,7 +111,7 @@ void CallModelBase::incomingCall(const QString & accountID, const QString & call
 void CallModelBase::incomingConference(const QString &confID)
 {
    Call* conf = addConference(confID);
-   qDebug() << "---------------Adding conference" << conf << confID << "---------------";
+   qDebug() << "Adding conference" << conf << confID;
    emit conferenceCreated(conf);
 }
 
@@ -131,7 +131,7 @@ void CallModelBase::changingConference(const QString &confID, const QString &sta
 }
 
 ///When a conference is removed
-void CallModelBase::conferenceRemoved(const QString &confId)
+void CallModelBase::conferenceRemovedSlot(const QString &confId)
 {
    Call* conf = getCall(confId);
    emit aboutToRemoveConference(conf);
@@ -140,14 +140,14 @@ void CallModelBase::conferenceRemoved(const QString &confId)
 }
 
 ///When a new voice mail is available
-void CallModelBase::voiceMailNotify(const QString &accountID, int count)
+void CallModelBase::voiceMailNotifySlot(const QString &accountID, int count)
 {
    qDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
    emit voiceMailNotify(accountID,count);
 }
 
 ///When the daemon change the volume
-void CallModelBase::volumeChanged(const QString & device, double value)
+void CallModelBase::volumeChangedSlot(const QString & device, double value)
 {
    emit volumeChanged(device,value);
 }

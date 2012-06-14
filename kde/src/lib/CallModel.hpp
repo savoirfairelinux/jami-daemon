@@ -210,14 +210,11 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
 } //addCallCommon
 
 ///Create a new dialing call from peer name and the account ID
-CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, QString account)
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, Account* account)
 {
-   QString account2 = account;
-   if (account2.isEmpty()) {
-      account2 = getCurrentAccountId();
-   }
+   Account* acc = (account)?account:getCurrentAccount();
    
-   Call* call = Call::buildDialingCall(generateCallId(), peerName, account2);
+   Call* call = Call::buildDialingCall(generateCallId(), peerName, acc->getAccountId());
    return addCallCommon(call);
 }  //addDialingCall
 

@@ -65,13 +65,13 @@ public:
    static AccountList* getAccountList (                                             );
    
 public slots:
-   void callStateChanged   ( const QString& callID    , const QString &state   );
-   void incomingCall       ( const QString& accountID , const QString & callID );
-   void incomingConference ( const QString& confID                             );
-   void changingConference ( const QString& confID    , const QString &state   );
-   void conferenceRemoved  ( const QString& confId                             );
-   void voiceMailNotify    ( const QString& accountID , int count              );
-   void volumeChanged      ( const QString& device    , double value           );
+   void callStateChanged      ( const QString& callID    , const QString &state   );
+   void incomingCall          ( const QString& accountID , const QString & callID );
+   void incomingConference    ( const QString& confID                             );
+   void changingConference    ( const QString& confID    , const QString &state   );
+   void conferenceRemovedSlot ( const QString& confId                             );
+   void voiceMailNotifySlot   ( const QString& accountID , int count              );
+   void volumeChangedSlot     ( const QString& device    , double value           );
 
 protected:
    static CallMap m_sActiveCalls;
@@ -119,14 +119,14 @@ class LIB_EXPORT CallModel : public CallModelBase {
       static  void destroy     (                    );
 
       //Call related
-      virtual Call*  addCall          ( Call* call                , Call* parent =0    );
-      Call*          addDialingCall   ( const QString& peerName="", QString account="" );
-      Call*          addIncomingCall  ( const QString& callId                          );
-      Call*          addRingingCall   ( const QString& callId                          );
-      static QString generateCallId   (                                                );
-      void           removeCall       ( Call* call                                     );
-      void           attendedTransfer ( Call* toTransfer           , Call* target      );
-      void           transfer         ( Call* toTransfer           , QString target    );
+      virtual Call*  addCall          ( Call* call                , Call* parent =0          );
+      Call*          addDialingCall   ( const QString& peerName="", Account* account=nullptr );
+      Call*          addIncomingCall  ( const QString& callId                                );
+      Call*          addRingingCall   ( const QString& callId                                );
+      static QString generateCallId   (                                                      );
+      void           removeCall       ( Call* call                                           );
+      void           attendedTransfer ( Call* toTransfer           , Call* target            );
+      void           transfer         ( Call* toTransfer           , QString target          );
       
       virtual bool selectItem(Call* item) { Q_UNUSED(item); return false;}
 
