@@ -138,6 +138,7 @@ class CallView : public QTreeWidget {
       void hideOverlay();
 
    signals:
+      ///Emmited when one of the call item change
       void itemChanged(Call*);
 
 };

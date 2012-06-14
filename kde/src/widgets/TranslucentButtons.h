@@ -43,6 +43,7 @@ public slots:
 private slots:
    void changeVisibility();
 signals:
+   ///Emitted when data is dropped on the button
    void dataDropped(QMimeData*);
 };
 #endif

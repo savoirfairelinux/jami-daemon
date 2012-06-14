@@ -105,11 +105,17 @@ public slots:
    void updated();
 
 signals:
+   ///Emmited when a call is over
    void over(Call*);
+   ///Emmited when the item change
    void changed();
+   ///Emmited when it is required to expand the childs
    void showChilds(CallTreeItem*);
+   ///Emmited when a call is dropped on the "transfer" button
    void askTransfer(Call*);
+   ///Emmited when something is dropped on the button
    void transferDropEvent(Call*,QMimeData*);
+   ///Emmited when something is dropped on the "conference" button
    void conversationDropEvent(Call*,QMimeData*);
  };
 

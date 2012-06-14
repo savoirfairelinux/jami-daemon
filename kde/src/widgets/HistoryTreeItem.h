@@ -148,8 +148,6 @@ private slots:
    void showContext  ( const QPoint& pos );
    void transferEvent( QMimeData* data   );
 
-signals:
-   void over(Call*);
 };
 
 #endif // CALLTREE_ITEM_H

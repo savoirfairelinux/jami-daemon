@@ -69,6 +69,7 @@ private slots:
    void on_m_pCheckBox_stateChanged(int state);
 
 signals:
+   ///Emitted when the account is checked
    void checkStateChanged(bool checked);
 
 };

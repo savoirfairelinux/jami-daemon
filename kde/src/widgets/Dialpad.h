@@ -71,6 +71,7 @@ private slots:
    void clicked(QString& text);
 
 signals:
+   ///Emmited to add a number/letter to the string
    void typed(QString text);
 };
 

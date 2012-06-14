@@ -66,6 +66,7 @@ public slots:
    void updateAccounts();
    
 signals:
+   ///The account list changed
    void accountListUpdated();
 };
 

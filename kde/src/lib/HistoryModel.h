@@ -71,7 +71,9 @@ public slots:
 private slots:
    
 signals:
+   ///Emitted when the history change (new items, cleared)
    void historyChanged          (            );
+   ///Emitted when a new item is added to prevent full reload
    void newHistoryCall          ( Call* call );
 };
 

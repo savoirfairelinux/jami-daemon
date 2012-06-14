@@ -74,6 +74,7 @@ private slots:
    void timedEvents();
 
 signals:
+   ///Emitted when a new frame is ready
    void frameUpdated();
 };
 

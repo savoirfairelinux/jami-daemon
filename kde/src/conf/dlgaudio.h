@@ -58,6 +58,7 @@ private slots:
    //void codecTableChanged();
 
 signals:
+   ///Emitted when the buttons need to be updated in the parent dialog
    void updateButtons();
 };
 

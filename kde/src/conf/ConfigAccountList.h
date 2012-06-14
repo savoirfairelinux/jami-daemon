@@ -62,6 +62,7 @@ class ConfigAccountList : public QObject {
       QVector<AccountView*>*  accounts;
 
    signals:
+      ///Emitted when the list change
       void accountListUpdated();
 };
 

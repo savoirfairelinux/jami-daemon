@@ -109,7 +109,9 @@ private slots:
 
 
 signals:
+   ///Emitted when the history need to be cleaned
    void clearCallHistoryAsked();
+   ///Emitted when changes are applied
    void changesApplied();
 
 };

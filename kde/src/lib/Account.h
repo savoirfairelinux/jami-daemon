@@ -83,6 +83,7 @@ class LIB_EXPORT Account : public QObject {
       void accountChanged(QString accountId,QString stateName, int state);
 
    signals:
+      ///The account state (Invalif,Trying,Registered) changed
       void stateChanged(QString state);
 };
 #endif

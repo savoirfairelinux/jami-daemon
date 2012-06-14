@@ -42,6 +42,7 @@ private slots:
    void emitSetFirst();
 
 signals:
+   ///Set the account to be the first one
    void setFirst(Account * account);
 
 };

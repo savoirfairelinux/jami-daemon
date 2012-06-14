@@ -268,7 +268,9 @@ private slots:
    void updatePlayback(int position,int size);
 
 signals:
+   ///Emitted when a call change (state or details)
    void changed();
+   ///Emitted when the call is over
    void isOver(Call*);
    void playbackPositionChanged(int,int);
    void playbackStopped();

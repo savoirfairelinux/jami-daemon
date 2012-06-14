@@ -202,15 +202,21 @@ public slots:
    void on1_volumeChanged(const QString &device, double value);
 
 signals:
+   ///The status need to be updated
    void statusMessageChangeAsked      ( const QString&  message            );
+   ///The window title need to be updated
    void windowTitleChangeAsked        ( const QString&  title              );
+   ///The toolbar need to be updated
    void enabledActionsChangeAsked     ( const bool*     enabledActions     );
+   ///Toolbar/actions icons need to be changed
    void actionIconsChangeAsked        ( const QString*  actionIcons        );
+   ///Action string need to be changed
    void actionTextsChangeAsked        ( const QString*  actionTexts        );
+   ///Transfer state has changed
    void transferCheckStateChangeAsked ( bool            transferCheckState );
+   ///Record state has changed
    void recordCheckStateChangeAsked   ( bool            recordCheckState   );
-   void addressBookEnableAsked        ( bool            enableAddressBook  );
-   void screenChanged(int screen);
+   ///When a new call is comming
    void incomingCall(const Call * call);
 
 
