@@ -87,25 +87,25 @@ private:
    static bool dbusInit;
    
 signals:
-   ///Emmited when a call state change
+   ///Emitted when a call state change
    void callStateChanged        ( Call* call                              );
-   ///Emmited when a new call is incomming
+   ///Emitted when a new call is incomming
    void incomingCall            ( Call* call                              );
-   ///Emmited when a conference is created
+   ///Emitted when a conference is created
    void conferenceCreated       ( Call* conf                              );
-   ///Emmited when a conference change state or participant
+   ///Emitted when a conference change state or participant
    void conferenceChanged       ( Call* conf                              );
-   ///Emmited when a conference is removed
+   ///Emitted when a conference is removed
    void conferenceRemoved       ( Call* conf                              );
-   ///Emmited just before a conference is removed
+   ///Emitted just before a conference is removed
    void aboutToRemoveConference ( Call* conf                              );
-   ///Emmited when a new voice mail is available
+   ///Emitted when a new voice mail is available
    void voiceMailNotify         ( const QString& accountID , int    count );
-   ///Emmited when the volume change
+   ///Emitted when the volume change
    void volumeChanged           ( const QString& device    , double value );
-   ///Emmited when a call is added
+   ///Emitted when a call is added
    void callAdded               ( Call* call               , Call* parent );
-   ///Emmited when an account state change
+   ///Emitted when an account state change
    void accountStateChanged     ( Account* account, QString state         );
 };
 

@@ -42,7 +42,7 @@ private slots:
 private:
    QString m_Value;
 signals:
-   ///Emmited to add a number/letter to the string
+   ///Emitted to add a number/letter to the string
    void typed(QString&);
 };
 
@@ -71,7 +71,7 @@ private slots:
    void clicked(QString& text);
 
 signals:
-   ///Emmited to add a number/letter to the string
+   ///Emitted to add a number/letter to the string
    void typed(QString text);
 };
 
