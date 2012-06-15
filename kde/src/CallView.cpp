@@ -207,6 +207,10 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
          kDebug() << "Call dropped on itself (doing nothing)";
          return true;
       }
+      else if (SFLPhone::model()->getIndex(encodedCallId) == parent) {
+         kDebug() << "Dropping conference on itself (doing nothing)";
+         return true;
+      }
 
       if ((parent->childCount()) && (SFLPhone::model()->getIndex(encodedCallId)->childCount())) {
          kDebug() << "Merging two conferences";
