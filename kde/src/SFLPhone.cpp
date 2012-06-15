@@ -125,6 +125,7 @@ bool SFLPhone::initialize()
 
    m_pContactCD = new ContactDock(this);
    addDockWidget(Qt::TopDockWidgetArea,m_pContactCD);
+   m_pContactCD->show();
    m_pContactCD->setVisible(ConfigurationSkeleton::displayContactDock());
 
    // tell the KXmlGuiWindow that this is indeed the main widget
@@ -160,8 +161,15 @@ bool SFLPhone::initialize()
    addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
    tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
 
+   m_pHistoryDW->show();
    m_pHistoryDW->setVisible(ConfigurationSkeleton::displayHistoryDock());
+   m_pBookmarkDW->show();
    m_pBookmarkDW->setVisible(ConfigurationSkeleton::displayBookmarkDock());
+
+   //Add bug when the dock is tabbed
+   /*connect(m_pContactCD,  SIGNAL(visibilityChanged(bool)) ,action_showContactDock , SLOT(setChecked(bool)));
+   connect(m_pBookmarkDW, SIGNAL(visibilityChanged(bool)) ,action_showBookmarkDock, SLOT(setChecked(bool)));
+   connect(m_pHistoryDW,  SIGNAL(visibilityChanged(bool)) ,action_showHistoryDock , SLOT(setChecked(bool)));*/
 
    connect(action_showContactDock, SIGNAL(toggled(bool)),m_pContactCD, SLOT(setVisible(bool)));
    connect(action_showHistoryDock, SIGNAL(toggled(bool)),m_pHistoryDW, SLOT(setVisible(bool)));
