@@ -186,29 +186,29 @@ void CallTreeItem::setCall(Call *call)
    m_pTransferNumberL  = new QLabel(" ");
    m_pElapsedL         = new QLabel(" ");
    QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
-
+   
    m_pTransferPrefixL->setVisible(false);
    m_pTransferNumberL->setVisible(false);
-
+   
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
-
-
+   
+   
    m_pBtnConf = new TranslucentButtons(this);
    m_pBtnConf->setVisible(false);
    m_pBtnConf->setParent(this);
    m_pBtnConf->setText(i18n("Conference"));
    m_pBtnConf->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/confBlackWhite.png")));
    connect(m_pBtnConf,SIGNAL(dataDropped(QMimeData*)),this,SLOT(conversationEvent(QMimeData*)));
-
+   
    m_pBtnTrans = new TranslucentButtons(this);
    m_pBtnTrans->setText(i18n("Transfer"));
    m_pBtnTrans->setVisible(false);
    m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
    connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
-
+   
    m_pElapsedL->setStyleSheet("margin-right:5px;");
-
+   
    mainLayout->setSpacing(4);
    QVBoxLayout* descr = new QVBoxLayout();
    descr->setMargin(1);
@@ -378,7 +378,7 @@ void CallTreeItem::updated()
    }
    changed();
 
-   if (state == CALL_STATE_CURRENT && !m_pTimer) {
+   if ((state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_TRANSFER) && !m_pTimer) {
       m_pTimer = new QTimer(this);
       m_pTimer->setInterval(1000);
       connect(m_pTimer,SIGNAL(timeout()),this,SLOT(incrementTimer()));
