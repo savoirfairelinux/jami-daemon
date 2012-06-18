@@ -38,8 +38,8 @@
 
 calltab_t* calltab_init(gboolean searchbar_type, const gchar * const name)
 {
-    calltab_t* ret = calloc(1, sizeof(calltab_t));
-    ret->_name = g_strdup(name);
+    calltab_t* ret = g_new0(calltab_t, 1);
+    ret->name = g_strdup(name);
 
     calltree_create(ret, searchbar_type);
 
@@ -98,10 +98,16 @@ calltab_create_searchbar(calltab_t* tab)
 {
     g_assert(tab);
 
-    if (g_strcmp0(tab->_name, HISTORY) == 0)
+    if (calltab_has_name(tab, HISTORY))
         tab->searchbar = history_searchbar_new();
-    else if (g_strcmp0(tab->_name, CONTACTS) == 0)
+    else if (calltab_has_name(tab, CONTACTS))
         tab->searchbar = contacts_searchbar_new();
     else
         ERROR("Current calls tab does not need a searchbar\n");
+}
+
+gboolean
+calltab_has_name(calltab_t *tab, const gchar *name)
+{
+    return g_strcmp0(tab->name, name) == 0;
 }

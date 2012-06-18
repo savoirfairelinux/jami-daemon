@@ -640,7 +640,8 @@ sflphone_keypad(guint keyval, gchar * key)
 {
     callable_obj_t * c = calltab_get_selected_call(current_calls_tab);
 
-    if ((active_calltree_tab != current_calls_tab) || (active_calltree_tab == current_calls_tab && !c)) {
+    const gboolean current_is_active_tab = calltab_has_name(active_calltree_tab, CURRENT_CALLS);
+    if (!current_is_active_tab || (current_is_active_tab && !c)) {
         switch (keyval) {
             case GDK_Return:
             case GDK_KP_Enter:

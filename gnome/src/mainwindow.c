@@ -151,10 +151,10 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data
         return TRUE;
 
     if (event->keyval == GDK_KEY_Return) {
-        if (active_calltree_tab == current_calls_tab) {
+        if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
             sflphone_keypad(event->keyval, event->string);
             return TRUE;
-        } else if (active_calltree_tab == history_tab)
+        } else if (calltab_has_name(active_calltree_tab, HISTORY))
             return FALSE;
     }
 

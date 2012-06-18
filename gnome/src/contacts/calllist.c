@@ -117,9 +117,9 @@ calllist_reset(calltab_t* tab)
 void
 calllist_add_call(calltab_t* tab, callable_obj_t * c)
 {
-    DEBUG("Adding call with callID %s to tab %s", c->_callID, tab->_name);
+    DEBUG("Adding call with callID %s to tab %s", c->_callID, tab->name);
     g_queue_push_tail(tab->callQueue, c);
-    DEBUG("Tab %s has %d calls", tab->_name, calllist_get_size(tab));
+    DEBUG("Tab %s has %d calls", tab->name, calllist_get_size(tab));
 }
 
 void
@@ -159,7 +159,7 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
 
     callable_obj_t *call = c->data;
 
-    DEBUG("Removing call %s from tab %s", callID, tab->_name);
+    DEBUG("Removing call %s from tab %s", callID, tab->name);
     g_queue_remove(tab->callQueue, call);
 
     /* Don't save empty (i.e. started dialing, then deleted) calls */
@@ -194,7 +194,7 @@ calllist_get_call(calltab_t* tab, const gchar * callID)
     GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL) {
-        ERROR("Could not find call %s in tab %s", callID, tab->_name);
+        ERROR("Could not find call %s in tab %s", callID, tab->name);
         return NULL;
     }
 

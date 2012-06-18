@@ -65,4 +65,7 @@ calltab_get_selected_conf (calltab_t *);
 void
 calltab_create_searchbar (calltab_t *);
 
+gboolean
+calltab_has_name(calltab_t *tab, const gchar *name);
+
 #endif

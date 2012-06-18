@@ -204,7 +204,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 DEBUG("Call State Dialing");
                 gtk_action_set_sensitive(pickUpAction_, TRUE);
 
-                if (active_calltree_tab == current_calls_tab)
+                if (calltab_has_name(active_calltree_tab, CURRENT_CALLS))
                     gtk_action_set_sensitive(hangUpAction_, TRUE);
 
                 g_object_ref(newCallWidget_);
@@ -212,11 +212,11 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 pos = 0;
                 add_to_toolbar(toolbar_, pickUpWidget_, pos++);
 
-                if (active_calltree_tab == current_calls_tab) {
+                if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     main_window_hide_playback_scale();
                 }
-                else if (active_calltree_tab == history_tab) {
+                else if (calltab_has_name(active_calltree_tab, HISTORY)) {
                     main_window_show_playback_scale();
                     if (is_non_empty(selectedCall->_recordfile)) {
                         main_window_set_playback_scale_sensitive();
@@ -346,7 +346,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
         case CONFERENCE_STATE_ACTIVE_DETACHED:
             DEBUG("Conference State Active");
             g_signal_handler_block(recordWidget_, recordButtonConnId_);
-            if (active_calltree_tab == current_calls_tab) {
+            if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
                 gtk_action_set_sensitive(hangUpAction_, TRUE);
                 gtk_widget_set_sensitive(holdToolbar_, TRUE);
                 gtk_widget_set_sensitive(recordWidget_, TRUE);
@@ -360,7 +360,7 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
                     add_to_toolbar(toolbar_, imToolbar_, pos);
                 }
                 main_window_hide_playback_scale();
-            } else if (active_calltree_tab == history_tab) {
+            } else if (calltab_has_name(active_calltree_tab, HISTORY)) {
                 main_window_show_playback_scale();
                 if (is_non_empty(selectedConf->_recordfile)) {
                     main_window_set_playback_scale_sensitive();
