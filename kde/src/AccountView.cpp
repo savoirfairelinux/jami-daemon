@@ -152,7 +152,7 @@ AccountView* AccountView::buildNewAccountFromAlias(const QString& alias)
    //Account* a = Account::buildNewAccountFromAlias(alias);
    AccountView* a = new AccountView();
    a->m_pAccountDetails = new MapStringString();
-   a->setAccountDetail(ACCOUNT_ALIAS,alias);
+   a->setAccountAlias(alias);
    a->initItem();
    return a;
 }
