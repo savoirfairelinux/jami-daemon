@@ -84,7 +84,8 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 {
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
     encoderCtx_ = avcodec_alloc_context();
-    avcodec_get_context_defaults(encoderCtx_, encoder);
+    avcodec_get_context_defaults(encoderCtx_);
+    (void) encoder;
 #else
     encoderCtx_ = avcodec_alloc_context3(encoder);
 #endif
