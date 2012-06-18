@@ -146,8 +146,8 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /*                                                                                                                               */
 
 
-   connect(accountList,    SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(accountListChanged(QListWidgetItem*,QListWidgetItem*)));
-   connect(list_credential,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
+   connect(listWidget_accountList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(accountListChanged(QListWidgetItem*,QListWidgetItem*)));
+   connect(list_credential,        SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
 
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
