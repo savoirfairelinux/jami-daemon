@@ -160,15 +160,10 @@ VideoControls::getSettings() {
     return videoPreference_.getSettings();
 }
 
-void VideoControls::startPreview(int32_t &width, int32_t &height,
-                                 int32_t &shmKey, int32_t &semKey,
-                                 int32_t &videoBufferSize)
+void VideoControls::startPreview()
 {
     if (preview_.get()) {
         ERROR("Video preview was already started!");
-        shmKey = -1;
-        semKey = -1;
-        videoBufferSize = -1;
         return;
     }
 
@@ -177,10 +172,6 @@ void VideoControls::startPreview(int32_t &width, int32_t &height,
 
     map<string, string> args(videoPreference_.getSettings());
     preview_.reset(new sfl_video::VideoPreview(args));
-
-    width = atoi(args["width"].c_str());
-    height = atoi(args["height"].c_str());
-    preview_->getShmInfo(shmKey, semKey, videoBufferSize);
 }
 
 void VideoControls::stopPreview()

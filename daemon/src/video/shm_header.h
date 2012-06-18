@@ -46,7 +46,6 @@ struct SHMHeader {
     int buffer_size;
 
     char data[0];
-    SHMHeader() : notification(), mutex(), buffer_gen(0), buffer_size(0) {}
 };
 
 #endif

@@ -112,16 +112,6 @@
        </method>
 
        <method name="startPreview" tp:name-for-bindings="startPreview">
-           <arg type="i" name="width" direction="out">
-           </arg>
-           <arg type="i" name="height" direction="out">
-           </arg>
-           <arg type="i" name="shmKey" direction="out">
-           </arg>
-           <arg type="i" name="semKey" direction="out">
-           </arg>
-           <arg type="i" name="videoBufferSize" direction="out">
-           </arg>
        </method>
 
        <method name="stopPreview" tp:name-for-bindings="stopPreview">

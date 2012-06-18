@@ -32,7 +32,6 @@
 #include <map>
 #include <string>
 #include "manager.h"
-#include "shared_memory.h"
 #include "video_receive_thread.h"
 
 class VideoControls;
@@ -40,19 +39,10 @@ class VideoControls;
 namespace sfl_video {
 
 VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
-    args_(args), sharedMemory_(), receiveThread_()
+    args_(args), receiveThread_()
 {
-    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-    sharedMemory_.reset(new SharedMemory(*controls));
-    receiveThread_.reset(new VideoReceiveThread(args_, *sharedMemory_));
+    receiveThread_.reset(new VideoReceiveThread(args_));
     receiveThread_->start();
-    sharedMemory_->waitForShm();
 }
 
-void VideoPreview::getShmInfo(int &shmKey, int &semaphoreKey, int &bufferSize)
-{
-    shmKey = sharedMemory_->getShmKey();
-    semaphoreKey = sharedMemory_->getSemaphoreKey();
-    bufferSize = sharedMemory_->getBufferSize();
-}
 } // end namspace sfl_video

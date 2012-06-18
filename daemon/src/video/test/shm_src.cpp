@@ -34,7 +34,7 @@
  */
 
 #include "shm_src.h"
-#include "shm_header.h"
+#include "../shm_header.h"
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <cstdio>

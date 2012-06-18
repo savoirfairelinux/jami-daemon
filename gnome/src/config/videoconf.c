@@ -125,20 +125,15 @@ preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
 }
 
 void
-video_preview_started_cb(DBusGProxy *proxy, gint OUT_width, gint OUT_height,
-                         gint OUT_shmId, gint OUT_semId,
-                         gint OUT_videoBufferSize, GError *error,
+video_preview_started_cb(DBusGProxy *proxy, GError *error,
                          gpointer userdata)
 {
     (void) proxy;
     (void) error;
     (void) userdata;
 
-    if (OUT_shmId == -1 || OUT_semId == -1 || OUT_videoBufferSize == -1)
-        return;
-
-    DEBUG("Preview started width:%d height:%d shm:%d sem:%d size:%d",
-          OUT_width, OUT_height, OUT_shmId, OUT_semId, OUT_videoBufferSize);
+    DEBUG("Preview started");
+#if 0
     drawWidth = OUT_width;
     drawHeight = OUT_height;
     gtk_widget_set_size_request(drawarea, drawWidth, drawHeight);
@@ -148,6 +143,7 @@ video_preview_started_cb(DBusGProxy *proxy, gint OUT_width, gint OUT_height,
         ERROR("Video preview run returned an error, unreffing\n");
         g_object_unref(preview);
     }
+#endif
 }
 
 static void

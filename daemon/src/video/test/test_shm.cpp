@@ -25,8 +25,10 @@ void sink_thread()
     SHMSink sink("bob");;
     if (!sink.start())
         return;
+    std::vector<unsigned char> test_vec(test_data, test_data + sizeof(test_data) / sizeof(test_data[0]));
+
     while (!done) {
-        sink.render((char*) test_data, sizeof(test_data));
+        sink.render(test_vec);
         usleep(1000);
     }
     sink.stop();

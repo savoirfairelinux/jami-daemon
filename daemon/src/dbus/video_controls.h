@@ -98,8 +98,7 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         std::string getInputDeviceRate();
         std::string getCurrentCodecName(const std::string &callID);
 
-        void startPreview(int32_t &width, int32_t &height, int32_t &shmKey,
-                          int32_t &semKey, int32_t &bufferSize);
+        void startPreview();
         void stopPreview();
 };
 

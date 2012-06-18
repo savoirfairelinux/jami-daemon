@@ -38,6 +38,7 @@
 
 #include <semaphore.h>
 #include <string>
+#include <vector>
 #include "noncopyable.h"
 
 class SHMHeader;
@@ -52,7 +53,7 @@ class SHMSink {
 
         bool resize_area(size_t desired_length);
 
-        void render(char *data, size_t len);
+        void render(const std::vector<unsigned char> &data);
 
     private:
         NON_COPYABLE(SHMSink);

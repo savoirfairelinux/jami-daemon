@@ -37,7 +37,7 @@
 #define SHM_SRC_H_
 
 #include <string>
-#include "noncopyable.h"
+#include "../../noncopyable.h"
 
 class SHMHeader;
 // Example Shared memory source, only useful for testing
@@ -46,17 +46,16 @@ class SHMHeader;
 class SHMSrc {
     public:
         SHMSrc(const std::string &shm_name);
+        virtual ~SHMSrc() {};
 
         bool start();
         bool stop();
 
         bool resize_area();
 
-        void render(char *data, size_t len);
+        virtual void render(char *data, size_t len);
 
-    private:
-        NON_COPYABLE(SHMSrc);
-
+    protected:
         void shm_lock();
         void shm_unlock();
         std::string shm_name_;
@@ -64,6 +63,9 @@ class SHMSrc {
         SHMHeader *shm_area_;
         size_t shm_area_len_;
         unsigned buffer_gen_;
+
+    private:
+        NON_COPYABLE(SHMSrc);
 };
 
 #endif // SHM_SRC_H_

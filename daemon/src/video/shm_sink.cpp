@@ -148,15 +148,15 @@ SHMSink::resize_area(size_t desired_length)
     return true;
 }
 
-void SHMSink::render(char *data, size_t len)
+void SHMSink::render(const std::vector<unsigned char> &data)
 {
     shm_lock();
 
-    if (!resize_area(sizeof(SHMHeader) + len))
+    if (!resize_area(sizeof(SHMHeader) + data.size()))
         return;
 
-    memcpy(shm_area_->data, data, len);
-    shm_area_->buffer_size = len;
+    memcpy(shm_area_->data, &(*data.begin()), data.size());
+    shm_area_->buffer_size = data.size();
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();

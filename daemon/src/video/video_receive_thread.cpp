@@ -50,7 +50,6 @@ extern "C" {
 #include <fstream>
 
 #include "manager.h"
-#include "shared_memory.h"
 
 static const enum PixelFormat VIDEO_RGB_FORMAT = PIX_FMT_BGRA;
 
@@ -60,24 +59,50 @@ using std::string;
 
 namespace { // anonymous namespace
 
+// FIXME: this is an ugly hack to generate a unique filename for shm_open
+// While there's a good chance that /dev/shm/sfl_XXXX will not
+// be in use we need a better way of doing this.
+
+std::string createTempFileName()
+{
+    std::string path;
+    const char SHM_PATH[] = "/dev/shm";
+    int i;
+    for (i = 0; path.empty() and i < TMP_MAX; ++i) {
+        char *fname = tempnam(SHM_PATH, "sfl_");
+        // if no file with name path exists, the path is usable
+        if (access(fname, F_OK))
+            path = std::string(fname + sizeof(SHM_PATH));
+        free(fname);
+    }
+    if (i == TMP_MAX)
+        throw std::runtime_error("Could not generate unique filename");
+
+    DEBUG("Created path %s", path.c_str());
+    return path;
+}
+
 int getBufferSize(int width, int height, int format)
 {
     enum PixelFormat fmt = (enum PixelFormat) format;
     // determine required buffer size and allocate buffer
-    return sizeof(uint8_t) * avpicture_get_size(fmt, width, height);
+    return sizeof(unsigned char) * avpicture_get_size(fmt, width, height);
 }
 
-string openTemp(string path, std::ofstream& f)
+string openTemp(string path, std::ofstream& os)
 {
-    path += "/XXXXXX";
+    path += "/";
+    // POSIX the mktemp family of functions requires names to end with 6 x's
+    const char * const X_SUFFIX = "XXXXXX";
+
+    path += X_SUFFIX;
     std::vector<char> dst_path(path.begin(), path.end());
     dst_path.push_back('\0');
-    int fd = -1;
-    while (fd == -1) {
+    for (int fd = -1; fd == -1; ) {
         fd = mkstemp(&dst_path[0]);
         if (fd != -1) {
             path.assign(dst_path.begin(), dst_path.end() - 1);
-            f.open(path.c_str(), std::ios_base::trunc | std::ios_base::out);
+            os.open(path.c_str(), std::ios_base::trunc | std::ios_base::out);
             close(fd);
         }
     }
@@ -174,13 +199,7 @@ void VideoReceiveThread::setup()
     }
 
     // determine required buffer size and allocate buffer
-    const int bufferSize = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
-    try {
-        sharedMemory_.allocateBuffer(dstWidth_, dstHeight_, bufferSize);
-    } catch (const std::runtime_error &e) {
-        ERROR("%s", e.what());
-        ost::Thread::exit();
-    }
+    outBuffer_.resize(getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT));
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
@@ -197,22 +216,20 @@ void VideoReceiveThread::createScalingContext()
     RETURN_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
 }
 
-VideoReceiveThread::VideoReceiveThread(const std::map<string, string> &args,
-                                       sfl_video::SharedMemory &handle) :
+VideoReceiveThread::VideoReceiveThread(const std::map<string, string> &args) :
     args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
-    dstWidth_(0), dstHeight_(0), sharedMemory_(handle), receiving_(false),
-    sdpFilename_()
+    dstWidth_(0), dstHeight_(0), sink_(createTempFileName()),
+    receiving_(false), sdpFilename_(), outBuffer_()
 {}
 
 void VideoReceiveThread::run()
 {
     setup();
+    RETURN_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
 
     createScalingContext();
     receiving_ = true;
-    if (not args_["receiving_sdp"].empty())
-        sharedMemory_.publishShm();
     while (receiving_) {
         AVPacket inpacket;
 
@@ -230,14 +247,14 @@ void VideoReceiveThread::run()
                                   &inpacket);
             if (frameFinished) {
                 avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                               sharedMemory_.getTargetBuffer(),
-                               VIDEO_RGB_FORMAT, dstWidth_, dstHeight_);
+                               &(*outBuffer_.begin()), VIDEO_RGB_FORMAT,
+                               dstWidth_, dstHeight_);
 
                 sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
                           0, decoderCtx_->height, scaledPicture_->data,
                           scaledPicture_->linesize);
 
-                sharedMemory_.frameUpdatedCallback();
+                sink_.render(outBuffer_);
             }
         }
         yield();
