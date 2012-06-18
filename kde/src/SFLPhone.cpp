@@ -329,7 +329,7 @@ TreeWidgetCallModel* SFLPhone::model()
    if (!m_pModel) {
       m_pModel = new TreeWidgetCallModel();
       m_pModel->initCall();
-      m_pModel->initContact(AkonadiBackend::getInstance());
+      Call::setContactBackend(AkonadiBackend::getInstance());
     }
    return m_pModel;
 }

@@ -124,7 +124,7 @@ const QString& AccountView::getStateColorName()
 ///Is this item checked?
 bool AccountView::isChecked() const
 {
-   return m_pWidget->getEnabled();
+   return (m_pWidget)?m_pWidget->getEnabled():false;
 }
 
 
