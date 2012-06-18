@@ -52,6 +52,43 @@ class LIB_EXPORT Account : public QObject {
       const QString&          getAlias()                             const;
       bool                    isEnabled()                            const;
       bool                    isRegistered()                         const;
+      
+      QString getAccountHostname              () { return getAccountDetail(ACCOUNT_HOSTNAME               )                 ;}
+      bool    getAccountEnabled               () { return (getAccountDetail(ACCOUNT_ENABLED               )  == "true")?1:0 ;}
+      QString getAccountUsername              () { return getAccountDetail(ACCOUNT_USERNAME               )                 ;}
+      QString getAccountMailbox               () { return getAccountDetail(ACCOUNT_MAILBOX                )                 ;}
+      bool    getAccountDisplaysAsOnce        () { return (getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 ;}
+      bool    getAccountSrtpRtpFallback       () { return (getAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 ;}
+      bool    getAccountZrtpDisplaySas        () { return (getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 ;}
+      bool    getAccountZrtpNotSuppWarning    () { return (getAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING )  == "true")?1:0 ;}
+      bool    getAccountZrtpHelloHash         () { return (getAccountDetail(ACCOUNT_ZRTP_HELLO_HASH       )  == "true")?1:0 ;}
+      bool    getAccountSipStunEnabled        () { return (getAccountDetail(ACCOUNT_SIP_STUN_ENABLED      )  == "true")?1:0 ;}
+      QString getAccountSipStunServer         () { return getAccountDetail(ACCOUNT_SIP_STUN_SERVER        )                 ;}
+      int     getAccountRegistrationExpire    () { return getAccountDetail(ACCOUNT_REGISTRATION_EXPIRE    ).toInt()         ;}
+      bool    getPublishedSameasLocal         () { return (getAccountDetail(PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 ;}
+      QString getPublishedAddress             () { return getAccountDetail(PUBLISHED_ADDRESS              )                 ;}
+      int     getPublishedPort                () { return getAccountDetail(PUBLISHED_PORT                 ).toUInt()        ;}
+      QString getTlsPassword                  () { return getAccountDetail(TLS_PASSWORD                   )                 ;}
+      int     getTlsListenerPort              () { return getAccountDetail(TLS_LISTENER_PORT              ).toInt()         ;}
+      QString getTlsCaListFile                () { return getAccountDetail(TLS_CA_LIST_FILE               )                 ;}
+      QString getTlsCertificateFile           () { return getAccountDetail(TLS_CERTIFICATE_FILE           )                 ;}
+      QString getTlsPrivateKeyFile            () { return getAccountDetail(TLS_PRIVATE_KEY_FILE           )                 ;}
+      QString getTlsCiphers                   () { return getAccountDetail(TLS_CIPHERS                    )                 ;}
+      QString getTlsServerName                () { return getAccountDetail(TLS_SERVER_NAME                )                 ;}
+      int     getTlsNegotiationTimeoutSec     () { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC    ).toInt()         ;}
+      int     getTlsNegotiationTimeoutMsec    () { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC   ).toInt()         ;}
+      bool    getTlsVerifyServer              () { return (getAccountDetail(TLS_VERIFY_SERVER             )  == "true")?1:0 ;}
+      bool    getTlsVerifyClient              () { return (getAccountDetail(TLS_VERIFY_CLIENT             )  == "true")?1:0 ;}
+      bool    getTlsRequireClientCertificate  () { return (getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 ;}
+      bool    getTlsEnable                    () { return (getAccountDetail(TLS_ENABLE                    )  == "true")?1:0 ;}
+      int     getTlsMethod                    () { return getAccountDetail(TLS_METHOD                     ).toInt()         ;}
+      QString getAccountAlias                 () { return getAccountDetail(ACCOUNT_ALIAS                  )                 ;}
+      bool    getConfigRingToneEnabled        () { return (getAccountDetail(CONFIG_RINGTONE_ENABLED       )  == "true")?1:0 ;}
+      QString getConfigRingtonePath           () { return getAccountDetail(CONFIG_RINGTONE_PATH           )                 ;}
+      int     getLocalPort                    () { return getAccountDetail(LOCAL_PORT).toInt()                              ;}
+      QString getLocalInterface               () { return getAccountDetail(LOCAL_INTERFACE)                                 ;}
+      QString getAccountRegistrationStatus    () { return getAccountDetail(ACCOUNT_REGISTRATION_STATUS)                     ;}
+      QString getAccountType                  () { return getAccountDetail(ACCOUNT_TYPE)                                    ;}
    
       //Setters
       void setAccountId      (const QString& id                        );

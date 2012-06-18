@@ -326,7 +326,7 @@ void SFLPhoneView::updateWindowCallState()
    bool transfer = false;
    bool recordActivated = false;    //tells whether the call is in recording position
 
-   enabledActions[SFLPhone::Mailbox] = SFLPhone::model()->getCurrentAccount() && ! SFLPhone::model()->getCurrentAccount()->getAccountDetail(ACCOUNT_MAILBOX).isEmpty();
+   enabledActions[SFLPhone::Mailbox] = SFLPhone::model()->getCurrentAccount() && ! SFLPhone::model()->getCurrentAccount()->getAccountMailbox().isEmpty();
 
    call = callView->getCurrentItem();
    if (!call) {
@@ -554,7 +554,7 @@ void SFLPhoneView::updateStatusMessage()
    else {
       emit statusMessageChangeAsked(i18n("Using account")
                      + " \'" + account->getAlias()
-                     + "\' (" + account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) + ")");
+                     + "\' (" + account->getAccountRegistrationStatus() + ")");
    }
 }
 
@@ -795,7 +795,7 @@ void SFLPhoneView::record()
 void SFLPhoneView::mailBox()
 {
    Account* account = SFLPhone::model()->getCurrentAccount();
-   QString mailBoxNumber = account->getAccountDetail(ACCOUNT_MAILBOX);
+   QString mailBoxNumber = account->getAccountMailbox();
    Call* call = SFLPhone::model()->addDialingCall();
    call->appendText(mailBoxNumber);
    action(call, CALL_ACTION_ACCEPT);

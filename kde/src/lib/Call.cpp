@@ -522,7 +522,7 @@ bool Call::isSecure() const {
    AccountList accountList(true);
    Account* currentAccount = accountList.getAccountById(m_Account);
 
-   if ((currentAccount->getAccountDetail(TLS_ENABLE ) == "true") || (currentAccount->getAccountDetail(TLS_METHOD).toInt())) {
+   if ((currentAccount->getTlsEnable()) || (currentAccount->getAccountDetail(TLS_METHOD).toInt())) {
       return true;
    }
    return false;

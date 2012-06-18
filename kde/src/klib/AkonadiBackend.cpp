@@ -104,7 +104,7 @@ Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resol
       return m_ContactByPhone[phoneNumber];
    else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
       foreach (Account* a, m_pModel->getAccountList()->getAccounts()) {
-         if (a->getAccountDetail(ACCOUNT_HOSTNAME) == getHostNameFromPhone(phoneNumber))
+         if (a->getAccountHostname() == getHostNameFromPhone(phoneNumber))
             return m_ContactByPhone[getUserFromPhone(phoneNumber)];
       }
    }

@@ -145,7 +145,7 @@ QVector<Account*> AccountList::getAccountsByState(const QString& state)
 {
    QVector<Account *> v;
    for (int i = 0; i < m_pAccounts->size(); ++i) {
-      if ((*m_pAccounts)[i]->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == state)
+      if ((*m_pAccounts)[i]->getAccountRegistrationStatus() == state)
          v += (*m_pAccounts)[i];
    }
    return v;
@@ -159,7 +159,7 @@ QVector<Account*> AccountList::registeredAccounts() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED) {
          qDebug() << current->getAlias() << " : " << current;
          registeredAccounts.append(current);
       }
@@ -173,14 +173,14 @@ Account* AccountList::firstRegisteredAccount() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current && current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED)
+      if(current && current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED)
          return current;
-      else if (current && (current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_READY) && m_pAccounts->count() == 1)
+      else if (current && (current->getAccountRegistrationStatus() == ACCOUNT_STATE_READY) && m_pAccounts->count() == 1)
          return current;
-      else if (current && !(current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_READY)) {
+      else if (current && !(current->getAccountRegistrationStatus() == ACCOUNT_STATE_READY)) {
          qDebug() << "Account " << ((current)?current->getAccountId():"") << " is not registered ("
-         << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"") << ") State:"
-         << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"");
+         << ((current)?current->getAccountRegistrationStatus():"") << ") State:"
+         << ((current)?current->getAccountRegistrationStatus():"");
       }
    }
    return NULL;
