@@ -69,7 +69,7 @@ void searchbar_addressbook_activated(GtkEntry *entry, gchar *arg1 UNUSED, gpoint
 void searchbar_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
     DEBUG("Searchbar: Entry changed");
-    if (active_calltree_tab == history_tab)
+    if (calltab_has_name(active_calltree_tab, HISTORY))
         history_search();
 }
 
@@ -247,10 +247,10 @@ static void icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event,
 {
     DEBUG("Searchbar: Icon pressed");
 
-    if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree_tab == history_tab)
+    if (position == GTK_ENTRY_ICON_PRIMARY && calltab_has_name(active_calltree_tab, HISTORY))
         gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
                        event->button, event->time);
-    else if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree_tab == contacts_tab) {
+    else if (position == GTK_ENTRY_ICON_PRIMARY && calltab_has_name(active_calltree_tab, CONTACTS)) {
         GtkWidget *addrbook_menu = addressbook_menu_new();
         gtk_menu_popup(GTK_MENU(addrbook_menu), NULL, NULL, NULL, NULL,
                        event->button, event->time);
@@ -260,13 +260,9 @@ static void icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event,
 
 static void text_changed_cb(GtkEntry *entry, GParamSpec *pspec UNUSED)
 {
-    gboolean has_text;
-
-    has_text = gtk_entry_get_text_length(entry) > 0;
+    const gboolean has_text = gtk_entry_get_text_length(entry) > 0;
     gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 }
-
-
 
 GtkWidget *addressbook_menu_new(void)
 {

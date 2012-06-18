@@ -109,9 +109,8 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     if (!gtk_tree_selection_get_selected(sel, &model, &iter))
         return;
 
-    if (active_calltree_tab == history_tab) {
+    if (calltab_has_name(active_calltree_tab, HISTORY))
         main_window_reset_playback_scale();
-    }
 
     /* Get ID of selected object, may be a call or a conference */
     gchar *id;
@@ -151,7 +150,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
 
         if (selectedCall) {
             // Get the right event from the right calltree
-            if (active_calltree_tab == current_calls_tab) {
+            if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
                 switch (selectedCall->_state) {
                     case CALL_STATE_INCOMING:
                         dbus_accept(selectedCall);
@@ -185,7 +184,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
     } else if (calltab_get_selected_type(active_calltree_tab) == A_CONFERENCE) {
         DEBUG("Selected a conference");
 
-        if (active_calltree_tab == current_calls_tab) {
+        if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
             conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
             if (selectedConf) {
@@ -219,9 +218,9 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
     callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
     conference_obj_t *selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
-    if (active_calltree_tab == current_calls_tab)
+    if (calltab_has_name(active_calltree_tab, CURRENT_CALLS))
         DEBUG("Active calltree is current_calls");
-    else if (active_calltree_tab == history_tab)
+    else if (calltab_has_name(active_calltree_tab, HISTORY))
         DEBUG("Active calltree is history");
 
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
@@ -245,7 +244,7 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
             /*  Make sure that we are not in the history tab since
              *  nothing is defined for it yet
              */
-            if (active_calltree_tab == current_calls_tab) {
+            if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
                 switch (selectedCall->_srtp_state) {
                     case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
                         selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
@@ -280,9 +279,9 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     if (event->button != 3 || event->type != GDK_BUTTON_PRESS)
         return FALSE;
 
-    if (active_calltree_tab == current_calls_tab)
+    if (calltab_has_name(active_calltree_tab, CURRENT_CALLS))
         show_popup_menu(widget, event);
-    else if (active_calltree_tab == history_tab)
+    else if (calltab_has_name(active_calltree_tab, HISTORY))
         show_popup_menu_history(widget, event);
     else
         show_popup_menu_contacts(widget, event);
@@ -421,7 +420,7 @@ calltree_create(calltab_t* tab, int searchbar_type)
                      G_CALLBACK(button_pressed),
                      NULL);
 
-    if (g_strcmp0(tab->_name, CURRENT_CALLS) == 0) {
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
 
         gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tab->view), GDK_BUTTON1_MASK, target_list, n_targets, GDK_ACTION_DEFAULT | GDK_ACTION_MOVE);
         gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tab->view), target_list, n_targets, GDK_ACTION_DEFAULT);
@@ -636,7 +635,7 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
     g_free(audio_codec);
 
     /* Update icons */
-    if (tab == current_calls_tab) {
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
         DEBUG("Receiving in state %d", call->_state);
 
         switch (call->_state) {
@@ -694,7 +693,7 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                     pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
         }
 
-    } else if (tab == history_tab) {
+    } else if (calltab_has_name(tab, HISTORY)) {
         pixbuf = history_state_to_pixbuf(call);
 
         g_free(description);
@@ -770,7 +769,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
 
     DEBUG("Added call key exchange is %s", key_exchange);
 
-    if (tab == current_calls_tab) {
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
         switch (call->_state) {
             case CALL_STATE_INCOMING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
@@ -803,7 +802,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
         if (srtp_enabled && utf8_case_equal(srtp_enabled, "true"))
             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/secure_off.svg", NULL);
 
-    } else if (tab == contacts_tab)
+    } else if (calltab_has_name(tab, CONTACTS))
         pixbuf = call->_contact_thumbnail;
     else
         WARN("This widget doesn't exist - This is a bug in the application.");
@@ -1103,21 +1102,21 @@ void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
 void calltree_display(calltab_t *tab)
 {
     /* If we already are displaying the specified calltree */
-    if (active_calltree_tab == tab)
+    if (calltab_has_name(active_calltree_tab, tab->name))
         return;
 
-    if (tab == current_calls_tab) {
-        if (active_calltree_tab == contacts_tab)
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
+        if (calltab_has_name(active_calltree_tab, CONTACTS))
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), FALSE);
         else
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton_), FALSE);
-    } else if (tab == history_tab) {
-        if (active_calltree_tab == contacts_tab)
+    } else if (calltab_has_name(tab, HISTORY)) {
+        if (calltab_has_name(active_calltree_tab, CONTACTS))
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), FALSE);
 
         gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton_), TRUE);
-    } else if (tab == contacts_tab) {
-        if (active_calltree_tab == history_tab)
+    } else if (calltab_has_name(tab, CONTACTS)) {
+        if (calltab_has_name(active_calltree_tab, HISTORY))
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton_), FALSE);
 
         gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), TRUE);
