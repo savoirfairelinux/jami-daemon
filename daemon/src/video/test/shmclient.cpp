@@ -6,14 +6,6 @@
 #include <iostream>
 #include <clutter/clutter.h>
 
-namespace {
-/* round integer value up to next multiple of 4 */
-int round_up_4(int value)
-{
-    return (value + 3) &~ 3;
-}
-}
-
 class ClutterSHMSrc : public SHMSrc {
     public:
         ClutterSHMSrc(const std::string &name,
@@ -43,15 +35,18 @@ class ClutterSHMSrc : public SHMSrc {
             if (!resize_area())
                 return;
 
+            clutter_actor_set_size(texture_, width_, height_);
+            const int BPP = 4;
+            const int ROW_STRIDE = BPP * width_;
             /* update the clutter texture */
             clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture_),
                     reinterpret_cast<const unsigned char *>(shm_area_->data),
-                    FALSE,
+                    TRUE,
                     width_,
                     height_,
-                    round_up_4(3 * width_),
-                    3,
-                    CLUTTER_TEXTURE_NONE,
+                    ROW_STRIDE,
+                    BPP,
+                    CLUTTER_TEXTURE_RGB_FLAG_BGR,
                     NULL);
             buffer_gen_ = shm_area_->buffer_gen;
             shm_unlock();
