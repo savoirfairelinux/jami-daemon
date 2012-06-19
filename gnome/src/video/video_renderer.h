@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_RENDERER_H__
-#define __VIDEO_RENDERER_H__
+#ifndef VIDEO_RENDERER_H__
+#define VIDEO_RENDERER_H__
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
@@ -63,15 +63,15 @@ struct _VideoRendererClass {
 };
 
 /* Public interface */
-VideoRenderer *video_renderer_new(GtkWidget *drawarea, int width, int height, int shmkey, int semkey, int vbsize);
+VideoRenderer *video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path, int vbsize);
 int video_renderer_run(VideoRenderer *preview);
 void video_renderer_stop(VideoRenderer *preview);
 
-void receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId,
-                              gint videoBufferSize, gint destWidth,
-                              gint destHeight, GError *error,
-                              gpointer userdata);
-void stopped_receiving_video_event_cb(DBusGProxy *proxy, gint shmId, gint semId, GError *error, gpointer userdata);
+void started_video_event_cb(DBusGProxy *proxy, gchar *shm_path,
+                            gint buffer_size, gint width,
+                            gint height, GError *error,
+                            gpointer userdata);
+void stopped_video_event_cb(DBusGProxy *proxy, gchar *shm_path, GError *error, gpointer userdata);
 
 /* Try to init the gtk clutter backend, returns TRUE on success, FALSE otherwise */
 gboolean try_clutter_init();

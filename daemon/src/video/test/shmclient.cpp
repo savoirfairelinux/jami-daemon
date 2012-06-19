@@ -20,8 +20,7 @@ class ClutterSHMSrc : public SHMSrc {
                 printf("Creating source with name:%s width:%d height:%d texture:%p\n", name.c_str(), width, height, texture);
             }
 
-        // override default memcpy implementation
-        void render(char * /*data*/, size_t /*len*/)
+        void render_to_texture()
         {
             shm_lock();
 
@@ -62,7 +61,7 @@ class ClutterSHMSrc : public SHMSrc {
 gboolean updateTexture(gpointer data)
 {
     ClutterSHMSrc *src = static_cast<ClutterSHMSrc *>(data);
-    src->render(NULL, 0);
+    src->render_to_texture();
     return TRUE;
 }
 

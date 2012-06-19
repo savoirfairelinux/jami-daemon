@@ -53,7 +53,7 @@ class SHMSrc {
 
         bool resize_area();
 
-        virtual void render(char *data, size_t len);
+        void render(char *data, size_t len);
 
     protected:
         void shm_lock();

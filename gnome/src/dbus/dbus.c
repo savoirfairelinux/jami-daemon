@@ -907,11 +907,10 @@ gboolean dbus_connect(GError **error)
             g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
             G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
-    dbus_g_proxy_add_signal(video_proxy, "receivingEvent", G_TYPE_INT,
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
-            G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(video_proxy, "receivingEvent",
-            G_CALLBACK(receiving_video_event_cb), NULL,
+    dbus_g_proxy_add_signal(video_proxy, "startedEvent", G_TYPE_STRING,
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "startedEvent",
+            G_CALLBACK(started_video_event_cb), NULL,
             NULL);
 
     /* Marshaller for INT INT */
@@ -919,10 +918,10 @@ gboolean dbus_connect(GError **error)
                                       G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT,
                                       G_TYPE_INVALID);
 
-    dbus_g_proxy_add_signal(video_proxy, "stoppedReceivingEvent",
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(video_proxy, "stoppedReceivingEvent",
-            G_CALLBACK(stopped_receiving_video_event_cb),
+    dbus_g_proxy_add_signal(video_proxy, "stoppedEvent",
+            G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "stoppedEvent",
+            G_CALLBACK(stopped_video_event_cb),
             NULL, NULL);
 #endif
 
@@ -1758,180 +1757,135 @@ dbus_get_audio_manager(void)
 
 #ifdef SFL_VIDEO
 gchar *
-dbus_get_video_input_device_channel()
+dbus_get_active_video_device_channel()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device_channel(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device_channel(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
 gchar *
-dbus_get_video_input_device_size()
+dbus_get_active_video_device_size()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device_size(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device_size(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
 gchar *
-dbus_get_video_input_device_rate()
+dbus_get_active_video_device_rate()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device_rate(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device_rate(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
 gchar *
-dbus_get_video_input_device()
+dbus_get_active_video_device()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
-/**
- * Set video input device
- */
 void
-dbus_set_video_input_device(const gchar *device)
+dbus_set_active_video_device(const gchar *device)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device(video_proxy, device, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device(video_proxy, device, &error);
     check_error(error);
 }
 
-/**
- * Set video input device channel
- */
 void
-dbus_set_video_input_device_channel(const gchar *channel)
+dbus_set_active_video_device_channel(const gchar *channel)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device_channel(video_proxy, channel, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device_channel(video_proxy, channel, &error);
     check_error(error);
 }
 
-/**
- * Set video input size
- */
 void
-dbus_set_video_input_size(const gchar *size)
+dbus_set_active_video_device_size(const gchar *size)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device_size(video_proxy, size, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device_size(video_proxy, size, &error);
     check_error(error);
 }
 
-/**
- * Set video input rate
- */
 void
-dbus_set_video_input_rate(const gchar *rate)
+dbus_set_active_video_device_rate(const gchar *rate)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device_rate(video_proxy, rate, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device_rate(video_proxy, rate, &error);
     check_error(error);
 }
 
-/**
- * Get a list of video input devices
- */
 gchar **
-dbus_get_video_input_device_list()
+dbus_get_video_device_list()
 {
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_list(video_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_list) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_list: %s", error->message);
-
-        g_error_free (error);
-    }
-
+    org_sflphone_SFLphone_VideoControls_get_device_list(video_proxy, &array, &error);
+    check_error(error);
     return array;
 }
 
 /**
- * Get a list of inputs supported by the video input device
+ * Get the list of channels supported by the given device
  */
 gchar **
-dbus_get_video_input_device_channel_list(const gchar *dev)
+dbus_get_video_device_channel_list(const gchar *dev)
 {
     gchar **array = NULL;
     GError *error = NULL;
-
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_channel_list(
-                video_proxy, dev, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_channel_list) exception  %s: %s",
-                  dbus_g_error_get_name (error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_channel_list: %s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_VideoControls_get_device_channel_list(video_proxy, dev, &array, &error);
+    check_error(error);
     return array;
 }
 
 /**
- * Get a list of resolutions supported by the video input
+ * Get the list of resolutions supported by the given channel of the given device
  */
 gchar **
-dbus_get_video_input_device_size_list(const gchar *dev, const gchar *channel)
+dbus_get_video_device_size_list(const gchar *dev, const gchar *channel)
 {
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_size_list(video_proxy, dev, channel, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_size_list) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_size_list: %s", error->message);
-
-        g_error_free (error);
-        return NULL;
-    } else
-        return array;
+    org_sflphone_SFLphone_VideoControls_get_device_size_list(video_proxy, dev, channel, &array, &error);
+    check_error(error);
+    return array;
 }
 
 /**
- * Get a list of frame rates supported by the video input resolution
+ * Get the list of frame rates supported by the given resolution of the given channel of the given device
  */
 gchar **
-dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size)
+dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size)
 {
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_rate_list(video_proxy, dev, channel, size, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_rate_list) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_rate_list: %s", error->message);
-        g_error_free(error);
-        return NULL;
-    } else
-        return array;
+    org_sflphone_SFLphone_VideoControls_get_device_rate_list(video_proxy, dev, channel, size, &array, &error);
+    check_error(error);
+    return array;
 }
 #endif
 
@@ -2223,24 +2177,15 @@ void
 dbus_start_video_preview()
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy,
-                                                            video_preview_started_cb,
-                                                            &error);
+    org_sflphone_SFLphone_VideoControls_start_preview(video_proxy, &error);
     check_error(error);
-}
-
-static void preview_stopped_cb()
-{
-    DEBUG("Video preview has stopped");
 }
 
 void
 dbus_stop_video_preview()
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy,
-                                                           preview_stopped_cb,
-                                                           &error);
+    org_sflphone_SFLphone_VideoControls_stop_preview(video_proxy, &error);
     check_error(error);
 }
 #endif

@@ -1060,6 +1060,10 @@ class ManagerImpl {
             return &dbus_;
         }
 
+        VideoControls * getVideoControls() {
+            return dbus_.getVideoControls();
+        }
+
         /**
         * Tell if an account exists
         * @param accountID account ID check

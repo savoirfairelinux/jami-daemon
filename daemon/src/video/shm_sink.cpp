@@ -188,6 +188,7 @@ void SHMSink::render(const std::vector<unsigned char> &data)
     shm_unlock();
 }
 
+// Note: this doesn't depend on VideoReceiveThread's implementation since it's forward declared.
 void SHMSink::render_callback(sfl_video::VideoReceiveThread * const th, const Callback &callback, size_t bytes)
 {
     shm_lock();

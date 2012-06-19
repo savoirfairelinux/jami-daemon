@@ -90,7 +90,7 @@ select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(GTK_WIDGET(codecMoveDownButton), TRUE);
     }
 }
-    
+
 void active_is_always_recording()
 {
     gboolean enabled = FALSE;
@@ -105,45 +105,6 @@ void active_is_always_recording()
     }
 
     dbus_set_is_always_recording(enabled);
-}
-
-/* This gets called when the video preview is stopped */
-static gboolean
-preview_is_running_cb(GObject *obj, GParamSpec *pspec, gpointer user_data)
-{
-    (void) pspec;
-    gboolean running = FALSE;
-    g_object_get(obj, "running", &running, NULL);
-    GtkButton *button = GTK_BUTTON(user_data);
-    if (running)
-        gtk_button_set_label(button, _("_Stop"));
-    else {
-        gtk_button_set_label(button, _("_Start"));
-        preview = NULL;
-    }
-    return TRUE;
-}
-
-void
-video_preview_started_cb(DBusGProxy *proxy, GError *error,
-                         gpointer userdata)
-{
-    (void) proxy;
-    (void) error;
-    (void) userdata;
-
-    DEBUG("Preview started");
-#if 0
-    drawWidth = OUT_width;
-    drawHeight = OUT_height;
-    gtk_widget_set_size_request(drawarea, drawWidth, drawHeight);
-    preview = video_renderer_new(drawarea, drawWidth, drawHeight, OUT_shmId, OUT_semId, OUT_videoBufferSize);
-    g_signal_connect(preview, "notify::running", G_CALLBACK(preview_is_running_cb), preview_button);
-    if (video_renderer_run(preview)) {
-        ERROR("Video preview run returned an error, unreffing\n");
-        g_object_unref(preview);
-    }
-#endif
 }
 
 static void

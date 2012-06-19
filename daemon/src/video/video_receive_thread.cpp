@@ -30,6 +30,7 @@
  */
 
 #include "video_receive_thread.h"
+#include "dbus/video_controls.h"
 #include "packet_handle.h"
 #include "check.h"
 
@@ -181,6 +182,7 @@ void VideoReceiveThread::setup()
     bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    Manager::instance().getVideoControls()->startedEvent(sink_.openedName(), bufferSize_, dstWidth_, dstHeight_);
 }
 
 void VideoReceiveThread::createScalingContext()
@@ -221,12 +223,11 @@ void VideoReceiveThread::fill_buffer(void *data)
 
 void VideoReceiveThread::run()
 {
-    using std::tr1::ref;
-    using std::tr1::bind;
     setup();
 
     createScalingContext();
     receiving_ = true;
+    const Callback cb(&VideoReceiveThread::fill_buffer);
     while (receiving_) {
         AVPacket inpacket;
 
@@ -242,12 +243,11 @@ void VideoReceiveThread::run()
             int frameFinished;
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
                                   &inpacket);
-            if (frameFinished) {
-                // we want our rendering code to be called by the shm_sink,
-                // while it's holding the lock
-                const Callback cb(&VideoReceiveThread::fill_buffer);
+
+            // we want our rendering code to be called by the shm_sink,
+            // because it manages the shared memory synchronization
+            if (frameFinished)
                 sink_.render_callback(this, cb, bufferSize_);
-            }
         }
         yield();
     }
@@ -255,6 +255,7 @@ void VideoReceiveThread::run()
 
 VideoReceiveThread::~VideoReceiveThread()
 {
+    Manager::instance().getVideoControls()->stoppedEvent(sink_.openedName());
     receiving_ = false;
     ost::Thread::terminate();
 

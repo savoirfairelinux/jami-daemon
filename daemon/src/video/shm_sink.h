@@ -54,6 +54,7 @@ typedef std::tr1::function<void (sfl_video::VideoReceiveThread * const, void *)>
 class SHMSink {
     public:
         SHMSink(const std::string &shm_name = "");
+        std::string openedName() const { return opened_name_; }
         ~SHMSink();
 
         bool start();
