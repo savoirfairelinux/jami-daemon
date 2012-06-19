@@ -75,4 +75,4 @@ void DBusTests::testInstanceManagerConnection()
 }
 
 QTEST_MAIN(DBusTests)
-#include "dlgaccount_test.moc"
+#include "dbus_test.moc"

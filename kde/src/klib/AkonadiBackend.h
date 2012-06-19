@@ -63,7 +63,6 @@ private:
 
    //Attributes
    static AkonadiBackend*         m_pInstance  ;
-   static CallModel<>*            m_pModel     ;
    Akonadi::Session*              m_pSession   ;
    Akonadi::Collection            m_Collection ;
    QHash<QString,KABC::Addressee> m_AddrHash   ;

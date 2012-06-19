@@ -35,7 +35,7 @@ class QModelIndex;
 
 //SFLPhone
 class Call;
-class AccountList;
+//class AccountList;
 class Account;
 class ContactBackend;
 class HistoryModel;
@@ -56,7 +56,6 @@ public:
    virtual Call* addCall              ( Call* call           , Call* parent =0      );
    virtual Call* getCall              ( const QString& callId                       ) const = 0;
    Call*   addConferenceS             ( Call* conf                                  );
-   static AccountList* getAccountList (                                             );
    
 private slots:
    void callStateChanged      ( const QString& callID    , const QString &state   );
@@ -77,7 +76,6 @@ protected:
 
    //Attributes
    static CallMap m_sActiveCalls;
-   static AccountList* m_spAccountList;
 
 private slots:
    void removeActiveCall(Call*);
@@ -144,12 +142,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       CallList                 getCallList            ();
       CallList                 getConferenceList      ();
 
-      //Account related
-      static Account* getCurrentAccount  (                     );
-      static QString getCurrentAccountId (                     );
-      static QString getPriorAccoundId   (                     );
-      static void setPriorAccountId      (const QString& value );
-
       //Connection related
       static bool init();
       
@@ -215,7 +207,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
 
       static CallMap        m_lConfList;
       
-      static QString        m_sPriorAccountId;
       static bool           m_sCallInit      ;
 
    private:

@@ -277,7 +277,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
       Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(encodedPhoneNumber);
       QString name;
       name = (contact)?contact->getFormattedName():i18n("Unknown");
-      Call* call2 = SFLPhone::model()->addDialingCall(name, SFLPhone::model()->getCurrentAccount());
+      Call* call2 = SFLPhone::model()->addDialingCall(name, AccountList::getCurrentAccount());
       call2->appendText(QString(encodedPhoneNumber));
       if (!parent) {
          //Dropped on free space

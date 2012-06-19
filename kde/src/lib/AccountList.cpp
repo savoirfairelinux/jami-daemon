@@ -27,6 +27,8 @@
 //SFLPhone library
 #include "configurationmanager_interface_singleton.h"
 
+AccountList* AccountList::m_spAccountList   = nullptr;
+QString      AccountList::m_sPriorAccountId = ""     ;
 
 ///Constructors
 AccountList::AccountList(QStringList & _accountIds)
@@ -53,6 +55,23 @@ AccountList::~AccountList()
       delete a;
    }
    delete m_pAccounts;
+}
+
+///Singleton
+AccountList* AccountList::getInstance()
+{
+   if (not m_spAccountList) {
+      m_spAccountList = new AccountList(true);
+   }
+   return m_spAccountList;
+}
+
+///Static destructor
+void AccountList::destroy()
+{
+   if (m_spAccountList)
+      delete m_spAccountList;
+   m_spAccountList = nullptr;
 }
 
 
@@ -192,6 +211,25 @@ int AccountList::size() const
    return m_pAccounts->size();
 }
 
+///Return the current account
+Account* AccountList::getCurrentAccount()
+{
+   Account* priorAccount = AccountList::getInstance()->getAccountById(m_sPriorAccountId);
+   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
+      return priorAccount;
+   }
+   else {
+      return AccountList::getInstance()->firstRegisteredAccount();
+   }
+} //getCurrentAccount
+
+///Return the previously used account ID
+QString AccountList::getPriorAccoundId()
+{
+   return m_sPriorAccountId;
+}
+
+
 /*****************************************************************************
  *                                                                           *
  *                                  Setters                                  *
@@ -212,6 +250,12 @@ void AccountList::removeAccount(Account* account)
    qDebug() << "Removing" << m_pAccounts;
    m_pAccounts->remove(m_pAccounts->indexOf(account));
 }
+
+///Set the previous account used
+void AccountList::setPriorAccountId(const QString& value) {
+   m_sPriorAccountId = value;
+}
+
 
 /*****************************************************************************
  *                                                                           *

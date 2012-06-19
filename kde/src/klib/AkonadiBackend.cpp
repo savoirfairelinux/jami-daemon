@@ -49,17 +49,11 @@
 
 ///Init static attributes
 AkonadiBackend*  AkonadiBackend::m_pInstance = nullptr;
-CallModel<>*     AkonadiBackend::m_pModel    = nullptr;
 
 ///Constructor
 AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 {
    m_pSession = new Akonadi::Session( "SFLPhone::instance" );
-
-   if ( not m_pModel ) {
-      m_pModel = new CallModel<>();
-      m_pModel->initCall();
-   }
 
    // fetching all collections containing emails recursively, starting at the root collection
    Akonadi::CollectionFetchJob *job = new Akonadi::CollectionFetchJob( Akonadi::Collection::root(), Akonadi::CollectionFetchJob::Recursive, this );
@@ -70,7 +64,6 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 ///Destructor
 AkonadiBackend::~AkonadiBackend()
 {
-   delete m_pModel;
    CallModel<>::destroy();
 }
 
@@ -97,7 +90,7 @@ Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resol
    if (!resolveDNS || phoneNumber.indexOf("@") == -1)
       return m_ContactByPhone[phoneNumber];
    else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
-      foreach (Account* a, m_pModel->getAccountList()->getAccounts()) {
+      foreach (Account* a, AccountList::getInstance()->getAccounts()) {
          if (a->getAccountHostname() == getHostNameFromPhone(phoneNumber))
             return m_ContactByPhone[getUserFromPhone(phoneNumber)];
       }
