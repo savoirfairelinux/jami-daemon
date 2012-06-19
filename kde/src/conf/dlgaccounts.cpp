@@ -246,21 +246,21 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountUsername             ( edit4_user->text()                                                       );
    /**/account->setAccountPassword             ( edit5_password->text()                                                   );
    /**/account->setAccountMailbox              ( edit6_mailbox->text()                                                    );
-   /**/account->setAccountEnabled              ( account->isChecked()?REGISTRATION_ENABLED_TRUE:REGISTRATION_ENABLED_FALSE);
-   /**/account->setAccountRegistrationExpire   ( QString::number(spinbox_regExpire->value())                              );
+   /**/account->setAccountEnabled              ( account->isChecked()                                                     );
+   /**/account->setAccountRegistrationExpire   ( spinbox_regExpire->value()                                               );
    /**/                                                                                                                 /**/
    /*                                            Security                                                                 */
    /**/account->setTlsPassword                 ( edit_tls_private_key_password->text()                                    );
-   /**/account->setTlsListenerPort             ( QString::number(spinbox_tls_listener->value())                           );
+   /**/account->setTlsListenerPort             ( spinbox_tls_listener->value()                                            );
    /**/account->setTlsCaListFile               ( file_tls_authority->text()                                               );
    /**/account->setTlsCertificateFile          ( file_tls_endpoint->text()                                                );
    /**/account->setTlsPrivateKeyFile           ( file_tls_private_key->text()                                             );
-   /**/account->setTlsMethod                   ( combo_tls_method->currentText()                                          );
+   /**/account->setTlsMethod                   ( combo_tls_method->currentIndex()                                         );
    /**/account->setTlsCiphers                  ( edit_tls_cipher->text()                                                  );
    /**/account->setTlsServerName               ( edit_tls_outgoing->text()                                                );
-   /**/account->setTlsNegotiationTimeoutSec    ( QString::number(spinbox_tls_timeout_sec->value())                        );
-   /**/account->setTlsNegotiationTimeoutMsec   ( QString::number(spinbox_tls_timeout_msec->value())                       );
-   /**/account->setTlsMethod                   ( QString::number(combo_security_STRP->currentIndex())                     );
+   /**/account->setTlsNegotiationTimeoutSec    ( spinbox_tls_timeout_sec->value()                                         );
+   /**/account->setTlsNegotiationTimeoutMsec   ( spinbox_tls_timeout_msec->value()                                        );
+   ///**/account->setTlsMethod                   ( QString::number(combo_security_STRP->currentIndex())                     );
    /**/account->setTlsVerifyServer             ( check_tls_incoming->isChecked()                                          );
    /**/account->setTlsVerifyClient             ( check_tls_answer->isChecked()                                            );
    /**/account->setTlsRequireClientCertificate ( check_tls_requier_cert->isChecked()                                      );
@@ -273,9 +273,9 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountSipStunEnabled       ( checkbox_stun->isChecked()                                               );
    /**/account->setPublishedSameAsLocal        ( radioButton_pa_same_as_local->isChecked()                                );
    /**/account->setAccountSipStunServer        ( line_stun->text()                                                        );
-   /**/account->setPublishedPort               ( QString::number(spinBox_pa_published_port->value())                      );
+   /**/account->setPublishedPort               ( spinBox_pa_published_port->value()                                       );
    /**/account->setPublishedAddress            ( lineEdit_pa_published_address ->text()                                   );
-   /**/account->setLocalPort                   ( QString::number(spinBox_pa_published_port->value())                      );
+   /**/account->setLocalPort                   ( spinBox_pa_published_port->value()                                       );
    /**/account->setLocalInterface              ( comboBox_ni_local_address->currentText()                                 );
    /**/account->setConfigRingtoneEnabled       ( m_pEnableRingtoneGB->isChecked()                                         );
    /**/account->setConfigRingtonePath          ( m_pRingTonePath->url().path()                                            );
