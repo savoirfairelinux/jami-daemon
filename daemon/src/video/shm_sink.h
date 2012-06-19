@@ -39,13 +39,21 @@
 #include <semaphore.h>
 #include <string>
 #include <vector>
+#include <tr1/functional>
 #include "noncopyable.h"
 
 class SHMHeader;
+namespace sfl_video {
+    class VideoReceiveThread;
+}
+
+// A VideoReceiveThread member function handle, where the member function
+// takes a (void *) as an argument
+typedef std::tr1::function<void (sfl_video::VideoReceiveThread * const, void *)> Callback;
 
 class SHMSink {
     public:
-        SHMSink(const std::string &shm_name);
+        SHMSink(const std::string &shm_name = "");
         ~SHMSink();
 
         bool start();
@@ -54,6 +62,7 @@ class SHMSink {
         bool resize_area(size_t desired_length);
 
         void render(const std::vector<unsigned char> &data);
+        void render_callback(sfl_video::VideoReceiveThread * const th, const Callback &callback, size_t bytes);
 
     private:
         NON_COPYABLE(SHMSink);

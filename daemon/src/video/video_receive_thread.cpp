@@ -59,29 +59,6 @@ using std::string;
 
 namespace { // anonymous namespace
 
-// FIXME: this is an ugly hack to generate a unique filename for shm_open
-// While there's a good chance that /dev/shm/sfl_XXXX will not
-// be in use we need a better way of doing this.
-
-std::string createTempFileName()
-{
-    std::string path;
-    const char SHM_PATH[] = "/dev/shm";
-    int i;
-    for (i = 0; path.empty() and i < TMP_MAX; ++i) {
-        char *fname = tempnam(SHM_PATH, "sfl_");
-        // if no file with name path exists, the path is usable
-        if (access(fname, F_OK))
-            path = std::string(fname + sizeof(SHM_PATH));
-        free(fname);
-    }
-    if (i == TMP_MAX)
-        throw std::runtime_error("Could not generate unique filename");
-
-    DEBUG("Created path %s", path.c_str());
-    return path;
-}
-
 int getBufferSize(int width, int height, int format)
 {
     enum PixelFormat fmt = (enum PixelFormat) format;
@@ -145,7 +122,7 @@ void VideoReceiveThread::setup()
 
     DEBUG("Using %s format", format_str.c_str());
     AVInputFormat *file_iformat = av_find_input_format(format_str.c_str());
-    RETURN_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
+    EXIT_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
 
     AVDictionary *options = NULL;
     if (!args_["framerate"].empty())
@@ -158,7 +135,7 @@ void VideoReceiveThread::setup()
     // Open video file
     DEBUG("Opening input");
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
-    RETURN_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
+    EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
     DEBUG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
@@ -166,7 +143,7 @@ void VideoReceiveThread::setup()
 #else
     ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
-    RETURN_IF_FAIL(ret >= 0, "Could not find stream info!");
+    EXIT_IF_FAIL(ret >= 0, "Could not find stream info!");
 
     // find the first video stream from the input
     streamIndex_ = -1;
@@ -174,35 +151,36 @@ void VideoReceiveThread::setup()
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
 
-    RETURN_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
+    EXIT_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
 
     // find the decoder for the video stream
     AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
-    RETURN_IF_FAIL(inputDecoder, "Unsupported codec");
+    EXIT_IF_FAIL(inputDecoder, "Unsupported codec");
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     ret = avcodec_open(decoderCtx_, inputDecoder);
 #else
     ret = avcodec_open2(decoderCtx_, inputDecoder, NULL);
 #endif
-    RETURN_IF_FAIL(ret == 0, "Could not open codec");
+    EXIT_IF_FAIL(ret == 0, "Could not open codec");
 
     scaledPicture_ = avcodec_alloc_frame();
-    RETURN_IF_FAIL(scaledPicture_, "Could not allocate output frame");
+    EXIT_IF_FAIL(scaledPicture_, "Could not allocate output frame");
 
     if (dstWidth_ == 0 and dstHeight_ == 0) {
         dstWidth_ = decoderCtx_->width;
         dstHeight_ = decoderCtx_->height;
     }
 
-    // determine required buffer size and allocate buffer
-    outBuffer_.resize(getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT));
-
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
+    // determine required buffer size and allocate buffer
+    bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
+
+    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
 }
 
 void VideoReceiveThread::createScalingContext()
@@ -213,20 +191,39 @@ void VideoReceiveThread::createScalingContext()
                                           decoderCtx_->pix_fmt, dstWidth_,
                                           dstHeight_, VIDEO_RGB_FORMAT,
                                           SWS_BICUBIC, NULL, NULL, NULL);
-    RETURN_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
+    EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::map<string, string> &args) :
     args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
-    dstWidth_(0), dstHeight_(0), sink_(createTempFileName()),
-    receiving_(false), sdpFilename_(), outBuffer_()
+    dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
+    bufferSize_(0)
 {}
+
+/// Copies and scales our rendered frame to the buffer pointed to by data
+void VideoReceiveThread::fill_buffer(void *data)
+{
+    avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
+                   static_cast<uint8_t *>(data),
+                   VIDEO_RGB_FORMAT,
+                   dstWidth_,
+                   dstHeight_);
+
+    sws_scale(imgConvertCtx_,
+            rawFrame_->data,
+            rawFrame_->linesize,
+            0,
+            decoderCtx_->height,
+            scaledPicture_->data,
+            scaledPicture_->linesize);
+}
 
 void VideoReceiveThread::run()
 {
+    using std::tr1::ref;
+    using std::tr1::bind;
     setup();
-    RETURN_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
 
     createScalingContext();
     receiving_ = true;
@@ -246,15 +243,10 @@ void VideoReceiveThread::run()
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
                                   &inpacket);
             if (frameFinished) {
-                avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
-                               &(*outBuffer_.begin()), VIDEO_RGB_FORMAT,
-                               dstWidth_, dstHeight_);
-
-                sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize,
-                          0, decoderCtx_->height, scaledPicture_->data,
-                          scaledPicture_->linesize);
-
-                sink_.render(outBuffer_);
+                // we want our rendering code to be called by the shm_sink,
+                // while it's holding the lock
+                const Callback cb(&VideoReceiveThread::fill_buffer);
+                sink_.render_callback(this, cb, bufferSize_);
             }
         }
         yield();

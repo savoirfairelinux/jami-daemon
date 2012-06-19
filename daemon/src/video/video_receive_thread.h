@@ -69,10 +69,11 @@ class VideoReceiveThread : public ost::Thread {
         SHMSink sink_;
         bool receiving_;
         std::string sdpFilename_;
-        std::vector<unsigned char> outBuffer_;
+        size_t bufferSize_;
         void setup();
         void createScalingContext();
         void loadSDP();
+        void fill_buffer(void *data);
 
     public:
         VideoReceiveThread(const std::map<std::string, std::string> &args);

@@ -33,16 +33,20 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "shm_sink.h"
 #include "shm_header.h"
+#include "logger.h"
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <cstdio>
-#include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
-#include <cassert>
 
 SHMSink::SHMSink(const std::string &shm_name) :
     shm_name_(shm_name),
@@ -62,22 +66,38 @@ bool
 SHMSink::start()
 {
     if (fd_ != -1) {
-        std::cerr << "fd must be -1" << std::endl;
+        ERROR("fd must be -1");
         return false;
     }
 
-    fd_ = shm_open(shm_name_.c_str(), O_RDWR | O_CREAT | O_TRUNC, perms_);
-    if (fd_ < 0) {
-        std::cerr << "could not open shm area \"" << shm_name_ << "\", shm_open failed" << std::endl;
-        perror(strerror(errno));
-        return false;
+    const int flags = O_RDWR | O_CREAT | O_TRUNC;
+    if (not shm_name_.empty()) {
+        fd_ = shm_open(shm_name_.c_str(), flags, perms_);
+        if (fd_ < 0) {
+            ERROR("could not open shm area \"%s\", shm_open failed:%s", shm_name_.c_str(), strerror(errno));
+            perror(strerror(errno));
+            return false;
+        }
+    } else {
+        for (int i = 0; fd_ < 0; ++i) {
+            std::ostringstream name;
+            name << PACKAGE_NAME << "_shm_" << getpid() << "_" << i;
+            shm_name_ = name.str();
+            fd_ = shm_open(shm_name_.c_str(), flags, perms_);
+            if (fd_ < 0 and errno != EEXIST) {
+                ERROR("%s", strerror(errno));
+                return false;
+            }
+        }
     }
+
+    DEBUG("Using name %s", shm_name_.c_str());
     opened_name_ = shm_name_;
 
     shm_area_len_ = sizeof(SHMHeader);
 
     if (ftruncate(fd_, shm_area_len_)) {
-        std::cerr << "Could not make shm area large enough for header" << std::endl;
+        ERROR("Could not make shm area large enough for header");
         perror(strerror(errno));
         return false;
     }
@@ -85,13 +105,19 @@ SHMSink::start()
     shm_area_ = static_cast<SHMHeader*>(mmap(NULL, shm_area_len_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
 
     if (shm_area_ == MAP_FAILED) {
-        std::cerr << "Could not map shm area, mmap failed" << std::endl;
+        ERROR("Could not map shm area, mmap failed");
         return false;
     }
 
     memset(shm_area_, 0, shm_area_len_);
-    assert(sem_init(&shm_area_->notification, 1, 0) == 0);
-    assert(sem_init(&shm_area_->mutex, 1, 1) == 0);
+    if (sem_init(&shm_area_->notification, 1, 0) != 0) {
+        ERROR("sem_init: notification initialization failed");
+        return false;
+    }
+    if (sem_init(&shm_area_->mutex, 1, 1) != 0) {
+        ERROR("sem_init: mutex initialization failed");
+        return false;
+    }
     return true;
 }
 
@@ -124,13 +150,13 @@ SHMSink::resize_area(size_t desired_length)
     shm_unlock();
 
     if (munmap(shm_area_, shm_area_len_)) {
-        std::cerr << "Could not unmap shared area" << std::endl;
+        ERROR("Could not unmap shared area");
         perror(strerror(errno));
         return false;
     }
 
     if (ftruncate(fd_, desired_length)) {
-        std::cerr << "Could not resize shared area" << std::endl;
+        ERROR("Could not resize shared area");
         perror(strerror(errno));
         return false;
     }
@@ -140,7 +166,7 @@ SHMSink::resize_area(size_t desired_length)
 
     if (shm_area_ == MAP_FAILED) {
         shm_area_ = 0;
-        std::cerr << "Could not remap shared area" << std::endl;
+        ERROR("Could not remap shared area");
         return false;
     }
 
@@ -157,6 +183,20 @@ void SHMSink::render(const std::vector<unsigned char> &data)
 
     memcpy(shm_area_->data, &(*data.begin()), data.size());
     shm_area_->buffer_size = data.size();
+    shm_area_->buffer_gen++;
+    sem_post(&shm_area_->notification);
+    shm_unlock();
+}
+
+void SHMSink::render_callback(sfl_video::VideoReceiveThread * const th, const Callback &callback, size_t bytes)
+{
+    shm_lock();
+
+    if (!resize_area(sizeof(SHMHeader) + bytes))
+        return;
+
+    callback(th, static_cast<void*>(shm_area_->data));
+    shm_area_->buffer_size = bytes;
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();
