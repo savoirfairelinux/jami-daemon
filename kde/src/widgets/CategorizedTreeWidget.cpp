@@ -77,7 +77,8 @@ class KateColorTreeDelegate : public QStyledItemDelegate
       if (item->isExpanded() && item->childCount() > 0) {
         const int childCount = item->childCount();
         const int h = sizeHint(option, index.child(0, 0)).height();
-        r.setHeight(r.height() + childCount * h);
+        //There is a massive implact on CPU usage to have massive rect
+        r.setHeight(r.height() + (childCount * h > 100)?100:(childCount * h));
       }
 
       r.setTop(r.top() + m_categoryDrawer.leftMargin());

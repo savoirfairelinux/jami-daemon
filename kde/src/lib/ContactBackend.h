@@ -68,6 +68,7 @@ public slots:
 private slots:
    
 signals:
+   void collectionChanged();
    
 };
 

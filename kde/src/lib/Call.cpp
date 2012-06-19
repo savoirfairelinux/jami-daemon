@@ -115,7 +115,8 @@ void Call::setContactBackend(ContactBackend* be)
 
 ///Constructor
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
-   : m_isConference(false),m_pStopTime(nullptr),m_pStartTime(nullptr)
+   : m_isConference(false),m_pStopTime(nullptr),m_pStartTime(nullptr),
+   m_ContactChanged(false),m_pContact(nullptr)
 {
    this->m_CallId          = callId     ;
    this->m_PeerPhoneNumber = peerNumber ;
@@ -126,9 +127,12 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
    this->m_pStartTime      = NULL       ;
    this->m_pStopTime       = NULL       ;
 
+   m_ContactChanged = true;
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager,SIGNAL(recordPlaybackStopped(QString) ), this, SLOT(stopPlayback(QString)   ));
    connect(&callManager,SIGNAL(updatePlaybackScale(int,int)   ), this, SLOT(updatePlayback(int,int) ));
+   if (m_pContactBackend)
+      connect(m_pContactBackend,SIGNAL(collectionChanged()),this,SLOT(contactBackendChanged()));
 
    emit changed();
 }
@@ -528,6 +532,14 @@ bool Call::isSecure() const {
    return false;
 } //isSecure
 
+Contact* Call::getContact()
+{
+   if (!m_pContact && m_ContactChanged) {
+      m_pContact = m_pContactBackend->getContactByPhone(m_PeerPhoneNumber,true);
+   }
+   return m_pContact;
+}
+
 
 /*****************************************************************************
  *                                                                           *
@@ -754,10 +766,10 @@ void Call::call()
       callManager.placeCall(m_Account, m_CallId, m_CallNumber);
       this->m_Account = m_Account;
       this->m_PeerPhoneNumber = m_CallNumber;
+      m_ContactChanged = true;
       if (m_pContactBackend) {
-         Contact* contact = m_pContactBackend->getContactByPhone(m_PeerPhoneNumber);
-         if (contact)
-            m_PeerName = contact->getFormattedName();
+         if (getContact())
+            m_PeerName = m_pContact->getFormattedName();
       }
       setStartTime_private(new QDateTime(QDateTime::currentDateTime()));
       this->m_HistoryState = OUTGOING;
@@ -944,4 +956,10 @@ void Call::stopPlayback(QString filePath)
 void Call::updatePlayback(int position,int size)
 {
    emit playbackPositionChanged(position,size);
+}
+
+///Called to notice the call thatits contact might be outdated
+void Call::contactBackendChanged()
+{
+   m_ContactChanged = true;
 }
