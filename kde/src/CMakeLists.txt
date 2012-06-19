@@ -82,6 +82,10 @@ SET(
    conf/dlgvideobase.ui
 )
 
+
+ENABLE_TESTING()
+add_subdirectory( test   )
+
 IF(${ENABLE_VIDEO} MATCHES true)
    MESSAGE("VIDEO enabled")
    SET(ENABLE_VIDEO 1 CACHE BOOLEAN "Enable video")

@@ -281,7 +281,7 @@ void CallTreeItem::updated()
    call_state state = m_pItemCall->getState();
    bool recording = m_pItemCall->getRecording();
    if (!m_pContact)
-      m_pContact = AkonadiBackend::getInstance()->getContactByPhone(m_pItemCall->getPeerPhoneNumber(),true);
+      m_pContact = m_pItemCall->getContact();
 
    if (m_pContact) {
       if (m_pPeerL) {

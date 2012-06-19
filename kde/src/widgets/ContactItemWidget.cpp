@@ -54,7 +54,8 @@
 
 ///Constructor
 ContactItemWidget::ContactItemWidget(QWidget *parent)
-   : QWidget(parent), m_pMenu(0),m_pOrganizationL(0),m_pEmailL(0)
+   : QWidget(parent), m_pMenu(0),m_pOrganizationL(0),m_pEmailL(0),m_pContactKA(0), m_pIconL(0), m_pContactNameL(0),
+   m_pCallNumberL(0)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
    setAcceptDrops(true);
@@ -155,7 +156,7 @@ void ContactItemWidget::setContact(Contact* contact)
 
    uint row = 1;
 
-   if (ConfigurationSkeleton::displayOrganisation()) {
+   if (ConfigurationSkeleton::displayOrganisation() && !contact->getOrganization().isEmpty()) {
       m_pOrganizationL = new QLabel ( this );
       mainLayout->addWidget( m_pOrganizationL, row , 1);
       row++;
@@ -163,7 +164,7 @@ void ContactItemWidget::setContact(Contact* contact)
    mainLayout->addWidget( m_pCallNumberL  , row , 1       );
    row++;
 
-   if (ConfigurationSkeleton::displayEmail()) {
+   if (ConfigurationSkeleton::displayEmail() && !contact->getPreferredEmail().isEmpty()) {
       m_pEmailL        = new QLabel (      );
       mainLayout->addWidget( m_pEmailL       , row , 1    );
       row++;
@@ -176,6 +177,28 @@ void ContactItemWidget::setContact(Contact* contact)
 
    updated();
    connect(this,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(showContext(QPoint)));
+
+   uint height =0;
+   if ( m_pContactNameL  ) {
+      QFontMetrics fm(m_pContactNameL->font());
+      height += fm.height();
+   }
+   if ( m_pCallNumberL   ) {
+      QFontMetrics fm(m_pCallNumberL->font());
+      height += fm.height();
+   }
+   if ( m_pOrganizationL ) {
+      QFontMetrics fm(m_pOrganizationL->font());
+      height += fm.height();
+   }
+   if ( m_pEmailL        ) {
+      QFontMetrics fm(m_pEmailL->font());
+      height += fm.height();
+   }
+
+   if (height < 48)
+      height = 48;
+   m_Size = QSize(0,height+8);
 } //setContact
 
 ///Set the model index
@@ -296,6 +319,12 @@ QString ContactItemWidget::showNumberSelector(bool& ok)
       ok = false;
       return "";
    }
+}
+
+///Return precalculated size hint, prevent it from being computed over and over
+QSize ContactItemWidget::sizeHint () const
+{
+   return m_Size;
 }
 
 /*****************************************************************************

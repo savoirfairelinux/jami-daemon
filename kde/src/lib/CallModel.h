@@ -122,7 +122,6 @@ class LIB_EXPORT CallModel : public CallModelBase {
       CallModel                (                    );
       virtual ~CallModel       (                    );
       virtual bool initCall    (                    );
-      virtual void initContact ( ContactBackend* be );
       static  void destroy     (                    );
 
       //Call related

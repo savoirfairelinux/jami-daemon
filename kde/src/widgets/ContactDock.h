@@ -93,7 +93,7 @@ class ContactTree : public CategorizedTreeWidget {
    Q_OBJECT
 public:
    ///Constructor
-   ContactTree(QWidget* parent) : CategorizedTreeWidget(parent) {}
+   ContactTree(QWidget* parent) : CategorizedTreeWidget(parent) {setUniformRowHeights(false);}
    virtual QMimeData* mimeData( const QList<QTreeWidgetItem *> items) const;
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };
@@ -104,7 +104,7 @@ class KeyPressEaterC : public QObject
    Q_OBJECT
 public:
    KeyPressEaterC(ContactDock* parent) : QObject(parent) {
-      m_pDock =  parent;
+      m_pDock = parent;
    }
 
 protected:

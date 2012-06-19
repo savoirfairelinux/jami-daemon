@@ -121,12 +121,6 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
    return true;
 } //initCall
 
-///Set how the call can find more informations about the call it receive
-CALLMODEL_TEMPLATE void CALLMODEL_T::initContact ( ContactBackend* be )
-{
-   Call::setContactBackend(be);
-}
-
 
 /*****************************************************************************
  *                                                                           *

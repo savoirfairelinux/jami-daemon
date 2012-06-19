@@ -329,7 +329,7 @@ TreeWidgetCallModel* SFLPhone::model()
    if (!m_pModel) {
       m_pModel = new TreeWidgetCallModel();
       m_pModel->initCall();
-      m_pModel->initContact(AkonadiBackend::getInstance());
+      Call::setContactBackend(AkonadiBackend::getInstance());
     }
    return m_pModel;
 }
@@ -470,9 +470,9 @@ void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 }
 
 ///Called when a call is coming
-void SFLPhone::on_m_pView_incomingCall(const Call * call)
+void SFLPhone::on_m_pView_incomingCall(const Call* call)
 {
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(call->getPeerPhoneNumber());
+   Contact* contact = ((Call*)call)->getContact();
    if (contact && call) {
       KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()),((contact->getPhoto())?*contact->getPhoto():NULL));
    }

@@ -77,9 +77,6 @@ public slots:
    void collectionsReceived( const Akonadi::Collection::List& );
 
 signals:
-   //TODO <elepage 2012> Move this to ContactBackend
-   ///Emitted when one of the akonadi connection have changed, the contact then need to be reloaded
-   void collectionChanged();
 };
 
 #endif

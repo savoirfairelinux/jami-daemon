@@ -47,24 +47,18 @@
 #include "../lib/AccountList.h"
 #include "../lib/Account.h"
 
-//SFLPhone
-//#include "SFLPhone.h"
-//#include "SFLPhoneView.h"
-
 ///Init static attributes
-AkonadiBackend*  AkonadiBackend::m_pInstance = 0;
-CallModel<>*     AkonadiBackend::m_pModel    = 0;
+AkonadiBackend*  AkonadiBackend::m_pInstance = nullptr;
+CallModel<>*     AkonadiBackend::m_pModel    = nullptr;
 
 ///Constructor
 AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 {
-   //QTimer::singleShot( 0, this, SLOT( delayedInit() ) );
    m_pSession = new Akonadi::Session( "SFLPhone::instance" );
 
    if ( not m_pModel ) {
       m_pModel = new CallModel<>();
       m_pModel->initCall();
-      //m_pModel->initHistory();
    }
 
    // fetching all collections containing emails recursively, starting at the root collection
@@ -104,7 +98,7 @@ Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resol
       return m_ContactByPhone[phoneNumber];
    else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
       foreach (Account* a, m_pModel->getAccountList()->getAccounts()) {
-         if (a->getAccountDetail(ACCOUNT_HOSTNAME) == getHostNameFromPhone(phoneNumber))
+         if (a->getAccountHostname() == getHostNameFromPhone(phoneNumber))
             return m_ContactByPhone[getUserFromPhone(phoneNumber)];
       }
    }

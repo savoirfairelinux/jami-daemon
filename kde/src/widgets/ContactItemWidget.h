@@ -60,6 +60,7 @@ class ContactItemWidget : public QWidget
     QPixmap*          getPicture()      const;
     QTreeWidgetItem*  getItem()         const;
     Contact*          getContact()      const;
+    virtual QSize     sizeHint ()       const;
 
     //Setters
     void setContact ( Contact*         contact );
@@ -83,6 +84,7 @@ protected:
     QLabel*  m_pOrganizationL;
     QLabel*  m_pEmailL       ;
     QTreeWidgetItem* m_pItem ;
+    QSize    m_Size          ;
 
     //Actions
     KAction* m_pCallAgain   ;

@@ -28,10 +28,12 @@ class QDateTime;
 class QLabel;
 class QWidget;
 
+//SFLPhone
 #include "sflphone_const.h"
 #include "typedefs.h"
 
 class ContactBackend;
+class Contact;
 
 
 /** @enum daemon_call_state_t 
@@ -153,6 +155,7 @@ public:
    const QString&       getCallNumber       () const;
    const QString&       getRecordingPath    () const;
    const QString        toHumanStateName    () const;
+   Contact*             getContact()                ;
 
    //Automated function
    call_state stateChanged(const QString & newState);
@@ -192,6 +195,8 @@ private:
    call_state             m_CurrentState   ;
    bool                   m_Recording      ;
    static Call*           m_sSelectedCall  ;
+   bool                   m_ContactChanged ;
+   Contact*               m_pContact;
    
    //State machine
    /**
@@ -266,6 +271,7 @@ public slots:
 private slots:
    void stopPlayback(QString filePath);
    void updatePlayback(int position,int size);
+   void contactBackendChanged();
 
 signals:
    ///Emitted when a call change (state or details)
