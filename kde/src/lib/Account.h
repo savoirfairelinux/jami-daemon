@@ -52,42 +52,78 @@ class LIB_EXPORT Account : public QObject {
       const QString&          getAlias()                             const;
       bool                    isEnabled()                            const;
       bool                    isRegistered()                         const;
-      
+
+      ///Return the account hostname
       QString getAccountHostname              () { return getAccountDetail(ACCOUNT_HOSTNAME               )                 ;}
-      bool    getAccountEnabled               () { return (getAccountDetail(ACCOUNT_ENABLED               )  == "true")?1:0 ;}
+      ///Return if the account is enabled
+      bool    isAccountEnabled               () { return (getAccountDetail(ACCOUNT_ENABLED               )  == "true")?1:0 ;}
+      ///Return the account user name
       QString getAccountUsername              () { return getAccountDetail(ACCOUNT_USERNAME               )                 ;}
+      ///Return the account mailbox address
       QString getAccountMailbox               () { return getAccountDetail(ACCOUNT_MAILBOX                )                 ;}
-      bool    getAccountDisplaysAsOnce        () { return (getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 ;}
+      ///
+      bool    isAccountDisplaysAsOnce        () { return (getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 ;}
+      ///Return the account security fallback
       bool    getAccountSrtpRtpFallback       () { return (getAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 ;}
-      bool    getAccountZrtpDisplaySas        () { return (getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 ;}
-      bool    getAccountZrtpNotSuppWarning    () { return (getAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING )  == "true")?1:0 ;}
-      bool    getAccountZrtpHelloHash         () { return (getAccountDetail(ACCOUNT_ZRTP_HELLO_HASH       )  == "true")?1:0 ;}
-      bool    getAccountSipStunEnabled        () { return (getAccountDetail(ACCOUNT_SIP_STUN_ENABLED      )  == "true")?1:0 ;}
+      ///
+      bool    isAccountZrtpDisplaySas        () { return (getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 ;}
+      ///Return if the other side support warning
+      bool    isAccountZrtpNotSuppWarning    () { return (getAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING )  == "true")?1:0 ;}
+      ///
+      bool    isAccountZrtpHelloHash         () { return (getAccountDetail(ACCOUNT_ZRTP_HELLO_HASH       )  == "true")?1:0 ;}
+      ///Return if the account is using a STUN server
+      bool    isAccountSipStunEnabled        () { return (getAccountDetail(ACCOUNT_SIP_STUN_ENABLED      )  == "true")?1:0 ;}
+      ///Return the account STUN server
       QString getAccountSipStunServer         () { return getAccountDetail(ACCOUNT_SIP_STUN_SERVER        )                 ;}
+      ///Return when the account expire (require renewal)
       int     getAccountRegistrationExpire    () { return getAccountDetail(ACCOUNT_REGISTRATION_EXPIRE    ).toInt()         ;}
-      bool    getPublishedSameasLocal         () { return (getAccountDetail(PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 ;}
+      ///Return if the published address is the same as the local one
+      bool    isPublishedSameasLocal         () { return (getAccountDetail(PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 ;}
+      ///Return the account published address
       QString getPublishedAddress             () { return getAccountDetail(PUBLISHED_ADDRESS              )                 ;}
+      ///Return the account published port
       int     getPublishedPort                () { return getAccountDetail(PUBLISHED_PORT                 ).toUInt()        ;}
+      ///Return the account tls password
       QString getTlsPassword                  () { return getAccountDetail(TLS_PASSWORD                   )                 ;}
+      ///Return the account TLS port
       int     getTlsListenerPort              () { return getAccountDetail(TLS_LISTENER_PORT              ).toInt()         ;}
+      ///Return the account TLS certificate authority list file
       QString getTlsCaListFile                () { return getAccountDetail(TLS_CA_LIST_FILE               )                 ;}
+      ///Return the account TLS certificate
       QString getTlsCertificateFile           () { return getAccountDetail(TLS_CERTIFICATE_FILE           )                 ;}
+      ///Return the account private key
       QString getTlsPrivateKeyFile            () { return getAccountDetail(TLS_PRIVATE_KEY_FILE           )                 ;}
+      ///Return the account cipher
       QString getTlsCiphers                   () { return getAccountDetail(TLS_CIPHERS                    )                 ;}
+      ///Return the account TLS server name
       QString getTlsServerName                () { return getAccountDetail(TLS_SERVER_NAME                )                 ;}
+      ///Return the account negotiation timeout in seconds
       int     getTlsNegotiationTimeoutSec     () { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC    ).toInt()         ;}
+      ///Return the account negotiation timeout in milliseconds
       int     getTlsNegotiationTimeoutMsec    () { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC   ).toInt()         ;}
-      bool    getTlsVerifyServer              () { return (getAccountDetail(TLS_VERIFY_SERVER             )  == "true")?1:0 ;}
-      bool    getTlsVerifyClient              () { return (getAccountDetail(TLS_VERIFY_CLIENT             )  == "true")?1:0 ;}
-      bool    getTlsRequireClientCertificate  () { return (getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 ;}
-      bool    getTlsEnable                    () { return (getAccountDetail(TLS_ENABLE                    )  == "true")?1:0 ;}
+      ///Return the account TLS verify server
+      bool    isTlsVerifyServer              () { return (getAccountDetail(TLS_VERIFY_SERVER             )  == "true")?1:0 ;}
+      ///Return the account TLS verify client
+      bool    isTlsVerifyClient              () { return (getAccountDetail(TLS_VERIFY_CLIENT             )  == "true")?1:0 ;}
+      ///Return if it is required for the peer to have a certificate
+      bool    isTlsRequireClientCertificate  () { return (getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 ;}
+      ///Return the account TLS security is enabled
+      bool    isTlsEnable                    () { return (getAccountDetail(TLS_ENABLE                    )  == "true")?1:0 ;}
+      ///Return the account the TLS encryption method
       int     getTlsMethod                    () { return getAccountDetail(TLS_METHOD                     ).toInt()         ;}
+      ///Return the account alias
       QString getAccountAlias                 () { return getAccountDetail(ACCOUNT_ALIAS                  )                 ;}
-      bool    getConfigRingToneEnabled        () { return (getAccountDetail(CONFIG_RINGTONE_ENABLED       )  == "true")?1:0 ;}
+      ///Return if the ringtone are enabled
+      bool    isConfigRingToneEnabled        () { return (getAccountDetail(CONFIG_RINGTONE_ENABLED       )  == "true")?1:0 ;}
+      ///Return the account ringtone path
       QString getConfigRingtonePath           () { return getAccountDetail(CONFIG_RINGTONE_PATH           )                 ;}
+      ///Return the account local port
       int     getLocalPort                    () { return getAccountDetail(LOCAL_PORT).toInt()                              ;}
+      ///Return the account local interface
       QString getLocalInterface               () { return getAccountDetail(LOCAL_INTERFACE)                                 ;}
+      ///Return the account registration status
       QString getAccountRegistrationStatus    () { return getAccountDetail(ACCOUNT_REGISTRATION_STATUS)                     ;}
+      ///Return the account type
       QString getAccountType                  () { return getAccountDetail(ACCOUNT_TYPE)                                    ;}
    
       //Setters

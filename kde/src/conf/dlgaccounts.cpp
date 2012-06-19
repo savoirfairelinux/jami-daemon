@@ -382,16 +382,16 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/edit3_server->setText                    (  account->getAccountHostname             ());
    /**/edit4_user->setText                      (  account->getAccountUsername             ());
    /**/edit6_mailbox->setText                   (  account->getAccountMailbox              ());
-   /**/checkbox_ZRTP_Ask_user->setChecked       (  account->getAccountDisplaysAsOnce       ());
+   /**/checkbox_ZRTP_Ask_user->setChecked       (  account->isAccountDisplaysAsOnce        ());
    /**/checkbox_SDES_fallback_rtp->setChecked   (  account->getAccountSrtpRtpFallback      ());
-   /**/checkbox_ZRTP_display_SAS->setChecked    (  account->getAccountZrtpDisplaySas       ());
-   /**/checkbox_ZRTP_warn_supported->setChecked (  account->getAccountZrtpNotSuppWarning   ());
-   /**/checkbox_ZTRP_send_hello->setChecked     (  account->getAccountZrtpHelloHash        ());
-   /**/checkbox_stun->setChecked                (  account->getAccountSipStunEnabled       ());
+   /**/checkbox_ZRTP_display_SAS->setChecked    (  account->isAccountZrtpDisplaySas        ());
+   /**/checkbox_ZRTP_warn_supported->setChecked (  account->isAccountZrtpNotSuppWarning    ());
+   /**/checkbox_ZTRP_send_hello->setChecked     (  account->isAccountZrtpHelloHash         ());
+   /**/checkbox_stun->setChecked                (  account->isAccountSipStunEnabled        ());
    /**/line_stun->setText                       (  account->getAccountSipStunServer        ());
    /**/spinbox_regExpire->setValue              (  account->getAccountRegistrationExpire   ());
-   /**/radioButton_pa_same_as_local->setChecked (  account->getPublishedSameasLocal        ());
-   /**/radioButton_pa_custom->setChecked        ( !account->getPublishedSameasLocal        ());
+   /**/radioButton_pa_same_as_local->setChecked (  account->isPublishedSameasLocal         ());
+   /**/radioButton_pa_custom->setChecked        ( !account->isPublishedSameasLocal         ());
    /**/lineEdit_pa_published_address->setText   (  account->getPublishedAddress            ());
    /**/spinBox_pa_published_port->setValue      (  account->getPublishedPort               ());
    /*                                                  Security                             **/
@@ -404,10 +404,10 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/edit_tls_outgoing->setText               (  account->getTlsServerName               ());
    /**/spinbox_tls_timeout_sec->setValue        (  account->getTlsNegotiationTimeoutSec    ());
    /**/spinbox_tls_timeout_msec->setValue       (  account->getTlsNegotiationTimeoutMsec   ());
-   /**/check_tls_incoming->setChecked           (  account->getTlsVerifyServer             ());
-   /**/check_tls_answer->setChecked             (  account->getTlsVerifyClient             ());
-   /**/check_tls_requier_cert->setChecked       (  account->getTlsRequireClientCertificate ());
-   /**/group_security_tls->setChecked           (  account->getTlsEnable                   ());
+   /**/check_tls_incoming->setChecked           (  account->isTlsVerifyServer              ());
+   /**/check_tls_answer->setChecked             (  account->isTlsVerifyClient              ());
+   /**/check_tls_requier_cert->setChecked       (  account->isTlsRequireClientCertificate  ());
+   /**/group_security_tls->setChecked           (  account->isTlsEnable                    ());
    /**/combo_security_STRP->setCurrentIndex     (  account->getTlsMethod                   ());
    /*                                                                                       */
 
@@ -425,7 +425,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       frame2_editAccounts->setCurrentIndex(0);
    }
 
-   m_pEnableRingtoneGB->setChecked(account->getConfigRingToneEnabled());
+   m_pEnableRingtoneGB->setChecked(account->isConfigRingToneEnabled());
    QString ringtonePath = KStandardDirs::realFilePath(account->getConfigRingtonePath());
    m_pRingTonePath->setUrl( ringtonePath );
 
@@ -486,7 +486,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
 
    if(protocolIndex == 0) { // if sip selected
-      checkbox_stun->setChecked(account->getAccountSipStunEnabled());
+      checkbox_stun->setChecked(account->isAccountSipStunEnabled());
       line_stun->setText( account->getAccountSipStunServer() );
       //checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == REGISTRATION_ENABLED_TRUE);
 

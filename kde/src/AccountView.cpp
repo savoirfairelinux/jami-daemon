@@ -65,7 +65,7 @@ void AccountView::initItemWidget()
    if(m_pWidget != NULL)
       delete m_pWidget;
 
-   bool enabled = getAccountEnabled();
+   bool enabled = isAccountEnabled();
    m_pWidget = new AccountItemWidget();
    m_pWidget->setEnabled(enabled);
    m_pWidget->setAccountText(getAccountAlias());
@@ -164,7 +164,7 @@ void AccountView::updateState()
       Account::updateState();
 
       AccountItemWidget * m_pWidget = getItemWidget();
-      if(!getAccountEnabled()) {
+      if(!isAccountEnabled()) {
          kDebug() << "Changing account state to Unregistered";
          if (m_pWidget) m_pWidget->setState(AccountItemWidget::Unregistered);
       }
