@@ -25,6 +25,7 @@ ConfigurationManagerInterface* ConfigurationManagerInterfaceSingleton::interface
 
 ConfigurationManagerInterface & ConfigurationManagerInterfaceSingleton::getInstance()
 {
+   if (!dbus_metaTypeInit) registerCommTypes();
    if (!interface)
       interface = new ConfigurationManagerInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/ConfigurationManager", QDBusConnection::sessionBus());
    if(!interface->connection().isConnected()) {

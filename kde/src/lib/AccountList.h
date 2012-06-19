@@ -26,6 +26,7 @@
 
 #include "Account.h"
 #include "typedefs.h"
+#include "dbus/metatypes.h"
 
 ///AccountList: List of all daemon accounts
 class LIB_EXPORT AccountList : public QObject{

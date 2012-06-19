@@ -30,6 +30,7 @@ class QString;
 #include "VideoCodec.h"
 #include "sflphone_const.h"
 #include "typedefs.h"
+#include "dbus/metatypes.h"
 
 const QString& account_state_name(const QString& s);
 
@@ -177,6 +178,9 @@ class LIB_EXPORT Account : public QObject {
    
       //Operators
       bool operator==(const Account&)const;
+
+      //Mutator
+      void save();
    
    protected:
       //Constructors

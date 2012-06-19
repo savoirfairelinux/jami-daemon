@@ -61,10 +61,15 @@ class KateColorTreeDelegate : public QStyledItemDelegate
     }
 
     QRect fullCategoryRect(const QStyleOptionViewItem& option, const QModelIndex& index) const {
-      QModelIndex i = index;
+      QModelIndex i(index),old(index);
       if (i.parent().isValid()) {
         i = i.parent();
       }
+
+      //Avoid repainting the category over and over (optimization)
+      //note: 0,0,0,0 is actually wrong, but it wont change anything for this use case
+      if (i != old && old.row()>2)
+         return QRect(0,0,0,0);
 
       QTreeWidgetItem* item = m_tree->itemFromIndex(i);
       QRect r = m_tree->visualItemRect(item);

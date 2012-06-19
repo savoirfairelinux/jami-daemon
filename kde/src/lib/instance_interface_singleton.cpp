@@ -24,6 +24,7 @@ InstanceInterface* InstanceInterfaceSingleton::interface = NULL;
 
 InstanceInterface& InstanceInterfaceSingleton::getInstance()
 {
+   if (!dbus_metaTypeInit) registerCommTypes();
    if (!interface)
       interface = new InstanceInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/Instance", QDBusConnection::sessionBus());
    if(!interface->connection().isConnected()) {
