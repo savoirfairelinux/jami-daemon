@@ -27,6 +27,48 @@ private slots:
    void testCreateAccount();
    void testGetNewAccount();
    void cleanupTestCase();
+
+   //Attributes test
+   void testAccountAlias                  ();
+   void testAccountType                   ();
+   void testAccountHostname               ();
+   void testAccountUsername               ();
+   void testAccountPassword               ();
+   void testAccountMailbox                ();
+   void testTlsPassword                   ();
+   void testTlsCaListFile                 ();
+   void testTlsCertificateFile            ();
+   void testTlsPrivateKeyFile             ();
+   void testTlsCiphers                    ();
+   void testTlsServerName                 ();
+   void testAccountSipStunServer          ();
+   void testPublishedAddress              ();
+   void testLocalInterface                ();
+   void testConfigRingtonePath            ();
+   void testRingtonePath                  ();
+   void testTlsMethod                     ();
+   void testAccountRegistrationExpire     ();
+   void testTlsNegotiationTimeoutSec      ();
+   void testTlsNegotiationTimeoutMsec     ();
+   void testLocalPort                     ();
+   void testTlsListenerPort               ();
+   void testPublishedPort                 ();
+   void testAccountEnabled                ();
+   void testTlsVerifyServer               ();
+   void testTlsVerifyClient               ();
+   void testTlsRequireClientCertificate   ();
+   void testTlsEnable                     ();
+   void testAccountDisplaySasOnce         ();
+   void testAccountSrtpRtpFallback        ();
+   void testAccountZrtpDisplaySas         ();
+   void testAccountZrtpNotSuppWarning     ();
+   void testAccountZrtpHelloHash          ();
+   void testAccountSipStunEnabled         ();
+   void testPublishedSameAsLocal          ();
+   void testConfigRingtoneEnabled         ();
+
+private:
+   QString id;
    
 };
 
@@ -100,16 +142,242 @@ void AccountTests::testCreateAccount()
 
 void AccountTests::testGetNewAccount()
 {
-   Account* acc = AccountList::getInstance()->getAccountById("unit_test_account");
+   Account* acc = AccountList::getInstance()->getAccountById(id);
    QCOMPARE( acc != nullptr, true);
 }
 //END creating a new account
 
+//BEGIN Testing every account attributes
+
+void AccountTests::testAccountAlias                  ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   acc->setAccountAlias("unit_alias");
+   QCOMPARE( acc->getAccountAlias(), QString("unit_alias"));
+}
+
+void AccountTests::testAccountType                   ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountHostname               ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountUsername               ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountPassword               ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountMailbox                ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsPassword                   ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsCaListFile                 ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsCertificateFile            ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsPrivateKeyFile             ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsCiphers                    ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsServerName                 ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountSipStunServer          ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testPublishedAddress              ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testLocalInterface                ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testConfigRingtonePath            ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testRingtonePath                  ()/*QString detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsMethod                     ()/*int     detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountRegistrationExpire     ()/*int     detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsNegotiationTimeoutSec      ()/*int     detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsNegotiationTimeoutMsec     ()/*int     detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testLocalPort                     ()/*short   detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsListenerPort               ()/*short   detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testPublishedPort                 ()/*short   detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountEnabled                ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsVerifyServer               ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsVerifyClient               ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsRequireClientCertificate   ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testTlsEnable                     ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountDisplaySasOnce         ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountSrtpRtpFallback        ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountZrtpDisplaySas         ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountZrtpNotSuppWarning     ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountZrtpHelloHash          ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testAccountSipStunEnabled         ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testPublishedSameAsLocal          ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+void AccountTests::testConfigRingtoneEnabled         ()/*bool    detail*/
+{
+   Account* acc = AccountList::getInstance()->getAccountById(id);
+   
+}
+
+//END Testing every account attributes
 
 //BEGIN cleanup
 void AccountTests::cleanupTestCase() {
-   //AccountList::getInstance()->removeAccount(AccountList::getInstance()->getAccountById("unit_test_account"));
-   //QCOMPARE( AccountList::getInstance()->getAccountById("unit_test_account") == nullptr, true);
+   //AccountList::getInstance()->removeAccount(AccountList::getInstance()->getAccountById(id));
+   //QCOMPARE( AccountList::getInstance()->getAccountById(id) == nullptr, true);
 }
 //END cleanup
 

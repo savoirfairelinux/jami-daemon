@@ -313,7 +313,7 @@ QString ContactItemWidget::showNumberSelector(bool& ok)
    }
    else if (m_pContactKA->getPhoneNumbers().size() == 1) {
       ok = true;
-      return m_pContactKA->getPhoneNumbers()[1]->getNumber();
+      return m_pContactKA->getPhoneNumbers()[0]->getNumber();
    }
    else {
       ok = false;
