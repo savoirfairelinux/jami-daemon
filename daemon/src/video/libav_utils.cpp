@@ -33,7 +33,6 @@
 #include <algorithm>
 #include <string>
 #include <iostream>
-#include <assert.h>
 #include "cc_thread.h"
 #include "logger.h"
 
