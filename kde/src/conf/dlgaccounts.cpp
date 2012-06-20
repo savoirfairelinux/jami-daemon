@@ -345,14 +345,21 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
    loadCredentails(account->getAccountId());
 
-//    bool ok;
-//    int val = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS).toInt(&ok);
-//    spinbox_regExpire->setValue(ok ? val : REGISTRATION_EXPIRE_DEFAULT);
-
-   foreach(CredentialData data,credentialList) {
-      if (data.name == account->getAccountUsername()) {
-         edit5_password->setText( data.password );
+   if (credentialList.size() > 0) {
+      bool found = false;
+      foreach(CredentialData data,credentialList) {
+         if (data.name == account->getAccountUsername()) {
+            edit5_password->setText( data.password );
+            found = true;
+         }
       }
+      if (!found) {
+         //Better than nothing, can happen if username change
+         edit5_password->setText( credentialList[0].password );
+      }
+   }
+   else {
+      edit5_password->setText("");
    }
 
 
@@ -796,6 +803,7 @@ void DlgAccounts::updateCombo(int value)
 
 void DlgAccounts::loadCredentails(QString accountId) {
    credentialInfo.clear();
+   credentialList.clear();
    list_credential->clear();
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    VectorMapStringString credentials = configurationManager.getCredentials(accountId);
