@@ -43,8 +43,8 @@ public:
 
    //Getters
    static const CallMap&    getHistory             ();
-      static const QStringList getHistoryCallId       ();
-      static const QStringList getNumbersByPopularity ();
+   static const QStringList getHistoryCallId       ();
+   static const QStringList getNumbersByPopularity ();
    
    //Setters
    static void add(Call* call);
@@ -53,7 +53,7 @@ private:
    
    //Constructor
    HistoryModel();
-   /*static*/  bool initHistory ();
+   bool initHistory ();
 
    //Mutator
    void addPriv(Call* call);

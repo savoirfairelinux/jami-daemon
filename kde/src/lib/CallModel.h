@@ -68,9 +68,9 @@ private slots:
 
 protected:
    virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
-   virtual bool changeConference  ( const QString &confId, const QString &state ) = 0;
-   virtual void removeConference  ( const QString &confId                       ) = 0;
-   virtual Call* addConference    ( const QString &confID                       ) = 0;
+   virtual bool changeConference  ( const QString& confId, const QString &state ) = 0;
+   virtual void removeConference  ( const QString& confId                       ) = 0;
+   virtual Call* addConference    ( const QString& confID                       ) = 0;
    virtual Call* addRingingCall   ( const QString& callId                       ) = 0;
    virtual Call* addIncomingCall  ( const QString& callId                       ) = 0;
 
@@ -183,6 +183,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       virtual void  removeConference ( const QString& confId                       );
       Call*         addIncomingCall  ( const QString& callId                       );
       Call*         addRingingCall   ( const QString& callId                       );
+      
       //Struct
       struct InternalStruct;
       typedef QList<InternalStruct*> InternalCallList;

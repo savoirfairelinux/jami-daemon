@@ -27,6 +27,7 @@
  *                             Private classes                               *
  *                                                                           *
  ****************************************************************************/
+
 ///SortableCallSource: helper class to make sorting possible
 class SortableCallSource {
 public:
@@ -45,6 +46,13 @@ inline bool operator< (const SortableCallSource & s1, const SortableCallSource &
 
 HistoryModel* HistoryModel::m_spInstance = nullptr;
 CallMap HistoryModel::m_sHistoryCalls;
+
+
+/*****************************************************************************
+ *                                                                           *
+ *                                 Constructor                               *
+ *                                                                           *
+ ****************************************************************************/
 
 ///Constructor
 HistoryModel::HistoryModel():m_HistoryInit(false)
