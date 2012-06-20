@@ -173,8 +173,8 @@ void CategorizedTreeWidget::drawBranches(QPainter* painter, const QRect& rect, c
   Q_UNUSED(painter)
   Q_UNUSED(rect)
   Q_UNUSED(index)
-//   if (index.parent() != QModelIndex() && index.parent().parent() != QModelIndex())
-//     QTreeWidget::drawBranches(painter,rect,index);
+  /*if (index.parent().parent().isValid())
+    QTreeWidget::drawBranches(painter,rect,index);*/
 }
 
 QVector<QTreeWidgetItem*> CategorizedTreeWidget::realItems() const

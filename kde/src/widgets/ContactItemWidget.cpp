@@ -485,3 +485,17 @@ void ContactItemWidget::dropEvent(QDropEvent *e)
       e->ignore();
    }
 }
+
+///On double click
+void ContactItemWidget::mouseDoubleClickEvent(QMouseEvent *e )
+{
+   PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
+
+   if (getCallNumbers().count() == 1) {
+      e->accept();
+      callAgain();
+   }
+   else {
+      e->ignore();
+   }
+}

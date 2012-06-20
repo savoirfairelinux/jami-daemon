@@ -78,6 +78,7 @@ template <class T> T* CategorizedTreeWidget::addItem(QString category)
 template <class T> T* CategorizedTreeWidget::addCategory(QString name)
 {
    T* categoryItem = new T(this);
+   categoryItem->setFlags(Qt::ItemIsEnabled);
    categoryItem->setText(0, name);
    addTopLevelItem(categoryItem);
    expandItem(categoryItem);
