@@ -90,7 +90,7 @@ string openTemp(string path, std::ofstream& os)
 
 void VideoReceiveThread::loadSDP()
 {
-    RETURN_IF_FAIL(not args_["receiving_sdp"].empty(), "Cannot load empty SDP");
+    EXIT_IF_FAIL(not args_["receiving_sdp"].empty(), "Cannot load empty SDP");
 
     std::ofstream os;
     sdpFilename_ = openTemp("/tmp", os);
