@@ -33,6 +33,7 @@
 #include "configurationmanager_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
 #include "video_interface_singleton.h"
+#include "AccountList.h"
 
 ///Match state name to user readable string
 const QString& account_state_name(const QString& s)
@@ -268,9 +269,21 @@ void Account::save()
       MapStringString details = getAccountDetails();
       QString currentId = configurationManager.addAccount(details);
       setAccountId(currentId);
+      qDebug() << "NEW ID" << currentId;
    }
    else {
       configurationManager.setAccountDetails(getAccountId(), getAccountDetails());
+   }
+
+   //QString id = configurationManager.getAccountDetail(getAccountId());
+   if (!getAccountId().isEmpty()) {
+      Account* acc =  AccountList::getInstance()->getAccountById(getAccountId());
+      qDebug() << "Adding the new account to the account list (" << getAccountId() << ")";
+      if (acc != this) {
+         (*AccountList::getInstance()->m_pAccounts) << this;
+      }
+      
+      updateState();
    }
 }
 

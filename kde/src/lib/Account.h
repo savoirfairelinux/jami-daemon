@@ -63,9 +63,9 @@ class LIB_EXPORT Account : public QObject {
       ///Return the account mailbox address
       QString getAccountMailbox               () { return getAccountDetail(ACCOUNT_MAILBOX                )                 ;}
       ///
-      bool    isAccountDisplaysAsOnce         () { return (getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 ;}
+      bool    isAccountDisplaySasOnce         () { return (getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 ;}
       ///Return the account security fallback
-      bool    getAccountSrtpRtpFallback       () { return (getAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 ;}
+      bool    isAccountSrtpRtpFallback       () { return (getAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 ;}
       ///
       bool    isAccountZrtpDisplaySas         () { return (getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 ;}
       ///Return if the other side support warning
@@ -79,7 +79,7 @@ class LIB_EXPORT Account : public QObject {
       ///Return when the account expire (require renewal)
       int     getAccountRegistrationExpire    () { return getAccountDetail(ACCOUNT_REGISTRATION_EXPIRE    ).toInt()         ;}
       ///Return if the published address is the same as the local one
-      bool    isPublishedSameasLocal          () { return (getAccountDetail(PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 ;}
+      bool    isPublishedSameAsLocal          () { return (getAccountDetail(PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 ;}
       ///Return the account published address
       QString getPublishedAddress             () { return getAccountDetail(PUBLISHED_ADDRESS              )                 ;}
       ///Return the account published port
@@ -107,7 +107,7 @@ class LIB_EXPORT Account : public QObject {
       ///Return the account TLS verify client
       bool    isTlsVerifyClient               () { return (getAccountDetail(TLS_VERIFY_CLIENT             )  == "true")?1:0 ;}
       ///Return if it is required for the peer to have a certificate
-      bool    isTlsRequireClientCertificate  () { return (getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 ;}
+      bool    isTlsRequireClientCertificate   () { return (getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 ;}
       ///Return the account TLS security is enabled
       bool    isTlsEnable                     () { return (getAccountDetail(TLS_ENABLE                    )  == "true")?1:0 ;}
       ///Return the account the TLS encryption method
@@ -115,9 +115,9 @@ class LIB_EXPORT Account : public QObject {
       ///Return the account alias
       QString getAccountAlias                 () { return getAccountDetail(ACCOUNT_ALIAS                  )                 ;}
       ///Return if the ringtone are enabled
-      bool    isConfigRingToneEnabled         () { return (getAccountDetail(CONFIG_RINGTONE_ENABLED       )  == "true")?1:0 ;}
+      bool    isRingtoneEnabled               () { return (getAccountDetail(CONFIG_RINGTONE_ENABLED       )  == "true")?1:0 ;}
       ///Return the account ringtone path
-      QString getConfigRingtonePath           () { return getAccountDetail(CONFIG_RINGTONE_PATH           )                 ;}
+      QString getRingtonePath                 () { return getAccountDetail(CONFIG_RINGTONE_PATH           )                 ;}
       ///Return the account local port
       int     getLocalPort                    () { return getAccountDetail(LOCAL_PORT).toInt()                              ;}
       ///Return the account local interface
@@ -150,15 +150,14 @@ class LIB_EXPORT Account : public QObject {
       void setAccountSipStunServer          (QString detail){setAccountDetail(ACCOUNT_SIP_STUN_SERVER        ,detail);}
       void setPublishedAddress              (QString detail){setAccountDetail(PUBLISHED_ADDRESS              ,detail);}
       void setLocalInterface                (QString detail){setAccountDetail(LOCAL_INTERFACE                ,detail);}
-      void setConfigRingtonePath            (QString detail){setAccountDetail(CONFIG_RINGTONE_PATH           ,detail);}
       void setRingtonePath                  (QString detail){setAccountDetail(CONFIG_RINGTONE_PATH           ,detail);}
       void setTlsMethod                     (int     detail){setAccountDetail(TLS_METHOD                     ,QString::number(detail));}
       void setAccountRegistrationExpire     (int     detail){setAccountDetail(ACCOUNT_REGISTRATION_EXPIRE    ,QString::number(detail));}
       void setTlsNegotiationTimeoutSec      (int     detail){setAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC    ,QString::number(detail));}
       void setTlsNegotiationTimeoutMsec     (int     detail){setAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC   ,QString::number(detail));}
-      void setLocalPort                     (short   detail){setAccountDetail(LOCAL_PORT                     ,QString::number(detail));}
-      void setTlsListenerPort               (short   detail){setAccountDetail(TLS_LISTENER_PORT              ,QString::number(detail));}
-      void setPublishedPort                 (short   detail){setAccountDetail(PUBLISHED_PORT                 ,QString::number(detail));}
+      void setLocalPort                     (unsigned short detail){setAccountDetail(LOCAL_PORT                     ,QString::number(detail));}
+      void setTlsListenerPort               (unsigned short detail){setAccountDetail(TLS_LISTENER_PORT              ,QString::number(detail));}
+      void setPublishedPort                 (unsigned short detail){setAccountDetail(PUBLISHED_PORT                 ,QString::number(detail));}
       void setAccountEnabled                (bool    detail){setAccountDetail(ACCOUNT_ENABLED                ,detail?"true":"false");}
       void setTlsVerifyServer               (bool    detail){setAccountDetail(TLS_VERIFY_SERVER              ,detail?"true":"false");}
       void setTlsVerifyClient               (bool    detail){setAccountDetail(TLS_VERIFY_CLIENT              ,detail?"true":"false");}
@@ -171,7 +170,7 @@ class LIB_EXPORT Account : public QObject {
       void setAccountZrtpHelloHash          (bool    detail){setAccountDetail(ACCOUNT_ZRTP_HELLO_HASH        ,detail?"true":"false");}
       void setAccountSipStunEnabled         (bool    detail){setAccountDetail(ACCOUNT_SIP_STUN_ENABLED       ,detail?"true":"false");}
       void setPublishedSameAsLocal          (bool    detail){setAccountDetail(PUBLISHED_SAMEAS_LOCAL         ,detail?"true":"false");}
-      void setConfigRingtoneEnabled         (bool    detail){setAccountDetail(CONFIG_RINGTONE_ENABLED        ,detail?"true":"false");}
+      void setRingtoneEnabled               (bool    detail){setAccountDetail(CONFIG_RINGTONE_ENABLED        ,detail?"true":"false");}
    
       //Updates
       virtual void updateState();

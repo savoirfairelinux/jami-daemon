@@ -279,8 +279,8 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setPublishedAddress            ( lineEdit_pa_published_address ->text()                                   );
    /**/account->setLocalPort                   ( spinBox_pa_published_port->value()                                       );
    /**/account->setLocalInterface              ( comboBox_ni_local_address->currentText()                                 );
-   /**/account->setConfigRingtoneEnabled       ( m_pEnableRingtoneGB->isChecked()                                         );
-   /**/account->setConfigRingtonePath          ( m_pRingTonePath->url().path()                                            );
+   /**/account->setRingtoneEnabled             ( m_pEnableRingtoneGB->isChecked()                                         );
+   /**/account->setRingtonePath                ( m_pRingTonePath->url().path()                                            );
    //                                                                                                                      /
 
    QStringList _codecList;
@@ -384,16 +384,16 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    /**/edit3_server->setText                    (  account->getAccountHostname             ());
    /**/edit4_user->setText                      (  account->getAccountUsername             ());
    /**/edit6_mailbox->setText                   (  account->getAccountMailbox              ());
-   /**/checkbox_ZRTP_Ask_user->setChecked       (  account->isAccountDisplaysAsOnce        ());
-   /**/checkbox_SDES_fallback_rtp->setChecked   (  account->getAccountSrtpRtpFallback      ());
+   /**/checkbox_ZRTP_Ask_user->setChecked       (  account->isAccountDisplaySasOnce        ());
+   /**/checkbox_SDES_fallback_rtp->setChecked   (  account->isAccountSrtpRtpFallback       ());
    /**/checkbox_ZRTP_display_SAS->setChecked    (  account->isAccountZrtpDisplaySas        ());
    /**/checkbox_ZRTP_warn_supported->setChecked (  account->isAccountZrtpNotSuppWarning    ());
    /**/checkbox_ZTRP_send_hello->setChecked     (  account->isAccountZrtpHelloHash         ());
    /**/checkbox_stun->setChecked                (  account->isAccountSipStunEnabled        ());
    /**/line_stun->setText                       (  account->getAccountSipStunServer        ());
    /**/spinbox_regExpire->setValue              (  account->getAccountRegistrationExpire   ());
-   /**/radioButton_pa_same_as_local->setChecked (  account->isPublishedSameasLocal         ());
-   /**/radioButton_pa_custom->setChecked        ( !account->isPublishedSameasLocal         ());
+   /**/radioButton_pa_same_as_local->setChecked (  account->isPublishedSameAsLocal         ());
+   /**/radioButton_pa_custom->setChecked        ( !account->isPublishedSameAsLocal         ());
    /**/lineEdit_pa_published_address->setText   (  account->getPublishedAddress            ());
    /**/spinBox_pa_published_port->setValue      (  account->getPublishedPort               ());
    /*                                                  Security                             **/
@@ -427,8 +427,8 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       frame2_editAccounts->setCurrentIndex(0);
    }
 
-   m_pEnableRingtoneGB->setChecked(account->isConfigRingToneEnabled());
-   QString ringtonePath = KStandardDirs::realFilePath(account->getConfigRingtonePath());
+   m_pEnableRingtoneGB->setChecked(account->isRingtoneEnabled());
+   QString ringtonePath = KStandardDirs::realFilePath(account->getRingtonePath());
    m_pRingTonePath->setUrl( ringtonePath );
 
 

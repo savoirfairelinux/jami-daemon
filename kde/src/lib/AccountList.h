@@ -33,6 +33,7 @@ class LIB_EXPORT AccountList : public QObject{
    Q_OBJECT
 
 public:
+   friend class Account;
    //Static getter and destructor
    static AccountList* getInstance();
    static void destroy();
