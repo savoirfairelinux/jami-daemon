@@ -703,47 +703,47 @@ gboolean dbus_connect(GError **error)
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT,
                                       G_TYPE_NONE, G_TYPE_INT, G_TYPE_INVALID);
 
-    /* Register STRING STRING STRING Marshaller */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register INT INT Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
+                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
-    /* Register STRING STRING INT Marshaller */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_INT, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
-
-    /* Register STRING STRING Marshaller */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING, G_TYPE_NONE, G_TYPE_STRING,
-        G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register STRING Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
 
     /* Register STRING INT Marshaller */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_INT,
                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
-
-    /* Register INT INT Marshaller */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
-                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
     /* Register STRING DOUBLE Marshaller */
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_DOUBLE, G_TYPE_NONE, G_TYPE_STRING,
         G_TYPE_DOUBLE, G_TYPE_INVALID);
 
-    /* Register STRING Marshaller */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
-                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register STRING STRING Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING, G_TYPE_NONE, G_TYPE_STRING,
+        G_TYPE_STRING, G_TYPE_INVALID);
+
+    /* Register STRING INT INT Marshaller */
+    dbus_g_object_register_marshaller(
+            g_cclosure_user_marshal_VOID__STRING_INT_INT, G_TYPE_NONE,
+            G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
     /* Register STRING STRING BOOL Marshaller */
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_STRING_BOOL, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
 
-    /* Register STRING Marshaller */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
-                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register STRING STRING INT Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_INT, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
 
+    /* Register STRING STRING STRING Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
 
     DEBUG("Adding callmanager Dbus signals");
 
@@ -902,21 +902,11 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(video_proxy, "deviceEvent",
             G_CALLBACK(video_device_event_cb), NULL, NULL);
 
-    /* Marshaller for INT INT INT INT INT */
-    dbus_g_object_register_marshaller(
-            g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
-
     dbus_g_proxy_add_signal(video_proxy, "startedEvent", G_TYPE_STRING,
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+            G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(video_proxy, "startedEvent",
             G_CALLBACK(started_video_event_cb), NULL,
             NULL);
-
-    /* Marshaller for INT INT */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
-                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT,
-                                      G_TYPE_INVALID);
 
     dbus_g_proxy_add_signal(video_proxy, "stoppedEvent",
             G_TYPE_STRING, G_TYPE_INVALID);

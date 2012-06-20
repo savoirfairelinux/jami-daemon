@@ -395,7 +395,7 @@ preferences_dialog_fill_video_input_device_rate_list()
 
     // Call dbus to retreive list
     if (dev && chan && size) {
-      list = dbus_get_video_input_device_rate_list(dev, chan, size);
+      list = dbus_get_video_device_rate_list(dev, chan, size);
       g_free(size);
       g_free(chan);
       g_free(dev);
@@ -410,11 +410,11 @@ preferences_dialog_fill_video_input_device_rate_list()
         }
         g_strfreev(list);
 
-        gchar *rate = dbus_get_video_input_device_rate();
+        gchar *rate = dbus_get_active_video_device_rate();
         if (!rate || !*rate || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Rate), rate, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Rate), 0);
-            dbus_set_video_input_rate(get_active_text(GTK_COMBO_BOX(v4l2Rate)));
+            dbus_set_active_video_device_rate(get_active_text(GTK_COMBO_BOX(v4l2Rate)));
         }
         g_free(rate);
     } else
@@ -430,7 +430,7 @@ select_video_input_device_rate_cb(GtkComboBox* comboBox, gpointer data UNUSED)
 {
     gchar *str = get_active_text(comboBox);
     if (str)
-        dbus_set_video_input_rate(str);
+        dbus_set_active_video_device_rate(str);
     g_free(str);
 }
 
@@ -451,7 +451,7 @@ preferences_dialog_fill_video_input_device_size_list()
     gchar** list = NULL;
     // Call dbus to retrieve list
     if (dev && chan) {
-        list = dbus_get_video_input_device_size_list(dev, chan);
+        list = dbus_get_video_device_size_list(dev, chan);
         g_free(chan);
         g_free(dev);
     }
@@ -464,11 +464,11 @@ preferences_dialog_fill_video_input_device_size_list()
             gtk_list_store_set(v4l2SizeList, &iter, 0, *tmp, 1, c, -1);
         }
         g_strfreev(list);
-        gchar *size = dbus_get_video_input_device_size();
+        gchar *size = dbus_get_active_video_device_size();
         if (!size || !*size || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Size), size, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Size), 0);
-            dbus_set_video_input_size(get_active_text(GTK_COMBO_BOX(v4l2Size)));
+            dbus_set_active_video_device_size(get_active_text(GTK_COMBO_BOX(v4l2Size)));
         }
         g_free(size);
     } else
@@ -483,7 +483,7 @@ select_video_input_device_size_cb(GtkComboBox* comboBox, gpointer data UNUSED)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
-        dbus_set_video_input_size(str);
+        dbus_set_active_video_device_size(str);
         preferences_dialog_fill_video_input_device_rate_list();
         g_free(str);
     }
@@ -503,7 +503,7 @@ preferences_dialog_fill_video_input_device_channel_list()
     gchar **list = NULL;
     // Call dbus to retrieve list
     if (dev) {
-        list = dbus_get_video_input_device_channel_list(dev);
+        list = dbus_get_video_device_channel_list(dev);
         g_free(dev);
     }
 
@@ -516,11 +516,11 @@ preferences_dialog_fill_video_input_device_channel_list()
             gtk_list_store_set(v4l2ChannelList, &iter, 0, *tmp, 1, c, -1);
         }
         g_strfreev(list);
-        gchar *channel = dbus_get_video_input_device_channel();
+        gchar *channel = dbus_get_active_video_device_channel();
         if (!channel || !*channel || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Channel), channel, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Channel), 0);
-            dbus_set_video_input_device_channel(get_active_text(GTK_COMBO_BOX(v4l2Channel)));
+            dbus_set_active_video_device_channel(get_active_text(GTK_COMBO_BOX(v4l2Channel)));
         }
         g_free(channel);
     } else
@@ -535,7 +535,7 @@ select_video_input_device_channel_cb(GtkComboBox* comboBox, gpointer data UNUSED
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
-        dbus_set_video_input_device_channel(str);
+        dbus_set_active_video_device_channel(str);
         preferences_dialog_fill_video_input_device_size_list();
         g_free(str);
     }
@@ -550,7 +550,7 @@ preferences_dialog_fill_video_input_device_list()
     gtk_list_store_clear(v4l2DeviceList);
 
     // Call dbus to retrieve list
-    gchar **list = dbus_get_video_input_device_list();
+    gchar **list = dbus_get_video_device_list();
     if (!list || !*list) {
         ERROR("No device list found");
         return FALSE;
@@ -563,11 +563,11 @@ preferences_dialog_fill_video_input_device_list()
             gtk_list_store_set(v4l2DeviceList, &iter, 0, *tmp, 1, c, -1);
         }
         g_strfreev(list);
-        gchar *dev = dbus_get_video_input_device();
+        gchar *dev = dbus_get_active_video_device();
         if (!dev || !*dev || set_combo_index_from_str(GTK_COMBO_BOX(v4l2Device), dev, c)) {
             // if setting is invalid, choose first entry
             gtk_combo_box_set_active(GTK_COMBO_BOX(v4l2Device), 0);
-            dbus_set_video_input_device(get_active_text(GTK_COMBO_BOX(v4l2Device)));
+            dbus_set_active_video_device(get_active_text(GTK_COMBO_BOX(v4l2Device)));
         }
         g_free(dev);
         return TRUE;
@@ -583,7 +583,7 @@ select_video_input_device_cb(GtkComboBox* comboBox, gpointer data UNUSED)
     gchar *str = get_active_text(comboBox);
     if (str) {
         DEBUG("Setting video input device to %s", str);
-        dbus_set_video_input_device(str);
+        dbus_set_active_video_device(str);
         preferences_dialog_fill_video_input_device_channel_list();
         g_free(str);
     }

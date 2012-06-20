@@ -43,9 +43,6 @@ G_BEGIN_DECLS
 #define VIDEO_RENDERER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_RENDERER_TYPE, VideoRendererClass))
 #define IS_VIDEO_RENDERER(obj)           (G_TYPE_CHECK_INSTANCE_TYPE((obj), VIDEO_RENDERER_TYPE))
 #define IS_VIDEO_RENDERER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE((klass), VIDEO_RENDERER_TYPE))
-#define VIDEO_RENDERER_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS((obj), VIDEO_RENDERER_TYPE, VideoRendererClass))
-#define VIDEO_RENDERER_CAST(obj)         ((VideoRenderer*)(obj))
-#define VIDEO_RENDERER_CLASS_CAST(klass) ((VideoRendererClass*)(klass))
 
 typedef struct _VideoRenderer      VideoRenderer;
 typedef struct _VideoRendererClass VideoRendererClass;
@@ -63,13 +60,17 @@ struct _VideoRendererClass {
 };
 
 /* Public interface */
-VideoRenderer *video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path, int vbsize);
-int video_renderer_run(VideoRenderer *preview);
-void video_renderer_stop(VideoRenderer *preview);
+VideoRenderer *
+video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path);
+
+gboolean
+video_renderer_run(VideoRenderer *self);
+
+void
+video_renderer_stop(VideoRenderer *self);
 
 void started_video_event_cb(DBusGProxy *proxy, gchar *shm_path,
-                            gint buffer_size, gint width,
-                            gint height, GError *error,
+                            gint width, gint height, GError *error,
                             gpointer userdata);
 void stopped_video_event_cb(DBusGProxy *proxy, gchar *shm_path, GError *error, gpointer userdata);
 

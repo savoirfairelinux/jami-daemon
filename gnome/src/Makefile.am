@@ -5,6 +5,10 @@ bin_PROGRAMS = sflphone-client-gnome
 SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
                  ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
 
+if SFL_VIDEO
+SFLPHONEGTK_LIBS+=./video/libvideo.la
+endif
+
 sflphone_client_gnome_SOURCES = main.c
 sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
@@ -19,10 +23,6 @@ endif
 
 NOFIFY_LIBS = -lnotify
 LD_LIBS = -ldl
-
-if SFL_VIDEO
-SFLPHONEGTK_LIBS+=./video/libvideo.la
-endif
 
 noinst_LTLIBRARIES = libsflphone_client.la
 

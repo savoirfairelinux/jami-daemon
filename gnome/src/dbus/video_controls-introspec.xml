@@ -131,9 +131,6 @@
             <arg type="s" name="shmPath">
               <tp:docstring>The path of the newly created shared memory</tp:docstring>
             </arg>
-            <arg type="i" name="videoBufferSize">
-              <tp:docstring>The size in bytes of the video in the shared memory</tp:docstring>
-            </arg>
             <arg type="i" name="width">
               <tp:docstring>The width of the video in the shared memory</tp:docstring>
             </arg>

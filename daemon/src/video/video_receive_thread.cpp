@@ -182,7 +182,7 @@ void VideoReceiveThread::setup()
     bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
-    Manager::instance().getVideoControls()->startedEvent(sink_.openedName(), bufferSize_, dstWidth_, dstHeight_);
+    Manager::instance().getVideoControls()->startedEvent(sink_.openedName(), dstWidth_, dstHeight_);
 }
 
 void VideoReceiveThread::createScalingContext()
