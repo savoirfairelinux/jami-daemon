@@ -114,7 +114,6 @@ BookmarkDock::~BookmarkDock()
    delete m_pFilterLE  ;
    delete m_pSplitter  ;
    delete m_pMostUsedCK;
-   delete m_pTest      ;
 }
 
 

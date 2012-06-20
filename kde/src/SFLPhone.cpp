@@ -382,6 +382,9 @@ void SFLPhone::setObjectNames()
    m_pView->setObjectName      ( "m_pView"   );
    statusBar()->setObjectName  ( "statusBar" );
    m_pTrayIcon->setObjectName  ( "trayIcon"  );
+   m_pHistoryDW->setObjectName ( "historydock"  );
+   m_pContactCD->setObjectName ( "contactdock"  );
+   m_pBookmarkDW->setObjectName( "bookmarkdock" );
 }
 
 

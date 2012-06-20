@@ -20,21 +20,25 @@
 
 #include "dlgaccounts.h"
 
-#include <QtGui/QInputDialog>
 
+//Qt
+#include <QtCore/QString>
+#include <QtGui/QInputDialog>
+#include <QtGui/QTableWidget>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QWidget>
+
+//KDE
+#include <KConfigDialog>
+#include <KDebug>
+#include <KStandardDirs>
+
+//SFLPhone
+#include "conf/ConfigurationDialog.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "SFLPhoneView.h"
 #include "../AccountView.h"
 #include "lib/sflphone_const.h"
-#include <kconfigdialog.h>
-#include <QTableWidget>
-#include <QString>
-#include <QListWidgetItem>
-#include "conf/ConfigurationDialog.h"
-#include <QWidget>
-#include <KStandardDirs>
-//KDE
-#include <KDebug>
 
 Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent)
 {
@@ -71,6 +75,8 @@ Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QSt
    resize(550,300);
    connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
 } //Private_AddCodecDialog
+
+///When a new codec is added (ok pressed)
 void Private_AddCodecDialog::emitNewCodec() {
    if (codecTable->currentRow() >= 0)
    emit addCodec(codecTable->item(codecTable->currentRow(),3)->text());
@@ -177,23 +183,6 @@ void DlgAccounts::saveAccountList()
    for (int i = 0; i < accountList->size(); i++) {
       AccountView* current = (*accountList)[i];
       QString currentId;
-      //if the account has no instanciated id, it has just been created in the client
-      /*if(current && current->isNew()) {
-         MapStringString details = current->getAccountDetails();
-         currentId = configurationManager.addAccount(details);
-         current->setAccountId(currentId);
-      }
-      //if the account has an instanciated id but it's not in configurationManager
-      else {
-         if(! accountIds.contains(current->getAccountId())) {
-            kDebug() << "The account with id " << current->getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
-            currentId = QString();
-         }
-         else {
-            //configurationManager.setAccountDetails(current->getAccountId(), current->getAccountDetails());
-
-         }
-      }*/
       current->save();
       currentId = QString(current->getAccountId());
    }
@@ -386,6 +375,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
          checkbox_ZTRP_send_hello->setVisible     ( false );
          break;
    }
+   
    //         WIDGET VALUE                                             VALUE                 /
    /**/edit2_protocol->setCurrentIndex          ( (protocolIndex < 0) ? 0 : protocolIndex    );
    /**/edit3_server->setText                    (  account->getAccountHostname             ());

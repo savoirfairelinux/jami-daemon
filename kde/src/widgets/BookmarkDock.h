@@ -56,7 +56,6 @@ private:
    QSplitter*              m_pSplitter  ;
    BookmarkList            m_pBookmark  ;
    QCheckBox*              m_pMostUsedCK;
-   QTreeView*              m_pTest      ;
 
    //Mutators
    void addBookmark_internal(const QString& phone);
