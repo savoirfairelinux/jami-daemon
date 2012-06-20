@@ -135,33 +135,61 @@ class LIB_EXPORT Account : public QObject {
       void setActiveVideoCodecList(QList<VideoCodec*> codecs);
       QList<VideoCodec*> getActiveVideoCodecList();
       #endif
+      ///Set the account alias
       void setAccountAlias                  (QString detail){setAccountDetail(ACCOUNT_ALIAS                  ,detail);}
+      ///Set the account type, SIP or IAX
       void setAccountType                   (QString detail){setAccountDetail(ACCOUNT_TYPE                   ,detail);}
+      ///The set account hostname, it can be an hostname or an IP address
       void setAccountHostname               (QString detail){setAccountDetail(ACCOUNT_HOSTNAME               ,detail);}
+      ///Set the account username, everything is valid, some might be rejected by the PBX server
       void setAccountUsername               (QString detail){setAccountDetail(ACCOUNT_USERNAME               ,detail);}
-      void setAccountPassword               (QString detail){setAccountDetail(ACCOUNT_PASSWORD               ,detail);}
+      ///Set the account mailbox, usually a number, but can be anything
       void setAccountMailbox                (QString detail){setAccountDetail(ACCOUNT_MAILBOX                ,detail);}
+      ///Set the main credential password
+      void setAccountPassword               (QString detail){setAccountDetail(ACCOUNT_PASSWORD               ,detail);}
+      ///Set the TLS (encryption) password
       void setTlsPassword                   (QString detail){setAccountDetail(TLS_PASSWORD                   ,detail);}
+      ///Set the certificate authority list file
       void setTlsCaListFile                 (QString detail){setAccountDetail(TLS_CA_LIST_FILE               ,detail);}
+      ///Set the certificate
       void setTlsCertificateFile            (QString detail){setAccountDetail(TLS_CERTIFICATE_FILE           ,detail);}
+      ///Set the private key
       void setTlsPrivateKeyFile             (QString detail){setAccountDetail(TLS_PRIVATE_KEY_FILE           ,detail);}
+      ///Set the TLS cipher
       void setTlsCiphers                    (QString detail){setAccountDetail(TLS_CIPHERS                    ,detail);}
+      ///Set the TLS server
       void setTlsServerName                 (QString detail){setAccountDetail(TLS_SERVER_NAME                ,detail);}
+      ///Set the stun server
       void setAccountSipStunServer          (QString detail){setAccountDetail(ACCOUNT_SIP_STUN_SERVER        ,detail);}
+      ///Set the published address
       void setPublishedAddress              (QString detail){setAccountDetail(PUBLISHED_ADDRESS              ,detail);}
+      ///Set the local interface
       void setLocalInterface                (QString detail){setAccountDetail(LOCAL_INTERFACE                ,detail);}
+      ///Set the ringtone path, it have to be a valid absolute path
       void setRingtonePath                  (QString detail){setAccountDetail(CONFIG_RINGTONE_PATH           ,detail);}
+      ///Set the Tls method
       void setTlsMethod                     (int     detail){setAccountDetail(TLS_METHOD                     ,QString::number(detail));}
+      ///Set the account timeout, it will be renegotiated when that timeout occur
       void setAccountRegistrationExpire     (int     detail){setAccountDetail(ACCOUNT_REGISTRATION_EXPIRE    ,QString::number(detail));}
+      ///Set TLS negotiation timeout in second
       void setTlsNegotiationTimeoutSec      (int     detail){setAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC    ,QString::number(detail));}
+      ///Set the TLS negotiation timeout in milliseconds
       void setTlsNegotiationTimeoutMsec     (int     detail){setAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC   ,QString::number(detail));}
-      void setLocalPort                     (unsigned short detail){setAccountDetail(LOCAL_PORT                     ,QString::number(detail));}
-      void setTlsListenerPort               (unsigned short detail){setAccountDetail(TLS_LISTENER_PORT              ,QString::number(detail));}
-      void setPublishedPort                 (unsigned short detail){setAccountDetail(PUBLISHED_PORT                 ,QString::number(detail));}
+      ///Set the local port for SIP/IAX communications
+      void setLocalPort                     (unsigned short detail){setAccountDetail(LOCAL_PORT              ,QString::number(detail));}
+      ///Set the TLS listener port (0-2^16)
+      void setTlsListenerPort               (unsigned short detail){setAccountDetail(TLS_LISTENER_PORT       ,QString::number(detail));}
+      ///Set the published port (0-2^16)
+      void setPublishedPort                 (unsigned short detail){setAccountDetail(PUBLISHED_PORT          ,QString::number(detail));}
+      ///Set if the account is enabled or not
       void setAccountEnabled                (bool    detail){setAccountDetail(ACCOUNT_ENABLED                ,detail?"true":"false");}
+      ///Set the TLS verification server
       void setTlsVerifyServer               (bool    detail){setAccountDetail(TLS_VERIFY_SERVER              ,detail?"true":"false");}
+      ///Set the TLS verification client
       void setTlsVerifyClient               (bool    detail){setAccountDetail(TLS_VERIFY_CLIENT              ,detail?"true":"false");}
+      ///Set if the peer need to be providing a certificate
       void setTlsRequireClientCertificate   (bool    detail){setAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE ,detail?"true":"false");}
+      ///Set if the security settings are enabled
       void setTlsEnable                     (bool    detail){setAccountDetail(TLS_ENABLE                     ,detail?"true":"false");}
       void setAccountDisplaySasOnce         (bool    detail){setAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE       ,detail?"true":"false");}
       void setAccountSrtpRtpFallback        (bool    detail){setAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK      ,detail?"true":"false");}
@@ -170,6 +198,7 @@ class LIB_EXPORT Account : public QObject {
       void setAccountZrtpHelloHash          (bool    detail){setAccountDetail(ACCOUNT_ZRTP_HELLO_HASH        ,detail?"true":"false");}
       void setAccountSipStunEnabled         (bool    detail){setAccountDetail(ACCOUNT_SIP_STUN_ENABLED       ,detail?"true":"false");}
       void setPublishedSameAsLocal          (bool    detail){setAccountDetail(PUBLISHED_SAMEAS_LOCAL         ,detail?"true":"false");}
+      ///Set if custom ringtone are enabled
       void setRingtoneEnabled               (bool    detail){setAccountDetail(CONFIG_RINGTONE_ENABLED        ,detail?"true":"false");}
    
       //Updates

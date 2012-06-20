@@ -128,7 +128,7 @@ Account::~Account()
 ///Callback when the account state change
 void Account::accountChanged(QString accountId,QString state,int)
 {
-   if (accountId == *m_pAccountId) {
+   if (m_pAccountId && accountId == *m_pAccountId) {
       Account::updateState();
       stateChanged(getStateName(state));
    }

@@ -44,8 +44,8 @@ inline bool operator< (const SortableCallSource & s1, const SortableCallSource &
     return  s1.count < s2.count;
 }
 
-HistoryModel* HistoryModel::m_spInstance = nullptr;
-CallMap HistoryModel::m_sHistoryCalls;
+HistoryModel* HistoryModel::m_spInstance    = nullptr;
+CallMap       HistoryModel::m_sHistoryCalls          ;
 
 
 /*****************************************************************************
@@ -73,7 +73,6 @@ HistoryModel::HistoryModel():m_HistoryInit(false)
          pastCall->setPeerName("Unknown");
       }
       pastCall->setRecordingPath(hc[ RECORDING_PATH_KEY ]);
-      //m_sHistoryCalls[ hc[TIMESTAMP_START_KEY ]] = pastCall;
       addPriv(pastCall);
    }
    m_HistoryInit = true;
