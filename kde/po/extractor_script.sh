@@ -1,14 +1,14 @@
 #!/bin/sh
 BASEDIR="/home/lepagee/sflphone/kde/"	# root of translatable sources
-PROJECT="sflphoner-client-kde"	# project name
+PROJECT="sflphone-client-kde"	# project name
 BUGADDR="https://projects.savoirfairelinux.com/projects/sflphone/"	# MSGID-Bugs
-WDIR=`pwd`		# working dir
+WDIR=`pwd`"/../"		# working dir
  
  
 echo "Preparing rc files"
 cd ${BASEDIR}
 # we use simple sorting to make sure the lines do not jump around too much from system to system
-find . -name '*.rc' -o -name '*.ui' -o -name '*.kcfg' | sort > ${WDIR}/rcfiles.list
+find $WDIR -name '*.rc' -o -name '*.ui' -o -name '*.kcfg' | sort > ${WDIR}/rcfiles.list
 xargs --arg-file=${WDIR}/rcfiles.list extractrc > ${WDIR}/rc.cpp
 # additional string for KAboutData
 echo 'i18nc("NAME OF TRANSLATORS","Your names");' >> ${WDIR}/rc.cpp
@@ -31,7 +31,7 @@ echo "Done extracting messages"
  
  
 echo "Merging translations"
-catalogs=`find . -name '*.po'`
+catalogs=`find $WDIR -name '*.po'`
 for cat in $catalogs; do
   echo $cat
   msgmerge -o $cat.new $cat ${PROJECT}.pot

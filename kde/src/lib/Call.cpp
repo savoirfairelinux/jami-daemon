@@ -523,8 +523,7 @@ bool Call::isSecure() const {
       return false;
    }
 
-   AccountList accountList(true);
-   Account* currentAccount = accountList.getAccountById(m_Account);
+   Account* currentAccount = AccountList::getInstance()->getAccountById(m_Account);
 
    if ((currentAccount->isTlsEnable()) || (currentAccount->getTlsMethod())) {
       return true;
@@ -759,7 +758,7 @@ void Call::call()
    qDebug() << "account = " << m_Account;
    if(m_Account.isEmpty()) {
       qDebug() << "Account is not set, taking the first registered.";
-      this->m_Account = CallModel<>::getCurrentAccountId();
+      this->m_Account = AccountList::getCurrentAccount()->getAccountId();
    }
    if(!m_Account.isEmpty()) {
       qDebug() << "Calling " << m_CallNumber << " with account " << m_Account << ". callId : " << m_CallId  << "ConfId:" << m_ConfId;

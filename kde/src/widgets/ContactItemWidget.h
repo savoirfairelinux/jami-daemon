@@ -70,10 +70,11 @@ class ContactItemWidget : public QWidget
     static const char * callStateIcons[12];
     
 protected:
-   virtual void dragEnterEvent ( QDragEnterEvent *e );
-   virtual void dragMoveEvent  ( QDragMoveEvent  *e );
-   virtual void dragLeaveEvent ( QDragLeaveEvent *e );
-   virtual void dropEvent      ( QDropEvent      *e );
+   virtual void dragEnterEvent        ( QDragEnterEvent *e );
+   virtual void dragMoveEvent         ( QDragMoveEvent  *e );
+   virtual void dragLeaveEvent        ( QDragLeaveEvent *e );
+   virtual void dropEvent             ( QDropEvent      *e );
+   virtual void mouseDoubleClickEvent ( QMouseEvent     *e );
 
  private:
     //Attributes

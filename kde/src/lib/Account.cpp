@@ -33,6 +33,7 @@
 #include "configurationmanager_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
 #include "video_interface_singleton.h"
+#include "AccountList.h"
 
 ///Match state name to user readable string
 const QString& account_state_name(const QString& s)
@@ -83,13 +84,13 @@ Account* Account::buildExistingAccountFromId(const QString& _accountId)
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    Account* a = new Account();
    a->m_pAccountId = new QString(_accountId);
-   MapStringString* aDetails = new MapStringString(configurationManager.getAccountDetails(_accountId).value());
+   QMap<QString,QString> aDetails = configurationManager.getAccountDetails(_accountId);
    
-   if (!aDetails->count()) {
+   if (!aDetails.count()) {
       qDebug() << "Account not found";
       return NULL;
    }
-   a->m_pAccountDetails = aDetails;
+   a->m_pAccountDetails = new MapStringString(aDetails);
 
    //Enable for debug
    //    foreach (QString str, *aDetails) {
@@ -127,7 +128,7 @@ Account::~Account()
 ///Callback when the account state change
 void Account::accountChanged(QString accountId,QString state,int)
 {
-   if (accountId == *m_pAccountId) {
+   if (m_pAccountId && accountId == *m_pAccountId) {
       Account::updateState();
       stateChanged(getStateName(state));
    }
@@ -257,6 +258,32 @@ void Account::updateState()
       MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
       QString status = details[ACCOUNT_REGISTRATION_STATUS];
       setAccountDetail(ACCOUNT_REGISTRATION_STATUS, status); //Update -internal- object state
+   }
+}
+
+///Save the current account to the daemon
+void Account::save()
+{
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   if (isNew()) {
+      MapStringString details = getAccountDetails();
+      QString currentId = configurationManager.addAccount(details);
+      setAccountId(currentId);
+      qDebug() << "NEW ID" << currentId;
+   }
+   else {
+      configurationManager.setAccountDetails(getAccountId(), getAccountDetails());
+   }
+
+   //QString id = configurationManager.getAccountDetail(getAccountId());
+   if (!getAccountId().isEmpty()) {
+      Account* acc =  AccountList::getInstance()->getAccountById(getAccountId());
+      qDebug() << "Adding the new account to the account list (" << getAccountId() << ")";
+      if (acc != this) {
+         (*AccountList::getInstance()->m_pAccounts) << this;
+      }
+      
+      updateState();
    }
 }
 

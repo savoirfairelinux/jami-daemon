@@ -281,13 +281,13 @@ void SFLPhoneEngine::updateContacts()
 ///Update other informations
 void SFLPhoneEngine::updateInfo()
 {
-   setData("info", I18N_NOOP("Current_account"), m_pModel->getCurrentAccountId());
+   setData("info", I18N_NOOP("Current_account"), AccountList::getCurrentAccount()->getAccountId());
 }
 
 ///Load/Update account list
 void SFLPhoneEngine::updateAccounts()
 {
-   const QVector<Account*>& list = m_pModel->getAccountList()->getAccounts();
+   const QVector<Account*>& list = AccountList::getInstance()->getAccounts();
    foreach(Account* a,list) {
       if (dynamic_cast<Account*>(a)) {
          QHash<QString,QVariant> acc;

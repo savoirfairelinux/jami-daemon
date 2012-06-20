@@ -313,7 +313,7 @@ QString ContactItemWidget::showNumberSelector(bool& ok)
    }
    else if (m_pContactKA->getPhoneNumbers().size() == 1) {
       ok = true;
-      return m_pContactKA->getPhoneNumbers()[1]->getNumber();
+      return m_pContactKA->getPhoneNumbers()[0]->getNumber();
    }
    else {
       ok = false;
@@ -365,7 +365,7 @@ void ContactItemWidget::callAgain()
    bool ok;
    QString number = showNumberSelector(ok);
    if (ok) {
-      Call* call = SFLPhone::model()->addDialingCall(m_pContactKA->getFormattedName(), SFLPhone::app()->model()->getCurrentAccount());
+      Call* call = SFLPhone::model()->addDialingCall(m_pContactKA->getFormattedName(), AccountList::getCurrentAccount());
       call->setCallNumber(number);
       call->setPeerName(m_pContactKA->getFormattedName());
       call->actionPerformed(CALL_ACTION_ACCEPT);
@@ -482,6 +482,20 @@ void ContactItemWidget::dropEvent(QDropEvent *e)
    }
    else {
       kDebug() << "Invalid drop data";
+      e->ignore();
+   }
+}
+
+///On double click
+void ContactItemWidget::mouseDoubleClickEvent(QMouseEvent *e )
+{
+   PhoneNumbers numbers = m_pContactKA->getPhoneNumbers();
+
+   if (getCallNumbers().count() == 1) {
+      e->accept();
+      callAgain();
+   }
+   else {
       e->ignore();
    }
 }

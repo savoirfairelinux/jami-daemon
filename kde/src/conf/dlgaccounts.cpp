@@ -20,21 +20,25 @@
 
 #include "dlgaccounts.h"
 
-#include <QtGui/QInputDialog>
 
+//Qt
+#include <QtCore/QString>
+#include <QtGui/QInputDialog>
+#include <QtGui/QTableWidget>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QWidget>
+
+//KDE
+#include <KConfigDialog>
+#include <KDebug>
+#include <KStandardDirs>
+
+//SFLPhone
+#include "conf/ConfigurationDialog.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "SFLPhoneView.h"
 #include "../AccountView.h"
 #include "lib/sflphone_const.h"
-#include <kconfigdialog.h>
-#include <QTableWidget>
-#include <QString>
-#include <QListWidgetItem>
-#include "conf/ConfigurationDialog.h"
-#include <QWidget>
-#include <KStandardDirs>
-//KDE
-#include <KDebug>
 
 Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent)
 {
@@ -71,6 +75,8 @@ Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QSt
    resize(550,300);
    connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
 } //Private_AddCodecDialog
+
+///When a new codec is added (ok pressed)
 void Private_AddCodecDialog::emitNewCodec() {
    if (codecTable->currentRow() >= 0)
    emit addCodec(codecTable->item(codecTable->currentRow(),3)->text());
@@ -177,23 +183,8 @@ void DlgAccounts::saveAccountList()
    for (int i = 0; i < accountList->size(); i++) {
       AccountView* current = (*accountList)[i];
       QString currentId;
-      //if the account has no instanciated id, it has just been created in the client
-      if(current && current->isNew()) {
-         MapStringString details = current->getAccountDetails();
-         currentId = configurationManager.addAccount(details);
-         current->setAccountId(currentId);
-      }
-      //if the account has an instanciated id but it's not in configurationManager
-      else {
-         if(! accountIds.contains(current->getAccountId())) {
-            kDebug() << "The account with id " << current->getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
-            currentId = QString();
-         }
-         else {
-            configurationManager.setAccountDetails(current->getAccountId(), current->getAccountDetails());
-            currentId = QString(current->getAccountId());
-         }
-      }
+      current->save();
+      currentId = QString(current->getAccountId());
    }
 
    //remove accounts that are in the configurationManager but not in the client
@@ -277,8 +268,8 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setPublishedAddress            ( lineEdit_pa_published_address ->text()                                   );
    /**/account->setLocalPort                   ( spinBox_pa_published_port->value()                                       );
    /**/account->setLocalInterface              ( comboBox_ni_local_address->currentText()                                 );
-   /**/account->setConfigRingtoneEnabled       ( m_pEnableRingtoneGB->isChecked()                                         );
-   /**/account->setConfigRingtonePath          ( m_pRingTonePath->url().path()                                            );
+   /**/account->setRingtoneEnabled             ( m_pEnableRingtoneGB->isChecked()                                         );
+   /**/account->setRingtonePath                ( m_pRingTonePath->url().path()                                            );
    //                                                                                                                      /
 
    QStringList _codecList;
@@ -343,14 +334,21 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
    loadCredentails(account->getAccountId());
 
-//    bool ok;
-//    int val = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS).toInt(&ok);
-//    spinbox_regExpire->setValue(ok ? val : REGISTRATION_EXPIRE_DEFAULT);
-
-   foreach(CredentialData data,credentialList) {
-      if (data.name == account->getAccountUsername()) {
-         edit5_password->setText( data.password );
+   if (credentialList.size() > 0) {
+      bool found = false;
+      foreach(CredentialData data,credentialList) {
+         if (data.name == account->getAccountUsername()) {
+            edit5_password->setText( data.password );
+            found = true;
+         }
       }
+      if (!found) {
+         //Better than nothing, can happen if username change
+         edit5_password->setText( credentialList[0].password );
+      }
+   }
+   else {
+      edit5_password->setText("");
    }
 
 
@@ -377,21 +375,22 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
          checkbox_ZTRP_send_hello->setVisible     ( false );
          break;
    }
+   
    //         WIDGET VALUE                                             VALUE                 /
    /**/edit2_protocol->setCurrentIndex          ( (protocolIndex < 0) ? 0 : protocolIndex    );
    /**/edit3_server->setText                    (  account->getAccountHostname             ());
    /**/edit4_user->setText                      (  account->getAccountUsername             ());
    /**/edit6_mailbox->setText                   (  account->getAccountMailbox              ());
-   /**/checkbox_ZRTP_Ask_user->setChecked       (  account->isAccountDisplaysAsOnce        ());
-   /**/checkbox_SDES_fallback_rtp->setChecked   (  account->getAccountSrtpRtpFallback      ());
+   /**/checkbox_ZRTP_Ask_user->setChecked       (  account->isAccountDisplaySasOnce        ());
+   /**/checkbox_SDES_fallback_rtp->setChecked   (  account->isAccountSrtpRtpFallback       ());
    /**/checkbox_ZRTP_display_SAS->setChecked    (  account->isAccountZrtpDisplaySas        ());
    /**/checkbox_ZRTP_warn_supported->setChecked (  account->isAccountZrtpNotSuppWarning    ());
    /**/checkbox_ZTRP_send_hello->setChecked     (  account->isAccountZrtpHelloHash         ());
    /**/checkbox_stun->setChecked                (  account->isAccountSipStunEnabled        ());
    /**/line_stun->setText                       (  account->getAccountSipStunServer        ());
    /**/spinbox_regExpire->setValue              (  account->getAccountRegistrationExpire   ());
-   /**/radioButton_pa_same_as_local->setChecked (  account->isPublishedSameasLocal         ());
-   /**/radioButton_pa_custom->setChecked        ( !account->isPublishedSameasLocal         ());
+   /**/radioButton_pa_same_as_local->setChecked (  account->isPublishedSameAsLocal         ());
+   /**/radioButton_pa_custom->setChecked        ( !account->isPublishedSameAsLocal         ());
    /**/lineEdit_pa_published_address->setText   (  account->getPublishedAddress            ());
    /**/spinBox_pa_published_port->setValue      (  account->getPublishedPort               ());
    /*                                                  Security                             **/
@@ -425,8 +424,8 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       frame2_editAccounts->setCurrentIndex(0);
    }
 
-   m_pEnableRingtoneGB->setChecked(account->isConfigRingToneEnabled());
-   QString ringtonePath = KStandardDirs::realFilePath(account->getConfigRingtonePath());
+   m_pEnableRingtoneGB->setChecked(account->isRingtoneEnabled());
+   QString ringtonePath = KStandardDirs::realFilePath(account->getRingtonePath());
    m_pRingTonePath->setUrl( ringtonePath );
 
 
@@ -794,6 +793,7 @@ void DlgAccounts::updateCombo(int value)
 
 void DlgAccounts::loadCredentails(QString accountId) {
    credentialInfo.clear();
+   credentialList.clear();
    list_credential->clear();
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    VectorMapStringString credentials = configurationManager.getCredentials(accountId);

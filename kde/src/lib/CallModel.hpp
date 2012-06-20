@@ -42,7 +42,6 @@
 #define CALLMODEL_T CallModel<CallWidget,Index>
 
 //Static member
-CALLMODEL_TEMPLATE QString      CALLMODEL_T::m_sPriorAccountId      = ""        ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sInstanceInit        = false     ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sCallInit            = false     ;
 CALLMODEL_TEMPLATE CallMap      CALLMODEL_T::m_lConfList            = CallMap() ;
@@ -88,13 +87,8 @@ CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
 ///Open the connection to the daemon and register this client
 CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
 {
-   if (!m_sInstanceInit) {
+   if (!m_sInstanceInit)
       registerCommTypes();
-      
-      //Setup accounts
-      if (m_spAccountList == NULL)
-         m_spAccountList = new AccountList(true);
-   }
    m_sInstanceInit = true;
    return true;
 } //init
@@ -204,7 +198,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
 ///Create a new dialing call from peer name and the account ID
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, Account* account)
 {
-   Account* acc = (account)?account:getCurrentAccount();
+   Account* acc = (account)?account:AccountList::getCurrentAccount();
    
    Call* call = Call::buildDialingCall(generateCallId(), peerName, acc->getAccountId());
    return addCallCommon(call);
@@ -395,49 +389,6 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(Call* call)
    m_lConfList[call->getConfId()] = nullptr;
 }
 
-
-/*****************************************************************************
- *                                                                           *
- *                           Account related code                            *
- *                                                                           *
- ****************************************************************************/
-
-///Return the current account id (do not put in the cpp file)
-CALLMODEL_TEMPLATE QString CALLMODEL_T::getCurrentAccountId()
-{
-   Account* firstRegistered = getCurrentAccount();
-   if(!firstRegistered) {
-      return QString();
-   }
-   else {
-      return firstRegistered->getAccountId();
-   }
-} //getCurrentAccountId
-
-
-///Return the current account
-CALLMODEL_TEMPLATE Account* CALLMODEL_T::getCurrentAccount()
-{
-   Account* priorAccount = getAccountList()->getAccountById(m_sPriorAccountId);
-   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
-      return priorAccount;
-   }
-   else {
-      //qDebug() << "Returning the first account" << getAccountList()->size();
-      return getAccountList()->firstRegisteredAccount();
-   }
-} //getCurrentAccount
-
-///Return the previously used account ID
-CALLMODEL_TEMPLATE QString CALLMODEL_T::getPriorAccoundId()
-{
-   return m_sPriorAccountId;
-}
-
-///Set the previous account used
-CALLMODEL_TEMPLATE void CALLMODEL_T::setPriorAccountId(const QString& value) {
-   m_sPriorAccountId = value;
-}
 
 /*****************************************************************************
  *                                                                           *

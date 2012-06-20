@@ -82,8 +82,6 @@ SET(
    conf/dlgvideobase.ui
 )
 
-
-ENABLE_TESTING()
 add_subdirectory( test   )
 
 IF(${ENABLE_VIDEO} MATCHES true)

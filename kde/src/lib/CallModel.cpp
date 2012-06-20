@@ -24,7 +24,6 @@
 
 bool CallModelBase::dbusInit = false;
 CallMap CallModelBase::m_sActiveCalls;
-AccountList* CallModelBase::m_spAccountList=NULL;
 
 ///Constructor
 CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
@@ -57,8 +56,7 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 ///Destructor
 CallModelBase::~CallModelBase()
 {
-   if (m_spAccountList) delete m_spAccountList;
-   m_spAccountList = NULL;
+   //if (m_spAccountList) delete m_spAccountList;
 }
 
 ///When a call state change
@@ -173,7 +171,7 @@ Call* CallModelBase::addConferenceS(Call* conf)
 void CallModelBase::accountChanged(const QString& account,const QString& state, int code)
 {
    Q_UNUSED(code)
-   Account* a = getAccountList()->getAccountById(account);
+   Account* a = AccountList::getInstance()->getAccountById(account);
    if (a) {
       emit accountStateChanged(a,a->getStateName(state));
    }
@@ -195,13 +193,13 @@ void CallModelBase::removeActiveCall(Call* call)
  ****************************************************************************/
 
 ///Return a list of registered accounts
-AccountList* CallModelBase::getAccountList()
-{
-   if (m_spAccountList == NULL) {
-      m_spAccountList = new AccountList(true);
-   }
-   return m_spAccountList;
-}
+// AccountList* CallModelBase::getAccountList()
+// {
+//    if (m_spAccountList == NULL) {
+//       m_spAccountList = new AccountList(true);
+//    }
+//    return m_spAccountList;
+// }
 
 
 /*****************************************************************************
