@@ -130,6 +130,7 @@ function build_daemon {
 function build_gnome {
 	# Compile the daemon
 	pushd daemon
+  killall sflphoned
 	make distclean
 	./autogen.sh
   # Compile pjproject first
@@ -142,7 +143,7 @@ function build_gnome {
 	make clean
 	# Compile src code
 	make -j
-  sudo make install
+  ./src/sflphoned&
 	popd
 
 	# Compile the plugins
