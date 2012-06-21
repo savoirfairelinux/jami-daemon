@@ -35,6 +35,10 @@
 #ifndef MANAGER_IMPL_H_
 #define MANAGER_IMPL_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string>
 #include <vector>
 #include <set>
@@ -1060,9 +1064,11 @@ class ManagerImpl {
             return &dbus_;
         }
 
+#ifdef SFL_VIDEO
         VideoControls * getVideoControls() {
             return dbus_.getVideoControls();
         }
+#endif
 
         /**
         * Tell if an account exists
