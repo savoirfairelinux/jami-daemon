@@ -23,6 +23,7 @@
 #include <QtCore/QList>
 #include <KAction>
 
+///SFLPhoneAccessibility: Functions to improve accessibility for disabled peoples
 class SFLPhoneAccessibility : public QObject, public QList<KAction*>
 {
    Q_OBJECT

@@ -38,6 +38,7 @@ class DlgAddressBook;
 class DlgRecord;
 class DlgHooks;
 class DlgAccessibility;
+class DlgVideo;
 
 class SFLPhoneView;
 
@@ -63,6 +64,7 @@ private:
    DlgAddressBook*   dlgAddressBook  ;
    DlgHooks*         dlgHooks        ;
    DlgAccessibility* dlgAccessibility;
+   DlgVideo*         dlgVideo        ;
 
 public:
    ConfigurationDialog(SFLPhoneView *parent = 0);
@@ -107,7 +109,9 @@ private slots:
 
 
 signals:
+   ///Emitted when the history need to be cleaned
    void clearCallHistoryAsked();
+   ///Emitted when changes are applied
    void changesApplied();
 
 };

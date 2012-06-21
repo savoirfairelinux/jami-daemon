@@ -49,7 +49,7 @@ class QMimeData;
 //KDE
 class KAction;
 
-///@class HistoryTreeItem Items for the history dock
+///HistoryTreeItem: Items for the history dock
 class HistoryTreeItem : public QWidget
 {
    Q_OBJECT
@@ -148,8 +148,6 @@ private slots:
    void showContext  ( const QPoint& pos );
    void transferEvent( QMimeData* data   );
 
-signals:
-   void over(Call*);
 };
 
 #endif // CALLTREE_ITEM_H

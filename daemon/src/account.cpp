@@ -102,6 +102,8 @@ void Account::setActiveVideoCodecs(const std::vector<std::string> &list)
     videoCodecList_ = !list.empty() ? list : sfl_video::getCodecList();
     // update the codec string according to new codec selection
     videoCodecStr_ = ManagerImpl::join_string(list);
+#else
+    (void) list;
 #endif
 }
 

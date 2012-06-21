@@ -16,7 +16,7 @@ SET(LOCAL_CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 SET(CMAKE_MODULE_PATH "${LOCAL_CMAKE_MODULE_PATH}")
 
 FIND_PACKAGE ( KDE4 REQUIRED )
-FIND_PACKAGE ( Qt4 REQUIRED )
+FIND_PACKAGE ( Qt4  REQUIRED )
 
 INCLUDE ( KDE4Defaults )
 
@@ -30,12 +30,16 @@ set( qtsflphone_LIB_SRCS
   Account.cpp
   AccountList.cpp
   CallModel.cpp
+  HistoryModel.cpp
   Contact.cpp
   ContactBackend.cpp
-  Item.cpp
+  VideoCodec.cpp
+  VideoModel.cpp
+  VideoDevice.cpp
   configurationmanager_interface_singleton.cpp
   callmanager_interface_singleton.cpp
   instance_interface_singleton.cpp
+  video_interface_singleton.cpp
   sflphone_const.h
 )
 
@@ -70,6 +74,20 @@ QT4_ADD_DBUS_INTERFACE(
    ${callmanager_xml}
    callmanager_dbus_interface)
 
+# video manager interface
+SET ( video_xml  ${dbus_xml_introspecs_path}/video_controls-introspec.xml )
+
+SET_SOURCE_FILES_PROPERTIES(
+   ${video_xml}
+   PROPERTIES
+   CLASSNAME VideoInterface
+   INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/dbus/metatypes.h")
+
+QT4_ADD_DBUS_INTERFACE(
+   qtsflphone_LIB_SRCS
+   ${video_xml}
+   video_dbus_interface)
+
 # instance interface
 SET ( instance_xml  ${dbus_xml_introspecs_path}/instance-introspec.xml )
 
@@ -98,14 +116,18 @@ set_target_properties( qtsflphone
 set( qtsflphone_LIB_HDRS
   Account.h
   AccountList.h
-  Call.h  
+  Call.h
   CallModel.h
+  HistoryModel.h
   Contact.h
-  ContactBackend.h  
-  Item.h  
+  ContactBackend.h
+  VideoCodec.h
+  VideoModel.h
+  VideoDevice.h
   configurationmanager_interface_singleton.h
   callmanager_interface_singleton.h
   instance_interface_singleton.h
+  video_interface_singleton.h
   sflphone_const.h
 )
 

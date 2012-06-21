@@ -24,7 +24,7 @@
 #include "../lib/AccountList.h"
 #include "../AccountView.h"
 
-///@class ConfigAccountList Account list model
+///ConfigAccountList: Account list model
 class ConfigAccountList : public QObject {
    Q_OBJECT
    public:
@@ -32,6 +32,7 @@ class ConfigAccountList : public QObject {
       ///Constructor
       ConfigAccountList(bool fill = true);
       ConfigAccountList(QStringList &_accountIds);
+      ~ConfigAccountList();
 
       ///Getters
       const AccountView*      getAccountAt           ( int i                 ) const;
@@ -61,6 +62,7 @@ class ConfigAccountList : public QObject {
       QVector<AccountView*>*  accounts;
 
    signals:
+      ///Emitted when the list change
       void accountListUpdated();
 };
 

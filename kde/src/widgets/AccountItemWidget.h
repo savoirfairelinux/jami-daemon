@@ -30,7 +30,7 @@ class QCheckBox;
 class QLabel;
 
 
-///@class AccountItemWidget Widget for the config dialog account list
+///AccountItemWidget: Widget for the config dialog account list
 class AccountItemWidget : public QWidget
 {
 Q_OBJECT
@@ -69,6 +69,7 @@ private slots:
    void on_m_pCheckBox_stateChanged(int state);
 
 signals:
+   ///Emitted when the account is checked
    void checkStateChanged(bool checked);
 
 };

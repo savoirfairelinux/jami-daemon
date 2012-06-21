@@ -42,7 +42,7 @@ namespace KABC {
 class Contact;
 class TranslucentButtons;
 
-///@class ContactItemWidget Item for the contact tree
+///ContactItemWidget: Item for the contact tree
 class ContactItemWidget : public QWidget
 {
    Q_OBJECT
@@ -60,6 +60,7 @@ class ContactItemWidget : public QWidget
     QPixmap*          getPicture()      const;
     QTreeWidgetItem*  getItem()         const;
     Contact*          getContact()      const;
+    virtual QSize     sizeHint ()       const;
 
     //Setters
     void setContact ( Contact*         contact );
@@ -69,10 +70,11 @@ class ContactItemWidget : public QWidget
     static const char * callStateIcons[12];
     
 protected:
-   virtual void dragEnterEvent ( QDragEnterEvent *e );
-   virtual void dragMoveEvent  ( QDragMoveEvent  *e );
-   virtual void dragLeaveEvent ( QDragLeaveEvent *e );
-   virtual void dropEvent      ( QDropEvent      *e );
+   virtual void dragEnterEvent        ( QDragEnterEvent *e );
+   virtual void dragMoveEvent         ( QDragMoveEvent  *e );
+   virtual void dragLeaveEvent        ( QDragLeaveEvent *e );
+   virtual void dropEvent             ( QDropEvent      *e );
+   virtual void mouseDoubleClickEvent ( QMouseEvent     *e );
 
  private:
     //Attributes
@@ -83,6 +85,7 @@ protected:
     QLabel*  m_pOrganizationL;
     QLabel*  m_pEmailL       ;
     QTreeWidgetItem* m_pItem ;
+    QSize    m_Size          ;
 
     //Actions
     KAction* m_pCallAgain   ;

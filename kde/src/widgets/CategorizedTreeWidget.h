@@ -28,6 +28,7 @@ class KConfigGroup;
 class KateColorTreeItem;
 class QTreeWidgetItem;
 
+///CategorizedTreeWidget: A better looking widget than the plain QListWidget
 class CategorizedTreeWidget : public QTreeWidget
 {
   Q_OBJECT
@@ -77,6 +78,7 @@ template <class T> T* CategorizedTreeWidget::addItem(QString category)
 template <class T> T* CategorizedTreeWidget::addCategory(QString name)
 {
    T* categoryItem = new T(this);
+   categoryItem->setFlags(Qt::ItemIsEnabled);
    categoryItem->setText(0, name);
    addTopLevelItem(categoryItem);
    expandItem(categoryItem);

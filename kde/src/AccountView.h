@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *   Author : Jérémy Quentin <jeremy.quentin@gmail.com>                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -20,7 +21,6 @@
 #ifndef ACCOUNT_VIEW_H
 #define ACCOUNT_VIEW_H
 
-#include "lib/Item.h"
 #include "lib/Account.h"
 #include "widgets/AccountItemWidget.h"
 
@@ -30,15 +30,14 @@ class QListWidgetItem;
 //SFLPhone
 class AccountItemWidget;
 
-///@class AccountView List widgets displaying accounts
-class AccountView : public Account, public Item<AccountItemWidget> {
+///AccountView: List widgets displaying accounts
+class AccountView : public Account {
    public:
       //Constructor
       AccountView   ();
+      ~AccountView  ();
       void initItem ();
 
-      //Destructor
-      ~AccountView(){};
 
       //Getters
       QListWidgetItem*   getItem           ()      ;
@@ -46,6 +45,8 @@ class AccountView : public Account, public Item<AccountItemWidget> {
       QColor             getStateColor     ()      ;
       const QString&     getStateColorName ()      ;
       bool               isChecked         () const;
+
+      ///Return the Qwidget hosted by the QListWidgetItem
 
       //Mutators
       static AccountView* buildExistingAccountFromId (const QString& _accountId );
@@ -56,7 +57,7 @@ class AccountView : public Account, public Item<AccountItemWidget> {
       //Attributes
       QListWidgetItem*   m_pItem;
       AccountItemWidget* m_pWidget;
-
+      
       //Private constructor
       void initItemWidget();
 };

@@ -71,20 +71,21 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 
    m_pMessageBoxW->setVisible(false);
 
-   //                SENDER                                        SIGNAL                             RECEIVER                                            SLOT                                  /
-   /**/connect(SFLPhone::model()                     , SIGNAL(incomingCall(Call*))                   , this                                  , SLOT(on1_incomingCall(Call*)                    ));
-   /**/connect(SFLPhone::model()                     , SIGNAL(voiceMailNotify(const QString &, int)) , this                                  , SLOT(on1_voiceMailNotify(const QString &, int)  ));
-   /**/connect(callView                              , SIGNAL(itemChanged(Call*))                    , this                                  , SLOT(updateWindowCallState()                    ));
-   /**///connect(SFLPhone::model()                     , SIGNAL(volumeChanged(const QString &, double)), this                                , SLOT(on1_volumeChanged(const QString &, double) ));
-   /**/connect(SFLPhone::model()                     , SIGNAL(callStateChanged(Call*))               , this                                  , SLOT(updateWindowCallState()                    ));
-   /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateStatusMessage()                      ));
-   /**/connect(TreeWidgetCallModel::getAccountList() , SIGNAL(accountListUpdated())                  , this                                  , SLOT(updateWindowCallState()                    ));
-   /**/connect(&configurationManager                 , SIGNAL(accountsChanged())                     , TreeWidgetCallModel::getAccountList() , SLOT(updateAccounts()                           ));
-   /**/connect(m_pSendMessageLE                      , SIGNAL(returnPressed())                       , this                                  , SLOT(sendMessage()                              ));
-   /**/connect(m_pSendMessagePB                      , SIGNAL(clicked())                             , this                                  , SLOT(sendMessage()                              ));
-   /*                                                                                                                                                                                           */
+   //                SENDER                             SIGNAL                             RECEIVER                                 SLOT                                  /
+   /**/connect(SFLPhone::model()          , SIGNAL(incomingCall(Call*))                   , this                       , SLOT(on1_incomingCall(Call*)                    ));
+   /**/connect(SFLPhone::model()          , SIGNAL(voiceMailNotify(const QString &, int)) , this                       , SLOT(on1_voiceMailNotify(const QString &, int)  ));
+   /**/connect(callView                   , SIGNAL(itemChanged(Call*))                    , this                       , SLOT(updateWindowCallState()                    ));
+   /**///connect(SFLPhone::model()          , SIGNAL(volumeChanged(const QString &, double)), this                     , SLOT(on1_volumeChanged(const QString &, double) ));
+   /**/connect(SFLPhone::model()          , SIGNAL(callStateChanged(Call*))               , this                       , SLOT(updateWindowCallState()                    ));
+   /**/connect(SFLPhone::model()          , SIGNAL(accountStateChanged(Account*,QString)) , this                       , SLOT(updateStatusMessage()                      ));
+   /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateStatusMessage()                      ));
+   /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateWindowCallState()                    ));
+   /**/connect(&configurationManager      , SIGNAL(accountsChanged())                     , AccountList::getInstance() , SLOT(updateAccounts()                           ));
+   /**/connect(m_pSendMessageLE           , SIGNAL(returnPressed())                       , this                       , SLOT(sendMessage()                              ));
+   /**/connect(m_pSendMessagePB           , SIGNAL(clicked())                             , this                       , SLOT(sendMessage()                              ));
+   /*                                                                                                                                                                     */
 
-   TreeWidgetCallModel::getAccountList()->updateAccounts();
+   AccountList::getInstance()->updateAccounts();
 }
 
 ///Destructor
@@ -277,7 +278,7 @@ void SFLPhoneView::action(Call* call, call_action action)
 bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
 {
    if (contact->getPhoneNumbers().count() == 1) {
-      call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+      call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(),AccountList::getCurrentAccount());
       call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
    }
    else if (contact->getPhoneNumbers().count() > 1) {
@@ -290,7 +291,7 @@ bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
       }
       QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
       if (ok) {
-         call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), SFLPhone::model()->getCurrentAccountId());
+         call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), AccountList::getCurrentAccount());
          call2->appendText(map[result]);
       }
       else {
@@ -325,7 +326,7 @@ void SFLPhoneView::updateWindowCallState()
    bool transfer = false;
    bool recordActivated = false;    //tells whether the call is in recording position
 
-   enabledActions[SFLPhone::Mailbox] = SFLPhone::model()->getCurrentAccount() && ! SFLPhone::model()->getCurrentAccount()->getAccountDetail(ACCOUNT_MAILBOX).isEmpty();
+   enabledActions[SFLPhone::Mailbox] = AccountList::getCurrentAccount() && ! AccountList::getCurrentAccount()->getAccountMailbox().isEmpty();
 
    call = callView->getCurrentItem();
    if (!call) {
@@ -545,15 +546,15 @@ void SFLPhoneView::updateDialpad()
 ///Change the statusbar message
 void SFLPhoneView::updateStatusMessage()
 {
-   Account * account = SFLPhone::model()->getCurrentAccount();
+   Account * account = AccountList::getCurrentAccount();
 
-   if(account == NULL) {
+   if(!account) {
       emit statusMessageChangeAsked(i18n("No registered accounts"));
    }
    else {
       emit statusMessageChangeAsked(i18n("Using account")
                      + " \'" + account->getAlias()
-                     + "\' (" + account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) + ")");
+                     + "\' (" + account->getAccountRegistrationStatus() + ")");
    }
 }
 
@@ -565,7 +566,6 @@ void SFLPhoneView::updateStatusMessage()
  ****************************************************************************/
 
 ///Proxy to hide or show the volume control
-///@TODO is it still needed? <elepage 2011>
 void SFLPhoneView::displayVolumeControls(bool checked)
 {
    //ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -574,13 +574,13 @@ void SFLPhoneView::displayVolumeControls(bool checked)
 }
 
 ///Proxy to hide or show the dialpad
-///@TODO is it still needed? <elepage 2011>
 void SFLPhoneView::displayDialpad(bool checked)
 {
    ConfigurationSkeleton::setDisplayDialpad(checked);
    updateDialpad();
 }
 
+///Display a notification popup (freedesktop notification)
 void SFLPhoneView::displayMessageBox(bool checked)
 {
    ConfigurationSkeleton::setDisplayMessageBox(checked);
@@ -670,35 +670,19 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
    menu.addSeparator();
 
    QAction* action = new ActionSetAccountFirst(NULL, &menu);
-   action->setChecked(SFLPhone::model()->getPriorAccoundId().isEmpty());
+   action->setChecked(AccountList::getPriorAccoundId().isEmpty());
    connect(action,  SIGNAL(setFirst(Account *)), this  ,  SLOT(setAccountFirst(Account *)));
    menu.addAction(action);
 
-   QVector<Account *> accounts = SFLPhone::model()->getAccountList()->registeredAccounts();
+   QVector<Account *> accounts = AccountList::getInstance()->registeredAccounts();
    for (int i = 0 ; i < accounts.size() ; i++) {
       Account* account = accounts.at(i);
       QAction* action = new ActionSetAccountFirst(account, &menu);
-      action->setChecked(account->getAccountId() == SFLPhone::model()->getPriorAccoundId());
+      action->setChecked(account->getAccountId() == AccountList::getPriorAccoundId());
       connect(action, SIGNAL(setFirst(Account *)), this  , SLOT(setAccountFirst(Account *)));
       menu.addAction(action);
    }
    menu.exec(event->globalPos());
-}
-
-///
-void SFLPhoneView::editBeforeCall()
-{
-   QString name;
-   QString number;
-
-   bool ok;
-   QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number, &ok);
-   if(ok) {
-      Call* call = SFLPhone::model()->addDialingCall(name);
-      call->appendText(newNumber);
-      //callView->selectItem(addCallToCallList(call));
-      action(call, CALL_ACTION_ACCEPT);
-   }
 }
 
 ///Pick the default account and load it
@@ -706,12 +690,12 @@ void SFLPhoneView::setAccountFirst(Account * account)
 {
    kDebug() << "setAccountFirst : " << (account ? account->getAlias() : QString()) << (account ? account->getAccountId() : QString());
    if(account) {
-      SFLPhone::model()->setPriorAccountId(account->getAccountId());
+      AccountList::setPriorAccountId(account->getAccountId());
    }
    else {
-      SFLPhone::model()->setPriorAccountId(QString());
+      AccountList::setPriorAccountId(QString());
    }
-   kDebug() << "Current account id" << SFLPhone::model()->getCurrentAccountId();
+   kDebug() << "Current account id" << AccountList::getCurrentAccount()->getAccountId();
    updateStatusMessage();
 }
 
@@ -728,7 +712,7 @@ void SFLPhoneView::configureSflPhone()
    configDialog->show();
 }
 
-///Show the accoutn creation wizard
+///Show the account creation wizard
 void SFLPhoneView::accountCreationWizard()
 {
    if (!wizard) {
@@ -810,8 +794,8 @@ void SFLPhoneView::record()
 ///Access the voice mail list
 void SFLPhoneView::mailBox()
 {
-   Account* account = SFLPhone::model()->getCurrentAccount();
-   QString mailBoxNumber = account->getAccountDetail(ACCOUNT_MAILBOX);
+   Account* account = AccountList::getCurrentAccount();
+   QString mailBoxNumber = account->getAccountMailbox();
    Call* call = SFLPhone::model()->addDialingCall();
    call->appendText(mailBoxNumber);
    action(call, CALL_ACTION_ACCEPT);

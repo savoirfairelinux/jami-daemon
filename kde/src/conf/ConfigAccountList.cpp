@@ -26,6 +26,7 @@
 #include "lib/sflphone_const.h"
 #include "lib/configurationmanager_interface_singleton.h"
 
+///Constructor
 ConfigAccountList::ConfigAccountList(QStringList &_accountIds) : QObject()
 {
    accounts = new QVector<AccountView*>();
@@ -34,6 +35,8 @@ ConfigAccountList::ConfigAccountList(QStringList &_accountIds) : QObject()
    }
 }
 
+///Constructor
+///@param fill Keep the list empty (false), load all account (true)
 ConfigAccountList::ConfigAccountList(bool fill) : QObject()
 {
    accounts = new QVector<AccountView*>();
@@ -41,7 +44,17 @@ ConfigAccountList::ConfigAccountList(bool fill) : QObject()
       updateAccounts();
 }
 
-AccountView* ConfigAccountList::getAccountByItem(QListWidgetItem * item)
+///Destructor
+ConfigAccountList::~ConfigAccountList()
+{
+   foreach(Account* a, *accounts) {
+      delete a;
+   }
+   delete accounts;
+}
+
+///Get an account using a widget
+AccountView* ConfigAccountList::getAccountByItem(QListWidgetItem* item)
 {
    for (int i = 0; i < accounts->size(); ++i) {
       if ((*accounts)[i]->getItem() == item)
@@ -50,6 +63,7 @@ AccountView* ConfigAccountList::getAccountByItem(QListWidgetItem * item)
    return NULL;
 }
 
+///Add an account
 AccountView* ConfigAccountList::addAccount(const QString& alias)
 {
    AccountView* a = AccountView::buildNewAccountFromAlias(alias);
@@ -57,6 +71,7 @@ AccountView* ConfigAccountList::addAccount(const QString& alias)
    return a;
 }
 
+///Remove an account
 void ConfigAccountList::removeAccount(QListWidgetItem* item)
 {
    if(!item) {
@@ -73,6 +88,7 @@ void ConfigAccountList::removeAccount(QListWidgetItem* item)
    accounts->remove(accounts->indexOf(a));
 }
 
+///Operator overload to access an account using its position in the list
 AccountView* ConfigAccountList::operator[] (int i)
 {
    if (i < accounts->size())
@@ -81,13 +97,13 @@ AccountView* ConfigAccountList::operator[] (int i)
       return 0;
 }
 
+///Remove an account
 void ConfigAccountList::removeAccount(AccountView* account)
 {
    accounts->remove(accounts->indexOf(account));
 }
 
-
-
+///Get an account by id
 AccountView* ConfigAccountList::getAccountById(const QString & id) const
 {
    if(id.isEmpty())
@@ -99,32 +115,36 @@ AccountView* ConfigAccountList::getAccountById(const QString & id) const
    return NULL;
 }
 
+///Get an account according to its state
 QVector<AccountView*> ConfigAccountList::getAccountByState(QString & state)
 {
    QVector<AccountView*> v;
    for (int i = 0; i < accounts->size(); ++i) {
-      if ((*accounts)[i]->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == state)
+      if ((*accounts)[i]->getAccountRegistrationStatus() == state)
          v += (*accounts)[i];
    }
    return v;
 }
 
-
+///Return the list of all loaded accounts
 QVector<AccountView*>& ConfigAccountList::getAccounts()
 {
    return *accounts;
 }
 
+///Get account at index 'i'
 const AccountView* ConfigAccountList::getAccountAt(int i) const
 {
    return (*accounts)[i];
 }
 
+///Get account at index 'i'
 AccountView* ConfigAccountList::getAccountAt (int i)
 {
    return (*accounts)[i];
 }
 
+///Update the list
 void ConfigAccountList::update()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -141,6 +161,7 @@ void ConfigAccountList::update()
    }
 }
 
+///Reload accounts
 void ConfigAccountList::updateAccounts()
 {
    kDebug() << "updateAccounts";
@@ -153,6 +174,7 @@ void ConfigAccountList::updateAccounts()
    emit accountListUpdated();
 }
 
+///Move account up
 void ConfigAccountList::upAccount(int index)
 {
    if(index <= 0 || index >= size()) {
@@ -164,6 +186,7 @@ void ConfigAccountList::upAccount(int index)
    accounts->insert(index - 1, account);
 }
 
+///Move account down
 void ConfigAccountList::downAccount(int index)
 {
    if(index < 0 || index >= size() - 1) {
@@ -175,7 +198,7 @@ void ConfigAccountList::downAccount(int index)
    accounts->insert(index + 1, account);
 }
 
-
+///Get an account list separated by '/'
 QString ConfigAccountList::getOrderedList() const
 {
    QString order;
@@ -185,13 +208,14 @@ QString ConfigAccountList::getOrderedList() const
    return order;
 }
 
+///Return a list of all registered accounts
 QVector<AccountView*> ConfigAccountList::registeredAccounts() const
 {
    QVector<AccountView*> registeredAccounts;
    AccountView* current;
    for (int i = 0; i < accounts->count(); ++i) {
       current = (*accounts)[i];
-      if(current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED) {
          kDebug() << current->getAlias() << " : " << current;
          registeredAccounts.append(current);
       }
@@ -199,12 +223,13 @@ QVector<AccountView*> ConfigAccountList::registeredAccounts() const
    return registeredAccounts;
 }
 
+///Return the first registered account
 AccountView* ConfigAccountList::firstRegisteredAccount() const
 {
    AccountView* current;
    for (int i = 0; i < accounts->count(); ++i) {
       current = (*accounts)[i];
-      if(current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED)
+      if(current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED)
       {
          return current;
       }
@@ -212,6 +237,7 @@ AccountView* ConfigAccountList::firstRegisteredAccount() const
    return NULL;
 }
 
+///Return the number (count) of accounts
 int ConfigAccountList::size() const
 {
    return accounts->size();

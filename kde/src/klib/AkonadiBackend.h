@@ -44,7 +44,7 @@ namespace Akonadi {
 //SFLPhone
 class Contact;
 
-///@class AkonadiBackend Implement a backend for Akonadi
+///AkonadiBackend: Implement a backend for Akonadi
 class LIB_EXPORT AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:
@@ -61,13 +61,8 @@ public:
 private:
    AkonadiBackend(QObject* parent);
 
-   //Helper
-   QString getUserFromPhone(QString phoneNumber);
-   QString getHostNameFromPhone(QString phoneNumber);
-
    //Attributes
    static AkonadiBackend*         m_pInstance  ;
-   static CallModel<>*            m_pModel     ;
    Akonadi::Session*              m_pSession   ;
    Akonadi::Collection            m_Collection ;
    QHash<QString,KABC::Addressee> m_AddrHash   ;
@@ -81,7 +76,6 @@ public slots:
    void collectionsReceived( const Akonadi::Collection::List& );
 
 signals:
-   void collectionChanged();
 };
 
 #endif

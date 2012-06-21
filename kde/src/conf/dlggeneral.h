@@ -55,7 +55,9 @@ private slots:
    void changed();
 
 signals:
+   ///Emitted when the history need to be cleared
    void clearCallHistoryAsked();
+   ///Emitted when the buttons need to be updated
    void updateButtons();
 
 };

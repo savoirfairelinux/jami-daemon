@@ -27,24 +27,27 @@
 //Qt
 class QGridLayout;
 
-///@class DialpadButton the 12 button of the dialpad
+///DialpadButton: the 12 button of the dialpad
 class DialpadButton : public QPushButton
 {
    Q_OBJECT
 public:
+   ///Constructor
    DialpadButton(QWidget* parent, const QString& value): QPushButton(parent),m_Value(value) {
       connect(this,SIGNAL(clicked()),this,SLOT(sltClicked()));
    }
 private slots:
+   ///Called on button click
    void sltClicked() { emit typed(m_Value); }
 private:
    QString m_Value;
 signals:
+   ///Emitted to add a number/letter to the string
    void typed(QString&);
 };
 
 
-///@class Dialpad A widget that representing a phone dialpad with associated numbers and letters
+///Dialpad: A widget that representing a phone dialpad with associated numbers and letters
 class Dialpad : public QWidget
 {
 Q_OBJECT
@@ -68,6 +71,7 @@ private slots:
    void clicked(QString& text);
 
 signals:
+   ///Emitted to add a number/letter to the string
    void typed(QString text);
 };
 

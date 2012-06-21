@@ -21,6 +21,7 @@
 #include "sflphoneService.h"
 
 #include "../../lib/Call.h"
+#include "../../lib/Account.h"
 
 /*****************************************************************************
  *                                                                           *
@@ -31,8 +32,8 @@
 ///Constructor
 CallJob::CallJob(QObject* parent, const QString& operation, const QVariantMap& parameters)
    : Plasma::ServiceJob("", operation, parameters, parent)
-   , m_AccountId ( parameters[ "AccountId" ].toString() )
-   , m_Number    ( parameters[ "Number"    ].toString() )
+   , m_pAccount ( Account::buildExistingAccountFromId(parameters[ "AccountId" ].toString() ))
+   , m_Number   ( parameters[ "Number"    ].toString() )
 {
    
 }
@@ -40,7 +41,7 @@ CallJob::CallJob(QObject* parent, const QString& operation, const QVariantMap& p
 ///Make a call
 void CallJob::start()
 {
-   Call* call = SFLPhoneEngine::getModel()->addDialingCall(m_Number,m_AccountId);
+   Call* call = SFLPhoneEngine::getModel()->addDialingCall(m_Number,m_pAccount);
    call->setCallNumber(m_Number);
    call->actionPerformed(CALL_ACTION_ACCEPT);
 }

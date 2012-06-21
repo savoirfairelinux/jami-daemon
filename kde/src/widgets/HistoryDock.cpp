@@ -44,6 +44,7 @@
 #include "widgets/HistoryTreeItem.h"
 #include "klib/AkonadiBackend.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "lib/HistoryModel.h"
 
 //SFLPhone library
 #include "lib/sflphone_const.h"
@@ -51,7 +52,7 @@
 
 #define CURRENT_SORTING_MODE m_pSortByCBB->currentIndex()
 
-///@class QNumericTreeWidgetItem Qt lack official functional sorting algo, so this hack around it
+///QNumericTreeWidgetItem: Qt lack official functional sorting algo, so this hack around it
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent=0):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -157,7 +158,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    connect(m_pToDW    ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedToDate(QDate)   ));
    connect(m_pSortByCBB,                   SIGNAL(currentIndexChanged(int)), this, SLOT(reload()                    ));
    connect(AkonadiBackend::getInstance(),  SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo()         ));
-   connect(SFLPhone::model()            ,  SIGNAL(historyChanged()),         this, SLOT(reload()                    ));
+   connect(HistoryModel::self()         ,  SIGNAL(newHistoryCall(Call*)),    this, SLOT(newHistoryCall(Call*)       ));
 
    reload();
 } //HistoryDock
@@ -165,9 +166,10 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
 ///Destructor
 HistoryDock::~HistoryDock()
 {
-   /*foreach (HistoryTreeItem* w, m_History) {
+   foreach (HistoryTreeItem* w, m_History) {
       delete w;
    }
+   m_History.clear();
    delete m_pItemView     ;
    delete m_pFilterLE     ;
    delete m_pSortByCBB    ;
@@ -178,7 +180,7 @@ HistoryDock::~HistoryDock()
    delete m_pToDW         ;
    delete m_pAllTimeCB    ;
    delete m_pLinkPB       ;
-   delete m_pKeyPressEater;*/
+   delete m_pKeyPressEater;
 }
 
 
@@ -215,55 +217,30 @@ void HistoryDock::reload()
             m_pItemView->addCategory(i18n(cat.toAscii()));
          }
          break;
+      case Popularity: {
+         m_hGroup.clear();
+         break;
+      }
    }
    
    foreach(HistoryTreeItem* hitem, m_History) {
       delete hitem;
    }
    m_History.clear();
-   foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
-      if (call != nullptr && (!m_pAllTimeCB->isChecked() || (QDateTime(m_pFromDW->date()).toTime_t() < call->getStartTimeStamp().toUInt() && QDateTime(m_pToDW->date().addDays(1)).toTime_t() > call->getStartTimeStamp().toUInt() ))) {
-         HistoryTreeItem* callItem = new HistoryTreeItem(m_pItemView);
-         callItem->setCall(call);
-         m_History << callItem;
-      }
+   foreach (Call* call, HistoryModel::getHistory()) {
+      newHistoryCall(call);
    }
-   switch (m_pSortByCBB->currentIndex()) {
+   
+   ConfigurationSkeleton::setHistorySortMode(CURRENT_SORTING_MODE);
+
+   switch (CURRENT_SORTING_MODE) {
       case Date:
-         foreach(HistoryTreeItem* hitem, m_History) {
-            QString category = timeToHistoryCategory(QDateTime::fromTime_t(hitem->call()->getStartTimeStamp().toUInt()).date());
-            QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(category);
-            item->widget = hitem;
-            hitem->setItem(item);
-            m_pItemView->setItemWidget(item,0,hitem);
+         for (int i=0;i<m_pItemView->topLevelItemCount();i++) {
+            m_pItemView->topLevelItem(i)->sortChildren(0,Qt::DescendingOrder);
          }
          break;
-      case Name2: {
-         QHash<QString,QTreeWidgetItem*> group;
-         foreach(HistoryTreeItem* item, m_History) {
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(item->getName());
-            item->setItem(twItem);
-            twItem->widget = item;
-            m_pItemView->setItemWidget(twItem,0,item);
-         }
-         break;
-      }
       case Popularity: {
-         QHash<QString,QNumericTreeWidgetItem*> group;
-         foreach(HistoryTreeItem* item, m_History) {
-            QString name = item->getName().trimmed();
-            if (!group[name]) {
-               group[name] = m_pItemView->addCategory<QNumericTreeWidgetItem>(name);
-               group[name]->weight = 0;
-               m_pItemView->addTopLevelItem(group[name]);
-            }
-            group[name]->weight++;
-            QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(name);
-            item->setItem(twItem);
-            twItem->widget = item;
-            m_pItemView->setItemWidget(twItem,0,item);
-         }
-         QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(group);
+         QMutableHashIterator<QString,QNumericTreeWidgetItem*> iter(m_hGroup);
          while (iter.hasNext()) {
             iter.next();
             QNumericTreeWidgetItem* item = iter.value();
@@ -271,40 +248,71 @@ void HistoryDock::reload()
          }
          break;
       }
-      case Length:
-         foreach(HistoryTreeItem* hitem, m_History) {
-            QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(" ");
-            item->weight = hitem->getLength();
-            hitem->setItem(item);
-            m_pItemView->addTopLevelItem(item);
-            m_pItemView->setItemWidget(item,0,hitem);
-         }
-         break;
-   }
-   ConfigurationSkeleton::setHistorySortMode(m_pSortByCBB->currentIndex());
-
-   switch (m_pSortByCBB->currentIndex()) {
-      case Date:
-         break;
       default:
          m_pItemView->sortItems(0,Qt::AscendingOrder);
    }
-
-   int maxWidth = 0;
-
-   //Align all durationwidget
-   foreach(HistoryTreeItem* item, m_History) {
-      maxWidth = ((uint)item->getDurWidth() > (uint)maxWidth)?item->getDurWidth():maxWidth;
-   }
 } //reload
+
+///Faster way to sync the history than reloading it (2+ seconds)
+void HistoryDock::newHistoryCall(Call* call)
+{
+   HistoryTreeItem* callItem = nullptr;
+   if (call != nullptr && (!m_pAllTimeCB->isChecked() || (QDateTime(m_pFromDW->date()).toTime_t() < call->getStartTimeStamp().toUInt() && QDateTime(m_pToDW->date().addDays(1)).toTime_t() > call->getStartTimeStamp().toUInt() ))) {
+      callItem = new HistoryTreeItem(m_pItemView);
+      callItem->setCall(call);
+      m_History << callItem;
+   }
+   else
+      return;
+   switch (CURRENT_SORTING_MODE) {
+      case Date: {
+         QString category = timeToHistoryCategory(QDateTime::fromTime_t(callItem->call()->getStartTimeStamp().toUInt()).date());
+         QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(category);
+         item->weight = -callItem->call()->getStopTimeStamp().toUInt();
+         item->widget = callItem;
+         callItem->setItem(item);
+         m_pItemView->setItemWidget(item,0,callItem);
+         break;
+      }
+      case Name2: {
+         QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(callItem->getName());
+         callItem->setItem(twItem);
+         twItem->widget = callItem;
+         m_pItemView->setItemWidget(twItem,0,callItem);
+         break;
+      }
+      case Popularity: {
+         QString name = callItem->getName().trimmed();
+         if (!m_hGroup[name]) {
+            m_hGroup[name] = m_pItemView->addCategory<QNumericTreeWidgetItem>(name);
+            m_hGroup[name]->weight = 0;
+            m_pItemView->addTopLevelItem(m_hGroup[name]);
+         }
+         m_hGroup[name]->weight++;
+         QNumericTreeWidgetItem* twItem = m_pItemView->addItem<QNumericTreeWidgetItem>(name);
+         callItem->setItem(twItem);
+         twItem->widget = callItem;
+         m_pItemView->setItemWidget(twItem,0,callItem);
+         break;
+      }
+      case Length: {
+         QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(" ");
+         item->weight = callItem->getLength();
+         callItem->setItem(item);
+         m_pItemView->addTopLevelItem(item);
+         m_pItemView->setItemWidget(item,0,callItem);
+         break;
+      }
+   }
+} //newHistoryCall
 
 ///Enable the ability to set a date range like 1 month to limit history
 void HistoryDock::enableDateRange(bool disable)
 {
-   m_pFromL->setVisible(!disable);
-   m_pToL->setVisible(!disable);
+   m_pFromL->setVisible (!disable);
+   m_pToL->setVisible   (!disable);
    m_pFromDW->setVisible(!disable);
-   m_pToDW->setVisible(!disable);
+   m_pToDW->setVisible  (!disable);
    m_pLinkPB->setVisible(!disable);
 
    ConfigurationSkeleton::setDisplayDataRange(!disable);
@@ -394,9 +402,9 @@ QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 ///Handle what happen when serialized data is dropped
 bool HistoryTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
-   Q_UNUSED(index)
-   Q_UNUSED(action)
-   Q_UNUSED(parent)
+   Q_UNUSED( index  )
+   Q_UNUSED( action )
+   Q_UNUSED( parent )
 
    QByteArray encodedData = data->data(MIME_CALLID);
 
@@ -421,7 +429,7 @@ void HistoryDock::keyPressEvent(QKeyEvent* event) {
       if (m_pItemView->selectedItems()[0] && m_pItemView->itemWidget(m_pItemView->selectedItems()[0],0)) {
          QNumericTreeWidgetItem* item = dynamic_cast<QNumericTreeWidgetItem*>(m_pItemView->selectedItems()[0]);
          if (item) {
-            SFLPhone::model()->addDialingCall(item->widget->getName(), SFLPhone::app()->model()->getCurrentAccountId())->setCallNumber(item->widget->getPhoneNumber());
+            SFLPhone::model()->addDialingCall(item->widget->getName(), AccountList::getCurrentAccount())->setCallNumber(item->widget->getPhoneNumber());
          }
       }
    }

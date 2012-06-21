@@ -43,7 +43,6 @@
 
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
-#include <cairo.h>
 
 #include "actions.h"
 #include "logger.h"
@@ -94,7 +93,6 @@ struct _VideoRendererPrivate {
     gint sem_key;
     gint shm_key;
     gint videobuffersize;
-    gboolean using_clutter;
     ClutterActor *texture;
 
     gpointer drawarea;
@@ -336,32 +334,6 @@ static void render_clutter(ClutterActor *texture, gpointer data, int width,
                                       CLUTTER_TEXTURE_RGB_FLAG_BGR, NULL);
 }
 
-static void render_cairo(GtkWidget *widget, gpointer data, int width,
-                         int height, int parent_width, int parent_height)
-{
-    const cairo_format_t format = CAIRO_FORMAT_RGB24;
-    int stride = cairo_format_stride_for_width(format, width);
-    cairo_surface_t *surface = cairo_image_surface_create_for_data(data,
-                                                                   format,
-                                                                   width,
-                                                                   height,
-                                                                   stride);
-    if (surface) {
-        GdkWindow * window = gtk_widget_get_window(widget);
-        cairo_t *cairo = gdk_cairo_create(window);
-        cairo_scale(cairo, (double) parent_width / width,
-                    (double) parent_height / height);
-        cairo_set_source_surface(cairo, surface, 0, 0);
-
-        cairo_status_t status = cairo_surface_status(surface);
-        if (status != CAIRO_STATUS_SURFACE_FINISHED)
-            cairo_paint(cairo);
-
-        cairo_surface_destroy(surface);
-        cairo_destroy(cairo);
-    }
-}
-
 static gboolean
 readFrameFromShm(VideoRendererPrivate *priv)
 {
@@ -384,12 +356,8 @@ readFrameFromShm(VideoRendererPrivate *priv)
     const gint p_width = gtk_widget_get_allocated_width(parent);
     const gint p_height = gtk_widget_get_allocated_height(parent);
 
-    if (priv->using_clutter)
-        render_clutter(priv->texture, priv->shm_buffer, priv->width,
-                       priv->height, p_width, p_height);
-    else
-        render_cairo(priv->drawarea, priv->shm_buffer, priv->width,
-                     priv->height, p_width, p_height);
+    render_clutter(priv->texture, priv->shm_buffer, priv->width,
+                   priv->height, p_width, p_height);
 
     return TRUE;
 }
@@ -473,20 +441,18 @@ video_renderer_run(VideoRenderer *renderer)
     };
     gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 
-    priv->using_clutter = GTK_CLUTTER_IS_EMBED(priv->drawarea);
-
-    if (priv->using_clutter) {
+    if (GTK_CLUTTER_IS_EMBED(priv->drawarea))
         DEBUG("video_renderer: using clutter\n");
-        ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
-        g_assert(stage);
-        priv->texture = clutter_texture_new();
+    else
+        ERROR("Drawing area is not a GtkClutterEmbed widget");
 
-        /* Add ClutterTexture to the stage */
-        clutter_container_add(CLUTTER_CONTAINER(stage), priv->texture, NULL);
-        clutter_actor_show_all(stage);
-    } else {
-        DEBUG("video_renderer: using cairo\n");
-    }
+    ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
+    g_assert(stage);
+    priv->texture = clutter_texture_new();
+
+    /* Add ClutterTexture to the stage */
+    clutter_container_add(CLUTTER_CONTAINER(stage), priv->texture, NULL);
+    clutter_actor_show_all(stage);
 
     /* frames are read and saved here */
     g_object_ref(renderer);
@@ -526,6 +492,31 @@ receiving_video_window_button_cb(GtkWindow *win, GdkEventButton *event,
     }
 }
 
+gboolean
+try_clutter_init()
+{
+    const ClutterInitError clutter_ok = gtk_clutter_init(NULL, NULL);
+    gboolean result = FALSE;
+    switch (clutter_ok) {
+        case CLUTTER_INIT_SUCCESS:
+            result = TRUE;
+            break;
+        case CLUTTER_INIT_ERROR_UNKNOWN:
+            ERROR("Unknown clutter error");
+            break;
+        case CLUTTER_INIT_ERROR_THREADS:
+            ERROR("Clutter thread init error");
+            break;
+        case CLUTTER_INIT_ERROR_BACKEND:
+            ERROR("Clutter backend init error");
+            break;
+        case CLUTTER_INIT_ERROR_INTERNAL:
+            ERROR("Clutter internal init error");
+            break;
+    }
+    return result;
+}
+
 void receiving_video_event_cb(DBusGProxy *proxy UNUSED, gint shmKey,
                               gint semKey, gint videoBufferSize,
                               gint destWidth, gint destHeight,
@@ -540,23 +531,19 @@ void receiving_video_event_cb(DBusGProxy *proxy UNUSED, gint shmKey,
         g_signal_connect(receivingVideoWindow, "delete-event",
                          G_CALLBACK(receiving_video_window_deleted_cb), NULL);
     }
-    gboolean using_clutter = gtk_clutter_init(NULL, NULL) == CLUTTER_INIT_SUCCESS;
+
+    if (!try_clutter_init())
+        return;
 
     if (!receivingVideoArea) {
-        if (using_clutter) {
-            receivingVideoArea = gtk_clutter_embed_new();
-            ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(receivingVideoArea));
-            if (!stage) {
-                gtk_widget_destroy(receivingVideoArea);
-                using_clutter = FALSE;
-            }
-            else {
-                ClutterColor stage_color = { 0x61, 0x64, 0x8c, 0xff };
-                clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
-            }
+        receivingVideoArea = gtk_clutter_embed_new();
+        ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(receivingVideoArea));
+        if (!stage)
+            gtk_widget_destroy(receivingVideoArea);
+        else {
+            ClutterColor stage_color = { 0x61, 0x64, 0x8c, 0xff };
+            clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
         }
-        if (!using_clutter)
-            receivingVideoArea = gtk_drawing_area_new();
     }
 
     g_assert(receivingVideoArea);

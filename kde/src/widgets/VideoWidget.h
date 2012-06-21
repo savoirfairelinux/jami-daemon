@@ -1,7 +1,6 @@
 /************************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                                       *
- *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>                  *
- *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
+ *   Copyright (C) 2012 by Savoir-Faire Linux                                       *
+ *   Author : Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>         *
  *                                                                                  *
  *   This library is free software; you can redistribute it and/or                  *
  *   modify it under the terms of the GNU Lesser General Public                     *
@@ -17,10 +16,26 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
+#ifndef VIDEO_WIDGET_H
+#define VIDEO_WIDGET_H
 
-//Parent
-#include "Item.h"
+#include <QtGui/QWidget>
+#include <QtGui/QPainter>
 
-//Qt
-#include <QtGui/QListWidgetItem>
+#include "../lib/VideoModel.h"
 
+///VideoWidget: A widget to display video from a framebuffer
+class VideoWidget : public QWidget {
+   Q_OBJECT
+public:
+   VideoWidget(QWidget* parent =0 );
+private:
+   QImage* m_Image;
+protected:
+   virtual void paintEvent(QPaintEvent* event);
+private slots:
+   void update();
+   void repaint2();
+};
+
+#endif

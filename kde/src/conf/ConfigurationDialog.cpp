@@ -32,6 +32,7 @@
 #include "dlgaddressbook.h"
 #include "dlghooks.h"
 #include "dlgaccessibility.h"
+#include "dlgvideo.h"
 
 #include "lib/sflphone_const.h"
 
@@ -47,6 +48,10 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
    dlgAddressBook   = new DlgAddressBook   (this);
    dlgHooks         = new DlgHooks         (this);
    dlgAccessibility = new DlgAccessibility (this);
+
+   #ifdef ENABLE_VIDEO
+   dlgVideo         = new DlgVideo         (this);
+   #endif
    
    addPage( dlgGeneral       , i18n("General")       , "sflphone-client-kde"               );
    addPage( dlgDisplay       , i18n("Display")       , "applications-graphics"             );
@@ -55,6 +60,9 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
    addPage( dlgAddressBook   , i18n("Address Book")  , "x-office-address-book"             );
    addPage( dlgHooks         , i18n("Hooks")         , "insert-link"                       );
    addPage( dlgAccessibility , i18n("Accessibility") , "preferences-desktop-accessibility" );
+   #ifdef ENABLE_VIDEO
+   addPage( dlgVideo         , i18n("Video")         , "camera-web"                        );
+   #endif
 
    connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
    connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
@@ -65,6 +73,16 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 
 ConfigurationDialog::~ConfigurationDialog()
 {
+   delete dlgGeneral;
+   delete dlgDisplay;
+   delete dlgAccounts;
+   delete dlgAudio;
+   delete dlgAddressBook;
+   delete dlgHooks;
+   delete dlgAccessibility;
+   #ifdef ENABLE_VIDEO
+   delete dlgVideo;
+   #endif
 }
 
 void ConfigurationDialog::updateWidgets()
@@ -88,14 +106,12 @@ void ConfigurationDialog::updateSettings()
 bool ConfigurationDialog::hasChanged()
 {
    bool res = dlgAudio->hasChanged() || dlgAccounts->hasChanged() || dlgGeneral->hasChanged();
-   kDebug() << "Config has Changed" << res;
    return res;
 }
 
 void ConfigurationDialog::updateButtons()
 {
    bool changed = hasChanged();
-   kDebug() << "updateButtons , hasChanged = " << changed;
    enableButtonApply( changed );
 }
 

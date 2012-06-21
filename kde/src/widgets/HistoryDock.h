@@ -46,11 +46,13 @@ class KDateWidget;
 class HistoryTreeItem;
 class HistoryTree;
 class KeyPressEater;
+class QNumericTreeWidgetItem;
 
 //Typedef
 typedef QList<HistoryTreeItem*> HistoryList;
+typedef QHash<QString,QNumericTreeWidgetItem*> GroupHash;
 
-///@class HistoryDock Dock to see the previous SFLPhone calls
+///HistoryDock: Dock to see the previous SFLPhone calls
 class HistoryDock : public QDockWidget, public SortableDockCommon<CallTreeItem*,QTreeWidgetItem*> {
    Q_OBJECT
 
@@ -78,6 +80,7 @@ private:
    QDate          m_CurrentFromDate  ;
    QDate          m_CurrentToDate    ;
    KeyPressEater* m_pKeyPressEater   ;
+   GroupHash      m_hGroup           ;
 
    //Mutator
    void updateLinkedDate(KDateWidget* item, QDate& prevDate, QDate& newDate);
@@ -92,10 +95,11 @@ private slots:
    void updateLinkedToDate   ( QDate   date );
    void reload               (              );
    void updateContactInfo    (              );
+   void newHistoryCall       ( Call*   call );
 };
 
 
-///@class HistoryTree Simple tree view with additional keybpard filter
+///HistoryTree: Simple tree view with additional keybpard filter
 class HistoryTree : public CategorizedTreeWidget {
    Q_OBJECT
 public:
@@ -104,7 +108,7 @@ public:
    bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);
 };
 
-///@class KeyPressEater Intercept each keypress to manage it globally
+///KeyPressEater: Intercept each keypress to manage it globally
 class KeyPressEater : public QObject
 {
    Q_OBJECT

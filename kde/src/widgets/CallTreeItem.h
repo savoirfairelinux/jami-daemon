@@ -41,7 +41,7 @@ class Call;
 class TranslucentButtons;
 class Contact;
 
-///@class CallTreeItem Widget for the central call treeview
+///CallTreeItem: Widget for the central call treeview
 class CallTreeItem : public QWidget
 {
    Q_OBJECT
@@ -105,11 +105,17 @@ public slots:
    void updated();
 
 signals:
+   ///Emitted when a call is over
    void over(Call*);
+   ///Emitted when the item change
    void changed();
+   ///Emitted when it is required to expand the childs
    void showChilds(CallTreeItem*);
+   ///Emitted when a call is dropped on the "transfer" button
    void askTransfer(Call*);
+   ///Emitted when something is dropped on the button
    void transferDropEvent(Call*,QMimeData*);
+   ///Emitted when something is dropped on the "conference" button
    void conversationDropEvent(Call*,QMimeData*);
  };
 

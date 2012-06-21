@@ -58,8 +58,8 @@
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
-         <item>
+        <layout class="QGridLayout" name="gridLayout_13">
+         <item row="0" column="0" colspan="5">
           <widget class="QListWidget" name="listWidget_accountList">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -87,139 +87,103 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_accountListHandle">
+         <item row="1" column="0">
+          <widget class="QToolButton" name="button_accountUp">
+           <property name="toolTip">
+            <string>Get this account up</string>
+           </property>
+           <property name="whatsThis">
+            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
+           </property>
+           <property name="text">
+            <string>Up</string>
+           </property>
+           <property name="shortcut">
+            <string notr="true">Up, PgUp</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QToolButton" name="button_accountDown">
+           <property name="toolTip">
+            <string>Get this account down</string>
+           </property>
+           <property name="whatsThis">
+            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
+           </property>
+           <property name="text">
+            <string>Down</string>
+           </property>
+           <property name="shortcut">
+            <string notr="true">Down, PgDown</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QToolButton" name="button_accountAdd">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="maximumSize">
+           <property name="sizeIncrement">
             <size>
-             <width>16777215</width>
-             <height>16777215</height>
+             <width>0</width>
+             <height>0</height>
             </size>
            </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
+           <property name="toolTip">
+            <string>Add a new account</string>
            </property>
-           <property name="title">
+           <property name="whatsThis">
+            <string>This button enables you to initialize a new account. You will then be able to edit it using the form on the right.</string>
+           </property>
+           <property name="text">
+            <string>Add</string>
+           </property>
+           <property name="shortcut">
+            <string notr="true">+</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QToolButton" name="button_accountRemove">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Remove the selected account</string>
+           </property>
+           <property name="whatsThis">
+            <string>This button will remove the selected account in the list below. Be sure you really don't need it anymore. If you think you might use it again later, just uncheck it.</string>
+           </property>
+           <property name="accessibleDescription">
             <string/>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <property name="text">
+            <string>Remove</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="sizeConstraint">
-             <enum>QLayout::SetNoConstraint</enum>
-            </property>
-            <property name="margin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QToolButton" name="button_accountRemove">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="toolTip">
-               <string>Remove the selected account</string>
-              </property>
-              <property name="whatsThis">
-               <string>This button will remove the selected account in the list below. Be sure you really don't need it anymore. If you think you might use it again later, just uncheck it.</string>
-              </property>
-              <property name="accessibleDescription">
-               <string/>
-              </property>
-              <property name="text">
-               <string>Remove</string>
-              </property>
-              <property name="shortcut">
-               <string notr="true">-, Del, Backspace</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="button_accountAdd">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="sizeIncrement">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Add a new account</string>
-              </property>
-              <property name="whatsThis">
-               <string>This button enables you to initialize a new account. You will then be able to edit it using the form on the right.</string>
-              </property>
-              <property name="text">
-               <string>Add</string>
-              </property>
-              <property name="shortcut">
-               <string notr="true">+</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="button_accountDown">
-              <property name="toolTip">
-               <string>Get this account down</string>
-              </property>
-              <property name="whatsThis">
-               <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
-              </property>
-              <property name="text">
-               <string>Down</string>
-              </property>
-              <property name="shortcut">
-               <string notr="true">Down, PgDown</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="button_accountUp">
-              <property name="toolTip">
-               <string>Get this account up</string>
-              </property>
-              <property name="whatsThis">
-               <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
-              </property>
-              <property name="text">
-               <string>Up</string>
-              </property>
-              <property name="shortcut">
-               <string notr="true">Up, PgUp</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
+           <property name="shortcut">
+            <string notr="true">-, Del, Backspace</string>
+           </property>
           </widget>
+         </item>
+         <item row="1" column="4">
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>41</width>
+             <height>21</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>
@@ -589,68 +553,114 @@
          <attribute name="title">
           <string>Codecs</string>
          </attribute>
-         <layout class="QGridLayout" name="gridLayout_7">
-          <item row="0" column="0" colspan="3">
-           <widget class="KEditListBox" name="keditlistbox_codec">
-            <property name="buttons">
-             <set>KEditListBox::All</set>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QGroupBox" name="groupBox_5">
+            <property name="title">
+             <string>Audio codecs</string>
             </property>
+            <layout class="QGridLayout" name="gridLayout_7">
+             <item row="1" column="2">
+              <spacer name="horizontalSpacer_6">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>461</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_frequency_value">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_frequency">
+               <property name="text">
+                <string>Frequency: </string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1" colspan="2">
+              <widget class="QLabel" name="label_bitrate_value">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="3">
+              <widget class="KEditListBox" name="keditlistbox_codec">
+               <property name="buttons">
+                <set>KEditListBox::All</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_bitrate">
+               <property name="text">
+                <string>Bitrate:</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_frequency">
-            <property name="text">
-             <string>Frequency: </string>
+          <item>
+           <widget class="QGroupBox" name="m_pVideoCodecGB">
+            <property name="title">
+             <string>Video codecs</string>
             </property>
+            <layout class="QGridLayout" name="gridLayout_12">
+             <item row="0" column="0" colspan="2">
+              <widget class="QListWidget" name="m_pCodecsLW"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Bitrate:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="m_pBitrateL">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label_frequency_value">
-            <property name="text">
-             <string>-</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2" rowspan="2">
-           <spacer name="horizontalSpacer_6">
+          <item>
+           <spacer name="verticalSpacer_2">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>470</width>
-              <height>20</height>
+              <width>20</width>
+              <height>40</height>
              </size>
             </property>
            </spacer>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_bitrate">
-            <property name="text">
-             <string>Bitrate:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLabel" name="label_bitrate_value">
-            <property name="text">
-             <string>-</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_bandwidth">
-            <property name="text">
-             <string>Bandwidth: </string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="label_bandwidth_value">
-            <property name="text">
-             <string>-</string>
-            </property>
-           </widget>
           </item>
          </layout>
         </widget>
@@ -738,6 +748,22 @@
                 <enum>QLineEdit::Password</enum>
                </property>
               </widget>
+             </item>
+             <item row="3" column="1">
+              <spacer name="verticalSpacer_4">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Minimum</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
            </widget>

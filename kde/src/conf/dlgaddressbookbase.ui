@@ -61,6 +61,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="kcfg_alwaysShowPhoneNumber">
+        <property name="text">
+         <string>Always display phone number</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

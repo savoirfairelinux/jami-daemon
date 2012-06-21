@@ -1467,7 +1467,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     // Get active session sessions
-    const pjmedia_sdp_session *remote_sdp;
+    const pjmedia_sdp_session *remote_sdp = 0;
     pjmedia_sdp_neg_get_active_remote(inv->neg, &remote_sdp);
 
     if (pjmedia_sdp_validate(remote_sdp) != PJ_SUCCESS) {
@@ -1941,6 +1941,13 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
+namespace {
+    unsigned int getRandomPort()
+    {
+        return ((rand() % 27250) + 5250) * 2;
+    }
+}
+
 void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 {
     std::string account_id(Manager::instance().getAccountFromCall(call->getCallId()));
@@ -1948,9 +1955,9 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     if (!account)
         return;
 
-    unsigned int callLocalAudioPort = ((rand() % 27250) + 5250) * 2;
+    const unsigned int callLocalAudioPort = getRandomPort();
 
-    unsigned int callLocalExternAudioPort = account->isStunEnabled()
+    const unsigned int callLocalExternAudioPort = account->isStunEnabled()
                                             ? account->getStunPort()
                                             : callLocalAudioPort;
 
@@ -1958,8 +1965,11 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     call->setLocalAudioPort(callLocalAudioPort);
     call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
 #ifdef SFL_VIDEO
-    unsigned int callLocalVideoPort = ((rand() % 27250) + 5250) * 2;
-    assert(callLocalAudioPort != callLocalVideoPort);
+    unsigned int callLocalVideoPort = 0;
+    do
+        callLocalVideoPort = getRandomPort();
+    while (callLocalAudioPort == callLocalVideoPort);
+
     call->setLocalVideoPort(callLocalVideoPort);
     call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
 #endif

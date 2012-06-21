@@ -47,25 +47,13 @@
 #include "../lib/AccountList.h"
 #include "../lib/Account.h"
 
-//SFLPhone
-//#include "SFLPhone.h"
-//#include "SFLPhoneView.h"
-
 ///Init static attributes
-AkonadiBackend*  AkonadiBackend::m_pInstance = 0;
-CallModel<>*     AkonadiBackend::m_pModel    = 0;
+AkonadiBackend*  AkonadiBackend::m_pInstance = nullptr;
 
 ///Constructor
 AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 {
-   //QTimer::singleShot( 0, this, SLOT( delayedInit() ) );
    m_pSession = new Akonadi::Session( "SFLPhone::instance" );
-
-   if ( not m_pModel ) {
-      m_pModel = new CallModel<>(CallModel<>::ActiveCall);
-      m_pModel->initCall();
-      m_pModel->initHistory();
-   }
 
    // fetching all collections containing emails recursively, starting at the root collection
    Akonadi::CollectionFetchJob *job = new Akonadi::CollectionFetchJob( Akonadi::Collection::root(), Akonadi::CollectionFetchJob::Recursive, this );
@@ -76,7 +64,6 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 ///Destructor
 AkonadiBackend::~AkonadiBackend()
 {
-   delete m_pModel;
    CallModel<>::destroy();
 }
 
@@ -96,15 +83,15 @@ ContactBackend* AkonadiBackend::getInstance()
    return m_pInstance;
 }
 
-///Find contact using a phone number,
+///Find contact using a phone number
 ///@param resolveDNS check if the DNS is used by an account, then assume contact with that phone number / extension is the same as the caller
 Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resolveDNS)
 {
    if (!resolveDNS || phoneNumber.indexOf("@") == -1)
       return m_ContactByPhone[phoneNumber];
    else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
-      foreach (Account* a, m_pModel->getAccountList()->getAccounts()) {
-         if (a->getAccountDetail(ACCOUNT_HOSTNAME) == getHostNameFromPhone(phoneNumber))
+      foreach (Account* a, AccountList::getInstance()->getAccounts()) {
+         if (a->getAccountHostname() == getHostNameFromPhone(phoneNumber))
             return m_ContactByPhone[getUserFromPhone(phoneNumber)];
       }
    }
@@ -278,34 +265,4 @@ void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list
 ContactList AkonadiBackend::update_slot()
 {
    return m_pContacts;//update(m_Collection);
-}
-
-/*****************************************************************************
- *                                                                           *
- *                                  Helpers                                  *
- *                                                                           *
- ****************************************************************************/
-
-///Return the extension/user of an URI (<sip:12345@exemple.com>)
-QString AkonadiBackend::getUserFromPhone(QString phoneNumber)
-{
-   if (phoneNumber.indexOf("@") != -1) {
-      QString user = phoneNumber.split("@")[0];
-      if (user.indexOf(":") != -1) {
-         return user.split(":")[1];
-      }
-      else {
-         return user;
-      }
-   }
-   return phoneNumber;
-} //getUserFromPhone
-
-///Return the domaine of an URI (<sip:12345@exemple.com>)
-QString AkonadiBackend::getHostNameFromPhone(QString phoneNumber)
-{
-   if (phoneNumber.indexOf("@") != -1) {
-      return phoneNumber.split("@")[1].left(phoneNumber.split("@")[1].size()-1);
-   }
-   return "";
 }

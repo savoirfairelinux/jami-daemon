@@ -48,7 +48,7 @@
 #include "klib/ConfigurationSkeleton.h"
 #include "SFLPhoneAccessibility.h"
 
-///@class CallTreeItemDelegate Delegates for CallTreeItem
+///CallTreeItemDelegate: Delegates for CallTreeItem
 class CallTreeItemDelegate : public QStyledItemDelegate
 {
 public:
@@ -207,6 +207,10 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
          kDebug() << "Call dropped on itself (doing nothing)";
          return true;
       }
+      else if (SFLPhone::model()->getIndex(encodedCallId) == parent) {
+         kDebug() << "Dropping conference on itself (doing nothing)";
+         return true;
+      }
 
       if ((parent->childCount()) && (SFLPhone::model()->getIndex(encodedCallId)->childCount())) {
          kDebug() << "Merging two conferences";
@@ -272,11 +276,8 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
    if (!QString(encodedPhoneNumber).isEmpty()) {
       Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(encodedPhoneNumber);
       QString name;
-      if (contact)
-         name = contact->getFormattedName();
-      else
-         name = i18n("Unknown");
-      Call* call2 = SFLPhone::model()->addDialingCall(name, SFLPhone::model()->getCurrentAccountId());
+      name = (contact)?contact->getFormattedName():i18n("Unknown");
+      Call* call2 = SFLPhone::model()->addDialingCall(name, AccountList::getCurrentAccount());
       call2->appendText(QString(encodedPhoneNumber));
       if (!parent) {
          //Dropped on free space
@@ -475,17 +476,6 @@ void CallView::setTitle(const QString& title)
    headerItem()->setText(0,title);
 }
 
-///Select an item in the TreeView
-bool CallView::selectItem(Call* item)
-{
-   if (SFLPhone::model()->getIndex(item)) {
-      setCurrentItem(SFLPhone::model()->getIndex(item));
-      return true;
-   }
-   else
-      return false;
-}
-
 ///Return the current item
 Call* CallView::getCurrentItem()
 {
@@ -672,8 +662,7 @@ Call* CallView::addConference(Call* conf)
       kDebug() << "Adding " << callId << "to the conversation";
       insertItem(extractItem(SFLPhone::model()->getIndex(callId)),confItem);
    }
-
-   Q_ASSERT_X(confItem->childCount() == 0, "add conference","Conference created, but without any participants");
+   
    return newConf;
 } //addConference
 
@@ -719,7 +708,6 @@ void CallView::conferenceRemoved(Call* conf)
       insertItem(extractItem(SFLPhone::model()->getIndex(conf)->child(0)));
    }
    takeTopLevelItem(indexOfTopLevelItem(SFLPhone::model()->getIndex(conf)));
-   //SFLPhone::model()->conferenceRemoved(confId);
    kDebug() << "Conference removed";
    }
    else {
@@ -768,6 +756,7 @@ CallViewOverlay::CallViewOverlay(QWidget* parent) : QWidget(parent),m_pIcon(0),m
    m_black.setAlpha(75);
 }
 
+///Destructor
 CallViewOverlay::~CallViewOverlay()
 {
 

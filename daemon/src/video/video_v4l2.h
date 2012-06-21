@@ -103,7 +103,7 @@ class VideoV4l2Device {
         const VideoV4l2Channel &getChannel(const std::string &name) const;
 
     private:
-        std::vector<VideoV4l2Channel> channels;
+        std::vector<VideoV4l2Channel> channels_;
 };
 
 } // namespace sfl_video

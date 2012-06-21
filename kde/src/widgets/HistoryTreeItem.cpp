@@ -60,6 +60,7 @@
 
 const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
+///PlayerWidget: A small widget to play call recording
 class PlayerWidget : public QWidget {
 public:
    PlayerWidget(QWidget* parent = 0) : QWidget(parent) {}
@@ -248,7 +249,7 @@ void HistoryTreeItem::callAgain()
    if (m_pItemCall) {
       kDebug() << "Calling "<< m_pItemCall->getPeerPhoneNumber();
    }
-   Call* call = SFLPhone::model()->addDialingCall(getName(), SFLPhone::app()->model()->getCurrentAccountId());
+   Call* call = SFLPhone::model()->addDialingCall(getName(), AccountList::getCurrentAccount());
    call->setCallNumber(m_PhoneNumber);
    call->setPeerName(m_pPeerNameL->text());
    call->actionPerformed(CALL_ACTION_ACCEPT);
@@ -507,12 +508,15 @@ void HistoryTreeItem::setItem(QTreeWidgetItem* item)
 ///Can a contact be associed with this call?
 bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 {
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber,true);
-   if (contact) {
-      m_Name = contact->getFormattedName();
+   if (!m_pContact && !m_pItemCall)
+      m_pContact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber,true);
+   else if (m_pItemCall)
+      m_pContact = m_pItemCall->getContact();
+   if (m_pContact) {
+      m_Name = m_pContact->getFormattedName();
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
-      if (contact->getPhoto() != NULL) {
-         QPixmap pxm = (*contact->getPhoto());
+      if (m_pContact->getPhoto() != NULL) {
+         QPixmap pxm = (*m_pContact->getPhoto());
          if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty()) {
             QPainter painter(&pxm);
             QPixmap status(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png"));
@@ -525,7 +529,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
          m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
       else
          m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-      m_pContact = contact;
+      m_pContact = m_pContact;
    }
    else {
       if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())

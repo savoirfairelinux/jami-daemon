@@ -29,7 +29,6 @@
  */
 
 #include "video_rtp_session.h"
-#include <cassert>
 #include <sstream>
 #include <map>
 #include <string>
@@ -95,12 +94,16 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
         receiving_ = false;
     }
 
-    const string codec = libav_utils::encodersMap()[v[1]];
-    if (codec.empty()) {
-        DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
-        sending_ = false;
+    if (not v[1].empty()) {
+        const string codec = libav_utils::encodersMap()[v[1]];
+        if (codec.empty()) {
+            DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
+            sending_ = false;
+        } else {
+            txArgs_["codec"] = codec;
+        }
     } else {
-        txArgs_["codec"] = codec;
+        sending_ = false;
     }
 
     txArgs_["payload_type"] = v[2];
@@ -109,13 +112,19 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
 void VideoRtpSession::updateDestination(const string &destination,
                                         unsigned int port)
 {
-    assert(not destination.empty());
+    if (destination.empty()) {
+        ERROR("Destination is empty, ignoring");
+        return;
+    }
 
     std::stringstream tmp;
     tmp << "rtp://" << destination << ":" << port;
     // if destination has changed
     if (tmp.str() != txArgs_["destination"]) {
-        assert(sendThread_.get() == 0);
+        if (sendThread_.get() != 0) {
+            ERROR("Video is already being sent");
+            return;
+        }
         txArgs_["destination"] = tmp.str();
         DEBUG("updated dest to %s",  txArgs_["destination"].c_str());
     }
@@ -124,33 +133,6 @@ void VideoRtpSession::updateDestination(const string &destination,
         DEBUG("Sending video disabled, port was set to 0");
         sending_ = false;
     }
-}
-
-void VideoRtpSession::test()
-{
-    assert(sendThread_.get() == 0);
-    assert(receiveThread_.get() == 0);
-
-    sendThread_.reset(new VideoSendThread(txArgs_));
-    sendThread_->start();
-
-    /* block until SDP is ready */
-    sendThread_->waitForSDP();
-}
-
-void VideoRtpSession::test_loopback()
-{
-    assert(sendThread_.get() == 0);
-
-    sendThread_.reset(new VideoSendThread(txArgs_));
-    sendThread_->start();
-
-    sendThread_->waitForSDP();
-    rxArgs_["input"] = "test.sdp";
-    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-    sharedMemory_.reset(new SharedMemory(*controls));
-    receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
-    receiveThread_->start();
 }
 
 void VideoRtpSession::start()
@@ -171,7 +153,6 @@ void VideoRtpSession::start()
         sharedMemory_.reset(new SharedMemory(*controls));
         receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
         receiveThread_->start();
-        sharedMemory_->publishShm();
     }
     else
         DEBUG("Video receiving disabled");
