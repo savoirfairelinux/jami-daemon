@@ -41,10 +41,6 @@
 #include "logger.h"
 #include "unused.h"
 
-// FIXME: get rid of these
-static GtkWidget *video_window_global = NULL;
-static gboolean video_window_fullscreen = FALSE;
-
 /* This macro will implement the video_renderer_get_type function
    and define a parent class pointer accessible from the whole .c file */
 G_DEFINE_TYPE(VideoRenderer, video_renderer, G_TYPE_OBJECT);
@@ -233,10 +229,18 @@ video_renderer_start_shm(VideoRenderer *self)
     return TRUE;
 }
 
-static void
+static const gint TIMEOUT_NSEC = 50 * 10E6;
+
+static gboolean
 shm_lock(SHMHeader *shm_area)
 {
-    sem_wait(&shm_area->mutex);
+    const struct timespec timeout = {0, TIMEOUT_NSEC};
+    /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
+    if (sem_timedwait(&shm_area->mutex, &timeout) == ETIMEDOUT) {
+        ERROR("Timed out before shm lock was acquired");
+        return FALSE;
+    }
+    return TRUE;
 }
 
 static void
@@ -267,7 +271,8 @@ video_renderer_resize_shm(VideoRendererPrivate *priv)
         }
 
         priv->shm_area_len = new_size;
-        shm_lock(priv->shm_area);
+        if (!shm_lock(priv->shm_area))
+            return FALSE;
     }
     return TRUE;
 }
@@ -275,12 +280,18 @@ video_renderer_resize_shm(VideoRendererPrivate *priv)
 static void
 video_renderer_render_to_texture(VideoRendererPrivate *priv)
 {
-    shm_lock(priv->shm_area);
+    if (!shm_lock(priv->shm_area))
+        return;
 
     while (priv->buffer_gen == priv->shm_area->buffer_gen) {
         shm_unlock(priv->shm_area);
-        sem_wait(&priv->shm_area->notification);
-        shm_lock(priv->shm_area);
+        const struct timespec timeout = {0, TIMEOUT_NSEC};
+        if (sem_timedwait(&priv->shm_area->notification, &timeout) == ETIMEDOUT) {
+            ERROR("Timed out before notifcation lock was acquired");
+            return;
+        }
+        if (!shm_lock(priv->shm_area))
+            return;
     }
 
     if (!video_renderer_resize_shm(priv)) {
@@ -393,8 +404,7 @@ video_renderer_run(VideoRenderer *self)
 
     /* frames are read and saved here */
     g_object_ref(self);
-    const gdouble FPS = 30.0;
-    g_timeout_add(1000 / FPS, update_texture, self);
+    g_idle_add(update_texture, self);
 
     gtk_widget_show_all(GTK_WIDGET(priv->drawarea));
 

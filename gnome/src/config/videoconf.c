@@ -117,13 +117,10 @@ void
 toggle_preview_button_label()
 {
     GtkToggleButton *button = GTK_TOGGLE_BUTTON(preview_button);
-    if (gtk_toggle_button_get_active(button)) {
-        DEBUG("Setting to %s", PREVIEW_STOP_STR);
+    if (gtk_toggle_button_get_active(button))
         gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_STOP_STR));
-    } else {
-        DEBUG("Setting to %s", PREVIEW_START_STR);
+    else
         gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_START_STR));
-    }
 }
 
 /**
@@ -442,8 +439,6 @@ select_video_input_device_rate_cb(GtkComboBox* comboBox, gpointer data UNUSED)
 static void
 preferences_dialog_fill_video_input_device_size_list()
 {
-    GtkTreeIter iter;
-
     if (v4l2SizeList)
         gtk_list_store_clear(v4l2SizeList);
 
@@ -462,6 +457,7 @@ preferences_dialog_fill_video_input_device_size_list()
         // For each device name included in list
         gint c = 0;
         for (gchar **tmp = list; *tmp; c++, tmp++) {
+            GtkTreeIter iter;
             gtk_list_store_append(v4l2SizeList, &iter);
             gtk_list_store_set(v4l2SizeList, &iter, 0, *tmp, 1, c, -1);
         }

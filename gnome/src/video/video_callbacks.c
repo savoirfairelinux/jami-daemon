@@ -52,13 +52,10 @@ video_stream_is_local(const gchar * id)
 }
 
 static void
-video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data)
+video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
     // FIXME: probably need to do something smarter here
-    if (data)
-        dbus_stop_video_preview();
-    else
-        sflphone_hang_up();
+    sflphone_hang_up();
 }
 
 static void
@@ -102,14 +99,13 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
     if (!video_window_global) {
         video_window_global = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         video_window_fullscreen = FALSE;
-        gboolean is_local = video_stream_is_local(id);
-        if (is_local)
+        if (video_stream_is_local(id))
             toggle_preview_button_label();
         g_signal_connect(video_window_global, "button_press_event",
                          G_CALLBACK(video_window_button_cb),
                          &video_window_fullscreen);
         g_signal_connect(video_window_global, "delete-event",
-                         G_CALLBACK(video_window_deleted_cb), is_local ? (gpointer) 1 : NULL);
+                         G_CALLBACK(video_window_deleted_cb), NULL);
     }
 
     if (!try_clutter_init())

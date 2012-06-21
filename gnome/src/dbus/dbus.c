@@ -2167,20 +2167,30 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
 }
 
 #ifdef SFL_VIDEO
+static void
+start_video_preview_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+{
+    DEBUG("%s", __PRETTY_FUNCTION__);
+    check_error(error);
+}
+
+static void
+stop_video_preview_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+{
+    DEBUG("%s", __PRETTY_FUNCTION__);
+    check_error(error);
+}
+
 void
 dbus_start_video_preview()
 {
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_start_preview(video_proxy, &error);
-    check_error(error);
+    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy, start_video_preview_cb, NULL);
 }
 
 void
 dbus_stop_video_preview()
 {
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_stop_preview(video_proxy, &error);
-    check_error(error);
+    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy, stop_video_preview_cb, NULL);
 }
 #endif
 
