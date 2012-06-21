@@ -999,20 +999,22 @@ dbus_stop_recorded_file_playback(const gchar *filepath)
     check_error(error);
 }
 
+static void
+hang_up_reply_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+{
+    check_error(error);
+}
+
 void
 dbus_hang_up(const callable_obj_t *c)
 {
-    GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hang_up(call_proxy, c->_callID, &error);
-    check_error(error);
+    org_sflphone_SFLphone_CallManager_hang_up_async(call_proxy, c->_callID, hang_up_reply_cb, NULL);
 }
 
 void
 dbus_hang_up_conference(const conference_obj_t *c)
 {
-    GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hang_up_conference(call_proxy, c->_confID, &error);
-    check_error(error);
+    org_sflphone_SFLphone_CallManager_hang_up_conference_async(call_proxy, c->_confID, hang_up_reply_cb, NULL);
 }
 
 void
