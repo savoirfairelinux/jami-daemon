@@ -46,7 +46,7 @@ using std::string;
 
 VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs) :
     sendThread_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(), sending_(true), receiving_(true)
+    rxArgs_(), sending_(false), receiving_(false)
 {
     // FIXME: bitrate must be configurable
     txArgs_["bitrate"] = "500000";
