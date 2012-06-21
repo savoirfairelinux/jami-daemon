@@ -112,6 +112,58 @@ void AccountList::updateAccounts()
    emit accountListUpdated();
 } //updateAccounts
 
+///Save accounts details and reload it
+void AccountList::save()
+{
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QStringList accountIds= QStringList(configurationManager.getAccountList().value());
+
+   //create or update each account from accountList
+   for (int i = 0; i < size(); i++) {
+      Account* current = (*this)[i];
+      QString currentId;
+      current->save();
+      currentId = QString(current->getAccountId());
+   }
+
+   //remove accounts that are in the configurationManager but not in the client
+   for (int i = 0; i < accountIds.size(); i++) {
+      if(!getAccountById(accountIds[i])) {
+         configurationManager.removeAccount(accountIds[i]);
+      }
+   }
+
+   configurationManager.setAccountsOrder(getOrderedList());
+}
+
+///Move account up
+bool AccountList::accountUp( int index )
+{
+   if(index > 0 && index <= rowCount()) {
+      //accounts->upAccount(index);
+      Account* account = getAccountAt(index);
+      m_pAccounts->remove(index);
+      m_pAccounts->insert(index - 1, account);
+      emit dataChanged(this->index(index - 1, 0, QModelIndex()), this->index(index, 0, QModelIndex()));
+      return true;
+   }
+   return false;
+}
+
+///Move account down
+bool AccountList::accountDown( int index )
+{
+   if(index >= 0 && index < rowCount()) {
+      //accounts->downAccount(index);
+      Account* account = getAccountAt(index);
+      m_pAccounts->remove(index);
+      m_pAccounts->insert(index + 1, account);
+      emit dataChanged(this->index(index, 0, QModelIndex()), this->index(index + 1, 0, QModelIndex()));
+      return true;
+   }
+   return false;
+}
+
 
 /*****************************************************************************
  *                                                                           *
@@ -192,7 +244,7 @@ Account* AccountList::firstRegisteredAccount() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current && current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED)
+      if(current && current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED && current->isAccountEnabled())
          return current;
       else if (current && (current->getAccountRegistrationStatus() == ACCOUNT_STATE_READY) && m_pAccounts->count() == 1)
          return current;
@@ -215,7 +267,7 @@ int AccountList::size() const
 Account* AccountList::getCurrentAccount()
 {
    Account* priorAccount = AccountList::getInstance()->getAccountById(m_sPriorAccountId);
-   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
+   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED && priorAccount->isAccountEnabled() ) {
       return priorAccount;
    }
    else {
@@ -227,6 +279,51 @@ Account* AccountList::getCurrentAccount()
 QString AccountList::getPriorAccoundId()
 {
    return m_sPriorAccountId;
+}
+
+
+
+///TODO port proprely
+///Get data from the model
+QVariant AccountList::data ( const QModelIndex& index, int role) const
+{
+   if (!index.isValid() || index.row() < 0 || index.row() >= rowCount())
+      return QVariant();
+
+   const Account * account = (*m_pAccounts)[index.row()];
+   if(index.column() == 0 && role == Qt::DisplayRole)
+      return QVariant(account->getAlias());
+   else if(index.column() == 0 && role == Qt::CheckStateRole)
+      return QVariant(account->isEnabled() ? Qt::Checked : Qt::Unchecked);
+   else if(index.column() == 0 && role == Qt::DecorationRole) {
+      /*if(! account->isEnabled())
+         return QVariant( QIcon( ICON_ACCOUNT_LED_GRAY  ));
+      else if(account->isRegistered())
+         return QVariant( QIcon( ICON_ACCOUNT_LED_GREEN ));
+      else
+         return QVariant( QIcon( ICON_ACCOUNT_LED_RED   ));*/
+   }
+   return QVariant();
+} //data
+
+///Flags for "index"
+Qt::ItemFlags AccountList::flags(const QModelIndex & index) const
+{
+   if (index.column() == 0)
+      return QAbstractItemModel::flags(index) | Qt::ItemIsUserCheckable;
+   return QAbstractItemModel::flags(index);
+}
+
+///Get the account list
+// QString AccountList::getOrderedList() const
+// {
+//    return m_pAccounts->getOrderedList();
+// }
+
+///Number of account
+int AccountList::rowCount(const QModelIndex & /*parent*/) const
+{
+   return m_pAccounts->size();
 }
 
 
@@ -254,6 +351,18 @@ void AccountList::removeAccount(Account* account)
 ///Set the previous account used
 void AccountList::setPriorAccountId(const QString& value) {
    m_sPriorAccountId = value;
+}
+
+//TODO port proprely
+///Set model data
+bool AccountList::setData(const QModelIndex & index, const QVariant &value, int role)
+{
+   if (index.isValid() && index.column() == 0 && role == Qt::CheckStateRole) {
+      (*m_pAccounts)[index.row()]->setEnabled(value.toBool());
+      emit dataChanged(index, index);
+      return true;
+   }
+   return false;
 }
 
 

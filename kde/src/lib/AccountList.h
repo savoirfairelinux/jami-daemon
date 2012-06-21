@@ -29,7 +29,7 @@
 #include "dbus/metatypes.h"
 
 ///AccountList: List of all daemon accounts
-class LIB_EXPORT AccountList : public QObject{
+class LIB_EXPORT AccountList : public QAbstractListModel {
    Q_OBJECT
 
 public:
@@ -50,18 +50,37 @@ public:
    static Account*          getCurrentAccount      (                        );
    static QString           getPriorAccoundId      (                        );
 
+   //Getters
+   QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole ) const;
+   int           rowCount ( const QModelIndex& parent = QModelIndex()            ) const;
+   Qt::ItemFlags flags    ( const QModelIndex& index                             ) const;
+
    //Setters
-   static void setPriorAccountId(const QString& value );
+   static  void setPriorAccountId( const QString& value                                     );
+   virtual bool setData          ( const QModelIndex& index, const QVariant &value, int role);
    
    //Mutators
    virtual Account*  addAccount        ( QString & alias  )      ;
    void              removeAccount     ( Account* account )      ;
    QVector<Account*> registeredAccounts(                  ) const;
+   void              save              (                  )      ;
+   bool              accountUp         ( int index        )      ;
+   bool              accountDown       ( int index        )      ;
 
    //Operators
    Account*       operator[] (int i)      ;
    const Account* operator[] (int i) const;
-   
+
+#warning REMOVE THIS
+   //TODO big hack, temporary
+   Account* getAccountByItem(void* item) {
+      for (int i = 0; i < m_pAccounts->size(); ++i) {
+         if ((*m_pAccounts)[i]->object == item)
+            return (*m_pAccounts)[i];
+      }
+      return nullptr;
+   }
+
 private:
    //Constructors & Destructors
    AccountList(QStringList & _accountIds);

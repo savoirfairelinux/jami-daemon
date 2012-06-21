@@ -209,6 +209,18 @@ class LIB_EXPORT Account : public QObject {
 
       //Mutator
       void save();
+      void reload();
+
+      #warning THIS IS TEMPORARY, REMOVE AS SOON AS POSSIBLE <elepage june 2012>
+      //TODO Remove, this is for the length of the port away from the old hack
+      void *object;
+      void *object2;
+      bool isChecked() {
+         return isAccountEnabled();
+      }
+      void initItem(){}
+      QString getStateColorName() {return "blue";}
+      //END to remove
    
    protected:
       //Constructors

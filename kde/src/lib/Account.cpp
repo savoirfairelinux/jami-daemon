@@ -81,21 +81,9 @@ Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
 Account* Account::buildExistingAccountFromId(const QString& _accountId)
 {
    qDebug() << "Building an account from id: " << _accountId;
-   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    Account* a = new Account();
    a->m_pAccountId = new QString(_accountId);
-   QMap<QString,QString> aDetails = configurationManager.getAccountDetails(_accountId);
-   
-   if (!aDetails.count()) {
-      qDebug() << "Account not found";
-      return NULL;
-   }
-   a->m_pAccountDetails = new MapStringString(aDetails);
-
-   //Enable for debug
-   //    foreach (QString str, *aDetails) {
-   //       qDebug() << aDetails->key(str) << str;
-   //    }
+   a->reload();
 
    return a;
 } //buildExistingAccountFromId
@@ -282,8 +270,25 @@ void Account::save()
       if (acc != this) {
          (*AccountList::getInstance()->m_pAccounts) << this;
       }
-      
+      reload();
       updateState();
+   }
+}
+
+///Synchronise with the daemon, this need to be done manually to prevent reloading the account while it is being edited
+void Account::reload()
+{
+   qDebug() << "Reloading" << getAccountId();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QMap<QString,QString> aDetails = configurationManager.getAccountDetails(getAccountId());
+
+   if (!aDetails.count()) {
+      qDebug() << "Account not found";
+   }
+   else {
+      if (m_pAccountDetails)
+         delete m_pAccountDetails;
+      m_pAccountDetails = new MapStringString(aDetails);
    }
 }
 

@@ -22,12 +22,23 @@ private:
 ///When there is no accounts, no call should be created
 void CallTests::testCallWithoutAccounts()
 {
+   QMap<Account*,bool> saveState;
+   //Disable all accounts
    for (int i=0;i<AccountList::getInstance()->size();i++) {
+      saveState[(*AccountList::getInstance())[i]] = (*AccountList::getInstance())[i]->isAccountEnabled();
+      qDebug() << "Disabling" << (*AccountList::getInstance())[i]->getAccountId();
       (*AccountList::getInstance())[i]->setAccountEnabled(false);
+      (*AccountList::getInstance())[i]->save();
    }
    
     Call* call = m_pModel->addDialingCall("test call", AccountList::getCurrentAccount());
     QCOMPARE( call, (Call*)NULL );
+
+   //Restore state
+   for (int i=0;i<AccountList::getInstance()->size();i++) {
+      (*AccountList::getInstance())[i]->setAccountEnabled(saveState[(*AccountList::getInstance())[i]]);
+      (*AccountList::getInstance())[i]->save();
+   }
 }
 
 QTEST_MAIN(CallTests)

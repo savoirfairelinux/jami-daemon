@@ -136,7 +136,7 @@ public:
 
 private:
    ///Attributes
-   ConfigAccountList*    accountList           ;
+   //ConfigAccountList*    accountList           ;
    QList<StringHash>     codecList             ;
    QListWidgetItemHash   credentialInfo        ;
    CredentialList        credentialList        ;
@@ -173,8 +173,8 @@ private slots:
    void updateStatusLabel          ( QListWidgetItem* item                                    );
    void accountListChanged         ( QListWidgetItem* current , QListWidgetItem * previous    );
    void selectCredential           ( QListWidgetItem* item    , QListWidgetItem* previous     );
-   void addAccountToAccountList    ( AccountView*   account                                   );
-   void updateStatusLabel          ( AccountView*   account                                   );
+   void addAccountToAccountList    ( Account*   account                                       );
+   void updateStatusLabel          ( Account*   account                                       );
    void addCodec                   ( QString        name = ""                                 );
    void updateCombo                ( int            value                                     );
    void loadCredentails            ( QString        accountId                                 );
