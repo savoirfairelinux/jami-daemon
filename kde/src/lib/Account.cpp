@@ -198,6 +198,15 @@ bool Account::isRegistered() const
    return (getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
+QModelIndex Account::getIndex()
+{
+   for (int i=0;i < AccountList::getInstance()->m_pAccounts->size();i++) {
+      if (this == (*AccountList::getInstance()->m_pAccounts)[i]) {
+         return AccountList::getInstance()->index(i,0);
+      }
+   }
+   return QModelIndex();
+}
 
 /*****************************************************************************
  *                                                                           *

@@ -79,7 +79,6 @@ protected:
 
 private slots:
    void removeActiveCall(Call*);
-   void accountChanged(const QString& account,const QString& state, int code);
    void addPrivateCall(Call* call);
 private:
    static bool dbusInit;
@@ -104,7 +103,7 @@ signals:
    ///Emitted when a call is added
    void callAdded               ( Call* call               , Call* parent );
    ///Emitted when an account state change
-   void accountStateChanged     ( Account* account, QString state         );
+   //void accountStateChanged     ( Account* account, QString state         );
 };
 
 /**

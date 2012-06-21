@@ -116,7 +116,7 @@ public:
    DlgAccounts(KConfigDialog *parent = 0);
    ~DlgAccounts();
 
-   void saveAccount(QListWidgetItem * item);
+   void saveAccount(QModelIndex item);
 
    /**
     *   Fills the settings form in the right side with the
@@ -132,7 +132,7 @@ public:
     * @param item the item with which to fill the settings form
     *
     */
-   void loadAccount(QListWidgetItem * item);
+   void loadAccount(QModelIndex item);
 
 private:
    ///Attributes
@@ -141,8 +141,8 @@ private:
    QListWidgetItemHash   credentialInfo        ;
    CredentialList        credentialList        ;
    bool                  accountListHasChanged ;
-   QMap<QString,QString> m_hRingtonePath;
-
+   QMap<QString,QString> m_hRingtonePath       ;
+   
    ///Mutators
    void loadCodecList();
 
@@ -170,8 +170,8 @@ private slots:
 
    void loadVidCodecDetails        ( const QString& name                                      );
    void codecClicked               ( const QModelIndex& model                                 );
-   void updateStatusLabel          ( QListWidgetItem* item                                    );
-   void accountListChanged         ( QListWidgetItem* current , QListWidgetItem * previous    );
+   void updateStatusLabel          ( QModelIndex item                                         );
+   void accountListChanged         ( Account* current, Account* previous                      );
    void selectCredential           ( QListWidgetItem* item    , QListWidgetItem* previous     );
    void addAccountToAccountList    ( Account*   account                                       );
    void updateStatusLabel          ( Account*   account                                       );

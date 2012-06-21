@@ -59,34 +59,6 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QGridLayout" name="gridLayout_13">
-         <item row="0" column="0" colspan="5">
-          <widget class="QListWidget" name="listWidget_accountList">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>150</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="whatsThis">
-            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows. Enable/disable them by checking/unchecking them on the left of the item. Add or remove some with &quot;Plus&quot; and &quot;Sub&quot; buttons. Edit the selected account with the form on the right.</string>
-           </property>
-           <property name="dragEnabled">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QToolButton" name="button_accountUp">
            <property name="toolTip">
@@ -184,6 +156,34 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item row="0" column="0" colspan="5">
+          <widget class="AccountListWidget" name="listView_accountList">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>150</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="whatsThis">
+            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows. Enable/disable them by checking/unchecking them on the left of the item. Add or remove some with &quot;Plus&quot; and &quot;Sub&quot; buttons. Edit the selected account with the form on the right.</string>
+           </property>
+           <property name="dragEnabled">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1233,6 +1233,11 @@
    <class>KUrlRequester</class>
    <extends>QFrame</extends>
    <header>kurlrequester.h</header>
+  </customwidget>
+  <customwidget>
+   <class>AccountListWidget</class>
+   <extends>QListView</extends>
+   <header>widgets/AccountListWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -78,7 +78,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    /**/connect(callView                   , SIGNAL(itemChanged(Call*))                    , this                       , SLOT(updateWindowCallState()                    ));
    /**///connect(SFLPhone::model()          , SIGNAL(volumeChanged(const QString &, double)), this                     , SLOT(on1_volumeChanged(const QString &, double) ));
    /**/connect(SFLPhone::model()          , SIGNAL(callStateChanged(Call*))               , this                       , SLOT(updateWindowCallState()                    ));
-   /**/connect(SFLPhone::model()          , SIGNAL(accountStateChanged(Account*,QString)) , this                       , SLOT(updateStatusMessage()                      ));
+   /**/connect(AccountList::getInstance() , SIGNAL(accountStateChanged(Account*,QString)) , this                       , SLOT(updateStatusMessage()                      ));
    /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateStatusMessage()                      ));
    /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateWindowCallState()                    ));
    /**/connect(&configurationManager      , SIGNAL(accountsChanged())                     , AccountList::getInstance() , SLOT(updateAccounts()                           ));

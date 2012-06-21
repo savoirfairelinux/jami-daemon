@@ -95,6 +95,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    button_accountRemove->setIcon     ( KIcon( "list-remove" ) );
    button_add_credential->setIcon    ( KIcon( "list-add"    ) );
    button_remove_credential->setIcon ( KIcon( "list-remove" ) );
+   listView_accountList->setModel(AccountList::getInstance());
 
    m_pRingTonePath->setMode(KFile::File | KFile::ExistingOnly);
    m_pRingTonePath->lineEdit()->setObjectName("m_pRingTonePath");
@@ -150,9 +151,9 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /**/connect(button_remove_credential,       SIGNAL(clicked())                    , this      , SLOT(removeCredential()          ));
    /*                                                                                                                               */
 
-
-   connect(listWidget_accountList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(accountListChanged(QListWidgetItem*,QListWidgetItem*)));
-   connect(list_credential,        SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
+   connect(listView_accountList, SIGNAL(currentAccountChanged(Account*,Account*)), this, SLOT(accountListChanged(Account*,Account*)));
+   connect(listView_accountList, SIGNAL(currentIndexChanged(QModelIndex,QModelIndex)), this, SLOT(updateAccountListCommands()));
+   connect(list_credential,      SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
 
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
@@ -171,8 +172,8 @@ void DlgAccounts::saveAccountList()
 {
    disconnectAccountsChangedSignal();
    //save the account being edited
-   if(listWidget_accountList->currentItem()) {
-      saveAccount(listWidget_accountList->currentItem());
+   if(listView_accountList->currentIndex().isValid()) {
+      saveAccount(listView_accountList->currentIndex());
    }
    
    //accountList->save();
@@ -180,8 +181,8 @@ void DlgAccounts::saveAccountList()
 
 //    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 //    //save the account being edited
-//    if(listWidget_accountList->currentItem()) {
-//       saveAccount(listWidget_accountList->currentItem());
+//    if(listView_accountList->currentIndex()) {
+//       saveAccount(listView_accountList->currentIndex());
 //    }
 //    QStringList accountIds= QStringList(configurationManager.getAccountList().value());
 // 
@@ -221,18 +222,18 @@ void DlgAccounts::disconnectAccountsChangedSignal()
 }
 
 ///Save an account using the values from the widgets
-void DlgAccounts::saveAccount(QListWidgetItem * item)
+void DlgAccounts::saveAccount(QModelIndex item)
 {
    QString protocolsTab[] = ACCOUNT_TYPES_TAB;
 
-   if(! item) {
+   if(!item.isValid()) {
       kDebug() << "Attempting to save details of an account from a NULL item";
       return;
    }
 
-   Account* account = AccountList::getInstance()->getAccountByItem(item);
+   Account* account = AccountList::getInstance()->getAccountByModelIndex(item);
    if(!account) {
-      kDebug() << "Attempting to save details of an unexisting account : " << item->text();
+      kDebug() << "Attempting to save details of an unexisting account : " << item.data(Qt::DisplayRole);
       return;
    }
    
@@ -244,7 +245,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountUsername             ( edit4_user->text()                                                       );
    /**/account->setAccountPassword             ( edit5_password->text()                                                   );
    /**/account->setAccountMailbox              ( edit6_mailbox->text()                                                    );
-   /**/account->setAccountEnabled              ( item->checkState()                                                       );
+   /**/account->setAccountEnabled              ( item.data(Qt::CheckStateRole).toBool()                                   );
    /**/account->setAccountRegistrationExpire   ( spinbox_regExpire->value()                                               );
    /**/                                                                                                                 /**/
    /*                                            Security                                                                 */
@@ -292,7 +293,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    configurationManager.setActiveAudioCodecList(_codecList, account->getAccountId());
    kDebug() << "Account codec have been saved" << _codecList << account->getAccountId();
 
-   if (m_pRingtoneListLW->selectedItems().size() == 1 && m_pRingtoneListLW->currentItem() ) {
+   if (m_pRingtoneListLW->selectedItems().size() == 1 && m_pRingtoneListLW->currentIndex().isValid() ) {
       QListWidgetItem* selectedRingtone = m_pRingtoneListLW->currentItem();
       RingToneListItem* ringtoneWidget = qobject_cast<RingToneListItem*>(m_pRingtoneListLW->itemWidget(selectedRingtone));
       if (ringtoneWidget) {
@@ -312,14 +313,14 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    saveCredential(account->getAccountId());
 } //saveAccount
 
-void DlgAccounts::loadAccount(QListWidgetItem * item)
+void DlgAccounts::loadAccount(QModelIndex item)
 {
-   if(! item ) {
+   if(! item.isValid() ) {
       kDebug() << "Attempting to load details of an account from a NULL item";
       return;
    }
 
-   Account* account = AccountList::getInstance()->getAccountByItem(item);
+   Account* account = AccountList::getInstance()->getAccountByModelIndex(item);
    if(! account ) {
       kDebug() << "Attempting to load details of an unexisting account";
       return;
@@ -518,12 +519,12 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 void DlgAccounts::loadAccountList()
 {
    AccountList::getInstance()->updateAccounts();
-   listWidget_accountList->clear();
+   //TODO listView_accountList->clear();
    for (int i = 0; i < AccountList::getInstance()->size(); ++i) {
       addAccountToAccountList((*AccountList::getInstance())[i]);
    }
-   if (listWidget_accountList->count() > 0 && listWidget_accountList->currentItem() == NULL)
-      listWidget_accountList->setCurrentRow(0);
+   if (listView_accountList->model()->rowCount() > 0 && !listView_accountList->currentIndex().isValid())
+      listView_accountList->setCurrentIndex(listView_accountList->model()->index(0,0));
    else
       frame2_editAccounts->setEnabled(false);
 }
@@ -531,18 +532,18 @@ void DlgAccounts::loadAccountList()
 ///Add an account to the list
 void DlgAccounts::addAccountToAccountList(Account* account)
 {
-   QListWidgetItem* item = new QListWidgetItem();//(QListWidgetItem*) account->object;
-   item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-   item->setCheckState(account->isAccountEnabled()?Qt::Checked:Qt::Unchecked);
-   item->setText(account->getAccountAlias());
+   //QListWidgetItem* item = new QListWidgetItem();//(QListWidgetItem*) account->object;
+   //item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+   //item->setCheckState(account->isAccountEnabled()?Qt::Checked:Qt::Unchecked);
+   //item->setText(account->getAccountAlias());
 #warning REMOVE THIS
-   account->object = item;
+   //account->object = item;
    
    //QWidget* widget = new AccountItemWidget();
    //account->object2 = widget;
    //connect(widget, SIGNAL(checkStateChanged(bool)), this, SLOT(changedAccountList()));
-   listWidget_accountList->addItem(item);
-   //listWidget_accountList->setItemWidget(item, widget);
+   //listView_accountList->addItem(item);
+   //listView_accountList->setItemWidget(item, widget);
 }
 
 ///Called when one of the child widget is modified
@@ -553,47 +554,32 @@ void DlgAccounts::changedAccountList()
 }
 
 ///Callback when the account change
-void DlgAccounts::accountListChanged( QListWidgetItem * current, QListWidgetItem * previous )
+void DlgAccounts::accountListChanged(Account* current, Account* previous)
 {
-   kDebug() << "on_listWidget_accountList_currentItemChanged";
-   saveAccount(previous);
-   loadAccount(current);
-   updateAccountListCommands();
+   kDebug() << "on_listView_accountList_currentItemChanged";
+   saveAccount(previous->getIndex());
+   
+   loadAccount(current->getIndex());
+   //updateAccountListCommands();
 }
 
 void DlgAccounts::on_button_accountUp_clicked()
 {
    kDebug() << "on_button_accountUp_clicked";
-   int currentRow = listWidget_accountList->currentRow();
-   QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
-   Account* account = AccountList::getInstance()->getAccountByItem(prevItem);
-   //we need to build a new item to set the itemWidget back
-   account->initItem();
-   QListWidgetItem * item = (QListWidgetItem*) account->object;
-#warning REWRITE THIS
-   //AccountItemWidget * widget = (AccountItemWidget*)account->object2;
-   AccountList::getInstance()->accountUp(currentRow);
-   listWidget_accountList->insertItem     ( currentRow - 1 , item );
-   //listWidget_accountList->setItemWidget  ( item, widget          );
-   listWidget_accountList->setCurrentItem ( item                  );
-} //on_button_accountUp_clicked
+   QModelIndex index = listView_accountList->currentIndex();
+   Account* acc = AccountList::getInstance()->getAccountByModelIndex(index);
+   AccountList::getInstance()->accountUp(index.row());
+   listView_accountList->setCurrentIndex(acc->getIndex());
+}
 
 void DlgAccounts::on_button_accountDown_clicked()
 {
    kDebug() << "on_button_accountDown_clicked";
-   int currentRow = listWidget_accountList->currentRow();
-   QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
-   Account* account = AccountList::getInstance()->getAccountByItem(prevItem);
-   //we need to build a new item to set the itemWidget back
-   account->initItem();
-   QListWidgetItem * item = (QListWidgetItem*)account->object;
-#warning REWRITE THIS
-   //AccountItemWidget * widget = (AccountItemWidget*)account->object2;
-   AccountList::getInstance()->accountDown(currentRow);
-   listWidget_accountList->insertItem     ( currentRow + 1 , item );
-   //listWidget_accountList->setItemWidget  ( item, widget          );
-   listWidget_accountList->setCurrentItem ( item                  );
-} //on_button_accountDown_clicked
+   QModelIndex index = listView_accountList->currentIndex();
+   Account* acc = AccountList::getInstance()->getAccountByModelIndex(index);
+   AccountList::getInstance()->accountDown(index.row());
+   listView_accountList->setCurrentIndex(acc->getIndex());
+}
 
 void DlgAccounts::on_button_accountAdd_clicked()
 {
@@ -602,9 +588,9 @@ void DlgAccounts::on_button_accountAdd_clicked()
    itemName = itemName.simplified();
    if (!itemName.isEmpty()) {
       Account* account = AccountList::getInstance()->addAccount(itemName);
-      addAccountToAccountList(account);
-      int r = listWidget_accountList->count() - 1;
-      listWidget_accountList->setCurrentRow(r);
+      //addAccountToAccountList(account);
+      int r = listView_accountList->model()->rowCount() - 1;
+      listView_accountList->setCurrentIndex(listView_accountList->model()->index(r,0));
       frame2_editAccounts->setEnabled(true);
    }
 } //on_button_accountAdd_clicked
@@ -612,32 +598,32 @@ void DlgAccounts::on_button_accountAdd_clicked()
 void DlgAccounts::on_button_accountRemove_clicked()
 {
    kDebug() << "on_button_accountRemove_clicked";
-   int r = listWidget_accountList->currentRow();
-   QListWidgetItem * item = listWidget_accountList->takeItem(r);
-   AccountList::getInstance()->removeAccount(AccountList::getInstance()->getAccountByItem(item));
-   listWidget_accountList->setCurrentRow( (r >= listWidget_accountList->count()) ? r-1 : r );
+   //int r = listView_accountList->currentIndex().row();
+   //QListWidgetItem * item = listView_accountList->takeItem(r);
+   AccountList::getInstance()->removeAccount(listView_accountList->currentIndex());
+   //listView_accountList->setCurrentIndex( (r >= listView_accountList->count()) ? r-1 : r );
 }
 
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 {
    kDebug() << "on_edit1_alias_textChanged";
-   QListWidgetItem* item = listWidget_accountList->currentItem();
-   item->setText(text);
+   //QListWidgetItem* item = listView_accountList->currentIndex();
+   //item->setText(text);
 }
 
 void DlgAccounts::updateAccountListCommands()
 {
    kDebug() << "updateAccountListCommands";
    bool buttonsEnabled[4] = {true,true,true,true};
-   if(! listWidget_accountList->currentItem()) {
+   if(! listView_accountList->currentIndex().isValid()) {
       buttonsEnabled[0] = false;
       buttonsEnabled[1] = false;
       buttonsEnabled[3] = false;
    }
-   else if(listWidget_accountList->currentRow() == 0) {
+   else if(listView_accountList->currentIndex().row() == 0) {
       buttonsEnabled[0] = false;
    }
-   if(listWidget_accountList->currentRow() == listWidget_accountList->count() - 1) {
+   if(listView_accountList->currentIndex().row() == listView_accountList->model()->rowCount() - 1) {
       buttonsEnabled[1] = false;
    }
 
@@ -661,16 +647,17 @@ void DlgAccounts::updateAccountStates()
       Account* current = AccountList::getInstance()->getAccountAt(i);
       current->updateState();
    }
-   updateStatusLabel(listWidget_accountList->currentItem());
+   updateStatusLabel(listView_accountList->currentIndex());
 }
 
-void DlgAccounts::updateStatusLabel(QListWidgetItem * item)
+void DlgAccounts::updateStatusLabel(QModelIndex item)
 {
-   if(! item ) {
-          return;
-        }
-   Account* account = AccountList::getInstance()->getAccountByItem(item);
-   updateStatusLabel(account);
+   if(!item.isValid()) {
+      return;
+   }
+   Account* account = AccountList::getInstance()->getAccountByModelIndex(item);
+   if (account)
+      updateStatusLabel(account);
 }
 
 void DlgAccounts::updateStatusLabel(Account* account)

@@ -26,6 +26,7 @@
 
 //SFLPhone library
 #include "configurationmanager_interface_singleton.h"
+#include "callmanager_interface_singleton.h"
 
 AccountList* AccountList::m_spAccountList   = nullptr;
 QString      AccountList::m_sPriorAccountId = ""     ;
@@ -36,7 +37,10 @@ AccountList::AccountList(QStringList & _accountIds)
    m_pAccounts = new QVector<Account*>();
    for (int i = 0; i < _accountIds.size(); ++i) {
       (*m_pAccounts) += Account::buildExistingAccountFromId(_accountIds[i]);
+      emit dataChanged(index(size()-1,0),index(size()-1,0));
    }
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
 }
 
 ///Constructors
@@ -46,6 +50,8 @@ AccountList::AccountList(bool fill)
    m_pAccounts = new QVector<Account *>();
    if(fill)
       updateAccounts();
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
 }
 
 ///Destructor
@@ -74,6 +80,29 @@ void AccountList::destroy()
    m_spAccountList = nullptr;
 }
 
+///Account status changed
+void AccountList::accountChanged(const QString& account,const QString& state, int code)
+{
+   Q_UNUSED(code)
+   Account* a = AccountList::getInstance()->getAccountById(account);
+   if (!a) {
+      ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+      QStringList accountIds = configurationManager.getAccountList().value();
+      m_pAccounts->clear();
+      for (int i = 0; i < accountIds.size(); ++i) {
+         if (!getAccountById(accountIds[i])) {
+            m_pAccounts->insert(i, Account::buildExistingAccountFromId(accountIds[i]));
+            emit dataChanged(index(i,0),index(size()-1));
+         }
+      }
+      a = AccountList::getInstance()->getAccountById(account);
+   }
+   if (a)
+      emit accountStateChanged(a,a->getStateName(state));
+   else
+      qDebug() << "Account not found";
+}
+
 
 /*****************************************************************************
  *                                                                           *
@@ -85,7 +114,7 @@ void AccountList::destroy()
 void AccountList::update()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   Account * current;
+   Account* current;
    for (int i = 0; i < m_pAccounts->size(); i++) {
       current = (*m_pAccounts)[i];
       if (!(*m_pAccounts)[i]->isNew())
@@ -95,6 +124,7 @@ void AccountList::update()
    QStringList accountIds = configurationManager.getAccountList().value();
    for (int i = 0; i < accountIds.size(); ++i) {
       m_pAccounts->insert(i, Account::buildExistingAccountFromId(accountIds[i]));
+      emit dataChanged(index(i,0),index(size()-1,0));
    }
 } //update
 
@@ -108,6 +138,7 @@ void AccountList::updateAccounts()
    for (int i = 0; i < accountIds.size(); ++i) {
       qDebug() << "updateAccounts " << accountIds[i];
       (*m_pAccounts) += Account::buildExistingAccountFromId(accountIds[i]);
+      emit dataChanged(index(size()-1,0),index(size()-1,0));
    }
    emit accountListUpdated();
 } //updateAccounts
@@ -140,7 +171,6 @@ void AccountList::save()
 bool AccountList::accountUp( int index )
 {
    if(index > 0 && index <= rowCount()) {
-      //accounts->upAccount(index);
       Account* account = getAccountAt(index);
       m_pAccounts->remove(index);
       m_pAccounts->insert(index - 1, account);
@@ -154,7 +184,6 @@ bool AccountList::accountUp( int index )
 bool AccountList::accountDown( int index )
 {
    if(index >= 0 && index < rowCount()) {
-      //accounts->downAccount(index);
       Account* account = getAccountAt(index);
       m_pAccounts->remove(index);
       m_pAccounts->insert(index + 1, account);
@@ -295,6 +324,9 @@ QVariant AccountList::data ( const QModelIndex& index, int role) const
       return QVariant(account->getAlias());
    else if(index.column() == 0 && role == Qt::CheckStateRole)
       return QVariant(account->isEnabled() ? Qt::Checked : Qt::Unchecked);
+   else if (role == Qt::BackgroundRole) {
+      return QVariant(account->getStateColor());
+   }
    else if(index.column() == 0 && role == Qt::DecorationRole) {
       /*if(! account->isEnabled())
          return QVariant( QIcon( ICON_ACCOUNT_LED_GRAY  ));
@@ -310,7 +342,7 @@ QVariant AccountList::data ( const QModelIndex& index, int role) const
 Qt::ItemFlags AccountList::flags(const QModelIndex & index) const
 {
    if (index.column() == 0)
-      return QAbstractItemModel::flags(index) | Qt::ItemIsUserCheckable;
+      return QAbstractItemModel::flags(index) | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
    return QAbstractItemModel::flags(index);
 }
 
@@ -338,14 +370,24 @@ Account* AccountList::addAccount(QString & alias)
 {
    Account* a = Account::buildNewAccountFromAlias(alias);
    (*m_pAccounts) += a;
+   
+   emit dataChanged(index(m_pAccounts->size()-1,0), index(m_pAccounts->size()-1,0));
    return a;
 }
 
 ///Remove an account
 void AccountList::removeAccount(Account* account)
 {
+   if (not account) return;
    qDebug() << "Removing" << m_pAccounts;
-   m_pAccounts->remove(m_pAccounts->indexOf(account));
+   int aindex = m_pAccounts->indexOf(account);
+   m_pAccounts->remove(aindex);
+   emit dataChanged(index(aindex,0), index(m_pAccounts->size()-1,0));
+}
+
+void AccountList::removeAccount( QModelIndex index )
+{
+   removeAccount(getAccountByModelIndex(index));
 }
 
 ///Set the previous account used
@@ -353,7 +395,6 @@ void AccountList::setPriorAccountId(const QString& value) {
    m_sPriorAccountId = value;
 }
 
-//TODO port proprely
 ///Set model data
 bool AccountList::setData(const QModelIndex & index, const QVariant &value, int role)
 {
@@ -362,6 +403,7 @@ bool AccountList::setData(const QModelIndex & index, const QVariant &value, int 
       emit dataChanged(index, index);
       return true;
    }
+   emit dataChanged(index, index);
    return false;
 }
 

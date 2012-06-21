@@ -145,6 +145,7 @@ void AccountTests::testAccountAlias                  ()/*QString detail*/
 
    QFETCH(QString, alias);
    acc->setAccountAlias(alias);
+   acc->save();
    QCOMPARE( acc->getAccountAlias(), alias );
    
 }
@@ -153,8 +154,10 @@ void AccountTests::testAccountType                   ()/*QString detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountType("IAX");
+   acc->save();
    QCOMPARE( acc->getAccountType(), QString("IAX") );
    acc->setAccountType("SIP");
+   acc->save();
    QCOMPARE( acc->getAccountType(), QString("SIP") );
 
    //Test invalid
@@ -177,6 +180,7 @@ void AccountTests::testAccountHostname               ()
    Account* acc = AccountList::getInstance()->getAccountById(id);
    QFETCH(QString, hostname);
    acc->setAccountHostname(hostname);
+   acc->save();
    QCOMPARE( acc->getAccountHostname(), hostname );
 }
 
@@ -198,6 +202,7 @@ void AccountTests::testAccountHostnameInvalid        ()
    QFETCH(QString, hostname);
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountHostname(hostname);
+   acc->save();
    QVERIFY(acc->getAccountHostname() != hostname);
 }
 
@@ -205,6 +210,7 @@ void AccountTests::testAccountUsername               ()/*QString detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountHostname("1234567879");
+   acc->save();
    QString username = acc->getAccountHostname();
    QCOMPARE(username,QString("1234567879"));
    
@@ -231,6 +237,7 @@ void AccountTests::testAccountMailbox                ()/*QString detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountMailbox("1234567879");
+   acc->save();
    QString mailbox = acc->getAccountMailbox();
    QCOMPARE(mailbox,QString("1234567879"));
    
@@ -240,6 +247,7 @@ void AccountTests::testTlsPassword                   ()/*QString detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setTlsPassword("1234567879");
+   acc->save();
    QString tlspass = acc->getTlsPassword();
    QCOMPARE(tlspass,QString("1234567879"));
 }
@@ -272,6 +280,7 @@ void AccountTests::testTlsServerName                 ()/*QString detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setTlsServerName("qwerty");
+   acc->save();
    QString tlsserver = acc->getTlsServerName();
    QCOMPARE(tlsserver,QString("qwerty"));
 }
@@ -280,6 +289,7 @@ void AccountTests::testAccountSipStunServer          ()/*QString detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountSipStunServer("qwerty");
+   acc->save();
    QString tlsserver = acc->getAccountSipStunServer();
    QCOMPARE(tlsserver,QString("qwerty"));
 }
@@ -332,6 +342,7 @@ void AccountTests::testRingtonePath                  ()/*QString detail*/
    Account* acc = AccountList::getInstance()->getAccountById(id);
    QFETCH(QString, path);
    acc->setRingtonePath(path);
+   acc->save();
    if (path.indexOf("invalid") != -1)
       QCOMPARE(acc->getRingtonePath() == path ,false);
    else
@@ -348,10 +359,12 @@ void AccountTests::testAccountRegistrationExpire     ()/*int     detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountRegistrationExpire(10000);
+   acc->save();
    QCOMPARE(acc->getAccountRegistrationExpire(),10000);
 
    //Time machines are not on the market yet
    acc->setAccountRegistrationExpire(-10000);
+   acc->save();
    QCOMPARE(acc->getAccountRegistrationExpire() == -10000,false);
 }
 
@@ -359,11 +372,13 @@ void AccountTests::testTlsNegotiationTimeoutSec      ()/*int     detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setTlsNegotiationTimeoutSec(10000);
+   acc->save();
 
    QCOMPARE(acc->getTlsNegotiationTimeoutSec(),10000);
 
    //Time machines are not on the market yet
    acc->setTlsNegotiationTimeoutSec(-10000);
+   acc->save();
    QCOMPARE(acc->getTlsNegotiationTimeoutSec() == -10000,false);
 }
 
@@ -372,10 +387,12 @@ void AccountTests::testTlsNegotiationTimeoutMsec     ()/*int     detail*/
    Account* acc = AccountList::getInstance()->getAccountById(id);
 
    acc->setTlsNegotiationTimeoutMsec(10000);
+   acc->save();
    QCOMPARE(acc->getTlsNegotiationTimeoutMsec(),10000);
 
    //Time machines are not on the market yet
    acc->setTlsNegotiationTimeoutMsec(-10000);
+   acc->save();
    QCOMPARE(acc->getTlsNegotiationTimeoutMsec() == -10000,false);
 }
 
@@ -396,6 +413,7 @@ void AccountTests::testLocalPort                     ()/*short   detail*/
    Account* acc = AccountList::getInstance()->getAccountById(id);
    QFETCH(int, port);
    acc->setLocalPort(port);
+   acc->save();
    if (port < 0 || port > 65533)
       QCOMPARE(acc->getLocalPort() == port,false);
    else
@@ -419,6 +437,7 @@ void AccountTests::testTlsListenerPort               ()/*short   detail*/
    Account* acc = AccountList::getInstance()->getAccountById(id);
    QFETCH(int, port);
    acc->setTlsListenerPort(port);
+   acc->save();
    if (port < 0 || port > 65533)
       QCOMPARE(acc->getTlsListenerPort() == port,false);
    else
@@ -442,6 +461,7 @@ void AccountTests::testPublishedPort                 ()/*short   detail*/
    Account* acc = AccountList::getInstance()->getAccountById(id);
    QFETCH(int, port);
    acc->setPublishedPort(port);
+   acc->save();
    if (port < 0 || port > 65533)
       QCOMPARE(acc->getPublishedPort() == port,false);
    else
@@ -473,8 +493,10 @@ void AccountTests::testTlsRequireClientCertificate   ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setTlsRequireClientCertificate(true);
+   acc->save();
    QCOMPARE(acc->isTlsRequireClientCertificate(),true);
    acc->setTlsRequireClientCertificate(false);
+   acc->save();
    QCOMPARE(acc->isTlsRequireClientCertificate(),false);
 }
 
@@ -482,8 +504,10 @@ void AccountTests::testTlsEnable                     ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setTlsEnable(true);
+   acc->save();
    QCOMPARE(acc->isTlsEnable(),true);
    acc->setTlsEnable(false);
+   acc->save();
    QCOMPARE(acc->isTlsEnable(),false);
 }
 
@@ -491,8 +515,10 @@ void AccountTests::testAccountDisplaySasOnce         ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountDisplaySasOnce(true);
+   acc->save();
    QCOMPARE(acc->isAccountDisplaySasOnce(),true);
    acc->setAccountDisplaySasOnce(false);
+   acc->save();
    QCOMPARE(acc->isAccountDisplaySasOnce(),false);
 }
 
@@ -500,8 +526,10 @@ void AccountTests::testAccountSrtpRtpFallback        ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountSrtpRtpFallback(true);
+   acc->save();
    QCOMPARE(acc->isAccountSrtpRtpFallback(),true);
    acc->setAccountSrtpRtpFallback(false);
+   acc->save();
    QCOMPARE(acc->isAccountSrtpRtpFallback(),false);
 }
 
@@ -509,8 +537,10 @@ void AccountTests::testAccountZrtpDisplaySas         ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountSrtpRtpFallback(true);
+   acc->save();
    QCOMPARE(acc->isAccountSrtpRtpFallback(),true);
    acc->setAccountSrtpRtpFallback(false);
+   acc->save();
    QCOMPARE(acc->isAccountSrtpRtpFallback(),false);
 }
 
@@ -518,8 +548,10 @@ void AccountTests::testAccountZrtpNotSuppWarning     ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountZrtpNotSuppWarning(true);
+   acc->save();
    QCOMPARE(acc->isAccountZrtpNotSuppWarning(),true);
    acc->setAccountZrtpNotSuppWarning(false);
+   acc->save();
    QCOMPARE(acc->isAccountZrtpNotSuppWarning(),false);
 }
 
@@ -527,8 +559,10 @@ void AccountTests::testAccountZrtpHelloHash          ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountZrtpHelloHash(true);
+   acc->save();
    QCOMPARE(acc->isAccountZrtpHelloHash(),true);
    acc->setAccountZrtpHelloHash(false);
+   acc->save();
    QCOMPARE(acc->isAccountZrtpHelloHash(),false);
 }
 
@@ -536,8 +570,10 @@ void AccountTests::testAccountSipStunEnabled         ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setAccountSipStunEnabled(true);
+   acc->save();
    QCOMPARE(acc->isAccountSipStunEnabled(),true);
    acc->setAccountSipStunEnabled(false);
+   acc->save();
    QCOMPARE(acc->isAccountSipStunEnabled(),false);
 }
 
@@ -545,8 +581,10 @@ void AccountTests::testPublishedSameAsLocal          ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setPublishedSameAsLocal(true);
+   acc->save();
    QCOMPARE(acc->isPublishedSameAsLocal(),true);
    acc->setPublishedSameAsLocal(false);
+   acc->save();
    QCOMPARE(acc->isPublishedSameAsLocal(),false);
 }
 
@@ -554,8 +592,10 @@ void AccountTests::testConfigRingtoneEnabled         ()/*bool    detail*/
 {
    Account* acc = AccountList::getInstance()->getAccountById(id);
    acc->setRingtoneEnabled(true);
+   acc->save();
    QCOMPARE(acc->isRingtoneEnabled(),true);
    acc->setRingtoneEnabled(false);
+   acc->save();
    QCOMPARE(acc->isRingtoneEnabled(),false);
 }
 
@@ -570,7 +610,7 @@ void AccountTests::testDisableAllAccounts()
    for (int i=0;i<AccountList::getInstance()->size();i++) {
       saveState << (*AccountList::getInstance())[i]->isAccountEnabled();
       (*AccountList::getInstance())[i]->setAccountEnabled(false);
-      (*AccountList::getInstance())[i]->updateState();
+      acc->save();
    }
 
    QCOMPARE(AccountList::getCurrentAccount(),(Account*)NULL);
@@ -578,6 +618,7 @@ void AccountTests::testDisableAllAccounts()
    //Restore state
    for (int i=0;i<AccountList::getInstance()->size();i++) {
       (*AccountList::getInstance())[i]->setAccountEnabled(saveState[i]);
+      acc->save();
    }
 }
 

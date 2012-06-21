@@ -44,7 +44,6 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 
       connect(HistoryModel::self(),SIGNAL(newHistoryCall(Call*)),this,SLOT(addPrivateCall(Call*)));
       
-      connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
       dbusInit = true;
 
       foreach(Call* call,HistoryModel::getHistory()){
@@ -165,16 +164,6 @@ Call* CallModelBase::addConferenceS(Call* conf)
 {
    emit conferenceCreated(conf);
    return conf;
-}
-
-///Account status changed
-void CallModelBase::accountChanged(const QString& account,const QString& state, int code)
-{
-   Q_UNUSED(code)
-   Account* a = AccountList::getInstance()->getAccountById(account);
-   if (a) {
-      emit accountStateChanged(a,a->getStateName(state));
-   }
 }
 
 ///Remove it from active calls

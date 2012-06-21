@@ -23,6 +23,7 @@
 
 
 #include <QtCore/QVector>
+#include <QtCore/QAbstractListModel>
 
 #include "Account.h"
 #include "typedefs.h"
@@ -60,12 +61,13 @@ public:
    virtual bool setData          ( const QModelIndex& index, const QVariant &value, int role);
    
    //Mutators
-   virtual Account*  addAccount        ( QString & alias  )      ;
-   void              removeAccount     ( Account* account )      ;
-   QVector<Account*> registeredAccounts(                  ) const;
-   void              save              (                  )      ;
-   bool              accountUp         ( int index        )      ;
-   bool              accountDown       ( int index        )      ;
+   virtual Account*  addAccount        ( QString & alias   )      ;
+   void              removeAccount     ( Account* account  )      ;
+   void              removeAccount     ( QModelIndex index )      ;
+   QVector<Account*> registeredAccounts(                   ) const;
+   void              save              (                   )      ;
+   bool              accountUp         ( int index         )      ;
+   bool              accountDown       ( int index         )      ;
 
    //Operators
    Account*       operator[] (int i)      ;
@@ -73,12 +75,8 @@ public:
 
 #warning REMOVE THIS
    //TODO big hack, temporary
-   Account* getAccountByItem(void* item) {
-      for (int i = 0; i < m_pAccounts->size(); ++i) {
-         if ((*m_pAccounts)[i]->object == item)
-            return (*m_pAccounts)[i];
-      }
-      return nullptr;
+   Account* getAccountByModelIndex(QModelIndex item) {
+      return (*m_pAccounts)[item.row()];
    }
 
 private:
@@ -95,10 +93,15 @@ private:
 public slots:
    void update();
    void updateAccounts();
+
+private slots:
+   void accountChanged(const QString& account,const QString& state, int code);
    
 signals:
    ///The account list changed
    void accountListUpdated();
+   ///Emitted when an account state change
+   void accountStateChanged( Account* account, QString state);
 };
 
 #endif
