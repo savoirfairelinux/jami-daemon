@@ -735,15 +735,15 @@ gboolean dbus_connect(GError **error)
         g_cclosure_user_marshal_VOID__STRING_STRING_BOOL, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
 
-    /* Register STRING STRING INT Marshaller */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_INT, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
-
     /* Register STRING STRING STRING Marshaller */
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+
+    /* Register STRING STRING INT INT Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_INT_INT, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
     DEBUG("Adding callmanager Dbus signals");
 
@@ -892,7 +892,6 @@ gboolean dbus_connect(GError **error)
     const gchar *videocontrols_interface = "org.sflphone.SFLphone.VideoControls";
     video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
             videocontrols_object_instance, videocontrols_interface);
-    g_assert(video_proxy != NULL);
     if (video_proxy == NULL) {
         ERROR("Error: Failed to connect to %s", videocontrols_object_instance);
         return FALSE;
@@ -902,16 +901,16 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(video_proxy, "deviceEvent",
             G_CALLBACK(video_device_event_cb), NULL, NULL);
 
-    dbus_g_proxy_add_signal(video_proxy, "startedEvent", G_TYPE_STRING,
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(video_proxy, "startedEvent",
-            G_CALLBACK(started_video_event_cb), NULL,
+    dbus_g_proxy_add_signal(video_proxy, "startedDecoding", G_TYPE_STRING,
+            G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "startedDecoding",
+            G_CALLBACK(started_decoding_video_cb), NULL,
             NULL);
 
-    dbus_g_proxy_add_signal(video_proxy, "stoppedEvent",
-            G_TYPE_STRING, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(video_proxy, "stoppedEvent",
-            G_CALLBACK(stopped_video_event_cb),
+    dbus_g_proxy_add_signal(video_proxy, "stoppedDecoding",
+            G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "stoppedDecoding",
+            G_CALLBACK(stopped_decoding_video_cb),
             NULL, NULL);
 #endif
 

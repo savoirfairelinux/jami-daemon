@@ -49,7 +49,8 @@ SIPCall::SIPCall(const std::string& id, Call::CallType type,
     , inv(NULL)
     , audiortp_(this)
 #ifdef SFL_VIDEO
-    , videortp_(Manager::instance().getDbusManager()->getVideoControls()->getSettings())
+    // The ID is used to associate video streams to calls
+    , videortp_(id, Manager::instance().getDbusManager()->getVideoControls()->getSettings())
 #endif
     , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))

@@ -69,10 +69,11 @@ video_renderer_run(VideoRenderer *self);
 void
 video_renderer_stop(VideoRenderer *self);
 
-void started_video_event_cb(DBusGProxy *proxy, gchar *shm_path,
-                            gint width, gint height, GError *error,
-                            gpointer userdata);
-void stopped_video_event_cb(DBusGProxy *proxy, gchar *shm_path, GError *error, gpointer userdata);
+void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
+                               gint width, gint height, GError *error,
+                               gpointer userdata);
+void stopped_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
+                               GError *error, gpointer userdata);
 
 /* Try to init the gtk clutter backend, returns TRUE on success, FALSE otherwise */
 gboolean try_clutter_init();

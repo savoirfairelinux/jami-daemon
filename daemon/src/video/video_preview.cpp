@@ -41,7 +41,8 @@ namespace sfl_video {
 VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
     args_(args), receiveThread_()
 {
-    receiveThread_.reset(new VideoReceiveThread(args_));
+    const char * const LOCAL_ID = "local";
+    receiveThread_.reset(new VideoReceiveThread(LOCAL_ID, args_));
     receiveThread_->start();
 }
 

@@ -44,8 +44,8 @@ class VideoReceiveThread;
 
 class VideoRtpSession {
     public:
-        VideoRtpSession(const std::map<std::string, std::string> &txArgs);
-
+        VideoRtpSession(const std::string &callID,
+                        const std::map<std::string, std::string> &txArgs);
         void start();
         void stop();
         void updateDestination(const std::string &destination,
@@ -59,6 +59,7 @@ class VideoRtpSession {
         std::map<std::string, std::string> rxArgs_;
         bool sending_;
         bool receiving_;
+        const std::string callID_;
 };
 }
 

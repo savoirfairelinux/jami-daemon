@@ -126,8 +126,11 @@
            <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
         </signal>
 
-        <signal name="startedEvent" tp:name-for-bindings="startedEvent">
+        <signal name="startedDecoding" tp:name-for-bindings="startedDecoding">
             <tp:docstring>Signal triggered when video is available in a shared memory buffer.</tp:docstring>
+            <arg type="s" name="id">
+              <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
+            </arg>
             <arg type="s" name="shmPath">
               <tp:docstring>The path of the newly created shared memory</tp:docstring>
             </arg>
@@ -139,9 +142,14 @@
             </arg>
         </signal>
 
-        <signal name="stoppedEvent" tp:name-for-bindings="stoppedEvent">
+        <signal name="stoppedDecoding" tp:name-for-bindings="stoppedDecoding">
             <tp:docstring>Signal triggered when video is no longer available in a shared memory buffer.</tp:docstring>
-            <arg type="s" name="shmPath"></arg>
+            <arg type="s" name="id">
+              <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
+            </arg>
+            <arg type="s" name="shmPath">
+              <tp:docstring>The path of the newly created shared memory</tp:docstring>
+            </arg>
         </signal>
 
         <method name="getCurrentCodecName" tp:name-for-bindings="getCurrentCodecName">

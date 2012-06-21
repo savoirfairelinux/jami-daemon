@@ -477,9 +477,9 @@ try_clutter_init()
 #undef PRINT_ERR
 }
 
-void started_video_event_cb(DBusGProxy *proxy UNUSED, gchar *shm_path,
-                            gint width, gint height,
-                            GError *error UNUSED, gpointer userdata UNUSED)
+void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
+        gchar *id, gchar *shm_path, gint width, gint height,
+        GError *error UNUSED, gpointer userdata UNUSED)
 {
     if (!video_window) {
         video_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -529,9 +529,9 @@ void started_video_event_cb(DBusGProxy *proxy UNUSED, gchar *shm_path,
 }
 
 void
-stopped_video_event_cb(DBusGProxy *proxy UNUSED, gchar *shm_path, GError *error UNUSED, gpointer userdata UNUSED)
+stopped_decoding_video_cb(DBusGProxy *proxy UNUSED, gchar *id, gchar *shm_path, GError *error UNUSED, gpointer userdata UNUSED)
 {
-    DEBUG("Video stopped for shm:%s", shm_path);
+    DEBUG("Video stopped for id %s, shm path %s", id, shm_path);
 
     if (video_renderer_global) {
         if (video_window) {

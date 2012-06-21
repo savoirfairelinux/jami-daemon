@@ -44,9 +44,9 @@ namespace sfl_video {
 using std::map;
 using std::string;
 
-VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs) :
+VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string> &txArgs) :
     sendThread_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(), sending_(false), receiving_(false)
+    rxArgs_(), sending_(false), receiving_(false), callID_(callID)
 {
     // FIXME: bitrate must be configurable
     txArgs_["bitrate"] = "500000";
@@ -142,7 +142,7 @@ void VideoRtpSession::start()
     if (receiving_) {
         if (receiveThread_.get())
             WARN("Restarting video receiver");
-        receiveThread_.reset(new VideoReceiveThread(rxArgs_));
+        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->start();
     }
     else

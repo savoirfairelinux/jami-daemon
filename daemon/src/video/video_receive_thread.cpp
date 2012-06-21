@@ -182,7 +182,7 @@ void VideoReceiveThread::setup()
     bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
-    Manager::instance().getVideoControls()->startedEvent(sink_.openedName(), dstWidth_, dstHeight_);
+    Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
 }
 
 void VideoReceiveThread::createScalingContext()
@@ -196,11 +196,11 @@ void VideoReceiveThread::createScalingContext()
     EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
 }
 
-VideoReceiveThread::VideoReceiveThread(const std::map<string, string> &args) :
+VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<string, string> &args) :
     args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
-    bufferSize_(0)
+    bufferSize_(0), id_(id)
 {}
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
@@ -236,6 +236,7 @@ void VideoReceiveThread::run()
             ERROR("Couldn't read frame : %s\n", strerror(ret));
             break;
         }
+        // Guarantee that we free the packet every iteration
         PacketHandle inpacket_handle(inpacket);
 
         // is this a packet from the video stream?
@@ -255,7 +256,7 @@ void VideoReceiveThread::run()
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    Manager::instance().getVideoControls()->stoppedEvent(sink_.openedName());
+    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     receiving_ = false;
     ost::Thread::terminate();
 

@@ -70,13 +70,14 @@ class VideoReceiveThread : public ost::Thread {
         bool receiving_;
         std::string sdpFilename_;
         size_t bufferSize_;
+        const std::string id_;
         void setup();
         void createScalingContext();
         void loadSDP();
         void fill_buffer(void *data);
 
     public:
-        VideoReceiveThread(const std::map<std::string, std::string> &args);
+        VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
         virtual ~VideoReceiveThread();
         virtual void run();
 };
