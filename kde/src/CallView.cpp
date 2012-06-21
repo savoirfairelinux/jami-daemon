@@ -39,13 +39,14 @@
 #include "lib/Contact.h"
 #include "lib/sflphone_const.h"
 #include "lib/callmanager_interface_singleton.h"
-
-//SFLPhone
-#include "widgets/CallTreeItem.h"
-#include "SFLPhone.h"
-#include "SFLPhoneView.h"
 #include "klib/AkonadiBackend.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "klib/HelperFunctions.h"
+
+//SFLPhone
+#include "SFLPhoneView.h"
+#include "widgets/CallTreeItem.h"
+#include "SFLPhone.h"
 #include "SFLPhoneAccessibility.h"
 
 ///CallTreeItemDelegate: Delegates for CallTreeItem
@@ -278,24 +279,29 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
       QString name;
       name = (contact)?contact->getFormattedName():i18n("Unknown");
       Call* call2 = SFLPhone::model()->addDialingCall(name, AccountList::getCurrentAccount());
-      call2->appendText(QString(encodedPhoneNumber));
-      if (!parent) {
-         //Dropped on free space
-         kDebug() << "Adding new dialing call";
-      }
-      else if (parent->childCount() || parent->parent()) {
-         //Dropped on a conversation
-         QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
-         SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call),call2);
+      if (call2) {
+         call2->appendText(QString(encodedPhoneNumber));
+         if (!parent) {
+            //Dropped on free space
+            kDebug() << "Adding new dialing call";
+         }
+         else if (parent->childCount() || parent->parent()) {
+            //Dropped on a conversation
+            QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
+            SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call),call2);
+         }
+         else {
+            //Dropped on call
+            call2->actionPerformed(CALL_ACTION_ACCEPT);
+            int state = SFLPhone::model()->getCall(parent)->getState();
+            if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+               SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
+            }
+            SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
+         }
       }
       else {
-         //Dropped on call
-         call2->actionPerformed(CALL_ACTION_ACCEPT);
-         int state = SFLPhone::model()->getCall(parent)->getState();
-         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
-            SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
-         }
-         SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
+         HelperFunctions::displayNoAccountMessageBox(this);
       }
    }
    return false;

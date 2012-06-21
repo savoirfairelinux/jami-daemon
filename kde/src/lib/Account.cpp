@@ -157,7 +157,7 @@ const QString& Account::getAccountId() const
       return EMPTY_STRING; //WARNING May explode
    }
    
-   return *m_pAccountId; 
+   return *m_pAccountId;
 }
 
 ///Get this account details

@@ -86,9 +86,14 @@ protected:
    {
       e->accept();
       Call* call = SFLPhone::model()->addDialingCall(m_pName, AccountList::getCurrentAccount());
-      call->setCallNumber(m_pNumber);
-      call->setPeerName(m_pName);
-      call->actionPerformed(CALL_ACTION_ACCEPT);
+      if (call) {
+         call->setCallNumber(m_pNumber);
+         call->setPeerName(m_pName);
+         call->actionPerformed(CALL_ACTION_ACCEPT);
+      }
+      else {
+         HelperFunctions::displayNoAccountMessageBox(this);
+      }
    }
 private:
    QString m_pNumber;

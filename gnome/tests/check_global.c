@@ -36,6 +36,8 @@
 #include "../src/sflphone_const.h"
 #include "../src/str_utils.h"
 
+#define XML_OUTPUT  "gnome-check-global.xml"
+
 account_t* create_test_account(gchar *alias)
 {
     account_t *test;
@@ -150,6 +152,7 @@ main(void)
     int number_failed;
     Suite *s = global_suite();
     SRunner *sr = srunner_create(s);
+    srunner_set_xml(sr, XML_OUTPUT);
     srunner_run_all(sr, CK_NORMAL);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);

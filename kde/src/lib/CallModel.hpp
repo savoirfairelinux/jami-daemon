@@ -199,9 +199,13 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, Account* account)
 {
    Account* acc = (account)?account:AccountList::getCurrentAccount();
-   
-   Call* call = Call::buildDialingCall(generateCallId(), peerName, acc->getAccountId());
-   return addCallCommon(call);
+   if (acc) {
+      Call* call = Call::buildDialingCall(generateCallId(), peerName, acc->getAccountId());
+      return addCallCommon(call);
+   }
+   else {
+      return nullptr;
+   }
 }  //addDialingCall
 
 ///Create a new incomming call when the daemon is being called

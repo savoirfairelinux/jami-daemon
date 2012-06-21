@@ -5,7 +5,7 @@ SUBDIRS = config contacts dbus widget icons video
 bin_PROGRAMS = sflphone-client-gnome
 
 SFLPHONE_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
-                 ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
+              ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
 
 DL_LIBS = -ldl
 
@@ -18,7 +18,12 @@ sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
                                @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
                                @GTHREAD_CFLAGS@
-sflphone_client_gnome_LDADD = ./libsflphone_client.la $(SFLPHONE_LIBS) $(DL_LIBS)
+sflphone_client_gnome_LDADD = $(SFLPHONE_LIBS) $(DL_LIBS) ./libsflphone_client.la
+
+SUBDIRS = config contacts dbus widget icons
+if SFL_VIDEO
+SUBDIRS += video
+endif
 
 noinst_LTLIBRARIES = libsflphone_client.la
 

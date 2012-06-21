@@ -26,6 +26,7 @@
 
 //KDE
 #include <KLocale>
+#include <KMessageBox>
 
 //SFLPhone
 #include "../lib/Contact.h"
@@ -73,4 +74,10 @@ QString HelperFunctions::escapeHtmlEntities(QString str)
       str = str.replace(">","&gt;");
    }
    return str;
+}
+
+///Display a message box
+void HelperFunctions::displayNoAccountMessageBox(QWidget* parent)
+{
+   KMessageBox::error(parent,i18n("No registered accounts"));
 }

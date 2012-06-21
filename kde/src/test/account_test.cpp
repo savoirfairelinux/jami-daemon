@@ -75,6 +75,7 @@ private slots:
    void testAccountSipStunEnabled         ();
    void testPublishedSameAsLocal          ();
    void testConfigRingtoneEnabled         ();
+   void testDisableAllAccounts            ();
 
 private:
    QString id;
@@ -559,6 +560,27 @@ void AccountTests::testConfigRingtoneEnabled         ()/*bool    detail*/
 }
 
 //END Testing every account attributes
+
+//BEGIN testing account list
+
+void AccountTests::testDisableAllAccounts()
+{
+   QList<bool> saveState;
+   //Disable all accounts
+   for (int i=0;i<AccountList::getInstance()->size();i++) {
+      saveState << (*AccountList::getInstance())[i]->isAccountEnabled();
+      (*AccountList::getInstance())[i]->setAccountEnabled(false);
+   }
+
+   QCOMPARE(AccountList::getCurrentAccount(),(Account*)NULL);
+
+   //Restore state
+   for (int i=0;i<AccountList::getInstance()->size();i++) {
+      (*AccountList::getInstance())[i]->setAccountEnabled(saveState[i]);
+   }
+}
+
+//END testing account list
 
 //BEGIN cleanup
 void AccountTests::cleanupTestCase() {
