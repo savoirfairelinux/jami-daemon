@@ -214,12 +214,19 @@ class LIB_EXPORT Account : public QObject {
       #warning THIS IS TEMPORARY, REMOVE AS SOON AS POSSIBLE <elepage june 2012>
       //TODO Remove, this is for the length of the port away from the old hack
       void *object;
-      void *object2;
+      //void *object2;
       bool isChecked() {
          return isAccountEnabled();
       }
       void initItem(){}
-      QString getStateColorName() {return "blue";}
+      QString getStateColorName() // QColor AccountView::getStateColor()
+      {
+         if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
+                return "black";
+         if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
+                return "darkGreen";
+         return "red";
+      }
       //END to remove
    
    protected:

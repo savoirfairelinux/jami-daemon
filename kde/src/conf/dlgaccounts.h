@@ -22,7 +22,7 @@
 #define DLGACCOUNTS_H
 
 #include "ui_dlgaccountsbase.h"
-#include "AccountView.h"
+#include "../lib/Account.h"
 #include "ConfigAccountList.h"
 #include "../lib/callmanager_interface_singleton.h"
 

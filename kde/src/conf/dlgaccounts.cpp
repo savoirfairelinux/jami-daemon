@@ -235,6 +235,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
       kDebug() << "Attempting to save details of an unexisting account : " << item->text();
       return;
    }
+   
    //ACCOUNT DETAILS
    //                                                                     WIDGET VALUE                                     /
    /**/account->setAccountAlias                ( edit1_alias->text()                                                      );
@@ -243,7 +244,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    /**/account->setAccountUsername             ( edit4_user->text()                                                       );
    /**/account->setAccountPassword             ( edit5_password->text()                                                   );
    /**/account->setAccountMailbox              ( edit6_mailbox->text()                                                    );
-   /**/account->setAccountEnabled              ( account->isChecked()                                                     );
+   /**/account->setAccountEnabled              ( item->checkState()                                                       );
    /**/account->setAccountRegistrationExpire   ( spinbox_regExpire->value()                                               );
    /**/                                                                                                                 /**/
    /*                                            Security                                                                 */
@@ -531,14 +532,17 @@ void DlgAccounts::loadAccountList()
 void DlgAccounts::addAccountToAccountList(Account* account)
 {
    QListWidgetItem* item = new QListWidgetItem();//(QListWidgetItem*) account->object;
+   item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+   item->setCheckState(account->isAccountEnabled()?Qt::Checked:Qt::Unchecked);
+   item->setText(account->getAccountAlias());
 #warning REMOVE THIS
    account->object = item;
    
-   QWidget* widget = new AccountItemWidget();
-   account->object2 = widget;
-   connect(widget, SIGNAL(checkStateChanged(bool)), this, SLOT(changedAccountList()));
+   //QWidget* widget = new AccountItemWidget();
+   //account->object2 = widget;
+   //connect(widget, SIGNAL(checkStateChanged(bool)), this, SLOT(changedAccountList()));
    listWidget_accountList->addItem(item);
-   listWidget_accountList->setItemWidget(item, widget);
+   //listWidget_accountList->setItemWidget(item, widget);
 }
 
 ///Called when one of the child widget is modified
@@ -566,10 +570,11 @@ void DlgAccounts::on_button_accountUp_clicked()
    //we need to build a new item to set the itemWidget back
    account->initItem();
    QListWidgetItem * item = (QListWidgetItem*) account->object;
-   AccountItemWidget * widget = (AccountItemWidget*)account->object2;
+#warning REWRITE THIS
+   //AccountItemWidget * widget = (AccountItemWidget*)account->object2;
    AccountList::getInstance()->accountUp(currentRow);
    listWidget_accountList->insertItem     ( currentRow - 1 , item );
-   listWidget_accountList->setItemWidget  ( item, widget          );
+   //listWidget_accountList->setItemWidget  ( item, widget          );
    listWidget_accountList->setCurrentItem ( item                  );
 } //on_button_accountUp_clicked
 
@@ -582,10 +587,11 @@ void DlgAccounts::on_button_accountDown_clicked()
    //we need to build a new item to set the itemWidget back
    account->initItem();
    QListWidgetItem * item = (QListWidgetItem*)account->object;
-   AccountItemWidget * widget = (AccountItemWidget*)account->object2;
+#warning REWRITE THIS
+   //AccountItemWidget * widget = (AccountItemWidget*)account->object2;
    AccountList::getInstance()->accountDown(currentRow);
    listWidget_accountList->insertItem     ( currentRow + 1 , item );
-   listWidget_accountList->setItemWidget  ( item, widget          );
+   //listWidget_accountList->setItemWidget  ( item, widget          );
    listWidget_accountList->setCurrentItem ( item                  );
 } //on_button_accountDown_clicked
 
@@ -615,8 +621,8 @@ void DlgAccounts::on_button_accountRemove_clicked()
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 {
    kDebug() << "on_edit1_alias_textChanged";
-   AccountItemWidget * widget = (AccountItemWidget *) listWidget_accountList->itemWidget(listWidget_accountList->currentItem());
-   widget->setAccountText(text);
+   QListWidgetItem* item = listWidget_accountList->currentItem();
+   item->setText(text);
 }
 
 void DlgAccounts::updateAccountListCommands()
