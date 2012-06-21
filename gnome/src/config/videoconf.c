@@ -39,9 +39,6 @@
 #include "actions.h"
 #include "codeclist.h"
 
-#include <clutter/clutter.h>
-#include <clutter-gtk/clutter-gtk.h>
-
 static GtkWidget *v4l2Device;
 static GtkWidget *v4l2Channel;
 static GtkWidget *v4l2Size;
@@ -726,9 +723,6 @@ GtkWidget* create_video_configuration()
 
     if (active_call)
         gtk_widget_set_sensitive(GTK_WIDGET(preview_button), FALSE);
-
-    if (!try_clutter_init())
-        return NULL;
 
     gtk_widget_show_all(vbox);
 
