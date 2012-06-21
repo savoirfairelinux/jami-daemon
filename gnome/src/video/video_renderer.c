@@ -296,7 +296,6 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
 
     while (priv->buffer_gen == priv->shm_area->buffer_gen) {
         shm_unlock(priv->shm_area);
-        DEBUG("Waiting for notif");
         sem_wait(&priv->shm_area->notification);
         shm_lock(priv->shm_area);
     }
