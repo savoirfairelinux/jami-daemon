@@ -1,12 +1,16 @@
 include ../globals.mak
 
+SUBDIRS = config contacts dbus widget icons video
+
 bin_PROGRAMS = sflphone-client-gnome
 
-SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
+SFLPHONE_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
                  ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
 
+DL_LIBS = -ldl
+
 if SFL_VIDEO
-SFLPHONEGTK_LIBS+=./video/libvideo.la
+SFLPHONE_LIBS+=./video/libvideo.la
 endif
 
 sflphone_client_gnome_SOURCES = main.c
@@ -14,15 +18,7 @@ sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
                                @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
                                @GTHREAD_CFLAGS@
-sflphone_client_gnome_LDADD = ./libsflphone_client.la $(SFLPHONEGTK_LIBS) $(LD_LIBS)
-
-SUBDIRS = config contacts dbus widget icons
-if SFL_VIDEO
-SUBDIRS += video
-endif
-
-NOFIFY_LIBS = -lnotify
-LD_LIBS = -ldl
+sflphone_client_gnome_LDADD = ./libsflphone_client.la $(SFLPHONE_LIBS) $(DL_LIBS)
 
 noinst_LTLIBRARIES = libsflphone_client.la
 
@@ -66,11 +62,10 @@ libsflphone_client_la_SOURCES = \
   gtk2_wrappers.h \
   seekslider.h
 
-libsflphone_client_la_LDFLAGS = @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
-                                @NOTIFY_LIBS@ $(SFLPHONEGTK_LIBS) @X11_LIBS@ \
-                                @GTK_LIBS@ @GLIB_LIBS@ @WEBKIT_LIBS@ \
-                                $(LD_LIBS) @GCONF_LIBS@ \
-                                @JAVASCRIPT_CORE_GTK_LIBS@ @GTHREAD_LIBS@
+libsflphone_client_la_LDFLAGS = $(SFLPHONE_LIBS) @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
+                                @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ @WEBKIT_LIBS@ \
+                                $(DL_LIBS) @GCONF_LIBS@ @JAVASCRIPT_CORE_GTK_LIBS@ \
+                                @GTHREAD_LIBS@
 
 libsflphone_client_la_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \

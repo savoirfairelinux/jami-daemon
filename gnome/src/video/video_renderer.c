@@ -30,7 +30,6 @@
 
 #include "video_renderer.h"
 #include "shm_header.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,14 +40,14 @@
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
+#include "config/videoconf.h"
 #include "actions.h"
 #include "logger.h"
 #include "unused.h"
 
-static GtkWidget *video_window = NULL;
+// FIXME: get rid of these
+static GtkWidget *video_window_global = NULL;
 static gboolean video_window_fullscreen = FALSE;
-static GtkWidget *video_area = NULL;
-static VideoRenderer *video_renderer_global = NULL;
 
 /* This macro will implement the video_renderer_get_type function
    and define a parent class pointer accessible from the whole .c file */
@@ -60,7 +59,6 @@ G_DEFINE_TYPE(VideoRenderer, video_renderer, G_TYPE_OBJECT);
 enum
 {
     PROP_0,
-    PROP_RUNNING,
     PROP_WIDTH,
     PROP_HEIGHT,
     PROP_DRAWAREA,
@@ -83,7 +81,6 @@ struct _VideoRendererPrivate {
     ClutterActor *texture;
 
     gpointer drawarea;
-    gboolean is_running;
     gint fd;
     SHMHeader *shm_area;
     gsize shm_area_len;
@@ -99,11 +96,6 @@ video_renderer_class_init(VideoRendererClass *klass)
     gobject_class->finalize = video_renderer_finalize;
     gobject_class->get_property = video_renderer_get_property;
     gobject_class->set_property = video_renderer_set_property;
-
-    properties[PROP_RUNNING] = g_param_spec_boolean("running", "Running",
-                                                    "True if renderer is running",
-                                                    FALSE,
-                                                    G_PARAM_READABLE);
 
     properties[PROP_DRAWAREA] = g_param_spec_pointer("drawarea", "DrawArea",
                                                     "Pointer to the drawing area",
@@ -131,9 +123,6 @@ video_renderer_get_property(GObject *object, guint prop_id,
     VideoRendererPrivate *priv = renderer->priv;
 
     switch (prop_id) {
-        case PROP_RUNNING:
-            g_value_set_boolean(value, priv->is_running);
-            break;
         case PROP_DRAWAREA:
             g_value_set_pointer(value, priv->drawarea);
             break;
@@ -191,7 +180,6 @@ video_renderer_init(VideoRenderer *self)
     priv->shm_path = NULL;
     priv->texture = NULL;
     priv->drawarea = NULL;
-    priv->is_running = FALSE;
     priv->fd = -1;
     priv->shm_area = MAP_FAILED;
     priv->shm_area_len = 0;
@@ -217,7 +205,6 @@ video_renderer_stop_shm(VideoRenderer *self)
 static void
 video_renderer_finalize(GObject *obj)
 {
-    DEBUG("finalize");
     VideoRenderer *self = VIDEO_RENDERER(obj);
     video_renderer_stop_shm(self);
 
@@ -325,7 +312,11 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
 static gboolean
 render_frame_from_shm(VideoRendererPrivate *priv)
 {
+    if (!GTK_IS_WIDGET(priv->drawarea))
+        return FALSE;
     GtkWidget *parent = gtk_widget_get_parent(priv->drawarea);
+    if (!parent)
+        return FALSE;
     const gint parent_width = gtk_widget_get_allocated_width(parent);
     const gint parent_height = gtk_widget_get_allocated_height(parent);
 
@@ -338,16 +329,8 @@ render_frame_from_shm(VideoRendererPrivate *priv)
 void video_renderer_stop(VideoRenderer *renderer)
 {
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
-    g_assert(priv);
-    gtk_widget_hide(GTK_WIDGET(priv->drawarea));
-
-    priv->is_running = FALSE;
-
-#if GLIB_CHECK_VERSION(2,26,0)
-    g_object_notify_by_pspec(G_OBJECT(renderer), properties[PROP_RUNNING]);
-#else
-    g_object_notify(G_OBJECT(renderer), "running");
-#endif
+    if (priv && priv->drawarea && GTK_IS_WIDGET(priv->drawarea))
+        gtk_widget_hide(GTK_WIDGET(priv->drawarea));
 
     g_object_unref(G_OBJECT(renderer));
 }
@@ -358,16 +341,9 @@ update_texture(gpointer data)
     VideoRenderer *renderer = (VideoRenderer *) data;
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
 
-    if (!priv->is_running) {
-        /* renderer was stopped already */
-        g_object_unref(G_OBJECT(data));
-        return FALSE;
-    }
-
     const gboolean ret = render_frame_from_shm(priv);
 
     if (!ret) {
-        priv->is_running = FALSE; // no need to notify daemon
         video_renderer_stop(data);
         g_object_unref(G_OBJECT(data));
     }
@@ -424,23 +400,27 @@ video_renderer_run(VideoRenderer *self)
     const gdouble FPS = 30.0;
     g_timeout_add(1000 / FPS, update_texture, self);
 
-    priv->is_running = TRUE;
-    /* emit the notify signal for this property */
-#if GLIB_CHECK_VERSION(2, 26, 0)
-    g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_RUNNING]);
-#else
-    g_object_notify(G_OBJECT(data), "running");
-#endif
     gtk_widget_show_all(GTK_WIDGET(priv->drawarea));
 
     return TRUE;
 }
 
-static void
-video_window_deleted_cb(GtkWidget *widget UNUSED,
-                                  gpointer data UNUSED)
+static gboolean
+video_stream_is_local(const gchar * id)
 {
-    sflphone_hang_up();
+    static const gchar * const LOCAL_VIDEO_ID = "local";
+    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
+}
+
+static void
+video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data)
+{
+    const gboolean is_local = (gboolean) data;
+    // FIXME: probably need to do something smarter here
+    if (is_local)
+        dbus_stop_video_preview();
+    else
+        sflphone_hang_up();
 }
 
 static void
@@ -481,31 +461,31 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
         gchar *id, gchar *shm_path, gint width, gint height,
         GError *error UNUSED, gpointer userdata UNUSED)
 {
-    if (!video_window) {
-        video_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    if (!video_window_global) {
+        video_window_global = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         video_window_fullscreen = FALSE;
-        g_signal_connect(video_window, "button_press_event",
+        gboolean is_local = video_stream_is_local(id);
+        if (is_local)
+            toggle_preview_button_label();
+        g_signal_connect(video_window_global, "button_press_event",
                          G_CALLBACK(video_window_button_cb),
                          &video_window_fullscreen);
-        g_signal_connect(video_window, "delete-event",
-                         G_CALLBACK(video_window_deleted_cb), NULL);
+        g_signal_connect(video_window_global, "delete-event",
+                         G_CALLBACK(video_window_deleted_cb), (gpointer) is_local);
     }
 
     if (!try_clutter_init())
         return;
 
-    if (!video_area) {
-        video_area = gtk_clutter_embed_new();
-        ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(video_area));
-        if (!stage)
-            gtk_widget_destroy(video_area);
-        else {
-            ClutterColor stage_color = { 0x61, 0x64, 0x8c, 0xff };
-            clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
-        }
+    GtkWidget *video_area = gtk_clutter_embed_new();
+    ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(video_area));
+    if (!stage)
+        gtk_widget_destroy(video_area);
+    else {
+        ClutterColor stage_color = { 0x61, 0x64, 0x8c, 0xff };
+        clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
     }
 
-    g_assert(video_area);
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_add(GTK_CONTAINER(vbox), video_area);
 
@@ -513,18 +493,19 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
         return;
 
     gtk_widget_set_size_request(video_area, width, height);
-    gtk_container_add(GTK_CONTAINER(video_window), vbox);
-    gtk_widget_show_all(video_window);
+    if (video_window_global) {
+        gtk_container_add(GTK_CONTAINER(video_window_global), vbox);
+        gtk_widget_show_all(video_window_global);
+    }
 
-    DEBUG("Video started for shm:%s width:%d height:%d",
-           shm_path, width, height);
+    DEBUG("Video started for id: %s shm-path:%s width:%d height:%d",
+           id, shm_path, width, height);
 
-    video_renderer_global = video_renderer_new(video_area, width, height, shm_path);
-    g_assert(video_renderer_global);
-    if (!video_renderer_run(video_renderer_global)) {
-        g_object_unref(video_renderer_global);
-        video_renderer_global = NULL;
+    VideoRenderer *renderer = video_renderer_new(video_area, width, height, shm_path);
+    if (!video_renderer_run(renderer)) {
+        g_object_unref(renderer);
         ERROR("Could not run video renderer");
+        return;
     }
 }
 
@@ -533,12 +514,9 @@ stopped_decoding_video_cb(DBusGProxy *proxy UNUSED, gchar *id, gchar *shm_path, 
 {
     DEBUG("Video stopped for id %s, shm path %s", id, shm_path);
 
-    if (video_renderer_global) {
-        if (video_window) {
-            if (GTK_IS_WIDGET(video_window))
-                gtk_widget_destroy(video_window);
-            video_area = video_window = NULL;
-        }
-        video_renderer_global = NULL;
+    if (video_window_global) {
+        if (GTK_IS_WIDGET(video_window_global))
+            gtk_widget_destroy(video_window_global);
+        video_window_global = NULL;
     }
 }

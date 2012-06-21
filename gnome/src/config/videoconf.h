@@ -36,7 +36,7 @@
 
 GtkWidget* create_video_configuration();
 GtkWidget* videocodecs_box();
-void video_preview_started_cb(DBusGProxy *proxy, GError *error, gpointer userdata);
 void video_device_event_cb(DBusGProxy *proxy, void * foo);
+void toggle_preview_button_label();
 
 #endif // __VIDEO_CONF_H__

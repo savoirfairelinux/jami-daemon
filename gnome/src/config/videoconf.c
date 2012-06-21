@@ -36,7 +36,6 @@
 #include "unused.h"
 #include "eel-gconf-extensions.h"
 #include "dbus.h"
-#include "video/video_renderer.h"
 #include "actions.h"
 #include "codeclist.h"
 
@@ -58,12 +57,7 @@ static GtkWidget *v4l2_nodev;
 
 static GtkWidget *preview_button = NULL;
 
-static GtkWidget *drawarea = NULL;
-static int drawWidth  = 352;
-static int drawHeight = 288;
-static VideoRenderer *preview = NULL;
-
-static GtkWidget *codecTreeView;		// View used instead of store to get access to selection
+static GtkWidget *codecTreeView; // View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
 static GtkWidget *codecMoveDownButton;
 
@@ -107,19 +101,31 @@ void active_is_always_recording()
     dbus_set_is_always_recording(enabled);
 }
 
+static const gchar *const PREVIEW_START_STR = "_Start";
+static const gchar *const PREVIEW_STOP_STR = "_Stop";
+
 static void
-preview_button_clicked(GtkButton *button, gpointer data UNUSED)
+preview_button_toggled(GtkButton *button, gpointer data UNUSED)
 {
     preview_button = GTK_WIDGET(button);
-    if (g_strcmp0(gtk_button_get_label(button), _("_Start")) == 0)
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)))
         dbus_start_video_preview();
-    else {
-        /* user clicked stop */
-        if (!preview) /* preview was not created yet on the server */
-            return ;
-        video_renderer_stop(preview);
+    else
         dbus_stop_video_preview();
-        preview = NULL;
+
+    toggle_preview_button_label();
+}
+
+void
+toggle_preview_button_label()
+{
+    GtkToggleButton *button = GTK_TOGGLE_BUTTON(preview_button);
+    if (gtk_toggle_button_get_active(button)) {
+        DEBUG("Setting to %s", PREVIEW_STOP_STR);
+        gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_STOP_STR));
+    } else {
+        DEBUG("Setting to %s", PREVIEW_START_STR);
+        gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_START_STR));
     }
 }
 
@@ -128,8 +134,6 @@ preview_button_clicked(GtkButton *button, gpointer data UNUSED)
  */
 static void preferences_dialog_fill_codec_list(account_t *a)
 {
-    GtkTreeIter iter;
-
     // Get model of view and clear it
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
@@ -142,6 +146,7 @@ static void preferences_dialog_fill_codec_list(account_t *a)
 
         if (c) {
             DEBUG("%s is %sactive", c->name, c->is_active ? "" : "not ");
+            GtkTreeIter iter;
             gtk_list_store_append(codecStore, &iter);
             gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
 
@@ -684,22 +689,6 @@ static GtkWidget* v4l2_box()
 }
 
 
-static gint
-on_drawarea_unrealize(GtkWidget *widget, gpointer data)
-{
-    (void) widget;
-    (void) data;
-    if (preview) {
-        gboolean running = FALSE;
-        g_object_get(preview, "running", &running, NULL);
-        if (running) {
-            video_renderer_stop(preview);
-            dbus_stop_video_preview();
-        }
-    }
-    return FALSE; // call other handlers
-}
-
 GtkWidget* create_video_configuration()
 {
     // Main widget
@@ -721,11 +710,11 @@ GtkWidget* create_video_configuration()
     gnome_main_section_new_with_table(_("Preview"), &frame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-    preview_button = gtk_button_new_with_mnemonic(_("_Start"));
+    preview_button = gtk_toggle_button_new_with_mnemonic(_("_Start"));
     gtk_widget_set_size_request(preview_button, 80, 30);
     gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
-    g_signal_connect(G_OBJECT(preview_button), "clicked",
-                     G_CALLBACK(preview_button_clicked), NULL);
+    g_signal_connect(G_OBJECT(preview_button), "toggled",
+                     G_CALLBACK(preview_button_toggled), NULL);
     gtk_widget_show(GTK_WIDGET(preview_button));
 
     gchar **list = dbus_get_call_list();
@@ -740,17 +729,6 @@ GtkWidget* create_video_configuration()
 
     if (!try_clutter_init())
         return NULL;
-
-    drawarea = gtk_clutter_embed_new();
-    gtk_widget_set_size_request(drawarea, drawWidth, drawHeight);
-    gtk_table_attach(GTK_TABLE(table), drawarea, 0, 1, 1, 2, 0, 0, 0, 6);
-    if (!gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(drawarea))) {
-        DEBUG("Could not get stage, destroying");
-        gtk_widget_destroy(drawarea);
-        drawarea = NULL;
-    }
-    g_signal_connect(drawarea, "unrealize", G_CALLBACK(on_drawarea_unrealize),
-                     NULL);
 
     gtk_widget_show_all(vbox);
 

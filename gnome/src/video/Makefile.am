@@ -1,5 +1,7 @@
 include ../../globals.mak
 
+if SFL_VIDEO
+
 noinst_LTLIBRARIES = libvideo.la
 
 libvideo_la_SOURCES = video_renderer.c video_renderer.h shm_header.h
@@ -11,3 +13,5 @@ libvideo_la_LIBADD = @CLUTTER_LIBS@ \
 					  
 libvideo_la_CFLAGS = @CLUTTER_CFLAGS@ \
 			@GTK_CFLAGS@ @GLIB_CFLAGS@ @CLUTTERGTK_CFLAGS@ @DBUSGLIB_CFLAGS@
+
+endif
