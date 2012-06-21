@@ -23,7 +23,6 @@
 
 #include "ui_dlgaccountsbase.h"
 #include "../lib/Account.h"
-#include "ConfigAccountList.h"
 #include "../lib/callmanager_interface_singleton.h"
 
 //Qt

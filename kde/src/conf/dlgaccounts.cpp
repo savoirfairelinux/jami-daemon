@@ -37,7 +37,6 @@
 #include "conf/ConfigurationDialog.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "SFLPhoneView.h"
-#include "../AccountView.h"
 #include "lib/sflphone_const.h"
 
 Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent)
@@ -532,18 +531,7 @@ void DlgAccounts::loadAccountList()
 ///Add an account to the list
 void DlgAccounts::addAccountToAccountList(Account* account)
 {
-   //QListWidgetItem* item = new QListWidgetItem();//(QListWidgetItem*) account->object;
-   //item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-   //item->setCheckState(account->isAccountEnabled()?Qt::Checked:Qt::Unchecked);
-   //item->setText(account->getAccountAlias());
-#warning REMOVE THIS
-   //account->object = item;
-   
-   //QWidget* widget = new AccountItemWidget();
-   //account->object2 = widget;
-   //connect(widget, SIGNAL(checkStateChanged(bool)), this, SLOT(changedAccountList()));
-   //listView_accountList->addItem(item);
-   //listView_accountList->setItemWidget(item, widget);
+   Q_UNUSED(account)
 }
 
 ///Called when one of the child widget is modified
@@ -587,8 +575,6 @@ void DlgAccounts::on_button_accountAdd_clicked()
    QString itemName = QInputDialog::getText(this, "New account", "Enter new account's alias");
    itemName = itemName.simplified();
    if (!itemName.isEmpty()) {
-      Account* account = AccountList::getInstance()->addAccount(itemName);
-      //addAccountToAccountList(account);
       int r = listView_accountList->model()->rowCount() - 1;
       listView_accountList->setCurrentIndex(listView_accountList->model()->index(r,0));
       frame2_editAccounts->setEnabled(true);
@@ -598,17 +584,14 @@ void DlgAccounts::on_button_accountAdd_clicked()
 void DlgAccounts::on_button_accountRemove_clicked()
 {
    kDebug() << "on_button_accountRemove_clicked";
-   //int r = listView_accountList->currentIndex().row();
-   //QListWidgetItem * item = listView_accountList->takeItem(r);
    AccountList::getInstance()->removeAccount(listView_accountList->currentIndex());
-   //listView_accountList->setCurrentIndex( (r >= listView_accountList->count()) ? r-1 : r );
 }
 
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 {
+   Q_UNUSED(text);
+   //TODO reimplement
    kDebug() << "on_edit1_alias_textChanged";
-   //QListWidgetItem* item = listView_accountList->currentIndex();
-   //item->setText(text);
 }
 
 void DlgAccounts::updateAccountListCommands()

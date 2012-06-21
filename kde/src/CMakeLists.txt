@@ -33,7 +33,6 @@ SET(
    widgets/SFLPhoneTray.cpp
    main.cpp
    AccountWizard.cpp
-   widgets/AccountItemWidget.cpp
    widgets/CallTreeItem.cpp
    widgets/HistoryTreeItem.cpp
    ActionSetAccountFirst.cpp
@@ -46,7 +45,6 @@ SET(
    conf/dlghooks.cpp
    conf/dlgaccessibility.cpp
    conf/dlgvideo.cpp
-   conf/ConfigAccountList.cpp
    widgets/Dialpad.cpp
    widgets/ContactItemWidget.cpp
    widgets/ContactDock.cpp
@@ -58,9 +56,7 @@ SET(
    widgets/VideoWidget.cpp
    widgets/AccountListWidget.cpp
    Codec.cpp
-   AccountListModel.cpp
    CallView.cpp
-   AccountView.cpp
 )
 
 

@@ -54,6 +54,8 @@ class LIB_EXPORT Account : public QObject {
       bool                    isEnabled()                            const;
       bool                    isRegistered()                         const;
       QModelIndex             getIndex()                                  ;
+      QString                 getStateColorName()                    const;
+      Qt::GlobalColor         getStateColor()                        const;
 
       ///Return the account hostname
       QString getAccountHostname              () const { return getAccountDetail(ACCOUNT_HOSTNAME               )                 ;}
@@ -211,27 +213,6 @@ class LIB_EXPORT Account : public QObject {
       //Mutator
       void save();
       void reload();
-
-      #warning THIS IS TEMPORARY, REMOVE AS SOON AS POSSIBLE <elepage june 2012>
-      QString getStateColorName() // QColor AccountView::getStateColor()
-      {
-         if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
-                return "black";
-         if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
-                return "darkGreen";
-         return "red";
-      }
-      Qt::GlobalColor getStateColor() const // QColor AccountView::getStateColor()
-      {
-         if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
-                return Qt::darkGray;
-         if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
-                return Qt::darkGreen;
-         if(getAccountRegistrationStatus() == ACCOUNT_STATE_TRYING)
-                return Qt::darkYellow;
-         return Qt::darkRed;
-      }
-      //END to remove
    
    protected:
       //Constructors

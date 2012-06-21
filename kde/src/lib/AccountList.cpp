@@ -310,9 +310,6 @@ QString AccountList::getPriorAccoundId()
    return m_sPriorAccountId;
 }
 
-
-
-///TODO port proprely
 ///Get data from the model
 QVariant AccountList::data ( const QModelIndex& index, int role) const
 {
@@ -328,12 +325,7 @@ QVariant AccountList::data ( const QModelIndex& index, int role) const
       return QVariant(account->getStateColor());
    }
    else if(index.column() == 0 && role == Qt::DecorationRole) {
-      /*if(! account->isEnabled())
-         return QVariant( QIcon( ICON_ACCOUNT_LED_GRAY  ));
-      else if(account->isRegistered())
-         return QVariant( QIcon( ICON_ACCOUNT_LED_GREEN ));
-      else
-         return QVariant( QIcon( ICON_ACCOUNT_LED_RED   ));*/
+      /*TODO implement visitor*/
    }
    return QVariant();
 } //data
@@ -346,16 +338,14 @@ Qt::ItemFlags AccountList::flags(const QModelIndex & index) const
    return QAbstractItemModel::flags(index);
 }
 
-///Get the account list
-// QString AccountList::getOrderedList() const
-// {
-//    return m_pAccounts->getOrderedList();
-// }
-
 ///Number of account
 int AccountList::rowCount(const QModelIndex & /*parent*/) const
 {
    return m_pAccounts->size();
+}
+
+Account* AccountList::getAccountByModelIndex(QModelIndex item) const {
+   return (*m_pAccounts)[item.row()];
 }
 
 

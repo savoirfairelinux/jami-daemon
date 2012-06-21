@@ -198,6 +198,7 @@ bool Account::isRegistered() const
    return (getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
+///Return the model index of this item
 QModelIndex Account::getIndex()
 {
    for (int i=0;i < AccountList::getInstance()->m_pAccounts->size();i++) {
@@ -206,6 +207,28 @@ QModelIndex Account::getIndex()
       }
    }
    return QModelIndex();
+}
+
+///Return status color name
+QString Account::getStateColorName() const
+{
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
+            return "black";
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
+            return "darkGreen";
+   return "red";
+}
+
+///Return status Qt color, QColor is not part of QtCore, use using the global variant
+Qt::GlobalColor Account::getStateColor() const
+{
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
+            return Qt::darkGray;
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
+            return Qt::darkGreen;
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_TRYING)
+            return Qt::darkYellow;
+   return Qt::darkRed;
 }
 
 /*****************************************************************************

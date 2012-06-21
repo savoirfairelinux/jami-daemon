@@ -55,6 +55,7 @@ public:
    QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole ) const;
    int           rowCount ( const QModelIndex& parent = QModelIndex()            ) const;
    Qt::ItemFlags flags    ( const QModelIndex& index                             ) const;
+   Account*      getAccountByModelIndex(QModelIndex item)                          const;
 
    //Setters
    static  void setPriorAccountId( const QString& value                                     );
@@ -72,12 +73,6 @@ public:
    //Operators
    Account*       operator[] (int i)      ;
    const Account* operator[] (int i) const;
-
-#warning REMOVE THIS
-   //TODO big hack, temporary
-   Account* getAccountByModelIndex(QModelIndex item) {
-      return (*m_pAccounts)[item.row()];
-   }
 
 private:
    //Constructors & Destructors
