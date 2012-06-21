@@ -52,12 +52,6 @@ VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs) :
     txArgs_["bitrate"] = "500000";
 }
 
-VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs,
-                                 const map<string, string> &rxArgs) :
-    sendThread_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(rxArgs), sending_(true), receiving_(true)
-{}
-
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
     const std::vector<string> v(sdp.getActiveVideoDescription());
