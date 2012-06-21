@@ -17,12 +17,13 @@ Q_DECLARE_METATYPE(MapStringInt)
 Q_DECLARE_METATYPE(VectorMapStringString)
 Q_DECLARE_METATYPE(VectorInt);
 
-
+static bool dbus_metaTypeInit = false;
 inline void registerCommTypes() {
 	qDBusRegisterMetaType<MapStringString>();
 	qDBusRegisterMetaType<MapStringInt>();
 	qDBusRegisterMetaType<VectorMapStringString>();
 	qDBusRegisterMetaType<VectorInt>();
+   dbus_metaTypeInit = true;
 }
 
 #endif

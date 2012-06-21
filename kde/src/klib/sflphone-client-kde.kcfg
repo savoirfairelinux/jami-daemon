@@ -97,6 +97,7 @@
     </entry>
     <entry name="displayDataRange" type="Bool">
     	<label>Defines whether call history is restricted to a specific date range</label>
+      <default>false</default>
     </entry>
     <entry name="displayPopularAsBookmark" type="Bool">
       <label>Defines whether or not to display the 10 most popular phone number as bookmark automagically</label>

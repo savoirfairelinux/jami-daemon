@@ -18,7 +18,7 @@
  ***********************************************************************************/
 #ifndef VIDEO_MODEL_H
 #define VIDEO_MODEL_H
-
+//Base
 #include "typedefs.h"
 #include <QtCore/QObject>
 
@@ -29,33 +29,42 @@ class QTimer;
 //SFLPhone
 #include "VideoDevice.h"
 
-///@class VideoModel Video event dispatcher
+///VideoModel: Video event dispatcher
 class LIB_EXPORT VideoModel : public QObject {
    Q_OBJECT
 public:
+   //Singleton
    static VideoModel* getInstance();
-   void setBufferSize(uint size);
-   bool isPreviewing();
-   QByteArray getCurrentFrame();
+
+   //Getters
+   bool       isPreviewing       ();
+   QByteArray getCurrentFrame    ();
    Resolution getActiveResolution();
+   
+   //Setters
+   void       setBufferSize(uint size);
 
 private:
+   //Constructor
    VideoModel();
-   //Attributes
+
+   //Static attributes
    static VideoModel* m_spInstance;
-   bool m_Attached;
-   bool m_PreviewState;
-   uint m_BufferSize;
-   uint m_ShmKey;
-   uint m_SemKey;
-   int  m_SetSetId;
-   Resolution m_Res;
-   QByteArray m_Frame;
-   QTimer* m_pTimer;
-   void* m_pBuffer;
+   
+   //Attributes
+   bool       m_Attached    ;
+   bool       m_PreviewState;
+   uint       m_BufferSize  ;
+   uint       m_ShmKey      ;
+   uint       m_SemKey      ;
+   int        m_SetSetId    ;
+   Resolution m_Res         ;
+   QByteArray m_Frame       ;
+   QTimer*    m_pTimer      ;
+   void*      m_pBuffer     ;
 
 public slots:
-   void stopPreview();
+   void stopPreview ();
    void startPreview();
 
 private slots:
@@ -65,17 +74,8 @@ private slots:
    void timedEvents();
 
 signals:
+   ///Emitted when a new frame is ready
    void frameUpdated();
 };
-
-/*class LIB_EXPORT VideoStream : public QThread {
-public:
-   VideoStream(QObject* parent) : QThread(parent) {
-
-   }
-   void run() {
-
-   }
-};*/
 
 #endif

@@ -42,13 +42,9 @@
 #define CALLMODEL_T CallModel<CallWidget,Index>
 
 //Static member
-CALLMODEL_TEMPLATE QString      CALLMODEL_T::m_sPriorAccountId      = ""        ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sInstanceInit        = false     ;
 CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sCallInit            = false     ;
-CALLMODEL_TEMPLATE bool         CALLMODEL_T::m_sHistoryInit         = false     ;
 CALLMODEL_TEMPLATE CallMap      CALLMODEL_T::m_lConfList            = CallMap() ;
-
-CALLMODEL_TEMPLATE CallMap CALLMODEL_T::m_sHistoryCalls ;
 
 CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalCall   CALLMODEL_T::m_sPrivateCallList_call   ;
 CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalCallId CALLMODEL_T::m_sPrivateCallList_callId ;
@@ -57,35 +53,13 @@ CALLMODEL_TEMPLATE typename CALLMODEL_T::InternalWidget CALLMODEL_T::m_sPrivateC
 
 /*****************************************************************************
  *                                                                           *
- *                             Private classes                               *
- *                                                                           *
- ****************************************************************************/
-class SortableCallSource {
-public:
-   SortableCallSource(Call* call=0) : count(0),callInfo(call) {}
-   uint count;
-   Call* callInfo;
-   bool operator<(SortableCallSource other) {
-      return (other.count > count);
-   }
-};
-
-inline bool operator< (const SortableCallSource & s1, const SortableCallSource & s2)
-{
-    return  s1.count < s2.count;
-}
-
-
-/*****************************************************************************
- *                                                                           *
  *                               Constructor                                 *
  *                                                                           *
  ****************************************************************************/
 
 ///Retrieve current and older calls from the daemon, fill history and the calls TreeView and enable drag n' drop
-CALLMODEL_TEMPLATE CALLMODEL_T::CallModel(ModelType type) : CallModelBase(0)
+CALLMODEL_TEMPLATE CALLMODEL_T::CallModel() : CallModelBase(0)
 {
-   Q_UNUSED(type)
    init();
 }
 
@@ -102,7 +76,6 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::destroy()
    m_sPrivateCallList_callId.clear();
    m_sPrivateCallList_widget.clear();
    m_sPrivateCallList_index.clear();
-   m_sHistoryCalls.clear();
 }
 
 ///Destructor
@@ -114,15 +87,8 @@ CALLMODEL_TEMPLATE CALLMODEL_T::~CallModel()
 ///Open the connection to the daemon and register this client
 CALLMODEL_TEMPLATE bool CALLMODEL_T::init()
 {
-   if (!m_sInstanceInit) {
+   if (!m_sInstanceInit)
       registerCommTypes();
-      
-      //Setup accounts
-      if (m_spAccountList == NULL)
-         m_spAccountList = new AccountList(true);
-
-      initHistory();
-   }
    m_sInstanceInit = true;
    return true;
 } //init
@@ -148,47 +114,6 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
    m_sCallInit = true;
    return true;
 } //initCall
-
-///Set how the call can find more informations about the call it receive
-CALLMODEL_TEMPLATE void CALLMODEL_T::initContact ( ContactBackend* be )
-{
-   Call::setContactBackend(be);
-}
-
-///Fill the history list
-///@warning This solution wont scale to multiple call or history model implementation. Some static addCall + foreach for each call would be needed if this case ever become unavoidable
-CALLMODEL_TEMPLATE bool CALLMODEL_T::initHistory()
-{
-   if (!m_sHistoryInit) {
-      ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-      QVector< QMap<QString, QString> > history = configurationManager.getHistory();
-      foreach (MapStringString hc, history) {
-         Call* pastCall = Call::buildHistoryCall(
-                  hc[ CALLID_KEY          ]         ,
-                  hc[ TIMESTAMP_START_KEY ].toUInt(),
-                  hc[ TIMESTAMP_STOP_KEY  ].toUInt(),
-                  hc[ ACCOUNT_ID_KEY      ]         ,
-                  hc[ DISPLAY_NAME_KEY    ]         ,
-                  hc[ PEER_NUMBER_KEY     ]         ,
-                  hc[ STATE_KEY           ]
-         );
-         if (pastCall->getPeerName().isEmpty()) {
-            pastCall->setPeerName("Unknown");
-         }
-         pastCall->setRecordingPath(hc[ RECORDING_PATH_KEY ]);
-         m_sHistoryCalls[ hc[TIMESTAMP_START_KEY ]] = pastCall;
-         
-         InternalStruct* aNewStruct = new InternalStruct;
-         aNewStruct->call_real  = pastCall;
-         aNewStruct->conference = false;
-
-         m_sPrivateCallList_call[pastCall]                = aNewStruct;
-         m_sPrivateCallList_callId[pastCall->getCallId()] = aNewStruct;
-      }
-   }
-   m_sHistoryInit = true;
-   return true;
-} //initHistory
 
 
 /*****************************************************************************
@@ -267,20 +192,20 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
 {
    m_sActiveCalls[call->getCallId()] = call;
    addCall(call);
-   selectItem(call);
    return call;
 } //addCallCommon
 
 ///Create a new dialing call from peer name and the account ID
-CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, QString account)
+CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, Account* account)
 {
-   QString account2 = account;
-   if (account2.isEmpty()) {
-      account2 = getCurrentAccountId();
+   Account* acc = (account)?account:AccountList::getCurrentAccount();
+   if (acc) {
+      Call* call = Call::buildDialingCall(generateCallId(), peerName, acc->getAccountId());
+      return addCallCommon(call);
    }
-   
-   Call* call = Call::buildDialingCall(generateCallId(), peerName, account2);
-   return addCallCommon(call);
+   else {
+      return nullptr;
+   }
 }  //addDialingCall
 
 ///Create a new incomming call when the daemon is being called
@@ -468,106 +393,6 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(Call* call)
    m_lConfList[call->getConfId()] = nullptr;
 }
 
-
-/*****************************************************************************
- *                                                                           *
- *                           History related code                            *
- *                                                                           *
- ****************************************************************************/
-
-///Return a list of all previous calls
-CALLMODEL_TEMPLATE const QStringList CALLMODEL_T::getHistoryCallId()
-{
-   QStringList toReturn;
-   foreach(Call* call, m_sHistoryCalls) {
-      toReturn << call->getCallId();
-   }
-   return toReturn;
-}
-
-///Return the history list
-CALLMODEL_TEMPLATE const CallMap& CALLMODEL_T::getHistory()
-{
-   return m_sHistoryCalls;
-}
-
-///Add to history
-CALLMODEL_TEMPLATE void CALLMODEL_T::addToHistory(Call* call)
-{
-   if (call) {
-      m_sHistoryCalls[call->getStartTimeStamp()] = call;
-   }
-}
-
-///Sort all history call by popularity and return the result (most popular first)
-CALLMODEL_TEMPLATE const QStringList CALLMODEL_T::getNumbersByPopularity()
-{
-   QHash<QString,SortableCallSource*> hc;
-   foreach (Call* call, getHistory()) {
-      if (!hc[call->getPeerPhoneNumber()]) {
-         hc[call->getPeerPhoneNumber()] = new SortableCallSource(call);
-      }
-      hc[call->getPeerPhoneNumber()]->count++;
-   }
-   QList<SortableCallSource> userList;
-   foreach (SortableCallSource* i,hc) {
-      userList << *i;
-   }
-   qSort(userList);
-   QStringList cl;
-   for (int i=userList.size()-1;i >=0 ;i--) {
-      cl << userList[i].callInfo->getPeerPhoneNumber();
-   }
-   foreach (SortableCallSource* i,hc) {
-      delete i;
-   }
-   
-   return cl;
-} //getNumbersByPopularity
-
-
-/*****************************************************************************
- *                                                                           *
- *                           Account related code                            *
- *                                                                           *
- ****************************************************************************/
-
-///Return the current account id (do not put in the cpp file)
-CALLMODEL_TEMPLATE QString CALLMODEL_T::getCurrentAccountId()
-{
-   Account* firstRegistered = getCurrentAccount();
-   if(!firstRegistered) {
-      return QString();
-   }
-   else {
-      return firstRegistered->getAccountId();
-   }
-} //getCurrentAccountId
-
-
-///Return the current account
-CALLMODEL_TEMPLATE Account* CALLMODEL_T::getCurrentAccount()
-{
-   Account* priorAccount = getAccountList()->getAccountById(m_sPriorAccountId);
-   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
-      return priorAccount;
-   }
-   else {
-      //qDebug() << "Returning the first account" << getAccountList()->size();
-      return getAccountList()->firstRegisteredAccount();
-   }
-} //getCurrentAccount
-
-///Return the previously used account ID
-CALLMODEL_TEMPLATE QString CALLMODEL_T::getPriorAccoundId()
-{
-   return m_sPriorAccountId;
-}
-
-///Set the previous account used
-CALLMODEL_TEMPLATE void CALLMODEL_T::setPriorAccountId(const QString& value) {
-   m_sPriorAccountId = value;
-}
 
 /*****************************************************************************
  *                                                                           *

@@ -38,17 +38,21 @@ namespace KABC {
 
 #include "typedefs.h"
 
-///@class Contact Abstract version of a contact
+///Contact: Abstract version of a contact
 class LIB_EXPORT Contact : public QObject{
    Q_OBJECT
 public:
+   ///PhoneNumber: represent a phone number
    class PhoneNumber {
    public:
+      ///Constructor
       PhoneNumber(QString number, QString type)
       : m_Number(number),m_Type(type){}
+      ///return the phone number
       QString& getNumber() {
          return m_Number ;
       }
+      ///Return the phone number type
       QString& getType() {
          return m_Type   ;
       }

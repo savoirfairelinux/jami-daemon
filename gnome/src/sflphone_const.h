@@ -43,10 +43,6 @@
 #define LOGO_OFFLINE        ICONS_DIR "/sflphone_offline.svg"
 #define LOGO_SMALL          ICONS_DIR "/sflphone_small.svg"
 
-#define CURRENT_CALLS       "current_calls"
-#define HISTORY             "history"
-#define CONTACTS            "contacts"
-
 /** Locale */
 #define c_(COMMENT,STRING)    gettext(STRING)
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)

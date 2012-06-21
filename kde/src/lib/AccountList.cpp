@@ -27,6 +27,8 @@
 //SFLPhone library
 #include "configurationmanager_interface_singleton.h"
 
+AccountList* AccountList::m_spAccountList   = nullptr;
+QString      AccountList::m_sPriorAccountId = ""     ;
 
 ///Constructors
 AccountList::AccountList(QStringList & _accountIds)
@@ -53,6 +55,23 @@ AccountList::~AccountList()
       delete a;
    }
    delete m_pAccounts;
+}
+
+///Singleton
+AccountList* AccountList::getInstance()
+{
+   if (not m_spAccountList) {
+      m_spAccountList = new AccountList(true);
+   }
+   return m_spAccountList;
+}
+
+///Static destructor
+void AccountList::destroy()
+{
+   if (m_spAccountList)
+      delete m_spAccountList;
+   m_spAccountList = nullptr;
 }
 
 
@@ -145,7 +164,7 @@ QVector<Account*> AccountList::getAccountsByState(const QString& state)
 {
    QVector<Account *> v;
    for (int i = 0; i < m_pAccounts->size(); ++i) {
-      if ((*m_pAccounts)[i]->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == state)
+      if ((*m_pAccounts)[i]->getAccountRegistrationStatus() == state)
          v += (*m_pAccounts)[i];
    }
    return v;
@@ -159,7 +178,7 @@ QVector<Account*> AccountList::registeredAccounts() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED) {
+      if(current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED) {
          qDebug() << current->getAlias() << " : " << current;
          registeredAccounts.append(current);
       }
@@ -173,14 +192,14 @@ Account* AccountList::firstRegisteredAccount() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current && current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED)
+      if(current && current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED)
          return current;
-      else if (current && (current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_READY) && m_pAccounts->count() == 1)
+      else if (current && (current->getAccountRegistrationStatus() == ACCOUNT_STATE_READY) && m_pAccounts->count() == 1)
          return current;
-      else if (current && !(current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_READY)) {
+      else if (current && !(current->getAccountRegistrationStatus() == ACCOUNT_STATE_READY)) {
          qDebug() << "Account " << ((current)?current->getAccountId():"") << " is not registered ("
-         << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"") << ") State:"
-         << ((current)?current->getAccountDetail(ACCOUNT_REGISTRATION_STATUS):"");
+         << ((current)?current->getAccountRegistrationStatus():"") << ") State:"
+         << ((current)?current->getAccountRegistrationStatus():"");
       }
    }
    return NULL;
@@ -191,6 +210,25 @@ int AccountList::size() const
 {
    return m_pAccounts->size();
 }
+
+///Return the current account
+Account* AccountList::getCurrentAccount()
+{
+   Account* priorAccount = AccountList::getInstance()->getAccountById(m_sPriorAccountId);
+   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
+      return priorAccount;
+   }
+   else {
+      return AccountList::getInstance()->firstRegisteredAccount();
+   }
+} //getCurrentAccount
+
+///Return the previously used account ID
+QString AccountList::getPriorAccoundId()
+{
+   return m_sPriorAccountId;
+}
+
 
 /*****************************************************************************
  *                                                                           *
@@ -213,19 +251,25 @@ void AccountList::removeAccount(Account* account)
    m_pAccounts->remove(m_pAccounts->indexOf(account));
 }
 
+///Set the previous account used
+void AccountList::setPriorAccountId(const QString& value) {
+   m_sPriorAccountId = value;
+}
+
+
 /*****************************************************************************
  *                                                                           *
  *                                 Operator                                  *
  *                                                                           *
  ****************************************************************************/
 
-///Get the accoutn from its index
+///Get the account from its index
 const Account* AccountList::operator[] (int i) const
 {
    return (*m_pAccounts)[i];
 }
 
-///Get the accoutn from its index
+///Get the account from its index
 Account* AccountList::operator[] (int i)
 {
    return (*m_pAccounts)[i];

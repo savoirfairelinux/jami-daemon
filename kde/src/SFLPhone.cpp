@@ -125,6 +125,7 @@ bool SFLPhone::initialize()
 
    m_pContactCD = new ContactDock(this);
    addDockWidget(Qt::TopDockWidgetArea,m_pContactCD);
+   m_pContactCD->show();
    m_pContactCD->setVisible(ConfigurationSkeleton::displayContactDock());
 
    // tell the KXmlGuiWindow that this is indeed the main widget
@@ -160,8 +161,15 @@ bool SFLPhone::initialize()
    addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
    tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
 
+   m_pHistoryDW->show();
    m_pHistoryDW->setVisible(ConfigurationSkeleton::displayHistoryDock());
+   m_pBookmarkDW->show();
    m_pBookmarkDW->setVisible(ConfigurationSkeleton::displayBookmarkDock());
+
+   //Add bug when the dock is tabbed
+   /*connect(m_pContactCD,  SIGNAL(visibilityChanged(bool)) ,action_showContactDock , SLOT(setChecked(bool)));
+   connect(m_pBookmarkDW, SIGNAL(visibilityChanged(bool)) ,action_showBookmarkDock, SLOT(setChecked(bool)));
+   connect(m_pHistoryDW,  SIGNAL(visibilityChanged(bool)) ,action_showHistoryDock , SLOT(setChecked(bool)));*/
 
    connect(action_showContactDock, SIGNAL(toggled(bool)),m_pContactCD, SLOT(setVisible(bool)));
    connect(action_showHistoryDock, SIGNAL(toggled(bool)),m_pHistoryDW, SLOT(setVisible(bool)));
@@ -181,7 +189,6 @@ bool SFLPhone::initialize()
    m_pView->loadWindow();
 
    move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
-   //show();
 
    if(configurationManager.getAccountList().value().isEmpty()) {
       (new AccountWizard())->show();
@@ -319,9 +326,9 @@ SFLPhoneView* SFLPhone::view()
 TreeWidgetCallModel* SFLPhone::model()
 {
    if (!m_pModel) {
-      m_pModel = new TreeWidgetCallModel(TreeWidgetCallModel::ActiveCall);
+      m_pModel = new TreeWidgetCallModel();
       m_pModel->initCall();
-      m_pModel->initContact(AkonadiBackend::getInstance());
+      Call::setContactBackend(AkonadiBackend::getInstance());
     }
    return m_pModel;
 }
@@ -374,6 +381,9 @@ void SFLPhone::setObjectNames()
    m_pView->setObjectName      ( "m_pView"   );
    statusBar()->setObjectName  ( "statusBar" );
    m_pTrayIcon->setObjectName  ( "trayIcon"  );
+   m_pHistoryDW->setObjectName ( "historydock"  );
+   m_pContactCD->setObjectName ( "contactdock"  );
+   m_pBookmarkDW->setObjectName( "bookmarkdock" );
 }
 
 
@@ -462,9 +472,9 @@ void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 }
 
 ///Called when a call is coming
-void SFLPhone::on_m_pView_incomingCall(const Call * call)
+void SFLPhone::on_m_pView_incomingCall(const Call* call)
 {
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(call->getPeerPhoneNumber());
+   Contact* contact = ((Call*)call)->getContact();
    if (contact && call) {
       KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()),((contact->getPhoto())?*contact->getPhoto():NULL));
    }

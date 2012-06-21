@@ -31,6 +31,7 @@
 #include "../lib/Call.h"
 #include "../lib/Contact.h"
 #include "../lib/CallModel.h"
+#include "../lib/HistoryModel.h"
 #include "AkonadiBackend.h"
 #include "HelperFunctions.h"
 #include "ConfigurationSkeleton.h"
@@ -91,7 +92,7 @@ CALLMODEL_TEMPLATE QString SORTABLE_T::timeToHistoryCategory(QDate date)
 ///Return the list of contact from history (in order, most recently used first)
 CALLMODEL_TEMPLATE QHash<Contact*, QDateTime> SORTABLE_T::getContactListByTime(/*ContactList list*/)
 {
-   const CallMap& history= CallModel<CallWidget,Index>::getHistory();
+   const CallMap& history= HistoryModel::getHistory();
    QHash<Contact*, QDateTime> toReturn;
    QSet<QString> alreadyUsed;
    QMapIterator<QString, Call*> i(history);
@@ -100,7 +101,7 @@ CALLMODEL_TEMPLATE QHash<Contact*, QDateTime> SORTABLE_T::getContactListByTime(/
       i.previous();
       (alreadyUsed.find(i.value()->getPeerPhoneNumber()) == alreadyUsed.constEnd()); //Don't ask, leave it there Elv13(2012)
       if (alreadyUsed.find(i.value()->getPeerPhoneNumber()) == alreadyUsed.constEnd()) {
-         Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(i.value()->getPeerPhoneNumber(),true);
+         Contact* contact = i.value()->getContact();
          if (contact && toReturn.find(contact) == toReturn.end()) {
             toReturn[contact] = QDateTime::fromTime_t(i.value()->getStartTimeStamp().toUInt());
          }
@@ -213,7 +214,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
 ///Return the identity of the call caller, try to return something usefull
 CALLMODEL_TEMPLATE QString SORTABLE_T::getIdentity(Call* item)
 {
-   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(item->getPeerPhoneNumber());
+   Contact* contact = item->getContact();
    if (contact)
       return contact->getFormattedName();
    else if (!item->getPeerName().isEmpty())

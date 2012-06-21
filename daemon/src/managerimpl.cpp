@@ -2381,7 +2381,12 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     std::string newAccountID(accountID.str());
 
     // Get the type
-    std::string accountType((*details.find(CONFIG_ACCOUNT_TYPE)).second);
+    
+    std::string accountType;
+    if (details.find(CONFIG_ACCOUNT_TYPE) == details.end())
+        accountType = "SIP";
+    else
+        accountType = ((*details.find(CONFIG_ACCOUNT_TYPE)).second);
 
     DEBUG("Adding account %s", newAccountID.c_str());
 

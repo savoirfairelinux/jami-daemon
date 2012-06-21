@@ -26,7 +26,7 @@
 
 class VideoDevice;
 
-///@class DlgVideo video preferences for sflphone
+///DlgVideo: video preferences for sflphone
 class DlgVideo : public QWidget, public Ui_DlgVideoBase
 {
 Q_OBJECT

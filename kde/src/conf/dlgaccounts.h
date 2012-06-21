@@ -47,7 +47,7 @@ typedef QHash<QString, QString> StringHash;                          //Needed to
 typedef QHash<QListWidgetItem*, CredentialData> QListWidgetItemHash; //Needed to fix a Qt foreach macro argument parsing bug
 typedef QList<CredentialData> CredentialList;
 
-///@class Private_AddCodecDialog Little dialog to add codec to the list
+///Private_AddCodecDialog: Little dialog to add codec to the list
 class Private_AddCodecDialog : public KDialog {
   Q_OBJECT
   public:
@@ -63,11 +63,12 @@ class Private_AddCodecDialog : public KDialog {
     void addCodec(QString alias);
 };
 
-///@class RingToneListItem Ringtone list widget
+///RingToneListItem: Ringtone list widget
 class RingToneListItem : public QWidget
 {
    Q_OBJECT
    friend class DlgAccounts;
+   ///Constructor
    RingToneListItem(QString path, QString name) : QWidget(0),m_Path(path) {
       QHBoxLayout* l = new QHBoxLayout(this);
       l->setContentsMargins(0,0,0,0);
@@ -82,15 +83,18 @@ class RingToneListItem : public QWidget
       connect(m_pPlayPB,SIGNAL(clicked()),this,SLOT(playRingtone()));
    }
 protected:
+   ///Show the button when the cursor is over the item
    virtual void enterEvent ( QEvent * event ) {
       Q_UNUSED(event)
       m_pPlayPB->setVisible(true);
    }
+   ///Hide the button when the mouse leave the button
    virtual void leaveEvent ( QEvent * event ) {
       Q_UNUSED(event)
       m_pPlayPB->setVisible(false);
    }
 private slots:
+   ///Play the ringtone file when the button is clicked
    void playRingtone() {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
       callManager.startRecordedFilePlayback(m_Path);
@@ -179,6 +183,7 @@ private slots:
 
 
 signals:
+   ///Update the Ok and Apply button style
    void updateButtons();
 
 };

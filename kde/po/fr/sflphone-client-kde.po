@@ -1616,6 +1616,9 @@ msgstr "Automatiquement lire les champs textes des boîtes de dialogue interne"
 msgid "Automattically read the call details when it is selected"
 msgstr "Automatiquement lire les informations de l'appel sélectionne"
 
+msgid "Always display phone number"
+msgstr "Toujours afficher les numéros de téléphones"
+
 msgid "View"
 msgstr "Affichage"
 

@@ -27,6 +27,7 @@
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QListWidget>
 #include <QtGui/QTreeWidget>
+#include <QtGui/QSpacerItem>
 #include <QtGui/QHeaderView>
 #include <QtGui/QCheckBox>
 #include <QtGui/QSplitter>
@@ -46,6 +47,7 @@
 #include "klib/ConfigurationSkeleton.h"
 #include "CallView.h"
 #include "SFLPhoneView.h"
+#include "lib/HistoryModel.h"
 
 //SFLPhone library
 #include "lib/Call.h"
@@ -53,7 +55,7 @@
 
 #define CURRENT_SORTING_MODE m_pSortByCBB->currentIndex()
 
-///@class QNumericTreeWidgetItem_hist TreeWidget using different sorting criterias
+///QNumericTreeWidgetItem_hist: TreeWidget using different sorting criterias
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -67,6 +69,38 @@ class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
          return text(column) < other.text(column);
       }
 };
+
+class PhoneNumberItem : public QWidget {
+public:
+   PhoneNumberItem(QString number, QString type,QString name, QWidget* parent = nullptr) : QWidget(parent),m_pNumber(number),m_pType(type),m_pName(name) {
+      QHBoxLayout* l   = new QHBoxLayout(this);
+      QLabel* numberL  = new QLabel(" <b>"+type+":</b>",this);
+      QLabel* number2L = new QLabel(number,this);
+      l->addWidget(numberL);
+      l->addWidget(number2L);
+      l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+      numberL->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+   }
+protected:
+   virtual void mouseDoubleClickEvent(QMouseEvent *e )
+   {
+      e->accept();
+      Call* call = SFLPhone::model()->addDialingCall(m_pName, AccountList::getCurrentAccount());
+      if (call) {
+         call->setCallNumber(m_pNumber);
+         call->setPeerName(m_pName);
+         call->actionPerformed(CALL_ACTION_ACCEPT);
+      }
+      else {
+         HelperFunctions::displayNoAccountMessageBox(this);
+      }
+   }
+private:
+   QString m_pNumber;
+   QString m_pType;
+   QString m_pName;
+};
+
 
 ///Forward keypresses to the filter line edit
 bool KeyPressEaterC::eventFilter(QObject *obj, QEvent *event)
@@ -96,7 +130,6 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    sortType << i18n("Name") << i18n("Organisation") << i18n("Recently used") << i18n("Group") << i18n("Department");
 
    m_pSortByCBB->addItems(sortType);
-   //m_pSortByCBB->setDisabled(true);
 
    QWidget* mainWidget = new QWidget(this);
    setWidget(mainWidget);
@@ -108,8 +141,6 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    m_pContactView->setDragEnabled(true);
    KeyPressEaterC *keyPressEater = new KeyPressEaterC(this);
    m_pContactView->installEventFilter(keyPressEater);
-
-   //m_pContactView->setAlternatingRowColors(true);
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
@@ -221,9 +252,11 @@ void ContactDock::reloadContact()
          if (numbers.count() > 1) {
             foreach (Contact::PhoneNumber* number, numbers) {
                QNumericTreeWidgetItem_hist* item2 = new QNumericTreeWidgetItem_hist(item);
-               QLabel* numberL = new QLabel("<b>"+number->getType()+":</b>"+number->getNumber(),this);
+               item2->setFlags(item2->flags() | Qt::ItemIsDragEnabled);
                item2->number = number->getNumber();
-               m_pContactView->setItemWidget(item2,0,numberL);
+               //Because of a Qt bug, we need to wrap the widget in an other widget, as drag and drop is broken for rich text (try dragging the bold part)
+               QWidget* wrapper = new PhoneNumberItem(number->getNumber(),number->getType(),aContact->getContact()->getFormattedName(),this);
+               m_pContactView->setItemWidget(item2,0,wrapper);
             }
          }
          else if (numbers.count() == 1) {
@@ -255,7 +288,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
       m_pCallView->clear();
       if (dynamic_cast<QNumericTreeWidgetItem_hist*>(item) != NULL) {
          QNumericTreeWidgetItem_hist* realItem = dynamic_cast<QNumericTreeWidgetItem_hist*>(item);
-         foreach (Call* call, SFLPhone::app()->model()->getHistory()) {
+         foreach (Call* call, HistoryModel::getHistory()) {
             if (realItem->widget != 0) {
                foreach (Contact::PhoneNumber* number, realItem->widget->getContact()->getPhoneNumbers()) {
                   if (number->getNumber() == call->getPeerPhoneNumber()) {

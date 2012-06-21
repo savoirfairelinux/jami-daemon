@@ -23,6 +23,7 @@ VideoInterface* VideoInterfaceSingleton::interface = NULL;
 
 VideoInterface& VideoInterfaceSingleton::getInstance()
 {
+   if (!dbus_metaTypeInit) registerCommTypes();
    if (!interface)
       interface = new VideoInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/VideoControls", QDBusConnection::sessionBus());
    

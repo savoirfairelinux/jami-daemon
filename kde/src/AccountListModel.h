@@ -26,7 +26,7 @@
 //SFLPhone
 class ConfigAccountList;
 
-///@class AccountListModel Model for the account list widget
+/// AccountListModel Model for the account list widget
 class AccountListModel : public QAbstractListModel
 {
 Q_OBJECT

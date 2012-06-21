@@ -35,18 +35,31 @@ class Contact;
 //Typedef
 typedef QList<Contact*> ContactList;
 
-///@class ContactBackend Allow different way to handle contact without poluting the library
+///ContactBackend: Allow different way to handle contact without poluting the library
 class LIB_EXPORT ContactBackend : public QObject {
    Q_OBJECT
 public:
    ContactBackend(QObject* parent);
    virtual ~ContactBackend();
+
+   ///Get a contact using a phone number
+   ///@param resolveDNS interpret the number as is (false) or parse it to extract the domain and number (true)
    virtual Contact*    getContactByPhone ( const QString& phoneNumber , bool resolveDNS = false) = 0;
+
+   ///Return a contact (or nullptr) according to the contact unique identifier
    virtual Contact*    getContactByUid   ( const QString& uid         ) = 0;
+   ///Edit 'contact', the implementation may be a GUI or somehting else
    virtual void        editContact       ( Contact*       contact     ) = 0;
+   ///Add a new contact to the backend
    virtual void        addNewContact     ( Contact*       contact     ) = 0;
 protected:
    virtual ContactList update_slot       (                     ) = 0;
+
+   //Helper
+   QString getUserFromPhone(QString phoneNumber);
+   QString getHostNameFromPhone(QString phoneNumber);
+
+   //Attributes
    QHash<QString,Contact*>        m_ContactByPhone ;
    QHash<QString,Contact*>        m_ContactByUid   ;
 public slots:
@@ -55,6 +68,7 @@ public slots:
 private slots:
    
 signals:
+   void collectionChanged();
    
 };
 

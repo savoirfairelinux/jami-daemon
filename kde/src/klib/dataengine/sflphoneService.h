@@ -31,7 +31,9 @@
 
 using namespace Plasma;
 
-///@class SFLPhoneService RPC between the plasmoid and the library
+class Account;
+
+///SFLPhoneService: RPC between the plasmoid and the library
 class SFLPhoneService : public Plasma::Service
 {
    Q_OBJECT
@@ -44,7 +46,7 @@ private:
    SFLPhoneEngine *m_engine;
 };
 
-///@class CallJob Call using and account and a number
+///CallJob: Call using and account and a number
 class CallJob : public Plasma::ServiceJob
 {
    Q_OBJECT
@@ -54,11 +56,11 @@ public:
    void start();
 
 private:
-    QString m_AccountId;
-    QString m_Number   ;
+    Account* m_pAccount;
+    QString  m_Number  ;
 };
 
-///@class DTMFJob Play a sound when called
+///DTMFJob: Play a sound when called
 class DTMFJob : public Plasma::ServiceJob
 {
    Q_OBJECT
@@ -70,7 +72,7 @@ private:
    QString m_mStr;
 };
 
-///@class HangUpJob Hang up a call using an id
+///HangUpJob: Hang up a call using an id
 class HangUpJob : public Plasma::ServiceJob
 {
    Q_OBJECT
@@ -82,7 +84,7 @@ private:
    QString m_CallId;
 };
 
-///@class TransferJob Transfer a call
+///TransferJob: Transfer a call
 class TransferJob : public Plasma::ServiceJob
 {
    Q_OBJECT
@@ -95,7 +97,7 @@ private:
    QString m_transferNumber;
 };
 
-///@class HoldJob Put or remove a call from hold mode
+///HoldJob: Put or remove a call from hold mode
 class HoldJob : public Plasma::ServiceJob
 {
    Q_OBJECT
@@ -107,7 +109,7 @@ private:
    QString m_CallId;
 };
 
-///@class RecordJob Record a call
+///RecordJob: Record a call
 class RecordJob : public Plasma::ServiceJob
 {
    Q_OBJECT

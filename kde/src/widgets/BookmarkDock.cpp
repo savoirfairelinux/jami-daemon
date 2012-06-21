@@ -42,8 +42,9 @@
 #include "widgets/CategorizedTreeWidget.h"
 #include "klib/AkonadiBackend.h"
 #include "klib/HelperFunctions.h"
+#include "lib/HistoryModel.h"
 
-///@class QNumericTreeWidgetItem : Tree widget with different sorting criterias
+///QNumericTreeWidgetItem : Tree widget with different sorting criterias
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
@@ -113,7 +114,6 @@ BookmarkDock::~BookmarkDock()
    delete m_pFilterLE  ;
    delete m_pSplitter  ;
    delete m_pMostUsedCK;
-   delete m_pTest      ;
 }
 
 
@@ -170,7 +170,7 @@ void BookmarkDock::reload()
       m_pItemView->addCategory(QString(i));
    }
    if (m_pMostUsedCK->isChecked()) {
-      QStringList cl = SFLPhone::model()->getNumbersByPopularity();
+      QStringList cl = HistoryModel::getNumbersByPopularity();
       for (int i=0;i < ((cl.size() < 10)?cl.size():10);i++) {
          QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18n("Popular"));
          HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,cl[i]);

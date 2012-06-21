@@ -202,7 +202,7 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
         } else {
             enc_name = video_codec_list_[i];
             clock_rate = 90000;
-            payload = dynamic_payload++;
+            payload = dynamic_payload;
         }
 
         std::ostringstream s;
@@ -225,9 +225,18 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
         pjmedia_sdp_rtpmap_to_attr(memPool_, &rtpmap, &attr);
 
         med->attr[med->attr_count++] = attr;
+        if (enc_name == "H264") {
+            std::ostringstream os;
+            // FIXME: this should not be hardcoded, it will determine what profile and level
+            // our peer will send us
+            os << "fmtp:" << dynamic_payload << " profile-level-id=428014";
+            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
+        }
+        if (not audio)
+            dynamic_payload++;
     }
 
-    med->attr[ med->attr_count++] = pjmedia_sdp_attr_create(memPool_, "sendrecv", NULL);
+    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, "sendrecv", NULL);
     if (!zrtpHelloHash_.empty())
         addZrtpAttribute(med, zrtpHelloHash_);
 

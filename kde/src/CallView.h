@@ -40,7 +40,7 @@ class CallTreeItemDelegate;
 //Typedef
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
-///@class CallViewOverlay Display overlay on top of the call tree
+///CallViewOverlay: Display overlay on top of the call tree
 class CallViewOverlay : public QWidget {
    Q_OBJECT
 
@@ -70,7 +70,7 @@ private slots:
    void changeVisibility();
 };
 
-///@class CallView Central tree widget managing active calls
+///CallView: Central tree widget managing active calls
 class CallView : public QTreeWidget {
    Q_OBJECT
    friend class CallTreeItemDelegate;
@@ -89,7 +89,6 @@ class CallView : public QTreeWidget {
       void setTitle               ( const QString& title                                                              );
 
       //Mutator
-      bool selectItem             ( Call* item                                                                        );
       bool removeItem             ( Call* item                                                                        );
       bool dropMimeData           ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
       bool callToCall             ( QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action  );
@@ -139,6 +138,7 @@ class CallView : public QTreeWidget {
       void hideOverlay();
 
    signals:
+      ///Emitted when one of the call item change
       void itemChanged(Call*);
 
 };

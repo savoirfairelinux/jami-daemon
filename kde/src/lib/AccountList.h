@@ -26,17 +26,17 @@
 
 #include "Account.h"
 #include "typedefs.h"
+#include "dbus/metatypes.h"
 
-///@class AccountList List of all daemon accounts
+///AccountList: List of all daemon accounts
 class LIB_EXPORT AccountList : public QObject{
    Q_OBJECT
 
 public:
-
-   //Constructors & Destructors
-   AccountList(QStringList & _accountIds);
-   AccountList(bool fill = true);
-   ~AccountList();
+   friend class Account;
+   //Static getter and destructor
+   static AccountList* getInstance();
+   static void destroy();
    
    //Getters
    const QVector<Account*>& getAccounts            (                        );
@@ -47,6 +47,11 @@ public:
    const Account*           getAccountAt           ( int i                  ) const;
    int                      size                   (                        ) const;
    Account*                 firstRegisteredAccount (                        ) const;
+   static Account*          getCurrentAccount      (                        );
+   static QString           getPriorAccoundId      (                        );
+
+   //Setters
+   static void setPriorAccountId(const QString& value );
    
    //Mutators
    virtual Account*  addAccount        ( QString & alias  )      ;
@@ -58,14 +63,22 @@ public:
    const Account* operator[] (int i) const;
    
 private:
+   //Constructors & Destructors
+   AccountList(QStringList & _accountIds);
+   AccountList(bool fill = true);
+   ~AccountList();
+   
    //Attributes
    QVector<Account*>*  m_pAccounts;
+   static AccountList* m_spAccountList;
+   static QString      m_sPriorAccountId;
    
 public slots:
    void update();
    void updateAccounts();
    
 signals:
+   ///The account list changed
    void accountListUpdated();
 };
 

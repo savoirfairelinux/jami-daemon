@@ -29,6 +29,7 @@ class QPainter;
 class QModelIndex;
 class QStyleOption;
 
+///CategoryDrawer: A better looking widget than the plain QListWidget
 class CategoryDrawer : public KCategoryDrawerV2
 {
 public:

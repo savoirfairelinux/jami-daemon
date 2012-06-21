@@ -20,21 +20,25 @@
 
 #include "dlgaccounts.h"
 
-#include <QtGui/QInputDialog>
 
+//Qt
+#include <QtCore/QString>
+#include <QtGui/QInputDialog>
+#include <QtGui/QTableWidget>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QWidget>
+
+//KDE
+#include <KConfigDialog>
+#include <KDebug>
+#include <KStandardDirs>
+
+//SFLPhone
+#include "conf/ConfigurationDialog.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "SFLPhoneView.h"
 #include "../AccountView.h"
 #include "lib/sflphone_const.h"
-#include <kconfigdialog.h>
-#include <QTableWidget>
-#include <QString>
-#include <QListWidgetItem>
-#include "conf/ConfigurationDialog.h"
-#include <QWidget>
-#include <KStandardDirs>
-//KDE
-#include <KDebug>
 
 Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent)
 {
@@ -71,17 +75,20 @@ Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QSt
    resize(550,300);
    connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
 } //Private_AddCodecDialog
+
+///When a new codec is added (ok pressed)
 void Private_AddCodecDialog::emitNewCodec() {
    if (codecTable->currentRow() >= 0)
    emit addCodec(codecTable->item(codecTable->currentRow(),3)->text());
 }
 
+///Constructor
 DlgAccounts::DlgAccounts(KConfigDialog* parent)
  : QWidget(parent),accountList(NULL)
 {
    setupUi(this);
    disconnect(keditlistbox_codec->addButton(),SIGNAL(clicked()));
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    button_accountUp->setIcon         ( KIcon( "go-up"       ) );
    button_accountDown->setIcon       ( KIcon( "go-down"     ) );
    button_accountAdd->setIcon        ( KIcon( "list-add"    ) );
@@ -97,7 +104,6 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    loadAccountList();
    loadCodecList();
    accountListHasChanged = false;
-   //toolButton_accountsApply->setEnabled(false);
 
    //SLOTS
    //                     SENDER                            SIGNAL                    RECEIVER               SLOT                   /
@@ -145,21 +151,22 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /*                                                                                                                               */
 
 
-   connect(accountList,    SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(accountListChanged(QListWidgetItem*,QListWidgetItem*)));
-   connect(list_credential,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
+   connect(listWidget_accountList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(accountListChanged(QListWidgetItem*,QListWidgetItem*)));
+   connect(list_credential,        SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
 
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
    connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
 } //DlgAccounts
 
+///Destructor
 DlgAccounts::~DlgAccounts()
 {
    accountList->disconnect();
    if (accountList) delete accountList;
 }
 
-
+///Save the account list, necessary for new and removed accounts
 void DlgAccounts::saveAccountList()
 {
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -175,23 +182,8 @@ void DlgAccounts::saveAccountList()
    for (int i = 0; i < accountList->size(); i++) {
       AccountView* current = (*accountList)[i];
       QString currentId;
-      //if the account has no instanciated id, it has just been created in the client
-      if(current && current->isNew()) {
-         MapStringString details = current->getAccountDetails();
-         currentId = configurationManager.addAccount(details);
-         current->setAccountId(currentId);
-      }
-      //if the account has an instanciated id but it's not in configurationManager
-      else {
-         if(! accountIds.contains(current->getAccountId())) {
-            kDebug() << "The account with id " << current->getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
-            currentId = QString();
-         }
-         else {
-            configurationManager.setAccountDetails(current->getAccountId(), current->getAccountDetails());
-            currentId = QString(current->getAccountId());
-         }
-      }
+      current->save();
+      currentId = QString(current->getAccountId());
    }
 
    //remove accounts that are in the configurationManager but not in the client
@@ -221,7 +213,7 @@ void DlgAccounts::disconnectAccountsChangedSignal()
            this,                  SLOT(updateAccountStates()));
 }
 
-
+///Save an account using the values from the widgets
 void DlgAccounts::saveAccount(QListWidgetItem * item)
 {
    QString protocolsTab[] = ACCOUNT_TYPES_TAB;
@@ -237,47 +229,47 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
       return;
    }
    //ACCOUNT DETAILS
-   //                                     FIELD                                             WIDGET VALUE                                     /
-   /**/account->setAccountDetail( ACCOUNT_ALIAS                  , edit1_alias->text()                                                      );
-   /**/account->setAccountDetail( ACCOUNT_TYPE                   , protocolsTab[edit2_protocol->currentIndex()]                             );
-   /**/account->setAccountDetail( ACCOUNT_HOSTNAME               , edit3_server->text()                                                     );
-   /**/account->setAccountDetail( ACCOUNT_USERNAME               , edit4_user->text()                                                       );
-   /**/account->setAccountDetail( ACCOUNT_PASSWORD               , edit5_password->text()                                                   );
-   /**/account->setAccountDetail( ACCOUNT_MAILBOX                , edit6_mailbox->text()                                                    );
-   /**/account->setAccountDetail( ACCOUNT_ENABLED                , account->isChecked()?REGISTRATION_ENABLED_TRUE:REGISTRATION_ENABLED_FALSE);
-   /**/account->setAccountDetail( ACCOUNT_REGISTRATION_EXPIRE    , QString::number(spinbox_regExpire->value())                              );
-   /**/                                                                                                                                   /**/
-   /*                                                               Security                                                                */
-   /**/account->setAccountDetail( TLS_PASSWORD                   , edit_tls_private_key_password->text()                                    );
-   /**/account->setAccountDetail( TLS_LISTENER_PORT              , QString::number(spinbox_tls_listener->value())                           );
-   /**/account->setAccountDetail( TLS_CA_LIST_FILE               , file_tls_authority->text()                                               );
-   /**/account->setAccountDetail( TLS_CERTIFICATE_FILE           , file_tls_endpoint->text()                                                );
-   /**/account->setAccountDetail( TLS_PRIVATE_KEY_FILE           , file_tls_private_key->text()                                             );
-   /**/account->setAccountDetail( TLS_METHOD                     , combo_tls_method->currentText()                                          );
-   /**/account->setAccountDetail( TLS_CIPHERS                    , edit_tls_cipher->text()                                                  );
-   /**/account->setAccountDetail( TLS_SERVER_NAME                , edit_tls_outgoing->text()                                                );
-   /**/account->setAccountDetail( TLS_NEGOTIATION_TIMEOUT_SEC    , QString::number(spinbox_tls_timeout_sec->value())                        );
-   /**/account->setAccountDetail( TLS_NEGOTIATION_TIMEOUT_MSEC   , QString::number(spinbox_tls_timeout_msec->value())                       );
-   /**/account->setAccountDetail( TLS_METHOD                     , QString::number(combo_security_STRP->currentIndex())                     );
-   /**/account->setAccountDetail( TLS_VERIFY_SERVER              , check_tls_incoming->isChecked()                          ?"true":"false" );
-   /**/account->setAccountDetail( TLS_VERIFY_CLIENT              , check_tls_answer->isChecked()                            ?"true":"false" );
-   /**/account->setAccountDetail( TLS_REQUIRE_CLIENT_CERTIFICATE , check_tls_requier_cert->isChecked()                      ?"true":"false" );
-   /**/account->setAccountDetail( TLS_ENABLE                     , group_security_tls->isChecked()                          ?"true":"false" );
-   /**/account->setAccountDetail( ACCOUNT_DISPLAY_SAS_ONCE       , checkbox_ZRTP_Ask_user->isChecked()                      ?"true":"false" );
-   /**/account->setAccountDetail( ACCOUNT_SRTP_RTP_FALLBACK      , checkbox_SDES_fallback_rtp->isChecked()                  ?"true":"false" );
-   /**/account->setAccountDetail( ACCOUNT_ZRTP_DISPLAY_SAS       , checkbox_ZRTP_display_SAS->isChecked()                   ?"true":"false" );
-   /**/account->setAccountDetail( ACCOUNT_ZRTP_NOT_SUPP_WARNING  , checkbox_ZRTP_warn_supported->isChecked()                ?"true":"false" );
-   /**/account->setAccountDetail( ACCOUNT_ZRTP_HELLO_HASH        , checkbox_ZTRP_send_hello->isChecked()                    ?"true":"false" );
-   /**/account->setAccountDetail( ACCOUNT_SIP_STUN_ENABLED       , checkbox_stun->isChecked()                               ?"true":"false" );
-   /**/account->setAccountDetail( PUBLISHED_SAMEAS_LOCAL         , radioButton_pa_same_as_local->isChecked()                ?"true":"false" );
-   /**/account->setAccountDetail( ACCOUNT_SIP_STUN_SERVER        , line_stun->text()                                                        );
-   /**/account->setAccountDetail( PUBLISHED_PORT                 , QString::number(spinBox_pa_published_port->value())                      );
-   /**/account->setAccountDetail( PUBLISHED_ADDRESS              , lineEdit_pa_published_address ->text()                                   );
-   /**/account->setAccountDetail( LOCAL_PORT                     , QString::number(spinBox_pa_published_port->value())                      );
-   /**/account->setAccountDetail( LOCAL_INTERFACE                , comboBox_ni_local_address->currentText()                                 );
-   /**/account->setAccountDetail( CONFIG_RINGTONE_ENABLED        , m_pEnableRingtoneGB->isChecked()                         ?"true":"false" );
-   /**/account->setAccountDetail( CONFIG_RINGTONE_PATH           , m_pRingTonePath->url().path()                                            );
-   //                                                                                                                                        /
+   //                                                                     WIDGET VALUE                                     /
+   /**/account->setAccountAlias                ( edit1_alias->text()                                                      );
+   /**/account->setAccountType                 ( protocolsTab[edit2_protocol->currentIndex()]                             );
+   /**/account->setAccountHostname             ( edit3_server->text()                                                     );
+   /**/account->setAccountUsername             ( edit4_user->text()                                                       );
+   /**/account->setAccountPassword             ( edit5_password->text()                                                   );
+   /**/account->setAccountMailbox              ( edit6_mailbox->text()                                                    );
+   /**/account->setAccountEnabled              ( account->isChecked()                                                     );
+   /**/account->setAccountRegistrationExpire   ( spinbox_regExpire->value()                                               );
+   /**/                                                                                                                 /**/
+   /*                                            Security                                                                 */
+   /**/account->setTlsPassword                 ( edit_tls_private_key_password->text()                                    );
+   /**/account->setTlsListenerPort             ( spinbox_tls_listener->value()                                            );
+   /**/account->setTlsCaListFile               ( file_tls_authority->text()                                               );
+   /**/account->setTlsCertificateFile          ( file_tls_endpoint->text()                                                );
+   /**/account->setTlsPrivateKeyFile           ( file_tls_private_key->text()                                             );
+   /**/account->setTlsMethod                   ( combo_tls_method->currentIndex()                                         );
+   /**/account->setTlsCiphers                  ( edit_tls_cipher->text()                                                  );
+   /**/account->setTlsServerName               ( edit_tls_outgoing->text()                                                );
+   /**/account->setTlsNegotiationTimeoutSec    ( spinbox_tls_timeout_sec->value()                                         );
+   /**/account->setTlsNegotiationTimeoutMsec   ( spinbox_tls_timeout_msec->value()                                        );
+   ///**/account->setTlsMethod                   ( QString::number(combo_security_STRP->currentIndex())                     );
+   /**/account->setTlsVerifyServer             ( check_tls_incoming->isChecked()                                          );
+   /**/account->setTlsVerifyClient             ( check_tls_answer->isChecked()                                            );
+   /**/account->setTlsRequireClientCertificate ( check_tls_requier_cert->isChecked()                                      );
+   /**/account->setTlsEnable                   ( group_security_tls->isChecked()                                          );
+   /**/account->setAccountDisplaySasOnce       ( checkbox_ZRTP_Ask_user->isChecked()                                      );
+   /**/account->setAccountSrtpRtpFallback      ( checkbox_SDES_fallback_rtp->isChecked()                                  );
+   /**/account->setAccountZrtpDisplaySas       ( checkbox_ZRTP_display_SAS->isChecked()                                   );
+   /**/account->setAccountZrtpNotSuppWarning   ( checkbox_ZRTP_warn_supported->isChecked()                                );
+   /**/account->setAccountZrtpHelloHash        ( checkbox_ZTRP_send_hello->isChecked()                                    );
+   /**/account->setAccountSipStunEnabled       ( checkbox_stun->isChecked()                                               );
+   /**/account->setPublishedSameAsLocal        ( radioButton_pa_same_as_local->isChecked()                                );
+   /**/account->setAccountSipStunServer        ( line_stun->text()                                                        );
+   /**/account->setPublishedPort               ( spinBox_pa_published_port->value()                                       );
+   /**/account->setPublishedAddress            ( lineEdit_pa_published_address ->text()                                   );
+   /**/account->setLocalPort                   ( spinBox_pa_published_port->value()                                       );
+   /**/account->setLocalInterface              ( comboBox_ni_local_address->currentText()                                 );
+   /**/account->setRingtoneEnabled             ( m_pEnableRingtoneGB->isChecked()                                         );
+   /**/account->setRingtonePath                ( m_pRingTonePath->url().path()                                            );
+   //                                                                                                                      /
 
    QStringList _codecList;
    foreach (QString aCodec, keditlistbox_codec->items()) {
@@ -289,14 +281,14 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    }
 
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   configurationManager.setActiveAudioCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
-   kDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
+   configurationManager.setActiveAudioCodecList(_codecList, account->getAccountId());
+   kDebug() << "Account codec have been saved" << _codecList << account->getAccountId();
 
    if (m_pRingtoneListLW->selectedItems().size() == 1 && m_pRingtoneListLW->currentItem() ) {
       QListWidgetItem* selectedRingtone = m_pRingtoneListLW->currentItem();
       RingToneListItem* ringtoneWidget = qobject_cast<RingToneListItem*>(m_pRingtoneListLW->itemWidget(selectedRingtone));
       if (ringtoneWidget) {
-         account->setAccountDetail( CONFIG_RINGTONE_PATH, ringtoneWidget->m_Path);
+         account->setRingtonePath(ringtoneWidget->m_Path);
       }
    }
 
@@ -309,7 +301,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    }
    VideoCodec::setActiveCodecList(account,activeCodecs);
 
-   saveCredential(account->getAccountDetail(ACCOUNT_ID));
+   saveCredential(account->getAccountId());
 } //saveAccount
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
@@ -325,7 +317,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       return;
    }
 
-   edit1_alias->setText( account->getAccountDetail(ACCOUNT_ALIAS));
+   edit1_alias->setText( account->getAccountAlias());
 
    QString protocolsTab[] = ACCOUNT_TYPES_TAB;
    QList<QString> * protocolsList = new QList<QString>();
@@ -333,26 +325,33 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       protocolsList->append(protocolsTab[i]);
    }
 
-   QString accountName = account->getAccountDetail(ACCOUNT_TYPE);
+   QString accountName = account->getAccountType();
    int protocolIndex = protocolsList->indexOf(accountName);
    delete protocolsList;
 
 
 
-   loadCredentails(account->getAccountDetail(ACCOUNT_ID));
+   loadCredentails(account->getAccountId());
 
-//    bool ok;
-//    int val = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS).toInt(&ok);
-//    spinbox_regExpire->setValue(ok ? val : REGISTRATION_EXPIRE_DEFAULT);
-
-   foreach(CredentialData data,credentialList) {
-      if (data.name == account->getAccountDetail(ACCOUNT_USERNAME)) {
-         edit5_password->setText( data.password );
+   if (credentialList.size() > 0) {
+      bool found = false;
+      foreach(CredentialData data,credentialList) {
+         if (data.name == account->getAccountUsername()) {
+            edit5_password->setText( data.password );
+            found = true;
+         }
       }
+      if (!found) {
+         //Better than nothing, can happen if username change
+         edit5_password->setText( credentialList[0].password );
+      }
+   }
+   else {
+      edit5_password->setText("");
    }
 
 
-   switch (account->getAccountDetail(TLS_METHOD ).toInt()) {
+   switch (account->getTlsMethod()) {
       case 0: //KEY_EXCHANGE_NONE
          checkbox_SDES_fallback_rtp->setVisible   ( false );
          checkbox_ZRTP_Ask_user->setVisible       ( false );
@@ -375,41 +374,42 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
          checkbox_ZTRP_send_hello->setVisible     ( false );
          break;
    }
-   //         WIDGET VALUE                                                          FIELD                          VALUE        /
-   /**/edit2_protocol->setCurrentIndex          ( (protocolIndex < 0) ? 0 : protocolIndex                                      );
-   /**/edit3_server->setText                    ( account->getAccountDetail(   ACCOUNT_HOSTNAME              )                 );
-   /**/edit4_user->setText                      ( account->getAccountDetail(   ACCOUNT_USERNAME              )                 );
-   /**/edit6_mailbox->setText                   ( account->getAccountDetail(   ACCOUNT_MAILBOX               )                 );
-   /**/checkbox_ZRTP_Ask_user->setChecked       ( (account->getAccountDetail(  ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 );
-   /**/checkbox_SDES_fallback_rtp->setChecked   ( (account->getAccountDetail(  ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 );
-   /**/checkbox_ZRTP_display_SAS->setChecked    ( (account->getAccountDetail(  ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 );
-   /**/checkbox_ZRTP_warn_supported->setChecked ( (account->getAccountDetail(  ACCOUNT_ZRTP_NOT_SUPP_WARNING )  == "true")?1:0 );
-   /**/checkbox_ZTRP_send_hello->setChecked     ( (account->getAccountDetail(  ACCOUNT_ZRTP_HELLO_HASH       )  == "true")?1:0 );
-   /**/checkbox_stun->setChecked                ( (account->getAccountDetail(  ACCOUNT_SIP_STUN_ENABLED      )  == "true")?1:0 );
-   /**/line_stun->setText                       ( account->getAccountDetail(   ACCOUNT_SIP_STUN_SERVER       )                 );
-   /**/spinbox_regExpire->setValue              ( account->getAccountDetail(   ACCOUNT_REGISTRATION_EXPIRE   ).toInt()         );
-   /**/radioButton_pa_same_as_local->setChecked ( (account->getAccountDetail(  PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 );
-   /**/radioButton_pa_custom->setChecked        ( !(account->getAccountDetail( PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 );
-   /**/lineEdit_pa_published_address->setText   ( account->getAccountDetail(   PUBLISHED_ADDRESS             )                 );
-   /**/spinBox_pa_published_port->setValue      ( account->getAccountDetail(   PUBLISHED_PORT).toUInt()                        );
-   /*                                                   Security                                                               */
-   /**/edit_tls_private_key_password->setText   ( account->getAccountDetail(   TLS_PASSWORD                  )                 );
-   /**/spinbox_tls_listener->setValue           ( account->getAccountDetail(   TLS_LISTENER_PORT             ).toInt()         );
-   /**/file_tls_authority->setText              ( account->getAccountDetail(   TLS_CA_LIST_FILE              )                 );
-   /**/file_tls_endpoint->setText               ( account->getAccountDetail(   TLS_CERTIFICATE_FILE          )                 );
-   /**/file_tls_private_key->setText            ( account->getAccountDetail(   TLS_PRIVATE_KEY_FILE          )                 );
-   /**/edit_tls_cipher->setText                 ( account->getAccountDetail(   TLS_CIPHERS                   )                 );
-   /**/edit_tls_outgoing->setText               ( account->getAccountDetail(   TLS_SERVER_NAME               )                 );
-   /**/spinbox_tls_timeout_sec->setValue        ( account->getAccountDetail(   TLS_NEGOTIATION_TIMEOUT_SEC ).toInt()           );
-   /**/spinbox_tls_timeout_msec->setValue       ( account->getAccountDetail(   TLS_NEGOTIATION_TIMEOUT_MSEC ).toInt()          );
-   /**/check_tls_incoming->setChecked           ( (account->getAccountDetail(  TLS_VERIFY_SERVER             )  == "true")?1:0 );
-   /**/check_tls_answer->setChecked             ( (account->getAccountDetail(  TLS_VERIFY_CLIENT             )  == "true")?1:0 );
-   /**/check_tls_requier_cert->setChecked       ( (account->getAccountDetail(  TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 );
-   /**/group_security_tls->setChecked           ( (account->getAccountDetail(  TLS_ENABLE                    )  == "true")?1:0 );
-   /**/combo_security_STRP->setCurrentIndex     ( account->getAccountDetail(   TLS_METHOD                    ).toInt()         );
-   /*                                                                                                                          */
+   
+   //         WIDGET VALUE                                             VALUE                 /
+   /**/edit2_protocol->setCurrentIndex          ( (protocolIndex < 0) ? 0 : protocolIndex    );
+   /**/edit3_server->setText                    (  account->getAccountHostname             ());
+   /**/edit4_user->setText                      (  account->getAccountUsername             ());
+   /**/edit6_mailbox->setText                   (  account->getAccountMailbox              ());
+   /**/checkbox_ZRTP_Ask_user->setChecked       (  account->isAccountDisplaySasOnce        ());
+   /**/checkbox_SDES_fallback_rtp->setChecked   (  account->isAccountSrtpRtpFallback       ());
+   /**/checkbox_ZRTP_display_SAS->setChecked    (  account->isAccountZrtpDisplaySas        ());
+   /**/checkbox_ZRTP_warn_supported->setChecked (  account->isAccountZrtpNotSuppWarning    ());
+   /**/checkbox_ZTRP_send_hello->setChecked     (  account->isAccountZrtpHelloHash         ());
+   /**/checkbox_stun->setChecked                (  account->isAccountSipStunEnabled        ());
+   /**/line_stun->setText                       (  account->getAccountSipStunServer        ());
+   /**/spinbox_regExpire->setValue              (  account->getAccountRegistrationExpire   ());
+   /**/radioButton_pa_same_as_local->setChecked (  account->isPublishedSameAsLocal         ());
+   /**/radioButton_pa_custom->setChecked        ( !account->isPublishedSameAsLocal         ());
+   /**/lineEdit_pa_published_address->setText   (  account->getPublishedAddress            ());
+   /**/spinBox_pa_published_port->setValue      (  account->getPublishedPort               ());
+   /*                                                  Security                             **/
+   /**/edit_tls_private_key_password->setText   (  account->getTlsPassword                 ());
+   /**/spinbox_tls_listener->setValue           (  account->getTlsListenerPort             ());
+   /**/file_tls_authority->setText              (  account->getTlsCaListFile               ());
+   /**/file_tls_endpoint->setText               (  account->getTlsCertificateFile          ());
+   /**/file_tls_private_key->setText            (  account->getTlsPrivateKeyFile           ());
+   /**/edit_tls_cipher->setText                 (  account->getTlsCiphers                  ());
+   /**/edit_tls_outgoing->setText               (  account->getTlsServerName               ());
+   /**/spinbox_tls_timeout_sec->setValue        (  account->getTlsNegotiationTimeoutSec    ());
+   /**/spinbox_tls_timeout_msec->setValue       (  account->getTlsNegotiationTimeoutMsec   ());
+   /**/check_tls_incoming->setChecked           (  account->isTlsVerifyServer              ());
+   /**/check_tls_answer->setChecked             (  account->isTlsVerifyClient              ());
+   /**/check_tls_requier_cert->setChecked       (  account->isTlsRequireClientCertificate  ());
+   /**/group_security_tls->setChecked           (  account->isTlsEnable                    ());
+   /**/combo_security_STRP->setCurrentIndex     (  account->getTlsMethod                   ());
+   /*                                                                                       */
 
-   if (account->getAccountDetail(ACCOUNT_ALIAS) == "IP2IP") {
+   if (account->getAccountAlias() == "IP2IP") {
       frame2_editAccounts->setTabEnabled(0,false);
       frame2_editAccounts->setTabEnabled(1,false);
       frame2_editAccounts->setTabEnabled(3,false);
@@ -423,12 +423,12 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
       frame2_editAccounts->setCurrentIndex(0);
    }
 
-   m_pEnableRingtoneGB->setChecked((account->getAccountDetail(CONFIG_RINGTONE_ENABLED)=="false")?false:true);
-   QString ringtonePath = KStandardDirs::realFilePath(account->getAccountDetail(CONFIG_RINGTONE_PATH));
+   m_pEnableRingtoneGB->setChecked(account->isRingtoneEnabled());
+   QString ringtonePath = KStandardDirs::realFilePath(account->getRingtonePath());
    m_pRingTonePath->setUrl( ringtonePath );
 
 
-   combo_tls_method->setCurrentIndex        ( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
+   combo_tls_method->setCurrentIndex        ( account->getTlsMethod() );
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
    m_pRingtoneListLW->clear();
@@ -469,10 +469,10 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    QStringList interfaceList = configurationManager.getAllIpInterfaceByName();
    comboBox_ni_local_address->addItems(interfaceList);
 
-   spinBox_ni_local_port->setValue(account->getAccountDetail(LOCAL_PORT).toInt());
-   comboBox_ni_local_address->setCurrentIndex(comboBox_ni_local_address->findText(account->getAccountDetail(LOCAL_INTERFACE))); //TODO need to load the list first
+   spinBox_ni_local_port->setValue(account->getLocalPort());
+   comboBox_ni_local_address->setCurrentIndex(comboBox_ni_local_address->findText(account->getLocalInterface())); //TODO need to load the list first
 
-   QVector<int> activeCodecList = configurationManager.getActiveAudioCodecList(account->getAccountDetail(ACCOUNT_ID));
+   QVector<int> activeCodecList = configurationManager.getActiveAudioCodecList(account->getAccountId());
    keditlistbox_codec->clear();
    foreach (int aCodec, activeCodecList) {
       foreach (StringHash _aCodec, codecList) {
@@ -484,8 +484,8 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
 
    if(protocolIndex == 0) { // if sip selected
-      checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == REGISTRATION_ENABLED_TRUE);
-      line_stun->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
+      checkbox_stun->setChecked(account->isAccountSipStunEnabled());
+      line_stun->setText( account->getAccountSipStunServer() );
       //checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == REGISTRATION_ENABLED_TRUE);
 
       tab_advanced->setEnabled(true);
@@ -495,7 +495,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    }
    else {
       checkbox_stun->setChecked(false);
-      line_stun->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
+      line_stun->setText( account->getAccountSipStunServer() );
       //checkbox_zrtp->setChecked(false);
 
       tab_advanced->setEnabled(false);
@@ -506,6 +506,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    frame2_editAccounts->setEnabled(true);
 } //loadAccount
 
+///Load an account
 void DlgAccounts::loadAccountList()
 {
    accountList->updateAccounts();
@@ -519,6 +520,7 @@ void DlgAccounts::loadAccountList()
       frame2_editAccounts->setEnabled(false);
 }
 
+///Add an account to the list
 void DlgAccounts::addAccountToAccountList(AccountView* account)
 {
    QListWidgetItem * item = account->getItem();
@@ -528,14 +530,14 @@ void DlgAccounts::addAccountToAccountList(AccountView* account)
    listWidget_accountList->setItemWidget(item, widget);
 }
 
+///Called when one of the child widget is modified
 void DlgAccounts::changedAccountList()
 {
    accountListHasChanged = true;
    emit updateButtons();
 }
 
-
-
+///Callback when the account change
 void DlgAccounts::accountListChanged( QListWidgetItem * current, QListWidgetItem * previous )
 {
    kDebug() << "on_listWidget_accountList_currentItemChanged";
@@ -659,17 +661,17 @@ void DlgAccounts::updateStatusLabel(AccountView* account)
    if(! account ) {
           return;
         }
-   QString status = account->getAccountDetail(ACCOUNT_REGISTRATION_STATUS);
+   QString status = account->getAccountRegistrationStatus();
    edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
 }
 
+///Have the account changed
 bool DlgAccounts::hasChanged()
 {
-   bool res = accountListHasChanged;
-   return res;
+   return accountListHasChanged;
 }
 
-
+///Save settings
 void DlgAccounts::updateSettings()
 {
    if(accountListHasChanged) {
@@ -679,6 +681,7 @@ void DlgAccounts::updateSettings()
    }
 }
 
+///Reload
 void DlgAccounts::updateWidgets()
 {
    loadAccountList();
@@ -686,6 +689,7 @@ void DlgAccounts::updateWidgets()
    accountListHasChanged = false;
 }
 
+///Get the codecs
 void DlgAccounts::loadCodecList()
 {
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -788,6 +792,7 @@ void DlgAccounts::updateCombo(int value)
 
 void DlgAccounts::loadCredentails(QString accountId) {
    credentialInfo.clear();
+   credentialList.clear();
    list_credential->clear();
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    VectorMapStringString credentials = configurationManager.getCredentials(accountId);

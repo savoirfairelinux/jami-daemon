@@ -29,8 +29,8 @@ VideoCodec::VideoCodec(QString codecName)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    QMap<QString,QString> details = interface.getCodecDetails(codecName);
-   m_Name    = details["name"];//TODO do not use stringlist
-   m_Bitrate = details["bitrate"];//TODO do not use stringlist
+   m_Name    = details[ "name"    ];//TODO do not use stringlist
+   m_Bitrate = details[ "bitrate" ];//TODO do not use stringlist
 }
 
 ///Init the device list

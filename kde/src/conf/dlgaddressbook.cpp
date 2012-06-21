@@ -22,6 +22,7 @@
 
 #include "klib/ConfigurationSkeleton.h"
 
+///Constructor
 DlgAddressBook::DlgAddressBook(QWidget *parent)
  : QWidget(parent)
 {
@@ -50,16 +51,18 @@ DlgAddressBook::DlgAddressBook(QWidget *parent)
    }
 } //DlgAddressBook
 
+///Destructor
 DlgAddressBook::~DlgAddressBook()
 {
 }
 
-
+///Reload the widget
 void DlgAddressBook::updateWidgets()
 {
    
 }
 
+///Save the settings
 void DlgAddressBook::updateSettings()
 {
    QStringList list;
