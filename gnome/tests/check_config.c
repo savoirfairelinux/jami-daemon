@@ -31,6 +31,8 @@
 #include <check.h>
 #include <stdlib.h>
 
+#define XML_OUTPUT  "gnome-check-config.xml"
+
 Suite *
 config_suite(void)
 {
@@ -45,6 +47,7 @@ main(void)
     int number_failed;
     Suite *s = config_suite();
     SRunner *sr = srunner_create(s);
+    srunner_set_xml(sr, XML_OUTPUT);
     srunner_run_all(sr, CK_NORMAL);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
