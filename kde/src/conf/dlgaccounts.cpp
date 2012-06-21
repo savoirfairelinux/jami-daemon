@@ -88,7 +88,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
 {
    setupUi(this);
    disconnect(keditlistbox_codec->addButton(),SIGNAL(clicked()));
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    button_accountUp->setIcon         ( KIcon( "go-up"       ) );
    button_accountDown->setIcon       ( KIcon( "go-down"     ) );
    button_accountAdd->setIcon        ( KIcon( "list-add"    ) );
@@ -104,7 +104,6 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    loadAccountList();
    loadCodecList();
    accountListHasChanged = false;
-   //toolButton_accountsApply->setEnabled(false);
 
    //SLOTS
    //                     SENDER                            SIGNAL                    RECEIVER               SLOT                   /

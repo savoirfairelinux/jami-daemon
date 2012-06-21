@@ -45,6 +45,7 @@
 #include "klib/AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "klib/HelperFunctions.h"
 #include "widgets/TranslucentButtons.h"
 #include "SFLPhone.h"
 
@@ -366,9 +367,14 @@ void ContactItemWidget::callAgain()
    QString number = showNumberSelector(ok);
    if (ok) {
       Call* call = SFLPhone::model()->addDialingCall(m_pContactKA->getFormattedName(), AccountList::getCurrentAccount());
-      call->setCallNumber(number);
-      call->setPeerName(m_pContactKA->getFormattedName());
-      call->actionPerformed(CALL_ACTION_ACCEPT);
+      if (call) {
+         call->setCallNumber(number);
+         call->setPeerName(m_pContactKA->getFormattedName());
+         call->actionPerformed(CALL_ACTION_ACCEPT);
+      }
+      else {
+         HelperFunctions::displayNoAccountMessageBox(this);
+      }
    }
 }
 

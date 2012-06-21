@@ -39,3 +39,21 @@ target_link_libraries( account
    ksflphone
    qtsflphone
 )
+
+#CALL tests
+set( call_SRCS call_test.cpp )
+
+kde4_add_unit_test( call
+   TESTNAME "Basic_calls"
+   ${call_SRCS}
+)
+
+
+
+target_link_libraries( call
+   ${KDE4_KDECORE_LIBS}
+   ${QT_QTTEST_LIBRARY}
+   ${KDE4_KDEUI_LIBS}
+   ksflphone
+   qtsflphone
+)

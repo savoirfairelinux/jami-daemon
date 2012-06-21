@@ -51,6 +51,7 @@
 #include "lib/instance_interface_singleton.h"
 #include "lib/sflphone_const.h"
 #include "lib/Contact.h"
+#include "klib/HelperFunctions.h"
 
 //ConfigurationDialog* SFLPhoneView::configDialog;
 
@@ -184,6 +185,8 @@ void SFLPhoneView::typeString(QString str)
    if(!currentCall && candidate) {
       candidate->appendText(str);
    }
+   if (!candidate)
+      HelperFunctions::displayNoAccountMessageBox(this);
 } //typeString
 
 ///Called when a backspace is detected
@@ -279,7 +282,8 @@ bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
 {
    if (contact->getPhoneNumbers().count() == 1) {
       call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(),AccountList::getCurrentAccount());
-      call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
+      if (call2)
+         call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
    }
    else if (contact->getPhoneNumbers().count() > 1) {
       bool ok = false;
@@ -292,7 +296,8 @@ bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
       QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
       if (ok) {
          call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), AccountList::getCurrentAccount());
-         call2->appendText(map[result]);
+         if (call2)
+            call2->appendText(map[result]);
       }
       else {
          kDebug() << "Operation cancelled";
@@ -695,7 +700,7 @@ void SFLPhoneView::setAccountFirst(Account * account)
    else {
       AccountList::setPriorAccountId(QString());
    }
-   kDebug() << "Current account id" << AccountList::getCurrentAccount()->getAccountId();
+   kDebug() << "Current account id" << (AccountList::getCurrentAccount()?AccountList::getCurrentAccount()->getAccountId():"<no account>");
    updateStatusMessage();
 }
 
@@ -797,8 +802,13 @@ void SFLPhoneView::mailBox()
    Account* account = AccountList::getCurrentAccount();
    QString mailBoxNumber = account->getAccountMailbox();
    Call* call = SFLPhone::model()->addDialingCall();
-   call->appendText(mailBoxNumber);
-   action(call, CALL_ACTION_ACCEPT);
+   if (call) {
+      call->appendText(mailBoxNumber);
+      action(call, CALL_ACTION_ACCEPT);
+   }
+   else {
+      HelperFunctions::displayNoAccountMessageBox(this);
+   }
 }
 
 ///Called the there is an error (dbus)

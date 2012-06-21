@@ -40,5 +40,6 @@ public:
    static ContactHash toHash(QList<Contact*> contacts);
    static QString normStrippped(QString str);
    static QString escapeHtmlEntities(QString str);
+   static void displayNoAccountMessageBox(QWidget* parent = nullptr);
 };
 #endif

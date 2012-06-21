@@ -189,7 +189,6 @@ bool SFLPhone::initialize()
    m_pView->loadWindow();
 
    move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
-   //show();
 
    if(configurationManager.getAccountList().value().isEmpty()) {
       (new AccountWizard())->show();

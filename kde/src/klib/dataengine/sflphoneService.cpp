@@ -42,8 +42,10 @@ CallJob::CallJob(QObject* parent, const QString& operation, const QVariantMap& p
 void CallJob::start()
 {
    Call* call = SFLPhoneEngine::getModel()->addDialingCall(m_Number,m_pAccount);
-   call->setCallNumber(m_Number);
-   call->actionPerformed(CALL_ACTION_ACCEPT);
+   if (call) {
+      call->setCallNumber(m_Number);
+      call->actionPerformed(CALL_ACTION_ACCEPT);
+   }
 }
 
 
