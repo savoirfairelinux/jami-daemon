@@ -71,7 +71,7 @@ const QString& account_state_name(const QString& s)
 } //account_state_name
 
 ///Constructors
-Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
+Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_Temporary(false)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager,SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
@@ -198,6 +198,12 @@ bool Account::isRegistered() const
    return (getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
+///If this account is really part of the model or just "in progress" that can be canceled
+bool Account::isTemporary() const
+{
+   return m_Temporary;
+}
+
 ///Return the model index of this item
 QModelIndex Account::getIndex()
 {
@@ -266,6 +272,12 @@ void Account::setEnabled(bool checked)
    setAccountDetail(ACCOUNT_ENABLED, checked ? REGISTRATION_ENABLED_TRUE : REGISTRATION_ENABLED_FALSE);
 }
 
+///Set if the account is temporary (work in progress, can be cancelled)
+void Account::setTemporary(bool value)
+{
+   m_Temporary = value;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Mutator                                  *
@@ -286,6 +298,7 @@ void Account::updateState()
 ///Save the current account to the daemon
 void Account::save()
 {
+   if (isTemporary()) return;
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    if (isNew()) {
       MapStringString details = getAccountDetails();

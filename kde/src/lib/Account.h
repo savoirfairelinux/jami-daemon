@@ -53,6 +53,7 @@ class LIB_EXPORT Account : public QObject {
       const QString&          getAlias()                             const;
       bool                    isEnabled()                            const;
       bool                    isRegistered()                         const;
+      bool                    isTemporary()                          const;
       QModelIndex             getIndex()                                  ;
       QString                 getStateColorName()                    const;
       Qt::GlobalColor         getStateColor()                        const;
@@ -134,6 +135,7 @@ class LIB_EXPORT Account : public QObject {
       void setAccountId      (const QString& id                        );
       void setAccountDetails (const MapStringString& m                 );
       void setAccountDetail  (const QString& param, const QString& val );
+      void setTemporary      (const bool value                         );
       #ifdef ENABLE_VIDEO
       void setActiveVideoCodecList(QList<VideoCodec*> codecs);
       QList<VideoCodec*> getActiveVideoCodecList();
@@ -227,6 +229,9 @@ class LIB_EXPORT Account : public QObject {
 
    private slots:
       void accountChanged(QString accountId,QString stateName, int state);
+
+   private:
+      bool m_Temporary;
 
    signals:
       ///The account state (Invalif,Trying,Registered) changed

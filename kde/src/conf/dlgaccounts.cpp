@@ -575,6 +575,7 @@ void DlgAccounts::on_button_accountAdd_clicked()
    QString itemName = QInputDialog::getText(this, "New account", "Enter new account's alias");
    itemName = itemName.simplified();
    if (!itemName.isEmpty()) {
+      AccountList::getInstance()->addAccount(itemName);
       int r = listView_accountList->model()->rowCount() - 1;
       listView_accountList->setCurrentIndex(listView_accountList->model()->index(r,0));
       frame2_editAccounts->setEnabled(true);
