@@ -84,6 +84,13 @@ try_clutter_init()
 #undef PRINT_ERR
 }
 
+static gboolean
+video_is_local(const gchar *id)
+{
+    static const gchar * const LOCAL_VIDEO_ID = "local";
+    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
+}
+
 void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
         gchar *id, gchar *shm_path, gint width, gint height,
         GError *error UNUSED, gpointer userdata UNUSED)
@@ -97,6 +104,8 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
         g_signal_connect(video_window_global, "delete-event",
                          G_CALLBACK(video_window_deleted_cb),
                          NULL);
+        if (video_is_local(id))
+            update_preview_button_label();
     }
 
     if (!try_clutter_init())
@@ -132,13 +141,6 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
         ERROR("Could not run video renderer");
         return;
     }
-}
-
-static gboolean
-video_is_local(const gchar *id)
-{
-    static const gchar * const LOCAL_VIDEO_ID = "local";
-    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
 }
 
 void
