@@ -71,9 +71,11 @@ SFLPhone::SFLPhone(QWidget *parent)
 ///Destructor
 SFLPhone::~SFLPhone()
 {
-   ConfigurationSkeleton::setDisplayContactDock ( m_pContactCD->isVisible()  );
-   ConfigurationSkeleton::setDisplayHistoryDock ( m_pHistoryDW->isVisible()  );
-   ConfigurationSkeleton::setDisplayBookmarkDock( m_pBookmarkDW->isVisible() );
+   if (!isHidden()) {
+      ConfigurationSkeleton::setDisplayContactDock ( m_pContactCD->isVisible()  );
+      ConfigurationSkeleton::setDisplayHistoryDock ( m_pHistoryDW->isVisible()  );
+      ConfigurationSkeleton::setDisplayBookmarkDock( m_pBookmarkDW->isVisible() );
+   }
    
    delete action_accept                ;
    delete action_refuse                ;
@@ -156,6 +158,14 @@ bool SFLPhone::initialize()
    m_pBookmarkDW      = new BookmarkDock ( this                     );
    m_pStatusBarWidget = new QLabel       (                          );
    m_pTrayIcon        = new SFLPhoneTray ( this->windowIcon(), this );
+   m_pTrayIcon->addAction( action_accept   );
+   m_pTrayIcon->addAction( action_mailBox  );
+   m_pTrayIcon->addAction( action_refuse   );
+   m_pTrayIcon->addAction( action_hold     );
+   m_pTrayIcon->addAction( action_transfer );
+   m_pTrayIcon->addAction( action_record   );
+   m_pTrayIcon->addSeparator();
+   m_pTrayIcon->addAction( action_quit     );
    
    addDockWidget( Qt::TopDockWidgetArea,m_pHistoryDW  );
    addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
@@ -396,6 +406,11 @@ void SFLPhone::setObjectNames()
 ///[Action]Hide sflphone
 bool SFLPhone::queryClose()
 {
+   if (!isHidden()) {
+      ConfigurationSkeleton::setDisplayContactDock ( m_pContactCD->isVisible()  );
+      ConfigurationSkeleton::setDisplayHistoryDock ( m_pHistoryDW->isVisible()  );
+      ConfigurationSkeleton::setDisplayBookmarkDock( m_pBookmarkDW->isVisible() );
+   }
    hide();
    return false;
 }
