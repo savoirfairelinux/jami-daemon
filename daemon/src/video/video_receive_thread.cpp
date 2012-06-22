@@ -257,8 +257,8 @@ void VideoReceiveThread::run()
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     receiving_ = false;
+    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     ost::Thread::terminate();
 
     if (imgConvertCtx_)
