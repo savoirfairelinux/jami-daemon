@@ -183,6 +183,7 @@ void VideoReceiveThread::setup()
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
+    DEBUG("shm sink started with size %d, width %d and height %d", bufferSize_, dstWidth_, dstHeight_);
 }
 
 void VideoReceiveThread::createScalingContext()
@@ -241,7 +242,7 @@ void VideoReceiveThread::run()
 
         // is this a packet from the video stream?
         if (inpacket.stream_index == streamIndex_) {
-            int frameFinished;
+            int frameFinished = 0;
             avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
                                   &inpacket);
 

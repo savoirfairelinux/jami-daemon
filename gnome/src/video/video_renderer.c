@@ -404,7 +404,8 @@ video_renderer_run(VideoRenderer *self)
 
     /* frames are read and saved here */
     g_object_ref(self);
-    g_idle_add(update_texture, self);
+    const gint FRAME_INTERVAL = 30; // ms
+    g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, FRAME_INTERVAL, update_texture, self, NULL);
 
     gtk_widget_show_all(GTK_WIDGET(priv->drawarea));
 

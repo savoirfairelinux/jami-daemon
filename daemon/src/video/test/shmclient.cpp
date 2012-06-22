@@ -3,6 +3,7 @@
 #include "shm_src.h"
 #include "../shm_header.h"
 #include "../../noncopyable.h"
+#include <sys/mman.h>
 #include <iostream>
 #include <clutter/clutter.h>
 
@@ -22,6 +23,11 @@ class ClutterSHMSrc : public SHMSrc {
 
         void render_to_texture()
         {
+            if (shm_area_ == MAP_FAILED) {
+                g_print("shm_area is MAP FAILED!\n");
+                return;
+            }
+
             shm_lock();
 
             while (buffer_gen_ == shm_area_->buffer_gen) {
@@ -31,8 +37,10 @@ class ClutterSHMSrc : public SHMSrc {
                 shm_lock();
             }
 
-            if (!resize_area())
+            if (!resize_area()) {
+                g_print("could not resize area\n");
                 return;
+            }
 
             clutter_actor_set_size(texture_, width_, height_);
             const int BPP = 4;
@@ -96,7 +104,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     /* frames are read and saved here */
-    g_idle_add(updateTexture, &src);
+    g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, 30, updateTexture, &src, NULL);
 
     clutter_actor_show_all(stage);
 

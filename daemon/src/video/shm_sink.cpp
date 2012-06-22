@@ -193,8 +193,10 @@ void SHMSink::render_callback(sfl_video::VideoReceiveThread * const th, const Ca
 {
     shm_lock();
 
-    if (!resize_area(sizeof(SHMHeader) + bytes))
+    if (!resize_area(sizeof(SHMHeader) + bytes)) {
+        ERROR("Could not resize area");
         return;
+    }
 
     callback(th, static_cast<void*>(shm_area_->data));
     shm_area_->buffer_size = bytes;
