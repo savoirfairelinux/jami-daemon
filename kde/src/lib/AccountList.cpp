@@ -32,7 +32,7 @@ AccountList* AccountList::m_spAccountList   = nullptr;
 QString      AccountList::m_sPriorAccountId = ""     ;
 
 ///Constructors
-AccountList::AccountList(QStringList & _accountIds)
+AccountList::AccountList(QStringList & _accountIds) : m_pColorVisitor(nullptr)
 {
    m_pAccounts = new QVector<Account*>();
    for (int i = 0; i < _accountIds.size(); ++i) {
@@ -45,7 +45,7 @@ AccountList::AccountList(QStringList & _accountIds)
 
 ///Constructors
 ///@param fill Whether to fill the list with accounts from configurationManager or not.
-AccountList::AccountList(bool fill)
+AccountList::AccountList(bool fill) : m_pColorVisitor(nullptr)
 {
    m_pAccounts = new QVector<Account *>();
    if(fill)
@@ -300,7 +300,11 @@ Account* AccountList::getCurrentAccount()
       return priorAccount;
    }
    else {
-      return AccountList::getInstance()->firstRegisteredAccount();
+      Account* a = AccountList::getInstance()->firstRegisteredAccount();
+      if (a)
+         return AccountList::getInstance()->firstRegisteredAccount();
+      else
+         return AccountList::getInstance()->getAccountById("IP2IP");
    }
 } //getCurrentAccount
 
@@ -322,7 +326,10 @@ QVariant AccountList::data ( const QModelIndex& index, int role) const
    else if(index.column() == 0 && role == Qt::CheckStateRole)
       return QVariant(account->isEnabled() ? Qt::Checked : Qt::Unchecked);
    else if (role == Qt::BackgroundRole) {
-      return QVariant(account->getStateColor());
+      if (m_pColorVisitor)
+         return m_pColorVisitor->getColor(account);
+      else
+         return QVariant(account->getStateColor());
    }
    else if(index.column() == 0 && role == Qt::DecorationRole) {
       /*TODO implement visitor*/
@@ -395,6 +402,12 @@ bool AccountList::setData(const QModelIndex & index, const QVariant &value, int 
    }
    emit dataChanged(index, index);
    return false;
+}
+
+///Set QAbstractItemModel BackgroundRole visitor
+void AccountList::setColorVisitor(AccountListColorVisitor* visitor)
+{
+   m_pColorVisitor = visitor;
 }
 
 

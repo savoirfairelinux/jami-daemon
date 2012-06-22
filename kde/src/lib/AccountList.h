@@ -29,6 +29,8 @@
 #include "typedefs.h"
 #include "dbus/metatypes.h"
 
+class AccountListColorVisitor;
+
 ///AccountList: List of all daemon accounts
 class LIB_EXPORT AccountList : public QAbstractListModel {
    Q_OBJECT
@@ -60,6 +62,7 @@ public:
    //Setters
    static  void setPriorAccountId( const QString& value                                     );
    virtual bool setData          ( const QModelIndex& index, const QVariant &value, int role);
+   void         setColorVisitor  ( AccountListColorVisitor* visitor                         );
    
    //Mutators
    virtual Account*  addAccount        ( QString & alias   )      ;
@@ -84,6 +87,7 @@ private:
    QVector<Account*>*  m_pAccounts;
    static AccountList* m_spAccountList;
    static QString      m_sPriorAccountId;
+   AccountListColorVisitor* m_pColorVisitor;
    
 public slots:
    void update();
@@ -97,6 +101,13 @@ signals:
    void accountListUpdated();
    ///Emitted when an account state change
    void accountStateChanged( Account* account, QString state);
+};
+
+///SFLPhonelib Qt does not link to QtGui, and does not need to, this allow to add runtime Gui support
+class LIB_EXPORT AccountListColorVisitor {
+public:
+   virtual QVariant getColor(const Account* a) = 0;
+   virtual ~AccountListColorVisitor() {}
 };
 
 #endif

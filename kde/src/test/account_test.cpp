@@ -610,7 +610,7 @@ void AccountTests::testDisableAllAccounts()
    for (int i=0;i<AccountList::getInstance()->size();i++) {
       saveState << (*AccountList::getInstance())[i]->isAccountEnabled();
       (*AccountList::getInstance())[i]->setAccountEnabled(false);
-      acc->save();
+      (*AccountList::getInstance())[i]->save();
    }
 
    QCOMPARE(AccountList::getCurrentAccount(),(Account*)NULL);
@@ -618,7 +618,7 @@ void AccountTests::testDisableAllAccounts()
    //Restore state
    for (int i=0;i<AccountList::getInstance()->size();i++) {
       (*AccountList::getInstance())[i]->setAccountEnabled(saveState[i]);
-      acc->save();
+      (*AccountList::getInstance())[i]->save();
    }
 }
 

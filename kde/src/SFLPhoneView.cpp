@@ -55,6 +55,52 @@
 
 //ConfigurationDialog* SFLPhoneView::configDialog;
 
+class ColorVisitor : public AccountListColorVisitor {
+public:
+   ColorVisitor(QPalette pal) : m_Pal(pal) {
+      m_Green = QColor(m_Pal.color(QPalette::Base));
+      if (m_Green.green()+20 >= 255) {
+         m_Green.setRed(((int)m_Green.red()-20));
+         m_Green.setBlue(((int)m_Green.blue()-20));
+      }
+      else
+         m_Green.setGreen(((int)m_Green.green()+20));
+      
+      m_Red = QColor(m_Pal.color(QPalette::Base));
+      if (m_Red.red()+20 >= 255) {
+         m_Red.setGreen(((int)m_Red.green()-20));
+         m_Red.setBlue(((int)m_Red.blue()-20));
+      }
+      else
+         m_Red.setRed(((int)m_Red.red()+20));
+
+      m_Yellow = QColor(m_Pal.color(QPalette::Base));
+      if (m_Yellow.red()+20 >= 255 || m_Green.green()+20 >= 255) {
+         m_Yellow.setBlue(((int)m_Yellow.blue()-20));
+      }
+      else {
+         m_Yellow.setGreen(((int)m_Yellow.green()+20));
+         m_Yellow.setRed(((int)m_Yellow.red()+20));
+      }
+   }
+   
+   virtual QVariant getColor(const Account* a) {
+      if(a->getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED || !a->isEnabled())
+            return m_Pal.color(QPalette::Base);
+      if(a->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || a->getAccountRegistrationStatus() == ACCOUNT_STATE_READY) {
+         return m_Green;
+      }
+      if(a->getAccountRegistrationStatus() == ACCOUNT_STATE_TRYING)
+               return m_Yellow;
+      return m_Red;
+   }
+private:
+   QPalette m_Pal;
+   QColor m_Green;
+   QColor m_Yellow;
+   QColor m_Red;
+};
+
 ///Constructor
 SFLPhoneView::SFLPhoneView(QWidget *parent)
    : QWidget(parent), wizard(0), errorWindow(0)
@@ -69,6 +115,8 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    QPalette pal = QPalette(palette());
    pal.setColor(QPalette::AlternateBase, Qt::lightGray);
    setPalette(pal);
+
+   AccountList::getInstance()->setColorVisitor(new ColorVisitor(pal));
 
    m_pMessageBoxW->setVisible(false);
 
@@ -159,8 +207,8 @@ void SFLPhoneView::typeString(QString str)
 
    Call* call = callView->getCurrentItem();
    callManager.playDTMF(str);
-   Call *currentCall = 0;
-   Call *candidate = 0;
+   Call *currentCall = nullptr;
+   Call *candidate   = nullptr;
 
    if(call) {
       if(call->getState() == CALL_STATE_CURRENT) {

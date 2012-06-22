@@ -103,7 +103,7 @@ Account::~Account()
 {
    disconnect();
    delete m_pAccountId;
-   delete m_pAccountDetails;
+   if (m_pAccountDetails) delete m_pAccountDetails;
 }
 
 
@@ -240,6 +240,8 @@ Qt::GlobalColor Account::getStateColor() const
 ///Set account details
 void Account::setAccountDetails(const MapStringString& m)
 {
+   if (m_pAccountDetails)
+      delete m_pAccountDetails;
    *m_pAccountDetails = m;
 }
 
@@ -318,8 +320,10 @@ void Account::reload()
       qDebug() << "Account not found";
    }
    else {
-      if (m_pAccountDetails)
+      if (m_pAccountDetails) {
          delete m_pAccountDetails;
+         m_pAccountDetails = nullptr;
+      }
       m_pAccountDetails = new MapStringString(aDetails);
    }
 }

@@ -200,7 +200,7 @@ bool SFLPhone::initialize()
 
    move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
 
-   if(configurationManager.getAccountList().value().isEmpty()) {
+   if(configurationManager.getAccountList().value().size() <= 1) {
       (new AccountWizard())->show();
    }
 
