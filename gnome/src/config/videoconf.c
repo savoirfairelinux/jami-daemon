@@ -103,7 +103,6 @@ static const gchar *const PREVIEW_STOP_STR = "_Stop";
 static void
 preview_button_toggled(GtkButton *button, gpointer data UNUSED)
 {
-    DEBUG("TOGGGGLED");
     preview_button = GTK_WIDGET(button);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)))
         dbus_start_video_preview();

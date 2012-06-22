@@ -55,7 +55,8 @@ libsflphone_client_la_SOURCES = \
   gtk2_wrappers.h \
   seekslider.h
 
-libsflphone_client_la_LDFLAGS = $(SFLPHONE_LIBS) @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
+libsflphone_client_la_LIBADD = $(SFLPHONE_LIBS)
+libsflphone_client_la_LDFLAGS = @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
                                 @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ @WEBKIT_LIBS@ \
                                 $(DL_LIBS) @GCONF_LIBS@ @JAVASCRIPT_CORE_GTK_LIBS@ \
                                 @GTHREAD_LIBS@
@@ -71,7 +72,7 @@ sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
                                @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
                                @GTHREAD_CFLAGS@
-sflphone_client_gnome_LDADD = $(SFLPHONE_LIBS) libsflphone_client.la
+sflphone_client_gnome_LDADD = libsflphone_client.la
 
 # add symbolic link
 install-exec-local:

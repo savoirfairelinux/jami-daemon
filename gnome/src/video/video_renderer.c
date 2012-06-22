@@ -389,9 +389,7 @@ video_renderer_run(VideoRenderer *self)
     };
     gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 
-    if (GTK_CLUTTER_IS_EMBED(priv->drawarea))
-        DEBUG("using clutter\n");
-    else
+    if (!GTK_CLUTTER_IS_EMBED(priv->drawarea))
         ERROR("Drawing area is not a GtkClutterEmbed widget");
 
     ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
