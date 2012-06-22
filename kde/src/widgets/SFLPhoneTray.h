@@ -40,15 +40,14 @@ public:
    //Constructor
    SFLPhoneTray(QIcon icon, QWidget *parent = 0);
    ~SFLPhoneTray();
-   bool initialize();
-
+   
    //Mutators
    void addAction(KAction *action);
+   void addSeparator();
 
 private:
    //Attributes
    QMenu* m_pTrayIconMenu;
-   bool   m_Init;
 };
 
 #endif // SFLPHONETRAY_H
