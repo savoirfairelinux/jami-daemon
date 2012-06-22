@@ -59,14 +59,21 @@ DBusManager::DBusManager() : callManager_(0)
 #endif
 {
     try {
+        DEBUG("DBUS init threading");
         DBus::_init_threading();
+        DEBUG("DBUS instantiate default dispatcher");
         DBus::default_dispatcher = &dispatcher_;
 
+        DEBUG("DBUS session connection to session bus");
         DBus::Connection sessionConnection(DBus::Connection::SessionBus());
+        DEBUG("DBUS request org.sflphone.SFLphone from session connection");
         sessionConnection.request_name("org.sflphone.SFLphone");
 
+        DEBUG("DBUS create call manager from session connection");
         callManager_ = new CallManager(sessionConnection);
+        DEBUG("DBUS create configuration manager from session connection");
         configurationManager_ = new ConfigurationManager(sessionConnection);
+        DEBUG("DBUS create instance manager from session connection");
         instanceManager_ = new Instance(sessionConnection);
 
 #ifdef SFL_VIDEO
@@ -74,7 +81,9 @@ DBusManager::DBusManager() : callManager_(0)
 #endif
 
 #ifdef USE_NETWORKMANAGER
+        DEBUG("DBUS system connection to system bus");
         DBus::Connection systemConnection(DBus::Connection::SystemBus());
+        DEBUG("DBUS create the network manager from the system bus");
         networkManager_ = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 
@@ -82,6 +91,8 @@ DBusManager::DBusManager() : callManager_(0)
         ERROR("%s: %s, exiting\n", err.name(), err.what());
         ::exit(EXIT_FAILURE);
     }
+
+    DEBUG("DBUS registration done");
 }
 
 DBusManager::~DBusManager()

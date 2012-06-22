@@ -86,7 +86,7 @@ void AudioRtpFactory::initConfig()
 
 void AudioRtpFactory::initSession()
 {
-    DEBUG("AudioRtpFactory: init session");
+    DEBUG("AudioRtpFactory: init session2");
     ost::MutexLock m(audioRtpThreadMutex_);
 
     if (srtpEnabled_) {

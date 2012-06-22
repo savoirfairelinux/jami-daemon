@@ -95,7 +95,7 @@ AudioRtpRecord::~AudioRtpRecord()
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     id_(call.getCallId()),
-    echoCanceller(call.getMemoryPool()),
+    // echoCanceller(call.getMemoryPool()),
     gainController(8000, -10.0)
 {}
 
@@ -173,8 +173,8 @@ int AudioRtpRecordHandler::processDataEncode()
 
     audioRtpRecord_.fadeInDecodedData(samples);
 
-    if (Manager::instance().getEchoCancelState())
-        echoCanceller.getData(micData);
+    // if (Manager::instance().getEchoCancelState())
+    //     echoCanceller.getData(micData);
 
     SFLDataFormat *out = micData;
 
@@ -249,8 +249,8 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
                 mainBufferSampleRate, inSamples);
     }
 
-    if (Manager::instance().getEchoCancelState())
-        echoCanceller.putData(out, outSamples);
+    // if (Manager::instance().getEchoCancelState())
+    //   echoCanceller.putData(out, outSamples);
 
     Manager::instance().getMainBuffer()->putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
