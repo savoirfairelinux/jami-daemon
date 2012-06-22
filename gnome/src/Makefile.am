@@ -13,18 +13,6 @@ if SFL_VIDEO
 SFLPHONE_LIBS+=./video/libvideo.la
 endif
 
-sflphone_client_gnome_SOURCES = main.c
-sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
-                               @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
-                               @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
-                               @GTHREAD_CFLAGS@
-sflphone_client_gnome_LDADD = $(SFLPHONE_LIBS) $(DL_LIBS) ./libsflphone_client.la
-
-SUBDIRS = config contacts dbus widget icons
-if SFL_VIDEO
-SUBDIRS += video
-endif
-
 noinst_LTLIBRARIES = libsflphone_client.la
 
 libsflphone_client_la_SOURCES = \
@@ -76,6 +64,14 @@ libsflphone_client_la_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
                                @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
                                @GTHREAD_CFLAGS@
+
+
+sflphone_client_gnome_SOURCES = main.c
+sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
+                               @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
+                               @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
+                               @GTHREAD_CFLAGS@
+sflphone_client_gnome_LDADD = $(SFLPHONE_LIBS) libsflphone_client.la
 
 # add symbolic link
 install-exec-local:

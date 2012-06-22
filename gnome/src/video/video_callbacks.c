@@ -34,28 +34,20 @@
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
-#include "config/videoconf.h"
 #include <string.h>
-#include "actions.h"
 #include "logger.h"
+#include "config/videoconf.h"
 #include "unused.h"
 
 // FIXME: get rid of these
 static GtkWidget *video_window_global = NULL;
 static gboolean video_window_fullscreen = FALSE;
 
-static gboolean
-video_stream_is_local(const gchar * id)
-{
-    static const gchar * const LOCAL_VIDEO_ID = "local";
-    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
-}
-
 static void
 video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
-    // FIXME: probably need to do something smarter here
-    sflphone_hang_up();
+    if (dbus_has_video_preview_started())
+        dbus_stop_video_preview();
 }
 
 static void
@@ -99,13 +91,12 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
     if (!video_window_global) {
         video_window_global = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         video_window_fullscreen = FALSE;
-        if (video_stream_is_local(id))
-            toggle_preview_button_label();
         g_signal_connect(video_window_global, "button_press_event",
                          G_CALLBACK(video_window_button_cb),
                          &video_window_fullscreen);
         g_signal_connect(video_window_global, "delete-event",
-                         G_CALLBACK(video_window_deleted_cb), NULL);
+                         G_CALLBACK(video_window_deleted_cb),
+                         NULL);
     }
 
     if (!try_clutter_init())
@@ -143,14 +134,24 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
     }
 }
 
+static gboolean
+video_is_local(const gchar *id)
+{
+    static const gchar * const LOCAL_VIDEO_ID = "local";
+    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
+}
+
 void
 stopped_decoding_video_cb(DBusGProxy *proxy UNUSED, gchar *id, gchar *shm_path, GError *error UNUSED, gpointer userdata UNUSED)
 {
     DEBUG("Video stopped for id %s, shm path %s", id, shm_path);
 
     if (video_window_global) {
-        if (GTK_IS_WIDGET(video_window_global))
+        if (GTK_IS_WIDGET(video_window_global)) {
             gtk_widget_destroy(video_window_global);
+            if (video_is_local(id))
+                update_preview_button_label();
+        }
         video_window_global = NULL;
     }
 }

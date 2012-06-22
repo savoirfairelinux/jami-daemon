@@ -122,6 +122,13 @@
         <method name="stopPreview" tp:name-for-bindings="stopPreview">
         </method>
 
+        <method name="hasPreviewStarted" tp:name-for-bindings="hasPreviewStarted">
+            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="Bool"/>
+            <arg type="b" name="started" direction="out">
+            <tp:docstring>Returns true if the preview has already started, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
         <signal name="deviceEvent" tp:name-for-bindings="deviceEvent">
            <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
         </signal>

@@ -36,7 +36,6 @@
 #include "unused.h"
 #include "eel-gconf-extensions.h"
 #include "dbus.h"
-#include "actions.h"
 #include "codeclist.h"
 
 static GtkWidget *v4l2Device;
@@ -104,23 +103,31 @@ static const gchar *const PREVIEW_STOP_STR = "_Stop";
 static void
 preview_button_toggled(GtkButton *button, gpointer data UNUSED)
 {
+    DEBUG("TOGGGGLED");
     preview_button = GTK_WIDGET(button);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)))
         dbus_start_video_preview();
     else
         dbus_stop_video_preview();
 
-    toggle_preview_button_label();
+    update_preview_button_label();
 }
 
 void
-toggle_preview_button_label()
+update_preview_button_label()
 {
+    if (!preview_button || !GTK_IS_WIDGET(preview_button))
+        return;
+
     GtkToggleButton *button = GTK_TOGGLE_BUTTON(preview_button);
-    if (gtk_toggle_button_get_active(button))
+    if (dbus_has_video_preview_started()) {
+        /* We call g_object_set to avoid triggering the "toggled" signal */
         gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_STOP_STR));
-    else
+        g_object_set(button, "active", TRUE, NULL);
+    } else {
         gtk_button_set_label(GTK_BUTTON(button), _(PREVIEW_START_STR));
+        g_object_set(button, "active", FALSE, NULL);
+    }
 }
 
 /**
@@ -703,12 +710,16 @@ GtkWidget* create_video_configuration()
     gnome_main_section_new_with_table(_("Preview"), &frame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-    preview_button = gtk_toggle_button_new_with_mnemonic(_("_Start"));
+    const gboolean started = dbus_has_video_preview_started();
+
+    preview_button = gtk_toggle_button_new_with_mnemonic(started ? _(PREVIEW_STOP_STR) : _(PREVIEW_START_STR));
     gtk_widget_set_size_request(preview_button, 80, 30);
     gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
+    gtk_widget_show(GTK_WIDGET(preview_button));
+    if (started)
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preview_button), TRUE);
     g_signal_connect(G_OBJECT(preview_button), "toggled",
                      G_CALLBACK(preview_button_toggled), NULL);
-    gtk_widget_show(GTK_WIDGET(preview_button));
 
     gchar **list = dbus_get_call_list();
     gboolean active_call;

@@ -623,6 +623,7 @@ void dbus_stop_recorded_file_playback(const gchar *);
 
 void dbus_start_video_preview();
 void dbus_stop_video_preview();
+gboolean dbus_has_video_preview_started();
 
 /**
  * Prevent Gnome Session Manager from entering in screen-saver mode

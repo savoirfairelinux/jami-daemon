@@ -199,6 +199,12 @@ VideoControls::stopPreview()
     }
 }
 
+bool
+VideoControls::hasPreviewStarted()
+{
+    return preview_.get() != 0;
+}
+
 std::string
 VideoControls::getCurrentCodecName(const std::string &callID)
 {

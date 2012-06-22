@@ -2170,29 +2170,31 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
 
 #ifdef SFL_VIDEO
 static void
-start_video_preview_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+video_preview_async_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
 {
-    DEBUG("%s", __PRETTY_FUNCTION__);
-    check_error(error);
-}
-
-static void
-stop_video_preview_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
-{
-    DEBUG("%s", __PRETTY_FUNCTION__);
     check_error(error);
 }
 
 void
 dbus_start_video_preview()
 {
-    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy, start_video_preview_cb, NULL);
+    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy, video_preview_async_cb, NULL);
 }
 
 void
 dbus_stop_video_preview()
 {
-    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy, stop_video_preview_cb, NULL);
+    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy, video_preview_async_cb, NULL);
+}
+
+gboolean
+dbus_has_video_preview_started()
+{
+    GError *error = NULL;
+    gboolean started = FALSE;
+    org_sflphone_SFLphone_VideoControls_has_preview_started(video_proxy, &started, &error);
+    check_error(error);
+    return started;
 }
 #endif
 
