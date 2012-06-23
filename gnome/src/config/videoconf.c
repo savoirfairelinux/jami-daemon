@@ -113,6 +113,15 @@ preview_button_toggled(GtkButton *button, gpointer data UNUSED)
 }
 
 void
+set_preview_button_sensitivity(gboolean sensitive)
+{
+    if (!preview_button || !GTK_IS_WIDGET(preview_button))
+        return;
+    DEBUG("%ssetting preview button", sensitive ? "" : "Un");
+    gtk_widget_set_sensitive(GTK_WIDGET(preview_button), sensitive);
+}
+
+void
 update_preview_button_label()
 {
     if (!preview_button || !GTK_IS_WIDGET(preview_button))

@@ -42,6 +42,7 @@ class VideoReceiveThread;
 class VideoPreview {
     public:
         VideoPreview(const std::map<std::string, std::string> &args);
+        ~VideoPreview();
 
     private:
         std::map<std::string, std::string> args_;

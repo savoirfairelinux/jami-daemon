@@ -2173,17 +2173,21 @@ static void
 video_preview_async_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
 {
     check_error(error);
+    // Reactivate it now that we're done, D-Bus wise
+    set_preview_button_sensitivity(TRUE);
 }
 
 void
 dbus_start_video_preview()
 {
+    set_preview_button_sensitivity(FALSE);
     org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy, video_preview_async_cb, NULL);
 }
 
 void
 dbus_stop_video_preview()
 {
+    set_preview_button_sensitivity(FALSE);
     org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy, video_preview_async_cb, NULL);
 }
 

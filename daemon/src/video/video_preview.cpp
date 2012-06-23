@@ -29,9 +29,9 @@
  */
 
 #include "video_preview.h"
+#include "logger.h"
 #include <map>
 #include <string>
-#include "manager.h"
 #include "video_receive_thread.h"
 
 class VideoControls;
@@ -44,6 +44,12 @@ VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
     const char * const LOCAL_ID = "local";
     receiveThread_.reset(new VideoReceiveThread(LOCAL_ID, args_));
     receiveThread_->start();
+}
+
+VideoPreview::~VideoPreview()
+{
+    // explicitly destroy the thread object
+    receiveThread_.reset();
 }
 
 } // end namspace sfl_video
