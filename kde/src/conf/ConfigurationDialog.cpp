@@ -43,11 +43,11 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 
    dlgGeneral       = new DlgGeneral       (this);
    dlgDisplay       = new DlgDisplay       (this);
-   dlgAccounts      = new DlgAccounts      (this);
    dlgAudio         = new DlgAudio         (this);
    dlgAddressBook   = new DlgAddressBook   (this);
    dlgHooks         = new DlgHooks         (this);
    dlgAccessibility = new DlgAccessibility (this);
+   dlgAccounts      = new DlgAccounts      (this);
 
    #ifdef ENABLE_VIDEO
    dlgVideo         = new DlgVideo         (this);

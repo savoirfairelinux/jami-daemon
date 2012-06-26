@@ -157,6 +157,12 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
    connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
+
+
+   if (AccountList::getInstance()->index(0,0).isValid()) {
+      listView_accountList->setCurrentIndex(AccountList::getInstance()->index(0,0));
+      loadAccount(listView_accountList->currentIndex());
+   }
 } //DlgAccounts
 
 ///Destructor
@@ -315,7 +321,7 @@ void DlgAccounts::saveAccount(QModelIndex item)
 void DlgAccounts::loadAccount(QModelIndex item)
 {
    if(! item.isValid() ) {
-      kDebug() << "Attempting to load details of an account from a NULL item";
+      kDebug() << "Attempting to load details of an account from a NULL item (" << item.row() << ")";
       return;
    }
 
@@ -420,8 +426,10 @@ void DlgAccounts::loadAccount(QModelIndex item)
    if (account->getAccountAlias() == "IP2IP") {
       frame2_editAccounts->setTabEnabled(0,false);
       frame2_editAccounts->setTabEnabled(1,false);
+      frame2_editAccounts->setTabEnabled(2,true );
       frame2_editAccounts->setTabEnabled(3,false);
       frame2_editAccounts->setTabEnabled(4,false);
+      frame2_editAccounts->setTabEnabled(5,true );
    }
    else {
       frame2_editAccounts->setTabEnabled(0,true);
@@ -518,12 +526,13 @@ void DlgAccounts::loadAccount(QModelIndex item)
 void DlgAccounts::loadAccountList()
 {
    AccountList::getInstance()->updateAccounts();
-   //TODO listView_accountList->clear();
    for (int i = 0; i < AccountList::getInstance()->size(); ++i) {
       addAccountToAccountList((*AccountList::getInstance())[i]);
    }
    if (listView_accountList->model()->rowCount() > 0 && !listView_accountList->currentIndex().isValid())
       listView_accountList->setCurrentIndex(listView_accountList->model()->index(0,0));
+   else if (listView_accountList->currentIndex().isValid())
+      frame2_editAccounts->setEnabled(true);
    else
       frame2_editAccounts->setEnabled(false);
 }
