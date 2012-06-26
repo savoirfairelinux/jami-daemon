@@ -229,12 +229,23 @@ video_renderer_start_shm(VideoRenderer *self)
     return TRUE;
 }
 
-static const gint TIMEOUT_NSEC = 50 * 10E6;
+static const gint TIMEOUT_NSEC = 10E8; // 1 second
+
+static struct timespec
+create_timeout()
+{
+    struct timespec timeout = {0, 0};
+    if (clock_gettime(CLOCK_REALTIME, &timeout) == -1)
+        perror("clock_gettime");
+    timeout.tv_nsec += TIMEOUT_NSEC;
+    return timeout;
+}
+
 
 static gboolean
 shm_lock(SHMHeader *shm_area)
 {
-    const struct timespec timeout = {0, TIMEOUT_NSEC};
+    const struct timespec timeout = create_timeout();
     /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
     if (sem_timedwait(&shm_area->mutex, &timeout) == ETIMEDOUT) {
         ERROR("Timed out before shm lock was acquired");
@@ -283,13 +294,14 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
     if (!shm_lock(priv->shm_area))
         return;
 
+    // wait for a new buffer
     while (priv->buffer_gen == priv->shm_area->buffer_gen) {
         shm_unlock(priv->shm_area);
-        const struct timespec timeout = {0, TIMEOUT_NSEC};
-        if (sem_timedwait(&priv->shm_area->notification, &timeout) == ETIMEDOUT) {
-            ERROR("Timed out before notifcation lock was acquired");
+        const struct timespec timeout = create_timeout();
+        // Could not decrement semaphore in time, returning
+        if (sem_timedwait(&priv->shm_area->notification, &timeout) < 0)
             return;
-        }
+
         if (!shm_lock(priv->shm_area))
             return;
     }
