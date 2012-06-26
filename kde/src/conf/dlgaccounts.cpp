@@ -586,6 +586,7 @@ void DlgAccounts::on_button_accountRemove_clicked()
 {
    kDebug() << "on_button_accountRemove_clicked";
    AccountList::getInstance()->removeAccount(listView_accountList->currentIndex());
+   listView_accountList->setCurrentIndex(listView_accountList->model()->index(0,0));
 }
 
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
@@ -636,6 +637,7 @@ void DlgAccounts::updateAccountStates()
 
 void DlgAccounts::updateStatusLabel(QModelIndex item)
 {
+   kDebug() << "MODEL index is" << item.row();
    if(!item.isValid()) {
       return;
    }
