@@ -669,16 +669,6 @@
           <string>Credential</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="0" rowspan="2" colspan="3">
-           <widget class="QListWidget" name="list_credential">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="0">
            <spacer name="horizontalSpacer_2">
             <property name="orientation">
@@ -779,6 +769,16 @@
            <widget class="QToolButton" name="button_remove_credential">
             <property name="text">
              <string>Remove</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" rowspan="2" colspan="3">
+           <widget class="QListView" name="list_credential">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
            </widget>
           </item>

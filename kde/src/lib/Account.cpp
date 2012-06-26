@@ -34,6 +34,7 @@
 #include "callmanager_interface_singleton.h"
 #include "video_interface_singleton.h"
 #include "AccountList.h"
+#include "CredentialModel.h"
 
 ///Match state name to user readable string
 const QString& account_state_name(const QString& s)
@@ -71,7 +72,7 @@ const QString& account_state_name(const QString& s)
 } //account_state_name
 
 ///Constructors
-Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_Temporary(false)
+Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_Temporary(false),m_pCredentials(nullptr)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager,SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
@@ -103,6 +104,7 @@ Account::~Account()
 {
    disconnect();
    delete m_pAccountId;
+   if (m_pCredentials)    delete m_pCredentials;
    if (m_pAccountDetails) delete m_pAccountDetails;
 }
 
@@ -237,6 +239,15 @@ Qt::GlobalColor Account::getStateColor() const
    return Qt::darkRed;
 }
 
+
+CredentialModel* Account::getCredentialsModel()
+{
+   if (!m_pCredentials) {
+      reloadCredentials();
+   }
+   return m_pCredentials;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Setters                                  *
@@ -338,6 +349,37 @@ void Account::reload()
          m_pAccountDetails = nullptr;
       }
       m_pAccountDetails = new MapStringString(aDetails);
+   }
+}
+
+void Account::reloadCredentials()
+{
+   if (!m_pCredentials) {
+      m_pCredentials = new CredentialModel(this);
+         ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+         VectorMapStringString credentials = configurationManager.getCredentials(getAccountId());
+         for (int i=0; i < credentials.size(); i++) {
+            QModelIndex idx = m_pCredentials->addCredentials();
+            m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_USERNAME  ],CredentialModel::NAME_ROLE    );
+            m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_PASSWORD  ],CredentialModel::PASSWORD_ROLE);
+            m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_REALM     ],CredentialModel::REALM_ROLE   );
+         }
+   }
+}
+
+void Account::saveCredentials() {
+   if (m_pCredentials) {
+      ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+      VectorMapStringString toReturn;
+      for (int i=0; i < m_pCredentials->rowCount();i++) {
+         QModelIndex idx = m_pCredentials->index(i,0);
+         MapStringString credentialData;
+         credentialData[ CONFIG_ACCOUNT_USERNAME] = m_pCredentials->data(idx,CredentialModel::NAME_ROLE     ).toString();
+         credentialData[ CONFIG_ACCOUNT_PASSWORD] = m_pCredentials->data(idx,CredentialModel::PASSWORD_ROLE ).toString();
+         credentialData[ CONFIG_ACCOUNT_REALM   ] = m_pCredentials->data(idx,CredentialModel::REALM_ROLE    ).toString();
+         toReturn << credentialData;
+      }
+      configurationManager.setCredentials(getAccountId(),toReturn);
    }
 }
 

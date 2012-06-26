@@ -38,6 +38,7 @@
 #include "lib/configurationmanager_interface_singleton.h"
 #include "SFLPhoneView.h"
 #include "lib/sflphone_const.h"
+#include "lib/CredentialModel.h"
 
 Private_AddCodecDialog::Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent) : KDialog(parent)
 {
@@ -100,59 +101,62 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    m_pRingTonePath->lineEdit()->setObjectName("m_pRingTonePath");
    m_pRingTonePath->lineEdit()->setReadOnly(true);
 
-   //accountList = new ConfigAccountList(false);
    loadAccountList();
    loadCodecList();
    accountListHasChanged = false;
 
    //SLOTS
-   //                     SENDER                            SIGNAL                    RECEIVER               SLOT                   /
-   /**/connect(edit1_alias,                    SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit2_protocol,                 SIGNAL(activated(int))               , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit3_server,                   SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit4_user,                     SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit5_password,                 SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit6_mailbox,                  SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(spinbox_regExpire,              SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()        ));
-   /**/connect(comboBox_ni_local_address,      SIGNAL(currentIndexChanged (int))    , this      , SLOT(changedAccountList()        ));
-   /**/connect(button_accountUp,               SIGNAL(clicked())                    , this      , SLOT(changedAccountList()        ));
-   /**/connect(button_accountDown,             SIGNAL(clicked())                    , this      , SLOT(changedAccountList()        ));
-   /**/connect(button_accountAdd,              SIGNAL(clicked())                    , this      , SLOT(changedAccountList()        ));
-   /**/connect(button_accountRemove,           SIGNAL(clicked())                    , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(spinbox_tls_listener,           SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()        ));
-   /**/connect(file_tls_authority,             SIGNAL(textChanged(const QString &)) , this      , SLOT(changedAccountList()        ));
-   /**/connect(file_tls_endpoint,              SIGNAL(textChanged(const QString &)) , this      , SLOT(changedAccountList()        ));
-   /**/connect(file_tls_private_key,           SIGNAL(textChanged(const QString &)) , this      , SLOT(changedAccountList()        ));
-   /**/connect(combo_tls_method,               SIGNAL(currentIndexChanged(int))     , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit_tls_cipher,                SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(edit_tls_outgoing,              SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(spinbox_tls_timeout_sec,        SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()        ));
-   /**/connect(spinbox_tls_timeout_msec,       SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()        ));
-   /**/connect(check_tls_incoming,             SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()        ));
-   /**/connect(check_tls_answer,               SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()        ));
-   /**/connect(check_tls_requier_cert,         SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()        ));
-   /**/connect(group_security_tls,             SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()        ));
-   /**/connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()        ));
-   /**/connect(radioButton_pa_custom,          SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()        ));
-   /**/connect(m_pRingtoneListLW,              SIGNAL(currentRowChanged(int))       , this      , SLOT(changedAccountList()        ));
-   /**/connect(m_pUseCustomFileCK,             SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()        ));
-   /**/connect(m_pCodecsLW,                    SIGNAL(itemChanged(QListWidgetItem*)), this      , SLOT(changedAccountList()        ));
-   /**/connect(m_pCodecsLW,                    SIGNAL(currentTextChanged(QString))  , this      , SLOT(loadVidCodecDetails(QString)));
-   /**/connect(&configurationManager,          SIGNAL(accountsChanged())            , this      , SLOT(updateAccountStates()       ));
-   /**/connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()        ));
-   /**/connect(this,                           SIGNAL(updateButtons())              , parent    , SLOT(updateButtons()             ));
-   /**/connect(keditlistbox_codec->listView(), SIGNAL(clicked(QModelIndex))         , this      , SLOT(codecClicked(QModelIndex)   ));
-   /**/connect(keditlistbox_codec->addButton(),SIGNAL(clicked())                    , this      , SLOT(addCodec()                  ));
-   /**/connect(keditlistbox_codec,             SIGNAL(changed())                    , this      , SLOT(codecChanged()              ));
-   /**/connect(combo_security_STRP,            SIGNAL(currentIndexChanged(int))     , this      , SLOT(updateCombo(int)            ));
-   /**/connect(button_add_credential,          SIGNAL(clicked())                    , this      , SLOT(addCredential()             ));
-   /**/connect(button_remove_credential,       SIGNAL(clicked())                    , this      , SLOT(removeCredential()          ));
+   //                     SENDER                            SIGNAL                    RECEIVER               SLOT                           /
+   /**/connect(edit1_alias,                    SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit2_protocol,                 SIGNAL(activated(int))               , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit3_server,                   SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit4_user,                     SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit5_password,                 SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit6_mailbox,                  SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(spinbox_regExpire,              SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()               ));
+   /**/connect(comboBox_ni_local_address,      SIGNAL(currentIndexChanged (int))    , this      , SLOT(changedAccountList()               ));
+   /**/connect(button_accountUp,               SIGNAL(clicked())                    , this      , SLOT(changedAccountList()               ));
+   /**/connect(button_accountDown,             SIGNAL(clicked())                    , this      , SLOT(changedAccountList()               ));
+   /**/connect(button_accountAdd,              SIGNAL(clicked())                    , this      , SLOT(changedAccountList()               ));
+   /**/connect(button_accountRemove,           SIGNAL(clicked())                    , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(spinbox_tls_listener,           SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()               ));
+   /**/connect(file_tls_authority,             SIGNAL(textChanged(const QString &)) , this      , SLOT(changedAccountList()               ));
+   /**/connect(file_tls_endpoint,              SIGNAL(textChanged(const QString &)) , this      , SLOT(changedAccountList()               ));
+   /**/connect(file_tls_private_key,           SIGNAL(textChanged(const QString &)) , this      , SLOT(changedAccountList()               ));
+   /**/connect(combo_tls_method,               SIGNAL(currentIndexChanged(int))     , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit_tls_cipher,                SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit_tls_outgoing,              SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(spinbox_tls_timeout_sec,        SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()               ));
+   /**/connect(spinbox_tls_timeout_msec,       SIGNAL(editingFinished())            , this      , SLOT(changedAccountList()               ));
+   /**/connect(check_tls_incoming,             SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()               ));
+   /**/connect(check_tls_answer,               SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()               ));
+   /**/connect(check_tls_requier_cert,         SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()               ));
+   /**/connect(group_security_tls,             SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()               ));
+   /**/connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()               ));
+   /**/connect(radioButton_pa_custom,          SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()               ));
+   /**/connect(m_pRingtoneListLW,              SIGNAL(currentRowChanged(int))       , this      , SLOT(changedAccountList()               ));
+   /**/connect(m_pUseCustomFileCK,             SIGNAL(clicked(bool))                , this      , SLOT(changedAccountList()               ));
+   /**/connect(m_pCodecsLW,                    SIGNAL(itemChanged(QListWidgetItem*)), this      , SLOT(changedAccountList()               ));
+   /**/connect(edit_credential_realm,          SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit_credential_auth,           SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(edit_credential_password,       SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(m_pCodecsLW,                    SIGNAL(currentTextChanged(QString))  , this      , SLOT(loadVidCodecDetails(QString)       ));
+   /**/connect(&configurationManager,          SIGNAL(accountsChanged())            , this      , SLOT(updateAccountStates()              ));
+   /**/connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &))  , this      , SLOT(changedAccountList()               ));
+   /**/connect(this,                           SIGNAL(updateButtons())              , parent    , SLOT(updateButtons()                    ));
+   /**/connect(keditlistbox_codec->listView(), SIGNAL(clicked(QModelIndex))         , this      , SLOT(codecClicked(QModelIndex)          ));
+   /**/connect(keditlistbox_codec->addButton(),SIGNAL(clicked())                    , this      , SLOT(addCodec()                         ));
+   /**/connect(keditlistbox_codec,             SIGNAL(changed())                    , this      , SLOT(codecChanged()                     ));
+   /**/connect(combo_security_STRP,            SIGNAL(currentIndexChanged(int))     , this      , SLOT(updateCombo(int)                   ));
+   /**/connect(button_add_credential,          SIGNAL(clicked())                    , this      , SLOT(addCredential()                    ));
+   /**/connect(button_remove_credential,       SIGNAL(clicked())                    , this      , SLOT(removeCredential()                 ));
+   /**/connect(edit5_password,                 SIGNAL(textEdited(const QString &))  , this      , SLOT(main_password_field_changed()      ));
+   /**/connect(edit_credential_password,       SIGNAL(textEdited(const QString &))  , this      , SLOT(main_credential_password_changed() ));
    /*                                                                                                                               */
 
    connect(listView_accountList, SIGNAL(currentAccountChanged(Account*,Account*)), this, SLOT(accountListChanged(Account*,Account*)));
    connect(listView_accountList, SIGNAL(currentIndexChanged(QModelIndex,QModelIndex)), this, SLOT(updateAccountListCommands()));
-   connect(list_credential,      SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectCredential  (QListWidgetItem*,QListWidgetItem*)));
 
    //Disable control
    connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
@@ -181,32 +185,7 @@ void DlgAccounts::saveAccountList()
       saveAccount(listView_accountList->currentIndex());
    }
    
-   //accountList->save();
    AccountList::getInstance()->save();
-
-//    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-//    //save the account being edited
-//    if(listView_accountList->currentIndex()) {
-//       saveAccount(listView_accountList->currentIndex());
-//    }
-//    QStringList accountIds= QStringList(configurationManager.getAccountList().value());
-// 
-//    //create or update each account from accountList
-//    for (int i = 0; i < accountList->size(); i++) {
-//       AccountView* current = (*accountList)[i];
-//       QString currentId;
-//       current->save();
-//       currentId = QString(current->getAccountId());
-//    }
-// 
-//    //remove accounts that are in the configurationManager but not in the client
-//    for (int i = 0; i < accountIds.size(); i++) {
-//       if(!accountList->getAccountById(accountIds[i])) {
-//          configurationManager.removeAccount(accountIds[i]);
-//       }
-//    }
-// 
-//    configurationManager.setAccountsOrder(accountList->getOrderedList());
    connectAccountsChangedSignal();
 } //saveAccountList
 
@@ -315,7 +294,7 @@ void DlgAccounts::saveAccount(QModelIndex item)
    }
    VideoCodec::setActiveCodecList(account,activeCodecs);
 
-   saveCredential(account->getAccountId());
+   saveCredential();
 } //saveAccount
 
 void DlgAccounts::loadAccount(QModelIndex item)
@@ -344,25 +323,11 @@ void DlgAccounts::loadAccount(QModelIndex item)
    delete protocolsList;
 
 
-
-   loadCredentails(account->getAccountId());
-
-   if (credentialList.size() > 0) {
-      bool found = false;
-      foreach(CredentialData data,credentialList) {
-         if (data.name == account->getAccountUsername()) {
-            edit5_password->setText( data.password );
-            found = true;
-         }
-      }
-      if (!found) {
-         //Better than nothing, can happen if username change
-         edit5_password->setText( credentialList[0].password );
-      }
-   }
-   else {
+   QModelIndex idx = account->getCredentialsModel()->index(0,0);
+   if (idx.isValid())
+      edit5_password->setText(account->getCredentialsModel()->data(idx,CredentialModel::PASSWORD_ROLE).toString());
+   else
       edit5_password->setText("");
-   }
 
 
    switch (account->getTlsMethod()) {
@@ -422,6 +387,10 @@ void DlgAccounts::loadAccount(QModelIndex item)
    /**/group_security_tls->setChecked           (  account->isTlsEnable                    ());
    /**/combo_security_STRP->setCurrentIndex     (  account->getTlsMethod                   ());
    /*                                                                                       */
+
+   disconnect(list_credential->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential  (QModelIndex,QModelIndex)));
+   list_credential->setModel(account->getCredentialsModel());
+   connect(list_credential->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential  (QModelIndex,QModelIndex)));
 
    if (account->getAccountAlias() == "IP2IP") {
       frame2_editAccounts->setTabEnabled(0,false);
@@ -627,6 +596,19 @@ void DlgAccounts::updateAccountListCommands()
    button_accountRemove->setEnabled ( buttonsEnabled[3] );
 }
 
+
+void DlgAccounts::main_password_field_changed()
+{
+   list_credential->model()->setData(list_credential->model()->index(0,0),edit5_password->text(),CredentialModel::PASSWORD_ROLE);
+}
+
+void DlgAccounts::main_credential_password_changed()
+{
+   if (list_credential->currentIndex().row() == 0) {
+      edit5_password->setText(edit_credential_password->text());
+   }
+}
+
 void DlgAccounts::loadVidCodecDetails(const QString& text)
 {
    VideoCodec* codec = VideoCodec::getCodec(text);
@@ -788,71 +770,51 @@ void DlgAccounts::updateCombo(int value)
    }
 } //updateCombo
 
-
-void DlgAccounts::loadCredentails(QString accountId) {
-   credentialInfo.clear();
-   credentialList.clear();
-   list_credential->clear();
-   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   VectorMapStringString credentials = configurationManager.getCredentials(accountId);
-   for (int i=0; i < credentials.size(); i++) {
-      QListWidgetItem* newItem = new QListWidgetItem();
-      newItem->setText(credentials[i][ CONFIG_ACCOUNT_USERNAME ]);
-      CredentialData data;
-      data.pointer  = newItem                       ;
-      data.name     = credentials[i][ CONFIG_ACCOUNT_USERNAME  ] ;
-      data.password = credentials[i][ CONFIG_ACCOUNT_PASSWORD  ] ;
-      data.realm    = credentials[i][ CONFIG_ACCOUNT_REALM     ] ;
-      credentialInfo[newItem] = data;
-      credentialList << data;
-      list_credential->addItem(newItem);
+void DlgAccounts::saveCredential()
+{
+   QModelIndex index = listView_accountList->currentIndex();
+   Account*    acc   = AccountList::getInstance()->getAccountByModelIndex(index);
+   QModelIndex currentCredential = list_credential->currentIndex();
+   if (currentCredential.isValid()) {
+      acc->getCredentialsModel()->setData(currentCredential,edit_credential_auth->text()    , CredentialModel::NAME_ROLE     );
+      acc->getCredentialsModel()->setData(currentCredential,edit_credential_password->text(), CredentialModel::PASSWORD_ROLE );
+      acc->getCredentialsModel()->setData(currentCredential,edit_credential_realm->text()   , CredentialModel::REALM_ROLE    );
    }
-} //loadCredentails
 
-void DlgAccounts::saveCredential(QString accountId) {
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   //configurationManager.setNumberOfCredential(accountId, list_credential->count()); //TODO
-   VectorMapStringString toReturn;
-
-   for (int i=0; i < list_credential->count();i++) {
-      QListWidgetItem* currentItem = list_credential->item(i);
-      MapStringString credentialData;
-      credentialData[CONFIG_ACCOUNT_USERNAME] = credentialInfo[currentItem].name     ;
-      credentialData[CONFIG_ACCOUNT_PASSWORD] = credentialInfo[currentItem].password ;
-      credentialData[CONFIG_ACCOUNT_REALM]    = credentialInfo[currentItem].realm    ;
-      toReturn << credentialData;
-   }
-   configurationManager.setCredentials(accountId,toReturn);
+   acc->saveCredentials();
 } //saveCredential
 
-void DlgAccounts::addCredential() {
-   QListWidgetItem* newItem = new QListWidgetItem();
-   newItem->setText(i18n("New credential"));
-   credentialInfo[newItem] = {newItem, i18n("New credential"), "",""};
+void DlgAccounts::addCredential()
+{
+   QModelIndex index = listView_accountList->currentIndex();
+   Account*    acc   = AccountList::getInstance()->getAccountByModelIndex(index);
 
-   selectCredential(newItem,list_credential->currentItem());
-   list_credential->addItem(newItem);
-   list_credential->setCurrentItem(newItem);
+   QModelIndex idx = acc->getCredentialsModel()->addCredentials();
+   list_credential->setCurrentIndex(idx);
 } //addCredential
 
-void DlgAccounts::selectCredential(QListWidgetItem* item, QListWidgetItem* previous) {
-   if (previous) {
-      credentialInfo[previous].realm    = edit_credential_realm->text();
-      credentialInfo[previous].name     = edit_credential_auth->text();
-      credentialInfo[previous].password = edit_credential_password->text();
-      previous->setText(edit_credential_auth->text());
-   }
-   list_credential->setCurrentItem      ( item                          );
-   edit_credential_realm->setText       ( credentialInfo[item].realm    );
-   edit_credential_auth->setText        ( credentialInfo[item].name     );
-   edit_credential_password->setText    ( credentialInfo[item].password );
+void DlgAccounts::selectCredential(QModelIndex item, QModelIndex previous)
+{
+   list_credential->model()->setData(previous,edit_credential_auth->text()    , CredentialModel::NAME_ROLE     );
+   list_credential->model()->setData(previous,edit_credential_password->text(), CredentialModel::PASSWORD_ROLE );
+   list_credential->model()->setData(previous,edit_credential_realm->text()   , CredentialModel::REALM_ROLE    );
+   
+   edit_credential_realm->setText       ( list_credential->model()->data(item,CredentialModel::REALM_ROLE)    .toString());
+   edit_credential_auth->setText        ( list_credential->model()->data(item,CredentialModel::NAME_ROLE)     .toString());
+   edit_credential_password->setText    ( list_credential->model()->data(item,CredentialModel::PASSWORD_ROLE) .toString());
+   
    edit_credential_realm->setEnabled    ( true                          );
    edit_credential_auth->setEnabled     ( true                          );
    edit_credential_password->setEnabled ( true                          );
+//TODO
+
+kDebug() << "I AM HERE";
 } //selectCredential
 
 void DlgAccounts::removeCredential() {
-   list_credential->takeItem(list_credential->currentRow());
+   Account*    acc   = AccountList::getInstance()->getAccountByModelIndex(listView_accountList->currentIndex());
+   acc->getCredentialsModel()->removeCredentials(list_credential->currentIndex());
+   list_credential->setCurrentIndex(acc->getCredentialsModel()->index(0,0));
 }
 
 void DlgAccounts::enablePublished()

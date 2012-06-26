@@ -31,6 +31,7 @@ class QString;
 #include "sflphone_const.h"
 #include "typedefs.h"
 #include "dbus/metatypes.h"
+class CredentialModel;
 
 const QString& account_state_name(const QString& s);
 
@@ -57,6 +58,8 @@ class LIB_EXPORT Account : public QObject {
       QModelIndex             getIndex()                                  ;
       QString                 getStateColorName()                    const;
       Qt::GlobalColor         getStateColor()                        const;
+
+      CredentialModel*        getCredentialsModel();
 
       ///Return the account hostname
       QString getAccountHostname              () const { return getAccountDetail(ACCOUNT_HOSTNAME               )                 ;}
@@ -214,7 +217,9 @@ class LIB_EXPORT Account : public QObject {
 
       //Mutator
       void save();
+      void saveCredentials();
       void reload();
+      void reloadCredentials();
    
    protected:
       //Constructors
@@ -232,6 +237,8 @@ class LIB_EXPORT Account : public QObject {
 
    private:
       bool m_Temporary;
+      CredentialModel* m_pCredentials;
+      
 
    signals:
       ///The account state (Invalif,Trying,Registered) changed

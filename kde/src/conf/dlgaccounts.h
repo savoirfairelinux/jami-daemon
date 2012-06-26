@@ -33,18 +33,8 @@ class QWidget;
 //KDE
 class KConfigDialog;
 
-///@struct CredentialData store credential informations
-struct CredentialData {
-   QListWidgetItem* pointer ;
-   QString          name    ;
-   QString          password;
-   QString          realm   ;
-};
-
 //Typedef
 typedef QHash<QString, QString> StringHash;                          //Needed to fix a Qt foreach macro argument parsing bug
-typedef QHash<QListWidgetItem*, CredentialData> QListWidgetItemHash; //Needed to fix a Qt foreach macro argument parsing bug
-typedef QList<CredentialData> CredentialList;
 
 ///Private_AddCodecDialog: Little dialog to add codec to the list
 class Private_AddCodecDialog : public KDialog {
@@ -135,10 +125,7 @@ public:
 
 private:
    ///Attributes
-   //ConfigAccountList*    accountList           ;
    QList<StringHash>     codecList             ;
-   QListWidgetItemHash   credentialInfo        ;
-   CredentialList        credentialList        ;
    bool                  accountListHasChanged ;
    QMap<QString,QString> m_hRingtonePath       ;
    
@@ -153,32 +140,34 @@ public slots:
    void updateWidgets   ();
 
 private slots:
-   void changedAccountList              ();
-   void connectAccountsChangedSignal    ();
-   void disconnectAccountsChangedSignal ();
-   void on_button_accountUp_clicked     ();
-   void on_button_accountDown_clicked   ();
-   void on_button_accountAdd_clicked    ();
-   void on_button_accountRemove_clicked ();
-   void codecChanged                    ();
-   void addCredential                   ();
-   void removeCredential                ();
-   void enablePublished                 ();
-   void updateAccountStates             ();
-   void updateAccountListCommands       ();
+   void changedAccountList               ();
+   void connectAccountsChangedSignal     ();
+   void disconnectAccountsChangedSignal  ();
+   void on_button_accountUp_clicked      ();
+   void on_button_accountDown_clicked    ();
+   void on_button_accountAdd_clicked     ();
+   void on_button_accountRemove_clicked  ();
+   void codecChanged                     ();
+   void addCredential                    ();
+   void removeCredential                 ();
+   void enablePublished                  ();
+   void updateAccountStates              ();
+   void updateAccountListCommands        ();
+   void main_password_field_changed      ();
+   void main_credential_password_changed ();
 
-   void loadVidCodecDetails        ( const QString& name                                      );
-   void codecClicked               ( const QModelIndex& model                                 );
-   void updateStatusLabel          ( QModelIndex item                                         );
-   void accountListChanged         ( Account* current, Account* previous                      );
-   void selectCredential           ( QListWidgetItem* item    , QListWidgetItem* previous     );
-   void addAccountToAccountList    ( Account*   account                                       );
-   void updateStatusLabel          ( Account*   account                                       );
-   void addCodec                   ( QString        name = ""                                 );
-   void updateCombo                ( int            value                                     );
-   void loadCredentails            ( QString        accountId                                 );
-   void saveCredential             ( QString        accountId                                 );
-   void on_edit1_alias_textChanged ( const QString& text                                      );
+   void loadVidCodecDetails        ( const QString& name                      );
+   void codecClicked               ( const QModelIndex& model                 );
+   void updateStatusLabel          ( QModelIndex item                         );
+   void accountListChanged         ( Account* current, Account* previous      );
+   void selectCredential           ( QModelIndex item, QModelIndex previous   );
+   void addAccountToAccountList    ( Account*   account                       );
+   void updateStatusLabel          ( Account*   account                       );
+   void addCodec                   ( QString        name = ""                 );
+   void updateCombo                ( int            value                     );
+//    void loadCredentails            ( QString        accountId                 );
+   void saveCredential             (                                          );
+   void on_edit1_alias_textChanged ( const QString& text                      );
 
 
 signals:
