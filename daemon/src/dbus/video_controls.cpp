@@ -59,12 +59,14 @@ VideoControls::getVideoPreferences()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<std::string> VideoControls::getCodecList()
+std::vector<std::string>
+VideoControls::getCodecList()
 {
     return sfl_video::getCodecList();
 }
 
-std::map<std::string, std::string> VideoControls::getCodecDetails(const std::string& name)
+std::map<std::string, std::string>
+VideoControls::getCodecDetails(const std::string& name)
 {
     return sfl_video::getCodecSpecifications(name);
 }
@@ -93,64 +95,75 @@ VideoControls::setActiveCodecList(const std::vector<std::string>& list, const st
     }
 }
 
-std::vector<std::string> VideoControls::getInputDeviceList()
+std::vector<std::string>
+VideoControls::getDeviceList()
 {
     return videoPreference_.getDeviceList();
 }
 
-std::vector<std::string> VideoControls::getInputDeviceChannelList(const std::string &dev)
+std::vector<std::string>
+VideoControls::getDeviceChannelList(const std::string &dev)
 {
     return videoPreference_.getChannelList(dev);
 }
 
-std::vector<std::string> VideoControls::getInputDeviceSizeList(const std::string &dev, const std::string &channel)
+std::vector<std::string>
+VideoControls::getDeviceSizeList(const std::string &dev, const std::string &channel)
 {
     return videoPreference_.getSizeList(dev, channel);
 }
 
 std::vector<std::string>
-VideoControls::getInputDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
+VideoControls::getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size)
 {
     return videoPreference_.getRateList(dev, channel, size);
 }
 
-std::string VideoControls::getInputDevice()
+std::string
+VideoControls::getActiveDevice()
 {
     return videoPreference_.getDevice();
 }
 
-std::string VideoControls::getInputDeviceChannel()
+std::string
+VideoControls::getActiveDeviceChannel()
 {
     return videoPreference_.getChannel();
 }
 
-std::string VideoControls::getInputDeviceSize()
+std::string
+VideoControls::getActiveDeviceSize()
 {
     return videoPreference_.getSize();
 }
 
-std::string VideoControls::getInputDeviceRate()
+std::string
+VideoControls::getActiveDeviceRate()
 {
     return videoPreference_.getRate();
 }
 
-void VideoControls::setInputDevice(const std::string& device)
+void
+VideoControls::setActiveDevice(const std::string &device)
 {
     DEBUG("Setting device to %s", device.c_str());
     videoPreference_.setDevice(device);
 }
 
-void VideoControls::setInputDeviceChannel(const std::string& channel)
+void
+VideoControls::setActiveDeviceChannel(const std::string &channel)
 {
     videoPreference_.setChannel(channel);
 }
 
-void VideoControls::setInputDeviceSize(const std::string& size)
+void
+VideoControls::setActiveDeviceSize(const std::string &size)
 {
     videoPreference_.setSize(size);
 }
 
-void VideoControls::setInputDeviceRate(const std::string& rate)
+void
+VideoControls::setActiveDeviceRate(const std::string &rate)
 {
     videoPreference_.setRate(rate);
 }
@@ -160,15 +173,11 @@ VideoControls::getSettings() {
     return videoPreference_.getSettings();
 }
 
-void VideoControls::startPreview(int32_t &width, int32_t &height,
-                                 int32_t &shmKey, int32_t &semKey,
-                                 int32_t &videoBufferSize)
+void
+VideoControls::startPreview()
 {
     if (preview_.get()) {
         ERROR("Video preview was already started!");
-        shmKey = -1;
-        semKey = -1;
-        videoBufferSize = -1;
         return;
     }
 
@@ -177,22 +186,27 @@ void VideoControls::startPreview(int32_t &width, int32_t &height,
 
     map<string, string> args(videoPreference_.getSettings());
     preview_.reset(new sfl_video::VideoPreview(args));
-
-    width = atoi(args["width"].c_str());
-    height = atoi(args["height"].c_str());
-    preview_->getShmInfo(shmKey, semKey, videoBufferSize);
 }
 
-void VideoControls::stopPreview()
+void
+VideoControls::stopPreview()
 {
     if (preview_.get()) {
         DEBUG("Stopping video preview");
         preview_.reset();
+    } else {
+        ERROR("Video preview was already stopped");
     }
 }
 
+bool
+VideoControls::hasPreviewStarted()
+{
+    return preview_.get() != 0;
+}
+
 std::string
-VideoControls::getCurrentCodecName(const std::string& callID)
+VideoControls::getCurrentCodecName(const std::string &callID)
 {
     return Manager::instance().getCurrentCodecName(callID);
 }

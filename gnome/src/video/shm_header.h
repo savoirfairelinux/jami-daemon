@@ -1,6 +1,11 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *
+ *  Portions derived from GStreamer:
+ *  Copyright (C) <2009> Collabora Ltd
+ *  @author: Olivier Crete <olivier.crete@collabora.co.uk
+ *  Copyright (C) <2009> Nokia Inc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,21 +33,19 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
-#include <cassert>
-#include <unistd.h> // for sleep
-#include <map>
-#include <string>
-#include "video_rtp_session.h"
-#include "video_preferences.h"
+#ifndef SHM_HEADER_H_
+#define SHM_HEADER_H_
 
-int main ()
-{
-    VideoPreference preference;
-    sfl_video::VideoRtpSession session("test", preference.getSettings());
-    session.start();
-    sleep(10);
-    session.stop();
+#include <semaphore.h>
 
-    return 0;
-}
+typedef struct {
+    sem_t notification;
+    sem_t mutex;
+
+    unsigned buffer_gen;
+    int buffer_size;
+
+    char data[0];
+} SHMHeader;
+
+#endif

@@ -39,16 +39,13 @@ class Sdp;
 
 namespace sfl_video {
 
-class SharedMemory;
 class VideoSendThread;
 class VideoReceiveThread;
 
 class VideoRtpSession {
     public:
-        VideoRtpSession(const std::map<std::string, std::string> &txArgs);
-        VideoRtpSession(const std::map<std::string, std::string> &txArgs,
-                        const std::map<std::string, std::string> &rxArgs);
-
+        VideoRtpSession(const std::string &callID,
+                        const std::map<std::string, std::string> &txArgs);
         void start();
         void stop();
         void updateDestination(const std::string &destination,
@@ -56,13 +53,13 @@ class VideoRtpSession {
         void updateSDP(const Sdp &sdp);
 
     private:
-        std::tr1::shared_ptr<SharedMemory> sharedMemory_;
         std::tr1::shared_ptr<VideoSendThread> sendThread_;
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
         std::map<std::string, std::string> txArgs_;
         std::map<std::string, std::string> rxArgs_;
         bool sending_;
         bool receiving_;
+        const std::string callID_;
 };
 }
 

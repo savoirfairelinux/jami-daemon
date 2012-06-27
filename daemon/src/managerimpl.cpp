@@ -1253,8 +1253,7 @@ void ManagerImpl::saveConfig()
         hookPreference.serialize(emitter);
         audioPreference.serialize(emitter);
 #ifdef SFL_VIDEO
-        VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-        controls->getVideoPreferences().serialize(emitter);
+        getVideoControls()->getVideoPreferences().serialize(emitter);
 #endif
         shortcutPreferences.serialize(emitter);
 
@@ -2611,7 +2610,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
 #ifdef SFL_VIDEO
-    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
+    VideoControls *controls(getVideoControls());
     try {
         MappingNode *videoNode = parser.getVideoNode();
         if (videoNode)

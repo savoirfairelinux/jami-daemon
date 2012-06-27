@@ -29,10 +29,9 @@
  */
 
 #include "video_preview.h"
+#include "logger.h"
 #include <map>
 #include <string>
-#include "manager.h"
-#include "shared_memory.h"
 #include "video_receive_thread.h"
 
 class VideoControls;
@@ -40,19 +39,17 @@ class VideoControls;
 namespace sfl_video {
 
 VideoPreview::VideoPreview(const std::map<std::string, std::string> &args) :
-    args_(args), sharedMemory_(), receiveThread_()
+    args_(args), receiveThread_()
 {
-    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-    sharedMemory_.reset(new SharedMemory(*controls));
-    receiveThread_.reset(new VideoReceiveThread(args_, *sharedMemory_));
+    const char * const LOCAL_ID = "local";
+    receiveThread_.reset(new VideoReceiveThread(LOCAL_ID, args_));
     receiveThread_->start();
-    sharedMemory_->waitForShm();
 }
 
-void VideoPreview::getShmInfo(int &shmKey, int &semaphoreKey, int &bufferSize)
+VideoPreview::~VideoPreview()
 {
-    shmKey = sharedMemory_->getShmKey();
-    semaphoreKey = sharedMemory_->getSemaphoreKey();
-    bufferSize = sharedMemory_->getBufferSize();
+    // explicitly destroy the thread object
+    receiveThread_.reset();
 }
+
 } // end namspace sfl_video

@@ -1,6 +1,11 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *
+ *  Portions derived from GStreamer:
+ *  Copyright (C) <2009> Collabora Ltd
+ *  @author: Olivier Crete <olivier.crete@collabora.co.uk
+ *  Copyright (C) <2009> Nokia Inc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,21 +33,39 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
-#include <cassert>
-#include <unistd.h> // for sleep
-#include <map>
+#ifndef SHM_SRC_H_
+#define SHM_SRC_H_
+
 #include <string>
-#include "video_rtp_session.h"
-#include "video_preferences.h"
+#include "../../noncopyable.h"
 
-int main ()
-{
-    VideoPreference preference;
-    sfl_video::VideoRtpSession session("test", preference.getSettings());
-    session.start();
-    sleep(10);
-    session.stop();
+class SHMHeader;
+// Example Shared memory source, only useful for testing
+// as far as the daemon is concerned
 
-    return 0;
-}
+class SHMSrc {
+    public:
+        SHMSrc(const std::string &shm_name);
+        virtual ~SHMSrc() {};
+
+        bool start();
+        bool stop();
+
+        bool resize_area();
+
+        void render(char *data, size_t len);
+
+    protected:
+        void shm_lock();
+        void shm_unlock();
+        std::string shm_name_;
+        int fd_;
+        SHMHeader *shm_area_;
+        size_t shm_area_len_;
+        unsigned buffer_gen_;
+
+    private:
+        NON_COPYABLE(SHMSrc);
+};
+
+#endif // SHM_SRC_H_

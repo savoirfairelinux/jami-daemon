@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,21 +28,16 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
-#include <cassert>
-#include <unistd.h> // for sleep
-#include <map>
-#include <string>
-#include "video_rtp_session.h"
-#include "video_preferences.h"
+#ifndef VIDEO_CALLBACKS_H_
+#define VIDEO_CALLBACKS_H_
 
-int main ()
-{
-    VideoPreference preference;
-    sfl_video::VideoRtpSession session("test", preference.getSettings());
-    session.start();
-    sleep(10);
-    session.stop();
+#include "dbus.h"
 
-    return 0;
-}
+void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
+                               gint width, gint height, GError *error,
+                               gpointer userdata);
+
+void stopped_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
+                               GError *error, gpointer userdata);
+
+#endif // VIDEO_CALLBACKS_H_

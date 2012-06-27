@@ -380,18 +380,18 @@ gchar *dbus_get_audio_manager(void);
  */
 void dbus_set_audio_manager(const gchar *api);
 
-void dbus_set_video_input_device(const gchar *dev);
-void dbus_set_video_input_device_channel(const gchar *channel);
-void dbus_set_video_input_size(const gchar *size);
-void dbus_set_video_input_rate(const gchar *rate);
-gchar *dbus_get_video_input_device();
-gchar *dbus_get_video_input_device_channel();
-gchar *dbus_get_video_input_device_size();
-gchar *dbus_get_video_input_device_rate();
-gchar **dbus_get_video_input_device_list();
-gchar **dbus_get_video_input_device_channel_list(const gchar *dev);
-gchar **dbus_get_video_input_device_size_list(const gchar *dev, const gchar *channel);
-gchar **dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size);
+void dbus_set_active_video_device(const gchar *dev);
+void dbus_set_active_video_device_channel(const gchar *channel);
+void dbus_set_active_video_device_size(const gchar *size);
+void dbus_set_active_video_device_rate(const gchar *rate);
+gchar *dbus_get_active_video_device();
+gchar *dbus_get_active_video_device_channel();
+gchar *dbus_get_active_video_device_size();
+gchar *dbus_get_active_video_device_rate();
+gchar **dbus_get_video_device_list();
+gchar **dbus_get_video_device_channel_list(const gchar *dev);
+gchar **dbus_get_video_device_size_list(const gchar *dev, const gchar *channel);
+gchar **dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size);
 
 /**
  * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed
@@ -623,6 +623,7 @@ void dbus_stop_recorded_file_playback(const gchar *);
 
 void dbus_start_video_preview();
 void dbus_stop_video_preview();
+gboolean dbus_has_video_preview_started();
 
 /**
  * Prevent Gnome Session Manager from entering in screen-saver mode

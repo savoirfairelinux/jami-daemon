@@ -1,21 +1,11 @@
 include ../globals.mak
 
+SUBDIRS = config contacts dbus widget icons video
+
 bin_PROGRAMS = sflphone-client-gnome
 
 SFLPHONE_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
               ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
-
-sflphone_client_gnome_SOURCES = main.c
-sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
-                               @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
-                               @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
-                               @GTHREAD_CFLAGS@
-sflphone_client_gnome_LDADD = $(SFLPHONE_LIBS) $(DL_LIBS) ./libsflphone_client.la
-
-SUBDIRS = config contacts dbus widget icons
-if SFL_VIDEO
-SUBDIRS += video
-endif
 
 DL_LIBS = -ldl
 
@@ -65,16 +55,24 @@ libsflphone_client_la_SOURCES = \
   gtk2_wrappers.h \
   seekslider.h
 
+libsflphone_client_la_LIBADD = $(SFLPHONE_LIBS)
 libsflphone_client_la_LDFLAGS = @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
-                                $(SFLPHONE_LIBS) @X11_LIBS@ \
-                                @GTK_LIBS@ @GLIB_LIBS@ @WEBKIT_LIBS@ \
-                                $(DL_LIBS) @GCONF_LIBS@ \
-                                @JAVASCRIPT_CORE_GTK_LIBS@ @GTHREAD_LIBS@
+                                @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ @WEBKIT_LIBS@ \
+                                $(DL_LIBS) @GCONF_LIBS@ @JAVASCRIPT_CORE_GTK_LIBS@ \
+                                @GTHREAD_LIBS@
 
 libsflphone_client_la_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
                                @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
                                @GTHREAD_CFLAGS@
+
+
+sflphone_client_gnome_SOURCES = main.c
+sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
+                               @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
+                               @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
+                               @GTHREAD_CFLAGS@
+sflphone_client_gnome_LDADD = libsflphone_client.la
 
 # add symbolic link
 install-exec-local:

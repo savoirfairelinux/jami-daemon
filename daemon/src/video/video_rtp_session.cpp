@@ -32,7 +32,6 @@
 #include <sstream>
 #include <map>
 #include <string>
-#include "shared_memory.h"
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
 #include "sip/sdp.h"
@@ -45,19 +44,13 @@ namespace sfl_video {
 using std::map;
 using std::string;
 
-VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs) :
-    sharedMemory_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(), sending_(true), receiving_(true)
+VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string> &txArgs) :
+    sendThread_(), receiveThread_(), txArgs_(txArgs),
+    rxArgs_(), sending_(false), receiving_(false), callID_(callID)
 {
     // FIXME: bitrate must be configurable
     txArgs_["bitrate"] = "500000";
 }
-
-VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs,
-                                 const map<string, string> &rxArgs) :
-    sharedMemory_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(rxArgs), sending_(true), receiving_(true)
-{}
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
@@ -149,9 +142,7 @@ void VideoRtpSession::start()
     if (receiving_) {
         if (receiveThread_.get())
             WARN("Restarting video receiver");
-        VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-        sharedMemory_.reset(new SharedMemory(*controls));
-        receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
+        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->start();
     }
     else
