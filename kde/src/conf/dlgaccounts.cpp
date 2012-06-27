@@ -47,8 +47,6 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
 {
    m_IsLoading = true;
    setupUi(this);
-   //disconnect(keditlistbox_codec->addButton(),SIGNAL(clicked()));
-   //ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    button_accountUp->setIcon         ( KIcon( "go-up"       ) );
    button_accountDown->setIcon       ( KIcon( "go-down"     ) );
    button_accountAdd->setIcon        ( KIcon( "list-add"    ) );
@@ -136,22 +134,6 @@ DlgAccounts::~DlgAccounts()
    //accountList->disconnect();
    //if (accountList) delete accountList;
 }
-
-// void DlgAccounts::connectAccountsChangedSignal()
-// {
-//    kDebug() << "connectAccountsChangedSignal";
-//    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-//    connect(&configurationManager, SIGNAL(accountsChanged()),
-//            this,                  SLOT(updateAccountStates()));
-// }
-// 
-// void DlgAccounts::disconnectAccountsChangedSignal()
-// {
-//    kDebug() << "disconnectAccountsChangedSignal";
-//    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-//    disconnect(&configurationManager, SIGNAL(accountsChanged()),
-//            this,                  SLOT(updateAccountStates()));
-// }
 
 ///Save an account using the values from the widgets
 void DlgAccounts::saveAccount(QModelIndex item)
@@ -468,7 +450,6 @@ void DlgAccounts::changedAccountList()
 ///Callback when the account change
 void DlgAccounts::accountListChanged(QModelIndex current, QModelIndex previous)
 {
-   kDebug() << "on_listView_accountList_currentItemChanged";
    saveAccount(previous);
    Account* acc = AccountList::getInstance()->getAccountByModelIndex(previous);
    if (acc->currentState() == EDITING || acc->currentState() == OUTDATED)

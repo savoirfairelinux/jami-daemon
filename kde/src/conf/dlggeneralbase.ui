@@ -97,22 +97,12 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Connection</string>
+      <string>Recording</string>
      </property>
      <layout class="QFormLayout" name="formLayout_13">
       <property name="fieldGrowthPolicy">
        <enum>QFormLayout::ExpandingFieldsGrow</enum>
       </property>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_SIPPort_2">
-        <property name="text">
-         <string>SIP Port</string>
-        </property>
-        <property name="buddy">
-         <cstring>kcfg_SIPPort</cstring>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1">
        <widget class="QWidget" name="widget_SIPPort_2" native="true">
         <property name="minimumSize">
@@ -126,7 +116,11 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="KIntSpinBox" name="kcfg_SIPPort"/>
+          <widget class="QCheckBox" name="m_pAlwaysRecordCK">
+           <property name="text">
+            <string>Always record calls</string>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QLabel" name="label_WarningSIPPort">

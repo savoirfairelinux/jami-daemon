@@ -29,7 +29,7 @@
 #include "Contact.h"
 
 
-const call_state Call::actionPerformedStateMap [13][5] =
+const call_state Call::actionPerformedStateMap [14][5] =
 {
 //                      ACCEPT                  REFUSE                  TRANSFER                   HOLD                           RECORD            /**/
 /*INCOMING     */  {CALL_STATE_INCOMING   , CALL_STATE_INCOMING    , CALL_STATE_ERROR        , CALL_STATE_INCOMING     ,  CALL_STATE_INCOMING     },/**/
@@ -44,11 +44,12 @@ const call_state Call::actionPerformedStateMap [13][5] =
 /*OVER         */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        },/**/
 /*ERROR        */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        },/**/
 /*CONF         */  {CALL_STATE_ERROR      , CALL_STATE_CURRENT     , CALL_STATE_TRANSFER     , CALL_STATE_CURRENT      ,  CALL_STATE_CURRENT      },/**/
-/*CONF_HOLD    */  {CALL_STATE_ERROR      , CALL_STATE_HOLD        , CALL_STATE_TRANSF_HOLD  , CALL_STATE_HOLD         ,  CALL_STATE_HOLD         } /**/
+/*CONF_HOLD    */  {CALL_STATE_ERROR      , CALL_STATE_HOLD        , CALL_STATE_TRANSF_HOLD  , CALL_STATE_HOLD         ,  CALL_STATE_HOLD         },/**/
+/*RECORD       */  {CALL_STATE_ERROR      , CALL_STATE_CURRENT     , CALL_STATE_TRANSFER     , CALL_STATE_CURRENT      ,  CALL_STATE_CURRENT      },/**/
 };//                                                                                                                                                    
 
 
-const function Call::actionPerformedFunctionMap[13][5] =
+const function Call::actionPerformedFunctionMap[14][5] =
 { 
 //                      ACCEPT               REFUSE            TRANSFER                 HOLD                  RECORD             /**/
 /*INCOMING       */  {&Call::accept     , &Call::refuse   , &Call::acceptTransf   , &Call::acceptHold  ,  &Call::setRecord     },/**/
@@ -63,11 +64,12 @@ const function Call::actionPerformedFunctionMap[13][5] =
 /*OVER           */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
 /*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
 /*CONF           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },/**/
-/*CONF_HOLD      */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     } /**/
+/*CONF_HOLD      */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },/**/
+/*RECORD         */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },/**/
 };//                                                                                                                                 
 
 
-const call_state Call::stateChangedStateMap [13][6] =
+const call_state Call::stateChangedStateMap [14][6] =
 {
 //                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE             /**/
 /*INCOMING     */ {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
@@ -82,10 +84,11 @@ const call_state Call::stateChangedStateMap [13][6] =
 /*OVER         */ {CALL_STATE_OVER        , CALL_STATE_OVER     , CALL_STATE_OVER   , CALL_STATE_OVER         ,  CALL_STATE_OVER  ,  CALL_STATE_OVER     },/**/
 /*ERROR        */ {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    },/**/
 /*CONF         */ {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
-/*CONF_HOLD    */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  } /**/
+/*CONF_HOLD    */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
+/*RECORD       */ {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
 };//                                                                                                                                                           
 
-const function Call::stateChangedFunctionMap[13][6] =
+const function Call::stateChangedFunctionMap[14][6] =
 { 
 //                      RINGING                  CURRENT             BUSY              HOLD                    HUNGUP           FAILURE            /**/
 /*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::startWeird     , &Call::startWeird   ,  &Call::startStop    , &Call::start   },/**/
@@ -100,7 +103,8 @@ const function Call::stateChangedFunctionMap[13][6] =
 /*OVER           */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::stop         , &Call::warning },/**/
 /*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
 /*CONF           */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
-/*CONF_HOLD      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing } /**/
+/*CONF_HOLD      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
+/*RECORD         */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
 };//                                                                                                                                                   
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
@@ -309,6 +313,8 @@ call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QStri
       return CALL_STATE_RINGING  ;
    else if(daemonCallState == DAEMON_CALL_STATE_INIT_INCOMING )
       return CALL_STATE_INCOMING ;
+   else if(daemonCallState == DAEMON_CALL_STATE_INIT_RECORD )
+      return CALL_STATE_RECORD   ;
    else if(daemonCallState == DAEMON_CALL_STATE_INIT_RINGING  )
       return CALL_STATE_RINGING  ;
    else
@@ -330,12 +336,16 @@ daemon_call_state Call::toDaemonCallState(const QString& stateName)
       return DAEMON_CALL_STATE_RINGING ;
    if(stateName == QString(CALL_STATE_CHANGE_CURRENT)        )
       return DAEMON_CALL_STATE_CURRENT ;
+   if(stateName == QString(CALL_STATE_CHANGE_RECORD)        )
+      return DAEMON_CALL_STATE_RECORD ;
    if(stateName == QString(CALL_STATE_CHANGE_UNHOLD_CURRENT) )
       return DAEMON_CALL_STATE_CURRENT ;
    if(stateName == QString(CALL_STATE_CHANGE_UNHOLD_RECORD)  )
       return DAEMON_CALL_STATE_CURRENT ;
    if(stateName == QString(CALL_STATE_CHANGE_HOLD)           )
       return DAEMON_CALL_STATE_HOLD    ;
+   if(stateName == QString(CALL_STATE_RECORD)                )
+      return DAEMON_CALL_STATE_RECORD  ;
    if(stateName == QString(CALL_STATE_CHANGE_BUSY)           )
       return DAEMON_CALL_STATE_BUSY    ;
    if(stateName == QString(CALL_STATE_CHANGE_FAILURE)        )
@@ -397,6 +407,8 @@ const QString Call::toHumanStateName() const
          break;
       case CALL_STATE_CONFERENCE_HOLD:
          return ( "Conference (hold)" );
+      case CALL_STATE_RECORD:
+         return ( "Recording" );
       default:
          return "";
    }
@@ -457,6 +469,8 @@ call_state Call::getCurrentState()          const
 ///Get the call recording
 bool Call::getRecording()                   const
 {
+   CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+   ((Call*) this)->m_Recording = callManager.getIsRecording(m_CallId);
    return m_Recording;
 }
 

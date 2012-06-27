@@ -5,13 +5,6 @@
   <group name="main">
 
     <!-- General Settings -->
-
-    <entry name="SIPPort" type="Int">
-      <label>Defines the port that will be used for SIP communication.</label>
-      <min> 1025 </min>
-      <max> 65536 </max>
-      <default> 1025 </default>
-    </entry>
     <entry name="enableHistory" type="Bool">
       <label>Defines whether sflphone should keep a history of calls.</label>
     </entry>
