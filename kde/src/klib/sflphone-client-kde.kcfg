@@ -54,6 +54,10 @@
       <label>The minimum number of pixel for a call item</label>
       <default> 48 </default>
    </entry>
+   <entry name="displayHistoryStatus" type="Bool">
+      <label>Display incomming, outgoing or missed</label>
+      <default> true </default>
+   </entry>
 
     <!-- Display Settings -->
 

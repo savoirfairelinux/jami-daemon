@@ -190,7 +190,7 @@ Call* Call::buildExistingCall(QString callId)
       call->m_pStartTime = new QDateTime(QDateTime::currentDateTime())                                   ;
    
    call->m_Recording     = callManager.getIsRecording(callId)                                            ;
-   call->m_HistoryState  = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE])   ;
+   call->m_HistoryState  = getHistoryStateFromType(details[STATE_KEY]);
    
    return call;
 } //buildExistingCall
@@ -254,49 +254,21 @@ Call* Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint s
    }
    
    call->m_HistoryState  = getHistoryStateFromType(type);
+   
    return call;
 }
 
 ///Get the history state from the type (see Call.cpp header)
 history_state Call::getHistoryStateFromType(QString type)
 {
-   if(type == DAEMON_HISTORY_TYPE_MISSED        )
+   if(type == MISSED_STRING        )
       return MISSED   ;
-   else if(type == DAEMON_HISTORY_TYPE_OUTGOING )
+   else if(type == OUTGOING_STRING )
       return OUTGOING ;
-   else if(type == DAEMON_HISTORY_TYPE_INCOMING )
+   else if(type == INCOMING_STRING )
       return INCOMING ;
    return NONE        ;
 }
-
-///Get the type from an history state (see Call.cpp header)
-QString Call::getTypeFromHistoryState(history_state historyState)
-{
-   if(historyState == MISSED        )
-      return DAEMON_HISTORY_TYPE_MISSED   ;
-   else if(historyState == OUTGOING )
-      return DAEMON_HISTORY_TYPE_OUTGOING ;
-   else if(historyState == INCOMING )
-      return DAEMON_HISTORY_TYPE_INCOMING ;
-   return QString()                       ;
-}
-
-///Get history state from daemon
-history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
-{
-   if((daemonCallState      == DAEMON_CALL_STATE_INIT_CURRENT  || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_INCOMING )
-      return INCOMING ;
-   else if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT  || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_OUTGOING )
-      return OUTGOING ;
-   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_BUSY                                                                                                       )
-      return OUTGOING ;
-   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING                                                    )
-      return INCOMING ;
-   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING                                                    )
-      return MISSED   ;
-   else
-      return NONE     ;
-} //getHistoryStateFromDaemonCallState
 
 ///Get the start sate from the daemon state
 call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)

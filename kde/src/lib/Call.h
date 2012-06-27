@@ -132,9 +132,7 @@ public:
 
    //Static getters
    static history_state getHistoryStateFromType            ( QString type                                    );
-   static QString       getTypeFromHistoryState            ( history_state historyState                      );
    static call_state    getStartStateFromDaemonCallState   ( QString daemonCallState, QString daemonCallType );
-   static history_state getHistoryStateFromDaemonCallState ( QString daemonCallState, QString daemonCallType );
    
    //Getters
    call_state           getState            () const;

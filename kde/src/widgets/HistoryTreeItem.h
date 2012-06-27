@@ -71,9 +71,6 @@ class HistoryTreeItem : public QWidget
     void setCall     ( Call*            call  );
     void setItem     ( QTreeWidgetItem* item  );
 
-    //Const
-    static const char * callStateIcons[12];
-
  private:
     //Attributes
     Call*        m_pItemCall      ;
