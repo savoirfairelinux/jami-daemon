@@ -137,22 +137,6 @@ DlgAccounts::~DlgAccounts()
    //if (accountList) delete accountList;
 }
 
-///Save the account list, necessary for new and removed accounts
-void DlgAccounts::saveAccountList()
-{
-   //disconnectAccountsChangedSignal();
-   //save the account being edited
-   if(listView_accountList->currentIndex().isValid()) {
-      saveAccount(listView_accountList->currentIndex());
-      Account* acc = AccountList::getInstance()->getAccountByModelIndex(listView_accountList->currentIndex());
-      if (acc->currentState() == EDITING || acc->currentState() == OUTDATED)
-         acc->performAction(CANCEL);
-   }
-   
-   AccountList::getInstance()->save();
-   //connectAccountsChangedSignal();
-} //saveAccountList
-
 // void DlgAccounts::connectAccountsChangedSignal()
 // {
 //    kDebug() << "connectAccountsChangedSignal";
@@ -532,13 +516,6 @@ void DlgAccounts::on_button_accountRemove_clicked()
    listView_accountList->setCurrentIndex(listView_accountList->model()->index(0,0));
 }
 
-void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
-{
-   Q_UNUSED(text);
-   //TODO reimplement
-   kDebug() << "on_edit1_alias_textChanged";
-}
-
 void DlgAccounts::updateAccountListCommands()
 {
    kDebug() << "updateAccountListCommands";
@@ -633,8 +610,14 @@ bool DlgAccounts::hasChanged()
 void DlgAccounts::updateSettings()
 {
    if(accountListHasChanged) {
-      saveAccountList();
-      //toolButton_accountsApply->setEnabled(false);
+      if(listView_accountList->currentIndex().isValid()) {
+         saveAccount(listView_accountList->currentIndex());
+         Account* acc = AccountList::getInstance()->getAccountByModelIndex(listView_accountList->currentIndex());
+         if (acc->currentState() == EDITING || acc->currentState() == OUTDATED)
+            acc->performAction(CANCEL);
+      }
+
+   AccountList::getInstance()->save();
       accountListHasChanged = false;
    }
 }

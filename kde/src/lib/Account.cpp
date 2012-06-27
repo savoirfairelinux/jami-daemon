@@ -132,8 +132,8 @@ Account::~Account()
 void Account::accountChanged(QString accountId,QString state,int)
 {
    if (m_pAccountId && accountId == *m_pAccountId) {
-      Account::updateState();
-      stateChanged(getStateName(state));
+      if (Account::updateState())
+         emit stateChanged(getStateName(state));
    }
 }
 
@@ -316,15 +316,20 @@ void Account::setEnabled(bool checked)
  *                                                                           *
  ****************************************************************************/
 
-///Update the account
-void Account::updateState()
+/**Update the account
+ * @return if the state changed
+ */
+bool Account::updateState()
 {
    if(! isNew()) {
       ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
       QString status = details[ACCOUNT_REGISTRATION_STATUS];
+      QString currentStatus = getAccountRegistrationStatus();
       setAccountDetail(ACCOUNT_REGISTRATION_STATUS, status); //Update -internal- object state
+      return status == currentStatus;
    }
+   return true;
 }
 
 ///Save the current account to the daemon

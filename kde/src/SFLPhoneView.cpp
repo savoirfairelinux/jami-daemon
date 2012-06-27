@@ -116,9 +116,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 {
    setupUi(this);
 
-   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-
-
    callView->setTitle(i18n("Calls"));
 
    QPalette pal = QPalette(palette());
@@ -138,7 +135,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    /**/connect(AccountList::getInstance() , SIGNAL(accountStateChanged(Account*,QString)) , this                       , SLOT(updateStatusMessage()                      ));
    /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateStatusMessage()                      ));
    /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateWindowCallState()                    ));
-   /**/connect(&configurationManager      , SIGNAL(accountsChanged())                     , AccountList::getInstance() , SLOT(updateAccounts()                           ));
    /**/connect(m_pSendMessageLE           , SIGNAL(returnPressed())                       , this                       , SLOT(sendMessage()                              ));
    /**/connect(m_pSendMessagePB           , SIGNAL(clicked())                             , this                       , SLOT(sendMessage()                              ));
    /*                                                                                                                                                                     */

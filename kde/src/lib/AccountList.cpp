@@ -43,6 +43,9 @@ AccountList::AccountList(QStringList & _accountIds) : m_pColorVisitor(nullptr)
    }
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
+   
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   connect(&configurationManager,SIGNAL(accountsChanged()),this,SLOT(updateAccounts()));
 }
 
 ///Constructors
@@ -54,6 +57,9 @@ AccountList::AccountList(bool fill) : m_pColorVisitor(nullptr)
       updateAccounts();
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
+
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   connect(&configurationManager,SIGNAL(accountsChanged()),this,SLOT(updateAccounts()));
 }
 
 ///Destructor

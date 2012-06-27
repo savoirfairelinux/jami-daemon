@@ -117,7 +117,6 @@ private:
    bool                  m_IsLoading           ;
 
 public slots:
-   void saveAccountList ();
    void loadAccountList ();
    bool hasChanged      ();
    void updateSettings  ();
@@ -125,8 +124,6 @@ public slots:
 
 private slots:
    void changedAccountList               ();
-//    void connectAccountsChangedSignal     ();
-//    void disconnectAccountsChangedSignal  ();
    void on_button_accountUp_clicked      ();
    void on_button_accountDown_clicked    ();
    void on_button_accountAdd_clicked     ();
@@ -150,7 +147,6 @@ private slots:
    void updateStatusLabel          ( Account*   account                                      );
    void updateCombo                ( int            value                                    );
    void saveCredential             (                                                         );
-   void on_edit1_alias_textChanged ( const QString& text                                     );
 
 
 signals:

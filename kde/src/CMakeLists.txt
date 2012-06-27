@@ -54,7 +54,6 @@ SET(
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
    widgets/VideoWidget.cpp
-   widgets/AccountListWidget.cpp
    Codec.cpp
    CallView.cpp
 )

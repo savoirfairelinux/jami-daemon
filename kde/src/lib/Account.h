@@ -244,7 +244,7 @@ class LIB_EXPORT Account : public QObject {
       void setRingtoneEnabled               (bool    detail){setAccountDetail(CONFIG_RINGTONE_ENABLED        ,detail?"true":"false");}
    
       //Updates
-      virtual void updateState();
+      virtual bool updateState();
    
       //Operators
       bool operator==(const Account&)const;
