@@ -351,7 +351,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
         // migration from old file format
         std::map<std::string, std::string> credmap;
         std::string password;
-        map.getValue(PASSWORD_KEY, &password);
+        if (not isIP2IP()) map.getValue(PASSWORD_KEY, &password);
 
         credmap[CONFIG_ACCOUNT_USERNAME] = username_;
         credmap[CONFIG_ACCOUNT_PASSWORD] = password;
