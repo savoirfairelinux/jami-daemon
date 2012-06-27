@@ -32,6 +32,7 @@ class QString;
 #include "typedefs.h"
 #include "dbus/metatypes.h"
 class CredentialModel;
+class AudioCodecModel;
 
 const QString& account_state_name(const QString& s);
 
@@ -60,6 +61,7 @@ class LIB_EXPORT Account : public QObject {
       Qt::GlobalColor         getStateColor()                        const;
 
       CredentialModel*        getCredentialsModel();
+      AudioCodecModel*        getAudioCodecModel();
 
       ///Return the account hostname
       QString getAccountHostname              () const { return getAccountDetail(ACCOUNT_HOSTNAME               )                 ;}
@@ -218,9 +220,11 @@ class LIB_EXPORT Account : public QObject {
       //Mutator
       void save();
       void saveCredentials();
+      void saveAudioCodecs();
       void reload();
       void reloadCredentials();
-   
+      void reloadAudioCodecs();
+
    protected:
       //Constructors
       Account();
@@ -238,7 +242,8 @@ class LIB_EXPORT Account : public QObject {
    private:
       bool m_Temporary;
       CredentialModel* m_pCredentials;
-      
+      AudioCodecModel* m_pAudioCodecs;
+
 
    signals:
       ///The account state (Invalif,Trying,Registered) changed

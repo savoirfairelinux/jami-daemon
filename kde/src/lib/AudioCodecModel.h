@@ -16,48 +16,52 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
-#ifndef CREDENTIAL_MODEL_H
-#define CREDENTIAL_MODEL_H
+#ifndef AUDIO_CODEC_MODEL_H
+#define AUDIO_CODEC_MODEL_H
 
 #include <QtCore/QString>
 #include <QtCore/QAbstractListModel>
 #include "typedefs.h"
 
-
-///CredentialModel: A model for account credentials
-class LIB_EXPORT CredentialModel : public QAbstractListModel {
+///AudioCodecModel: A model for account audio codec
+class LIB_EXPORT AudioCodecModel : public QAbstractListModel {
    Q_OBJECT
 public:
    //friend class Account;
    //Roles
-   static const int NAME_ROLE     = 100;
-   static const int PASSWORD_ROLE = 101;
-   static const int REALM_ROLE    = 102;
+   static const int ID_ROLE         = 103;
+   static const int NAME_ROLE       = 100;
+   static const int BITRATE_ROLE    = 101;
+   static const int SAMPLERATE_ROLE = 102;
 
    //Constructor
-   CredentialModel(QObject* parent =nullptr);
+   AudioCodecModel(QObject* parent =nullptr);
 
    //Abstract model member
    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole ) const;
-   int rowCount(const QModelIndex& parent = QModelIndex()            ) const;
-   Qt::ItemFlags flags(const QModelIndex& index                             ) const;
+   int rowCount(const QModelIndex& parent = QModelIndex()             ) const;
+   Qt::ItemFlags flags(const QModelIndex& index                       ) const;
    virtual bool setData(const QModelIndex& index, const QVariant &value, int role);
 
    //Mutator
-   QModelIndex addCredentials();
-   void removeCredentials(QModelIndex idx);
+   QModelIndex addAudioCodec();
+   void removeAudioCodec(QModelIndex idx);
    void clear();
+   bool moveUp(QModelIndex idx);
+   bool moveDown(QModelIndex idx);
 
 private:
-   ///@struct CredentialData store credential informations
-   struct CredentialData2 {
-      QString          name    ;
-      QString          password;
-      QString          realm   ;
+   ///@struct AudioCodecData store audio codec informations
+   struct AudioCodecData {
+      int              id        ;
+      QString          name      ;
+      QString          bitrate   ;
+      QString          samplerate;
    };
    
    //Attributes
-   QList<CredentialData2*> m_lCredentials;
+   QList<AudioCodecData*> m_lAudioCodecs;
+   QMap<int,bool>  m_lEnabledCodecs;
 
 };
 

@@ -95,3 +95,12 @@ void CredentialModel::removeCredentials(QModelIndex idx) {
       qDebug() << "Failed to remove an invalid credential";
    }
 }
+
+///Remove everything
+void CredentialModel::clear()
+{
+   foreach(CredentialData2* data, m_lCredentials) {
+      delete data;
+   }
+   m_lCredentials.clear();
+}

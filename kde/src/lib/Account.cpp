@@ -35,6 +35,7 @@
 #include "video_interface_singleton.h"
 #include "AccountList.h"
 #include "CredentialModel.h"
+#include "AudioCodecModel.h"
 
 ///Match state name to user readable string
 const QString& account_state_name(const QString& s)
@@ -72,7 +73,7 @@ const QString& account_state_name(const QString& s)
 } //account_state_name
 
 ///Constructors
-Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_Temporary(false),m_pCredentials(nullptr)
+Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_Temporary(false),m_pCredentials(nullptr),m_pAudioCodecs(nullptr)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager,SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
@@ -248,6 +249,14 @@ CredentialModel* Account::getCredentialsModel()
    return m_pCredentials;
 }
 
+AudioCodecModel* Account::getAudioCodecModel()
+{
+   if (!m_pAudioCodecs) {
+      reloadAudioCodecs();
+   }
+   return m_pAudioCodecs;
+}
+
 /*****************************************************************************
  *                                                                           *
  *                                  Setters                                  *
@@ -356,14 +365,15 @@ void Account::reloadCredentials()
 {
    if (!m_pCredentials) {
       m_pCredentials = new CredentialModel(this);
-         ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-         VectorMapStringString credentials = configurationManager.getCredentials(getAccountId());
-         for (int i=0; i < credentials.size(); i++) {
-            QModelIndex idx = m_pCredentials->addCredentials();
-            m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_USERNAME  ],CredentialModel::NAME_ROLE    );
-            m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_PASSWORD  ],CredentialModel::PASSWORD_ROLE);
-            m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_REALM     ],CredentialModel::REALM_ROLE   );
-         }
+   }
+   m_pCredentials->clear();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   VectorMapStringString credentials = configurationManager.getCredentials(getAccountId());
+   for (int i=0; i < credentials.size(); i++) {
+      QModelIndex idx = m_pCredentials->addCredentials();
+      m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_USERNAME  ],CredentialModel::NAME_ROLE    );
+      m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_PASSWORD  ],CredentialModel::PASSWORD_ROLE);
+      m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_REALM     ],CredentialModel::REALM_ROLE   );
    }
 }
 
@@ -381,6 +391,55 @@ void Account::saveCredentials() {
       }
       configurationManager.setCredentials(getAccountId(),toReturn);
    }
+}
+
+void Account::reloadAudioCodecs()
+{
+   if (!m_pAudioCodecs) {
+      m_pAudioCodecs = new AudioCodecModel(this);
+   }
+   m_pAudioCodecs->clear();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QVector<int> codecIdList = configurationManager.getAudioCodecList();
+   QVector<int> activeCodecList = configurationManager.getActiveAudioCodecList(getAccountId());
+   QStringList tmpNameList;
+
+   foreach (int aCodec, activeCodecList) {
+      QStringList codec = configurationManager.getAudioCodecDetails(aCodec);
+      QModelIndex idx = m_pAudioCodecs->addAudioCodec();
+      m_pAudioCodecs->setData(idx,codec[0]     ,AudioCodecModel::NAME_ROLE       );
+      m_pAudioCodecs->setData(idx,codec[1]     ,AudioCodecModel::SAMPLERATE_ROLE );
+      m_pAudioCodecs->setData(idx,codec[2]     ,AudioCodecModel::BITRATE_ROLE    );
+      m_pAudioCodecs->setData(idx,aCodec       ,AudioCodecModel::ID_ROLE         );
+      m_pAudioCodecs->setData(idx, Qt::Checked ,Qt::CheckStateRole               );
+      if (codecIdList.indexOf(aCodec)!=-1)
+         codecIdList.remove(codecIdList.indexOf(aCodec));
+   }
+
+   foreach (int aCodec, codecIdList) {
+      QStringList codec = configurationManager.getAudioCodecDetails(aCodec);
+      QModelIndex idx = m_pAudioCodecs->addAudioCodec();
+      m_pAudioCodecs->setData(idx,codec[0],AudioCodecModel::NAME_ROLE       );
+      m_pAudioCodecs->setData(idx,codec[1],AudioCodecModel::SAMPLERATE_ROLE );
+      m_pAudioCodecs->setData(idx,codec[2],AudioCodecModel::BITRATE_ROLE    );
+      m_pAudioCodecs->setData(idx,aCodec  ,AudioCodecModel::ID_ROLE         );
+      
+      m_pAudioCodecs->setData(idx, Qt::Unchecked ,Qt::CheckStateRole);
+   }
+}
+
+void Account::saveAudioCodecs() {
+   QStringList _codecList;
+   for (int i=0; i < m_pAudioCodecs->rowCount();i++) {
+      QModelIndex idx = m_pAudioCodecs->index(i,0);
+      if (m_pAudioCodecs->data(idx,Qt::CheckStateRole) == Qt::Checked) {
+         _codecList << m_pAudioCodecs->data(idx,AudioCodecModel::ID_ROLE).toString();
+      }
+   }
+
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   configurationManager.setActiveAudioCodecList(_codecList, getAccountId());
+   qDebug() << "Account codec have been saved" << _codecList << getAccountId();
 }
 
 /*****************************************************************************

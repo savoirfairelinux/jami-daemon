@@ -37,6 +37,7 @@ set( qtsflphone_LIB_SRCS
   VideoModel.cpp
   VideoDevice.cpp
   CredentialModel.cpp
+  AudioCodecModel.cpp
   configurationmanager_interface_singleton.cpp
   callmanager_interface_singleton.cpp
   instance_interface_singleton.cpp
@@ -126,6 +127,7 @@ set( qtsflphone_LIB_HDRS
   VideoModel.h
   VideoDevice.h
   CredentialModel.h
+  AudioCodecModel.h
   configurationmanager_interface_singleton.h
   callmanager_interface_singleton.h
   instance_interface_singleton.h

@@ -36,22 +36,6 @@ class KConfigDialog;
 //Typedef
 typedef QHash<QString, QString> StringHash;                          //Needed to fix a Qt foreach macro argument parsing bug
 
-///Private_AddCodecDialog: Little dialog to add codec to the list
-class Private_AddCodecDialog : public KDialog {
-  Q_OBJECT
-  public:
-    Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent = 0);
-
-  private:
-    QTableWidget* codecTable;
-
-  private slots:
-    void emitNewCodec();
-
-  signals:
-    void addCodec(QString alias);
-};
-
 ///RingToneListItem: Ringtone list widget
 class RingToneListItem : public QWidget
 {
@@ -128,9 +112,6 @@ private:
    QList<StringHash>     codecList             ;
    bool                  accountListHasChanged ;
    QMap<QString,QString> m_hRingtonePath       ;
-   
-   ///Mutators
-   void loadCodecList();
 
 public slots:
    void saveAccountList ();
@@ -147,7 +128,6 @@ private slots:
    void on_button_accountDown_clicked    ();
    void on_button_accountAdd_clicked     ();
    void on_button_accountRemove_clicked  ();
-   void codecChanged                     ();
    void addCredential                    ();
    void removeCredential                 ();
    void enablePublished                  ();
@@ -156,18 +136,18 @@ private slots:
    void main_password_field_changed      ();
    void main_credential_password_changed ();
 
-   void loadVidCodecDetails        ( const QString& name                      );
-   void codecClicked               ( const QModelIndex& model                 );
-   void updateStatusLabel          ( QModelIndex item                         );
-   void accountListChanged         ( Account* current, Account* previous      );
-   void selectCredential           ( QModelIndex item, QModelIndex previous   );
-   void addAccountToAccountList    ( Account*   account                       );
-   void updateStatusLabel          ( Account*   account                       );
-   void addCodec                   ( QString        name = ""                 );
-   void updateCombo                ( int            value                     );
-//    void loadCredentails            ( QString        accountId                 );
-   void saveCredential             (                                          );
-   void on_edit1_alias_textChanged ( const QString& text                      );
+   void moveAudioCodecUp                 ();
+   void moveAudioCodecDown               ();
+
+   void loadVidCodecDetails        ( const QString& name                                     );
+   void selectedCodecChanged       ( const QModelIndex& current, const QModelIndex& previous );
+   void updateStatusLabel          ( QModelIndex item                                        );
+   void accountListChanged         ( Account* current, Account* previous                     );
+   void selectCredential           ( QModelIndex item, QModelIndex previous                  );
+   void updateStatusLabel          ( Account*   account                                      );
+   void updateCombo                ( int            value                                    );
+   void saveCredential             (                                                         );
+   void on_edit1_alias_textChanged ( const QString& text                                     );
 
 
 signals:
