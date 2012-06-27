@@ -36,6 +36,29 @@ class AudioCodecModel;
 
 const QString& account_state_name(const QString& s);
 
+typedef void (Account::*account_function)();
+
+///@enum AccountEditState: Manage how and when an account can be reloaded or change state
+enum AccountEditState {
+   READY    =0,
+   EDITING  =1,
+   OUTDATED =2,
+   NEW      =3,
+   MODIFIED =4,
+   REMOVED  =5
+};
+
+///@enum AccountEditAction
+enum AccountEditAction {
+   NOTHING =0,
+   EDIT    =1,
+   RELOAD  =2,
+   SAVE    =3,
+   REMOVE  =4,
+   MODIFY  =5,
+   CANCEL  =6
+};
+
 ///Account: a daemon account (SIP or AIX)
 class LIB_EXPORT Account : public QObject {
    Q_OBJECT
@@ -45,7 +68,18 @@ class LIB_EXPORT Account : public QObject {
       //Constructors
       static Account* buildExistingAccountFromId(const QString& _accountId);
       static Account* buildNewAccountFromAlias(const QString& alias);
-   
+
+      /**
+       *Perform an action
+       * @return If the state changed
+       */
+      bool performAction(AccountEditAction action) {
+         AccountEditState curState = m_CurrentState;
+         (this->*(stateMachineActionsOnState[m_CurrentState][action]))();
+         return curState != m_CurrentState;
+      }
+      AccountEditState currentState() const {return m_CurrentState;};
+
       //Getters
       bool                    isNew()                                const;
       const QString&          getAccountId()                         const;
@@ -55,7 +89,6 @@ class LIB_EXPORT Account : public QObject {
       const QString&          getAlias()                             const;
       bool                    isEnabled()                            const;
       bool                    isRegistered()                         const;
-      bool                    isTemporary()                          const;
       QModelIndex             getIndex()                                  ;
       QString                 getStateColorName()                    const;
       Qt::GlobalColor         getStateColor()                        const;
@@ -139,8 +172,7 @@ class LIB_EXPORT Account : public QObject {
       //Setters
       void setAccountId      (const QString& id                        );
       void setAccountDetails (const MapStringString& m                 );
-      void setAccountDetail  (const QString& param, const QString& val );
-      void setTemporary      (const bool value                         );
+      bool setAccountDetail  (const QString& param, const QString& val );
       #ifdef ENABLE_VIDEO
       void setActiveVideoCodecList(QList<VideoCodec*> codecs);
       QList<VideoCodec*> getActiveVideoCodecList();
@@ -218,10 +250,8 @@ class LIB_EXPORT Account : public QObject {
       bool operator==(const Account&)const;
 
       //Mutator
-      void save();
       void saveCredentials();
       void saveAudioCodecs();
-      void reload();
       void reloadCredentials();
       void reloadAudioCodecs();
 
@@ -240,13 +270,27 @@ class LIB_EXPORT Account : public QObject {
       void accountChanged(QString accountId,QString stateName, int state);
 
    private:
-      bool m_Temporary;
+      //State actions
+      void nothing() {};
+      void edit()   {m_CurrentState = EDITING ;emit changed(this);};
+      void modify() {m_CurrentState = MODIFIED;emit changed(this);};
+      void remove() {m_CurrentState = REMOVED ;emit changed(this);};
+      void cancel() {m_CurrentState = READY   ;emit changed(this);};
+      void outdate(){m_CurrentState = OUTDATED;emit changed(this);};
+      void reload();
+      void save();
+      void reloadMod() {reload();modify();};
+      
       CredentialModel* m_pCredentials;
       AudioCodecModel* m_pAudioCodecs;
+      AccountEditState m_CurrentState;
+      static const account_function stateMachineActionsOnState[6][7];
 
 
    signals:
       ///The account state (Invalif,Trying,Registered) changed
       void stateChanged(QString state);
+      void detailChanged(Account* a,QString name,QString newVal, QString oldVal);
+      void changed(Account* a);
 };
 #endif

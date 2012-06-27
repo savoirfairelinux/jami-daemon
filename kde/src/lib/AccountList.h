@@ -95,6 +95,7 @@ public slots:
 
 private slots:
    void accountChanged(const QString& account,const QString& state, int code);
+   void accountChanged(Account* a);
    
 signals:
    ///The account list changed
@@ -107,6 +108,7 @@ signals:
 class LIB_EXPORT AccountListColorVisitor {
 public:
    virtual QVariant getColor(const Account* a) = 0;
+   virtual QVariant getIcon(const Account* a)        = 0;
    virtual ~AccountListColorVisitor() {}
 };
 

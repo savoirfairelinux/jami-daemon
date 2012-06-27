@@ -91,6 +91,8 @@ public:
 
    void saveAccount(QModelIndex item);
 
+   void cancel();
+
    /**
     *   Fills the settings form in the right side with the
     *   settings of @p item.
@@ -112,6 +114,7 @@ private:
    QList<StringHash>     codecList             ;
    bool                  accountListHasChanged ;
    QMap<QString,QString> m_hRingtonePath       ;
+   bool                  m_IsLoading           ;
 
 public slots:
    void saveAccountList ();
@@ -122,8 +125,8 @@ public slots:
 
 private slots:
    void changedAccountList               ();
-   void connectAccountsChangedSignal     ();
-   void disconnectAccountsChangedSignal  ();
+//    void connectAccountsChangedSignal     ();
+//    void disconnectAccountsChangedSignal  ();
    void on_button_accountUp_clicked      ();
    void on_button_accountDown_clicked    ();
    void on_button_accountAdd_clicked     ();
@@ -142,7 +145,7 @@ private slots:
    void loadVidCodecDetails        ( const QString& name                                     );
    void selectedCodecChanged       ( const QModelIndex& current, const QModelIndex& previous );
    void updateStatusLabel          ( QModelIndex item                                        );
-   void accountListChanged         ( Account* current, Account* previous                     );
+   void accountListChanged         ( QModelIndex current, QModelIndex previous               );
    void selectCredential           ( QModelIndex item, QModelIndex previous                  );
    void updateStatusLabel          ( Account*   account                                      );
    void updateCombo                ( int            value                                    );

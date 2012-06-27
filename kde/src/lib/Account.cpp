@@ -37,6 +37,17 @@
 #include "CredentialModel.h"
 #include "AudioCodecModel.h"
 
+const account_function Account::stateMachineActionsOnState[6][7] = {
+/*                 NOTHING              EDIT              RELOAD              SAVE               REMOVE             MODIFY             CANCEL            */
+/*READY    */{ &Account::nothing, &Account::edit   , &Account::reload , &Account::nothing, &Account::remove , &Account::modify   , &Account::nothing },/**/
+/*EDITING  */{ &Account::nothing, &Account::nothing, &Account::outdate, &Account::nothing, &Account::remove , &Account::modify   , &Account::cancel  },/**/
+/*OUTDATED */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing, &Account::remove , &Account::reloadMod, &Account::reload  },/**/
+/*NEW      */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::save   , &Account::remove , &Account::nothing  , &Account::nothing },/**/
+/*MODIFIED */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::save   , &Account::remove , &Account::nothing  , &Account::reload  },/**/
+/*REMOVED  */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing  , &Account::cancel  } /**/
+/*                                                                                                                                                       */
+};
+
 ///Match state name to user readable string
 const QString& account_state_name(const QString& s)
 {
@@ -73,7 +84,7 @@ const QString& account_state_name(const QString& s)
 } //account_state_name
 
 ///Constructors
-Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_Temporary(false),m_pCredentials(nullptr),m_pAudioCodecs(nullptr)
+Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_pCredentials(nullptr),m_pAudioCodecs(nullptr),m_CurrentState(READY)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager,SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
@@ -85,7 +96,8 @@ Account* Account::buildExistingAccountFromId(const QString& _accountId)
    qDebug() << "Building an account from id: " << _accountId;
    Account* a = new Account();
    a->m_pAccountId = new QString(_accountId);
-   a->reload();
+
+   a->performAction(AccountEditAction::RELOAD);
 
    return a;
 } //buildExistingAccountFromId
@@ -201,12 +213,6 @@ bool Account::isRegistered() const
    return (getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
-///If this account is really part of the model or just "in progress" that can be canceled
-bool Account::isTemporary() const
-{
-   return m_Temporary;
-}
-
 ///Return the model index of this item
 QModelIndex Account::getIndex()
 {
@@ -272,9 +278,21 @@ void Account::setAccountDetails(const MapStringString& m)
 }
 
 ///Set a specific detail
-void Account::setAccountDetail(const QString& param, const QString& val)
+bool Account::setAccountDetail(const QString& param, const QString& val)
 {
-   (*m_pAccountDetails)[param] = val;
+   QString buf = (*m_pAccountDetails)[param];
+   if (param == ACCOUNT_REGISTRATION_STATUS) {
+      (*m_pAccountDetails)[param] = val;
+      emit detailChanged(this,param,val,buf);
+   }
+   else {
+      performAction(AccountEditAction::MODIFY);
+      if (m_CurrentState == MODIFIED || m_CurrentState == NEW) {
+         (*m_pAccountDetails)[param] = val;
+         emit detailChanged(this,param,val,buf);
+      }
+   }
+   return m_CurrentState == MODIFIED || m_CurrentState == NEW;
 }
 
 ///Set the account id
@@ -289,13 +307,7 @@ void Account::setAccountId(const QString& id)
 ///Set account enabled
 void Account::setEnabled(bool checked)
 {
-   setAccountDetail(ACCOUNT_ENABLED, checked ? REGISTRATION_ENABLED_TRUE : REGISTRATION_ENABLED_FALSE);
-}
-
-///Set if the account is temporary (work in progress, can be cancelled)
-void Account::setTemporary(bool value)
-{
-   m_Temporary = value;
+   setAccountEnabled(checked);
 }
 
 /*****************************************************************************
@@ -318,7 +330,6 @@ void Account::updateState()
 ///Save the current account to the daemon
 void Account::save()
 {
-   if (isTemporary()) return;
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    if (isNew()) {
       MapStringString details = getAccountDetails();
@@ -337,8 +348,10 @@ void Account::save()
       if (acc != this) {
          (*AccountList::getInstance()->m_pAccounts) << this;
       }
-      reload();
+      
+      performAction(AccountEditAction::RELOAD);
       updateState();
+      m_CurrentState = READY;
    }
 }
 
@@ -359,6 +372,7 @@ void Account::reload()
       }
       m_pAccountDetails = new MapStringString(aDetails);
    }
+   m_CurrentState = READY;
 }
 
 void Account::reloadCredentials()

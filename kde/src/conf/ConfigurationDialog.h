@@ -90,6 +90,12 @@ public slots:
     *   Disable/Enable Apply Button according to hasChanged() result
     */
    void updateButtons();
+
+   /**
+    *   Cancel modifications (apply only to model changes)
+    */
+   void cancelSettings();
+   
    /**
     * @return whether any custom widget has changed in the dialog.
     */

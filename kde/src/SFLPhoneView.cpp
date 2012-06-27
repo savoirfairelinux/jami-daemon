@@ -94,6 +94,15 @@ public:
                return m_Yellow;
       return m_Red;
    }
+
+   virtual QVariant getIcon(const Account* a) {
+      if (a->currentState() == MODIFIED)
+         return KIcon("document-save");
+      else if (a->currentState() == OUTDATED) {
+         return KIcon("view-refresh");
+      }
+      return QVariant();
+   }
 private:
    QPalette m_Pal;
    QColor m_Green;

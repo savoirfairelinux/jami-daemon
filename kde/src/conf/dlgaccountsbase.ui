@@ -158,7 +158,7 @@
           </spacer>
          </item>
          <item row="0" column="0" colspan="5">
-          <widget class="AccountListWidget" name="listView_accountList">
+          <widget class="QListView" name="listView_accountList">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -1275,11 +1275,6 @@
    <class>KUrlRequester</class>
    <extends>QFrame</extends>
    <header>kurlrequester.h</header>
-  </customwidget>
-  <customwidget>
-   <class>AccountListWidget</class>
-   <extends>QListView</extends>
-   <header>widgets/AccountListWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>
