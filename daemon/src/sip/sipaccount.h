@@ -205,6 +205,10 @@ class SIPAccount : public Account {
             return credentials_.size();
         }
 
+        bool hasCredentials() const {
+            return not credentials_.empty();
+        }
+
         void setCredentials(const std::vector<std::map<std::string, std::string> >& details);
 
         const std::vector<std::map<std::string, std::string> > &

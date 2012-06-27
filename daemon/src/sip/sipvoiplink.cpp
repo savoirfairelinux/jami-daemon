@@ -1215,8 +1215,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     if (not account->getServiceRoute().empty())
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 
-    if (pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initialize credential for invite session authentication");
+    if (account->hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
+        ERROR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
