@@ -119,7 +119,7 @@ class Sdp {
          * to video.
          * Second member of the vector is the video codec rtp name
          */
-        std::vector<std::string> getActiveVideoDescription() const;
+        void getActiveVideoDescription(std::string &desc, std::string &codec, std::string &payload) const;
 #endif
 
         /*

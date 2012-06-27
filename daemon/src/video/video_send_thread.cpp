@@ -226,8 +226,10 @@ void VideoSendThread::setup()
 
     // write the stream header, if any
     options = NULL;
-    if (!args_["payload_type"].empty())
+    if (not args_["payload_type"].empty()) {
+        DEBUG("Writing stream header for payload type %s", args_["payload_type"].c_str());
         av_dict_set(&options, "payload_type", args_["payload_type"].c_str(), 0);
+    }
 
     EXIT_IF_FAIL(avformat_write_header(outputCtx_, &options) >= 0, "Could not write "
           "header for output file...check codec parameters");

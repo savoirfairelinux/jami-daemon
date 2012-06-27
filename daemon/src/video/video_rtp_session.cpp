@@ -54,8 +54,8 @@ VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string>
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
-    const std::vector<string> v(sdp.getActiveVideoDescription());
-    const string &desc = v[0];
+    string desc, codec, payload;
+    sdp.getActiveVideoDescription(desc, codec, payload);
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
@@ -87,19 +87,19 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
         receiving_ = false;
     }
 
-    if (not v[1].empty()) {
-        const string codec = libav_utils::encodersMap()[v[1]];
-        if (codec.empty()) {
-            DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
+    if (not codec.empty()) {
+        const string encoder(libav_utils::encodersMap()[codec]);
+        if (encoder.empty()) {
+            DEBUG("Couldn't find encoder for \"%s\"\n", codec.c_str());
             sending_ = false;
         } else {
-            txArgs_["codec"] = codec;
+            txArgs_["codec"] = encoder;
         }
     } else {
         sending_ = false;
     }
 
-    txArgs_["payload_type"] = v[2];
+    txArgs_["payload_type"] = payload;
 }
 
 void VideoRtpSession::updateDestination(const string &destination,
