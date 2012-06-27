@@ -34,6 +34,7 @@
 #include "config.h"
 #endif
 
+#include "account_schema.h"
 #include "sipaccount.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
@@ -495,7 +496,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
-    RegistrationState state = Unregistered;
+    RegistrationState state = UNREGISTERED;
     std::string registrationStateCode;
     std::string registrationStateDescription;
 

@@ -550,7 +550,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     sipTransport.createSipTransport(*account);
 
     account->setRegister(true);
-    account->setRegistrationState(Trying);
+    account->setRegistrationState(TRYING);
 
     pjsip_regc *regc = account->getRegistrationInfo();
 
@@ -637,7 +637,7 @@ void SIPVoIPLink::sendUnregister(Account *a)
 
     // This may occurs if account failed to register and is in state INVALID
     if (!account->isRegistered()) {
-        account->setRegistrationState(Unregistered);
+        account->setRegistrationState(UNREGISTERED);
         return;
     }
 
@@ -1788,7 +1788,7 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->status != PJ_SUCCESS) {
         FAILURE_MESSAGE();
-        processRegistrationError(*account, ErrorAuth);
+        processRegistrationError(*account, ERROR_AUTH);
         return;
     }
 
@@ -1800,11 +1800,11 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_USE_PROXY: // 305
             case PJSIP_SC_ALTERNATIVE_SERVICE: // 380
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, Error);
+                processRegistrationError(*account, ERROR);
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE: // 503
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ErrorHost);
+                processRegistrationError(*account, ERROR_HOST);
                 break;
             case PJSIP_SC_UNAUTHORIZED: // 401
                 // Automatically answered by PJSIP
@@ -1813,11 +1813,11 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_FORBIDDEN: // 403
             case PJSIP_SC_NOT_FOUND: // 404
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ErrorAuth);
+                processRegistrationError(*account, ERROR_AUTH);
                 break;
             case PJSIP_SC_REQUEST_TIMEOUT: // 408
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ErrorHost);
+                processRegistrationError(*account, ERROR_HOST);
                 break;
             case PJSIP_SC_INTERVAL_TOO_BRIEF: // 423
                 // Expiration Interval Too Brief
@@ -1827,21 +1827,21 @@ void registration_cb(pjsip_regc_cbparam *param)
                 break;
             case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE: // 606
                 lookForReceivedParameter(*param, *account);
-                account->setRegistrationState(ErrorNotAcceptable);
+                account->setRegistrationState(ERROR_NOT_ACCEPTABLE);
                 account->registerVoIPLink();
                 break;
             default:
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, Error);
+                processRegistrationError(*account, ERROR);
                 break;
         }
 
     } else {
         lookForReceivedParameter(*param, *account);
         if (account->isRegistered())
-            account->setRegistrationState(Registered);
+            account->setRegistrationState(REGISTERED);
         else {
-            account->setRegistrationState(Unregistered);
+            account->setRegistrationState(UNREGISTERED);
             SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
         }
     }

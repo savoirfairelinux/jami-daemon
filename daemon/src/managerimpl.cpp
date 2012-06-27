@@ -38,6 +38,7 @@
 
 #include "logger.h"
 #include "managerimpl.h"
+#include "account_schema.h"
 
 #include "account.h"
 #include "dbus/callmanager.h"

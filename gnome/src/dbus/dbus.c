@@ -63,6 +63,7 @@
 #include "video/video_callbacks.h"
 #endif
 #include "eel-gconf-extensions.h"
+#include "account_schema.h"
 #include "mainwindow.h"
 
 #ifdef SFL_VIDEO
@@ -464,7 +465,7 @@ stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, void *f
     // Disable STUN for the account that tried to create the STUN transport
     account_t *account = account_list_get_by_id(accountID);
     if (account) {
-        account_replace(account, ACCOUNT_SIP_STUN_ENABLED, "false");
+        account_replace(account, CONFIG_STUN_ENABLE, "false");
         dbus_set_account_details(account);
     }
 }

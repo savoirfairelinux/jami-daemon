@@ -37,6 +37,21 @@
 #include "video/video_endpoint.h"
 #endif
 
+const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
+const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";
+const char * const Account::RINGTONE_PATH_KEY =     "ringtonePath";
+const char * const Account::RINGTONE_ENABLED_KEY =  "ringtoneEnabled";
+const char * const Account::DISPLAY_NAME_KEY =      "displayName";
+const char * const Account::ALIAS_KEY =             "alias";
+const char * const Account::TYPE_KEY =              "type";
+const char * const Account::ID_KEY =                "id";
+const char * const Account::USERNAME_KEY =          "username";
+const char * const Account::AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
+const char * const Account::PASSWORD_KEY =          "password";
+const char * const Account::HOSTNAME_KEY =          "hostname";
+const char * const Account::ACCOUNT_ENABLE_KEY =    "enable";
+const char * const Account::MAILBOX_KEY =           "mailbox";
+
 Account::Account(const std::string &accountID, const std::string &type) :
     accountID_(accountID)
     , username_()
@@ -44,7 +59,7 @@ Account::Account(const std::string &accountID, const std::string &type) :
     , alias_()
     , enabled_(true)
     , type_(type)
-    , registrationState_(Unregistered)
+    , registrationState_(UNREGISTERED)
     , audioCodecList_()
     , videoCodecList_()
     , audioCodecStr_()
@@ -138,7 +153,7 @@ std::string Account::mapStateNumberToString(RegistrationState state)
         "ERRORCONFSTUN"
     };
 
-    if (state > NumberOfStates)
+    if (state > NUMBER_OF_STATES)
         return "ERROR";
 
     return mapStateToChar[state];

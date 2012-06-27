@@ -61,6 +61,7 @@
 #include "actions.h"
 #include "dbus/dbus.h"
 #include "logger.h"
+#include "account_schema.h"
 #include "contacts/calltab.h"
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
@@ -135,13 +136,13 @@ status_bar_display_account()
     if (acc) {
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                                       _("Using account"),
-                                      (gchar*) account_lookup(acc, ACCOUNT_ALIAS),
-                                      (gchar*) account_lookup(acc, ACCOUNT_TYPE));
+                                      (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
+                                      (gchar*) account_lookup(acc, CONFIG_ACCOUNT_TYPE));
     } else {
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
 
-    statusbar_push_message(msg, NULL,  __MSG_ACCOUNT_DEFAULT);
+    statusbar_push_message(msg, NULL, __MSG_ACCOUNT_DEFAULT);
     g_free(msg);
 }
 
@@ -213,7 +214,7 @@ void sflphone_fill_account_list(void)
         account_list_add(acc);
         /* Fill the actual array of credentials */
         dbus_get_credentials(acc);
-        gchar * status = account_lookup(acc, ACCOUNT_REGISTRATION_STATUS);
+        gchar * status = account_lookup(acc, CONFIG_ACCOUNT_REGISTRATION_STATUS);
 
         if (g_strcmp0(status, "REGISTERED") == 0)
             acc->state = ACCOUNT_STATE_REGISTERED;
@@ -238,10 +239,10 @@ void sflphone_fill_account_list(void)
         else
             acc->state = ACCOUNT_STATE_INVALID;
 
-        gchar * code = account_lookup(acc, ACCOUNT_REGISTRATION_STATE_CODE);
+        gchar * code = account_lookup(acc, CONFIG_ACCOUNT_REGISTRATION_STATE_CODE);
         if (code != NULL)
             acc->protocol_state_code = atoi(code);
-        acc->protocol_state_description = account_lookup(acc, ACCOUNT_REGISTRATION_STATE_DESC);
+        acc->protocol_state_description = account_lookup(acc, CONFIG_ACCOUNT_REGISTRATION_STATE_DESC);
     }
 
     g_strfreev(array);

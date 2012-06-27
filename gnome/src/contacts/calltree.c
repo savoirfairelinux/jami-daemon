@@ -33,6 +33,7 @@
 #include "calllist.h"
 #include "calltree.h"
 #include "str_utils.h"
+#include "account_schema.h"
 #include <string.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
@@ -230,13 +231,13 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
             DEBUG("AccountID %s", selectedCall->_accountID);
 
             if (account_details != NULL) {
-                displaySasOnce = g_hash_table_lookup(account_details->properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                displaySasOnce = g_hash_table_lookup(account_details->properties, CONFIG_ZRTP_DISPLAY_SAS_ONCE);
                 DEBUG("Display SAS once %s", displaySasOnce);
             } else {
                 GHashTable *properties = sflphone_get_ip2ip_properties();
 
                 if (properties != NULL) {
-                    displaySasOnce = g_hash_table_lookup(properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                    displaySasOnce = g_hash_table_lookup(properties, CONFIG_ZRTP_DISPLAY_SAS_ONCE);
                     DEBUG("IP2IP displaysasonce %s", displaySasOnce);
                 }
             }
@@ -595,13 +596,13 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
     account = account_list_get_by_id(call->_accountID);
 
     if (account != NULL) {
-        srtp_enabled = account_lookup(account, ACCOUNT_SRTP_ENABLED);
-        display_sas = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+        srtp_enabled = account_lookup(account, CONFIG_SRTP_ENABLE);
+        display_sas = utf8_case_equal(account_lookup(account, CONFIG_ZRTP_DISPLAY_SAS), "true");
     } else {
         GHashTable * properties = sflphone_get_ip2ip_properties();
         if (properties != NULL) {
-            srtp_enabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
-            display_sas = utf8_case_equal(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+            srtp_enabled = g_hash_table_lookup(properties, CONFIG_SRTP_ENABLE);
+            display_sas = utf8_case_equal(g_hash_table_lookup(properties, CONFIG_ZRTP_DISPLAY_SAS), "true");
         }
     }
 
@@ -762,8 +763,8 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
         account_details = account_list_get_by_id(call->_accountID);
 
         if (account_details) {
-            srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
-            key_exchange = g_hash_table_lookup(account_details->properties, ACCOUNT_KEY_EXCHANGE);
+            srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
+            key_exchange = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_KEY_EXCHANGE);
         }
     }
 
@@ -963,7 +964,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
                 if (!account_details)
                     ERROR("Could not find account %s in account list", call->_accountID);
                 else
-                    srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
+                    srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
 
                 if (utf8_case_equal(srtp_enabled, "true")) {
                     DEBUG("SRTP enabled for participant %s", call_id);
