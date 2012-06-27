@@ -216,13 +216,13 @@ void SFLPhoneView::typeString(QString str)
    Call *candidate   = nullptr;
 
    if(call) {
-      if(call->getState() == CALL_STATE_CURRENT) {
+      if (call->getState() == CALL_STATE_CURRENT || call->getState() == CALL_STATE_RECORD) {
          currentCall = call;
       }
    }
 
    foreach (Call* call2, SFLPhone::model()->getCallList()) {
-      if(dynamic_cast<Call*>(call2) && currentCall != call2 && call2->getState() == CALL_STATE_CURRENT) {
+      if(dynamic_cast<Call*>(call2) && currentCall != call2 && (call2->getState() == CALL_STATE_CURRENT || call->getState() == CALL_STATE_RECORD)) {
          action(call2, CALL_ACTION_HOLD);
       }
       else if(dynamic_cast<Call*>(call2) && call2->getState() == CALL_STATE_DIALING) {
@@ -418,6 +418,10 @@ void SFLPhoneView::updateWindowCallState()
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_CURRENT:
+            buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
+            m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
+            break;
+         case CALL_STATE_RECORD:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
             m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
             break;
@@ -645,8 +649,9 @@ void SFLPhoneView::displayMessageBox(bool checked)
    Call* call = callView->getCurrentItem();
    m_pMessageBoxW->setVisible(checked
       && call
-      && (call->getState() == CALL_STATE_CURRENT
+      && (call->getState()   == CALL_STATE_CURRENT
          || call->getState() == CALL_STATE_HOLD
+         || call->getState() == CALL_STATE_RECORD
       )
    );
 }
@@ -790,7 +795,7 @@ void SFLPhoneView::accept()
    }
    else {
       int state = call->getState();
-      if(state == CALL_STATE_RINGING || state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_BUSY)
+      if(state == CALL_STATE_RINGING || state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_BUSY || state == CALL_STATE_RECORD)
       {
          kDebug() << "Calling when item currently ringing, current, hold or busy. Opening an item.";
          SFLPhone::model()->addDialingCall();

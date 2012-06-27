@@ -57,8 +57,14 @@
 #include "SFLPhone.h"
 #include "widgets/BookmarkDock.h"
 #include "widgets/TranslucentButtons.h"
+#include "klib/ConfigurationSkeleton.h"
 
-const char * HistoryTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
+static const char* icnPath[4] = {
+/* INCOMING */ ICON_HISTORY_INCOMING,
+/* OUTGOING */ ICON_HISTORY_OUTGOING,
+/* MISSED   */ ICON_HISTORY_MISSED,
+/* NONE     */ "",
+};
 
 ///PlayerWidget: A small widget to play call recording
 class PlayerWidget : public QWidget {
@@ -513,6 +519,7 @@ void HistoryTreeItem::setItem(QTreeWidgetItem* item)
 ///Can a contact be associed with this call?
 bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 {
+   QPixmap pxm;
    if (!m_pContact && !m_pItemCall)
       m_pContact = AkonadiBackend::getInstance()->getContactByPhone(phoneNumber,true);
    else if (m_pItemCall)
@@ -520,36 +527,37 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    if (m_pContact) {
       m_Name = m_pContact->getFormattedName();
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
-      if (m_pContact->getPhoto() != NULL) {
-         QPixmap pxm = (*m_pContact->getPhoto());
-         if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty()) {
-            QPainter painter(&pxm);
-            QPixmap status(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png"));
-            status=status.scaled(QSize(24,24));
-            painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
-         }
-         m_pIconL->setPixmap(pxm);
-      }
-      else if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())
-         m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
+      if (m_pContact->getPhoto() != NULL)
+         pxm = (*m_pContact->getPhoto());
       else
-         m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+         pxm = QPixmap(KIcon("user-identity").pixmap(QSize(48,48)));
       m_pContact = m_pContact;
    }
    else {
-      if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty())
-         m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png")));
-      else
-         m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
+      pxm = QPixmap(KIcon("user-identity").pixmap(QSize(48,48)));
       if (!phoneNumber.isEmpty() && m_Name.isEmpty())
          m_Name = phoneNumber;
       else if (m_Name.isEmpty())
          m_Name = i18n("Unknown");
       
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
-      return false;
    }
-   return true;
+   
+   if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty()) {
+      QPainter painter(&pxm);
+      QPixmap status(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png"));
+      status=status.scaled(QSize(24,24));
+      painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
+   }
+   else if (m_pItemCall && m_pItemCall->getHistoryState() != history_state::NONE && ConfigurationSkeleton::displayHistoryStatus()) {
+      QPainter painter(&pxm);
+      QPixmap status(icnPath[m_pItemCall->getHistoryState()]);
+      status=status.scaled(QSize(24,24));
+      painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
+   }
+      m_pIconL->setPixmap(pxm);
+   
+   return m_pContact;
 } //getContactInfo
 
 ///Return the time stamp

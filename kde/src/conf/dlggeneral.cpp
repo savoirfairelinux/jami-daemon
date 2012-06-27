@@ -24,6 +24,7 @@
 
 #include "klib/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
+#include "lib/configurationmanager_interface_singleton.h"
 
 DlgGeneral::DlgGeneral(KConfigDialog *parent)
  : QWidget(parent),m_HasChanged(false)
@@ -33,6 +34,9 @@ DlgGeneral::DlgGeneral(KConfigDialog *parent)
 
    kcfg_historyMax->setValue(ConfigurationSkeleton::historyMax());
    kcfg_minimumRowHeight->setEnabled(ConfigurationSkeleton::limitMinimumRowHeight());
+
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   m_pAlwaysRecordCK->setChecked(configurationManager.getIsAlwaysRecording());
 
    //Need to be ordered
    m_lCallDetails[ "Display Icon"         ] = "displayCallIcon"        ;
@@ -53,8 +57,9 @@ DlgGeneral::DlgGeneral(KConfigDialog *parent)
       i->setCheckState((checked)?Qt::Checked:Qt::Unchecked);
       m_pDetailsList->addItem(m_lItemList[iter.value()] = i);
    }
-   connect(m_pDetailsList, SIGNAL(itemChanged(QListWidgetItem*)) , this  , SLOT( changed()      ));
-   connect(this          , SIGNAL(updateButtons())               , parent, SLOT( updateButtons()));
+   connect(m_pDetailsList   , SIGNAL(itemChanged(QListWidgetItem*))  , this  , SLOT( changed()      ));
+   connect(m_pAlwaysRecordCK, SIGNAL(clicked(bool)                )  , this  , SLOT( changed()      ));
+   connect(this             , SIGNAL(updateButtons()              )  , parent, SLOT( updateButtons()));
 }
 
 DlgGeneral::~DlgGeneral()
@@ -84,5 +89,10 @@ void DlgGeneral::updateSettings()
       ConfigurationSkeleton::self()->findItem(iter.value())->setProperty(m_lItemList[iter.value()]->checkState() == Qt::Checked);
    }
    ConfigurationSkeleton::setHistoryMax(kcfg_historyMax->value());
+
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   configurationManager.setIsAlwaysRecording(m_pAlwaysRecordCK->isChecked());
+   
    m_HasChanged = false;
+   
 }
