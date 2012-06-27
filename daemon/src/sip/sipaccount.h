@@ -418,7 +418,7 @@ class SIPAccount : public Account {
          * @return pj_uint16 The port used for that account
          */
         pj_uint16_t getLocalPort() const {
-            return (pj_uint16_t) localPort_;
+            return localPort_;
         }
 
         /**

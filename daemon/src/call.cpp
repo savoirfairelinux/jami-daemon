@@ -161,7 +161,7 @@ Call::setRecording()
         mbuffer->unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }
 
-    Manager::instance().getMainBuffer()->stateInfo();
+    Manager::instance().getMainBuffer()->dumpInfo();
 
     return recordStatus;
 }

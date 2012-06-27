@@ -274,12 +274,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_tpselector *tp = SIPVoIPLink::instance()->sipTransport.initTransportSelector(account->transport_, call->getMemoryPool());
 
-    if (addrToUse == "0.0.0.0")
-        addrToUse = SipTransport::getSIPLocalIP();
-
-    if (addrSdp == "0.0.0.0")
-        addrSdp = addrToUse;
-
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, std::min(length, sizeof tmp));
@@ -574,13 +568,14 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
-    if (!received.empty()) {
+    if (not received.empty()) {
         // Set received parameter string to empty in order to avoid creating new transport for each register
         account->setReceivedParameter("");
-        // Explicitely set the bound address port to 0 so that pjsip determine a random port by itself
+        DEBUG("Creating transport on random port because we have rx param %s", received.c_str());
+        // Explicitly set the bound address port to 0 so that pjsip determines a random port by itself
         account->transport_= sipTransport.createUdpTransport(account->getLocalInterface(), 0, received, account->getRPort());
         account->setRPort(-1);
-        if(account->transport_ == NULL) {
+        if (account->transport_ == NULL) {
             ERROR("Could not create new udp transport with public address: %s:%d", received.c_str(), account->getLocalPort());
         }
     }
@@ -627,7 +622,7 @@ void SIPVoIPLink::sendRegister(Account *a)
 
     // start the periodic registration request based on Expire header
     // account determines itself if a keep alive is required
-    if(account->isKeepAliveEnabled())
+    if (account->isKeepAliveEnabled())
         account->startKeepAliveTimer();
 }
 
@@ -734,9 +729,6 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
 
-    if (localAddress == "0.0.0.0")
-        localAddress = SipTransport::getSIPLocalIP();
-
     setCallMediaLocal(call, localAddress);
 
     std::string toUri = account->getToUri(to);
@@ -793,19 +785,12 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
 
     call->setPeerNumber(toUri);
     std::string localAddr(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
-
-    if (localAddr == "0.0.0.0")
-        localAddr = SipTransport::getSIPLocalIP();
-
     setCallMediaLocal(call, localAddr);
 
     // May use the published address as well
     std::string addrSdp = account->isStunEnabled() ?
     account->getPublishedAddress() :
     SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
-
-    if (addrSdp == "0.0.0.0")
-        addrSdp = SipTransport::getSIPLocalIP();
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -1416,12 +1401,6 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
     std::string addrSdp(localAddress);
-
-    if (localAddress == "0.0.0.0")
-        localAddress = SipTransport::getSIPLocalIP();
-
-    if (addrSdp == "0.0.0.0")
-        addrSdp = localAddress;
 
     setCallMediaLocal(call, localAddress);
 

@@ -267,7 +267,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         return false;
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     return true;
 }
@@ -322,7 +322,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     // Connect streams
     addStream(call_id);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
@@ -371,23 +371,27 @@ void ManagerImpl::hangupCall(const std::string& callId)
         /* Direct IP to IP call */
         try {
             Call * call = SIPVoIPLink::instance()->getCall(callId);
-            history_.addCall(call, preferences.getHistoryLimit());
-            SIPVoIPLink::instance()->hangup(callId);
-            saveHistory();
+            if (call) {
+                history_.addCall(call, preferences.getHistoryLimit());
+                SIPVoIPLink::instance()->hangup(callId);
+                saveHistory();
+            }
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
         }
     } else {
         std::string accountId(getAccountFromCall(callId));
         Call * call = getCallFromCallID(callId);
-        history_.addCall(call, preferences.getHistoryLimit());
-        VoIPLink *link = getAccountLink(accountId);
-        link->hangup(callId);
-        removeCallAccount(callId);
-        saveHistory();
+        if (call) {
+            history_.addCall(call, preferences.getHistoryLimit());
+            VoIPLink *link = getAccountLink(accountId);
+            link->hangup(callId);
+            removeCallAccount(callId);
+            saveHistory();
+        }
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 bool ManagerImpl::hangupConference(const std::string& id)
@@ -413,7 +417,7 @@ bool ManagerImpl::hangupConference(const std::string& id)
 
     unsetCurrentCall();
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     return true;
 }
@@ -459,7 +463,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 //THREAD=Main
@@ -512,7 +516,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
     addStream(callId);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 //THREAD=Main
@@ -539,7 +543,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     // remove waiting call in case we make transfer without even answer
     removeWaitingCall(callId);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     return true;
 }
@@ -600,7 +604,7 @@ void ManagerImpl::refuseCall(const std::string& id)
     // Disconnect streams
     removeStream(id);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 Conference*
@@ -966,7 +970,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)
@@ -1018,7 +1022,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
                 conf->setRecordingSmplRate(audiodriver_->getSampleRate());
         }
 
-        getMainBuffer()->stateInfo();
+        getMainBuffer()->dumpInfo();
     } else {
         delete conf;
     }
@@ -1116,7 +1120,7 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     call->setConfId("");
 
     removeStream(call_id);
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
     processRemainingParticipants(*conf);
 }
@@ -1222,14 +1226,14 @@ void ManagerImpl::addStream(const std::string& call_id)
         audiodriver_->flushMain();
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 void ManagerImpl::removeStream(const std::string& call_id)
 {
     DEBUG("Remove audio stream %s", call_id.c_str());
     getMainBuffer()->unBindAll(call_id);
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 //THREAD=Main
@@ -2513,14 +2517,6 @@ std::vector<std::string> ManagerImpl::loadAccountOrder() const
     return split_string(preferences.getAccountOrder());
 }
 
-void ManagerImpl::loadDefaultAccountMap()
-{
-    // build a default IP2IP account with default parameters
-    accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
-    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
-    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
-}
-
 namespace {
     bool isIP2IP(const Conf::YamlNode *node)
     {
@@ -2577,13 +2573,27 @@ namespace {
         }
     }
 
+    SIPAccount *createIP2IPAccount()
+    {
+        SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE);
+        SIPVoIPLink::instance()->sipTransport.createSipTransport(*ip2ip);
+        return ip2ip;
+    }
+
 } // end anonymous namespace
+
+void ManagerImpl::loadDefaultAccountMap()
+{
+    // build a default IP2IP account with default parameters
+    accountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
+    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
+}
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
     // build a default IP2IP account with default parameters
-    accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
+    accountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
 
     // load saved preferences for IP2IP account from configuration file
     Sequence *seq = parser.getAccountSequence()->getSequence();
@@ -2595,11 +2605,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
             accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
     }
 
-    // Initialize default UDP transport according to
-    // IP to IP settings (most likely using port 5060)
-    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
-
-    // Force IP2IP settings to be loaded to be loaded
+    // Force IP2IP settings to be loaded
     // No registration in the sense of the REGISTER method is performed.
     accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
