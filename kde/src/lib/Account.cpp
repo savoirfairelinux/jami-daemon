@@ -403,6 +403,8 @@ void Account::saveCredentials() {
       for (int i=0; i < m_pCredentials->rowCount();i++) {
          QModelIndex idx = m_pCredentials->index(i,0);
          MapStringString credentialData;
+         QString username = m_pCredentials->data(idx,CredentialModel::NAME_ROLE     ).toString();
+         username = (username.isEmpty())?getAccountUsername():username;
          credentialData[ CONFIG_ACCOUNT_USERNAME] = m_pCredentials->data(idx,CredentialModel::NAME_ROLE     ).toString();
          credentialData[ CONFIG_ACCOUNT_PASSWORD] = m_pCredentials->data(idx,CredentialModel::PASSWORD_ROLE ).toString();
          credentialData[ CONFIG_ACCOUNT_REALM   ] = m_pCredentials->data(idx,CredentialModel::REALM_ROLE    ).toString();
