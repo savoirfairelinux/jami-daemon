@@ -61,16 +61,15 @@
 static const char * const DEFAULT_INTERFACE = "default";
 static const char * const ANY_HOSTS = "0.0.0.0";
 
+#define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return (VAL); }
+
 std::string SipTransport::getSIPLocalIP()
 {
     pj_sockaddr ip_addr;
 
-    if (pj_gethostip(pj_AF_INET(), &ip_addr) == PJ_SUCCESS)
-        return pj_inet_ntoa(ip_addr.ipv4.sin_addr);
-    else  {
-        ERROR("Could not get local IP");
-        return "";
-    }
+    const pj_status_t status = pj_gethostip(pj_AF_INET(), &ip_addr);
+    RETURN_IF_FAIL(status == PJ_SUCCESS, "", "Could not get local IP");
+    return pj_inet_ntoa(ip_addr.ipv4.sin_addr);
 }
 
 std::vector<std::string> SipTransport::getAllIpInterfaceByName()
@@ -103,11 +102,7 @@ std::string SipTransport::getInterfaceAddrFromName(const std::string &ifaceName)
         return getSIPLocalIP();
 
     int fd = socket(AF_INET, SOCK_DGRAM,0);
-
-    if (fd < 0) {
-        ERROR("Error: could not open socket: %m");
-        return "";
-    }
+    RETURN_IF_FAIL(fd >= 0, "", "Could not open socket: %m");
 
     ifreq ifr;
     strcpy(ifr.ifr_name, ifaceName.c_str());
@@ -167,11 +162,10 @@ stun_sock_on_status_cb(pj_stun_sock * /*stun_sock*/, pj_stun_sock_op op,
             break;
     }
 
-    if (status == PJ_SUCCESS) {
+    if (status == PJ_SUCCESS)
         DEBUG("STUN operation success");
-    } else {
+    else
         ERROR("STUN operation failure");
-    }
 
     // Always return true so the stun transport registration retry even on failure
     return true;
@@ -228,7 +222,7 @@ pj_status_t SipTransport::createStunResolver(pj_str_t serverName, pj_uint16_t po
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
         DEBUG("Error starting STUN socket for %.*s: %s",
-                (int) serverName.slen, serverName.ptr, errmsg);
+              (int) serverName.slen, serverName.ptr, errmsg);
         pj_stun_sock_destroy(stun_sock);
     }
 
@@ -259,10 +253,7 @@ pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
     pj_sockaddr_in_init(&local_addr, 0, 0);
     local_addr.sin_port = pj_htons(account.getTlsListenerPort());
 
-    if (account.getTlsSetting() == NULL) {
-        ERROR("Error TLS settings not specified");
-        return NULL;
-    }
+    RETURN_IF_FAIL(account.getTlsSetting() != NULL, NULL, "TLS settings not specified");
 
     std::string interface(account.getLocalInterface());
     std::string listeningAddress;
@@ -280,11 +271,8 @@ pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
     pj_sockaddr_in_set_port(&local_addr, account.getTlsListenerPort());
 
     pjsip_tpfactory *listener = NULL;
-    if (pjsip_tls_transport_start(endpt_, account.getTlsSetting(), &local_addr,
-                NULL, 1, &listener) != PJ_SUCCESS) {
-        ERROR("Failed to start tls listener");
-        listener = NULL;
-    }
+    const pj_status_t status = pjsip_tls_transport_start(endpt_, account.getTlsSetting(), &local_addr, NULL, 1, &listener);
+    RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "Failed to start TLS listener");
     return listener;
 }
 
@@ -305,9 +293,8 @@ SipTransport::createTlsTransport(SIPAccount &account)
     if (pos != std::string::npos) {
         ipAddr = remoteAddr.substr(0, pos);
         port = atoi(remoteAddr.substr(pos + 1, remoteAddr.length() - pos).c_str());
-    } else {
+    } else
         ipAddr = remoteAddr;
-    }
 
     pj_str_t remote;
     pj_cstr(&remote, ipAddr.c_str());
@@ -325,9 +312,7 @@ SipTransport::createTlsTransport(SIPAccount &account)
     pjsip_transport *transport = NULL;
     pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
-    if (transport == NULL)
-        ERROR("Could not create new TLS transport\n");
-
+    RETURN_IF_FAIL(transport != NULL, NULL, "Could not create new TLS transport");
     return transport;
 }
 
@@ -379,8 +364,6 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     // init socket to bind this transport to
     pj_uint16_t listeningPort = (pj_uint16_t) port;
 
-    DEBUG("Create UDP transport on %s:%d", interface.c_str(), port);
-
     // determine the IP address for this transport
     std::string listeningAddress;
     if (interface == DEFAULT_INTERFACE)
@@ -388,15 +371,8 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     else
         listeningAddress = getInterfaceAddrFromName(interface);
 
-    if (listeningAddress.empty()) {
-        ERROR("Could not determine ip address for this transport");
-        return NULL;
-    }
-
-    if (listeningPort == 0) {
-        ERROR("Could not determine port for this transport");
-        return NULL;
-    }
+    RETURN_IF_FAIL(not listeningAddress.empty(), NULL, "Could not determine ip address for this transport");
+    RETURN_IF_FAIL(listeningPort != 0, NULL, "Could not determine port for this transport");
 
     std::ostringstream fullAddress;
     fullAddress << listeningAddress << ":" << listeningPort;
@@ -410,14 +386,13 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
-        if (status != PJ_SUCCESS)
-            return NULL;
+        RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "UDP IPV4 Transport did not start");
     } else if (boundAddr.addr.sa_family == pj_AF_INET6()) {
         status = pjsip_udp_transport_start6(endpt_, &boundAddr.ipv6, NULL, 1, &transport);
-        if (status != PJ_SUCCESS)
-            return NULL;
+        RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "UDP IPV6 Transport did not start");
     }
 
+    DEBUG("Created UDP transport on %s:%d", interface.c_str(), port);
     DEBUG("Listening address %s", fullAddressStr.c_str());
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
@@ -439,10 +414,7 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     // determine the ip address for this transport
     std::string listeningAddress(getInterfaceAddrFromName(interface));
 
-    if (listeningAddress.empty()) {
-        ERROR("Could not determine ip address for this transport");
-        return NULL;
-    }
+    RETURN_IF_FAIL(not listeningAddress.empty(), NULL, "Could not determine ip address for this transport");
 
     std::ostringstream fullAddress;
     fullAddress << listeningAddress << ":" << listeningPort;
@@ -458,10 +430,8 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     hostPort.port = publicPort;
 
     pj_status_t status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, &hostPort, 1, &transport);
-    if (status != PJ_SUCCESS) {
-        ERROR("Could not start new transport with address %s:%d, error code %d", publicAddr.c_str(), publicPort, status);
-        return NULL;
-    }
+    RETURN_IF_FAIL(status == PJ_SUCCESS, NULL,
+            "Could not start new transport with address %s:%d, error code %d", publicAddr.c_str(), publicPort, status);
 
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
@@ -471,10 +441,7 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 
 pjsip_tpselector *SipTransport::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
 {
-    if (!transport) {
-        ERROR("Transport is not initialized");
-        return NULL;
-    }
+    RETURN_IF_FAIL(transport != NULL, NULL, "Transport is not initialized");
     pjsip_tpselector *tp = (pjsip_tpselector *) pj_pool_zalloc(tp_pool, sizeof(pjsip_tpselector));
     tp->type = PJSIP_TPSELECTOR_TRANSPORT;
     tp->u.transport = transport;
@@ -483,31 +450,27 @@ pjsip_tpselector *SipTransport::initTransportSelector(pjsip_transport *transport
 
 pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 {
+#define RETURN_IF_STUN_FAIL(A, M, ...) \
+    if (!(A)) { \
+        ERROR(M, ##__VA_ARGS__); \
+        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
+        return NULL; }
+
     pj_str_t serverName = account.getStunServerName();
     pj_uint16_t port = account.getStunPort();
 
     DEBUG("Create STUN transport  server name: %s, port: %d", serverName, port);
-    if (createStunResolver(serverName, port) != PJ_SUCCESS) {
-        ERROR("Can't resolve STUN server");
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
-        return NULL;
-    }
+    RETURN_IF_STUN_FAIL(createStunResolver(serverName, port) == PJ_SUCCESS, "Can't resolve STUN server");
 
     pj_sock_t sock = PJ_INVALID_SOCKET;
 
     pj_sockaddr_in boundAddr;
 
-    if (pj_sockaddr_in_init(&boundAddr, &serverName, 0) != PJ_SUCCESS) {
-        ERROR("Can't initialize IPv4 socket on %*s:%i", serverName.slen, serverName.ptr, port);
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
-        return NULL;
-    }
+    RETURN_IF_STUN_FAIL(pj_sockaddr_in_init(&boundAddr, &serverName, 0) == PJ_SUCCESS,
+                        "Can't initialize IPv4 socket on %*s:%i", serverName.slen, serverName.ptr, port);
 
-    if (pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &sock) != PJ_SUCCESS) {
-        ERROR("Can't create or bind socket");
-        Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
-        return NULL;
-    }
+    RETURN_IF_STUN_FAIL(pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &sock) == PJ_SUCCESS,
+                        "Can't create or bind socket");
 
     // Query the mapped IP address and port on the 'outside' of the NAT
     pj_sockaddr_in pub_addr;
@@ -531,6 +494,7 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
 
     return transport;
+#undef RETURN_IF_STUN_FAIL
 }
 
 void SipTransport::shutdownSipTransport(SIPAccount &account)
@@ -549,6 +513,8 @@ void SipTransport::shutdownSipTransport(SIPAccount &account)
 
 void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjsip_transport_type_e transportType, std::string &addr, std::string &port) const
 {
+#define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { ERROR(M, ##__VA_ARGS__); return; }
+
     // Initialize the sip port with the default SIP port
     std::stringstream ss;
     ss << DEFAULT_SIP_PORT;
@@ -559,26 +525,17 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     addr = std::string(pjMachineName->ptr, pjMachineName->slen);
 
     // Update address and port with active transport
-    if (!transport) {
-        ERROR("Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
-        return;
-    }
+    RETURN_IF_NULL(transport, "Transport is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
 
     // get the transport manager associated with the SIP enpoint
     pjsip_tpmgr *tpmgr = pjsip_endpt_get_tpmgr(endpt_);
-    if (!tpmgr) {
-        ERROR("Transport manager is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
-        return;
-    }
+    RETURN_IF_NULL(tpmgr, "Transport manager is NULL in findLocalAddress, using local address %s:%s", addr.c_str(), port.c_str());
 
     // initialize a transport selector
     // TODO Need to determine why we exclude TLS here...
     // if (transportType == PJSIP_TRANSPORT_UDP and transport_)
     pjsip_tpselector *tp_sel = initTransportSelector(transport, pool_);
-    if (!tp_sel) {
-        ERROR("Could not initialize transport selector, using local address %s:%s", addr.c_str(), port.c_str());
-        return;
-    }
+    RETURN_IF_NULL(tp_sel, "Could not initialize transport selector, using local address %s:%s", addr.c_str(), port.c_str());
 
     pj_str_t localAddress = {0,0};
     int i_port = 0;
@@ -600,4 +557,6 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     ss.str("");
     ss << i_port;
     port = ss.str();
+
+#undef RETURN_IF_FAIL
 }
