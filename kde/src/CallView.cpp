@@ -588,9 +588,11 @@ void CallView::destroyCall(Call* toDestroy)
    else if (SFLPhone::model()->getIndex(toDestroy)->parent()) {
       QTreeWidgetItem* callIndex = SFLPhone::model()->getIndex(toDestroy);
       QTreeWidgetItem* parent = callIndex->parent();
-      parent->removeChild(callIndex);
-      if (dynamic_cast<QTreeWidgetItem*>(parent) && parent->childCount() == 0) /*This should never happen, but it does*/
-         takeTopLevelItem(indexOfTopLevelItem(parent));
+      if (indexOfTopLevelItem(parent) != -1) {
+         parent->removeChild(callIndex);
+         if (dynamic_cast<QTreeWidgetItem*>(parent) && parent->childCount() == 0) /*This should never happen, but it does*/
+            takeTopLevelItem(indexOfTopLevelItem(parent));
+      }
    }
    else
       kDebug() << "Call not found";
