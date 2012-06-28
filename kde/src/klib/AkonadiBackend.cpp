@@ -107,6 +107,32 @@ Contact* AkonadiBackend::getContactByUid(const QString& uid)
 
 /*****************************************************************************
  *                                                                           *
+ *                                  Helper                                   *
+ *                                                                           *
+ ****************************************************************************/
+
+KABC::PhoneNumber::Type nameToType(QString name)
+{
+   if      (name == "Home"   ) return KABC::PhoneNumber::Home ;
+   else if (name == "Work"   ) return KABC::PhoneNumber::Work ;
+   else if (name == "Msg"    ) return KABC::PhoneNumber::Msg  ;
+   else if (name == "Pref"   ) return KABC::PhoneNumber::Pref ;
+   else if (name == "Voice"  ) return KABC::PhoneNumber::Voice;
+   else if (name == "Fax"    ) return KABC::PhoneNumber::Fax  ;
+   else if (name == "Cell"   ) return KABC::PhoneNumber::Cell ;
+   else if (name == "Video"  ) return KABC::PhoneNumber::Video;
+   else if (name == "Bbs"    ) return KABC::PhoneNumber::Bbs  ;
+   else if (name == "Modem"  ) return KABC::PhoneNumber::Modem;
+   else if (name == "Car"    ) return KABC::PhoneNumber::Car  ;
+   else if (name == "Isdn"   ) return KABC::PhoneNumber::Isdn ;
+   else if (name == "Pcs"    ) return KABC::PhoneNumber::Pcs  ;
+   else if (name == "Pager"  ) return KABC::PhoneNumber::Pager;
+   return KABC::PhoneNumber::Home;
+}
+
+
+/*****************************************************************************
+ *                                                                           *
  *                                  Mutator                                  *
  *                                                                           *
  ****************************************************************************/
@@ -159,6 +185,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                aContact->setPhoto(0);
             
             m_AddrHash[tmp.uid()] = tmp;
+            m_ItemHash[tmp.uid()] = item;
          }
       }
       m_pContacts = m_ContactByUid.values();
@@ -169,18 +196,22 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
 ///Edit backend value using an updated frontend contact
 void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
 {
-   KABC::Addressee ct = m_AddrHash[contact->getUid()];
-   if (ct.uid() != contact->getUid()) {
+   Akonadi::Item item = m_ItemHash[contact->getUid()];
+   if (!(item.hasPayload<KABC::Addressee>() && item.payload<KABC::Addressee>().uid() == contact->getUid())) {
       kDebug() << "Contact not found";
       return;
    }
    
-   Akonadi::ContactEditorDialog *editor = new Akonadi::ContactEditorDialog( Akonadi::ContactEditorDialog::EditMode, parent );
-   Akonadi::Item item(rand());
-   item.setPayload<KABC::Addressee>(ct);
+   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
    if ( item.isValid() ) {
-      editor->setContact(item);
-      editor->exec();
+      editor->loadContact(item);
+      KDialog* dlg = new KDialog(parent);
+      dlg->setMainWidget(editor);
+      dlg->exec();
+      if ( !editor->saveContact() ) {
+         kDebug() << "Unable to save new contact to storage";
+         return;
+      }
    }
 } //editContact
 
@@ -198,20 +229,7 @@ void AkonadiBackend::addNewContact(Contact* contact,QWidget* parent)
 
    foreach (Contact::PhoneNumber* nb, contact->getPhoneNumbers()) {
       KABC::PhoneNumber pn;
-      if (nb->getType()      == "Home"   ) pn.setType(KABC::PhoneNumber::Home  );
-      else if (nb->getType() == "Work"   ) pn.setType(KABC::PhoneNumber::Work  );
-      else if (nb->getType() == "Msg"    ) pn.setType(KABC::PhoneNumber::Msg   );
-      else if (nb->getType() == "Pref"   ) pn.setType(KABC::PhoneNumber::Pref  );
-      else if (nb->getType() == "Voice"  ) pn.setType(KABC::PhoneNumber::Voice );
-      else if (nb->getType() == "Fax"    ) pn.setType(KABC::PhoneNumber::Fax   );
-      else if (nb->getType() == "Cell"   ) pn.setType(KABC::PhoneNumber::Cell  );
-      else if (nb->getType() == "Video"  ) pn.setType(KABC::PhoneNumber::Video );
-      else if (nb->getType() == "Bbs"    ) pn.setType(KABC::PhoneNumber::Bbs   );
-      else if (nb->getType() == "Modem"  ) pn.setType(KABC::PhoneNumber::Modem );
-      else if (nb->getType() == "Car"    ) pn.setType(KABC::PhoneNumber::Car   );
-      else if (nb->getType() == "Isdn"   ) pn.setType(KABC::PhoneNumber::Isdn  );
-      else if (nb->getType() == "Pcs"    ) pn.setType(KABC::PhoneNumber::Pcs   );
-      else if (nb->getType() == "Pager"  ) pn.setType(KABC::PhoneNumber::Pager );
+      pn.setType(nameToType(nb->getType()));
 
       pn.setNumber(nb->getNumber());
       newContact.insertPhoneNumber(pn);
@@ -243,6 +261,17 @@ void AkonadiBackend::editContact(Contact* contact)
 void AkonadiBackend::addNewContact(Contact* contact)
 {
    addNewContact(contact,0);
+}
+
+///Add a new phone number to an existing contact
+void AkonadiBackend::addPhoneNumber(Contact* contact, QString number, QString type)
+{
+   KABC::Addressee ct = m_AddrHash[contact->getUid()];
+   if (ct.uid() != contact->getUid()) {
+      kDebug() << "Contact not found";
+      return;
+   }
+   ct.insertPhoneNumber(KABC::PhoneNumber(number,nameToType(type)));
 }
 
 

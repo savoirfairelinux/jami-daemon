@@ -418,6 +418,12 @@ void ContactItemWidget::editContact()
 void ContactItemWidget::addPhone()
 {
    kDebug() << "Adding to contact";
+   bool ok;
+   //QString number = QInputDialog::getText(0, i18n("Enter a new number"),i18n("New number:"),QLineEdit::Normal,QString(),ok,0);
+   QString text = QInputDialog::getText(this, i18n("Enter a new number"), i18n("New number:"), QLineEdit::Normal, QString(), &ok);
+   if (ok && !text.isEmpty()) {
+      
+   }
 }
 
 ///Add this contact to the bookmark list
