@@ -48,7 +48,7 @@
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
-static const char version[] = "1.1.0";
+static const char version[] = "1.1.1";
 
 SFLPhoneApplication* app;
 void quitOnSignal(int signal)

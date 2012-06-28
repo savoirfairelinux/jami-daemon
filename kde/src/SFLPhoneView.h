@@ -51,8 +51,8 @@ class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
    Q_OBJECT
 
 private:
-   AccountWizard * wizard;
-   QErrorMessage * errorWindow;
+   AccountWizard* wizard     ;
+   QErrorMessage* errorWindow;
 
 protected:
 
@@ -77,18 +77,7 @@ public:
    virtual ~SFLPhoneView();
 
    //Getters
-
-
    QErrorMessage * getErrorWindow();
-
-
-   //Daemon getters
-   /**
-   * Used to sort contacts according to their types with Kabc.
-   * @return the integer resulting to the flags of the types
-   * chosen to be displayed in SFLphone configuration.
-   */
-   int phoneNumberTypesDisplayed();
 
 
    bool selectCallPhoneNumber(Call* call,Contact* contact);
@@ -153,7 +142,7 @@ private slots:
    void updateVolumeBar      (double _value = -1);
    void updateVolumeControls ();
    void updateDialpad        ();
-   void sendMessage();
+   void sendMessage          ();
 
 
 
@@ -176,11 +165,11 @@ public slots:
 
    virtual void keyPressEvent(QKeyEvent *event);
 
-   void displayVolumeControls(bool checked = true);
-   void displayDialpad(bool checked = true);
-   void displayMessageBox(bool checked = true);
-   void configureSflPhone();
-   void accountCreationWizard();
+   void displayVolumeControls ( bool checked = true );
+   void displayDialpad        ( bool checked = true );
+   void displayMessageBox     ( bool checked = true );
+   void configureSflPhone     ();
+   void accountCreationWizard ();
    void accept   ();
    void refuse   ();
    void hold     ();
@@ -196,10 +185,10 @@ public slots:
    void on_toolButton_recVol_clicked  ( bool checked );
    void on_toolButton_sndVol_clicked  ( bool checked );
 
-   void on1_error(MapStringString details);
-   void on1_incomingCall(Call* call);
-   void on1_voiceMailNotify(const QString &accountID, int count);
-   void on1_volumeChanged(const QString &device, double value);
+   void on1_error          ( MapStringString details             );
+   void on1_incomingCall   ( Call* call                          );
+   void on1_voiceMailNotify( const QString &accountID, int count );
+   void on1_volumeChanged  ( const QString &device, double value );
 
 signals:
    ///The status need to be updated

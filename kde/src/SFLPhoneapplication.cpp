@@ -73,28 +73,15 @@ void SFLPhoneApplication::initializeMainWindow()
 
   // Enable KDE session restore.
 //   int restoredWindow = -1;
-//   if( kapp->isSessionRestored() ) {
-//     int n = 0;
-//     while( KMainWindow::canBeRestored( ++n ) ) {
-//       if( KMainWindow::classNameOfToplevel( n ) != QLatin1String( "SFLPhone" ) ) {
-//         continue;
-//       }
-//
-//       restoredWindow = n;
-//       break;
-//     }
-//   }
-
-  // Create the main window and initialize it
-//   sflphoneWindow_ = new SFLPhone();
-//   if( ! sflphoneWindow_->initialize() ) {
-//     exit(1);
-//     return;
-//   }
-
-  // Initialize KApplication
-  //setTopWidget( sflphoneWindow_ );
-//   sflphoneWindow_->show();
+  if( kapp->isSessionRestored() ) {
+    int n = 0;
+    while( KMainWindow::canBeRestored( ++n ) ) {
+      if( KMainWindow::classNameOfToplevel( n ) != QLatin1String( "SFLPhone" ) ) {
+        continue;
+      }
+      break;
+    }
+  }
 }
 
 

@@ -64,8 +64,9 @@ TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent), m_pInitialized(false), m_pView(new SFLPhoneView(this))
 {
-    setupActions();
-    m_sApp = this;
+   setObjectName("SFLPhone");
+   setupActions();
+   m_sApp = this;
 }
 
 ///Destructor
