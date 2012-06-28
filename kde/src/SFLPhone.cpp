@@ -64,9 +64,8 @@ TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent), m_pInitialized(false), m_pView(new SFLPhoneView(this))
 {
-   setObjectName("SFLPhone");
-   setupActions();
-   m_sApp = this;
+    setupActions();
+    m_sApp = this;
 }
 
 ///Destructor
@@ -77,7 +76,7 @@ SFLPhone::~SFLPhone()
       ConfigurationSkeleton::setDisplayHistoryDock ( m_pHistoryDW->isVisible()  );
       ConfigurationSkeleton::setDisplayBookmarkDock( m_pBookmarkDW->isVisible() );
    }
-   
+
    delete action_accept                ;
    delete action_refuse                ;
    delete action_hold                  ;
@@ -110,6 +109,7 @@ SFLPhone::~SFLPhone()
    }
    delete AkonadiBackend::getInstance();
    TreeWidgetCallModel::destroy();
+   //saveState();
 }
 
 ///Init everything
@@ -121,6 +121,10 @@ bool SFLPhone::initialize()
    }
 
    ConfigurationSkeleton::self();
+
+   //Keep these template paramater or the static attribute wont be share between this and the call view, they need to be
+//    CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
+//    histoModel->initHistory();
 
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    // accept dnd
@@ -158,6 +162,8 @@ bool SFLPhone::initialize()
    m_pHistoryDW       = new HistoryDock  ( this                     );
    m_pBookmarkDW      = new BookmarkDock ( this                     );
    m_pStatusBarWidget = new QLabel       (                          );
+
+   //System tray
    m_pTrayIcon        = new SFLPhoneTray ( this->windowIcon(), this );
    m_pTrayIcon->addAction( action_accept   );
    m_pTrayIcon->addAction( action_mailBox  );
@@ -167,27 +173,25 @@ bool SFLPhone::initialize()
    m_pTrayIcon->addAction( action_record   );
    m_pTrayIcon->addSeparator();
    m_pTrayIcon->addAction( action_quit     );
-   
+
    addDockWidget( Qt::TopDockWidgetArea,m_pHistoryDW  );
    addDockWidget( Qt::TopDockWidgetArea,m_pBookmarkDW );
    tabifyDockWidget(m_pBookmarkDW,m_pHistoryDW);
+
 
    m_pHistoryDW->show();
    m_pHistoryDW->setVisible(ConfigurationSkeleton::displayHistoryDock());
    m_pBookmarkDW->show();
    m_pBookmarkDW->setVisible(ConfigurationSkeleton::displayBookmarkDock());
 
-   //Add bug when the dock is tabbed
-   /*connect(m_pContactCD,  SIGNAL(visibilityChanged(bool)) ,action_showContactDock , SLOT(setChecked(bool)));
-   connect(m_pBookmarkDW, SIGNAL(visibilityChanged(bool)) ,action_showBookmarkDock, SLOT(setChecked(bool)));
-   connect(m_pHistoryDW,  SIGNAL(visibilityChanged(bool)) ,action_showHistoryDock , SLOT(setChecked(bool)));*/
-
-   connect(action_showContactDock, SIGNAL(toggled(bool)),m_pContactCD, SLOT(setVisible(bool)));
-   connect(action_showHistoryDock, SIGNAL(toggled(bool)),m_pHistoryDW, SLOT(setVisible(bool)));
-   connect(action_showBookmarkDock,SIGNAL(toggled(bool)),m_pBookmarkDW,SLOT(setVisible(bool)));
 
    setWindowIcon (QIcon(ICON_SFLPHONE) );
    setWindowTitle(i18n("SFLphone")     );
+
+   setupActions();
+   connect(action_showContactDock, SIGNAL(toggled(bool)),m_pContactCD, SLOT(setVisible(bool)));
+   connect(action_showHistoryDock, SIGNAL(toggled(bool)),m_pHistoryDW, SLOT(setVisible(bool)));
+   connect(action_showBookmarkDock,SIGNAL(toggled(bool)),m_pBookmarkDW,SLOT(setVisible(bool)));
 
    statusBar()->addWidget(m_pStatusBarWidget);
 
@@ -200,8 +204,9 @@ bool SFLPhone::initialize()
    m_pView->loadWindow();
 
    move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
+   show();
 
-   if(configurationManager.getAccountList().value().size() <= 1) {
+   if (configurationManager.getAccountList().value().size() <= 1) {
       (new AccountWizard())->show();
    }
 
@@ -258,19 +263,20 @@ void SFLPhone::setupActions()
    action_showContactDock  = new KAction(KIcon("edit-find-user")   , i18n("Display Contact") , this);
    action_showContactDock->setCheckable( true );
    action_showContactDock->setChecked(ConfigurationSkeleton::displayContactDock());
-   
+
    action_showHistoryDock  = new KAction(KIcon("view-history")     , i18n("Display history") , this);
    action_showHistoryDock->setCheckable( true );
    action_showHistoryDock->setChecked(ConfigurationSkeleton::displayHistoryDock());
-   
+
    action_showBookmarkDock = new KAction(KIcon("bookmark-new-list"), i18n("Display bookmark"), this);
    action_showBookmarkDock->setCheckable( true );
    action_showBookmarkDock->setChecked(ConfigurationSkeleton::displayBookmarkDock());
-   
+
    action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
 
+
    action_configureShortcut = new KAction(KIcon(KIcon("configure-shortcuts")), i18n("Configure Shortcut"), this);
-   //                    SENDER                        SIGNAL               RECEIVER                 SLOT                /
+   //                    SENDER                        SIGNAL               RECEIVER                 SLOT               /
    /**/connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept()                    ));
    /**/connect(action_refuse,                SIGNAL(triggered()),           m_pView , SLOT(refuse()                    ));
    /**/connect(action_hold,                  SIGNAL(triggered()),           m_pView , SLOT(hold()                      ));
@@ -284,6 +290,7 @@ void SFLPhone::setupActions()
    /**/connect(action_pastenumber,           SIGNAL(triggered()),           m_pView , SLOT(paste()                     ));
    /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
    /*                                                                                                                   */
+
 
    actionCollection()->addAction("action_accept"                , action_accept                );
    actionCollection()->addAction("action_refuse"                , action_refuse                );
@@ -304,8 +311,9 @@ void SFLPhone::setupActions()
    actionCollection()->addAction("action_showHistoryDock"       , action_showHistoryDock       );
    actionCollection()->addAction("action_showBookmarkDock"      , action_showBookmarkDock      );
 
+
    QList<KAction*> acList = *SFLPhoneAccessibility::getInstance();
-   
+
    foreach(KAction* ac,acList) {
       actionCollection()->addAction(ac->objectName() , ac);
    }
@@ -389,12 +397,9 @@ QList<QAction*> SFLPhone::getCallActions()
 ///Set widgets object name
 void SFLPhone::setObjectNames()
 {
-   m_pView->setObjectName      ( "m_pView"   );
-   statusBar()->setObjectName  ( "statusBar" );
-   m_pTrayIcon->setObjectName  ( "trayIcon"  );
-   m_pHistoryDW->setObjectName ( "historydock"  );
-   m_pContactCD->setObjectName ( "contactdock"  );
-   m_pBookmarkDW->setObjectName( "bookmarkdock" );
+   m_pView->setObjectName      ( "m_pView"       );
+   statusBar()->setObjectName  ( "statusBar"     );
+   m_pTrayIcon->setObjectName  ( "m_pTrayIcon"   );
 }
 
 
@@ -426,24 +431,24 @@ void SFLPhone::quitButton()
 void SFLPhone::changeEvent(QEvent* event)
 {
    if (event->type() == QEvent::ActivationChange && m_pIconChanged && isActiveWindow()) {
-     m_pIconChanged = false;
+      m_pIconChanged = false;
    }
 }
 
 ///Change status message
-void SFLPhone::on_m_pView_statusMessageChangeAsked(const QString & message)
+void SFLPhone::on_m_pView_statusMessageChangeAsked(const QString& message)
 {
    m_pStatusBarWidget->setText(message);
 }
 
 ///Change windowtitle
-void SFLPhone::on_m_pView_windowTitleChangeAsked(const QString & message)
+void SFLPhone::on_m_pView_windowTitleChangeAsked(const QString& message)
 {
    setWindowTitle(message);
 }
 
 ///Enable or disable toolbar items
-void SFLPhone::on_m_pView_enabledActionsChangeAsked(const bool * enabledActions)
+void SFLPhone::on_m_pView_enabledActionsChangeAsked(const bool* enabledActions)
 {
    action_accept->setVisible   ( enabledActions[SFLPhone::Accept   ]);
    action_refuse->setVisible   ( enabledActions[SFLPhone::Refuse   ]);
@@ -454,7 +459,7 @@ void SFLPhone::on_m_pView_enabledActionsChangeAsked(const bool * enabledActions)
 }
 
 ///Change icons
-void SFLPhone::on_m_pView_actionIconsChangeAsked(const QString * actionIcons)
+void SFLPhone::on_m_pView_actionIconsChangeAsked(const QString* actionIcons)
 {
    action_accept->setIcon   ( QIcon(actionIcons[SFLPhone::Accept   ]));
    action_refuse->setIcon   ( QIcon(actionIcons[SFLPhone::Refuse   ]));
@@ -465,7 +470,7 @@ void SFLPhone::on_m_pView_actionIconsChangeAsked(const QString * actionIcons)
 }
 
 ///Change text
-void SFLPhone::on_m_pView_actionTextsChangeAsked(const QString * actionTexts)
+void SFLPhone::on_m_pView_actionTextsChangeAsked(const QString* actionTexts)
 {
    action_accept->setText   ( actionTexts[SFLPhone::Accept   ]);
    action_refuse->setText   ( actionTexts[SFLPhone::Refuse   ]);
@@ -490,7 +495,7 @@ void SFLPhone::on_m_pView_recordCheckStateChangeAsked(bool recordCheckState)
 ///Called when a call is coming
 void SFLPhone::on_m_pView_incomingCall(const Call* call)
 {
-   Contact* contact = ((Call*)call)->getContact();
+   Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(call->getPeerPhoneNumber());
    if (contact && call) {
       KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()),((contact->getPhoto())?*contact->getPhoto():NULL));
    }
