@@ -39,7 +39,7 @@ class CategorizedTreeWidget : public QTreeWidget
     explicit CategorizedTreeWidget(QWidget *parent = 0);
 
   public:
-    template <class T = QTreeWidgetItem> T* addItem(QString category);
+    template <class T = QTreeWidgetItem> T* addItem(QString category,bool top = false);
     template <class T = QTreeWidgetItem> T* addCategory(QString name);
     void removeItem(QTreeWidgetItem* item);
     
@@ -54,7 +54,7 @@ class CategorizedTreeWidget : public QTreeWidget
     QVector<QTreeWidgetItem*> m_lItems;
 };
 
-template <class T> T* CategorizedTreeWidget::addItem(QString category)
+template <class T> T* CategorizedTreeWidget::addItem(QString category,bool top)
 {
   QTreeWidgetItem* categoryItem = 0;
   for (int i = 0; i < topLevelItemCount(); ++i) {
@@ -69,8 +69,10 @@ template <class T> T* CategorizedTreeWidget::addItem(QString category)
   }
   setItemHidden(categoryItem,false);
 
-  T* iwdg =  new T(categoryItem);
+  T* iwdg =  new T((top)?0:categoryItem);
   resizeColumnToContents(0);
+   if (top)
+      categoryItem->insertChild(0,iwdg);
   m_lItems << iwdg;
   return iwdg;
 }

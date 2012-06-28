@@ -48,7 +48,7 @@
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
-      QNumericTreeWidgetItem(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
+      QNumericTreeWidgetItem(QTreeWidgetItem* parent=0):QTreeWidgetItem(parent),widget(0),weight(-1){}
       HistoryTreeItem* widget;
       int weight;
    private:

@@ -118,7 +118,6 @@ ContactItemWidget::~ContactItemWidget()
    if (m_pOrganizationL) delete m_pOrganizationL;
    if (m_pEmailL)        delete m_pEmailL       ;
    if (m_pMenu)          delete m_pMenu         ;
-//    delete m_pItem         ;
 
    delete m_pCallAgain   ;
    delete m_pEditContact ;

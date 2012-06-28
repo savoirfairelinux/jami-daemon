@@ -59,7 +59,7 @@
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
-      QNumericTreeWidgetItem_hist(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
+      QNumericTreeWidgetItem_hist(QTreeWidgetItem* parent=0):QTreeWidgetItem(parent),widget(0),weight(-1){}
       ContactItemWidget* widget;
       QString number;
       int weight;

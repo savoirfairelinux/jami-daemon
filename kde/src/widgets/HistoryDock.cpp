@@ -267,7 +267,7 @@ void HistoryDock::newHistoryCall(Call* call)
    switch (CURRENT_SORTING_MODE) {
       case Date: {
          QString category = timeToHistoryCategory(QDateTime::fromTime_t(callItem->call()->getStartTimeStamp().toUInt()).date());
-         QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(category);
+         QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(category,true);
          item->weight = -callItem->call()->getStopTimeStamp().toUInt();
          item->widget = callItem;
          callItem->setItem(item);
