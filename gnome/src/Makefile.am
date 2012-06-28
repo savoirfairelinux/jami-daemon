@@ -53,7 +53,8 @@ libsflphone_client_la_SOURCES = \
   unused.h \
   str_utils.h \
   gtk2_wrappers.h \
-  seekslider.h
+  seekslider.h \
+  account_schema.h
 
 libsflphone_client_la_LIBADD = $(SFLPHONE_LIBS)
 libsflphone_client_la_LDFLAGS = @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \

@@ -61,6 +61,7 @@
 #include "eel-gconf-extensions.h"
 
 #include "accountlist.h"
+#include "account_schema.h"
 #include "config/accountlistconfigdialog.h"
 
 #include <sys/stat.h>
@@ -979,7 +980,7 @@ call_mailbox_cb(void)
     if (current == NULL) // Should not happens
         return;
 
-    const gchar * const to = g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX);
+    const gchar * const to = g_hash_table_lookup(current->properties, CONFIG_ACCOUNT_MAILBOX);
     const gchar * const account_id = g_strdup(current->accountID);
 
     callable_obj_t *mailbox_call = create_new_call(CALL, CALL_STATE_DIALING,
@@ -1245,9 +1246,9 @@ add_registered_accounts_to_menu(GtkWidget *menu)
         // Display only the registered accounts
         if (utf8_case_equal(account_state_name(acc->state),
                             account_state_name(ACCOUNT_STATE_REGISTERED))) {
-            gchar *alias = g_strconcat(g_hash_table_lookup(acc->properties, ACCOUNT_ALIAS),
+            gchar *alias = g_strconcat(g_hash_table_lookup(acc->properties, CONFIG_ACCOUNT_ALIAS),
                                        " - ",
-                                       g_hash_table_lookup(acc->properties, ACCOUNT_TYPE),
+                                       g_hash_table_lookup(acc->properties, CONFIG_ACCOUNT_TYPE),
                                        NULL);
             GtkWidget *menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);

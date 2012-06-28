@@ -33,7 +33,7 @@
 #include "str_utils.h"
 #include "mainwindow.h"
 #include "zrtpadvanceddialog.h"
-#include "sflphone_const.h"
+#include "account_schema.h"
 #include "utils.h"
 
 void show_advanced_zrtp_options(account_t *account)
@@ -44,10 +44,10 @@ void show_advanced_zrtp_options(account_t *account)
     gboolean curDisplaySasOnce = FALSE;
 
     if (account != NULL) {
-        curHelloEnabled = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_HELLO_HASH), "true");
-        curSasConfirm = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
-        curZrtpNotSuppOther = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_NOT_SUPP_WARNING), "true");
-        curDisplaySasOnce = utf8_case_equal(account_lookup(account, ACCOUNT_DISPLAY_SAS_ONCE), "true");
+        curHelloEnabled = utf8_case_equal(account_lookup(account, CONFIG_ZRTP_HELLO_HASH), "true");
+        curSasConfirm = utf8_case_equal(account_lookup(account, CONFIG_ZRTP_DISPLAY_SAS), "true");
+        curZrtpNotSuppOther = utf8_case_equal(account_lookup(account, CONFIG_ZRTP_NOT_SUPP_WARNING), "true");
+        curDisplaySasOnce = utf8_case_equal(account_lookup(account, CONFIG_ZRTP_DISPLAY_SAS_ONCE), "true");
     }
 
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("ZRTP Options"),
@@ -92,16 +92,16 @@ void show_advanced_zrtp_options(account_t *account)
     gtk_container_set_border_width(GTK_CONTAINER(tableZrtp), 10);
 
     if (gtk_dialog_run(GTK_DIALOG(securityDialog)) == GTK_RESPONSE_ACCEPT) {
-        account_replace(account, ACCOUNT_ZRTP_DISPLAY_SAS,
+        account_replace(account, CONFIG_ZRTP_DISPLAY_SAS,
                         gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableSASConfirm)) ? "true": "false");
 
-        account_replace(account, ACCOUNT_DISPLAY_SAS_ONCE,
+        account_replace(account, CONFIG_ZRTP_DISPLAY_SAS_ONCE,
                         gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(displaySasOnce)) ? "true": "false");
 
-        account_replace(account, ACCOUNT_ZRTP_HELLO_HASH,
+        account_replace(account, CONFIG_ZRTP_HELLO_HASH,
                         gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableHelloHash)) ? "true": "false");
 
-        account_replace(account, ACCOUNT_ZRTP_NOT_SUPP_WARNING,
+        account_replace(account, CONFIG_ZRTP_NOT_SUPP_WARNING,
                         gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableZrtpNotSuppOther)) ? "true": "false");
     }
 
@@ -114,7 +114,7 @@ void show_advanced_sdes_options(account_t *account)
     gboolean rtpFallback = FALSE;
 
     if (account != NULL)
-        rtpFallback = utf8_case_equal(account_lookup(account, ACCOUNT_SRTP_RTP_FALLBACK), "true");
+        rtpFallback = utf8_case_equal(account_lookup(account, CONFIG_SRTP_RTP_FALLBACK), "true");
 
     GtkDialog *securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("SDES Options"),
                                            GTK_WINDOW(get_main_window()),
@@ -142,7 +142,7 @@ void show_advanced_sdes_options(account_t *account)
     gtk_container_set_border_width(GTK_CONTAINER(sdesTable), 10);
 
     if (gtk_dialog_run(GTK_DIALOG(securityDialog)) == GTK_RESPONSE_ACCEPT) {
-        account_replace(account, ACCOUNT_SRTP_RTP_FALLBACK,
+        account_replace(account, CONFIG_SRTP_RTP_FALLBACK,
                         gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableRtpFallback)) ? "true": "false");
     }
 

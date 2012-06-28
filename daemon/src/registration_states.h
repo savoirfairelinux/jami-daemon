@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,30 +29,21 @@
  *  as that of the covered work.
  */
 
-#include <cppunit/extensions/HelperMacros.h>
-#include <map>
-#include "account.h"
-#include "account_schema.h"
-#include "accounttest.h"
-#include "manager.h"
-#include "logger.h"
-#include "validator.h"
+#ifndef REGISTRATION_STATES_H_
+#define REGISTRATION_STATES_H_
 
-void AccountTest::TestAddRemove()
-{
-    DEBUG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
+/** Contains all the Registration states for an account can be in */
+typedef enum {
+    UNREGISTERED,
+    TRYING,
+    REGISTERED,
+    ERROR,
+    ERROR_AUTH ,
+    ERROR_NETWORK ,
+    ERROR_HOST,
+    ERROR_EXIST_STUN,
+    ERROR_NOT_ACCEPTABLE,
+    NUMBER_OF_STATES
+} RegistrationState;
 
-    std::map<std::string, std::string> details;
-    details[CONFIG_ACCOUNT_TYPE] = "SIP";
-    details[CONFIG_ACCOUNT_ENABLE] = "false";
-    details[CONFIG_LOCAL_INTERFACE] = "default";
-    details[CONFIG_LOCAL_PORT] = "5060";
-
-    std::string accountId = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(Validator::isNotNull(accountId));
-    CPPUNIT_ASSERT(Manager::instance().accountExists(accountId));
-
-    Manager::instance().removeAccount(accountId);
-
-    CPPUNIT_ASSERT(!Manager::instance().accountExists(accountId));
-}
+#endif // REGISTRATION_STATES_H_

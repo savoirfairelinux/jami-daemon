@@ -59,8 +59,7 @@
 #include "dbus/configurationmanager.h"
 
 static const char * const DEFAULT_INTERFACE = "default";
-
-static pjsip_transport *localUDPTransport_ = NULL; /** The default transport (5060) */
+static const char * const ANY_HOSTS = "0.0.0.0";
 
 std::string SipTransport::getSIPLocalIP()
 {
@@ -100,6 +99,9 @@ std::vector<std::string> SipTransport::getAllIpInterfaceByName()
 
 std::string SipTransport::getInterfaceAddrFromName(const std::string &ifaceName)
 {
+    if (ifaceName == DEFAULT_INTERFACE)
+        return getSIPLocalIP();
+
     int fd = socket(AF_INET, SOCK_DGRAM,0);
 
     if (fd < 0) {
@@ -116,7 +118,10 @@ std::string SipTransport::getInterfaceAddrFromName(const std::string &ifaceName)
     close(fd);
 
     sockaddr_in *saddr_in = (sockaddr_in *) &ifr.ifr_addr;
-    return inet_ntoa(saddr_in->sin_addr);
+    std::string result(inet_ntoa(saddr_in->sin_addr));
+    if (result == ANY_HOSTS)
+        result = getSIPLocalIP();
+    return result;
 }
 
 std::vector<std::string> SipTransport::getAllIpInterface()
@@ -326,6 +331,15 @@ SipTransport::createTlsTransport(SIPAccount &account)
     return transport;
 }
 
+namespace {
+std::string transportMapKey(const std::string &interface, int port)
+{
+    std::ostringstream os;
+    os << interface << ":" << port;
+    return os.str();
+}
+}
+
 void SipTransport::createSipTransport(SIPAccount &account)
 {
     shutdownSipTransport(account);
@@ -343,56 +357,20 @@ void SipTransport::createSipTransport(SIPAccount &account)
     }
 
     if (!account.transport_) {
-        std::ostringstream key;
-        key << account.getLocalInterface();
-        key << ":";
-        key << account.getLocalPort();
-        DEBUG("Looking into previously created transport map for"
-              " %s", key.str().c_str());
+        std::string key(transportMapKey(account.getLocalInterface(), account.getLocalPort()));
+        DEBUG("Looking into previously created transport map for" " %s", key.c_str());
         // Could not create new transport, this transport may already exists
-        pjsip_transport *cachedTransport = transportMap_[key.str()];
+        std::map<std::string, pjsip_transport *>::iterator iter = transportMap_.find(key);
 
-        if (cachedTransport) {
-            account.transport_ = cachedTransport;
+        if (iter != transportMap_.end()) {
+            account.transport_ = iter->second;
             pjsip_transport_add_ref(account.transport_);
+        } else if (account.isTlsEnabled()) {
+            throw std::runtime_error("Could not create TLS connection");
         } else {
-            if (account.isTlsEnabled())
-                throw std::runtime_error("SipTransport: Could not create TLS connection");
-            assert(localUDPTransport_);
-            account.transport_ = localUDPTransport_;
-            account.setLocalPort(localUDPTransport_->local_name.port);
+            throw std::runtime_error("Could not create new UDP transport");
         }
     }
-}
-
-void SipTransport::createDefaultSipUdpTransport()
-{
-    DEBUG("Create default sip udp transport");
-
-    SIPAccount *account = Manager::instance().getIP2IPAccount();
-
-    pjsip_transport *transport = NULL;
-    pj_uint16_t port = 0;
-    static const int DEFAULT_TRANSPORT_ATTEMPTS = 5;
-    for (int counter = 0; transport == NULL and counter < DEFAULT_TRANSPORT_ATTEMPTS; ++counter) {
-        // if default udp transport fails to init on 5060, try other ports
-        // with 2 step size increment (i.e. 5062, 5064, ...)
-        port = account->getLocalPort() + (counter * 2);
-        transport = createUdpTransport(account->getLocalInterface(), port);
-    }
-
-    if (transport == NULL) {
-        ERROR("Could not create UDP transport");
-        return;
-    }
-
-    DEBUG("Created default sip transport on %d", port);
-
-    // set transport for this account
-    account->transport_ = transport;
-
-    // set local udp transport
-    localUDPTransport_ = account->transport_;
 }
 
 pjsip_transport *
@@ -403,7 +381,7 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 
     DEBUG("Create UDP transport on %s:%d", interface.c_str(), port);
 
-    // determine the ip address for this transport
+    // determine the IP address for this transport
     std::string listeningAddress;
     if (interface == DEFAULT_INTERFACE)
         listeningAddress = getSIPLocalIP();
@@ -430,24 +408,20 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     pj_status_t status;
     pjsip_transport *transport = NULL;
 
-
-
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
-        if (status != PJ_SUCCESS) {
+        if (status != PJ_SUCCESS)
             return NULL;
-        }
     } else if (boundAddr.addr.sa_family == pj_AF_INET6()) {
         status = pjsip_udp_transport_start6(endpt_, &boundAddr.ipv6, NULL, 1, &transport);
-        if (status != PJ_SUCCESS) {
+        if (status != PJ_SUCCESS)
             return NULL;
-        }
     }
 
     DEBUG("Listening address %s", fullAddressStr.c_str());
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
-    transportMap_[fullAddressStr] = transport;
+    transportMap_[transportMapKey(interface, port)] = transport;
 
     return transport;
 }
@@ -463,11 +437,7 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
           interface.c_str(), port, publicAddr.c_str(), publicPort);
 
     // determine the ip address for this transport
-    std::string listeningAddress;
-    if (interface == DEFAULT_INTERFACE)
-        listeningAddress = getSIPLocalIP();
-    else
-        listeningAddress = getInterfaceAddrFromName(interface);
+    std::string listeningAddress(getInterfaceAddrFromName(interface));
 
     if (listeningAddress.empty()) {
         ERROR("Could not determine ip address for this transport");
@@ -487,11 +457,10 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     hostPort.host = public_addr;
     hostPort.port = publicPort;
 
-    pj_status_t status;
-    // status = pjsip_udp_transport_restart(transport, PJSIP_UDP_TRANSPORT_DESTROY_SOCKET, PJ_INVALID_SOCKET, &boundAddr.ipv4, &hostPort);
-    status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, &hostPort, 1, &transport);
+    pj_status_t status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, &hostPort, 1, &transport);
     if (status != PJ_SUCCESS) {
         ERROR("Could not start new transport with address %s:%d, error code %d", publicAddr.c_str(), publicPort, status);
+        return NULL;
     }
 
     // dump debug information to stdout
@@ -624,7 +593,7 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     addr = std::string(localAddress.ptr, localAddress.slen);
 
     // Fallback on local ip provided by pj_gethostip()
-    if (addr == "0.0.0.0")
+    if (addr == ANY_HOSTS)
         addr = getSIPLocalIP();
 
     // Determine the local port based on transport information

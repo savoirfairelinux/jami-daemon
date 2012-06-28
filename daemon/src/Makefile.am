@@ -54,7 +54,9 @@ noinst_HEADERS = \
 		cc_thread.h \
 		cc_config.h \
 		sfl_types.h \
-		array_size.h
+		array_size.h \
+		account_schema.h \
+		registration_states.h
 
 if SFL_VIDEO
 SFL_VIDEO_LIB=./video/libvideo.la

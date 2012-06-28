@@ -36,6 +36,7 @@
 #include "logger.h"
 #include "dbus.h"
 #include "reqaccount.h"
+#include "account_schema.h"
 
 #define SFLPHONE_ORG_SERVER "sip.sflphone.org"
 
@@ -144,23 +145,23 @@ static void sip_apply_callback(void)
     }
 
     if (account_type == _SIP) {
-        account_insert(current, ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
-        account_insert(current, ACCOUNT_ENABLED, "true");
-        account_insert(current, ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail)));
-        account_insert(current, ACCOUNT_TYPE, "SIP");
-        account_insert(current, ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)));
-        account_insert(current, ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->sip_password)));
-        account_insert(current, ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)));
-        account_insert(current, ACCOUNT_SIP_STUN_ENABLED, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true" : "false");
-        account_insert(current, ACCOUNT_SIP_STUN_SERVER, gtk_entry_get_text(GTK_ENTRY(wiz->addr)));
+        account_insert(current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)));
+        account_insert(current, CONFIG_ACCOUNT_ENABLE, "true");
+        account_insert(current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail)));
+        account_insert(current, CONFIG_ACCOUNT_TYPE, "SIP");
+        account_insert(current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_server)));
+        account_insert(current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->sip_password)));
+        account_insert(current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->sip_username)));
+        account_insert(current, CONFIG_STUN_ENABLE, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)) ? "true" : "false");
+        account_insert(current, CONFIG_STUN_SERVER, gtk_entry_get_text(GTK_ENTRY(wiz->addr)));
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
-            account_insert(current, ACCOUNT_SRTP_ENABLED, "true");
-            account_insert(current, ACCOUNT_KEY_EXCHANGE, ZRTP);
-            account_insert(current, ACCOUNT_ZRTP_DISPLAY_SAS, "true");
-            account_insert(current, ACCOUNT_ZRTP_NOT_SUPP_WARNING, "true");
-            account_insert(current, ACCOUNT_ZRTP_HELLO_HASH, "true");
-            account_insert(current, ACCOUNT_DISPLAY_SAS_ONCE, "false");
+            account_insert(current, CONFIG_SRTP_ENABLE, "true");
+            account_insert(current, CONFIG_SRTP_KEY_EXCHANGE, ZRTP);
+            account_insert(current, CONFIG_ZRTP_DISPLAY_SAS, "true");
+            account_insert(current, CONFIG_ZRTP_NOT_SUPP_WARNING, "true");
+            account_insert(current, CONFIG_ZRTP_HELLO_HASH, "true");
+            account_insert(current, CONFIG_ZRTP_DISPLAY_SAS_ONCE, "false");
         }
 
         // Add default interface info
@@ -172,8 +173,8 @@ static void sip_apply_callback(void)
         iface = iface_list;
         DEBUG("Selected interface %s", *iface);
 
-        account_insert(current, LOCAL_INTERFACE, *iface);
-        account_insert(current, PUBLISHED_ADDRESS, *iface);
+        account_insert(current, CONFIG_LOCAL_INTERFACE, *iface);
+        account_insert(current, CONFIG_PUBLISHED_ADDRESS, *iface);
 
         dbus_add_account(current);
         getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias)),
@@ -193,13 +194,13 @@ static void sip_apply_callback(void)
 static void iax_apply_callback(void)
 {
     if (account_type == _IAX) {
-        account_insert(current, ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)));
-        account_insert(current, ACCOUNT_ENABLED, "true");
-        account_insert(current, ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail)));
-        account_insert(current, ACCOUNT_TYPE, "IAX");
-        account_insert(current, ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)));
-        account_insert(current, ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)));
-        account_insert(current, ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->iax_password)));
+        account_insert(current, CONFIG_ACCOUNT_ALIAS, gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)));
+        account_insert(current, CONFIG_ACCOUNT_ENABLE, "true");
+        account_insert(current, CONFIG_ACCOUNT_MAILBOX, gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail)));
+        account_insert(current, CONFIG_ACCOUNT_TYPE, "IAX");
+        account_insert(current, CONFIG_ACCOUNT_USERNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_username)));
+        account_insert(current, CONFIG_ACCOUNT_HOSTNAME, gtk_entry_get_text(GTK_ENTRY(wiz->iax_server)));
+        account_insert(current, CONFIG_ACCOUNT_PASSWORD, gtk_entry_get_text(GTK_ENTRY(wiz->iax_password)));
 
         dbus_add_account(current);
         getMessageSummary(gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias)),
@@ -459,7 +460,7 @@ GtkWidget* build_iax_account_configuration(void)
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), wiz->iax_voicemail);
     gtk_table_attach(GTK_TABLE(table), wiz->iax_voicemail, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    current -> state = ACCOUNT_STATE_UNREGISTERED;
+    current->state = ACCOUNT_STATE_UNREGISTERED;
 
     g_signal_connect(G_OBJECT(wiz->assistant), "apply", G_CALLBACK(iax_apply_callback), NULL);
 

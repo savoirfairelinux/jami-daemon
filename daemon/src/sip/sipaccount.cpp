@@ -34,6 +34,7 @@
 #include "config.h"
 #endif
 
+#include "account_schema.h"
 #include "sipaccount.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
@@ -102,7 +103,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
-    , receivedParameter_()
+    , receivedParameter_("")
     , rPort_(-1)
 {
     if (isIP2IP())
@@ -144,10 +145,8 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode publishPort(publicportstr.str());
 
     ScalarNode sameasLocal(publishedSameasLocal_);
-    DEBUG("%s", audioCodecStr_.c_str());
     ScalarNode audioCodecs(audioCodecStr_);
 #ifdef SFL_VIDEO
-    DEBUG("%s", videoCodecStr_.c_str());
     ScalarNode videoCodecs(videoCodecStr_);
 #endif
 
@@ -352,7 +351,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
         // migration from old file format
         std::map<std::string, std::string> credmap;
         std::string password;
-        map.getValue(PASSWORD_KEY, &password);
+        if (not isIP2IP()) map.getValue(PASSWORD_KEY, &password);
 
         credmap[CONFIG_ACCOUNT_USERNAME] = username_;
         credmap[CONFIG_ACCOUNT_PASSWORD] = password;
@@ -495,7 +494,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
-    RegistrationState state = Unregistered;
+    RegistrationState state = UNREGISTERED;
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
@@ -618,7 +617,7 @@ void SIPAccount::startKeepAliveTimer() {
     if (isIP2IP())
         return;
 
-    if(keepAliveTimerActive_)
+    if (keepAliveTimerActive_)
         return;
 
     DEBUG("Start keep alive timer for account %s", getAccountID().c_str());
@@ -635,8 +634,7 @@ void SIPAccount::startKeepAliveTimer() {
     if (registrationExpire_ == 0) {
         DEBUG("Registration Expire: 0, taking 60 instead");
         keepAliveDelay_.sec = 3600;
-    }
-    else {
+    } else {
         DEBUG("Registration Expire: %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }

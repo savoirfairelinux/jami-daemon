@@ -274,12 +274,6 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_tpselector *tp = SIPVoIPLink::instance()->sipTransport.initTransportSelector(account->transport_, call->getMemoryPool());
 
-    if (addrToUse == "0.0.0.0")
-        addrToUse = SipTransport::getSIPLocalIP();
-
-    if (addrSdp == "0.0.0.0")
-        addrSdp = addrToUse;
-
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, std::min(length, sizeof tmp));
@@ -550,7 +544,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     sipTransport.createSipTransport(*account);
 
     account->setRegister(true);
-    account->setRegistrationState(Trying);
+    account->setRegistrationState(TRYING);
 
     pjsip_regc *regc = account->getRegistrationInfo();
 
@@ -574,13 +568,14 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
-    if (!received.empty()) {
+    if (not received.empty()) {
         // Set received parameter string to empty in order to avoid creating new transport for each register
         account->setReceivedParameter("");
-        // Explicitely set the bound address port to 0 so that pjsip determine a random port by itself
+        DEBUG("Creating transport on random port because we have rx param %s", received.c_str());
+        // Explicitly set the bound address port to 0 so that pjsip determines a random port by itself
         account->transport_= sipTransport.createUdpTransport(account->getLocalInterface(), 0, received, account->getRPort());
         account->setRPort(-1);
-        if(account->transport_ == NULL) {
+        if (account->transport_ == NULL) {
             ERROR("Could not create new udp transport with public address: %s:%d", received.c_str(), account->getLocalPort());
         }
     }
@@ -627,7 +622,7 @@ void SIPVoIPLink::sendRegister(Account *a)
 
     // start the periodic registration request based on Expire header
     // account determines itself if a keep alive is required
-    if(account->isKeepAliveEnabled())
+    if (account->isKeepAliveEnabled())
         account->startKeepAliveTimer();
 }
 
@@ -637,7 +632,7 @@ void SIPVoIPLink::sendUnregister(Account *a)
 
     // This may occurs if account failed to register and is in state INVALID
     if (!account->isRegistered()) {
-        account->setRegistrationState(Unregistered);
+        account->setRegistrationState(UNREGISTERED);
         return;
     }
 
@@ -734,9 +729,6 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
 
-    if (localAddress == "0.0.0.0")
-        localAddress = SipTransport::getSIPLocalIP();
-
     setCallMediaLocal(call, localAddress);
 
     std::string toUri = account->getToUri(to);
@@ -793,19 +785,12 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
 
     call->setPeerNumber(toUri);
     std::string localAddr(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
-
-    if (localAddr == "0.0.0.0")
-        localAddr = SipTransport::getSIPLocalIP();
-
     setCallMediaLocal(call, localAddr);
 
     // May use the published address as well
     std::string addrSdp = account->isStunEnabled() ?
     account->getPublishedAddress() :
     SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
-
-    if (addrSdp == "0.0.0.0")
-        addrSdp = SipTransport::getSIPLocalIP();
 
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
@@ -1230,8 +1215,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     if (not account->getServiceRoute().empty())
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 
-    if (pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
-        ERROR("Could not initialize credential for invite session authentication");
+    if (account->hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
+        ERROR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
@@ -1416,12 +1401,6 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
     std::string addrSdp(localAddress);
-
-    if (localAddress == "0.0.0.0")
-        localAddress = SipTransport::getSIPLocalIP();
-
-    if (addrSdp == "0.0.0.0")
-        addrSdp = localAddress;
 
     setCallMediaLocal(call, localAddress);
 
@@ -1788,7 +1767,7 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->status != PJ_SUCCESS) {
         FAILURE_MESSAGE();
-        processRegistrationError(*account, ErrorAuth);
+        processRegistrationError(*account, ERROR_AUTH);
         return;
     }
 
@@ -1800,11 +1779,11 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_USE_PROXY: // 305
             case PJSIP_SC_ALTERNATIVE_SERVICE: // 380
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, Error);
+                processRegistrationError(*account, ERROR);
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE: // 503
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ErrorHost);
+                processRegistrationError(*account, ERROR_HOST);
                 break;
             case PJSIP_SC_UNAUTHORIZED: // 401
                 // Automatically answered by PJSIP
@@ -1813,11 +1792,11 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_FORBIDDEN: // 403
             case PJSIP_SC_NOT_FOUND: // 404
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ErrorAuth);
+                processRegistrationError(*account, ERROR_AUTH);
                 break;
             case PJSIP_SC_REQUEST_TIMEOUT: // 408
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ErrorHost);
+                processRegistrationError(*account, ERROR_HOST);
                 break;
             case PJSIP_SC_INTERVAL_TOO_BRIEF: // 423
                 // Expiration Interval Too Brief
@@ -1827,21 +1806,21 @@ void registration_cb(pjsip_regc_cbparam *param)
                 break;
             case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE: // 606
                 lookForReceivedParameter(*param, *account);
-                account->setRegistrationState(ErrorNotAcceptable);
+                account->setRegistrationState(ERROR_NOT_ACCEPTABLE);
                 account->registerVoIPLink();
                 break;
             default:
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, Error);
+                processRegistrationError(*account, ERROR);
                 break;
         }
 
     } else {
         lookForReceivedParameter(*param, *account);
         if (account->isRegistered())
-            account->setRegistrationState(Registered);
+            account->setRegistrationState(REGISTERED);
         else {
-            account->setRegistrationState(Unregistered);
+            account->setRegistrationState(UNREGISTERED);
             SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(*account);
         }
     }

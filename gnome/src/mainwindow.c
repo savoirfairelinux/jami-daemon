@@ -35,6 +35,7 @@
 #endif
 
 #include "gtk2_wrappers.h"
+#include "account_schema.h"
 #include "actions.h"
 #include "dbus.h"
 #include "calltree.h"
@@ -432,7 +433,7 @@ main_window_zrtp_not_supported(callable_obj_t * c)
 
     if (account != NULL) {
         warning_enabled = account_lookup(account,
-                                         ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+                                         CONFIG_ZRTP_NOT_SUPP_WARNING);
         DEBUG("Warning Enabled %s", warning_enabled);
     } else {
         DEBUG("Account is null callID %s", c->_callID);
@@ -440,7 +441,7 @@ main_window_zrtp_not_supported(callable_obj_t * c)
 
         if (properties)
             warning_enabled = g_hash_table_lookup(properties,
-                                                  ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+                                                  CONFIG_ZRTP_NOT_SUPP_WARNING);
     }
 
     if (utf8_case_equal(warning_enabled, "true")) {
