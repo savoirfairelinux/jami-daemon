@@ -379,8 +379,6 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     // init socket to bind this transport to
     pj_uint16_t listeningPort = (pj_uint16_t) port;
 
-    DEBUG("Create UDP transport on %s:%d", interface.c_str(), port);
-
     // determine the IP address for this transport
     std::string listeningAddress;
     if (interface == DEFAULT_INTERFACE)
@@ -410,14 +408,19 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
 
     if (boundAddr.addr.sa_family == pj_AF_INET()) {
         status = pjsip_udp_transport_start(endpt_, &boundAddr.ipv4, NULL, 1, &transport);
-        if (status != PJ_SUCCESS)
+        if (status != PJ_SUCCESS) {
+            DEBUG("UDP IPV4 Transport did not start");
             return NULL;
+        }
     } else if (boundAddr.addr.sa_family == pj_AF_INET6()) {
         status = pjsip_udp_transport_start6(endpt_, &boundAddr.ipv6, NULL, 1, &transport);
-        if (status != PJ_SUCCESS)
+        if (status != PJ_SUCCESS) {
+            DEBUG("UDP IPV6 Transport did not start");
             return NULL;
+        }
     }
 
+    DEBUG("Created UDP transport on %s:%d", interface.c_str(), port);
     DEBUG("Listening address %s", fullAddressStr.c_str());
     // dump debug information to stdout
     pjsip_tpmgr_dump_transports(pjsip_endpt_get_tpmgr(endpt_));
