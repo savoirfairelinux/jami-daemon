@@ -126,7 +126,7 @@ BookmarkDock::~BookmarkDock()
 ///Add a new bookmark
 void BookmarkDock::addBookmark_internal(const QString& phone)
 {
-   HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone);
+   HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone,true);
    QTreeWidgetItem* item   = NULL;
 
    if (widget->getName() == i18n("Unknown") || widget->getName().isEmpty()) {
@@ -147,6 +147,25 @@ void BookmarkDock::addBookmark(const QString& phone)
 {
    addBookmark_internal(phone);
    ConfigurationSkeleton::setBookmarkList(ConfigurationSkeleton::bookmarkList() << phone);
+}
+
+///Remove a bookmark
+void BookmarkDock::removeBookmark(const QString& phone)
+{
+   foreach (HistoryTreeItem* w,m_pBookmark) {
+      if (w->getPhoneNumber() == phone) {
+         QTreeWidgetItem* item = w->getItem();
+         m_pItemView->removeItem(item);
+         QStringList bookmarks = ConfigurationSkeleton::bookmarkList();
+         if (bookmarks.indexOf(phone)!= -1) {
+            bookmarks.removeAt(bookmarks.indexOf(phone));
+            ConfigurationSkeleton::setBookmarkList(bookmarks);
+         }
+         if (m_pBookmark.indexOf(w)!=-1) {
+            m_pBookmark.removeAt(m_pBookmark.indexOf(w));
+         }
+      }
+   }
 }
 
 ///Filter the list

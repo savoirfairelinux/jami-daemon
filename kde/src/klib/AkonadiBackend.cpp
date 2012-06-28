@@ -65,6 +65,7 @@ AkonadiBackend::AkonadiBackend(QObject* parent) : ContactBackend(parent)
 AkonadiBackend::~AkonadiBackend()
 {
    CallModel<>::destroy();
+   delete m_pSession;
 }
 
 
@@ -202,8 +203,8 @@ void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
       return;
    }
    
-   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
    if ( item.isValid() ) {
+      Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
       editor->loadContact(item);
       KDialog* dlg = new KDialog(parent);
       dlg->setMainWidget(editor);
@@ -212,6 +213,8 @@ void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
          kDebug() << "Unable to save new contact to storage";
          return;
       }
+      delete editor;
+      delete dlg;
    }
 } //editContact
 
@@ -266,12 +269,30 @@ void AkonadiBackend::addNewContact(Contact* contact)
 ///Add a new phone number to an existing contact
 void AkonadiBackend::addPhoneNumber(Contact* contact, QString number, QString type)
 {
-   KABC::Addressee ct = m_AddrHash[contact->getUid()];
-   if (ct.uid() != contact->getUid()) {
+   Akonadi::Item item = m_ItemHash[contact->getUid()];
+   if (!(item.hasPayload<KABC::Addressee>() && item.payload<KABC::Addressee>().uid() == contact->getUid())) {
       kDebug() << "Contact not found";
       return;
    }
-   ct.insertPhoneNumber(KABC::PhoneNumber(number,nameToType(type)));
+   if ( item.isValid() ) {
+      KABC::Addressee payload = item.payload<KABC::Addressee>();
+      payload.insertPhoneNumber(KABC::PhoneNumber(number,nameToType(type)));
+      item.setPayload<KABC::Addressee>(payload);
+      Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, (QWidget*)nullptr );
+      editor->loadContact(item);
+
+      KDialog* dlg = new KDialog(0);
+      dlg->setMainWidget(editor);
+      dlg->exec();
+      if ( !editor->saveContact() ) {
+         kDebug() << "Unable to save new contact to storage";
+         return;
+      }
+      delete editor;
+   }
+   else {
+      kDebug() << "Invalid item";
+   }
 }
 
 

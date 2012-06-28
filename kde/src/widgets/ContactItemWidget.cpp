@@ -62,7 +62,7 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    setContextMenuPolicy(Qt::CustomContextMenu);
    setAcceptDrops(true);
    
-   m_pCallAgain  = new KAction(this);
+   m_pCallAgain   = new KAction(this);
    m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
    m_pCallAgain->setText       ( i18n("Call Again")         );
    m_pCallAgain->setIcon       ( KIcon("call-start")        );
@@ -73,23 +73,24 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pEditContact->setText     ( i18n("Edit contact")       );
    m_pEditContact->setIcon     ( KIcon("contact-new")       );
 
-   m_pCopy       = new KAction(this);
+   m_pCopy        = new KAction(this);
    m_pCopy->setShortcut        ( Qt::CTRL + Qt::Key_C       );
    m_pCopy->setText            ( i18n("Copy")               );
    m_pCopy->setIcon            ( KIcon("edit-copy")         );
 
-   m_pEmail      = new KAction(this);
+   m_pEmail       = new KAction(this);
    m_pEmail->setShortcut       ( Qt::CTRL + Qt::Key_M       );
    m_pEmail->setText           ( i18n("Send Email")         );
    m_pEmail->setIcon           ( KIcon("mail-message-new")  );
    m_pEmail->setEnabled        ( false                      );
 
-   m_pAddPhone      = new KAction(this);
+   m_pAddPhone    = new KAction(this);
    m_pAddPhone->setShortcut    ( Qt::CTRL + Qt::Key_N       );
    m_pAddPhone->setText        ( i18n("Add Phone Number")   );
    m_pAddPhone->setIcon        ( KIcon("list-resource-add") );
+   m_pEmail->setEnabled        ( false                      );
 
-   m_pBookmark      = new KAction(this);
+   m_pBookmark    = new KAction(this);
    m_pBookmark->setShortcut    ( Qt::CTRL + Qt::Key_D       );
    m_pBookmark->setText        ( i18n("Bookmark")           );
    m_pBookmark->setIcon        ( KIcon("bookmarks")         );
@@ -112,20 +113,20 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
 ///Destructor
 ContactItemWidget::~ContactItemWidget()
 {
-   /*delete m_pIconL        ;
-   delete m_pContactNameL ;
-   delete m_pCallNumberL  ;
-   delete m_pOrganizationL;
-   delete m_pEmailL       ;
-   delete m_pItem         ;
-   
+   if (m_pIconL)         delete m_pIconL        ;
+   if (m_pContactNameL)  delete m_pContactNameL ;
+   if (m_pCallNumberL)   delete m_pCallNumberL  ;
+   if (m_pOrganizationL) delete m_pOrganizationL;
+   if (m_pEmailL)        delete m_pEmailL       ;
+   if (m_pMenu)          delete m_pMenu         ;
+//    delete m_pItem         ;
+
    delete m_pCallAgain   ;
    delete m_pEditContact ;
    delete m_pCopy        ;
    delete m_pEmail       ;
    delete m_pAddPhone    ;
    delete m_pBookmark    ;
-   delete m_pMenu        ;*/
 }
 
 
@@ -422,7 +423,7 @@ void ContactItemWidget::addPhone()
    //QString number = QInputDialog::getText(0, i18n("Enter a new number"),i18n("New number:"),QLineEdit::Normal,QString(),ok,0);
    QString text = QInputDialog::getText(this, i18n("Enter a new number"), i18n("New number:"), QLineEdit::Normal, QString(), &ok);
    if (ok && !text.isEmpty()) {
-      
+      AkonadiBackend::getInstance()->addPhoneNumber(m_pContactKA,text,"work");
    }
 }
 

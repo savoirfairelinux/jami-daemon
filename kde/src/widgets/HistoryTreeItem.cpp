@@ -83,9 +83,9 @@ protected:
 
 
 ///Constructor
-HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
+HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone,bool isBookmark)
    : QWidget(parent), m_pItemCall(0), m_pMenu(0) , m_pAudioSlider(0) , m_pTimeLeftL(0) , m_pTimePlayedL(0),m_pPlayer(0),
-   m_pContact(0)    , m_pPause(0)   , m_pStop(0) , m_pNote(0)        , m_SeekPos(0)    , m_Paused(false)
+   m_pContact(0)    , m_pPause(0)   , m_pStop(0) , m_pNote(0)        , m_SeekPos(0)    , m_Paused(false)  ,m_IsBookmark(isBookmark)
 {
    setContextMenuPolicy(Qt::CustomContextMenu);
    setAcceptDrops(true);
@@ -121,7 +121,14 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone)
 
    m_pBookmark->setShortcut     ( Qt::CTRL + Qt::Key_D           );
    m_pBookmark->setText         ( i18n("Bookmark")               );
-   m_pBookmark->setIcon         ( KIcon("bookmarks")             );
+   if (!m_IsBookmark) {
+      m_pBookmark->setText      ( i18n("Bookmark")               );
+      m_pBookmark->setIcon      ( KIcon("bookmarks")             );
+   }
+   else {
+      m_pBookmark->setText      ( i18n("Remove bookmark")        );
+      m_pBookmark->setIcon      ( KIcon("edit-delete")           );
+   }
 
    m_pPlay = new QToolButton(this);
 
@@ -316,7 +323,10 @@ void HistoryTreeItem::addToContact()
 ///Bookmark this contact
 void HistoryTreeItem::bookmark()
 {
-   SFLPhone::app()->bookmarkDock()->addBookmark(m_PhoneNumber);
+   if (!m_IsBookmark)
+      SFLPhone::app()->bookmarkDock()->addBookmark(m_PhoneNumber);
+   else
+      SFLPhone::app()->bookmarkDock()->removeBookmark(m_PhoneNumber);
 }
 
 void HistoryTreeItem::removeRecording()

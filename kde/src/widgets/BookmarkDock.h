@@ -49,6 +49,7 @@ public:
 
    //Mutators
    void addBookmark(const QString& phone);
+   void removeBookmark(const QString& phone);
 private:
    //Attributes
    CategorizedTreeWidget*  m_pItemView  ;

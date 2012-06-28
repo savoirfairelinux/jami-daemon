@@ -41,7 +41,8 @@ class CategorizedTreeWidget : public QTreeWidget
   public:
     template <class T = QTreeWidgetItem> T* addItem(QString category);
     template <class T = QTreeWidgetItem> T* addCategory(QString name);
-
+    void removeItem(QTreeWidgetItem* item);
+    
     QVector<QTreeWidgetItem*> realItems() const;
 
   Q_SIGNALS:

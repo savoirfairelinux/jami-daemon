@@ -55,7 +55,7 @@ class HistoryTreeItem : public QWidget
    Q_OBJECT
  public:
     //Constructor
-    HistoryTreeItem(QWidget* parent =0, QString phone = "");
+    HistoryTreeItem(QWidget* parent =0, QString phone = "",bool isBookmark=false);
     ~HistoryTreeItem();
 
     //Getters
@@ -113,6 +113,8 @@ class HistoryTreeItem : public QWidget
     QWidget*     m_pPlayer      ;
 
     TranslucentButtons* m_pBtnTrans;
+
+    bool m_IsBookmark;
 
 protected:
    virtual void resizeEvent(QResizeEvent* event);
