@@ -23,6 +23,7 @@
 
 //Qt
 #include <QtCore/QMimeData>
+#include <QtCore/QProcess>
 #include <QtGui/QApplication>
 #include <QtGui/QClipboard>
 #include <QtGui/QGridLayout>
@@ -65,6 +66,7 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
    m_pCallAgain->setText       ( i18n("Call Again")         );
    m_pCallAgain->setIcon       ( KIcon("call-start")        );
+   m_pCallAgain->setDisabled   ( true                       );
 
    m_pEditContact = new KAction(this);
    m_pEditContact->setShortcut ( Qt::CTRL + Qt::Key_E       );
@@ -80,6 +82,7 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pEmail->setShortcut       ( Qt::CTRL + Qt::Key_M       );
    m_pEmail->setText           ( i18n("Send Email")         );
    m_pEmail->setIcon           ( KIcon("mail-message-new")  );
+   m_pEmail->setEnabled        ( false                      );
 
    m_pAddPhone      = new KAction(this);
    m_pAddPhone->setShortcut    ( Qt::CTRL + Qt::Key_N       );
@@ -200,6 +203,10 @@ void ContactItemWidget::setContact(Contact* contact)
    if (height < 48)
       height = 48;
    m_Size = QSize(0,height+8);
+
+   if (!m_pContactKA->getPreferredEmail().isEmpty()) {
+      m_pEmail->setEnabled(true);
+   }
 } //setContact
 
 ///Set the model index
@@ -356,6 +363,9 @@ void ContactItemWidget::showContext(const QPoint& pos)
 void ContactItemWidget::sendEmail()
 {
    kDebug() << "Sending email";
+   QProcess *myProcess = new QProcess(this);
+   QStringList arguments;
+   myProcess->start("xdg-email", (arguments << m_pContactKA->getPreferredEmail()));
 }
 
 ///Call the same number again

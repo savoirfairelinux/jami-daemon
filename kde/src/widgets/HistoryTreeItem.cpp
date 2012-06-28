@@ -37,6 +37,7 @@
 #include <QtGui/QFontMetrics>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
+#include <QtCore/QProcess>
 
 //KDE
 #include <KLocale>
@@ -245,8 +246,10 @@ void HistoryTreeItem::showContext(const QPoint& pos)
 ///Send an email
 void HistoryTreeItem::sendEmail()
 {
-   //TODO
    kDebug() << "Sending email";
+   QProcess *myProcess = new QProcess(this);
+   QStringList arguments;
+   myProcess->start("xdg-email", (arguments << m_pContact->getPreferredEmail()));
 }
 
 ///Call the caller again
@@ -271,14 +274,16 @@ void HistoryTreeItem::copy()
 {
    kDebug() << "Copying contact";
    QMimeData* mimeData = new QMimeData();
-   mimeData->setData(MIME_CALLID, m_pItemCall->getCallId().toUtf8());
+   if (m_pItemCall)
+      mimeData->setData(MIME_CALLID, m_pItemCall->getCallId().toUtf8());
+   
    QString numbers;
    QString numbersHtml;
    if (m_pContact) {
       numbers     = m_pContact->getFormattedName()+": "+m_PhoneNumber;
       numbersHtml = "<b>"+m_pContact->getFormattedName()+"</b><br />"+HelperFunctions::escapeHtmlEntities(m_PhoneNumber);
    }
-   else {
+   else if (m_pItemCall) {
       numbers     = m_pItemCall->getPeerName()+": "+m_PhoneNumber;
       numbersHtml = "<b>"+m_pItemCall->getPeerName()+"</b><br />"+HelperFunctions::escapeHtmlEntities(m_PhoneNumber);
    }
@@ -531,7 +536,13 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
          pxm = (*m_pContact->getPhoto());
       else
          pxm = QPixmap(KIcon("user-identity").pixmap(QSize(48,48)));
-      m_pContact = m_pContact;
+
+      //There is no point to add new contacts when there is already one
+      m_pAddToContact->setDisabled(true);
+      m_pAddContact->setDisabled(true);
+
+      if (!m_pContact->getPreferredEmail().isEmpty())
+         m_pEmail->setDisabled(false);
    }
    else {
       pxm = QPixmap(KIcon("user-identity").pixmap(QSize(48,48)));
