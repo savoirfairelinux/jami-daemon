@@ -192,7 +192,7 @@ void BookmarkDock::reload()
       QStringList cl = HistoryModel::getNumbersByPopularity();
       for (int i=0;i < ((cl.size() < 10)?cl.size():10);i++) {
          QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18n("Popular"));
-         HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,cl[i]);
+         HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,cl[i],true);
          widget->setItem(item);
          m_pItemView->setItemWidget(item,0,widget);
          m_pBookmark << widget;

@@ -66,7 +66,6 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
    m_pCallAgain->setText       ( i18n("Call Again")         );
    m_pCallAgain->setIcon       ( KIcon("call-start")        );
-   m_pCallAgain->setDisabled   ( true                       );
 
    m_pEditContact = new KAction(this);
    m_pEditContact->setShortcut ( Qt::CTRL + Qt::Key_E       );
