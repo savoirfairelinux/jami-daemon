@@ -302,8 +302,14 @@ void SFLPhoneView::enter()
 ///Create a call from the clipboard content
 void SFLPhoneView::paste()
 {
-   QClipboard* cb = QApplication::clipboard();;
-   typeString(cb->text());
+   QClipboard* cb = QApplication::clipboard();
+   const QMimeData* data = cb->mimeData();
+   if (data->hasFormat(MIME_PHONENUMBER)) {
+      typeString(data->data(MIME_PHONENUMBER));
+   }
+   else {
+      typeString(cb->text());
+   }
 }
 
 

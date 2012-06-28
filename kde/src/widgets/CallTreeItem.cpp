@@ -328,7 +328,7 @@ void CallTreeItem::updated()
       }
       else if (m_pIconL) {
          QString str = QString(callStateIcons[state]);
-         if (m_pContact && !m_pItemCall->isConference()) {
+         if (m_pContact && !m_pItemCall->isConference() && m_pContact->getPhoto()) {
             QPixmap pxm = (*m_pContact->getPhoto()).scaled(QSize(m_Height,m_Height));
             QPainter painter(&pxm);
             QPixmap status(str);

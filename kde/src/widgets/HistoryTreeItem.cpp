@@ -276,6 +276,8 @@ void HistoryTreeItem::copy()
    QMimeData* mimeData = new QMimeData();
    if (m_pItemCall)
       mimeData->setData(MIME_CALLID, m_pItemCall->getCallId().toUtf8());
+
+   mimeData->setData(MIME_PHONENUMBER, m_PhoneNumber.toUtf8());
    
    QString numbers;
    QString numbersHtml;
