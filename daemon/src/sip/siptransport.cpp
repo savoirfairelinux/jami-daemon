@@ -338,23 +338,22 @@ void SipTransport::createSipTransport(SIPAccount &account)
             account.transport_ = createUdpTransport(account.getLocalInterface(), account.getLocalPort());
         }
     } else {
-        account.transport_ = createUdpTransport(account.getLocalInterface(), account.getLocalPort());
-    }
-
-    if (!account.transport_) {
+        // if this transport already exists, reuse it
         std::string key(transportMapKey(account.getLocalInterface(), account.getLocalPort()));
-        DEBUG("Looking into previously created transport map for" " %s", key.c_str());
-        // Could not create new transport, this transport may already exists
         std::map<std::string, pjsip_transport *>::iterator iter = transportMap_.find(key);
 
         if (iter != transportMap_.end()) {
             account.transport_ = iter->second;
             pjsip_transport_add_ref(account.transport_);
-        } else if (account.isTlsEnabled()) {
+        } else
+            account.transport_ = createUdpTransport(account.getLocalInterface(), account.getLocalPort());
+    }
+
+    if (!account.transport_) {
+        if (account.isTlsEnabled())
             throw std::runtime_error("Could not create TLS connection");
-        } else {
+        else
             throw std::runtime_error("Could not create new UDP transport");
-        }
     }
 }
 
