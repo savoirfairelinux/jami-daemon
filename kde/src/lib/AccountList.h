@@ -102,6 +102,7 @@ signals:
    void accountListUpdated();
    ///Emitted when an account state change
    void accountStateChanged( Account* account, QString state);
+   void accountEnabledChanged(Account* source);
 };
 
 ///SFLPhonelib Qt does not link to QtGui, and does not need to, this allow to add runtime Gui support

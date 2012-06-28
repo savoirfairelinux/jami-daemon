@@ -124,6 +124,7 @@ public slots:
 
 private slots:
    void changedAccountList               ();
+   void otherAccountChanged              ();
    void on_button_accountUp_clicked      ();
    void on_button_accountDown_clicked    ();
    void on_button_accountAdd_clicked     ();
