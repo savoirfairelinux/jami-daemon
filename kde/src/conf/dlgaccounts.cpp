@@ -76,8 +76,8 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /**/connect(comboBox_ni_local_address,         SIGNAL(currentIndexChanged (int))      , this   , SLOT(changedAccountList()               ));
    /**/connect(button_accountUp,                  SIGNAL(clicked())                      , this   , SLOT(changedAccountList()               ));
    /**/connect(button_accountDown,                SIGNAL(clicked())                      , this   , SLOT(changedAccountList()               ));
-   /**/connect(button_accountAdd,                 SIGNAL(clicked())                      , this   , SLOT(changedAccountList()               ));
-   /**/connect(button_accountRemove,              SIGNAL(clicked())                      , this   , SLOT(changedAccountList()               ));
+   /**/connect(button_accountAdd,                 SIGNAL(clicked())                      , this   , SLOT(otherAccountChanged()              ));
+   /**/connect(button_accountRemove,              SIGNAL(clicked())                      , this   , SLOT(otherAccountChanged()              ));
    /**/connect(button_audiocodecDown,             SIGNAL(clicked())                      , this   , SLOT(changedAccountList()               ));
    /**/connect(button_audiocodecUp,               SIGNAL(clicked())                      , this   , SLOT(changedAccountList()               ));
    /**/connect(edit_tls_private_key_password,     SIGNAL(textEdited(const QString &))    , this   , SLOT(changedAccountList()               ));
