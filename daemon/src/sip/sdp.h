@@ -117,9 +117,10 @@ class Sdp {
         /**
          * Returns a string version of the negotiated SDP fields which pertain
          * to video.
-         * Second member of the vector is the video codec rtp name
          */
-        void getActiveVideoDescription(std::string &desc, std::string &codec, std::string &payload) const;
+        std::string getActiveIncomingVideoDescription() const;
+        std::string getActiveOutgoingVideoCodec() const;
+        std::string getActiveOutgoingVideoPayload() const;
 #endif
 
         /*
@@ -268,7 +269,7 @@ class Sdp {
         NON_COPYABLE(Sdp);
         friend class SDPTest;
 
-        std::string getLineFromLocalSDP(const std::string &keyword) const;
+        std::string getLineFromSession(const pjmedia_sdp_session *sess, const std::string &keyword) const;
 
         /**
          * The pool to allocate memory, ownership to SipCall

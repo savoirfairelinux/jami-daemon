@@ -567,10 +567,10 @@ namespace
     }
 } // end anonymous namespace
 
-std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
+std::string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const std::string &keyword) const
 {
     char buffer[2048];
-    int size = pjmedia_sdp_print(activeLocalSession_, buffer, sizeof buffer);
+    int size = pjmedia_sdp_print(sess, buffer, sizeof buffer);
     std::string sdp(buffer, size);
     const std::vector<std::string> tokens(split(sdp, '\n'));
     for (std::vector<std::string>::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
@@ -580,7 +580,7 @@ std::string Sdp::getLineFromLocalSDP(const std::string &keyword) const
 }
 
 #ifdef SFL_VIDEO
-void Sdp::getActiveVideoDescription(std::string &desc, std::string &codec, std::string &payload) const
+std::string Sdp::getActiveIncomingVideoDescription() const
 {
     std::stringstream ss;
     ss << "v=0" << std::endl;
@@ -589,7 +589,7 @@ void Sdp::getActiveVideoDescription(std::string &desc, std::string &codec, std::
     ss << "c=IN IP4 " << remoteIpAddr_ << std::endl;
     ss << "t=0 0" << std::endl;
 
-    std::string videoLine(getLineFromLocalSDP("m=video"));
+    std::string videoLine(getLineFromSession(activeLocalSession_, "m=video"));
     ss << videoLine << std::endl;
 
     int payload_num;
@@ -600,17 +600,12 @@ void Sdp::getActiveVideoDescription(std::string &desc, std::string &codec, std::
     s << "a=rtpmap:";
     s << payload_num;
 
-    std::string vCodecLine(getLineFromLocalSDP(s.str()));
+    std::string vCodecLine(getLineFromSession(activeLocalSession_, s.str()));
     ss << vCodecLine << std::endl;
 
-    char codec_buf[32];
-    codec_buf[0] = '\0';
-    sscanf(vCodecLine.c_str(), "a=rtpmap:%*d %31[^/]", codec_buf);
-
-
-    unsigned videoIdx = 0;
-    while (pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0)
-        ++videoIdx;
+    unsigned videoIdx;
+    for (videoIdx = 0; pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0; ++videoIdx)
+        ;
 
     // get direction string
     static const pj_str_t DIRECTIONS[] = {
@@ -629,13 +624,29 @@ void Sdp::getActiveVideoDescription(std::string &desc, std::string &codec, std::
     if (direction)
         ss << "a=" + std::string(direction->name.ptr, direction->name.slen) << std::endl;
 
-    desc = ss.str();
-    codec = std::string(codec_buf);
+    return ss.str();
+}
 
-    ss.str("");
-    ss << payload_num;
+std::string Sdp::getActiveOutgoingVideoCodec() const
+{
+    string str("a=rtpmap:");
+    str += getActiveOutgoingVideoPayload();
+    string vCodecLine(getLineFromSession(activeRemoteSession_, str));
+    char codec_buf[32];
+    codec_buf[0] = '\0';
+    sscanf(vCodecLine.c_str(), "a=rtpmap:%*d %31[^/]", codec_buf);
+    return string(codec_buf);
+}
 
-    payload = ss.str();
+std::string Sdp::getActiveOutgoingVideoPayload() const
+{
+    string videoLine(getLineFromSession(activeRemoteSession_, "m=video"));
+    int payload_num;
+    if (sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload_num) != 1)
+        payload_num = 0;
+    std::ostringstream os;
+    os << payload_num;
+    return os.str();
 }
 #endif
 
