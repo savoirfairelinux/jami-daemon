@@ -138,7 +138,8 @@ call_mute(void)
 
 
 static void
-update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging_enabled) {
+update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging_enabled)
+{
     int pos = 0;
 
     DEBUG("Update actions for call %s", selectedCall->_callID);
@@ -254,49 +255,17 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 add_to_toolbar(toolbar_, transferToolbar_, pos++);
                 add_to_toolbar(toolbar_, recordWidget_, pos++);
                 add_to_toolbar(toolbar_, muteWidget_, pos++);
-                if (instant_messaging_enabled) {
+                if (instant_messaging_enabled)
                     add_to_toolbar(toolbar_, imToolbar_, pos++);
 
                 gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), FALSE);
+                gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), dbus_get_is_recording(selectedCall));
 
                 g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
                 g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
                 break;
         }
 
-        case CALL_STATE_RECORD:
-        {
-                DEBUG("Call State Record");
-                g_signal_handler_block(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_block(recordWidget_, recordButtonConnId_);
-
-                gtk_action_set_sensitive(hangUpAction_, TRUE);
-                gtk_action_set_sensitive(recordAction_, TRUE);
-                gtk_action_set_sensitive(muteAction_, TRUE);
-                gtk_widget_set_sensitive(holdMenu_, TRUE);
-                gtk_widget_set_sensitive(holdToolbar_, TRUE);
-                gtk_widget_set_sensitive(transferToolbar_, TRUE);
-                gtk_widget_set_sensitive(muteWidget_, TRUE);
-                if (instant_messaging_enabled)
-                    gtk_action_set_sensitive(imAction_, TRUE);
-
-                pos = 1;
-                add_to_toolbar(toolbar_, hangUpWidget_, pos++);
-                add_to_toolbar(toolbar_, holdToolbar_, pos++);
-                add_to_toolbar(toolbar_, transferToolbar_, pos++);
-                add_to_toolbar(toolbar_, recordWidget_, pos++);
-                add_to_toolbar(toolbar_, muteWidget_, pos++);
-                if (instant_messaging_enabled)
-                    add_to_toolbar(toolbar_, imToolbar_, pos++);
-
-                gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_), FALSE);
-                gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(recordWidget_), TRUE);
-
-                g_signal_handler_unblock(transferToolbar_, transferButtonConnId_);
-                g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
-                break;
-        }
         case CALL_STATE_BUSY:
         case CALL_STATE_FAILURE:
         {
@@ -328,7 +297,6 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
         default:
             ERROR("Unknown state in action update!");
             break;
-        }
     }
 }
 
@@ -918,7 +886,6 @@ edit_paste(void * foo UNUSED)
             }
             break;
             case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
             default: {
                 for (unsigned i = 0; i < strlen(no); i++) {
                     gchar * oneNo = g_strndup(&no[i], 1);
@@ -1318,7 +1285,6 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
                     hangup = TRUE;
                     accounts = TRUE;
                     break;
-                case CALL_STATE_RECORD:
                 case CALL_STATE_CURRENT:
                     hangup = TRUE;
                     hold = TRUE;

@@ -93,7 +93,7 @@ Call::getStateStr()
                     return isIncoming() ? "INCOMING" : "RINGING";
                 case CONNECTED:
                 default:
-                    return isRecording() ? "RECORD" : "CURRENT";
+                    return "CURRENT";
             }
 
         case HOLD:

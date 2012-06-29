@@ -210,8 +210,7 @@ im_widget_send_message(const gchar *id, const gchar *message)
         dbus_send_text_message(id, message);
     else if (im_widget_call) {
         if (im_widget_call->_type == CALL && (im_widget_call->_state == CALL_STATE_CURRENT ||
-                                              im_widget_call->_state == CALL_STATE_HOLD ||
-                                              im_widget_call->_state == CALL_STATE_RECORD)) {
+                                              im_widget_call->_state == CALL_STATE_HOLD)) {
             /* Ship the message through D-Bus */
             dbus_send_text_message(id, message);
         } else {
@@ -326,7 +325,6 @@ call_state_image_widget(call_state_t state)
     switch (state) {
         case CALL_STATE_CURRENT:
         case CALL_STATE_HOLD:
-        case CALL_STATE_RECORD:
             return gtk_image_new_from_stock(GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
         default:
             return gtk_image_new_from_stock(GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
