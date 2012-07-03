@@ -38,6 +38,10 @@
 #include "shm_sink.h"
 #include "noncopyable.h"
 
+extern "C" {
+#include <libavformat/avformat.h>
+}
+
 class SwsContext;
 class AVCodecContext;
 class AVStream;
@@ -71,10 +75,12 @@ class VideoReceiveThread : public ost::Thread {
         std::string sdpFilename_;
         size_t bufferSize_;
         const std::string id_;
+        AVIOInterruptCB interruptCb_;
         void setup();
         void createScalingContext();
         void loadSDP();
         void fill_buffer(void *data);
+        static int decodeInterruptCb(void *ctx);
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);

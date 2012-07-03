@@ -135,6 +135,8 @@ void VideoReceiveThread::setup()
 
     // Open video file
     DEBUG("Opening input");
+    inputCtx_ = avformat_alloc_context();
+    inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
     EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
@@ -197,12 +199,22 @@ void VideoReceiveThread::createScalingContext()
     EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
 }
 
+// This callback is used by libav internally to break out of blocking calls
+int VideoReceiveThread::decodeInterruptCb(void *ctx)
+{
+    VideoReceiveThread *context = static_cast<VideoReceiveThread*>(ctx);
+    return not context->receiving_;
+}
+
 VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<string, string> &args) :
     args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
-    bufferSize_(0), id_(id)
-{}
+    bufferSize_(0), id_(id), interruptCb_()
+{
+    interruptCb_.callback = decodeInterruptCb;
+    interruptCb_.opaque = this;
+}
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
 void VideoReceiveThread::fill_buffer(void *data)
@@ -224,10 +236,10 @@ void VideoReceiveThread::fill_buffer(void *data)
 
 void VideoReceiveThread::run()
 {
+    receiving_ = true;
     setup();
 
     createScalingContext();
-    receiving_ = true;
     const Callback cb(&VideoReceiveThread::fill_buffer);
     while (receiving_) {
         AVPacket inpacket;
@@ -273,11 +285,12 @@ VideoReceiveThread::~VideoReceiveThread()
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
-    if (inputCtx_)
+    if (inputCtx_) {
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
         av_close_input_file(inputCtx_);
 #else
         avformat_close_input(&inputCtx_);
 #endif
+    }
 }
 } // end namespace sfl_video
