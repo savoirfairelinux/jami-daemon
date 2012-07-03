@@ -26,7 +26,8 @@ VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(NULL) {
 
 void VideoWidget::update() {
    QPainter painter(this);
-   painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
+   if (m_Image)
+      painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
    painter.end();
 }
 
@@ -40,6 +41,7 @@ void VideoWidget::paintEvent(QPaintEvent* event)
 
 void VideoWidget::repaint2()
 {
+   kDebug() << "Repainting";
    QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
