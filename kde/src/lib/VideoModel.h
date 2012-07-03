@@ -28,6 +28,7 @@ class QTimer;
 
 //SFLPhone
 #include "VideoDevice.h"
+class VideoRenderer;
 
 ///VideoModel: Video event dispatcher
 class LIB_EXPORT VideoModel : public QObject {
@@ -52,24 +53,27 @@ private:
    static VideoModel* m_spInstance;
    
    //Attributes
-   bool       m_Attached    ;
-   bool       m_PreviewState;
-   uint       m_BufferSize  ;
-   uint       m_ShmKey      ;
-   uint       m_SemKey      ;
-   int        m_SetSetId    ;
-   Resolution m_Res         ;
-   QByteArray m_Frame       ;
-   QTimer*    m_pTimer      ;
-   void*      m_pBuffer     ;
+   bool           m_Attached    ;
+   bool           m_PreviewState;
+   uint           m_BufferSize  ;
+   uint           m_ShmKey      ;
+   uint           m_SemKey      ;
+   int            m_SetSetId    ;
+   Resolution     m_Res         ;
+   QByteArray     m_Frame       ;
+   QTimer*        m_pTimer      ;
+   void*          m_pBuffer     ;
+   VideoRenderer* m_pRenderer   ;
 
 public slots:
    void stopPreview ();
    void startPreview();
 
 private slots:
-   void receivingEvent(int shmKey, int semKey, int videoBufferSize, int destWidth, int destHeight);
-   void stoppedReceivingEvent(int shmKey, int semKey);
+   //void receivingEvent(int shmKey, int semKey, int videoBufferSize, int destWidth, int destHeight);
+   //void stoppedReceivingEvent(int shmKey, int semKey);
+   void startedDecoding(QString id, QString shmPath, int width, int height);
+   void stoppedDecoding(QString id, QString shmPath);
    void deviceEvent();
    void timedEvents();
 

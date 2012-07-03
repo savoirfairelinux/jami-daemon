@@ -107,6 +107,8 @@ QT4_ADD_DBUS_INTERFACE(
 kde4_add_library( qtsflphone  SHARED ${qtsflphone_LIB_SRCS} )
  
 target_link_libraries( qtsflphone
+  -lrt
+  -lpthread
   ${QT_QTDBUS_LIBRARY}
   ${QT_QTCORE_LIBRARY}
 )
