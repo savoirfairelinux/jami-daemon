@@ -54,8 +54,7 @@ VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string>
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
-    string desc, codec, payload;
-    sdp.getActiveVideoDescription(desc, codec, payload);
+    string desc(sdp.getActiveIncomingVideoDescription());
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
@@ -87,6 +86,7 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
         receiving_ = false;
     }
 
+    string codec(sdp.getActiveOutgoingVideoCodec());
     if (not codec.empty()) {
         const string encoder(libav_utils::encodersMap()[codec]);
         if (encoder.empty()) {
@@ -99,7 +99,7 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
         sending_ = false;
     }
 
-    txArgs_["payload_type"] = payload;
+    txArgs_["payload_type"] = sdp.getActiveOutgoingVideoPayload();;
 }
 
 void VideoRtpSession::updateDestination(const string &destination,

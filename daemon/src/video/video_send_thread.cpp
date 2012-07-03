@@ -45,7 +45,6 @@ extern "C" {
 
 #include <map>
 #include "manager.h"
-#include "libx264-ultrafast.ffpreset.h"
 
 namespace sfl_video {
 
@@ -77,7 +76,10 @@ void VideoSendThread::waitForSDP()
 
 void VideoSendThread::forcePresetX264()
 {
-    av_set_options_string(encoderCtx_, x264_preset_ultrafast, "=", "\n");
+    if (av_opt_set(encoderCtx_->priv_data, "preset", "ultrafast", 0))
+        DEBUG("Failed to set x264 preset 'veryfast'");
+    if (av_opt_set(encoderCtx_->priv_data, "tune", "zerolatency", 0))
+        DEBUG("Failed to set x264 tune 'zerolatency'");
 }
 
 void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
@@ -93,9 +95,6 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     // set some encoder settings here
     encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
     encoderCtx_->bit_rate = 400000;
-    encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;
-    encoderCtx_->rc_min_rate = 0;
-    encoderCtx_->rc_buffer_size = encoderCtx_->rc_max_rate;
 
     // resolution must be a multiple of two
     if (args_["width"].empty() and inputDecoderCtx_)
@@ -122,6 +121,7 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     // This is to place global headers in extradata instead of every keyframe.
     // encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
 }
+
 
 void VideoSendThread::setup()
 {
@@ -224,18 +224,16 @@ void VideoSendThread::setup()
     } else
         DEBUG("No need to open \"%s\"", outputCtx_->filename);
 
+    AVDictionary *outOptions = NULL;
     // write the stream header, if any
-    options = NULL;
     if (not args_["payload_type"].empty()) {
         DEBUG("Writing stream header for payload type %s", args_["payload_type"].c_str());
-        av_dict_set(&options, "payload_type", args_["payload_type"].c_str(), 0);
+        av_dict_set(&outOptions, "payload_type", args_["payload_type"].c_str(), 0);
     }
-
-    EXIT_IF_FAIL(avformat_write_header(outputCtx_, &options) >= 0, "Could not write "
-          "header for output file...check codec parameters");
-
-    print_sdp();
+    EXIT_IF_FAIL(avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL) >= 0, "Could not write "
+                 "header for output file...check codec parameters")
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
+    print_sdp();
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();

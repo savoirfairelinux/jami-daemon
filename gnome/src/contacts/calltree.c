@@ -648,7 +648,10 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
                 break;
             case CALL_STATE_CURRENT:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                if (dbus_get_is_recording(call))
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                else
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
                 break;
             case CALL_STATE_DIALING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
@@ -661,9 +664,6 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                 break;
             case CALL_STATE_TRANSFER:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfer.svg", NULL);
-                break;
-            case CALL_STATE_RECORD:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
                 break;
             default:
                 WARN("Update calltree - Should not happen!");
@@ -783,14 +783,14 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
                 break;
             case CALL_STATE_CURRENT:
                 // If the call has been initiated by a another client and, when we start, it is already current
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                if (dbus_get_is_recording(call))
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                else
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
                 break;
             case CALL_STATE_HOLD:
                 // If the call has been initiated by a another client and, when we start, it is already current
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-                break;
-            case CALL_STATE_RECORD:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
                 break;
             case CALL_STATE_FAILURE:
                 // If the call has been initiated by a another client and, when we start, it is already current

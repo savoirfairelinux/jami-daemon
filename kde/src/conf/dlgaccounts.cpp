@@ -150,7 +150,7 @@ void DlgAccounts::saveAccount(QModelIndex item)
    }
 
    if(!account) {
-      kDebug() << "Attempting to save details of an unexisting account : " << item.data(Qt::DisplayRole);
+      kDebug() << "Attempting to save details of an unexisting account : " << item.data(Qt::DisplayRole).toString();
       return;
    }
 

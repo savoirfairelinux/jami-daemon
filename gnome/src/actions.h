@@ -192,8 +192,6 @@ void sflphone_fill_codec_list_per_account(account_t *);
 
 void sflphone_add_participant();
 
-void sflphone_record(callable_obj_t *c);
-
 void sflphone_rec_call(void);
 
 void sflphone_mute_call(void);

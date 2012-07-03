@@ -203,19 +203,12 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state)
         calltree_update_call(history_tab, c);
         status_bar_display_account();
         sflphone_hung_up(c);
-    }
-    else if (g_strcmp0(state, "UNHOLD_CURRENT") == 0)
+    } else if (g_strcmp0(state, "UNHOLD") == 0 || g_strcmp0(state, "CURRENT") == 0)
         sflphone_current(c);
-    else if (g_strcmp0(state, "UNHOLD_RECORD") == 0)
-        sflphone_record(c);
     else if (g_strcmp0(state, "HOLD") == 0)
         sflphone_hold(c);
     else if (g_strcmp0(state, "RINGING") == 0)
         sflphone_ringing(c);
-    else if (g_strcmp0(state, "CURRENT") == 0)
-        sflphone_current(c);
-    else if (g_strcmp0(state, "RECORD") == 0)
-        sflphone_record(c);
     else if (g_strcmp0(state, "FAILURE") == 0)
         sflphone_fail(c);
     else if (g_strcmp0(state, "BUSY") == 0)
@@ -242,9 +235,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
     // The callID is unknown, treat it like a new call
     // If it were an incoming call, we won't be here
     // It means that a new call has been initiated with an other client (cli for instance)
-    if (g_strcmp0(state, "RINGING") == 0 ||
-        g_strcmp0(state, "CURRENT") == 0 ||
-        g_strcmp0(state, "RECORD")) {
+    if (g_strcmp0(state, "RINGING") == 0 || g_strcmp0(state, "CURRENT") == 0) {
 
         DEBUG("New ringing call! accountID: %s", callID);
 
@@ -344,7 +335,7 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, void *foo U
         im_widget_update_state(IM_WIDGET(call->_im_widget), FALSE);
 
         // if one of these participants is currently recording, the whole conference will be recorded
-        if (call->_state == CALL_STATE_RECORD)
+        if (dbus_get_is_recording(call))
             new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
 
         call->_historyConfID = g_strdup(confID);

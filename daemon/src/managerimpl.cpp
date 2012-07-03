@@ -329,11 +329,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
         setRecordingCall(call_id);
 
     // update call state on client side
-    if (audioPreference.getIsAlwaysRecording())
-        dbus_.getCallManager()->callStateChanged(call_id, "RECORD");
-    else
-        dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
-
+    dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
     return true;
 }
 
@@ -488,8 +484,6 @@ void ManagerImpl::offHoldCall(const std::string& callId)
             detachParticipant(MainBuffer::DEFAULT_ID, currentCallId);
     }
 
-    bool isRec = false;
-
     if (isIPToIP(callId))
         SIPVoIPLink::instance()->offhold(callId);
     else {
@@ -498,13 +492,11 @@ void ManagerImpl::offHoldCall(const std::string& callId)
         DEBUG("Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
         Call * call = getAccountLink(accountId)->getCall(callId);
 
-        if (call) {
-            isRec = call->isRecording();
+        if (call)
             getAccountLink(accountId)->offhold(callId);
-        }
     }
 
-    dbus_.getCallManager()->callStateChanged(callId, isRec ? "UNHOLD_RECORD" : "UNHOLD_CURRENT");
+    dbus_.getCallManager()->callStateChanged(callId, "UNHOLD");
 
     if (isConferenceParticipant(callId)) {
         Call *call = getCallFromCallID(callId);
@@ -929,11 +921,9 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     } else if (call1_state_str == "INCOMING") {
         conf->bindParticipant(callId1);
         answerCall(callId1);
-    } else if (call1_state_str == "CURRENT")
+    } else if (call1_state_str == "CURRENT") {
         conf->bindParticipant(callId1);
-    else if (call1_state_str == "RECORD")
-        conf->bindParticipant(callId1);
-    else if (call1_state_str == "INACTIVE") {
+    } else if (call1_state_str == "INACTIVE") {
         conf->bindParticipant(callId1);
         answerCall(callId1);
     } else
@@ -949,11 +939,9 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     } else if (call2_state_str == "INCOMING") {
         conf->bindParticipant(callId2);
         answerCall(callId2);
-    } else if (call2_state_str == "CURRENT")
+    } else if (call2_state_str == "CURRENT") {
         conf->bindParticipant(callId2);
-    else if (call2_state_str == "RECORD")
-        conf->bindParticipant(callId2);
-    else if (call2_state_str == "INACTIVE") {
+    } else if (call2_state_str == "INACTIVE") {
         conf->bindParticipant(callId2);
         answerCall(callId2);
     } else
@@ -1520,11 +1508,10 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
         audiodriver_->flushUrgent();
     }
 
-    if (audioPreference.getIsAlwaysRecording()) {
+    if (audioPreference.getIsAlwaysRecording())
         setRecordingCall(id);
-        dbus_.getCallManager()->callStateChanged(id, "RECORD");
-    } else
-        dbus_.getCallManager()->callStateChanged(id, "CURRENT");
+
+    dbus_.getCallManager()->callStateChanged(id, "CURRENT");
 }
 
 //THREAD=VoIP Call=Outgoing

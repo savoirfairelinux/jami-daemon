@@ -312,7 +312,6 @@ sflphone_hang_up()
             case CALL_STATE_CURRENT:
             case CALL_STATE_HOLD:
             case CALL_STATE_BUSY:
-            case CALL_STATE_RECORD:
                 dbus_hang_up(selectedCall);
                 call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
@@ -398,7 +397,6 @@ sflphone_pick_up()
             break;
         case CALL_STATE_CURRENT:
         case CALL_STATE_HOLD:
-        case CALL_STATE_RECORD:
         case CALL_STATE_RINGING:
             sflphone_new_call();
             break;
@@ -417,7 +415,6 @@ sflphone_on_hold()
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
                 dbus_hold(selectedCall);
                 break;
             default:
@@ -472,17 +469,6 @@ sflphone_current(callable_obj_t * c)
         time(&c->_time_start);
 
     c->_state = CALL_STATE_CURRENT;
-    calltree_update_call(current_calls_tab, c);
-    update_actions();
-}
-
-void
-sflphone_record(callable_obj_t * c)
-{
-    if (c->_state != CALL_STATE_HOLD)
-        time(&c->_time_start);
-
-    c->_state = CALL_STATE_RECORD;
     calltree_update_call(current_calls_tab, c);
     update_actions();
 }
@@ -659,7 +645,6 @@ sflphone_keypad(guint keyval, gchar * key)
             case CALL_STATE_DIALING: // Currently dialing => edit number
                 process_dialing(c, keyval, key);
                 break;
-            case CALL_STATE_RECORD:
             case CALL_STATE_CURRENT:
 
                 switch (keyval) {
@@ -855,19 +840,6 @@ sflphone_rec_call()
     if (selectedCall) {
         DEBUG("Set record for selected call");
         dbus_set_record(selectedCall->_callID);
-
-        switch (selectedCall->_state) {
-            case CALL_STATE_CURRENT:
-                selectedCall->_state = CALL_STATE_RECORD;
-                break;
-            case CALL_STATE_RECORD:
-                selectedCall->_state = CALL_STATE_CURRENT;
-                break;
-            default:
-                WARN("Should not happen in sflphone_off_hold ()!");
-                break;
-        }
-
         calltree_update_call(current_calls_tab, selectedCall);
     } else if (selectedConf) {
         DEBUG("Set record for selected conf");
