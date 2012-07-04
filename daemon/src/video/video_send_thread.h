@@ -36,6 +36,10 @@
 #include <string>
 #include "noncopyable.h"
 
+extern "C" {
+#include <libavformat/avformat.h>
+}
+
 class SwsContext;
 class AVCodecContext;
 class AVStream;
@@ -53,6 +57,7 @@ class VideoSendThread : public ost::Thread {
         void setup();
         void prepareEncoderContext(AVCodec *encoder);
         void createScalingContext();
+        static int interruptCb(void *ctx);
         ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;
@@ -72,6 +77,7 @@ class VideoSendThread : public ost::Thread {
         AVFormatContext *outputCtx_;
         SwsContext *imgConvertCtx_;
         std::string sdp_;
+        AVIOInterruptCB interruptCb_;
         bool sending_;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
