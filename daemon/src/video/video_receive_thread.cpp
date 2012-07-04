@@ -200,7 +200,7 @@ void VideoReceiveThread::createScalingContext()
 }
 
 // This callback is used by libav internally to break out of blocking calls
-int VideoReceiveThread::decodeInterruptCb(void *ctx)
+int VideoReceiveThread::interruptCb(void *ctx)
 {
     VideoReceiveThread *context = static_cast<VideoReceiveThread*>(ctx);
     return not context->receiving_;
@@ -212,7 +212,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
     dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
     bufferSize_(0), id_(id), interruptCb_()
 {
-    interruptCb_.callback = decodeInterruptCb;
+    interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
 }
 

@@ -75,12 +75,12 @@ class VideoReceiveThread : public ost::Thread {
         std::string sdpFilename_;
         size_t bufferSize_;
         const std::string id_;
-        AVIOInterruptCB interruptCb_;
         void setup();
         void createScalingContext();
         void loadSDP();
         void fill_buffer(void *data);
-        static int decodeInterruptCb(void *ctx);
+        static int interruptCb(void *ctx);
+        AVIOInterruptCB interruptCb_;
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);

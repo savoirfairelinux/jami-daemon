@@ -145,6 +145,8 @@ void VideoSendThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
+    inputCtx_ = avformat_alloc_context();
+    inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                   file_iformat, &options);
     EXIT_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
@@ -173,6 +175,7 @@ void VideoSendThread::setup()
     EXIT_IF_FAIL(ret >= 0, "Could not open codec");
 
     outputCtx_ = avformat_alloc_context();
+    outputCtx_->interrupt_callback = interruptCb_;
 
     AVOutputFormat *file_oformat = av_guess_format("rtp", args_["destination"].c_str(), NULL);
     EXIT_IF_FAIL(file_oformat, "Unable to find a suitable output format for %s",
@@ -220,7 +223,7 @@ void VideoSendThread::setup()
 
     // open the output file, if needed
     if (!(file_oformat->flags & AVFMT_NOFILE)) {
-        ret = avio_open(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE);
+        ret = avio_open2(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE, &interruptCb_, NULL);
         EXIT_IF_FAIL(ret >= 0, "Could not open \"%s\"!", outputCtx_->filename);
     } else
         DEBUG("No need to open \"%s\"", outputCtx_->filename);
@@ -267,21 +270,32 @@ void VideoSendThread::createScalingContext()
     EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context");
 }
 
+// This callback is used by libav internally to break out of blocking calls
+int VideoSendThread::interruptCb(void *ctx)
+{
+    VideoSendThread *context = static_cast<VideoSendThread*>(ctx);
+    return not context->sending_;
+}
+
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     sdpReady_(), args_(args), scaledPictureBuf_(0), outbuf_(0),
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
-    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), sending_(false)
-{}
+    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
+    sending_(false)
+{
+    interruptCb_.callback = interruptCb;
+    interruptCb_.opaque = this;
+}
 
 void VideoSendThread::run()
 {
+    sending_ = true;
     // We don't want setup() called in the main thread in case it exits or blocks
     setup();
     createScalingContext();
 
     int frameNumber = 0;
-    sending_ = true;
     while (sending_) {
         AVPacket inpacket;
         if (av_read_frame(inputCtx_, &inpacket) < 0)

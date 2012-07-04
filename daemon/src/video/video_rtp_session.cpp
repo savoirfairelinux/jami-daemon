@@ -154,4 +154,5 @@ void VideoRtpSession::stop()
     receiveThread_.reset();
     sendThread_.reset();
 }
+
 } // end namespace sfl_video
