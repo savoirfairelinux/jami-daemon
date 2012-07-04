@@ -29,6 +29,7 @@ class QTimer;
 //SFLPhone
 #include "VideoDevice.h"
 class VideoRenderer;
+struct SHMHeader;
 
 ///VideoModel: Video event dispatcher
 class LIB_EXPORT VideoModel : public QObject {
@@ -41,6 +42,8 @@ public:
    bool       isPreviewing       ();
    QByteArray getCurrentFrame    ();
    Resolution getActiveResolution();
+   char*      rawData            ();
+   
    
    //Setters
    void       setBufferSize(uint size);
@@ -70,8 +73,6 @@ public slots:
    void startPreview();
 
 private slots:
-   //void receivingEvent(int shmKey, int semKey, int videoBufferSize, int destWidth, int destHeight);
-   //void stoppedReceivingEvent(int shmKey, int semKey);
    void startedDecoding(QString id, QString shmPath, int width, int height);
    void stoppedDecoding(QString id, QString shmPath);
    void deviceEvent();

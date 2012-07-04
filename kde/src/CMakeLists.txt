@@ -54,6 +54,7 @@ SET(
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
    widgets/VideoWidget.cpp
+   widgets/AcceleratedVideoWidget.cpp
    Codec.cpp
    CallView.cpp
 )
@@ -92,7 +93,7 @@ QT4_ADD_DBUS_INTERFACES(sflphone_client_kde_SRCS ${KDE4_DBUS_INTERFACES_DIR}/org
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})
 
-TARGET_LINK_LIBRARIES(sflphone-client-kde ksflphone qtsflphone  ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDEPIMLIBS_AKONADI_KMIME_LIBS} ${KDEPIMLIBS_AKONADI_LIBS} ${KDEPIMLIBS_AKONADI_CONTACT_LIBS})
+TARGET_LINK_LIBRARIES(sflphone-client-kde ksflphone qtsflphone  ${KDE4_KDEUI_LIBS} ${QT_QTOPENGL_LIBRARY} ${KDE4_KIO_LIBS} ${KDEPIMLIBS_AKONADI_KMIME_LIBS} ${KDEPIMLIBS_AKONADI_LIBS} ${KDEPIMLIBS_AKONADI_CONTACT_LIBS})
 
 ########### install files ###############
 

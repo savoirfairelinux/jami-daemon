@@ -41,13 +41,11 @@ void VideoWidget::paintEvent(QPaintEvent* event)
 
 void VideoWidget::repaint2()
 {
-   kDebug() << "Repainting";
    QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
-   //if (m_Image)
-   //   delete m_Image;
-   m_Image = new QImage(size,QImage::Format_ARGB32);
-   m_Image->loadFromData(VideoModel::getInstance()->getCurrentFrame(),"BMP");
+   if (m_Image)
+      delete m_Image;
+   m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
    repaint();
 }

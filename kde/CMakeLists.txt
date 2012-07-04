@@ -12,7 +12,7 @@ INCLUDE( ${LOCAL_CMAKE_MODULE_PATH}/TargetDistclean.cmake  REQUIRED)
 
 FIND_PACKAGE ( KdepimLibs REQUIRED            )
 FIND_PACKAGE ( KDE4       REQUIRED            )
-FIND_PACKAGE ( Qt4        REQUIRED QtCore QtGui QtXml QtDBus QtTest QtSVG QT_USE_QT* )
+FIND_PACKAGE ( Qt4        REQUIRED QtCore QtGui QtXml QtDBus QtTest QtSVG QtOpenGl QT_USE_QT* )
 
 if (CMAKE_COMPILER_IS_GNUCC)
    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)

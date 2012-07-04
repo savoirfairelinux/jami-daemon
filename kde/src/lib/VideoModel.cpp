@@ -27,10 +27,6 @@
 #include <sys/mman.h>
 #include <semaphore.h>
 
-//Qt
-#include <QSharedMemory>
-#include <QDBusPendingReply>
-
 //SFLPhone
 #include "video_interface_singleton.h"
 #include "VideoDevice.h"
@@ -39,15 +35,15 @@
 VideoModel* VideoModel::m_spInstance = NULL;
 
 ///Shared memory object
-typedef struct {
+struct SHMHeader {
     sem_t notification;
     sem_t mutex;
 
     unsigned m_BufferGen;
     int m_BufferSize;
 
-    char data[0];
-} SHMHeader;
+    char m_Data[0];
+};
 
 
 ///Manage shared memory and convert it to QByteArray
@@ -85,7 +81,7 @@ class VideoRenderer {
       bool startShm ();
 
       //Getters
-      QByteArray renderToBitmap(bool& ok);
+      QByteArray renderToBitmap(QByteArray& data, bool& ok);
 };
 
 ///Constructor
@@ -104,7 +100,7 @@ VideoRenderer::~VideoRenderer()
 }
 
 ///Get the data from shared memory and transform it into a QByteArray
-QByteArray VideoRenderer::renderToBitmap(bool& ok)
+QByteArray VideoRenderer::renderToBitmap(QByteArray& data,bool& ok)
 {
    if (!shmLock()) {
       ok = false;
@@ -133,7 +129,14 @@ QByteArray VideoRenderer::renderToBitmap(bool& ok)
       return QByteArray();
    }
 
-   QByteArray data(m_pShmArea->data,m_pShmArea->m_BufferSize);
+   if (data.size() != m_pShmArea->m_BufferSize)
+      data.resize(m_pShmArea->m_BufferSize);
+   //data = m_pShmArea->m_Data;
+   memcpy(data.data(),m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
+   QByteArray data2(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
+//    QByteArray data3(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
+//    QByteArray data4(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
+//    QByteArray data5(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
    m_BufferGen = m_pShmArea->m_BufferGen;
    shmUnlock();
    return data;
@@ -294,12 +297,14 @@ void VideoModel::deviceEvent()
 void VideoModel::timedEvents()
 {
    bool ok = true;
-   m_Frame = m_pRenderer->renderToBitmap(ok);
-   qDebug() << "Render" << ok;
-   if (ok)
+   QByteArray ba;
+   m_pRenderer->renderToBitmap(m_Frame,ok);
+   if (ok == true)
       emit frameUpdated();
-   else
+   else {
+      qDebug() << "Frame dropped";
       usleep(rand()%100000); //Be sure it can come back in sync
+   }
 }
 
 ///Return the current framerate
@@ -337,4 +342,9 @@ void VideoModel::stoppedDecoding(QString id, QString shmPath)
 {
    Q_UNUSED(id)
    Q_UNUSED(shmPath)
+}
+
+char* VideoModel::rawData()
+{
+   return m_pRenderer->m_pShmArea->m_Data;
 }
