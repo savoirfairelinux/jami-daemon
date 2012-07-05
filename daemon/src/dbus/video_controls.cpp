@@ -208,6 +208,6 @@ VideoControls::hasPreviewStarted()
 std::string
 VideoControls::getCurrentCodecName(const std::string &callID)
 {
-    return Manager::instance().getCurrentCodecName(callID);
+    return Manager::instance().getCurrentVideoCodecName(callID);
 }
 
