@@ -53,7 +53,8 @@ void VideoWidget::updateFrame()
       setMinimumSize(size);
    if (m_Image)
       delete m_Image;
-   m_Image = new QImage((uchar*)VideoModel::getInstance()->getCurrentFrame().data() , size.width(), size.height(), QImage::Format_ARGB32 );
+   //if (!m_Image && VideoModel::getInstance()->isRendering())
+      m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
    //This is the right way to do it, but it does not work
 //    if (!m_Image || (m_Image && m_Image->size() != size))
 //       m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
