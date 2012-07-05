@@ -112,10 +112,7 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     const int fps = args_["framerate"].empty() ? DEFAULT_FPS : atoi(args_["framerate"].c_str());
     encoderCtx_->time_base = (AVRational) {1, fps};
     // emit one intra frame every gop_size frames
-    encoderCtx_->gop_size = 10 * fps;
     encoderCtx_->max_b_frames = 0;
-    const int MTU = 1500;
-    encoderCtx_->rtp_payload_size = MTU / 2; // Target GOB length
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
