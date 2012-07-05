@@ -541,7 +541,11 @@ void SIPVoIPLink::sendRegister(Account *a)
 
     if (!account)
         throw VoipLinkException("SipVoipLink: Account is not SIPAccount");
-    sipTransport.createSipTransport(*account);
+    try {
+        sipTransport.createSipTransport(*account);
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
+    }
 
     account->setRegister(true);
     account->setRegistrationState(TRYING);

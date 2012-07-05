@@ -2563,7 +2563,11 @@ namespace {
     SIPAccount *createIP2IPAccount()
     {
         SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE);
-        SIPVoIPLink::instance()->sipTransport.createSipTransport(*ip2ip);
+        try {
+            SIPVoIPLink::instance()->sipTransport.createSipTransport(*ip2ip);
+        } catch (const std::runtime_error &e) {
+            ERROR("%s", e.what());
+        }
         return ip2ip;
     }
 
