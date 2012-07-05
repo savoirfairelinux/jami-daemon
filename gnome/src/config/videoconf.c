@@ -377,7 +377,7 @@ static int set_combo_index_from_str(GtkComboBox *box, const gchar *str, size_t m
     unsigned idx = 0;
     gtk_tree_model_get_iter_first(model, &iter);
     do {
-        gchar *boxstr;
+        gchar *boxstr = 0;
         gtk_tree_model_get(model, &iter, 0, &boxstr, -1);
         if (boxstr && !g_strcmp0(boxstr, str))
             break;
