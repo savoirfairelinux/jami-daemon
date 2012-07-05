@@ -55,16 +55,17 @@ class VideoRenderer {
    
    private:
       //Attributes
-      uint       m_Width     ;
-      uint       m_Height    ;
-      QString    m_ShmPath   ;
-      int        fd          ;
-      SHMHeader* m_pShmArea  ;
-      signed int m_ShmAreaLen;
-      uint       m_BufferGen ;
+      uint       m_Width      ;
+      uint       m_Height     ;
+      QString    m_ShmPath    ;
+      int        fd           ;
+      SHMHeader* m_pShmArea   ;
+      signed int m_ShmAreaLen ;
+      uint       m_BufferGen  ;
+      bool       m_isRendering;
 
       //Constants
-      static const int TIMEOUT_NSEC = 10E8; // 1 second
+      static const int TIMEOUT_SEC = 1; // 1 second
 
       //Helpers
       timespec createTimeout();
@@ -89,7 +90,8 @@ class VideoRenderer {
 ///Constructor
 VideoRenderer::VideoRenderer():
    m_Width(0), m_Height(0), m_ShmPath(QString()), fd(-1),
-   m_pShmArea((SHMHeader*)MAP_FAILED), m_ShmAreaLen(0), m_BufferGen(0)
+   m_pShmArea((SHMHeader*)MAP_FAILED), m_ShmAreaLen(0), m_BufferGen(0),
+   m_isRendering(false)
 {
    
 }
@@ -104,6 +106,10 @@ VideoRenderer::~VideoRenderer()
 ///Get the data from shared memory and transform it into a QByteArray
 QByteArray VideoRenderer::renderToBitmap(QByteArray& data,bool& ok)
 {
+   if (!m_isRendering) {
+      return QByteArray();
+   }
+   
    if (!shmLock()) {
       ok = false;
       return QByteArray();
@@ -113,8 +119,31 @@ QByteArray VideoRenderer::renderToBitmap(QByteArray& data,bool& ok)
    while (m_BufferGen == m_pShmArea->m_BufferGen) {
       shmUnlock();
       const struct timespec timeout = createTimeout();
+      int err = sem_timedwait(&m_pShmArea->notification, &timeout);
       // Could not decrement semaphore in time, returning
-      if (sem_timedwait(&m_pShmArea->notification, &timeout) < 0) {
+//       switch (errno ) {
+//          case EINTR:
+//             qDebug() << "Unlock failed: Interrupted function call (POSIX.1); see signal(7)";
+//             ok = false;
+//             return QByteArray();
+//             break;
+//          case EINVAL:
+//             qDebug() << "Unlock failed: Invalid argument (POSIX.1)";
+//             ok = false;
+//             return QByteArray();
+//             break;
+//          case EAGAIN:
+//             qDebug() << "Unlock failed: Resource temporarily unavailable (may be the same value as EWOULDBLOCK) (POSIX.1)";
+//             ok = false;
+//             return QByteArray();
+//             break;
+//          case ETIMEDOUT:
+//             qDebug() << "Unlock failed: Connection timed out (POSIX.1)";
+//             ok = false;
+//             return QByteArray();
+//             break;
+//       }
+      if (err < 0) {
          ok = false;
          return QByteArray();
       }
@@ -226,13 +255,12 @@ timespec VideoRenderer::createTimeout()
    timespec timeout = {0, 0};
    if (clock_gettime(CLOCK_REALTIME, &timeout) == -1)
       qDebug() << "clock_gettime";
-   timeout.tv_nsec += TIMEOUT_NSEC;
+   timeout.tv_sec += TIMEOUT_SEC;
    return timeout;
 }
 
 ///Constructor
-VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_Res(0,0),m_pTimer(0),m_PreviewState(false),m_pRenderer(new VideoRenderer()),
-m_Attached(false)
+VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_Res(0,0),m_pTimer(0),m_PreviewState(false),m_pRenderer(new VideoRenderer())
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    connect( &interface , SIGNAL(deviceEvent()                       ), this, SLOT( deviceEvent()                       ));
@@ -254,13 +282,9 @@ void VideoModel::stopPreview()
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    interface.stopPreview();
-   m_pRenderer->stopShm();
    m_PreviewState = false;
-   if (m_pTimer)
-      m_pTimer->stop();
-   if (m_Attached) {
-      m_Attached = false;
-   }
+//    if (m_pTimer)
+//       m_pTimer->stop();
 }
 
 ///Start video preview
@@ -296,8 +320,10 @@ void VideoModel::timedEvents()
    bool ok = true;
    QByteArray ba;
    m_pRenderer->renderToBitmap(m_Frame,ok);
-   if (ok == true)
+   if (ok == true) {
+      qDebug() << "Emit";
       emit frameUpdated();
+   }
    else {
       qDebug() << "Frame dropped";
       usleep(rand()%100000); //Be sure it can come back in sync
@@ -325,6 +351,7 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
    m_Res.height           = height ;
    m_pRenderer->m_Width   = width  ;
    m_pRenderer->m_Height  = height ;
+   m_pRenderer->m_isRendering = true;
    m_pRenderer->startShm();
    if (!m_pTimer) {
       m_pTimer = new QTimer(this);
@@ -342,6 +369,8 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
 void VideoModel::stoppedDecoding(QString id, QString shmPath)
 {
    Q_UNUSED(shmPath)
+   m_pRenderer->m_isRendering = false;
+   m_pRenderer->stopShm();
    qDebug() << "Video stopped for call" << id;
    emit videoStopped();
    if (m_pTimer)
@@ -351,4 +380,9 @@ void VideoModel::stoppedDecoding(QString id, QString shmPath)
 char* VideoModel::rawData()
 {
    return m_pRenderer->m_pShmArea->m_Data;
+}
+
+bool VideoModel::isRendering()
+{
+   return m_pRenderer->m_isRendering;
 }

@@ -29,8 +29,9 @@ VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(nullptr) {
 
 ///Repaint the widget
 void VideoWidget::update() {
+   kDebug() << "Painting" << this;
    QPainter painter(this);
-   if (m_Image)
+   if (m_Image && VideoModel::getInstance()->isRendering())
       painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
    painter.end();
 }
@@ -50,8 +51,15 @@ void VideoWidget::updateFrame()
    QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
-   if (!m_Image || (m_Image && m_Image->size() != size))
-      m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+   if (m_Image)
+      delete m_Image;
+   m_Image = new QImage((uchar*)VideoModel::getInstance()->getCurrentFrame().data() , size.width(), size.height(), QImage::Format_ARGB32 );
+   //This is the right way to do it, but it does not work
+//    if (!m_Image || (m_Image && m_Image->size() != size))
+//       m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+//    if (!m_Image->loadFromData(VideoModel::getInstance()->getCurrentFrame())) {
+//       qDebug() << "Loading image failed";
+//    }
    repaint();
 }
 

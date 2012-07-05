@@ -44,6 +44,7 @@ public:
    QByteArray getCurrentFrame    ();
    Resolution getActiveResolution();
    char*      rawData            ();
+   bool       isRendering        ();
    
    
    //Setters

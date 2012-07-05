@@ -44,6 +44,10 @@ DlgVideo::DlgVideo(QWidget *parent)
 
    if (devices.size())
       loadDevice(devices[0]->getDeviceId());
+
+   if (VideoModel::getInstance()->isPreviewing()) {
+      m_pPreviewPB->setText(i18n("Stop preview"));
+   }
 }
 
 
