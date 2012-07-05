@@ -19,11 +19,15 @@
 #include "VideoWidget.h"
 #include <KDebug>
 
-VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(NULL) {
+///Constructor
+VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(nullptr) {
    setMinimumSize(200,200);
-   connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(repaint2()));
+   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+   connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
+   connect(VideoModel::getInstance(),SIGNAL(videoStopped()),this,SLOT(stop()));
 }
 
+///Repaint the widget
 void VideoWidget::update() {
    QPainter painter(this);
    if (m_Image)
@@ -31,21 +35,31 @@ void VideoWidget::update() {
    painter.end();
 }
 
+///Called when the widget need repainting
 void VideoWidget::paintEvent(QPaintEvent* event)
 {
    Q_UNUSED(event)
-   if (VideoModel::getInstance()->isPreviewing()) {
-      update();
-   }
+   //if (VideoModel::getInstance()->isPreviewing()) {
+   update();
+   //}
 }
 
-void VideoWidget::repaint2()
+///Called when a new frame is ready
+void VideoWidget::updateFrame()
 {
    QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
-   if (m_Image)
-      delete m_Image;
-   m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+   if (!m_Image || (m_Image && m_Image->size() != size))
+      m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
    repaint();
+}
+
+///Prevent the painter to try to paint an invalid framebuffer
+void VideoWidget::stop()
+{
+   if (m_Image) {
+      delete m_Image;
+      m_Image = nullptr;
+   }
 }

@@ -30,6 +30,8 @@
 //SFLPhone
 #include "video_interface_singleton.h"
 #include "VideoDevice.h"
+#include "Call.h"
+#include "CallModel.h"
 
 //Static member
 VideoModel* VideoModel::m_spInstance = NULL;
@@ -131,12 +133,7 @@ QByteArray VideoRenderer::renderToBitmap(QByteArray& data,bool& ok)
 
    if (data.size() != m_pShmArea->m_BufferSize)
       data.resize(m_pShmArea->m_BufferSize);
-   //data = m_pShmArea->m_Data;
    memcpy(data.data(),m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
-   QByteArray data2(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
-//    QByteArray data3(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
-//    QByteArray data4(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
-//    QByteArray data5(m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
    m_BufferGen = m_pShmArea->m_BufferGen;
    shmUnlock();
    return data;
@@ -332,16 +329,23 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
    if (!m_pTimer) {
       m_pTimer = new QTimer(this);
       connect(m_pTimer,SIGNAL(timeout()),this,SLOT(timedEvents()));
+      m_pTimer->setInterval(42);
    }
-   m_pTimer->setInterval(42);
    m_pTimer->start();
+   if (id != "local") {
+      qDebug() << "Starting video for call" << id;
+      emit videoCallInitiated(id);
+   }
 }
 
 ///A video stopped being rendered
 void VideoModel::stoppedDecoding(QString id, QString shmPath)
 {
-   Q_UNUSED(id)
    Q_UNUSED(shmPath)
+   qDebug() << "Video stopped for call" << id;
+   emit videoStopped();
+   if (m_pTimer)
+      m_pTimer->stop();
 }
 
 char* VideoModel::rawData()

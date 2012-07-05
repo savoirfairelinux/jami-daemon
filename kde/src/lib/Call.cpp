@@ -22,11 +22,12 @@
 #include "Call.h"
 
 //SFLPhone library
-#include "CallModel.h"
 #include "callmanager_interface_singleton.h"
 #include "configurationmanager_interface_singleton.h"
 #include "ContactBackend.h"
 #include "Contact.h"
+#include "Account.h"
+#include "AccountList.h"
 
 
 const call_state Call::actionPerformedStateMap [14][5] =

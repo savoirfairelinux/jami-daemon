@@ -16,27 +16,26 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
-#ifndef VIDEO_WIDGET_H
-#define VIDEO_WIDGET_H
+#include "VideoDock.h"
 
-#include <QtGui/QWidget>
-#include <QtGui/QPainter>
+#include <QtGui/QSpacerItem>
+#include <QtGui/QGridLayout>
 
-#include "../lib/VideoModel.h"
+#include <KLocale>
 
-///VideoWidget: A widget to display video from a framebuffer
-class VideoWidget : public QWidget {
-   Q_OBJECT
-public:
-   VideoWidget(QWidget* parent =0 );
-private:
-   QImage* m_Image;
-protected:
-   virtual void paintEvent(QPaintEvent* event);
-private slots:
-   void update();
-   void updateFrame();
-   void stop();
-};
+#include "VideoWidget.h"
 
-#endif
+///Constructor
+VideoDock::VideoDock(QWidget* parent) : QDockWidget(parent)
+{
+   setWindowTitle(i18n("Video"));
+   QWidget* wdg = new QWidget(this);
+   VideoWidget* vwdg = new VideoWidget(this);
+   auto l = new QGridLayout(wdg);
+   l->addWidget(vwdg,1,1);
+   l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),0,0);
+   l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),0,1);
+   l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),2,0);
+   l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),0,2);
+   setWidget(wdg);
+}

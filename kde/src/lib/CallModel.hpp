@@ -108,7 +108,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
    
       QStringList confList = callManager.getConferenceList();
       foreach (QString confId, confList) {
-          CallModelBase::addConferenceS(addConference(confId));
+         CallModelBase::addConferenceS(addConference(confId));
       }
    }
    m_sCallInit = true;

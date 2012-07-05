@@ -53,6 +53,7 @@ SET(
    widgets/TranslucentButtons.cpp
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
+   widgets/VideoDock.cpp
    widgets/VideoWidget.cpp
    widgets/AcceleratedVideoWidget.cpp
    Codec.cpp

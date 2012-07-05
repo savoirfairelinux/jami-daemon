@@ -38,6 +38,7 @@ class KAction;
 class Call;
 class ContactDock;
 class BookmarkDock;
+class VideoDock;
 class SFLPhoneTray;
 class SFLPhoneView;
 class HistoryDock;
@@ -106,6 +107,9 @@ private:
    QDockWidget*   m_pCentralDW       ;
    HistoryDock*   m_pHistoryDW       ;
    BookmarkDock*  m_pBookmarkDW      ;
+   #ifdef ENABLE_VIDEO
+   VideoDock*     m_pVideoDW         ;
+   #endif
 
    static SFLPhone* m_sApp;
    static TreeWidgetCallModel* m_pModel;
@@ -144,12 +148,12 @@ private slots:
    void on_m_pView_actionTextsChangeAsked        ( const QString* actionTexts    );
    void on_m_pView_transferCheckStateChangeAsked ( bool  transferCheckState      );
    void on_m_pView_recordCheckStateChangeAsked   ( bool  recordCheckState        );
-   void on_m_pView_incomingCall                  ( const Call * call             );
+   void on_m_pView_incomingCall                  ( const Call*    call           );
    void showShortCutEditor                       (                               );
-
-   void quitButton();
-
+   void quitButton                               (                               );
+   #ifdef ENABLE_VIDEO
+   void displayVideoDock                         ( const QString& callId         );
+   #endif
 };
 
 #endif
-

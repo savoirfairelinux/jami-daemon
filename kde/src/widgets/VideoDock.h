@@ -16,27 +16,28 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
-#ifndef VIDEO_WIDGET_H
-#define VIDEO_WIDGET_H
+#ifndef VIDEO_DOCK_H
+#define VIDEO_DOCK_H
 
-#include <QtGui/QWidget>
-#include <QtGui/QPainter>
+#include <QtGui/QDockWidget>
 
-#include "../lib/VideoModel.h"
+//Qt
+class QSpacerItem;
 
-///VideoWidget: A widget to display video from a framebuffer
-class VideoWidget : public QWidget {
+//SFLPhone
+class VideoWidget;
+
+///VideoDock: A dock hosting a VideoWidget or AcceleratedVideoWidget
+class VideoDock : public QDockWidget {
    Q_OBJECT
 public:
-   VideoWidget(QWidget* parent =0 );
+   VideoDock(QWidget* parent =0 );
+   
 private:
-   QImage* m_Image;
-protected:
-   virtual void paintEvent(QPaintEvent* event);
+   VideoWidget* m_pVideoWidet;
+   
 private slots:
-   void update();
-   void updateFrame();
-   void stop();
+   
 };
 
 #endif

@@ -29,6 +29,7 @@ class QTimer;
 //SFLPhone
 #include "VideoDevice.h"
 class VideoRenderer;
+class Call;
 struct SHMHeader;
 
 ///VideoModel: Video event dispatcher
@@ -81,6 +82,10 @@ private slots:
 signals:
    ///Emitted when a new frame is ready
    void frameUpdated();
+   ///Emmitted when the video is stopped, before the framebuffer become invalid
+   void videoStopped();
+   ///Emmitted when a call make video available
+   void videoCallInitiated(QString callId);
 };
 
 #endif

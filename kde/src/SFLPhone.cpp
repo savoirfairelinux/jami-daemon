@@ -54,8 +54,10 @@
 #include "widgets/ContactDock.h"
 #include "widgets/HistoryDock.h"
 #include "widgets/BookmarkDock.h"
+#include "widgets/VideoDock.h"
 #include "klib/ConfigurationSkeleton.h"
 #include "SFLPhoneAccessibility.h"
+#include "lib/VideoModel.h"
 
 SFLPhone* SFLPhone::m_sApp              = NULL;
 TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
@@ -63,6 +65,9 @@ TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
 ///Constructor
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent), m_pInitialized(false), m_pView(new SFLPhoneView(this))
+#ifdef ENABLE_VIDEO
+      ,m_pVideoDW(nullptr)
+#endif
 {
     setupActions();
     m_sApp = this;
@@ -192,6 +197,10 @@ bool SFLPhone::initialize()
    connect(action_showContactDock, SIGNAL(toggled(bool)),m_pContactCD, SLOT(setVisible(bool)));
    connect(action_showHistoryDock, SIGNAL(toggled(bool)),m_pHistoryDW, SLOT(setVisible(bool)));
    connect(action_showBookmarkDock,SIGNAL(toggled(bool)),m_pBookmarkDW,SLOT(setVisible(bool)));
+
+   #ifdef ENABLE_VIDEO
+   connect(VideoModel::getInstance(),SIGNAL(videoCallInitiated(QString)),this,SLOT(displayVideoDock(QString)));
+   #endif
 
    statusBar()->addWidget(m_pStatusBarWidget);
 
@@ -348,6 +357,9 @@ TreeWidgetCallModel* SFLPhone::model()
       m_pModel = new TreeWidgetCallModel();
       m_pModel->initCall();
       Call::setContactBackend(AkonadiBackend::getInstance());
+      #ifdef ENABLE_VIDEO
+      VideoModel::getInstance();
+      #endif
     }
    return m_pModel;
 }
@@ -501,3 +513,21 @@ void SFLPhone::on_m_pView_incomingCall(const Call* call)
    }
    KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()));
 }
+
+#ifdef ENABLE_VIDEO
+///Display the video dock
+void SFLPhone::displayVideoDock(const QString& callId)
+{
+   Q_UNUSED(callId)
+   if (!m_pVideoDW) {
+      m_pVideoDW = new VideoDock(this);
+//       QWidget* wdg = new QWidget(m_pVideoDW);
+//       VideoWidget* vwdg = new VideoWidget(m_pVideoDW);
+//       QVBoxLayout* l = new QVBoxLayout(wdg);
+//       l->addWidget(vwdg);
+//       l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+//       m_pVideoDW->setWidget(wdg);
+   }
+   m_pVideoDW->show();
+}
+#endif
