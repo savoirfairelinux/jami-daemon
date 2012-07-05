@@ -315,11 +315,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-#ifdef SFL_VIDEO
     call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-#else
-    call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs());
-#endif
 
     sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
     if (!ac) {
@@ -752,11 +748,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
 
     // Building the local SDP offer
     call->getLocalSDP()->setLocalIP(localAddress);
-#ifdef SFL_VIDEO
     call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-#else
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
-#endif
 
     if (!SIPStartCall(call)) {
         delete call;
@@ -818,11 +810,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     call->initRecFilename(toUrl);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
-#ifdef SFL_VIDEO
     call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-#else
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
-#endif
 
     if (!SIPStartCall(call)) {
         delete call;
@@ -1381,11 +1369,7 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
     if (!account)
         return;
 
-#ifdef SFL_VIDEO
     call->getLocalSDP()->receiveOffer(offer, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-#else
-    call->getLocalSDP()->receiveOffer(offer, account->getActiveAudioCodecs());
-#endif
     call->getLocalSDP()->startNegotiation();
 
     pjsip_inv_set_sdp_answer(call->inv, call->getLocalSDP()->getLocalSdpSession());
@@ -1408,11 +1392,7 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     setCallMediaLocal(call, localAddress);
 
     call->getLocalSDP()->setLocalIP(addrSdp);
-#ifdef SFL_VIDEO
     call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-#else
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs());
-#endif
 
     *p_offer = call->getLocalSDP()->getLocalSdpSession();
 }
