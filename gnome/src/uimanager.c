@@ -102,10 +102,6 @@ static GtkWidget * imToolbar_;
 static GtkWidget * editable_num_;
 static GtkWidget * edit_dialog_;
 
-enum {
-    CALLTREE_CALLS, CALLTREE_HISTORY, CALLTREE_CONTACTS
-};
-
 static void
 remove_from_toolbar(GtkWidget *widget)
 {
@@ -217,18 +213,13 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
                     add_to_toolbar(toolbar_, hangUpWidget_, pos++);
                     main_window_hide_playback_scale();
-                }
-                else if (calltab_has_name(active_calltree_tab, HISTORY)) {
+                } else if (calltab_has_name(active_calltree_tab, HISTORY)) {
                     main_window_show_playback_scale();
-                    if (is_non_empty(selectedCall->_recordfile)) {
+                    if (is_non_empty(selectedCall->_recordfile))
                         main_window_set_playback_scale_sensitive();
-                    }
-                    else {
+                    else
                         main_window_set_playback_scale_unsensitive();
-                    }
-
-                }
-                else {
+                } else {
                     main_window_hide_playback_scale();
                 }
                 break;
@@ -331,14 +322,11 @@ update_toolbar_for_conference(conference_obj_t * selectedConf, gboolean instant_
                 main_window_hide_playback_scale();
             } else if (calltab_has_name(active_calltree_tab, HISTORY)) {
                 main_window_show_playback_scale();
-                if (is_non_empty(selectedConf->_recordfile)) {
+                if (is_non_empty(selectedConf->_recordfile))
                     main_window_set_playback_scale_sensitive();
-                }
-                else {
+                else
                     main_window_set_playback_scale_unsensitive();
-                }
-            }
-            else {
+            } else {
                 main_window_hide_playback_scale();
             }
             g_signal_handler_unblock(recordWidget_, recordButtonConnId_);
@@ -944,7 +932,7 @@ call_mailbox_cb(void)
 {
     account_t *current = account_list_get_current();
 
-    if (current == NULL) // Should not happens
+    if (current == NULL) // Should not happen
         return;
 
     const gchar * const to = g_hash_table_lookup(current->properties, CONFIG_ACCOUNT_MAILBOX);
@@ -962,13 +950,25 @@ call_mailbox_cb(void)
 }
 
 static void
+reset_scrollwindow_position(calltab_t *tab)
+{
+    GList *children = gtk_container_get_children(GTK_CONTAINER(tab->tree));
+    /* Calltree scrolled window is first element in list */
+    GtkScrolledWindow *scrolled_window = GTK_SCROLLED_WINDOW(children->data);
+    g_list_free(children);
+    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(scrolled_window);
+    gtk_adjustment_set_value(adjustment, 0.0);
+}
+
+static void
 toggle_history_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
     if (gtk_toggle_action_get_active(action)) {
+        /* Ensure that latest call is visible in history without scrolling */
+        reset_scrollwindow_position(history_tab);
         calltree_display(history_tab);
         main_window_show_playback_scale();
-    }
-    else {
+    } else {
         calltree_display(current_calls_tab);
         main_window_hide_playback_scale();
     }
