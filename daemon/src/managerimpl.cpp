@@ -1819,7 +1819,7 @@ std::string ManagerImpl::join_string(const std::vector<std::string> &v)
     return os.str();
 }
 
-std::string ManagerImpl::getCurrentCodecName(const std::string& id)
+std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 {
     std::string accountid = getAccountFromCall(id);
     VoIPLink* link = getAccountLink(accountid);
@@ -1830,20 +1830,20 @@ std::string ManagerImpl::getCurrentCodecName(const std::string& id)
         Call::CallState state = call->getState();
 
         if (state == Call::ACTIVE or state == Call::CONFERENCING)
-            codecName = link->getCurrentCodecName(call);
+            codecName = link->getCurrentAudioCodecName(call);
     }
 
     return codecName;
 }
 
-#ifdef SFL_VIDEO
-std::string ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
+std::string
+ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
 {
     std::string accountID = getAccountFromCall(ID);
     VoIPLink* link = getAccountLink(accountID);
-    return link->getCurrentVideoCodecName(ID);
+    Call *call(getCallFromCallID(ID));
+    return link->getCurrentVideoCodecName(call);
 }
-#endif
 
 /**
  * Set input audio plugin

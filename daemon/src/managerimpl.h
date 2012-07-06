@@ -504,10 +504,8 @@ class ManagerImpl {
          * @param call id
          * @return std::string The codec name
          */
-        std::string getCurrentCodecName(const std::string& id);
-#ifdef SFL_VIDEO
+        std::string getCurrentAudioCodecName(const std::string& id);
         std::string getCurrentVideoCodecName(const std::string& id);
-#endif
 
         /**
          * Set input audio plugin

@@ -270,7 +270,7 @@ CallManager::getIsRecording(const std::string& callID)
 
 std::string CallManager::getCurrentAudioCodecName(const std::string& callID)
 {
-    return Manager::instance().getCurrentCodecName(callID).c_str();
+    return Manager::instance().getCurrentAudioCodecName(callID);
 }
 
 std::map<std::string, std::string>

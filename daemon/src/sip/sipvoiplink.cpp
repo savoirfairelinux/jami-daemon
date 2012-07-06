@@ -1094,22 +1094,14 @@ SIPVoIPLink::refuse(const std::string& id)
     removeCall(id);
 }
 
-#ifdef SFL_VIDEO
 std::string
-SIPVoIPLink::getCurrentVideoCodecName(const std::string& id)
+SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
 {
-    SIPCall *call = getSIPCall(id);
-    if (call) {
-        Call::CallState state = call->getState();
-        if (state == Call::ACTIVE or state == Call::CONFERENCING)
-            return call->getLocalSDP()->getSessionVideoCodec();
-    }
-    return "";
+    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getSessionVideoCodec();
 }
-#endif
 
 std::string
-SIPVoIPLink::getCurrentCodecName(Call *call) const
+SIPVoIPLink::getCurrentAudioCodecName(Call *call) const
 {
     return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
 }

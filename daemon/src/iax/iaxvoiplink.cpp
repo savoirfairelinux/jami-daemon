@@ -412,16 +412,15 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
     }
 }
 
-#ifdef SFL_VIDEO
 std::string
-IAXVoIPLink::getCurrentVideoCodecName(const std::string& /*id*/)
+IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
 {
+    // FIXME: Video not supported for IAX yet
     return "";
 }
-#endif
 
 std::string
-IAXVoIPLink::getCurrentCodecName(Call *c) const
+IAXVoIPLink::getCurrentAudioCodecName(Call *c) const
 {
     IAXCall *call = dynamic_cast<IAXCall*>(c);
     sfl::Codec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
