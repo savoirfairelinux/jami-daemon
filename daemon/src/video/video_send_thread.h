@@ -79,6 +79,7 @@ class VideoSendThread : public ost::Thread {
         std::string sdp_;
         AVIOInterruptCB interruptCb_;
         bool sending_;
+        ucommon::atomic::counter forceKeyFrame_;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
         virtual ~VideoSendThread();
@@ -86,6 +87,7 @@ class VideoSendThread : public ost::Thread {
         void waitForSDP();
         virtual void run();
         std::string getSDP() const { return sdp_; }
+        void forceKeyFrame();
 };
 }
 
