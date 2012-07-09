@@ -204,14 +204,14 @@ private:
     *  Map of the states to go to when the action action is 
     *  performed on a call in state orig_state.
    **/
-   static const call_state actionPerformedStateMap [14][5];
+   static const call_state actionPerformedStateMap [13][5];
    
    /**
     *  actionPerformedFunctionMap[orig_state][action]
     *  Map of the functions to call when the action action is 
     *  performed on a call in state orig_state.
    **/
-   static const function actionPerformedFunctionMap [14][5];
+   static const function actionPerformedFunctionMap [13][5];
    
    /**
     *  stateChangedStateMap[orig_state][daemon_new_state]
@@ -219,7 +219,7 @@ private:
     *  callStateChanged with arg daemon_new_state
     *  on a call in state orig_state.
    **/
-   static const call_state stateChangedStateMap [14][6];
+   static const call_state stateChangedStateMap [13][6];
    
    /**
     *  stateChangedFunctionMap[orig_state][daemon_new_state]
@@ -227,7 +227,7 @@ private:
     *  callStateChanged with arg daemon_new_state
     *  on a call in state orig_state.
    **/
-   static const function stateChangedFunctionMap [14][6];
+   static const function stateChangedFunctionMap [13][6];
    
    static const char * historyIcons[3];
    

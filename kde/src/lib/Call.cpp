@@ -30,7 +30,7 @@
 #include "AccountList.h"
 
 
-const call_state Call::actionPerformedStateMap [14][5] =
+const call_state Call::actionPerformedStateMap [13][5] =
 {
 //                      ACCEPT                  REFUSE                  TRANSFER                   HOLD                           RECORD            /**/
 /*INCOMING     */  {CALL_STATE_INCOMING   , CALL_STATE_INCOMING    , CALL_STATE_ERROR        , CALL_STATE_INCOMING     ,  CALL_STATE_INCOMING     },/**/
@@ -49,7 +49,7 @@ const call_state Call::actionPerformedStateMap [14][5] =
 };//                                                                                                                                                    
 
 
-const function Call::actionPerformedFunctionMap[14][5] =
+const function Call::actionPerformedFunctionMap[13][5] =
 { 
 //                      ACCEPT               REFUSE            TRANSFER                 HOLD                  RECORD             /**/
 /*INCOMING       */  {&Call::accept     , &Call::refuse   , &Call::acceptTransf   , &Call::acceptHold  ,  &Call::setRecord     },/**/
@@ -68,7 +68,7 @@ const function Call::actionPerformedFunctionMap[14][5] =
 };//                                                                                                                                 
 
 
-const call_state Call::stateChangedStateMap [14][6] =
+const call_state Call::stateChangedStateMap [13][6] =
 {
 //                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE             /**/
 /*INCOMING     */ {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
@@ -86,7 +86,7 @@ const call_state Call::stateChangedStateMap [14][6] =
 /*CONF_HOLD    */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
 };//                                                                                                                                                           
 
-const function Call::stateChangedFunctionMap[14][6] =
+const function Call::stateChangedFunctionMap[13][6] =
 { 
 //                      RINGING                  CURRENT             BUSY              HOLD                    HUNGUP           FAILURE            /**/
 /*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::startWeird     , &Call::startWeird   ,  &Call::startStop    , &Call::start   },/**/
