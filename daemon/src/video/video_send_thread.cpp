@@ -297,11 +297,13 @@ void VideoSendThread::run()
     int frameNumber = 0;
     while (sending_) {
         AVPacket inpacket;
-        int ret2 = av_read_frame(inputCtx_, &inpacket);
-        if (ret2 == AVERROR(EAGAIN))
-           continue;
-        else if (ret2 < 0)
-            break;
+        {
+            int ret = av_read_frame(inputCtx_, &inpacket);
+            if (ret == AVERROR(EAGAIN))
+                continue;
+            else
+                EXIT_IF_FAIL(ret >= 0, "Could not read frame");
+        }
 
         /* Guarantees that we free the packet allocated by av_read_frame */
         PacketHandle inpacket_handle(inpacket);
@@ -361,8 +363,10 @@ void VideoSendThread::run()
         opkt.stream_index = stream_->index;
 
         // write the compressed frame in the media file
-        int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-        EXIT_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
+        {
+            int ret = av_interleaved_write_frame(outputCtx_, &opkt);
+            EXIT_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
+        }
         yield();
     }
 }
