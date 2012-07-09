@@ -326,7 +326,11 @@ void VideoSendThread::run()
         // Set presentation timestamp on our scaled frame before encoding it
         scaledPicture_->pts = frameNumber++;
 
+#ifdef CCPP_PREFIX
+        if ((int) forceKeyFrame_ > 0) {
+#else
         if (*forceKeyFrame_ > 0) {
+#endif
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
             scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
 #else

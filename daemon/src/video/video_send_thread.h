@@ -79,7 +79,11 @@ class VideoSendThread : public ost::Thread {
         std::string sdp_;
         AVIOInterruptCB interruptCb_;
         bool sending_;
+#ifdef CCPP_PREFIX
+        ost::AtomicCounter forceKeyFrame_;
+#else
         ucommon::atomic::counter forceKeyFrame_;
+#endif
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
         virtual ~VideoSendThread();
