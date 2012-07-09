@@ -51,6 +51,7 @@ class VideoRtpSession {
         void updateDestination(const std::string &destination,
                                unsigned int port);
         void updateSDP(const Sdp &sdp);
+        void forceKeyFrame();
 
     private:
         std::tr1::shared_ptr<VideoSendThread> sendThread_;

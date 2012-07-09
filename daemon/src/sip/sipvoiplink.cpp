@@ -1538,6 +1538,46 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 void outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/)
 {}
 
+void handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
+{
+    /*
+     * Incoming INFO request for media control.
+     */
+    const pj_str_t STR_APPLICATION = { (char *) "application", 11};
+    const pj_str_t STR_MEDIA_CONTROL_XML = { (char *) "media_control+xml", 17};
+    pjsip_rx_data *rdata = event->body.tsx_state.src.rdata;
+    pjsip_msg_body *body = rdata->msg_info.msg->body;
+
+    if (body and body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0 and
+        pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
+        pjsip_tx_data *tdata;
+        pj_str_t control_st;
+        pj_status_t status;
+
+        /* Apply and answer the INFO request */
+        pj_strset(&control_st, (char *) body->data, body->len);
+        const pj_str_t PICT_FAST_UPDATE = {(char *) "picture_fast_update", 19};
+
+        if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
+#ifdef SFL_VIDEO
+            DEBUG("handling picture fast update");
+            SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
+            if (call)
+                call->getVideoRtp().forceKeyFrame();
+            status = pjsip_endpt_create_response(tsx->endpt, rdata,
+                    200, NULL, &tdata);
+            if (status == PJ_SUCCESS)
+                status = pjsip_tsx_send_msg(tsx, tdata);
+#endif
+        } else {
+            status = pjsip_endpt_create_response(tsx->endpt, rdata,
+                    400, NULL, &tdata);
+            if (status == PJ_SUCCESS)
+                status = pjsip_tsx_send_msg(tsx, tdata);
+        }
+    }
+}
+
 void transaction_state_changed_cb(pjsip_inv_session * inv,
                                   pjsip_transaction *tsx, pjsip_event *event)
 {
@@ -1551,16 +1591,22 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         return;
     }
 
-    pjsip_tx_data* t_data;
+    if (tsx->role == PJSIP_ROLE_UAS and tsx->state == PJSIP_TSX_STATE_TRYING) {
+        handle_media_control(inv, tsx, event);
+        return;
+    }
 
     if (event->body.rx_msg.rdata) {
+        pjsip_tx_data* t_data;
+
         pjsip_rx_data *r_data = event->body.rx_msg.rdata;
 
         if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
-            std::string request =  pjsip_rx_data_get_info(r_data);
+            std::string request(pjsip_rx_data_get_info(r_data));
             DEBUG("%s", request.c_str());
 
-            if (request.find("NOTIFY") == std::string::npos && request.find("INFO") != std::string::npos) {
+            if (request.find("NOTIFY") == std::string::npos and
+                request.find("INFO") != std::string::npos) {
                 pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
                 pjsip_dlg_send_response(inv->dlg, tsx, t_data);
                 return;
@@ -1589,6 +1635,7 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         return;
 
     // Respond with a 200/OK
+    pjsip_tx_data* t_data;
     pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
     pjsip_dlg_send_response(inv->dlg, tsx, t_data);
 

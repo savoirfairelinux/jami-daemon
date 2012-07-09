@@ -76,10 +76,12 @@ void VideoSendThread::waitForSDP()
 
 void VideoSendThread::forcePresetX264()
 {
-    if (av_opt_set(encoderCtx_->priv_data, "preset", "ultrafast", 0))
-        DEBUG("Failed to set x264 preset 'veryfast'");
-    if (av_opt_set(encoderCtx_->priv_data, "tune", "zerolatency", 0))
-        DEBUG("Failed to set x264 tune 'zerolatency'");
+    const char *speedPreset = "ultrafast";
+    if (av_opt_set(encoderCtx_->priv_data, "preset", speedPreset, 0))
+        WARN("Failed to set x264 preset '%s'", speedPreset);
+    const char *tune = "zerolatency";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        WARN("Failed to set x264 tune '%s'", tune);
 }
 
 void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
@@ -279,7 +281,7 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
     inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    sending_(false)
+    sending_(false), forceKeyFrame_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -322,6 +324,14 @@ void VideoSendThread::run()
         // Set presentation timestamp on our scaled frame before encoding it
         scaledPicture_->pts = frameNumber++;
 
+        if (*forceKeyFrame_ > 0) {
+#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
+            scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
+#else
+            scaledPicture_->pict_type = FF_I_TYPE;
+#endif
+            --forceKeyFrame_;
+        }
         const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
                                                      outbufSize_, scaledPicture_);
 
@@ -408,4 +418,10 @@ VideoSendThread::~VideoSendThread()
         avformat_close_input(&inputCtx_);
 #endif
 }
+
+void VideoSendThread::forceKeyFrame()
+{
+    ++forceKeyFrame_;
+}
+
 } // end namespace sfl_video

@@ -155,4 +155,9 @@ void VideoRtpSession::stop()
     sendThread_.reset();
 }
 
+void VideoRtpSession::forceKeyFrame()
+{
+    sendThread_->forceKeyFrame();
+}
+
 } // end namespace sfl_video
