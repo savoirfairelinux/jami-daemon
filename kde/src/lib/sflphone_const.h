@@ -222,8 +222,6 @@
 #define CALL_STATE_CHANGE_BUSY            "BUSY"
 #define CALL_STATE_CHANGE_FAILURE         "FAILURE"
 #define CALL_STATE_CHANGE_UNHOLD_CURRENT  "UNHOLD_CURRENT"
-#define CALL_STATE_CHANGE_UNHOLD_RECORD   "UNHOLD_RECORD"
-#define CALL_STATE_CHANGE_RECORD          "RECORD"
 #define CALL_STATE_CHANGE_UNKNOWN         "UNKNOWN"
 
 #define CONF_STATE_CHANGE_HOLD            "HOLD"
@@ -235,7 +233,6 @@
 #define DAEMON_CALL_STATE_INIT_INCOMING   "INCOMING"
 #define DAEMON_CALL_STATE_INIT_RINGING    "RINGING"
 #define DAEMON_CALL_STATE_INIT_INACTIVE   "INACTIVE"
-#define DAEMON_CALL_STATE_INIT_RECORD     "RECORD"
 
 #define DAEMON_CALL_TYPE_INCOMING         "0"
 #define DAEMON_CALL_TYPE_OUTGOING         "1"
@@ -289,7 +286,6 @@ typedef enum
    CALL_STATE_ERROR           = 10,/** This state should never be reached */
    CALL_STATE_CONFERENCE      = 11,/** This call is the current conference*/
    CALL_STATE_CONFERENCE_HOLD = 12,/** This call is a conference on hold*/
-   CALL_STATE_RECORD          = 13,/** When the call start as recorging instead of current*/
 } call_state;
 
 static const QString empty("");

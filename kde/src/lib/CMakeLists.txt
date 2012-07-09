@@ -35,6 +35,7 @@ set( qtsflphone_LIB_SRCS
   ContactBackend.cpp
   VideoCodec.cpp
   VideoModel.cpp
+  VideoRenderer.cpp
   VideoDevice.cpp
   CredentialModel.cpp
   AudioCodecModel.cpp
@@ -128,6 +129,7 @@ set( qtsflphone_LIB_HDRS
   VideoCodec.h
   VideoModel.h
   VideoDevice.h
+  VideoRenderer.h
   CredentialModel.h
   AudioCodecModel.h
   configurationmanager_interface_singleton.h

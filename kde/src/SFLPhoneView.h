@@ -80,7 +80,7 @@ public:
    QErrorMessage * getErrorWindow();
 
 
-   bool selectCallPhoneNumber(Call* call,Contact* contact);
+   bool selectCallPhoneNumber(Call** call,Contact* contact);
 
 private slots:
    /**

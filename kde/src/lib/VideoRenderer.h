@@ -16,70 +16,78 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
-#ifndef VIDEO_MODEL_H
-#define VIDEO_MODEL_H
+#ifndef VIDEO_RENDERER_H
+#define VIDEO_RENDERER_H
+
 //Base
-#include "typedefs.h"
 #include <QtCore/QObject>
+#include "typedefs.h"
 
 //Qt
-#include <QtCore/QHash>
+class QTimer;
 
 //SFLPhone
 #include "VideoDevice.h"
-class VideoRenderer;
-class Call;
 struct SHMHeader;
 
-///VideoModel: Video event dispatcher
-class LIB_EXPORT VideoModel : public QObject {
+///Manage shared memory and convert it to QByteArray
+class LIB_EXPORT VideoRenderer : public QObject {
    Q_OBJECT
-public:
-   //Singleton
-   static VideoModel* getInstance();
-
-   //Getters
-   bool       isPreviewing       ();
-//    Resolution getActiveResolution();
-   VideoRenderer* getRenderer() {return m_pRenderer;} //TODO remove
    
-   //Setters
-   void       setBufferSize(uint size);
+   public:
+      //Constructor
+      VideoRenderer (QString shmPath,Resolution res);
+      ~VideoRenderer();
 
-private:
-   //Constructor
-   VideoModel();
+      //Mutators
+      bool resizeShm();
+      void stopShm  ();
+      bool startShm ();
 
-   //Static attributes
-   static VideoModel* m_spInstance;
-   
-   //Attributes
-   bool           m_Attached    ;
-   bool           m_PreviewState;
-   uint           m_BufferSize  ;
-   uint           m_ShmKey      ;
-   uint           m_SemKey      ;
-   int            m_SetSetId    ;
-   void*          m_pBuffer     ;
-   VideoRenderer* m_pRenderer   ;
-   QHash<QString,VideoRenderer*> m_lRenderers;
+      //Getters
+      QByteArray  renderToBitmap(QByteArray& data, bool& ok);
+      const char* rawData            ();
+      bool        isRendering        ();
+      QByteArray  getCurrentFrame    ();
+      Resolution  getActiveResolution();
 
-public slots:
-   void stopPreview ();
-   void startPreview();
+      //Setters
+      void setResolution(QSize   size);
+      void setShmPath   (QString path);
 
-private slots:
-   void startedDecoding(QString id, QString shmPath, int width, int height);
-   void stoppedDecoding(QString id, QString shmPath);
-   void deviceEvent();
+   private:
+      //Attributes
+      uint       m_Width      ;
+      uint       m_Height     ;
+      QString    m_ShmPath    ;
+      int        fd           ;
+      SHMHeader* m_pShmArea   ;
+      signed int m_ShmAreaLen ;
+      uint       m_BufferGen  ;
+      bool       m_isRendering;
+      QTimer*    m_pTimer     ;
+      QByteArray m_Frame      ;
+      Resolution m_Res        ;
 
-signals:
-   ///Emitted when a new frame is ready
-   void frameUpdated();
-   ///Emmitted when the video is stopped, before the framebuffer become invalid
-   void videoStopped();
-   ///Emmitted when a call make video available
-   void videoCallInitiated(QString callId);
+      //Constants
+      static const int TIMEOUT_SEC = 1; // 1 second
+
+      //Helpers
+      timespec createTimeout();
+      bool     shmLock      ();
+      void     shmUnlock    ();
+
+   private slots:
+      void timedEvents();
+
+   public slots:
+      void startRendering();
+      void stopRendering ();
+
+   signals:
+      ///Emitted when a new frame is ready
+      void frameUpdated();
+
 };
 
 #endif

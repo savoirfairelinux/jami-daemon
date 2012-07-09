@@ -17,6 +17,7 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 #include "VideoWidget.h"
+#include "../lib/VideoRenderer.h"
 #include <KDebug>
 
 ///Constructor
@@ -31,7 +32,7 @@ VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(nullptr) {
 void VideoWidget::update() {
    kDebug() << "Painting" << this;
    QPainter painter(this);
-   if (m_Image && VideoModel::getInstance()->isRendering())
+   if (m_Image && VideoModel::getInstance()->getRenderer()->isRendering())
       painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
    painter.end();
 }
@@ -48,13 +49,13 @@ void VideoWidget::paintEvent(QPaintEvent* event)
 ///Called when a new frame is ready
 void VideoWidget::updateFrame()
 {
-   QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
+   QSize size(VideoModel::getInstance()->getRenderer()->getActiveResolution().width, VideoModel::getInstance()->getRenderer()->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
    if (m_Image)
       delete m_Image;
    //if (!m_Image && VideoModel::getInstance()->isRendering())
-      m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+      m_Image = new QImage((uchar*)VideoModel::getInstance()->getRenderer()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
    //This is the right way to do it, but it does not work
 //    if (!m_Image || (m_Image && m_Image->size() != size))
 //       m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );

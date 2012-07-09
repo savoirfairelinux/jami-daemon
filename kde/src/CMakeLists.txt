@@ -55,7 +55,7 @@ SET(
    widgets/CategorizedTreeWidget.cpp
    widgets/VideoDock.cpp
    widgets/VideoWidget.cpp
-   widgets/AcceleratedVideoWidget.cpp
+#    widgets/AcceleratedVideoWidget.cpp
    Codec.cpp
    CallView.cpp
 )

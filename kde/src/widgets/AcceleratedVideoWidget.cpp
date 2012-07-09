@@ -21,6 +21,7 @@
 #include <QPixmap>
 #include <KDebug>
 #include "../lib/VideoModel.h"
+#include "../lib/VideoRenderer.h"
 
 
 
@@ -317,8 +318,8 @@ Cube *CubeBuilder::newCube(const QVector3D &loc) const
 void AcceleratedVideoWidget::newFrameEvent()
 {
    qDebug() << "New frame event";
-   QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
-   m_Image = QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+   QSize size(VideoModel::getInstance()->getRenderer()->getActiveResolution().width, VideoModel::getInstance()->getRenderer()->getActiveResolution().height);
+   m_Image = QImage((uchar*)VideoModel::getInstance()->getRenderer()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
    paintGL();
 }
 
@@ -374,7 +375,7 @@ static GLfloat colorArray[][4] = {
 
  void AcceleratedVideoWidget::paintGL()
  {
-   QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
+   QSize size(VideoModel::getInstance()->getRenderer()->getActiveResolution().width, VideoModel::getInstance()->getRenderer()->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
    

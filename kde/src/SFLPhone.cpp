@@ -521,12 +521,6 @@ void SFLPhone::displayVideoDock(const QString& callId)
    Q_UNUSED(callId)
    if (!m_pVideoDW) {
       m_pVideoDW = new VideoDock(this);
-//       QWidget* wdg = new QWidget(m_pVideoDW);
-//       VideoWidget* vwdg = new VideoWidget(m_pVideoDW);
-//       QVBoxLayout* l = new QVBoxLayout(wdg);
-//       l->addWidget(vwdg);
-//       l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-//       m_pVideoDW->setWidget(wdg);
    }
    m_pVideoDW->show();
 }

@@ -318,7 +318,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
       Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
       if (contact) {
          Call* call2 = NULL;
-         if (!SFLPhone::app()->view()->selectCallPhoneNumber(call2,contact))
+         if (!SFLPhone::app()->view()->selectCallPhoneNumber(&call2,contact))
             return false;
          if (!parent) {
             //Dropped on free space
@@ -331,6 +331,14 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
          }
          else {
             //Dropped on call
+//             if (!call2) {
+//                call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName());
+//             }
+//             QByteArray encodedPhoneNumber = data->data( MIME_PHONENUMBER );
+//             if (!encodedPhoneNumber.isEmpty()) {
+//                call2->setCallNumber(encodedPhoneNumber);
+//             }
+
             call2->actionPerformed(CALL_ACTION_ACCEPT);
             int state = SFLPhone::model()->getCall(parent)->getState();
             if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {

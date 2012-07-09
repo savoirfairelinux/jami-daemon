@@ -19,248 +19,26 @@
 #include "VideoModel.h"
 
 //Posix
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <semaphore.h>
+// #include <sys/ipc.h>
+// #include <sys/sem.h>
+// #include <sys/shm.h>
+// #include <fcntl.h>
+// #include <unistd.h>
+// #include <sys/mman.h>
+// #include <semaphore.h>
 
 //SFLPhone
 #include "video_interface_singleton.h"
 #include "VideoDevice.h"
 #include "Call.h"
 #include "CallModel.h"
+#include "VideoRenderer.h"
 
 //Static member
 VideoModel* VideoModel::m_spInstance = NULL;
 
-///Shared memory object
-struct SHMHeader {
-    sem_t notification;
-    sem_t mutex;
-
-    unsigned m_BufferGen;
-    int m_BufferSize;
-
-    char m_Data[0];
-};
-
-
-///Manage shared memory and convert it to QByteArray
-class VideoRenderer {
-   //This class is private there is no point to make accessors
-   friend class VideoModel;
-   
-   private:
-      //Attributes
-      uint       m_Width      ;
-      uint       m_Height     ;
-      QString    m_ShmPath    ;
-      int        fd           ;
-      SHMHeader* m_pShmArea   ;
-      signed int m_ShmAreaLen ;
-      uint       m_BufferGen  ;
-      bool       m_isRendering;
-
-      //Constants
-      static const int TIMEOUT_SEC = 1; // 1 second
-
-      //Helpers
-      timespec createTimeout();
-      bool     shmLock      ();
-      void     shmUnlock    ();
-
-
-   public:
-      //Constructor
-      VideoRenderer ();
-      ~VideoRenderer();
-
-      //Mutators
-      bool resizeShm();
-      void stopShm  ();
-      bool startShm ();
-
-      //Getters
-      QByteArray renderToBitmap(QByteArray& data, bool& ok);
-};
-
 ///Constructor
-VideoRenderer::VideoRenderer():
-   m_Width(0), m_Height(0), m_ShmPath(QString()), fd(-1),
-   m_pShmArea((SHMHeader*)MAP_FAILED), m_ShmAreaLen(0), m_BufferGen(0),
-   m_isRendering(false)
-{
-   
-}
-
-///Destructor
-VideoRenderer::~VideoRenderer()
-{
-   stopShm();
-   delete m_pShmArea;
-}
-
-///Get the data from shared memory and transform it into a QByteArray
-QByteArray VideoRenderer::renderToBitmap(QByteArray& data,bool& ok)
-{
-   if (!m_isRendering) {
-      return QByteArray();
-   }
-   
-   if (!shmLock()) {
-      ok = false;
-      return QByteArray();
-   }
-
-   // wait for a new buffer
-   while (m_BufferGen == m_pShmArea->m_BufferGen) {
-      shmUnlock();
-      const struct timespec timeout = createTimeout();
-      int err = sem_timedwait(&m_pShmArea->notification, &timeout);
-      // Could not decrement semaphore in time, returning
-//       switch (errno ) {
-//          case EINTR:
-//             qDebug() << "Unlock failed: Interrupted function call (POSIX.1); see signal(7)";
-//             ok = false;
-//             return QByteArray();
-//             break;
-//          case EINVAL:
-//             qDebug() << "Unlock failed: Invalid argument (POSIX.1)";
-//             ok = false;
-//             return QByteArray();
-//             break;
-//          case EAGAIN:
-//             qDebug() << "Unlock failed: Resource temporarily unavailable (may be the same value as EWOULDBLOCK) (POSIX.1)";
-//             ok = false;
-//             return QByteArray();
-//             break;
-//          case ETIMEDOUT:
-//             qDebug() << "Unlock failed: Connection timed out (POSIX.1)";
-//             ok = false;
-//             return QByteArray();
-//             break;
-//       }
-      if (err < 0) {
-         ok = false;
-         return QByteArray();
-      }
-
-      if (!shmLock()) {
-         ok = false;
-         return QByteArray();
-      }
-   }
-
-   if (!resizeShm()) {
-      qDebug() << "Could not resize shared memory";
-      ok = false;
-      return QByteArray();
-   }
-
-   if (data.size() != m_pShmArea->m_BufferSize)
-      data.resize(m_pShmArea->m_BufferSize);
-   memcpy(data.data(),m_pShmArea->m_Data,m_pShmArea->m_BufferSize);
-   m_BufferGen = m_pShmArea->m_BufferGen;
-   shmUnlock();
-   return data;
-}
-
-///Connect to the shared memory
-bool VideoRenderer::startShm()
-{
-   if (fd != -1) {
-      qDebug() << "fd must be -1";
-      return false;
-   }
-
-   fd = shm_open(m_ShmPath.toAscii(), O_RDWR, 0);
-   if (fd < 0) {
-      qDebug() << "could not open shm area \"%s\", shm_open failed:%s" << m_ShmPath << strerror(errno);
-      return false;
-   }
-   m_ShmAreaLen = sizeof(SHMHeader);
-   m_pShmArea = (SHMHeader*) mmap(NULL, m_ShmAreaLen, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-   if (m_pShmArea == MAP_FAILED) {
-      qDebug() << "Could not map shm area, mmap failed";
-      return false;
-   }
-   return true;
-}
-
-///Disconnect from the shared memory
-void VideoRenderer::stopShm()
-{
-   if (fd >= 0)
-      close(fd);
-   fd = -1;
-
-   if (m_pShmArea != MAP_FAILED)
-      munmap(m_pShmArea, m_ShmAreaLen);
-   m_ShmAreaLen = 0;
-   m_pShmArea = (SHMHeader*) MAP_FAILED;
-}
-
-///Resize the shared memory
-bool VideoRenderer::resizeShm()
-{
-   while ((sizeof(SHMHeader) + m_pShmArea->m_BufferSize) > m_ShmAreaLen) {
-      const size_t new_size = sizeof(SHMHeader) + m_pShmArea->m_BufferSize;
-
-      shmUnlock();
-      if (munmap(m_pShmArea, m_ShmAreaLen)) {
-            qDebug() << "Could not unmap shared area:%s" << strerror(errno);
-            return false;
-      }
-
-      m_pShmArea = (SHMHeader*) mmap(NULL, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-      m_ShmAreaLen = new_size;
-
-      if (!m_pShmArea) {
-            m_pShmArea = 0;
-            qDebug() << "Could not remap shared area";
-            return false;
-      }
-
-      m_ShmAreaLen = new_size;
-      if (!shmLock())
-            return false;
-   }
-   return true;
-}
-
-///Lock the memory while the copy is being made
-bool VideoRenderer::shmLock()
-{
-   const timespec timeout = createTimeout();
-   /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
-   if (sem_timedwait(&m_pShmArea->mutex, &timeout) == ETIMEDOUT) {
-      qDebug() << "Timed out before shm lock was acquired";
-      return false;
-   }
-   return true;
-}
-
-///Remove the lock, allow a new frame to be drawn
-void VideoRenderer::shmUnlock()
-{
-   sem_post(&m_pShmArea->mutex);
-}
-
-///Create a SHM timeout
-timespec VideoRenderer::createTimeout()
-{
-   timespec timeout = {0, 0};
-   if (clock_gettime(CLOCK_REALTIME, &timeout) == -1)
-      qDebug() << "clock_gettime";
-   timeout.tv_sec += TIMEOUT_SEC;
-   return timeout;
-}
-
-///Constructor
-VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_Res(0,0),m_pTimer(0),m_PreviewState(false),m_pRenderer(new VideoRenderer())
+VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_PreviewState(false),m_pRenderer(nullptr)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    connect( &interface , SIGNAL(deviceEvent()                       ), this, SLOT( deviceEvent()                       ));
@@ -283,8 +61,6 @@ void VideoModel::stopPreview()
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    interface.stopPreview();
    m_PreviewState = false;
-//    if (m_pTimer)
-//       m_pTimer->stop();
 }
 
 ///Start video preview
@@ -314,51 +90,44 @@ void VideoModel::deviceEvent()
    
 }
 
-///Update the buffer
-void VideoModel::timedEvents()
-{
-   bool ok = true;
-   QByteArray ba;
-   m_pRenderer->renderToBitmap(m_Frame,ok);
-   if (ok == true) {
-      qDebug() << "Emit";
-      emit frameUpdated();
-   }
-   else {
-      qDebug() << "Frame dropped";
-      usleep(rand()%100000); //Be sure it can come back in sync
-   }
-}
-
-///Return the current framerate
-QByteArray VideoModel::getCurrentFrame()
-{
-   return m_Frame;
-}
-
 ///Return the current resolution
-Resolution VideoModel::getActiveResolution()
-{
-   return m_Res;
-}
+// Resolution VideoModel::getActiveResolution()
+// {
+//    return m_Res;
+// }
 
 ///A video is not being rendered
 void VideoModel::startedDecoding(QString id, QString shmPath, int width, int height)
 {
    Q_UNUSED(id)
-   m_pRenderer->m_ShmPath = shmPath;
-   m_Res.width            = width  ;
-   m_Res.height           = height ;
-   m_pRenderer->m_Width   = width  ;
-   m_pRenderer->m_Height  = height ;
-   m_pRenderer->m_isRendering = true;
-   m_pRenderer->startShm();
-   if (!m_pTimer) {
-      m_pTimer = new QTimer(this);
-      connect(m_pTimer,SIGNAL(timeout()),this,SLOT(timedEvents()));
-      m_pTimer->setInterval(42);
+//    m_pRenderer->m_ShmPath = shmPath;
+//    m_Res.width            = width  ;
+//    m_Res.height           = height ;
+//    m_pRenderer->m_Width   = width  ;
+//    m_pRenderer->m_Height  = height ;
+//    m_pRenderer->m_isRendering = true;
+//    m_pRenderer->startShm();
+   
+//    if (!m_pTimer) {
+//       m_pTimer = new QTimer(this);
+//       connect(m_pTimer,SIGNAL(timeout()),this,SLOT(timedEvents()));
+//       m_pTimer->setInterval(42);
+//    }
+//    m_pTimer->start();
+   
+   if (m_lRenderers[id] == nullptr ) {
+      m_lRenderers[id] = new VideoRenderer(shmPath,Resolution(width,height));
    }
-   m_pTimer->start();
+   else {
+      VideoRenderer* renderer = m_lRenderers[id];
+      renderer->setShmPath(shmPath);
+      renderer->setResolution(QSize(width,height));
+   }
+
+   if (!m_pRenderer)
+      m_pRenderer = m_lRenderers[id];
+   
+   m_pRenderer->startRendering();
    if (id != "local") {
       qDebug() << "Starting video for call" << id;
       emit videoCallInitiated(id);
@@ -369,20 +138,12 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
 void VideoModel::stoppedDecoding(QString id, QString shmPath)
 {
    Q_UNUSED(shmPath)
-   m_pRenderer->m_isRendering = false;
-   m_pRenderer->stopShm();
+   if (m_pRenderer)
+      m_pRenderer->stopRendering();
+//    m_pRenderer->m_isRendering = false;
+//    m_pRenderer->stopShm();
    qDebug() << "Video stopped for call" << id;
    emit videoStopped();
-   if (m_pTimer)
-      m_pTimer->stop();
-}
-
-char* VideoModel::rawData()
-{
-   return m_pRenderer->m_pShmArea->m_Data;
-}
-
-bool VideoModel::isRendering()
-{
-   return m_pRenderer->m_isRendering;
+//    if (m_pTimer)
+//       m_pTimer->stop();
 }

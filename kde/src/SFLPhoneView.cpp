@@ -215,12 +215,12 @@ void SFLPhoneView::typeString(QString str)
    Call* currentCall = nullptr;
    Call* candidate   = nullptr;
 
-   if(call && (call->getState() == CALL_STATE_CURRENT || call->getState() == CALL_STATE_RECORD)) {
+   if(call && call->getState() == CALL_STATE_CURRENT) {
       currentCall = call;
    }
 
    foreach (Call* call2, SFLPhone::model()->getCallList()) {
-      if(dynamic_cast<Call*>(call2) && currentCall != call2 && (call2->getState() == CALL_STATE_CURRENT || call->getState() == CALL_STATE_RECORD)) {
+      if(dynamic_cast<Call*>(call2) && currentCall != call2 && call2->getState() == CALL_STATE_CURRENT) {
          action(call2, CALL_ACTION_HOLD);
       }
       else if(dynamic_cast<Call*>(call2) && call2->getState() == CALL_STATE_DIALING) {
@@ -334,12 +334,12 @@ void SFLPhoneView::action(Call* call, call_action action)
 } //action
 
 ///Select a phone number when calling using a contact
-bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
+bool SFLPhoneView::selectCallPhoneNumber(Call** call2,Contact* contact)
 {
    if (contact->getPhoneNumbers().count() == 1) {
-      call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(),AccountList::getCurrentAccount());
-      if (call2)
-         call2->appendText(contact->getPhoneNumbers()[0]->getNumber());
+      *call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(),AccountList::getCurrentAccount());
+      if (*call2)
+         (*call2)->appendText(contact->getPhoneNumbers()[0]->getNumber());
    }
    else if (contact->getPhoneNumbers().count() > 1) {
       bool                   ok = false;
@@ -351,9 +351,9 @@ bool SFLPhoneView::selectCallPhoneNumber(Call* call2,Contact* contact)
       }
       QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
       if (ok) {
-         call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName(), AccountList::getCurrentAccount());
-         if (call2)
-            call2->appendText(map[result]);
+         (*call2) = SFLPhone::model()->addDialingCall(contact->getFormattedName(), AccountList::getCurrentAccount());
+         if (*call2)
+            (*call2)->appendText(map[result]);
       }
       else {
          kDebug() << "Operation cancelled";
@@ -420,10 +420,6 @@ void SFLPhoneView::updateWindowCallState()
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_CURRENT:
-            buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
-            m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
-            break;
-         case CALL_STATE_RECORD:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
             m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
             break;
@@ -630,7 +626,6 @@ void SFLPhoneView::displayMessageBox(bool checked)
       && call
       && (call->getState()   == CALL_STATE_CURRENT
          || call->getState() == CALL_STATE_HOLD
-         || call->getState() == CALL_STATE_RECORD
       )
    );
 }
@@ -774,7 +769,7 @@ void SFLPhoneView::accept()
    }
    else {
       int state = call->getState();
-      if(state == CALL_STATE_RINGING || state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_BUSY || state == CALL_STATE_RECORD)
+      if (state == CALL_STATE_RINGING || state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_BUSY)
       {
          kDebug() << "Calling when item currently ringing, current, hold or busy. Opening an item.";
          SFLPhone::model()->addDialingCall();

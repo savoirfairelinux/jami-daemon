@@ -414,7 +414,7 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
          QNumericTreeWidgetItem_hist* item = dynamic_cast<QNumericTreeWidgetItem_hist*>(m_pContactView->selectedItems()[0]);
          if (item) {
             Call* call = NULL;
-            SFLPhone::app()->view()->selectCallPhoneNumber(call,item->widget->getContact());
+            SFLPhone::app()->view()->selectCallPhoneNumber(&call,item->widget->getContact());
          }
       }
    }

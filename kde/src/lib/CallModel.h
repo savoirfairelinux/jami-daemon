@@ -65,6 +65,10 @@ private slots:
    void conferenceRemovedSlot ( const QString& confId                             );
    void voiceMailNotifySlot   ( const QString& accountID , int count              );
    void volumeChangedSlot     ( const QString& device    , double value           );
+   void removeActiveCall      ( Call* call                                        );
+   void addPrivateCall        ( Call* call                                        );
+   void startedDecoding       ( const QString& callId    , const QString& shmKey  );
+   void stoppedDecoding       ( const QString& callId    , const QString& shmKey  );
 
 protected:
    virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
@@ -77,9 +81,6 @@ protected:
    //Attributes
    static CallMap m_sActiveCalls;
 
-private slots:
-   void removeActiveCall(Call*);
-   void addPrivateCall(Call* call);
 private:
    static bool dbusInit;
    
