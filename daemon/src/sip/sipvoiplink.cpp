@@ -705,7 +705,7 @@ bool isValidIpAddress(const std::string &address)
  */
 std::string resolvDns(const std::string& url)
 {
-   int pos;
+   size_t pos;
    if ((pos = url.find("@")) == std::string::npos) {
       return url;
    }
