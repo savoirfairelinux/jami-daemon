@@ -295,7 +295,10 @@ void VideoSendThread::run()
     int frameNumber = 0;
     while (sending_) {
         AVPacket inpacket;
-        if (av_read_frame(inputCtx_, &inpacket) < 0)
+        int ret2 = av_read_frame(inputCtx_, &inpacket);
+        if (ret2 == AVERROR(EAGAIN))
+           continue;
+        else if (ret2 < 0)
             break;
 
         /* Guarantees that we free the packet allocated by av_read_frame */
