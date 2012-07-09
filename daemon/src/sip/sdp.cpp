@@ -76,33 +76,34 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
     if (activeLocalSession_->media_count < 1)
         return;
 
-    pjmedia_sdp_media *current = activeLocalSession_->media[0];
+    for (unsigned media = 0; media < activeLocalSession_->media_count; ++media) {
+        pjmedia_sdp_media *current = activeLocalSession_->media[media];
 
-    for (unsigned j = 0; j < current->desc.fmt_count; j++) {
-        static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
-        pjmedia_sdp_attr *attribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, NULL);
+        for (unsigned fmt = 0; fmt < current->desc.fmt_count; ++fmt) {
+            static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
+            pjmedia_sdp_attr *attribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, NULL);
 
-        if (!attribute) {
-            sessionAudioMedia_.clear();
-            return;
-        }
-
-        pjmedia_sdp_rtpmap *rtpmap;
-        pjmedia_sdp_attr_to_rtpmap(memPool_, attribute, &rtpmap);
-
-        string type(current->desc.media.ptr, current->desc.media.slen);
-        if (type == "audio") {
-            const int pt = pj_strtoul(&rtpmap->pt);
-            sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
-            if (codec)
-                sessionAudioMedia_.push_back(codec);
-            else {
-                DEBUG("Could not get codec for payload type %lu", pt);
-                sessionAudioMedia_.clear();
-                return;
+            if (!attribute) {
+                ERROR("Could not find rtpmap attribute");
+                break;
             }
-        } else if (type == "video")
-            sessionVideoMedia_.push_back(string(rtpmap->enc_name.ptr, rtpmap->enc_name.slen));
+
+            pjmedia_sdp_rtpmap *rtpmap;
+            pjmedia_sdp_attr_to_rtpmap(memPool_, attribute, &rtpmap);
+
+            string type(current->desc.media.ptr, current->desc.media.slen);
+            if (type == "audio") {
+                const int pt = pj_strtoul(&rtpmap->pt);
+                sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
+                if (codec)
+                    sessionAudioMedia_.push_back(codec);
+                else {
+                    DEBUG("Could not get codec for payload type %lu", pt);
+                    break;
+                }
+            } else if (type == "video")
+                sessionVideoMedia_.push_back(string(rtpmap->enc_name.ptr, rtpmap->enc_name.slen));
+        }
     }
 }
 

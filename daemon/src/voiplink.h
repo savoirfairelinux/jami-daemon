@@ -150,10 +150,8 @@ class VoIPLink {
          * Return the codec protocol used for this call
          * @param call The call
          */
-#ifdef SFL_VIDEO
-        virtual std::string getCurrentVideoCodecName(const std::string& id) = 0;
-#endif
-        virtual std::string getCurrentCodecName(Call *call) const = 0;
+        virtual std::string getCurrentVideoCodecName(Call *call) const = 0;
+        virtual std::string getCurrentAudioCodecName(Call *call) const = 0;
 
         /**
          * Send a message to a call identified by its callid

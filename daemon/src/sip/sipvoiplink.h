@@ -218,10 +218,8 @@ class SIPVoIPLink : public VoIPLink {
          * Return the codec protocol used for this call
          * @param c The call identifier
          */
-#ifdef SFL_VIDEO
-        std::string getCurrentVideoCodecName(const std::string& id);
-#endif
-        std::string getCurrentCodecName(Call *c) const;
+        std::string getCurrentVideoCodecName(Call *c) const;
+        std::string getCurrentAudioCodecName(Call *c) const;
 
         /**
          * Retrive useragent name from account

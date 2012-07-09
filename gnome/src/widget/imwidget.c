@@ -42,8 +42,6 @@
 #include <gtk/gtk.h>
 
 
-#define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
-
 static void
 on_frame_loading_done(GObject *gobject UNUSED, GParamSpec *pspec UNUSED, gpointer user_data)
 {
@@ -126,6 +124,25 @@ im_widget_add_message(IMWidget *im, const gchar *from, const gchar *message, gin
     g_free(msgtime);
 }
 
+static gchar *
+get_webkit_dir_uri()
+{
+#define FILE_URI_PREFIX "file://"
+#define WEBKIT_DIR "/webkit/"
+
+    if (!access(DATA_DIR WEBKIT_DIR, R_OK))
+        return g_strconcat(FILE_URI_PREFIX, DATA_DIR WEBKIT_DIR, NULL);
+    else {
+        gchar *current_dir = g_get_current_dir();
+        gchar *full_path = g_build_filename(current_dir, WEBKIT_DIR, NULL);
+        g_free(current_dir);
+        gchar *full_uri = g_strconcat(FILE_URI_PREFIX, full_path, NULL);
+        return full_uri;
+    }
+#undef FILE_URI_PREFIX
+#undef WEBKIT_DIR
+}
+
 static gboolean
 web_view_nav_requested_cb(
     WebKitWebView             *web_view UNUSED,
@@ -137,12 +154,14 @@ web_view_nav_requested_cb(
 {
     const gchar *uri = webkit_network_request_get_uri(request);
 
+    gchar *webkit_dir_uri = get_webkit_dir_uri();
+
     /* Always allow files we are serving ourselves. */
-    if (!strncmp(uri, WEBKIT_DIR, sizeof(WEBKIT_DIR) - 1)) {
+    if (!strncmp(uri, webkit_dir_uri, strlen(webkit_dir_uri))) {
         webkit_web_policy_decision_use(policy_decision);
     } else {
         /* Running a system command to open the URL in the user's default browser */
-        gchar *cmd = g_strdup_printf("x-www-browser %s", uri);
+        gchar *cmd = g_strdup_printf("xdg-open %s", uri);
 
         if (system(cmd) == -1)
             ERROR("InstantMessaging: Error: executing command %s", cmd);
@@ -150,6 +169,7 @@ web_view_nav_requested_cb(
         webkit_web_policy_decision_ignore(policy_decision);
         g_free(cmd);
     }
+    g_free(webkit_dir_uri);
 
     return TRUE;
 }
@@ -260,7 +280,12 @@ im_widget_init(IMWidget *im)
     im->web_frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(im->web_view));
     im->js_context = webkit_web_frame_get_global_context(im->web_frame);
     im->js_global = JSContextGetGlobalObject(im->js_context);
-    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
+
+    gchar *webkit_dir_uri = get_webkit_dir_uri();
+    gchar *html_file_uri = g_strconcat(webkit_dir_uri, "/im/im.html", NULL);
+    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(im->web_view), html_file_uri);
+    g_free(html_file_uri);
+    g_free(webkit_dir_uri);
 
     im->containText = FALSE;
 

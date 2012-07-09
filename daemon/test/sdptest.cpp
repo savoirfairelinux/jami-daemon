@@ -50,12 +50,8 @@ static const char *sdp_answer1 = "v=0\r\n"
                                  "t=0 0\r\n"
                                  "m=audio 49920 RTP/AVP 0\r\n"
                                  "a=rtpmap:0 PCMU/8000\r\n"
-#ifdef SFL_VIDEO
-                                 "m=video 0 RTP/AVP 31\r\n"
                                  "m=video 53002 RTP/AVP 32\r\n"
-                                 "a=rtpmap:32 MPV/90000\r\n"
-#endif
-                                 ;
+                                 "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_offer1 = "v=0\r\n"
                                 "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -64,12 +60,8 @@ static const char *sdp_offer1 = "v=0\r\n"
                                 "t=0 0\r\n"
                                 "m=audio 49920 RTP/AVP 0\r\n"
                                 "a=rtpmap:0 PCMU/8000\r\n"
-#ifdef SFL_VIDEO
-                                "m=video 0 RTP/AVP 31\r\n"
                                 "m=video 53002 RTP/AVP 32\r\n"
-                                "a=rtpmap:32 MPV/90000\r\n"
-#endif
-                                ;
+                                "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_answer2 = "v=0\r\n"
                                  "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -80,12 +72,8 @@ static const char *sdp_answer2 = "v=0\r\n"
                                  "a=rtpmap:3 GSM/8000\r\n"
                                  "a=rtpmap:97 iLBC/8000\r\n"
                                  "a=rtpmap:9 G722/8000\r\n"
-#ifdef SFL_VIDEO
-                                 "m=video 0 RTP/AVP 31\r\n"
                                  "m=video 53002 RTP/AVP 32\r\n"
-                                 "a=rtpmap:32 MPV/90000\r\n"
-#endif
-                                 ;
+                                 "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_offer2 = "v=0\r\n"
                                 "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -96,12 +84,8 @@ static const char *sdp_offer2 = "v=0\r\n"
                                 "a=rtpmap:3 GSM/8000\r\n"
                                 "a=rtpmap:97 iLBC/8000\r\n"
                                 "a=rtpmap:9 G722/8000\r\n"
-#ifdef SFL_VIDEO
-                                "m=video 0 RTP/AVP 31\r\n"
                                 "m=video 53002 RTP/AVP 32\r\n"
-                                "a=rtpmap:32 MPV/90000\r\n"
-#endif
-                                ;
+                                "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *sdp_reinvite = "v=0\r\n"
                                   "o=bob 2890844730 2890844730 IN IP4 host.example.com\r\n"
@@ -110,12 +94,8 @@ static const char *sdp_reinvite = "v=0\r\n"
                                   "t=0 0\r\n"
                                   "m=audio 42445 RTP/AVP 0\r\n"
                                   "a=rtpmap:0 PCMU/8000\r\n"
-#ifdef SFL_VIDEO
-                                  "m=video 0 RTP/AVP 31\r\n"
                                   "m=video 53002 RTP/AVP 32\r\n"
-                                  "a=rtpmap:32 MPV/90000\r\n"
-#endif
-                                  ;
+                                  "a=rtpmap:32 MPV/90000\r\n";
 
 static const char *const LOCALHOST = "127.0.0.1";
 
