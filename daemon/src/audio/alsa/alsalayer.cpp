@@ -40,11 +40,17 @@
 #include "dbus/configurationmanager.h"
 #include <ctime>
 
+#define SFL_ALSA_PERIOD_SIZE 160
+#define SFL_ALSA_NB_PERIOD 8
+#define SFL_ALSA_BUFFER_SIZE SFL_ALSA_PERIOD_SIZE*SFL_ALSA_NB_PERIOD
+
 class AlsaThread : public ost::Thread {
     public:
         AlsaThread(AlsaLayer *alsa);
 
         ~AlsaThread() { ost::Thread::terminate(); }
+
+        void initAudioLayer();
 
         virtual void run();
 
@@ -57,11 +63,57 @@ AlsaThread::AlsaThread(AlsaLayer *alsa)
     : ost::Thread(), alsa_(alsa)
 {}
 
+void AlsaThread::initAudioLayer(void)
+{
+    std::string pcmp;
+    std::string pcmr;
+    std::string pcmc;
+
+    if (alsa_->audioPlugin_ == PCM_DMIX_DSNOOP) {
+        pcmp = alsa_->buildDeviceTopo(PCM_DMIX, alsa_->indexOut_);
+        pcmr = alsa_->buildDeviceTopo(PCM_DMIX, alsa_->indexRing_);
+        pcmc = alsa_->buildDeviceTopo(PCM_DSNOOP, alsa_->indexIn_);
+    } else {
+        pcmp = alsa_->buildDeviceTopo(alsa_->audioPlugin_, alsa_->indexOut_);
+        pcmr = alsa_->buildDeviceTopo(alsa_->audioPlugin_, alsa_->indexRing_);
+        pcmc = alsa_->buildDeviceTopo(alsa_->audioPlugin_, alsa_->indexIn_);
+    }
+
+    if (not alsa_->is_capture_open_) {
+        alsa_->is_capture_open_ = alsa_->openDevice(&alsa_->captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
+
+        if (not alsa_->is_capture_open_)
+            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
+    }
+
+    if (not alsa_->is_playback_open_) {
+        alsa_->is_playback_open_ = alsa_->openDevice(&alsa_->playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK);
+
+        if (not alsa_->is_playback_open_)
+            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
+
+        if (alsa_->getIndexPlayback() != alsa_->getIndexRingtone())
+            if (!alsa_->openDevice(&alsa_->ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK))
+                Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
+    }
+
+    alsa_->prepareCaptureStream();
+    alsa_->preparePlaybackStream();
+
+    alsa_->startCaptureStream();
+    alsa_->startPlaybackStream();
+
+    alsa_->flushMain();
+    alsa_->flushUrgent();
+}
+
 /**
  * Reimplementation of run()
  */
 void AlsaThread::run()
 {
+    initAudioLayer();
+
     while (alsa_->isStarted_) {
         alsa_->audioCallback();
         ost::Thread::sleep(20 /* ms */);
@@ -134,47 +186,6 @@ AlsaLayer::startStream()
 
     if (is_playback_running_ and is_capture_running_)
         return;
-
-    std::string pcmp;
-    std::string pcmr;
-    std::string pcmc;
-
-    if (audioPlugin_ == PCM_DMIX_DSNOOP) {
-        pcmp = buildDeviceTopo(PCM_DMIX, indexOut_);
-        pcmr = buildDeviceTopo(PCM_DMIX, indexRing_);
-        pcmc = buildDeviceTopo(PCM_DSNOOP, indexIn_);
-    } else {
-        pcmp = buildDeviceTopo(audioPlugin_, indexOut_);
-        pcmr = buildDeviceTopo(audioPlugin_, indexRing_);
-        pcmc = buildDeviceTopo(audioPlugin_, indexIn_);
-    }
-
-    if (not is_capture_open_) {
-        is_capture_open_ = openDevice(&captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
-
-        if (not is_capture_open_)
-            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
-    }
-
-    if (not is_playback_open_) {
-        is_playback_open_ = openDevice(&playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK);
-
-        if (not is_playback_open_)
-            Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
-
-        if (getIndexPlayback() != getIndexRingtone())
-            if (!openDevice(&ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK))
-                Manager::instance().getDbusManager()->getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
-    }
-
-    prepareCaptureStream();
-    preparePlaybackStream();
-
-    startCaptureStream();
-    startPlaybackStream();
-
-    flushMain();
-    flushUrgent();
 
     if (audioThread_ == NULL) {
         audioThread_ = new AlsaThread(this);
@@ -278,9 +289,7 @@ void AlsaLayer::closePlaybackStream()
 
 void AlsaLayer::startPlaybackStream()
 {
-    if (playbackHandle_ and not is_playback_running_)
-        if (ALSA_CALL(snd_pcm_start(playbackHandle_), "Couldn't start playback") >= 0)
-            is_playback_running_ = true;
+    is_playback_running_ = true;
 }
 
 void AlsaLayer::prepareCaptureStream()
@@ -292,9 +301,7 @@ void AlsaLayer::prepareCaptureStream()
 
 void AlsaLayer::preparePlaybackStream()
 {
-    if (is_playback_open_ and not is_playback_prepared_)
-        if (ALSA_CALL(snd_pcm_prepare(playbackHandle_), "Couldn't prepare playback") >= 0)
-            is_playback_prepared_ = true;
+    is_playback_prepared_ = true;
 }
 
 bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
@@ -307,8 +314,14 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     snd_pcm_hw_params_t *hwparams;
     snd_pcm_hw_params_alloca(&hwparams);
 
-    snd_pcm_uframes_t periodSize = 160;
-    unsigned int periods = 4;
+    snd_pcm_uframes_t period_size = SFL_ALSA_PERIOD_SIZE;
+    snd_pcm_uframes_t buffer_size = SFL_ALSA_BUFFER_SIZE;
+    unsigned int periods = SFL_ALSA_NB_PERIOD;
+
+    snd_pcm_uframes_t  period_size_min = 0;
+    snd_pcm_uframes_t  period_size_max = 0;
+    snd_pcm_uframes_t  buffer_size_min = 0;
+    snd_pcm_uframes_t  buffer_size_max = 0;
 
 #define HW pcm_handle, hwparams /* hardware parameters */
     TRY(snd_pcm_hw_params_any(HW), "hwparams init");
@@ -316,9 +329,32 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
     TRY(snd_pcm_hw_params_set_rate_near(HW, &sampleRate_, NULL), "sample rate");
     TRY(snd_pcm_hw_params_set_channels(HW, 1), "channel count");
-    TRY(snd_pcm_hw_params_set_period_size_near(HW, &periodSize, NULL), "period time");
-    TRY(snd_pcm_hw_params_set_periods_near(HW, &periods, NULL), "periods number");
+
+    snd_pcm_hw_params_get_buffer_size_min(hwparams, &buffer_size_min);
+    snd_pcm_hw_params_get_buffer_size_max(hwparams, &buffer_size_max);
+    snd_pcm_hw_params_get_period_size_min(hwparams, &period_size_min, NULL);
+    snd_pcm_hw_params_get_period_size_max(hwparams, &period_size_max, NULL);
+    DEBUG("Buffer size range from %lu to %lu", buffer_size_min, buffer_size_max);
+    DEBUG("Period size range from %lu to %lu", period_size_min, period_size_max);
+    buffer_size = buffer_size > buffer_size_max ? buffer_size_max : buffer_size;
+    buffer_size = buffer_size < buffer_size_min ? buffer_size_min : buffer_size;
+    period_size = period_size > period_size_max ? period_size_max : period_size;
+    period_size = period_size < period_size_min ? period_size_min : period_size;
+
+    TRY(snd_pcm_hw_params_set_buffer_size_near(HW, &buffer_size), "Unable to set buffer size for playback");
+    TRY(snd_pcm_hw_params_set_period_size_near(HW, &period_size, NULL), "Unable to set period size for playback");
+    TRY(snd_pcm_hw_params_set_periods_near(HW, &periods, NULL), "Unable to set number of periods for playback");
     TRY(snd_pcm_hw_params(HW), "hwparams");
+
+    snd_pcm_hw_params_get_buffer_size(hwparams, &buffer_size);
+    snd_pcm_hw_params_get_period_size(hwparams, &period_size, NULL);
+    DEBUG("Was set period_size = %lu", period_size);
+    DEBUG("Was set buffer_size = %lu", buffer_size);
+
+    if (2*period_size > buffer_size) {
+        ERROR("buffer to small, could not use");
+        return false;
+    }
 #undef HW
 
     DEBUG("%s using sampling rate %dHz",
@@ -330,7 +366,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 
 #define SW pcm_handle, swparams /* software parameters */
     snd_pcm_sw_params_current(SW);
-    TRY(snd_pcm_sw_params_set_start_threshold(SW, periodSize * 2), "start threshold");
+    TRY(snd_pcm_sw_params_set_start_threshold(SW, period_size * 2), "start threshold");
     TRY(snd_pcm_sw_params(SW), "sw parameters");
 #undef SW
 
