@@ -35,8 +35,6 @@
 #ifndef __MESSAGING_H__
 #define __MESSAGING_H__
 
-// #include <clutter/clutter.h>
-// #include <clutter-gtk/clutter-gtk.h>
 #include <gtk/gtk.h>
 
 typedef struct {
@@ -50,5 +48,6 @@ typedef struct {
 // void add_message_box(ClutterActor* stage, const char* author, const char* message);
 message_tab* create_messaging_tab(const char* call_id,const char* title);
 GtkWidget *get_tab_box();
+void new_text_message(gchar* call_id, char* message);
 
 #endif

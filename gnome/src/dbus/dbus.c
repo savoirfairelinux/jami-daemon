@@ -163,6 +163,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
     if (call) {
         widget = &call->_im_widget;
         id = call->_callID;
+        new_text_message(call->_callID,msg);
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
         if (!conf) {
@@ -172,10 +173,12 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
 
         widget = &conf->_im_widget;
         id = conf->_confID;
+        new_text_message(conf->_confID,msg);
     }
 
     if (!*widget)
         *widget = im_widget_display(id);
+
 
     im_widget_add_message(IM_WIDGET(*widget), from, msg, 0);
 }

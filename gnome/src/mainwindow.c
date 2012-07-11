@@ -62,11 +62,6 @@
 #include <sys/stat.h>
 #include <gtk/gtk.h>
 
-/*TODO elepage REMOVE*/
-#include <clutter/clutter.h>
-#include <clutter-gtk/clutter-gtk.h>
-/*TODO END elepage REMOVE*/
-
 #include <gdk/gdkkeysyms.h>
 
 /** Local variables */
@@ -281,7 +276,7 @@ create_main_window()
 
 //    gtk_widget_show (text_box_widget2);
 
-    create_messaging_tab("test","test2");
+//     create_messaging_tab("test","test2");
 //     ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff }; /* Black */
 //     gtk_clutter_init(NULL,NULL);
 //    GtkWidget *clutter_widget = gtk_clutter_embed_new ();

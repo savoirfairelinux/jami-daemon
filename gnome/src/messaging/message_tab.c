@@ -48,9 +48,12 @@ GtkWidget *get_tab_box()
    return tab_box;
 }
 
-void add_message(message_tab *self, char* message)
+void new_text_message(gchar* call_id, char* message)
 {
-   
+   message_tab *tab = g_hash_table_lookup(tabs,call_id);
+   if (!tab)
+      tab = create_messaging_tab(call_id,call_id);
+   append_message(tab,"Peer",message);
 }
 void replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
 {
@@ -70,7 +73,7 @@ void append_message(message_tab* self, gchar* name, gchar* message)
    gtk_text_buffer_insert(self->buffer, &current_end, "\n\n", -1);
    gtk_text_buffer_insert(self->buffer, &current_end, name, -1);
    gtk_text_buffer_insert(self->buffer, &current_end, ": ", -1);
-   
+
    gtk_text_buffer_get_end_iter(self->buffer, &current_end);
    for (int i=0;i<strlen(name)+2;i++){
       if (!gtk_text_iter_backward_char(&current_end))
@@ -87,27 +90,30 @@ static gboolean on_enter(GtkEntry *entry, gpointer user_data)
 {
    message_tab *tab = (message_tab*)user_data;
    append_message(tab,"Me",gtk_entry_get_text(entry));
+   dbus_send_text_message(tab->call_id,gtk_entry_get_text(entry));
    gtk_entry_set_text(entry,"");
-//    dbus_send_text_message(user_data->call_id,gtk_entry_get_text(entry));
 }
 
 
 message_tab* create_messaging_tab(const char* call_id,const char* title)
 {
+    message_tab *tab = g_hash_table_lookup(tabs,call_id);
+    if (tab) {
+
+       return tab;
+    }
     message_tab *self = g_new0(message_tab, 1);
-   
+
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkTextBuffer *text_buffer = gtk_text_buffer_new(NULL);
     gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
 
     GtkWidget *scoll_area = gtk_scrolled_window_new(NULL,NULL);
-    
+
     GtkWidget *text_box_widget = gtk_text_view_new_with_buffer(text_buffer);
     gtk_text_view_set_editable(text_box_widget,FALSE);
     gtk_text_view_set_wrap_mode(text_box_widget,GTK_WRAP_CHAR);
 
-    gtk_widget_show (text_box_widget);
-    
     gtk_container_add(scoll_area,text_box_widget);
     gtk_box_pack_start(GTK_BOX(vbox), scoll_area, TRUE, TRUE, 0);
 
@@ -131,7 +137,14 @@ message_tab* create_messaging_tab(const char* call_id,const char* title)
     append_message(self,"test_name","message blah blah blah");
     append_message(self,"other_name","sajfhasdjkh fsdjkafh kasdh kahjk hfkjasdhfjkasd hfasdkjfh asdjk fhsdjkfh asdjkfh asdjkfhsdjkfha fhfhsdkajh fasdjkfh ahfkasdjfhasdkfhsdjkafh jh sdkfhasdkjhfajksdfhkasdjfh hsjk fhsdkfhkasdjfh");
 
-    gtk_notebook_append_page(get_tab_box(),vbox,NULL);
+    printf("\n\n\nusing widget %d\n",GTK_NOTEBOOK(get_tab_box()));
+    int ret = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,NULL);
+    gtk_widget_show (vbox);
+    gtk_widget_show (scoll_area);
+    gtk_widget_show (text_box_widget);
+    gtk_widget_show (line_edit);
+    printf("ret %d\n",ret);
+
     if (!tabs) {
       tabs = g_hash_table_new(NULL,g_str_equal);
     }
