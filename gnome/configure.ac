@@ -67,6 +67,7 @@ src/contacts/Makefile
 src/widget/Makefile
 src/video/Makefile
 src/icons/Makefile
+src/messaging/Makefile
 pixmaps/Makefile
 webkit/Makefile
 sflphone.desktop

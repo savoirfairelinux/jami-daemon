@@ -54,12 +54,18 @@
 #include "config/audioconf.h"
 #include "str_utils.h"
 #include "seekslider.h"
+#include "messaging/message_tab.h"
 
 #include "eel-gconf-extensions.h"
 
 #include <glib/gi18n.h>
 #include <sys/stat.h>
 #include <gtk/gtk.h>
+
+/*TODO elepage REMOVE*/
+#include <clutter/clutter.h>
+#include <clutter-gtk/clutter-gtk.h>
+/*TODO END elepage REMOVE*/
 
 #include <gdk/gdkkeysyms.h>
 
@@ -250,6 +256,69 @@ create_main_window()
     subvbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_box_set_homogeneous(GTK_BOX(subvbox), FALSE);
 
+    /*TODO elepage REMOVE*/
+   GtkWidget *tab_widget = get_tab_box();
+//    gtk_box_pack_start (GTK_BOX (vbox), tab_widget, TRUE, TRUE, 0);
+   gtk_widget_show (tab_widget);
+    
+//    GtkTextBuffer *text_buffer = gtk_text_buffer_new(NULL);
+//    gtk_text_buffer_set_text(text_buffer,"1234 <b>234</b> 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 \n1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 ",300);
+//     
+//     GtkWidget *text_box_widget = gtk_text_view_new_with_buffer(text_buffer);
+//     gtk_text_view_set_editable(text_box_widget,FALSE);
+//     gtk_text_view_set_wrap_mode(text_box_widget,GTK_WRAP_CHAR);
+// 
+//    gtk_widget_show (text_box_widget);
+
+    create_messaging_tab("test","test2");
+
+//    GtkTextBuffer *text_buffer2 = gtk_text_buffer_new(NULL);
+//    gtk_text_buffer_set_text(text_buffer2,"1234 <b>234</b> 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 \n1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 ",300);
+// 
+//     GtkWidget *text_box_widget2 = gtk_text_view_new_with_buffer(text_buffer2);
+//     gtk_text_view_set_editable(text_box_widget2,FALSE);
+//     gtk_text_view_set_wrap_mode(text_box_widget2,GTK_WRAP_CHAR);
+
+//    gtk_widget_show (text_box_widget2);
+
+    create_messaging_tab("test","test2");
+//     ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff }; /* Black */
+//     gtk_clutter_init(NULL,NULL);
+//    GtkWidget *clutter_widget = gtk_clutter_embed_new ();
+
+//       ClutterActor *stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (clutter_widget));
+// //       clutter_actor_set_size(stage, 512, 512);
+// //       clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
+// //       clutter_actor_show(stage);
+// 
+//       ClutterActor* group = clutter_group_new();
+//       clutter_actor_set_size(group, 300, 100);
+// //       clutter_actor_allocate_available_size(group,0,0,300,100,CLUTTER_ALLOCATION_NONE);
+//       clutter_container_add_actor(CLUTTER_CONTAINER(stage), group);
+// // 
+//       ClutterColor actor_color = { 0, 255, 0, 128 };
+//       ClutterActor *rect = clutter_rectangle_new_with_color(&actor_color);
+//       clutter_actor_set_size(rect, 300, 100);
+//       clutter_actor_set_position(rect, 0, 0);
+//       clutter_container_add_actor(CLUTTER_CONTAINER(group), rect);
+//       clutter_actor_show(rect);
+// // 
+//       ClutterColor actor_color2 = { 255, 0, 0, 128 };
+//       ClutterActor *label = clutter_text_new_full("Sans 12", "Some Text fgsdgfksdgf sdfg hsdfghs gs hjsdfghs gsdg jhsdg jsgjh dgjhdg jh gfjhg s d gf", &actor_color);
+//       clutter_text_set_color (label, &actor_color2);
+// // //       clutter_actor_set_size (label, 500, 500);
+//       clutter_actor_set_position (label, 10, 10);
+//       clutter_text_set_line_wrap(CLUTTER_TEXT(label),TRUE);
+//       clutter_text_set_line_alignment(CLUTTER_TEXT(label),PANGO_ALIGN_CENTER);
+//       //clutter_text_set_max_length(CLUTTER_TEXT(label),50);
+//       clutter_actor_set_size(CLUTTER_TEXT(label),280,80);
+//       clutter_container_add_actor (CLUTTER_CONTAINER (group), label);
+//       clutter_actor_show(label);
+
+//    clutter_main();
+
+    /*END TODO elepage REMOVE*/
+
     /* Populate the main window */
     GtkWidget *widget = create_menus(ui_manager);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
@@ -257,10 +326,19 @@ create_main_window()
     widget = create_toolbar_actions(ui_manager);
     pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
+    /* Add paned */
+    GtkWidget *vpaned = gtk_vpaned_new();
+    gtk_widget_show (vpaned);
+    gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
+    
     /* Add tree views */
-    gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
+//     gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
+//     gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);
+//     gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
+    gtk_paned_pack1 (GTK_PANED (vpaned), current_calls_tab->tree, TRUE, FALSE);
+    gtk_paned_add1 (GTK_PANED (vpaned), history_tab->tree);
+    gtk_paned_add1 (GTK_PANED (vpaned), contacts_tab->tree);
+    gtk_paned_pack2 (GTK_PANED (vpaned), tab_widget, FALSE, FALSE);
 
     /* Add playback scale */
     seekslider = GTK_WIDGET(sfl_seekslider_new());
