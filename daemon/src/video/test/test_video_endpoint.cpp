@@ -33,17 +33,16 @@
 #include <memory>
 #include <iostream>
 #include <cassert>
-#include "video_endpoint.h"
 #include "libav_utils.h"
 
 void VideoEndpointTest::testListInstalledCodecs()
 {
     /* This would list codecs */
-	std::cout << "Installed codecs:" << std::endl;
-    std::vector<std::string> codecs = sfl_video::getCodecList();
+    std::cout << "Installed codecs:" << std::endl;
+    std::vector<std::string> codecs(libav_utils::getVideoCodecList());
     std::vector<std::string>::iterator it;
-	for (it = codecs.begin(); it != codecs.end(); ++it)
-		std::cout << '\t' << *it << std::endl;
+    for (it = codecs.begin(); it != codecs.end(); ++it)
+        std::cout << '\t' << *it << std::endl;
 }
 
 int main ()

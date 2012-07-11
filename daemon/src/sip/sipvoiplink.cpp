@@ -1608,6 +1608,8 @@ void handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
                     200, NULL, &tdata);
             if (status == PJ_SUCCESS)
                 status = pjsip_tsx_send_msg(tsx, tdata);
+#else
+            (void) inv;
 #endif
         } else {
             status = pjsip_endpt_create_response(tsx->endpt, rdata,

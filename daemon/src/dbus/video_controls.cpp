@@ -32,7 +32,6 @@
 
 #include "video_controls.h"
 #include "video/libav_utils.h"
-#include "video/video_endpoint.h"
 #include "video/video_preview.h"
 #include "account.h"
 #include "logger.h"
@@ -55,42 +54,23 @@ VideoControls::getVideoPreferences()
     return videoPreference_;
 }
 
-/**
- * Send the list of all codecs loaded to the client through DBus.
- * Can stay global, as only the active codecs will be set per accounts
- */
-std::vector<std::string>
-VideoControls::getCodecList()
+std::vector<std::map<std::string, std::string> >
+VideoControls::getCodecs(const std::string &accountID)
 {
-    return sfl_video::getCodecList();
-}
-
-std::map<std::string, std::string>
-VideoControls::getCodecDetails(const std::string& name)
-{
-    return sfl_video::getCodecSpecifications(name);
-}
-
-std::vector<std::string>
-VideoControls::getActiveCodecList(const std::string& accountID)
-{
-    std::vector<std::string> v;
     Account *acc = Manager::instance().getAccount(accountID);
 
     if (acc != NULL)
-        v = acc->getActiveVideoCodecs();
-
-    return v;
-
+        return acc->getAllVideoCodecs();
+    else
+        return std::vector<std::map<std::string, std::string> >();
 }
 
 void
-VideoControls::setActiveCodecList(const std::vector<std::string>& list, const std::string& accountID)
+VideoControls::setCodecs(const std::vector<std::map<std::string, std::string> > &details, const std::string& accountID)
 {
     Account *acc = Manager::instance().getAccount(accountID);
-
     if (acc != NULL) {
-        acc->setActiveVideoCodecs(list);
+        acc->setVideoCodecs(details);
         Manager::instance().saveConfig();
     }
 }
