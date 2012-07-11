@@ -96,9 +96,9 @@
 
        <method name="setCodecs" tp:name-for-bindings="setCodecs">
            <tp:docstring>Sets a vector of hashtables describing codecs and their parameters for a given account, one hashtable per codec</tp:docstring>
-           <arg type="aa{ss}" name="details" direction="in">
-           </arg>
            <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="aa{ss}" name="details" direction="in">
            </arg>
         </method>
 

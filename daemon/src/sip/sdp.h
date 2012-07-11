@@ -115,6 +115,7 @@ class Sdp {
          */
         std::string getActiveIncomingVideoDescription() const;
         std::string getActiveOutgoingVideoCodec() const;
+        std::string getActiveOutgoingVideoBitrate(const std::string &codec) const;
         std::string getActiveOutgoingVideoPayload() const;
 
         /*

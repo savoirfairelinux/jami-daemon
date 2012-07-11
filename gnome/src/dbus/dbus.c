@@ -1229,33 +1229,22 @@ dbus_audio_codec_list()
 }
 
 #ifdef SFL_VIDEO
-gchar **
-dbus_video_codec_list()
+GPtrArray *
+dbus_get_video_codecs(const gchar *accountID)
 {
     GError *error = NULL;
-    gchar **array = NULL;
-    org_sflphone_SFLphone_VideoControls_get_codec_list(video_proxy, &array, &error);
-    check_error(error);
-
-    return array;
-}
-
-gchar **
-dbus_get_active_video_codec_list(const gchar *accountID)
-{
-    gchar **array = NULL;
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_get_active_codec_list(video_proxy, accountID, &array, &error);
+    GPtrArray *array = NULL;
+    org_sflphone_SFLphone_VideoControls_get_codecs(video_proxy, accountID, &array, &error);
     check_error(error);
 
     return array;
 }
 
 void
-dbus_set_active_video_codec_list(const gchar** list, const gchar *accountID)
+dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_active_codec_list(video_proxy, list, accountID, &error);
+    org_sflphone_SFLphone_VideoControls_set_codecs(video_proxy, accountID, list, &error);
     check_error(error);
 }
 #endif
@@ -1271,16 +1260,6 @@ dbus_audio_codec_details(int payload)
 }
 
 #ifdef SFL_VIDEO
-GHashTable*
-dbus_video_codec_details(const gchar *codec)
-{
-    GError *error = NULL;
-    GHashTable *details = NULL;
-    org_sflphone_SFLphone_VideoControls_get_codec_details(video_proxy,
-                                                          codec, &details, &error);
-    check_error(error);
-    return details;
-}
 
 gchar *
 dbus_get_current_video_codec_name(const callable_obj_t *c)

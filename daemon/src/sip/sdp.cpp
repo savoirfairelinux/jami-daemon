@@ -479,6 +479,19 @@ std::string Sdp::getActiveOutgoingVideoCodec() const
     return string(codec_buf);
 }
 
+std::string Sdp::getActiveOutgoingVideoBitrate(const std::string &codec) const
+{
+    for (vector<map<string, string> >::const_iterator i = video_codec_list_.begin(); i != video_codec_list_.end(); ++i) {
+        map<string, string>::const_iterator name = i->find("name");
+        if (name != i->end() and (codec == name->second)) {
+            map<string, string>::const_iterator bitrate = i->find("bitrate");
+            if (bitrate != i->end())
+                return bitrate->second;
+        }
+    }
+    return "0";
+}
+
 std::string Sdp::getActiveOutgoingVideoPayload() const
 {
     string videoLine(getLineFromSession(activeRemoteSession_, "m=video"));

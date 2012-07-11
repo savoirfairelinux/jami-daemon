@@ -71,8 +71,8 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         getCodecs(const std::string& accountID);
 
         void
-        setCodecs(const std::vector<std::map<std::string, std::string> > &details,
-                        const std::string& accountID);
+        setCodecs(const std::string& accountID,
+                  const std::vector<std::map<std::string, std::string> > &details);
 
         std::vector<std::string>
         getDeviceList();

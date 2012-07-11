@@ -43,7 +43,6 @@
 #include "dbus.h"
 
 static GQueue audioCodecs = G_QUEUE_INIT;
-static GQueue videoCodecs = G_QUEUE_INIT;
 
 /*
  * Instantiate a new codec
@@ -113,60 +112,6 @@ static void codecs_audio_unload(void)
     g_queue_foreach(&audioCodecs, codec_free, NULL);
 }
 
-#ifdef SFL_VIDEO
-static
-codec_t *
-codec_create_from_hash_table(gint payload, GHashTable *details)
-{
-    codec_t *codec = g_new0(codec_t, 1);
-
-    codec->payload = payload;
-    codec->name = g_strdup(g_hash_table_lookup(details, "name"));
-    codec->bitrate = g_strdup(g_hash_table_lookup(details, "bitrate"));
-    codec->is_active = TRUE;
-
-    return codec;
-}
-
-static gboolean codecs_video_load(void)
-{
-    gchar **codecs = dbus_video_codec_list();
-    gchar **codecs_orig = codecs;
-
-    if (!codecs)
-        return FALSE;
-
-    int payload = 96; // dynamic payloads
-    // Add the codecs in the list
-    for (; codecs && *codecs; ++codecs) {
-        GHashTable *codec_details = dbus_video_codec_details(*codecs);
-        codec_t *c = codec_create_from_hash_table(payload++, codec_details);
-        g_queue_push_tail(&videoCodecs, c);
-        g_free(*codecs);
-    }
-    g_free(codecs_orig);
-
-    // If we didn't load any codecs, problem ...
-    return g_queue_get_length(&videoCodecs) > 0;
-}
-
-gboolean codecs_load(void)
-{
-    return codecs_audio_load() && codecs_video_load();
-}
-
-static void codecs_video_unload(void)
-{
-    g_queue_foreach(&videoCodecs, codec_free, NULL);
-}
-
-void codecs_unload(void)
-{
-    codecs_audio_unload();
-    codecs_video_unload();
-}
-
-#else
 gboolean codecs_load(void)
 {
     return codecs_audio_load();
@@ -176,7 +121,6 @@ void codecs_unload(void)
 {
     codecs_audio_unload();
 }
-#endif // SFL_VIDEO
 
 codec_t *codec_create_new_from_caps(codec_t *original)
 {
@@ -306,33 +250,12 @@ codec_list_update_to_daemon_audio(const account_t *acc)
     g_slist_free_full(activeCodecs, g_free);
 }
 
-#ifdef SFL_VIDEO
-static void codec_list_update_to_daemon_video(const account_t *acc)
-{
-    GSList *activeCodecs = codec_list_get_active_codecs(acc->vcodecs, FALSE);
-    gchar **activeCodecsStr = get_items_from_list(activeCodecs);
-
-    // call dbus function with array of strings
-    dbus_set_active_video_codec_list((const gchar **) activeCodecsStr, acc->accountID);
-    g_free(activeCodecsStr);
-    g_slist_free_full(activeCodecs, g_free);
-}
-#endif
-
 void codec_list_update_to_daemon(const account_t *acc)
 {
     codec_list_update_to_daemon_audio(acc);
-#ifdef SFL_VIDEO
-    codec_list_update_to_daemon_video(acc);
-#endif
 }
 
 GQueue* get_audio_codecs_list(void)
 {
     return &audioCodecs;
-}
-
-GQueue* get_video_codecs_list(void)
-{
-    return &videoCodecs;
 }

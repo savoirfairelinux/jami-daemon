@@ -66,7 +66,8 @@ VideoControls::getCodecs(const std::string &accountID)
 }
 
 void
-VideoControls::setCodecs(const std::vector<std::map<std::string, std::string> > &details, const std::string& accountID)
+VideoControls::setCodecs(const std::string& accountID,
+                         const std::vector<std::map<std::string, std::string> > &details)
 {
     Account *acc = Manager::instance().getAccount(accountID);
     if (acc != NULL) {

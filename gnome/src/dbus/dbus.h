@@ -195,12 +195,6 @@ void dbus_play_dtmf(const gchar *key);
 GArray *dbus_audio_codec_list();
 
 /**
- * ConfigurationManager - Get the video codecs list
- * @return gchar** The list of video codecs
- */
-gchar** dbus_video_codec_list();
-
-/**
  * ConfigurationManager - Get the audio codec details
  * @param payload The payload of the audio codec
  * @return gchar** The audio codec details
@@ -237,13 +231,16 @@ void dbus_set_active_audio_codec_list(const gchar **list, const gchar *);
  * ConfigurationManager - Get the list of the audio codecs used for media negotiation
  * @return gchar** The list of audio codecs
  */
-gchar **dbus_get_active_video_codec_list(const gchar *accountID);
+GPtrArray *
+dbus_get_video_codecs(const gchar *accountID);
 
 /**
  * ConfigurationManager - Set the list of audio codecs used for media negociation
- * @param list The list of audio codecs
+ * @param id The accountID
+ * @param list The list of codecs
  */
-void dbus_set_active_video_codec_list(const gchar **list, const gchar *);
+void
+dbus_set_video_codecs(const gchar *id, const GPtrArray *list);
 
 /**
  * CallManager - return the video codec name
