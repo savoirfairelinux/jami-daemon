@@ -32,13 +32,8 @@
 #include "../dbus/dbus.h"
 #include <string.h>
 
-// void add_message_box(ClutterActor* stage, const char* author, const char* message)
-// {
-//    
-// }
-
 static GtkWidget *tab_box = NULL;
-static GHashTable *tabs = NULL;
+static GHashTable *tabs   = NULL;
 
 GtkWidget *get_tab_box()
 {
@@ -95,10 +90,10 @@ static gboolean on_enter(GtkEntry *entry, gpointer user_data)
    gtk_entry_set_text(entry,"");
 }
 
-
-message_tab* create_messaging_tab(const char* call_id,const char* title)
+//conference_obj_t
+message_tab* create_messaging_tab(callable_obj_t* call,const char* title)
 {
-    message_tab *tab = g_hash_table_lookup(tabs,call_id);
+    message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
     if (tab) {
 
        return tab;
@@ -124,13 +119,20 @@ message_tab* create_messaging_tab(const char* call_id,const char* title)
     g_signal_connect(G_OBJECT(line_edit), "activate", G_CALLBACK(on_enter), self);
 
     self->widget = vbox;
-    self->call_id = call_id;
+    self->call_id = call->_callID;
     self->title = title;
     self->buffer = text_buffer;
     self->entry = line_edit;
     self->view = text_box_widget;
 
-    int ret = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,NULL);
+    GtkWidget *tab_label = gtk_label_new(call->_peer_number);
+    gchar* label_text;
+    if (strcmp(call->_display_name,""))
+       label_text = call->_display_name;
+    else
+       label_text = call->_peer_number;
+
+    int ret = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label);
     gtk_widget_show (vbox);
     gtk_widget_show (scoll_area);
     gtk_widget_show (text_box_widget);
@@ -139,7 +141,7 @@ message_tab* create_messaging_tab(const char* call_id,const char* title)
     if (!tabs) {
       tabs = g_hash_table_new(NULL,g_str_equal);
     }
-    g_hash_table_insert(tabs,(gpointer)call_id,(gpointer)self);
+    g_hash_table_insert(tabs,(gpointer)call->_callID,(gpointer)self);
 
     return self;
 }

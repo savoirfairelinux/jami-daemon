@@ -36,6 +36,7 @@
 #define __MESSAGING_H__
 
 #include <gtk/gtk.h>
+#include <callable_obj.h>
 
 typedef struct {
    GtkWidget *widget;
@@ -47,7 +48,7 @@ typedef struct {
 } message_tab;
 
 // void add_message_box(ClutterActor* stage, const char* author, const char* message);
-message_tab* create_messaging_tab(const char* call_id,const char* title);
+message_tab* create_messaging_tab(callable_obj_t* call,const char* title);
 GtkWidget *get_tab_box();
 void new_text_message(gchar* call_id, char* message);
 

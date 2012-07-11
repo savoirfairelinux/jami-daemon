@@ -652,14 +652,14 @@ call_im(void* foo UNUSED)
         if (selectedCall) {
             if (!selectedCall->_im_widget)
                 selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
-            create_messaging_tab(selectedCall->_callID,"test");
+            create_messaging_tab(selectedCall,"test");
         } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     } else {
         if (selectedConf) {
             if (!selectedConf->_im_widget)
                 selectedConf->_im_widget = im_widget_display(selectedConf->_confID);
-            create_messaging_tab(selectedConf->_confID,"test");
+            create_messaging_tab(selectedConf,"test");
         } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     }
