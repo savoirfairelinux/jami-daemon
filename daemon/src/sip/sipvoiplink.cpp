@@ -1631,13 +1631,15 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         return;
     }
 
-    if (tsx->role == PJSIP_ROLE_UAS and tsx->state == PJSIP_TSX_STATE_TRYING) {
-        handle_media_control(inv, tsx, event);
-        return;
-    }
+    pjsip_tx_data* t_data;
+    //TODO this brake the instant messaging
+//     if (tsx->role == PJSIP_ROLE_UAS and tsx->state == PJSIP_TSX_STATE_TRYING) {
+//         handle_media_control(inv, tsx, event);
+//         return;
+//     }
 
     if (event->body.rx_msg.rdata) {
-        pjsip_tx_data* t_data;
+//         pjsip_tx_data* t_data;
 
         pjsip_rx_data *r_data = event->body.rx_msg.rdata;
 
@@ -1675,7 +1677,7 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         return;
 
     // Respond with a 200/OK
-    pjsip_tx_data* t_data;
+//     pjsip_tx_data* t_data;
     pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
     pjsip_dlg_send_response(inv->dlg, tsx, t_data);
 
