@@ -70,7 +70,6 @@ void append_message(message_tab* self, gchar* name, gchar* message)
 {
    GtkTextIter current_end,new_end;
    gtk_text_buffer_get_end_iter(self->buffer, &current_end);
-   gtk_text_buffer_insert(self->buffer, &current_end, "\n\n", -1);
    gtk_text_buffer_insert(self->buffer, &current_end, name, -1);
    gtk_text_buffer_insert(self->buffer, &current_end, ": ", -1);
 
@@ -84,6 +83,7 @@ void append_message(message_tab* self, gchar* name, gchar* message)
    gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
 
    gtk_text_buffer_insert(self->buffer, &new_end, message, -1);
+   gtk_text_buffer_insert(self->buffer, &new_end, "\n"   , -1);
 }
 
 static gboolean on_enter(GtkEntry *entry, gpointer user_data)
@@ -128,22 +128,11 @@ message_tab* create_messaging_tab(const char* call_id,const char* title)
     self->buffer = text_buffer;
     self->entry = line_edit;
 
-    append_message(self,"test_name","message blah blah blah");
-    append_message(self,"other_name","sajfhasdjkh fsdjkafh kasdh kahjk hfkjasdhfjkasd hfasdkjfh asdjk fhsdjkfh asdjkfh asdjkfhsdjkfha fhfhsdkajh fasdjkfh ahfkasdjfhasdkfhsdjkafh jh sdkfhasdkjhfajksdfhkasdjfh hsjk fhsdkfhkasdjfh");
-
-    append_message(self,"test_name","message blah blah blah");
-    append_message(self,"other_name","sajfhasdjkh fsdjkafh kasdh kahjk hfkjasdhfjkasd hfasdkjfh asdjk fhsdjkfh asdjkfh asdjkfhsdjkfha fhfhsdkajh fasdjkfh ahfkasdjfhasdkfhsdjkafh jh sdkfhasdkjhfajksdfhkasdjfh hsjk fhsdkfhkasdjfh");
-
-    append_message(self,"test_name","message blah blah blah");
-    append_message(self,"other_name","sajfhasdjkh fsdjkafh kasdh kahjk hfkjasdhfjkasd hfasdkjfh asdjk fhsdjkfh asdjkfh asdjkfhsdjkfha fhfhsdkajh fasdjkfh ahfkasdjfhasdkfhsdjkafh jh sdkfhasdkjhfajksdfhkasdjfh hsjk fhsdkfhkasdjfh");
-
-    printf("\n\n\nusing widget %d\n",GTK_NOTEBOOK(get_tab_box()));
     int ret = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,NULL);
     gtk_widget_show (vbox);
     gtk_widget_show (scoll_area);
     gtk_widget_show (text_box_widget);
     gtk_widget_show (line_edit);
-    printf("ret %d\n",ret);
 
     if (!tabs) {
       tabs = g_hash_table_new(NULL,g_str_equal);
