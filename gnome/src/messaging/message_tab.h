@@ -42,6 +42,7 @@ typedef struct {
    char *call_id;
    char *title;
    GtkTextBuffer *buffer;
+   GtkTextView *view;
    GtkWidget* entry;
 } message_tab;
 

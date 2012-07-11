@@ -84,6 +84,7 @@ void append_message(message_tab* self, gchar* name, gchar* message)
 
    gtk_text_buffer_insert(self->buffer, &new_end, message, -1);
    gtk_text_buffer_insert(self->buffer, &new_end, "\n"   , -1);
+   gtk_text_view_scroll_to_iter(self->view,&new_end,FALSE,0,0,FALSE);
 }
 
 static gboolean on_enter(GtkEntry *entry, gpointer user_data)
@@ -127,6 +128,7 @@ message_tab* create_messaging_tab(const char* call_id,const char* title)
     self->title = title;
     self->buffer = text_buffer;
     self->entry = line_edit;
+    self->view = text_box_widget;
 
     int ret = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,NULL);
     gtk_widget_show (vbox);
