@@ -45,6 +45,7 @@ typedef struct {
    GtkTextBuffer *buffer;
    GtkTextView *view;
    GtkWidget* entry;
+   gint index;
 } message_tab;
 
 message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title);

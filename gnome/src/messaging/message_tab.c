@@ -90,6 +90,13 @@ static void on_enter(GtkEntry *entry, gpointer user_data)
    gtk_entry_set_text(entry,"");
 }
 
+static void on_close(GtkWidget *button,gpointer data)
+{
+   message_tab *tab = (message_tab*)data;
+   gtk_notebook_remove_page(GTK_NOTEBOOK(get_tab_box()),tab->index);
+   g_hash_table_remove(tabs,tab->call_id);
+}
+
 //conference_obj_t
 message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
 {
@@ -131,8 +138,21 @@ message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
        label_text = call->_peer_number;
 
     GtkWidget *tab_label = gtk_label_new(label_text);
+    GtkWidget *tab_label_vbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_box_set_spacing (GTK_BOX(tab_label_vbox),0);
+    gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_label, TRUE, TRUE, 0);
 
-    gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label);
+    GtkWidget *tab_close_button = gtk_button_new();
+    GtkWidget *button_image = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_MENU);
+    gtk_button_set_image(GTK_BUTTON(tab_close_button),button_image);
+    gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_close_button, FALSE, FALSE, 0);
+    g_signal_connect(G_OBJECT(tab_close_button), "clicked", G_CALLBACK(on_close), self);
+
+    gtk_widget_show (tab_label);
+    gtk_widget_show (tab_close_button);
+    gtk_widget_show (tab_label_vbox);
+
+    self->index = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label_vbox);
     gtk_widget_show (vbox);
     gtk_widget_show (scoll_area);
     gtk_widget_show (text_box_widget);
