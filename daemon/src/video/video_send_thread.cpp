@@ -95,9 +95,8 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 #endif
 
     // set some encoder settings here
-    // FIXME: don't hardcode this
-    // encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
-    encoderCtx_->bit_rate = 400000;
+    encoderCtx_->bit_rate = 1000 * atoi(args_["bitrate"].c_str());
+    DEBUG("Using bitrate %d", encoderCtx_->bit_rate);
 
     // resolution must be a multiple of two
     if (args_["width"].empty() and inputDecoderCtx_)

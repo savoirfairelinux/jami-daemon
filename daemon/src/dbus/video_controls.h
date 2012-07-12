@@ -67,14 +67,12 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         VideoControls(DBus::Connection& connection);
         VideoPreference &getVideoPreferences();
 
-        std::vector<std::string> getCodecList();
-        std::map<std::string, std::string> getCodecDetails(const std::string& name);
+        std::vector<std::map<std::string, std::string> >
+        getCodecs(const std::string& accountID);
 
-        std::vector<std::string>
-        getActiveCodecList(const std::string& accountID);
-
-        void setActiveCodecList(const std::vector<std::string> &list,
-                                const std::string& accountID);
+        void
+        setCodecs(const std::string& accountID,
+                  const std::vector<std::map<std::string, std::string> > &details);
 
         std::vector<std::string>
         getDeviceList();
@@ -88,17 +86,35 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         std::vector<std::string>
         getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
 
-        std::map<std::string, std::string> getSettings();
+        std::map<std::string, std::string>
+        getSettings();
 
-        void setActiveDevice(const std::string &dev);
-        void setActiveDeviceChannel(const std::string &channel);
-        void setActiveDeviceSize(const std::string &size);
-        void setActiveDeviceRate(const std::string &rate);
-        std::string getActiveDevice();
-        std::string getActiveDeviceChannel();
-        std::string getActiveDeviceSize();
-        std::string getActiveDeviceRate();
-        std::string getCurrentCodecName(const std::string &callID);
+        void
+        setActiveDevice(const std::string &dev);
+
+        void
+        setActiveDeviceChannel(const std::string &channel);
+
+        void
+        setActiveDeviceSize(const std::string &size);
+
+        void
+        setActiveDeviceRate(const std::string &rate);
+
+        std::string
+        getActiveDevice();
+
+        std::string
+        getActiveDeviceChannel();
+
+        std::string
+        getActiveDeviceSize();
+
+        std::string
+        getActiveDeviceRate();
+
+        std::string
+        getCurrentCodecName(const std::string &callID);
 
         void startPreview();
         void stopPreview();

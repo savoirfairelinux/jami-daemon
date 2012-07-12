@@ -53,8 +53,15 @@ namespace {
     }
 }
 
+void cleanup()
+{
+    std::cerr << "Killing all sipp processes" << std::endl;
+    system("killall sipp");
+}
+
 int main(int argc, char* argv[])
 {
+    atexit(cleanup);
     printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
     Logger::setConsoleLog(true);
     Logger::setDebugMode(true);

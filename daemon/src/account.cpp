@@ -29,16 +29,23 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "account.h"
+#include <algorithm>
+#ifdef SFL_VIDEO
+#include "video/libav_utils.h"
+#endif
+
 #include "manager.h"
 #include "dbus/configurationmanager.h"
-#ifdef SFL_VIDEO
-#include "video/video_endpoint.h"
-#endif
 
 const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";
+const char * const Account::VIDEO_CODEC_ENABLED =   "enabled";
+const char * const Account::VIDEO_CODEC_NAME =      "name";
+const char * const Account::VIDEO_CODEC_BITRATE =   "bitrate";
 const char * const Account::RINGTONE_PATH_KEY =     "ringtonePath";
 const char * const Account::RINGTONE_ENABLED_KEY =  "ringtoneEnabled";
 const char * const Account::DISPLAY_NAME_KEY =      "displayName";
@@ -52,7 +59,12 @@ const char * const Account::HOSTNAME_KEY =          "hostname";
 const char * const Account::ACCOUNT_ENABLE_KEY =    "enable";
 const char * const Account::MAILBOX_KEY =           "mailbox";
 
-Account::Account(const std::string &accountID, const std::string &type) :
+using std::map;
+using std::string;
+using std::vector;
+
+
+Account::Account(const string &accountID, const string &type) :
     accountID_(accountID)
     , username_()
     , hostname_()
@@ -63,7 +75,6 @@ Account::Account(const std::string &accountID, const std::string &type) :
     , audioCodecList_()
     , videoCodecList_()
     , audioCodecStr_()
-    , videoCodecStr_()
     , ringtonePath_("/usr/share/sflphone/ringtones/konga.ul")
     , ringtoneEnabled_(true)
     , displayName_("")
@@ -94,7 +105,7 @@ void Account::loadDefaultCodecs()
     // CodecMap codecMap = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
 
     // Initialize codec
-    std::vector<std::string> result;
+    vector<string> result;
     result.push_back("0");
     result.push_back("3");
     result.push_back("8");
@@ -105,31 +116,30 @@ void Account::loadDefaultCodecs()
 
     setActiveAudioCodecs(result);
 #ifdef SFL_VIDEO
-    setActiveVideoCodecs(sfl_video::getCodecList());
+    setVideoCodecs(libav_utils::getDefaultCodecs());
 #endif
 }
 
-void Account::setActiveVideoCodecs(const std::vector<std::string> &list)
+void Account::setVideoCodecs(const vector<map<string, string> > &list)
 {
 #ifdef SFL_VIDEO
     // first clear the previously stored codecs
     videoCodecList_.clear();
-    videoCodecList_ = !list.empty() ? list : sfl_video::getCodecList();
-    // update the codec string according to new codec selection
-    videoCodecStr_ = ManagerImpl::join_string(list);
+    // FIXME: do real validation here
+    videoCodecList_ = list;
 #else
     (void) list;
 #endif
 }
 
-void Account::setActiveAudioCodecs(const std::vector<std::string> &list)
+void Account::setActiveAudioCodecs(const vector<string> &list)
 {
     // first clear the previously stored codecs
     audioCodecList_.clear();
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the CodecOrder vector to save the order.
-    for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end();
+    for (vector<string>::const_iterator iter = list.begin(); iter != list.end();
             ++iter) {
         int payload = std::atoi(iter->c_str());
         audioCodecList_.push_back(payload);
@@ -139,7 +149,7 @@ void Account::setActiveAudioCodecs(const std::vector<std::string> &list)
     audioCodecStr_ = ManagerImpl::join_string(list);
 }
 
-std::string Account::mapStateNumberToString(RegistrationState state)
+string Account::mapStateNumberToString(RegistrationState state)
 {
     static const char * mapStateToChar[] = {
         "UNREGISTERED",
@@ -157,4 +167,27 @@ std::string Account::mapStateNumberToString(RegistrationState state)
         return "ERROR";
 
     return mapStateToChar[state];
+}
+
+vector<map<string, string> >
+Account::getAllVideoCodecs() const
+{
+    return videoCodecList_;
+}
+
+namespace {
+    bool is_inactive(const map<string, string> &codec)
+    {
+        map<string, string>::const_iterator iter = codec.find(Account::VIDEO_CODEC_ENABLED);
+        return iter == codec.end() or iter->second != "true";
+    }
+}
+
+vector<map<string, string> >
+Account::getActiveVideoCodecs() const
+{
+    // FIXME: validate video codec details first
+    vector<map<string, string> > result(videoCodecList_);
+    result.erase(std::remove_if(result.begin(), result.end(), is_inactive), result.end());
+    return result;
 }

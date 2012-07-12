@@ -129,17 +129,16 @@ class Account : public Serializable {
         std::string getAlias() const {
             return alias_;
         }
+
         void setAlias(const std::string &alias) {
             alias_ = alias;
         }
 
-        /**
-         * Accessor to data structures
-         * @return std::vector<std::string>& The list that reflects the user's choice
-         */
-        std::vector<std::string> getActiveVideoCodecs() const {
-            return videoCodecList_;
-        }
+        std::vector<std::map<std::string, std::string> >
+        getAllVideoCodecs() const;
+
+        std::vector<std::map<std::string, std::string> >
+        getActiveVideoCodecs() const;
 
          /* Accessor to data structures
          * @return CodecOrder& The list that reflects the user's choice
@@ -153,7 +152,7 @@ class Account : public Serializable {
          * SDP offer and configuration respectively
          */
         void setActiveAudioCodecs(const std::vector<std::string>& list);
-        void setActiveVideoCodecs(const std::vector<std::string>& list);
+        void setVideoCodecs(const std::vector<std::map<std::string, std::string> > &codecs);
 
         std::string getRingtonePath() const {
             return ringtonePath_;
@@ -184,6 +183,7 @@ class Account : public Serializable {
             mailBox_ = mb;
         }
 
+        static const char * const VIDEO_CODEC_ENABLED;
     private:
         NON_COPYABLE(Account);
 
@@ -197,6 +197,8 @@ class Account : public Serializable {
         // General configuration keys for accounts
         static const char * const AUDIO_CODECS_KEY;
         static const char * const VIDEO_CODECS_KEY;
+        static const char * const VIDEO_CODEC_NAME;
+        static const char * const VIDEO_CODEC_BITRATE;
         static const char * const RINGTONE_PATH_KEY;
         static const char * const RINGTONE_ENABLED_KEY;
         static const char * const DISPLAY_NAME_KEY;
@@ -257,21 +259,15 @@ class Account : public Serializable {
         std::vector<int> audioCodecList_;
 
         /**
-         * Vector containing the order of the video codecs
+         * Vector containing the video codecs in order
          */
-        std::vector<std::string> videoCodecList_;
+        std::vector<std::map<std::string, std::string> > videoCodecList_;
 
         /**
          * List of audio codecs obtained when parsing configuration and used
          * to generate codec order list
          */
         std::string audioCodecStr_;
-
-        /**
-         * List of video codecs obtained when parsing configuration and used
-         * to generate codec order list
-         */
-        std::string videoCodecStr_;
 
         /**
          * Ringtone .au file used for this account

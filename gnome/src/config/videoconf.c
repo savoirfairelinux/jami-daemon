@@ -51,7 +51,7 @@ static GtkListStore *v4l2RateList;
 static GtkWidget *v4l2_hbox;
 static GtkWidget *v4l2_nodev;
 
-static GtkWidget *preview_button = NULL;
+static GtkWidget *preview_button;
 
 static GtkWidget *codecTreeView; // View used instead of store to get access to selection
 static GtkWidget *codecMoveUpButton;
@@ -141,30 +141,36 @@ update_preview_button_label()
 /**
  * Fills the tree list with supported codecs
  */
-static void preferences_dialog_fill_codec_list(account_t *a)
+static void
+preferences_dialog_fill_codec_list(account_t *acc)
 {
+    if (!acc) {
+        ERROR("Account is NULL");
+        return;
+    }
     // Get model of view and clear it
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
 
-    GQueue *list = a ? a->vcodecs : get_video_codecs_list();
+    GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
 
     // Add the codecs in the list
-    for (size_t i = 0; i < list->length; i++) {
-        codec_t *c = g_queue_peek_nth(list, i);
+    for (size_t i = 0; i < vcodecs->len; ++i) {
+        GHashTable *c = g_ptr_array_index(vcodecs, i);
 
         if (c) {
-            DEBUG("%s is %sactive", c->name, c->is_active ? "" : "not ");
             GtkTreeIter iter;
             gtk_list_store_append(codecStore, &iter);
-            gchar *bitrate = g_strdup_printf("%s kbps", c->bitrate);
+            const gchar *bitrate = g_hash_table_lookup(c, "bitrate");
+            const gboolean is_active = !g_strcmp0(g_hash_table_lookup(c, "enabled"), "true");
+            const gchar *name = g_hash_table_lookup(c, "name");
 
             gtk_list_store_set(codecStore, &iter, COLUMN_CODEC_ACTIVE,
-                               c->is_active, COLUMN_CODEC_NAME, c->name,
+                               is_active, COLUMN_CODEC_NAME, name,
                                COLUMN_CODEC_BITRATE, bitrate, -1);
-            g_free(bitrate);
         }
     }
+    g_ptr_array_free(vcodecs, TRUE);
 }
 
 /**
@@ -172,23 +178,52 @@ static void preferences_dialog_fill_codec_list(account_t *a)
  * and in configuration files
  */
 
+static gboolean
+video_codec_has_name(GHashTable *codec, const gchar *name)
+{
+    return g_strcmp0(g_hash_table_lookup(codec, "name"), name) == 0;
+}
+
+static void
+video_codec_set_active(GHashTable *codec, gboolean active)
+{
+    g_hash_table_replace(codec, g_strdup("enabled"), active ? g_strdup("true") : g_strdup("false"));
+}
+
+static void
+video_codec_set_bitrate(GHashTable *codec, const gchar *bitrate)
+{
+    g_hash_table_replace(codec, g_strdup("bitrate"), g_strdup(bitrate));
+}
+
+static GHashTable *
+video_codec_list_get_by_name(GPtrArray *vcodecs, const gchar *name)
+{
+    for (guint i = 0; i < vcodecs->len; ++i) {
+        GHashTable *codec = g_ptr_array_index(vcodecs, i);
+        if (video_codec_has_name(codec, name))
+            return codec;
+    }
+    return NULL;
+}
+
 static void
 codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
                      gpointer data)
 {
-    // Get path of clicked codec active toggle box
-    GtkTreePath *treePath = gtk_tree_path_new_from_string(path);
-    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW (codecTreeView));
-    GtkTreeIter iter;
-    gtk_tree_model_get_iter(model, &iter, treePath);
-
-    // Retrieve userdata
     account_t *acc = (account_t*) data;
 
     if (!acc) {
         ERROR("No account selected");
         return;
     }
+
+    // Get path of clicked codec active toggle box
+    GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
+    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW (codecTreeView));
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter(model, &iter, tree_path);
+    gtk_tree_path_free(tree_path);
 
     // Get active value and name at iteration
     gboolean active = FALSE;
@@ -197,9 +232,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
                        COLUMN_CODEC_NAME, &name, -1);
 
     DEBUG("%s", name);
-    DEBUG("video codecs length %i", g_queue_get_length(acc->vcodecs));
-
-    codec_t *codec = codec_list_get_by_name((gconstpointer) name, acc->vcodecs);
+    GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+    DEBUG("video codecs length %i", vcodecs->len);
 
     // Toggle active value
     active = !active;
@@ -208,85 +242,154 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_ACTIVE,
                        active, -1);
 
-    gtk_tree_path_free(treePath);
+    GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
+    if (codec) {
+        video_codec_set_active(codec, active);
+        dbus_set_video_codecs(acc->accountID, vcodecs);
+    }
+}
 
-    // Modify codec queue to represent change
-    codec->is_active = active;
+
+static GPtrArray *
+swap_pointers(GPtrArray *array, guint old_pos, guint new_pos)
+{
+    GHashTable *src = g_ptr_array_index(array, old_pos);
+    GHashTable *dst = g_ptr_array_index(array, new_pos);
+
+    GPtrArray *new_array = g_ptr_array_new();
+    for (guint i = 0; i < array->len; ++i) {
+        if (i == new_pos)
+            g_ptr_array_add(new_array, src);
+        else if (i == old_pos)
+            g_ptr_array_add(new_array, dst);
+        else
+            g_ptr_array_add(new_array, g_ptr_array_index(array, i));
+    }
+
+    g_ptr_array_free(array, TRUE);
+    return new_array;
 }
 
 /**
  * Move codec in list depending on direction and selected codec and
  * update changes in the daemon list and the configuration files
  */
-static void codec_move(gboolean moveUp, gpointer data)
+static void
+codec_move(gboolean move_up, gpointer data)
 {
-    GtkTreeIter iter;
-    GtkTreeIter *iter2;
-    GtkTreeModel *model;
-    GtkTreeSelection *selection;
-    GtkTreePath *treePath;
-    gchar *path;
-
     // Get view, model and selection of codec store
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
+    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
 
     // Find selected iteration and create a copy
+    GtkTreeIter iter;
     gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), &model, &iter);
-    iter2 = gtk_tree_iter_copy(&iter);
+    GtkTreeIter *iter_cpy = gtk_tree_iter_copy(&iter);
 
     // Find path of iteration
-    path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL (model), &iter);
-    treePath = gtk_tree_path_new_from_string(path);
-    gint *indices = gtk_tree_path_get_indices(treePath);
-    gint pos = indices[0];
+    gchar *path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(model), &iter);
+    GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
+    gint *indices = gtk_tree_path_get_indices(tree_path);
+    const gint pos = indices[0];
 
     // Depending on button direction get new path
-    if (moveUp)
-        gtk_tree_path_prev(treePath);
+    if (move_up)
+        gtk_tree_path_prev(tree_path);
     else
-        gtk_tree_path_next(treePath);
+        gtk_tree_path_next(tree_path);
 
-    gtk_tree_model_get_iter(model, &iter, treePath);
+    gtk_tree_model_get_iter(model, &iter, tree_path);
 
     // Swap iterations if valid
-    if (gtk_list_store_iter_is_valid (GTK_LIST_STORE (model), &iter))
-        gtk_list_store_swap(GTK_LIST_STORE (model), &iter, iter2);
+    GtkListStore *list_store = GTK_LIST_STORE(model);
+    if (gtk_list_store_iter_is_valid(list_store, &iter)) {
+        gtk_list_store_swap(list_store, &iter, iter_cpy);
+
+        const gint dest_pos = move_up ? pos - 1 : pos + 1;
+        if (dest_pos >= 0 &&
+            dest_pos < gtk_tree_model_iter_n_children(model, NULL)) {
+            account_t *acc = (account_t *) data;
+            GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+            // Perpetuate changes in daemon
+            vcodecs = swap_pointers(vcodecs, pos, dest_pos);
+            // FIXME: only do this AFTER apply is clicked, not every time we move codecs!
+            dbus_set_video_codecs(acc->accountID, vcodecs);
+            g_ptr_array_free(vcodecs, TRUE);
+        }
+    }
 
     // Scroll to new position
-    gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(codecTreeView), treePath, NULL, FALSE, 0, 0);
+    gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(codecTreeView), tree_path, NULL, FALSE, 0, 0);
 
     // Free resources
-    gtk_tree_path_free(treePath);
-    gtk_tree_iter_free(iter2);
+    gtk_tree_path_free(tree_path);
+    gtk_tree_iter_free(iter_cpy);
     g_free(path);
-
-    // Perpetuate changes in codec queue
-    if (moveUp)
-        codec_list_move_codec_up(pos, &((account_t*)data)->vcodecs);
-    else
-        codec_list_move_codec_down(pos, &((account_t*)data)->vcodecs);
 }
 
 /**
  * Called from move up codec button signal
  */
-static void codec_move_up (GtkButton *button UNUSED, gpointer data)
+static void
+codec_move_up(GtkButton *button UNUSED, gpointer data)
 {
-    // Change tree view ordering and get indice changed
-    codec_move (TRUE, data);
+    codec_move(TRUE, data);
 }
 
 /**
  * Called from move down codec button signal
  */
-static void codec_move_down (GtkButton *button UNUSED, gpointer data)
+static void
+codec_move_down(GtkButton *button UNUSED, gpointer data)
 {
-    // Change tree view ordering and get indice changed
-    codec_move (FALSE, data);
+    codec_move(FALSE, data);
 }
 
-GtkWidget* videocodecs_box(account_t *a)
+static void
+bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text, gpointer data)
+{
+    // Retrieve userdata
+    account_t *acc = (account_t*) data;
+
+    if (!acc) {
+        ERROR("No account selected");
+        return;
+    }
+    DEBUG("updating bitrate for %s", acc->accountID);
+    // Get active value and name at iteration
+    const gint base = 10;
+    gchar *endptr;
+    const unsigned long long val = strtoull(new_text, &endptr, base);
+    /* Ignore if it's not a number */
+    if (*endptr != '\0') {
+        WARN("Ignoring characters %s\n", val, endptr);
+    } else {
+        // Get path of edited codec
+        GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
+        GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
+        GtkTreeIter iter;
+        gtk_tree_model_get_iter(model, &iter, tree_path);
+        gtk_tree_path_free(tree_path);
+        gchar *name = NULL;
+        gtk_tree_model_get(model, &iter, COLUMN_CODEC_NAME, &name, -1);
+        DEBUG("Setting new bitrate for %s", name);
+
+        /* Don't free this, we want it to persist in the codec structure */
+        gchar *bitrate = g_strdup_printf("%llu", val);
+        gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_BITRATE, bitrate, -1);
+        GPtrArray *vcodecs = dbus_get_video_codecs(name);
+        GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
+        if (codec) {
+            video_codec_set_bitrate(codec, bitrate);
+            dbus_set_video_codecs(acc->accountID, vcodecs);
+        }
+        g_ptr_array_free(vcodecs, TRUE);
+    }
+}
+
+
+GtkWidget *
+videocodecs_box(account_t *acc)
 {
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -318,7 +421,7 @@ GtkWidget* videocodecs_box(account_t *a)
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
     // Toggle codec active property on clicked
-    g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(codec_active_toggled), (gpointer) a);
+    g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(codec_active_toggled), (gpointer) acc);
 
     // Name column
     renderer = gtk_cell_renderer_text_new();
@@ -327,7 +430,9 @@ GtkWidget* videocodecs_box(account_t *a)
 
     // Bitrate column
     renderer = gtk_cell_renderer_text_new();
-    treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
+    g_object_set(renderer, "editable", TRUE, NULL);
+    g_signal_connect(G_OBJECT(renderer), "edited", G_CALLBACK(bitrate_edited_cb), acc);
+    treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate (kbps)"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
     g_object_unref(G_OBJECT(codecStore));
@@ -341,21 +446,22 @@ GtkWidget* videocodecs_box(account_t *a)
     codecMoveUpButton = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveUpButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveUpButton, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(codecMoveUpButton), "clicked", G_CALLBACK(codec_move_up), a);
+    g_signal_connect(G_OBJECT(codecMoveUpButton), "clicked", G_CALLBACK(codec_move_up), acc);
 
     codecMoveDownButton = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveDownButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveDownButton, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked", G_CALLBACK(codec_move_down), a);
+    g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked", G_CALLBACK(codec_move_down), acc);
 
-    preferences_dialog_fill_codec_list(a);
+    preferences_dialog_fill_codec_list(acc);
 
     return ret;
 }
 
 /* Gets a newly allocated string with the active text, the caller must
  * free this string */
-static gchar *get_active_text(GtkComboBox *box)
+static gchar *
+get_active_text(GtkComboBox *box)
 {
     gchar *text = NULL;
     int comboBoxIndex = gtk_combo_box_get_active(box);
@@ -368,7 +474,8 @@ static gchar *get_active_text(GtkComboBox *box)
 }
 
 /* Return 0 if string was found in the combo box, != 0 if the string was not found */
-static int set_combo_index_from_str(GtkComboBox *box, const gchar *str, size_t max)
+static int
+set_combo_index_from_str(GtkComboBox *box, const gchar *str, size_t max)
 {
     g_assert(str);
 
@@ -602,7 +709,8 @@ select_video_input_device_cb(GtkComboBox* comboBox, gpointer data UNUSED)
     }
 }
 
-static void fill_devices(void)
+static void
+fill_devices()
 {
     if (preferences_dialog_fill_video_input_device_list()) {
         gtk_widget_show_all(v4l2_hbox);
@@ -615,13 +723,15 @@ static void fill_devices(void)
     }
 }
 
-void video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo UNUSED)
+void
+video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo UNUSED)
 {
     fill_devices();
 }
 
 
-static GtkWidget* v4l2_box()
+static GtkWidget *
+v4l2_box()
 {
     DEBUG("%s", __PRETTY_FUNCTION__);
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -697,7 +807,8 @@ static GtkWidget* v4l2_box()
 }
 
 
-GtkWidget* create_video_configuration()
+GtkWidget *
+create_video_configuration()
 {
     // Main widget
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);

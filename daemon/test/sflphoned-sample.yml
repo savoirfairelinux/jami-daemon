@@ -93,6 +93,13 @@ accounts:
   type: SIP
   updateContact: false
   username:
+  videoCodecs:
+  - bitrate: 400
+    enabled: true
+    name: H263-2000
+  - bitrate: 400
+    enabled: true
+    name: H264
   zrtp:
     displaySas: true
     displaySasOnce: false

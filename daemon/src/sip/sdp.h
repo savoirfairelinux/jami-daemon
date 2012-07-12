@@ -115,13 +115,14 @@ class Sdp {
          */
         std::string getActiveIncomingVideoDescription() const;
         std::string getActiveOutgoingVideoCodec() const;
+        std::string getActiveOutgoingVideoBitrate(const std::string &codec) const;
         std::string getActiveOutgoingVideoPayload() const;
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
          */
-        void createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs);
+        void createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::map<std::string, std::string> > &videoCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -131,7 +132,7 @@ class Sdp {
         */
         void receiveOffer(const pjmedia_sdp_session* remote,
                           const std::vector<int> &selectedCodecs,
-                          const std::vector<std::string> &videoCodecs);
+                          const std::vector<std::map<std::string, std::string> > &videoCodecs);
 
         /**
          * Start the sdp negotiation.
@@ -285,7 +286,7 @@ class Sdp {
          * Codec Map used for offer
          */
         std::vector<sfl::Codec *> audio_codec_list_;
-        std::vector<std::string> video_codec_list_;
+        std::vector<std::map<std::string, std::string> > video_codec_list_;
 
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
@@ -323,11 +324,12 @@ class Sdp {
          * @param List of codec in preference order
          */
         void setLocalMediaAudioCapabilities(const std::vector<int> &selected);
-        void setLocalMediaVideoCapabilities(const std::vector<std::string> &selected);
+        void setLocalMediaVideoCapabilities(const std::vector<std::map<std::string, std::string> > &codecs);
         /*
          * Build the local SDP offer
          */
-        int createLocalSession(const std::vector<int> &selectedAudio, const std::vector<std::string> &selectedVideo);
+        int createLocalSession(const std::vector<int> &selectedAudio,
+                               const std::vector<std::map<std::string, std::string> > &selectedVideo);
         /*
          * Adds a sdes attribute to the given media section.
          *
