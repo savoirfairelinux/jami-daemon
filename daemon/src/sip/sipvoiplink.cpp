@@ -151,18 +151,20 @@ void handleIncomingOptions(pjsip_rx_data *rdata)
         pjsip_tx_data_dec_ref(tdata);
 }
 
-// Always return PJ_TRUE since we are the only module that will handle these requests
+// return PJ_FALSE so that eventuall other modules will handle these requests
+// TODO: move Voicemail to separate module
+// TODO: add Buddy presence in separate module
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 {
     pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
 
     if (!dlg)
-        return PJ_TRUE;
+        return PJ_FALSE;
 
     pjsip_transaction *tsx = pjsip_rdata_get_tsx(rdata);
 
     if (!tsx or tsx->method.id != PJSIP_INVITE_METHOD)
-        return PJ_TRUE;
+        return PJ_FALSE;
 
     if (tsx->status_code / 100 == 2) {
         /**
@@ -176,34 +178,33 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
         }
     }
 
-    return PJ_TRUE;
+    return PJ_FALSE;
 }
 
-// Always return PJ_TRUE since we are the only module that will handle these requests
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
     if (!rdata or !rdata->msg_info.msg) {
         ERROR("rx_data is NULL");
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
     if (!method) {
         ERROR("method is NULL");
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     if (method->id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata))
-        return PJ_TRUE;
+        return PJ_FALSE;
 
     if (!rdata->msg_info.to or !rdata->msg_info.from) {
         ERROR("NULL from/to fields");
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
     pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
     pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
     if (!sip_to_uri or !sip_from_uri) {
         ERROR("NULL uri");
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
@@ -226,19 +227,19 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
-        return PJ_TRUE;
+        return PJ_FALSE;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
         handleIncomingOptions(rdata);
-        return PJ_TRUE;
+        return PJ_FALSE;
     } else if (method->id != PJSIP_INVITE_METHOD && method->id != PJSIP_ACK_METHOD) {
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
     if (!account) {
         ERROR("Could not find account %s", account_id.c_str());
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     pjmedia_sdp_session *r_sdp;
@@ -250,7 +251,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         pjsip_endpt_respond_stateless(endpt_, rdata,
                                       PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
                                       NULL);
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     // Verify that we can handle the request
@@ -258,7 +259,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
@@ -327,7 +328,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (!ac) {
         ERROR("Could not instantiate codec");
         delete call;
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
     call->getAudioRtp().start(ac);
 
@@ -336,7 +337,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog) != PJ_SUCCESS) {
         delete call;
         pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
@@ -344,13 +345,13 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     if (pjsip_dlg_set_transport(dialog, tp) != PJ_SUCCESS) {
         ERROR("Could not set transport for dialog");
         delete call;
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     if (!call->inv) {
         ERROR("Call invite is not initialized");
         delete call;
-        return PJ_TRUE;
+        return PJ_FALSE;
     }
 
     call->inv->mod_data[mod_ua_.id] = call;
@@ -384,12 +385,12 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             ERROR("Could not answer invite");
             delete call;
-            return PJ_TRUE;
+            return PJ_FALSE;
         }
         if (pjsip_inv_send_msg(call->inv, tdata) != PJ_SUCCESS) {
             ERROR("Could not send msg for invite");
             delete call;
-            return PJ_TRUE;
+            return PJ_FALSE;
         }
 
         call->setConnectionState(Call::RINGING);
@@ -398,7 +399,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         Manager::instance().getAccountLink(account_id)->addCall(call);
     }
 
-    return PJ_TRUE;
+    return PJ_FALSE;
 }
 } // end anonymous namespace
 
