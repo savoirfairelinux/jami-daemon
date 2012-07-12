@@ -204,22 +204,17 @@ void codec_list_move_codec_down(guint codec_index, GQueue **q)
     }
 
     *q = tmp;
-
 }
 
 /* Returns a list of strings for just the active codecs in a given queue of codecs */
 static GSList*
-codec_list_get_active_codecs(GQueue *codecs, gboolean by_payload)
+codec_list_get_active_codecs(GQueue *codecs)
 {
     GSList *active = NULL;
     for (guint i = 0; i < codecs->length; i++) {
         codec_t* currentCodec = g_queue_peek_nth(codecs, i);
-        if (currentCodec && currentCodec->is_active) {
-            if (by_payload)
-                active = g_slist_append(active, g_strdup_printf("%d", currentCodec->payload));
-            else
-                active = g_slist_append(active, g_strdup(currentCodec->name));
-        }
+        if (currentCodec && currentCodec->is_active)
+            active = g_slist_append(active, g_strdup_printf("%d", currentCodec->payload));
     }
     return active;
 }
@@ -241,7 +236,7 @@ get_items_from_list(GSList *codecs)
 static void
 codec_list_update_to_daemon_audio(const account_t *acc)
 {
-    GSList *activeCodecs = codec_list_get_active_codecs(acc->acodecs, TRUE);
+    GSList *activeCodecs = codec_list_get_active_codecs(acc->acodecs);
     gchar **activeCodecsStr = get_items_from_list(activeCodecs);
 
     // call dbus function with array of strings

@@ -249,6 +249,27 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
     }
 }
 
+
+static GPtrArray *
+swap_pointers(GPtrArray *array, guint old_pos, guint new_pos)
+{
+    GHashTable *src = g_ptr_array_index(array, old_pos);
+    GHashTable *dst = g_ptr_array_index(array, new_pos);
+
+    GPtrArray *new_array = g_ptr_array_new();
+    for (guint i = 0; i < array->len; ++i) {
+        if (i == new_pos)
+            g_ptr_array_add(new_array, src);
+        else if (i == old_pos)
+            g_ptr_array_add(new_array, dst);
+        else
+            g_ptr_array_add(new_array, g_ptr_array_index(array, i));
+    }
+
+    g_ptr_array_free(array, TRUE);
+    return new_array;
+}
+
 /**
  * Move codec in list depending on direction and selected codec and
  * update changes in the daemon list and the configuration files
@@ -266,10 +287,10 @@ codec_move(gboolean move_up, gpointer data)
     GtkTreeIter *iter_cpy = gtk_tree_iter_copy(&iter);
 
     // Find path of iteration
-    gchar *path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL (model), &iter);
+    gchar *path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(model), &iter);
     GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
     gint *indices = gtk_tree_path_get_indices(tree_path);
-    gint pos = indices[0];
+    const gint pos = indices[0];
 
     // Depending on button direction get new path
     if (move_up)
@@ -280,8 +301,22 @@ codec_move(gboolean move_up, gpointer data)
     gtk_tree_model_get_iter(model, &iter, tree_path);
 
     // Swap iterations if valid
-    if (gtk_list_store_iter_is_valid(GTK_LIST_STORE (model), &iter))
-        gtk_list_store_swap(GTK_LIST_STORE (model), &iter, iter_cpy);
+    GtkListStore *list_store = GTK_LIST_STORE(model);
+    if (gtk_list_store_iter_is_valid(list_store, &iter)) {
+        gtk_list_store_swap(list_store, &iter, iter_cpy);
+
+        const gint dest_pos = move_up ? pos - 1 : pos + 1;
+        if (dest_pos >= 0 &&
+            dest_pos < gtk_tree_model_iter_n_children(model, NULL)) {
+            account_t *acc = (account_t *) data;
+            GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+            // Perpetuate changes in daemon
+            vcodecs = swap_pointers(vcodecs, pos, dest_pos);
+            // FIXME: only do this AFTER apply is clicked, not every time we move codecs!
+            dbus_set_video_codecs(acc->accountID, vcodecs);
+            g_ptr_array_free(vcodecs, TRUE);
+        }
+    }
 
     // Scroll to new position
     gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(codecTreeView), tree_path, NULL, FALSE, 0, 0);
@@ -290,14 +325,6 @@ codec_move(gboolean move_up, gpointer data)
     gtk_tree_path_free(tree_path);
     gtk_tree_iter_free(iter_cpy);
     g_free(path);
-
-#if 0
-    // Perpetuate changes in codec queue
-    if (move_up)
-        codec_list_move_codec_up(pos, &((account_t *) data)->vcodecs);
-    else
-        codec_list_move_codec_down(pos, &((account_t *) data)->vcodecs);
-#endif
 }
 
 /**
