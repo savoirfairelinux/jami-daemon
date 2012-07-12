@@ -66,6 +66,7 @@ void append_message(message_tab* self, gchar* name, const gchar* message)
 
 void new_text_message(callable_obj_t* call, const gchar* message)
 {
+   if (!tabs) return;
    message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
    if (!tab)
       tab = create_messaging_tab(call,call->_callID);
@@ -116,6 +117,7 @@ message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
     GtkWidget *text_box_widget = gtk_text_view_new_with_buffer(text_buffer);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text_box_widget),FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
+    gtk_container_add(scoll_area,text_box_widget);
 
     gtk_box_pack_start(GTK_BOX(vbox), scoll_area, TRUE, TRUE, 0);
 
