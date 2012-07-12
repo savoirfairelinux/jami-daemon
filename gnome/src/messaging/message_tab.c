@@ -43,11 +43,32 @@ GtkWidget *get_tab_box()
    return tab_box;
 }
 
-void new_text_message(gchar* call_id, char* message)
+void append_message(message_tab* self, gchar* name, const gchar* message)
 {
-   message_tab *tab = g_hash_table_lookup(tabs,call_id);
+   GtkTextIter current_end,new_end;
+   gtk_text_buffer_get_end_iter(self->buffer, &current_end);
+   gtk_text_buffer_insert(self->buffer, &current_end, name, -1);
+   gtk_text_buffer_insert(self->buffer, &current_end, ": ", -1);
+
+   gtk_text_buffer_get_end_iter(self->buffer, &current_end);
+   for (unsigned int i=0;i<strlen(name)+2;i++){
+      if (!gtk_text_iter_backward_char(&current_end))
+         break;
+   }
+
+   gtk_text_buffer_get_end_iter(self->buffer, &new_end);
+   gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
+
+   gtk_text_buffer_insert(self->buffer, &new_end, message, -1);
+   gtk_text_buffer_insert(self->buffer, &new_end, "\n"   , -1);
+   gtk_text_view_scroll_to_iter(self->view,&new_end,FALSE,0,0,FALSE);
+}
+
+void new_text_message(callable_obj_t* call, const gchar* message)
+{
+   message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
    if (!tab)
-      tab = create_messaging_tab(call_id,call_id);
+      tab = create_messaging_tab(call,call->_callID);
    append_message(tab,"Peer",message);
 }
 void replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
@@ -61,37 +82,16 @@ void replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
     }
 }
 
-void append_message(message_tab* self, gchar* name, gchar* message)
-{
-   GtkTextIter current_end,new_end;
-   gtk_text_buffer_get_end_iter(self->buffer, &current_end);
-   gtk_text_buffer_insert(self->buffer, &current_end, name, -1);
-   gtk_text_buffer_insert(self->buffer, &current_end, ": ", -1);
-
-   gtk_text_buffer_get_end_iter(self->buffer, &current_end);
-   for (int i=0;i<strlen(name)+2;i++){
-      if (!gtk_text_iter_backward_char(&current_end))
-         break;
-   }
-
-   gtk_text_buffer_get_end_iter(self->buffer, &new_end);
-   gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
-
-   gtk_text_buffer_insert(self->buffer, &new_end, message, -1);
-   gtk_text_buffer_insert(self->buffer, &new_end, "\n"   , -1);
-   gtk_text_view_scroll_to_iter(self->view,&new_end,FALSE,0,0,FALSE);
-}
-
-static gboolean on_enter(GtkEntry *entry, gpointer user_data)
+static void on_enter(GtkEntry *entry, gpointer user_data)
 {
    message_tab *tab = (message_tab*)user_data;
-   append_message(tab,"Me",gtk_entry_get_text(entry));
+   append_message(tab,(gchar*)"Me",gtk_entry_get_text(entry));
    dbus_send_text_message(tab->call_id,gtk_entry_get_text(entry));
    gtk_entry_set_text(entry,"");
 }
 
 //conference_obj_t
-message_tab* create_messaging_tab(callable_obj_t* call,const char* title)
+message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
 {
     message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
     if (tab) {
@@ -107,10 +107,9 @@ message_tab* create_messaging_tab(callable_obj_t* call,const char* title)
     GtkWidget *scoll_area = gtk_scrolled_window_new(NULL,NULL);
 
     GtkWidget *text_box_widget = gtk_text_view_new_with_buffer(text_buffer);
-    gtk_text_view_set_editable(text_box_widget,FALSE);
-    gtk_text_view_set_wrap_mode(text_box_widget,GTK_WRAP_CHAR);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_box_widget),FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
 
-    gtk_container_add(scoll_area,text_box_widget);
     gtk_box_pack_start(GTK_BOX(vbox), scoll_area, TRUE, TRUE, 0);
 
     GtkWidget *line_edit = gtk_entry_new();
@@ -120,19 +119,20 @@ message_tab* create_messaging_tab(callable_obj_t* call,const char* title)
 
     self->widget = vbox;
     self->call_id = call->_callID;
-    self->title = title;
+    self->title = malloc(strlen(title) * sizeof(gchar*));
+    strcpy(self->title,title);
     self->buffer = text_buffer;
     self->entry = line_edit;
-    self->view = text_box_widget;
-
-    GtkWidget *tab_label = gtk_label_new(call->_peer_number);
+    self->view = GTK_TEXT_VIEW(text_box_widget);
     gchar* label_text;
     if (strcmp(call->_display_name,""))
        label_text = call->_display_name;
     else
        label_text = call->_peer_number;
 
-    int ret = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label);
+    GtkWidget *tab_label = gtk_label_new(label_text);
+
+    gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label);
     gtk_widget_show (vbox);
     gtk_widget_show (scoll_area);
     gtk_widget_show (text_box_widget);

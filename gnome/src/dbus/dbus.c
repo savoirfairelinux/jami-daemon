@@ -51,6 +51,7 @@
 #include "assistant.h"
 #include "accountlist.h"
 #include "accountlistconfigdialog.h"
+#include "messaging/message_tab.h"
 
 #include "dbus.h"
 #include "actions.h"
@@ -147,18 +148,16 @@ voice_mail_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, guint nb,
 
 static void
 incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
-                    const gchar *from, const gchar *msg, void *foo UNUSED)
+                    const gchar *from UNUSED, const gchar *msg, void *foo UNUSED)
 {
     // do not display message if instant messaging is disabled
     if (eel_gconf_key_exists(INSTANT_MESSAGING_ENABLED) &&
         !eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED))
         return;
 
-    gchar *id;
     callable_obj_t *call = calllist_get_call(current_calls_tab, callID);
 
     if (call) {
-        id = call->_callID;
         new_text_message(call,msg);
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
@@ -167,7 +166,6 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
             return;
         }
 
-        id = conf->_confID;
         new_text_message(conf,msg);
     }
 }
@@ -358,6 +356,7 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
     // remove all participants for this conference
     for (GSList *p = c->participant_list; p; p = g_slist_next(p)) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
+        /*TODO elepage(2012) implement unmerging of IM here*/
     }
 
     conferencelist_remove(current_calls_tab, c->_confID);

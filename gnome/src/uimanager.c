@@ -63,6 +63,8 @@
 #include "account_schema.h"
 #include "config/accountlistconfigdialog.h"
 
+#include "messaging/message_tab.h"
+
 #include <sys/stat.h>
 
 #include <sliders.h>

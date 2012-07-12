@@ -47,9 +47,8 @@ typedef struct {
    GtkWidget* entry;
 } message_tab;
 
-// void add_message_box(ClutterActor* stage, const char* author, const char* message);
-message_tab* create_messaging_tab(callable_obj_t* call,const char* title);
+message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title);
 GtkWidget *get_tab_box();
-void new_text_message(gchar* call_id, char* message);
+void new_text_message(callable_obj_t* call, const gchar* message);
 
 #endif
