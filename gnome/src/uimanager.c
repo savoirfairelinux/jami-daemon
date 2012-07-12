@@ -46,7 +46,6 @@
 
 #include "uimanager.h"
 #include "statusicon.h"
-#include "widget/imwidget.h"
 #include "eel-gconf-extensions.h"
 
 #include "config/audioconf.h"
@@ -111,7 +110,7 @@ remove_from_toolbar(GtkWidget *widget)
         gtk_container_remove(GTK_CONTAINER(toolbar_), widget);
 }
 
-static bool
+static gboolean
 is_non_empty(const char *str)
 {
     return str && strlen(str) > 0;
@@ -650,15 +649,11 @@ call_im(void* foo UNUSED)
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         if (selectedCall) {
-            if (!selectedCall->_im_widget)
-                selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
             create_messaging_tab(selectedCall,"test");
         } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     } else {
         if (selectedConf) {
-            if (!selectedConf->_im_widget)
-                selectedConf->_im_widget = im_widget_display(selectedConf->_confID);
             create_messaging_tab(selectedConf,"test");
         } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");

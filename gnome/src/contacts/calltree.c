@@ -50,7 +50,6 @@
 #include "calltree.h"
 #include "uimanager.h"
 #include "actions.h"
-#include "imwindow.h"
 #include "searchbar.h"
 
 #if !GLIB_CHECK_VERSION(2, 30, 0)

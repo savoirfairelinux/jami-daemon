@@ -66,10 +66,8 @@
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
 #include "icons/icon_factory.h"
-#include "imwindow.h"
 #include "statusicon.h"
 #include "unused.h"
-#include "widget/imwidget.h"
 #include "sliders.h"
 
 static GHashTable * ip2ip_profile;
@@ -181,18 +179,12 @@ void
 sflphone_hung_up(callable_obj_t * c)
 {
     DEBUG("%s", __PRETTY_FUNCTION__);
-
+    /*TODO elepage(2012) disable IM new text message here*/
     calllist_remove_call(current_calls_tab, c->_callID);
     calltree_remove_call(current_calls_tab, c->_callID);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
     update_actions();
-
-    // test whether the widget contains text, if not remove it
-    if ((im_window_get_nb_tabs() > 1) && c->_im_widget && !(IM_WIDGET(c->_im_widget)->containText))
-        im_window_remove_tab(c->_im_widget);
-    else
-        im_widget_update_state(IM_WIDGET(c->_im_widget), FALSE);
 
     status_tray_icon_blink(FALSE);
 
@@ -296,7 +288,7 @@ sflphone_hang_up()
     DEBUG("%s", __PRETTY_FUNCTION__);
 
     if (selectedConf) {
-        im_widget_update_state(IM_WIDGET(selectedConf->_im_widget), FALSE);
+        /*TODO elepage(2012) disable IM text message here*/
         dbus_hang_up_conference(selectedConf);
     } else if (selectedCall) {
         switch (selectedCall->_state) {
@@ -316,8 +308,6 @@ sflphone_hang_up()
                 call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 time(&selectedCall->_time_stop);
-
-                im_widget_update_state(IM_WIDGET(selectedCall->_im_widget), FALSE);
 
                 break;
             case CALL_STATE_FAILURE:
@@ -371,20 +361,10 @@ sflphone_pick_up()
         case CALL_STATE_DIALING:
             sflphone_place_call(selectedCall);
 
-            // if instant messaging window is visible, create new tab (deleted automatically if not used)
-            if (im_window_is_visible())
-                if (!selectedCall->_im_widget)
-                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
-
             break;
         case CALL_STATE_INCOMING:
             selectedCall->_history_state = g_strdup(INCOMING_STRING);
             calltree_update_call(history_tab, selectedCall);
-
-            // if instant messaging window is visible, create new tab (deleted automatically if not used)
-            if (im_window_is_visible())
-                if (!selectedCall->_im_widget)
-                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
 
             dbus_accept(selectedCall);
             break;
@@ -803,7 +783,7 @@ sflphone_detach_participant(const gchar* callID)
 
     DEBUG("Detach participant %s", selectedCall->_callID);
 
-    im_widget_update_state(IM_WIDGET(selectedCall->_im_widget), TRUE);
+    /*TODO elepage(2012) correct IM conversation*/
     calltree_remove_call(current_calls_tab, selectedCall->_callID);
     calltree_add_call(current_calls_tab, selectedCall, NULL);
     dbus_detach_participant(selectedCall->_callID);

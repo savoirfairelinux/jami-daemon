@@ -56,8 +56,6 @@
 #include "actions.h"
 #include "unused.h"
 
-#include "widget/imwidget.h"
-
 #ifdef SFL_VIDEO
 #include "config/videoconf.h"
 #include "video/video_callbacks.h"
@@ -156,12 +154,10 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
         !eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED))
         return;
 
-    GtkWidget **widget;
     gchar *id;
     callable_obj_t *call = calllist_get_call(current_calls_tab, callID);
 
     if (call) {
-        widget = &call->_im_widget;
         id = call->_callID;
         new_text_message(call,msg);
     } else {
@@ -171,16 +167,9 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
             return;
         }
 
-        widget = &conf->_im_widget;
         id = conf->_confID;
         new_text_message(conf,msg);
     }
-
-    if (!*widget)
-        *widget = im_widget_display(id);
-
-
-    im_widget_add_message(IM_WIDGET(*widget), from, msg, 0);
 }
 
 /**
@@ -271,8 +260,7 @@ toggle_im(conference_obj_t *conf, gboolean activate)
     for (GSList *p = conf->participant_list; p; p = g_slist_next(p)) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
 
-        if (call)
-            im_widget_update_state(IM_WIDGET(call->_im_widget), activate);
+        /*TODO elepage(2012) Implement IM messaging toggle here*/
     }
 }
 
@@ -335,7 +323,7 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, void *foo U
     for (gchar **part = participants; part && *part; ++part) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, *part);
 
-        im_widget_update_state(IM_WIDGET(call->_im_widget), FALSE);
+        /*TODO elepage (2012) implement merging IM conversation here*/
 
         // if one of these participants is currently recording, the whole conference will be recorded
         if (dbus_get_is_recording(call))
@@ -365,15 +353,11 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 
     calltree_remove_conference(current_calls_tab, c);
 
-    im_widget_update_state(IM_WIDGET(c->_im_widget), FALSE);
+    /*TODO elepage(2012) implement unmerging of IM here*/
 
     // remove all participants for this conference
     for (GSList *p = c->participant_list; p; p = g_slist_next(p)) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
-
-        if (call) {
-            im_widget_update_state(IM_WIDGET(call->_im_widget), TRUE);
-        }
     }
 
     conferencelist_remove(current_calls_tab, c->_confID);

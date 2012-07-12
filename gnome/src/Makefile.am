@@ -21,7 +21,6 @@ libsflphone_client_la_SOURCES = \
   uimanager.c \
   sflnotify.c \
   mainwindow.c \
-  imwindow.c \
   dialpad.c \
   callable_obj.c \
   conference_obj.c \
@@ -50,7 +49,6 @@ libsflphone_client_la_SOURCES = \
   shortcuts.h \
   eel-gconf-extensions.h \
   logger.h \
-  imwindow.h \
   unused.h \
   str_utils.h \
   gtk2_wrappers.h \
