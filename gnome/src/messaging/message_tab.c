@@ -104,7 +104,7 @@ on_enter(GtkEntry *entry, gpointer user_data)
 }
 
 static void
-on_close(GtkWidget *button, gpointer data)
+on_close(GtkWidget *button UNUSED, gpointer data)
 {
     message_tab *tab = (message_tab*)data;
     gtk_widget_destroy(tab->widget);
@@ -196,6 +196,8 @@ create_messaging_tab(callable_obj_t* call UNUSED)
     if (tab) {
        return tab;
     }
+    //show_messaging();
+
     message_tab *self = g_new0(message_tab, 1);
 
     /* Create the main layout */
@@ -204,15 +206,27 @@ create_messaging_tab(callable_obj_t* call UNUSED)
     gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
 
     /* Create the conversation history widget*/
+    GtkWidget *history_hbox    = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2  );
+    GtkWidget *h_left_spacer   = gtk_label_new ( ""                         );
+    GtkWidget *h_right_spacer  = gtk_label_new ( ""                         );
     GtkWidget *scoll_area      = gtk_scrolled_window_new      ( NULL,NULL   );
     GtkWidget *text_box_widget = gtk_text_view_new_with_buffer( text_buffer );
+    gtk_box_pack_start(GTK_BOX(history_hbox) , h_left_spacer  , FALSE , FALSE , 0);
+    gtk_box_pack_start(GTK_BOX(history_hbox) , scoll_area     , TRUE  , TRUE  , 0);
+    gtk_box_pack_start(GTK_BOX(history_hbox) , h_right_spacer , FALSE , FALSE , 0);
 
     gtk_text_view_set_editable ( GTK_TEXT_VIEW(text_box_widget),FALSE        );
     gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
 
     gtk_container_add(GTK_SCROLLED_WINDOW(scoll_area),text_box_widget);
 
-    GtkWidget *line_edit = gtk_entry_new();
+    GtkWidget *line_edit    = gtk_entry_new (                               );
+    GtkWidget *hbox         = gtk_box_new   ( GTK_ORIENTATION_HORIZONTAL, 1 );
+    GtkWidget *left_spacer  = gtk_label_new ( ""                            );
+    GtkWidget *right_spacer = gtk_label_new ( ""                            );
+    gtk_box_pack_start(GTK_BOX(hbox) , left_spacer  , FALSE , FALSE , 0);
+    gtk_box_pack_start(GTK_BOX(hbox) , line_edit    , TRUE  , TRUE  , 0);
+    gtk_box_pack_start(GTK_BOX(hbox) , right_spacer , FALSE , FALSE , 0);
 
     g_signal_connect(G_OBJECT(line_edit), "activate"        , G_CALLBACK(on_enter)    , self);
     g_signal_connect(G_OBJECT(line_edit), "focus-in-event"  , G_CALLBACK(on_focus_in) , self);
@@ -246,8 +260,8 @@ create_messaging_tab(callable_obj_t* call UNUSED)
     g_signal_connect(G_OBJECT(tab_close_button), "clicked", G_CALLBACK(on_close), self);
 
     /* Fill the layout ans show everything */
-    gtk_box_pack_start(GTK_BOX(vbox)          , scoll_area      , TRUE , TRUE , 0);
-    gtk_box_pack_start(GTK_BOX(vbox)          , line_edit       , FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox)          , history_hbox    , TRUE , TRUE , 0);
+    gtk_box_pack_start(GTK_BOX(vbox)          , hbox            , FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_label       , TRUE , TRUE , 0);
     gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_close_button, FALSE, FALSE, 0);
 
@@ -257,7 +271,13 @@ create_messaging_tab(callable_obj_t* call UNUSED)
     gtk_widget_show (vbox            );
     gtk_widget_show (scoll_area      );
     gtk_widget_show (text_box_widget );
+    gtk_widget_show (history_hbox    );
+    gtk_widget_show (h_left_spacer   );
+    gtk_widget_show (h_right_spacer  );
+    gtk_widget_show (hbox            );
     gtk_widget_show (line_edit       );
+    gtk_widget_show (left_spacer     );
+    gtk_widget_show (right_spacer    );
 
     self->index = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label_vbox);
     gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(get_tab_box()),vbox,TRUE);
