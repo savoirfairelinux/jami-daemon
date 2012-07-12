@@ -64,4 +64,12 @@ GtkWidget *get_tab_box();
  */
 void new_text_message(callable_obj_t* call, const gchar* message);
 
+
+/**
+ * Display or hide messaging notebook
+ */
+void toogle_messaging();
+void hide_messaging();
+void show_messaging();
+
 #endif

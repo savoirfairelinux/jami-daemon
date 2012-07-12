@@ -289,7 +289,6 @@ sflphone_hang_up()
     DEBUG("%s", __PRETTY_FUNCTION__);
 
     if (selectedConf) {
-        /*TODO elepage(2012) disable IM text message here*/
         disable_messaging_tab(selectedConf);
         dbus_hang_up_conference(selectedConf);
     } else if (selectedCall) {

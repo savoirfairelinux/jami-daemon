@@ -36,7 +36,14 @@
 
 static GtkWidget *tab_box = NULL;
 static GHashTable *tabs   = NULL;
+static gboolean   visible = FALSE;
 
+void disable_messaging_tab ( callable_obj_t* call                                                   );
+void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
+void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
+void replace_markup_tag    ( GtkTextBuffer* text_buffer, GtkTextIter* start                         );
+
+message_tab * create_messaging_tab(callable_obj_t* call UNUSED);
 
 
 /////////////////////GETTERS/////////////////////////
@@ -50,6 +57,40 @@ GtkWidget *get_tab_box()
 }
 
 
+
+/////////////////////GETTERS/////////////////////////
+
+void
+hide_show_common()
+{
+   if (visible) {
+      gtk_widget_show(get_tab_box());
+   }
+   else {
+      gtk_widget_hide(get_tab_box());
+   }
+}
+
+void
+toogle_messaging()
+{
+   visible = !visible;
+   hide_show_common();
+}
+
+void
+hide_messaging()
+{
+   visible = TRUE;
+   hide_show_common();
+}
+
+void
+show_messaging()
+{
+   visible = FALSE;
+   hide_show_common();
+}
 
 //////////////////////SLOTS//////////////////////////
 
@@ -65,7 +106,6 @@ on_enter(GtkEntry *entry, gpointer user_data)
 static void
 on_close(GtkWidget *button, gpointer data)
 {
-    gint page = GPOINTER_TO_INT( g_object_get_data( G_OBJECT( button ), "page" ) );
     message_tab *tab = (message_tab*)data;
     gtk_widget_destroy(tab->widget);
     g_hash_table_remove(tabs,tab->call->_callID);
@@ -97,7 +137,7 @@ disable_messaging_tab(callable_obj_t* call)
 }
 
 void
-append_message(message_tab* self, gchar* name, const gchar* message)
+append_message(message_tab* self, const gchar* name, const gchar* message)
 {
     GtkTextIter current_end,new_end;
     gtk_text_buffer_get_end_iter( self->buffer, &current_end           );
