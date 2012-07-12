@@ -156,6 +156,10 @@ int main(int argc, char *argv [])
         return 1;
     }
 
+#ifdef SFL_VIDEO
+    WARN("Built with video support");
+#endif
+
     Manager::instance().run();
     Manager::instance().saveHistory();
 

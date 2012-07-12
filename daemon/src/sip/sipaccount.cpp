@@ -45,6 +45,10 @@
 #include <sstream>
 #include <stdlib.h>
 
+#ifdef SFL_VIDEO
+#include "video/libav_utils.h"
+#endif
+
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
@@ -311,14 +315,18 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
     if (videoCodecsNode && videoCodecsNode->getType() == SEQUENCE) {
         SequenceNode *videoCodecs = static_cast<SequenceNode *>(videoCodecsNode);
         Sequence *seq = videoCodecs->getSequence();
-
-        for (Sequence::iterator it = seq->begin(); it != seq->end(); ++it) {
-            MappingNode *codec = static_cast<MappingNode *>(*it);
-            map<string, string> codecMap;
-            codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
-            codec->getValue(VIDEO_CODEC_BITRATE, &codecMap[VIDEO_CODEC_BITRATE]);
-            codec->getValue(VIDEO_CODEC_ENABLED, &codecMap[VIDEO_CODEC_ENABLED]);
-            videoCodecDetails.push_back(codecMap);
+        if (seq->empty()) {
+            WARN("Loading default video codecs");
+            videoCodecDetails = libav_utils::getDefaultCodecs();
+        } else {
+            for (Sequence::iterator it = seq->begin(); it != seq->end(); ++it) {
+                MappingNode *codec = static_cast<MappingNode *>(*it);
+                map<string, string> codecMap;
+                codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
+                codec->getValue(VIDEO_CODEC_BITRATE, &codecMap[VIDEO_CODEC_BITRATE]);
+                codec->getValue(VIDEO_CODEC_ENABLED, &codecMap[VIDEO_CODEC_ENABLED]);
+                videoCodecDetails.push_back(codecMap);
+            }
         }
     }
     setVideoCodecs(videoCodecDetails);
