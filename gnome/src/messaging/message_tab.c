@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Author: Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,9 +32,14 @@
 #include "../dbus/dbus.h"
 #include "../mainwindow.h"
 #include <string.h>
+#include <unused.h>
 
 static GtkWidget *tab_box = NULL;
 static GHashTable *tabs   = NULL;
+
+
+
+/////////////////////GETTERS/////////////////////////
 
 GtkWidget *get_tab_box()
 {
@@ -44,34 +49,83 @@ GtkWidget *get_tab_box()
    return tab_box;
 }
 
-void append_message(message_tab* self, gchar* name, const gchar* message)
+
+
+//////////////////////SLOTS//////////////////////////
+
+static void
+on_enter(GtkEntry *entry, gpointer user_data)
 {
-   GtkTextIter current_end,new_end;
-   gtk_text_buffer_get_end_iter(self->buffer, &current_end);
-   gtk_text_buffer_insert(self->buffer, &current_end, name, -1);
-   gtk_text_buffer_insert(self->buffer, &current_end, ": ", -1);
-
-   gtk_text_buffer_get_end_iter(self->buffer, &current_end);
-   for (unsigned int i=0;i<strlen(name)+2;i++){
-      if (!gtk_text_iter_backward_char(&current_end))
-         break;
-   }
-
-   gtk_text_buffer_get_end_iter(self->buffer, &new_end);
-   gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
-
-   gtk_text_buffer_insert(self->buffer, &new_end, message, -1);
-   gtk_text_buffer_insert(self->buffer, &new_end, "\n"   , -1);
-   gtk_text_buffer_get_end_iter(self->buffer, &new_end);
-   gtk_text_view_scroll_to_iter(self->view,&new_end,FALSE,0,0,FALSE);
+    message_tab *tab = (message_tab*)user_data;
+    append_message(tab,(gchar*)"Me",gtk_entry_get_text(entry));
+    dbus_send_text_message(tab->call->_callID,gtk_entry_get_text(entry));
+    gtk_entry_set_text(entry,"");
 }
 
-void new_text_message(callable_obj_t* call, const gchar* message)
+static void
+on_close(GtkWidget *button, gpointer data)
+{
+    gint page = GPOINTER_TO_INT( g_object_get_data( G_OBJECT( button ), "page" ) );
+    message_tab *tab = (message_tab*)data;
+    gtk_widget_destroy(tab->widget);
+    g_hash_table_remove(tabs,tab->call->_callID);
+}
+
+static void
+on_focus_in(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
+{
+    main_window_pause_keygrabber(TRUE);
+}
+
+static void
+on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
+{
+    main_window_pause_keygrabber(FALSE);
+}
+
+
+
+/////////////////////MUTATORS////////////////////////
+
+void
+disable_messaging_tab(callable_obj_t* call)
+{
+    message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
+    if (tab) {
+       gtk_widget_hide(tab->entry);
+    }
+}
+
+void
+append_message(message_tab* self, gchar* name, const gchar* message)
+{
+    GtkTextIter current_end,new_end;
+    gtk_text_buffer_get_end_iter( self->buffer, &current_end           );
+    gtk_text_buffer_insert      ( self->buffer, &current_end, name, -1 );
+    gtk_text_buffer_insert      ( self->buffer, &current_end, ": ", -1 );
+
+    gtk_text_buffer_get_end_iter(self->buffer, &current_end);
+    for (unsigned int i=0;i<strlen(name)+2;i++){
+        if (!gtk_text_iter_backward_char(&current_end))
+            break;
+    }
+
+    gtk_text_buffer_get_end_iter(self->buffer, &new_end);
+    gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
+
+    gtk_text_buffer_insert      ( self->buffer, &new_end, message,    -1 );
+    gtk_text_buffer_insert      ( self->buffer, &new_end, "\n"   ,    -1 );
+    gtk_text_buffer_get_end_iter( self->buffer, &new_end                 );
+    gtk_text_view_scroll_to_iter( self->view  , &new_end,FALSE,0,0,FALSE );
+}
+
+void
+new_text_message(callable_obj_t* call, const gchar* message)
 {
     if (!tabs) return;
     message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
     if (!tab)
-        tab = create_messaging_tab(call,call->_callID);
+        tab = create_messaging_tab(call);
     gchar* name;
     if (strcmp(call->_display_name,""))
        name = call->_display_name;
@@ -79,7 +133,9 @@ void new_text_message(callable_obj_t* call, const gchar* message)
        name = "Peer";
     append_message(tab,name,message);
 }
-void replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
+
+void
+replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
 {
     GtkTextIter start_match,end_match;
     while ( gtk_text_iter_forward_search(start, "<b>", GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, &start_match, &end_match, NULL) ) {
@@ -90,101 +146,84 @@ void replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
     }
 }
 
-static void on_enter(GtkEntry *entry, gpointer user_data)
-{
-   message_tab *tab = (message_tab*)user_data;
-   append_message(tab,(gchar*)"Me",gtk_entry_get_text(entry));
-   dbus_send_text_message(tab->call->_callID,gtk_entry_get_text(entry));
-   gtk_entry_set_text(entry,"");
-}
-
-static void on_close(GtkWidget *button,gpointer data)
-{
-   message_tab *tab = (message_tab*)data;
-   gtk_notebook_remove_page(GTK_NOTEBOOK(get_tab_box()),tab->index);
-   g_hash_table_remove(tabs,tab->call->_callID);
-}
-
-static void on_focus_in(GtkEntry *entry, gpointer user_data)
-{
-   main_window_pause_keygrabber(TRUE);
-}
-
-static void on_focus_out(GtkEntry *entry, gpointer user_data)
-{
-   main_window_pause_keygrabber(FALSE);
-}
-
 //conference_obj_t
-message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
+message_tab *
+create_messaging_tab(callable_obj_t* call UNUSED)
 {
 
+    /* Do not create a new tab if it already exist */
     message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
     if (tab) {
-
        return tab;
     }
     message_tab *self = g_new0(message_tab, 1);
 
-    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    /* Create the main layout */
+    GtkWidget *vbox            = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkTextBuffer *text_buffer = gtk_text_buffer_new(NULL);
     gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
 
-    GtkWidget *scoll_area = gtk_scrolled_window_new(NULL,NULL);
+    /* Create the conversation history widget*/
+    GtkWidget *scoll_area      = gtk_scrolled_window_new      ( NULL,NULL   );
+    GtkWidget *text_box_widget = gtk_text_view_new_with_buffer( text_buffer );
 
-    GtkWidget *text_box_widget = gtk_text_view_new_with_buffer(text_buffer);
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_box_widget),FALSE);
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
+    gtk_text_view_set_editable ( GTK_TEXT_VIEW(text_box_widget),FALSE        );
+    gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
+
     gtk_container_add(GTK_SCROLLED_WINDOW(scoll_area),text_box_widget);
 
-    gtk_box_pack_start(GTK_BOX(vbox), scoll_area, TRUE, TRUE, 0);
-
     GtkWidget *line_edit = gtk_entry_new();
-    gtk_box_pack_start(GTK_BOX(vbox), line_edit, FALSE, FALSE, 0);
 
     g_signal_connect(G_OBJECT(line_edit), "activate"        , G_CALLBACK(on_enter)    , self);
     g_signal_connect(G_OBJECT(line_edit), "focus-in-event"  , G_CALLBACK(on_focus_in) , self);
     g_signal_connect(G_OBJECT(line_edit), "focus-out-event" , G_CALLBACK(on_focus_out), self);
 
-    self->widget = vbox;
-    self->call = call;
-    self->title = malloc(strlen(title) * sizeof(gchar*));
-    strcpy(self->title,title);
+    self->view   = GTK_TEXT_VIEW(text_box_widget);
+    self->widget = vbox       ;
+    self->call   = call       ;
     self->buffer = text_buffer;
-    self->entry = line_edit;
-    self->view = GTK_TEXT_VIEW(text_box_widget);
+    self->entry  = line_edit  ;
+
     gchar* label_text;
     if (strcmp(call->_display_name,""))
        label_text = call->_display_name;
     else
-       label_text = call->_peer_number;
+       label_text = call->_peer_number ;
 
-    GtkWidget *tab_label = gtk_label_new(label_text);
-    GtkWidget *tab_label_vbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    /* Setup the tab label */
+    GtkWidget *tab_label        = gtk_label_new           ( label_text                         );
+    GtkWidget *tab_label_vbox   = gtk_box_new             ( GTK_ORIENTATION_HORIZONTAL, 0      );
+    GtkWidget *tab_close_button = gtk_button_new          (                                    );
+    GtkWidget *button_image     = gtk_image_new_from_stock( GTK_STOCK_CLOSE,GTK_ICON_SIZE_MENU );
     gtk_box_set_spacing (GTK_BOX(tab_label_vbox),0);
-    gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_label, TRUE, TRUE, 0);
 
-    GtkWidget *tab_close_button = gtk_button_new();
-//     GtkRcStyle *style = gtk_rc_style_new();
-//     style->xthickness = 0;
-//     style->ythickness = 0;
-//     gtk_widget_modify_style(tab_close_button,style);
-    GtkWidget *button_image = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_MENU);
+    /*TODO make it work*/
+    /*   GtkRcStyle *style = gtk_rc_style_new();
+         style->xthickness = 0;
+         style->ythickness = 0;
+         gtk_widget_modify_style(tab_close_button,style);*/
     gtk_button_set_image(GTK_BUTTON(tab_close_button),button_image);
-    gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_close_button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(tab_close_button), "clicked", G_CALLBACK(on_close), self);
 
-    gtk_widget_show (tab_label);
+    /* Fill the layout ans show everything */
+    gtk_box_pack_start(GTK_BOX(vbox)          , scoll_area      , TRUE , TRUE , 0);
+    gtk_box_pack_start(GTK_BOX(vbox)          , line_edit       , FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_label       , TRUE , TRUE , 0);
+    gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_close_button, FALSE, FALSE, 0);
+
+    gtk_widget_show (tab_label       );
     gtk_widget_show (tab_close_button);
-    gtk_widget_show (tab_label_vbox);
+    gtk_widget_show (tab_label_vbox  );
+    gtk_widget_show (vbox            );
+    gtk_widget_show (scoll_area      );
+    gtk_widget_show (text_box_widget );
+    gtk_widget_show (line_edit       );
 
     self->index = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label_vbox);
+    gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(get_tab_box()),vbox,TRUE);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(get_tab_box()),self->index);
-    gtk_widget_show (vbox);
-    gtk_widget_show (scoll_area);
-    gtk_widget_show (text_box_widget);
-    gtk_widget_show (line_edit);
 
+    /* Keep track of the tab */
     if (!tabs) {
       tabs = g_hash_table_new(NULL,g_str_equal);
     }

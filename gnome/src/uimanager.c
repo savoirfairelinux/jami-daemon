@@ -651,12 +651,12 @@ call_im(void* foo UNUSED)
 
     if (calltab_get_selected_type(current_calls_tab) == A_CALL) {
         if (selectedCall) {
-            create_messaging_tab(selectedCall,"test");
+            create_messaging_tab(selectedCall);
         } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     } else {
         if (selectedConf) {
-            create_messaging_tab(selectedConf,"test");
+            create_messaging_tab(selectedConf);
         } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     }

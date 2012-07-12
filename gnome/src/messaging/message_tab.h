@@ -38,18 +38,30 @@
 #include <gtk/gtk.h>
 #include <callable_obj.h>
 
+/** An IM conversation */
 typedef struct {
-   GtkWidget *widget;
-   callable_obj_t *call;
-   char *title;
-   GtkTextBuffer *buffer;
-   GtkTextView *view;
-   GtkWidget* entry;
-   gint index;
+   GtkWidget      *widget ;
+   callable_obj_t *call   ;
+   gchar          *title  ;
+   GtkTextBuffer  *buffer ;
+   GtkTextView    *view   ;
+   GtkWidget      *entry  ;
+   gint           index   ;
 } message_tab;
 
-message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title);
+/**
+ * Create a new message tab or use the existing on if the call exist
+ * @param call the conversation call
+ */
+message_tab* create_messaging_tab(callable_obj_t* call);
+
+/** Return the main conversation notebook */
 GtkWidget *get_tab_box();
+
+/** Add a new text message to an existng conversation or create a new one
+ * @param call the call
+ * @param message the new message
+ */
 void new_text_message(callable_obj_t* call, const gchar* message);
 
 #endif

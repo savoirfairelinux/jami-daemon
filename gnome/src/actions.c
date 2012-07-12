@@ -69,6 +69,7 @@
 #include "statusicon.h"
 #include "unused.h"
 #include "sliders.h"
+#include "messaging/message_tab.h"
 
 static GHashTable * ip2ip_profile;
 
@@ -179,7 +180,7 @@ void
 sflphone_hung_up(callable_obj_t * c)
 {
     DEBUG("%s", __PRETTY_FUNCTION__);
-    /*TODO elepage(2012) disable IM new text message here*/
+    disable_messaging_tab(c);
     calllist_remove_call(current_calls_tab, c->_callID);
     calltree_remove_call(current_calls_tab, c->_callID);
     c->_state = CALL_STATE_DIALING;
@@ -289,6 +290,7 @@ sflphone_hang_up()
 
     if (selectedConf) {
         /*TODO elepage(2012) disable IM text message here*/
+        disable_messaging_tab(selectedConf);
         dbus_hang_up_conference(selectedConf);
     } else if (selectedCall) {
         switch (selectedCall->_state) {
