@@ -30,6 +30,7 @@
 #include "message_tab.h"
 
 #include "../dbus/dbus.h"
+#include "../mainwindow.h"
 #include <string.h>
 
 static GtkWidget *tab_box = NULL;
@@ -61,6 +62,7 @@ void append_message(message_tab* self, gchar* name, const gchar* message)
 
    gtk_text_buffer_insert(self->buffer, &new_end, message, -1);
    gtk_text_buffer_insert(self->buffer, &new_end, "\n"   , -1);
+   gtk_text_buffer_get_end_iter(self->buffer, &new_end);
    gtk_text_view_scroll_to_iter(self->view,&new_end,FALSE,0,0,FALSE);
 }
 
@@ -98,9 +100,20 @@ static void on_close(GtkWidget *button,gpointer data)
    g_hash_table_remove(tabs,tab->call_id);
 }
 
+static void on_focus_in(GtkEntry *entry, gpointer user_data)
+{
+   main_window_pause_keygrabber(TRUE);
+}
+
+static void on_focus_out(GtkEntry *entry, gpointer user_data)
+{
+   main_window_pause_keygrabber(FALSE);
+}
+
 //conference_obj_t
 message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
 {
+
     message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
     if (tab) {
 
@@ -117,14 +130,16 @@ message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
     GtkWidget *text_box_widget = gtk_text_view_new_with_buffer(text_buffer);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text_box_widget),FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
-    gtk_container_add(scoll_area,text_box_widget);
+    gtk_container_add(GTK_SCROLLED_WINDOW(scoll_area),text_box_widget);
 
     gtk_box_pack_start(GTK_BOX(vbox), scoll_area, TRUE, TRUE, 0);
 
     GtkWidget *line_edit = gtk_entry_new();
     gtk_box_pack_start(GTK_BOX(vbox), line_edit, FALSE, FALSE, 0);
 
-    g_signal_connect(G_OBJECT(line_edit), "activate", G_CALLBACK(on_enter), self);
+    g_signal_connect(G_OBJECT(line_edit), "activate"        , G_CALLBACK(on_enter)    , self);
+    g_signal_connect(G_OBJECT(line_edit), "focus-in-event"  , G_CALLBACK(on_focus_in) , self);
+    g_signal_connect(G_OBJECT(line_edit), "focus-out-event" , G_CALLBACK(on_focus_out), self);
 
     self->widget = vbox;
     self->call_id = call->_callID;
@@ -145,6 +160,10 @@ message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
     gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_label, TRUE, TRUE, 0);
 
     GtkWidget *tab_close_button = gtk_button_new();
+//     GtkRcStyle *style = gtk_rc_style_new();
+//     style->xthickness = 0;
+//     style->ythickness = 0;
+//     gtk_widget_modify_style(tab_close_button,style);
     GtkWidget *button_image = gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_MENU);
     gtk_button_set_image(GTK_BUTTON(tab_close_button),button_image);
     gtk_box_pack_start(GTK_BOX(tab_label_vbox), tab_close_button, FALSE, FALSE, 0);

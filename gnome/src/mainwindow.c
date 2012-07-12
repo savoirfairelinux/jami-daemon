@@ -80,6 +80,8 @@ static gchar *status_current_message;
 
 static gboolean focus_is_on_searchbar = FALSE;
 
+static gboolean pause_grabber = FALSE;
+
 void
 focus_on_searchbar_out()
 {
@@ -149,35 +151,38 @@ main_window_ask_quit()
 static gboolean
 on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, gpointer user_data UNUSED)
 {
-    if (focus_is_on_searchbar)
+    if (!pause_grabber) {
+        if (focus_is_on_searchbar)
+           return TRUE;
+
+        if (event->keyval == GDK_KEY_Return) {
+           if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
+                 sflphone_keypad(event->keyval, event->string);
+                 return TRUE;
+           } else if (calltab_has_name(active_calltree_tab, HISTORY))
+                 return FALSE;
+        }
+
+        // If a modifier key is pressed, it's a shortcut, pass along
+        if (event->state & GDK_CONTROL_MASK || event->state & GDK_MOD1_MASK ||
+                 event->keyval == '<' ||
+                 event->keyval == '>' ||
+                 event->keyval == '\"'||
+                 event->keyval == GDK_KEY_Tab ||
+                 event->keyval == GDK_KEY_Return ||
+                 event->keyval == GDK_KEY_Left ||
+                 event->keyval == GDK_KEY_Up ||
+                 event->keyval == GDK_KEY_Right ||
+                 event->keyval == GDK_KEY_Down ||
+                 (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
+                 event->keyval == ' ')
+           return FALSE;
+        else
+           sflphone_keypad(event->keyval, event->string);
+
         return TRUE;
-
-    if (event->keyval == GDK_KEY_Return) {
-        if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
-            sflphone_keypad(event->keyval, event->string);
-            return TRUE;
-        } else if (calltab_has_name(active_calltree_tab, HISTORY))
-            return FALSE;
     }
-
-    // If a modifier key is pressed, it's a shortcut, pass along
-    if (event->state & GDK_CONTROL_MASK || event->state & GDK_MOD1_MASK ||
-            event->keyval == '<' ||
-            event->keyval == '>' ||
-            event->keyval == '\"'||
-            event->keyval == GDK_KEY_Tab ||
-            event->keyval == GDK_KEY_Return ||
-            event->keyval == GDK_KEY_Left ||
-            event->keyval == GDK_KEY_Up ||
-            event->keyval == GDK_KEY_Right ||
-            event->keyval == GDK_KEY_Down ||
-            (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
-            event->keyval == ' ')
-        return FALSE;
-    else
-        sflphone_keypad(event->keyval, event->string);
-
-    return TRUE;
+    return FALSE;
 }
 
 static void pack_main_window_start(GtkBox *box, GtkWidget *widget, gboolean expand, gboolean fill, guint padding)
@@ -555,4 +560,11 @@ void
 main_window_reset_playback_scale()
 {
     sfl_seekslider_reset((SFLSeekSlider *)seekslider);
+}
+
+
+void
+main_window_pause_keygrabber(gboolean value)
+{
+    pause_grabber = value;
 }
