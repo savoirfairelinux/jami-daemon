@@ -40,7 +40,7 @@
 
 typedef struct {
    GtkWidget *widget;
-   char *call_id;
+   callable_obj_t *call;
    char *title;
    GtkTextBuffer *buffer;
    GtkTextView *view;

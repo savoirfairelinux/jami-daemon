@@ -68,11 +68,16 @@ void append_message(message_tab* self, gchar* name, const gchar* message)
 
 void new_text_message(callable_obj_t* call, const gchar* message)
 {
-   if (!tabs) return;
-   message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
-   if (!tab)
-      tab = create_messaging_tab(call,call->_callID);
-   append_message(tab,"Peer",message);
+    if (!tabs) return;
+    message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
+    if (!tab)
+        tab = create_messaging_tab(call,call->_callID);
+    gchar* name;
+    if (strcmp(call->_display_name,""))
+       name = call->_display_name;
+    else
+       name = "Peer";
+    append_message(tab,name,message);
 }
 void replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
 {
@@ -89,7 +94,7 @@ static void on_enter(GtkEntry *entry, gpointer user_data)
 {
    message_tab *tab = (message_tab*)user_data;
    append_message(tab,(gchar*)"Me",gtk_entry_get_text(entry));
-   dbus_send_text_message(tab->call_id,gtk_entry_get_text(entry));
+   dbus_send_text_message(tab->call->_callID,gtk_entry_get_text(entry));
    gtk_entry_set_text(entry,"");
 }
 
@@ -97,7 +102,7 @@ static void on_close(GtkWidget *button,gpointer data)
 {
    message_tab *tab = (message_tab*)data;
    gtk_notebook_remove_page(GTK_NOTEBOOK(get_tab_box()),tab->index);
-   g_hash_table_remove(tabs,tab->call_id);
+   g_hash_table_remove(tabs,tab->call->_callID);
 }
 
 static void on_focus_in(GtkEntry *entry, gpointer user_data)
@@ -142,7 +147,7 @@ message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
     g_signal_connect(G_OBJECT(line_edit), "focus-out-event" , G_CALLBACK(on_focus_out), self);
 
     self->widget = vbox;
-    self->call_id = call->_callID;
+    self->call = call;
     self->title = malloc(strlen(title) * sizeof(gchar*));
     strcpy(self->title,title);
     self->buffer = text_buffer;
@@ -174,6 +179,7 @@ message_tab* create_messaging_tab(callable_obj_t* call,const gchar* title)
     gtk_widget_show (tab_label_vbox);
 
     self->index = gtk_notebook_append_page(GTK_NOTEBOOK(get_tab_box()),vbox,tab_label_vbox);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(get_tab_box()),self->index);
     gtk_widget_show (vbox);
     gtk_widget_show (scoll_area);
     gtk_widget_show (text_box_widget);
