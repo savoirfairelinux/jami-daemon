@@ -370,9 +370,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     // If Replace header present
     if (replaced_dlg) {
-        // Always answer the new INVITE with 200, regardless whether
-        // the replaced call is in early or confirmed state.
-        if (pjsip_inv_answer(call->inv, 200, NULL, NULL, &response) == PJ_SUCCESS)
+        // Always answer the new INVITE with 200 if the replaced call is in early or confirmed state.
+        if (pjsip_inv_answer(call->inv, PJSIP_SC_OK, NULL, NULL, &response) == PJ_SUCCESS)
             pjsip_inv_send_msg(call->inv, response);
 
         // Get the INVITE session associated with the replaced dialog.
@@ -1578,7 +1577,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 void outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/)
 {}
 
-void handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
+bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
 {
     /*
      * Incoming INFO request for media control.
@@ -1605,19 +1604,17 @@ void handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
             if (call)
                 call->getVideoRtp().forceKeyFrame();
             status = pjsip_endpt_create_response(tsx->endpt, rdata,
-                    200, NULL, &tdata);
-            if (status == PJ_SUCCESS)
+                    PJSIP_SC_OK, NULL, &tdata);
+            if (status == PJ_SUCCESS) {
                 status = pjsip_tsx_send_msg(tsx, tdata);
-#else
-            (void) inv;
-#endif
-        } else {
-            status = pjsip_endpt_create_response(tsx->endpt, rdata,
-                    400, NULL, &tdata);
-            if (status == PJ_SUCCESS)
-                status = pjsip_tsx_send_msg(tsx, tdata);
+                return true;
+            }
         }
+#else
+        (void) inv;
+#endif
     }
+    return false;
 }
 
 void transaction_state_changed_cb(pjsip_inv_session * inv,
@@ -1634,15 +1631,12 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     }
 
     pjsip_tx_data* t_data;
-    //TODO this brake the instant messaging
-//     if (tsx->role == PJSIP_ROLE_UAS and tsx->state == PJSIP_TSX_STATE_TRYING) {
-//         handle_media_control(inv, tsx, event);
-//         return;
-//     }
+    if (tsx->role == PJSIP_ROLE_UAS and tsx->state == PJSIP_TSX_STATE_TRYING) {
+        if (handle_media_control(inv, tsx, event))
+            return;
+    }
 
     if (event->body.rx_msg.rdata) {
-//         pjsip_tx_data* t_data;
-
         pjsip_rx_data *r_data = event->body.rx_msg.rdata;
 
         if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
@@ -1679,7 +1673,6 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         return;
 
     // Respond with a 200/OK
-//     pjsip_tx_data* t_data;
     pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
     pjsip_dlg_send_response(inv->dlg, tsx, t_data);
 
