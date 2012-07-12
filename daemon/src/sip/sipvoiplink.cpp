@@ -1590,9 +1590,7 @@ bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
 
     if (body and body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0 and
         pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
-        pjsip_tx_data *tdata;
         pj_str_t control_st;
-        pj_status_t status;
 
         /* Apply and answer the INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
@@ -1604,16 +1602,18 @@ bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
             SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
             if (call)
                 call->getVideoRtp().forceKeyFrame();
-            status = pjsip_endpt_create_response(tsx->endpt, rdata,
-                    PJSIP_SC_OK, NULL, &tdata);
+            pjsip_tx_data *tdata;
+            pj_status_t status = pjsip_endpt_create_response(tsx->endpt, rdata,
+                                                             PJSIP_SC_OK, NULL, &tdata);
             if (status == PJ_SUCCESS) {
                 status = pjsip_tsx_send_msg(tsx, tdata);
                 return true;
             }
-        }
 #else
         (void) inv;
+        (void) tsx;
 #endif
+        }
     }
     return false;
 }
