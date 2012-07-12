@@ -372,17 +372,19 @@ bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text
         gtk_tree_path_free(tree_path);
         gchar *name = NULL;
         gtk_tree_model_get(model, &iter, COLUMN_CODEC_NAME, &name, -1);
-        DEBUG("Setting new bitrate for %s", name);
 
-        /* Don't free this, we want it to persist in the codec structure */
         gchar *bitrate = g_strdup_printf("%llu", val);
         gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_BITRATE, bitrate, -1);
-        GPtrArray *vcodecs = dbus_get_video_codecs(name);
+        GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
         GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
         if (codec) {
+            DEBUG("Setting new bitrate %s for %s", bitrate, name);
             video_codec_set_bitrate(codec, bitrate);
             dbus_set_video_codecs(acc->accountID, vcodecs);
+        } else {
+            ERROR("Could not find codec %s", name);
         }
+        g_free(bitrate);
         g_ptr_array_free(vcodecs, TRUE);
     }
 }
