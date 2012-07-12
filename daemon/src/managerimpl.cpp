@@ -2563,6 +2563,11 @@ namespace {
         }
     }
 
+    void registerAccount(std::pair<const std::string, Account*> &item)
+    {
+        item.second->registerVoIPLink();
+    }
+
     void unregisterAccount(std::pair<const std::string, Account*> &item)
     {
         item.second->unregisterVoIPLink();
@@ -2625,6 +2630,11 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     // Each valid account element in sequence is a new account to load
     std::for_each(seq->begin(), seq->end(),
             std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
+}
+
+void ManagerImpl::registerAllAccounts()
+{
+    std::for_each(accountMap_.begin(), accountMap_.end(), registerAccount);
 }
 
 void ManagerImpl::unregisterAllAccounts()

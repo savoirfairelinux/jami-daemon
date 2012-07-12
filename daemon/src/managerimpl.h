@@ -419,6 +419,16 @@ class ManagerImpl {
         void sendRegister(const std::string& accountId, bool enable);
 
         /**
+         * Register all account in accountMap_
+         */
+        void registerAllAccounts();
+
+        /**
+         * Unregister all account in accountMap_
+         */
+        void unregisterAllAccounts();
+
+        /**
          * Get account list
          * @return std::vector<std::string> A list of accoundIDs
          */
@@ -990,11 +1000,6 @@ class ManagerImpl {
         /**
          *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
         AccountMap accountMap_;
-
-        /**
-         * Unregister all account in accountMap_
-         */
-        void unregisterAllAccounts();
 
         /**
          * Load the account map from configuration

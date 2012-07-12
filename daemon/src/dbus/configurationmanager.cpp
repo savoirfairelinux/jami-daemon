@@ -144,6 +144,11 @@ void ConfigurationManager::sendRegister(const std::string& accountID, const bool
     Manager::instance().sendRegister(accountID, enable);
 }
 
+void ConfigurationManager::registerAllAccounts()
+{
+    Manager::instance().registerAllAccounts();
+}
+
 std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
 {
     return Manager::instance().addAccount(details);

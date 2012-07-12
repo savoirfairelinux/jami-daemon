@@ -185,6 +185,13 @@
            </arg>
        </method>
 
+       <method name="registerAllAccounts" tp:name-for-bindings="registerAllAccounts">
+           <tp:docstring>
+                Send account registration (REGISTER) for all currently registered account.
+           </tp:docstring>
+           Register each account for which enable=true
+       </method>
+
        <method name="sendRegister" tp:name-for-bindings="sendRegister">
            <tp:docstring>
                 Send account registration (REGISTER) to the registrar.
