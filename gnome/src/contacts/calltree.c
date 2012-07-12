@@ -1125,9 +1125,15 @@ void calltree_display(calltab_t *tab)
     } else
         ERROR("Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
 
-    gtk_widget_hide(active_calltree_tab->tree);
+    if (active_calltree_tab->mainwidget)
+        gtk_widget_hide(active_calltree_tab->mainwidget);
+    else
+        gtk_widget_hide(active_calltree_tab->tree);
     active_calltree_tab = tab;
-    gtk_widget_show(active_calltree_tab->tree);
+    if (active_calltree_tab->mainwidget)
+        gtk_widget_show(active_calltree_tab->mainwidget);
+    else
+        gtk_widget_show(active_calltree_tab->tree);
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
     g_signal_emit_by_name(sel, "changed");

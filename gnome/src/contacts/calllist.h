@@ -48,6 +48,7 @@ typedef struct {
     GtkWidget* view;
     GtkWidget* tree;
     GtkWidget* searchbar;
+    GtkWidget* mainwidget;
 
     // Calllist vars
     GQueue* callQueue;

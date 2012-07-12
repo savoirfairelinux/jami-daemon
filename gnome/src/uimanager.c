@@ -981,7 +981,7 @@ toggle_addressbook_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
     if (gtk_toggle_action_get_active(action)) {
         calltree_display(contacts_tab);
-        main_window_show_playback_scale();
+        main_window_hide_playback_scale();
     }
     else {
         calltree_display(current_calls_tab);

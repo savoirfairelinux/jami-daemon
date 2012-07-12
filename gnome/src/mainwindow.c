@@ -262,23 +262,27 @@ create_main_window()
     widget = create_toolbar_actions(ui_manager);
     pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
-    /* Add paned */
+    /* Setup call main widget*/
     GtkWidget *vpaned = gtk_vpaned_new();
+    current_calls_tab->mainwidget = vpaned;
     gtk_widget_show (vpaned);
     gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
+
+    /* Setup history main widget */
+    GtkWidget *history_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    history_tab->mainwidget = history_vbox;
+    gtk_box_set_homogeneous(GTK_BOX(history_vbox), FALSE);
+    gtk_box_pack_start(GTK_BOX(history_vbox), history_tab->tree, TRUE, TRUE, 0);
     
     /* Add tree views */
-//     gtk_box_pack_start(GTK_BOX(vbox), current_calls_tab->tree, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), history_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), history_vbox, TRUE, TRUE, 0);
     gtk_paned_pack1 (GTK_PANED (vpaned), current_calls_tab->tree, TRUE, FALSE);
-    gtk_paned_add1 (GTK_PANED (vpaned), history_tab->tree);
-    gtk_paned_add1 (GTK_PANED (vpaned), contacts_tab->tree);
     gtk_paned_pack2 (GTK_PANED (vpaned), tab_widget, FALSE, FALSE);
 
-    /* Add playback scale */
+    /* Add playback scale and setup history tab */
     seekslider = GTK_WIDGET(sfl_seekslider_new());
-    pack_main_window_start(GTK_BOX(vbox), seekslider, FALSE, TRUE, 0);
+    pack_main_window_start(GTK_BOX(history_vbox), seekslider, FALSE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), subvbox, FALSE, FALSE, 0);
 
@@ -314,7 +318,7 @@ create_main_window()
     gtk_widget_show_all(window);
 
     /* dont't show the history */
-    gtk_widget_hide(history_tab->tree);
+    gtk_widget_hide(history_vbox);
 
     /* dont't show the contact list */
     gtk_widget_hide(contacts_tab->tree);
