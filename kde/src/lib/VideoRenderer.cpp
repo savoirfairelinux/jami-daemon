@@ -229,12 +229,11 @@ void VideoRenderer::timedEvents()
    QByteArray ba;
    renderToBitmap(m_Frame,ok);
    if (ok == true) {
-      qDebug() << "Emit";
       emit frameUpdated();
    }
    else {
       qDebug() << "Frame dropped";
-      usleep(rand()%100000); //Be sure it can come back in sync
+      usleep(rand()%1000); //Be sure it can come back in sync
    }
 }
 

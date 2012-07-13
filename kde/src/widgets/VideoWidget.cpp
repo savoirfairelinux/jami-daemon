@@ -32,7 +32,6 @@ VideoWidget::VideoWidget(QWidget* parent ,VideoRenderer* renderer) : QWidget(par
 
 void VideoWidget::setRenderer(VideoRenderer* renderer)
 {
-   kDebug() << "CHANGINF RENDERER";
    disconnect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
    m_pRenderer = renderer;
    connect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
@@ -40,7 +39,6 @@ void VideoWidget::setRenderer(VideoRenderer* renderer)
 
 ///Repaint the widget
 void VideoWidget::update() {
-   kDebug() << "Painting" << this;
    QPainter painter(this);
    if (m_Image && m_pRenderer->isRendering())
       painter.drawImage(QRect(0,0,width(),height()),*(m_Image));

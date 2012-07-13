@@ -51,6 +51,7 @@ GtkWidget *get_tab_box()
 {
    if (!tab_box) {
       tab_box = gtk_notebook_new();
+      gtk_notebook_set_scrollable(GTK_NOTEBOOK(tab_box),TRUE);
    }
    return tab_box;
 }
@@ -129,9 +130,11 @@ on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
 void
 disable_messaging_tab(const gchar * id)
 {
-    message_tab *tab = g_hash_table_lookup(tabs, id);
-    if (tab)
-       gtk_widget_hide(tab->entry);
+    message_tab *tab = NULL;
+    if (tabs)
+        tab = g_hash_table_lookup(tabs, id);
+    if (tab != NULL)
+        gtk_widget_hide(tab->entry);
 }
 
 void
@@ -161,7 +164,9 @@ void
 new_text_message(callable_obj_t* call, const gchar* message)
 {
     if (!tabs) return;
-    message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
+    message_tab *tab = NULL;
+    if (tabs)
+        tab = g_hash_table_lookup(tabs,call->_callID);
     if (!tab)
         tab = create_messaging_tab(call);
     gchar* name;
@@ -196,7 +201,9 @@ create_messaging_tab(callable_obj_t* call)
 {
 
     /* Do not create a new tab if it already exist */
-    message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
+    message_tab *tab = NULL;
+    if (tabs)
+        tab = g_hash_table_lookup(tabs,call->_callID);
     if (tab) {
        return tab;
     }

@@ -181,19 +181,23 @@ void CallModelBase::removeActiveCall(Call* call)
 ///Updating call state when video is added
 void CallModelBase::startedDecoding(const QString& callId, const QString& shmKey  )
 {
-   Call* call = getCall(callId);
-   if (call) {
-      
-   }
+   Q_UNUSED(callId)
+   Q_UNUSED(shmKey)
+//    Call* call = getCall(callId);
+//    if (call) {
+//       
+//    }
 }
 
 ///Updating call state when video is removed
 void CallModelBase::stoppedDecoding(const QString& callId, const QString& shmKey)
 {
-   Call* call = getCall(callId);
-   if (call) {
-      
-   }
+   Q_UNUSED(callId)
+   Q_UNUSED(shmKey)
+//    Call* call = getCall(callId);
+//    if (call) {
+//       
+//    }
 }
 
 /*****************************************************************************
