@@ -153,6 +153,8 @@ preferences_dialog_fill_codec_list(account_t *acc)
     gtk_list_store_clear(codecStore);
 
     GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+    if (!vcodecs)
+        return;
 
     // Add the codecs in the list
     for (size_t i = 0; i < vcodecs->len; ++i) {
@@ -233,6 +235,9 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
 
     DEBUG("%s", name);
     GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+    if (!vcodecs)
+        return;
+
     DEBUG("video codecs length %i", vcodecs->len);
 
     // Toggle active value
@@ -310,11 +315,13 @@ codec_move(gboolean move_up, gpointer data)
             dest_pos < gtk_tree_model_iter_n_children(model, NULL)) {
             account_t *acc = (account_t *) data;
             GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
-            // Perpetuate changes in daemon
-            vcodecs = swap_pointers(vcodecs, pos, dest_pos);
-            // FIXME: only do this AFTER apply is clicked, not every time we move codecs!
-            dbus_set_video_codecs(acc->accountID, vcodecs);
-            g_ptr_array_free(vcodecs, TRUE);
+            if (vcodecs) {
+                // Perpetuate changes in daemon
+                vcodecs = swap_pointers(vcodecs, pos, dest_pos);
+                // FIXME: only do this AFTER apply is clicked, not every time we move codecs!
+                dbus_set_video_codecs(acc->accountID, vcodecs);
+                g_ptr_array_free(vcodecs, TRUE);
+            }
         }
     }
 
@@ -373,9 +380,13 @@ bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text
         gchar *name = NULL;
         gtk_tree_model_get(model, &iter, COLUMN_CODEC_NAME, &name, -1);
 
+        GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+        if (!vcodecs)
+            return;
+
         gchar *bitrate = g_strdup_printf("%llu", val);
         gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_BITRATE, bitrate, -1);
-        GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+
         GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
         if (codec) {
             DEBUG("Setting new bitrate %s for %s", bitrate, name);
@@ -518,10 +529,10 @@ preferences_dialog_fill_video_input_device_rate_list()
 
     // Call dbus to retreive list
     if (dev && chan && size) {
-      list = dbus_get_video_device_rate_list(dev, chan, size);
-      g_free(size);
-      g_free(chan);
-      g_free(dev);
+        list = dbus_get_video_device_rate_list(dev, chan, size);
+        g_free(size);
+        g_free(chan);
+        g_free(dev);
     }
 
     // For each device name included in list

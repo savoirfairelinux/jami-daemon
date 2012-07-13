@@ -1236,7 +1236,6 @@ dbus_get_video_codecs(const gchar *accountID)
     GPtrArray *array = NULL;
     org_sflphone_SFLphone_VideoControls_get_codecs(video_proxy, accountID, &array, &error);
     check_error(error);
-
     return array;
 }
 
