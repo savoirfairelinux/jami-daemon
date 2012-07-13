@@ -656,7 +656,7 @@ call_im(void* foo UNUSED)
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     } else {
         if (selectedConf) {
-            create_messaging_tab(selectedConf);
+            create_messaging_tab_conf(selectedConf);
         } else
             WARN("Sorry. Instant messaging is not allowed outside a call\n");
     }

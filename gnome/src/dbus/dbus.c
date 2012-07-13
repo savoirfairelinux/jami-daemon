@@ -166,7 +166,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
             return;
         }
 
-        new_text_message(conf,msg);
+        new_text_message_conf(conf,msg);
     }
 }
 
@@ -253,10 +253,10 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
 }
 
 static void
-toggle_im(conference_obj_t *conf, gboolean activate)
+toggle_im(conference_obj_t *conf, gboolean activate UNUSED)
 {
     for (GSList *p = conf->participant_list; p; p = g_slist_next(p)) {
-        callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
+        //callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
 
         /*TODO elepage(2012) Implement IM messaging toggle here*/
     }
@@ -355,7 +355,7 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 
     // remove all participants for this conference
     for (GSList *p = c->participant_list; p; p = g_slist_next(p)) {
-        callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
+        //callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
         /*TODO elepage(2012) implement unmerging of IM here*/
     }
 

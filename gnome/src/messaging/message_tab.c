@@ -173,6 +173,12 @@ new_text_message(callable_obj_t* call, const gchar* message)
 }
 
 void
+new_text_message_conf(conference_obj_t* call, const gchar* message)
+{
+   new_text_message((callable_obj_t*)call,message);
+}
+
+void
 replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
 {
     GtkTextIter start_match,end_match;
@@ -186,7 +192,7 @@ replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
 
 //conference_obj_t
 message_tab *
-create_messaging_tab(callable_obj_t* call UNUSED)
+create_messaging_tab(callable_obj_t* call)
 {
 
     /* Do not create a new tab if it already exist */
@@ -288,4 +294,10 @@ create_messaging_tab(callable_obj_t* call UNUSED)
     g_hash_table_insert(tabs,(gpointer)call->_callID,(gpointer)self);
 
     return self;
+}
+
+message_tab *
+create_messaging_tab_conf(conference_obj_t* call)
+{
+   return create_messaging_tab((callable_obj_t*)call);
 }

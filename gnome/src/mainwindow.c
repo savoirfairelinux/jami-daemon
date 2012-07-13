@@ -268,7 +268,11 @@ create_main_window()
     pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
     /* Setup call main widget*/
+#if GTK_MAJOR_VERSION == 2
     GtkWidget *vpaned = gtk_vpaned_new();
+#else
+    GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+#endif
     current_calls_tab->mainwidget = vpaned;
     gtk_widget_show (vpaned);
     gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
