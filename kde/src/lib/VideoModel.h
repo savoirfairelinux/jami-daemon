@@ -40,8 +40,8 @@ public:
 
    //Getters
    bool       isPreviewing       ();
-//    Resolution getActiveResolution();
-   VideoRenderer* getRenderer() {return m_pRenderer;} //TODO remove
+   VideoRenderer* getRenderer(Call* call);
+   VideoRenderer* getPreviewRenderer();
    
    //Setters
    void       setBufferSize(uint size);
@@ -61,7 +61,6 @@ private:
    uint           m_SemKey      ;
    int            m_SetSetId    ;
    void*          m_pBuffer     ;
-   VideoRenderer* m_pRenderer   ;
    QHash<QString,VideoRenderer*> m_lRenderers;
 
 public slots:

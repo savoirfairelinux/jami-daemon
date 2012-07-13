@@ -21,7 +21,7 @@
 #include <KDebug>
 
 ///Constructor
-VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(nullptr) {
+VideoWidget::VideoWidget(QWidget* parent ,VideoRenderer* renderer) : QWidget(parent),m_Image(nullptr),m_pRenderer(renderer) {
    setMinimumSize(200,200);
    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
    connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
@@ -32,7 +32,7 @@ VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(nullptr) {
 void VideoWidget::update() {
    kDebug() << "Painting" << this;
    QPainter painter(this);
-   if (m_Image && VideoModel::getInstance()->getRenderer()->isRendering())
+   if (m_Image && m_pRenderer->isRendering())
       painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
    painter.end();
 }
@@ -49,13 +49,13 @@ void VideoWidget::paintEvent(QPaintEvent* event)
 ///Called when a new frame is ready
 void VideoWidget::updateFrame()
 {
-   QSize size(VideoModel::getInstance()->getRenderer()->getActiveResolution().width, VideoModel::getInstance()->getRenderer()->getActiveResolution().height);
+   QSize size(m_pRenderer->getActiveResolution().width, m_pRenderer->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
    if (m_Image)
       delete m_Image;
    //if (!m_Image && VideoModel::getInstance()->isRendering())
-      m_Image = new QImage((uchar*)VideoModel::getInstance()->getRenderer()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+      m_Image = new QImage((uchar*)m_pRenderer->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
    //This is the right way to do it, but it does not work
 //    if (!m_Image || (m_Image && m_Image->size() != size))
 //       m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );

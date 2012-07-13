@@ -38,7 +38,7 @@
 VideoModel* VideoModel::m_spInstance = NULL;
 
 ///Constructor
-VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_PreviewState(false),m_pRenderer(nullptr)
+VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_PreviewState(false)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    connect( &interface , SIGNAL(deviceEvent()                       ), this, SLOT( deviceEvent()                       ));
@@ -53,6 +53,23 @@ VideoModel* VideoModel::getInstance()
       m_spInstance = new VideoModel();
    }
    return m_spInstance;
+}
+
+///Return the call renderer or nullptr
+VideoRenderer* VideoModel::getRenderer(Call* call)
+{
+   if (!call) return nullptr;
+   return m_lRenderers[call->getCallId()];
+}
+
+///Get the video preview renderer
+VideoRenderer* VideoModel::getPreviewRenderer()
+{
+   if (!m_lRenderers["local"]) {
+      VideoInterface& interface = VideoInterfaceSingleton::getInstance();
+      m_lRenderers["local"] = new VideoRenderer("", Resolution(interface.getActiveDeviceSize()));
+   }
+   return m_lRenderers["local"];
 }
 
 ///Stop video preview
@@ -100,6 +117,7 @@ void VideoModel::deviceEvent()
 void VideoModel::startedDecoding(QString id, QString shmPath, int width, int height)
 {
    Q_UNUSED(id)
+   qDebug() << "PREVIEW ID" << id;exit(33);
 //    m_pRenderer->m_ShmPath = shmPath;
 //    m_Res.width            = width  ;
 //    m_Res.height           = height ;
@@ -124,10 +142,10 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
       renderer->setResolution(QSize(width,height));
    }
 
-   if (!m_pRenderer)
-      m_pRenderer = m_lRenderers[id];
+//    if (!m_pRenderer)
+//       m_pRenderer = m_lRenderers[id];
    
-   m_pRenderer->startRendering();
+    m_lRenderers[id]->startRendering();
    if (id != "local") {
       qDebug() << "Starting video for call" << id;
       emit videoCallInitiated(id);
@@ -138,8 +156,8 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
 void VideoModel::stoppedDecoding(QString id, QString shmPath)
 {
    Q_UNUSED(shmPath)
-   if (m_pRenderer)
-      m_pRenderer->stopRendering();
+   if ( m_lRenderers[id] )
+       m_lRenderers[id]->stopRendering();
 //    m_pRenderer->m_isRendering = false;
 //    m_pRenderer->stopShm();
    qDebug() << "Video stopped for call" << id;

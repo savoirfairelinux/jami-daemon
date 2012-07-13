@@ -19,7 +19,7 @@
 
 #include "dlgvideo.h"
 #include "../lib/VideoDevice.h"
-#include "../lib/VideoCodec.h"
+#include "../lib/VideoCodecModel.h"
 #include "../lib/VideoModel.h"
 #include <KDebug>
 

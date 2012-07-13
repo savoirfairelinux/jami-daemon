@@ -566,63 +566,10 @@
              <string>Audio codecs</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_7">
-             <item row="2" column="1">
-              <widget class="QLabel" name="label_frequency_value">
-               <property name="text">
-                <string>-</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2" colspan="4">
-              <spacer name="horizontalSpacer_6">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>448</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_bitrate">
-               <property name="text">
-                <string>Bitrate:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0" colspan="6">
-              <widget class="QListView" name="list_audiocodec"/>
-             </item>
-             <item row="2" column="0">
+             <item row="1" column="0">
               <widget class="QLabel" name="label_frequency">
                <property name="text">
                 <string>Sample rate:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLabel" name="label_bitrate_value">
-               <property name="text">
-                <string>-</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="5">
-              <widget class="QToolButton" name="button_audiocodecDown">
-               <property name="toolTip">
-                <string>Get this account down</string>
-               </property>
-               <property name="whatsThis">
-                <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
-               </property>
-               <property name="text">
-                <string>Down</string>
-               </property>
-               <property name="shortcut">
-                <string notr="true">Down, PgDown</string>
                </property>
               </widget>
              </item>
@@ -642,18 +589,58 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0" colspan="4">
-              <spacer name="horizontalSpacer_10">
+             <item row="3" column="1">
+              <widget class="QLabel" name="label_bitrate_value">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <spacer name="horizontalSpacer_6">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
-                 <width>422</width>
-                 <height>23</height>
+                 <width>448</width>
+                 <height>20</height>
                 </size>
                </property>
               </spacer>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_frequency_value">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="6">
+              <widget class="QListView" name="list_audiocodec"/>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_bitrate">
+               <property name="text">
+                <string>Bitrate:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="5">
+              <widget class="QToolButton" name="button_audiocodecDown">
+               <property name="toolTip">
+                <string>Get this account down</string>
+               </property>
+               <property name="whatsThis">
+                <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
+               </property>
+               <property name="text">
+                <string>Down</string>
+               </property>
+               <property name="shortcut">
+                <string notr="true">Down, PgDown</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>
@@ -664,8 +651,25 @@
              <string>Video codecs</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_12">
-             <item row="0" column="0" colspan="2">
-              <widget class="QListWidget" name="m_pCodecsLW"/>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="m_pBitrateSB">
+               <property name="maximum">
+                <number>100000</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <spacer name="horizontalSpacer_11">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label">
@@ -680,18 +684,22 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="m_pBitrateL">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
+             <item row="1" column="4">
+              <widget class="QToolButton" name="m_pVCodecDownPB">
                <property name="text">
-                <string>-</string>
+                <string>Down</string>
                </property>
               </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QToolButton" name="m_pVCodecUpPB">
+               <property name="text">
+                <string>Up</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="5">
+              <widget class="QListView" name="m_pCodecsLW"/>
              </item>
             </layout>
            </widget>

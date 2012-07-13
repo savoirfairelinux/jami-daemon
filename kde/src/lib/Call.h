@@ -34,6 +34,8 @@ class QWidget;
 
 class ContactBackend;
 class Contact;
+class Account;
+class VideoRenderer;
 
 
 /** @enum daemon_call_state_t 
@@ -142,7 +144,7 @@ public:
    call_state           getCurrentState     () const;
    history_state        getHistoryState     () const;
    bool                 getRecording        () const;
-   const QString&       getAccountId        () const;
+   Account*             getAccount          () const;
    bool                 isHistory           () const;
    QString              getStopTimeStamp    () const;
    QString              getStartTimeStamp   () const;
@@ -155,7 +157,8 @@ public:
    const QString&       getCallNumber       () const;
    const QString&       getRecordingPath    () const;
    const QString        toHumanStateName    () const;
-   Contact*             getContact()                ;
+   Contact*             getContact          ()      ;
+   VideoRenderer*       getVideoRenderer    ()      ;
 
    //Automated function
    call_state stateChanged(const QString & newState);

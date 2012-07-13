@@ -20,6 +20,7 @@
 #define VIDEO_CODEC_H
 
 #include "typedefs.h"
+#include <QtCore/QAbstractListModel>
 
 //Qt
 class QStringList;
@@ -32,33 +33,59 @@ class Account;
 class VideoCodec;
 typedef QHash<QString,VideoCodec*> CodecHash;
 
+class LIB_EXPORT VideoCodecModel : public QAbstractListModel {
+   Q_OBJECT
+   friend class Account;
+public:
+   //Roles
+   static const int BITRATE_ROLE = 101;
+
+   //Model functions
+   QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole     ) const;
+   int           rowCount ( const QModelIndex& parent = QModelIndex()                ) const;
+   Qt::ItemFlags flags    ( const QModelIndex& index                                 ) const;
+   virtual bool  setData  ( const QModelIndex& index, const QVariant &value, int role)      ;
+   
+   void reload();
+   void save();
+   bool moveUp(QModelIndex idx);
+   bool moveDown(QModelIndex idx);
+   
+private:
+   //Private constructor, can only be called by 'Account'
+   VideoCodecModel(Account* account);
+
+   //Attrbutes
+   QList<VideoCodec*> m_lCodecs;
+   Account*           m_pAccount;
+};
+
 ///VideoCodec: Codecs used for video calls
 class LIB_EXPORT VideoCodec {
+   friend class VideoCodecModel;
    public:
-
-      //Static getter
-      static VideoCodec* getCodec(QString name);
-      static VideoCodec* getCurrentCodec(Call* call);
-      static QList<VideoCodec*> getCodecList();
-      static QList<VideoCodec*> getActiveCodecList(Account* account);
-
       //Static setters
       static void setActiveCodecList(Account* account, QStringList codecs);
 
       //Getters
-      QString getName();
-      QString getBitrate();
+      QString getName   () const;
+      uint    getBitrate() const;
+      bool    getEnabled() const;
+
+      //Setters
+      void setBitrate(const uint bitrate);
+      void setEnabled(const bool enabled);
       
    private:
       //Constructor
-      VideoCodec(QString codecName);
+      VideoCodec(QString codecName, uint bitRate, bool enabled);
       ~VideoCodec(){};
-      static void init();
 
       //Attributes
       static CodecHash m_slCodecs;
       QString m_Name;
-      QString m_Bitrate;
+      uint m_Bitrate;
+      bool    m_Enabled;
       static bool m_sInit;
 };
 #endif

@@ -139,8 +139,10 @@ private slots:
 
    void moveAudioCodecUp                 ();
    void moveAudioCodecDown               ();
+   void moveVideoCodecUp                 ();
+   void moveVideoCodecDown               ();
 
-   void loadVidCodecDetails        ( const QString& name                                     );
+   void loadVidCodecDetails        ( const QModelIndex& current, const QModelIndex& previous );
    void selectedCodecChanged       ( const QModelIndex& current, const QModelIndex& previous );
    void updateStatusLabel          ( QModelIndex item                                        );
    void accountListChanged         ( QModelIndex current, QModelIndex previous               );

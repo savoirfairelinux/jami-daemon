@@ -27,7 +27,6 @@
 
 //SFLPhone
 #include "sflphone_const.h"
-#include "VideoCodec.h"
 
 //SFLPhone lib
 #include "configurationmanager_interface_singleton.h"
@@ -36,6 +35,7 @@
 #include "AccountList.h"
 #include "CredentialModel.h"
 #include "AudioCodecModel.h"
+#include "VideoCodecModel.h"
 
 const account_function Account::stateMachineActionsOnState[6][7] = {
 /*                 NOTHING              EDIT              RELOAD              SAVE               REMOVE             MODIFY             CANCEL            */
@@ -84,7 +84,8 @@ const QString& account_state_name(const QString& s)
 } //account_state_name
 
 ///Constructors
-Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_pCredentials(nullptr),m_pAudioCodecs(nullptr),m_CurrentState(READY)
+Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_pCredentials(nullptr),m_pAudioCodecs(nullptr),m_CurrentState(READY),
+m_pVideoCodecs(nullptr)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager,SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
@@ -246,7 +247,7 @@ Qt::GlobalColor Account::getStateColor() const
    return Qt::darkRed;
 }
 
-
+///Create and return the credential model
 CredentialModel* Account::getCredentialsModel()
 {
    if (!m_pCredentials) {
@@ -255,12 +256,22 @@ CredentialModel* Account::getCredentialsModel()
    return m_pCredentials;
 }
 
+///Create and return the audio codec model
 AudioCodecModel* Account::getAudioCodecModel()
 {
    if (!m_pAudioCodecs) {
       reloadAudioCodecs();
    }
    return m_pAudioCodecs;
+}
+
+///Create and return the video codec model
+VideoCodecModel* Account::getVideoCodecModel()
+{
+   if (!m_pVideoCodecs) {
+      m_pVideoCodecs = new VideoCodecModel(this);
+   }
+   return m_pVideoCodecs;
 }
 
 /*****************************************************************************
@@ -358,6 +369,8 @@ void Account::save()
       updateState();
       m_CurrentState = READY;
    }
+   m_pVideoCodecs->save();
+   saveAudioCodecs();
 }
 
 ///Synchronise with the daemon, this need to be done manually to prevent reloading the account while it is being edited

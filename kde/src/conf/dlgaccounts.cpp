@@ -49,6 +49,8 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    setupUi(this);
    button_accountUp->setIcon         ( KIcon( "go-up"       ) );
    button_accountDown->setIcon       ( KIcon( "go-down"     ) );
+   m_pVCodecUpPB->setIcon            ( KIcon( "go-up"       ) );
+   m_pVCodecDownPB->setIcon          ( KIcon( "go-down"     ) );
    button_accountAdd->setIcon        ( KIcon( "list-add"    ) );
    button_accountRemove->setIcon     ( KIcon( "list-remove" ) );
    button_add_credential->setIcon    ( KIcon( "list-add"    ) );
@@ -82,6 +84,7 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /**/connect(button_audiocodecUp,               SIGNAL(clicked())                      , this   , SLOT(changedAccountList()               ));
    /**/connect(edit_tls_private_key_password,     SIGNAL(textEdited(const QString &))    , this   , SLOT(changedAccountList()               ));
    /**/connect(spinbox_tls_listener,              SIGNAL(editingFinished())              , this   , SLOT(changedAccountList()               ));
+   /**/connect(m_pBitrateSB,                      SIGNAL(editingFinished())              , this   , SLOT(changedAccountList()               ));
    /**/connect(file_tls_authority,                SIGNAL(textChanged(const QString &))   , this   , SLOT(changedAccountList()               ));
    /**/connect(file_tls_endpoint,                 SIGNAL(textChanged(const QString &))   , this   , SLOT(changedAccountList()               ));
    /**/connect(file_tls_private_key,              SIGNAL(textChanged(const QString &))   , this   , SLOT(changedAccountList()               ));
@@ -113,6 +116,8 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /**/connect(edit_credential_password,          SIGNAL(textEdited(const QString &))    , this   , SLOT(main_credential_password_changed() ));
    /**/connect(button_audiocodecUp,               SIGNAL(clicked())                      , this   , SLOT(moveAudioCodecUp()                 ));
    /**/connect(button_audiocodecDown,             SIGNAL(clicked())                      , this   , SLOT(moveAudioCodecDown()               ));
+   /**/connect(m_pVCodecUpPB,                     SIGNAL(clicked())                      , this   , SLOT(moveVideoCodecUp()                 ));
+   /**/connect(m_pVCodecDownPB,                   SIGNAL(clicked())                      , this   , SLOT(moveVideoCodecDown()               ));
    /**/connect(AccountList::getInstance(),        SIGNAL(accountEnabledChanged(Account*)), this   , SLOT(otherAccountChanged()              ));
    /*                                                                                                                                        */
 
@@ -214,17 +219,9 @@ void DlgAccounts::saveAccount(QModelIndex item)
       }
    }
 
-   QStringList activeCodecs;
-   for (int i=0;i < m_pCodecsLW->count();i++) {
-      QListWidgetItem* item = m_pCodecsLW->item(i);
-      if (item->checkState() == Qt::Checked) {
-         activeCodecs << item->text();
-      }
-   }
-   VideoCodec::setActiveCodecList(account,activeCodecs);
-
+   if (m_pCodecsLW->currentIndex().isValid())
+      m_pCodecsLW->model()->setData(m_pCodecsLW->currentIndex(),m_pBitrateSB->value(),VideoCodecModel::BITRATE_ROLE);
    saveCredential();
-   account->saveAudioCodecs();
    m_IsLoading = false;
 } //saveAccount
 
@@ -328,14 +325,27 @@ void DlgAccounts::loadAccount(QModelIndex item)
    /**/combo_security_STRP->setCurrentIndex     (  account->getTlsMethod                   ());
    /*                                                                                       */
 
+   account->getVideoCodecModel()->reload();
+
    disconnect(list_credential->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential  (QModelIndex,QModelIndex)));
    list_credential->setModel(account->getCredentialsModel());
    connect(list_credential->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential  (QModelIndex,QModelIndex)));
    
    disconnect(list_audiocodec->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectedCodecChanged(const QModelIndex&,const QModelIndex&)));
+   disconnect(list_audiocodec->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
    list_audiocodec->setModel(account->getAudioCodecModel());
+   connect(list_audiocodec->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
    connect(list_audiocodec->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectedCodecChanged(const QModelIndex&,const QModelIndex&)));
 
+   #ifdef ENABLE_VIDEO
+   disconnect(m_pCodecsLW->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(loadVidCodecDetails(const QModelIndex&,const QModelIndex&)));
+   disconnect(m_pCodecsLW->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
+   m_pCodecsLW->setModel(account->getVideoCodecModel());
+   connect(m_pCodecsLW->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
+   connect(m_pCodecsLW->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(loadVidCodecDetails(const QModelIndex&,const QModelIndex&)));
+   #endif
+
+   
    if (account->getAccountAlias() == "IP2IP") {
       frame2_editAccounts->setTabEnabled(0,false);
       frame2_editAccounts->setTabEnabled(1,false);
@@ -379,19 +389,8 @@ void DlgAccounts::loadAccount(QModelIndex item)
    }
    if (!found) m_pRingtoneListLW->setDisabled(true);
 
-   #ifdef ENABLE_VIDEO
-      m_pCodecsLW->clear();
-      QList<VideoCodec*> codecs       = VideoCodec::getCodecList();
-      QList<VideoCodec*> activeCodecs = VideoCodec::getActiveCodecList(account);
-      foreach(VideoCodec* codec,codecs) {
-         if (codec) {
-            QListWidgetItem* i = new QListWidgetItem(codec->getName());
-            i->setCheckState((activeCodecs.indexOf(codec) != -1)?Qt::Checked:Qt::Unchecked);
-            m_pCodecsLW->addItem(i);
-         }
-      }
-   #else
-      m_pVideoCodecGB->setVisible(false);
+   #ifndef ENABLE_VIDEO
+   m_pVideoCodecGB->setVisible(false);
    #endif
    
    comboBox_ni_local_address->clear();
@@ -554,11 +553,26 @@ void DlgAccounts::moveAudioCodecDown()
       list_audiocodec->setCurrentIndex(list_audiocodec->model()->index(list_audiocodec->currentIndex().row()+1,0));
 }
 
-void DlgAccounts::loadVidCodecDetails(const QString& text)
+void DlgAccounts::moveVideoCodecUp()
 {
-   VideoCodec* codec = VideoCodec::getCodec(text);
-   if (codec)
-      m_pBitrateL->setText(codec->getBitrate());
+   if (((VideoCodecModel*) m_pCodecsLW->model())->moveUp(m_pCodecsLW->currentIndex()))
+      m_pCodecsLW->setCurrentIndex(m_pCodecsLW->model()->index(m_pCodecsLW->currentIndex().row()-1,0));
+}
+
+void DlgAccounts::moveVideoCodecDown()
+{
+   if (((VideoCodecModel*) m_pCodecsLW->model())->moveDown(m_pCodecsLW->currentIndex()))
+      m_pCodecsLW->setCurrentIndex(m_pCodecsLW->model()->index(m_pCodecsLW->currentIndex().row()+1,0));
+}
+
+void DlgAccounts::loadVidCodecDetails(const QModelIndex& current,const QModelIndex& previous)
+{
+   if (previous != current && previous.isValid()) {
+      m_pCodecsLW->model()->setData(previous,m_pBitrateSB->value(),VideoCodecModel::BITRATE_ROLE);
+   }
+   
+   int bitrate = m_pCodecsLW->model()->data(current,VideoCodecModel::BITRATE_ROLE).toInt();
+   m_pBitrateSB->setValue(bitrate);
 }
 
 void DlgAccounts::updateAccountStates()

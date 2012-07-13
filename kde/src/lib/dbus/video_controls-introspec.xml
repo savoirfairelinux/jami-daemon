@@ -85,33 +85,21 @@
 
         <!-- Video Codec related methods -->
 
-        <method name="getCodecList" tp:name-for-bindings="getCodecList">
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-            <arg type="as" name="list" direction="out">
-            </arg>
-        </method>
-
-        <method name="getCodecDetails" tp:name-for-bindings="getCodecDetails">
-            <arg type="s" name="codec" direction="in">
-            </arg>
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
-            </arg>
-        </method>
-
-        <method name="getActiveCodecList" tp:name-for-bindings="getActiveCodecList">
-            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+        <method name="getCodecs" tp:name-for-bindings="getCodecs">
+            <tp:docstring>Gets the hashtable describing all the codecs and their parameters for a given account</tp:docstring>
             <arg type="s" name="accountID" direction="in">
             </arg>
-            <arg type="as" name="list" direction="out">
+            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="details" direction="out">
             </arg>
         </method>
 
-       <method name="setActiveCodecList" tp:name-for-bindings="setActiveCodecList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
-           <arg type="as" name="list" direction="in">
-           </arg>
+       <method name="setCodecs" tp:name-for-bindings="setCodecs">
+           <tp:docstring>Sets a vector of hashtables describing codecs and their parameters for a given account, one hashtable per codec</tp:docstring>
            <arg type="s" name="accountID" direction="in">
+           </arg>
+           <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+           <arg type="aa{ss}" name="details" direction="in">
            </arg>
         </method>
 

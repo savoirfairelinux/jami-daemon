@@ -28,6 +28,7 @@
 #include "Contact.h"
 #include "Account.h"
 #include "AccountList.h"
+#include "VideoModel.h"
 
 
 const call_state Call::actionPerformedStateMap [13][5] =
@@ -434,9 +435,9 @@ bool Call::getRecording()                   const
 }
 
 ///Get the call account id
-const QString& Call::getAccountId()         const
+Account* Call::getAccount()           const
 {
-   return m_Account;
+   return AccountList::getInstance()->getAccountById(m_Account);
 }
 
 ///Is this call a conference
@@ -452,13 +453,13 @@ const QString& Call::getConfId()            const
 }
 
 ///Get the recording path
-const QString& Call::getRecordingPath()      const
+const QString& Call::getRecordingPath()     const
 {
    return m_RecordingPath;
 }
 
 ///Get the current codec
-QString Call::getCurrentCodecName()  const
+QString Call::getCurrentCodecName()         const
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    return callManager.getCurrentAudioCodecName(m_CallId);
@@ -510,6 +511,12 @@ Contact* Call::getContact()
       m_pContact = m_pContactBackend->getContactByPhone(m_PeerPhoneNumber,true);
    }
    return m_pContact;
+}
+
+///Return the renderer associated with this call or nullptr
+VideoRenderer* Call::getVideoRenderer()
+{
+   return VideoModel::getInstance()->getRenderer(this);
 }
 
 

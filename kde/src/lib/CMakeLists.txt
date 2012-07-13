@@ -33,7 +33,7 @@ set( qtsflphone_LIB_SRCS
   HistoryModel.cpp
   Contact.cpp
   ContactBackend.cpp
-  VideoCodec.cpp
+  VideoCodecModel.cpp
   VideoModel.cpp
   VideoRenderer.cpp
   VideoDevice.cpp
@@ -126,7 +126,7 @@ set( qtsflphone_LIB_HDRS
   HistoryModel.h
   Contact.h
   ContactBackend.h
-  VideoCodec.h
+  VideoCodecModel.h
   VideoModel.h
   VideoDevice.h
   VideoRenderer.h
