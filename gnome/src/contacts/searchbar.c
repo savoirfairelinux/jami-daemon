@@ -76,7 +76,8 @@ void searchbar_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointe
 static gchar *get_combobox_active_text(GtkWidget *widget)
 {
     GtkTreeIter iter;
-    gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter);
+    if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter))
+        return NULL;
     GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
     gchar *string = NULL;
     /* this will return a strdup'd string of the text for the active
@@ -127,7 +128,6 @@ void update_searchbar_addressbook_list()
 
     // store the current active text
     gchar *activeText = get_combobox_active_text(cbox);
-
 
     if (activeText == NULL)
         activeText = g_strdup("");
