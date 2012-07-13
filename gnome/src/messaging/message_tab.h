@@ -71,5 +71,6 @@ void new_text_message(callable_obj_t* call, const gchar* message);
 void toogle_messaging();
 void hide_messaging();
 void show_messaging();
+void disable_messaging_tab(const gchar *id);
 
 #endif

@@ -180,7 +180,7 @@ void
 sflphone_hung_up(callable_obj_t * c)
 {
     DEBUG("%s", __PRETTY_FUNCTION__);
-    disable_messaging_tab(c);
+    disable_messaging_tab(c->_callID);
     calllist_remove_call(current_calls_tab, c->_callID);
     calltree_remove_call(current_calls_tab, c->_callID);
     c->_state = CALL_STATE_DIALING;
@@ -289,7 +289,7 @@ sflphone_hang_up()
     DEBUG("%s", __PRETTY_FUNCTION__);
 
     if (selectedConf) {
-        disable_messaging_tab(selectedConf);
+        disable_messaging_tab(selectedConf->_confID);
         dbus_hang_up_conference(selectedConf);
     } else if (selectedCall) {
         switch (selectedCall->_state) {

@@ -38,7 +38,6 @@ static GtkWidget *tab_box = NULL;
 static GHashTable *tabs   = NULL;
 static gboolean   visible = FALSE;
 
-void disable_messaging_tab ( callable_obj_t* call                                                   );
 void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
 void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
 void replace_markup_tag    ( GtkTextBuffer* text_buffer, GtkTextIter* start                         );
@@ -128,12 +127,11 @@ on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
 /////////////////////MUTATORS////////////////////////
 
 void
-disable_messaging_tab(callable_obj_t* call)
+disable_messaging_tab(const gchar * id)
 {
-    message_tab *tab = g_hash_table_lookup(tabs,call->_callID);
-    if (tab) {
+    message_tab *tab = g_hash_table_lookup(tabs, id);
+    if (tab)
        gtk_widget_hide(tab->entry);
-    }
 }
 
 void
@@ -218,7 +216,7 @@ create_messaging_tab(callable_obj_t* call UNUSED)
     gtk_text_view_set_editable ( GTK_TEXT_VIEW(text_box_widget),FALSE        );
     gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
 
-    gtk_container_add(GTK_SCROLLED_WINDOW(scoll_area),text_box_widget);
+    gtk_container_add(GTK_CONTAINER(scoll_area), text_box_widget);
 
     GtkWidget *line_edit    = gtk_entry_new (                               );
     GtkWidget *hbox         = gtk_box_new   ( GTK_ORIENTATION_HORIZONTAL, 1 );
