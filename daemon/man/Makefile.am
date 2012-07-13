@@ -1,15 +1,14 @@
 SECTION="1"
 
-TEMPLATES=\
-         sflphoned.pod
+TEMPLATES=sflphoned.pod
 
-man_MANS = sflphoned.1
+man_MANS=sflphoned.1
 
 POD2MAN=pod2man
 
-EXTRA_DIST= $(man_MANS)
+EXTRA_DIST=$(man_MANS) $(TEMPLATES)
 
-all:    $(MANPAGES)
+all: $(MANPAGES)
 
 SUFFIXES=.pod .1
 
