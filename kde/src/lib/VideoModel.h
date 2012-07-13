@@ -78,7 +78,7 @@ signals:
    ///Emmitted when the video is stopped, before the framebuffer become invalid
    void videoStopped();
    ///Emmitted when a call make video available
-   void videoCallInitiated(QString callId);
+   void videoCallInitiated(VideoRenderer*);
 };
 
 #endif

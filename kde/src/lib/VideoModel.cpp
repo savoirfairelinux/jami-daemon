@@ -117,7 +117,7 @@ void VideoModel::deviceEvent()
 void VideoModel::startedDecoding(QString id, QString shmPath, int width, int height)
 {
    Q_UNUSED(id)
-   qDebug() << "PREVIEW ID" << id;exit(33);
+   qDebug() << "PREVIEW ID" << id;
 //    m_pRenderer->m_ShmPath = shmPath;
 //    m_Res.width            = width  ;
 //    m_Res.height           = height ;
@@ -148,7 +148,7 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
     m_lRenderers[id]->startRendering();
    if (id != "local") {
       qDebug() << "Starting video for call" << id;
-      emit videoCallInitiated(id);
+      emit videoCallInitiated(m_lRenderers[id]);
    }
 }
 

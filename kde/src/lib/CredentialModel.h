@@ -39,8 +39,8 @@ public:
 
    //Abstract model member
    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole ) const;
-   int rowCount(const QModelIndex& parent = QModelIndex()            ) const;
-   Qt::ItemFlags flags(const QModelIndex& index                             ) const;
+   int rowCount(const QModelIndex& parent = QModelIndex()             ) const;
+   Qt::ItemFlags flags(const QModelIndex& index                       ) const;
    virtual bool setData(const QModelIndex& index, const QVariant &value, int role);
 
    //Mutator

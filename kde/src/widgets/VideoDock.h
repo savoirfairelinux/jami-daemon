@@ -26,12 +26,14 @@ class QSpacerItem;
 
 //SFLPhone
 class VideoWidget;
+class VideoRenderer;
 
 ///VideoDock: A dock hosting a VideoWidget or AcceleratedVideoWidget
 class VideoDock : public QDockWidget {
    Q_OBJECT
 public:
    VideoDock(QWidget* parent =0 );
+   void setRenderer(VideoRenderer* r);
    
 private:
    VideoWidget* m_pVideoWidet;

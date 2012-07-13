@@ -199,7 +199,7 @@ bool SFLPhone::initialize()
    connect(action_showBookmarkDock,SIGNAL(toggled(bool)),m_pBookmarkDW,SLOT(setVisible(bool)));
 
    #ifdef ENABLE_VIDEO
-   connect(VideoModel::getInstance(),SIGNAL(videoCallInitiated(QString)),this,SLOT(displayVideoDock(QString)));
+   connect(VideoModel::getInstance(),SIGNAL(videoCallInitiated(VideoRenderer*)),this,SLOT(displayVideoDock(VideoRenderer*)));
    #endif
 
    statusBar()->addWidget(m_pStatusBarWidget);
@@ -516,12 +516,12 @@ void SFLPhone::on_m_pView_incomingCall(const Call* call)
 
 #ifdef ENABLE_VIDEO
 ///Display the video dock
-void SFLPhone::displayVideoDock(const QString& callId)
+void SFLPhone::displayVideoDock(VideoRenderer* r)
 {
-   Q_UNUSED(callId)
    if (!m_pVideoDW) {
       m_pVideoDW = new VideoDock(this);
    }
+   m_pVideoDW->setRenderer(r);
    m_pVideoDW->show();
 }
 #endif

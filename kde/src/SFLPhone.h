@@ -43,6 +43,7 @@ class SFLPhoneTray;
 class SFLPhoneView;
 class HistoryDock;
 class CallTreeItem;
+class VideoRenderer;
 
 typedef CallModel<CallTreeItem*,QTreeWidgetItem*> TreeWidgetCallModel;
 
@@ -152,7 +153,7 @@ private slots:
    void showShortCutEditor                       (                               );
    void quitButton                               (                               );
    #ifdef ENABLE_VIDEO
-   void displayVideoDock                         ( const QString& callId         );
+   void displayVideoDock                         ( VideoRenderer* r              );
    #endif
 };
 

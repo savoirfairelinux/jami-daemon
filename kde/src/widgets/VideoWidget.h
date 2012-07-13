@@ -39,6 +39,9 @@ private slots:
    void update();
    void updateFrame();
    void stop();
+public slots:
+   void setRenderer(VideoRenderer* renderer);
+   
 };
 
 #endif

@@ -30,12 +30,17 @@ VideoDock::VideoDock(QWidget* parent) : QDockWidget(parent)
 {
    setWindowTitle(i18n("Video"));
    QWidget* wdg = new QWidget(this);
-   VideoWidget* vwdg = new VideoWidget(this);
+   m_pVideoWidet = new VideoWidget(this);
    auto l = new QGridLayout(wdg);
-   l->addWidget(vwdg,1,1);
+   l->addWidget(m_pVideoWidet,1,1);
    l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),0,0);
    l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),0,1);
    l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),2,0);
    l->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding),0,2);
    setWidget(wdg);
+}
+
+void VideoDock::setRenderer(VideoRenderer* r)
+{
+   m_pVideoWidet->setRenderer(r);
 }

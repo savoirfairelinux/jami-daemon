@@ -300,7 +300,10 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
       qDebug() << "Invalid call";
       return 0;
    }
-   Call* newConf =  new Call(confID, m_sPrivateCallList_callId[callList[0]]->call_real->getAccount()->getAccountId());
+
+   Call* newConf;
+   if (m_sPrivateCallList_callId[callList[0]]->call_real->getAccount())
+      newConf =  new Call(confID, m_sPrivateCallList_callId[callList[0]]->call_real->getAccount()->getAccountId());
    
    InternalStruct* aNewStruct = new InternalStruct;
    aNewStruct->call_real  = newConf;

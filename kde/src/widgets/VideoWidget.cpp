@@ -24,8 +24,18 @@
 VideoWidget::VideoWidget(QWidget* parent ,VideoRenderer* renderer) : QWidget(parent),m_Image(nullptr),m_pRenderer(renderer) {
    setMinimumSize(200,200);
    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-   connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
+   connect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
    connect(VideoModel::getInstance(),SIGNAL(videoStopped()),this,SLOT(stop()));
+   connect(VideoModel::getInstance(),SIGNAL(videoCallInitiated(VideoRenderer*)),this,SLOT(setRenderer(VideoRenderer*)));
+}
+
+
+void VideoWidget::setRenderer(VideoRenderer* renderer)
+{
+   kDebug() << "CHANGINF RENDERER";
+   disconnect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
+   m_pRenderer = renderer;
+   connect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
 }
 
 ///Repaint the widget
