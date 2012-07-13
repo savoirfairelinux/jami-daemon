@@ -1841,7 +1841,7 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_USE_PROXY: // 305
             case PJSIP_SC_ALTERNATIVE_SERVICE: // 380
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ERROR);
+                processRegistrationError(*account, ERROR_GENERIC);
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE: // 503
                 FAILURE_MESSAGE();
@@ -1873,7 +1873,7 @@ void registration_cb(pjsip_regc_cbparam *param)
                 break;
             default:
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ERROR);
+                processRegistrationError(*account, ERROR_GENERIC);
                 break;
         }
 

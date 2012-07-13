@@ -37,7 +37,7 @@ typedef enum {
     UNREGISTERED,
     TRYING,
     REGISTERED,
-    ERROR,
+    ERROR_GENERIC,
     ERROR_AUTH ,
     ERROR_NETWORK ,
     ERROR_HOST,
