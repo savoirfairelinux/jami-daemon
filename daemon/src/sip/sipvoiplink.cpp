@@ -59,6 +59,7 @@
 
 #ifdef SFL_VIDEO
 #include "video/video_rtp_session.h"
+#include "dbus/video_controls.h"
 #endif
 
 #include "pjsip/sip_endpoint.h"
@@ -1501,6 +1502,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     call->getAudioRtp().updateDestinationIpAddress();
     call->getAudioRtp().setDtmfPayloadType(sdpSession->getTelephoneEventType());
 #ifdef SFL_VIDEO
+    Manager::instance().getVideoControls()->stopPreview();
     call->getVideoRtp().updateSDP(*call->getLocalSDP());
     call->getVideoRtp().updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
     call->getVideoRtp().start();
