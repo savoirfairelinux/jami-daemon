@@ -309,16 +309,17 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
     // Update codec list which one is used for SDP offer
     setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
 #ifdef SFL_VIDEO
-    vector<map<string, string> > videoCodecDetails;
     YamlNode *videoCodecsNode(mapNode.getValue(VIDEO_CODECS_KEY));
 
-    if (videoCodecsNode && videoCodecsNode->getType() == SEQUENCE) {
+    if (videoCodecsNode and videoCodecsNode->getType() == SEQUENCE) {
         SequenceNode *videoCodecs = static_cast<SequenceNode *>(videoCodecsNode);
         Sequence *seq = videoCodecs->getSequence();
         if (seq->empty()) {
+            // Video codecs are an empty list
             WARN("Loading default video codecs");
-            videoCodecDetails = libav_utils::getDefaultCodecs();
+            setVideoCodecs(libav_utils::getDefaultCodecs());
         } else {
+            vector<map<string, string> > videoCodecDetails;
             for (Sequence::iterator it = seq->begin(); it != seq->end(); ++it) {
                 MappingNode *codec = static_cast<MappingNode *>(*it);
                 map<string, string> codecMap;
@@ -327,9 +328,14 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
                 codec->getValue(VIDEO_CODEC_ENABLED, &codecMap[VIDEO_CODEC_ENABLED]);
                 videoCodecDetails.push_back(codecMap);
             }
+            setVideoCodecs(videoCodecDetails);
         }
+    } else {
+        // either this is an older config file which had videoCodecs as a scalar node,
+        // or it had no video codecs at all
+        WARN("Loading default video codecs");
+        setVideoCodecs(libav_utils::getDefaultCodecs());
     }
-    setVideoCodecs(videoCodecDetails);
 #endif
 
     mapNode.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
