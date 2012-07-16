@@ -229,7 +229,7 @@ video_renderer_start_shm(VideoRenderer *self)
     return TRUE;
 }
 
-static const gint TIMEOUT_NSEC = 10E8; // 1 second
+static const gint TIMEOUT_SEC = 1; // 1 second
 
 static struct timespec
 create_timeout()
@@ -237,7 +237,7 @@ create_timeout()
     struct timespec timeout = {0, 0};
     if (clock_gettime(CLOCK_REALTIME, &timeout) == -1)
         perror("clock_gettime");
-    timeout.tv_nsec += TIMEOUT_NSEC;
+    timeout.tv_sec += TIMEOUT_SEC;
     return timeout;
 }
 
