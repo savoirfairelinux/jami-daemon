@@ -423,7 +423,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
     TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
-    pool_ = pj_pool_create(&cp_->factory, "sflphone", 4000, 4000, NULL);
+    pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4000, 4000, NULL);
 
     if (!pool_)
         throw VoipLinkException("UserAgent: Could not initialize memory pool");
