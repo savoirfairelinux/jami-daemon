@@ -324,10 +324,13 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     localSession_->time.stop = 0;
 
     // For DTMF RTP events
-    localSession_->media_count = 2;
     const bool audio = true;
+    localSession_->media_count = 1;
     localSession_->media[0] = setMediaDescriptorLine(audio);
-    localSession_->media[1] = setMediaDescriptorLine(!audio);
+    if (not selectedVideoCodecs.empty()) {
+        localSession_->media[1] = setMediaDescriptorLine(!audio);
+        ++localSession_->media_count;
+    }
 
     if (!srtpCrypto_.empty())
         addSdesAttribute(srtpCrypto_);
@@ -445,7 +448,7 @@ string Sdp::getActiveIncomingVideoDescription() const
     ss << vCodecLine << std::endl;
 
     unsigned videoIdx;
-    for (videoIdx = 0; pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0; ++videoIdx)
+    for (videoIdx = 0; videoIdx < activeLocalSession_->media_count and pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0; ++videoIdx)
         ;
 
     // get direction string
