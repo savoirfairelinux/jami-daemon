@@ -43,17 +43,18 @@ static int        skip_height = -3   ;
 void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
 void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
 void replace_markup_tag    ( GtkTextBuffer* text_buffer, GtkTextIter* start                         );
-message_tab *create_messaging_tab_common(const gchar* call_id, const gchar *label);
-
+message_tab * create_messaging_tab_common(const gchar* call_id, const gchar *label);
 message_tab * create_messaging_tab(callable_obj_t* call UNUSED);
 
 /////////////////////HELPERS/////////////////////////
 
+
+/*I really don't know why we need this, but without, it doesn't work*/
 message_tab *
 force_lookup(const gchar *id)
 {
    GList *list = g_hash_table_get_keys(tabs);
-   for (int k=0;k<g_list_length(list);k++) {
+   for (guint k=0;k<g_list_length(list);k++) {
       if (!strcmp(id,(gchar*)g_list_nth(list,k)->data)) {
          return g_hash_table_lookup(tabs,(const gchar*)g_list_nth(list,k)->data);
       }
@@ -76,6 +77,7 @@ disable_conference_calls(conference_obj_t *call)
         }
     }
 }
+
 
 
 /////////////////////GETTERS/////////////////////////
