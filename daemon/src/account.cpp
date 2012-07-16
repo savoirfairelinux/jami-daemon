@@ -38,6 +38,7 @@
 #include "video/libav_utils.h"
 #endif
 
+#include "logger.h"
 #include "manager.h"
 #include "dbus/configurationmanager.h"
 
@@ -116,17 +117,77 @@ void Account::loadDefaultCodecs()
 
     setActiveAudioCodecs(result);
 #ifdef SFL_VIDEO
-    setVideoCodecs(libav_utils::getDefaultCodecs());
+    // we don't need to validate via setVideoCodecs, since these are defaults
+    videoCodecList_ = libav_utils::getDefaultCodecs();
 #endif
 }
+
+#ifdef SFL_VIDEO
+namespace {
+    bool isPositiveInteger(const string &s)
+    {
+        string::const_iterator it = s.begin();
+        while (it != s.end() and std::isdigit(*it))
+            ++it;
+        return not s.empty() and it == s.end();
+    }
+
+    bool isBoolean(const string &s)
+    {
+        return s == "true" or s == "false";
+    }
+
+    template <typename Predicate>
+    bool isFieldValid(const map<string, string> &codec, const char *field, Predicate p)
+    {
+        map<string, string>::const_iterator key(codec.find(field));
+        return key != codec.end() and p(key->second);
+    }
+
+    bool isCodecValid(const map<string, string> &codec, const vector<map<string, string> > &defaults)
+    {
+        map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
+        if (name == codec.end()) {
+            ERROR("Field \"name\" missing in codec specification");
+            return false;
+        }
+
+        // check that it's in the list of valid codecs and that it has all the required fields
+        for (vector<map<string, string> >::const_iterator i = defaults.begin(); i != defaults.end(); ++i) {
+            map<string, string>::const_iterator defaultName = i->find(Account::VIDEO_CODEC_NAME);
+            if (defaultName->second == name->second) {
+                return isFieldValid(codec, Account::VIDEO_CODEC_BITRATE, isPositiveInteger)
+                    and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
+            }
+        }
+        ERROR("Codec %s not supported", name->second.c_str());
+        return false;
+    }
+
+    bool isCodecListValid(const vector<map<string, string> > &list)
+    {
+        const vector<map<string, string> > defaults(libav_utils::getDefaultCodecs());
+        if (list.size() != defaults.size()) {
+            ERROR("New codec list has a different length than the list of supported codecs");
+            return false;
+        }
+
+        // make sure that all codecs are present
+        for (vector<map<string, string> >::const_iterator i = list.begin();
+             i != list.end(); ++i) {
+            if (not isCodecValid(*i, defaults))
+                return false;
+        }
+        return true;
+    }
+}
+#endif
 
 void Account::setVideoCodecs(const vector<map<string, string> > &list)
 {
 #ifdef SFL_VIDEO
-    // first clear the previously stored codecs
-    videoCodecList_.clear();
-    // FIXME: do real validation here
-    videoCodecList_ = list;
+    if (isCodecListValid(list))
+        videoCodecList_ = list;
 #else
     (void) list;
 #endif

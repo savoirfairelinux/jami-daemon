@@ -184,6 +184,8 @@ class Account : public Serializable {
         }
 
         static const char * const VIDEO_CODEC_ENABLED;
+        static const char * const VIDEO_CODEC_NAME;
+        static const char * const VIDEO_CODEC_BITRATE;
     private:
         NON_COPYABLE(Account);
 
@@ -197,8 +199,6 @@ class Account : public Serializable {
         // General configuration keys for accounts
         static const char * const AUDIO_CODECS_KEY;
         static const char * const VIDEO_CODECS_KEY;
-        static const char * const VIDEO_CODEC_NAME;
-        static const char * const VIDEO_CODEC_BITRATE;
         static const char * const RINGTONE_PATH_KEY;
         static const char * const RINGTONE_ENABLED_KEY;
         static const char * const DISPLAY_NAME_KEY;

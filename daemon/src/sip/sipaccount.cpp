@@ -317,7 +317,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
         if (seq->empty()) {
             // Video codecs are an empty list
             WARN("Loading default video codecs");
-            setVideoCodecs(libav_utils::getDefaultCodecs());
+            videoCodecList_ = libav_utils::getDefaultCodecs();
         } else {
             vector<map<string, string> > videoCodecDetails;
             for (Sequence::iterator it = seq->begin(); it != seq->end(); ++it) {
@@ -328,13 +328,14 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
                 codec->getValue(VIDEO_CODEC_ENABLED, &codecMap[VIDEO_CODEC_ENABLED]);
                 videoCodecDetails.push_back(codecMap);
             }
+            // these must be validated
             setVideoCodecs(videoCodecDetails);
         }
     } else {
         // either this is an older config file which had videoCodecs as a scalar node,
         // or it had no video codecs at all
         WARN("Loading default video codecs");
-        setVideoCodecs(libav_utils::getDefaultCodecs());
+        videoCodecList_ = libav_utils::getDefaultCodecs();
     }
 #endif
 

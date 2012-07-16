@@ -366,10 +366,12 @@ bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text
     // Get active value and name at iteration
     const gint base = 10;
     gchar *endptr;
-    const unsigned long long val = strtoull(new_text, &endptr, base);
+    const long long val = strtoll(new_text, &endptr, base);
     /* Ignore if it's not a number */
     if (*endptr != '\0') {
         WARN("Ignoring characters %s\n", val, endptr);
+    } else if (val < 0) {
+        WARN("Ignoring negative bitrate value");
     } else {
         // Get path of edited codec
         GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
