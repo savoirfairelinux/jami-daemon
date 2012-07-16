@@ -95,12 +95,27 @@ focus_on_searchbar_in()
 }
 
 /**
+ * Save the vpaned size
+ */
+static void
+on_messaging_paned_position_change(GtkPaned* paned, GtkScrollType scroll_type UNUSED,gpointer user_data UNUSED)
+{
+    int height = gtk_paned_get_position(paned);
+    eel_gconf_set_integer(CONF_MESSAGING_HEIGHT, height);
+    set_message_tab_height(paned,height);
+}
+
+/**
  * Handle main window resizing
  */
 static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *event)
 {
     eel_gconf_set_integer(CONF_MAIN_WINDOW_WIDTH, event->width);
     eel_gconf_set_integer(CONF_MAIN_WINDOW_HEIGHT, event->height);
+
+    gint height = 0;
+    gint width  = 0;
+    gtk_widget_get_size_request(get_tab_box(),&width,&height);
 
     int pos_x, pos_y;
     gtk_window_get_position(GTK_WINDOW(window), &pos_x, &pos_y);
@@ -274,6 +289,10 @@ create_main_window()
     GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
 #endif
     current_calls_tab->mainwidget = vpaned;
+
+    int messaging_height = eel_gconf_get_integer(CONF_MESSAGING_HEIGHT);
+    set_message_tab_height(GTK_PANED(vpaned),messaging_height);
+    
     gtk_widget_show (vpaned);
     gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
 
@@ -288,6 +307,8 @@ create_main_window()
     gtk_box_pack_start(GTK_BOX(vbox), history_vbox, TRUE, TRUE, 0);
     gtk_paned_pack1 (GTK_PANED (vpaned), current_calls_tab->tree, TRUE, FALSE);
     gtk_paned_pack2 (GTK_PANED (vpaned), tab_widget, FALSE, FALSE);
+
+    g_signal_connect(G_OBJECT(vpaned), "notify::position" , G_CALLBACK(on_messaging_paned_position_change), current_calls_tab);
 
     /* Add playback scale and setup history tab */
     seekslider = GTK_WIDGET(sfl_seekslider_new());

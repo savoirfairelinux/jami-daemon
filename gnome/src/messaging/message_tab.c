@@ -32,11 +32,13 @@
 #include "../dbus/dbus.h"
 #include "../mainwindow.h"
 #include <string.h>
-#include <unused.h>
 
-static GtkWidget *tab_box = NULL;
-static GHashTable *tabs   = NULL;
-static gboolean   visible = FALSE;
+static GtkWidget  *tab_box    = NULL ;
+static GHashTable *tabs       = NULL ;
+static gboolean   visible     = FALSE;
+static GtkPaned   *paned      = NULL ;
+static int        vpanes_s    = -1   ;
+static int        skip_height = -3   ;
 
 void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
 void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
@@ -58,7 +60,7 @@ GtkWidget *get_tab_box()
 
 
 
-/////////////////////GETTERS/////////////////////////
+/////////////////////SETTERS/////////////////////////
 
 void
 hide_show_common()
@@ -89,8 +91,24 @@ void
 show_messaging()
 {
    visible = FALSE;
-   hide_show_common();
+//    hide_show_common();
+   gtk_widget_show(get_tab_box());
+   if (vpanes_s > 0) {
+      gtk_paned_set_position(GTK_PANED(paned),vpanes_s);
+   }
 }
+
+void
+set_message_tab_height(GtkPaned* _paned, int height)
+{
+   if ( skip_height >=0 || skip_height == -3 ) {
+      paned    = _paned;
+      vpanes_s = height;
+   }
+   skip_height++;
+}
+
+
 
 //////////////////////SLOTS//////////////////////////
 
@@ -199,7 +217,7 @@ replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
 message_tab *
 create_messaging_tab(callable_obj_t* call)
 {
-
+    show_messaging();
     /* Do not create a new tab if it already exist */
     message_tab *tab = NULL;
     if (tabs)
@@ -207,7 +225,6 @@ create_messaging_tab(callable_obj_t* call)
     if (tab) {
        return tab;
     }
-    //show_messaging();
 
     message_tab *self = g_new0(message_tab, 1);
 

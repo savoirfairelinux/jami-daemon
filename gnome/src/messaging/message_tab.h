@@ -38,6 +38,7 @@
 #include <gtk/gtk.h>
 #include <callable_obj.h>
 #include <conference_obj.h>
+#include <unused.h>
 
 /** An IM conversation */
 typedef struct {
@@ -75,5 +76,11 @@ void toogle_messaging();
 void hide_messaging();
 void show_messaging();
 void disable_messaging_tab(const gchar *id);
+
+/**
+ * Set message tab height
+ */
+void set_message_tab_height(GtkPaned* _paned, int height);
+
 
 #endif
