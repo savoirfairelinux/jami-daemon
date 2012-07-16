@@ -40,6 +40,11 @@ static GtkPaned   *paned      = NULL ;
 static int        vpanes_s    = -1   ;
 static int        skip_height = -3   ;
 
+
+static GtkTextIter* start_link = NULL;
+static GtkTextIter* end_link   = NULL;
+
+
 void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
 void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
 void replace_markup_tag    ( GtkTextBuffer* text_buffer, GtkTextIter* start                         );
@@ -180,6 +185,60 @@ on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
     main_window_pause_keygrabber(FALSE);
 }
 
+static void
+on_cursor_motion(GtkTextView *view UNUSED, GdkEvent  *event, gpointer data)
+{
+   gint x,y;
+   GtkTextIter cursor_pos,end_iter;
+   GtkTextIter end_match,start_match,end_match_b,start_match_b;
+   GtkTextIter* start_real = NULL;
+   GtkTextIter* end_real   = NULL;
+   gtk_text_buffer_get_end_iter( ((message_tab*) data)->buffer, &end_iter );
+   gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT,((GdkEventMotion*)event)->x,((GdkEventMotion*)event)->y,&x,&y);
+   gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(view),&cursor_pos,x,y);
+   gboolean ret = gtk_text_iter_backward_search(&cursor_pos," ",GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY,&start_match_b,&end_match_b,NULL);
+   gchar* text;
+   if ( ret ) {
+        if (gtk_text_iter_forward_search(&cursor_pos," ",GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY,&start_match,&end_match,NULL)) {
+            text = gtk_text_buffer_get_text(((message_tab*) data)->buffer,&end_match_b,&start_match,FALSE);
+            start_real = (&end_match_b);
+            end_real   = (&start_match);
+        }
+        else {
+            text = gtk_text_buffer_get_text(((message_tab*) data)->buffer,&end_match_b,&end_iter,FALSE);
+            start_real = &end_match_b;
+            end_real   = &end_iter;
+        }
+        GError *error = NULL;
+        gchar *pattern_string = "^http\\://[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(/\\S*)?$";
+        GRegex *regex = g_regex_new( pattern_string, 0, 0, &error );
+        GMatchInfo *match_info;
+        g_regex_match( regex, text, 0, &match_info );
+        GtkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT);
+        if (g_match_info_matches( match_info )) {
+            while( g_match_info_matches( match_info ) ) {
+                  g_match_info_next( match_info, &error );
+                  gtk_text_buffer_remove_all_tags(((message_tab*) data)->buffer,start_real, end_real);
+                  gtk_text_buffer_apply_tag_by_name(((message_tab*) data)->buffer, "link", start_real, end_real);
+            }
+            GdkCursor *cur = gdk_cursor_new(GDK_HAND2);
+            gdk_window_set_cursor(GTK_WINDOW(win),cur);
+            start_link = gtk_text_iter_copy(start_real);
+            end_link   = gtk_text_iter_copy(end_real);
+        }
+        else {
+            GdkCursor *cur = gdk_cursor_new(GDK_XTERM);
+            gdk_window_set_cursor(GTK_WINDOW(win),cur);
+            if (start_link && end_link) {
+               gtk_text_buffer_remove_all_tags(((message_tab*) data)->buffer,start_link,end_link );
+//                g_free(start_link);
+//                g_free(end_link);
+               start_link = NULL;
+               end_link   = NULL;
+            }
+        }
+   }
+}
 
 
 /////////////////////MUTATORS////////////////////////
@@ -211,10 +270,23 @@ append_message(message_tab* self, const gchar* name, const gchar* message)
     gtk_text_buffer_get_end_iter(self->buffer, &new_end);
     gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
 
+    //GRegex *link_regex = g_regex_new("|([A-Za-z]{3,9})://([-;:&=\\+\\$,\\w]+@{1})?([-A-Za-z0-9\\.]+)+:?(\\d+)?((/[-\\+~%/\\.\\w]+)?\\??([-\\+=&;%@\\.\\w]+)?#?([\\w]+)?)?|",G_REGEX_OPTIMIZE,0,NULL);
+//     gtk_text_buffer_apply_tag_by_name(text_buffer, "b", &start_match, &end_match);
+
     gtk_text_buffer_insert      ( self->buffer, &new_end, message,    -1 );
     gtk_text_buffer_insert      ( self->buffer, &new_end, "\n"   ,    -1 );
     gtk_text_buffer_get_end_iter( self->buffer, &new_end                 );
     gtk_text_view_scroll_to_iter( self->view  , &new_end,FALSE,0,0,FALSE );
+    
+    GtkTextIter start_match,end_match;
+    GtkTextIter start_find, end_find;
+    gtk_text_buffer_get_start_iter(self->buffer, &start_find);
+    gtk_text_buffer_get_end_iter(self->buffer, &end_find);
+    while ( gtk_text_iter_forward_search(&start_find, "google", GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, &start_match, &end_match, NULL) ) {
+        gtk_text_buffer_apply_tag_by_name(self->buffer, "link", &start_match, &end_match);
+        int offset = gtk_text_iter_get_offset(&end_match);
+        gtk_text_buffer_get_iter_at_offset(self->buffer, &start_find, offset);
+    }
 }
 
 void
@@ -280,6 +352,7 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label)
     GtkWidget *vbox            = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkTextBuffer *text_buffer = gtk_text_buffer_new(NULL);
     gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
+    gtk_text_buffer_create_tag(text_buffer, "link", "foreground", "#0000FF","underline",PANGO_UNDERLINE_SINGLE);
 
     /* Create the conversation history widget*/
     GtkWidget *history_hbox    = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2  );
@@ -295,6 +368,8 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label)
     gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(text_box_widget),GTK_WRAP_CHAR);
 
     gtk_container_add(GTK_CONTAINER(scoll_area), text_box_widget);
+
+   g_signal_connect(G_OBJECT(text_box_widget), "motion-notify-event" , G_CALLBACK(on_cursor_motion), self);
 
     GtkWidget *line_edit    = gtk_entry_new (                               );
     GtkWidget *hbox         = gtk_box_new   ( GTK_ORIENTATION_HORIZONTAL, 1 );
