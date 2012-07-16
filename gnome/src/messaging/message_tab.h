@@ -42,13 +42,14 @@
 
 /** An IM conversation */
 typedef struct {
-   GtkWidget      *widget ;
-   callable_obj_t *call   ;
-   gchar          *title  ;
-   GtkTextBuffer  *buffer ;
-   GtkTextView    *view   ;
-   GtkWidget      *entry  ;
-   gint           index   ;
+   GtkWidget        *widget ;
+   callable_obj_t   *call   ;
+   conference_obj_t *conf   ;
+   gchar            *title  ;
+   GtkTextBuffer    *buffer ;
+   GtkTextView      *view   ;
+   GtkWidget        *entry  ;
+   gint             index   ;
 } message_tab;
 
 /**

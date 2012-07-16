@@ -43,8 +43,39 @@ static int        skip_height = -3   ;
 void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
 void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
 void replace_markup_tag    ( GtkTextBuffer* text_buffer, GtkTextIter* start                         );
+message_tab *create_messaging_tab_common(const gchar* call_id, const gchar *label);
 
 message_tab * create_messaging_tab(callable_obj_t* call UNUSED);
+
+/////////////////////HELPERS/////////////////////////
+
+message_tab *
+force_lookup(const gchar *id)
+{
+   GList *list = g_hash_table_get_keys(tabs);
+   for (int k=0;k<g_list_length(list);k++) {
+      if (!strcmp(id,(gchar*)g_list_nth(list,k)->data)) {
+         return g_hash_table_lookup(tabs,(const gchar*)g_list_nth(list,k)->data);
+      }
+   }
+   return NULL;
+}
+
+void
+disable_conference_calls(conference_obj_t *call)
+{
+    if (tabs) {
+        guint size = g_slist_length(call->participant_list);
+        for (guint i = 0; i < size;i++) {
+               const gchar* id = (gchar*)g_slist_nth(call->participant_list,i)->data;
+               message_tab *tab = g_hash_table_lookup(tabs,id);
+               tab = force_lookup(id);
+               if (tab) {
+                   gtk_widget_hide(tab->entry);
+               }
+        }
+    }
+}
 
 
 /////////////////////GETTERS/////////////////////////
@@ -117,7 +148,10 @@ on_enter(GtkEntry *entry, gpointer user_data)
 {
     message_tab *tab = (message_tab*)user_data;
     append_message(tab,(gchar*)"Me",gtk_entry_get_text(entry));
-    dbus_send_text_message(tab->call->_callID,gtk_entry_get_text(entry));
+    if (tab->call)
+        dbus_send_text_message(tab->call->_callID,gtk_entry_get_text(entry));
+    else if (tab->conf)
+        dbus_send_text_message(tab->conf->_confID,gtk_entry_get_text(entry));
     gtk_entry_set_text(entry,"");
 }
 
@@ -126,7 +160,10 @@ on_close(GtkWidget *button UNUSED, gpointer data)
 {
     message_tab *tab = (message_tab*)data;
     gtk_widget_destroy(tab->widget);
-    g_hash_table_remove(tabs,tab->call->_callID);
+    if (tab->call)
+      g_hash_table_remove(tabs,tab->call->_callID);
+    else if (tab->conf)
+       g_hash_table_remove(tabs,tab->conf->_confID);
 }
 
 static void
@@ -179,26 +216,35 @@ append_message(message_tab* self, const gchar* name, const gchar* message)
 }
 
 void
-new_text_message(callable_obj_t* call, const gchar* message)
+new_text_message_common(const gchar* call_id, const gchar* message, const gchar *name, gboolean conf)
 {
     if (!tabs) return;
     message_tab *tab = NULL;
     if (tabs)
-        tab = g_hash_table_lookup(tabs,call->_callID);
-    if (!tab)
-        tab = create_messaging_tab(call);
-    gchar* name;
-    if (strcmp(call->_display_name,""))
-       name = call->_display_name;
-    else
-       name = "Peer";
+        tab = g_hash_table_lookup(tabs,call_id);
+    if (!tab && !conf)
+        tab = create_messaging_tab_common(call_id,name);
+    else if (!tab && conf)
+        tab = create_messaging_tab_common(call_id,name);
     append_message(tab,name,message);
+}
+
+void
+new_text_message(callable_obj_t* call, const gchar* message)
+{
+    gchar* label_text;
+    if (strcmp(call->_display_name,""))
+       label_text = call->_display_name;
+    else
+       label_text = "Peer";
+    new_text_message_common(call->_callID,message,label_text,FALSE);
 }
 
 void
 new_text_message_conf(conference_obj_t* call, const gchar* message)
 {
-   new_text_message((callable_obj_t*)call,message);
+    disable_conference_calls(call);
+    new_text_message_common(call->_confID,message,"Conference",TRUE);
 }
 
 void
@@ -215,13 +261,13 @@ replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
 
 //conference_obj_t
 message_tab *
-create_messaging_tab(callable_obj_t* call)
+create_messaging_tab_common(const gchar* call_id, const gchar *label)
 {
     show_messaging();
     /* Do not create a new tab if it already exist */
     message_tab *tab = NULL;
     if (tabs)
-        tab = g_hash_table_lookup(tabs,call->_callID);
+        tab = g_hash_table_lookup(tabs,call_id);
     if (tab) {
        return tab;
     }
@@ -262,18 +308,11 @@ create_messaging_tab(callable_obj_t* call)
 
     self->view   = GTK_TEXT_VIEW(text_box_widget);
     self->widget = vbox       ;
-    self->call   = call       ;
     self->buffer = text_buffer;
     self->entry  = line_edit  ;
 
-    gchar* label_text;
-    if (strcmp(call->_display_name,""))
-       label_text = call->_display_name;
-    else
-       label_text = call->_peer_number ;
-
     /* Setup the tab label */
-    GtkWidget *tab_label        = gtk_label_new           ( label_text                         );
+    GtkWidget *tab_label        = gtk_label_new           ( label                              );
     GtkWidget *tab_label_vbox   = gtk_box_new             ( GTK_ORIENTATION_HORIZONTAL, 0      );
     GtkWidget *tab_close_button = gtk_button_new          (                                    );
     GtkWidget *button_image     = gtk_image_new_from_stock( GTK_STOCK_CLOSE,GTK_ICON_SIZE_MENU );
@@ -315,13 +354,41 @@ create_messaging_tab(callable_obj_t* call)
     if (!tabs) {
       tabs = g_hash_table_new(NULL,g_str_equal);
     }
-    g_hash_table_insert(tabs,(gpointer)call->_callID,(gpointer)self);
+    g_hash_table_insert(tabs,(gpointer)call_id,(gpointer)self);
 
+    return self;
+}
+
+message_tab *
+create_messaging_tab(callable_obj_t* call)
+{
+    const gchar *confID = dbus_get_conference_id(call->_callID);
+    if (strlen(confID) > 0 && ((tabs && force_lookup(confID) == NULL) || !tabs)) {
+        return create_messaging_tab_common(confID,"Conference");
+    }
+    else if (strlen(confID) > 0 && tabs) {
+        return force_lookup(confID);
+    }
+    gchar* label_text;
+    if (strcmp(call->_display_name,""))
+       label_text = call->_display_name;
+    else
+       label_text = call->_peer_number ;
+    message_tab* self = create_messaging_tab_common(call->_callID,label_text);
+    
+    self->call   = call;
+    self->conf   = NULL;
     return self;
 }
 
 message_tab *
 create_messaging_tab_conf(conference_obj_t* call)
 {
-   return create_messaging_tab((callable_obj_t*)call);
+    message_tab* self = create_messaging_tab_common(call->_confID,"Conference");
+    self->conf   = call;
+    self->call   = NULL;
+
+    disable_conference_calls(call);
+    
+    return self;
 }
