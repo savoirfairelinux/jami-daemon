@@ -50,15 +50,15 @@ class LIB_EXPORT AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:
    static   ContactBackend* getInstance();
-   Contact* getContactByPhone ( const QString& phoneNumber ,bool resolveDNS = false    );
-   Contact* getContactByUid   ( const QString& uid                                     );
-   void     editContact       ( Contact*       contact , QWidget* parent = 0           );
-   void     addNewContact     ( Contact*       contact , QWidget* parent = 0           );
-   virtual void addPhoneNumber( Contact*       contact , QString  number, QString type );
+   Contact* getContactByPhone ( const QString& phoneNumber ,bool resolveDNS = false, Account* a=nullptr);
+   Contact* getContactByUid   ( const QString& uid                                                     );
+   void     editContact       ( Contact*       contact , QWidget* parent = 0                           );
+   void     addNewContact     ( Contact*       contact , QWidget* parent = 0                           );
+   virtual void addPhoneNumber( Contact*       contact , QString  number, QString type                 );
    
-   virtual void     editContact   ( Contact*   contact                                 );
-   virtual void     addNewContact ( Contact*   contact                                 );
-   virtual ~AkonadiBackend        (                                                    );
+   virtual void     editContact   ( Contact*   contact                                                 );
+   virtual void     addNewContact ( Contact*   contact                                                 );
+   virtual ~AkonadiBackend        (                                                                    );
 
 private:
    AkonadiBackend(QObject* parent);

@@ -508,7 +508,7 @@ bool Call::isSecure() const {
 Contact* Call::getContact()
 {
    if (!m_pContact && m_ContactChanged) {
-      m_pContact = m_pContactBackend->getContactByPhone(m_PeerPhoneNumber,true);
+      m_pContact = m_pContactBackend->getContactByPhone(m_PeerPhoneNumber,true,getAccount());
    }
    return m_pContact;
 }

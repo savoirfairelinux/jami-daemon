@@ -31,6 +31,7 @@
 
 //SFLPhone
 class Contact;
+class Account;
 
 //Typedef
 typedef QList<Contact*> ContactList;
@@ -44,7 +45,7 @@ public:
 
    ///Get a contact using a phone number
    ///@param resolveDNS interpret the number as is (false) or parse it to extract the domain and number (true)
-   virtual Contact*    getContactByPhone ( const QString& phoneNumber , bool resolveDNS = false) = 0;
+   virtual Contact*    getContactByPhone ( const QString& phoneNumber , bool resolveDNS = false, Account* a = nullptr) = 0;
 
    ///Return a contact (or nullptr) according to the contact unique identifier
    virtual Contact*    getContactByUid   ( const QString& uid         ) = 0;

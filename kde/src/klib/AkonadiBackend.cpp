@@ -86,14 +86,24 @@ ContactBackend* AkonadiBackend::getInstance()
 
 ///Find contact using a phone number
 ///@param resolveDNS check if the DNS is used by an account, then assume contact with that phone number / extension is the same as the caller
-Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resolveDNS)
+Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resolveDNS,Account* a)
 {
-   if (!resolveDNS || phoneNumber.indexOf("@") == -1)
-      return m_ContactByPhone[phoneNumber];
-   else if (!getHostNameFromPhone(phoneNumber).isEmpty() && m_ContactByPhone[getUserFromPhone(phoneNumber)]) {
+   QString number = phoneNumber;
+   if (number.left(5) == "<sip:")
+      number = number.remove(0,5);
+   if (number.right(1) == ">")
+      number = number.remove(number.size()-1,1);
+   Contact* c = m_ContactByPhone[number];
+   if (c) {
+      return c;
+   }
+   else if (number.indexOf("@") == -1 && a)
+      return m_ContactByPhone[number+"@"+a->getAccountHostname()];
+   
+   if (resolveDNS &&  number.indexOf("@") != -1 && !getHostNameFromPhone(number).isEmpty() && m_ContactByPhone[getUserFromPhone(number)]) {
       foreach (Account* a, AccountList::getInstance()->getAccounts()) {
-         if (a->getAccountHostname() == getHostNameFromPhone(phoneNumber))
-            return m_ContactByPhone[getUserFromPhone(phoneNumber)];
+         if (a->getAccountHostname() == getHostNameFromPhone(number))
+            return m_ContactByPhone[getUserFromPhone(number)];
       }
    }
    return nullptr;
@@ -166,7 +176,12 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             PhoneNumbers newNumbers;
             foreach (KABC::PhoneNumber number, numbers) {
                newNumbers << new Contact::PhoneNumber(number.number(),number.typeLabel());
-               m_ContactByPhone[number.number()] = aContact;
+               QString number2 = number.number();
+               if (number2.left(5) == "<sip:")
+                  number2 = number2.remove(0,5);
+               if (number2.right(1) == ">")
+                  number2 = number2.remove(number2.size()-1,1);
+               m_ContactByPhone[number2] = aContact;
             }
             m_ContactByUid[tmp.uid()] = aContact;
 
