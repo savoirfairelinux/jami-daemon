@@ -67,7 +67,7 @@ GtkWidget *get_tab_box();
  * @param message the new message
  */
 void new_text_message(callable_obj_t *call, const gchar *message);
-void new_text_message_conf(conference_obj_t *call, const gchar *message);
+void new_text_message_conf(conference_obj_t *call, const gchar *message,const gchar* from);
 
 
 /**

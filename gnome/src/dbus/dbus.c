@@ -166,7 +166,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
             return;
         }
 
-        new_text_message_conf(conf,msg);
+        new_text_message_conf(conf,msg,from);
     }
 }
 

@@ -30,6 +30,7 @@
 #include "message_tab.h"
 
 #include "../dbus/dbus.h"
+#include <glib.h>
 #include "../mainwindow.h"
 #include <string.h>
 
@@ -153,6 +154,8 @@ set_message_tab_height(GtkPaned* _paned, int height)
 static void
 on_enter(GtkEntry *entry, gpointer user_data)
 {
+    start_link = NULL;
+    end_link   = NULL;
     message_tab *tab = (message_tab*)user_data;
     append_message(tab,(gchar*)"Me",gtk_entry_get_text(entry));
     if (tab->call)
@@ -186,50 +189,65 @@ on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
 }
 
 static void
+on_clicked(GtkTextBuffer *textbuffer UNUSED, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, gpointer user_data UNUSED)
+{
+   if (start_link && end_link && gtk_text_iter_compare(start_link,location) <= 0 && gtk_text_iter_compare(location,end_link) <= 0) {
+       gchar* text = gtk_text_buffer_get_text(textbuffer,start_link,end_link,FALSE);
+       start_link = NULL;
+       end_link = NULL;
+       if (strlen(text)) {
+         const gchar* argv[3] = {"x-www-browser",text,(char*)NULL};
+         g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
+       }
+   }
+}
+
+static void
 on_cursor_motion(GtkTextView *view UNUSED, GdkEvent  *event, gpointer data)
 {
    gint x,y;
    GtkTextIter cursor_pos,end_iter;
    GtkTextIter end_match,start_match,end_match_b,start_match_b;
-   GtkTextIter* start_real = NULL;
-   GtkTextIter* end_real   = NULL;
+   GtkTextIter start_real,end_real;
    gtk_text_buffer_get_end_iter( ((message_tab*) data)->buffer, &end_iter );
    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT,((GdkEventMotion*)event)->x,((GdkEventMotion*)event)->y,&x,&y);
    gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(view),&cursor_pos,x,y);
    gboolean ret = gtk_text_iter_backward_search(&cursor_pos," ",GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY,&start_match_b,&end_match_b,NULL);
-   gchar* text;
    if ( ret ) {
-        if (gtk_text_iter_forward_search(&cursor_pos," ",GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY,&start_match,&end_match,NULL)) {
-            text = gtk_text_buffer_get_text(((message_tab*) data)->buffer,&end_match_b,&start_match,FALSE);
-            start_real = (&end_match_b);
-            end_real   = (&start_match);
+        if (gtk_text_iter_forward_search(&cursor_pos," ",GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY,&start_match,&end_match,NULL)
+           && gtk_text_iter_get_line(&end_match) == gtk_text_iter_get_line(&cursor_pos)) {
+            start_real = end_match_b;
+            end_real   = start_match;
         }
         else {
-            text = gtk_text_buffer_get_text(((message_tab*) data)->buffer,&end_match_b,&end_iter,FALSE);
-            start_real = &end_match_b;
-            end_real   = &end_iter;
+            start_real = end_match_b;
+            gtk_text_iter_forward_visible_line(&cursor_pos);
+            end_real = cursor_pos;
         }
+        gchar* text = gtk_text_buffer_get_text(((message_tab*) data)->buffer,&start_real,&end_real,FALSE);
         GError *error = NULL;
         gchar *pattern_string = "^http\\://[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(/\\S*)?$";
         GRegex *regex = g_regex_new( pattern_string, 0, 0, &error );
         GMatchInfo *match_info;
         g_regex_match( regex, text, 0, &match_info );
-        GtkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT);
+        GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT);
         if (g_match_info_matches( match_info )) {
             while( g_match_info_matches( match_info ) ) {
                   g_match_info_next( match_info, &error );
-                  gtk_text_buffer_remove_all_tags(((message_tab*) data)->buffer,start_real, end_real);
-                  gtk_text_buffer_apply_tag_by_name(((message_tab*) data)->buffer, "link", start_real, end_real);
+                  if (gtk_text_iter_get_buffer(&start_real) == ((message_tab*) data)->buffer && gtk_text_iter_get_buffer(&end_real) == ((message_tab*) data)->buffer) {
+                       gtk_text_buffer_remove_all_tags(((message_tab*) data)->buffer,&start_real, &end_real);
+                       gtk_text_buffer_apply_tag_by_name(((message_tab*) data)->buffer, "link", &start_real, &end_real);
+                  }
             }
             GdkCursor *cur = gdk_cursor_new(GDK_HAND2);
-            gdk_window_set_cursor(GTK_WINDOW(win),cur);
-            start_link = gtk_text_iter_copy(start_real);
-            end_link   = gtk_text_iter_copy(end_real);
+            gdk_window_set_cursor(win,cur);
+            start_link = gtk_text_iter_copy(&start_real);
+            end_link   = gtk_text_iter_copy(&end_real);
         }
         else {
             GdkCursor *cur = gdk_cursor_new(GDK_XTERM);
-            gdk_window_set_cursor(GTK_WINDOW(win),cur);
-            if (start_link && end_link) {
+            gdk_window_set_cursor(win,cur);
+            if (start_link && end_link && gtk_text_iter_get_buffer(start_link) == ((message_tab*) data)->buffer && gtk_text_iter_get_buffer(end_link) == ((message_tab*) data)->buffer) {
                gtk_text_buffer_remove_all_tags(((message_tab*) data)->buffer,start_link,end_link );
 //                g_free(start_link);
 //                g_free(end_link);
@@ -287,6 +305,8 @@ append_message(message_tab* self, const gchar* name, const gchar* message)
         int offset = gtk_text_iter_get_offset(&end_match);
         gtk_text_buffer_get_iter_at_offset(self->buffer, &start_find, offset);
     }
+    start_link = NULL;
+    end_link   = NULL;
 }
 
 void
@@ -315,10 +335,10 @@ new_text_message(callable_obj_t* call, const gchar* message)
 }
 
 void
-new_text_message_conf(conference_obj_t* call, const gchar* message)
+new_text_message_conf(conference_obj_t* call, const gchar* message,const gchar* from)
 {
     disable_conference_calls(call);
-    new_text_message_common(call->_confID,message,"Conference",TRUE);
+    new_text_message_common(call->_confID,message,strlen(from)?from:"Conference",TRUE);
 }
 
 void
@@ -370,6 +390,7 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label)
     gtk_container_add(GTK_CONTAINER(scoll_area), text_box_widget);
 
    g_signal_connect(G_OBJECT(text_box_widget), "motion-notify-event" , G_CALLBACK(on_cursor_motion), self);
+   g_signal_connect(G_OBJECT(text_buffer    ), "mark-set"            , G_CALLBACK(on_clicked      ), self);
 
     GtkWidget *line_edit    = gtk_entry_new (                               );
     GtkWidget *hbox         = gtk_box_new   ( GTK_ORIENTATION_HORIZONTAL, 1 );
