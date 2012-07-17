@@ -45,6 +45,7 @@
 #include "lib/instance_interface_singleton.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/Contact.h"
+#include "lib/AccountList.h"
 
 //SFLPhone
 #include "klib/AkonadiBackend.h"
@@ -131,7 +132,6 @@ bool SFLPhone::initialize()
 //    CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
 //    histoModel->initHistory();
 
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    // accept dnd
    setAcceptDrops(true);
 
@@ -215,7 +215,7 @@ bool SFLPhone::initialize()
    move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
    show();
 
-   if (configurationManager.getAccountList().value().size() <= 1) {
+   if (AccountList::getInstance()->size() <= 1) {
       (new AccountWizard())->show();
    }
 
@@ -357,6 +357,7 @@ TreeWidgetCallModel* SFLPhone::model()
       m_pModel = new TreeWidgetCallModel();
       m_pModel->initCall();
       Call::setContactBackend(AkonadiBackend::getInstance());
+      AccountList::getInstance()->setDefaultAccount(AccountList::getInstance()->getAccountById(ConfigurationSkeleton::defaultAccountId()));
       #ifdef ENABLE_VIDEO
       VideoModel::getInstance();
       #endif

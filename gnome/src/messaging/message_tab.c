@@ -228,7 +228,7 @@ on_cursor_motion(GtkTextView *view UNUSED, GdkEvent  *event, gpointer data)
 
         /*Match the regex*/
         GError     *error          = NULL;
-        gchar      *pattern_string = "^http\\://[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(/\\S*)?$";
+        gchar      *pattern_string = "^[a-z]*\\://[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(/\\S*)?$";
         GRegex     *regex          = g_regex_new( pattern_string, 0, 0, &error );
         GMatchInfo *match_info     = NULL;
         GdkWindow  *win            = gtk_text_view_get_window(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT);

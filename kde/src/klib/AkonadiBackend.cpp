@@ -97,6 +97,8 @@ Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resol
    if (c) {
       return c;
    }
+   if (!a)
+      a = AccountList::getInstance()->getDefaultAccount();
    else if (number.indexOf("@") == -1 && a)
       return m_ContactByPhone[number+"@"+a->getAccountHostname()];
    
@@ -151,6 +153,7 @@ KABC::PhoneNumber::Type nameToType(QString name)
 ///Update the contact list when a new Akonadi collection is added
 ContactList AkonadiBackend::update(Akonadi::Collection collection)
 {
+   Account* defaultAccount = AccountList::getInstance()->getDefaultAccount();
    m_Collection = collection;
    if ( !collection.isValid() ) {
       kDebug() << "The current collection is not valid";
@@ -182,6 +185,8 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                if (number2.right(1) == ">")
                   number2 = number2.remove(number2.size()-1,1);
                m_ContactByPhone[number2] = aContact;
+               if (number2.size() <= 6 && defaultAccount && !defaultAccount->getAccountHostname().isEmpty())
+                  m_ContactByPhone[number2+"@"+defaultAccount->getAccountHostname()] = aContact;
             }
             m_ContactByUid[tmp.uid()] = aContact;
 

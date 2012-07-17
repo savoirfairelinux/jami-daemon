@@ -50,6 +50,7 @@ public:
    const Account*           getAccountAt           ( int i                  ) const;
    int                      size                   (                        ) const;
    Account*                 firstRegisteredAccount (                        ) const;
+   Account*                 getDefaultAccount      (                        );
    static Account*          getCurrentAccount      (                        );
    static QString           getPriorAccoundId      (                        );
 
@@ -58,6 +59,7 @@ public:
    int           rowCount ( const QModelIndex& parent = QModelIndex()            ) const;
    Qt::ItemFlags flags    ( const QModelIndex& index                             ) const;
    Account*      getAccountByModelIndex(QModelIndex item)                          const;
+   void          setDefaultAccount(Account* a);
 
    //Setters
    static  void setPriorAccountId( const QString& value                                     );
@@ -87,6 +89,7 @@ private:
    QVector<Account*>*  m_pAccounts;
    static AccountList* m_spAccountList;
    static QString      m_sPriorAccountId;
+   Account*            m_pDefaultAccount;
    AccountListColorVisitor* m_pColorVisitor;
    
 public slots:
@@ -103,13 +106,14 @@ signals:
    ///Emitted when an account state change
    void accountStateChanged( Account* account, QString state);
    void accountEnabledChanged(Account* source);
+   void defaultAccountChanged(Account* a);
 };
 
 ///SFLPhonelib Qt does not link to QtGui, and does not need to, this allow to add runtime Gui support
 class LIB_EXPORT AccountListColorVisitor {
 public:
    virtual QVariant getColor(const Account* a) = 0;
-   virtual QVariant getIcon(const Account* a)        = 0;
+   virtual QVariant getIcon(const Account* a)  = 0;
    virtual ~AccountListColorVisitor() {}
 };
 

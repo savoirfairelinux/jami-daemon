@@ -391,6 +391,12 @@ Account* AccountList::getAccountByModelIndex(QModelIndex item) const {
    return (*m_pAccounts)[item.row()];
 }
 
+///Return the default account (used for contact lookup)
+Account* AccountList::getDefaultAccount()
+{
+   return m_pDefaultAccount;
+}
+
 
 /*****************************************************************************
  *                                                                           *
@@ -448,6 +454,14 @@ bool AccountList::setData(const QModelIndex & index, const QVariant &value, int 
 void AccountList::setColorVisitor(AccountListColorVisitor* visitor)
 {
    m_pColorVisitor = visitor;
+}
+
+///Set the default account (used for contact lookup)
+void AccountList::setDefaultAccount(Account* a)
+{
+   if (a != m_pDefaultAccount)
+      emit defaultAccountChanged(a);
+   m_pDefaultAccount = a;
 }
 
 

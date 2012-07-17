@@ -39,6 +39,7 @@ set( qtsflphone_LIB_SRCS
   VideoDevice.cpp
   CredentialModel.cpp
   AudioCodecModel.cpp
+  InstantMessagingModel.cpp
   configurationmanager_interface_singleton.cpp
   callmanager_interface_singleton.cpp
   instance_interface_singleton.cpp
@@ -137,6 +138,7 @@ set( qtsflphone_LIB_HDRS
   instance_interface_singleton.h
   video_interface_singleton.h
   sflphone_const.h
+  InstantMessagingModel.h
 )
 
 install( FILES ${qtsflphone_LIB_HDRS}

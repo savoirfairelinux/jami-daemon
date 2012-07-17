@@ -34,6 +34,7 @@
 #include <KStandardDirs>
 
 //SFLPhone
+#include "klib/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
 #include "lib/configurationmanager_interface_singleton.h"
 #include "SFLPhoneView.h"
@@ -211,6 +212,12 @@ void DlgAccounts::saveAccount(QModelIndex item)
    /**/account->setRingtonePath                ( m_pRingTonePath->url().path()                                            );
    //                                                                                                                      /
 
+   if (m_pDefaultAccount->isChecked()) {
+      kDebug() << "\n\n\n\n\nIS CHECKED\n\n\n\n\n";
+      ConfigurationSkeleton::setDefaultAccountId(account->getAccountId());
+      AccountList::getInstance()->setDefaultAccount(account);
+   }
+
    if (m_pRingtoneListLW->selectedItems().size() == 1 && m_pRingtoneListLW->currentIndex().isValid() ) {
       QListWidgetItem* selectedRingtone = m_pRingtoneListLW->currentItem();
       RingToneListItem* ringtoneWidget = qobject_cast<RingToneListItem*>(m_pRingtoneListLW->itemWidget(selectedRingtone));
@@ -324,6 +331,8 @@ void DlgAccounts::loadAccount(QModelIndex item)
    /**/group_security_tls->setChecked           (  account->isTlsEnable                    ());
    /**/combo_security_STRP->setCurrentIndex     (  account->getTlsMethod                   ());
    /*                                                                                       */
+
+   m_pDefaultAccount->setChecked(account == AccountList::getInstance()->getDefaultAccount());
 
    account->getVideoCodecModel()->reload();
 
