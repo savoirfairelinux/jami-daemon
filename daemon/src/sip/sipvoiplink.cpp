@@ -72,6 +72,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <istream>
+// #include <fstream>
 #include <utility> // for std::pair
 
 #include <map>
@@ -82,6 +83,9 @@ SIPVoIPLink *SIPVoIPLink::instance_ = 0;
 bool SIPVoIPLink::destroyed_ = false;
 
 namespace {
+
+/** Environment variable used to set pjsip's logging level */
+#define SIPLOGLEVEL "SIPLOGLEVEL"
 
 /** A map to retreive SFLphone internal call id
  *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
@@ -417,8 +421,8 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
 
     TRY(pj_init());
     TRY(pjlib_util_init());
-    // From 0 (min) to 6 (max)
-    pj_log_set_level(6);
+
+    setSipLogLevel();
     TRY(pjnath_init());
 
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
@@ -519,6 +523,22 @@ void SIPVoIPLink::destroy()
     delete instance_;
     destroyed_ = true;
     instance_ = 0;
+}
+
+void SIPVoIPLink::setSipLogLevel()
+{
+    std::string loglevel = getenv(SIPLOGLEVEL);
+    int level = 0;
+
+    if(!loglevel.empty()) {
+        if ( ! (std::istringstream(loglevel) >> level) ) level = 0;
+
+        level = level > 6 ? 6 : level;
+        level = level < 0 ? 0 : level;
+    }
+
+    // From 0 (min) to 6 (max)
+    pj_log_set_level(level);
 }
 
 // Called from EventThread::run (not main thread)

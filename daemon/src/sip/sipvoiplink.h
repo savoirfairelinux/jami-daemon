@@ -79,6 +79,13 @@ class SIPVoIPLink : public VoIPLink {
         static void destroy();
 
         /**
+         * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
+         * SIPLOGLEVEL = 0 minimum logging
+         * SIPLOGLEVEL = 6 maximum logging
+         */
+        static void setSipLogLevel();
+
+        /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
         virtual bool getEvent();
