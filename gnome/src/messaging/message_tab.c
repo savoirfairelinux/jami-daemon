@@ -48,7 +48,6 @@ static GtkTextIter* end_link   = NULL;
 
 void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
 void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
-void replace_markup_tag    ( GtkTextBuffer* text_buffer, GtkTextIter* start                         );
 message_tab * create_messaging_tab_common(const gchar* call_id, const gchar *label);
 message_tab * create_messaging_tab(callable_obj_t* call UNUSED);
 
@@ -335,17 +334,7 @@ new_text_message_conf(conference_obj_t* call, const gchar* message,const gchar* 
     new_text_message_common(call->_confID,message,strlen(from)?from:"Conference",TRUE);
 }
 
-void
-replace_markup_tag(GtkTextBuffer* text_buffer, GtkTextIter* start)
-{
-    GtkTextIter start_match,end_match;
-    while ( gtk_text_iter_forward_search(start, "<b>", GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, &start_match, &end_match, NULL) ) {
-        gtk_text_iter_forward_search(start, "</b>", GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, &end_match, &end_match, NULL);
-        gtk_text_buffer_apply_tag_by_name(text_buffer, "b", &start_match, &end_match);
-        int offset = gtk_text_iter_get_offset(&end_match);
-        gtk_text_buffer_get_iter_at_offset(text_buffer, start, offset);
-    }
-}
+
 
 //conference_obj_t
 message_tab *
