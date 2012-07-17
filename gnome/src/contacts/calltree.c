@@ -30,6 +30,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "calllist.h"
 #include "calltree.h"
 #include "str_utils.h"
@@ -345,7 +349,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
             break;
         case DISPLAY_TYPE_STATE_CODE :
             if (video_codec && *video_codec)
-                codec = g_strconcat(audio_codec, "/", video_codec, NULL);
+                codec = g_strconcat(audio_codec, " ", video_codec, NULL);
             else
                 codec = g_strdup(audio_codec);
 

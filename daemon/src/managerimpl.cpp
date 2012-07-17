@@ -1842,7 +1842,10 @@ ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
     std::string accountID = getAccountFromCall(ID);
     VoIPLink* link = getAccountLink(accountID);
     Call *call(getCallFromCallID(ID));
-    return link->getCurrentVideoCodecName(call);
+    if (call)
+        return link->getCurrentVideoCodecName(call);
+    else
+        return "";
 }
 
 /**
