@@ -31,6 +31,8 @@
 
 #include "../src/dbus/dbus.h"
 
+#define XML_OUTPUT  "gnome-check-dbus.xml"
+
 START_TEST(test_dbus_connect)
 {
     GError *error = NULL;
@@ -56,6 +58,7 @@ main(void)
     int number_failed;
     Suite *s = dbus_suite();
     SRunner *sr = srunner_create(s);
+    srunner_set_xml(sr, XML_OUTPUT);
     srunner_run_all(sr, CK_NORMAL);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);

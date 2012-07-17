@@ -229,7 +229,7 @@ IAXVoIPLink::sendRegister(Account *a)
     if (regSession_) {
         iax_register(regSession_, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
         nextRefreshStamp_ = time(NULL) + 10;
-        account->setRegistrationState(Trying);
+        account->setRegistrationState(TRYING);
     }
 }
 
@@ -244,7 +244,7 @@ IAXVoIPLink::sendUnregister(Account *a)
 
     nextRefreshStamp_ = 0;
 
-    dynamic_cast<IAXAccount*>(a)->setRegistrationState(Unregistered);
+    dynamic_cast<IAXAccount*>(a)->setRegistrationState(UNREGISTERED);
 }
 
 Call*
@@ -412,16 +412,15 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
     }
 }
 
-#ifdef SFL_VIDEO
 std::string
-IAXVoIPLink::getCurrentVideoCodecName(const std::string& /*id*/)
+IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
 {
+    // FIXME: Video not supported for IAX yet
     return "";
 }
-#endif
 
 std::string
-IAXVoIPLink::getCurrentCodecName(Call *c) const
+IAXVoIPLink::getCurrentAudioCodecName(Call *c) const
 {
     IAXCall *call = dynamic_cast<IAXCall*>(c);
     sfl::Codec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
@@ -601,7 +600,7 @@ void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
     iax_destroy(regSession_);
     regSession_ = NULL;
 
-    account->setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? ErrorAuth : Registered);
+    account->setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? ERROR_AUTH : REGISTERED);
 
     if (event->etype == IAX_EVENT_REGACK)
         nextRefreshStamp_ = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);

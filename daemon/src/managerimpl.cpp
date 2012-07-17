@@ -38,6 +38,7 @@
 
 #include "logger.h"
 #include "managerimpl.h"
+#include "account_schema.h"
 
 #include "account.h"
 #include "dbus/callmanager.h"
@@ -266,7 +267,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         return false;
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     return true;
 }
@@ -321,18 +322,14 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     // Connect streams
     addStream(call_id);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
         setRecordingCall(call_id);
 
     // update call state on client side
-    if (audioPreference.getIsAlwaysRecording())
-        dbus_.getCallManager()->callStateChanged(call_id, "RECORD");
-    else
-        dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
-
+    dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
     return true;
 }
 
@@ -370,23 +367,27 @@ void ManagerImpl::hangupCall(const std::string& callId)
         /* Direct IP to IP call */
         try {
             Call * call = SIPVoIPLink::instance()->getCall(callId);
-            history_.addCall(call, preferences.getHistoryLimit());
-            SIPVoIPLink::instance()->hangup(callId);
-            saveHistory();
+            if (call) {
+                history_.addCall(call, preferences.getHistoryLimit());
+                SIPVoIPLink::instance()->hangup(callId);
+                saveHistory();
+            }
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
         }
     } else {
         std::string accountId(getAccountFromCall(callId));
         Call * call = getCallFromCallID(callId);
-        history_.addCall(call, preferences.getHistoryLimit());
-        VoIPLink *link = getAccountLink(accountId);
-        link->hangup(callId);
-        removeCallAccount(callId);
-        saveHistory();
+        if (call) {
+            history_.addCall(call, preferences.getHistoryLimit());
+            VoIPLink *link = getAccountLink(accountId);
+            link->hangup(callId);
+            removeCallAccount(callId);
+            saveHistory();
+        }
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 bool ManagerImpl::hangupConference(const std::string& id)
@@ -412,7 +413,7 @@ bool ManagerImpl::hangupConference(const std::string& id)
 
     unsetCurrentCall();
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     return true;
 }
@@ -458,7 +459,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 //THREAD=Main
@@ -483,8 +484,6 @@ void ManagerImpl::offHoldCall(const std::string& callId)
             detachParticipant(MainBuffer::DEFAULT_ID, currentCallId);
     }
 
-    bool isRec = false;
-
     if (isIPToIP(callId))
         SIPVoIPLink::instance()->offhold(callId);
     else {
@@ -493,13 +492,11 @@ void ManagerImpl::offHoldCall(const std::string& callId)
         DEBUG("Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
         Call * call = getAccountLink(accountId)->getCall(callId);
 
-        if (call) {
-            isRec = call->isRecording();
+        if (call)
             getAccountLink(accountId)->offhold(callId);
-        }
     }
 
-    dbus_.getCallManager()->callStateChanged(callId, isRec ? "UNHOLD_RECORD" : "UNHOLD_CURRENT");
+    dbus_.getCallManager()->callStateChanged(callId, "UNHOLD");
 
     if (isConferenceParticipant(callId)) {
         Call *call = getCallFromCallID(callId);
@@ -511,7 +508,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
     addStream(callId);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 //THREAD=Main
@@ -538,7 +535,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     // remove waiting call in case we make transfer without even answer
     removeWaitingCall(callId);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 
     return true;
 }
@@ -599,7 +596,7 @@ void ManagerImpl::refuseCall(const std::string& id)
     // Disconnect streams
     removeStream(id);
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 Conference*
@@ -924,11 +921,9 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     } else if (call1_state_str == "INCOMING") {
         conf->bindParticipant(callId1);
         answerCall(callId1);
-    } else if (call1_state_str == "CURRENT")
+    } else if (call1_state_str == "CURRENT") {
         conf->bindParticipant(callId1);
-    else if (call1_state_str == "RECORD")
-        conf->bindParticipant(callId1);
-    else if (call1_state_str == "INACTIVE") {
+    } else if (call1_state_str == "INACTIVE") {
         conf->bindParticipant(callId1);
         answerCall(callId1);
     } else
@@ -944,11 +939,9 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     } else if (call2_state_str == "INCOMING") {
         conf->bindParticipant(callId2);
         answerCall(callId2);
-    } else if (call2_state_str == "CURRENT")
+    } else if (call2_state_str == "CURRENT") {
         conf->bindParticipant(callId2);
-    else if (call2_state_str == "RECORD")
-        conf->bindParticipant(callId2);
-    else if (call2_state_str == "INACTIVE") {
+    } else if (call2_state_str == "INACTIVE") {
         conf->bindParticipant(callId2);
         answerCall(callId2);
     } else
@@ -965,7 +958,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)
@@ -1017,7 +1010,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
                 conf->setRecordingSmplRate(audiodriver_->getSampleRate());
         }
 
-        getMainBuffer()->stateInfo();
+        getMainBuffer()->dumpInfo();
     } else {
         delete conf;
     }
@@ -1115,7 +1108,7 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     call->setConfId("");
 
     removeStream(call_id);
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
     processRemainingParticipants(*conf);
 }
@@ -1221,14 +1214,14 @@ void ManagerImpl::addStream(const std::string& call_id)
         audiodriver_->flushMain();
     }
 
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 void ManagerImpl::removeStream(const std::string& call_id)
 {
     DEBUG("Remove audio stream %s", call_id.c_str());
     getMainBuffer()->unBindAll(call_id);
-    getMainBuffer()->stateInfo();
+    getMainBuffer()->dumpInfo();
 }
 
 //THREAD=Main
@@ -1253,8 +1246,7 @@ void ManagerImpl::saveConfig()
         hookPreference.serialize(emitter);
         audioPreference.serialize(emitter);
 #ifdef SFL_VIDEO
-        VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-        controls->getVideoPreferences().serialize(emitter);
+        getVideoControls()->getVideoPreferences().serialize(emitter);
 #endif
         shortcutPreferences.serialize(emitter);
 
@@ -1516,11 +1508,10 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
         audiodriver_->flushUrgent();
     }
 
-    if (audioPreference.getIsAlwaysRecording()) {
+    if (audioPreference.getIsAlwaysRecording())
         setRecordingCall(id);
-        dbus_.getCallManager()->callStateChanged(id, "RECORD");
-    } else
-        dbus_.getCallManager()->callStateChanged(id, "CURRENT");
+
+    dbus_.getCallManager()->callStateChanged(id, "CURRENT");
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1828,7 +1819,7 @@ std::string ManagerImpl::join_string(const std::vector<std::string> &v)
     return os.str();
 }
 
-std::string ManagerImpl::getCurrentCodecName(const std::string& id)
+std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 {
     std::string accountid = getAccountFromCall(id);
     VoIPLink* link = getAccountLink(accountid);
@@ -1839,20 +1830,23 @@ std::string ManagerImpl::getCurrentCodecName(const std::string& id)
         Call::CallState state = call->getState();
 
         if (state == Call::ACTIVE or state == Call::CONFERENCING)
-            codecName = link->getCurrentCodecName(call);
+            codecName = link->getCurrentAudioCodecName(call);
     }
 
     return codecName;
 }
 
-#ifdef SFL_VIDEO
-std::string ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
+std::string
+ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
 {
     std::string accountID = getAccountFromCall(ID);
     VoIPLink* link = getAccountLink(accountID);
-    return link->getCurrentVideoCodecName(ID);
+    Call *call(getCallFromCallID(ID));
+    if (call)
+        return link->getCurrentVideoCodecName(call);
+    else
+        return "";
 }
-#endif
 
 /**
  * Set input audio plugin
@@ -2513,14 +2507,6 @@ std::vector<std::string> ManagerImpl::loadAccountOrder() const
     return split_string(preferences.getAccountOrder());
 }
 
-void ManagerImpl::loadDefaultAccountMap()
-{
-    // build a default IP2IP account with default parameters
-    accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
-    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
-    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
-}
-
 namespace {
     bool isIP2IP(const Conf::YamlNode *node)
     {
@@ -2582,13 +2568,31 @@ namespace {
         }
     }
 
+    SIPAccount *createIP2IPAccount()
+    {
+        SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE);
+        try {
+            SIPVoIPLink::instance()->sipTransport.createSipTransport(*ip2ip);
+        } catch (const std::runtime_error &e) {
+            ERROR("%s", e.what());
+        }
+        return ip2ip;
+    }
+
 } // end anonymous namespace
+
+void ManagerImpl::loadDefaultAccountMap()
+{
+    // build a default IP2IP account with default parameters
+    accountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
+    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
+}
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
     // build a default IP2IP account with default parameters
-    accountMap_[SIPAccount::IP2IP_PROFILE] = new SIPAccount(SIPAccount::IP2IP_PROFILE);
+    accountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
 
     // load saved preferences for IP2IP account from configuration file
     Sequence *seq = parser.getAccountSequence()->getSequence();
@@ -2600,11 +2604,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
             accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
     }
 
-    // Initialize default UDP transport according to
-    // IP to IP settings (most likely using port 5060)
-    SIPVoIPLink::instance()->sipTransport.createDefaultSipUdpTransport();
-
-    // Force IP2IP settings to be loaded to be loaded
+    // Force IP2IP settings to be loaded
     // No registration in the sense of the REGISTER method is performed.
     accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
@@ -2616,7 +2616,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
 #ifdef SFL_VIDEO
-    VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
+    VideoControls *controls(getVideoControls());
     try {
         MappingNode *videoNode = parser.getVideoNode();
         if (videoNode)

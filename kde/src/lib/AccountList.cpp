@@ -26,26 +26,40 @@
 
 //SFLPhone library
 #include "configurationmanager_interface_singleton.h"
+#include "callmanager_interface_singleton.h"
 
 AccountList* AccountList::m_spAccountList   = nullptr;
 QString      AccountList::m_sPriorAccountId = ""     ;
 
 ///Constructors
-AccountList::AccountList(QStringList & _accountIds)
+AccountList::AccountList(QStringList & _accountIds) : m_pColorVisitor(nullptr)
 {
    m_pAccounts = new QVector<Account*>();
    for (int i = 0; i < _accountIds.size(); ++i) {
-      (*m_pAccounts) += Account::buildExistingAccountFromId(_accountIds[i]);
+      Account* a = Account::buildExistingAccountFromId(_accountIds[i]);
+      (*m_pAccounts) += a;
+      emit dataChanged(index(size()-1,0),index(size()-1,0));
+      connect(a,SIGNAL(changed(Account*)),this,SLOT(accountChanged(Account*)));
    }
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
+   
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   connect(&configurationManager,SIGNAL(accountsChanged()),this,SLOT(updateAccounts()));
 }
 
 ///Constructors
 ///@param fill Whether to fill the list with accounts from configurationManager or not.
-AccountList::AccountList(bool fill)
+AccountList::AccountList(bool fill) : m_pColorVisitor(nullptr)
 {
    m_pAccounts = new QVector<Account *>();
    if(fill)
       updateAccounts();
+   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+   connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
+
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   connect(&configurationManager,SIGNAL(accountsChanged()),this,SLOT(updateAccounts()));
 }
 
 ///Destructor
@@ -74,6 +88,46 @@ void AccountList::destroy()
    m_spAccountList = nullptr;
 }
 
+///Account status changed
+void AccountList::accountChanged(const QString& account,const QString& state, int code)
+{
+   Q_UNUSED(code)
+   Account* a = getAccountById(account);
+   if (!a) {
+      ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+      QStringList accountIds = configurationManager.getAccountList().value();
+      for (int i = 0; i < accountIds.size(); ++i) {
+         if (!getAccountById(accountIds[i])) {
+            Account* a = Account::buildExistingAccountFromId(accountIds[i]);
+            m_pAccounts->insert(i, a);
+            connect(a,SIGNAL(changed(Account*)),this,SLOT(accountChanged(Account*)));
+            emit dataChanged(index(i,0),index(size()-1));
+         }
+      }
+      foreach (Account* a, *m_pAccounts) {
+         int idx =accountIds.indexOf(a->getAccountId());
+         if (idx == -1 && (a->currentState() == READY || a->currentState() == REMOVED)) {
+            m_pAccounts->remove(idx);
+            emit dataChanged(index(idx - 1, 0), index(m_pAccounts->size()-1, 0));
+         }
+      }
+      a = getAccountById(account);
+   }
+   if (a)
+      emit accountStateChanged(a,a->getStateName(state));
+   else
+      qDebug() << "Account not found";
+}
+
+///Tell the model something changed
+void AccountList::accountChanged(Account* a)
+{
+   int idx = (*m_pAccounts).indexOf(a);
+   if (idx != -1) {
+      emit dataChanged(index(idx, 0), index(idx, 0));
+   }
+}
+
 
 /*****************************************************************************
  *                                                                           *
@@ -85,16 +139,19 @@ void AccountList::destroy()
 void AccountList::update()
 {
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   Account * current;
+   Account* current;
    for (int i = 0; i < m_pAccounts->size(); i++) {
       current = (*m_pAccounts)[i];
-      if (!(*m_pAccounts)[i]->isNew())
+      if (!(*m_pAccounts)[i]->isNew() && (current->currentState() != NEW || current->currentState() != MODIFIED || current->currentState() != OUTDATED))
          removeAccount(current);
    }
    //ask for the list of accounts ids to the configurationManager
    QStringList accountIds = configurationManager.getAccountList().value();
    for (int i = 0; i < accountIds.size(); ++i) {
-      m_pAccounts->insert(i, Account::buildExistingAccountFromId(accountIds[i]));
+      Account* a = Account::buildExistingAccountFromId(accountIds[i]);
+      m_pAccounts->insert(i, a);
+      emit dataChanged(index(i,0),index(size()-1,0));
+      connect(a,SIGNAL(changed(Account*)),this,SLOT(accountChanged(Account*)));
    }
 } //update
 
@@ -104,13 +161,73 @@ void AccountList::updateAccounts()
    qDebug() << "updateAccounts";
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    QStringList accountIds = configurationManager.getAccountList().value();
-   m_pAccounts->clear();
+   //m_pAccounts->clear();
    for (int i = 0; i < accountIds.size(); ++i) {
-      qDebug() << "updateAccounts " << accountIds[i];
-      (*m_pAccounts) += Account::buildExistingAccountFromId(accountIds[i]);
+      Account* acc = getAccountById(accountIds[i]);
+      if (!acc) {
+         qDebug() << "updateAccounts " << accountIds[i];
+         Account* a = Account::buildExistingAccountFromId(accountIds[i]);
+         (*m_pAccounts) += a;
+         connect(a,SIGNAL(changed(Account*)),this,SLOT(accountChanged(Account*)));
+         emit dataChanged(index(size()-1,0),index(size()-1,0));
+      }
+      else {
+         acc->performAction(RELOAD);
+      }
    }
    emit accountListUpdated();
 } //updateAccounts
+
+///Save accounts details and reload it
+void AccountList::save()
+{
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QStringList accountIds= QStringList(configurationManager.getAccountList().value());
+
+   //create or update each account from accountList
+   for (int i = 0; i < size(); i++) {
+      Account* current = (*this)[i];
+      QString currentId;
+      //current->save();
+      current->performAction(AccountEditAction::SAVE);
+      currentId = QString(current->getAccountId());
+   }
+
+   //remove accounts that are in the configurationManager but not in the client
+   for (int i = 0; i < accountIds.size(); i++) {
+      if(!getAccountById(accountIds[i])) {
+         configurationManager.removeAccount(accountIds[i]);
+      }
+   }
+
+   configurationManager.setAccountsOrder(getOrderedList());
+}
+
+///Move account up
+bool AccountList::accountUp( int index )
+{
+   if(index > 0 && index <= rowCount()) {
+      Account* account = getAccountAt(index);
+      m_pAccounts->remove(index);
+      m_pAccounts->insert(index - 1, account);
+      emit dataChanged(this->index(index - 1, 0, QModelIndex()), this->index(index, 0, QModelIndex()));
+      return true;
+   }
+   return false;
+}
+
+///Move account down
+bool AccountList::accountDown( int index )
+{
+   if(index >= 0 && index < rowCount()) {
+      Account* account = getAccountAt(index);
+      m_pAccounts->remove(index);
+      m_pAccounts->insert(index + 1, account);
+      emit dataChanged(this->index(index, 0, QModelIndex()), this->index(index + 1, 0, QModelIndex()));
+      return true;
+   }
+   return false;
+}
 
 
 /*****************************************************************************
@@ -192,7 +309,7 @@ Account* AccountList::firstRegisteredAccount() const
    Account* current;
    for (int i = 0; i < m_pAccounts->count(); ++i) {
       current = (*m_pAccounts)[i];
-      if(current && current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED)
+      if(current && current->getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED && current->isAccountEnabled())
          return current;
       else if (current && (current->getAccountRegistrationStatus() == ACCOUNT_STATE_READY) && m_pAccounts->count() == 1)
          return current;
@@ -214,12 +331,16 @@ int AccountList::size() const
 ///Return the current account
 Account* AccountList::getCurrentAccount()
 {
-   Account* priorAccount = AccountList::getInstance()->getAccountById(m_sPriorAccountId);
-   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED ) {
+   Account* priorAccount = getInstance()->getAccountById(m_sPriorAccountId);
+   if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED && priorAccount->isAccountEnabled() ) {
       return priorAccount;
    }
    else {
-      return AccountList::getInstance()->firstRegisteredAccount();
+      Account* a = getInstance()->firstRegisteredAccount();
+      if (a)
+         return getInstance()->firstRegisteredAccount();
+      else
+         return getInstance()->getAccountById("IP2IP");
    }
 } //getCurrentAccount
 
@@ -227,6 +348,47 @@ Account* AccountList::getCurrentAccount()
 QString AccountList::getPriorAccoundId()
 {
    return m_sPriorAccountId;
+}
+
+///Get data from the model
+QVariant AccountList::data ( const QModelIndex& index, int role) const
+{
+   if (!index.isValid() || index.row() < 0 || index.row() >= rowCount())
+      return QVariant();
+
+   const Account * account = (*m_pAccounts)[index.row()];
+   if(index.column() == 0 && role == Qt::DisplayRole)
+      return QVariant(account->getAlias());
+   else if(index.column() == 0 && role == Qt::CheckStateRole)
+      return QVariant(account->isEnabled() ? Qt::Checked : Qt::Unchecked);
+   else if (role == Qt::BackgroundRole) {
+      if (m_pColorVisitor)
+         return m_pColorVisitor->getColor(account);
+      else
+         return QVariant(account->getStateColor());
+   }
+   else if(index.column() == 0 && role == Qt::DecorationRole && m_pColorVisitor) {
+      return m_pColorVisitor->getIcon(account);
+   }
+   return QVariant();
+} //data
+
+///Flags for "index"
+Qt::ItemFlags AccountList::flags(const QModelIndex & index) const
+{
+   if (index.column() == 0)
+      return QAbstractItemModel::flags(index) | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+   return QAbstractItemModel::flags(index);
+}
+
+///Number of account
+int AccountList::rowCount(const QModelIndex & /*parent*/) const
+{
+   return m_pAccounts->size();
+}
+
+Account* AccountList::getAccountByModelIndex(QModelIndex item) const {
+   return (*m_pAccounts)[item.row()];
 }
 
 
@@ -240,20 +402,52 @@ QString AccountList::getPriorAccoundId()
 Account* AccountList::addAccount(QString & alias)
 {
    Account* a = Account::buildNewAccountFromAlias(alias);
+   connect(a,SIGNAL(changed(Account*)),this,SLOT(accountChanged(Account*)));
    (*m_pAccounts) += a;
+   
+   emit dataChanged(index(m_pAccounts->size()-1,0), index(m_pAccounts->size()-1,0));
    return a;
 }
 
 ///Remove an account
 void AccountList::removeAccount(Account* account)
 {
+   if (not account) return;
    qDebug() << "Removing" << m_pAccounts;
-   m_pAccounts->remove(m_pAccounts->indexOf(account));
+   int aindex = m_pAccounts->indexOf(account);
+   m_pAccounts->remove(aindex);
+   emit dataChanged(index(aindex,0), index(m_pAccounts->size()-1,0));
+}
+
+void AccountList::removeAccount( QModelIndex index )
+{
+   removeAccount(getAccountByModelIndex(index));
 }
 
 ///Set the previous account used
 void AccountList::setPriorAccountId(const QString& value) {
    m_sPriorAccountId = value;
+}
+
+///Set model data
+bool AccountList::setData(const QModelIndex & index, const QVariant &value, int role)
+{
+   if (index.isValid() && index.column() == 0 && role == Qt::CheckStateRole) {
+      bool prevEnabled = (*m_pAccounts)[index.row()]->isEnabled();
+      (*m_pAccounts)[index.row()]->setEnabled(value.toBool());
+      emit dataChanged(index, index);
+      if (prevEnabled != value.toBool())
+         emit accountEnabledChanged((*m_pAccounts)[index.row()]);
+      return true;
+   }
+   emit dataChanged(index, index);
+   return false;
+}
+
+///Set QAbstractItemModel BackgroundRole visitor
+void AccountList::setColorVisitor(AccountListColorVisitor* visitor)
+{
+   m_pColorVisitor = visitor;
 }
 
 

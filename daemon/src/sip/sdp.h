@@ -32,10 +32,6 @@
 #ifndef SDP_H_
 #define SDP_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
 #include <pjsip/sip_transport.h>
@@ -113,24 +109,20 @@ class Sdp {
          */
         void setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp);
 
-#ifdef SFL_VIDEO
         /**
          * Returns a string version of the negotiated SDP fields which pertain
          * to video.
-         * Second member of the vector is the video codec rtp name
          */
-        std::vector<std::string> getActiveVideoDescription() const;
-#endif
+        std::string getActiveIncomingVideoDescription() const;
+        std::string getActiveOutgoingVideoCodec() const;
+        std::string getActiveOutgoingVideoBitrate(const std::string &codec) const;
+        std::string getActiveOutgoingVideoPayload() const;
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
          */
-#ifdef SFL_VIDEO
-        void createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::string> &videoCodecs);
-#else
-        void createOffer(const std::vector<int> &selectedCodecs);
-#endif
+        void createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::map<std::string, std::string> > &videoCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -138,14 +130,9 @@ class Sdp {
         *
         * @param remote    The remote offer
         */
-#ifdef SFL_VIDEO
         void receiveOffer(const pjmedia_sdp_session* remote,
                           const std::vector<int> &selectedCodecs,
-                          const std::vector<std::string> &videoCodecs);
-#else
-        void receiveOffer(const pjmedia_sdp_session* remote,
-                          const std::vector<int> &selectedCodecs);
-#endif
+                          const std::vector<std::map<std::string, std::string> > &videoCodecs);
 
         /**
          * Start the sdp negotiation.
@@ -180,11 +167,9 @@ class Sdp {
             localAudioPort_ = port;
         }
 
-#ifdef SFL_VIDEO
         void setLocalPublishedVideoPort (int port) {
             localVideoPort_ = port;
         }
-#endif
 
         /**
          * Return IP of destination
@@ -210,7 +195,6 @@ class Sdp {
             return remoteAudioPort_;
         }
 
-#ifdef SFL_VIDEO
         /**
          * Return video port at destination
          * @return unsigned int The remote video port
@@ -218,14 +202,11 @@ class Sdp {
         unsigned int getRemoteVideoPort() const {
             return remoteVideoPort_;
         }
-#endif
 
         void addAttributeToLocalAudioMedia(const char *attr);
         void removeAttributeFromLocalAudioMedia(const char *attr);
-#ifdef SFL_VIDEO
         void addAttributeToLocalVideoMedia(const char *attr);
         void removeAttributeFromLocalVideoMedia(const char *attr);
-#endif
 
         /**
          * Get SRTP master key
@@ -259,16 +240,14 @@ class Sdp {
         void setMediaTransportInfoFromRemoteSdp();
 
         std::string getAudioCodecName() const;
-#ifdef SFL_VIDEO
         std::string getSessionVideoCodec() const;
-#endif
         sfl::AudioCodec* getSessionAudioMedia() const;
 
     private:
         NON_COPYABLE(Sdp);
         friend class SDPTest;
 
-        std::string getLineFromLocalSDP(const std::string &keyword) const;
+        std::string getLineFromSession(const pjmedia_sdp_session *sess, const std::string &keyword) const;
 
         /**
          * The pool to allocate memory, ownership to SipCall
@@ -307,29 +286,21 @@ class Sdp {
          * Codec Map used for offer
          */
         std::vector<sfl::Codec *> audio_codec_list_;
-#ifdef SFL_VIDEO
-        std::vector<std::string> video_codec_list_;
-#endif
+        std::vector<std::map<std::string, std::string> > video_codec_list_;
 
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
          */
         std::vector<sfl::Codec *> sessionAudioMedia_;
-#ifdef SFL_VIDEO
         std::vector<std::string> sessionVideoMedia_;
-#endif
 
         std::string localIpAddr_;
         std::string remoteIpAddr_;
 
         int localAudioPort_;
-#ifdef SFL_VIDEO
         int localVideoPort_;
-#endif
         unsigned int remoteAudioPort_;
-#ifdef SFL_VIDEO
         unsigned int remoteVideoPort_;
-#endif
 
         std::string zrtpHelloHash_;
 
@@ -353,18 +324,12 @@ class Sdp {
          * @param List of codec in preference order
          */
         void setLocalMediaAudioCapabilities(const std::vector<int> &selected);
-#ifdef SFL_VIDEO
-        void setLocalMediaVideoCapabilities(const std::vector<std::string> &selected);
-#endif
-
+        void setLocalMediaVideoCapabilities(const std::vector<std::map<std::string, std::string> > &codecs);
         /*
          * Build the local SDP offer
          */
-#ifdef SFL_VIDEO
-        int createLocalSession(const std::vector<int> &selectedAudio, const std::vector<std::string> &selectedVideo);
-#else
-        int createLocalSession(const std::vector<int> &selectedAudio);
-#endif
+        int createLocalSession(const std::vector<int> &selectedAudio,
+                               const std::vector<std::map<std::string, std::string> > &selectedVideo);
         /*
          * Adds a sdes attribute to the given media section.
          *

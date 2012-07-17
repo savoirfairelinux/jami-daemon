@@ -190,16 +190,16 @@ void PulseLayer::updateSourceList()
 
 bool PulseLayer::inSinkList(const std::string &deviceName) const
 {
-    bool found = std::find(sinkList_.begin(), sinkList_.end(), deviceName) != sinkList_.end();
-    DEBUG("seeking for %s in sinks. %s found", deviceName.c_str(), found?"":"NOT");
+    const bool found = std::find(sinkList_.begin(), sinkList_.end(), deviceName) != sinkList_.end();
+    DEBUG("seeking for %s in sinks. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
 }
 
 
 bool PulseLayer::inSourceList(const std::string &deviceName) const
 {
-    bool found = std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
-    DEBUG("seeking for %s in sources. %s found", deviceName.c_str(), found?"":"NOT");
+    const bool found = std::find(sourceList_.begin(), sourceList_.end(), deviceName) != sourceList_.end();
+    DEBUG("seeking for %s in sources. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
 }
 
@@ -273,44 +273,22 @@ void PulseLayer::createStreams(pa_context* c)
     flushUrgent();
 }
 
+namespace {
+    // Delete stream and zero out its pointer
+    void
+    cleanupStream(AudioStream *&stream)
+    {
+        delete stream;
+        stream = 0;
+    }
+}
+
 
 void PulseLayer::disconnectAudioStream()
 {
-    if (playback_) {
-        if (playback_->pulseStream()) {
-            const char *name = pa_stream_get_device_name(playback_->pulseStream());
-
-            if (name && *name)
-                preference_.setPulseDevicePlayback(name);
-        }
-
-        delete playback_;
-        playback_ = NULL;
-    }
-
-    if (ringtone_) {
-        if (ringtone_->pulseStream()) {
-            const char *name = pa_stream_get_device_name(ringtone_->pulseStream());
-
-            if (name && *name)
-                preference_.setPulseDeviceRingtone(name);
-        }
-
-        delete ringtone_;
-        ringtone_ = NULL;
-    }
-
-    if (record_) {
-        if (record_->pulseStream()) {
-            const char *name = pa_stream_get_device_name(record_->pulseStream());
-
-            if (name && *name)
-                preference_.setPulseDeviceRecord(name);
-        }
-
-        delete record_;
-        record_ = NULL;
-    }
+    cleanupStream(playback_);
+    cleanupStream(ringtone_);
+    cleanupStream(record_);
 }
 
 void PulseLayer::startStream()

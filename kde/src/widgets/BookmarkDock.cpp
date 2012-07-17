@@ -48,7 +48,7 @@
 class QNumericTreeWidgetItem : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
-      QNumericTreeWidgetItem(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
+      QNumericTreeWidgetItem(QTreeWidgetItem* parent=0):QTreeWidgetItem(parent),widget(0),weight(-1){}
       HistoryTreeItem* widget;
       int weight;
    private:
@@ -126,7 +126,7 @@ BookmarkDock::~BookmarkDock()
 ///Add a new bookmark
 void BookmarkDock::addBookmark_internal(const QString& phone)
 {
-   HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone);
+   HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone,true);
    QTreeWidgetItem* item   = NULL;
 
    if (widget->getName() == i18n("Unknown") || widget->getName().isEmpty()) {
@@ -147,6 +147,25 @@ void BookmarkDock::addBookmark(const QString& phone)
 {
    addBookmark_internal(phone);
    ConfigurationSkeleton::setBookmarkList(ConfigurationSkeleton::bookmarkList() << phone);
+}
+
+///Remove a bookmark
+void BookmarkDock::removeBookmark(const QString& phone)
+{
+   foreach (HistoryTreeItem* w,m_pBookmark) {
+      if (w->getPhoneNumber() == phone) {
+         QTreeWidgetItem* item = w->getItem();
+         m_pItemView->removeItem(item);
+         QStringList bookmarks = ConfigurationSkeleton::bookmarkList();
+         if (bookmarks.indexOf(phone)!= -1) {
+            bookmarks.removeAt(bookmarks.indexOf(phone));
+            ConfigurationSkeleton::setBookmarkList(bookmarks);
+         }
+         if (m_pBookmark.indexOf(w)!=-1) {
+            m_pBookmark.removeAt(m_pBookmark.indexOf(w));
+         }
+      }
+   }
 }
 
 ///Filter the list
@@ -173,7 +192,7 @@ void BookmarkDock::reload()
       QStringList cl = HistoryModel::getNumbersByPopularity();
       for (int i=0;i < ((cl.size() < 10)?cl.size():10);i++) {
          QNumericTreeWidgetItem* item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18n("Popular"));
-         HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,cl[i]);
+         HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,cl[i],true);
          widget->setItem(item);
          m_pItemView->setItemWidget(item,0,widget);
          m_pBookmark << widget;

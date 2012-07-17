@@ -514,8 +514,7 @@
                   <li>BUSY</li>
                   <li>FAILURE: Error when processing a call</li>
                   <li>HOLD</li>
-                  <li>UNHOLD_CURRENT</li>
-                  <li>UNHOLD_RECORD</li>
+                  <li>UNHOLD</li>
                 </ul>
               </tp:docstring>
             </arg>

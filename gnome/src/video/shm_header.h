@@ -1,6 +1,11 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *
+ *  Portions derived from GStreamer:
+ *  Copyright (C) <2009> Collabora Ltd
+ *  @author: Olivier Crete <olivier.crete@collabora.co.uk
+ *  Copyright (C) <2009> Nokia Inc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +19,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  *
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  *  Additional permission under GNU GPL version 3 section 7:
  *
  *  If you modify this program, or any covered work, by linking or
@@ -27,46 +33,19 @@
  *  as that of the covered work.
  */
 
-#include "video_endpoint.h"
+#ifndef SHM_HEADER_H_
+#define SHM_HEADER_H_
 
-#include <sstream>
-#include <vector>
-#include "libav_utils.h"
+#include <semaphore.h>
 
-namespace sfl_video {
+typedef struct {
+    sem_t notification;
+    sem_t mutex;
 
-/* anonymous namespace */
-namespace {
-int FAKE_BITRATE()
-{
-    return 1000;
-}
+    unsigned buffer_gen;
+    int buffer_size;
 
-/* FIXME: use real bitrates */
-int getBitRate(const std::string & /*codec*/)
-{
-    return FAKE_BITRATE();
-}
-} // end anonymous namespace
+    char data[0];
+} SHMHeader;
 
-std::vector<std::string> getCodecList()
-{
-    return libav_utils::getVideoCodecList();
-}
-
-std::map<std::string, std::string> getCodecSpecifications(const std::string &codec)
-{
-    std::map<std::string, std::string> specs;
-    const char * const NAME_KEY = "name";
-    const char * const BITRATE_KEY = "bitrate";
-
-    // Add the bit rate
-    specs[NAME_KEY] = codec;
-    std::stringstream ss;
-    ss << getBitRate(codec);
-    specs[BITRATE_KEY] = ss.str();
-
-    return specs;
-}
-
-} // end namespace sfl_video
+#endif

@@ -1,6 +1,11 @@
 /*
- *  Copyright (C) 2011, 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *
+ *  Portions derived from GStreamer:
+ *  Copyright (C) <2009> Collabora Ltd
+ *  @author: Olivier Crete <olivier.crete@collabora.co.uk
+ *  Copyright (C) <2009> Nokia Inc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +19,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,47 +33,49 @@
  *  as that of the covered work.
  */
 
-#ifndef SHARED_MEMORY_H_
-#define SHARED_MEMORY_H_
+#ifndef SHM_SINK_H_
+#define SHM_SINK_H_
 
-#include "cc_thread.h"
+#include <semaphore.h>
+#include <string>
+#include <vector>
+#include <tr1/functional>
 #include "noncopyable.h"
 
-class VideoControls;
-
+class SHMHeader;
 namespace sfl_video {
-class SharedMemory {
-    private:
-        NON_COPYABLE(SharedMemory);
-
-        /*-------------------------------------------------------------*/
-        /* These variables should be used in thread (i.e. run()) only! */
-        /*-------------------------------------------------------------*/
-        VideoControls &videoControls_;
-        int shmKey_;
-        int shmID_;
-        uint8_t *shmBuffer_;
-        int semaphoreSetID_;
-        int semaphoreKey_;
-
-        int dstWidth_;
-        int dstHeight_;
-        int bufferSize_;
-        ost::Event shmReady_;
-
-    public:
-        SharedMemory(VideoControls &controls);
-        ~SharedMemory();
-        void frameUpdatedCallback();
-        void waitForShm();
-        // Returns a pointer to the memory where frames should be copied
-        uint8_t *getTargetBuffer() { return shmBuffer_; }
-        int getShmKey() const { return shmKey_; }
-        int getSemaphoreKey() const { return semaphoreKey_; }
-        int getBufferSize() const { return bufferSize_; }
-        void allocateBuffer(int width, int height, int size);
-        void publishShm();
-};
+    class VideoReceiveThread;
 }
 
-#endif // SHARED_MEMORY_H_
+// A VideoReceiveThread member function handle, where the member function
+// takes a (void *) as an argument
+typedef std::tr1::function<void (sfl_video::VideoReceiveThread * const, void *)> Callback;
+
+class SHMSink {
+    public:
+        SHMSink(const std::string &shm_name = "");
+        std::string openedName() const { return opened_name_; }
+        ~SHMSink();
+
+        bool start();
+        bool stop();
+
+        bool resize_area(size_t desired_length);
+
+        void render(const std::vector<unsigned char> &data);
+        void render_callback(sfl_video::VideoReceiveThread * const th, const Callback &callback, size_t bytes);
+
+    private:
+        NON_COPYABLE(SHMSink);
+
+        void shm_lock();
+        void shm_unlock();
+        std::string shm_name_;
+        int fd_;
+        SHMHeader *shm_area_;
+        size_t shm_area_len_;
+        std::string opened_name_;
+        unsigned perms_;
+};
+
+#endif // SHM_SINK_H_

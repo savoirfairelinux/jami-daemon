@@ -45,7 +45,6 @@ extern "C" {
 
 #include <map>
 #include "manager.h"
-#include "libx264-ultrafast.ffpreset.h"
 
 namespace sfl_video {
 
@@ -77,7 +76,12 @@ void VideoSendThread::waitForSDP()
 
 void VideoSendThread::forcePresetX264()
 {
-    av_set_options_string(encoderCtx_, x264_preset_ultrafast, "=", "\n");
+    const char *speedPreset = "ultrafast";
+    if (av_opt_set(encoderCtx_->priv_data, "preset", speedPreset, 0))
+        WARN("Failed to set x264 preset '%s'", speedPreset);
+    const char *tune = "zerolatency";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        WARN("Failed to set x264 tune '%s'", tune);
 }
 
 void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
@@ -91,11 +95,8 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
 #endif
 
     // set some encoder settings here
-    encoderCtx_->bit_rate = atoi(args_["bitrate"].c_str());
-    encoderCtx_->bit_rate = 400000;
-    encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;
-    encoderCtx_->rc_min_rate = 0;
-    encoderCtx_->rc_buffer_size = encoderCtx_->rc_max_rate;
+    encoderCtx_->bit_rate = 1000 * atoi(args_["bitrate"].c_str());
+    DEBUG("Using bitrate %d", encoderCtx_->bit_rate);
 
     // resolution must be a multiple of two
     if (args_["width"].empty() and inputDecoderCtx_)
@@ -112,16 +113,14 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     const int fps = args_["framerate"].empty() ? DEFAULT_FPS : atoi(args_["framerate"].c_str());
     encoderCtx_->time_base = (AVRational) {1, fps};
     // emit one intra frame every gop_size frames
-    encoderCtx_->gop_size = 10 * fps;
     encoderCtx_->max_b_frames = 0;
-    const int MTU = 1500;
-    encoderCtx_->rtp_payload_size = MTU / 2; // Target GOB length
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
     // This is to place global headers in extradata instead of every keyframe.
     // encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
 }
+
 
 void VideoSendThread::setup()
 {
@@ -132,7 +131,7 @@ void VideoSendThread::setup()
     if (args_["input"].find(V4L_PATH) != std::string::npos) {
         DEBUG("Using v4l2 format");
         file_iformat = av_find_input_format("video4linux2");
-        RETURN_IF_FAIL(file_iformat, "Could not find format video4linux2");
+        EXIT_IF_FAIL(file_iformat, "Could not find format video4linux2");
     }
 
     AVDictionary *options = NULL;
@@ -144,9 +143,11 @@ void VideoSendThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
+    inputCtx_ = avformat_alloc_context();
+    inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                   file_iformat, &options);
-    RETURN_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
+    EXIT_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
 
     // find the first video stream from the input
     streamIndex_ = -1;
@@ -154,27 +155,28 @@ void VideoSendThread::setup()
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
 
-    RETURN_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
+    EXIT_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
 
     // Get a pointer to the codec context for the video stream
     inputDecoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
-    RETURN_IF_FAIL(inputDecoderCtx_, "Could not get input codec context");
+    EXIT_IF_FAIL(inputDecoderCtx_, "Could not get input codec context");
 
     // find the decoder for the video stream
     AVCodec *inputDecoder = avcodec_find_decoder(inputDecoderCtx_->codec_id);
-    RETURN_IF_FAIL(inputDecoder, "Could not decode video stream");
+    EXIT_IF_FAIL(inputDecoder, "Could not decode video stream");
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     ret = avcodec_open(inputDecoderCtx_, inputDecoder);
 #else
     ret = avcodec_open2(inputDecoderCtx_, inputDecoder, NULL);
 #endif
-    RETURN_IF_FAIL(ret >= 0, "Could not open codec");
+    EXIT_IF_FAIL(ret >= 0, "Could not open codec");
 
     outputCtx_ = avformat_alloc_context();
+    outputCtx_->interrupt_callback = interruptCb_;
 
     AVOutputFormat *file_oformat = av_guess_format("rtp", args_["destination"].c_str(), NULL);
-    RETURN_IF_FAIL(file_oformat, "Unable to find a suitable output format for %s",
+    EXIT_IF_FAIL(file_oformat, "Unable to find a suitable output format for %s",
           args_["destination"].c_str());
 
     outputCtx_->oformat = file_oformat;
@@ -183,7 +185,7 @@ void VideoSendThread::setup()
 
     /* find the video encoder */
     AVCodec *encoder = avcodec_find_encoder_by_name(enc_name);
-    RETURN_IF_FAIL(encoder != 0, "Encoder \"%s\" not found!", enc_name);
+    EXIT_IF_FAIL(encoder != 0, "Encoder \"%s\" not found!", enc_name);
 
     prepareEncoderContext(encoder);
 
@@ -202,9 +204,9 @@ void VideoSendThread::setup()
     // open encoder
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-    RETURN_IF_FAIL(avcodec_open(encoderCtx_, encoder) >= 0, "Could not open encoder")
+    EXIT_IF_FAIL(avcodec_open(encoderCtx_, encoder) >= 0, "Could not open encoder")
 #else
-    RETURN_IF_FAIL(avcodec_open2(encoderCtx_, encoder, NULL) >= 0, "Could not open "
+    EXIT_IF_FAIL(avcodec_open2(encoderCtx_, encoder, NULL) >= 0, "Could not open "
           "encoder")
 #endif
 
@@ -214,26 +216,26 @@ void VideoSendThread::setup()
 #else
     stream_ = avformat_new_stream(outputCtx_, 0);
 #endif
-    RETURN_IF_FAIL(stream_ != 0, "Could not allocate stream.");
+    EXIT_IF_FAIL(stream_ != 0, "Could not allocate stream.");
     stream_->codec = encoderCtx_;
 
     // open the output file, if needed
     if (!(file_oformat->flags & AVFMT_NOFILE)) {
-        ret = avio_open(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE);
-        RETURN_IF_FAIL(ret >= 0, "Could not open \"%s\"!", outputCtx_->filename);
+        ret = avio_open2(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE, &interruptCb_, NULL);
+        EXIT_IF_FAIL(ret >= 0, "Could not open \"%s\"!", outputCtx_->filename);
     } else
         DEBUG("No need to open \"%s\"", outputCtx_->filename);
 
+    AVDictionary *outOptions = NULL;
     // write the stream header, if any
-    options = NULL;
-    if (!args_["payload_type"].empty())
-        av_dict_set(&options, "payload_type", args_["payload_type"].c_str(), 0);
-
-    RETURN_IF_FAIL(avformat_write_header(outputCtx_, &options) >= 0, "Could not write "
-          "header for output file...check codec parameters");
-
-    print_sdp();
+    if (not args_["payload_type"].empty()) {
+        DEBUG("Writing stream header for payload type %s", args_["payload_type"].c_str());
+        av_dict_set(&outOptions, "payload_type", args_["payload_type"].c_str(), 0);
+    }
+    EXIT_IF_FAIL(avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL) >= 0, "Could not write "
+                 "header for output file...check codec parameters")
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
+    print_sdp();
 
     // allocate video frame
     rawFrame_ = avcodec_alloc_frame();
@@ -263,28 +265,44 @@ void VideoSendThread::createScalingContext()
                                           encoderCtx_->height,
                                           encoderCtx_->pix_fmt, SWS_BICUBIC,
                                           NULL, NULL, NULL);
-    RETURN_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context");
+    EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context");
+}
+
+// This callback is used by libav internally to break out of blocking calls
+int VideoSendThread::interruptCb(void *ctx)
+{
+    VideoSendThread *context = static_cast<VideoSendThread*>(ctx);
+    return not context->sending_;
 }
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     sdpReady_(), args_(args), scaledPictureBuf_(0), outbuf_(0),
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
-    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), sending_(false)
-{}
+    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
+    sending_(false), forceKeyFrame_(0)
+{
+    interruptCb_.callback = interruptCb;
+    interruptCb_.opaque = this;
+}
 
 void VideoSendThread::run()
 {
+    sending_ = true;
     // We don't want setup() called in the main thread in case it exits or blocks
     setup();
     createScalingContext();
 
     int frameNumber = 0;
-    sending_ = true;
     while (sending_) {
         AVPacket inpacket;
-        if (av_read_frame(inputCtx_, &inpacket) < 0)
-            break;
+        {
+            int ret = av_read_frame(inputCtx_, &inpacket);
+            if (ret == AVERROR(EAGAIN))
+                continue;
+            else
+                EXIT_IF_FAIL(ret >= 0, "Could not read frame");
+        }
 
         /* Guarantees that we free the packet allocated by av_read_frame */
         PacketHandle inpacket_handle(inpacket);
@@ -307,6 +325,18 @@ void VideoSendThread::run()
         // Set presentation timestamp on our scaled frame before encoding it
         scaledPicture_->pts = frameNumber++;
 
+#ifdef CCPP_PREFIX
+        if ((int) forceKeyFrame_ > 0) {
+#else
+        if (*forceKeyFrame_ > 0) {
+#endif
+#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
+            scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
+#else
+            scaledPicture_->pict_type = FF_I_TYPE;
+#endif
+            --forceKeyFrame_;
+        }
         const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
                                                      outbufSize_, scaledPicture_);
 
@@ -336,8 +366,10 @@ void VideoSendThread::run()
         opkt.stream_index = stream_->index;
 
         // write the compressed frame in the media file
-        int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-        RETURN_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
+        {
+            int ret = av_interleaved_write_frame(outputCtx_, &opkt);
+            EXIT_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
+        }
         yield();
     }
 }
@@ -393,4 +425,10 @@ VideoSendThread::~VideoSendThread()
         avformat_close_input(&inputCtx_);
 #endif
 }
+
+void VideoSendThread::forceKeyFrame()
+{
+    ++forceKeyFrame_;
+}
+
 } // end namespace sfl_video

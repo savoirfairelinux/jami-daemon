@@ -165,8 +165,9 @@ void SFLPhoneEngine::updateHistory()
 ///Load/Update calllist
 void SFLPhoneEngine::updateCallList()
 {
-   //As of KDE 4.8, an empty source is ignored, adding an invisible entry
-   QStringList keys = {"peerName","peerNumber","stateName","state","id"};
+   //As of KDE 4.8, an empty source are ignored, adding an invisible entry
+   QStringList keys;
+   keys << "peerName" << "peerNumber" << "stateName" << "state" << "id";
    QHash<QString,QVariant> fake;
    foreach (QString key, keys) {
       fake[key] = "";
@@ -268,8 +269,10 @@ void SFLPhoneEngine::updateCollection()
 void SFLPhoneEngine::updateContacts()
 {
    //As of KDE 4.8, an empty source is ignored, adding an invisible entry
-   QStringList keys = {"nickName","firstName"     ,"secondName","formattedName","organization",
-                       "Uid"     ,"preferredEmail","type"      ,"group"        ,"department" };
+   QStringList keys;
+   keys << "nickName" << "firstName" << "secondName"     << "formattedName" << "organization" << 
+                         "Uid"       << "preferredEmail" << "type"          << "group"        <<
+                         "department";
    
    QHash<QString,QVariant> fake;
    foreach(QString key,keys) {

@@ -108,7 +108,7 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
    
       QStringList confList = callManager.getConferenceList();
       foreach (QString confId, confList) {
-          CallModelBase::addConferenceS(addConference(confId));
+         CallModelBase::addConferenceS(addConference(confId));
       }
    }
    m_sCallInit = true;
@@ -199,9 +199,13 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCallCommon(Call* call)
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, Account* account)
 {
    Account* acc = (account)?account:AccountList::getCurrentAccount();
-   
-   Call* call = Call::buildDialingCall(generateCallId(), peerName, acc->getAccountId());
-   return addCallCommon(call);
+   if (acc) {
+      Call* call = Call::buildDialingCall(generateCallId(), peerName, acc->getAccountId());
+      return addCallCommon(call);
+   }
+   else {
+      return nullptr;
+   }
 }  //addDialingCall
 
 ///Create a new incomming call when the daemon is being called
@@ -296,7 +300,10 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
       qDebug() << "Invalid call";
       return 0;
    }
-   Call* newConf =  new Call(confID, m_sPrivateCallList_callId[callList[0]]->call_real->getAccountId());
+
+   Call* newConf;
+   if (m_sPrivateCallList_callId[callList[0]]->call_real->getAccount())
+      newConf =  new Call(confID, m_sPrivateCallList_callId[callList[0]]->call_real->getAccount()->getAccountId());
    
    InternalStruct* aNewStruct = new InternalStruct;
    aNewStruct->call_real  = newConf;

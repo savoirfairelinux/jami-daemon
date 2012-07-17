@@ -31,7 +31,7 @@
 #include "tlsadvanceddialog.h"
 #include "gtk2_wrappers.h"
 #include "str_utils.h"
-#include "sflphone_const.h"
+#include "account_schema.h"
 #include "mainwindow.h"
 #include "utils.h"
 #include <dbus.h>
@@ -101,19 +101,19 @@ void show_advanced_tls_options(account_t *account)
     gchar * negotiation_timeout_msec = NULL;
 
     if (account->properties != NULL) {
-        tls_listener_port = account_lookup(account, TLS_LISTENER_PORT);
-        tls_ca_list_file = account_lookup(account, TLS_CA_LIST_FILE);
-        tls_certificate_file = account_lookup(account, TLS_CERTIFICATE_FILE);
-        tls_private_key_file = account_lookup(account, TLS_PRIVATE_KEY_FILE);
-        tls_password = account_lookup(account, TLS_PASSWORD);
-        tls_method = account_lookup(account, TLS_METHOD);
-        tls_ciphers = account_lookup(account, TLS_CIPHERS);
-        tls_server_name = account_lookup(account, TLS_SERVER_NAME);
-        verify_server = account_lookup(account, TLS_VERIFY_SERVER);
-        verify_client = account_lookup(account, TLS_VERIFY_CLIENT);
-        require_client_certificate = account_lookup(account, TLS_REQUIRE_CLIENT_CERTIFICATE);
-        negotiation_timeout_sec = account_lookup(account, TLS_NEGOTIATION_TIMEOUT_SEC);
-        negotiation_timeout_msec = account_lookup(account, TLS_NEGOTIATION_TIMEOUT_MSEC);
+        tls_listener_port = account_lookup(account, CONFIG_TLS_LISTENER_PORT);
+        tls_ca_list_file = account_lookup(account, CONFIG_TLS_CA_LIST_FILE);
+        tls_certificate_file = account_lookup(account, CONFIG_TLS_CERTIFICATE_FILE);
+        tls_private_key_file = account_lookup(account, CONFIG_TLS_PRIVATE_KEY_FILE);
+        tls_password = account_lookup(account, CONFIG_TLS_PASSWORD);
+        tls_method = account_lookup(account, CONFIG_TLS_METHOD);
+        tls_ciphers = account_lookup(account, CONFIG_TLS_CIPHERS);
+        tls_server_name = account_lookup(account, CONFIG_TLS_SERVER_NAME);
+        verify_server = account_lookup(account, CONFIG_TLS_VERIFY_SERVER);
+        verify_client = account_lookup(account, CONFIG_TLS_VERIFY_CLIENT);
+        require_client_certificate = account_lookup(account, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE);
+        negotiation_timeout_sec = account_lookup(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC);
+        negotiation_timeout_msec = account_lookup(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC);
     }
 
 
@@ -274,35 +274,35 @@ void show_advanced_tls_options(account_t *account)
     gtk_widget_show_all(ret);
 
     if (gtk_dialog_run(GTK_DIALOG(tlsDialog)) == GTK_RESPONSE_ACCEPT) {
-        account_replace(account, TLS_LISTENER_PORT,
+        account_replace(account, CONFIG_TLS_LISTENER_PORT,
                         gtk_entry_get_text(GTK_ENTRY(tlsListenerPort)));
-        account_replace(account, TLS_CA_LIST_FILE, get_filename(caListFileChooser));
+        account_replace(account, CONFIG_TLS_CA_LIST_FILE, get_filename(caListFileChooser));
 
-        account_replace(account, TLS_CERTIFICATE_FILE,
+        account_replace(account, CONFIG_TLS_CERTIFICATE_FILE,
                         get_filename(certificateFileChooser));
 
-        account_replace(account, TLS_PRIVATE_KEY_FILE,
+        account_replace(account, CONFIG_TLS_PRIVATE_KEY_FILE,
                         get_filename(privateKeyFileChooser));
 
-        account_replace(account, TLS_PASSWORD, gtk_entry_get_text(GTK_ENTRY(privateKeyPasswordEntry)));
+        account_replace(account, CONFIG_TLS_PASSWORD, gtk_entry_get_text(GTK_ENTRY(privateKeyPasswordEntry)));
 
         gchar *tls_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(tlsProtocolMethodCombo));
-        account_replace(account, TLS_METHOD, tls_text);
+        account_replace(account, CONFIG_TLS_METHOD, tls_text);
         g_free(tls_text);
 
-        account_replace(account, TLS_CIPHERS, gtk_entry_get_text(GTK_ENTRY(cipherListEntry)));
+        account_replace(account, CONFIG_TLS_CIPHERS, gtk_entry_get_text(GTK_ENTRY(cipherListEntry)));
 
-        account_replace(account, TLS_SERVER_NAME, gtk_entry_get_text(GTK_ENTRY(serverNameInstance)));
+        account_replace(account, CONFIG_TLS_SERVER_NAME, gtk_entry_get_text(GTK_ENTRY(serverNameInstance)));
 
-        account_replace(account, TLS_VERIFY_SERVER, toggle_to_string(verifyCertificateServer));
+        account_replace(account, CONFIG_TLS_VERIFY_SERVER, toggle_to_string(verifyCertificateServer));
 
-        account_replace(account, TLS_VERIFY_CLIENT, toggle_to_string(verifyCertificateClient));
+        account_replace(account, CONFIG_TLS_VERIFY_CLIENT, toggle_to_string(verifyCertificateClient));
 
-        account_replace(account, TLS_REQUIRE_CLIENT_CERTIFICATE, toggle_to_string(requireCertificate));
+        account_replace(account, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, toggle_to_string(requireCertificate));
 
-        account_replace(account, TLS_NEGOTIATION_TIMEOUT_SEC, gtk_entry_get_text(GTK_ENTRY(tlsTimeOutSec)));
+        account_replace(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, gtk_entry_get_text(GTK_ENTRY(tlsTimeOutSec)));
 
-        account_replace(account, TLS_NEGOTIATION_TIMEOUT_MSEC, gtk_entry_get_text(GTK_ENTRY(tlsTimeOutMSec)));
+        account_replace(account, CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC, gtk_entry_get_text(GTK_ENTRY(tlsTimeOutMSec)));
     }
 
     gtk_widget_destroy(GTK_WIDGET(tlsDialog));

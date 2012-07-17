@@ -106,7 +106,6 @@ toggle_pick_up_hang_up_callback()
             case CALL_STATE_DIALING:
             case CALL_STATE_HOLD:
             case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
             case CALL_STATE_RINGING:
                 sflphone_hang_up();
                 break;
@@ -140,7 +139,6 @@ toggle_hold_callback()
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
                 sflphone_on_hold();
                 break;
             case CALL_STATE_HOLD:

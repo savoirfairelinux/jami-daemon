@@ -59,7 +59,7 @@
 class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
    public:
       QNumericTreeWidgetItem_hist(QTreeWidget* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
-      QNumericTreeWidgetItem_hist(QTreeWidgetItem* parent):QTreeWidgetItem(parent),widget(0),weight(-1){}
+      QNumericTreeWidgetItem_hist(QTreeWidgetItem* parent=0):QTreeWidgetItem(parent),widget(0),weight(-1){}
       ContactItemWidget* widget;
       QString number;
       int weight;
@@ -86,9 +86,14 @@ protected:
    {
       e->accept();
       Call* call = SFLPhone::model()->addDialingCall(m_pName, AccountList::getCurrentAccount());
-      call->setCallNumber(m_pNumber);
-      call->setPeerName(m_pName);
-      call->actionPerformed(CALL_ACTION_ACCEPT);
+      if (call) {
+         call->setCallNumber(m_pNumber);
+         call->setPeerName(m_pName);
+         call->actionPerformed(CALL_ACTION_ACCEPT);
+      }
+      else {
+         HelperFunctions::displayNoAccountMessageBox(this);
+      }
    }
 private:
    QString m_pNumber;
@@ -409,7 +414,7 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
          QNumericTreeWidgetItem_hist* item = dynamic_cast<QNumericTreeWidgetItem_hist*>(m_pContactView->selectedItems()[0]);
          if (item) {
             Call* call = NULL;
-            SFLPhone::app()->view()->selectCallPhoneNumber(call,item->widget->getContact());
+            SFLPhone::app()->view()->selectCallPhoneNumber(&call,item->widget->getContact());
          }
       }
    }

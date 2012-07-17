@@ -36,9 +36,17 @@
 #include <string>
 
 namespace libav_utils {
-    void sfl_avcodec_init();
-    std::map<std::string, std::string> encodersMap();
-    std::vector<std::string> getVideoCodecList();
+    void
+    sfl_avcodec_init();
+
+    std::map<std::string, std::string>
+    encodersMap();
+
+    std::vector<std::string>
+    getVideoCodecList();
+
+    std::vector<std::map<std::string, std::string> >
+    getDefaultCodecs();
 }
 
 #endif // __LIBAV_UTILS_H__

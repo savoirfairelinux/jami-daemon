@@ -37,8 +37,11 @@
 #endif
 
 #include "call.h"
-#include <tr1/memory>
 #include "audio/audiortp/audio_rtp_factory.h"
+#ifdef SFL_VIDEO
+#include "video/video_rtp_session.h"
+#endif
+
 #include "noncopyable.h"
 
 class pjsip_evsub;
@@ -46,13 +49,6 @@ class pj_caching_pool;
 class pj_pool_t;
 class pjsip_inv_session;
 class Sdp;
-
-#ifdef SFL_VIDEO
-namespace sfl_video
-{
-class VideoRtpSession;
-}
-#endif
 
 /**
  * @file sipcall.h
@@ -92,8 +88,8 @@ class SIPCall : public Call {
         /**
          * Returns a pointer to the VideoRtp object
          */
-        sfl_video::VideoRtpSession * getVideoRtp () {
-            return videortp_.get();
+        sfl_video::VideoRtpSession &getVideoRtp () {
+            return videortp_;
         }
 #endif
 
@@ -123,7 +119,7 @@ class SIPCall : public Call {
         /**
          * Video Rtp Session factory
          */
-        std::tr1::shared_ptr<sfl_video::VideoRtpSession> videortp_;
+        sfl_video::VideoRtpSession videortp_;
 #endif
 
         /**

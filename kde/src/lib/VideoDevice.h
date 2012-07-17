@@ -21,6 +21,7 @@
 
 #include "typedefs.h"
 #include <QStringList>
+#include <QtCore/QSize>
 
 ///@typedef VideoChannel A channel available in a Device
 typedef QString VideoChannel;
@@ -38,6 +39,8 @@ struct LIB_EXPORT Resolution {
          height=size.split("x")[1].toInt();
       }
    }
+   Resolution(const Resolution& res):width(res.width),height(res.height){}
+   Resolution(const QSize& size):width(size.width()),height(size.height()){}
    //Getter
    QString toString() { return QString::number(width)+"x"+QString::number(height);}
 

@@ -173,10 +173,8 @@ class IAXVoIPLink : public VoIPLink {
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-#ifdef SFL_VIDEO
-        virtual std::string getCurrentVideoCodecName(const std::string& id);
-#endif
-        virtual std::string getCurrentCodecName(Call *c) const;
+        virtual std::string getCurrentVideoCodecName(Call *c) const;
+        virtual std::string getCurrentAudioCodecName(Call *c) const;
 
     private:
         NON_COPYABLE(IAXVoIPLink);

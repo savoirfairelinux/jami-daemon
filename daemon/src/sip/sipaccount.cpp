@@ -34,6 +34,7 @@
 #include "config.h"
 #endif
 
+#include "account_schema.h"
 #include "sipaccount.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
@@ -43,6 +44,10 @@
 #include <pwd.h>
 #include <sstream>
 #include <stdlib.h>
+
+#ifdef SFL_VIDEO
+#include "video/libav_utils.h"
+#endif
 
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
@@ -102,7 +107,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
     , link_(SIPVoIPLink::instance())
-    , receivedParameter_()
+    , receivedParameter_("")
     , rPort_(-1)
 {
     if (isIP2IP())
@@ -114,6 +119,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     using namespace Conf;
     using std::vector;
     using std::string;
+    using std::map;
     MappingNode accountmap(NULL);
     MappingNode srtpmap(NULL);
     MappingNode zrtpmap(NULL);
@@ -144,11 +150,18 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode publishPort(publicportstr.str());
 
     ScalarNode sameasLocal(publishedSameasLocal_);
-    DEBUG("%s", audioCodecStr_.c_str());
     ScalarNode audioCodecs(audioCodecStr_);
 #ifdef SFL_VIDEO
-    DEBUG("%s", videoCodecStr_.c_str());
-    ScalarNode videoCodecs(videoCodecStr_);
+    SequenceNode videoCodecs(NULL);
+    accountmap.setKeyValue(VIDEO_CODECS_KEY, &videoCodecs);
+    for (vector<map<string, string> >::iterator i = videoCodecList_.begin(); i != videoCodecList_.end(); ++i) {
+        map<string, string> &codec = *i;
+        MappingNode *mapNode = new MappingNode(NULL);
+        mapNode->setKeyValue(VIDEO_CODEC_NAME, new ScalarNode(codec[VIDEO_CODEC_NAME]));
+        mapNode->setKeyValue(VIDEO_CODEC_BITRATE, new ScalarNode(codec[VIDEO_CODEC_BITRATE]));
+        mapNode->setKeyValue(VIDEO_CODEC_ENABLED, new ScalarNode(codec[VIDEO_CODEC_ENABLED]));
+        videoCodecs.addNode(mapNode);
+    }
 #endif
 
     ScalarNode ringtonePath(ringtonePath_);
@@ -207,9 +220,6 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
     accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
     accountmap.setKeyValue(AUDIO_CODECS_KEY, &audioCodecs);
-#ifdef SFL_VIDEO
-    accountmap.setKeyValue(VIDEO_CODECS_KEY, &videoCodecs);
-#endif
     accountmap.setKeyValue(RINGTONE_PATH_KEY, &ringtonePath);
     accountmap.setKeyValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled);
     accountmap.setKeyValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled);
@@ -260,68 +270,107 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
         ERROR("%s", e.what());
     }
 
-    Sequence *seq = credentialseq.getSequence();
-    Sequence::iterator seqit;
-
-    for (seqit = seq->begin(); seqit != seq->end(); ++seqit) {
+    // Cleanup
+    Sequence *credSeq = credentialseq.getSequence();
+    for (Sequence::iterator seqit = credSeq->begin(); seqit != credSeq->end(); ++seqit) {
         MappingNode *node = static_cast<MappingNode*>(*seqit);
         delete node->getValue(CONFIG_ACCOUNT_USERNAME);
         delete node->getValue(CONFIG_ACCOUNT_PASSWORD);
         delete node->getValue(CONFIG_ACCOUNT_REALM);
         delete node;
     }
+
+#ifdef SFL_VIDEO
+    Sequence *videoCodecSeq = videoCodecs.getSequence();
+    for (Sequence::iterator i = videoCodecSeq->begin(); i != videoCodecSeq->end(); ++i) {
+        MappingNode *node = static_cast<MappingNode*>(*i);
+        delete node->getValue(VIDEO_CODEC_NAME);
+        delete node->getValue(VIDEO_CODEC_BITRATE);
+        delete node->getValue(VIDEO_CODEC_ENABLED);
+        delete node;
+    }
+#endif
 }
 
-void SIPAccount::unserialize(const Conf::MappingNode &map)
+void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
 {
     using namespace Conf;
+    using std::vector;
+    using std::map;
+    using std::string;
 
-    map.getValue(ALIAS_KEY, &alias_);
-    map.getValue(TYPE_KEY, &type_);
-    map.getValue(USERNAME_KEY, &username_);
-    if (not isIP2IP()) map.getValue(HOSTNAME_KEY, &hostname_);
-    map.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
-    if (not isIP2IP()) map.getValue(MAILBOX_KEY, &mailBox_);
-    map.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
+    mapNode.getValue(ALIAS_KEY, &alias_);
+    mapNode.getValue(TYPE_KEY, &type_);
+    mapNode.getValue(USERNAME_KEY, &username_);
+    if (not isIP2IP()) mapNode.getValue(HOSTNAME_KEY, &hostname_);
+    mapNode.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
+    if (not isIP2IP()) mapNode.getValue(MAILBOX_KEY, &mailBox_);
+    mapNode.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
     // Update codec list which one is used for SDP offer
     setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
 #ifdef SFL_VIDEO
-    map.getValue(VIDEO_CODECS_KEY, &videoCodecStr_);
-    setActiveVideoCodecs(ManagerImpl::split_string(videoCodecStr_));
+    YamlNode *videoCodecsNode(mapNode.getValue(VIDEO_CODECS_KEY));
+
+    if (videoCodecsNode and videoCodecsNode->getType() == SEQUENCE) {
+        SequenceNode *videoCodecs = static_cast<SequenceNode *>(videoCodecsNode);
+        Sequence *seq = videoCodecs->getSequence();
+        if (seq->empty()) {
+            // Video codecs are an empty list
+            WARN("Loading default video codecs");
+            videoCodecList_ = libav_utils::getDefaultCodecs();
+        } else {
+            vector<map<string, string> > videoCodecDetails;
+            for (Sequence::iterator it = seq->begin(); it != seq->end(); ++it) {
+                MappingNode *codec = static_cast<MappingNode *>(*it);
+                map<string, string> codecMap;
+                codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
+                codec->getValue(VIDEO_CODEC_BITRATE, &codecMap[VIDEO_CODEC_BITRATE]);
+                codec->getValue(VIDEO_CODEC_ENABLED, &codecMap[VIDEO_CODEC_ENABLED]);
+                videoCodecDetails.push_back(codecMap);
+            }
+            // these must be validated
+            setVideoCodecs(videoCodecDetails);
+        }
+    } else {
+        // either this is an older config file which had videoCodecs as a scalar node,
+        // or it had no video codecs at all
+        WARN("Loading default video codecs");
+        videoCodecList_ = libav_utils::getDefaultCodecs();
+    }
 #endif
 
-    map.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
-    map.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
-    if (not isIP2IP()) map.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
-    map.getValue(INTERFACE_KEY, &interface_);
+    mapNode.getValue(RINGTONE_PATH_KEY, &ringtonePath_);
+    mapNode.getValue(RINGTONE_ENABLED_KEY, &ringtoneEnabled_);
+    if (not isIP2IP()) mapNode.getValue(Preferences::REGISTRATION_EXPIRE_KEY, &registrationExpire_);
+    mapNode.getValue(INTERFACE_KEY, &interface_);
     int port = DEFAULT_SIP_PORT;
-    map.getValue(PORT_KEY, &port);
+    mapNode.getValue(PORT_KEY, &port);
     localPort_ = port;
-    map.getValue(PUBLISH_ADDR_KEY, &publishedIpAddress_);
-    map.getValue(PUBLISH_PORT_KEY, &port);
+    mapNode.getValue(PUBLISH_ADDR_KEY, &publishedIpAddress_);
+    mapNode.getValue(PUBLISH_PORT_KEY, &port);
     publishedPort_ = port;
-    map.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
-    if (not isIP2IP()) map.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
+    mapNode.getValue(SAME_AS_LOCAL_KEY, &publishedSameasLocal_);
+    if (not isIP2IP()) mapNode.getValue(KEEP_ALIVE_ENABLED, &keepAliveEnabled_);
 
     std::string dtmfType;
-    map.getValue(DTMF_TYPE_KEY, &dtmfType);
+    mapNode.getValue(DTMF_TYPE_KEY, &dtmfType);
     dtmfType_ = dtmfType;
 
-    if (not isIP2IP()) map.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
-    map.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
+    if (not isIP2IP()) mapNode.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
+    mapNode.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
-    if (not isIP2IP()) map.getValue(STUN_ENABLED_KEY, &stunEnabled_);
-    if (not isIP2IP()) map.getValue(STUN_SERVER_KEY, &stunServer_);
+    if (not isIP2IP()) mapNode.getValue(STUN_ENABLED_KEY, &stunEnabled_);
+    if (not isIP2IP()) mapNode.getValue(STUN_SERVER_KEY, &stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
 
-    map.getValue(DISPLAY_NAME_KEY, &displayName_);
+    mapNode.getValue(DISPLAY_NAME_KEY, &displayName_);
 
     std::vector<std::map<std::string, std::string> > creds;
 
-    YamlNode *credNode = map.getValue(CRED_KEY);
+    YamlNode *credNode = mapNode.getValue(CRED_KEY);
 
     /* We check if the credential key is a sequence
      * because it was a mapping in a previous version of
@@ -352,7 +401,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
         // migration from old file format
         std::map<std::string, std::string> credmap;
         std::string password;
-        map.getValue(PASSWORD_KEY, &password);
+        if (not isIP2IP()) mapNode.getValue(PASSWORD_KEY, &password);
 
         credmap[CONFIG_ACCOUNT_USERNAME] = username_;
         credmap[CONFIG_ACCOUNT_PASSWORD] = password;
@@ -363,7 +412,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     setCredentials(creds);
 
     // get srtp submap
-    MappingNode *srtpMap = static_cast<MappingNode *>(map.getValue(SRTP_KEY));
+    MappingNode *srtpMap = static_cast<MappingNode *>(mapNode.getValue(SRTP_KEY));
 
     if (srtpMap) {
         srtpMap->getValue(SRTP_ENABLE_KEY, &srtpEnabled_);
@@ -372,7 +421,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     }
 
     // get zrtp submap
-    MappingNode *zrtpMap = static_cast<MappingNode *>(map.getValue(ZRTP_KEY));
+    MappingNode *zrtpMap = static_cast<MappingNode *>(mapNode.getValue(ZRTP_KEY));
 
     if (zrtpMap) {
         zrtpMap->getValue(DISPLAY_SAS_KEY, &zrtpDisplaySas_);
@@ -382,7 +431,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &map)
     }
 
     // get tls submap
-    MappingNode *tlsMap = static_cast<MappingNode *>(map.getValue(TLS_KEY));
+    MappingNode *tlsMap = static_cast<MappingNode *>(mapNode.getValue(TLS_KEY));
 
     if (tlsMap) {
         tlsMap->getValue(TLS_ENABLE_KEY, &tlsEnable_);
@@ -495,7 +544,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? "true" : "false";
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
-    RegistrationState state = Unregistered;
+    RegistrationState state = UNREGISTERED;
     std::string registrationStateCode;
     std::string registrationStateDescription;
 
@@ -618,7 +667,7 @@ void SIPAccount::startKeepAliveTimer() {
     if (isIP2IP())
         return;
 
-    if(keepAliveTimerActive_)
+    if (keepAliveTimerActive_)
         return;
 
     DEBUG("Start keep alive timer for account %s", getAccountID().c_str());
@@ -635,8 +684,7 @@ void SIPAccount::startKeepAliveTimer() {
     if (registrationExpire_ == 0) {
         DEBUG("Registration Expire: 0, taking 60 instead");
         keepAliveDelay_.sec = 3600;
-    }
-    else {
+    } else {
         DEBUG("Registration Expire: %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }

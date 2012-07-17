@@ -181,3 +181,21 @@ QVector<QTreeWidgetItem*> CategorizedTreeWidget::realItems() const
 {
   return m_lItems;
 }
+
+void CategorizedTreeWidget::removeItem(QTreeWidgetItem* item)
+{
+   for (int i=0;i<topLevelItemCount();i++) {
+      QTreeWidgetItem* topL = topLevelItem(i);
+      if (topL == item) {
+         takeTopLevelItem(i);
+      }
+      else {
+         for (int k=0;k<topL->childCount();k++) {
+            QTreeWidgetItem* childL = topL->child(k);
+            if (childL == item) {
+               topL->removeChild(childL);
+            }
+         }
+      }
+   }
+}

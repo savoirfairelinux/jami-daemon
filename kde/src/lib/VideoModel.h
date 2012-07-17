@@ -23,11 +23,13 @@
 #include <QtCore/QObject>
 
 //Qt
-class QSharedMemory;
-class QTimer;
+#include <QtCore/QHash>
 
 //SFLPhone
 #include "VideoDevice.h"
+class VideoRenderer;
+class Call;
+struct SHMHeader;
 
 ///VideoModel: Video event dispatcher
 class LIB_EXPORT VideoModel : public QObject {
@@ -38,8 +40,8 @@ public:
 
    //Getters
    bool       isPreviewing       ();
-   QByteArray getCurrentFrame    ();
-   Resolution getActiveResolution();
+   VideoRenderer* getRenderer(Call* call);
+   VideoRenderer* getPreviewRenderer();
    
    //Setters
    void       setBufferSize(uint size);
@@ -52,30 +54,31 @@ private:
    static VideoModel* m_spInstance;
    
    //Attributes
-   bool       m_Attached    ;
-   bool       m_PreviewState;
-   uint       m_BufferSize  ;
-   uint       m_ShmKey      ;
-   uint       m_SemKey      ;
-   int        m_SetSetId    ;
-   Resolution m_Res         ;
-   QByteArray m_Frame       ;
-   QTimer*    m_pTimer      ;
-   void*      m_pBuffer     ;
+   bool           m_Attached    ;
+   bool           m_PreviewState;
+   uint           m_BufferSize  ;
+   uint           m_ShmKey      ;
+   uint           m_SemKey      ;
+   int            m_SetSetId    ;
+   void*          m_pBuffer     ;
+   QHash<QString,VideoRenderer*> m_lRenderers;
 
 public slots:
    void stopPreview ();
    void startPreview();
 
 private slots:
-   void receivingEvent(int shmKey, int semKey, int videoBufferSize, int destWidth, int destHeight);
-   void stoppedReceivingEvent(int shmKey, int semKey);
+   void startedDecoding(QString id, QString shmPath, int width, int height);
+   void stoppedDecoding(QString id, QString shmPath);
    void deviceEvent();
-   void timedEvents();
 
 signals:
    ///Emitted when a new frame is ready
    void frameUpdated();
+   ///Emmitted when the video is stopped, before the framebuffer become invalid
+   void videoStopped();
+   ///Emmitted when a call make video available
+   void videoCallInitiated(VideoRenderer*);
 };
 
 #endif

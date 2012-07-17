@@ -51,6 +51,11 @@ class SipTransport {
         static std::string getSIPLocalIP();
 
         /**
+         * Get the IP for the network interface named ifaceName
+         */
+        static std::string getInterfaceAddrFromName(const std::string &ifaceName);
+
+        /**
         * List all the interfaces on the system and return
         * a vector list containing their name (eth0, eth0:1 ...).
         * @param void
@@ -59,16 +64,6 @@ class SipTransport {
         * the system.
         */
         static std::vector<std::string> getAllIpInterfaceByName();
-
-        /**
-         * List all the interfaces on the system and return
-         * a vector list containing their name (eth0, eth0:1 ...).
-         * @param void
-         * @return std::vector<std::string> A std::string vector
-         * of interface name available on all of the interfaces on
-         * the system.
-         */
-        static std::string getInterfaceAddrFromName(const std::string &ifaceName);
 
         /**
          * List all the interfaces on the system and return
@@ -100,12 +95,6 @@ class SipTransport {
          * @param account The account for which a transport must be created.
          */
         void createSipTransport(SIPAccount &account);
-
-        /**
-         * Create the default sip transport on 5060. In case this port is already used
-         * increme
-         */
-        void createDefaultSipUdpTransport();
 
         /**
          * Initialize the transport selector

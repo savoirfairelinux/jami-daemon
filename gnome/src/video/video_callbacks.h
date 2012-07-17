@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,19 +28,16 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEO_ENDPOINT_H__
-#define VIDEO_ENDPOINT_H__
+#ifndef VIDEO_CALLBACKS_H_
+#define VIDEO_CALLBACKS_H_
 
-#include <vector>
-#include <map>
-#include <string>
+#include "dbus.h"
 
-namespace sfl_video {
-    /**
-     * Returns the list of codecs installed at runtime and that we support
-     */
-    std::vector<std::string> getCodecList();
-    std::map<std::string, std::string> getCodecSpecifications(const std::string &codec);
-}
+void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
+                               gint width, gint height, GError *error,
+                               gpointer userdata);
 
-#endif // VIDEO_ENDPOINT_H__
+void stopped_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
+                               GError *error, gpointer userdata);
+
+#endif // VIDEO_CALLBACKS_H_

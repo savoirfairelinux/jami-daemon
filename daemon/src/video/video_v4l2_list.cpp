@@ -235,7 +235,7 @@ void VideoV4l2ListThread::run()
                         DEBUG("udev: adding %s", node);
                         try {
                             addDevice(node);
-                            Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
+                            Manager::instance().getVideoControls()->deviceEvent();
                         } catch (const std::runtime_error &e) {
                             ERROR("%s", e.what());
                         }
@@ -272,7 +272,7 @@ void VideoV4l2ListThread::delDevice(const string &node)
     for (std::vector<VideoV4l2Device>::iterator itr = devices_.begin(); itr != devices_.end(); ++itr) {
         if (itr->device == node) {
             devices_.erase(itr);
-            Manager::instance().getDbusManager()->getVideoControls()->deviceEvent();
+            Manager::instance().getVideoControls()->deviceEvent();
             return;
         }
     }

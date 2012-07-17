@@ -32,7 +32,6 @@
 #include <sstream>
 #include <map>
 #include <string>
-#include "shared_memory.h"
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
 #include "sip/sdp.h"
@@ -45,24 +44,14 @@ namespace sfl_video {
 using std::map;
 using std::string;
 
-VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs) :
-    sharedMemory_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(), sending_(true), receiving_(true)
-{
-    // FIXME: bitrate must be configurable
-    txArgs_["bitrate"] = "500000";
-}
-
-VideoRtpSession::VideoRtpSession(const map<string, string> &txArgs,
-                                 const map<string, string> &rxArgs) :
-    sharedMemory_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
-    rxArgs_(rxArgs), sending_(true), receiving_(true)
+VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string> &txArgs) :
+    sendThread_(), receiveThread_(), txArgs_(txArgs),
+    rxArgs_(), sending_(false), receiving_(false), callID_(callID)
 {}
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
-    const std::vector<string> v(sdp.getActiveVideoDescription());
-    const string &desc = v[0];
+    string desc(sdp.getActiveIncomingVideoDescription());
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
@@ -94,19 +83,21 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
         receiving_ = false;
     }
 
-    if (not v[1].empty()) {
-        const string codec = libav_utils::encodersMap()[v[1]];
-        if (codec.empty()) {
-            DEBUG("Couldn't find encoder for \"%s\"\n", v[1].c_str());
+    string codec(sdp.getActiveOutgoingVideoCodec());
+    if (not codec.empty()) {
+        const string encoder(libav_utils::encodersMap()[codec]);
+        if (encoder.empty()) {
+            DEBUG("Couldn't find encoder for \"%s\"\n", codec.c_str());
             sending_ = false;
         } else {
-            txArgs_["codec"] = codec;
+            txArgs_["codec"] = encoder;
+            txArgs_["bitrate"] = sdp.getActiveOutgoingVideoBitrate(codec);
         }
     } else {
         sending_ = false;
     }
 
-    txArgs_["payload_type"] = v[2];
+    txArgs_["payload_type"] = sdp.getActiveOutgoingVideoPayload();;
 }
 
 void VideoRtpSession::updateDestination(const string &destination,
@@ -149,9 +140,7 @@ void VideoRtpSession::start()
     if (receiving_) {
         if (receiveThread_.get())
             WARN("Restarting video receiver");
-        VideoControls *controls(Manager::instance().getDbusManager()->getVideoControls());
-        sharedMemory_.reset(new SharedMemory(*controls));
-        receiveThread_.reset(new VideoReceiveThread(rxArgs_, *sharedMemory_));
+        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->start();
     }
     else
@@ -163,4 +152,10 @@ void VideoRtpSession::stop()
     receiveThread_.reset();
     sendThread_.reset();
 }
+
+void VideoRtpSession::forceKeyFrame()
+{
+    sendThread_->forceKeyFrame();
+}
+
 } // end namespace sfl_video

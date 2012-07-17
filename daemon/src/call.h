@@ -195,7 +195,7 @@ class Call : public Recordable {
          * Set local video port, as seen by me [not protected]
          * @param port  The local video port
          */
-        void setLocalVideoPort (unsigned int port)  {
+        void setLocalVideoPort(unsigned int port)  {
             localVideoPort_ = port;
         }
 

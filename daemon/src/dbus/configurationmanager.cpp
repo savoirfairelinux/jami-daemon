@@ -35,6 +35,7 @@
 #endif
 
 #include "configurationmanager.h"
+#include "account_schema.h"
 #include <cerrno>
 #include <sstream>
 #include "../manager.h"

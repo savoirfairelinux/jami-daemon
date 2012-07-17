@@ -141,4 +141,22 @@ void sfl_avcodec_init()
     findInstalledVideoCodecs();
 }
 
+std::vector<std::map<std::string, std::string> >
+getDefaultCodecs()
+{
+    const char * const DEFAULT_BITRATE = "400";
+    sfl_avcodec_init();
+    std::vector<std::map<std::string, std::string> > result;
+    for (std::vector<std::string>::const_iterator iter = installed_video_codecs_.begin();
+         iter != installed_video_codecs_.end(); ++iter) {
+        std::map<std::string, std::string> codec;
+        // FIXME: get these keys from proper place
+        codec["name"] = *iter;
+        codec["bitrate"] = DEFAULT_BITRATE;
+        codec["enabled"] = "true";
+        result.push_back(codec);
+    }
+    return result;
+}
+
 } // end namespace libav_utils

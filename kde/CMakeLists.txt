@@ -12,7 +12,7 @@ INCLUDE( ${LOCAL_CMAKE_MODULE_PATH}/TargetDistclean.cmake  REQUIRED)
 
 FIND_PACKAGE ( KdepimLibs REQUIRED            )
 FIND_PACKAGE ( KDE4       REQUIRED            )
-FIND_PACKAGE ( Qt4        REQUIRED QtCore QtGui QtXml QtDBus QtTest QtSVG QT_USE_QT* )
+FIND_PACKAGE ( Qt4        REQUIRED QtCore QtGui QtXml QtDBus QtTest QtSVG QtOpenGl QT_USE_QT* )
 
 if (CMAKE_COMPILER_IS_GNUCC)
    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
@@ -44,7 +44,7 @@ add_subdirectory( man    )
 add_subdirectory( po     )
 add_subdirectory( plasma )
 
-set(PROJECT_VERSION "1.1.0")
+set(PROJECT_VERSION "1.1.1")
 set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${PROJECT_VERSION})
 
 add_custom_target(dist

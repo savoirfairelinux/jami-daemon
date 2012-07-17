@@ -27,13 +27,26 @@
 
 //SFLPhone
 #include "sflphone_const.h"
-#include "VideoCodec.h"
 
 //SFLPhone lib
 #include "configurationmanager_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
 #include "video_interface_singleton.h"
 #include "AccountList.h"
+#include "CredentialModel.h"
+#include "AudioCodecModel.h"
+#include "VideoCodecModel.h"
+
+const account_function Account::stateMachineActionsOnState[6][7] = {
+/*                 NOTHING              EDIT              RELOAD              SAVE               REMOVE             MODIFY             CANCEL            */
+/*READY    */{ &Account::nothing, &Account::edit   , &Account::reload , &Account::nothing, &Account::remove , &Account::modify   , &Account::nothing },/**/
+/*EDITING  */{ &Account::nothing, &Account::nothing, &Account::outdate, &Account::nothing, &Account::remove , &Account::modify   , &Account::cancel  },/**/
+/*OUTDATED */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing, &Account::remove , &Account::reloadMod, &Account::reload  },/**/
+/*NEW      */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::save   , &Account::remove , &Account::nothing  , &Account::nothing },/**/
+/*MODIFIED */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::save   , &Account::remove , &Account::nothing  , &Account::reload  },/**/
+/*REMOVED  */{ &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing, &Account::nothing  , &Account::cancel  } /**/
+/*                                                                                                                                                       */
+};
 
 ///Match state name to user readable string
 const QString& account_state_name(const QString& s)
@@ -71,7 +84,8 @@ const QString& account_state_name(const QString& s)
 } //account_state_name
 
 ///Constructors
-Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
+Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_pCredentials(nullptr),m_pAudioCodecs(nullptr),m_CurrentState(READY),
+m_pVideoCodecs(nullptr)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
    connect(&callManager,SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
@@ -81,21 +95,10 @@ Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL)
 Account* Account::buildExistingAccountFromId(const QString& _accountId)
 {
    qDebug() << "Building an account from id: " << _accountId;
-   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    Account* a = new Account();
    a->m_pAccountId = new QString(_accountId);
-   QMap<QString,QString> aDetails = configurationManager.getAccountDetails(_accountId);
-   
-   if (!aDetails.count()) {
-      qDebug() << "Account not found";
-      return NULL;
-   }
-   a->m_pAccountDetails = new MapStringString(aDetails);
 
-   //Enable for debug
-   //    foreach (QString str, *aDetails) {
-   //       qDebug() << aDetails->key(str) << str;
-   //    }
+   a->performAction(AccountEditAction::RELOAD);
 
    return a;
 } //buildExistingAccountFromId
@@ -115,7 +118,8 @@ Account::~Account()
 {
    disconnect();
    delete m_pAccountId;
-   delete m_pAccountDetails;
+   if (m_pCredentials)    delete m_pCredentials;
+   if (m_pAccountDetails) delete m_pAccountDetails;
 }
 
 
@@ -129,8 +133,8 @@ Account::~Account()
 void Account::accountChanged(QString accountId,QString state,int)
 {
    if (m_pAccountId && accountId == *m_pAccountId) {
-      Account::updateState();
-      stateChanged(getStateName(state));
+      if (Account::updateState())
+         emit stateChanged(getStateName(state));
    }
 }
 
@@ -157,7 +161,7 @@ const QString& Account::getAccountId() const
       return EMPTY_STRING; //WARNING May explode
    }
    
-   return *m_pAccountId; 
+   return *m_pAccountId;
 }
 
 ///Get this account details
@@ -210,6 +214,65 @@ bool Account::isRegistered() const
    return (getAccountDetail(ACCOUNT_REGISTRATION_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
+///Return the model index of this item
+QModelIndex Account::getIndex()
+{
+   for (int i=0;i < AccountList::getInstance()->m_pAccounts->size();i++) {
+      if (this == (*AccountList::getInstance()->m_pAccounts)[i]) {
+         return AccountList::getInstance()->index(i,0);
+      }
+   }
+   return QModelIndex();
+}
+
+///Return status color name
+QString Account::getStateColorName() const
+{
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
+            return "black";
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
+            return "darkGreen";
+   return "red";
+}
+
+///Return status Qt color, QColor is not part of QtCore, use using the global variant
+Qt::GlobalColor Account::getStateColor() const
+{
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
+            return Qt::darkGray;
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
+            return Qt::darkGreen;
+   if(getAccountRegistrationStatus() == ACCOUNT_STATE_TRYING)
+            return Qt::darkYellow;
+   return Qt::darkRed;
+}
+
+///Create and return the credential model
+CredentialModel* Account::getCredentialsModel()
+{
+   if (!m_pCredentials) {
+      reloadCredentials();
+   }
+   return m_pCredentials;
+}
+
+///Create and return the audio codec model
+AudioCodecModel* Account::getAudioCodecModel()
+{
+   if (!m_pAudioCodecs) {
+      reloadAudioCodecs();
+   }
+   return m_pAudioCodecs;
+}
+
+///Create and return the video codec model
+VideoCodecModel* Account::getVideoCodecModel()
+{
+   if (!m_pVideoCodecs) {
+      m_pVideoCodecs = new VideoCodecModel(this);
+   }
+   return m_pVideoCodecs;
+}
 
 /*****************************************************************************
  *                                                                           *
@@ -220,13 +283,27 @@ bool Account::isRegistered() const
 ///Set account details
 void Account::setAccountDetails(const MapStringString& m)
 {
+   if (m_pAccountDetails)
+      delete m_pAccountDetails;
    *m_pAccountDetails = m;
 }
 
 ///Set a specific detail
-void Account::setAccountDetail(const QString& param, const QString& val)
+bool Account::setAccountDetail(const QString& param, const QString& val)
 {
-   (*m_pAccountDetails)[param] = val;
+   QString buf = (*m_pAccountDetails)[param];
+   if (param == ACCOUNT_REGISTRATION_STATUS) {
+      (*m_pAccountDetails)[param] = val;
+      emit detailChanged(this,param,val,buf);
+   }
+   else {
+      performAction(AccountEditAction::MODIFY);
+      if (m_CurrentState == MODIFIED || m_CurrentState == NEW) {
+         (*m_pAccountDetails)[param] = val;
+         emit detailChanged(this,param,val,buf);
+      }
+   }
+   return m_CurrentState == MODIFIED || m_CurrentState == NEW;
 }
 
 ///Set the account id
@@ -241,7 +318,7 @@ void Account::setAccountId(const QString& id)
 ///Set account enabled
 void Account::setEnabled(bool checked)
 {
-   setAccountDetail(ACCOUNT_ENABLED, checked ? REGISTRATION_ENABLED_TRUE : REGISTRATION_ENABLED_FALSE);
+   setAccountEnabled(checked);
 }
 
 /*****************************************************************************
@@ -250,15 +327,20 @@ void Account::setEnabled(bool checked)
  *                                                                           *
  ****************************************************************************/
 
-///Update the account
-void Account::updateState()
+/**Update the account
+ * @return if the state changed
+ */
+bool Account::updateState()
 {
    if(! isNew()) {
       ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
       MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
       QString status = details[ACCOUNT_REGISTRATION_STATUS];
+      QString currentStatus = getAccountRegistrationStatus();
       setAccountDetail(ACCOUNT_REGISTRATION_STATUS, status); //Update -internal- object state
+      return status == currentStatus;
    }
+   return true;
 }
 
 ///Save the current account to the daemon
@@ -283,8 +365,115 @@ void Account::save()
          (*AccountList::getInstance()->m_pAccounts) << this;
       }
       
+      performAction(AccountEditAction::RELOAD);
       updateState();
+      m_CurrentState = READY;
    }
+   m_pVideoCodecs->save();
+   saveAudioCodecs();
+}
+
+///Synchronise with the daemon, this need to be done manually to prevent reloading the account while it is being edited
+void Account::reload()
+{
+   qDebug() << "Reloading" << getAccountId();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QMap<QString,QString> aDetails = configurationManager.getAccountDetails(getAccountId());
+
+   if (!aDetails.count()) {
+      qDebug() << "Account not found";
+   }
+   else {
+      if (m_pAccountDetails) {
+         delete m_pAccountDetails;
+         m_pAccountDetails = nullptr;
+      }
+      m_pAccountDetails = new MapStringString(aDetails);
+   }
+   m_CurrentState = READY;
+}
+
+void Account::reloadCredentials()
+{
+   if (!m_pCredentials) {
+      m_pCredentials = new CredentialModel(this);
+   }
+   m_pCredentials->clear();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   VectorMapStringString credentials = configurationManager.getCredentials(getAccountId());
+   for (int i=0; i < credentials.size(); i++) {
+      QModelIndex idx = m_pCredentials->addCredentials();
+      m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_USERNAME  ],CredentialModel::NAME_ROLE    );
+      m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_PASSWORD  ],CredentialModel::PASSWORD_ROLE);
+      m_pCredentials->setData(idx,credentials[i][ CONFIG_ACCOUNT_REALM     ],CredentialModel::REALM_ROLE   );
+   }
+}
+
+void Account::saveCredentials() {
+   if (m_pCredentials) {
+      ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+      VectorMapStringString toReturn;
+      for (int i=0; i < m_pCredentials->rowCount();i++) {
+         QModelIndex idx = m_pCredentials->index(i,0);
+         MapStringString credentialData;
+         QString username = m_pCredentials->data(idx,CredentialModel::NAME_ROLE     ).toString();
+         username = (username.isEmpty())?getAccountUsername():username;
+         credentialData[ CONFIG_ACCOUNT_USERNAME] = m_pCredentials->data(idx,CredentialModel::NAME_ROLE     ).toString();
+         credentialData[ CONFIG_ACCOUNT_PASSWORD] = m_pCredentials->data(idx,CredentialModel::PASSWORD_ROLE ).toString();
+         credentialData[ CONFIG_ACCOUNT_REALM   ] = m_pCredentials->data(idx,CredentialModel::REALM_ROLE    ).toString();
+         toReturn << credentialData;
+      }
+      configurationManager.setCredentials(getAccountId(),toReturn);
+   }
+}
+
+void Account::reloadAudioCodecs()
+{
+   if (!m_pAudioCodecs) {
+      m_pAudioCodecs = new AudioCodecModel(this);
+   }
+   m_pAudioCodecs->clear();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QVector<int> codecIdList = configurationManager.getAudioCodecList();
+   QVector<int> activeCodecList = configurationManager.getActiveAudioCodecList(getAccountId());
+   QStringList tmpNameList;
+
+   foreach (int aCodec, activeCodecList) {
+      QStringList codec = configurationManager.getAudioCodecDetails(aCodec);
+      QModelIndex idx = m_pAudioCodecs->addAudioCodec();
+      m_pAudioCodecs->setData(idx,codec[0]     ,AudioCodecModel::NAME_ROLE       );
+      m_pAudioCodecs->setData(idx,codec[1]     ,AudioCodecModel::SAMPLERATE_ROLE );
+      m_pAudioCodecs->setData(idx,codec[2]     ,AudioCodecModel::BITRATE_ROLE    );
+      m_pAudioCodecs->setData(idx,aCodec       ,AudioCodecModel::ID_ROLE         );
+      m_pAudioCodecs->setData(idx, Qt::Checked ,Qt::CheckStateRole               );
+      if (codecIdList.indexOf(aCodec)!=-1)
+         codecIdList.remove(codecIdList.indexOf(aCodec));
+   }
+
+   foreach (int aCodec, codecIdList) {
+      QStringList codec = configurationManager.getAudioCodecDetails(aCodec);
+      QModelIndex idx = m_pAudioCodecs->addAudioCodec();
+      m_pAudioCodecs->setData(idx,codec[0],AudioCodecModel::NAME_ROLE       );
+      m_pAudioCodecs->setData(idx,codec[1],AudioCodecModel::SAMPLERATE_ROLE );
+      m_pAudioCodecs->setData(idx,codec[2],AudioCodecModel::BITRATE_ROLE    );
+      m_pAudioCodecs->setData(idx,aCodec  ,AudioCodecModel::ID_ROLE         );
+      
+      m_pAudioCodecs->setData(idx, Qt::Unchecked ,Qt::CheckStateRole);
+   }
+}
+
+void Account::saveAudioCodecs() {
+   QStringList _codecList;
+   for (int i=0; i < m_pAudioCodecs->rowCount();i++) {
+      QModelIndex idx = m_pAudioCodecs->index(i,0);
+      if (m_pAudioCodecs->data(idx,Qt::CheckStateRole) == Qt::Checked) {
+         _codecList << m_pAudioCodecs->data(idx,AudioCodecModel::ID_ROLE).toString();
+      }
+   }
+
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   configurationManager.setActiveAudioCodecList(_codecList, getAccountId());
+   qDebug() << "Account codec have been saved" << _codecList << getAccountId();
 }
 
 /*****************************************************************************

@@ -23,19 +23,25 @@
 #include <QtGui/QPainter>
 
 #include "../lib/VideoModel.h"
+class VideoRenderer;
 
 ///VideoWidget: A widget to display video from a framebuffer
 class VideoWidget : public QWidget {
    Q_OBJECT
 public:
-   VideoWidget(QWidget* parent =0 );
+   VideoWidget(QWidget* parent =0, VideoRenderer* renderer = VideoModel::getInstance()->getPreviewRenderer());
 private:
-   QImage* m_Image;
+   QImage*        m_Image;
+   VideoRenderer* m_pRenderer;
 protected:
    virtual void paintEvent(QPaintEvent* event);
 private slots:
    void update();
-   void repaint2();
+   void updateFrame();
+   void stop();
+public slots:
+   void setRenderer(VideoRenderer* renderer);
+   
 };
 
 #endif

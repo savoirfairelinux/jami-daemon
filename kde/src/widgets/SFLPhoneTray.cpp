@@ -33,31 +33,16 @@
 ///Constructor
 SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)
       : KSystemTrayIcon(icon, parent),
-         m_pTrayIconMenu(0),
-         m_Init(false)
+         m_pTrayIconMenu(0)
 {
+   m_pTrayIconMenu = new QMenu(parentWidget());
+   setContextMenu(m_pTrayIconMenu);
 }
 
 ///Destructor
 SFLPhoneTray::~SFLPhoneTray()
 {
    if (m_pTrayIconMenu) delete m_pTrayIconMenu;
-}
-
-///Initializer
-bool SFLPhoneTray::initialize()
-{
-   if ( m_Init ) {
-      kDebug() << "Already initialized.";
-      return false;
-   }
-
-   m_pTrayIconMenu = new QMenu(parentWidget());
-   setContextMenu(m_pTrayIconMenu);
-
-   m_Init = true;
-
-   return true;
 }
 
 
@@ -71,4 +56,10 @@ bool SFLPhoneTray::initialize()
 void SFLPhoneTray::addAction(KAction *action)
 {
    m_pTrayIconMenu->addAction(action);
+}
+
+///Add a menu separator
+void SFLPhoneTray::addSeparator()
+{
+   m_pTrayIconMenu->addSeparator();
 }

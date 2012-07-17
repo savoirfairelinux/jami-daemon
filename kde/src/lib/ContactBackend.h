@@ -52,6 +52,9 @@ public:
    virtual void        editContact       ( Contact*       contact     ) = 0;
    ///Add a new contact to the backend
    virtual void        addNewContact     ( Contact*       contact     ) = 0;
+
+   ///Add a new phone number to an existing contact
+   virtual void addPhoneNumber( Contact*       contact , QString  number, QString type )=0;
 protected:
    virtual ContactList update_slot       (                     ) = 0;
 

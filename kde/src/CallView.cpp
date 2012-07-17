@@ -39,13 +39,14 @@
 #include "lib/Contact.h"
 #include "lib/sflphone_const.h"
 #include "lib/callmanager_interface_singleton.h"
-
-//SFLPhone
-#include "widgets/CallTreeItem.h"
-#include "SFLPhone.h"
-#include "SFLPhoneView.h"
 #include "klib/AkonadiBackend.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "klib/HelperFunctions.h"
+
+//SFLPhone
+#include "SFLPhoneView.h"
+#include "widgets/CallTreeItem.h"
+#include "SFLPhone.h"
 #include "SFLPhoneAccessibility.h"
 
 ///CallTreeItemDelegate: Delegates for CallTreeItem
@@ -274,28 +275,33 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
    Q_UNUSED(action)
    QByteArray encodedPhoneNumber = data->data( MIME_PHONENUMBER );
    if (!QString(encodedPhoneNumber).isEmpty()) {
-      Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(encodedPhoneNumber);
+      Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(encodedPhoneNumber,true);
       QString name;
       name = (contact)?contact->getFormattedName():i18n("Unknown");
       Call* call2 = SFLPhone::model()->addDialingCall(name, AccountList::getCurrentAccount());
-      call2->appendText(QString(encodedPhoneNumber));
-      if (!parent) {
-         //Dropped on free space
-         kDebug() << "Adding new dialing call";
-      }
-      else if (parent->childCount() || parent->parent()) {
-         //Dropped on a conversation
-         QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
-         SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call),call2);
+      if (call2) {
+         call2->appendText(QString(encodedPhoneNumber));
+         if (!parent) {
+            //Dropped on free space
+            kDebug() << "Adding new dialing call";
+         }
+         else if (parent->childCount() || parent->parent()) {
+            //Dropped on a conversation
+            QTreeWidgetItem* call = (parent->parent())?parent->parent():parent;
+            SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call),call2);
+         }
+         else {
+            //Dropped on call
+            call2->actionPerformed(CALL_ACTION_ACCEPT);
+            int state = SFLPhone::model()->getCall(parent)->getState();
+            if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+               SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
+            }
+            SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
+         }
       }
       else {
-         //Dropped on call
-         call2->actionPerformed(CALL_ACTION_ACCEPT);
-         int state = SFLPhone::model()->getCall(parent)->getState();
-         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
-            SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
-         }
-         SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
+         HelperFunctions::displayNoAccountMessageBox(this);
       }
    }
    return false;
@@ -312,7 +318,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
       Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
       if (contact) {
          Call* call2 = NULL;
-         if (!SFLPhone::app()->view()->selectCallPhoneNumber(call2,contact))
+         if (!SFLPhone::app()->view()->selectCallPhoneNumber(&call2,contact))
             return false;
          if (!parent) {
             //Dropped on free space
@@ -325,6 +331,14 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
          }
          else {
             //Dropped on call
+//             if (!call2) {
+//                call2 = SFLPhone::model()->addDialingCall(contact->getFormattedName());
+//             }
+//             QByteArray encodedPhoneNumber = data->data( MIME_PHONENUMBER );
+//             if (!encodedPhoneNumber.isEmpty()) {
+//                call2->setCallNumber(encodedPhoneNumber);
+//             }
+
             call2->actionPerformed(CALL_ACTION_ACCEPT);
             int state = SFLPhone::model()->getCall(parent)->getState();
             if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
@@ -580,10 +594,13 @@ void CallView::destroyCall(Call* toDestroy)
    else if (indexOfTopLevelItem(SFLPhone::model()->getIndex(toDestroy)) != -1)
       takeTopLevelItem(indexOfTopLevelItem(SFLPhone::model()->getIndex(toDestroy)));
    else if (SFLPhone::model()->getIndex(toDestroy)->parent()) {
-      QTreeWidgetItem* parent = SFLPhone::model()->getIndex(toDestroy)->parent();
-      SFLPhone::model()->getIndex(toDestroy)->parent()->removeChild(SFLPhone::model()->getIndex(toDestroy));
-      if (parent->childCount() == 0) /*This should never happen, but it does*/
-         takeTopLevelItem(indexOfTopLevelItem(parent));
+      QTreeWidgetItem* callIndex = SFLPhone::model()->getIndex(toDestroy);
+      QTreeWidgetItem* parent = callIndex->parent();
+      if (indexOfTopLevelItem(parent) != -1) {
+         parent->removeChild(callIndex);
+         if (dynamic_cast<QTreeWidgetItem*>(parent) && parent->childCount() == 0) /*This should never happen, but it does*/
+            takeTopLevelItem(indexOfTopLevelItem(parent));
+      }
    }
    else
       kDebug() << "Call not found";

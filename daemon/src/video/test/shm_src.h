@@ -1,5 +1,11 @@
 /*
- *  Copyright (C) 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *
+ *  Portions derived from GStreamer:
+ *  Copyright (C) <2009> Collabora Ltd
+ *  @author: Olivier Crete <olivier.crete@collabora.co.uk
+ *  Copyright (C) <2009> Nokia Inc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,52 +33,39 @@
  *  as that of the covered work.
  */
 
-#ifndef __IMWINDOW_H__
-#define __IMWINDOW_H__
+#ifndef SHM_SRC_H_
+#define SHM_SRC_H_
 
-#include <gtk/gtk.h>
+#include <string>
+#include "../../noncopyable.h"
 
-#include "widget/imwidget.h"
+class SHMHeader;
+// Example Shared memory source, only useful for testing
+// as far as the daemon is concerned
 
-/** @file imwindow.h
-  * @brief The IM window of the client.
-  */
+class SHMSrc {
+    public:
+        SHMSrc(const std::string &shm_name);
+        virtual ~SHMSrc() {};
 
-/*!	@function
-@abstract	Add IM widget to the IM window
- */
-void im_window_add (IMWidget *widget);
+        bool start();
+        bool stop();
 
-/*! @function
- @abstract	Remove IM widget from the IM window
- */
-void im_window_remove_tab (GtkWidget *widget);
+        bool resize_area();
 
-/**
- * Return wether the instant messaging window have been created or not
- */
-gboolean im_window_is_active (void);
+        void render(char *data, size_t len);
 
-/**
- * Return wether the instant messaging window is visible
- */
-gboolean im_window_is_visible (void);
+    protected:
+        void shm_lock();
+        void shm_unlock();
+        std::string shm_name_;
+        int fd_;
+        SHMHeader *shm_area_;
+        size_t shm_area_len_;
+        unsigned buffer_gen_;
 
-/**
- * Return the number of tabs already open in instant messaging window
- */
-gint im_window_get_nb_tabs (void);
+    private:
+        NON_COPYABLE(SHMSrc);
+};
 
-/*! @function
-@abstract	Add a new tab in the notebook. Each tab is an IM Widget
-@param		The IM widget
-*/
-void im_window_add_tab (IMWidget *widget);
-
-/*! @function
-@abstract Select the specified tab as current in instant messaging window
-@param The tab to be set as current
-*/
-void im_window_show_tab (GtkWidget *widget);
-
-#endif
+#endif // SHM_SRC_H_

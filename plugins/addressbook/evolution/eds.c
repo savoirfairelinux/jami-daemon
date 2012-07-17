@@ -37,7 +37,6 @@
  */
 
 #include <glib.h>
-#include <glib/gstring.h>
 #include <string.h>
 #include <pango/pango.h>
 #include "eds.h"

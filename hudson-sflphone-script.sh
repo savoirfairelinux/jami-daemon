@@ -120,11 +120,6 @@ function build_daemon {
 	make clean
 	# Compile src code
 	make -j
-	# Generate documentation
-	make doc
-	if [ $DOXYGEN == 1 ]; then
-		gen_doxygen
-	fi
 	# Remove the previous XML test file
 	rm -rf $XML_RESULTS
 	# Compile unit tests
@@ -133,6 +128,24 @@ function build_daemon {
 }
 
 function build_gnome {
+	# Compile the daemon
+	pushd daemon
+  killall sflphoned
+	make distclean
+	./autogen.sh
+  # Compile pjproject first
+	pushd libs/pjproject
+	./autogen.sh
+	./configure
+	make && make dep
+	popd
+	./configure --prefix=/usr
+	make clean
+	# Compile src code
+	make -j
+  ./src/sflphoned&
+	popd
+
 	# Compile the plugins
 	pushd plugins
 	make distclean

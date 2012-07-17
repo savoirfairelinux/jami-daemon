@@ -37,17 +37,15 @@
 
 namespace sfl_video {
 
-class SharedMemory;
 class VideoReceiveThread;
 
 class VideoPreview {
     public:
         VideoPreview(const std::map<std::string, std::string> &args);
-        void getShmInfo(int &shmKey, int &semaphoreKey, int &bufferSize);
+        ~VideoPreview();
 
     private:
         std::map<std::string, std::string> args_;
-        std::tr1::shared_ptr<SharedMemory> sharedMemory_;
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
 };
 }

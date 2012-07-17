@@ -17,14 +17,14 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 
-#ifndef INSTANCE_INTERFACE_SINGLETON_H
-#define INSTANCE_INTERFACE_SINGLETON_H
+#ifndef VIDEO_INTERFACE_SINGLETON_H
+#define VIDEO_INTERFACE_SINGLETON_H
 
 #include "src/lib/video_dbus_interface.h"
 #include "typedefs.h"
 
 /**
- * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+ * @author Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>
  */
 class LIB_EXPORT VideoInterfaceSingleton
 {

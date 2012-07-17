@@ -19,106 +19,31 @@
 #include "VideoModel.h"
 
 //Posix
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
-#include <unistd.h>
-
-//Qt
-#include <QSharedMemory>
-#include <QDBusPendingReply>
+// #include <sys/ipc.h>
+// #include <sys/sem.h>
+// #include <sys/shm.h>
+// #include <fcntl.h>
+// #include <unistd.h>
+// #include <sys/mman.h>
+// #include <semaphore.h>
 
 //SFLPhone
 #include "video_interface_singleton.h"
 #include "VideoDevice.h"
+#include "Call.h"
+#include "CallModel.h"
+#include "VideoRenderer.h"
 
 //Static member
 VideoModel* VideoModel::m_spInstance = NULL;
 
-///@namespace ShmManager Low level function to access shared memory
-namespace ShmManager {
-   ///Get the shared memory key
-   static int getShm(unsigned numBytes, int shmKey)
-   {
-      key_t key = shmKey;
-      int shm_id = shmget(key, numBytes, 0644);
-
-      if (shm_id == -1)
-         qDebug() << ("shmget");
-
-      return shm_id;
-   }
-
-   ///Get the shared buffer
-   static void * attachShm(int shm_id)
-   {
-      void *data = shmat(shm_id, (void *)0, 0);
-      if (data == (char *)(-1)) {
-         qDebug() << ("shmat");
-         data = NULL;
-      }
-
-      return data;
-   }
-
-   ///Detach shared ownership of the buffer
-   static void detachShm(char *data)
-   {
-      /* detach from the segment: */
-      if (shmdt(data) == -1)
-         qDebug() << ("shmdt");
-   }
-
-   #if _SEM_SEMUN_UNDEFINED
-   union semun
-   {
-      int                 val  ; /* value for SETVAL */
-      struct semid_ds*    buf  ; /* buffer for IPC_STAT & IPC_SET */
-      unsigned short int* array; /* array for GETALL & SETALL */
-      struct seminfo*     __buf; /* buffer for IPC_INFO */
-   };
-   #endif
-
-   ///Get the sempahor key
-   static int get_sem_set(int semKey)
-   {
-      int sem_set_id;
-      key_t key = semKey;
-
-      union semun sem_val;
-
-      sem_set_id = semget(key, 1, 0600);
-      if (sem_set_id == -1) {
-         qDebug() << ("semget");
-         return sem_set_id;
-      }
-      sem_val.val = 0;
-      semctl(sem_set_id, 0, SETVAL, sem_val);
-      return sem_set_id;
-   }
-
-   ///Is a new frame ready to be fetched
-   static int sem_wait(int sem_set_id)
-   {
-      /* structure for semaphore operations.   */
-      struct sembuf sem_op;
-
-      /* wait on the semaphore, unless it's value is non-negative. */
-      sem_op.sem_num = 0;
-      sem_op.sem_op = -1;
-      sem_op.sem_flg = IPC_NOWAIT;
-      return semop(sem_set_id, &sem_op, 1);
-   }
-};
-
 ///Constructor
-VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_Res(0,0),m_pTimer(0),m_PreviewState(false),
-m_Attached(false)
+VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_PreviewState(false)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
-   connect( &interface , SIGNAL(receivingEvent(int,int,int,int,int) ), this, SLOT( receivingEvent(int,int,int,int,int) ));
    connect( &interface , SIGNAL(deviceEvent()                       ), this, SLOT( deviceEvent()                       ));
-   connect( &interface , SIGNAL(stoppedReceivingEvent(int,int)      ), this, SLOT( stoppedReceivingEvent(int,int)      ));
+   connect( &interface , SIGNAL(startedDecoding(QString,QString,int,int)), this, SLOT( startedDecoding(QString,QString,int,int) ));
+   connect( &interface , SIGNAL(stoppedDecoding(QString,QString)        ), this, SLOT( stoppedDecoding(QString,QString        ) ));
 }
 
 ///Singleton
@@ -130,18 +55,29 @@ VideoModel* VideoModel::getInstance()
    return m_spInstance;
 }
 
+///Return the call renderer or nullptr
+VideoRenderer* VideoModel::getRenderer(Call* call)
+{
+   if (!call) return nullptr;
+   return m_lRenderers[call->getCallId()];
+}
+
+///Get the video preview renderer
+VideoRenderer* VideoModel::getPreviewRenderer()
+{
+   if (!m_lRenderers["local"]) {
+      VideoInterface& interface = VideoInterfaceSingleton::getInstance();
+      m_lRenderers["local"] = new VideoRenderer("", Resolution(interface.getActiveDeviceSize()));
+   }
+   return m_lRenderers["local"];
+}
+
 ///Stop video preview
 void VideoModel::stopPreview()
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    interface.stopPreview();
    m_PreviewState = false;
-   if (m_pTimer)
-      m_pTimer->stop();
-   if (m_Attached) {
-      ShmManager::detachShm((char*)m_pBuffer);
-      m_Attached = false;
-   }
 }
 
 ///Start video preview
@@ -149,22 +85,8 @@ void VideoModel::startPreview()
 {
    if (m_PreviewState) return;
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
-   QDBusPendingReply<int,int,int,int,int> reply = interface.startPreview();
-   reply.waitForFinished();
-   if (!reply.isError()) {
-      m_Res.width   = reply.argumentAt(0).toInt();
-      m_Res.height  = reply.argumentAt(1).toInt();
-      m_ShmKey      = reply.argumentAt(2).toInt();
-      m_SemKey      = reply.argumentAt(3).toInt();
-      m_BufferSize  = reply.argumentAt(4).toInt();
-      if (!m_pTimer) {
-         m_pTimer = new QTimer(this);
-         connect(m_pTimer,SIGNAL(timeout()),this,SLOT(timedEvents()));
-      }
-      m_pTimer->setInterval(42);
-      m_pTimer->start();
-      m_PreviewState = true;
-   }
+   interface.startPreview();
+   m_PreviewState = true;
 }
 
 ///Is the video model fetching preview from a camera
@@ -180,60 +102,66 @@ void VideoModel::setBufferSize(uint size)
 }
 
 ///Event callback
-void VideoModel::receivingEvent(int shmKey, int semKey, int videoBufferSize, int destWidth, int destHeight)
-{
-   m_ShmKey     = (uint)shmKey   ;
-   m_ShmKey     = (uint)semKey   ;
-   m_BufferSize = videoBufferSize;
-   m_Res.width  = destWidth      ;
-   m_Res.height = destHeight     ;
-
-
-}
-
-///Callback when video is stopped
-void VideoModel::stoppedReceivingEvent(int shmKey, int semKey)
-{
-   m_ShmKey = (uint)shmKey;
-   m_ShmKey = (uint)semKey;
-}
-
-///Event callback
 void VideoModel::deviceEvent()
 {
    
 }
 
-///Update the buffer
-void VideoModel::timedEvents()
-{
-   if ( !m_Attached ) {
-      int shm_id = ShmManager::getShm(m_BufferSize, m_ShmKey);
-      m_pBuffer  = ShmManager::attachShm(shm_id);
-      m_Attached = true;
-      m_SetSetId = ShmManager::get_sem_set(m_SemKey);
-   }
+///Return the current resolution
+// Resolution VideoModel::getActiveResolution()
+// {
+//    return m_Res;
+// }
 
-   int ret = ShmManager::sem_wait(m_SetSetId);
-   if (ret != -1) {
-      QByteArray array((char*)m_pBuffer,m_BufferSize);
-      m_Frame.resize(0);
-      m_Frame = array;
-      emit frameUpdated();
+///A video is not being rendered
+void VideoModel::startedDecoding(QString id, QString shmPath, int width, int height)
+{
+   Q_UNUSED(id)
+   qDebug() << "PREVIEW ID" << id;
+//    m_pRenderer->m_ShmPath = shmPath;
+//    m_Res.width            = width  ;
+//    m_Res.height           = height ;
+//    m_pRenderer->m_Width   = width  ;
+//    m_pRenderer->m_Height  = height ;
+//    m_pRenderer->m_isRendering = true;
+//    m_pRenderer->startShm();
+   
+//    if (!m_pTimer) {
+//       m_pTimer = new QTimer(this);
+//       connect(m_pTimer,SIGNAL(timeout()),this,SLOT(timedEvents()));
+//       m_pTimer->setInterval(42);
+//    }
+//    m_pTimer->start();
+   
+   if (m_lRenderers[id] == nullptr ) {
+      m_lRenderers[id] = new VideoRenderer(shmPath,Resolution(width,height));
    }
    else {
-      usleep(rand()%100000); //Be sure it can come back in sync
+      VideoRenderer* renderer = m_lRenderers[id];
+      renderer->setShmPath(shmPath);
+      renderer->setResolution(QSize(width,height));
+   }
+
+//    if (!m_pRenderer)
+//       m_pRenderer = m_lRenderers[id];
+   
+    m_lRenderers[id]->startRendering();
+   if (id != "local") {
+      qDebug() << "Starting video for call" << id;
+      emit videoCallInitiated(m_lRenderers[id]);
    }
 }
 
-///Return the current framerate
-QByteArray VideoModel::getCurrentFrame()
+///A video stopped being rendered
+void VideoModel::stoppedDecoding(QString id, QString shmPath)
 {
-   return m_Frame;
-}
-
-///Return the current resolution
-Resolution VideoModel::getActiveResolution()
-{
-   return m_Res;
+   Q_UNUSED(shmPath)
+   if ( m_lRenderers[id] )
+       m_lRenderers[id]->stopRendering();
+//    m_pRenderer->m_isRendering = false;
+//    m_pRenderer->stopShm();
+   qDebug() << "Video stopped for call" << id;
+   emit videoStopped();
+//    if (m_pTimer)
+//       m_pTimer->stop();
 }

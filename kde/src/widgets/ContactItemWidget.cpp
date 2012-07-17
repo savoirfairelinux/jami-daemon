@@ -23,6 +23,7 @@
 
 //Qt
 #include <QtCore/QMimeData>
+#include <QtCore/QProcess>
 #include <QtGui/QApplication>
 #include <QtGui/QClipboard>
 #include <QtGui/QGridLayout>
@@ -45,6 +46,7 @@
 #include "klib/AkonadiBackend.h"
 #include "widgets/BookmarkDock.h"
 #include "klib/ConfigurationSkeleton.h"
+#include "klib/HelperFunctions.h"
 #include "widgets/TranslucentButtons.h"
 #include "SFLPhone.h"
 
@@ -60,7 +62,7 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    setContextMenuPolicy(Qt::CustomContextMenu);
    setAcceptDrops(true);
    
-   m_pCallAgain  = new KAction(this);
+   m_pCallAgain   = new KAction(this);
    m_pCallAgain->setShortcut   ( Qt::CTRL + Qt::Key_Enter   );
    m_pCallAgain->setText       ( i18n("Call Again")         );
    m_pCallAgain->setIcon       ( KIcon("call-start")        );
@@ -70,22 +72,24 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pEditContact->setText     ( i18n("Edit contact")       );
    m_pEditContact->setIcon     ( KIcon("contact-new")       );
 
-   m_pCopy       = new KAction(this);
+   m_pCopy        = new KAction(this);
    m_pCopy->setShortcut        ( Qt::CTRL + Qt::Key_C       );
    m_pCopy->setText            ( i18n("Copy")               );
    m_pCopy->setIcon            ( KIcon("edit-copy")         );
 
-   m_pEmail      = new KAction(this);
+   m_pEmail       = new KAction(this);
    m_pEmail->setShortcut       ( Qt::CTRL + Qt::Key_M       );
    m_pEmail->setText           ( i18n("Send Email")         );
    m_pEmail->setIcon           ( KIcon("mail-message-new")  );
+   m_pEmail->setEnabled        ( false                      );
 
-   m_pAddPhone      = new KAction(this);
+   m_pAddPhone    = new KAction(this);
    m_pAddPhone->setShortcut    ( Qt::CTRL + Qt::Key_N       );
    m_pAddPhone->setText        ( i18n("Add Phone Number")   );
    m_pAddPhone->setIcon        ( KIcon("list-resource-add") );
+   m_pEmail->setEnabled        ( false                      );
 
-   m_pBookmark      = new KAction(this);
+   m_pBookmark    = new KAction(this);
    m_pBookmark->setShortcut    ( Qt::CTRL + Qt::Key_D       );
    m_pBookmark->setText        ( i18n("Bookmark")           );
    m_pBookmark->setIcon        ( KIcon("bookmarks")         );
@@ -108,20 +112,19 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
 ///Destructor
 ContactItemWidget::~ContactItemWidget()
 {
-   /*delete m_pIconL        ;
-   delete m_pContactNameL ;
-   delete m_pCallNumberL  ;
-   delete m_pOrganizationL;
-   delete m_pEmailL       ;
-   delete m_pItem         ;
-   
+   if (m_pIconL)         delete m_pIconL        ;
+   if (m_pContactNameL)  delete m_pContactNameL ;
+   if (m_pCallNumberL)   delete m_pCallNumberL  ;
+   if (m_pOrganizationL) delete m_pOrganizationL;
+   if (m_pEmailL)        delete m_pEmailL       ;
+   if (m_pMenu)          delete m_pMenu         ;
+
    delete m_pCallAgain   ;
    delete m_pEditContact ;
    delete m_pCopy        ;
    delete m_pEmail       ;
    delete m_pAddPhone    ;
    delete m_pBookmark    ;
-   delete m_pMenu        ;*/
 }
 
 
@@ -199,6 +202,10 @@ void ContactItemWidget::setContact(Contact* contact)
    if (height < 48)
       height = 48;
    m_Size = QSize(0,height+8);
+
+   if (!m_pContactKA->getPreferredEmail().isEmpty()) {
+      m_pEmail->setEnabled(true);
+   }
 } //setContact
 
 ///Set the model index
@@ -355,6 +362,9 @@ void ContactItemWidget::showContext(const QPoint& pos)
 void ContactItemWidget::sendEmail()
 {
    kDebug() << "Sending email";
+   QProcess *myProcess = new QProcess(this);
+   QStringList arguments;
+   myProcess->start("xdg-email", (arguments << m_pContactKA->getPreferredEmail()));
 }
 
 ///Call the same number again
@@ -366,9 +376,14 @@ void ContactItemWidget::callAgain()
    QString number = showNumberSelector(ok);
    if (ok) {
       Call* call = SFLPhone::model()->addDialingCall(m_pContactKA->getFormattedName(), AccountList::getCurrentAccount());
-      call->setCallNumber(number);
-      call->setPeerName(m_pContactKA->getFormattedName());
-      call->actionPerformed(CALL_ACTION_ACCEPT);
+      if (call) {
+         call->setCallNumber(number);
+         call->setPeerName(m_pContactKA->getFormattedName());
+         call->actionPerformed(CALL_ACTION_ACCEPT);
+      }
+      else {
+         HelperFunctions::displayNoAccountMessageBox(this);
+      }
    }
 }
 
@@ -402,6 +417,12 @@ void ContactItemWidget::editContact()
 void ContactItemWidget::addPhone()
 {
    kDebug() << "Adding to contact";
+   bool ok;
+   //QString number = QInputDialog::getText(0, i18n("Enter a new number"),i18n("New number:"),QLineEdit::Normal,QString(),ok,0);
+   QString text = QInputDialog::getText(this, i18n("Enter a new number"), i18n("New number:"), QLineEdit::Normal, QString(), &ok);
+   if (ok && !text.isEmpty()) {
+      AkonadiBackend::getInstance()->addPhoneNumber(m_pContactKA,text,"work");
+   }
 }
 
 ///Add this contact to the bookmark list

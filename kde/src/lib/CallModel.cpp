@@ -20,7 +20,8 @@
 
 //Parent
 #include <CallModel.h>
-#include <HistoryModel.h>
+#include "video_interface_singleton.h"
+#include "HistoryModel.h"
 
 bool CallModelBase::dbusInit = false;
 CallMap CallModelBase::m_sActiveCalls;
@@ -30,9 +31,10 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 {
    if (!dbusInit) {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+      VideoInterface& interface = VideoInterfaceSingleton::getInstance();
       
       //SLOTS
-      //             SENDER                                        SIGNAL                                      RECEIVER                             SLOT                                    /
+      /*             SENDER                                                      SIGNAL                         RECEIVER                             SLOT                                   */
       /**/connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( callStateChanged      ( const QString &, const QString & ) ) );
       /**/connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( incomingCall          ( const QString &, const QString & ) ) );
       /**/connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( incomingConference    ( const QString &                  ) ) );
@@ -40,11 +42,12 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
       /**/connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( conferenceRemovedSlot ( const QString &                  ) ) );
       /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( voiceMailNotifySlot   ( const QString &, int             ) ) );
       /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( volumeChangedSlot     ( const QString &, double          ) ) );
+      /**/connect(&interface  , SIGNAL( startedDecoding   (QString,QString,int,int                           ) ), this,  SLOT( startedDecoding       ( const QString &, const QString & ) ) );
+      /**/connect(&interface  , SIGNAL( stoppedDecoding   (QString,QString                                   ) ), this,  SLOT( stoppedDecoding       ( const QString &, const QString & ) ) );
       /*                                                                                                                                                                                    */
 
       connect(HistoryModel::self(),SIGNAL(newHistoryCall(Call*)),this,SLOT(addPrivateCall(Call*)));
       
-      connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
       dbusInit = true;
 
       foreach(Call* call,HistoryModel::getHistory()){
@@ -167,16 +170,6 @@ Call* CallModelBase::addConferenceS(Call* conf)
    return conf;
 }
 
-///Account status changed
-void CallModelBase::accountChanged(const QString& account,const QString& state, int code)
-{
-   Q_UNUSED(code)
-   Account* a = AccountList::getInstance()->getAccountById(account);
-   if (a) {
-      emit accountStateChanged(a,a->getStateName(state));
-   }
-}
-
 ///Remove it from active calls
 void CallModelBase::removeActiveCall(Call* call)
 {
@@ -185,6 +178,27 @@ void CallModelBase::removeActiveCall(Call* call)
    //m_sActiveCalls[call->getCallId()] = nullptr;
 }
 
+///Updating call state when video is added
+void CallModelBase::startedDecoding(const QString& callId, const QString& shmKey  )
+{
+   Q_UNUSED(callId)
+   Q_UNUSED(shmKey)
+//    Call* call = getCall(callId);
+//    if (call) {
+//       
+//    }
+}
+
+///Updating call state when video is removed
+void CallModelBase::stoppedDecoding(const QString& callId, const QString& shmKey)
+{
+   Q_UNUSED(callId)
+   Q_UNUSED(shmKey)
+//    Call* call = getCall(callId);
+//    if (call) {
+//       
+//    }
+}
 
 /*****************************************************************************
  *                                                                           *

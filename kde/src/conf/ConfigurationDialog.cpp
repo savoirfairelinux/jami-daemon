@@ -43,11 +43,11 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 
    dlgGeneral       = new DlgGeneral       (this);
    dlgDisplay       = new DlgDisplay       (this);
-   dlgAccounts      = new DlgAccounts      (this);
    dlgAudio         = new DlgAudio         (this);
    dlgAddressBook   = new DlgAddressBook   (this);
    dlgHooks         = new DlgHooks         (this);
    dlgAccessibility = new DlgAccessibility (this);
+   dlgAccounts      = new DlgAccounts      (this);
 
    #ifdef ENABLE_VIDEO
    dlgVideo         = new DlgVideo         (this);
@@ -64,8 +64,9 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
    addPage( dlgVideo         , i18n("Video")         , "camera-web"                        );
    #endif
 
-   connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
-   connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
+   connect(this, SIGNAL(applyClicked()),  this,     SLOT(applyCustomSettings()));
+   connect(this, SIGNAL(okClicked()),     this,     SLOT(applyCustomSettings()));
+   connect(this, SIGNAL(cancelClicked()), this,     SLOT(cancelSettings()     ));
 
    connect(dlgGeneral, SIGNAL(clearCallHistoryAsked()), this, SIGNAL(clearCallHistoryAsked()));
 } //ConfigurationDialog
@@ -101,6 +102,11 @@ void ConfigurationDialog::updateSettings()
    dlgGeneral->updateSettings      ();
    dlgAddressBook->updateSettings  ();
    dlgAccessibility->updateSettings();
+}
+
+void ConfigurationDialog::cancelSettings()
+{
+   dlgAccounts->cancel();
 }
 
 bool ConfigurationDialog::hasChanged()

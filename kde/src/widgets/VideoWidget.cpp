@@ -17,35 +17,67 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 #include "VideoWidget.h"
+#include "../lib/VideoRenderer.h"
 #include <KDebug>
 
-VideoWidget::VideoWidget(QWidget* parent) : QWidget(parent),m_Image(NULL) {
+///Constructor
+VideoWidget::VideoWidget(QWidget* parent ,VideoRenderer* renderer) : QWidget(parent),m_Image(nullptr),m_pRenderer(renderer) {
    setMinimumSize(200,200);
-   connect(VideoModel::getInstance(),SIGNAL(frameUpdated()),this,SLOT(repaint2()));
+   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+   connect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
+   connect(VideoModel::getInstance(),SIGNAL(videoStopped()),this,SLOT(stop()));
+   connect(VideoModel::getInstance(),SIGNAL(videoCallInitiated(VideoRenderer*)),this,SLOT(setRenderer(VideoRenderer*)));
 }
 
+
+void VideoWidget::setRenderer(VideoRenderer* renderer)
+{
+   disconnect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
+   m_pRenderer = renderer;
+   connect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));
+}
+
+///Repaint the widget
 void VideoWidget::update() {
    QPainter painter(this);
-   painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
+   if (m_Image && m_pRenderer->isRendering())
+      painter.drawImage(QRect(0,0,width(),height()),*(m_Image));
    painter.end();
 }
 
+///Called when the widget need repainting
 void VideoWidget::paintEvent(QPaintEvent* event)
 {
    Q_UNUSED(event)
-   if (VideoModel::getInstance()->isPreviewing()) {
-      update();
-   }
+   //if (VideoModel::getInstance()->isPreviewing()) {
+   update();
+   //}
 }
 
-void VideoWidget::repaint2()
+///Called when a new frame is ready
+void VideoWidget::updateFrame()
 {
-   QSize size(VideoModel::getInstance()->getActiveResolution().width, VideoModel::getInstance()->getActiveResolution().height);
+   QSize size(m_pRenderer->getActiveResolution().width, m_pRenderer->getActiveResolution().height);
    if (size != minimumSize())
       setMinimumSize(size);
-   //if (m_Image)
-   //   delete m_Image;
-   m_Image = new QImage(size,QImage::Format_ARGB32);
-   m_Image->loadFromData(VideoModel::getInstance()->getCurrentFrame(),"BMP");
+   if (m_Image)
+      delete m_Image;
+   //if (!m_Image && VideoModel::getInstance()->isRendering())
+      m_Image = new QImage((uchar*)m_pRenderer->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+   //This is the right way to do it, but it does not work
+//    if (!m_Image || (m_Image && m_Image->size() != size))
+//       m_Image = new QImage((uchar*)VideoModel::getInstance()->rawData() , size.width(), size.height(), QImage::Format_ARGB32 );
+//    if (!m_Image->loadFromData(VideoModel::getInstance()->getCurrentFrame())) {
+//       qDebug() << "Loading image failed";
+//    }
    repaint();
+}
+
+///Prevent the painter to try to paint an invalid framebuffer
+void VideoWidget::stop()
+{
+   if (m_Image) {
+      delete m_Image;
+      m_Image = nullptr;
+   }
 }

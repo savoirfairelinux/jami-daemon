@@ -23,13 +23,16 @@
 
 
 #include <QtCore/QVector>
+#include <QtCore/QAbstractListModel>
 
 #include "Account.h"
 #include "typedefs.h"
 #include "dbus/metatypes.h"
 
+class AccountListColorVisitor;
+
 ///AccountList: List of all daemon accounts
-class LIB_EXPORT AccountList : public QObject{
+class LIB_EXPORT AccountList : public QAbstractListModel {
    Q_OBJECT
 
 public:
@@ -50,18 +53,30 @@ public:
    static Account*          getCurrentAccount      (                        );
    static QString           getPriorAccoundId      (                        );
 
+   //Getters
+   QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole ) const;
+   int           rowCount ( const QModelIndex& parent = QModelIndex()            ) const;
+   Qt::ItemFlags flags    ( const QModelIndex& index                             ) const;
+   Account*      getAccountByModelIndex(QModelIndex item)                          const;
+
    //Setters
-   static void setPriorAccountId(const QString& value );
+   static  void setPriorAccountId( const QString& value                                     );
+   virtual bool setData          ( const QModelIndex& index, const QVariant &value, int role);
+   void         setColorVisitor  ( AccountListColorVisitor* visitor                         );
    
    //Mutators
-   virtual Account*  addAccount        ( QString & alias  )      ;
-   void              removeAccount     ( Account* account )      ;
-   QVector<Account*> registeredAccounts(                  ) const;
+   virtual Account*  addAccount        ( QString & alias   )      ;
+   void              removeAccount     ( Account* account  )      ;
+   void              removeAccount     ( QModelIndex index )      ;
+   QVector<Account*> registeredAccounts(                   ) const;
+   void              save              (                   )      ;
+   bool              accountUp         ( int index         )      ;
+   bool              accountDown       ( int index         )      ;
 
    //Operators
    Account*       operator[] (int i)      ;
    const Account* operator[] (int i) const;
-   
+
 private:
    //Constructors & Destructors
    AccountList(QStringList & _accountIds);
@@ -72,14 +87,30 @@ private:
    QVector<Account*>*  m_pAccounts;
    static AccountList* m_spAccountList;
    static QString      m_sPriorAccountId;
+   AccountListColorVisitor* m_pColorVisitor;
    
 public slots:
    void update();
    void updateAccounts();
+
+private slots:
+   void accountChanged(const QString& account,const QString& state, int code);
+   void accountChanged(Account* a);
    
 signals:
    ///The account list changed
    void accountListUpdated();
+   ///Emitted when an account state change
+   void accountStateChanged( Account* account, QString state);
+   void accountEnabledChanged(Account* source);
+};
+
+///SFLPhonelib Qt does not link to QtGui, and does not need to, this allow to add runtime Gui support
+class LIB_EXPORT AccountListColorVisitor {
+public:
+   virtual QVariant getColor(const Account* a) = 0;
+   virtual QVariant getIcon(const Account* a)        = 0;
+   virtual ~AccountListColorVisitor() {}
 };
 
 #endif

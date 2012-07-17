@@ -1,17 +1,15 @@
 SECTION="1"
 
-TEMPLATES=\
-         sflphone-client-gnome.pod
+TEMPLATES=sflphone-client-gnome.pod
 
-man_MANS = \
-			sflphone-client-gnome.1 \
-            sflphone.1
+man_MANS = sflphone-client-gnome.1 \
+           sflphone.1
 
 POD2MAN=pod2man
 
-EXTRA_DIST= $(man_MANS)
+EXTRA_DIST=$(man_MANS) $(TEMPLATES)
 
-all:    $(MANPAGES)
+all: $(MANPAGES)
 
 SUFFIXES=.pod .1
 

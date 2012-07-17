@@ -16,49 +16,49 @@
  *   License along with this library; if not, write to the Free Software            *
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
-#ifndef VIDEO_CODEC_H
-#define VIDEO_CODEC_H
+#ifndef CREDENTIAL_MODEL_H
+#define CREDENTIAL_MODEL_H
 
+#include <QtCore/QString>
+#include <QtCore/QAbstractListModel>
 #include "typedefs.h"
 
-//Qt
-class QStringList;
 
-//SFLPhone
-class Call;
-class Account;
+///CredentialModel: A model for account credentials
+class LIB_EXPORT CredentialModel : public QAbstractListModel {
+   Q_OBJECT
+public:
+   //friend class Account;
+   //Roles
+   static const int NAME_ROLE     = 100;
+   static const int PASSWORD_ROLE = 101;
+   static const int REALM_ROLE    = 102;
 
-//Typedef
-class VideoCodec;
-typedef QHash<QString,VideoCodec*> CodecHash;
+   //Constructor
+   CredentialModel(QObject* parent =nullptr);
 
-///VideoCodec: Codecs used for video calls
-class LIB_EXPORT VideoCodec {
-   public:
+   //Abstract model member
+   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole ) const;
+   int rowCount(const QModelIndex& parent = QModelIndex()             ) const;
+   Qt::ItemFlags flags(const QModelIndex& index                       ) const;
+   virtual bool setData(const QModelIndex& index, const QVariant &value, int role);
 
-      //Static getter
-      static VideoCodec* getCodec(QString name);
-      static VideoCodec* getCurrentCodec(Call* call);
-      static QList<VideoCodec*> getCodecList();
-      static QList<VideoCodec*> getActiveCodecList(Account* account);
+   //Mutator
+   QModelIndex addCredentials();
+   void removeCredentials(QModelIndex idx);
+   void clear();
 
-      //Static setters
-      static void setActiveCodecList(Account* account, QStringList codecs);
+private:
+   ///@struct CredentialData store credential informations
+   struct CredentialData2 {
+      QString          name    ;
+      QString          password;
+      QString          realm   ;
+   };
+   
+   //Attributes
+   QList<CredentialData2*> m_lCredentials;
 
-      //Getters
-      QString getName();
-      QString getBitrate();
-      
-   private:
-      //Constructor
-      VideoCodec(QString codecName);
-      ~VideoCodec(){};
-      static void init();
-
-      //Attributes
-      static CodecHash m_slCodecs;
-      QString m_Name;
-      QString m_Bitrate;
-      static bool m_sInit;
 };
+
 #endif

@@ -22,8 +22,7 @@
 #define DLGACCOUNTS_H
 
 #include "ui_dlgaccountsbase.h"
-#include "AccountView.h"
-#include "ConfigAccountList.h"
+#include "../lib/Account.h"
 #include "../lib/callmanager_interface_singleton.h"
 
 //Qt
@@ -34,34 +33,8 @@ class QWidget;
 //KDE
 class KConfigDialog;
 
-///@struct CredentialData store credential informations
-struct CredentialData {
-   QListWidgetItem* pointer ;
-   QString          name    ;
-   QString          password;
-   QString          realm   ;
-};
-
 //Typedef
 typedef QHash<QString, QString> StringHash;                          //Needed to fix a Qt foreach macro argument parsing bug
-typedef QHash<QListWidgetItem*, CredentialData> QListWidgetItemHash; //Needed to fix a Qt foreach macro argument parsing bug
-typedef QList<CredentialData> CredentialList;
-
-///Private_AddCodecDialog: Little dialog to add codec to the list
-class Private_AddCodecDialog : public KDialog {
-  Q_OBJECT
-  public:
-    Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent = 0);
-
-  private:
-    QTableWidget* codecTable;
-
-  private slots:
-    void emitNewCodec();
-
-  signals:
-    void addCodec(QString alias);
-};
 
 ///RingToneListItem: Ringtone list widget
 class RingToneListItem : public QWidget
@@ -116,7 +89,9 @@ public:
    DlgAccounts(KConfigDialog *parent = 0);
    ~DlgAccounts();
 
-   void saveAccount(QListWidgetItem * item);
+   void saveAccount(QModelIndex item);
+
+   void cancel();
 
    /**
     *   Fills the settings form in the right side with the
@@ -132,54 +107,49 @@ public:
     * @param item the item with which to fill the settings form
     *
     */
-   void loadAccount(QListWidgetItem * item);
+   void loadAccount(QModelIndex item);
 
 private:
    ///Attributes
-   ConfigAccountList*    accountList           ;
    QList<StringHash>     codecList             ;
-   QListWidgetItemHash   credentialInfo        ;
-   CredentialList        credentialList        ;
    bool                  accountListHasChanged ;
-   QMap<QString,QString> m_hRingtonePath;
-
-   ///Mutators
-   void loadCodecList();
+   QMap<QString,QString> m_hRingtonePath       ;
+   bool                  m_IsLoading           ;
 
 public slots:
-   void saveAccountList ();
    void loadAccountList ();
    bool hasChanged      ();
    void updateSettings  ();
    void updateWidgets   ();
 
 private slots:
-   void changedAccountList              ();
-   void connectAccountsChangedSignal    ();
-   void disconnectAccountsChangedSignal ();
-   void on_button_accountUp_clicked     ();
-   void on_button_accountDown_clicked   ();
-   void on_button_accountAdd_clicked    ();
-   void on_button_accountRemove_clicked ();
-   void codecChanged                    ();
-   void addCredential                   ();
-   void removeCredential                ();
-   void enablePublished                 ();
-   void updateAccountStates             ();
-   void updateAccountListCommands       ();
+   void changedAccountList               ();
+   void otherAccountChanged              ();
+   void on_button_accountUp_clicked      ();
+   void on_button_accountDown_clicked    ();
+   void on_button_accountAdd_clicked     ();
+   void on_button_accountRemove_clicked  ();
+   void addCredential                    ();
+   void removeCredential                 ();
+   void enablePublished                  ();
+   void updateAccountStates              ();
+   void updateAccountListCommands        ();
+   void main_password_field_changed      ();
+   void main_credential_password_changed ();
 
-   void loadVidCodecDetails        ( const QString& name                                      );
-   void codecClicked               ( const QModelIndex& model                                 );
-   void updateStatusLabel          ( QListWidgetItem* item                                    );
-   void accountListChanged         ( QListWidgetItem* current , QListWidgetItem * previous    );
-   void selectCredential           ( QListWidgetItem* item    , QListWidgetItem* previous     );
-   void addAccountToAccountList    ( AccountView*   account                                   );
-   void updateStatusLabel          ( AccountView*   account                                   );
-   void addCodec                   ( QString        name = ""                                 );
-   void updateCombo                ( int            value                                     );
-   void loadCredentails            ( QString        accountId                                 );
-   void saveCredential             ( QString        accountId                                 );
-   void on_edit1_alias_textChanged ( const QString& text                                      );
+   void moveAudioCodecUp                 ();
+   void moveAudioCodecDown               ();
+   void moveVideoCodecUp                 ();
+   void moveVideoCodecDown               ();
+
+   void loadVidCodecDetails        ( const QModelIndex& current, const QModelIndex& previous );
+   void selectedCodecChanged       ( const QModelIndex& current, const QModelIndex& previous );
+   void updateStatusLabel          ( QModelIndex item                                        );
+   void accountListChanged         ( QModelIndex current, QModelIndex previous               );
+   void selectCredential           ( QModelIndex item, QModelIndex previous                  );
+   void updateStatusLabel          ( Account*   account                                      );
+   void updateCombo                ( int            value                                    );
+   void saveCredential             (                                                         );
 
 
 signals:

@@ -383,10 +383,10 @@ void MainBuffer::flushAllBuffers()
         iter->second->flushAll();
 }
 
-void MainBuffer::stateInfo()
+void MainBuffer::dumpInfo() const
 {
     // print each call and bound call ids
-    for (CallIDMap::iterator iter_call = callIDMap_.begin(); iter_call != callIDMap_.end(); ++iter_call) {
+    for (CallIDMap::const_iterator iter_call = callIDMap_.begin(); iter_call != callIDMap_.end(); ++iter_call) {
         std::string dbg_str("    Call: \t");
         dbg_str.append(iter_call->first);
         dbg_str.append("   is bound to: \t");
@@ -402,7 +402,7 @@ void MainBuffer::stateInfo()
     }
 
     // Print ringbuffers ids and readpointers
-    for (RingBufferMap::iterator iter_buffer = ringBufferMap_.begin(); iter_buffer != ringBufferMap_.end(); ++iter_buffer) {
+    for (RingBufferMap::const_iterator iter_buffer = ringBufferMap_.begin(); iter_buffer != ringBufferMap_.end(); ++iter_buffer) {
         std::string dbg_str("    Buffer: \t");
 
         dbg_str.append(iter_buffer->first);

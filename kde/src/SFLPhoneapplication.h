@@ -41,14 +41,9 @@ public:
    virtual ~SFLPhoneApplication();
 
 private:
-   //Constructor
+   //Init
    void         initializeMainWindow();
    void         initializePaths();
-
-private:
-   // Reference to the sflphone window
-   //SFLPhone       *sflphoneWindow_;
-
 };
 
 #endif // SFLPHONEAPPLICATION_H

@@ -195,12 +195,6 @@ void dbus_play_dtmf(const gchar *key);
 GArray *dbus_audio_codec_list();
 
 /**
- * ConfigurationManager - Get the video codecs list
- * @return gchar** The list of video codecs
- */
-gchar** dbus_video_codec_list();
-
-/**
  * ConfigurationManager - Get the audio codec details
  * @param payload The payload of the audio codec
  * @return gchar** The audio codec details
@@ -237,13 +231,16 @@ void dbus_set_active_audio_codec_list(const gchar **list, const gchar *);
  * ConfigurationManager - Get the list of the audio codecs used for media negotiation
  * @return gchar** The list of audio codecs
  */
-gchar **dbus_get_active_video_codec_list(const gchar *accountID);
+GPtrArray *
+dbus_get_video_codecs(const gchar *accountID);
 
 /**
  * ConfigurationManager - Set the list of audio codecs used for media negociation
- * @param list The list of audio codecs
+ * @param id The accountID
+ * @param list The list of codecs
  */
-void dbus_set_active_video_codec_list(const gchar **list, const gchar *);
+void
+dbus_set_video_codecs(const gchar *id, const GPtrArray *list);
 
 /**
  * CallManager - return the video codec name
@@ -380,18 +377,18 @@ gchar *dbus_get_audio_manager(void);
  */
 void dbus_set_audio_manager(const gchar *api);
 
-void dbus_set_video_input_device(const gchar *dev);
-void dbus_set_video_input_device_channel(const gchar *channel);
-void dbus_set_video_input_size(const gchar *size);
-void dbus_set_video_input_rate(const gchar *rate);
-gchar *dbus_get_video_input_device();
-gchar *dbus_get_video_input_device_channel();
-gchar *dbus_get_video_input_device_size();
-gchar *dbus_get_video_input_device_rate();
-gchar **dbus_get_video_input_device_list();
-gchar **dbus_get_video_input_device_channel_list(const gchar *dev);
-gchar **dbus_get_video_input_device_size_list(const gchar *dev, const gchar *channel);
-gchar **dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size);
+void dbus_set_active_video_device(const gchar *dev);
+void dbus_set_active_video_device_channel(const gchar *channel);
+void dbus_set_active_video_device_size(const gchar *size);
+void dbus_set_active_video_device_rate(const gchar *rate);
+gchar *dbus_get_active_video_device();
+gchar *dbus_get_active_video_device_channel();
+gchar *dbus_get_active_video_device_size();
+gchar *dbus_get_active_video_device_rate();
+gchar **dbus_get_video_device_list();
+gchar **dbus_get_video_device_channel_list(const gchar *dev);
+gchar **dbus_get_video_device_size_list(const gchar *dev, const gchar *channel);
+gchar **dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size);
 
 /**
  * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed
@@ -623,6 +620,7 @@ void dbus_stop_recorded_file_playback(const gchar *);
 
 void dbus_start_video_preview();
 void dbus_stop_video_preview();
+gboolean dbus_has_video_preview_started();
 
 /**
  * Prevent Gnome Session Manager from entering in screen-saver mode

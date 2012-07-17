@@ -256,7 +256,7 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 # Acutally perform the doxygen check
 BB_ENABLE_DOXYGEN
 
-CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
+CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++"
 
 dnl What to generate
 AC_CONFIG_FILES([Makefile])

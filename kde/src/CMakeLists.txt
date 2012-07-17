@@ -33,7 +33,6 @@ SET(
    widgets/SFLPhoneTray.cpp
    main.cpp
    AccountWizard.cpp
-   widgets/AccountItemWidget.cpp
    widgets/CallTreeItem.cpp
    widgets/HistoryTreeItem.cpp
    ActionSetAccountFirst.cpp
@@ -46,7 +45,6 @@ SET(
    conf/dlghooks.cpp
    conf/dlgaccessibility.cpp
    conf/dlgvideo.cpp
-   conf/ConfigAccountList.cpp
    widgets/Dialpad.cpp
    widgets/ContactItemWidget.cpp
    widgets/ContactDock.cpp
@@ -55,11 +53,11 @@ SET(
    widgets/TranslucentButtons.cpp
    widgets/CategoryDrawer.cpp
    widgets/CategorizedTreeWidget.cpp
+   widgets/VideoDock.cpp
    widgets/VideoWidget.cpp
+#    widgets/AcceleratedVideoWidget.cpp
    Codec.cpp
-   AccountListModel.cpp
    CallView.cpp
-   AccountView.cpp
 )
 
 
@@ -96,7 +94,7 @@ QT4_ADD_DBUS_INTERFACES(sflphone_client_kde_SRCS ${KDE4_DBUS_INTERFACES_DIR}/org
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})
 
-TARGET_LINK_LIBRARIES(sflphone-client-kde ksflphone qtsflphone  ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDEPIMLIBS_AKONADI_KMIME_LIBS} ${KDEPIMLIBS_AKONADI_LIBS} ${KDEPIMLIBS_AKONADI_CONTACT_LIBS})
+TARGET_LINK_LIBRARIES(sflphone-client-kde ksflphone qtsflphone  ${KDE4_KDEUI_LIBS} ${QT_QTOPENGL_LIBRARY} ${KDE4_KIO_LIBS} ${KDEPIMLIBS_AKONADI_KMIME_LIBS} ${KDEPIMLIBS_AKONADI_LIBS} ${KDEPIMLIBS_AKONADI_CONTACT_LIBS})
 
 ########### install files ###############
 

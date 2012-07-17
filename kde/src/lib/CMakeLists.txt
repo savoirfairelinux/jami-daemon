@@ -33,9 +33,12 @@ set( qtsflphone_LIB_SRCS
   HistoryModel.cpp
   Contact.cpp
   ContactBackend.cpp
-  VideoCodec.cpp
+  VideoCodecModel.cpp
   VideoModel.cpp
+  VideoRenderer.cpp
   VideoDevice.cpp
+  CredentialModel.cpp
+  AudioCodecModel.cpp
   configurationmanager_interface_singleton.cpp
   callmanager_interface_singleton.cpp
   instance_interface_singleton.cpp
@@ -105,6 +108,8 @@ QT4_ADD_DBUS_INTERFACE(
 kde4_add_library( qtsflphone  SHARED ${qtsflphone_LIB_SRCS} )
  
 target_link_libraries( qtsflphone
+  -lrt
+  -lpthread
   ${QT_QTDBUS_LIBRARY}
   ${QT_QTCORE_LIBRARY}
 )
@@ -121,9 +126,12 @@ set( qtsflphone_LIB_HDRS
   HistoryModel.h
   Contact.h
   ContactBackend.h
-  VideoCodec.h
+  VideoCodecModel.h
   VideoModel.h
   VideoDevice.h
+  VideoRenderer.h
+  CredentialModel.h
+  AudioCodecModel.h
   configurationmanager_interface_singleton.h
   callmanager_interface_singleton.h
   instance_interface_singleton.h

@@ -35,7 +35,12 @@
 #include <map>
 #include <string>
 #include <climits>
+#include "shm_sink.h"
 #include "noncopyable.h"
+
+extern "C" {
+#include <libavformat/avformat.h>
+}
 
 class SwsContext;
 class AVCodecContext;
@@ -44,7 +49,6 @@ class AVFormatContext;
 class AVFrame;
 
 namespace sfl_video {
-class SharedMemory;
 
 class VideoReceiveThread : public ost::Thread {
     private:
@@ -66,16 +70,20 @@ class VideoReceiveThread : public ost::Thread {
         int dstWidth_;
         int dstHeight_;
 
-        SharedMemory &sharedMemory_;
+        SHMSink sink_;
         bool receiving_;
         std::string sdpFilename_;
+        size_t bufferSize_;
+        const std::string id_;
         void setup();
         void createScalingContext();
         void loadSDP();
+        void fill_buffer(void *data);
+        static int interruptCb(void *ctx);
+        AVIOInterruptCB interruptCb_;
 
     public:
-        VideoReceiveThread(const std::map<std::string, std::string> &args,
-                           SharedMemory &handle);
+        VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
         virtual ~VideoReceiveThread();
         virtual void run();
 };

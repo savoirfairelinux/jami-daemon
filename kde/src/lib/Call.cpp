@@ -22,11 +22,13 @@
 #include "Call.h"
 
 //SFLPhone library
-#include "CallModel.h"
 #include "callmanager_interface_singleton.h"
 #include "configurationmanager_interface_singleton.h"
 #include "ContactBackend.h"
 #include "Contact.h"
+#include "Account.h"
+#include "AccountList.h"
+#include "VideoModel.h"
 
 
 const call_state Call::actionPerformedStateMap [13][5] =
@@ -44,7 +46,7 @@ const call_state Call::actionPerformedStateMap [13][5] =
 /*OVER         */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        },/**/
 /*ERROR        */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        },/**/
 /*CONF         */  {CALL_STATE_ERROR      , CALL_STATE_CURRENT     , CALL_STATE_TRANSFER     , CALL_STATE_CURRENT      ,  CALL_STATE_CURRENT      },/**/
-/*CONF_HOLD    */  {CALL_STATE_ERROR      , CALL_STATE_HOLD        , CALL_STATE_TRANSF_HOLD  , CALL_STATE_HOLD         ,  CALL_STATE_HOLD         } /**/
+/*CONF_HOLD    */  {CALL_STATE_ERROR      , CALL_STATE_HOLD        , CALL_STATE_TRANSF_HOLD  , CALL_STATE_HOLD         ,  CALL_STATE_HOLD         },/**/
 };//                                                                                                                                                    
 
 
@@ -63,7 +65,7 @@ const function Call::actionPerformedFunctionMap[13][5] =
 /*OVER           */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
 /*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },/**/
 /*CONF           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },/**/
-/*CONF_HOLD      */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     } /**/
+/*CONF_HOLD      */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },/**/
 };//                                                                                                                                 
 
 
@@ -82,7 +84,7 @@ const call_state Call::stateChangedStateMap [13][6] =
 /*OVER         */ {CALL_STATE_OVER        , CALL_STATE_OVER     , CALL_STATE_OVER   , CALL_STATE_OVER         ,  CALL_STATE_OVER  ,  CALL_STATE_OVER     },/**/
 /*ERROR        */ {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    },/**/
 /*CONF         */ {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
-/*CONF_HOLD    */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  } /**/
+/*CONF_HOLD    */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },/**/
 };//                                                                                                                                                           
 
 const function Call::stateChangedFunctionMap[13][6] =
@@ -100,7 +102,7 @@ const function Call::stateChangedFunctionMap[13][6] =
 /*OVER           */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::stop         , &Call::warning },/**/
 /*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
 /*CONF           */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
-/*CONF_HOLD      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing } /**/
+/*CONF_HOLD      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },/**/
 };//                                                                                                                                                   
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
@@ -186,7 +188,7 @@ Call* Call::buildExistingCall(QString callId)
       call->m_pStartTime = new QDateTime(QDateTime::currentDateTime())                                   ;
    
    call->m_Recording     = callManager.getIsRecording(callId)                                            ;
-   call->m_HistoryState  = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE])   ;
+   call->m_HistoryState  = getHistoryStateFromType(details[STATE_KEY]);
    
    return call;
 } //buildExistingCall
@@ -250,49 +252,21 @@ Call* Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint s
    }
    
    call->m_HistoryState  = getHistoryStateFromType(type);
+   
    return call;
 }
 
 ///Get the history state from the type (see Call.cpp header)
 history_state Call::getHistoryStateFromType(QString type)
 {
-   if(type == DAEMON_HISTORY_TYPE_MISSED        )
+   if(type == MISSED_STRING        )
       return MISSED   ;
-   else if(type == DAEMON_HISTORY_TYPE_OUTGOING )
+   else if(type == OUTGOING_STRING )
       return OUTGOING ;
-   else if(type == DAEMON_HISTORY_TYPE_INCOMING )
+   else if(type == INCOMING_STRING )
       return INCOMING ;
    return NONE        ;
 }
-
-///Get the type from an history state (see Call.cpp header)
-QString Call::getTypeFromHistoryState(history_state historyState)
-{
-   if(historyState == MISSED        )
-      return DAEMON_HISTORY_TYPE_MISSED   ;
-   else if(historyState == OUTGOING )
-      return DAEMON_HISTORY_TYPE_OUTGOING ;
-   else if(historyState == INCOMING )
-      return DAEMON_HISTORY_TYPE_INCOMING ;
-   return QString()                       ;
-}
-
-///Get history state from daemon
-history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
-{
-   if((daemonCallState      == DAEMON_CALL_STATE_INIT_CURRENT  || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_INCOMING )
-      return INCOMING ;
-   else if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT  || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_OUTGOING )
-      return OUTGOING ;
-   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_BUSY                                                                                                       )
-      return OUTGOING ;
-   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING                                                    )
-      return INCOMING ;
-   else if(daemonCallState  == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING                                                    )
-      return MISSED   ;
-   else
-      return NONE     ;
-} //getHistoryStateFromDaemonCallState
 
 ///Get the start sate from the daemon state
 call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
@@ -331,8 +305,6 @@ daemon_call_state Call::toDaemonCallState(const QString& stateName)
    if(stateName == QString(CALL_STATE_CHANGE_CURRENT)        )
       return DAEMON_CALL_STATE_CURRENT ;
    if(stateName == QString(CALL_STATE_CHANGE_UNHOLD_CURRENT) )
-      return DAEMON_CALL_STATE_CURRENT ;
-   if(stateName == QString(CALL_STATE_CHANGE_UNHOLD_RECORD)  )
       return DAEMON_CALL_STATE_CURRENT ;
    if(stateName == QString(CALL_STATE_CHANGE_HOLD)           )
       return DAEMON_CALL_STATE_HOLD    ;
@@ -457,13 +429,15 @@ call_state Call::getCurrentState()          const
 ///Get the call recording
 bool Call::getRecording()                   const
 {
+   CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+   ((Call*) this)->m_Recording = callManager.getIsRecording(m_CallId);
    return m_Recording;
 }
 
 ///Get the call account id
-const QString& Call::getAccountId()         const
+Account* Call::getAccount()           const
 {
-   return m_Account;
+   return AccountList::getInstance()->getAccountById(m_Account);
 }
 
 ///Is this call a conference
@@ -479,13 +453,13 @@ const QString& Call::getConfId()            const
 }
 
 ///Get the recording path
-const QString& Call::getRecordingPath()      const
+const QString& Call::getRecordingPath()     const
 {
    return m_RecordingPath;
 }
 
 ///Get the current codec
-QString Call::getCurrentCodecName()  const
+QString Call::getCurrentCodecName()         const
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
    return callManager.getCurrentAudioCodecName(m_CallId);
@@ -537,6 +511,12 @@ Contact* Call::getContact()
       m_pContact = m_pContactBackend->getContactByPhone(m_PeerPhoneNumber,true);
    }
    return m_pContact;
+}
+
+///Return the renderer associated with this call or nullptr
+VideoRenderer* Call::getVideoRenderer()
+{
+   return VideoModel::getInstance()->getRenderer(this);
 }
 
 

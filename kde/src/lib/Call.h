@@ -34,6 +34,8 @@ class QWidget;
 
 class ContactBackend;
 class Contact;
+class Account;
+class VideoRenderer;
 
 
 /** @enum daemon_call_state_t 
@@ -52,7 +54,9 @@ typedef enum
    /** Call is over  */
    DAEMON_CALL_STATE_HUNG_UP,
    /** Call has failed */
-   DAEMON_CALL_STATE_FAILURE
+   DAEMON_CALL_STATE_FAILURE,
+   /** Call is recording+current  */
+   DAEMON_CALL_STATE_RECORD,
 } daemon_call_state;
 
 /** @enum call_action
@@ -130,9 +134,7 @@ public:
 
    //Static getters
    static history_state getHistoryStateFromType            ( QString type                                    );
-   static QString       getTypeFromHistoryState            ( history_state historyState                      );
    static call_state    getStartStateFromDaemonCallState   ( QString daemonCallState, QString daemonCallType );
-   static history_state getHistoryStateFromDaemonCallState ( QString daemonCallState, QString daemonCallType );
    
    //Getters
    call_state           getState            () const;
@@ -142,7 +144,7 @@ public:
    call_state           getCurrentState     () const;
    history_state        getHistoryState     () const;
    bool                 getRecording        () const;
-   const QString&       getAccountId        () const;
+   Account*             getAccount          () const;
    bool                 isHistory           () const;
    QString              getStopTimeStamp    () const;
    QString              getStartTimeStamp   () const;
@@ -155,7 +157,8 @@ public:
    const QString&       getCallNumber       () const;
    const QString&       getRecordingPath    () const;
    const QString        toHumanStateName    () const;
-   Contact*             getContact()                ;
+   Contact*             getContact          ()      ;
+   VideoRenderer*       getVideoRenderer    ()      ;
 
    //Automated function
    call_state stateChanged(const QString & newState);

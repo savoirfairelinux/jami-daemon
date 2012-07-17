@@ -27,12 +27,38 @@
 class QString;
 
 //SFLPhone
-#include "VideoCodec.h"
+#include "VideoCodecModel.h"
 #include "sflphone_const.h"
 #include "typedefs.h"
 #include "dbus/metatypes.h"
+class CredentialModel;
+class AudioCodecModel;
+class VideoCodecModel;
 
 const QString& account_state_name(const QString& s);
+
+typedef void (Account::*account_function)();
+
+///@enum AccountEditState: Manage how and when an account can be reloaded or change state
+enum AccountEditState {
+   READY    =0,
+   EDITING  =1,
+   OUTDATED =2,
+   NEW      =3,
+   MODIFIED =4,
+   REMOVED  =5
+};
+
+///@enum AccountEditAction
+enum AccountEditAction {
+   NOTHING =0,
+   EDIT    =1,
+   RELOAD  =2,
+   SAVE    =3,
+   REMOVE  =4,
+   MODIFY  =5,
+   CANCEL  =6
+};
 
 ///Account: a daemon account (SIP or AIX)
 class LIB_EXPORT Account : public QObject {
@@ -43,7 +69,18 @@ class LIB_EXPORT Account : public QObject {
       //Constructors
       static Account* buildExistingAccountFromId(const QString& _accountId);
       static Account* buildNewAccountFromAlias(const QString& alias);
-   
+
+      /**
+       *Perform an action
+       * @return If the state changed
+       */
+      bool performAction(AccountEditAction action) {
+         AccountEditState curState = m_CurrentState;
+         (this->*(stateMachineActionsOnState[m_CurrentState][action]))();
+         return curState != m_CurrentState;
+      }
+      AccountEditState currentState() const {return m_CurrentState;};
+
       //Getters
       bool                    isNew()                                const;
       const QString&          getAccountId()                         const;
@@ -53,84 +90,91 @@ class LIB_EXPORT Account : public QObject {
       const QString&          getAlias()                             const;
       bool                    isEnabled()                            const;
       bool                    isRegistered()                         const;
+      QModelIndex             getIndex()                                  ;
+      QString                 getStateColorName()                    const;
+      Qt::GlobalColor         getStateColor()                        const;
+
+      CredentialModel*        getCredentialsModel();
+      AudioCodecModel*        getAudioCodecModel();
+      VideoCodecModel*        getVideoCodecModel();
 
       ///Return the account hostname
-      QString getAccountHostname              () { return getAccountDetail(ACCOUNT_HOSTNAME               )                 ;}
+      QString getAccountHostname              () const { return getAccountDetail(ACCOUNT_HOSTNAME               )                 ;}
       ///Return if the account is enabled
-      bool    isAccountEnabled                () { return (getAccountDetail(ACCOUNT_ENABLED               )  == "true")?1:0 ;}
+      bool    isAccountEnabled                () const { return (getAccountDetail(ACCOUNT_ENABLED               )  == "true")?1:0 ;}
       ///Return the account user name
-      QString getAccountUsername              () { return getAccountDetail(ACCOUNT_USERNAME               )                 ;}
+      QString getAccountUsername              () const { return getAccountDetail(ACCOUNT_USERNAME               )                 ;}
       ///Return the account mailbox address
-      QString getAccountMailbox               () { return getAccountDetail(ACCOUNT_MAILBOX                )                 ;}
+      QString getAccountMailbox               () const { return getAccountDetail(ACCOUNT_MAILBOX                )                 ;}
       ///
-      bool    isAccountDisplaySasOnce         () { return (getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 ;}
+      bool    isAccountDisplaySasOnce         () const { return (getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE      )  == "true")?1:0 ;}
       ///Return the account security fallback
-      bool    isAccountSrtpRtpFallback       () { return (getAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 ;}
+      bool    isAccountSrtpRtpFallback        () const { return (getAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK     )  == "true")?1:0 ;}
       ///
-      bool    isAccountZrtpDisplaySas         () { return (getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 ;}
+      bool    isAccountZrtpDisplaySas         () const { return (getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS      )  == "true")?1:0 ;}
       ///Return if the other side support warning
-      bool    isAccountZrtpNotSuppWarning     () { return (getAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING )  == "true")?1:0 ;}
+      bool    isAccountZrtpNotSuppWarning     () const { return (getAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING )  == "true")?1:0 ;}
       ///
-      bool    isAccountZrtpHelloHash          () { return (getAccountDetail(ACCOUNT_ZRTP_HELLO_HASH       )  == "true")?1:0 ;}
+      bool    isAccountZrtpHelloHash          () const { return (getAccountDetail(ACCOUNT_ZRTP_HELLO_HASH       )  == "true")?1:0 ;}
       ///Return if the account is using a STUN server
-      bool    isAccountSipStunEnabled         () { return (getAccountDetail(ACCOUNT_SIP_STUN_ENABLED      )  == "true")?1:0 ;}
+      bool    isAccountSipStunEnabled         () const { return (getAccountDetail(ACCOUNT_SIP_STUN_ENABLED      )  == "true")?1:0 ;}
       ///Return the account STUN server
-      QString getAccountSipStunServer         () { return getAccountDetail(ACCOUNT_SIP_STUN_SERVER        )                 ;}
+      QString getAccountSipStunServer         () const { return getAccountDetail(ACCOUNT_SIP_STUN_SERVER        )                 ;}
       ///Return when the account expire (require renewal)
-      int     getAccountRegistrationExpire    () { return getAccountDetail(ACCOUNT_REGISTRATION_EXPIRE    ).toInt()         ;}
+      int     getAccountRegistrationExpire    () const { return getAccountDetail(ACCOUNT_REGISTRATION_EXPIRE    ).toInt()         ;}
       ///Return if the published address is the same as the local one
-      bool    isPublishedSameAsLocal          () { return (getAccountDetail(PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 ;}
+      bool    isPublishedSameAsLocal          () const { return (getAccountDetail(PUBLISHED_SAMEAS_LOCAL        )  == "true")?1:0 ;}
       ///Return the account published address
-      QString getPublishedAddress             () { return getAccountDetail(PUBLISHED_ADDRESS              )                 ;}
+      QString getPublishedAddress             () const { return getAccountDetail(PUBLISHED_ADDRESS              )                 ;}
       ///Return the account published port
-      int     getPublishedPort                () { return getAccountDetail(PUBLISHED_PORT                 ).toUInt()        ;}
+      int     getPublishedPort                () const { return getAccountDetail(PUBLISHED_PORT                 ).toUInt()        ;}
       ///Return the account tls password
-      QString getTlsPassword                  () { return getAccountDetail(TLS_PASSWORD                   )                 ;}
+      QString getTlsPassword                  () const { return getAccountDetail(TLS_PASSWORD                   )                 ;}
       ///Return the account TLS port
-      int     getTlsListenerPort              () { return getAccountDetail(TLS_LISTENER_PORT              ).toInt()         ;}
+      int     getTlsListenerPort              () const { return getAccountDetail(TLS_LISTENER_PORT              ).toInt()         ;}
       ///Return the account TLS certificate authority list file
-      QString getTlsCaListFile                () { return getAccountDetail(TLS_CA_LIST_FILE               )                 ;}
+      QString getTlsCaListFile                () const { return getAccountDetail(TLS_CA_LIST_FILE               )                 ;}
       ///Return the account TLS certificate
-      QString getTlsCertificateFile           () { return getAccountDetail(TLS_CERTIFICATE_FILE           )                 ;}
+      QString getTlsCertificateFile           () const { return getAccountDetail(TLS_CERTIFICATE_FILE           )                 ;}
       ///Return the account private key
-      QString getTlsPrivateKeyFile            () { return getAccountDetail(TLS_PRIVATE_KEY_FILE           )                 ;}
+      QString getTlsPrivateKeyFile            () const { return getAccountDetail(TLS_PRIVATE_KEY_FILE           )                 ;}
       ///Return the account cipher
-      QString getTlsCiphers                   () { return getAccountDetail(TLS_CIPHERS                    )                 ;}
+      QString getTlsCiphers                   () const { return getAccountDetail(TLS_CIPHERS                    )                 ;}
       ///Return the account TLS server name
-      QString getTlsServerName                () { return getAccountDetail(TLS_SERVER_NAME                )                 ;}
+      QString getTlsServerName                () const { return getAccountDetail(TLS_SERVER_NAME                )                 ;}
       ///Return the account negotiation timeout in seconds
-      int     getTlsNegotiationTimeoutSec     () { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC    ).toInt()         ;}
+      int     getTlsNegotiationTimeoutSec     () const { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC    ).toInt()         ;}
       ///Return the account negotiation timeout in milliseconds
-      int     getTlsNegotiationTimeoutMsec    () { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC   ).toInt()         ;}
+      int     getTlsNegotiationTimeoutMsec    () const { return getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC   ).toInt()         ;}
       ///Return the account TLS verify server
-      bool    isTlsVerifyServer               () { return (getAccountDetail(TLS_VERIFY_SERVER             )  == "true")?1:0 ;}
+      bool    isTlsVerifyServer               () const { return (getAccountDetail(TLS_VERIFY_SERVER             )  == "true")?1:0 ;}
       ///Return the account TLS verify client
-      bool    isTlsVerifyClient               () { return (getAccountDetail(TLS_VERIFY_CLIENT             )  == "true")?1:0 ;}
+      bool    isTlsVerifyClient               () const { return (getAccountDetail(TLS_VERIFY_CLIENT             )  == "true")?1:0 ;}
       ///Return if it is required for the peer to have a certificate
-      bool    isTlsRequireClientCertificate   () { return (getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 ;}
+      bool    isTlsRequireClientCertificate   () const { return (getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE)  == "true")?1:0 ;}
       ///Return the account TLS security is enabled
-      bool    isTlsEnable                     () { return (getAccountDetail(TLS_ENABLE                    )  == "true")?1:0 ;}
+      bool    isTlsEnable                     () const { return (getAccountDetail(TLS_ENABLE                    )  == "true")?1:0 ;}
       ///Return the account the TLS encryption method
-      int     getTlsMethod                    () { return getAccountDetail(TLS_METHOD                     ).toInt()         ;}
+      int     getTlsMethod                    () const { return getAccountDetail(TLS_METHOD                     ).toInt()         ;}
       ///Return the account alias
-      QString getAccountAlias                 () { return getAccountDetail(ACCOUNT_ALIAS                  )                 ;}
+      QString getAccountAlias                 () const { return getAccountDetail(ACCOUNT_ALIAS                  )                 ;}
       ///Return if the ringtone are enabled
-      bool    isRingtoneEnabled               () { return (getAccountDetail(CONFIG_RINGTONE_ENABLED       )  == "true")?1:0 ;}
+      bool    isRingtoneEnabled               () const { return (getAccountDetail(CONFIG_RINGTONE_ENABLED       )  == "true")?1:0 ;}
       ///Return the account ringtone path
-      QString getRingtonePath                 () { return getAccountDetail(CONFIG_RINGTONE_PATH           )                 ;}
+      QString getRingtonePath                 () const { return getAccountDetail(CONFIG_RINGTONE_PATH           )                 ;}
       ///Return the account local port
-      int     getLocalPort                    () { return getAccountDetail(LOCAL_PORT).toInt()                              ;}
+      int     getLocalPort                    () const { return getAccountDetail(LOCAL_PORT).toInt()                              ;}
       ///Return the account local interface
-      QString getLocalInterface               () { return getAccountDetail(LOCAL_INTERFACE)                                 ;}
+      QString getLocalInterface               () const { return getAccountDetail(LOCAL_INTERFACE)                                 ;}
       ///Return the account registration status
-      QString getAccountRegistrationStatus    () { return getAccountDetail(ACCOUNT_REGISTRATION_STATUS)                     ;}
+      QString getAccountRegistrationStatus    () const { return getAccountDetail(ACCOUNT_REGISTRATION_STATUS)                     ;}
       ///Return the account type
-      QString getAccountType                  () { return getAccountDetail(ACCOUNT_TYPE)                                    ;}
+      QString getAccountType                  () const { return getAccountDetail(ACCOUNT_TYPE)                                    ;}
    
       //Setters
       void setAccountId      (const QString& id                        );
       void setAccountDetails (const MapStringString& m                 );
-      void setAccountDetail  (const QString& param, const QString& val );
+      bool setAccountDetail  (const QString& param, const QString& val );
       #ifdef ENABLE_VIDEO
       void setActiveVideoCodecList(QList<VideoCodec*> codecs);
       QList<VideoCodec*> getActiveVideoCodecList();
@@ -202,14 +246,17 @@ class LIB_EXPORT Account : public QObject {
       void setRingtoneEnabled               (bool    detail){setAccountDetail(CONFIG_RINGTONE_ENABLED        ,detail?"true":"false");}
    
       //Updates
-      virtual void updateState();
+      virtual bool updateState();
    
       //Operators
       bool operator==(const Account&)const;
 
       //Mutator
-      void save();
-   
+      void saveCredentials();
+      void saveAudioCodecs();
+      void reloadCredentials();
+      void reloadAudioCodecs();
+
    protected:
       //Constructors
       Account();
@@ -224,8 +271,29 @@ class LIB_EXPORT Account : public QObject {
    private slots:
       void accountChanged(QString accountId,QString stateName, int state);
 
+   private:
+      //State actions
+      void nothing() {};
+      void edit()   {m_CurrentState = EDITING ;emit changed(this);};
+      void modify() {m_CurrentState = MODIFIED;emit changed(this);};
+      void remove() {m_CurrentState = REMOVED ;emit changed(this);};
+      void cancel() {m_CurrentState = READY   ;emit changed(this);};
+      void outdate(){m_CurrentState = OUTDATED;emit changed(this);};
+      void reload();
+      void save();
+      void reloadMod() {reload();modify();};
+      
+      CredentialModel* m_pCredentials;
+      AudioCodecModel* m_pAudioCodecs;
+      VideoCodecModel* m_pVideoCodecs;
+      AccountEditState m_CurrentState;
+      static const account_function stateMachineActionsOnState[6][7];
+
+
    signals:
       ///The account state (Invalif,Trying,Registered) changed
       void stateChanged(QString state);
+      void detailChanged(Account* a,QString name,QString newVal, QString oldVal);
+      void changed(Account* a);
 };
 #endif

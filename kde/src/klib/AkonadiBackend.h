@@ -39,6 +39,7 @@ namespace Akonadi {
    class Session;
    class CollectionModel;
    class Collection;
+   class Item;
 }
 
 //SFLPhone
@@ -49,14 +50,15 @@ class LIB_EXPORT AkonadiBackend : public ContactBackend {
    Q_OBJECT
 public:
    static   ContactBackend* getInstance();
-   Contact* getContactByPhone ( const QString& phoneNumber ,bool resolveDNS = false );
-   Contact* getContactByUid   ( const QString& uid                                  );
-   void     editContact       ( Contact*       contact , QWidget* parent = 0        );
-   void     addNewContact     ( Contact*       contact , QWidget* parent = 0        );
+   Contact* getContactByPhone ( const QString& phoneNumber ,bool resolveDNS = false    );
+   Contact* getContactByUid   ( const QString& uid                                     );
+   void     editContact       ( Contact*       contact , QWidget* parent = 0           );
+   void     addNewContact     ( Contact*       contact , QWidget* parent = 0           );
+   virtual void addPhoneNumber( Contact*       contact , QString  number, QString type );
    
-   virtual void     editContact   ( Contact*   contact                              );
-   virtual void     addNewContact ( Contact*   contact                              );
-   virtual ~AkonadiBackend        (                                                 );
+   virtual void     editContact   ( Contact*   contact                                 );
+   virtual void     addNewContact ( Contact*   contact                                 );
+   virtual ~AkonadiBackend        (                                                    );
 
 private:
    AkonadiBackend(QObject* parent);
@@ -66,6 +68,7 @@ private:
    Akonadi::Session*              m_pSession   ;
    Akonadi::Collection            m_Collection ;
    QHash<QString,KABC::Addressee> m_AddrHash   ;
+   QHash<QString,Akonadi::Item>   m_ItemHash   ;
    ContactList                    m_pContacts  ;
 
 protected:
