@@ -32,6 +32,7 @@
 #include "../dbus/dbus.h"
 #include <glib.h>
 #include "../mainwindow.h"
+#include "eel-gconf-extensions.h"
 #include <string.h>
 
 static GtkWidget  *tab_box    = NULL ;
@@ -195,8 +196,11 @@ on_clicked(GtkTextBuffer *textbuffer UNUSED, GtkTextIter *location UNUSED, GtkTe
        start_link = NULL;
        end_link = NULL;
        if (strlen(text)) {
-         const gchar* argv[3] = {"x-www-browser",text,(char*)NULL};
-         g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
+           gchar* url_command = eel_gconf_get_string(MESSAGING_URL_COMMAND);
+           if (!strlen(url_command))
+               url_command = "xdg-open";
+           const gchar* argv[3] = {url_command,text,(char*)NULL};
+           g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
        }
    }
 }
