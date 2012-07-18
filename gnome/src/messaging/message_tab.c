@@ -197,7 +197,7 @@ on_clicked(GtkTextBuffer *textbuffer UNUSED, GtkTextIter *location UNUSED, GtkTe
        end_link = NULL;
        if (strlen(text)) {
            gchar* url_command = eel_gconf_get_string(MESSAGING_URL_COMMAND);
-           if (!strlen(url_command))
+           if (url_command && !strlen(url_command))
                url_command = "xdg-open";
            const gchar* argv[3] = {url_command,text,(char*)NULL};
            g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
