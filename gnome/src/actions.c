@@ -70,6 +70,9 @@
 #include "unused.h"
 #include "sliders.h"
 #include "messaging/message_tab.h"
+#ifdef SFL_VIDEO
+#include "video/video_callbacks.h"
+#endif
 
 static GHashTable * ip2ip_profile;
 
