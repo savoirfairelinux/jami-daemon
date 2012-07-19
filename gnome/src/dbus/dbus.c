@@ -1274,8 +1274,6 @@ dbus_get_current_video_codec_name(const callable_obj_t *c)
         codecName = g_strdup("");
     }
 
-    DEBUG("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
-
     return codecName;
 }
 #endif
@@ -1289,7 +1287,6 @@ dbus_get_current_audio_codec_name(const callable_obj_t *c)
     org_sflphone_SFLphone_CallManager_get_current_audio_codec_name(call_proxy, c->_callID, &codecName,
                                       &error);
     check_error(error);
-    DEBUG("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
     return codecName;
 }
 

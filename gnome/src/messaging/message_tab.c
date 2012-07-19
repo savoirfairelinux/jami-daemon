@@ -32,6 +32,7 @@
 #include "../dbus/dbus.h"
 #include <glib.h>
 #include "../mainwindow.h"
+#include "eel-gconf-extensions.h"
 #include <string.h>
 
 static GtkWidget  *tab_box    = NULL ;
@@ -188,15 +189,21 @@ on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
 }
 
 static void
-on_clicked(GtkTextBuffer *textbuffer UNUSED, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, gpointer user_data UNUSED)
+on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, gpointer user_data UNUSED)
 {
    if (start_link && end_link && gtk_text_iter_compare(start_link,location) <= 0 && gtk_text_iter_compare(location,end_link) <= 0) {
        gchar* text = gtk_text_buffer_get_text(textbuffer,start_link,end_link,FALSE);
        start_link = NULL;
        end_link = NULL;
        if (strlen(text)) {
-         const gchar* argv[3] = {"x-www-browser",text,(char*)NULL};
-         g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
+           gchar* url_command = eel_gconf_get_string(MESSAGING_URL_COMMAND);
+           if (url_command && !strlen(url_command))
+               url_command = "xdg-open";
+           const gchar* argv[3] = {url_command,text,(char*)NULL};
+           g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
+           gtk_text_buffer_remove_all_tags(textbuffer,start_link,end_link );
+           start_link = NULL;
+           end_link   = NULL;
        }
    }
 }
@@ -228,7 +235,7 @@ on_cursor_motion(GtkTextView *view UNUSED, GdkEvent  *event, gpointer data)
 
         /*Match the regex*/
         GError     *error          = NULL;
-        gchar      *pattern_string = "^http\\://[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(/\\S*)?$";
+        gchar      *pattern_string = "^[a-z]*\\://[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(/\\S*)?$";
         GRegex     *regex          = g_regex_new( pattern_string, 0, 0, &error );
         GMatchInfo *match_info     = NULL;
         GdkWindow  *win            = gtk_text_view_get_window(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT);
@@ -274,6 +281,8 @@ disable_messaging_tab(const gchar * id)
         tab = g_hash_table_lookup(tabs, id);
     if (tab != NULL)
         gtk_widget_hide(tab->entry);
+    if (!g_list_length(gtk_container_get_children(GTK_CONTAINER(get_tab_box()))))
+       gtk_widget_hide(get_tab_box());
 }
 
 void
@@ -354,8 +363,10 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label)
     /* Create the main layout */
     GtkWidget *vbox            = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkTextBuffer *text_buffer = gtk_text_buffer_new(NULL);
-    gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
-    gtk_text_buffer_create_tag(text_buffer, "link", "foreground", "#0000FF","underline",PANGO_UNDERLINE_SINGLE);
+    if (text_buffer) {
+      gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
+      gtk_text_buffer_create_tag(text_buffer, "link", "foreground", "#0000FF","underline",PANGO_UNDERLINE_SINGLE,NULL);
+    }
 
     /* Create the conversation history widget*/
     GtkWidget *history_hbox    = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2  );
@@ -465,11 +476,12 @@ create_messaging_tab(callable_obj_t* call)
 message_tab *
 create_messaging_tab_conf(conference_obj_t* call)
 {
-    message_tab* self = create_messaging_tab_common(call->_confID,"Conference");
-    self->conf   = call;
-    self->call   = NULL;
-
-    disable_conference_calls(call);
-    
-    return self;
+    if (call->_confID && strlen(call->_confID)) {
+        message_tab* self = create_messaging_tab_common(call->_confID,"Conference");
+        self->conf   = call;
+        self->call   = NULL;
+        disable_conference_calls(call);
+        return self;
+    }
+    return NULL;
 }

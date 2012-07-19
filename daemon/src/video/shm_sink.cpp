@@ -70,7 +70,7 @@ SHMSink::start()
         return false;
     }
 
-    const int flags = O_RDWR | O_CREAT | O_TRUNC;
+    const int flags = O_RDWR | O_CREAT | O_TRUNC | O_EXCL;
     if (not shm_name_.empty()) {
         fd_ = shm_open(shm_name_.c_str(), flags, perms_);
         if (fd_ < 0) {

@@ -53,6 +53,8 @@
 #include "lib/Contact.h"
 #include "klib/HelperFunctions.h"
 
+#define IM_ACTIVE m_pMessageTabBox->isVisible()
+
 //ConfigurationDialog* SFLPhoneView::configDialog;
 
 class ColorVisitor : public AccountListColorVisitor {
@@ -412,7 +414,7 @@ void SFLPhoneView::updateWindowCallState()
             buttonIconFiles [ SFLPhone::Refuse   ] = ICON_REFUSE                 ;
             actionTexts     [ SFLPhone::Accept   ] = ACTION_LABEL_ACCEPT         ;
             actionTexts     [ SFLPhone::Refuse   ] = ACTION_LABEL_REFUSE         ;
-            m_pMessageBoxW->setVisible(false)                                    ;
+            m_pMessageBoxW->setVisible(false || IM_ACTIVE)   ;
             break;
          case CALL_STATE_RINGING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -421,7 +423,7 @@ void SFLPhoneView::updateWindowCallState()
             break;
          case CALL_STATE_CURRENT:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
-            m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
+            m_pMessageBoxW->setVisible((true && ConfigurationSkeleton::displayMessageBox()) || IM_ACTIVE);
             break;
          case CALL_STATE_DIALING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -434,7 +436,7 @@ void SFLPhoneView::updateWindowCallState()
          case CALL_STATE_HOLD:
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
-            m_pMessageBoxW->setVisible(true && ConfigurationSkeleton::displayMessageBox());
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_FAILURE:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
@@ -454,7 +456,7 @@ void SFLPhoneView::updateWindowCallState()
             buttonIconFiles [ SFLPhone::Accept   ] = ICON_EXEC_TRANSF            ;
             actionTexts     [ SFLPhone::Transfer ] = ACTION_LABEL_GIVE_UP_TRANSF ;
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
-            m_pMessageBoxW->setVisible(false)                                    ;
+            m_pMessageBoxW->setVisible(false || IM_ACTIVE)                       ;
             transfer = true;
             break;
          case CALL_STATE_TRANSF_HOLD:
@@ -467,13 +469,15 @@ void SFLPhoneView::updateWindowCallState()
             break;
          case CALL_STATE_OVER:
             kDebug() << "Error : Reached CALL_STATE_OVER with call "  << call->getCallId() << "!";
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_ERROR:
             kDebug() << "Error : Reached CALL_STATE_ERROR with call " << call->getCallId() << "!";
+            m_pMessageBoxW->setVisible(false)                                    ;
             break;
          case CALL_STATE_CONFERENCE:
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
-            m_pMessageBoxW->setVisible(false)                                    ;
+            m_pMessageBoxW->setVisible(false || IM_ACTIVE)                       ;
             break;
          case CALL_STATE_CONFERENCE_HOLD:
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
@@ -886,6 +890,7 @@ void SFLPhoneView::sendMessage()
    if (dynamic_cast<Call*>(call) && !m_pSendMessageLE->text().isEmpty()) {
       call->sendTextMessage(m_pSendMessageLE->text());
    }
+   m_pSendMessageLE->clear();
 }
 
 #include "SFLPhoneView.moc"

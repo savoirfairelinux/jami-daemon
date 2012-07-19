@@ -243,10 +243,10 @@ eel_gconf_unset(const char *key)
     eel_gconf_handle_error(&error);
 }
 
-char *
+gchar *
 eel_gconf_get_string(const char *key)
 {
-    char *result;
+    gchar *result = NULL;
     GConfClient *client;
     GError *error = NULL;
 

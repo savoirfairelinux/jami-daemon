@@ -301,19 +301,20 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
       return 0;
    }
 
-   Call* newConf;
+   Call* newConf = nullptr;
    if (m_sPrivateCallList_callId[callList[0]]->call_real->getAccount())
       newConf =  new Call(confID, m_sPrivateCallList_callId[callList[0]]->call_real->getAccount()->getAccountId());
    
-   InternalStruct* aNewStruct = new InternalStruct;
-   aNewStruct->call_real  = newConf;
-   aNewStruct->conference = true;
-   
-   m_sPrivateCallList_call[newConf]  = aNewStruct;
-   m_sPrivateCallList_callId[confID] = aNewStruct;
+   if (newConf) {
+      InternalStruct* aNewStruct = new InternalStruct;
+      aNewStruct->call_real  = newConf;
+      aNewStruct->conference = true;
 
-   m_lConfList[newConf->getConfId()] = newConf;
-   
+      m_sPrivateCallList_call[newConf]  = aNewStruct;
+      m_sPrivateCallList_callId[confID] = aNewStruct;
+
+      m_lConfList[newConf->getConfId()] = newConf;
+   }
    return newConf;
 } //addConference
 

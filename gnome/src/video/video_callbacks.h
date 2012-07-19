@@ -33,6 +33,8 @@
 
 #include "dbus.h"
 
+void video_cleanup();
+
 void started_decoding_video_cb(DBusGProxy *proxy, gchar *id, gchar *shm_path,
                                gint width, gint height, GError *error,
                                gpointer userdata);

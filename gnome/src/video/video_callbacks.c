@@ -39,9 +39,36 @@
 #include "config/videoconf.h"
 #include "unused.h"
 
-// FIXME: get rid of these
-static GtkWidget *video_window_global = NULL;
-static gboolean video_window_fullscreen = FALSE;
+typedef struct {
+    gchar *id;
+    GtkWidget *window;
+    gboolean fullscreen;
+} VideoHandle;
+
+static GHashTable *video_handles;
+
+static gboolean
+video_is_local(const gchar *id)
+{
+    static const gchar * const LOCAL_VIDEO_ID = "local";
+    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
+}
+
+static void
+cleanup_handle(gpointer data)
+{
+    VideoHandle *h = (VideoHandle *) data;
+    if (!h)
+        return;
+
+    if (GTK_IS_WIDGET(h->window)) {
+        gtk_widget_destroy(h->window);
+        if (video_is_local(h->id))
+            update_preview_button_label();
+        g_free(h->id);
+    }
+    g_free(h);
+}
 
 static void
 video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
@@ -51,16 +78,52 @@ video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
 }
 
 static void
-video_window_button_cb(GtkWindow *win, GdkEventButton *event,
-                                 gpointer fullscreen)
+video_window_button_cb(GtkWindow *win, GdkEventButton *event, gpointer data)
 {
-    int *fs = fullscreen;
+    VideoHandle *handle = (VideoHandle *) data;
     if (event->type == GDK_2BUTTON_PRESS) {
-        *fs = !*fs;
-        if (*fs)
+        DEBUG("TOGGLING FULL SCREEEN!");
+        handle->fullscreen = !handle->fullscreen;
+        if (handle->fullscreen)
             gtk_window_fullscreen(win);
         else
             gtk_window_unfullscreen(win);
+    }
+}
+
+
+static VideoHandle*
+add_handle(const gchar *id)
+{
+    if (!video_handles)
+        video_handles = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, cleanup_handle);
+    if (g_hash_table_lookup(video_handles, id)) {
+        ERROR("Already created handle for video with id %s", id);
+        return NULL;
+    }
+
+    VideoHandle *handle = g_new0(VideoHandle, 1);
+    handle->id = g_strdup(id);
+    handle->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    handle->fullscreen = FALSE;
+    g_signal_connect(handle->window, "button_press_event",
+            G_CALLBACK(video_window_button_cb),
+            handle);
+    g_signal_connect(handle->window, "delete-event",
+            G_CALLBACK(video_window_deleted_cb),
+            NULL);
+    if (video_is_local(id))
+        update_preview_button_label();
+
+    g_hash_table_insert(video_handles, g_strdup(id), handle);
+    return handle;
+}
+
+void video_cleanup()
+{
+    if (video_handles) {
+        g_hash_table_destroy(video_handles);
+        video_handles = NULL;
     }
 }
 
@@ -84,38 +147,24 @@ try_clutter_init()
 #undef PRINT_ERR
 }
 
-static gboolean
-video_is_local(const gchar *id)
-{
-    static const gchar * const LOCAL_VIDEO_ID = "local";
-    return g_strcmp0(id, LOCAL_VIDEO_ID) == 0;
-}
-
 void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
         gchar *id, gchar *shm_path, gint width, gint height,
         GError *error UNUSED, gpointer userdata UNUSED)
 {
-    if (!video_window_global) {
-        video_window_global = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-        video_window_fullscreen = FALSE;
-        g_signal_connect(video_window_global, "button_press_event",
-                         G_CALLBACK(video_window_button_cb),
-                         &video_window_fullscreen);
-        g_signal_connect(video_window_global, "delete-event",
-                         G_CALLBACK(video_window_deleted_cb),
-                         NULL);
-        if (video_is_local(id))
-            update_preview_button_label();
-    }
+    if (!id || !*id || !shm_path || !*shm_path)
+        return;
 
     if (!try_clutter_init())
+        return;
+    VideoHandle *handle = add_handle(id);
+    if (!handle)
         return;
 
     GtkWidget *video_area = gtk_clutter_embed_new();
     ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(video_area));
-    if (!stage)
+    if (!stage) {
         gtk_widget_destroy(video_area);
-    else {
+    } else {
         ClutterColor stage_color = { 0x61, 0x64, 0x8c, 0xff };
         clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
     }
@@ -123,13 +172,10 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_add(GTK_CONTAINER(vbox), video_area);
 
-    if (shm_path == 0 || strlen(shm_path) == 0)
-        return;
-
     gtk_widget_set_size_request(video_area, width, height);
-    if (video_window_global) {
-        gtk_container_add(GTK_CONTAINER(video_window_global), vbox);
-        gtk_widget_show_all(video_window_global);
+    if (handle) {
+        gtk_container_add(GTK_CONTAINER(handle->window), vbox);
+        gtk_widget_show_all(handle->window);
     }
 
     DEBUG("Video started for id: %s shm-path:%s width:%d height:%d",
@@ -144,16 +190,12 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
 }
 
 void
-stopped_decoding_video_cb(DBusGProxy *proxy UNUSED, gchar *id, gchar *shm_path, GError *error UNUSED, gpointer userdata UNUSED)
+stopped_decoding_video_cb(DBusGProxy *proxy UNUSED,
+                          gchar *id,
+                          gchar *shm_path UNUSED,
+                          GError *error UNUSED,
+                          gpointer userdata UNUSED)
 {
-    DEBUG("Video stopped for id %s, shm path %s", id, shm_path);
-
-    if (video_window_global) {
-        if (GTK_IS_WIDGET(video_window_global)) {
-            gtk_widget_destroy(video_window_global);
-            if (video_is_local(id))
-                update_preview_button_label();
-        }
-        video_window_global = NULL;
-    }
+    if (video_handles)
+        g_hash_table_remove(video_handles, id);
 }

@@ -36,6 +36,7 @@ class ContactBackend;
 class Contact;
 class Account;
 class VideoRenderer;
+class InstantMessagingModel;
 
 
 /** @enum daemon_call_state_t 
@@ -159,6 +160,7 @@ public:
    const QString        toHumanStateName    () const;
    Contact*             getContact          ()      ;
    VideoRenderer*       getVideoRenderer    ()      ;
+   const QString        getFormattedName    ()      ;
 
    //Automated function
    call_state stateChanged(const QString & newState);
@@ -199,7 +201,8 @@ private:
    bool                   m_Recording      ;
    static Call*           m_sSelectedCall  ;
    bool                   m_ContactChanged ;
-   Contact*               m_pContact;
+   Contact*               m_pContact       ;
+   InstantMessagingModel* m_pImModel       ;
    
    //State machine
    /**

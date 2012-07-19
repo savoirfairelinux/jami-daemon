@@ -54,6 +54,7 @@ BEGIN_EXTERN_C
 #define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
 #define HISTORY_ENABLED				CONF_PREFIX "/state/history"
 #define INSTANT_MESSAGING_ENABLED               CONF_PREFIX "/state/instant_messaging"
+#define MESSAGING_URL_COMMAND               CONF_PREFIX "/hook/url_command"
 
 
 #define EEL_GCONF_UNDEFINED_CONNECTION 0

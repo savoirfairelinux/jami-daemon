@@ -15,13 +15,23 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="CallView" name="callView" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
+     <widget class="CallView" name="callView" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>3</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+     <widget class="IMManager" name="m_pMessageTabBox">
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+     </widget>
     </widget>
    </item>
    <item>
@@ -197,6 +207,12 @@
    <class>CallView</class>
    <extends>QWidget</extends>
    <header location="global">CallView.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>IMManager</class>
+   <extends>QTabWidget</extends>
+   <header>widgets/IMManager.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

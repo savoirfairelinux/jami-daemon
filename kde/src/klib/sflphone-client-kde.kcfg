@@ -158,6 +158,11 @@
       <default>false</default>
     </entry>
 
+    <entry name="defaultAccountId" type="String">
+      <label>Default account used for contact lookup if only partial (only extension) contacts info is available</label>
+      <default>IP2IP</default>
+    </entry>
+
     <!-- Bookmark -->
     <entry name="bookmarkList" type="StringList">
         <label>List of bookmarked clients</label>

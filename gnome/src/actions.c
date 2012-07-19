@@ -70,6 +70,9 @@
 #include "unused.h"
 #include "sliders.h"
 #include "messaging/message_tab.h"
+#ifdef SFL_VIDEO
+#include "video/video_callbacks.h"
+#endif
 
 static GHashTable * ip2ip_profile;
 
@@ -150,6 +153,9 @@ void
 sflphone_quit(gboolean force_quit)
 {
     if (force_quit || calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
+#ifdef SFL_VIDEO
+        video_cleanup();
+#endif
         dbus_unregister(getpid());
         dbus_clean();
         account_list_free();
