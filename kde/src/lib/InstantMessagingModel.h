@@ -23,6 +23,8 @@
 
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QModelIndex>
+#include "typedefs.h"
+#include <QtCore/QDebug>
 
 enum MessageRole {
    INCOMMING_IM,
@@ -30,27 +32,67 @@ enum MessageRole {
    MIME_TRANSFER,
 };
 
-class InstantMessagingModel : public QAbstractListModel
+class Call;
+class CallModelBase;
+class InstantMessagingModel;
+
+class LIB_EXPORT InstantMessagingModelManager : public QObject
 {
    Q_OBJECT
+public:
+   static InstantMessagingModelManager* getInstance() {
+      if (!m_spInstance) {
+         m_spInstance = new InstantMessagingModelManager();
+      }
+      return m_spInstance;
+   }
+   static void init(CallModelBase* model) {
+      m_spCallModel = model;
+      getInstance();
+   }
+   InstantMessagingModel* getModel(Call* call);
+private:
+   InstantMessagingModelManager();
+   static InstantMessagingModelManager* m_spInstance;
+   static CallModelBase* m_spCallModel;
+   QHash<QString,InstantMessagingModel*> m_lModels;
+private slots:
+   void newMessage(QString callId, QString from, QString message);
+
+signals:
+   void newMessagingModel(Call*,InstantMessagingModel*);
+};
+
+class LIB_EXPORT InstantMessagingModel : public QAbstractListModel
+{
+   Q_OBJECT
+   friend class InstantMessagingModelManager;
+   friend class Call;
 public:
    static const int MESSAGE_TYPE_ROLE    = 100;
    static const int MESSAGE_FROM_ROLE    = 101;
    static const int MESSAGE_TEXT_ROLE    = 102;
-   static const int MESSAGE_CONTACT_ROLE = 103;
+   static const int MESSAGE_IMAGE_ROLE   = 103;
+   static const int MESSAGE_CONTACT_ROLE = 104;
 
-   InstantMessagingModel(QObject* parent);
+   InstantMessagingModel(Call* call, QObject* parent = nullptr);
    QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole     ) const;
    int           rowCount ( const QModelIndex& parent = QModelIndex()                ) const;
    Qt::ItemFlags flags    ( const QModelIndex& index                                 ) const;
    virtual bool  setData  ( const QModelIndex& index, const QVariant &value, int role)      ;
 
 private:
+   void addIncommingMessage(QString from, QString message);
+   void addOutgoingMessage(QString message);
+   
    struct InternalIM {
       QString from;
       QString message;
    };
    QList<InternalIM> m_lMessages;
+   QHash<QModelIndex,QVariant> m_lImages;
+   Call* m_pCall;
+
 };
 
 #endif

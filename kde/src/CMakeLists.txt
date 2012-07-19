@@ -55,6 +55,8 @@ SET(
    widgets/CategorizedTreeWidget.cpp
    widgets/VideoDock.cpp
    widgets/VideoWidget.cpp
+   widgets/IMManager.cpp
+   widgets/IMTab.cpp
 #    widgets/AcceleratedVideoWidget.cpp
    Codec.cpp
    CallView.cpp

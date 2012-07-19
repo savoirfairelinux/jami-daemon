@@ -46,6 +46,7 @@
 #include "lib/configurationmanager_interface_singleton.h"
 #include "lib/Contact.h"
 #include "lib/AccountList.h"
+#include "lib/InstantMessagingModel.h"
 
 //SFLPhone
 #include "klib/AkonadiBackend.h"
@@ -357,6 +358,7 @@ TreeWidgetCallModel* SFLPhone::model()
       m_pModel = new TreeWidgetCallModel();
       m_pModel->initCall();
       Call::setContactBackend(AkonadiBackend::getInstance());
+      InstantMessagingModelManager::init(m_pModel);
       AccountList::getInstance()->setDefaultAccount(AccountList::getInstance()->getAccountById(ConfigurationSkeleton::defaultAccountId()));
       #ifdef ENABLE_VIDEO
       VideoModel::getInstance();

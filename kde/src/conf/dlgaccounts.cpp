@@ -213,7 +213,6 @@ void DlgAccounts::saveAccount(QModelIndex item)
    //                                                                                                                      /
 
    if (m_pDefaultAccount->isChecked()) {
-      kDebug() << "\n\n\n\n\nIS CHECKED\n\n\n\n\n";
       ConfigurationSkeleton::setDefaultAccountId(account->getAccountId());
       AccountList::getInstance()->setDefaultAccount(account);
    }

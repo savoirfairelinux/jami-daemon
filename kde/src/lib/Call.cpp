@@ -29,6 +29,7 @@
 #include "Account.h"
 #include "AccountList.h"
 #include "VideoModel.h"
+#include "InstantMessagingModel.h"
 
 
 const call_state Call::actionPerformedStateMap [13][5] =
@@ -118,7 +119,7 @@ void Call::setContactBackend(ContactBackend* be)
 ///Constructor
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
    : m_isConference(false),m_pStopTime(nullptr),m_pStartTime(nullptr),
-   m_ContactChanged(false),m_pContact(nullptr)
+   m_ContactChanged(false),m_pContact(nullptr),m_pImModel(nullptr)
 {
    this->m_CallId          = callId     ;
    this->m_PeerPhoneNumber = peerNumber ;
@@ -148,7 +149,8 @@ Call::~Call()
 }
 
 ///Constructor
-Call::Call(QString confId, QString account)
+Call::Call(QString confId, QString account): m_isConference(false),m_pStopTime(nullptr),m_pStartTime(nullptr),
+   m_ContactChanged(false),m_pContact(nullptr),m_pImModel(nullptr)
 {
    m_isConference  = m_ConfId.isEmpty();
    this->m_ConfId  = confId  ;
@@ -420,6 +422,19 @@ const QString& Call::getPeerName()          const
    return m_PeerName;
 }
 
+///Generate the best possible peer name
+const QString Call::getFormattedName()
+{
+   if (isConference())
+      return "Conference";
+   else if (m_pContact && !m_pContact->getFormattedName().isEmpty())
+      return m_pContact->getFormattedName();
+   else if (!getPeerName().isEmpty())
+      return m_PeerName;
+   else
+      return m_PeerPhoneNumber;
+}
+
 ///Get the current state
 call_state Call::getCurrentState()          const
 {
@@ -629,7 +644,13 @@ void Call::changeCurrentState(call_state newState)
 void Call::sendTextMessage(QString message)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   Q_NOREPLY callManager.sendTextMessage(m_CallId,message);
+   Q_NOREPLY callManager.sendTextMessage(isConference()?m_ConfId:m_CallId,message);
+   qDebug() << "MODEL IS" << m_pImModel;
+   if (!m_pImModel) {
+        m_pImModel = InstantMessagingModelManager::getInstance()->getModel(this);
+   }
+   qDebug() << "MODEL IS2" << m_pImModel;
+   m_pImModel->addOutgoingMessage(message);
 }
 
 QDateTime* Call::setStartTime_private(QDateTime* time)

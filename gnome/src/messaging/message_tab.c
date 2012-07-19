@@ -189,7 +189,7 @@ on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
 }
 
 static void
-on_clicked(GtkTextBuffer *textbuffer UNUSED, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, gpointer user_data UNUSED)
+on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, gpointer user_data UNUSED)
 {
    if (start_link && end_link && gtk_text_iter_compare(start_link,location) <= 0 && gtk_text_iter_compare(location,end_link) <= 0) {
        gchar* text = gtk_text_buffer_get_text(textbuffer,start_link,end_link,FALSE);
@@ -201,6 +201,9 @@ on_clicked(GtkTextBuffer *textbuffer UNUSED, GtkTextIter *location UNUSED, GtkTe
                url_command = "xdg-open";
            const gchar* argv[3] = {url_command,text,(char*)NULL};
            g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
+           gtk_text_buffer_remove_all_tags(textbuffer,start_link,end_link );
+           start_link = NULL;
+           end_link   = NULL;
        }
    }
 }
