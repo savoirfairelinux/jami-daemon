@@ -281,6 +281,8 @@ disable_messaging_tab(const gchar * id)
         tab = g_hash_table_lookup(tabs, id);
     if (tab != NULL)
         gtk_widget_hide(tab->entry);
+    if (!g_list_length(gtk_container_get_children(GTK_CONTAINER(get_tab_box()))))
+       gtk_widget_hide(get_tab_box());
 }
 
 void
@@ -361,8 +363,10 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label)
     /* Create the main layout */
     GtkWidget *vbox            = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkTextBuffer *text_buffer = gtk_text_buffer_new(NULL);
-    gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
-    gtk_text_buffer_create_tag(text_buffer, "link", "foreground", "#0000FF","underline",PANGO_UNDERLINE_SINGLE);
+    if (text_buffer) {
+      gtk_text_buffer_create_tag(text_buffer, "b", "weight", PANGO_WEIGHT_BOLD,NULL);
+      gtk_text_buffer_create_tag(text_buffer, "link", "foreground", "#0000FF","underline",PANGO_UNDERLINE_SINGLE,NULL);
+    }
 
     /* Create the conversation history widget*/
     GtkWidget *history_hbox    = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2  );
@@ -472,11 +476,12 @@ create_messaging_tab(callable_obj_t* call)
 message_tab *
 create_messaging_tab_conf(conference_obj_t* call)
 {
-    message_tab* self = create_messaging_tab_common(call->_confID,"Conference");
-    self->conf   = call;
-    self->call   = NULL;
-
-    disable_conference_calls(call);
-    
-    return self;
+    if (call->_confID && strlen(call->_confID)) {
+        message_tab* self = create_messaging_tab_common(call->_confID,"Conference");
+        self->conf   = call;
+        self->call   = NULL;
+        disable_conference_calls(call);
+        return self;
+    }
+    return NULL;
 }
