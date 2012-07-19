@@ -85,4 +85,12 @@ IMTab::IMTab(InstantMessagingModel* model,QWidget* parent) : QListView(parent)
 //    setWrapping(true);
    setUniformItemSizes(false);
    setItemDelegate(new ImDelegates(this));
+   setVerticalScrollMode(ScrollPerPixel);
+   connect(model,SIGNAL(dataChanged(QModelIndex, QModelIndex)),this,SLOT(scrollBottom()));
+}
+
+
+void IMTab::scrollBottom()
+{
+   scrollTo(model()->index(model()->rowCount()-1,0));
 }
