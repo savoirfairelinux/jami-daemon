@@ -732,9 +732,11 @@ fill_devices()
         gtk_widget_hide(v4l2_nodev);
         gtk_widget_set_sensitive(preview_button, TRUE);
     } else {
-        gtk_widget_hide(v4l2_hbox);
-        gtk_widget_show(v4l2_nodev);
-        gtk_widget_set_sensitive(preview_button, FALSE);
+        if (GTK_IS_WIDGET(v4l2_hbox)) {
+            gtk_widget_hide(v4l2_hbox);
+            gtk_widget_show(v4l2_nodev);
+            gtk_widget_set_sensitive(preview_button, FALSE);
+        }
     }
 }
 
