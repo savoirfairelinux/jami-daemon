@@ -174,7 +174,6 @@ class AudioRtpRecordHandler {
     private:
 
         const std::string id_;
-        // EchoSuppress echoCanceller;
         GainControl gainController;
 };
 }

@@ -527,10 +527,12 @@ void SIPVoIPLink::destroy()
 
 void SIPVoIPLink::setSipLogLevel()
 {
-    std::string loglevel = getenv(SIPLOGLEVEL);
+    char *envvar = getenv(SIPLOGLEVEL);
     int level = 0;
 
-    if(!loglevel.empty()) {
+    if(envvar != NULL) {
+        std::string loglevel = envvar;
+
         if ( ! (std::istringstream(loglevel) >> level) ) level = 0;
 
         level = level > 6 ? 6 : level;
