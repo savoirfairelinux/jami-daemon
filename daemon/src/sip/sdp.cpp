@@ -531,45 +531,55 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
         throw SdpException("Could not add zrtp attribute to media");
 }
 
+namespace {
+    // Returns index of desired media attribute, or -1 if not found */
+    int getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
+    {
+        if (!session) {
+            ERROR("Session is NULL when looking for \"%s\" attribute", type);
+            return -1;
+        }
+        int i = 0;
+        while (i < session->media_count and pj_stricmp2(&session->media[i]->desc.media, type) != 0)
+            ++i;
+
+        if (i == session->media_count)
+            return -1;
+        else
+            return i;
+    }
+}
+
 void Sdp::addAttributeToLocalAudioMedia(const char *attr)
 {
-    if (!localSession_) {
-        ERROR("Sdp: Local session is NULL");
+    const int i = getIndexOfAttribute(localSession_, "audio");
+    if (i == -1)
         return;
-    }
-    int i = 0;
-    while (pj_stricmp2(&localSession_->media[i]->desc.media, "audio") != 0)
-        ++i;
     pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_, attr, NULL);
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
 
 void Sdp::removeAttributeFromLocalAudioMedia(const char *attr)
 {
-   if (!localSession_) {
-        ERROR("Sdp: Local session is NULL");
+    const int i = getIndexOfAttribute(localSession_, "audio");
+    if (i == -1)
         return;
-    }
-    int i = 0;
-    while (pj_stricmp2(&localSession_->media[i]->desc.media, "audio") != 0)
-        ++i;
     pjmedia_sdp_media_remove_all_attr(localSession_->media[i], attr);
 }
 
 void Sdp::removeAttributeFromLocalVideoMedia(const char *attr)
 {
-    int i = 0;
-    while (pj_stricmp2(&localSession_->media[i]->desc.media, "video") != 0)
-        ++i;
+    const int i = getIndexOfAttribute(localSession_, "video");
+    if (i == -1)
+        return;
     pjmedia_sdp_media_remove_all_attr(localSession_->media[i], attr);
 }
 
 void Sdp::addAttributeToLocalVideoMedia(const char *attr)
 {
-    int i = 0;
-    while (pj_stricmp2(&localSession_->media[i]->desc.media, "video") != 0)
-        ++i;
-
+    const int i = getIndexOfAttribute(localSession_, "video");
+    if (i == -1)
+        return;
     pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_, attr, NULL);
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
