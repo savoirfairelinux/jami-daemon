@@ -36,7 +36,7 @@ namespace sfl {
 Pattern::Pattern(const std::string& pattern, const std::string& options) :
     pattern_(pattern),
     subject_(),
-    // re_(NULL),
+    re_(NULL),
     ovector_(),
     count_(0),
     options_(0),
@@ -81,7 +81,7 @@ void Pattern::compile()
     int offset;
     const char * error;
 
-    // re_ = pcre_compile(pattern_.c_str(), 0, &error, &offset, NULL);
+    re_ = pcre_compile(pattern_.c_str(), 0, &error, &offset, NULL);
 
     if (re_ == NULL) {
         std::string offsetStr;
@@ -106,7 +106,7 @@ void Pattern::compile()
 unsigned int Pattern::getCaptureGroupCount()
 {
     int captureCount = 0;
-    // pcre_fullinfo(re_, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
+    pcre_fullinfo(re_, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
     return captureCount;
 }
 
@@ -114,7 +114,7 @@ std::vector<std::string> Pattern::groups()
 {
     const char ** stringList;
 
-    // pcre_get_substring_list(subject_.c_str(), &ovector_[0], count_, &stringList);
+    pcre_get_substring_list(subject_.c_str(), &ovector_[0], count_, &stringList);
     std::vector<std::string> matchedSubstrings;
     for (int i = 1; stringList[i] != NULL; i++)
         matchedSubstrings.push_back(stringList[i]);
