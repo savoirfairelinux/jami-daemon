@@ -26,8 +26,6 @@ test_SOURCES = constants.h \
 			   numbercleanertest.cpp \
 			   sdesnegotiatortest.h \
 			   sdesnegotiatortest.cpp \
-			   instantmessagingtest.h \
-			   instantmessagingtest.cpp \
 			   siptest.h \
 			   siptest.cpp \
 			   sdptest.h \
@@ -40,6 +38,11 @@ test_SOURCES = constants.h \
 			   mainbuffertest.cpp \
 			   resamplertest.h \
 			   resamplertest.cpp
+
+if BUILD_INSTANT_MESSAGING
+test_SOURCES+=instantmessagingtest.h \
+			   instantmessagingtest.cpp
+endif
 
 clean-local:
 	rm -rf cppunitresults.xml im:testfile1.txt im:testfile2.txt \

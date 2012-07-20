@@ -389,6 +389,10 @@ CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 void
 CallManager::sendTextMessage(const std::string& callID, const std::string& message)
 {
+#if HAVE_INSTANT_MESSAGING
     if (!Manager::instance().sendTextMessage(callID, message, "Me"))
         throw CallManagerException();
+#else
+    ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
+#endif
 }

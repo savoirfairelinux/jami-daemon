@@ -175,8 +175,18 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-#AX_LIB_EXPAT([1.95.0])
-#AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
+AC_ARG_WITH([instant_messaging],
+	[ AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging]) ],
+	[],
+	[with_instant_messaging=yes])
+
+AS_IF([test "x$with_instant_messaging" = "xyes"], [
+	AX_LIB_EXPAT([1.95.0])
+	AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
+	]);
+
+AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
+AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )
 
 AX_PTHREAD
 

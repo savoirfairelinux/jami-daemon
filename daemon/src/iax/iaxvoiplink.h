@@ -167,7 +167,9 @@ class IAXVoIPLink : public VoIPLink {
         virtual void carryingDTMFdigits(const std::string& id, char code);
 
 
+#if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+#endif
 
         /**
          * Return the codec protocol used for this call

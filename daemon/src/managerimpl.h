@@ -390,6 +390,7 @@ class ManagerImpl {
          */
         void peerHungupCall(const std::string& id);
 
+#if HAVE_INSTANT_MESSAGING
         /**
          * Notify the client with an incoming message
          * @param accountId	The account identifier
@@ -405,6 +406,7 @@ class ManagerImpl {
         * @param from	        The sender of this message (could be another participant of a conference)
          */
         bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+#endif // HAVE_INSTANT_MESSAGING
 
         /**
          * Notify the client he has voice mails

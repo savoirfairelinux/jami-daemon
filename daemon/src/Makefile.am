@@ -7,7 +7,11 @@ if SFL_VIDEO
 SFL_VIDEO_SUBDIR = video
 endif
 
-SUBDIRS = dbus audio config hooks history sip iax im $(SFL_VIDEO_SUBDIR)
+if BUILD_INSTANT_MESSAGING
+INSTANT_MESSAGING_SUBDIR = im
+endif
+
+SUBDIRS = dbus audio config hooks history sip iax $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
 
 sflphoned_SOURCES = main.cpp
 
@@ -62,16 +66,19 @@ if SFL_VIDEO
 SFL_VIDEO_LIB=./video/libvideo.la
 endif
 
+if BUILD_INSTANT_MESSAGING
+IM_LIB=./im/libim.la
+endif
+
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \
-	./im/libim.la \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
-	./history/libhistory.la $(SFL_VIDEO_LIB)
+	./history/libhistory.la $(SFL_VIDEO_LIB) $(IM_LIB)
 
 libsflphone_la_LDFLAGS = \
 		@CCGNU2_LIBS@ \

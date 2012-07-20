@@ -1381,6 +1381,7 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 
 
 //THREAD=VoIP
+#if HAVE_INSTANT_MESSAGING
 void ManagerImpl::incomingMessage(const std::string& callID,
                                   const std::string& from,
                                   const std::string& message)
@@ -1416,7 +1417,6 @@ void ManagerImpl::incomingMessage(const std::string& callID,
     } else
         dbus_.getCallManager()->incomingMessage(callID, from, message);
 }
-
 
 //THREAD=VoIP
 bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
@@ -1486,9 +1486,9 @@ bool ManagerImpl::sendTextMessage(const std::string& callID, const std::string& 
 
         account->getVoIPLink()->sendTextMessage(callID, message, from);
     }
-
     return true;
 }
+#endif // HAVE_INSTANT_MESSAGING
 
 //THREAD=VoIP CALL=Outgoing
 void ManagerImpl::peerAnsweredCall(const std::string& id)

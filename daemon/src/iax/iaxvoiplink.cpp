@@ -399,6 +399,7 @@ IAXVoIPLink::carryingDTMFdigits(const std::string& id, char code)
     }
 }
 
+#if HAVE_INSTANT_MESSAGING
 void
 IAXVoIPLink::sendTextMessage(const std::string& callID,
                              const std::string& message,
@@ -411,6 +412,7 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
         sfl::InstantMessaging::send_iax_message(call->session, callID, message.c_str());
     }
 }
+#endif
 
 std::string
 IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
@@ -521,7 +523,9 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_TEXT:
+#if HAVE_INSTANT_MESSAGING
             Manager::instance().incomingMessage(call->getCallId(), call->getPeerNumber(), std::string((const char*) event->data));
+#endif
             break;
 
         case IAX_EVENT_RINGA:

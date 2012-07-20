@@ -31,9 +31,8 @@
 
 #include "instant_messaging.h"
 #include "logger.h"
-//#include "expat.h"
+#include "expat.h"
 
-#if 0
 namespace {
 void XMLCALL
 startElementCallback(void *userData, const char *name, const char **atts)
@@ -52,7 +51,6 @@ startElementCallback(void *userData, const char *name, const char **atts)
 void XMLCALL endElementCallback(void * /*userData*/, const char * /*name*/)
 {}
 } // end anonymous namespace
-#endif
 
 namespace sfl {
 bool InstantMessaging::saveMessage(const std::string &message, const std::string &author, const std::string &id, int mode)
@@ -151,7 +149,6 @@ InstantMessaging::parseXmlUriList(const std::string &urilist)
 {
     InstantMessaging::UriList list;
 
-/*
     XML_Parser parser = XML_ParserCreate(NULL);
     XML_SetUserData(parser, &list);
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
@@ -161,7 +158,6 @@ InstantMessaging::parseXmlUriList(const std::string &urilist)
                XML_GetCurrentLineNumber(parser));
         throw InstantMessageException("Error while parsing uri-list xml content");
     }
-*/
 
     return list;
 }

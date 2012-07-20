@@ -1015,6 +1015,7 @@ SIPVoIPLink::offhold(const std::string& id)
         call->setState(Call::ACTIVE);
 }
 
+#if HAVE_INSTANT_MESSAGING
 void SIPVoIPLink::sendTextMessage(const std::string &callID,
                                   const std::string &message,
                                   const std::string &from)
@@ -1035,6 +1036,7 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
     list.push_front(entry);
     send_sip_message(call->inv, callID, appendUriList(message, list));
 }
+#endif // HAVE_INSTANT_MESSAGING
 
 bool
 SIPVoIPLink::transferCommon(SIPCall *call, pj_str_t *dst)
@@ -1679,16 +1681,11 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     if (!event->body.tsx_state.src.rdata)
         return;
 
-    // Incoming TEXT message
-
-    // Get the message inside the transaction
     pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
-    if (!r_data->msg_info.msg->body)
-        return;
-    const char *formattedMsgPtr = static_cast<const char*>(r_data->msg_info.msg->body->data);
-    if (!formattedMsgPtr)
-        return;
-    std::string formattedMessage(formattedMsgPtr, strlen(formattedMsgPtr));
+
+    // Respond with a 200/OK
+    pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
+    pjsip_dlg_send_response(inv->dlg, tsx, t_data);
 
     // Try to determine who is the recipient of the message
     SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
@@ -1696,9 +1693,16 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     if (!call)
         return;
 
-    // Respond with a 200/OK
-    pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
-    pjsip_dlg_send_response(inv->dlg, tsx, t_data);
+#if HAVE_INSTANT_MESSAGING
+    // Incoming TEXT message
+
+    // Get the message inside the transaction
+    if (!r_data->msg_info.msg->body)
+        return;
+    const char *formattedMsgPtr = static_cast<const char*>(r_data->msg_info.msg->body->data);
+    if (!formattedMsgPtr)
+        return;
+    std::string formattedMessage(formattedMsgPtr, strlen(formattedMsgPtr));
 
     using namespace sfl::InstantMessaging;
 
@@ -1728,6 +1732,7 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     } catch (const sfl::InstantMessageException &except) {
         ERROR("%s", except.what());
     }
+#endif
 }
 
 void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)

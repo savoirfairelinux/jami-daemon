@@ -240,9 +240,11 @@ class SIPVoIPLink : public VoIPLink {
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
+#if HAVE_INSTANT_MESSAGING
         void sendTextMessage(const std::string& callID,
                              const std::string& message,
                              const std::string& from);
+#endif
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
