@@ -32,7 +32,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-// #include <pcre.h>
+#include <pcre.h>
 #include "noncopyable.h"
 
 namespace sfl {
@@ -308,7 +308,7 @@ class Pattern {
          * contains the compiled regular
          * expression
                */
-        // pcre * re_;
+        pcre * re_;
 
         // The internal output vector used by PCRE.
         std::vector<int> ovector_;

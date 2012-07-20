@@ -55,6 +55,8 @@
 #include "sipaccount.h"
 
 #include "pjsip/sip_types.h"
+#include "pjsip/sip_transport_tls.h"
+
 #include "dbus/dbusmanager.h"
 #include "dbus/configurationmanager.h"
 

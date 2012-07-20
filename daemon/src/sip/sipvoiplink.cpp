@@ -46,7 +46,9 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
+#if HAVE_SDES
 #include "sdes_negotiator.h"
+#endif
 #include "array_size.h"
 
 #include "dbus/dbusmanager.h"
@@ -63,7 +65,6 @@
 #endif
 
 #include "pjsip/sip_endpoint.h"
-#include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_uri.h"
 #include "pjnath.h"
 
@@ -318,12 +319,14 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
             std::copy(sfl::CryptoSuites, sfl::CryptoSuites + size,
                       localCapabilities.begin());
 
+#if HAVE_SDES
             sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 
             if (sdesnego.negotiate()) {
                 call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
                 call->getAudioRtp().initLocalCryptoInfo();
             }
+#endif
         }
     }
 
@@ -1535,6 +1538,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     CryptoOffer crypto_offer;
     call->getLocalSDP()->getRemoteSdpCryptoFromOffer(remote_sdp, crypto_offer);
 
+#if HAVE_SDES
     bool nego_success = false;
 
     if (!crypto_offer.empty()) {
@@ -1573,6 +1577,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         if (dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID))->getSrtpFallback())
             call->getAudioRtp().initSession();
     }
+#endif // HAVE_SDES
 
     sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
 
