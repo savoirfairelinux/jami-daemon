@@ -138,10 +138,13 @@ void VideoRtpSession::start()
         DEBUG("Video sending disabled");
 
     if (receiving_) {
-        if (receiveThread_.get())
-            WARN("Restarting video receiver");
-        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
-        receiveThread_->start();
+        if (receiveThread_.get()) {
+            // FIXME: this is just until we fix onhold/offhold
+            WARN("Not restarting video receiver");
+        } else {
+            receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
+            receiveThread_->start();
+        }
     }
     else
         DEBUG("Video receiving disabled");
