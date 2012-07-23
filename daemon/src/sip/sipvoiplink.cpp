@@ -1098,10 +1098,6 @@ void
 SIPVoIPLink::transfer(const std::string& id, const std::string& to)
 {
     SIPCall *call = getSIPCall(id);
-    if (call == NULL) {
-        ERROR("Could not find call %s", id.c_str());
-        return;
-    }
     call->stopRecording();
 
     std::string account_id(Manager::instance().getAccountFromCall(id));
@@ -1118,14 +1114,14 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
         pj_cstr(&dst, toUri.c_str());
     }
 
-    if (!transferCommon(getSIPCall(id), &dst))
+    if (!transferCommon(call, &dst))
         throw VoipLinkException("Couldn't transfer");
 }
 
 bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
 {
     SIPCall *call = getSIPCall(to);
-    if (!call or !call->inv or !call->inv->dlg)
+    if (!call->inv or !call->inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
     pjsip_dialog *target_dlg = call->inv->dlg;
     pjsip_uri *uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
@@ -1155,7 +1151,7 @@ SIPVoIPLink::refuse(const std::string& id)
 {
     SIPCall *call = getSIPCall(id);
 
-    if (!call or !call->isIncoming() or call->getConnectionState() == Call::CONNECTED or !call->inv)
+    if (!call->isIncoming() or call->getConnectionState() == Call::CONNECTED or !call->inv)
         return;
 
     call->getAudioRtp().stop();
@@ -1654,8 +1650,8 @@ bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
     /*
      * Incoming INFO request for media control.
      */
-    const pj_str_t STR_APPLICATION = { (char *) "application", 11};
-    const pj_str_t STR_MEDIA_CONTROL_XML = { (char *) "media_control+xml", 17};
+    const pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
+    const pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
     pjsip_rx_data *rdata = event->body.tsx_state.src.rdata;
     pjsip_msg_body *body = rdata->msg_info.msg->body;
 
@@ -1665,11 +1661,11 @@ bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
 
         /* Apply and answer the INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
-        const pj_str_t PICT_FAST_UPDATE = {(char *) "picture_fast_update", 19};
+        const pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
 #ifdef SFL_VIDEO
-            DEBUG("handling picture fast update");
+            DEBUG("handling picture fast update request");
             SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
             if (call)
                 call->getVideoRtp().forceKeyFrame();
@@ -1733,13 +1729,13 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
     pjsip_dlg_send_response(inv->dlg, tsx, t_data);
 
+#if HAVE_INSTANT_MESSAGING
     // Try to determine who is the recipient of the message
     SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (!call)
         return;
 
-#if HAVE_INSTANT_MESSAGING
     // Incoming TEXT message
 
     // Get the message inside the transaction
