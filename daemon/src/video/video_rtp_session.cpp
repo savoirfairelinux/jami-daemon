@@ -136,6 +136,7 @@ void VideoRtpSession::start()
         sendThread_->start();
     } else {
         DEBUG("Video sending disabled");
+        sendThread_.reset();
     }
 
     if (receiving_) {
@@ -146,6 +147,7 @@ void VideoRtpSession::start()
         receiveThread_->start();
     } else {
         DEBUG("Video receiving disabled");
+        receiveThread_.reset();
     }
 }
 
