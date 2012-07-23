@@ -266,8 +266,6 @@ class SIPVoIPLink : public VoIPLink {
          */
         bool SIPStartCall(SIPCall* call);
 
-        void dtmfSend(SIPCall *call, char code, const std::string &type);
-
         /**
          * Threading object
          */

@@ -973,6 +973,12 @@ SIPVoIPLink::onhold(const std::string& id)
     sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
     sdpSession->addAttributeToLocalAudioMedia("sendonly");
 
+#ifdef SFL_VIDEO
+    sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
+    sdpSession->removeAttributeFromLocalVideoMedia("sendonly");
+    sdpSession->addAttributeToLocalVideoMedia("sendonly");
+#endif
+
     SIPSessionReinvite(call);
 }
 
@@ -1013,6 +1019,12 @@ SIPVoIPLink::offhold(const std::string& id)
     sdpSession->removeAttributeFromLocalAudioMedia("sendrecv");
     sdpSession->removeAttributeFromLocalAudioMedia("sendonly");
     sdpSession->addAttributeToLocalAudioMedia("sendrecv");
+
+#ifdef SFL_VIDEO
+    sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
+    sdpSession->removeAttributeFromLocalVideoMedia("sendonly");
+    sdpSession->addAttributeToLocalVideoMedia("sendrecv");
+#endif
 
     if (SIPSessionReinvite(call) == PJ_SUCCESS)
         call->setState(Call::ACTIVE);
@@ -1173,59 +1185,88 @@ SIPVoIPLink::getCurrentAudioCodecName(Call *call) const
     return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
 }
 
-void
-SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
+/* Only use this macro with string literals or character arrays, will not work
+ * as expected with char pointers */
+#define CONST_PJ_STR(X) {(char *) (X), ARRAYSIZE(X) - 1}
+
+namespace {
+void sendSIPInfo(const SIPCall &call, const char *const body, const char *const subtype)
 {
-    std::string accountID(Manager::instance().getAccountFromCall(id));
-    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
-
-    if (account) {
-        try {
-            dtmfSend(getSIPCall(id), code, account->getDtmfType());
-        } catch (const VoipLinkException &e) {
-            // don't do anything if call doesn't exist
-        }
-    }
-}
-
-void
-SIPVoIPLink::dtmfSend(SIPCall *call, char code, const std::string &dtmf)
-{
-    if (dtmf == SIPAccount::OVERRTP_STR) {
-        call->getAudioRtp().sendDtmfDigit(code - '0');
-        return;
-    }
-    else if (dtmf != SIPAccount::SIPINFO_STR) {
-        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead",
-             dtmf.c_str(), SIPAccount::SIPINFO_STR);
-    }
-    // else : dtmf == SIPINFO
-
-    pj_str_t methodName = pj_str((char*) "INFO");
+    pj_str_t methodName = CONST_PJ_STR("INFO");
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
 
     /* Create request message. */
     pjsip_tx_data *tdata;
 
-    if (pjsip_dlg_create_request(call->inv->dlg, &method, -1, &tdata) != PJ_SUCCESS)
+    if (pjsip_dlg_create_request(call.inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
+        ERROR("Could not create dialog");
         return;
+    }
 
-    int duration = Manager::instance().voipPreferences.getPulseLength();
-    char dtmf_body[1000];
-    snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
-
-    /* Create "application/dtmf-relay" message body. */
-    pj_str_t content = pj_str(dtmf_body);
-    pj_str_t type = pj_str((char*) "application");
-    pj_str_t subtype = pj_str((char*) "dtmf-relay");
-    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &content);
+    /* Create "application/<subtype>" message body. */
+    pj_str_t content;
+    pj_cstr(&content, body);
+    const pj_str_t type = CONST_PJ_STR("application");
+    pj_str_t pj_subtype;
+    pj_cstr(&pj_subtype, subtype);
+    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
 
     if (tdata->msg->body == NULL)
         pjsip_tx_data_dec_ref(tdata);
     else
-        pjsip_dlg_send_request(call->inv->dlg, tdata, mod_ua_.id, NULL);
+        pjsip_dlg_send_request(call.inv->dlg, tdata, mod_ua_.id, NULL);
 }
+
+#ifdef SFL_VIDEO
+void
+requestFastPictureUpdate(const SIPCall &call)
+{
+    const char * const BODY =
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+        "<media_control><vc_primitive><to_encoder>"
+        "<picture_fast_update/>"
+        "</to_encoder></vc_primitive></media_control>";
+
+    DEBUG("Sending video keyframe request via SIP INFO");
+    sendSIPInfo(call, BODY, "media_control+xml");
+}
+#endif
+
+void
+dtmfSend(SIPCall &call, char code, const std::string &dtmf)
+{
+    if (dtmf == SIPAccount::OVERRTP_STR) {
+        call.getAudioRtp().sendDtmfDigit(code - '0');
+        return;
+    } else if (dtmf != SIPAccount::SIPINFO_STR) {
+        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead",
+             dtmf.c_str(), SIPAccount::SIPINFO_STR);
+    } // else : dtmf == SIPINFO
+
+    int duration = Manager::instance().voipPreferences.getPulseLength();
+    char dtmf_body[1000];
+    snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+    sendSIPInfo(call, dtmf_body, "dtmf-relay");
+}
+}
+
+void
+SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
+{
+    std::string accountID(Manager::instance().getAccountFromCall(id));
+    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    if (!account)
+        return;
+
+    try {
+        SIPCall *call(getSIPCall(id));
+        dtmfSend(*call, code, account->getDtmfType());
+    } catch (const VoipLinkException &e) {
+        // don't do anything if call doesn't exist
+    }
+}
+
 
 bool
 SIPVoIPLink::SIPStartCall(SIPCall *call)
