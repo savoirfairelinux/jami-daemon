@@ -81,11 +81,13 @@ class VideoReceiveThread : public ost::Thread {
         void fill_buffer(void *data);
         static int interruptCb(void *ctx);
         AVIOInterruptCB interruptCb_;
+        void (* requestKeyFrameCallback_)(const std::string &);
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
         virtual ~VideoReceiveThread();
         virtual void run();
+        void setRequestKeyFrameCallback(void (*)(const std::string &));
 };
 }
 

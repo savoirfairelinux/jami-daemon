@@ -253,6 +253,10 @@ class SIPVoIPLink : public VoIPLink {
 
         SipTransport sipTransport;
 
+#ifdef SFL_VIDEO
+        static void requestFastPictureUpdate(const std::string &callID);
+#endif
+
     private:
 
         NON_COPYABLE(SIPVoIPLink);

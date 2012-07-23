@@ -1214,21 +1214,6 @@ void sendSIPInfo(const SIPCall &call, const char *const body, const char *const 
         pjsip_dlg_send_request(call.inv->dlg, tdata, mod_ua_.id, NULL);
 }
 
-#ifdef SFL_VIDEO
-void
-requestFastPictureUpdate(const SIPCall &call)
-{
-    const char * const BODY =
-        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-        "<media_control><vc_primitive><to_encoder>"
-        "<picture_fast_update/>"
-        "</to_encoder></vc_primitive></media_control>";
-
-    DEBUG("Sending video keyframe request via SIP INFO");
-    sendSIPInfo(call, BODY, "media_control+xml");
-}
-#endif
-
 void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
@@ -1246,6 +1231,29 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     sendSIPInfo(call, dtmf_body, "dtmf-relay");
 }
 }
+
+#ifdef SFL_VIDEO
+void
+SIPVoIPLink::requestFastPictureUpdate(const std::string &callID)
+{
+    SIPCall *call;
+    try {
+         call = SIPVoIPLink::instance()->getSIPCall(callID);
+    } catch (const VoipLinkException &e) {
+        ERROR("%s", e.what());
+        return;
+    }
+
+    const char * const BODY =
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+        "<media_control><vc_primitive><to_encoder>"
+        "<picture_fast_update/>"
+        "</to_encoder></vc_primitive></media_control>";
+
+    DEBUG("Sending video keyframe request via SIP INFO");
+    sendSIPInfo(*call, BODY, "media_control+xml");
+}
+#endif
 
 void
 SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)

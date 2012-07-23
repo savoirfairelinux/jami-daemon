@@ -141,6 +141,8 @@ void VideoReceiveThread::setup()
     EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
     DEBUG("Finding stream info");
+    if (requestKeyFrameCallback_)
+        requestKeyFrameCallback_(id_);
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
@@ -178,8 +180,6 @@ void VideoReceiveThread::setup()
         dstHeight_ = decoderCtx_->height;
     }
 
-    // allocate video frame
-    rawFrame_ = avcodec_alloc_frame();
     // determine required buffer size and allocate buffer
     bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
 
@@ -210,7 +210,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
     args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
-    bufferSize_(0), id_(id), interruptCb_()
+    bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -241,22 +241,28 @@ void VideoReceiveThread::run()
 
     createScalingContext();
     const Callback cb(&VideoReceiveThread::fill_buffer);
+    AVFrame rawFrame;
+    rawFrame_ = &rawFrame;
+
     while (receiving_) {
         AVPacket inpacket;
 
         int ret = 0;
         if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
-            ERROR("Couldn't read frame : %s\n", strerror(ret));
+            ERROR("Couldn't read frame: %s\n", strerror(ret));
             break;
         }
         // Guarantee that we free the packet every iteration
         PacketHandle inpacket_handle(inpacket);
+        avcodec_get_frame_defaults(rawFrame_);
 
         // is this a packet from the video stream?
         if (inpacket.stream_index == streamIndex_) {
             int frameFinished = 0;
-            avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
-                                  &inpacket);
+            const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
+                                                  &inpacket);
+            if (len <= 0 and requestKeyFrameCallback_)
+                requestKeyFrameCallback_(id_);
 
             // we want our rendering code to be called by the shm_sink,
             // because it manages the shared memory synchronization
@@ -279,9 +285,6 @@ VideoReceiveThread::~VideoReceiveThread()
     if (scaledPicture_)
         av_free(scaledPicture_);
 
-    if (rawFrame_)
-        av_free(rawFrame_);
-
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
@@ -292,5 +295,10 @@ VideoReceiveThread::~VideoReceiveThread()
         avformat_close_input(&inputCtx_);
 #endif
     }
+}
+
+void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string &))
+{
+    requestKeyFrameCallback_ = cb;
 }
 } // end namespace sfl_video

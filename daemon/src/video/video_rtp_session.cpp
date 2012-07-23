@@ -35,6 +35,7 @@
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
 #include "sip/sdp.h"
+#include "sip/sipvoiplink.h"
 #include "libav_utils.h"
 #include "manager.h"
 #include "logger.h"
@@ -133,21 +134,19 @@ void VideoRtpSession::start()
             WARN("Restarting video sender");
         sendThread_.reset(new VideoSendThread(txArgs_));
         sendThread_->start();
-    }
-    else
+    } else {
         DEBUG("Video sending disabled");
+    }
 
     if (receiving_) {
-        if (receiveThread_.get()) {
-            // FIXME: this is just until we fix onhold/offhold
-            WARN("Not restarting video receiver");
-        } else {
-            receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
-            receiveThread_->start();
-        }
-    }
-    else
+        if (receiveThread_.get())
+            WARN("restarting video receiver");
+        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
+        receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::requestFastPictureUpdate);
+        receiveThread_->start();
+    } else {
         DEBUG("Video receiving disabled");
+    }
 }
 
 void VideoRtpSession::stop()
