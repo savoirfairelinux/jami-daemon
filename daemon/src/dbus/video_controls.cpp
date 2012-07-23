@@ -176,7 +176,7 @@ VideoControls::stopPreview()
         DEBUG("Stopping video preview");
         preview_.reset();
     } else {
-        ERROR("Video preview was already stopped");
+        WARN("Video preview was already stopped");
     }
 }
 
