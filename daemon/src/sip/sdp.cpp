@@ -40,6 +40,10 @@
 
 #include <algorithm>
 
+#ifdef SFL_VIDEO
+#include "video/libav_utils.h"
+#endif
+
 using std::string;
 using std::map;
 using std::vector;
@@ -424,7 +428,7 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
     return "";
 }
 
-string Sdp::getActiveIncomingVideoDescription() const
+string Sdp::getIncomingVideoDescription() const
 {
     stringstream ss;
     ss << "v=0" << std::endl;
@@ -471,10 +475,10 @@ string Sdp::getActiveIncomingVideoDescription() const
     return ss.str();
 }
 
-std::string Sdp::getActiveOutgoingVideoCodec() const
+std::string Sdp::getOutgoingVideoCodec() const
 {
     string str("a=rtpmap:");
-    str += getActiveOutgoingVideoPayload();
+    str += getOutgoingVideoPayload();
     string vCodecLine(getLineFromSession(activeRemoteSession_, str));
     char codec_buf[32];
     codec_buf[0] = '\0';
@@ -482,20 +486,33 @@ std::string Sdp::getActiveOutgoingVideoCodec() const
     return string(codec_buf);
 }
 
-std::string Sdp::getActiveOutgoingVideoBitrate(const std::string &codec) const
-{
-    for (vector<map<string, string> >::const_iterator i = video_codec_list_.begin(); i != video_codec_list_.end(); ++i) {
-        map<string, string>::const_iterator name = i->find("name");
-        if (name != i->end() and (codec == name->second)) {
-            map<string, string>::const_iterator bitrate = i->find("bitrate");
-            if (bitrate != i->end())
-                return bitrate->second;
+namespace {
+    vector<map<string, string> >::const_iterator
+        findCodecInList(const vector<map<string, string> > &codecs, const string &codec)
+        {
+            for (vector<map<string, string> >::const_iterator i = codecs.begin(); i != codecs.end(); ++i) {
+                map<string, string>::const_iterator name = i->find("name");
+                if (name != i->end() and (codec == name->second))
+                    return i;
+            }
+            return codecs.end();
         }
-    }
-    return "0";
 }
 
-std::string Sdp::getActiveOutgoingVideoPayload() const
+std::string
+Sdp::getOutgoingVideoField(const std::string &codec, const char *key) const
+{
+    const vector<map<string, string> >::const_iterator i = findCodecInList(video_codec_list_, codec);
+    if (i != video_codec_list_.end()) {
+        map<string, string>::const_iterator field = i->find(key);
+        if (field != i->end())
+            return field->second;
+    }
+    return "";
+}
+
+std::string
+Sdp::getOutgoingVideoPayload() const
 {
     string videoLine(getLineFromSession(activeRemoteSession_, "m=video"));
     int payload_num;
@@ -539,7 +556,7 @@ namespace {
             ERROR("Session is NULL when looking for \"%s\" attribute", type);
             return -1;
         }
-        int i = 0;
+        size_t i = 0;
         while (i < session->media_count and pj_stricmp2(&session->media[i]->desc.media, type) != 0)
             ++i;
 
@@ -615,4 +632,25 @@ void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, Cry
                 crypto_offer.push_back("a=crypto:" + std::string(attribute->value.ptr, attribute->value.slen));
         }
     }
+}
+
+bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
+{
+#ifdef SFL_VIDEO
+    string codec(getOutgoingVideoCodec());
+    if (not codec.empty()) {
+        const string encoder(libav_utils::encodersMap()[codec]);
+        if (encoder.empty()) {
+            DEBUG("Couldn't find encoder for \"%s\"\n", codec.c_str());
+            return false;
+        } else {
+            args["codec"] = encoder;
+            args["bitrate"] = getOutgoingVideoField(codec, "bitrate");
+            args["parameters"] = getOutgoingVideoField(codec, "parameters");
+            args["payload_type"] = getOutgoingVideoPayload();
+        }
+        return true;
+    }
+#endif
+    return false;
 }

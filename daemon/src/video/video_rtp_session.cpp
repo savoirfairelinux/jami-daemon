@@ -36,7 +36,6 @@
 #include "video_receive_thread.h"
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
-#include "libav_utils.h"
 #include "manager.h"
 #include "logger.h"
 
@@ -52,7 +51,7 @@ VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string>
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
-    string desc(sdp.getActiveIncomingVideoDescription());
+    string desc(sdp.getIncomingVideoDescription());
     // if port has changed
     if (desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
@@ -84,21 +83,8 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
         receiving_ = false;
     }
 
-    string codec(sdp.getActiveOutgoingVideoCodec());
-    if (not codec.empty()) {
-        const string encoder(libav_utils::encodersMap()[codec]);
-        if (encoder.empty()) {
-            DEBUG("Couldn't find encoder for \"%s\"\n", codec.c_str());
-            sending_ = false;
-        } else {
-            txArgs_["codec"] = encoder;
-            txArgs_["bitrate"] = sdp.getActiveOutgoingVideoBitrate(codec);
-        }
-    } else {
-        sending_ = false;
-    }
-
-    txArgs_["payload_type"] = sdp.getActiveOutgoingVideoPayload();;
+    if (sending_)
+        sending_ = sdp.getOutgoingVideoSettings(txArgs_);
 }
 
 void VideoRtpSession::updateDestination(const string &destination,
