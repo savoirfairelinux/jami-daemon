@@ -79,7 +79,7 @@ AkonadiBackend::~AkonadiBackend()
 ///Singleton
 ContactBackend* AkonadiBackend::getInstance()
 {
-   if (m_pInstance == NULL) {
+   if (m_pInstance == nullptr) {
       m_pInstance = new AkonadiBackend(0);
    }
    return m_pInstance;

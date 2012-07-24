@@ -613,7 +613,7 @@ void AccountTests::testDisableAllAccounts()
       (*AccountList::getInstance())[i]->save();
    }
 
-   QCOMPARE(AccountList::getCurrentAccount(),(Account*)NULL);
+   QCOMPARE(AccountList::getCurrentAccount(),(Account*)nullptr);
 
    //Restore state
    for (int i=0;i<AccountList::getInstance()->size();i++) {

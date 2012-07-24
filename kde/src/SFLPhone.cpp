@@ -61,8 +61,8 @@
 #include "SFLPhoneAccessibility.h"
 #include "lib/VideoModel.h"
 
-SFLPhone* SFLPhone::m_sApp              = NULL;
-TreeWidgetCallModel* SFLPhone::m_pModel = NULL;
+SFLPhone* SFLPhone::m_sApp              = nullptr;
+TreeWidgetCallModel* SFLPhone::m_pModel = nullptr;
 
 ///Constructor
 SFLPhone::SFLPhone(QWidget *parent)
@@ -129,7 +129,7 @@ bool SFLPhone::initialize()
 
    ConfigurationSkeleton::self();
 
-   //Keep these template paramater or the static attribute wont be share between this and the call view, they need to be
+   //Keep these template parameter or the static attribute wont be share between this and the call view, they need to be
 //    CallModel<CallTreeItem*,QTreeWidgetItem*>* histoModel = new CallModel<CallTreeItem*,QTreeWidgetItem*>(CallModel<CallTreeItem*,QTreeWidgetItem*>::History);
 //    histoModel->initHistory();
 
@@ -512,9 +512,9 @@ void SFLPhone::on_m_pView_incomingCall(const Call* call)
 {
    Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(call->getPeerPhoneNumber());
    if (contact && call) {
-      KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()),((contact->getPhoto())?*contact->getPhoto():NULL));
+      KNotification::event(KNotification::Notification, i18n("New incoming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()),((contact->getPhoto())?*contact->getPhoto():nullptr));
    }
-   KNotification::event(KNotification::Notification, i18n("New incomming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()));
+   KNotification::event(KNotification::Notification, i18n("New incoming call"), i18n("New call from: \n") + (call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName()));
 }
 
 #ifdef ENABLE_VIDEO

@@ -307,7 +307,7 @@ void HistoryTreeItem::copy()
 }
 
 
-///Create a contact from those informations
+///Create a contact from those information
 void HistoryTreeItem::addContact()
 {
    kDebug() << "Adding contact";
@@ -548,7 +548,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    if (m_pContact) {
       m_Name = m_pContact->getFormattedName();
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
-      if (m_pContact->getPhoto() != NULL) {
+      if (m_pContact->getPhoto() != nullptr) {
          pxm = (*m_pContact->getPhoto());
          QRect pxRect = pxm.rect();
          QBitmap mask(pxRect.size());
@@ -640,7 +640,7 @@ uint HistoryTreeItem::getDurWidth()
    return fm.width(m_pLengthL->text());
 }
 
-///Called when a drag and drop occure while the item have not been dropped yet
+///Called when a drag and drop occur while the item have not been dropped yet
 void HistoryTreeItem::dragEnterEvent ( QDragEnterEvent *e )
 {
    kDebug() << "Drag enter";
@@ -679,7 +679,7 @@ void HistoryTreeItem::transferEvent(QMimeData* data)
    if (data->hasFormat( MIME_CALLID)) {
       Call* call = SFLPhone::model()->getCall(data->data(MIME_CALLID));
       if (dynamic_cast<Call*>(call)) {
-         call->changeCurrentState(CALL_STATE_TRANSFER);
+         call->changeCurrentState(CALL_STATE_TRANSFERRED);
          SFLPhone::model()->transfer(call, m_pItemCall->getPeerPhoneNumber());
       }
    }

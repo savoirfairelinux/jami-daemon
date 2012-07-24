@@ -113,7 +113,7 @@ signals:
    void over(Call*);
    ///Emitted when the item change
    void changed();
-   ///Emitted when it is required to expand the childs
+   ///Emitted when it is required to expand the childrens
    void showChilds(CallTreeItem*);
    ///Emitted when a call is dropped on the "transfer" button
    void askTransfer(Call*);

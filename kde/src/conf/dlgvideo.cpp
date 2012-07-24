@@ -24,7 +24,7 @@
 #include <KDebug>
 
 DlgVideo::DlgVideo(QWidget *parent)
- : QWidget(parent),m_pDevice(NULL)
+ : QWidget(parent),m_pDevice(nullptr)
 {
    setupUi(this);
    

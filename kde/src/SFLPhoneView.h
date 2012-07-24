@@ -205,7 +205,7 @@ signals:
    void transferCheckStateChangeAsked ( bool            transferCheckState );
    ///Record state has changed
    void recordCheckStateChangeAsked   ( bool            recordCheckState   );
-   ///When a new call is comming
+   ///When a new call is coming
    void incomingCall(const Call * call);
 };
 

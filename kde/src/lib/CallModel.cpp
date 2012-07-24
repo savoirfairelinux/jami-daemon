@@ -65,7 +65,7 @@ CallModelBase::~CallModelBase()
 ///When a call state change
 void CallModelBase::callStateChanged(const QString &callID, const QString &state)
 {
-   //This code is part of the CallModel iterface too
+   //This code is part of the CallModel interface too
    qDebug() << "Call State Changed for call  " << callID << " . New state : " << state;
    Call* call = findCallByCallId(callID);
    if(!call) {

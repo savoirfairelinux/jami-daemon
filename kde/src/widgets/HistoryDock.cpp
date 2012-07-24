@@ -25,7 +25,6 @@
 #include <QtCore/QString>
 #include <QtCore/QDate>
 #include <QtGui/QTreeWidget>
-#include <QtGui/QComboBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QLabel>
 #include <QtGui/QTreeWidgetItem>
@@ -38,6 +37,7 @@
 #include <KIcon>
 #include <KLineEdit>
 #include <KDateWidget>
+#include <KComboBox>
 
 //SFLPhone
 #include "SFLPhone.h"
@@ -92,7 +92,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
    m_pFilterLE   = new KLineEdit   (                    );
    m_pItemView   = new HistoryTree ( this               );
-   m_pSortByCBB  = new QComboBox   (                    );
+   m_pSortByCBB  = new KComboBox   (                    );
    m_pSortByL    = new QLabel      ( i18n("Sort by:")   );
    m_pFromL      = new QLabel      ( i18n("From:")      );
    m_pToL        = new QLabel      ( i18nc("To date:","To:"));
@@ -197,7 +197,7 @@ HistoryDock::~HistoryDock()
  *                                                                           *
  ****************************************************************************/
 
-///Update informations
+///Update information
 void HistoryDock::updateContactInfo()
 {
    foreach(HistoryTreeItem* hitem, m_History) {
@@ -381,7 +381,7 @@ QMimeData* HistoryTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
    kDebug() << "An history call is being dragged";
    if (items.size() < 1) {
-      return NULL;
+      return nullptr;
    }
 
    QMimeData *mimeData = new QMimeData();

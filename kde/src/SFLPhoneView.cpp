@@ -270,7 +270,7 @@ void SFLPhoneView::escape()
       kDebug() << "Escape when no item is selected. Doing nothing.";
    }
    else {
-      if(call->getState() == CALL_STATE_TRANSFER || call->getState() == CALL_STATE_TRANSF_HOLD) {
+      if(call->getState() == CALL_STATE_TRANSFERRED || call->getState() == CALL_STATE_TRANSF_HOLD) {
          action(call, CALL_ACTION_TRANSFER);
       }
       else {
@@ -289,7 +289,7 @@ void SFLPhoneView::enter()
    }
    else {
       int state = call->getState();
-      if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+      if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFERRED || state == CALL_STATE_TRANSF_HOLD) {
          action(call, CALL_ACTION_ACCEPT);
       }
       else {
@@ -452,7 +452,7 @@ void SFLPhoneView::updateWindowCallState()
             enabledActions  [ SFLPhone::Record   ] = false                       ;
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
-         case CALL_STATE_TRANSFER:
+         case CALL_STATE_TRANSFERRED:
             buttonIconFiles [ SFLPhone::Accept   ] = ICON_EXEC_TRANSF            ;
             actionTexts     [ SFLPhone::Transfer ] = ACTION_LABEL_GIVE_UP_TRANSF ;
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
@@ -710,7 +710,7 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
    menu.addAction ( callActions[ SFLPhone::Record   ]      );
    menu.addSeparator();
 
-   QAction* action = new ActionSetAccountFirst(NULL, &menu);
+   QAction* action = new ActionSetAccountFirst(nullptr, &menu);
    action->setChecked(AccountList::getPriorAccoundId().isEmpty());
    connect(action,  SIGNAL(setFirst(Account *)), this  ,  SLOT(setAccountFirst(Account *)));
    menu.addAction(action);
@@ -853,7 +853,7 @@ void SFLPhoneView::on1_error(MapStringString details)
    kDebug() << "Signal : Daemon error : " << details;
 }
 
-///When a call is comming (dbus)
+///When a call is coming (dbus)
 void SFLPhoneView::on1_incomingCall(Call* call)
 {
    kDebug() << "Signal : Incoming Call ! ID = " << call->getCallId();
@@ -867,7 +867,7 @@ void SFLPhoneView::on1_incomingCall(Call* call)
    emit incomingCall(call);
 }
 
-///When a new voice mail is comming
+///When a new voice mail is coming
 void SFLPhoneView::on1_voiceMailNotify(const QString &accountID, int count)
 {
    kDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;

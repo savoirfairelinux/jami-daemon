@@ -21,7 +21,7 @@
 #include "callmanager_interface_singleton.h"
 
 
-CallManagerInterface * CallManagerInterfaceSingleton::interface = NULL;
+CallManagerInterface * CallManagerInterfaceSingleton::interface = nullptr;
 
 
 CallManagerInterface & CallManagerInterfaceSingleton::getInstance(){

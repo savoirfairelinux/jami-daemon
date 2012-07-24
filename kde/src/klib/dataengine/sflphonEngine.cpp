@@ -42,7 +42,7 @@
 #include "sflphoneService.h"
 
 //Static
-CallModel<>* SFLPhoneEngine::m_pModel = NULL;
+CallModel<>* SFLPhoneEngine::m_pModel = nullptr;
 
 
 /*****************************************************************************
@@ -281,7 +281,7 @@ void SFLPhoneEngine::updateContacts()
    setData("contacts", "fake",fake );
 }
 
-///Update other informations
+///Update other information
 void SFLPhoneEngine::updateInfo()
 {
    setData("info", I18N_NOOP("Current_account"), AccountList::getCurrentAccount()->getAccountId());
@@ -340,14 +340,14 @@ void SFLPhoneEngine::callStateChangedSignal(Call* call)
    updateCallList();
 }
 
-///When incomming call
+///When incoming call
 void SFLPhoneEngine::incomingCallSignal(Call* call)
 {
    Q_UNUSED(call)
    updateCallList();
 }
 
-///When incomming messge
+///When incoming messge
 void SFLPhoneEngine::incomingMessageSignal(const QString& accountId, const QString& message)
 {
    Q_UNUSED(accountId)

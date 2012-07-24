@@ -49,7 +49,7 @@ public:
    void clear();
 
 private:
-   ///@struct CredentialData store credential informations
+   ///@struct CredentialData store credential information
    struct CredentialData2 {
       QString          name    ;
       QString          password;

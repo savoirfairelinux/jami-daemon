@@ -102,7 +102,7 @@ public slots:
    bool hasChanged();
 
    /**
-    * reloads the informations before showing it.
+    * reloads the information before showing it.
     */
    void reload();
 

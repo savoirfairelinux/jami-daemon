@@ -21,15 +21,18 @@
 #ifndef IM_MANAGER_H
 #define IM_MANAGER_H
 
+//Qt
 #include <QtCore/QHash>
-#include <QtGui/QTabWidget>
+
+//KDE
+#include <KTabWidget>
 
 //SFLPhone
 class IMTab;
 class InstantMessagingModel;
 class Call;
 
-class IMManager : public QTabWidget
+class IMManager : public KTabWidget
 {
    Q_OBJECT
 public:

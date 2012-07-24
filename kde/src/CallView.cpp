@@ -239,7 +239,7 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    }
 
    foreach(Call* active, SFLPhone::model()->getConferenceList()) {
-      if (qobject_cast<Call*>(active)) //As of May 2012, the deamon still produce fake conferences
+      if (qobject_cast<Call*>(active)) //As of May 2012, the daemon still produce fake conferences
          addConference(active);
    }
 
@@ -380,11 +380,11 @@ bool CallView::callToCall(QTreeWidgetItem *parent, int index, const QMimeData *d
          }
          kDebug() << "Adding participant";
          int state = SFLPhone::model()->getCall(call1)->getState();
-         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFERRED || state == CALL_STATE_TRANSF_HOLD) {
             SFLPhone::model()->getCall(call1)->actionPerformed(CALL_ACTION_ACCEPT);
          }
          state = SFLPhone::model()->getCall(call2)->getState();
-         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+         if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFERRED || state == CALL_STATE_TRANSF_HOLD) {
             SFLPhone::model()->getCall(call2)->actionPerformed(CALL_ACTION_ACCEPT);
          }
          SFLPhone::model()->addParticipant(SFLPhone::model()->getCall(call1),SFLPhone::model()->getCall(call2));
@@ -428,7 +428,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
             //Dropped on call
             call2->actionPerformed(CALL_ACTION_ACCEPT);
             int state = SFLPhone::model()->getCall(parent)->getState();
-            if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+            if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFERRED || state == CALL_STATE_TRANSF_HOLD) {
                SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
             }
             SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
@@ -451,7 +451,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
    if (!QString(encodedContact).isEmpty()) {
       Contact* contact = AkonadiBackend::getInstance()->getContactByUid(encodedContact);
       if (contact) {
-         Call* call2 = NULL;
+         Call* call2 = nullptr;
          if (!SFLPhone::app()->view()->selectCallPhoneNumber(&call2,contact))
             return false;
          if (!parent) {
@@ -475,7 +475,7 @@ bool CallView::contactToCall(QTreeWidgetItem *parent, int index, const QMimeData
 
             call2->actionPerformed(CALL_ACTION_ACCEPT);
             int state = SFLPhone::model()->getCall(parent)->getState();
-            if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+            if(state == CALL_STATE_INCOMING || state == CALL_STATE_DIALING || state == CALL_STATE_TRANSFERRED || state == CALL_STATE_TRANSF_HOLD) {
                SFLPhone::model()->getCall(parent)->actionPerformed(CALL_ACTION_ACCEPT);
             }
             SFLPhone::model()->createConferenceFromCall(call2,SFLPhone::model()->getCall(parent));
@@ -515,7 +515,7 @@ QMimeData* CallView::mimeData( const QList<QTreeWidgetItem *> items) const
 {
    kDebug() << "A call is being dragged";
    if (items.size() < 1) {
-      return NULL;
+      return nullptr;
    }
 
    QMimeData *mimeData = new QMimeData();

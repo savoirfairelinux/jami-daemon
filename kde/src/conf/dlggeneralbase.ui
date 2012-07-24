@@ -84,7 +84,7 @@
       <item row="1" column="0">
        <widget class="QCheckBox" name="kcfg_displayHistoryStatus">
         <property name="text">
-         <string>Display incomming, outgoing and missed for history items</string>
+         <string>Display incoming, outgoing and missed for history items</string>
         </property>
        </widget>
       </item>

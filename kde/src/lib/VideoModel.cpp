@@ -35,7 +35,7 @@
 #include "VideoRenderer.h"
 
 //Static member
-VideoModel* VideoModel::m_spInstance = NULL;
+VideoModel* VideoModel::m_spInstance = nullptr;
 
 ///Constructor
 VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_PreviewState(false)

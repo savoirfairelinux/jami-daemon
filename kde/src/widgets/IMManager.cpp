@@ -24,7 +24,7 @@
 #include <KDebug>
 #include <KLocale>
 
-IMManager::IMManager(QWidget* parent) : QTabWidget(parent)
+IMManager::IMManager(QWidget* parent) : KTabWidget(parent)
 {
    setVisible(false);
    setTabsClosable(true);

@@ -51,7 +51,7 @@ public:
    bool moveDown(QModelIndex idx);
 
 private:
-   ///@struct AudioCodecData store audio codec informations
+   ///@struct AudioCodecData store audio codec information
    struct AudioCodecData {
       int              id        ;
       QString          name      ;

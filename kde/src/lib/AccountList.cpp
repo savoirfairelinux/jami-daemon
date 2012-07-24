@@ -268,12 +268,12 @@ QString AccountList::getOrderedList() const
 Account* AccountList::getAccountById(const QString & id) const
 {
    if(id.isEmpty())
-          return NULL;
+          return nullptr;
    for (int i = 0; i < m_pAccounts->size(); ++i) {
       if (!(*m_pAccounts)[i]->isNew() && (*m_pAccounts)[i]->getAccountId() == id)
          return (*m_pAccounts)[i];
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get account with a specific state
@@ -319,7 +319,7 @@ Account* AccountList::firstRegisteredAccount() const
          << ((current)?current->getAccountRegistrationStatus():"");
       }
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the account size

@@ -29,12 +29,12 @@
 #include <QtGui/QFormLayout>
 #include <QtGui/QLabel>
 #include <QtGui/QRadioButton>
-#include <QtGui/QLineEdit>
 #include <QtGui/QCheckBox>
 
 //KDE
 #include <KLocale>
 #include <KDebug>
+#include <KLineEdit>
 
 //SFLphone
 #include "lib/sflphone_const.h"
@@ -93,7 +93,7 @@ int sendRequest(QString host, int port, QString req, QString & ret)
 
    bzero(&servSockAddr, sizeof(servSockAddr));
    servHostEnt = gethostbyname(host.toLatin1());
-   if (servHostEnt == NULL) {
+   if (servHostEnt == nullptr) {
       ret = "gethostbyname";
       return -1;
    }
@@ -107,7 +107,7 @@ int sendRequest(QString host, int port, QString req, QString & ret)
    }
 
    if(connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0 ) {
-      perror(NULL);
+      perror(nullptr);
       ret = "connect";
       return -1;
    }
@@ -224,7 +224,7 @@ void AccountWizard::accept()
    QString& zrtp_hello_hash       = accountDetails[ QString( ACCOUNT_ZRTP_HELLO_HASH       ) ];
    QString& display_sas_once      = accountDetails[ QString( ACCOUNT_DISPLAY_SAS_ONCE      ) ];
 
-   //  interface paramters
+   //  interface parameters
    QString& locale_interface  = accountDetails[ QString(LOCAL_INTERFACE)   ];
    QString& published_address = accountDetails[ QString(PUBLISHED_ADDRESS) ];
 
@@ -292,7 +292,7 @@ void AccountWizard::accept()
    }
 
 
-   // common sip paramaters
+   // common sip parameters
    if(is_using_sip) {
       if(field(FIELD_SIP_ENABLE_STUN).toBool()) {
          stun_enabled = QString(REGISTRATION_ENABLED_TRUE);
@@ -462,7 +462,7 @@ WizardAccountEmailAddressPage::WizardAccountEmailAddressPage(QWidget *parent)
    setSubTitle(i18n( "This email address will be used to send your voicemail messages." ));
 
    label_emailAddress    = new QLabel    ( i18n("Email address")    );
-   lineEdit_emailAddress = new QLineEdit (                          );
+   lineEdit_emailAddress = new KLineEdit (                          );
    label_enableZrtp      = new QLabel    ( i18n("Secure with ZRTP") );
    checkBox_enableZrtp   = new QCheckBox (                          );
 
@@ -512,14 +512,14 @@ WizardAccountSIPFormPage::WizardAccountSIPFormPage(QWidget *parent)
    label_enableZrtp    = new QLabel( i18n( "Secure with ZRTP" )        );
    label_user          = new QLabel( i18nc( "SIP Account Username","Username") + " *" );
 
-   lineEdit_alias      = new QLineEdit;
-   lineEdit_server     = new QLineEdit;
-   lineEdit_user       = new QLineEdit;
-   lineEdit_password   = new QLineEdit;
-   lineEdit_voicemail  = new QLineEdit;
+   lineEdit_alias      = new KLineEdit;
+   lineEdit_server     = new KLineEdit;
+   lineEdit_user       = new KLineEdit;
+   lineEdit_password   = new KLineEdit;
+   lineEdit_voicemail  = new KLineEdit;
    checkBox_enableZrtp = new QCheckBox;
 
-   lineEdit_password->setEchoMode(QLineEdit::Password);
+   lineEdit_password->setEchoMode(KLineEdit::Password);
 
    registerField(QString( FIELD_SIP_ALIAS)    + '*' , lineEdit_alias      );
    registerField(QString( FIELD_SIP_SERVER)   + '*' , lineEdit_server     );
@@ -586,13 +586,13 @@ WizardAccountIAXFormPage::WizardAccountIAXFormPage(QWidget *parent)
    label_voicemail    = new QLabel(i18n("Voicemail number" ));
    label_user         = new QLabel(i18nc("SIP Account Username","Username") + " *"  );
 
-   lineEdit_alias     = new QLineEdit;
-   lineEdit_server    = new QLineEdit;
-   lineEdit_user      = new QLineEdit;
-   lineEdit_password  = new QLineEdit;
-   lineEdit_voicemail = new QLineEdit;
+   lineEdit_alias     = new KLineEdit;
+   lineEdit_server    = new KLineEdit;
+   lineEdit_user      = new KLineEdit;
+   lineEdit_password  = new KLineEdit;
+   lineEdit_voicemail = new KLineEdit;
 
-   lineEdit_password->setEchoMode(QLineEdit::Password);
+   lineEdit_password->setEchoMode(KLineEdit::Password);
 
    registerField( QString( FIELD_IAX_ALIAS     ) + '*', lineEdit_alias     );
    registerField( QString( FIELD_IAX_SERVER    ) + '*', lineEdit_server    );
@@ -649,7 +649,7 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
 
    checkBox_enableStun = new QCheckBox( i18n("Enable STUN") );
    label_StunServer    = new QLabel   ( i18n("Stun Server") );
-   lineEdit_StunServer = new QLineEdit(                     );
+   lineEdit_StunServer = new KLineEdit(                     );
    lineEdit_StunServer->setDisabled(true);
 
    registerField(FIELD_SIP_ENABLE_STUN, checkBox_enableStun);

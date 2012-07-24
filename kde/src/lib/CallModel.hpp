@@ -208,7 +208,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addDialingCall(const QString& peerName, Ac
    }
 }  //addDialingCall
 
-///Create a new incomming call when the daemon is being called
+///Create a new incoming call when the daemon is being called
 CALLMODEL_TEMPLATE Call* CALLMODEL_T::addIncomingCall(const QString& callId)
 {
    Call* call = Call::buildIncomingCall(callId);
@@ -240,7 +240,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeCall(Call* call)
       return;
    }
 
-   if (m_sPrivateCallList_call[call] != NULL) {
+   if (m_sPrivateCallList_call[call] != nullptr) {
       m_sPrivateCallList_call.remove(call);
    }
 
@@ -410,7 +410,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const CallWidget widget 
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->call_real;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get a call list from a conference                               
@@ -487,7 +487,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const Index idx         
       return m_sPrivateCallList_index[idx]->call_real;
    }
    qDebug() << "Call not found";
-   return NULL;
+   return nullptr;
 }
 
 ///Get the call associated with that conference index              
@@ -517,7 +517,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::getCall         ( const QString& callId   
    if (m_sPrivateCallList_callId[callId]) {
       return m_sPrivateCallList_callId[callId]->call_real;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the calls associated with this ID                           
@@ -538,7 +538,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Call* call        
    if (m_sPrivateCallList_call[(Call*)call]) {
       return m_sPrivateCallList_call[(Call*)call]->index;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the index associated with this index (dummy implementation) 
@@ -547,7 +547,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const Index idx         
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->index;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the index associated with this call                         
@@ -556,7 +556,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const CallWidget widget 
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->index;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the index associated with this ID                           
@@ -565,7 +565,7 @@ CALLMODEL_TEMPLATE Index CALLMODEL_T::getIndex        ( const QString& callId   
    if (m_sPrivateCallList_callId[callId]) {
       return m_sPrivateCallList_callId[callId]->index;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the widget associated with this call                        
@@ -574,7 +574,7 @@ CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Call* call        
    if (m_sPrivateCallList_call[call]) {
       return m_sPrivateCallList_call[call]->call;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the widget associated with this ID                          
@@ -583,7 +583,7 @@ CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const Index idx         
    if (m_sPrivateCallList_index[idx]) {
       return m_sPrivateCallList_index[idx]->call;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the widget associated with this widget (dummy)              
@@ -592,7 +592,7 @@ CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const CallWidget widget 
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->call;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Get the widget associated with this ID                          
@@ -601,7 +601,7 @@ CALLMODEL_TEMPLATE CallWidget CALLMODEL_T::getWidget  ( const QString& widget   
    if (m_sPrivateCallList_widget[widget]) {
       return m_sPrivateCallList_widget[widget]->call;
    }
-   return NULL;
+   return nullptr;
 }
 
 ///Common set of instruction shared by all gui updater

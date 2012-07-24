@@ -211,7 +211,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,
    }
 } //setContactCategory
 
-///Return the identity of the call caller, try to return something usefull
+///Return the identity of the call caller, try to return something useful
 CALLMODEL_TEMPLATE QString SORTABLE_T::getIdentity(Call* item)
 {
    Contact* contact = item->getContact();

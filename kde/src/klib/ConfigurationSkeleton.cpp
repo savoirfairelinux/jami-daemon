@@ -26,7 +26,7 @@
 //KDE
 #include <KDebug>
 
-ConfigurationSkeleton * ConfigurationSkeleton::instance = NULL;
+ConfigurationSkeleton * ConfigurationSkeleton::instance = nullptr;
 
 ///Constructor
 ConfigurationSkeleton::ConfigurationSkeleton()
@@ -45,12 +45,12 @@ ConfigurationSkeleton::~ConfigurationSkeleton()
 ///Signleton
 ConfigurationSkeleton * ConfigurationSkeleton::self()
 {
-   if(instance == NULL)
+   if(instance == nullptr)
    {   instance = new ConfigurationSkeleton();   }
    return instance;
 }
 
-///Read the config and override some variable using deamon defaults
+///Read the config and override some variable using daemon defaults
 void ConfigurationSkeleton::readConfig()
 {
    //ConfigurationSkeleton::readConfig();

@@ -434,7 +434,6 @@ void ContactItemWidget::addPhone()
 {
    kDebug() << "Adding to contact";
    bool ok;
-   //QString number = QInputDialog::getText(0, i18n("Enter a new number"),i18n("New number:"),QLineEdit::Normal,QString(),ok,0);
    QString text = QInputDialog::getText(this, i18n("Enter a new number"), i18n("New number:"), QLineEdit::Normal, QString(), &ok);
    if (ok && !text.isEmpty()) {
       AkonadiBackend::getInstance()->addPhoneNumber(m_pContactKA,text,"work");
@@ -456,7 +455,7 @@ void ContactItemWidget::bookmark()
  *                                                                           *
  ****************************************************************************/
 
-///Called when a drag and drop occure while the item have not been dropped yet
+///Called when a drag and drop occur while the item have not been dropped yet
 void ContactItemWidget::dragEnterEvent ( QDragEnterEvent *e )
 {
    kDebug() << "Drag enter";
@@ -498,7 +497,7 @@ void ContactItemWidget::transferEvent(QMimeData* data)
       if (ok) {
          Call* call = SFLPhone::model()->getCall(data->data(MIME_CALLID));
          if (dynamic_cast<Call*>(call)) {
-            call->changeCurrentState(CALL_STATE_TRANSFER);
+            call->changeCurrentState(CALL_STATE_TRANSFERRED);
             SFLPhone::model()->transfer(call, result);
          }
       }

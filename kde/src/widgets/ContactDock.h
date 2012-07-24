@@ -30,7 +30,6 @@
 //Qt
 class QSplitter;
 class QListWidget;
-class QComboBox;
 class QTreeWidgetItem;
 class QCheckBox;
 class QStringList;
@@ -38,6 +37,7 @@ class DateTime;
 
 //KDE
 class KLineEdit;
+class KComboBox;
 
 namespace Akonadi {
    class EntityTreeView;
@@ -73,7 +73,7 @@ private:
    QSplitter*                   m_pSplitter   ;
    ContactTree*                 m_pContactView;
    QListWidget*                 m_pCallView   ;
-   QComboBox*                   m_pSortByCBB  ;
+   KComboBox*                   m_pSortByCBB  ;
    QCheckBox*                   m_pShowHistoCK;
    QList<ContactItemWidget*>    m_Contacts    ;
 

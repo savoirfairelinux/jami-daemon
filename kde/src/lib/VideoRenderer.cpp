@@ -268,7 +268,7 @@ void VideoRenderer::stopRendering()
  *                                                                           *
  ****************************************************************************/
 
-///Get the raw bytes directly from the SHM, not recommanded, but optimal
+///Get the raw bytes directly from the SHM, not recommended, but optimal
 const char* VideoRenderer::rawData()
 {
    return m_pShmArea->m_Data;

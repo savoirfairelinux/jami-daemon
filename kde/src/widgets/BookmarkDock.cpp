@@ -127,7 +127,7 @@ BookmarkDock::~BookmarkDock()
 void BookmarkDock::addBookmark_internal(const QString& phone)
 {
    HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone,true);
-   QTreeWidgetItem* item   = NULL;
+   QTreeWidgetItem* item   = nullptr;
 
    if (widget->getName() == i18nc("Unknown peer","Unknown") || widget->getName().isEmpty()) {
       item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18nc("Unknown peer","Unknown"));

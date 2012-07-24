@@ -84,7 +84,7 @@ const QString& account_state_name(const QString& s)
 } //account_state_name
 
 ///Constructors
-Account::Account():m_pAccountId(NULL),m_pAccountDetails(NULL),m_pCredentials(nullptr),m_pAudioCodecs(nullptr),m_CurrentState(READY),
+Account::Account():m_pAccountId(nullptr),m_pAccountDetails(nullptr),m_pCredentials(nullptr),m_pAudioCodecs(nullptr),m_CurrentState(READY),
 m_pVideoCodecs(nullptr)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
@@ -148,7 +148,7 @@ void Account::accountChanged(QString accountId,QString state,int)
 ///IS this account new
 bool Account::isNew() const
 {
-   return (m_pAccountId == NULL);
+   return (m_pAccountId == nullptr);
 }
 
 ///Get this account ID
@@ -187,7 +187,7 @@ const QString& Account::getAccountDetail(const QString& param) const
       return (*m_pAccountDetails)[param];
    }
    else if (m_pAccountDetails->count() > 0) {
-      qDebug() << "Account paramater \"" << param << "\" not found";
+      qDebug() << "Account parameter \"" << param << "\" not found";
       return EMPTY_STRING;
    }
    else {
@@ -373,7 +373,7 @@ void Account::save()
    saveAudioCodecs();
 }
 
-///Synchronise with the daemon, this need to be done manually to prevent reloading the account while it is being edited
+///sync with the daemon, this need to be done manually to prevent reloading the account while it is being edited
 void Account::reload()
 {
    qDebug() << "Reloading" << getAccountId();

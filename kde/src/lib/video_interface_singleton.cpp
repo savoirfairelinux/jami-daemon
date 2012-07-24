@@ -19,7 +19,7 @@
 
 #include "video_interface_singleton.h"
 
-VideoInterface* VideoInterfaceSingleton::interface = NULL;
+VideoInterface* VideoInterfaceSingleton::interface = nullptr;
 
 VideoInterface& VideoInterfaceSingleton::getInstance()
 {

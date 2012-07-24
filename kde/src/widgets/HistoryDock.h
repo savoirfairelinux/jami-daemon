@@ -32,7 +32,7 @@
 class QTreeWidgetItem;
 class QString;
 class QTreeWidget;
-class QComboBox;
+class KComboBox;
 class QLabel;
 class QCheckBox;
 class QPushButton;
@@ -68,7 +68,7 @@ private:
    //Attributes
    HistoryTree*   m_pItemView        ;
    KLineEdit*     m_pFilterLE        ;
-   QComboBox*     m_pSortByCBB       ;
+   KComboBox*     m_pSortByCBB       ;
    QLabel*        m_pSortByL         ;
    QLabel*        m_pFromL           ;
    QLabel*        m_pToL             ;

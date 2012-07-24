@@ -27,7 +27,7 @@
 //Qt
 class QLabel;
 class QRadioButton;
-class QLineEdit;
+class KLineEdit;
 class QCheckBox;
 
 /**
@@ -120,7 +120,7 @@ public:
 
 private:
    QLabel * label_emailAddress;
-   QLineEdit * lineEdit_emailAddress;
+   KLineEdit * lineEdit_emailAddress;
    QLabel * label_enableZrtp;
    QCheckBox * checkBox_enableZrtp;
 };
@@ -150,11 +150,11 @@ private:
    QLabel* label_voicemail       ;
    QLabel* label_enableZrtp      ;
 
-   QLineEdit* lineEdit_alias     ;
-   QLineEdit* lineEdit_server    ;
-   QLineEdit* lineEdit_user      ;
-   QLineEdit* lineEdit_password  ;
-   QLineEdit* lineEdit_voicemail ;
+   KLineEdit* lineEdit_alias     ;
+   KLineEdit* lineEdit_server    ;
+   KLineEdit* lineEdit_user      ;
+   KLineEdit* lineEdit_password  ;
+   KLineEdit* lineEdit_voicemail ;
    QCheckBox* checkBox_enableZrtp;
 };
 
@@ -182,11 +182,11 @@ private:
    QLabel* label_password       ;
    QLabel* label_voicemail      ;
 
-   QLineEdit* lineEdit_alias    ;
-   QLineEdit* lineEdit_server   ;
-   QLineEdit* lineEdit_user     ;
-   QLineEdit* lineEdit_password ;
-   QLineEdit* lineEdit_voicemail;
+   KLineEdit* lineEdit_alias    ;
+   KLineEdit* lineEdit_server   ;
+   KLineEdit* lineEdit_user     ;
+   KLineEdit* lineEdit_password ;
+   KLineEdit* lineEdit_voicemail;
 };
 
 /***************************************************************************
@@ -206,7 +206,7 @@ public:
 private:
    QCheckBox* checkBox_enableStun;
    QLabel*    label_StunServer   ;
-   QLineEdit* lineEdit_StunServer;
+   KLineEdit* lineEdit_StunServer;
 };
 
 /***************************************************************************

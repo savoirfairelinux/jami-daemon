@@ -20,7 +20,7 @@
  
 #include "instance_interface_singleton.h"
 
-InstanceInterface* InstanceInterfaceSingleton::interface = NULL;
+InstanceInterface* InstanceInterfaceSingleton::interface = nullptr;
 
 InstanceInterface& InstanceInterfaceSingleton::getInstance()
 {

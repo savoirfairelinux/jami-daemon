@@ -378,7 +378,7 @@ void CallTreeItem::updated()
          m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/conf-small.png")));
       }
 
-      bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
+      bool transfer = state == CALL_STATE_TRANSFERRED || state == CALL_STATE_TRANSF_HOLD;
       if (m_pTransferPrefixL && m_pTransferNumberL) {
          m_pTransferPrefixL->setVisible(transfer);
          m_pTransferNumberL->setVisible(transfer);
@@ -406,7 +406,7 @@ void CallTreeItem::updated()
    else {
       //kDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
-   if (state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD) {
+   if (state == CALL_STATE_TRANSFERRED || state == CALL_STATE_TRANSF_HOLD) {
       kDebug() << "Transferring";
       emit askTransfer(m_pItemCall);
    }
@@ -422,7 +422,7 @@ void CallTreeItem::updated()
    }
 
    //Start/Stop the elapsed time label
-   if ((state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_TRANSFER) && !m_pTimer) {
+   if ((state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_TRANSFERRED) && !m_pTimer) {
       m_pTimer = new QTimer(this);
       m_pTimer->setInterval(1000);
       connect(m_pTimer,SIGNAL(timeout()),this,SLOT(incrementTimer()));
@@ -440,7 +440,7 @@ void CallTreeItem::updated()
  *                                                                           *
  ****************************************************************************/
 
-///Called when a drag and drop occure while the item have not been dropped yet
+///Called when a drag and drop occur while the item have not been dropped yet
 void CallTreeItem::dragEnterEvent ( QDragEnterEvent *e )
 {
    kDebug() << "Drag enter";

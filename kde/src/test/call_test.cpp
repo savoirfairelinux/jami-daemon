@@ -32,7 +32,7 @@ void CallTests::testCallWithoutAccounts()
    }
 
     Call* call = m_pModel->addDialingCall("test call", AccountList::getCurrentAccount());
-    QCOMPARE( call, (Call*)NULL );
+    QCOMPARE( call, (Call*)nullptr );
 
    //Restore state
    for (int i=0;i<AccountList::getInstance()->size();i++) {

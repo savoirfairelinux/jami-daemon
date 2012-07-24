@@ -280,7 +280,7 @@ typedef enum
    CALL_STATE_HOLD            = 4, /** Call is on hold */
    CALL_STATE_FAILURE         = 5, /** Call has failed */
    CALL_STATE_BUSY            = 6, /** Call is busy */
-   CALL_STATE_TRANSFER        = 7, /** Call is being transfered.  During this state, the user can enter the new number. */
+   CALL_STATE_TRANSFERRED     = 7, /** Call is being transferred.  During this state, the user can enter the new number. */
    CALL_STATE_TRANSF_HOLD     = 8, /** Call is on hold for transfer */
    CALL_STATE_OVER            = 9, /** Call is over and should not be used */
    CALL_STATE_ERROR           = 10,/** This state should never be reached */

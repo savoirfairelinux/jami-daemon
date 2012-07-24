@@ -32,13 +32,13 @@
 #include <QtGui/QCheckBox>
 #include <QtGui/QSplitter>
 #include <QtGui/QLabel>
-#include <QtGui/QComboBox>
 
 //KDE
 #include <KDebug>
 #include <KLineEdit>
 #include <KLocalizedString>
 #include <KIcon>
+#include <KComboBox>
 
 //SFLPhone
 #include "klib/AkonadiBackend.h"
@@ -120,7 +120,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    setObjectName("contactDock");
    m_pFilterLE     = new KLineEdit   (                   );
    m_pSplitter     = new QSplitter   ( Qt::Vertical,this );
-   m_pSortByCBB    = new QComboBox   ( this              );
+   m_pSortByCBB    = new KComboBox   ( this              );
    m_pContactView  = new ContactTree ( this              );
    m_pCallView     = new QListWidget ( this              );
    m_pShowHistoCK  = new QCheckBox   ( this              );
@@ -286,7 +286,7 @@ void ContactDock::loadContactHistory(QTreeWidgetItem* item)
 {
    if (m_pShowHistoCK->isChecked()) {
       m_pCallView->clear();
-      if (dynamic_cast<QNumericTreeWidgetItem_hist*>(item) != NULL) {
+      if (dynamic_cast<QNumericTreeWidgetItem_hist*>(item) != nullptr) {
          QNumericTreeWidgetItem_hist* realItem = dynamic_cast<QNumericTreeWidgetItem_hist*>(item);
          foreach (Call* call, HistoryModel::getHistory()) {
             if (realItem->widget != 0) {
@@ -342,12 +342,12 @@ void ContactDock::reloadHistoryConst()
  *                                                                           *
  ****************************************************************************/
 
-///Serialize informations to be used for drag and drop
+///Serialize information to be used for drag and drop
 QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
 {
    kDebug() << "An history call is being dragged";
    if (items.size() < 1) {
-      return NULL;
+      return nullptr;
    }
 
    QMimeData *mimeData = new QMimeData();
@@ -413,7 +413,7 @@ void ContactDock::keyPressEvent(QKeyEvent* event) {
       if (m_pContactView->selectedItems()[0] && m_pContactView->itemWidget(m_pContactView->selectedItems()[0],0)) {
          QNumericTreeWidgetItem_hist* item = dynamic_cast<QNumericTreeWidgetItem_hist*>(m_pContactView->selectedItems()[0]);
          if (item) {
-            Call* call = NULL;
+            Call* call = nullptr;
             SFLPhone::app()->view()->selectCallPhoneNumber(&call,item->widget->getContact());
          }
       }

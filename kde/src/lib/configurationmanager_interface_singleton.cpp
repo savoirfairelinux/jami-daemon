@@ -21,7 +21,7 @@
  #include "configurationmanager_interface_singleton.h"
 
 
-ConfigurationManagerInterface* ConfigurationManagerInterfaceSingleton::interface = NULL;
+ConfigurationManagerInterface* ConfigurationManagerInterfaceSingleton::interface = nullptr;
 
 ConfigurationManagerInterface & ConfigurationManagerInterfaceSingleton::getInstance()
 {
