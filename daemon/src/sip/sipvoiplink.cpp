@@ -963,6 +963,9 @@ SIPVoIPLink::onhold(const std::string& id)
     call->setState(Call::HOLD);
     call->getAudioRtp().saveLocalContext();
     call->getAudioRtp().stop();
+#ifdef SFL_VIDEO
+    call->getVideoRtp().stop();
+#endif
 
     Sdp *sdpSession = call->getLocalSDP();
 
@@ -975,8 +978,8 @@ SIPVoIPLink::onhold(const std::string& id)
 
 #ifdef SFL_VIDEO
     sdpSession->removeAttributeFromLocalVideoMedia("sendrecv");
-    sdpSession->removeAttributeFromLocalVideoMedia("sendonly");
-    sdpSession->addAttributeToLocalVideoMedia("sendonly");
+    sdpSession->removeAttributeFromLocalVideoMedia("inactive");
+    sdpSession->addAttributeToLocalVideoMedia("inactive");
 #endif
 
     SIPSessionReinvite(call);

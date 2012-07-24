@@ -334,11 +334,10 @@ render_frame_from_shm(VideoRendererPrivate *priv)
     if (!GTK_IS_WIDGET(priv->drawarea))
         return FALSE;
     GtkWidget *parent = gtk_widget_get_parent(priv->drawarea);
-    if (!parent)
+    if (!parent || !CLUTTER_IS_ACTOR(priv->texture))
         return FALSE;
     const gint parent_width = gtk_widget_get_allocated_width(parent);
     const gint parent_height = gtk_widget_get_allocated_height(parent);
-
     clutter_actor_set_size(priv->texture, parent_width, parent_height);
     video_renderer_render_to_texture(priv);
 
