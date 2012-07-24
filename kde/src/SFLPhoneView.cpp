@@ -348,8 +348,8 @@ bool SFLPhoneView::selectCallPhoneNumber(Call** call2,Contact* contact)
       QHash<QString,QString> map       ;
       QStringList            list      ;
       foreach (Contact::PhoneNumber* number, contact->getPhoneNumbers()) {
-         map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
-         list << number->getType()+" ("+number->getNumber()+")";
+         map[number->getType()+" ("+number->getNumber()+')'] = number->getNumber();
+         list << number->getType()+" ("+number->getNumber()+')';
       }
       QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
       if (ok) {
@@ -595,7 +595,7 @@ void SFLPhoneView::updateStatusMessage()
    else {
       emit statusMessageChangeAsked(i18n("Using account")
          + " \'" + account->getAlias()
-         + "\' (" + account->getAccountRegistrationStatus() + ")");
+         + "\' (" + account->getAccountRegistrationStatus() + ')');
    }
 }
 

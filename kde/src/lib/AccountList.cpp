@@ -259,7 +259,7 @@ QString AccountList::getOrderedList() const
 {
    QString order;
    for( int i = 0 ; i < size() ; i++) {
-      order += getAccountAt(i)->getAccountId() + "/";
+      order += getAccountAt(i)->getAccountId() + '/';
    }
    return order;
 }

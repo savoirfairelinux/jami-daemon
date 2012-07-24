@@ -18,6 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+#include "AccountWizard.h"
 
 //Unix
 #include <unistd.h>
@@ -36,7 +37,6 @@
 #include <KDebug>
 
 //SFLphone
-#include "AccountWizard.h"
 #include "lib/sflphone_const.h"
 #include "lib/configurationmanager_interface_singleton.h"
 
@@ -153,7 +153,7 @@ rest_account get_rest_account(QString host, QString email)
    kDebug() << "HOST: " << host;
    int res = sendRequest(host, 80, req, ret);
    if (res != -1) {
-      QStringList list = ret.split("\n");
+      QStringList list = ret.split('\n');
       ra.user = list[0];
       ra.passwd = list[1];\
       ra.success = true;
@@ -240,8 +240,8 @@ void AccountWizard::accept()
       rest_account acc = get_rest_account(SFL_ACCOUNT_HOST, charEmailAddress);
 
       if(acc.success) {
-         ret += i18n("This assistant is now finished.") + "\n";
-         field( FIELD_SIP_ALIAS     ) = QString( acc.user) + "@" + SFL_ACCOUNT_HOST;
+         ret += i18n("This assistant is now finished.") + '\n';
+         field( FIELD_SIP_ALIAS     ) = QString( acc.user) + '@' + SFL_ACCOUNT_HOST;
          field( FIELD_SIP_VOICEMAIL ) = QString(                                  );
          field( FIELD_SIP_SERVER    ) = QString( SFL_ACCOUNT_HOST                 );
          field( FIELD_SIP_PASSWORD  ) = QString( acc.passwd                       );
@@ -262,7 +262,7 @@ void AccountWizard::accept()
       }
    }
    else if(field(FIELD_SIP_ACCOUNT).toBool()) { //sip
-      ret += i18n("This assistant is now finished.") + "\n";
+      ret += i18n("This assistant is now finished.") + '\n';
 
       alias    = field   ( FIELD_SIP_ALIAS           ).toString();
       enabled  = QString ( REGISTRATION_ENABLED_TRUE )           ;
@@ -277,7 +277,7 @@ void AccountWizard::accept()
 
    }
    else { // iax
-      ret += i18n("This assistant is now finished.") + "\n";
+      ret += i18n("This assistant is now finished.") + '\n';
 
       alias    = field   ( FIELD_IAX_ALIAS           ).toString();
       enabled  = QString ( REGISTRATION_ENABLED_TRUE )           ;
@@ -317,12 +317,12 @@ void AccountWizard::accept()
       locale_interface  = ifaceList.at(0);
       published_address = ifaceList.at(0);
 
-      ret += i18n( "Alias"            ) + " : " + alias    + "\n";
-      ret += i18n( "Server"           ) + " : " + server   + "\n";
-      ret += i18n( "Username"         ) + " : " + user     + "\n";
-      ret += i18n( "Password"         ) + " : " + password + "\n";
-      ret += i18n( "Protocol"         ) + " : " + protocol + "\n";
-      ret += i18n( "Voicemail number" ) + " : " + mailbox  + "\n";
+      ret += i18n( "Alias"            ) + " : " + alias    + '\n';
+      ret += i18n( "Server"           ) + " : " + server   + '\n';
+      ret += i18n( "Password"         ) + " : " + password + '\n';
+      ret += i18n( "Protocol"         ) + " : " + protocol + '\n';
+      ret += i18n( "Voicemail number" ) + " : " + mailbox  + '\n';
+      ret += i18nc( "SIP Account username","Username" ) + " : " + user     + '\n';
    }
 
    if(is_create_account) {
@@ -507,10 +507,10 @@ WizardAccountSIPFormPage::WizardAccountSIPFormPage(QWidget *parent)
 
    label_alias         = new QLabel( i18n( "Alias"            ) + " *" );
    label_server        = new QLabel( i18n( "Server"           ) + " *" );
-   label_user          = new QLabel( i18n( "Username"         ) + " *" );
    label_password      = new QLabel( i18n( "Password"         ) + " *" );
    label_voicemail     = new QLabel( i18n( "Voicemail number" )        );
    label_enableZrtp    = new QLabel( i18n( "Secure with ZRTP" )        );
+   label_user          = new QLabel( i18nc( "SIP Account Username","Username") + " *" );
 
    lineEdit_alias      = new QLineEdit;
    lineEdit_server     = new QLineEdit;
@@ -521,10 +521,10 @@ WizardAccountSIPFormPage::WizardAccountSIPFormPage(QWidget *parent)
 
    lineEdit_password->setEchoMode(QLineEdit::Password);
 
-   registerField(QString( FIELD_SIP_ALIAS)    + "*" , lineEdit_alias      );
-   registerField(QString( FIELD_SIP_SERVER)   + "*" , lineEdit_server     );
-   registerField(QString( FIELD_SIP_USER)     + "*" , lineEdit_user       );
-   registerField(QString( FIELD_SIP_PASSWORD) + "*" , lineEdit_password   );
+   registerField(QString( FIELD_SIP_ALIAS)    + '*' , lineEdit_alias      );
+   registerField(QString( FIELD_SIP_SERVER)   + '*' , lineEdit_server     );
+   registerField(QString( FIELD_SIP_USER)     + '*' , lineEdit_user       );
+   registerField(QString( FIELD_SIP_PASSWORD) + '*' , lineEdit_password   );
    registerField(QString( FIELD_SIP_VOICEMAIL)      , lineEdit_voicemail  );
    registerField(QString( FIELD_ZRTP_ENABLED)       , checkBox_enableZrtp );
 
@@ -582,9 +582,9 @@ WizardAccountIAXFormPage::WizardAccountIAXFormPage(QWidget *parent)
 
    label_alias        = new QLabel(i18n("Alias") + " *"     );
    label_server       = new QLabel(i18n("Server") + " *"    );
-   label_user         = new QLabel(i18n("Username") + " *"  );
    label_password     = new QLabel(i18n("Password") + " *"  );
    label_voicemail    = new QLabel(i18n("Voicemail number" ));
+   label_user         = new QLabel(i18nc("SIP Account Username","Username") + " *"  );
 
    lineEdit_alias     = new QLineEdit;
    lineEdit_server    = new QLineEdit;
@@ -594,10 +594,10 @@ WizardAccountIAXFormPage::WizardAccountIAXFormPage(QWidget *parent)
 
    lineEdit_password->setEchoMode(QLineEdit::Password);
 
-   registerField( QString( FIELD_IAX_ALIAS     ) + "*", lineEdit_alias     );
-   registerField( QString( FIELD_IAX_SERVER    ) + "*", lineEdit_server    );
-   registerField( QString( FIELD_IAX_USER      ) + "*", lineEdit_user      );
-   registerField( QString( FIELD_IAX_PASSWORD  ) + "*", lineEdit_password  );
+   registerField( QString( FIELD_IAX_ALIAS     ) + '*', lineEdit_alias     );
+   registerField( QString( FIELD_IAX_SERVER    ) + '*', lineEdit_server    );
+   registerField( QString( FIELD_IAX_USER      ) + '*', lineEdit_user      );
+   registerField( QString( FIELD_IAX_PASSWORD  ) + '*', lineEdit_password  );
    registerField( QString( FIELD_IAX_VOICEMAIL )      , lineEdit_voicemail );
 
    QFormLayout *layout = new QFormLayout;

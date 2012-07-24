@@ -30,5 +30,3 @@ DlgDisplay::DlgDisplay(QWidget *parent)
 DlgDisplay::~DlgDisplay()
 {
 }
-
-

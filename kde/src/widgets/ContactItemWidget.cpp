@@ -1,4 +1,5 @@
 /***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Mathieu Leduc-Hamel mathieu.leduc-hamel@savoirfairelinux.com *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -323,8 +324,8 @@ QString ContactItemWidget::showNumberSelector(bool& ok)
       QStringList list;
       QHash<QString,QString> map;
       foreach (Contact::PhoneNumber* number, m_pContactKA->getPhoneNumbers()) {
-         map[number->getType()+" ("+number->getNumber()+")"] = number->getNumber();
-         list << number->getType()+" ("+number->getNumber()+")";
+         map[number->getType()+" ("+number->getNumber()+')'] = number->getNumber();
+         list << number->getType()+" ("+number->getNumber()+')';
       }
       QString result = QInputDialog::getItem (this, i18n("Select phone number"), i18n("This contact have many phone number, please select the one you wish to call"), list, 0, false, &ok);
 

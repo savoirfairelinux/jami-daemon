@@ -81,7 +81,7 @@ class TileBuilder
 {
 public:
    enum { bl, br, tr, tl };
-   TileBuilder(Geometry *, qreal depth = 0.0f, qreal size = 1.0f);
+   explicit TileBuilder(Geometry *, qreal depth = 0.0f, qreal size = 1.0f);
    Tile *newTile(const QVector3D &loc = QVector3D()) const;
    void setColor(QColor c) { color = c; }
 protected:
@@ -101,7 +101,7 @@ class Cube : public QObject, public Tile
    Q_PROPERTY(qreal altitude READ altitude WRITE setAltitude)
    Q_PROPERTY(qreal rotation READ rotation WRITE setRotation)
 public:
-   Cube(const QVector3D &loc = QVector3D());
+   explicit Cube(const QVector3D &loc = QVector3D());
    ~Cube();
    qreal range() { return location.x(); }
    void setRange(qreal r);
@@ -126,7 +126,7 @@ private:
 class CubeBuilder : public TileBuilder
 {
 public:
-   CubeBuilder(Geometry *, qreal depth = 0.0f, qreal size = 1.0f);
+   explicit CubeBuilder(Geometry *, qreal depth = 0.0f, qreal size = 1.0f);
    Cube *newCube(const QVector3D &loc = QVector3D()) const;
 private:
    mutable int ix;
@@ -142,7 +142,7 @@ class AcceleratedVideoWidget : public QGLWidget
 {
    Q_OBJECT
 public:
-   AcceleratedVideoWidget(QWidget* parent);
+   explicit AcceleratedVideoWidget(QWidget* parent);
    ~AcceleratedVideoWidget();
 
 private:

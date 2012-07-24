@@ -107,3 +107,4 @@ INSTALL( FILES icons/transfertarrow.svg  DESTINATION  ${DATA_INSTALL_DIR}/sflpho
 INSTALL( FILES icons/confBlackWhite.svg  DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )
 INSTALL( FILES icons/confBlackWhite.png  DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )
 INSTALL( FILES icons/voicemail.png       DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )
+INSTALL( FILES icons/conf-small.png       DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )

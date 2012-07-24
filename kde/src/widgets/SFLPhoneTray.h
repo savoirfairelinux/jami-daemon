@@ -38,7 +38,7 @@ Q_OBJECT
 
 public:
    //Constructor
-   SFLPhoneTray(QIcon icon, QWidget *parent = 0);
+   explicit SFLPhoneTray(QIcon icon, QWidget *parent = 0);
    ~SFLPhoneTray();
    
    //Mutators

@@ -55,7 +55,7 @@ class HistoryTreeItem : public QWidget
    Q_OBJECT
  public:
     //Constructor
-    HistoryTreeItem(QWidget* parent =0, QString phone = "",bool isBookmark=false);
+    explicit HistoryTreeItem(QWidget* parent =0, QString phone = "",bool isBookmark=false);
     ~HistoryTreeItem();
 
     //Getters

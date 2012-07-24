@@ -52,7 +52,7 @@ public:
    }
    InstantMessagingModel* getModel(Call* call);
 private:
-   InstantMessagingModelManager();
+   explicit InstantMessagingModelManager();
    static InstantMessagingModelManager* m_spInstance;
    static CallModelBase* m_spCallModel;
    QHash<QString,InstantMessagingModel*> m_lModels;
@@ -75,7 +75,7 @@ public:
    static const int MESSAGE_IMAGE_ROLE   = 103;
    static const int MESSAGE_CONTACT_ROLE = 104;
 
-   InstantMessagingModel(Call* call, QObject* parent = nullptr);
+   explicit InstantMessagingModel(Call* call, QObject* parent = nullptr);
    QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole     ) const;
    int           rowCount ( const QModelIndex& parent = QModelIndex()                ) const;
    Qt::ItemFlags flags    ( const QModelIndex& index                                 ) const;

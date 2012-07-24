@@ -95,7 +95,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pSortByCBB  = new QComboBox   (                    );
    m_pSortByL    = new QLabel      ( i18n("Sort by:")   );
    m_pFromL      = new QLabel      ( i18n("From:")      );
-   m_pToL        = new QLabel      ( i18n("To:")        );
+   m_pToL        = new QLabel      ( i18nc("To date:","To:"));
    m_pFromDW     = new KDateWidget (                    );
    m_pToDW       = new KDateWidget (                    );
    m_pAllTimeCB  = new QCheckBox   ( i18n("Display all"));
@@ -123,7 +123,7 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    m_pFilterLE->setClearButtonShown(true);
 
    QStringList sortBy;
-   sortBy << i18n("Date") << i18n("Name") << i18n("Popularity") << i18n("Length");
+   sortBy << i18nc("Sort by date","Date") << i18nc("Sort by Name","Name") << i18nc("Sort by Popularity","Popularity") << i18nc("Sort by Length","Length");
    m_pSortByCBB->addItems(sortBy);
 
    QWidget* mainWidget = new QWidget(this);
@@ -213,7 +213,7 @@ void HistoryDock::reload()
    QHash<Contact*, QDateTime> recentlyUsed;
    switch (CURRENT_SORTING_MODE) {
       case Date:
-         foreach (QString cat, m_slHistoryConst) {
+         foreach (const QString& cat, m_slHistoryConst) {
             m_pItemView->addCategory(i18n(cat.toAscii()));
          }
          break;
@@ -244,7 +244,7 @@ void HistoryDock::reload()
          while (iter.hasNext()) {
             iter.next();
             QNumericTreeWidgetItem* item = iter.value();
-            item->setText(0,iter.key()+" ("+QString::number(item->weight)+")");
+            item->setText(0,iter.key()+" ("+QString::number(item->weight)+')');
          }
          break;
       }

@@ -129,8 +129,8 @@ void BookmarkDock::addBookmark_internal(const QString& phone)
    HistoryTreeItem* widget = new HistoryTreeItem(m_pItemView,phone,true);
    QTreeWidgetItem* item   = NULL;
 
-   if (widget->getName() == i18n("Unknown") || widget->getName().isEmpty()) {
-      item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18n("Unknown"));
+   if (widget->getName() == i18nc("Unknown peer","Unknown") || widget->getName().isEmpty()) {
+      item = m_pItemView->addItem<QNumericTreeWidgetItem>(i18nc("Unknown peer","Unknown"));
    }
    else {
       item = m_pItemView->addItem<QNumericTreeWidgetItem>(QString(widget->getName()[0]));
@@ -198,7 +198,7 @@ void BookmarkDock::reload()
          m_pBookmark << widget;
       }
    }
-   foreach (QString nb, ConfigurationSkeleton::bookmarkList()) {
+   foreach (const QString& nb, ConfigurationSkeleton::bookmarkList()) {
       addBookmark_internal(nb);
    }
    ConfigurationSkeleton::setDisplayContactCallHistory(m_pMostUsedCK->isChecked());

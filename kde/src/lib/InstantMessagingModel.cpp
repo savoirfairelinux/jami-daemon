@@ -17,6 +17,7 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 #include "InstantMessagingModel.h"
+
 #include "CallModel.h"
 #include "callmanager_interface_singleton.h"
 #include "Call.h"

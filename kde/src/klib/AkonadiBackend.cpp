@@ -23,6 +23,7 @@
 //Qt
 #include <QtCore/QTimer>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 
 //KDE
 #include <KDebug>
@@ -99,10 +100,10 @@ Contact* AkonadiBackend::getContactByPhone(const QString& phoneNumber,bool resol
    }
    if (!a)
       a = AccountList::getInstance()->getDefaultAccount();
-   else if (number.indexOf("@") == -1 && a)
-      return m_ContactByPhone[number+"@"+a->getAccountHostname()];
+   else if (number.indexOf('@') == -1 && a)
+      return m_ContactByPhone[number+'@'+a->getAccountHostname()];
    
-   if (resolveDNS &&  number.indexOf("@") != -1 && !getHostNameFromPhone(number).isEmpty() && m_ContactByPhone[getUserFromPhone(number)]) {
+   if (resolveDNS &&  number.indexOf('@') != -1 && !getHostNameFromPhone(number).isEmpty() && m_ContactByPhone[getUserFromPhone(number)]) {
       foreach (Account* a, AccountList::getInstance()->getAccounts()) {
          if (a->getAccountHostname() == getHostNameFromPhone(number))
             return m_ContactByPhone[getUserFromPhone(number)];
@@ -175,9 +176,9 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             KABC::Addressee tmp = item.payload<KABC::Addressee>();
             Contact* aContact   = new Contact();
 
-            KABC::PhoneNumber::List numbers = tmp.phoneNumbers();
+            const KABC::PhoneNumber::List numbers = tmp.phoneNumbers();
             PhoneNumbers newNumbers;
-            foreach (KABC::PhoneNumber number, numbers) {
+            foreach (const KABC::PhoneNumber& number, numbers) {
                newNumbers << new Contact::PhoneNumber(number.number(),number.typeLabel());
                QString number2 = number.number();
                if (number2.left(5) == "<sip:")
@@ -186,7 +187,7 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                   number2 = number2.remove(number2.size()-1,1);
                m_ContactByPhone[number2] = aContact;
                if (number2.size() <= 6 && defaultAccount && !defaultAccount->getAccountHostname().isEmpty())
-                  m_ContactByPhone[number2+"@"+defaultAccount->getAccountHostname()] = aContact;
+                  m_ContactByPhone[number2+'@'+defaultAccount->getAccountHostname()] = aContact;
             }
             m_ContactByUid[tmp.uid()] = aContact;
 
@@ -224,9 +225,9 @@ void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
    }
    
    if ( item.isValid() ) {
-      Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
+      QPointer<Akonadi::ContactEditor> editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
       editor->loadContact(item);
-      KDialog* dlg = new KDialog(parent);
+      QPointer<KDialog> dlg = new KDialog(parent);
       dlg->setMainWidget(editor);
       dlg->exec();
       if ( !editor->saveContact() ) {
@@ -260,11 +261,11 @@ void AkonadiBackend::addNewContact(Contact* contact,QWidget* parent)
 
    //aContact->setPhoneNumbers   (newNumbers           );//TODO
 
-   Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::CreateMode, parent );
+   QPointer<Akonadi::ContactEditor> editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::CreateMode, parent );
 
    editor->setContactTemplate(newContact);
 
-   KDialog* dlg = new KDialog(parent);
+   QPointer<KDialog> dlg = new KDialog(parent);
    dlg->setMainWidget(editor);
    dlg->exec();
 
@@ -272,6 +273,7 @@ void AkonadiBackend::addNewContact(Contact* contact,QWidget* parent)
       kDebug() << "Unable to save new contact to storage";
       return;
    }
+   delete dlg;
 } //addNewContact
 
 ///Implement virtual pure method
@@ -298,16 +300,17 @@ void AkonadiBackend::addPhoneNumber(Contact* contact, QString number, QString ty
       KABC::Addressee payload = item.payload<KABC::Addressee>();
       payload.insertPhoneNumber(KABC::PhoneNumber(number,nameToType(type)));
       item.setPayload<KABC::Addressee>(payload);
-      Akonadi::ContactEditor *editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, (QWidget*)nullptr );
+      QPointer<Akonadi::ContactEditor> editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, (QWidget*)nullptr );
       editor->loadContact(item);
 
-      KDialog* dlg = new KDialog(0);
+      QPointer<KDialog> dlg = new KDialog(0);
       dlg->setMainWidget(editor);
       dlg->exec();
       if ( !editor->saveContact() ) {
          kDebug() << "Unable to save new contact to storage";
          return;
       }
+      delete dlg;
       delete editor;
    }
    else {
@@ -325,7 +328,7 @@ void AkonadiBackend::addPhoneNumber(Contact* contact, QString number, QString ty
 ///Called when a new collection is added
 void AkonadiBackend::collectionsReceived( const Akonadi::Collection::List&  list)
 {
-   foreach (Akonadi::Collection coll, list) {
+   foreach (const Akonadi::Collection& coll, list) {
       update(coll);
       emit collectionChanged();
    }

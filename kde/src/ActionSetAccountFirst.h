@@ -35,7 +35,7 @@ private:
    Account* account;
 
 public:
-   ActionSetAccountFirst(Account * account, QObject *parent = 0);
+   explicit ActionSetAccountFirst(Account * account, QObject *parent = 0);
    ~ActionSetAccountFirst();
 
 private slots:

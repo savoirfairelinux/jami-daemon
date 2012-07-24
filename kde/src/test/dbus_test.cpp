@@ -1,4 +1,4 @@
-#include <QString>
+#include <QtCore/QString>
 #include <QtTest>
 #include <QtCore>
 

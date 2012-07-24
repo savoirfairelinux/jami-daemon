@@ -40,7 +40,6 @@
 #include "klib/ConfigurationSkeleton.h"
 #include "CallView.h"
 #include "SFLPhone.h"
-#include "lib/instance_interface_singleton.h"
 
 //SFLPhone library
 #include "lib/instance_interface_singleton.h"

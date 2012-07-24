@@ -163,6 +163,7 @@ CallTreeItemDelegate(CallView* widget)
       if (option.state & QStyle::State_Selected) {
          QStyleOptionViewItem opt2(option);
          opt2.rect.setWidth(opt2.rect.width()-15);
+         //Check if it is the last item
          if (index.parent().isValid() && !index.parent().child(index.row()+1,0).isValid()) {
             opt2.rect.setHeight(opt2.rect.height()-15);
             QStyledItemDelegate::paint(painter,opt2,index);
@@ -410,7 +411,7 @@ bool CallView::phoneNumberToCall(QTreeWidgetItem *parent, int index, const QMime
    if (!QString(encodedPhoneNumber).isEmpty()) {
       Contact* contact = AkonadiBackend::getInstance()->getContactByPhone(encodedPhoneNumber,true);
       QString name;
-      name = (contact)?contact->getFormattedName():i18n("Unknown");
+      name = (contact)?contact->getFormattedName():i18nc("Unknown peer","Unknown");
       Call* call2 = SFLPhone::model()->addDialingCall(name, AccountList::getCurrentAccount());
       if (call2) {
          call2->appendText(QString(encodedPhoneNumber));
@@ -528,10 +529,10 @@ QMimeData* CallView::mimeData( const QList<QTreeWidgetItem *> items) const
    }
 
    //Plain text for other applications
-   mimeData->setData(MIME_PLAIN_TEXT, QString(SFLPhone::model()->getCall(items[0])->getPeerName()+"\n"+SFLPhone::model()->getCall(items[0])->getPeerPhoneNumber()).toAscii());
+   mimeData->setData(MIME_PLAIN_TEXT, QString(SFLPhone::model()->getCall(items[0])->getPeerName()+'\n'+SFLPhone::model()->getCall(items[0])->getPeerPhoneNumber()).toAscii());
 
    //TODO Comment this line if you don't want to see ugly artefact, but the caller details will not be visible while dragged
-   items[0]->setText(0, SFLPhone::model()->getCall(items[0])->getPeerName() + "\n" + SFLPhone::model()->getCall(items[0])->getPeerPhoneNumber());
+   items[0]->setText(0, SFLPhone::model()->getCall(items[0])->getPeerName() + '\n' + SFLPhone::model()->getCall(items[0])->getPeerPhoneNumber());
    return mimeData;
 } //mimeData
 
@@ -806,9 +807,9 @@ Call* CallView::addConference(Call* conf)
    setCurrentItem(confItem);
 
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   QStringList callList = callManager.getParticipantList(conf->getConfId());
+   const QStringList callList = callManager.getParticipantList(conf->getConfId());
 
-   foreach (QString callId, callList) {
+   foreach (const QString& callId, callList) {
       kDebug() << "Adding " << callId << "to the conversation";
       insertItem(extractItem(SFLPhone::model()->getIndex(callId)),confItem);
    }
@@ -823,10 +824,10 @@ bool CallView::conferenceChanged(Call* conf)
    kDebug() << "Conference changed";
 
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   QStringList callList = callManager.getParticipantList(conf->getConfId());
+   const QStringList callList = callManager.getParticipantList(conf->getConfId());
 
    QList<QTreeWidgetItem*> buffer;
-   foreach (QString callId, callList) {
+   foreach (const QString& callId, callList) {
       if (SFLPhone::model()->getCall(callId)) {
          QTreeWidgetItem* item3 = extractItem(SFLPhone::model()->getIndex(callId));
          insertItem(item3, SFLPhone::model()->getIndex(conf));
@@ -973,3 +974,4 @@ void CallViewOverlay::setAccessMessage(QString message)
 {
    m_accessMessage = message;
 }
+

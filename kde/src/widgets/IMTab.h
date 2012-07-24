@@ -31,7 +31,7 @@ class ImDelegates : public QStyledItemDelegate
 {
    Q_OBJECT
 public:
-   ImDelegates(IMTab* parent = nullptr);
+   explicit ImDelegates(IMTab* parent = nullptr);
 protected:
    virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
    virtual QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -43,7 +43,7 @@ class IMTab : public QListView
 {
    Q_OBJECT
 public:
-   IMTab(InstantMessagingModel* model,QWidget* parent = nullptr);
+   explicit IMTab(InstantMessagingModel* model,QWidget* parent = nullptr);
 private slots:
    void scrollBottom();
 };

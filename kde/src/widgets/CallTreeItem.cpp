@@ -1,4 +1,5 @@
 /***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Mathieu Leduc-Hamel mathieu.leduc-hamel@savoirfairelinux.com *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -41,6 +42,7 @@
 #include <QtGui/QFontMetrics>
 #include <QtGui/QPalette>
 #include <QtGui/QBitmap>
+#include <QtGui/QGraphicsOpacityEffect>
 
 //KDE
 #include <KLocale>
@@ -373,7 +375,7 @@ void CallTreeItem::updated()
       }
 
       if (m_pIconL && m_pItemCall->isConference()) {
-         m_pIconL->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(24,24)));
+         m_pIconL->setPixmap(QPixmap(KStandardDirs::locate("data","sflphone-client-kde/conf-small.png")));
       }
 
       bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
@@ -410,6 +412,16 @@ void CallTreeItem::updated()
    }
    changed();
 
+   //Set fading effect
+   if (state == CALL_STATE_HOLD && m_pItemCall && !m_pItemCall->isConference()) {
+      QGraphicsOpacityEffect* opacityEffect = new QGraphicsOpacityEffect;
+      setGraphicsEffect(opacityEffect);
+   }
+   else {
+      setGraphicsEffect(nullptr);
+   }
+
+   //Start/Stop the elapsed time label
    if ((state == CALL_STATE_CURRENT || state == CALL_STATE_HOLD || state == CALL_STATE_TRANSFER) && !m_pTimer) {
       m_pTimer = new QTimer(this);
       m_pTimer->setInterval(1000);
@@ -552,7 +564,7 @@ void CallTreeItem::incrementTimer()
 {
    int nsec = QDateTime::fromTime_t(m_pItemCall->getStartTimeStamp().toInt()).time().secsTo( QTime::currentTime() );
    if (nsec/3600)
-      m_pElapsedL->setText(QString("%1").arg(nsec/3600).trimmed()+":"+QString("%1").arg((nsec%3600)/60,2,10,QChar('0')).trimmed()+":"+QString("%1").arg((nsec%3600)%60,2,10,QChar('0')).trimmed()+" ");
+      m_pElapsedL->setText(QString("%1").arg(nsec/3600).trimmed()+':'+QString("%1").arg((nsec%3600)/60,2,10,QChar('0')).trimmed()+':'+QString("%1").arg((nsec%3600)%60,2,10,QChar('0')).trimmed()+' ');
    else
-      m_pElapsedL->setText(QString("%1").arg((nsec)/60).trimmed()+":"+QString("%1").arg((nsec)%60,2,10,QChar('0')).trimmed()+" ");
+      m_pElapsedL->setText(QString("%1").arg((nsec)/60).trimmed()+':'+QString("%1").arg((nsec)%60,2,10,QChar('0')).trimmed()+' ');
 }

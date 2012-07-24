@@ -207,8 +207,6 @@ signals:
    void recordCheckStateChangeAsked   ( bool            recordCheckState   );
    ///When a new call is comming
    void incomingCall(const Call * call);
-
-
 };
 
 #endif // SFLPHONEVIEW_H

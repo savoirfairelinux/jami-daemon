@@ -58,8 +58,8 @@ CallMap       HistoryModel::m_sHistoryCalls          ;
 HistoryModel::HistoryModel():m_HistoryInit(false)
 {
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   QVector< QMap<QString, QString> > history = configurationManager.getHistory();
-   foreach (MapStringString hc, history) {
+   const QVector< QMap<QString, QString> > history = configurationManager.getHistory();
+   foreach (const MapStringString& hc, history) {
       Call* pastCall = Call::buildHistoryCall(
                hc[ CALLID_KEY          ]         ,
                hc[ TIMESTAMP_START_KEY ].toUInt(),

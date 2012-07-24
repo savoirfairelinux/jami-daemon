@@ -38,6 +38,9 @@
      <layout class="QHBoxLayout" name="horizontalLayout_5">
       <item>
        <widget class="QCheckBox" name="kcfg_notifOnCalls">
+        <property name="accessibleDescription">
+         <string comment="Enable notification on incoming calls"/>
+        </property>
         <property name="text">
          <string>On incoming calls</string>
         </property>
@@ -45,6 +48,9 @@
       </item>
       <item>
        <widget class="QCheckBox" name="kcfg_notifOnMessages">
+        <property name="accessibleDescription">
+         <string comment="Enable notifications on messages"/>
+        </property>
         <property name="text">
          <string>On messages</string>
         </property>
@@ -77,6 +83,9 @@
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <item>
        <widget class="QCheckBox" name="kcfg_displayOnStart">
+        <property name="accessibleDescription">
+         <string comment="Show main window on start"/>
+        </property>
         <property name="text">
          <string>On start</string>
         </property>
@@ -84,6 +93,9 @@
       </item>
       <item>
        <widget class="QCheckBox" name="kcfg_displayOnCalls">
+        <property name="accessibleDescription">
+         <string comment="Show main window on incoming calls"/>
+        </property>
         <property name="text">
          <string>On incoming calls</string>
         </property>

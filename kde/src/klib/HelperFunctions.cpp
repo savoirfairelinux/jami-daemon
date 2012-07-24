@@ -44,7 +44,7 @@ ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
       }
       else {
          conth["phoneNumber"] = QString::number(cont->getPhoneNumbers().size())+i18n(" numbers");
-         conth["phoneType"  ] = "";
+         conth["phoneType"  ].clear();
       }
       hash[contacts[i]->getUid()] = conth;
    }
@@ -68,10 +68,10 @@ QString HelperFunctions::normStrippped(QString str)
 QString HelperFunctions::escapeHtmlEntities(QString str)
 {
    while (str.indexOf('<') != -1) {
-      str = str.replace("<","&lt;");
+      str = str.replace('<',"&lt;");
    }
    while (str.indexOf('>') != -1) {
-      str = str.replace(">","&gt;");
+      str = str.replace('>',"&gt;");
    }
    return str;
 }

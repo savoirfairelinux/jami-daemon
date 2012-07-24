@@ -42,7 +42,7 @@ struct LIB_EXPORT Resolution {
    Resolution(const Resolution& res):width(res.width),height(res.height){}
    Resolution(const QSize& size):width(size.width()),height(size.height()){}
    //Getter
-   QString toString() { return QString::number(width)+"x"+QString::number(height);}
+   const QString toString() const { return QString::number(width)+"x"+QString::number(height);}
 
    //Attributes
    uint width;
@@ -61,16 +61,16 @@ class LIB_EXPORT VideoDevice {
       static VideoDevice* getDevice(QString id);
 
       //Getter
-      QStringList                getRateList(VideoChannel channel, Resolution resolution);
-      QList<Resolution>          getResolutionList(VideoChannel channel);
-      QList<VideoChannel>        getChannelList ();
-      Resolution                 getResolution  ();
-      VideoChannel               getChannel     ();
-      VideoRate                  getRate        ();
-      QString                    getDeviceId    ();
+      const QStringList         getRateList(VideoChannel channel, Resolution resolution);
+      const QList<Resolution>   getResolutionList(VideoChannel channel);
+      const QList<VideoChannel> getChannelList ();
+      const Resolution          getResolution  ();
+      const VideoChannel        getChannel     ();
+      const VideoRate           getRate        ();
+      const QString             getDeviceId    () const;
       
       //Static getter
-      static QList<VideoDevice*> getDeviceList();
+      static const QList<VideoDevice*> getDeviceList();
 
       //Setter
       void setRate       ( VideoRate rate        );

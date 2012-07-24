@@ -176,7 +176,7 @@ class LIB_EXPORT Account : public QObject {
       void setAccountDetails (const MapStringString& m                 );
       bool setAccountDetail  (const QString& param, const QString& val );
       #ifdef ENABLE_VIDEO
-      void setActiveVideoCodecList(QList<VideoCodec*> codecs);
+      void setActiveVideoCodecList(const QList<VideoCodec*>& codecs);
       QList<VideoCodec*> getActiveVideoCodecList();
       #endif
       ///Set the account alias

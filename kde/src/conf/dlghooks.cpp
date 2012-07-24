@@ -30,5 +30,3 @@ DlgHooks::DlgHooks(QWidget *parent)
 DlgHooks::~DlgHooks()
 {
 }
-
-

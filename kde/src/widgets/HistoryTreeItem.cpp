@@ -1,4 +1,5 @@
 /***************************************************************************
+ *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Mathieu Leduc-Hamel mathieu.leduc-hamel@savoirfairelinux.com *
  *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
@@ -452,8 +453,8 @@ void HistoryTreeItem::editNote()
 
 void HistoryTreeItem::updateSlider(int pos, int size)
 {
-   m_pTimeLeftL->setText(QString("%1").arg((size/1000-pos/1000)/60,2,10,QChar('0'))+":"+QString("%1").arg((size/1000-pos/1000)%60,2,10,QChar('0')));
-   m_pTimePlayedL->setText(QString("%1").arg((pos/1000)/60,2,10,QChar('0'))+":"+QString("%1").arg((pos/1000)%60,2,10,QChar('0')));
+   m_pTimeLeftL->setText(QString("%1").arg((size/1000-pos/1000)/60,2,10,QChar('0'))+':'+QString("%1").arg((size/1000-pos/1000)%60,2,10,QChar('0')));
+   m_pTimePlayedL->setText(QString("%1").arg((pos/1000)/60,2,10,QChar('0'))+':'+QString("%1").arg((pos/1000)%60,2,10,QChar('0')));
    m_pAudioSlider->setMaximum(size);
    m_pAudioSlider->setValue(pos);
 }
@@ -506,9 +507,9 @@ void HistoryTreeItem::setCall(Call *call)
 
    int dur = m_pItemCall->getStopTimeStamp().toInt() - m_pItemCall->getStartTimeStamp().toInt();
    if (dur/3600)
-      m_pLengthL->setText(QString("%1").arg(dur/3600).trimmed()+":"+QString("%1").arg((dur%3600)/60,2,10,QChar('0')).trimmed()+":"+QString("%1").arg((dur%3600)%60,2,10,QChar('0')).trimmed()+" ");
+      m_pLengthL->setText(QString("%1").arg(dur/3600).trimmed()+':'+QString("%1").arg((dur%3600)/60,2,10,QChar('0')).trimmed()+':'+QString("%1").arg((dur%3600)%60,2,10,QChar('0')).trimmed()+' ');
    else
-      m_pLengthL->setText(QString("%1").arg((dur%3600)/60).trimmed()+":"+QString("%1").arg((dur%3600)%60,2,10,QChar('0')).trimmed()+" ");
+      m_pLengthL->setText(QString("%1").arg((dur%3600)/60).trimmed()+':'+QString("%1").arg((dur%3600)%60,2,10,QChar('0')).trimmed()+' ');
 
    connect(m_pItemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
    updated();
@@ -574,7 +575,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
       if (!phoneNumber.isEmpty() && m_Name.isEmpty())
          m_Name = phoneNumber;
       else if (m_Name.isEmpty())
-         m_Name = i18n("Unknown");
+         m_Name = i18nc("Unknown peer","Unknown");
       
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
    }
@@ -617,7 +618,7 @@ QString HistoryTreeItem::getName()
    else if (!m_Name.isEmpty()){
       return m_Name;
    }
-   return i18n("Unknown");
+   return i18nc("Unknown peer","Unknown");
 }
 
 ///Return the caller peer number

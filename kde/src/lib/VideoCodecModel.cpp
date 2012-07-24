@@ -76,8 +76,8 @@ void VideoCodecModel::reload()
 {
    m_lCodecs.clear();
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
-   VectorMapStringString codecs =  interface.getCodecs(m_pAccount->getAccountId());
-   foreach(MapStringString h,codecs) {
+   const VectorMapStringString codecs =  interface.getCodecs(m_pAccount->getAccountId());
+   foreach(const MapStringString& h,codecs) {
       VideoCodec* c = new VideoCodec(h["name"],h["bitrate"].toInt(),h["enabled"]=="true");
       m_lCodecs << c;
    }

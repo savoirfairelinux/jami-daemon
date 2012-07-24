@@ -494,21 +494,22 @@ bool Account::operator==(const Account& a)const
  *                                                                           *
  ****************************************************************************/
 #ifdef ENABLE_VIDEO
-void Account::setActiveVideoCodecList(QList<VideoCodec*> codecs)
+void Account::setActiveVideoCodecList(const QList<VideoCodec*>& codecs)
 {
-   QStringList codecs;
+   QStringList codecs2;
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
    foreach(VideoCodec* codec,codecs) {
-      codecs << codecs->getName();
+      codecs2 << codecs->getName();
    }
-   interface.setActiveCodecList(codecs,m_pAccountId);
+   interface.setActiveCodecList(codecs2,m_pAccountId);
 }
 
 QList<VideoCodec*> Account::getActiveVideoCodecList()
 {
    QList<VideoCodec*> codecs;
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
-   foreach (QString codec, interface.getActiveCodecList(m_pAccountId)) {
+   const QStringList activeCodecList = interface.getActiveCodecList(m_pAccountId);
+   foreach (const QString& codec, activeCodecList) {
       codecs << VideoCodec::getCodec(codec);
    }
 }

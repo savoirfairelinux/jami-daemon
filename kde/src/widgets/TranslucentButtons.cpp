@@ -43,7 +43,7 @@ void TranslucentButtons::paintEvent(QPaintEvent* event)
    QFont font = customPainter.font();
    font.setBold(true);
    customPainter.setFont(font);
-   customPainter.drawText (rect(), Qt::AlignVCenter|Qt::AlignHCenter, text().replace("&","") );
+   customPainter.drawText (rect(), Qt::AlignVCenter|Qt::AlignHCenter, text().remove('&') );
 }
 
 ///Override the visibility toggler

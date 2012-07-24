@@ -229,7 +229,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
     if (hasCurrentCall()) {
         DEBUG("Has current call (%s) put it onhold", current_call_id.c_str());
 
-        // if this is not a conferenceand this and is not a conference participant
+        // if this is not a conference and this and is not a conference participant
         if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
         else if (isConference(current_call_id) and not isConferenceParticipant(call_id))
@@ -474,12 +474,12 @@ void ManagerImpl::offHoldCall(const std::string& callId)
     std::string currentCallId(getCurrentCallId());
 
     //Place current call on hold if it isn't
-
     if (hasCurrentCall()) {
-
-        if (not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
+        if (not currentCallId.empty() and not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
             DEBUG("Has current call (%s), put on hold", currentCallId.c_str());
             onHoldCall(currentCallId);
+        } else if (isConference(currentCallId) && callId != currentCallId) {
+            holdConference(currentCallId);
         } else if (isConference(currentCallId) and not isConferenceParticipant(callId))
             detachParticipant(MainBuffer::DEFAULT_ID, currentCallId);
     }

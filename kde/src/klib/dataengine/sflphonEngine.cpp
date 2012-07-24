@@ -169,7 +169,7 @@ void SFLPhoneEngine::updateCallList()
    QStringList keys;
    keys << "peerName" << "peerNumber" << "stateName" << "state" << "id";
    QHash<QString,QVariant> fake;
-   foreach (QString key, keys) {
+   foreach (const QString& key, keys) {
       fake[key] = "";
    }
    setData("calls", "fake",fake );
@@ -210,13 +210,13 @@ void SFLPhoneEngine::updateBookmarkList()
    }
 
    //TODO Wont work for now
-   foreach (QString nb, ConfigurationSkeleton::bookmarkList()) {
+   foreach (const QString& nb, ConfigurationSkeleton::bookmarkList()) {
       i++;
       QHash<QString,QVariant> pop;
       /*             KEY          VALUE */
       /**/pop["peerName"     ] = "TODO"  ;
       /**/pop["peerNumber"   ] = nb      ;
-      /**/pop["section"      ] = "1"     ;
+      /**/pop["section"      ] = '1'     ;
       /**/pop["listPriority" ] = 0       ;
       /**/pop["id"           ] = i       ;
       /*                                */
@@ -247,8 +247,8 @@ void SFLPhoneEngine::updateCollection()
    if (!list.size())
       return;
    
-   ContactHash hash = HelperFunctions::toHash(list);
-   foreach (SerializedContact cont, hash) {
+   const ContactHash hash = HelperFunctions::toHash(list);
+   foreach (const SerializedContact& cont, hash) {
       if (!m_hContacts[hash.key(cont)].size()) {
          m_hContacts[hash.key(cont)] = cont;
       }
@@ -256,8 +256,8 @@ void SFLPhoneEngine::updateCollection()
    
    removeAllData("contacts");
    int i=0;
-   foreach (SerializedContact cont, m_hContacts) {
-      cont["section"] = "test";
+   foreach (const SerializedContact& cont, m_hContacts) {
+//       cont["section"] = "test";
       setData("contacts", QString::number(i), QVariant(cont));
       i++;
    }
@@ -275,8 +275,8 @@ void SFLPhoneEngine::updateContacts()
                          "department";
    
    QHash<QString,QVariant> fake;
-   foreach(QString key,keys) {
-      fake[key]="";
+   foreach(const QString& key,keys) {
+      fake[key].clear();
    }
    setData("contacts", "fake",fake );
 }

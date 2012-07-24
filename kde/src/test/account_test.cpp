@@ -1,6 +1,6 @@
-#include <QString>
-#include <QtTest>
-#include <QtCore>
+#include <QtCore/QString>
+#include <QtTest/QtTest>
+//#include <QtCore>
 
 #include "../src/lib/configurationmanager_interface_singleton.h"
 #include "../src/lib/callmanager_interface_singleton.h"

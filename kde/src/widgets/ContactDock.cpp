@@ -127,7 +127,7 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 
 
    QStringList sortType;
-   sortType << i18n("Name") << i18n("Organisation") << i18n("Recently used") << i18n("Group") << i18n("Department");
+   sortType << i18nc("Sort by name","Name") << i18nc("Sort by Organisation","Organisation") << i18nc("Sort by Recently used","Recently used") << i18nc("Sort by Group","Group") << i18nc("Sort by Department","Department");
 
    m_pSortByCBB->addItems(sortType);
 
@@ -213,7 +213,7 @@ void ContactDock::reloadContact()
    switch (CURRENT_SORTING_MODE) {
       case Recently_used:
          recentlyUsed = getContactListByTime();
-         foreach (QString cat, m_slHistoryConst) {
+         foreach (const QString& cat, m_slHistoryConst) {
             m_pContactView->addCategory(cat);
          }
          break;
@@ -228,7 +228,7 @@ void ContactDock::reloadContact()
                category = HelperFunctions::normStrippped(QString(cont->getFormattedName().trimmed()[0])).toUpper();
                break;
             case Organisation:
-               category = (cont->getOrganization().isEmpty())?i18n("Unknown"):cont->getOrganization();
+               category = (cont->getOrganization().isEmpty())?i18nc("Unknown category","Unknown"):cont->getOrganization();
                break;
             case Recently_used:
                if (recentlyUsed.find(cont) != recentlyUsed.end())
@@ -240,7 +240,7 @@ void ContactDock::reloadContact()
                category = i18n("TODO");
                break;
             case Department:
-               category = (cont->getDepartment().isEmpty())?i18n("Unknown"):cont->getDepartment();;
+               category = (cont->getDepartment().isEmpty())?i18nc("Unknown category","Unknown"):cont->getDepartment();;
                break;
          }
          QNumericTreeWidgetItem_hist* item = m_pContactView->addItem<QNumericTreeWidgetItem_hist>(category);

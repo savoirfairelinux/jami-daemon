@@ -84,8 +84,6 @@ void SFLPhoneApplication::initializeMainWindow()
   }
 }
 
-
-
 /**
  * Initialize additional paths
  */

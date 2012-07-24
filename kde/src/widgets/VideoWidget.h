@@ -29,7 +29,7 @@ class VideoRenderer;
 class VideoWidget : public QWidget {
    Q_OBJECT
 public:
-   VideoWidget(QWidget* parent =0, VideoRenderer* renderer = VideoModel::getInstance()->getPreviewRenderer());
+   explicit VideoWidget(QWidget* parent =0, VideoRenderer* renderer = VideoModel::getInstance()->getPreviewRenderer());
 private:
    QImage*        m_Image;
    VideoRenderer* m_pRenderer;

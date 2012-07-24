@@ -53,16 +53,16 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
    dlgVideo         = new DlgVideo         (this);
    #endif
    
-   addPage( dlgGeneral       , i18n("General")       , "sflphone-client-kde"               );
-   addPage( dlgDisplay       , i18n("Display")       , "applications-graphics"             );
+   addPage( dlgGeneral       , i18nc("General settings","General")       , "sflphone-client-kde"               );
    addPage( dlgAccounts      , i18n("Accounts")      , "user-identity"                     );
    addPage( dlgAudio         , i18n("Audio")         , "audio-headset"                     );
    addPage( dlgAddressBook   , i18n("Address Book")  , "x-office-address-book"             );
    addPage( dlgHooks         , i18n("Hooks")         , "insert-link"                       );
    addPage( dlgAccessibility , i18n("Accessibility") , "preferences-desktop-accessibility" );
    #ifdef ENABLE_VIDEO
-   addPage( dlgVideo         , i18n("Video")         , "camera-web"                        );
+   addPage( dlgVideo         , i18nc("Video conversation","Video")         , "camera-web"                        );
    #endif
+   addPage( dlgDisplay       , i18nc("User interterface settings","Display")       , "applications-graphics"             );
 
    connect(this, SIGNAL(applyClicked()),  this,     SLOT(applyCustomSettings()));
    connect(this, SIGNAL(okClicked()),     this,     SLOT(applyCustomSettings()));

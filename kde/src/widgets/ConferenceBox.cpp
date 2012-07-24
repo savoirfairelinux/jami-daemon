@@ -62,10 +62,10 @@ void ConferenceBox::drawCategory(const QModelIndex &index,
         QColor window(option.palette.window().color());
         const QColor base(option.palette.base().color());
 
-        window.setAlphaF(0.7);
+        window.setAlphaF(option.state & QStyle::State_Selected?0.9:0.7);
 
         QColor window2(window);
-        window2.setAlphaF(0.2);
+        window2.setAlphaF(option.state & QStyle::State_Selected?0.4:0.2);
 
         QLinearGradient decoGradient1;
         if (leftToRight) {
@@ -339,3 +339,4 @@ int ConferenceBox::categoryHeight(const QModelIndex &index, const QStyleOption &
 
    return fontMetrics.height() + 2 + 12 /* vertical spacing */;
 }
+

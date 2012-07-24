@@ -28,7 +28,7 @@ DlgVideo::DlgVideo(QWidget *parent)
 {
    setupUi(this);
    
-   QList<VideoDevice*> devices =  VideoDevice::getDeviceList();
+   const QList<VideoDevice*> devices =  VideoDevice::getDeviceList();
    foreach(VideoDevice* dev,devices) {
       m_pDeviceCB->addItem(dev->getDeviceId());
    }
@@ -61,7 +61,7 @@ void DlgVideo::loadDevice(QString device) {
    QString curChan = m_pDevice->getChannel();
    if (m_pDevice) {
       m_pChannelCB->clear();
-      foreach(VideoChannel channel,m_pDevice->getChannelList()) {
+      foreach(const VideoChannel& channel,m_pDevice->getChannelList()) {
          m_pChannelCB->addItem(channel);
          if (channel == curChan)
             m_pChannelCB->setCurrentIndex(m_pChannelCB->count()-1);
@@ -73,7 +73,7 @@ void DlgVideo::loadResolution(QString channel)
 {
    Resolution current = m_pDevice->getResolution();
    m_pResolutionCB->clear();
-   foreach(Resolution res,m_pDevice->getResolutionList(channel)) {
+   foreach(const Resolution& res,m_pDevice->getResolutionList(channel)) {
       m_pResolutionCB->addItem(res.toString());
       if (current == res) {
          m_pResolutionCB->setCurrentIndex(m_pResolutionCB->count()-1);
@@ -86,7 +86,7 @@ void DlgVideo::loadRate(QString resolution)
 {
    m_pRateCB->clear();
    QString rate = m_pDevice->getRate();
-   foreach(QString r,m_pDevice->getRateList(m_pChannelCB->currentText(),resolution)) {
+   foreach(const QString& r,m_pDevice->getRateList(m_pChannelCB->currentText(),resolution)) {
       m_pRateCB->addItem(r);
       if (r == rate)
          m_pRateCB->setCurrentIndex(m_pRateCB->count()-1);

@@ -56,10 +56,10 @@ ContactList ContactBackend::update()
 ///Return the extension/user of an URI (<sip:12345@exemple.com>)
 QString ContactBackend::getUserFromPhone(QString phoneNumber)
 {
-   if (phoneNumber.indexOf("@") != -1) {
-      QString user = phoneNumber.split("@")[0];
-      if (user.indexOf(":") != -1) {
-         return user.split(":")[1];
+   if (phoneNumber.indexOf('@') != -1) {
+      QString user = phoneNumber.split('@')[0];
+      if (user.indexOf(':') != -1) {
+         return user.split(':')[1];
       }
       else {
          return user;
@@ -71,8 +71,8 @@ QString ContactBackend::getUserFromPhone(QString phoneNumber)
 ///Return the domaine of an URI (<sip:12345@exemple.com>)
 QString ContactBackend::getHostNameFromPhone(QString phoneNumber)
 {
-   if (phoneNumber.indexOf("@") != -1) {
-      return phoneNumber.split("@")[1].left(phoneNumber.split("@")[1].size()-1);
+   if (phoneNumber.indexOf('@') != -1) {
+      return phoneNumber.split('@')[1].left(phoneNumber.split('@')[1].size()-1);
    }
    return "";
 }
