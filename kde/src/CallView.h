@@ -117,6 +117,7 @@ class CallView : public QTreeWidget {
       virtual void dragMoveEvent  ( QDragMoveEvent  *e );
       virtual void dragLeaveEvent ( QDragLeaveEvent *e );
       virtual void resizeEvent    ( QResizeEvent    *e );
+      virtual void drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const;
 
    public slots:
       void destroyCall        ( Call* toDestroy);

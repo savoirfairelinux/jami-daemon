@@ -31,6 +31,8 @@
 #include <QtGui/QLabel>
 #include <QtGui/QSpacerItem>
 #include <QtGui/QInputDialog>
+#include <QtGui/QBitmap>
+#include <QtGui/QPainter>
 
 //KDE
 #include <KIcon>
@@ -246,10 +248,23 @@ void ContactItemWidget::updated()
    else
       m_pCallNumberL->setText(QString::number(getCallNumbers().count())+i18n(" numbers"));
 
-   if (!m_pContactKA->getPhoto())
+   if (!m_pContactKA->getPhoto()) {
+
       m_pIconL->setPixmap(QPixmap(KIcon("user-identity").pixmap(QSize(48,48))));
-   else
-      m_pIconL->setPixmap(*m_pContactKA->getPhoto());
+   }
+   else {
+      QPixmap pxm =*m_pContactKA->getPhoto();
+      QRect pxRect = pxm.rect();
+      QBitmap mask(pxRect.size());
+      QPainter customPainter(&mask);
+      customPainter.setRenderHint(QPainter::Antialiasing, true);
+      customPainter.fillRect(pxRect,"white");
+      customPainter.setBackground(QColor("black"));
+      customPainter.setBrush(QColor("black"));
+      customPainter.drawRoundedRect(pxRect,5,5);
+      pxm.setMask(mask);
+      m_pIconL->setPixmap(pxm);
+   }
 } //updated
 
 

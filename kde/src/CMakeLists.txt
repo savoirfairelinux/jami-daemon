@@ -52,6 +52,7 @@ SET(
    widgets/BookmarkDock.cpp
    widgets/TranslucentButtons.cpp
    widgets/CategoryDrawer.cpp
+   widgets/ConferenceBox.cpp
    widgets/CategorizedTreeWidget.cpp
    widgets/VideoDock.cpp
    widgets/VideoWidget.cpp

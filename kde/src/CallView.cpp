@@ -48,6 +48,7 @@
 #include "widgets/CallTreeItem.h"
 #include "SFLPhone.h"
 #include "SFLPhoneAccessibility.h"
+#include "widgets/ConferenceBox.h"
 
 ///CallTreeItemDelegate: Delegates for CallTreeItem
 class CallTreeItemDelegate : public QStyledItemDelegate
@@ -56,6 +57,7 @@ public:
 CallTreeItemDelegate(CallView* widget)
       : QStyledItemDelegate(widget)
       , m_tree(widget)
+      , m_ConferenceDrawer()
     {
     }
 
@@ -65,13 +67,133 @@ CallTreeItemDelegate(CallView* widget)
       if (item) {
          CallTreeItem* widget = (CallTreeItem*)m_tree->itemWidget(item,0);
          if (widget)
-            sh.rheight() = widget->sizeHint().height()+4;
+            sh.rheight() = widget->sizeHint().height()+11; //Equal top and bottom padding
+
+         if (index.parent().isValid() && !index.parent().child(index.row()+1,0).isValid())
+            sh.rheight() += 15;
+            
       }
 
       return sh;
     }
+
+   QRect fullCategoryRect(const QStyleOptionViewItem& option, const QModelIndex& index) const {
+      QModelIndex i(index),old(index);
+      //BEGIN real sizeHint()
+      //Otherwise it would be called too often (thanks to valgrind)
+      ((CallTreeItemDelegate*)this)->m_SH          = QStyledItemDelegate::sizeHint(option, index);
+      ((CallTreeItemDelegate*)this)->m_LeftMargin  = m_ConferenceDrawer.leftMargin();
+      ((CallTreeItemDelegate*)this)->m_RightMargin = m_ConferenceDrawer.rightMargin();
+      if (!index.parent().isValid() && index.child(0,0).isValid()) {
+         ((QSize)m_SH).rheight() += 2 * m_ConferenceDrawer.leftMargin();
+      } else {
+         ((QSize)m_SH).rheight() += m_ConferenceDrawer.leftMargin();
+      }
+      ((QSize)m_SH).rwidth() += m_ConferenceDrawer.leftMargin();
+      //END real sizeHint()
+
+      if (i.parent().isValid()) {
+         i = i.parent();
+      }
+
+      //Avoid repainting the category over and over (optimization)
+      //note: 0,0,0,0 is actually wrong, but it wont change anything for this use case
+      if (i != old && old.row()>2)
+         return QRect(0,0,0,0);
+
+      QTreeWidgetItem* item = m_tree->itemFromIndex(i);
+      QRect r = m_tree->visualItemRect(item);
+
+      // adapt width
+      r.setLeft(m_ConferenceDrawer.leftMargin());
+      r.setWidth(m_tree->viewport()->width() - m_ConferenceDrawer.leftMargin() - m_ConferenceDrawer.rightMargin());
+
+      // adapt height
+      if (item->isExpanded() && item->childCount() > 0) {
+         const int childCount = item->childCount();
+         //There is a massive implact on CPU usage to have massive rect
+         for (int i =0;i < childCount;i++) {
+            r.setHeight(r.height() + sizeHint(option,index).height());
+         }
+//          qDebug() << "\n\nFINAL SIZE" << r;
+      }
+
+      r.setTop(r.top() + m_ConferenceDrawer.leftMargin());
+
+      return r;
+    }
+
+    virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+    {
+      Q_ASSERT(index.isValid());
+
+      QStyleOptionViewItem opt(option);
+      //BEGIN: draw toplevel items
+      if (!index.parent().isValid() && index.child(0,0).isValid()) {
+         const QRegion cl = painter->clipRegion();
+         painter->setClipRect(opt.rect);
+         opt.rect = fullCategoryRect(option, index);
+         m_ConferenceDrawer.drawCategory(index, 0, opt, painter);
+         painter->setClipRegion(cl);
+         return;
+      }
+
+      if (!index.parent().parent().isValid()) {
+         opt.rect = fullCategoryRect(option, index);
+         const QRegion cl = painter->clipRegion();
+         QRect cr = option.rect;
+         if (index.column() == 0) {
+            if (m_tree->layoutDirection() == Qt::LeftToRight) {
+               cr.setLeft(5);
+            } else {
+               cr.setRight(opt.rect.right());
+            }
+         }
+         painter->setClipRect(cr);
+         if (index.parent().isValid())
+            m_ConferenceDrawer.drawCategory(index, 0, opt, painter);
+         painter->setClipRegion(cl);
+         painter->setRenderHint(QPainter::Antialiasing, false);
+      }
+
+      //END: draw background of category for all other items
+
+      int max = 9999;
+      painter->setClipRect(option.rect);
+      if (option.state & QStyle::State_Selected) {
+         QStyleOptionViewItem opt2(option);
+         opt2.rect.setWidth(opt2.rect.width()-15);
+         if (index.parent().isValid() && !index.parent().child(index.row()+1,0).isValid()) {
+            opt2.rect.setHeight(opt2.rect.height()-15);
+            QStyledItemDelegate::paint(painter,opt2,index);
+            max = opt2.rect.height();
+         }
+         else {
+            QStyledItemDelegate::paint(painter,index.parent().isValid()?opt2:option,index);
+         }
+      }
+
+      QTreeWidgetItem* item = m_tree->itemFromIndex(index);
+      if (item) {
+         QWidget* widget = m_tree->itemWidget(item,0);
+         if (widget) {
+            widget->setMinimumSize((m_tree->viewport()->width() - m_ConferenceDrawer.leftMargin() - m_ConferenceDrawer.rightMargin())-m_ConferenceDrawer.leftMargin(),10);
+            widget->setMaximumSize((m_tree->viewport()->width() - m_ConferenceDrawer.leftMargin() - m_ConferenceDrawer.rightMargin())-m_ConferenceDrawer.leftMargin(),max);
+         }
+      }
+      
+      if (index.parent().isValid() && !index.parent().child(index.row()+1,0).isValid()) {
+         m_ConferenceDrawer.drawBoxBottom(index, 0, option, painter);
+      }
+    }
+
+    
 private:
-   CallView* m_tree;
+   CallView*      m_tree;
+   ConferenceBox  m_ConferenceDrawer;
+   QSize m_SH;
+   int m_LeftMargin;
+   int m_RightMargin;
 };
 
 
@@ -79,10 +201,12 @@ private:
 CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_pCallPendingTransfer(0)
 {
    //Widget part
-   setAcceptDrops(true);
-   setDragEnabled(true);
-   setAnimated   (true);
+   setAcceptDrops      (true );
+   setDragEnabled      (true );
+   setAnimated         (false);
    setUniformRowHeights(false);
+   setRootIsDecorated  (false);
+   setIndentation(15);
 
    CallTreeItemDelegate *delegate = new CallTreeItemDelegate(this);
    setItemDelegate(delegate);
@@ -141,6 +265,15 @@ CallView::~CallView()
    if (m_pTransferOverlay) delete m_pTransferOverlay;
    if (m_pActiveOverlay)   delete m_pActiveOverlay;
 }
+
+///A tree is not a good representation, remove branch and skin everything
+void CallView::drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const
+{
+   Q_UNUSED(painter)
+   Q_UNUSED(rect)
+   Q_UNUSED(index)
+}
+
 
 
 /*****************************************************************************

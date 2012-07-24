@@ -32,6 +32,7 @@ class QLabel;
 class QPushButton;
 class QMimeData;
 class QTimer;
+class QPixmap;
 
 //KDE
 class KIcon;
@@ -84,6 +85,9 @@ class CallTreeItem : public QWidget
     
     TranslucentButtons* m_pBtnConf ;
     TranslucentButtons* m_pBtnTrans;
+
+    //Helper
+    QPixmap& applyMask(QPixmap& pxm);
 
   protected:
     //Reimplementation

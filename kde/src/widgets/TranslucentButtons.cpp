@@ -29,6 +29,7 @@ void TranslucentButtons::paintEvent(QPaintEvent* event)
 {
    Q_UNUSED(event)
    QPainter customPainter(this);
+   customPainter.setRenderHint(QPainter::Antialiasing, true);
    customPainter.setBackground(m_CurrentColor);
    customPainter.setBrush(m_CurrentColor);
    customPainter.setPen(Qt::NoPen);

@@ -35,9 +35,12 @@
 #include <QtGui/QClipboard>
 #include <QtGui/QApplication>
 #include <QtGui/QFontMetrics>
+#include <QtGui/QBitmap>
+#include <QtGui/QBrush>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
 #include <QtCore/QProcess>
+#include <QtCore/QRect>
 
 //KDE
 #include <KLocale>
@@ -544,8 +547,18 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
    if (m_pContact) {
       m_Name = m_pContact->getFormattedName();
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
-      if (m_pContact->getPhoto() != NULL)
+      if (m_pContact->getPhoto() != NULL) {
          pxm = (*m_pContact->getPhoto());
+         QRect pxRect = pxm.rect();
+         QBitmap mask(pxRect.size());
+         QPainter customPainter(&mask);
+         customPainter.setRenderHint(QPainter::Antialiasing, true);
+         customPainter.fillRect(pxRect,"white");
+         customPainter.setBackground(QColor("black"));
+         customPainter.setBrush(QColor("black"));
+         customPainter.drawRoundedRect(pxRect,5,5);
+         pxm.setMask(mask);
+      }
       else
          pxm = QPixmap(KIcon("user-identity").pixmap(QSize(48,48)));
 

@@ -39,6 +39,8 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QTreeWidgetItem>
 #include <QtGui/QFontMetrics>
+#include <QtGui/QPalette>
+#include <QtGui/QBitmap>
 
 //KDE
 #include <KLocale>
@@ -131,11 +133,14 @@ QSize CallTreeItem::sizeHint () const
          height += fm.height();
       }
    }
+   else if (m_pItemCall && m_pItemCall->isConference()) {
+      height = 32;
+   }
    else {
       height = 32;
    }
 
-   if (ConfigurationSkeleton::limitMinimumRowHeight() && height < (uint)ConfigurationSkeleton::minimumRowHeight()) {
+   if (ConfigurationSkeleton::limitMinimumRowHeight() && height < (uint)ConfigurationSkeleton::minimumRowHeight() && !(m_pItemCall && m_pItemCall->isConference())) {
       height = (uint)ConfigurationSkeleton::minimumRowHeight();
    }
 
@@ -157,6 +162,21 @@ QSize CallTreeItem::sizeHint () const
  *                                                                           *
  ****************************************************************************/
 
+///Apply rounder mask
+QPixmap& CallTreeItem::applyMask(QPixmap& pxm)
+{
+      QRect pxRect = pxm.rect();
+      QBitmap mask(pxRect.size());
+      QPainter customPainter(&mask);
+      customPainter.setRenderHint(QPainter::Antialiasing, true);
+      customPainter.fillRect(pxRect,"white");
+      customPainter.setBackground(QColor("black"));
+      customPainter.setBrush(QColor("black"));
+      customPainter.drawRoundedRect(pxRect,5,5);
+      pxm.setMask(mask);
+      return pxm;
+}
+
 ///Set the call item
 void CallTreeItem::setCall(Call *call)
 {
@@ -168,7 +188,14 @@ void CallTreeItem::setCall(Call *call)
 
    if (m_pItemCall->isConference()) {
       if (!m_Init) {
-         m_pHistoryPeerL = new QLabel(i18n("Conference"),this);
+         QColor textColor = palette().text().color();
+         QColor baseColor = palette().base().color().name();
+         baseColor.setBlue (baseColor.blue() + (textColor.blue() -baseColor.blue()) *0.6);
+         baseColor.setRed  (baseColor.red()  + (textColor.red()  -baseColor.red())  *0.6);
+         baseColor.setGreen(baseColor.green()+ (textColor.green()-baseColor.green())*0.6);
+
+         m_pHistoryPeerL = new QLabel(i18n("<b>Conference</b>"),this);
+         m_pHistoryPeerL->setStyleSheet("color:"+baseColor.name());
          m_pIconL = new QLabel(" ",this);
          QHBoxLayout* mainLayout = new QHBoxLayout();
          mainLayout->addWidget(m_pIconL);
@@ -177,7 +204,7 @@ void CallTreeItem::setCall(Call *call)
          m_Init = true;
       }
       m_pIconL->setVisible(true);
-      m_pIconL->setStyleSheet("margin-top:"+(height()-32)/2);
+      m_pIconL->setStyleSheet("margin-left:7px;");
       m_pHistoryPeerL->setVisible(true);
       return;
    }
@@ -268,7 +295,10 @@ void CallTreeItem::setCall(Call *call)
    mainLayout->addLayout(descr);
    mainLayout->addWidget(m_pElapsedL);
 
-   setLayout(mainLayout);
+   QVBoxLayout* mainLayout2 = new QVBoxLayout();
+   mainLayout2->addItem(mainLayout);
+   mainLayout2->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+   setLayout(mainLayout2);
 
    connect(m_pItemCall, SIGNAL(changed()), this, SLOT(updated()));
    sizeHint();
@@ -317,6 +347,7 @@ void CallTreeItem::updated()
       if(m_pIconL && state == CALL_STATE_CURRENT && recording) {
          if (m_pContact && !m_pItemCall->isConference()) {
             QPixmap pxm = (*m_pContact->getPhoto()).scaled(QSize(m_Height,m_Height));
+            applyMask(pxm);
             QPainter painter(&pxm);
             QPixmap status(ICON_CURRENT_REC);
             painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
@@ -330,6 +361,7 @@ void CallTreeItem::updated()
          QString str = QString(callStateIcons[state]);
          if (m_pContact && !m_pItemCall->isConference() && m_pContact->getPhoto()) {
             QPixmap pxm = (*m_pContact->getPhoto()).scaled(QSize(m_Height,m_Height));
+            applyMask(pxm);
             QPainter painter(&pxm);
             QPixmap status(str);
             painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
@@ -341,7 +373,7 @@ void CallTreeItem::updated()
       }
 
       if (m_pIconL && m_pItemCall->isConference()) {
-         m_pIconL->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(m_Height,m_Height)));
+         m_pIconL->setPixmap(QPixmap(ICON_CONFERENCE).scaled(QSize(24,24)));
       }
 
       bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
