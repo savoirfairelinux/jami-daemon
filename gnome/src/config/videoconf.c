@@ -424,6 +424,9 @@ videocodecs_box(account_t *acc)
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));
 
+    /* The list store model will be destroyed automatically with the view */
+    g_object_unref(G_OBJECT(codecStore));
+
     // Get tree selection manager
     GtkTreeSelection *treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
     g_signal_connect(G_OBJECT(treeSelection), "changed",
@@ -450,7 +453,6 @@ videocodecs_box(account_t *acc)
     treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate (kbps)"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
-    g_object_unref(G_OBJECT(codecStore));
     gtk_container_add(GTK_CONTAINER(scrolledWindow), codecTreeView);
 
     // Create button box
@@ -731,12 +733,10 @@ fill_devices()
         gtk_widget_show_all(v4l2_hbox);
         gtk_widget_hide(v4l2_nodev);
         gtk_widget_set_sensitive(preview_button, TRUE);
-    } else {
-        if (GTK_IS_WIDGET(v4l2_hbox)) {
-            gtk_widget_hide(v4l2_hbox);
-            gtk_widget_show(v4l2_nodev);
-            gtk_widget_set_sensitive(preview_button, FALSE);
-        }
+    } else if (GTK_IS_WIDGET(v4l2_hbox)) {
+        gtk_widget_hide(v4l2_hbox);
+        gtk_widget_show(v4l2_nodev);
+        gtk_widget_set_sensitive(preview_button, FALSE);
     }
 }
 
@@ -750,7 +750,6 @@ video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo UNUSED)
 static GtkWidget *
 v4l2_box()
 {
-    DEBUG("%s", __PRETTY_FUNCTION__);
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     v4l2_nodev = gtk_label_new(_("No devices found"));

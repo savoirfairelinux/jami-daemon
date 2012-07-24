@@ -518,6 +518,9 @@ audiocodecs_box(const account_t *account)
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));
 
+    /* The list store model will be destroyed automatically with the view */
+    g_object_unref(G_OBJECT(codecStore));
+
     // Get tree selection manager
     GtkTreeSelection *treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
     g_signal_connect(G_OBJECT(treeSelection), "changed",
@@ -547,7 +550,6 @@ audiocodecs_box(const account_t *account)
     treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
-    g_object_unref(G_OBJECT(codecStore));
     gtk_container_add(GTK_CONTAINER(scrolledWindow), codecTreeView);
 
     // Create button box
