@@ -62,12 +62,12 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
       //m_pModel->initHistory();
    }
 
-   /*                SOURCE                             SIGNAL                 DESTINATION              SLOT                   */
-   /**/connect(m_pModel                     , SIGNAL( callStateChanged(Call*))  , this , SLOT( callStateChangedSignal(Call*)  ));
-   /**/connect(m_pModel                     , SIGNAL( callAdded(Call*))         , this , SLOT( callStateChangedSignal(Call*)  ));
-   /**/connect(m_pModel                     , SIGNAL( callStateChanged(Call*))  , this , SLOT( callStateChangedSignal(Call*)  ));
-   /**/connect(AkonadiBackend::getInstance(), SIGNAL( collectionChanged())      , this , SLOT( updateCollection()             ));
-   /*                                                                                                                          */
+   /*                SOURCE                             SIGNAL                 DESTINATION              SLOT                */
+   /**/connect(m_pModel                     , SIGNAL(callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)) );
+   /**/connect(m_pModel                     , SIGNAL(callAdded(Call*))         , this , SLOT(callStateChangedSignal(Call*)) );
+   /**/connect(m_pModel                     , SIGNAL(callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)) );
+   /**/connect(AkonadiBackend::getInstance(), SIGNAL(collectionChanged())      , this , SLOT(updateCollection())            );
+   /*                                                                                                                       */
    
    
 }

@@ -57,9 +57,9 @@ DlgGeneral::DlgGeneral(KConfigDialog *parent)
       i->setCheckState((checked)?Qt::Checked:Qt::Unchecked);
       m_pDetailsList->addItem(m_lItemList[iter.value()] = i);
    }
-   connect(m_pDetailsList   , SIGNAL(itemChanged(QListWidgetItem*))  , this  , SLOT( changed()      ));
-   connect(m_pAlwaysRecordCK, SIGNAL(clicked(bool)                )  , this  , SLOT( changed()      ));
-   connect(this             , SIGNAL(updateButtons()              )  , parent, SLOT( updateButtons()));
+   connect(m_pDetailsList   , SIGNAL(itemChanged(QListWidgetItem*))  , this  , SLOT(changed())      );
+   connect(m_pAlwaysRecordCK, SIGNAL(clicked(bool))                  , this  , SLOT(changed())      );
+   connect(this             , SIGNAL(updateButtons())                , parent, SLOT(updateButtons()));
 }
 
 DlgGeneral::~DlgGeneral()

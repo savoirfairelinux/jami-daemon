@@ -152,13 +152,13 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    
    m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::historySortMode());
 
-   connect(m_pAllTimeCB,                   SIGNAL(toggled(bool)),            this, SLOT(enableDateRange(bool)       ));
-   connect(m_pFilterLE,                    SIGNAL(textChanged(QString)),     this, SLOT(filter(QString)             ));
-   connect(m_pFromDW  ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedFromDate(QDate) ));
-   connect(m_pToDW    ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedToDate(QDate)   ));
-   connect(m_pSortByCBB,                   SIGNAL(currentIndexChanged(int)), this, SLOT(reload()                    ));
-   connect(AkonadiBackend::getInstance(),  SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo()         ));
-   connect(HistoryModel::self()         ,  SIGNAL(newHistoryCall(Call*)),    this, SLOT(newHistoryCall(Call*)       ));
+   connect(m_pAllTimeCB,                   SIGNAL(toggled(bool)),            this, SLOT(enableDateRange(bool))      );
+   connect(m_pFilterLE,                    SIGNAL(textChanged(QString)),     this, SLOT(filter(QString))            );
+   connect(m_pFromDW  ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedFromDate(QDate)));
+   connect(m_pToDW    ,                    SIGNAL(changed(QDate)),           this, SLOT(updateLinkedToDate(QDate))  );
+   connect(m_pSortByCBB,                   SIGNAL(currentIndexChanged(int)), this, SLOT(reload())                   );
+   connect(AkonadiBackend::getInstance(),  SIGNAL(collectionChanged()),      this, SLOT(updateContactInfo())        );
+   connect(HistoryModel::self()         ,  SIGNAL(newHistoryCall(Call*)),    this, SLOT(newHistoryCall(Call*))      );
 
    reload();
 } //HistoryDock

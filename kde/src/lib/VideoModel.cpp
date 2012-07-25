@@ -41,9 +41,9 @@ VideoModel* VideoModel::m_spInstance = nullptr;
 VideoModel::VideoModel():m_BufferSize(0),m_ShmKey(0),m_SemKey(0),m_PreviewState(false)
 {
    VideoInterface& interface = VideoInterfaceSingleton::getInstance();
-   connect( &interface , SIGNAL(deviceEvent()                       ), this, SLOT( deviceEvent()                       ));
-   connect( &interface , SIGNAL(startedDecoding(QString,QString,int,int)), this, SLOT( startedDecoding(QString,QString,int,int) ));
-   connect( &interface , SIGNAL(stoppedDecoding(QString,QString)        ), this, SLOT( stoppedDecoding(QString,QString        ) ));
+   connect( &interface , SIGNAL(deviceEvent())                           , this, SLOT(deviceEvent())                           );
+   connect( &interface , SIGNAL(startedDecoding(QString,QString,int,int)), this, SLOT(startedDecoding(QString,QString,int,int)));
+   connect( &interface , SIGNAL(stoppedDecoding(QString,QString))        , this, SLOT(stoppedDecoding(QString,QString))        );
 }
 
 ///Singleton

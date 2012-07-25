@@ -18,8 +18,8 @@
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA *
  ***********************************************************************************/
 
-#ifndef __SFLPHONE_CONST_H
-#define __SFLPHONE_CONST_H
+#ifndef SFLPHONE_CONST_H
+#define SFLPHONE_CONST_H
 
 #include <QtCore/QString>
 

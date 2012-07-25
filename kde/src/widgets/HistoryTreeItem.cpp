@@ -149,14 +149,14 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone,bool isBookmark)
    m_pRemove->setSizePolicy(QSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed));
    m_pRemove->setVisible(false);
 
-   connect(m_pCallAgain    , SIGNAL(triggered())                        , this        , SLOT(callAgain()         ));
-   connect(m_pAddContact   , SIGNAL(triggered())                        , this        , SLOT(addContact()        ));
-   connect(m_pCopy         , SIGNAL(triggered())                        , this        , SLOT(copy()              ));
-   connect(m_pEmail        , SIGNAL(triggered())                        , this        , SLOT(sendEmail()         ));
-   connect(m_pAddToContact , SIGNAL(triggered())                        , this        , SLOT(addToContact()      ));
-   connect(m_pBookmark     , SIGNAL(triggered())                        , this        , SLOT(bookmark()          ));
-   connect(m_pRemove       , SIGNAL(clicked()  )                        , this        , SLOT(removeRecording()   ));
-   connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this        , SLOT(showContext(QPoint) ));
+   connect(m_pCallAgain    , SIGNAL(triggered())                        , this        , SLOT(callAgain())        );
+   connect(m_pAddContact   , SIGNAL(triggered())                        , this        , SLOT(addContact())       );
+   connect(m_pCopy         , SIGNAL(triggered())                        , this        , SLOT(copy())             );
+   connect(m_pEmail        , SIGNAL(triggered())                        , this        , SLOT(sendEmail())        );
+   connect(m_pAddToContact , SIGNAL(triggered())                        , this        , SLOT(addToContact())     );
+   connect(m_pBookmark     , SIGNAL(triggered())                        , this        , SLOT(bookmark())         );
+   connect(m_pRemove       , SIGNAL(clicked())                          , this        , SLOT(removeRecording())  );
+   connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this        , SLOT(showContext(QPoint)));
 
    m_pIconL         = new QLabel( this );
    m_pPeerNameL     = new QLabel( this );
@@ -395,13 +395,13 @@ void HistoryTreeItem::showRecordPlayer()
 
 
 
-      connect( m_pStop        , SIGNAL(clicked()                        ) , m_pItemCall    , SLOT( stopRecording()       ));
-      connect( m_pItemCall    , SIGNAL(playbackStopped()                ) , this           , SLOT( stopPlayer()          ));
-      connect( m_pItemCall    , SIGNAL(playbackPositionChanged(int,int) ) , this           , SLOT( updateSlider(int,int) ));
-      connect( m_pPause       , SIGNAL(clicked()                        ) , this           , SLOT( playPausePlayer()     ));
-      connect( m_pNote        , SIGNAL(clicked()                        ) , this           , SLOT( editNote()            ));
-      connect( m_pAudioSlider , SIGNAL(sliderPressed()                  ) , this           , SLOT( disconnectSlider()    ));
-      connect( m_pAudioSlider , SIGNAL(sliderReleased()                 ) , this           , SLOT( connectSlider()       ));
+      connect( m_pStop        , SIGNAL(clicked())                        , m_pItemCall, SLOT(stopRecording())      );
+      connect( m_pItemCall    , SIGNAL(playbackStopped())                , this       , SLOT(stopPlayer())         );
+      connect( m_pItemCall    , SIGNAL(playbackPositionChanged(int,int)) , this       , SLOT(updateSlider(int,int)));
+      connect( m_pPause       , SIGNAL(clicked())                        , this       , SLOT(playPausePlayer())    );
+      connect( m_pNote        , SIGNAL(clicked())                        , this       , SLOT(editNote())           );
+      connect( m_pAudioSlider , SIGNAL(sliderPressed())                  , this       , SLOT(disconnectSlider())   );
+      connect( m_pAudioSlider , SIGNAL(sliderReleased())                 , this       , SLOT(connectSlider())      );
 
    }
    kDebug() << "Path:" << m_pItemCall->getRecordingPath();
@@ -498,8 +498,8 @@ void HistoryTreeItem::setCall(Call *call)
    }
 
    m_pItemCall = call;
-   connect(m_pPlay         , SIGNAL(clicked()  )         , m_pItemCall , SLOT(playRecording()     ));
-   connect(m_pItemCall     , SIGNAL(playbackStarted()  ) , this        , SLOT(showRecordPlayer()  ));
+   connect(m_pPlay         , SIGNAL(clicked())         , m_pItemCall , SLOT(playRecording())   );
+   connect(m_pItemCall     , SIGNAL(playbackStarted()) , this        , SLOT(showRecordPlayer()));
 
    m_pCallNumberL->setText(m_pItemCall->getPeerPhoneNumber());
 
@@ -511,7 +511,7 @@ void HistoryTreeItem::setCall(Call *call)
    else
       m_pLengthL->setText(QString("%1").arg((dur%3600)/60).trimmed()+':'+QString("%1").arg((dur%3600)%60,2,10,QChar('0')).trimmed()+' ');
 
-   connect(m_pItemCall , SIGNAL(changed())                          , this , SLOT(updated()           ));
+   connect(m_pItemCall , SIGNAL(changed())                          , this , SLOT(updated()));
    updated();
 
    m_TimeStamp   = m_pItemCall->getStartTimeStamp().toUInt();

@@ -166,13 +166,13 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 
    m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::contactSortMode());
 
-   connect (AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                   this,        SLOT(reloadContact()                      ));
-   connect (m_pSortByCBB                 ,SIGNAL(currentIndexChanged(int)),                              this,        SLOT(reloadContact()                      ));
-   connect (m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,        SLOT(loadContactHistory(QTreeWidgetItem*) ));
-   connect (m_pFilterLE,                  SIGNAL(textChanged(QString)),                                  this,        SLOT(filter(QString)                      ));
-   connect (m_pShowHistoCK,               SIGNAL(toggled(bool)),                                         this,        SLOT(setHistoryVisible(bool)              ));
-   connect (timer                        ,SIGNAL(timeout()),                                             this,        SLOT(reloadHistoryConst()                 ));
-   connect(ConfigurationSkeleton::self() ,SIGNAL(configChanged()),                                       this,        SLOT(reloadContact()                      ));
+   connect(AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                  this, SLOT(reloadContact())                     );
+   connect(m_pSortByCBB                 ,SIGNAL(currentIndexChanged(int)),                             this, SLOT(reloadContact())                     );
+   connect(m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),this, SLOT(loadContactHistory(QTreeWidgetItem*)));
+   connect(m_pFilterLE,                  SIGNAL(textChanged(QString)),                                 this, SLOT(filter(QString))                     );
+   connect(m_pShowHistoCK,               SIGNAL(toggled(bool)),                                        this, SLOT(setHistoryVisible(bool))             );
+   connect(timer                        ,SIGNAL(timeout()),                                            this, SLOT(reloadHistoryConst())                );
+   connect(ConfigurationSkeleton::self() ,SIGNAL(configChanged()),                                     this, SLOT(reloadContact())                     );
    timer->start(1800*1000); //30 minutes
    setWindowTitle(i18n("Contact"));
 

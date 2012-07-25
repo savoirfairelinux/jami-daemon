@@ -44,7 +44,7 @@ void InstantMessagingModelManager::newMessage(QString callId, QString from, QStr
 InstantMessagingModelManager::InstantMessagingModelManager() : QObject(0)
 {
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   connect(&callManager, SIGNAL(incomingMessage(const QString &, const QString &, const QString &)), this, SLOT(newMessage(const QString &, const QString &, const QString &)));
+   connect(&callManager, SIGNAL(incomingMessage(QString,QString,QString)), this, SLOT(newMessage(QString,QString,QString)));
 }
 
 InstantMessagingModel* InstantMessagingModelManager::getModel(Call* call) {

@@ -244,17 +244,17 @@ CallView::CallView(QWidget* parent) : QTreeWidget(parent),m_pActiveOverlay(0),m_
    }
 
    //User Interface even
-   //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                        /
-   /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)              ) , this, SLOT( itemDoubleClicked(QTreeWidgetItem*,int)) );
-   /**/connect(this              , SIGNAL(itemClicked(QTreeWidgetItem*,int)                    ) , this, SLOT( itemClicked(QTreeWidgetItem*,int))       );
-   /**/connect(this              , SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)) , this, SLOT( itemClicked(QTreeWidgetItem*))           );
-   /**/connect(SFLPhone::model() , SIGNAL(conferenceCreated(Call*)                             ) , this, SLOT( addConference(Call*))                    );
-   /**/connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*)                             ) , this, SLOT( conferenceChanged(Call*))                );
-   /**/connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*)                       ) , this, SLOT( conferenceRemoved(Call*))                );
-   /**/connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*)                               ) , this, SLOT( addCall(Call*,Call*))                    );
-   /**/connect(m_pTransferB      , SIGNAL(clicked()                                            ) , this, SLOT( transfer())                              );
-   /**/connect(m_pTransferLE     , SIGNAL(returnPressed()                                      ) , this, SLOT( transfer())                              );
-   /*                                                                                                                                                   */
+   //              SENDER                                   SIGNAL                              RECEIVER                     SLOT                       /
+   /**/connect(this              , SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int))               , this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)) );
+   /**/connect(this              , SIGNAL(itemClicked(QTreeWidgetItem*,int))                     , this, SLOT(itemClicked(QTreeWidgetItem*,int))       );
+   /**/connect(this              , SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)) , this, SLOT(itemClicked(QTreeWidgetItem*))           );
+   /**/connect(SFLPhone::model() , SIGNAL(conferenceCreated(Call*))                              , this, SLOT(addConference(Call*))                    );
+   /**/connect(SFLPhone::model() , SIGNAL(conferenceChanged(Call*))                              , this, SLOT(conferenceChanged(Call*))                );
+   /**/connect(SFLPhone::model() , SIGNAL(aboutToRemoveConference(Call*))                        , this, SLOT(conferenceRemoved(Call*))                );
+   /**/connect(SFLPhone::model() , SIGNAL(callAdded(Call*,Call*))                                , this, SLOT(addCall(Call*,Call*))                    );
+   /**/connect(m_pTransferB      , SIGNAL(clicked())                                             , this, SLOT(transfer())                              );
+   /**/connect(m_pTransferLE     , SIGNAL(returnPressed())                                       , this, SLOT(transfer())                              );
+   /*                                                                                                                                                  */
 
 } //CallView
 
@@ -704,9 +704,9 @@ CallTreeItem* CallView::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* paren
       parent->addChild(item);
 
    CallTreeItem* callItem = new CallTreeItem();
-   connect(callItem, SIGNAL(askTransfer(Call*))                     , this, SLOT(showTransferOverlay(Call*)              ));
-   connect(callItem, SIGNAL(transferDropEvent(Call*,QMimeData*))    , this, SLOT(transferDropEvent(Call*,QMimeData*)     ));
-   connect(callItem, SIGNAL(conversationDropEvent(Call*,QMimeData*)), this, SLOT(conversationDropEvent(Call*,QMimeData*) ));
+   connect(callItem, SIGNAL(askTransfer(Call*))                     , this, SLOT(showTransferOverlay(Call*))             );
+   connect(callItem, SIGNAL(transferDropEvent(Call*,QMimeData*))    , this, SLOT(transferDropEvent(Call*,QMimeData*))    );
+   connect(callItem, SIGNAL(conversationDropEvent(Call*,QMimeData*)), this, SLOT(conversationDropEvent(Call*,QMimeData*)));
 
    SFLPhone::model()->updateWidget(SFLPhone::model()->getCall(item), callItem);
    callItem->setCall(SFLPhone::model()->getCall(item));

@@ -34,17 +34,17 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
       VideoInterface& interface = VideoInterfaceSingleton::getInstance();
       
       //SLOTS
-      /*             SENDER                                                      SIGNAL                         RECEIVER                             SLOT                                   */
-      /**/connect(&callManager, SIGNAL( callStateChanged  (const QString &, const QString &                  ) ), this , SLOT( callStateChanged      ( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( incomingCall      (const QString &, const QString &, const QString & ) ), this , SLOT( incomingCall          ( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceCreated (const QString &                                   ) ), this , SLOT( incomingConference    ( const QString &                  ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceChanged (const QString &, const QString &                  ) ), this , SLOT( changingConference    ( const QString &, const QString & ) ) );
-      /**/connect(&callManager, SIGNAL( conferenceRemoved (const QString &                                   ) ), this , SLOT( conferenceRemovedSlot ( const QString &                  ) ) );
-      /**/connect(&callManager, SIGNAL( voiceMailNotify   (const QString &, int                              ) ), this , SLOT( voiceMailNotifySlot   ( const QString &, int             ) ) );
-      /**/connect(&callManager, SIGNAL( volumeChanged     (const QString &, double                           ) ), this , SLOT( volumeChangedSlot     ( const QString &, double          ) ) );
-      /**/connect(&interface  , SIGNAL( startedDecoding   (QString,QString,int,int                           ) ), this,  SLOT( startedDecoding       ( const QString &, const QString & ) ) );
-      /**/connect(&interface  , SIGNAL( stoppedDecoding   (QString,QString                                   ) ), this,  SLOT( stoppedDecoding       ( const QString &, const QString & ) ) );
-      /*                                                                                                                                                                                    */
+      /*             SENDER                          SIGNAL                     RECEIVER                    SLOT                   */
+      /**/connect(&callManager, SIGNAL(callStateChanged(QString,QString))       , this , SLOT(callStateChanged(QString,QString))   );
+      /**/connect(&callManager, SIGNAL(incomingCall(QString,QString,QString))   , this , SLOT(incomingCall(QString,QString))       );
+      /**/connect(&callManager, SIGNAL(conferenceCreated(QString))              , this , SLOT(incomingConference(QString))         );
+      /**/connect(&callManager, SIGNAL(conferenceChanged(QString,QString))      , this , SLOT(changingConference(QString,QString)) );
+      /**/connect(&callManager, SIGNAL(conferenceRemoved(QString))              , this , SLOT(conferenceRemovedSlot(QString))      );
+      /**/connect(&callManager, SIGNAL(voiceMailNotify(QString,int))            , this , SLOT(voiceMailNotifySlot(QString,int))    );
+      /**/connect(&callManager, SIGNAL(volumeChanged(QString,double))           , this , SLOT(volumeChangedSlot(QString,double))   );
+      /**/connect(&interface  , SIGNAL(startedDecoding(QString,QString,int,int)), this , SLOT(startedDecoding(QString,QString))    );
+      /**/connect(&interface  , SIGNAL(stoppedDecoding(QString,QString))        , this , SLOT(stoppedDecoding(QString,QString))    );
+      /*                                                                                                                           */
 
       connect(HistoryModel::self(),SIGNAL(newHistoryCall(Call*)),this,SLOT(addPrivateCall(Call*)));
       

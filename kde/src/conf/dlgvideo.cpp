@@ -33,11 +33,11 @@ DlgVideo::DlgVideo(QWidget *parent)
       m_pDeviceCB->addItem(dev->getDeviceId());
    }
 
-   connect(m_pDeviceCB    ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadDevice(QString)     ));
-   connect(m_pChannelCB   ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadResolution(QString) ));
-   connect(m_pResolutionCB,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadRate(QString)       ));
-   connect(m_pRateCB      ,SIGNAL(currentIndexChanged(QString)),this,SLOT(changeRate(QString)     ));
-   connect(m_pPreviewPB   ,SIGNAL(clicked()                   ),this,SLOT(startStopPreview()      ));
+   connect(m_pDeviceCB    ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadDevice(QString))    );
+   connect(m_pChannelCB   ,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadResolution(QString)));
+   connect(m_pResolutionCB,SIGNAL(currentIndexChanged(QString)),this,SLOT(loadRate(QString))      );
+   connect(m_pRateCB      ,SIGNAL(currentIndexChanged(QString)),this,SLOT(changeRate(QString))    );
+   connect(m_pPreviewPB   ,SIGNAL(clicked())                   ,this,SLOT(startStopPreview())     );
 
 
    m_pConfGB->setEnabled(devices.size());

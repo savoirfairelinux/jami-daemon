@@ -287,18 +287,18 @@ void SFLPhone::setupActions()
 
    action_configureShortcut = new KAction(KIcon(KIcon("configure-shortcuts")), i18n("Configure Shortcut"), this);
    //                    SENDER                        SIGNAL               RECEIVER                 SLOT               /
-   /**/connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept()                    ));
-   /**/connect(action_refuse,                SIGNAL(triggered()),           m_pView , SLOT(refuse()                    ));
-   /**/connect(action_hold,                  SIGNAL(triggered()),           m_pView , SLOT(hold()                      ));
-   /**/connect(action_transfer,              SIGNAL(triggered()),           m_pView , SLOT(transfer()                  ));
-   /**/connect(action_record,                SIGNAL(triggered()),           m_pView , SLOT(record()                    ));
-   /**/connect(action_mailBox,               SIGNAL(triggered()),           m_pView , SLOT(mailBox()                   ));
-   /**/connect(action_displayVolumeControls, SIGNAL(toggled(bool)),         m_pView , SLOT(displayVolumeControls(bool) ));
-   /**/connect(action_displayDialpad,        SIGNAL(toggled(bool)),         m_pView , SLOT(displayDialpad(bool)        ));
-   /**/connect(action_displayMessageBox,     SIGNAL(toggled(bool)),         m_pView , SLOT(displayMessageBox(bool)     ));
-   /**/connect(action_accountCreationWizard, SIGNAL(triggered()),           m_pView , SLOT(accountCreationWizard()     ));
-   /**/connect(action_pastenumber,           SIGNAL(triggered()),           m_pView , SLOT(paste()                     ));
-   /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor()        ));
+   /**/connect(action_accept,                SIGNAL(triggered()),           m_pView , SLOT(accept())                    );
+   /**/connect(action_refuse,                SIGNAL(triggered()),           m_pView , SLOT(refuse())                    );
+   /**/connect(action_hold,                  SIGNAL(triggered()),           m_pView , SLOT(hold())                      );
+   /**/connect(action_transfer,              SIGNAL(triggered()),           m_pView , SLOT(transfer())                  );
+   /**/connect(action_record,                SIGNAL(triggered()),           m_pView , SLOT(record())                    );
+   /**/connect(action_mailBox,               SIGNAL(triggered()),           m_pView , SLOT(mailBox())                   );
+   /**/connect(action_displayVolumeControls, SIGNAL(toggled(bool)),         m_pView , SLOT(displayVolumeControls(bool)) );
+   /**/connect(action_displayDialpad,        SIGNAL(toggled(bool)),         m_pView , SLOT(displayDialpad(bool))        );
+   /**/connect(action_displayMessageBox,     SIGNAL(toggled(bool)),         m_pView , SLOT(displayMessageBox(bool))     );
+   /**/connect(action_accountCreationWizard, SIGNAL(triggered()),           m_pView , SLOT(accountCreationWizard())     );
+   /**/connect(action_pastenumber,           SIGNAL(triggered()),           m_pView , SLOT(paste())                     );
+   /**/connect(action_configureShortcut,     SIGNAL(triggered()),           this    , SLOT(showShortCutEditor())        );
    /*                                                                                                                   */
 
 

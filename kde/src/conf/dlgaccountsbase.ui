@@ -224,7 +224,7 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLineEdit" name="edit1_alias">
+           <widget class="KLineEdit" name="edit1_alias">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -250,7 +250,7 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QComboBox" name="edit2_protocol">
+           <widget class="KComboBox" name="edit2_protocol">
             <item>
              <property name="text">
               <string>SIP</string>
@@ -274,7 +274,7 @@
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QLineEdit" name="edit3_server">
+           <widget class="KLineEdit" name="edit3_server">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -294,7 +294,7 @@
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QLineEdit" name="edit4_user"/>
+           <widget class="KLineEdit" name="edit4_user"/>
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="label5_password">
@@ -307,9 +307,9 @@
            </widget>
           </item>
           <item row="4" column="1">
-           <widget class="QLineEdit" name="edit5_password">
+           <widget class="KLineEdit" name="edit5_password">
             <property name="echoMode">
-             <enum>QLineEdit::Password</enum>
+             <enum>KLineEdit::Password</enum>
             </property>
            </widget>
           </item>
@@ -324,7 +324,7 @@
            </widget>
           </item>
           <item row="5" column="1">
-           <widget class="QLineEdit" name="edit6_mailbox"/>
+           <widget class="KLineEdit" name="edit6_mailbox"/>
           </item>
           <item row="8" column="0">
            <widget class="QLabel" name="label7_state">
@@ -419,7 +419,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QComboBox" name="comboBox_ni_local_address"/>
+              <widget class="KComboBox" name="comboBox_ni_local_address"/>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_ni_local_port">
@@ -493,7 +493,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QLineEdit" name="lineEdit_pa_published_address"/>
+              <widget class="KLineEdit" name="lineEdit_pa_published_address"/>
              </item>
              <item row="3" column="3">
               <spacer name="horizontalSpacer_9">
@@ -797,7 +797,7 @@
                 <bool>false</bool>
                </property>
                <property name="echoMode">
-                <enum>QLineEdit::Password</enum>
+                <enum>KLineEdit::Password</enum>
                </property>
               </widget>
              </item>
@@ -975,7 +975,7 @@
                   </widget>
                  </item>
                  <item row="5" column="1" colspan="3">
-                  <widget class="QComboBox" name="combo_tls_method">
+                  <widget class="KComboBox" name="combo_tls_method">
                    <item>
                     <property name="text">
                      <string>Default</string>
@@ -1164,7 +1164,7 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_2">
                  <item>
-                  <widget class="QComboBox" name="combo_security_STRP">
+                  <widget class="KComboBox" name="combo_security_STRP">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -1278,7 +1278,7 @@
  <customwidgets>
   <customwidget>
    <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
+   <extends>KLineEdit</extends>
    <header>klineedit.h</header>
   </customwidget>
   <customwidget>

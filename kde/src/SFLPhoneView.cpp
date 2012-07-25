@@ -129,16 +129,16 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    m_pMessageBoxW->setVisible(false);
 
    //                SENDER                             SIGNAL                             RECEIVER                                 SLOT                                  /
-   /**/connect(SFLPhone::model()          , SIGNAL(incomingCall(Call*))                   , this                       , SLOT(on1_incomingCall(Call*)                    ));
-   /**/connect(SFLPhone::model()          , SIGNAL(voiceMailNotify(const QString &, int)) , this                       , SLOT(on1_voiceMailNotify(const QString &, int)  ));
-   /**/connect(callView                   , SIGNAL(itemChanged(Call*))                    , this                       , SLOT(updateWindowCallState()                    ));
+   /**/connect(SFLPhone::model()          , SIGNAL(incomingCall(Call*))                   , this                       , SLOT(on1_incomingCall(Call*))                    );
+   /**/connect(SFLPhone::model()          , SIGNAL(voiceMailNotify(QString,int))          , this                       , SLOT(on1_voiceMailNotify(QString,int))           );
+   /**/connect(callView                   , SIGNAL(itemChanged(Call*))                    , this                       , SLOT(updateWindowCallState())                    );
    /**///connect(SFLPhone::model()          , SIGNAL(volumeChanged(const QString &, double)), this                     , SLOT(on1_volumeChanged(const QString &, double) ));
-   /**/connect(SFLPhone::model()          , SIGNAL(callStateChanged(Call*))               , this                       , SLOT(updateWindowCallState()                    ));
-   /**/connect(AccountList::getInstance() , SIGNAL(accountStateChanged(Account*,QString)) , this                       , SLOT(updateStatusMessage()                      ));
-   /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateStatusMessage()                      ));
-   /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateWindowCallState()                    ));
-   /**/connect(m_pSendMessageLE           , SIGNAL(returnPressed())                       , this                       , SLOT(sendMessage()                              ));
-   /**/connect(m_pSendMessagePB           , SIGNAL(clicked())                             , this                       , SLOT(sendMessage()                              ));
+   /**/connect(SFLPhone::model()          , SIGNAL(callStateChanged(Call*))               , this                       , SLOT(updateWindowCallState())                    );
+   /**/connect(AccountList::getInstance() , SIGNAL(accountStateChanged(Account*,QString)) , this                       , SLOT(updateStatusMessage())                      );
+   /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateStatusMessage())                      );
+   /**/connect(AccountList::getInstance() , SIGNAL(accountListUpdated())                  , this                       , SLOT(updateWindowCallState())                    );
+   /**/connect(m_pSendMessageLE           , SIGNAL(returnPressed())                       , this                       , SLOT(sendMessage())                              );
+   /**/connect(m_pSendMessagePB           , SIGNAL(clicked())                             , this                       , SLOT(sendMessage())                              );
    /*                                                                                                                                                                     */
 
    AccountList::getInstance()->updateAccounts();
@@ -712,7 +712,7 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 
    QAction* action = new ActionSetAccountFirst(nullptr, &menu);
    action->setChecked(AccountList::getPriorAccoundId().isEmpty());
-   connect(action,  SIGNAL(setFirst(Account *)), this  ,  SLOT(setAccountFirst(Account *)));
+   connect(action,  SIGNAL(setFirst(Account*)), this  ,  SLOT(setAccountFirst(Account*)));
    menu.addAction(action);
 
    QVector<Account *> accounts = AccountList::getInstance()->registeredAccounts();
@@ -720,7 +720,7 @@ void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
       Account* account = accounts.at(i);
       QAction* action = new ActionSetAccountFirst(account, &menu);
       action->setChecked(account->getAccountId() == AccountList::getPriorAccoundId());
-      connect(action, SIGNAL(setFirst(Account *)), this  , SLOT(setAccountFirst(Account *)));
+      connect(action, SIGNAL(setFirst(Account*)), this  , SLOT(setAccountFirst(Account*)));
       menu.addAction(action);
    }
    menu.exec(event->globalPos());
