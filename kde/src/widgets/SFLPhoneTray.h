@@ -37,7 +37,7 @@ public:
    //Constructor
    explicit SFLPhoneTray(QIcon icon, QWidget *parent = 0);
    ~SFLPhoneTray();
-   
+
    //Mutators
    void addAction(KAction *action);
    void addSeparator();

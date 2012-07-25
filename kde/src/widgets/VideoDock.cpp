@@ -39,6 +39,7 @@ VideoDock::VideoDock(QWidget* parent) : QDockWidget(parent)
    setWidget(wdg);
 }
 
+///Set current renderer
 void VideoDock::setRenderer(VideoRenderer* r)
 {
    m_pVideoWidet->setRenderer(r);

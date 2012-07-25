@@ -65,8 +65,8 @@
 static const char* icnPath[4] = {
 /* INCOMING */ ICON_HISTORY_INCOMING,
 /* OUTGOING */ ICON_HISTORY_OUTGOING,
-/* MISSED   */ ICON_HISTORY_MISSED,
-/* NONE     */ "",
+/* MISSED   */ ICON_HISTORY_MISSED  ,
+/* NONE     */ ""                   ,
 };
 
 ///PlayerWidget: A small widget to play call recording
@@ -147,14 +147,14 @@ HistoryTreeItem::HistoryTreeItem(QWidget *parent ,QString phone,bool isBookmark)
    m_pRemove->setSizePolicy(QSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed));
    m_pRemove->setVisible(false);
 
-   connect(m_pCallAgain    , SIGNAL(triggered())                        , this        , SLOT(callAgain())        );
-   connect(m_pAddContact   , SIGNAL(triggered())                        , this        , SLOT(addContact())       );
-   connect(m_pCopy         , SIGNAL(triggered())                        , this        , SLOT(copy())             );
-   connect(m_pEmail        , SIGNAL(triggered())                        , this        , SLOT(sendEmail())        );
-   connect(m_pAddToContact , SIGNAL(triggered())                        , this        , SLOT(addToContact())     );
-   connect(m_pBookmark     , SIGNAL(triggered())                        , this        , SLOT(bookmark())         );
-   connect(m_pRemove       , SIGNAL(clicked())                          , this        , SLOT(removeRecording())  );
-   connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this        , SLOT(showContext(QPoint)));
+   connect(m_pCallAgain    , SIGNAL(triggered())                        , this , SLOT(callAgain())        );
+   connect(m_pAddContact   , SIGNAL(triggered())                        , this , SLOT(addContact())       );
+   connect(m_pCopy         , SIGNAL(triggered())                        , this , SLOT(copy())             );
+   connect(m_pEmail        , SIGNAL(triggered())                        , this , SLOT(sendEmail())        );
+   connect(m_pAddToContact , SIGNAL(triggered())                        , this , SLOT(addToContact())     );
+   connect(m_pBookmark     , SIGNAL(triggered())                        , this , SLOT(bookmark())         );
+   connect(m_pRemove       , SIGNAL(clicked())                          , this , SLOT(removeRecording())  );
+   connect(this            , SIGNAL(customContextMenuRequested(QPoint)) , this , SLOT(showContext(QPoint)));
 
    m_pIconL         = new QLabel( this );
    m_pPeerNameL     = new QLabel( this );
@@ -269,9 +269,9 @@ void HistoryTreeItem::callAgain()
    }
    Call* call = SFLPhone::model()->addDialingCall(getName(), AccountList::getCurrentAccount());
    if (call) {
-      call->setCallNumber(m_PhoneNumber);
-      call->setPeerName(m_pPeerNameL->text());
-      call->actionPerformed(CALL_ACTION_ACCEPT);
+      call->setCallNumber  ( m_PhoneNumber        );
+      call->setPeerName    ( m_pPeerNameL->text() );
+      call->actionPerformed( CALL_ACTION_ACCEPT   );
    }
    else {
       HelperFunctions::displayNoAccountMessageBox(this);
@@ -298,8 +298,8 @@ void HistoryTreeItem::copy()
       numbers     = m_pItemCall->getPeerName()+": "+m_PhoneNumber;
       numbersHtml = "<b>"+m_pItemCall->getPeerName()+"</b><br />"+HelperFunctions::escapeHtmlEntities(m_PhoneNumber);
    }
-   mimeData->setData("text/plain", numbers.toUtf8());
-   mimeData->setData("text/html", numbersHtml.toUtf8());
+   mimeData->setData("text/plain", numbers.toUtf8()    );
+   mimeData->setData("text/html",  numbersHtml.toUtf8());
    QClipboard* clipboard = QApplication::clipboard();
    clipboard->setMimeData(mimeData);
 }
@@ -344,18 +344,18 @@ void HistoryTreeItem::removeRecording()
 void HistoryTreeItem::showRecordPlayer()
 {
    if (!m_pAudioSlider) {
-      m_pPlayer       = new PlayerWidget       ( this                 );
-      QWidget* r1w    = new QWidget            ( this                 );
-      QWidget* r2w    = new QWidget            ( this                 );
-      QVBoxLayout* l  = new QVBoxLayout        ( m_pPlayer            );
-      QHBoxLayout* r1 = new QHBoxLayout        ( r1w                  );
-      QHBoxLayout* r2 = new QHBoxLayout        ( r2w                  );
-      m_pAudioSlider  = new QSlider            ( Qt::Horizontal, this );
-      m_pTimeLeftL    = new QLabel             ( "00:00"              );
-      m_pTimePlayedL  = new QLabel             ( "00:00"              );
-      m_pPause        = new QToolButton        (                      );
-      m_pStop         = new QToolButton        (                      );
-      m_pNote         = new QToolButton        (                      );
+      m_pPlayer       = new PlayerWidget( this                 );
+      QWidget* r1w    = new QWidget     ( this                 );
+      QWidget* r2w    = new QWidget     ( this                 );
+      QVBoxLayout* l  = new QVBoxLayout ( m_pPlayer            );
+      QHBoxLayout* r1 = new QHBoxLayout ( r1w                  );
+      QHBoxLayout* r2 = new QHBoxLayout ( r2w                  );
+      m_pAudioSlider  = new QSlider     ( Qt::Horizontal, this );
+      m_pTimeLeftL    = new QLabel      ( "00:00"              );
+      m_pTimePlayedL  = new QLabel      ( "00:00"              );
+      m_pPause        = new QToolButton (                      );
+      m_pStop         = new QToolButton (                      );
+      m_pNote         = new QToolButton (                      );
 
       l->addWidget(r1w);
       l->addWidget(r2w);
@@ -449,6 +449,7 @@ void HistoryTreeItem::editNote()
 
 }
 
+///Update the player slider
 void HistoryTreeItem::updateSlider(int pos, int size)
 {
    m_pTimeLeftL->setText(QString("%1").arg((size/1000-pos/1000)/60,2,10,QChar('0'))+':'+QString("%1").arg((size/1000-pos/1000)%60,2,10,QChar('0')));
@@ -474,6 +475,7 @@ void HistoryTreeItem::resizeEvent(QResizeEvent* event)
    }
 }
 
+///Grab mouse click
 void HistoryTreeItem::mouseDoubleClickEvent(QMouseEvent* event)
 {
    Q_UNUSED(event);
@@ -547,9 +549,9 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
       m_Name = m_pContact->getFormattedName();
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
       if (m_pContact->getPhoto() != nullptr) {
-         pxm = (*m_pContact->getPhoto());
-         QRect pxRect = pxm.rect();
-         QBitmap mask(pxRect.size());
+         pxm =    (*m_pContact->getPhoto());
+         QRect    pxRect = pxm.rect();
+         QBitmap  mask(pxRect.size());
          QPainter customPainter(&mask);
          customPainter.setRenderHint(QPainter::Antialiasing, true);
          customPainter.fillRect(pxRect,"white");
@@ -563,7 +565,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
 
       //There is no point to add new contacts when there is already one
       m_pAddToContact->setDisabled(true);
-      m_pAddContact->setDisabled(true);
+      m_pAddContact->setDisabled  (true);
 
       if (!m_pContact->getPreferredEmail().isEmpty())
          m_pEmail->setDisabled(false);
@@ -574,10 +576,10 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
          m_Name = phoneNumber;
       else if (m_Name.isEmpty())
          m_Name = i18nc("Unknown peer","Unknown");
-      
+
       m_pPeerNameL->setText("<b>"+m_Name+"</b>");
    }
-   
+
    if (m_pItemCall && !m_pItemCall->getRecordingPath().isEmpty()) {
       QPainter painter(&pxm);
       QPixmap status(KStandardDirs::locate("data","sflphone-client-kde/voicemail.png"));
@@ -591,7 +593,7 @@ bool HistoryTreeItem::getContactInfo(QString phoneNumber)
       painter.drawPixmap(pxm.width()-status.width(),pxm.height()-status.height(),status);
    }
       m_pIconL->setPixmap(pxm);
-   
+
    return m_pContact;
 } //getContactInfo
 
@@ -647,7 +649,7 @@ void HistoryTreeItem::dragEnterEvent ( QDragEnterEvent *e )
       m_pBtnTrans->setMinimumSize(width()-16,height()-4);
       m_pBtnTrans->setMaximumSize(width()-16,height()-4);
       m_pBtnTrans->move(8,2);
-      m_pBtnTrans->setVisible(true);
+      m_pBtnTrans->setVisible   (true);
       m_pBtnTrans->setHoverState(true);
       e->accept();
    }
@@ -666,7 +668,7 @@ void HistoryTreeItem::dragMoveEvent  ( QDragMoveEvent  *e )
 void HistoryTreeItem::dragLeaveEvent ( QDragLeaveEvent *e )
 {
    m_pBtnTrans->setHoverState(false);
-   m_pBtnTrans->setVisible(false);
+   m_pBtnTrans->setVisible   (false);
    kDebug() << "Drag leave";
    e->accept();
 }
@@ -684,7 +686,7 @@ void HistoryTreeItem::transferEvent(QMimeData* data)
    else
       kDebug() << "Invalid mime data";
    m_pBtnTrans->setHoverState(false);
-   m_pBtnTrans->setVisible(false);
+   m_pBtnTrans->setVisible   (false);
 }
 
 ///On data drop

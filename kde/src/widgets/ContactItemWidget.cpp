@@ -95,18 +95,18 @@ ContactItemWidget::ContactItemWidget(QWidget *parent)
    m_pBookmark->setText        ( i18n("Bookmark")           );
    m_pBookmark->setIcon        ( KIcon("bookmarks")         );
 
-   connect(m_pCallAgain    , SIGNAL(triggered()) , this,SLOT(callAgain()      ));
-   connect(m_pEditContact  , SIGNAL(triggered()) , this,SLOT(editContact()    ));
-   connect(m_pCopy         , SIGNAL(triggered()) , this,SLOT(copy()           ));
-   connect(m_pEmail        , SIGNAL(triggered()) , this,SLOT(sendEmail()      ));
-   connect(m_pAddPhone     , SIGNAL(triggered()) , this,SLOT(addPhone()       ));
-   connect(m_pBookmark     , SIGNAL(triggered()) , this,SLOT(bookmark()       ));
+   connect(m_pCallAgain    , SIGNAL(triggered()) , this,SLOT(callAgain()  ));
+   connect(m_pEditContact  , SIGNAL(triggered()) , this,SLOT(editContact()));
+   connect(m_pCopy         , SIGNAL(triggered()) , this,SLOT(copy()       ));
+   connect(m_pEmail        , SIGNAL(triggered()) , this,SLOT(sendEmail()  ));
+   connect(m_pAddPhone     , SIGNAL(triggered()) , this,SLOT(addPhone()   ));
+   connect(m_pBookmark     , SIGNAL(triggered()) , this,SLOT(bookmark()   ));
 
    //Overlay
    m_pBtnTrans = new TranslucentButtons(this);
-   m_pBtnTrans->setText(i18n("Transfer"));
-   m_pBtnTrans->setVisible(false);
-   m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
+   m_pBtnTrans->setText   ( i18n("Transfer"));
+   m_pBtnTrans->setVisible( false);
+   m_pBtnTrans->setPixmap ( new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
    connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
 } //ContactItemWidget
 
@@ -256,10 +256,10 @@ void ContactItemWidget::updated()
       QRect pxRect = pxm.rect();
       QBitmap mask(pxRect.size());
       QPainter customPainter(&mask);
-      customPainter.setRenderHint(QPainter::Antialiasing, true);
-      customPainter.fillRect(pxRect,"white");
-      customPainter.setBackground(QColor("black"));
-      customPainter.setBrush(QColor("black"));
+      customPainter.setRenderHint  (QPainter::Antialiasing, true   );
+      customPainter.fillRect       (pxRect                ,"white" );
+      customPainter.setBackground  (QColor("black")                );
+      customPainter.setBrush       (QColor("black")                );
       customPainter.drawRoundedRect(pxRect,5,5);
       pxm.setMask(mask);
       m_pIconL->setPixmap(pxm);

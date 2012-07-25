@@ -28,18 +28,18 @@ SFLPhoneAccessibility* SFLPhoneAccessibility::m_pInstance=nullptr;
 SFLPhoneAccessibility::SFLPhoneAccessibility() : QObject(0),QList<KAction*>()
 {
    KAction* action = new KAction(0);
-   action->setObjectName("listCall");
-   action->setShortcut( Qt::CTRL + Qt::Key_L );
-   action->setText("List all current calls");
-   action->setIcon(KIcon("text-speak"));
+   action->setObjectName ( "listCall"               );
+   action->setShortcut   ( Qt::CTRL + Qt::Key_L     );
+   action->setText       ( "List all current calls" );
+   action->setIcon       ( KIcon("text-speak")      );
    *this << action;
    connect(action,SIGNAL(triggered(bool)),this,SLOT(listCall()));
 
    action = new KAction(0);
-   action->setObjectName("currentCallDetails");
-   action->setShortcut( Qt::CTRL + Qt::Key_I );
-   action->setText("Get current call details");
-   action->setIcon(KIcon("text-speak"));
+   action->setObjectName ( "currentCallDetails"       );
+   action->setShortcut   ( Qt::CTRL + Qt::Key_I       );
+   action->setText       ( "Get current call details" );
+   action->setIcon       ( KIcon("text-speak")        );
    *this << action;
    connect(action,SIGNAL(triggered(bool)),this,SLOT(currentCallDetails()));
 }
@@ -92,7 +92,7 @@ void SFLPhoneAccessibility::currentCallDetails()
             toSay += i18n(", the peer phone number is %1 ",numberToDigit(call->getPeerPhoneNumber())    );
          else if (!call->getCallNumber().isEmpty())
             toSay += i18n(", the phone number is %1 ",numberToDigit(call->getCallNumber()));
-         
+
          int nSec = QDateTime::fromTime_t(call->getStartTimeStamp().toInt()).time().secsTo( QTime::currentTime() );
          if (nSec>0)
             toSay += i18n(" and you have been talking since %1 seconds",nSec );

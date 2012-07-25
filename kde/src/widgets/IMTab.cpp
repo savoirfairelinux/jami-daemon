@@ -24,14 +24,14 @@
 #include <KIcon>
 #include <QtGui/QFont>
 
-
+///Delegate contructor
 ImDelegates::ImDelegates(IMTab* parent) : QStyledItemDelegate(parent),m_pParent(parent)
 {
 
 }
 
+///Delegate size hint
 QSize ImDelegates::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
-//    QSize orig = QStyledItemDelegate::sizeHint(option,index);
    int height = 0;
    QPixmap* icon = (QPixmap*)index.data(InstantMessagingModel::MESSAGE_IMAGE_ROLE).value<void*>();
    QFontMetrics metric( option.font);
@@ -44,14 +44,10 @@ QSize ImDelegates::sizeHint(const QStyleOptionViewItem& option, const QModelInde
    return QSize(m_pParent->width()-30,height);
 }
 
+///Delegate painter
 void ImDelegates::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
    Q_ASSERT(index.isValid());
-//    const QRegion cl = painter->clipRegion();
-//    painter->setClipRect(option.rect);
- 
-  
- 
    QPixmap* icon = (QPixmap*)index.data(InstantMessagingModel::MESSAGE_IMAGE_ROLE).value<void*>();
    int icnWidth = 50;
    if (icon && dynamic_cast<QPixmap*>(icon)) {
@@ -76,6 +72,7 @@ void ImDelegates::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
 }
 
+///Constructor
 IMTab::IMTab(InstantMessagingModel* model,QWidget* parent) : QListView(parent)
 {
    setModel(model);
@@ -87,7 +84,7 @@ IMTab::IMTab(InstantMessagingModel* model,QWidget* parent) : QListView(parent)
    connect(model,SIGNAL(dataChanged(QModelIndex,QModelIndex)),this,SLOT(scrollBottom()));
 }
 
-
+///Scroll to last message
 void IMTab::scrollBottom()
 {
    scrollTo(model()->index(model()->rowCount()-1,0));

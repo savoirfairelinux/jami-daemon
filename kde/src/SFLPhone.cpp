@@ -252,35 +252,37 @@ void SFLPhone::setupActions()
    action_configureSflPhone = KStandardAction::preferences(m_pView, SLOT(configureSflPhone()), this);
    action_configureSflPhone->setText(i18n("Configure SFLphone"));
 
-   action_displayDialpad = new KAction(KIcon(QIcon(ICON_DISPLAY_DIALPAD)), i18n("Display dialpad"), this);
+   action_displayDialpad        = new KAction(KIcon(QIcon(ICON_DISPLAY_DIALPAD)), i18n("Display dialpad")                 , this);
+   action_displayMessageBox     = new KAction(KIcon("mail-message-new"), i18n("Display text message box")                 , this);
+   action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);
+   action_pastenumber           = new KAction(KIcon("edit-paste"), i18n("Paste")                                          , this);
+   action_showContactDock       = new KAction(KIcon("edit-find-user")   , i18n("Display Contact")                         , this);
+   action_showHistoryDock       = new KAction(KIcon("view-history")     , i18n("Display history")                         , this);
+   action_showBookmarkDock      = new KAction(KIcon("bookmark-new-list"), i18n("Display bookmark")                        , this);
+   action_accountCreationWizard = new KAction(i18n("Account creation wizard")                                             , this);
+
+
    action_displayDialpad->setCheckable( true );
    action_displayDialpad->setChecked  ( ConfigurationSkeleton::displayDialpad() );
    action_configureSflPhone->setText(i18n("Configure SFLphone"));
 
-   action_displayMessageBox = new KAction(KIcon("mail-message-new"), i18n("Display text message box"), this);
    action_displayMessageBox->setCheckable( true );
    action_displayMessageBox->setChecked  ( ConfigurationSkeleton::displayMessageBox() );
 
-   action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);
    action_displayVolumeControls->setCheckable( true );
    action_displayVolumeControls->setChecked  ( ConfigurationSkeleton::displayVolume() );
 
-   action_pastenumber = new KAction(KIcon("edit-paste"), i18n("Paste"), this);
    action_pastenumber->setShortcut ( Qt::CTRL + Qt::Key_V );
 
-   action_showContactDock  = new KAction(KIcon("edit-find-user")   , i18n("Display Contact") , this);
    action_showContactDock->setCheckable( true );
    action_showContactDock->setChecked(ConfigurationSkeleton::displayContactDock());
 
-   action_showHistoryDock  = new KAction(KIcon("view-history")     , i18n("Display history") , this);
    action_showHistoryDock->setCheckable( true );
    action_showHistoryDock->setChecked(ConfigurationSkeleton::displayHistoryDock());
 
-   action_showBookmarkDock = new KAction(KIcon("bookmark-new-list"), i18n("Display bookmark"), this);
    action_showBookmarkDock->setCheckable( true );
    action_showBookmarkDock->setChecked(ConfigurationSkeleton::displayBookmarkDock());
 
-   action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
 
 
    action_configureShortcut = new KAction(KIcon(KIcon("configure-shortcuts")), i18n("Configure Shortcut"), this);

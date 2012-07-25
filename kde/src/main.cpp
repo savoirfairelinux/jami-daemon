@@ -82,7 +82,7 @@ int main(int argc, char **argv)
       //configuration dbus
       TreeWidgetCallModel::init();
 
-      
+
       SFLPhone* sflphoneWindow_ = new SFLPhone();
       if( ! sflphoneWindow_->initialize() ) {
          exit(1);
@@ -96,13 +96,13 @@ int main(int argc, char **argv)
          sflphoneWindow_->show();
       else
          sflphoneWindow_->hide();
-      
+
 
       int retVal = app->exec();
 
       delete sflphoneWindow_;
       ConfigurationSkeleton::self()->writeConfig();
-      
+
       delete app;
       return retVal;
    }

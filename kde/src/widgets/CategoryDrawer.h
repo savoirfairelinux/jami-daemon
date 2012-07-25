@@ -21,8 +21,10 @@
 #ifndef CATEGORYDRAWER_H
 #define CATEGORYDRAWER_H
 
+//KDE
 #include <KCategoryDrawer>
 
+//Qt
 class QPainter;
 class QModelIndex;
 class QStyleOption;

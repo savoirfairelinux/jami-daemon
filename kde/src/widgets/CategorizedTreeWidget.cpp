@@ -31,6 +31,7 @@
 #include <QKeyEvent>
 
 //BEGIN KateColorTreeDelegate
+///Code taken from Kate and adapted to render categorized lists
 class KateColorTreeDelegate : public QStyledItemDelegate
 {
   public:
@@ -154,6 +155,7 @@ class KateColorTreeDelegate : public QStyledItemDelegate
 };
 //END KateColorTreeDelegate
 
+///Constructor
 CategorizedTreeWidget::CategorizedTreeWidget(QWidget *parent)
   : QTreeWidget(parent)
 {
@@ -166,20 +168,21 @@ CategorizedTreeWidget::CategorizedTreeWidget(QWidget *parent)
   setHorizontalScrollMode(QAbstractItemView::ScrollPerItem);
 }
 
+///Do not draw branches
 void CategorizedTreeWidget::drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const
 {
-  Q_UNUSED(painter)
-  Q_UNUSED(rect)
-  Q_UNUSED(index)
-  /*if (index.parent().parent().isValid())
-    QTreeWidget::drawBranches(painter,rect,index);*/
+  Q_UNUSED( painter )
+  Q_UNUSED( rect    )
+  Q_UNUSED( index   )
 }
 
+///Get the item list
 QVector<QTreeWidgetItem*> CategorizedTreeWidget::realItems() const
 {
   return m_lItems;
 }
 
+///Remove an item from the list
 void CategorizedTreeWidget::removeItem(QTreeWidgetItem* item)
 {
    for (int i=0;i<topLevelItemCount();i++) {

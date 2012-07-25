@@ -69,7 +69,6 @@ CallTreeItemDelegate(CallView* widget)
 
          if (index.parent().isValid() && !index.parent().child(index.row()+1,0).isValid())
             sh.rheight() += 15;
-            
       }
 
       return sh;
@@ -113,7 +112,6 @@ CallTreeItemDelegate(CallView* widget)
          for (int i =0;i < childCount;i++) {
             r.setHeight(r.height() + sizeHint(option,index).height());
          }
-//          qDebug() << "\n\nFINAL SIZE" << r;
       }
 
       r.setTop(r.top() + m_ConferenceDrawer.leftMargin());
@@ -180,13 +178,13 @@ CallTreeItemDelegate(CallView* widget)
             widget->setMaximumSize((m_tree->viewport()->width() - m_ConferenceDrawer.leftMargin() - m_ConferenceDrawer.rightMargin())-m_ConferenceDrawer.leftMargin(),max);
          }
       }
-      
+
       if (index.parent().isValid() && !index.parent().child(index.row()+1,0).isValid()) {
          m_ConferenceDrawer.drawBoxBottom(index, 0, option, painter);
       }
     }
 
-    
+
 private:
    CallView*      m_tree;
    ConferenceBox  m_ConferenceDrawer;

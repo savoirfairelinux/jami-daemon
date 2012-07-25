@@ -28,19 +28,27 @@ class VideoRenderer;
 class VideoWidget : public QWidget {
    Q_OBJECT
 public:
-   explicit VideoWidget(QWidget* parent =0, VideoRenderer* renderer = VideoModel::getInstance()->getPreviewRenderer());
-private:
-   QImage*        m_Image;
-   VideoRenderer* m_pRenderer;
+   explicit VideoWidget(QWidget* parent =nullptr, VideoRenderer* renderer = VideoModel::getInstance()->getPreviewRenderer());
+
+
 protected:
    virtual void paintEvent(QPaintEvent* event);
+
+
+private:
+   //Attributes
+   QImage*        m_Image;
+   VideoRenderer* m_pRenderer;
+
 private slots:
    void update();
    void updateFrame();
    void stop();
+
+
 public slots:
    void setRenderer(VideoRenderer* renderer);
-   
+
 };
 
 #endif

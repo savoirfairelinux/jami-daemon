@@ -66,8 +66,8 @@ class HistoryTreeItem : public QWidget
     uint             getDurWidth    ();
 
     //Setters
-    void setCall     ( Call*            call  );
-    void setItem     ( QTreeWidgetItem* item  );
+    void setCall     ( Call*            call );
+    void setItem     ( QTreeWidgetItem* item );
 
  private:
     //Attributes

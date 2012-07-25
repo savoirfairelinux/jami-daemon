@@ -22,6 +22,7 @@
 #include <KDebug>
 #include <KLocale>
 
+///Constructor
 IMManager::IMManager(QWidget* parent) : KTabWidget(parent)
 {
    setVisible(false);
@@ -30,6 +31,7 @@ IMManager::IMManager(QWidget* parent) : KTabWidget(parent)
    connect(this,SIGNAL(tabCloseRequested(int)),this,SLOT(closeRequest(int)));
 }
 
+///Destructor
 void IMManager::newConversation(Call* call, InstantMessagingModel* model)
 {
    IMTab* newTab = new IMTab(model,this);
@@ -39,6 +41,7 @@ void IMManager::newConversation(Call* call, InstantMessagingModel* model)
    addTab(newTab,name);
 }
 
+///Close a tab
 void IMManager::closeRequest(int index)
 {
    QWidget* wdg = widget(index);

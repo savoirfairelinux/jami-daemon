@@ -28,7 +28,7 @@ VideoWidget::VideoWidget(QWidget* parent ,VideoRenderer* renderer) : QWidget(par
    connect(VideoModel::getInstance(),SIGNAL(videoCallInitiated(VideoRenderer*)),this,SLOT(setRenderer(VideoRenderer*)));
 }
 
-
+///Set widget renderer
 void VideoWidget::setRenderer(VideoRenderer* renderer)
 {
    disconnect(m_pRenderer,SIGNAL(frameUpdated()),this,SLOT(updateFrame()));

@@ -88,16 +88,16 @@ HistoryDock::HistoryDock(QWidget* parent) : QDockWidget(parent)
    setObjectName("historyDock");
    setMinimumSize(250,0);
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-   m_pFilterLE   = new KLineEdit   (                    );
-   m_pItemView   = new HistoryTree ( this               );
-   m_pSortByCBB  = new KComboBox   (                    );
-   m_pSortByL    = new QLabel      ( i18n("Sort by:")   );
-   m_pFromL      = new QLabel      ( i18n("From:")      );
+   m_pFilterLE   = new KLineEdit   (                        );
+   m_pItemView   = new HistoryTree ( this                   );
+   m_pSortByCBB  = new KComboBox   (                        );
+   m_pSortByL    = new QLabel      ( i18n("Sort by:")       );
+   m_pFromL      = new QLabel      ( i18n("From:")          );
    m_pToL        = new QLabel      ( i18nc("To date:","To:"));
-   m_pFromDW     = new KDateWidget (                    );
-   m_pToDW       = new KDateWidget (                    );
-   m_pAllTimeCB  = new QCheckBox   ( i18n("Display all"));
-   m_pLinkPB     = new QPushButton ( this               );
+   m_pFromDW     = new KDateWidget (                        );
+   m_pToDW       = new KDateWidget (                        );
+   m_pAllTimeCB  = new QCheckBox   ( i18n("Display all")    );
+   m_pLinkPB     = new QPushButton ( this                   );
 
    m_pAllTimeCB->setChecked(!ConfigurationSkeleton::displayDataRange());
    enableDateRange(!ConfigurationSkeleton::displayDataRange());

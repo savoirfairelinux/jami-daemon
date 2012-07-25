@@ -194,12 +194,14 @@ void CallTreeItem::setCall(Call *call)
          baseColor.setRed  (baseColor.red()  + (textColor.red()  -baseColor.red())  *0.6);
          baseColor.setGreen(baseColor.green()+ (textColor.green()-baseColor.green())*0.6);
 
-         m_pHistoryPeerL = new QLabel(i18n("<b>Conference</b>"),this);
-         m_pHistoryPeerL->setStyleSheet("color:"+baseColor.name());
-         m_pIconL = new QLabel(" ",this);
+         m_pHistoryPeerL         = new QLabel( i18n("<b>Conference</b>"),this );
+         m_pIconL                = new QLabel( " ",this                       );
          QHBoxLayout* mainLayout = new QHBoxLayout();
-         mainLayout->addWidget(m_pIconL);
-         mainLayout->addWidget(m_pHistoryPeerL);
+         m_pHistoryPeerL->setStyleSheet("color:"+baseColor.name());
+
+         mainLayout->addWidget( m_pIconL        );
+         mainLayout->addWidget( m_pHistoryPeerL );
+
          setLayout(mainLayout);
          m_Init = true;
       }
@@ -213,35 +215,34 @@ void CallTreeItem::setCall(Call *call)
    m_pTransferNumberL  = new QLabel(" ");
    m_pElapsedL         = new QLabel(" ");
    QSpacerItem* verticalSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
-   
+
    m_pTransferPrefixL->setVisible(false);
    m_pTransferNumberL->setVisible(false);
-   
+
    QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
-   
-   
+
    m_pBtnConf = new TranslucentButtons(this);
    m_pBtnConf->setVisible(false);
    m_pBtnConf->setParent(this);
    m_pBtnConf->setText(i18n("Conference"));
    m_pBtnConf->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/confBlackWhite.png")));
    connect(m_pBtnConf,SIGNAL(dataDropped(QMimeData*)),this,SLOT(conversationEvent(QMimeData*)));
-   
+
    m_pBtnTrans = new TranslucentButtons(this);
    m_pBtnTrans->setText(i18n("Transfer"));
    m_pBtnTrans->setVisible(false);
    m_pBtnTrans->setPixmap(new QImage(KStandardDirs::locate("data","sflphone-client-kde/transferarraw.png")));
    connect(m_pBtnTrans,SIGNAL(dataDropped(QMimeData*)),this,SLOT(transferEvent(QMimeData*)));
-   
+
    m_pElapsedL->setStyleSheet("margin-right:5px;");
-   
+
    mainLayout->setSpacing(4);
-   QVBoxLayout* descr = new QVBoxLayout();
-   descr->setMargin(1);
-   descr->setSpacing(1);
+   QVBoxLayout* descr    = new QVBoxLayout();
    QHBoxLayout* transfer = new QHBoxLayout();
-   transfer->setMargin(0);
+   descr->setMargin    (1);
+   descr->setSpacing   (1);
+   transfer->setMargin (0);
    transfer->setSpacing(0);
 
    if (ConfigurationSkeleton::displayCallIcon()) {
@@ -499,12 +500,12 @@ void CallTreeItem::dropEvent(QDropEvent *e)
 void CallTreeItem::resizeEvent ( QResizeEvent *e )
 {
    if (m_pBtnConf) {
-      m_pBtnConf->setMinimumSize(width()/2-15,height()-4);
-      m_pBtnConf->setMaximumSize(width()/2-15,height()-4);
-      m_pBtnTrans->setMinimumSize(width()/2-15,height()-4);
-      m_pBtnTrans->setMaximumSize(width()/2-15,height()-4);
-      m_pBtnTrans->move(width()/2+10,m_pBtnTrans->y()+2);
-      m_pBtnConf->move(10,m_pBtnConf->y()+2);
+      m_pBtnConf->setMinimumSize ( width()/2-15,height()-4        );
+      m_pBtnConf->setMaximumSize ( width()/2-15,height()-4        );
+      m_pBtnTrans->setMinimumSize( width()/2-15,height()-4        );
+      m_pBtnTrans->setMaximumSize( width()/2-15,height()-4        );
+      m_pBtnTrans->move          ( width()/2+10,m_pBtnTrans->y()+2);
+      m_pBtnConf->move           ( 10,m_pBtnConf->y()+2           );
    }
 
    e->accept();
@@ -539,11 +540,11 @@ void CallTreeItem::copy()
 {
    kDebug() << "Copying contact";
    QMimeData* mimeData = new QMimeData();
-   mimeData->setData(MIME_CALLID, m_pItemCall->getCallId().toUtf8());
    QString numbers(m_pItemCall->getPeerName()+": "+m_pItemCall->getPeerPhoneNumber());
    QString numbersHtml("<b>"+m_pItemCall->getPeerName()+"</b><br />"+m_pItemCall->getPeerPhoneNumber());
-   mimeData->setData("text/plain", numbers.toUtf8());
-   mimeData->setData("text/html", numbersHtml.toUtf8());
+   mimeData->setData( MIME_CALLID  , m_pItemCall->getCallId().toUtf8() );
+   mimeData->setData( "text/plain" , numbers.toUtf8()                  );
+   mimeData->setData( "text/html"  , numbersHtml.toUtf8()              );
    QClipboard* clipboard = QApplication::clipboard();
    clipboard->setMimeData(mimeData);
 }
@@ -552,7 +553,7 @@ void CallTreeItem::copy()
 void CallTreeItem::hide()
 {
    if (!m_isHover) {
-      m_pBtnConf->setVisible(false);
+      m_pBtnConf->setVisible (false);
       m_pBtnTrans->setVisible(false);
    }
 }

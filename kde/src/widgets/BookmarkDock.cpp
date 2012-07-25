@@ -69,26 +69,26 @@ BookmarkDock::BookmarkDock(QWidget* parent) : QDockWidget(parent)
    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
    setMinimumSize(250,0);
 
-   m_pFilterLE   = new KLineEdit(this);
-   m_pSplitter   = new QSplitter(Qt::Vertical,this);
-   m_pItemView   = new CategorizedTreeWidget(this);
-   m_pMostUsedCK = new QCheckBox(this);
+   m_pFilterLE             = new KLineEdit            ( this              );
+   m_pSplitter             = new QSplitter            ( Qt::Vertical,this );
+   m_pItemView             = new CategorizedTreeWidget( this              );
+   m_pMostUsedCK           = new QCheckBox            ( this              );
+   QWidget* mainWidget     = new QWidget              ( this              );
+   QVBoxLayout* mainLayout = new QVBoxLayout          ( mainWidget        );
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
 
    m_pMostUsedCK->setChecked(ConfigurationSkeleton::displayContactCallHistory());
-   
-   QWidget* mainWidget = new QWidget(this);
+
    setWidget(mainWidget);
 
    m_pMostUsedCK->setText(i18n("Show most called contacts"));
 
-   QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
 
-   mainLayout->addWidget(m_pMostUsedCK);
-   mainLayout->addWidget(m_pSplitter);
-   m_pSplitter->addWidget(m_pItemView);
-   mainLayout->addWidget(m_pFilterLE);
+   mainLayout->addWidget ( m_pMostUsedCK );
+   mainLayout->addWidget ( m_pSplitter   );
+   m_pSplitter->addWidget( m_pItemView   );
+   mainLayout->addWidget ( m_pFilterLE   );
 
    m_pSplitter->setChildrenCollapsible(true);
    m_pSplitter->setStretchFactor(0,7);

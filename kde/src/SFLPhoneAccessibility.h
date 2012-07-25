@@ -26,10 +26,14 @@ class SFLPhoneAccessibility : public QObject, public QList<KAction*>
 {
    Q_OBJECT
 public:
+   //Singleton
    static SFLPhoneAccessibility* getInstance();
 private:
+   //Constructor
    SFLPhoneAccessibility();
    QString numberToDigit(QString number);
+
+   //Static attributes
    static SFLPhoneAccessibility* m_pInstance;
 
 public slots:

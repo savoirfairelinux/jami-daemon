@@ -414,15 +414,18 @@ void SFLPhoneView::updateWindowCallState()
             actionTexts     [ SFLPhone::Refuse   ] = ACTION_LABEL_REFUSE         ;
             m_pMessageBoxW->setVisible(false || IM_ACTIVE)   ;
             break;
+
          case CALL_STATE_RINGING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          case CALL_STATE_CURRENT:
             buttonIconFiles [ SFLPhone::Record   ] = ICON_REC_DEL_ON             ;
             m_pMessageBoxW->setVisible((true && ConfigurationSkeleton::displayMessageBox()) || IM_ACTIVE);
             break;
+
          case CALL_STATE_DIALING:
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
@@ -431,11 +434,13 @@ void SFLPhoneView::updateWindowCallState()
             buttonIconFiles [ SFLPhone::Accept   ] = ICON_ACCEPT                 ;
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          case CALL_STATE_HOLD:
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
             actionTexts     [ SFLPhone::Hold     ] = ACTION_LABEL_UNHOLD         ;
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          case CALL_STATE_FAILURE:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -443,6 +448,7 @@ void SFLPhoneView::updateWindowCallState()
             enabledActions  [ SFLPhone::Record   ] = false                       ;
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          case CALL_STATE_BUSY:
             enabledActions  [ SFLPhone::Accept   ] = false                       ;
             enabledActions  [ SFLPhone::Hold     ] = false                       ;
@@ -450,6 +456,7 @@ void SFLPhoneView::updateWindowCallState()
             enabledActions  [ SFLPhone::Record   ] = false                       ;
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          case CALL_STATE_TRANSFERRED:
             buttonIconFiles [ SFLPhone::Accept   ] = ICON_EXEC_TRANSF            ;
             actionTexts     [ SFLPhone::Transfer ] = ACTION_LABEL_GIVE_UP_TRANSF ;
@@ -457,6 +464,7 @@ void SFLPhoneView::updateWindowCallState()
             m_pMessageBoxW->setVisible(false || IM_ACTIVE)                       ;
             transfer = true;
             break;
+
          case CALL_STATE_TRANSF_HOLD:
             buttonIconFiles [ SFLPhone::Accept   ] = ICON_EXEC_TRANSF            ;
             buttonIconFiles [ SFLPhone::Hold     ] = ICON_UNHOLD                 ;
@@ -465,25 +473,31 @@ void SFLPhoneView::updateWindowCallState()
             m_pMessageBoxW->setVisible(false)                                    ;
             transfer = true;
             break;
+
          case CALL_STATE_OVER:
             kDebug() << "Error : Reached CALL_STATE_OVER with call "  << call->getCallId() << "!";
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          case CALL_STATE_ERROR:
             kDebug() << "Error : Reached CALL_STATE_ERROR with call " << call->getCallId() << "!";
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          case CALL_STATE_CONFERENCE:
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
             m_pMessageBoxW->setVisible(false || IM_ACTIVE)                       ;
             break;
+
          case CALL_STATE_CONFERENCE_HOLD:
             enabledActions  [ SFLPhone::Transfer ] = false                       ;
             m_pMessageBoxW->setVisible(false)                                    ;
             break;
+
          default: 
             kDebug() << "Error : Reached unexisting state for call "  << call->getCallId() << "(" << call->toHumanStateName() << "!";
             break;
+
       }
    }
 

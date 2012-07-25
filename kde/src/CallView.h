@@ -18,10 +18,13 @@
 #ifndef CALL_VIEW
 #define CALL_VIEW
 
+//Qt
 #include <QtGui/QTreeWidget>
 #include <QtGui/QPainter>
 #include <QtGui/QStyledItemDelegate>
 #include <QtCore/QTimer>
+
+//SFLPhone
 #include "lib/CallModel.h"
 
 //Qt

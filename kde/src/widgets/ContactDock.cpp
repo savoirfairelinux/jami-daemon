@@ -39,17 +39,17 @@
 #include <KComboBox>
 
 //SFLPhone
-#include "klib/AkonadiBackend.h"
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
-#include "klib/ConfigurationSkeleton.h"
 #include "CallView.h"
 #include "SFLPhoneView.h"
-#include "lib/HistoryModel.h"
 
 //SFLPhone library
+#include "lib/HistoryModel.h"
 #include "lib/Call.h"
 #include "lib/Contact.h"
+#include "klib/AkonadiBackend.h"
+#include "klib/ConfigurationSkeleton.h"
 
 #define CURRENT_SORTING_MODE m_pSortByCBB->currentIndex()
 
@@ -68,6 +68,7 @@ class QNumericTreeWidgetItem_hist : public QTreeWidgetItem {
       }
 };
 
+///A Phone number in contact with many of them (not used when 0 or 1 number)
 class PhoneNumberItem : public QWidget {
 public:
    PhoneNumberItem(QString number, QString type,QString name, QWidget* parent = nullptr) : QWidget(parent),m_pNumber(number),m_pType(type),m_pName(name) {
@@ -132,13 +133,13 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
    QWidget* mainWidget = new QWidget(this);
    setWidget(mainWidget);
 
-   m_pContactView->headerItem()->setText(0,i18n("Contacts"));
-   m_pContactView->header()->setClickable(true);
-   m_pContactView->header()->setSortIndicatorShown(true);
-   m_pContactView->setAcceptDrops(true);
-   m_pContactView->setDragEnabled(true);
-   KeyPressEaterC *keyPressEater = new KeyPressEaterC(this);
-   m_pContactView->installEventFilter(keyPressEater);
+   m_pContactView->headerItem()->setText             ( 0,i18n("Contacts") );
+   m_pContactView->header()->setClickable            ( true               );
+   m_pContactView->header()->setSortIndicatorShown   ( true               );
+   m_pContactView->setAcceptDrops                    ( true               );
+   m_pContactView->setDragEnabled                    ( true               );
+   KeyPressEaterC *keyPressEater = new KeyPressEaterC( this               );
+   m_pContactView->installEventFilter                ( keyPressEater      );
 
    m_pFilterLE->setPlaceholderText(i18n("Filter"));
    m_pFilterLE->setClearButtonShown(true);
@@ -164,16 +165,15 @@ ContactDock::ContactDock(QWidget* parent) : QDockWidget(parent)
 
    m_pSortByCBB->setCurrentIndex(ConfigurationSkeleton::contactSortMode());
 
-   connect(AkonadiBackend::getInstance(),SIGNAL(collectionChanged()),                                  this, SLOT(reloadContact())                     );
-   connect(m_pSortByCBB                 ,SIGNAL(currentIndexChanged(int)),                             this, SLOT(reloadContact())                     );
-   connect(m_pContactView,               SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),this, SLOT(loadContactHistory(QTreeWidgetItem*)));
-   connect(m_pFilterLE,                  SIGNAL(textChanged(QString)),                                 this, SLOT(filter(QString))                     );
-   connect(m_pShowHistoCK,               SIGNAL(toggled(bool)),                                        this, SLOT(setHistoryVisible(bool))             );
-   connect(timer                        ,SIGNAL(timeout()),                                            this, SLOT(reloadHistoryConst())                );
-   connect(ConfigurationSkeleton::self() ,SIGNAL(configChanged()),                                     this, SLOT(reloadContact())                     );
+   connect(AkonadiBackend::getInstance() ,SIGNAL(collectionChanged()),                                  this, SLOT(reloadContact())                     );
+   connect(m_pSortByCBB                  ,SIGNAL(currentIndexChanged(int)),                             this, SLOT(reloadContact())                     );
+   connect(m_pContactView,                SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),this, SLOT(loadContactHistory(QTreeWidgetItem*)));
+   connect(m_pFilterLE,                   SIGNAL(textChanged(QString)),                                 this, SLOT(filter(QString))                     );
+   connect(m_pShowHistoCK,                SIGNAL(toggled(bool)),                                        this, SLOT(setHistoryVisible(bool))             );
+   connect(timer                         ,SIGNAL(timeout()),                                            this, SLOT(reloadHistoryConst())                );
+   connect(ConfigurationSkeleton::self() ,SIGNAL(configChanged()),                                      this, SLOT(reloadContact())                     );
    timer->start(1800*1000); //30 minutes
    setWindowTitle(i18n("Contact"));
-
 } //ContactDock
 
 ///Destructor
@@ -216,7 +216,7 @@ void ContactDock::reloadContact()
          }
          break;
    }
-   
+
    foreach (Contact* cont, list) {
       if (cont->getPhoneNumbers().count() && usableNumberCount(cont)) {
          ContactItemWidget* aContact  = new ContactItemWidget(m_pContactView);
@@ -369,7 +369,7 @@ QMimeData* ContactTree::mimeData( const QList<QTreeWidgetItem *> items) const
 ///Handle data being dropped on the widget
 bool ContactTree::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
 {
-   Q_UNUSED(index)
+   Q_UNUSED(index )
    Q_UNUSED(action)
    Q_UNUSED(parent)
 

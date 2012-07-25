@@ -33,12 +33,12 @@ class VideoDock : public QDockWidget {
 public:
    VideoDock(QWidget* parent =0 );
    void setRenderer(VideoRenderer* r);
+
    
 private:
    VideoWidget* m_pVideoWidet;
-   
-private slots:
-   
+
+
 };
 
 #endif

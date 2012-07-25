@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009-2012 by Savoir-Faire Linux                         *
  *   Author : Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
+ *            Nokia                                                        *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,9 +27,9 @@
 #include <QtGui/QImage>
  #include <QtCore/QPropertyAnimation>
 
-static const qreal FACE_SIZE = 0.4;
+static const qreal FACE_SIZE    = 0.4;
 
-static const qreal speeds[] = { 1.8f, 2.4f, 3.6f };
+static const qreal speeds[]     = { 1.8f, 2.4f, 3.6f };
 static const qreal amplitudes[] = { 2.0f, 2.5f, 3.0f };
 
 static inline void qSetColor(float colorVec[], QColor c)

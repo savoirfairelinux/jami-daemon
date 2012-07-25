@@ -36,8 +36,12 @@ class IMManager : public KTabWidget
 public:
    IMManager(QWidget* parent = nullptr);
 
+
 private:
+   //Attrubutes
    QHash<Call*,IMTab*> m_lTabs;
+
+
 private slots:
    void newConversation(Call* call, InstantMessagingModel* model);
    void closeRequest(int index);

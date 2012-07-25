@@ -97,11 +97,11 @@ class CallTreeItem : public QWidget
     virtual void mouseDoubleClickEvent ( QMouseEvent     *e );
 
 private slots:
-   void transferEvent(QMimeData* data);
+   void transferEvent    (QMimeData* data);
    void conversationEvent(QMimeData* data);
-   void hide();
-   void incrementTimer();
-   void copy();
+   void hide             (               );
+   void incrementTimer   (               );
+   void copy             (               );
 
 public slots:
    void updated();

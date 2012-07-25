@@ -20,13 +20,15 @@
 // Rafael agreet to relicense it under LGPLv2 or LGPLv3, just as we need it,
 // see: http://lists.kde.org/?l=kwrite-devel&m=133061943317199&w=2
 
+//KDE
 #include <KCategoryDrawer>
 
+//Qt
 class QPainter;
 class QModelIndex;
 class QStyleOption;
 
-///CategoryDrawer: A better looking widget than the plain QListWidget
+///ConferenceBox: Draw a nice box instead of using plain tree
 class ConferenceBox : public KCategoryDrawerV2
 {
 public:

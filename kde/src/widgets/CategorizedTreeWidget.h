@@ -51,6 +51,7 @@ class CategorizedTreeWidget : public QTreeWidget
     QVector<QTreeWidgetItem*> m_lItems;
 };
 
+///Add new item to the list
 template <class T> T* CategorizedTreeWidget::addItem(QString category,bool top)
 {
   QTreeWidgetItem* categoryItem = 0;
@@ -74,7 +75,7 @@ template <class T> T* CategorizedTreeWidget::addItem(QString category,bool top)
   return iwdg;
 }
 
-
+///Add a category to the list
 template <class T> T* CategorizedTreeWidget::addCategory(QString name)
 {
    T* categoryItem = new T(this);
