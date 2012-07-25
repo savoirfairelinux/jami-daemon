@@ -178,14 +178,18 @@ void PulseLayer::updateSinkList()
 {
     sinkList_.clear();
     enumeratingSinks_ = true;
-    pa_context_get_sink_info_list(context_, sink_input_info_callback, this);
+    pa_operation *op = pa_context_get_sink_info_list(context_, sink_input_info_callback, this);
+    if (op != NULL)
+        pa_operation_unref(op);
 }
 
 void PulseLayer::updateSourceList()
 {
     sourceList_.clear();
     enumeratingSources_ = true;
-    pa_context_get_source_info_list(context_, source_input_info_callback, this);
+    pa_operation *op = pa_context_get_source_info_list(context_, source_input_info_callback, this);
+    if (op != NULL)
+        pa_operation_unref(op);
 }
 
 bool PulseLayer::inSinkList(const std::string &deviceName) const
@@ -494,69 +498,56 @@ void PulseLayer::ringtoneToSpeaker()
     pa_stream_write(s, data, bytes, NULL, 0, PA_SEEK_RELATIVE);
 }
 
-void PulseLayer::context_changed_callback(pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void *userdata)
+void
+PulseLayer::context_changed_callback(pa_context* c,
+                                     pa_subscription_event_type_t type,
+                                     uint32_t idx UNUSED, void *userdata)
 {
     PulseLayer *context = static_cast<PulseLayer*>(userdata);
-    switch (t) {
+    switch (type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK) {
+        pa_operation *op;
+
         case PA_SUBSCRIPTION_EVENT_SINK:
-            DEBUG("PA_SUBSCRIPTION_EVENT_SINK");
-            context->sinkList_.clear();
-            pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
+            switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
+                case PA_SUBSCRIPTION_EVENT_NEW:
+                case PA_SUBSCRIPTION_EVENT_REMOVE:
+                    DEBUG("Updating sink list");
+                    context->sinkList_.clear();
+                    op = pa_context_get_sink_info_list(c, sink_input_info_callback, userdata);
+                    if (op != NULL)
+                        pa_operation_unref(op);
+                default:
+                    break;
+            }
             break;
+
         case PA_SUBSCRIPTION_EVENT_SOURCE:
-            DEBUG("PA_SUBSCRIPTION_EVENT_SOURCE");
-            context->sourceList_.clear();
-            pa_context_get_source_info_list(c, source_input_info_callback, userdata);
-            break;
-        case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
-            DEBUG("PA_SUBSCRIPTION_EVENT_SINK_INPUT");
-            break;
-        case PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT:
-            DEBUG("PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT");
-            break;
-        case PA_SUBSCRIPTION_EVENT_MODULE:
-            DEBUG("PA_SUBSCRIPTION_EVENT_MODULE");
-            break;
-        case PA_SUBSCRIPTION_EVENT_CLIENT:
-            DEBUG("PA_SUBSCRIPTION_EVENT_CLIENT");
-            break;
-        case PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE:
-            DEBUG("PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE");
-            break;
-        case PA_SUBSCRIPTION_EVENT_SERVER:
-            DEBUG("PA_SUBSCRIPTION_EVENT_SERVER");
-            break;
-        case PA_SUBSCRIPTION_EVENT_CARD:
-            DEBUG("PA_SUBSCRIPTION_EVENT_CARD");
-            break;
-        case PA_SUBSCRIPTION_EVENT_FACILITY_MASK:
-            DEBUG("PA_SUBSCRIPTION_EVENT_FACILITY_MASK");
-            break;
-        case PA_SUBSCRIPTION_EVENT_CHANGE:
-            DEBUG("PA_SUBSCRIPTION_EVENT_CHANGE");
-            break;
-        case PA_SUBSCRIPTION_EVENT_REMOVE:
-            DEBUG("PA_SUBSCRIPTION_EVENT_REMOVE");
-            context->sinkList_.clear();
-            context->sourceList_.clear();
-            pa_context_get_sink_info_list(c, sink_input_info_callback, userdata);
-            pa_context_get_source_info_list(c, source_input_info_callback, userdata);
-            break;
-        case PA_SUBSCRIPTION_EVENT_TYPE_MASK:
-            DEBUG("PA_SUBSCRIPTION_EVENT_TYPE_MASK");
+            switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
+                case PA_SUBSCRIPTION_EVENT_NEW:
+                case PA_SUBSCRIPTION_EVENT_REMOVE:
+                    DEBUG("Updating source list");
+                    context->sourceList_.clear();
+                    op = pa_context_get_source_info_list(c, source_input_info_callback, userdata);
+                    if (op != NULL)
+                        pa_operation_unref(op);
+                default:
+                    break;
+            }
             break;
         default:
-            DEBUG("Unknown event type 0x%x", t);
-
+            DEBUG("Unhandled event type 0x%x", type);
+            break;
     }
 }
+
 
 void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
+    PulseLayer *context = static_cast<PulseLayer*>(userdata);
 
     if (eol) {
-        static_cast<PulseLayer *>(userdata)->enumeratingSources_ = false;
+        context->enumeratingSources_ = false;
         return;
     }
 
@@ -585,15 +576,16 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
            i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
            i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
-    static_cast<PulseLayer *>(userdata)->sourceList_.push_back(i->name);
+    context->sourceList_.push_back(i->name);
 }
 
 void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
+    PulseLayer *context = static_cast<PulseLayer*>(userdata);
 
     if (eol) {
-        static_cast<PulseLayer *>(userdata)->enumeratingSinks_ = false;
+        context->enumeratingSinks_ = false;
         return;
     }
 
@@ -622,7 +614,7 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
           i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
           i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-    static_cast<PulseLayer *>(userdata)->sinkList_.push_back(i->name);
+    context->sinkList_.push_back(i->name);
 }
 
 void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
