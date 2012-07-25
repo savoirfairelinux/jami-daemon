@@ -28,13 +28,11 @@
  */
 class LIB_EXPORT InstanceInterfaceSingleton
 {
-
-private:
-   static InstanceInterface* interface;
-
 public:
    static InstanceInterface& getInstance();
 
+private:
+   static InstanceInterface* interface;
 };
 
 #endif

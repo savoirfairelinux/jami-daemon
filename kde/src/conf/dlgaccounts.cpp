@@ -16,9 +16,7 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #include "dlgaccounts.h"
-
 
 //Qt
 #include <QtCore/QString>
@@ -121,13 +119,13 @@ DlgAccounts::DlgAccounts(KConfigDialog* parent)
    /**/connect(AccountList::getInstance(),        SIGNAL(accountEnabledChanged(Account*)), this   , SLOT(otherAccountChanged())             );
    /*                                                                                                                                       */
 
-   connect(listView_accountList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(accountListChanged(QModelIndex,QModelIndex)));
-   connect(listView_accountList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(updateAccountListCommands()));
+   connect(listView_accountList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(accountListChanged(QModelIndex,QModelIndex)) );
+   connect(listView_accountList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(updateAccountListCommands())                 );
 
 
    //Disable control
-   connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
-   connect(radioButton_pa_custom,          SIGNAL(clicked(bool))               , this   , SLOT(enablePublished()));
+   connect(radioButton_pa_same_as_local,   SIGNAL(clicked(bool)) , this , SLOT(enablePublished()));
+   connect(radioButton_pa_custom,          SIGNAL(clicked(bool)) , this , SLOT(enablePublished()));
 
 
    if (AccountList::getInstance()->index(0,0).isValid()) {
@@ -296,7 +294,7 @@ void DlgAccounts::loadAccount(QModelIndex item)
          break;
    }
    
-   //         WIDGET VALUE                                             VALUE                 /
+   //         WIDGET VALUE                                          VALUE                     /
    /**/edit2_protocol->setCurrentIndex          ( (protocolIndex < 0) ? 0 : protocolIndex    );
    /**/edit3_server->setText                    (  account->getAccountHostname             ());
    /**/edit4_user->setText                      (  account->getAccountUsername             ());
@@ -328,44 +326,44 @@ void DlgAccounts::loadAccount(QModelIndex item)
    /**/check_tls_requier_cert->setChecked       (  account->isTlsRequireClientCertificate  ());
    /**/group_security_tls->setChecked           (  account->isTlsEnable                    ());
    /**/combo_security_STRP->setCurrentIndex     (  account->getTlsMethod                   ());
-   /*                                                                                       */
+   /*                                                                                        */
 
    m_pDefaultAccount->setChecked(account == AccountList::getInstance()->getDefaultAccount());
 
    account->getVideoCodecModel()->reload();
 
-   disconnect(list_credential->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential(QModelIndex,QModelIndex)));
+   disconnect(list_credential->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential(QModelIndex,QModelIndex))     );
    list_credential->setModel(account->getCredentialsModel());
-   connect(list_credential->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential(QModelIndex,QModelIndex)));
+   connect(list_credential->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectCredential(QModelIndex,QModelIndex))     );
    
-   disconnect(list_audiocodec->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectedCodecChanged(QModelIndex,QModelIndex)));
-   disconnect(list_audiocodec->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
+   disconnect(list_audiocodec->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectedCodecChanged(QModelIndex,QModelIndex)) );
+   disconnect(list_audiocodec->model()         ,SIGNAL(dataChanged(QModelIndex,QModelIndex)),    this, SLOT(changedAccountList())                          );
    list_audiocodec->setModel(account->getAudioCodecModel());
-   connect(list_audiocodec->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
-   connect(list_audiocodec->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectedCodecChanged(QModelIndex,QModelIndex)));
+   connect(list_audiocodec->model()            ,SIGNAL(dataChanged(QModelIndex,QModelIndex)),    this, SLOT(changedAccountList())                          );
+   connect(list_audiocodec->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(selectedCodecChanged(QModelIndex,QModelIndex)) );
 
    #ifdef ENABLE_VIDEO
-   disconnect(m_pCodecsLW->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(loadVidCodecDetails(QModelIndex,QModelIndex)));
-   disconnect(m_pCodecsLW->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
+   disconnect(m_pCodecsLW->selectionModel()    ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(loadVidCodecDetails(QModelIndex,QModelIndex))  );
+   disconnect(m_pCodecsLW->model()             ,SIGNAL(dataChanged(QModelIndex,QModelIndex)),    this, SLOT(changedAccountList())                          );
    m_pCodecsLW->setModel(account->getVideoCodecModel());
-   connect(m_pCodecsLW->model(),SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changedAccountList()));
-   connect(m_pCodecsLW->selectionModel()   ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(loadVidCodecDetails(QModelIndex,QModelIndex)));
+   connect(m_pCodecsLW->model()                ,SIGNAL(dataChanged(QModelIndex,QModelIndex)),    this, SLOT(changedAccountList())                          );
+   connect(m_pCodecsLW->selectionModel()       ,SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(loadVidCodecDetails(QModelIndex,QModelIndex))  );
    #endif
 
    
    if (account->getAccountAlias() == "IP2IP") {
-      frame2_editAccounts->setTabEnabled(0,false);
-      frame2_editAccounts->setTabEnabled(1,false);
-      frame2_editAccounts->setTabEnabled(2,true );
-      frame2_editAccounts->setTabEnabled(3,false);
-      frame2_editAccounts->setTabEnabled(4,false);
-      frame2_editAccounts->setTabEnabled(5,true );
+      frame2_editAccounts->setTabEnabled( 0, false );
+      frame2_editAccounts->setTabEnabled( 1, false );
+      frame2_editAccounts->setTabEnabled( 2, true  );
+      frame2_editAccounts->setTabEnabled( 3, false );
+      frame2_editAccounts->setTabEnabled( 4, false );
+      frame2_editAccounts->setTabEnabled( 5, true  );
    }
    else {
-      frame2_editAccounts->setTabEnabled(0,true);
-      frame2_editAccounts->setTabEnabled(1,true);
-      frame2_editAccounts->setTabEnabled(3,true);
-      frame2_editAccounts->setTabEnabled(4,true);
+      frame2_editAccounts->setTabEnabled( 0, true );
+      frame2_editAccounts->setTabEnabled( 1, true );
+      frame2_editAccounts->setTabEnabled( 3, true );
+      frame2_editAccounts->setTabEnabled( 4, true );
       frame2_editAccounts->setCurrentIndex(0);
    }
 
@@ -374,8 +372,8 @@ void DlgAccounts::loadAccount(QModelIndex item)
    m_pRingTonePath->setUrl( ringtonePath );
 
 
-   combo_tls_method->setCurrentIndex        ( account->getTlsMethod() );
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   combo_tls_method->setCurrentIndex( account->getTlsMethod() );
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 
    m_pRingtoneListLW->clear();
    m_hRingtonePath = configurationManager.getRingtoneList();
@@ -383,14 +381,15 @@ void DlgAccounts::loadAccount(QModelIndex item)
    bool found = false;
    while (iter.hasNext()) {
       iter.next();
-      QListWidgetItem* item = new QListWidgetItem();
+      QListWidgetItem*  item        = new QListWidgetItem();
       RingToneListItem* item_widget = new RingToneListItem(iter.key(),iter.value());
-      m_pRingtoneListLW->addItem(item);
-      m_pRingtoneListLW->setItemWidget(item,item_widget);
+      m_pRingtoneListLW->addItem      ( item              );
+      m_pRingtoneListLW->setItemWidget( item, item_widget );
+      
       if (KStandardDirs::realFilePath(iter.key()) == ringtonePath) {
-         m_pUseCustomFileCK->setChecked(false);
-         m_pRingTonePath->setDisabled(true);
-         item->setSelected(true);
+         m_pUseCustomFileCK->setChecked( false );
+         m_pRingTonePath->setDisabled  ( true  );
+         item->setSelected             ( true  );
          found = true;
       }
    }
@@ -412,17 +411,16 @@ void DlgAccounts::loadAccount(QModelIndex item)
       line_stun->setText( account->getAccountSipStunServer() );
       //checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == REGISTRATION_ENABLED_TRUE);
 
-      tab_advanced->setEnabled(true);
-      line_stun->setEnabled(checkbox_stun->isChecked());
-      radioButton_pa_same_as_local->setDisabled(checkbox_stun->isChecked());
-      radioButton_pa_custom->setDisabled(checkbox_stun->isChecked());
+      tab_advanced->                setEnabled ( true                       );
+      line_stun->                   setEnabled ( checkbox_stun->isChecked() );
+      radioButton_pa_same_as_local->setDisabled( checkbox_stun->isChecked() );
+      radioButton_pa_custom->       setDisabled( checkbox_stun->isChecked() );
    }
    else {
       checkbox_stun->setChecked(false);
+      tab_advanced->setEnabled (false);
       line_stun->setText( account->getAccountSipStunServer() );
       //checkbox_zrtp->setChecked(false);
-
-      tab_advanced->setEnabled(false);
    }
 
    updateStatusLabel(account);
@@ -438,10 +436,8 @@ void DlgAccounts::loadAccountList()
    AccountList::getInstance()->updateAccounts();
    if (listView_accountList->model()->rowCount() > 0 && !listView_accountList->currentIndex().isValid())
       listView_accountList->setCurrentIndex(listView_accountList->model()->index(0,0));
-   else if (listView_accountList->currentIndex().isValid())
-      frame2_editAccounts->setEnabled(true);
    else
-      frame2_editAccounts->setEnabled(false);
+      frame2_editAccounts->setEnabled(listView_accountList->currentIndex().isValid());
 }
 
 ///Called when one of the child widget is modified
@@ -449,9 +445,8 @@ void DlgAccounts::changedAccountList()
 {
    if (!m_IsLoading) {
       Account* acc = AccountList::getInstance()->getAccountByModelIndex(listView_accountList->currentIndex());
-      if (acc) {
+      if (acc)
          acc->performAction(MODIFY);
-      }
       accountListHasChanged = true;
       emit updateButtons();
    }
@@ -475,27 +470,27 @@ void DlgAccounts::accountListChanged(QModelIndex current, QModelIndex previous)
    //updateAccountListCommands();
 }
 
+///Move account up
 void DlgAccounts::on_button_accountUp_clicked()
 {
-   kDebug() << "on_button_accountUp_clicked";
    QModelIndex index = listView_accountList->currentIndex();
    Account* acc = AccountList::getInstance()->getAccountByModelIndex(index);
    AccountList::getInstance()->accountUp(index.row());
    listView_accountList->setCurrentIndex(acc->getIndex());
 }
 
+///Move account down
 void DlgAccounts::on_button_accountDown_clicked()
 {
-   kDebug() << "on_button_accountDown_clicked";
    QModelIndex index = listView_accountList->currentIndex();
    Account* acc = AccountList::getInstance()->getAccountByModelIndex(index);
    AccountList::getInstance()->accountDown(index.row());
    listView_accountList->setCurrentIndex(acc->getIndex());
 }
 
+///Add new account
 void DlgAccounts::on_button_accountAdd_clicked()
 {
-   kDebug() << "on_button_accountAdd_clicked";
    QString itemName = QInputDialog::getText(this, "New account", "Enter new account's alias");
    itemName = itemName.simplified();
    if (!itemName.isEmpty()) {
@@ -506,27 +501,27 @@ void DlgAccounts::on_button_accountAdd_clicked()
    }
 } //on_button_accountAdd_clicked
 
+///Remove selected account
 void DlgAccounts::on_button_accountRemove_clicked()
 {
-   kDebug() << "on_button_accountRemove_clicked";
    AccountList::getInstance()->removeAccount(listView_accountList->currentIndex());
    listView_accountList->setCurrentIndex(listView_accountList->model()->index(0,0));
 }
 
+///Update account list
 void DlgAccounts::updateAccountListCommands()
 {
-   kDebug() << "updateAccountListCommands";
    bool buttonsEnabled[4] = {true,true,true,true};
    if(! listView_accountList->currentIndex().isValid()) {
-      buttonsEnabled[0] = false;
-      buttonsEnabled[1] = false;
-      buttonsEnabled[3] = false;
+      buttonsEnabled[0]   = false;
+      buttonsEnabled[1]   = false;
+      buttonsEnabled[3]   = false;
    }
    else if(listView_accountList->currentIndex().row() == 0) {
-      buttonsEnabled[0] = false;
+      buttonsEnabled[0]   = false;
    }
    if(listView_accountList->currentIndex().row() == listView_accountList->model()->rowCount() - 1) {
-      buttonsEnabled[1] = false;
+      buttonsEnabled[1]   = false;
    }
 
    button_accountUp->setEnabled     ( buttonsEnabled[0] );
@@ -535,12 +530,13 @@ void DlgAccounts::updateAccountListCommands()
    button_accountRemove->setEnabled ( buttonsEnabled[3] );
 }
 
-
+///Password changed
 void DlgAccounts::main_password_field_changed()
 {
    list_credential->model()->setData(list_credential->model()->index(0,0),edit5_password->text(),CredentialModel::PASSWORD_ROLE);
 }
 
+///Credential changed
 void DlgAccounts::main_credential_password_changed()
 {
    if (list_credential->currentIndex().row() == 0) {
@@ -548,30 +544,35 @@ void DlgAccounts::main_credential_password_changed()
    }
 }
 
+///Move codec up
 void DlgAccounts::moveAudioCodecUp()
 {
    if (((AudioCodecModel*) list_audiocodec->model())->moveUp(list_audiocodec->currentIndex()))
       list_audiocodec->setCurrentIndex(list_audiocodec->model()->index(list_audiocodec->currentIndex().row()-1,0));
 }
 
+///Move codec down
 void DlgAccounts::moveAudioCodecDown()
 {
    if (((AudioCodecModel*) list_audiocodec->model())->moveDown(list_audiocodec->currentIndex()))
       list_audiocodec->setCurrentIndex(list_audiocodec->model()->index(list_audiocodec->currentIndex().row()+1,0));
 }
 
+///Move video codec up
 void DlgAccounts::moveVideoCodecUp()
 {
    if (((VideoCodecModel*) m_pCodecsLW->model())->moveUp(m_pCodecsLW->currentIndex()))
       m_pCodecsLW->setCurrentIndex(m_pCodecsLW->model()->index(m_pCodecsLW->currentIndex().row()-1,0));
 }
 
+///Move video codec down
 void DlgAccounts::moveVideoCodecDown()
 {
    if (((VideoCodecModel*) m_pCodecsLW->model())->moveDown(m_pCodecsLW->currentIndex()))
       m_pCodecsLW->setCurrentIndex(m_pCodecsLW->model()->index(m_pCodecsLW->currentIndex().row()+1,0));
 }
 
+///Load the video codec list
 void DlgAccounts::loadVidCodecDetails(const QModelIndex& current,const QModelIndex& previous)
 {
    if (previous != current && previous.isValid()) {
@@ -582,6 +583,7 @@ void DlgAccounts::loadVidCodecDetails(const QModelIndex& current,const QModelInd
    m_pBitrateSB->setValue(bitrate);
 }
 
+///Update account state
 void DlgAccounts::updateAccountStates()
 {
    kDebug() << "updateAccountStates";
@@ -592,22 +594,22 @@ void DlgAccounts::updateAccountStates()
    updateStatusLabel(listView_accountList->currentIndex());
 }
 
+///Update the status label to current account state
 void DlgAccounts::updateStatusLabel(QModelIndex item)
 {
    kDebug() << "MODEL index is" << item.row();
-   if(!item.isValid()) {
+   if(!item.isValid())
       return;
-   }
    Account* account = AccountList::getInstance()->getAccountByModelIndex(item);
    if (account)
       updateStatusLabel(account);
 }
 
+///Update the status label to current account state
 void DlgAccounts::updateStatusLabel(Account* account)
 {
-   if(! account ) {
-          return;
-        }
+   if(!account)
+      return;
    QString status = account->getAccountRegistrationStatus();
    edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
 }
@@ -642,6 +644,7 @@ void DlgAccounts::updateWidgets()
    accountListHasChanged = false;
 }
 
+///The audio codec changed
 void DlgAccounts::selectedCodecChanged(const QModelIndex& current,const QModelIndex& previous)
 {
    Q_UNUSED(previous)
@@ -649,7 +652,7 @@ void DlgAccounts::selectedCodecChanged(const QModelIndex& current,const QModelIn
    label_frequency_value->setText ( list_audiocodec->model()->data(current,AudioCodecModel::SAMPLERATE_ROLE).toString());
 }
 
-
+///Select available security options for various methods
 void DlgAccounts::updateCombo(int value)
 {
    Q_UNUSED(value)
@@ -678,6 +681,7 @@ void DlgAccounts::updateCombo(int value)
    }
 } //updateCombo
 
+///Save the current credential
 void DlgAccounts::saveCredential()
 {
    QModelIndex index = listView_accountList->currentIndex();
@@ -693,6 +697,7 @@ void DlgAccounts::saveCredential()
       acc->saveCredentials();
 } //saveCredential
 
+///Add a new credential
 void DlgAccounts::addCredential()
 {
    QModelIndex index = listView_accountList->currentIndex();
@@ -702,6 +707,7 @@ void DlgAccounts::addCredential()
    list_credential->setCurrentIndex(idx);
 } //addCredential
 
+///Save and load a credential
 void DlgAccounts::selectCredential(QModelIndex item, QModelIndex previous)
 {
    list_credential->model()->setData(previous,edit_credential_auth->text()    , CredentialModel::NAME_ROLE     );
@@ -718,12 +724,14 @@ void DlgAccounts::selectCredential(QModelIndex item, QModelIndex previous)
 //TODO
 } //selectCredential
 
+///Remove a credential
 void DlgAccounts::removeCredential() {
    Account*    acc   = AccountList::getInstance()->getAccountByModelIndex(listView_accountList->currentIndex());
    acc->getCredentialsModel()->removeCredentials(list_credential->currentIndex());
    list_credential->setCurrentIndex(acc->getCredentialsModel()->index(0,0));
 }
 
+///Enable published
 void DlgAccounts::enablePublished()
 {
    lineEdit_pa_published_address->setDisabled(radioButton_pa_same_as_local->isChecked());

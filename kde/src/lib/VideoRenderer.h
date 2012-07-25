@@ -32,7 +32,7 @@ struct SHMHeader;
 ///Manage shared memory and convert it to QByteArray
 class LIB_EXPORT VideoRenderer : public QObject {
    Q_OBJECT
-   
+
    public:
       //Constructor
       VideoRenderer (QString shmPath,Resolution res);

@@ -38,7 +38,7 @@ class StaticEventHandler;
 class Contact;
 class Call;
 
-///@enum ContactSortingMode Available sorting mode
+///@enum ContactSortingMode Available sorting mode for the contact dock
 enum ContactSortingMode {
    Name              ,
    Organisation      ,
@@ -47,7 +47,7 @@ enum ContactSortingMode {
    Department        ,
 };
 
-///@enum HistorySortingMode
+///@enum HistorySortingMode Mode used to sort the history dock
 enum HistorySortingMode {
    Date       = 0,
    Name2      = 1,

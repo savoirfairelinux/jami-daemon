@@ -52,19 +52,19 @@ public:
    Account*                 getDefaultAccount      (                        );
    static Account*          getCurrentAccount      (                        );
    static QString           getPriorAccoundId      (                        );
+   Account*                 getAccountByModelIndex ( QModelIndex item       ) const;
 
-   //Getters
+   //Abstract model accessors
    QVariant      data     ( const QModelIndex& index, int role = Qt::DisplayRole ) const;
    int           rowCount ( const QModelIndex& parent = QModelIndex()            ) const;
    Qt::ItemFlags flags    ( const QModelIndex& index                             ) const;
-   Account*      getAccountByModelIndex(QModelIndex item)                          const;
-   void          setDefaultAccount(Account* a);
 
    //Setters
    static  void setPriorAccountId( const QString& value                                     );
    virtual bool setData          ( const QModelIndex& index, const QVariant &value, int role);
    void         setColorVisitor  ( AccountListColorVisitor* visitor                         );
-   
+   void         setDefaultAccount(Account* a);
+
    //Mutators
    virtual Account*  addAccount        ( QString & alias   )      ;
    void              removeAccount     ( Account* account  )      ;
@@ -85,14 +85,14 @@ private:
    ~AccountList();
    
    //Attributes
-   QVector<Account*>*  m_pAccounts;
-   static AccountList* m_spAccountList;
-   static QString      m_sPriorAccountId;
-   Account*            m_pDefaultAccount;
-   AccountListColorVisitor* m_pColorVisitor;
+   QVector<Account*>*       m_pAccounts      ;
+   static AccountList*      m_spAccountList  ;
+   static QString           m_sPriorAccountId;
+   Account*                 m_pDefaultAccount;
+   AccountListColorVisitor* m_pColorVisitor  ;
    
 public slots:
-   void update();
+   void update        ();
    void updateAccounts();
 
 private slots:
@@ -103,9 +103,11 @@ signals:
    ///The account list changed
    void accountListUpdated();
    ///Emitted when an account state change
-   void accountStateChanged( Account* account, QString state);
-   void accountEnabledChanged(Account* source);
-   void defaultAccountChanged(Account* a);
+   void accountStateChanged  ( Account* account, QString state);
+   ///Emitted when an account enable attribute change
+   void accountEnabledChanged( Account* source                );
+   ///Emitted when the default account change
+   void defaultAccountChanged( Account* a                     );
 };
 
 ///SFLPhonelib Qt does not link to QtGui, and does not need to, this allow to add runtime Gui support

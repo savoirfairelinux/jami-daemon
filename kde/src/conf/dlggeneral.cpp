@@ -16,15 +16,18 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #include "dlggeneral.h"
-#include <QToolButton>
-#include <QAction>
 
+//Qt
+#include <QtGui/QToolButton>
+#include <QtGui/QAction>
+
+//SFLPhone
 #include "klib/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
 #include "lib/configurationmanager_interface_singleton.h"
 
+///Constructor
 DlgGeneral::DlgGeneral(KConfigDialog *parent)
  : QWidget(parent),m_HasChanged(false)
 {
@@ -34,7 +37,7 @@ DlgGeneral::DlgGeneral(KConfigDialog *parent)
    kcfg_historyMax->setValue(ConfigurationSkeleton::historyMax());
    kcfg_minimumRowHeight->setEnabled(ConfigurationSkeleton::limitMinimumRowHeight());
 
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    m_pAlwaysRecordCK->setChecked(configurationManager.getIsAlwaysRecording());
 
    //Need to be ordered
@@ -50,10 +53,10 @@ DlgGeneral::DlgGeneral(KConfigDialog *parent)
    QMutableMapIterator<QString, QString> iter(m_lCallDetails);
    while (iter.hasNext()) {
       iter.next();
-      QListWidgetItem* i = new QListWidgetItem(i18n(iter.key().toAscii()));
-      i->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
       bool checked = ConfigurationSkeleton::self()->findItem(iter.value())->isEqual(true);
-      i->setCheckState((checked)?Qt::Checked:Qt::Unchecked);
+      QListWidgetItem* i = new QListWidgetItem(i18n(iter.key().toAscii()));
+      i->setFlags      (Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+      i->setCheckState ((checked)?Qt::Checked:Qt::Unchecked        );
       m_pDetailsList->addItem(m_lItemList[iter.value()] = i);
    }
    connect(m_pDetailsList   , SIGNAL(itemChanged(QListWidgetItem*))  , this  , SLOT(changed())      );
@@ -61,25 +64,30 @@ DlgGeneral::DlgGeneral(KConfigDialog *parent)
    connect(this             , SIGNAL(updateButtons())                , parent, SLOT(updateButtons()));
 }
 
+///Destructor
 DlgGeneral::~DlgGeneral()
 {
 }
 
+///Have this dialog changed
 bool DlgGeneral::hasChanged()
 {
    return m_HasChanged;
 }
 
+///Tag this dialog as changed
 void DlgGeneral::changed()
 {
    m_HasChanged = true;
    emit updateButtons();
 }
 
+///Update all widgets
 void DlgGeneral::updateWidgets()
 {
 }
 
+///Save current settings
 void DlgGeneral::updateSettings()
 {
    QMutableMapIterator<QString, QString> iter(m_lCallDetails);
@@ -89,9 +97,8 @@ void DlgGeneral::updateSettings()
    }
    ConfigurationSkeleton::setHistoryMax(kcfg_historyMax->value());
 
-   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    configurationManager.setIsAlwaysRecording(m_pAlwaysRecordCK->isChecked());
-   
+
    m_HasChanged = false;
-   
 }

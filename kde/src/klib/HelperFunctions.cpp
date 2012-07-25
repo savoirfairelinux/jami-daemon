@@ -36,7 +36,7 @@ ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
    for (int i=0;i<contacts.size();i++) {
       Contact* cont = contacts[i];
       QHash<QString,QVariant> conth = cont->toHash();
-      conth["phoneCount"] = cont->getPhoneNumbers().size();
+      conth   ["phoneCount" ] = cont->getPhoneNumbers().size();
       if (cont->getPhoneNumbers().size() == 1) {
          conth["phoneNumber"] = cont->getPhoneNumbers()[0]->getNumber();
          conth["phoneType"  ] = cont->getPhoneNumbers()[0]->getType();
@@ -49,8 +49,6 @@ ContactHash HelperFunctions::toHash(QList<Contact*> contacts) {
    }
    return hash;
 }
-
-
 
 ///Remove accent and upper caps, try to stay ascii as much as possible
 QString HelperFunctions::normStrippped(QString str)

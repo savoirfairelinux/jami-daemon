@@ -19,13 +19,14 @@
 
 #include "dlgdisplay.h"
 
+///Constructor
 DlgDisplay::DlgDisplay(QWidget *parent)
  : QWidget(parent)
 {
    setupUi(this);
 }
 
-
+///Destructor
 DlgDisplay::~DlgDisplay()
 {
 }

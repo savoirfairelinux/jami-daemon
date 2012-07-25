@@ -32,6 +32,7 @@ class Account;
 class VideoCodec;
 typedef QHash<QString,VideoCodec*> CodecHash;
 
+///Abstract model for managing account video codec list
 class LIB_EXPORT VideoCodecModel : public QAbstractListModel {
    Q_OBJECT
    friend class Account;
@@ -47,7 +48,7 @@ public:
    
    void reload();
    void save();
-   bool moveUp(QModelIndex idx);
+   bool moveUp  (QModelIndex idx);
    bool moveDown(QModelIndex idx);
    
 private:

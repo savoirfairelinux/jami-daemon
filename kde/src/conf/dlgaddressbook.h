@@ -16,10 +16,10 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #ifndef DLGADDRESSBOOK_H
 #define DLGADDRESSBOOK_H
 
+//Qt
 #include <QtCore/QHash>
 #include <QtCore/QString>
 #include <QtGui/QWidget>
@@ -39,13 +39,12 @@ public:
    ~DlgAddressBook();
 
 private:
+   //Attributes
    QHash<QString,QListWidgetItem*> m_mNumbertype;
 
 public slots:
-   void updateWidgets();
+   void updateWidgets ();
    void updateSettings();
-
-
 };
 
 #endif

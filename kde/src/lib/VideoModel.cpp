@@ -97,32 +97,11 @@ void VideoModel::deviceEvent()
    
 }
 
-///Return the current resolution
-// Resolution VideoModel::getActiveResolution()
-// {
-//    return m_Res;
-// }
-
 ///A video is not being rendered
 void VideoModel::startedDecoding(QString id, QString shmPath, int width, int height)
 {
    Q_UNUSED(id)
-   qDebug() << "PREVIEW ID" << id;
-//    m_pRenderer->m_ShmPath = shmPath;
-//    m_Res.width            = width  ;
-//    m_Res.height           = height ;
-//    m_pRenderer->m_Width   = width  ;
-//    m_pRenderer->m_Height  = height ;
-//    m_pRenderer->m_isRendering = true;
-//    m_pRenderer->startShm();
-   
-//    if (!m_pTimer) {
-//       m_pTimer = new QTimer(this);
-//       connect(m_pTimer,SIGNAL(timeout()),this,SLOT(timedEvents()));
-//       m_pTimer->setInterval(42);
-//    }
-//    m_pTimer->start();
-   
+
    if (m_lRenderers[id] == nullptr ) {
       m_lRenderers[id] = new VideoRenderer(shmPath,Resolution(width,height));
    }
@@ -132,9 +111,6 @@ void VideoModel::startedDecoding(QString id, QString shmPath, int width, int hei
       renderer->setResolution(QSize(width,height));
    }
 
-//    if (!m_pRenderer)
-//       m_pRenderer = m_lRenderers[id];
-   
     m_lRenderers[id]->startRendering();
    if (id != "local") {
       qDebug() << "Starting video for call" << id;
@@ -148,10 +124,6 @@ void VideoModel::stoppedDecoding(QString id, QString shmPath)
    Q_UNUSED(shmPath)
    if ( m_lRenderers[id] )
        m_lRenderers[id]->stopRendering();
-//    m_pRenderer->m_isRendering = false;
-//    m_pRenderer->stopShm();
    qDebug() << "Video stopped for call" << id;
    emit videoStopped();
-//    if (m_pTimer)
-//       m_pTimer->stop();
 }

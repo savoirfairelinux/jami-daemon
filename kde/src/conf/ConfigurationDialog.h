@@ -16,19 +16,18 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #ifndef CONFIGURATIONDIALOG_H
 #define CONFIGURATIONDIALOG_H
 
+//Base
 #include <kconfigdialog.h>
-
 
 #include "klib/kcfg_settings.h"
 #include "SFLPhoneView.h"
-
-
 #define SETTINGS_NAME "settings"
 
+
+//SFLPhone
 class DlgGeneral;
 class DlgDisplay;
 class DlgAccounts;
@@ -38,7 +37,6 @@ class DlgRecord;
 class DlgHooks;
 class DlgAccessibility;
 class DlgVideo;
-
 class SFLPhoneView;
 
 /**
@@ -80,6 +78,7 @@ public slots:
     */
    void updateSettings();
    /**
+    *   @author Jérémy Quentin <jeremy.quentin@gmail.com>
     *   Is implemented in KConfigDialog only from KDE4.3
     *   It it implemented here for KDE4.2 users.
     *   I didn't test with KDE4.3 so I leave it even for 4.3 users.

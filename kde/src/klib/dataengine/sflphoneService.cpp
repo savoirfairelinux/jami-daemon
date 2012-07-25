@@ -96,9 +96,9 @@ void TransferJob::start()
 {
    Call* call = SFLPhoneEngine::getModel()->getCall(m_CallId);
    call->setTransferNumber(m_transferNumber);
-   call->changeCurrentState(CALL_STATE_TRANSFERRED);
-   call->actionPerformed(CALL_ACTION_ACCEPT);
-   call->changeCurrentState(CALL_STATE_OVER);
+   call->changeCurrentState( CALL_STATE_TRANSFERRED );
+   call->actionPerformed   ( CALL_ACTION_ACCEPT     );
+   call->changeCurrentState( CALL_STATE_OVER        );
 }
 
 ///Constructor

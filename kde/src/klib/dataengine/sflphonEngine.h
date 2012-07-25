@@ -87,8 +87,8 @@ class SFLPhoneEngine : public Plasma::DataEngine,public SortableDockCommon<>
    private slots:
       //Slots
       void updateCollection        (                                                  );
-      void callStateChangedSignal  (Call* call                                        );
-      void incomingCallSignal      (Call* conf                                        );
+      void callStateChangedSignal  ( Call* call                                       );
+      void incomingCallSignal      ( Call* conf                                       );
       void incomingMessageSignal   ( const QString& accountId, const QString& message );
       void voiceMailNotifySignal   ( const QString& accountId, int count              );
 };

@@ -16,22 +16,20 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #ifndef CONFIGURATION_MANAGER_INTERFACE_SINGLETON_H
 #define CONFIGURATION_MANAGER_INTERFACE_SINGLETON_H
 
 #include "src/lib/configurationmanager_dbus_interface.h"
 #include "typedefs.h"
 
+///Singleton to access the ConfigurationManager dbus interface
 class LIB_EXPORT ConfigurationManagerInterfaceSingleton
 {
-
-private:
-   static ConfigurationManagerInterface* interface;
-
 public:
    static ConfigurationManagerInterface& getInstance();
 
+private:
+   static ConfigurationManagerInterface* interface;
 };
 
 #endif

@@ -67,8 +67,6 @@ SFLPhoneEngine::SFLPhoneEngine(QObject* parent, const QVariantList& args)
    /**/connect(m_pModel                     , SIGNAL(callStateChanged(Call*))  , this , SLOT(callStateChangedSignal(Call*)) );
    /**/connect(AkonadiBackend::getInstance(), SIGNAL(collectionChanged())      , this , SLOT(updateCollection())            );
    /*                                                                                                                       */
-   
-   
 }
 
 
@@ -112,9 +110,8 @@ QStringList SFLPhoneEngine::sources() const {
 ///Return the service used for RPC
 Plasma::Service* SFLPhoneEngine::serviceForSource(const QString &source)
 {
-    if (source != "calls") {
-        return 0;
-    }
+    if (source != "calls")
+      return 0;
 
     SFLPhoneService* service = new SFLPhoneService(this);
     service->setParent(this);
@@ -269,9 +266,8 @@ void SFLPhoneEngine::updateContacts()
 {
    //As of KDE 4.8, an empty source is ignored, adding an invisible entry
    QStringList keys;
-   keys << "nickName" << "firstName" << "secondName"     << "formattedName" << "organization" << 
-                         "Uid"       << "preferredEmail" << "type"          << "group"        <<
-                         "department";
+   keys << "nickName" << "firstName"      << "secondName" << "formattedName" << "organization" <<
+            "Uid"     << "preferredEmail" << "type"       << "group"         << "department";
    
    QHash<QString,QVariant> fake;
    foreach(const QString& key,keys) {

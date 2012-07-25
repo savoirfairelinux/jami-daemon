@@ -106,7 +106,7 @@ Account* Account::buildExistingAccountFromId(const QString& _accountId)
 Account* Account::buildNewAccountFromAlias(const QString& alias)
 {
    qDebug() << "Building an account from alias: " << alias;
-   Account* a = new Account();
+   Account* a           = new Account        ();
    a->m_pAccountDetails = new MapStringString();
    a->setAccountDetail(ACCOUNT_ALIAS,alias);
    return a;
@@ -117,7 +117,7 @@ Account::~Account()
 {
    disconnect();
    delete m_pAccountId;
-   if (m_pCredentials)    delete m_pCredentials;
+   if (m_pCredentials)    delete m_pCredentials   ;
    if (m_pAccountDetails) delete m_pAccountDetails;
 }
 
@@ -228,9 +228,9 @@ QModelIndex Account::getIndex()
 QString Account::getStateColorName() const
 {
    if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
-            return "black";
+      return "black";
    if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
-            return "darkGreen";
+      return "darkGreen";
    return "red";
 }
 
@@ -238,38 +238,35 @@ QString Account::getStateColorName() const
 Qt::GlobalColor Account::getStateColor() const
 {
    if(getAccountRegistrationStatus() == ACCOUNT_STATE_UNREGISTERED)
-            return Qt::darkGray;
+      return Qt::darkGray  ;
    if(getAccountRegistrationStatus() == ACCOUNT_STATE_REGISTERED || getAccountRegistrationStatus() == ACCOUNT_STATE_READY)
-            return Qt::darkGreen;
+      return Qt::darkGreen ;
    if(getAccountRegistrationStatus() == ACCOUNT_STATE_TRYING)
-            return Qt::darkYellow;
+      return Qt::darkYellow;
    return Qt::darkRed;
 }
 
 ///Create and return the credential model
 CredentialModel* Account::getCredentialsModel()
 {
-   if (!m_pCredentials) {
+   if (!m_pCredentials)
       reloadCredentials();
-   }
    return m_pCredentials;
 }
 
 ///Create and return the audio codec model
 AudioCodecModel* Account::getAudioCodecModel()
 {
-   if (!m_pAudioCodecs) {
+   if (!m_pAudioCodecs)
       reloadAudioCodecs();
-   }
    return m_pAudioCodecs;
 }
 
 ///Create and return the video codec model
 VideoCodecModel* Account::getVideoCodecModel()
 {
-   if (!m_pVideoCodecs) {
+   if (!m_pVideoCodecs)
       m_pVideoCodecs = new VideoCodecModel(this);
-   }
    return m_pVideoCodecs;
 }
 
@@ -333,9 +330,9 @@ bool Account::updateState()
 {
    if(! isNew()) {
       ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-      MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
-      QString status = details[ACCOUNT_REGISTRATION_STATUS];
-      QString currentStatus = getAccountRegistrationStatus();
+      MapStringString details       = configurationManager.getAccountDetails(getAccountId()).value();
+      QString         status        = details[ACCOUNT_REGISTRATION_STATUS];
+      QString         currentStatus = getAccountRegistrationStatus();
       setAccountDetail(ACCOUNT_REGISTRATION_STATUS, status); //Update -internal- object state
       return status == currentStatus;
    }
@@ -350,7 +347,6 @@ void Account::save()
       MapStringString details = getAccountDetails();
       QString currentId = configurationManager.addAccount(details);
       setAccountId(currentId);
-      qDebug() << "NEW ID" << currentId;
    }
    else {
       configurationManager.setAccountDetails(getAccountId(), getAccountDetails());
@@ -363,7 +359,7 @@ void Account::save()
       if (acc != this) {
          (*AccountList::getInstance()->m_pAccounts) << this;
       }
-      
+
       performAction(AccountEditAction::RELOAD);
       updateState();
       m_CurrentState = READY;
@@ -392,6 +388,7 @@ void Account::reload()
    m_CurrentState = READY;
 }
 
+///Reload credentials from DBUS
 void Account::reloadCredentials()
 {
    if (!m_pCredentials) {
@@ -408,6 +405,7 @@ void Account::reloadCredentials()
    }
 }
 
+///Save all credentials
 void Account::saveCredentials() {
    if (m_pCredentials) {
       ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -426,6 +424,7 @@ void Account::saveCredentials() {
    }
 }
 
+///Reload all audio codecs
 void Account::reloadAudioCodecs()
 {
    if (!m_pAudioCodecs) {
@@ -461,6 +460,7 @@ void Account::reloadAudioCodecs()
    }
 }
 
+///Save audio codecs
 void Account::saveAudioCodecs() {
    QStringList _codecList;
    for (int i=0; i < m_pAudioCodecs->rowCount();i++) {
@@ -493,6 +493,7 @@ bool Account::operator==(const Account& a)const
  *                                                                           *
  ****************************************************************************/
 #ifdef ENABLE_VIDEO
+///Save active video codecs
 void Account::setActiveVideoCodecList(const QList<VideoCodec*>& codecs)
 {
    QStringList codecs2;
@@ -503,6 +504,7 @@ void Account::setActiveVideoCodecList(const QList<VideoCodec*>& codecs)
    interface.setActiveCodecList(codecs2,m_pAccountId);
 }
 
+///Return the list of active video dodecs
 QList<VideoCodec*> Account::getActiveVideoCodecList()
 {
    QList<VideoCodec*> codecs;

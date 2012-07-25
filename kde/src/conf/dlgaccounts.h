@@ -41,12 +41,12 @@ class RingToneListItem : public QWidget
    friend class DlgAccounts;
    ///Constructor
    RingToneListItem(QString path, QString name) : QWidget(0),m_Path(path) {
-      QHBoxLayout* l = new QHBoxLayout(this);
+      QHBoxLayout* l  = new QHBoxLayout(this);
+      m_pPlayPB       = new QPushButton(this);
+      QLabel* lblName = new QLabel(name,this);
       l->setContentsMargins(0,0,0,0);
-      m_pPlayPB = new QPushButton(this);
       m_pPlayPB->setIcon(KIcon("media-playback-start"));
       m_pPlayPB->setVisible(false);
-      QLabel* lblName = new QLabel(name,this);
       lblName->setStyleSheet("padding-left:5px;");
       lblName->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
       l->addWidget(lblName);
@@ -153,7 +153,6 @@ private slots:
 signals:
    ///Update the Ok and Apply button style
    void updateButtons();
-
 };
 
 #endif

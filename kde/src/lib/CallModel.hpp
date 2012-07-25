@@ -71,10 +71,10 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::destroy()
    foreach (InternalStruct* s,  m_sPrivateCallList_call.values()) {
       delete s;
    }
-   m_sPrivateCallList_call.clear();
+   m_sPrivateCallList_call.clear  ();
    m_sPrivateCallList_callId.clear();
    m_sPrivateCallList_widget.clear();
-   m_sPrivateCallList_index.clear();
+   m_sPrivateCallList_index.clear ();
 }
 
 ///Destructor
@@ -98,15 +98,15 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::initCall()
 {
    if (!m_sCallInit) {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-      QStringList callList = callManager.getCallList();
-      foreach (QString callId, callList) {
+      const QStringList callList = callManager.getCallList();
+      foreach (const QString& callId, callList) {
          Call* tmpCall = Call::buildExistingCall(callId);
          m_sActiveCalls[tmpCall->getCallId()] = tmpCall;
          addCall(tmpCall);
       }
-   
-      QStringList confList = callManager.getConferenceList();
-      foreach (QString confId, confList) {
+
+      const QStringList confList = callManager.getConferenceList();
+      foreach (const QString& confId, confList) {
          CallModelBase::addConferenceS(addConference(confId));
       }
    }
@@ -150,12 +150,12 @@ CALLMODEL_TEMPLATE CallList CALLMODEL_T::getConferenceList()
    CallList confList;
 
    //That way it can not be invalid
-   QStringList confListS = CallManagerInterfaceSingleton::getInstance().getConferenceList();
-   foreach (QString confId, confListS) {
-        if (m_lConfList[confId] != nullptr)
-           confList << m_lConfList[confId];
-        else
-           confList << addConference(confId);
+   const QStringList confListS = CallManagerInterfaceSingleton::getInstance().getConferenceList();
+   foreach (const QString& confId, confListS) {
+      if (m_lConfList[confId] != nullptr)
+         confList << m_lConfList[confId];
+      else
+         confList << addConference(confId);
    }
    return confList;
 }
@@ -178,8 +178,8 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addCall(Call* call, Call* parent)
    aNewStruct->call_real  = call;
    aNewStruct->conference = false;
    
-   m_sPrivateCallList_call[call]                = aNewStruct;
-   m_sPrivateCallList_callId[call->getCallId()] = aNewStruct;
+   m_sPrivateCallList_call  [ call              ] = aNewStruct;
+   m_sPrivateCallList_callId[ call->getCallId() ] = aNewStruct;
 
    //setCurrentItem(callItem);
    CallModelBase::addCall(call,parent);
@@ -225,8 +225,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addRingingCall(const QString& callId)
 CALLMODEL_TEMPLATE QString CALLMODEL_T::generateCallId()
 {
    int id = qrand();
-   QString res = QString::number(id);
-   return res;
+   return QString::number(id);
 }
 
 ///Remove a call and update the internal structure
@@ -271,9 +270,9 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::attendedTransfer(Call* toTransfer, Call* ta
 CALLMODEL_TEMPLATE void CALLMODEL_T::transfer(Call* toTransfer, QString target)
 {
    qDebug() << "Transferring call " << toTransfer->getCallId() << "to" << target;
-   toTransfer->setTransferNumber(target);
-   toTransfer->actionPerformed(CALL_ACTION_TRANSFER);
-   toTransfer->changeCurrentState(CALL_STATE_OVER);
+   toTransfer->setTransferNumber ( target               );
+   toTransfer->actionPerformed   ( CALL_ACTION_TRANSFER );
+   toTransfer->changeCurrentState( CALL_STATE_OVER      );
 } //transfer
 
 /*****************************************************************************
@@ -287,14 +286,14 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
 {
    qDebug() << "Notified of a new conference " << confID;
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   QStringList callList = callManager.getParticipantList(confID);
+   const QStringList callList = callManager.getParticipantList(confID);
    qDebug() << "Paticiapants are:" << callList;
-   
+
    if (!callList.size()) {
       qDebug() << "This conference (" + confID + ") contain no call";
       return 0;
    }
-   
+
    if (!m_sPrivateCallList_callId[callList[0]]) {
       qDebug() << "Invalid call";
       return 0;
@@ -303,7 +302,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
    Call* newConf = nullptr;
    if (m_sPrivateCallList_callId[callList[0]]->call_real->getAccount())
       newConf =  new Call(confID, m_sPrivateCallList_callId[callList[0]]->call_real->getAccount()->getAccountId());
-   
+
    if (newConf) {
       InternalStruct* aNewStruct = new InternalStruct;
       aNewStruct->call_real  = newConf;
@@ -312,7 +311,7 @@ CALLMODEL_TEMPLATE Call* CALLMODEL_T::addConference(const QString & confID)
       m_sPrivateCallList_call[newConf]  = aNewStruct;
       m_sPrivateCallList_callId[confID] = aNewStruct;
 
-      m_lConfList[newConf->getConfId()] = newConf;
+      m_lConfList[newConf->getConfId()] = newConf   ;
    }
    return newConf;
 } //addConference
@@ -361,12 +360,12 @@ CALLMODEL_TEMPLATE bool CALLMODEL_T::changeConference(const QString& confId, con
 {
    qDebug() << "Conf changed";
    Q_UNUSED(state)
-   
+
    if (!m_sPrivateCallList_callId[confId]) {
       qDebug() << "The conference does not exist";
       return false;
    }
-   
+
    if (!m_sPrivateCallList_callId[confId]->index) {
       qDebug() << "The conference item does not exist";
       return false;
@@ -386,7 +385,7 @@ CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(const QString &confId)
 CALLMODEL_TEMPLATE void CALLMODEL_T::removeConference(Call* call)
 {
    InternalStruct* internal = m_sPrivateCallList_call[call];
-   
+
    if (!internal) {
       qDebug() << "Cannot remove conference: call not found";
       return;

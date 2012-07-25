@@ -15,7 +15,6 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #ifndef DLG_VIDEO_H
 #define DLG_VIDEO_H
 
@@ -37,16 +36,15 @@ public:
    ~DlgVideo();
 
 private slots:
-   void loadDevice(QString device);
-   void loadResolution(QString channel);
-   void loadRate(QString resolution);
-   void changeRate(QString rate);
+   void loadDevice    ( QString device     );
+   void loadResolution( QString channel    );
+   void loadRate      ( QString resolution );
+   void changeRate    ( QString rate       );
    void startStopPreview();
 
 private:
    //Attribute
    VideoDevice* m_pDevice;
-
 };
 
 #endif

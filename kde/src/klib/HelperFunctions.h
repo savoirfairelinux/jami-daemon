@@ -36,9 +36,9 @@ typedef QHash<QString,QHash<QString,QVariant> > ContactHash;
 ///Ramdom mix of dynamic property and transtypping
 class LIB_EXPORT HelperFunctions {
 public:
-   static ContactHash toHash(QList<Contact*> contacts);
-   static QString normStrippped(QString str);
-   static QString escapeHtmlEntities(QString str);
-   static void displayNoAccountMessageBox(QWidget* parent = nullptr);
+   static ContactHash toHash                    (QList<Contact*> contacts );
+   static QString     normStrippped             (QString str              );
+   static QString     escapeHtmlEntities        (QString str              );
+   static void        displayNoAccountMessageBox(QWidget* parent = nullptr);
 };
 #endif

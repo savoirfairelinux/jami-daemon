@@ -23,15 +23,14 @@
 #include "src/lib/callmanager_dbus_interface.h"
 #include "typedefs.h"
 
+///Singleton to access dbus "CallManager" interface
 class LIB_EXPORT CallManagerInterfaceSingleton
 {
-
-private:
-   static CallManagerInterface* interface;
-
 public:
    static CallManagerInterface& getInstance();
 
+private:
+   static CallManagerInterface* interface;
 };
 
 #endif

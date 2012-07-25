@@ -35,6 +35,7 @@
 
 #include "lib/sflphone_const.h"
 
+///Constructor
 ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
  :KConfigDialog(parent, SETTINGS_NAME, ConfigurationSkeleton::self())
 {
@@ -52,39 +53,40 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
    dlgVideo         = new DlgVideo         (this);
    #endif
    
-   addPage( dlgGeneral       , i18nc("General settings","General")       , "sflphone-client-kde"               );
-   addPage( dlgAccounts      , i18n("Accounts")      , "user-identity"                     );
-   addPage( dlgAudio         , i18n("Audio")         , "audio-headset"                     );
-   addPage( dlgAddressBook   , i18n("Address Book")  , "x-office-address-book"             );
-   addPage( dlgHooks         , i18n("Hooks")         , "insert-link"                       );
-   addPage( dlgAccessibility , i18n("Accessibility") , "preferences-desktop-accessibility" );
+   addPage( dlgGeneral       , i18nc("General settings","General") , "sflphone-client-kde"               );
+   addPage( dlgAccounts      , i18n("Accounts")                    , "user-identity"                     );
+   addPage( dlgAudio         , i18n("Audio")                       , "audio-headset"                     );
+   addPage( dlgAddressBook   , i18n("Address Book")                , "x-office-address-book"             );
+   addPage( dlgHooks         , i18n("Hooks")                       , "insert-link"                       );
+   addPage( dlgAccessibility , i18n("Accessibility")               , "preferences-desktop-accessibility" );
    #ifdef ENABLE_VIDEO
-   addPage( dlgVideo         , i18nc("Video conversation","Video")         , "camera-web"                        );
+   addPage( dlgVideo         , i18nc("Video conversation","Video") , "camera-web"                        );
    #endif
-   addPage( dlgDisplay       , i18nc("User interterface settings","Display")       , "applications-graphics"             );
+   addPage( dlgDisplay       , i18nc("User interterface settings","Display"), "applications-graphics"    );
 
-   connect(this, SIGNAL(applyClicked()),  this,     SLOT(applyCustomSettings()));
-   connect(this, SIGNAL(okClicked()),     this,     SLOT(applyCustomSettings()));
-   connect(this, SIGNAL(cancelClicked()), this,     SLOT(cancelSettings()     ));
+   connect(this, SIGNAL(applyClicked()) , this, SLOT(applyCustomSettings()));
+   connect(this, SIGNAL(okClicked())    , this, SLOT(applyCustomSettings()));
+   connect(this, SIGNAL(cancelClicked()), this, SLOT(cancelSettings()     ));
 
    connect(dlgGeneral, SIGNAL(clearCallHistoryAsked()), this, SIGNAL(clearCallHistoryAsked()));
 } //ConfigurationDialog
 
-
+///Destructor
 ConfigurationDialog::~ConfigurationDialog()
 {
-   delete dlgGeneral;
-   delete dlgDisplay;
-   delete dlgAccounts;
-   delete dlgAudio;
-   delete dlgAddressBook;
-   delete dlgHooks;
+   delete dlgGeneral      ;
+   delete dlgDisplay      ;
+   delete dlgAccounts     ;
+   delete dlgAudio        ;
+   delete dlgAddressBook  ;
+   delete dlgHooks        ;
    delete dlgAccessibility;
    #ifdef ENABLE_VIDEO
-   delete dlgVideo;
+   delete dlgVideo        ;
    #endif
 }
 
+///Update all widgets when something is reloaded
 void ConfigurationDialog::updateWidgets()
 {
    dlgAudio->updateWidgets        ();
@@ -94,6 +96,7 @@ void ConfigurationDialog::updateWidgets()
    dlgAccessibility->updateWidgets();
 }
 
+///Save all settings when apply is clicked
 void ConfigurationDialog::updateSettings()
 {
    dlgAudio->updateSettings        ();
@@ -103,23 +106,27 @@ void ConfigurationDialog::updateSettings()
    dlgAccessibility->updateSettings();
 }
 
+///Cancel current modification
 void ConfigurationDialog::cancelSettings()
 {
    dlgAccounts->cancel();
 }
 
+///If the account changed
 bool ConfigurationDialog::hasChanged()
 {
    bool res = dlgAudio->hasChanged() || dlgAccounts->hasChanged() || dlgGeneral->hasChanged();
    return res;
 }
 
+///Update the buttons
 void ConfigurationDialog::updateButtons()
 {
    bool changed = hasChanged();
    enableButtonApply( changed );
 }
 
+///Apply settings
 void ConfigurationDialog::applyCustomSettings()
 {
    if(hasChanged()) {
@@ -131,6 +138,7 @@ void ConfigurationDialog::applyCustomSettings()
    emit changesApplied();
 }
 
+///Reload the pages
 void ConfigurationDialog::reload()
 {
    kDebug() << "Reloading config";

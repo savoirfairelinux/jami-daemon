@@ -54,10 +54,9 @@ private:
       QString          password;
       QString          realm   ;
    };
-   
+
    //Attributes
    QList<CredentialData2*> m_lCredentials;
-
 };
 
 #endif

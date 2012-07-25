@@ -56,10 +56,10 @@ public:
    ///Add a new phone number to an existing contact
    virtual void addPhoneNumber( Contact*       contact , QString  number, QString type )=0;
 protected:
-   virtual ContactList update_slot       (                     ) = 0;
+   virtual ContactList update_slot       (                            ) = 0;
 
    //Helper
-   QString getUserFromPhone(QString phoneNumber);
+   QString getUserFromPhone    (QString phoneNumber);
    QString getHostNameFromPhone(QString phoneNumber);
 
    //Attributes

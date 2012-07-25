@@ -44,12 +44,12 @@ public:
    static const CallMap&    getHistory             ();
    static const QStringList getHistoryCallId       ();
    static const QStringList getNumbersByPopularity ();
-   
+
    //Setters
    static void add(Call* call);
 
 private:
-   
+
    //Constructor
    HistoryModel();
    bool initHistory ();
@@ -63,12 +63,7 @@ private:
    //Attributes
    static CallMap m_sHistoryCalls;
    bool m_HistoryInit;
-   
-public slots:
-   
 
-private slots:
-   
 signals:
    ///Emitted when the history change (new items, cleared)
    void historyChanged          (            );

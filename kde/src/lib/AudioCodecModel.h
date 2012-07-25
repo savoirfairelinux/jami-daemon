@@ -37,17 +37,17 @@ public:
    AudioCodecModel(QObject* parent =nullptr);
 
    //Abstract model member
-   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole ) const;
-   int rowCount(const QModelIndex& parent = QModelIndex()             ) const;
-   Qt::ItemFlags flags(const QModelIndex& index                       ) const;
-   virtual bool setData(const QModelIndex& index, const QVariant &value, int role);
+   QVariant data        (const QModelIndex& index, int role = Qt::DisplayRole      ) const;
+   int rowCount         (const QModelIndex& parent = QModelIndex()                 ) const;
+   Qt::ItemFlags flags  (const QModelIndex& index                                  ) const;
+   virtual bool setData (const QModelIndex& index, const QVariant &value, int role );
 
    //Mutator
    QModelIndex addAudioCodec();
-   void removeAudioCodec(QModelIndex idx);
-   void clear();
-   bool moveUp(QModelIndex idx);
-   bool moveDown(QModelIndex idx);
+   void removeAudioCodec ( QModelIndex idx );
+   bool moveUp           ( QModelIndex idx );
+   bool moveDown         ( QModelIndex idx );
+   void clear            (                 );
 
 private:
    ///@struct AudioCodecData store audio codec information
@@ -57,11 +57,10 @@ private:
       QString          bitrate   ;
       QString          samplerate;
    };
-   
-   //Attributes
-   QList<AudioCodecData*> m_lAudioCodecs;
-   QMap<int,bool>  m_lEnabledCodecs;
 
+   //Attributes
+   QList<AudioCodecData*> m_lAudioCodecs  ;
+   QMap<int,bool>         m_lEnabledCodecs;
 };
 
 #endif

@@ -30,7 +30,6 @@ class QWidget;
 //SFLPhone
 #include "sflphone_const.h"
 #include "typedefs.h"
-
 class ContactBackend;
 class Contact;
 class Account;
@@ -43,20 +42,14 @@ class InstantMessagingModel;
   */
 typedef enum
 { 
-   /** Ringing outgoing or incoming call */
-   DAEMON_CALL_STATE_RINGING,
-   /** Call to which the user can speak and hear */
-   DAEMON_CALL_STATE_CURRENT,
-   /** Call is busy */
-   DAEMON_CALL_STATE_BUSY,
-   /** Call is on hold */
-   DAEMON_CALL_STATE_HOLD,
-   /** Call is over  */
-   DAEMON_CALL_STATE_HUNG_UP,
-   /** Call has failed */
-   DAEMON_CALL_STATE_FAILURE,
-   /** Call is recording+current  */
-   DAEMON_CALL_STATE_RECORD,
+   
+   /** Ringing outgoing or incoming call */         DAEMON_CALL_STATE_RINGING,
+   /** Call to which the user can speak and hear */ DAEMON_CALL_STATE_CURRENT,
+   /** Call is busy */                              DAEMON_CALL_STATE_BUSY   ,
+   /** Call is on hold */                           DAEMON_CALL_STATE_HOLD   ,
+   /** Call is over  */                             DAEMON_CALL_STATE_HUNG_UP,
+   /** Call has failed */                           DAEMON_CALL_STATE_FAILURE,
+   /** Call is recording+current  */                DAEMON_CALL_STATE_RECORD ,
 } daemon_call_state;
 
 /** @enum call_action
@@ -64,16 +57,13 @@ typedef enum
   */
 typedef enum
 { 
-   /** Green button, accept or new call or place call or place transfer */
-   CALL_ACTION_ACCEPT,
-   /** Red button, refuse or hang up */
-   CALL_ACTION_REFUSE,
-   /** Blue button, put into or out of transfer mode where you can type transfer number */
-   CALL_ACTION_TRANSFER,
-   /** Blue-green button, hold or unhold the call */
-   CALL_ACTION_HOLD,
-   /** Record button, enable or disable recording */
-   CALL_ACTION_RECORD,
+   
+   /** Accept, create or place call or place transfer */ CALL_ACTION_ACCEPT  ,
+   /** Red button, refuse or hang up */                  CALL_ACTION_REFUSE  ,
+   /** Put into or out of transfer mode*/                CALL_ACTION_TRANSFER,
+   /** Hold or unhold the call */                        CALL_ACTION_HOLD    ,
+   /** Enable or disable recording */                    CALL_ACTION_RECORD  ,
+   
 } call_action;
 
 /**
@@ -84,7 +74,7 @@ typedef enum
 {
   INCOMING,
   OUTGOING,
-  MISSED,
+  MISSED  ,
   NONE
 } history_state;
 

@@ -30,7 +30,7 @@
 ///Constructor
 ContactBackend::ContactBackend(QObject* parent) : QObject(parent)
 {
-   
+
 }
 
 ///Destructor
@@ -58,12 +58,7 @@ QString ContactBackend::getUserFromPhone(QString phoneNumber)
 {
    if (phoneNumber.indexOf('@') != -1) {
       QString user = phoneNumber.split('@')[0];
-      if (user.indexOf(':') != -1) {
-         return user.split(':')[1];
-      }
-      else {
-         return user;
-      }
+      return (user.indexOf(':') != -1)?user.split(':')[1]:user;
    }
    return phoneNumber;
 } //getUserFromPhone

@@ -48,7 +48,7 @@ class CallJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-   CallJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
+   CallJob(    QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
    void start();
 
@@ -62,7 +62,7 @@ class DTMFJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-   DTMFJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
+   DTMFJob(    QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
    void start();
 private:
@@ -74,7 +74,7 @@ class HangUpJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-   HangUpJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
+   HangUpJob(  QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
    void start();
 private:
@@ -99,7 +99,7 @@ class HoldJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-   HoldJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
+   HoldJob(    QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
    void start();
 private:
@@ -111,7 +111,7 @@ class RecordJob : public Plasma::ServiceJob
 {
    Q_OBJECT
 public:
-   RecordJob(QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
+   RecordJob(  QObject* parent, const QString& operation, const QVariantMap& parameters = QVariantMap());
 
    void start();
 private:

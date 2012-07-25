@@ -19,6 +19,8 @@
 #define VIDEO_DEVICE_H
 
 #include "typedefs.h"
+
+//Qt
 #include <QStringList>
 #include <QtCore/QSize>
 

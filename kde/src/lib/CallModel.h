@@ -66,8 +66,10 @@ private slots:
    void volumeChangedSlot     ( const QString& device    , double value           );
    void removeActiveCall      ( Call* call                                        );
    void addPrivateCall        ( Call* call                                        );
+   #ifdef ENABLE_VIDEO
    void startedDecoding       ( const QString& callId    , const QString& shmKey  );
    void stoppedDecoding       ( const QString& callId    , const QString& shmKey  );
+   #endif
 
 protected:
    virtual Call* findCallByCallId ( const QString& callId                       ) = 0;
@@ -206,8 +208,7 @@ class LIB_EXPORT CallModel : public CallModelBase {
       static InternalIndex  m_sPrivateCallList_index ;
 
       static CallMap        m_lConfList;
-      
-      static bool           m_sCallInit      ;
+      static bool           m_sCallInit;
 
    private:
       static bool m_sInstanceInit;

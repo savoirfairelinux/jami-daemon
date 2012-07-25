@@ -60,6 +60,7 @@ bool VideoCodecModel::setData(const QModelIndex& index, const QVariant &value, i
    else if (index.column() == 0 && role == VideoCodecModel::BITRATE_ROLE) {
       m_lCodecs[index.row()]->setBitrate(value.toInt());
       emit dataChanged(index, index);
+      return true;
    }
    return false;
 }

@@ -17,6 +17,7 @@
  ***************************************************************************/
 #include "AudioCodecModel.h"
 
+//Qt
 #include <QtCore/QDebug>
 
 ///Constructor
@@ -26,20 +27,22 @@ AudioCodecModel::AudioCodecModel(QObject* parent) : QAbstractListModel(parent) {
 
 ///Model data
 QVariant AudioCodecModel::data(const QModelIndex& index, int role) const {
-   if(index.column() == 0 && role == Qt::DisplayRole)
+   if(index.column() == 0      && role == Qt::DisplayRole                   ) {
       return QVariant(m_lAudioCodecs[index.row()]->name);
-   else if(index.column() == 0 && role == Qt::CheckStateRole)
-         return QVariant(m_lEnabledCodecs[m_lAudioCodecs[index.row()]->id] ? Qt::Checked : Qt::Unchecked);
-   else if (index.column() == 0 && role == AudioCodecModel::NAME_ROLE) {
+   }
+   else if(index.column() == 0 && role == Qt::CheckStateRole                ) {
+      return QVariant(m_lEnabledCodecs[m_lAudioCodecs[index.row()]->id] ? Qt::Checked : Qt::Unchecked);
+   }
+   else if (index.column() == 0 && role == AudioCodecModel::NAME_ROLE       ) {
       return m_lAudioCodecs[index.row()]->name;
    }
-   else if (index.column() == 0 && role == AudioCodecModel::BITRATE_ROLE) {
+   else if (index.column() == 0 && role == AudioCodecModel::BITRATE_ROLE    ) {
       return m_lAudioCodecs[index.row()]->bitrate;
    }
-   else if (index.column() == 0 && role == AudioCodecModel::SAMPLERATE_ROLE) {
+   else if (index.column() == 0 && role == AudioCodecModel::SAMPLERATE_ROLE ) {
       return m_lAudioCodecs[index.row()]->samplerate;
    }
-   else if (index.column() == 0 && role == AudioCodecModel::ID_ROLE) {
+   else if (index.column() == 0 && role == AudioCodecModel::ID_ROLE         ) {
       return m_lAudioCodecs[index.row()]->id;
    }
    return QVariant();
@@ -114,7 +117,7 @@ void AudioCodecModel::clear()
    foreach(AudioCodecData* data, m_lAudioCodecs) {
       delete data;
    }
-   m_lAudioCodecs.clear();
+   m_lAudioCodecs.clear  ();
    m_lEnabledCodecs.clear();
 }
 

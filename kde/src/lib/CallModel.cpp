@@ -30,8 +30,10 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
 {
    if (!dbusInit) {
       CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
+      #ifdef ENABLE_VIDEO
       VideoInterface& interface = VideoInterfaceSingleton::getInstance();
-      
+      #endif
+
       //SLOTS
       /*             SENDER                          SIGNAL                     RECEIVER                    SLOT                   */
       /**/connect(&callManager, SIGNAL(callStateChanged(QString,QString))       , this , SLOT(callStateChanged(QString,QString))   );
@@ -41,12 +43,14 @@ CallModelBase::CallModelBase(QObject* parent) : QObject(parent)
       /**/connect(&callManager, SIGNAL(conferenceRemoved(QString))              , this , SLOT(conferenceRemovedSlot(QString))      );
       /**/connect(&callManager, SIGNAL(voiceMailNotify(QString,int))            , this , SLOT(voiceMailNotifySlot(QString,int))    );
       /**/connect(&callManager, SIGNAL(volumeChanged(QString,double))           , this , SLOT(volumeChangedSlot(QString,double))   );
+      #ifdef ENABLE_VIDEO
       /**/connect(&interface  , SIGNAL(startedDecoding(QString,QString,int,int)), this , SLOT(startedDecoding(QString,QString))    );
       /**/connect(&interface  , SIGNAL(stoppedDecoding(QString,QString))        , this , SLOT(stoppedDecoding(QString,QString))    );
+      #endif
       /*                                                                                                                           */
 
       connect(HistoryModel::self(),SIGNAL(newHistoryCall(Call*)),this,SLOT(addPrivateCall(Call*)));
-      
+
       dbusInit = true;
 
       foreach(Call* call,HistoryModel::getHistory()){
@@ -85,9 +89,9 @@ void CallModelBase::callStateChanged(const QString &callID, const QString &state
    if (call->getCurrentState() == CALL_STATE_OVER) {
       HistoryModel::add(call);
    }
-   
+
    emit callStateChanged(call);
-   
+
 }
 
 
@@ -177,15 +181,12 @@ void CallModelBase::removeActiveCall(Call* call)
    //m_sActiveCalls[call->getCallId()] = nullptr;
 }
 
+#ifdef ENABLE_VIDEO
 ///Updating call state when video is added
 void CallModelBase::startedDecoding(const QString& callId, const QString& shmKey  )
 {
    Q_UNUSED(callId)
    Q_UNUSED(shmKey)
-//    Call* call = getCall(callId);
-//    if (call) {
-//       
-//    }
 }
 
 ///Updating call state when video is removed
@@ -193,11 +194,8 @@ void CallModelBase::stoppedDecoding(const QString& callId, const QString& shmKey
 {
    Q_UNUSED(callId)
    Q_UNUSED(shmKey)
-//    Call* call = getCall(callId);
-//    if (call) {
-//       
-//    }
 }
+#endif
 
 /*****************************************************************************
  *                                                                           *

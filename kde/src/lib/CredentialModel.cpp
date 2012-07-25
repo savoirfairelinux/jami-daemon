@@ -26,18 +26,21 @@ CredentialModel::CredentialModel(QObject* parent) : QAbstractListModel(parent) {
 
 ///Model data
 QVariant CredentialModel::data(const QModelIndex& index, int role) const {
-   if(index.column() == 0 && role == Qt::DisplayRole)
-      return QVariant(m_lCredentials[index.row()]->name);
-//       else if(index.column() == 0 && role == Qt::CheckStateRole)
-//          return QVariant(account->isEnabled() ? Qt::Checked : Qt::Unchecked);
-   else if (index.column() == 0 && role == CredentialModel::NAME_ROLE) {
-      return m_lCredentials[index.row()]->name;
-   }
-   else if (index.column() == 0 && role == CredentialModel::PASSWORD_ROLE) {
-      return m_lCredentials[index.row()]->password;
-   }
-   else if (index.column() == 0 && role == CredentialModel::REALM_ROLE) {
-      return m_lCredentials[index.row()]->realm;
+   if (index.column() == 0) {
+      switch (role) {
+         case Qt::DisplayRole:
+            return QVariant(m_lCredentials[index.row()]->name);
+            break;
+         case CredentialModel::NAME_ROLE:
+            return m_lCredentials[index.row()]->name;
+            break;
+         case CredentialModel::PASSWORD_ROLE:
+            return m_lCredentials[index.row()]->password;
+            break;
+         case CredentialModel::REALM_ROLE:
+            return m_lCredentials[index.row()]->realm;
+            break;
+      }
    }
    return QVariant();
 }

@@ -16,7 +16,6 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #ifndef DLGAUDIO_H
 #define DLGAUDIO_H
 
@@ -40,9 +39,9 @@ public:
    ~DlgAudio();
 
 public slots:
-   void updateWidgets();
+   void updateWidgets ();
    void updateSettings();
-   bool hasChanged();
+   bool hasChanged    ();
    /**
     *   Loads the ALSA settings to fill the combo boxes
     *   of the ALSA settings.

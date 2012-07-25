@@ -40,11 +40,11 @@ AccountList::AccountList(QStringList & _accountIds) : m_pColorVisitor(nullptr)
       emit dataChanged(index(size()-1,0),index(size()-1,0));
       connect(a,SIGNAL(changed(Account*)),this,SLOT(accountChanged(Account*)));
    }
-   CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
-   
+   CallManagerInterface&          callManager          = CallManagerInterfaceSingleton::getInstance();
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   connect(&configurationManager,SIGNAL(accountsChanged()),this,SLOT(updateAccounts()));
+
+   connect(&callManager         , SIGNAL(registrationStateChanged(QString,QString,int)) ,this,SLOT(accountChanged(QString,QString,int)));
+   connect(&configurationManager, SIGNAL(accountsChanged())                             ,this,SLOT(updateAccounts())                   );
 }
 
 ///Constructors
@@ -55,10 +55,10 @@ AccountList::AccountList(bool fill) : m_pColorVisitor(nullptr)
    if(fill)
       updateAccounts();
    CallManagerInterface& callManager = CallManagerInterfaceSingleton::getInstance();
-   connect(&callManager, SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
-
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-   connect(&configurationManager,SIGNAL(accountsChanged()),this,SLOT(updateAccounts()));
+
+   connect(&callManager         , SIGNAL(registrationStateChanged(QString,QString,int)),this,SLOT(accountChanged(QString,QString,int)));
+   connect(&configurationManager, SIGNAL(accountsChanged())                            ,this,SLOT(updateAccounts())                   );
 }
 
 ///Destructor

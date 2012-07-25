@@ -16,18 +16,22 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #include "dlgaudio.h"
 
+//Qt
+#include <QtGui/QHeaderView>
+
+//KDE
+#include <KStandardDirs>
 #include <KLineEdit>
+
+//SFLPhone
 #include "lib/configurationmanager_interface_singleton.h"
 #include "klib/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
-#include <QtGui/QHeaderView>
-#include <KStandardDirs>
-
 #include "lib/sflphone_const.h"
 
+///Constructor
 DlgAudio::DlgAudio(KConfigDialog *parent)
  : QWidget(parent)
 {
@@ -42,31 +46,31 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 
    connect( box_alsaPlugin, SIGNAL(activated(int)),  parent, SLOT(updateButtons()));
    connect( this,           SIGNAL(updateButtons()), parent, SLOT(updateButtons()));
-
 }
 
-
+///Destructor
 DlgAudio::~DlgAudio()
 {
 }
 
+///Update the widgets
 void DlgAudio::updateWidgets()
 {
    loadAlsaSettings();
 }
 
-
+///Save the settings
 void DlgAudio::updateSettings()
 {
    //alsaPlugin
    ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
    skeleton->setAlsaPlugin(box_alsaPlugin->currentText());
-   //skeleton->setRingtone(KUrlRequester_ringtone->lineEdit()->text());
    
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    configurationManager.setRecordPath(KUrlRequester_destinationFolder->lineEdit()->text());
 }
 
+///Have this dialog changed
 bool DlgAudio::hasChanged()
 {
    ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
@@ -74,6 +78,7 @@ bool DlgAudio::hasChanged()
    return alsaPluginHasChanged ;
 }
 
+///Load alsa settings
 void DlgAudio::loadAlsaSettings()
 {
    ConfigurationManagerInterface& configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();

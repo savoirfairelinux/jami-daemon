@@ -16,13 +16,11 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
- 
- #include "configurationmanager_interface_singleton.h"
-
+#include "configurationmanager_interface_singleton.h"
 
 ConfigurationManagerInterface* ConfigurationManagerInterfaceSingleton::interface = nullptr;
 
-ConfigurationManagerInterface & ConfigurationManagerInterfaceSingleton::getInstance()
+ConfigurationManagerInterface& ConfigurationManagerInterfaceSingleton::getInstance()
 {
    if (!dbus_metaTypeInit) registerCommTypes();
    if (!interface)

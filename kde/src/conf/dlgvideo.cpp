@@ -15,13 +15,17 @@
  *   You should have received a copy of the GNU General Public License      *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  ***************************************************************************/
-
 #include "dlgvideo.h"
+
+//KDE
+#include <KDebug>
+
+//SFLPhone
 #include "../lib/VideoDevice.h"
 #include "../lib/VideoCodecModel.h"
 #include "../lib/VideoModel.h"
-#include <KDebug>
 
+///Constructor
 DlgVideo::DlgVideo(QWidget *parent)
  : QWidget(parent),m_pDevice(nullptr)
 {
@@ -49,12 +53,13 @@ DlgVideo::DlgVideo(QWidget *parent)
    }
 }
 
-
+///Destructor
 DlgVideo::~DlgVideo()
 {
    VideoModel::getInstance()->stopPreview();
 }
 
+///Load the device list
 void DlgVideo::loadDevice(QString device) {
    m_pDevice = VideoDevice::getDevice(device);
    QString curChan = m_pDevice->getChannel();
@@ -68,6 +73,7 @@ void DlgVideo::loadDevice(QString device) {
    }
 }
 
+///Load resolution
 void DlgVideo::loadResolution(QString channel)
 {
    Resolution current = m_pDevice->getResolution();
@@ -81,6 +87,7 @@ void DlgVideo::loadResolution(QString channel)
    m_pDevice->setChannel(channel);
 }
 
+///Load the rate
 void DlgVideo::loadRate(QString resolution)
 {
    m_pRateCB->clear();
@@ -93,13 +100,16 @@ void DlgVideo::loadRate(QString resolution)
    m_pDevice->setResolution(resolution);
 }
 
+///Changes the rate
 void DlgVideo::changeRate(QString rate)
 {
    m_pDevice->setRate(rate);
 }
 
+///Start or stop preview
 void DlgVideo::startStopPreview()
 {
+   //TODO check if the preview is already running
    if (VideoModel::getInstance()->isPreviewing()) {
       m_pPreviewPB->setText(i18n("Start preview"));
       VideoModel::getInstance()->stopPreview();

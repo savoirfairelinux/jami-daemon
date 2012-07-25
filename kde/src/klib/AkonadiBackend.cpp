@@ -180,11 +180,13 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
             foreach (const KABC::PhoneNumber& number, numbers) {
                newNumbers << new Contact::PhoneNumber(number.number(),number.typeLabel());
                QString number2 = number.number();
-               if (number2.left(5) == "<sip:")
+               if (number2.left (5) == "<sip:")
                   number2 = number2.remove(0,5);
-               if (number2.right(1) == ">")
+               if (number2.right(1) == ">"    )
                   number2 = number2.remove(number2.size()-1,1);
+
                m_ContactByPhone[number2] = aContact;
+
                if (number2.size() <= 6 && defaultAccount && !defaultAccount->getAccountHostname().isEmpty())
                   m_ContactByPhone[number2+'@'+defaultAccount->getAccountHostname()] = aContact;
             }
@@ -204,9 +206,9 @@ ContactList AkonadiBackend::update(Akonadi::Collection collection)
                aContact->setPhoto(new QPixmap(QPixmap::fromImage( tmp.photo().data()).scaled(QSize(48,48))));
             else
                aContact->setPhoto(0);
-            
-            m_AddrHash[tmp.uid()] = tmp;
-            m_ItemHash[tmp.uid()] = item;
+
+            m_AddrHash[ tmp.uid() ] = tmp ;
+            m_ItemHash[ tmp.uid() ] = item;
          }
       }
       m_pContacts = m_ContactByUid.values();
@@ -222,7 +224,7 @@ void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
       kDebug() << "Contact not found";
       return;
    }
-   
+
    if ( item.isValid() ) {
       QPointer<Akonadi::ContactEditor> editor = new Akonadi::ContactEditor( Akonadi::ContactEditor::EditMode, parent );
       editor->loadContact(item);
@@ -234,7 +236,7 @@ void AkonadiBackend::editContact(Contact* contact,QWidget* parent)
          return;
       }
       delete editor;
-      delete dlg;
+      delete dlg   ;
    }
 } //editContact
 
@@ -309,7 +311,7 @@ void AkonadiBackend::addPhoneNumber(Contact* contact, QString number, QString ty
          kDebug() << "Unable to save new contact to storage";
          return;
       }
-      delete dlg;
+      delete dlg   ;
       delete editor;
    }
    else {

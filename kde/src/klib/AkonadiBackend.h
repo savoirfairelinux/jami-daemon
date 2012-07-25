@@ -30,15 +30,15 @@ class QObject;
 
 //KDE
 namespace KABC {
-   class Addressee;
+   class Addressee    ;
    class AddresseeList;
 }
 
 namespace Akonadi {
-   class Session;
+   class Session        ;
    class CollectionModel;
-   class Collection;
-   class Item;
+   class Collection     ;
+   class Item           ;
 }
 
 //SFLPhone
@@ -60,6 +60,7 @@ public:
    virtual ~AkonadiBackend        (                                                                    );
 
 private:
+   //Singleton constructor
    AkonadiBackend(QObject* parent);
 
    //Attributes
@@ -76,8 +77,6 @@ protected:
 public slots:
    ContactList update(Akonadi::Collection collection);
    void collectionsReceived( const Akonadi::Collection::List& );
-
-signals:
 };
 
 #endif

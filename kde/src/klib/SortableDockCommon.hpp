@@ -42,9 +42,10 @@
 CALLMODEL_TEMPLATE QStringList         SORTABLE_T::m_slHistoryConst = QStringList();
 CALLMODEL_TEMPLATE StaticEventHandler* SORTABLE_T::m_spEvHandler = new StaticEventHandler(0,&(SORTABLE_T::m_slHistoryConst));
 
+///Constructor
 CALLMODEL_TEMPLATE SORTABLE_T::SortableDockCommon()
 {
-   
+
 }
 
 
@@ -54,6 +55,7 @@ CALLMODEL_TEMPLATE SORTABLE_T::SortableDockCommon()
  *                                                                           *
  ****************************************************************************/
 
+///Convert call end time stamp to human readable relative date
 CALLMODEL_TEMPLATE QString SORTABLE_T::timeToHistoryCategory(QDate date)
 {
    if (m_slHistoryConst.size() < 10)
@@ -110,13 +112,14 @@ CALLMODEL_TEMPLATE QHash<Contact*, QDateTime> SORTABLE_T::getContactListByTime(/
    return toReturn;
 } //getContactListByTime
 
+///Set category
 CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,HistorySortingMode mode)
 {
    QHash<QString,uint> popularityCount;
    QMap<QString, QList<Call*> > byDate;
    switch (mode) {
       case HistorySortingMode::Date:
-         foreach (QString cat, m_slHistoryConst) {
+         foreach (const QString& cat, m_slHistoryConst) {
             byDate[i18n(cat.toAscii())] = QList<Call*>();
          }
          break;
@@ -168,6 +171,7 @@ CALLMODEL_TEMPLATE void SORTABLE_T::setHistoryCategory(QList<Call*>& calls,Histo
    }
 } //setHistoryCategory
 
+///Set contact category
 CALLMODEL_TEMPLATE void SORTABLE_T::setContactCategory(QList<Contact*> contacts,ContactSortingMode mode)
 {
    QHash<Contact*, QDateTime> recentlyUsed;
@@ -222,6 +226,7 @@ CALLMODEL_TEMPLATE QString SORTABLE_T::getIdentity(Call* item)
       return item->getPeerPhoneNumber();
 }
 
+///How many different number are present for 'cont'
 CALLMODEL_TEMPLATE int SORTABLE_T::usableNumberCount(Contact* cont)
 {
    uint result =0;

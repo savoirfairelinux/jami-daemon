@@ -48,7 +48,7 @@ enum AccountEditState {
    REMOVED  =5
 };
 
-///@enum AccountEditAction
+///@enum AccountEditAction Actions that can be performed on the Account state
 enum AccountEditAction {
    NOTHING =0,
    EDIT    =1,
@@ -67,7 +67,7 @@ class LIB_EXPORT Account : public QObject {
       ~Account();
       //Constructors
       static Account* buildExistingAccountFromId(const QString& _accountId);
-      static Account* buildNewAccountFromAlias(const QString& alias);
+      static Account* buildNewAccountFromAlias  (const QString& alias     );
 
       /**
        *Perform an action
@@ -251,8 +251,8 @@ class LIB_EXPORT Account : public QObject {
       bool operator==(const Account&)const;
 
       //Mutator
-      void saveCredentials();
-      void saveAudioCodecs();
+      void saveCredentials  ();
+      void saveAudioCodecs  ();
       void reloadCredentials();
       void reloadAudioCodecs();
 
@@ -261,7 +261,7 @@ class LIB_EXPORT Account : public QObject {
       Account();
 
       //Attributes
-      QString*         m_pAccountId;
+      QString*         m_pAccountId     ;
       MapStringString* m_pAccountDetails;
 
    public slots:
