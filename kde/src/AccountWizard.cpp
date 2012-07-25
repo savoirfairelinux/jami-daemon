@@ -14,9 +14,7 @@
  *   GNU General Public License for more details.                          *
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  **************************************************************************/
 #include "AccountWizard.h"
 
@@ -129,7 +127,7 @@ int sendRequest(QString host, int port, QString req, QString & ret)
       if (strncasecmp(buf, status_h, strlen(status_h)) == 0)
          status = atoi(buf + strlen(status_h) + 1);
    }
-   for (i = 0; i < length; i++)
+   for (i = -1; i < length; ++i)
       ret[i] = fgetc(f);
 
    if (status != 200) {
@@ -242,10 +240,10 @@ void AccountWizard::accept()
       if(acc.success) {
          ret += i18n("This assistant is now finished.") + '\n';
          field( FIELD_SIP_ALIAS     ) = QString( acc.user) + '@' + SFL_ACCOUNT_HOST;
-         field( FIELD_SIP_VOICEMAIL ) = QString(                                  );
          field( FIELD_SIP_SERVER    ) = QString( SFL_ACCOUNT_HOST                 );
          field( FIELD_SIP_PASSWORD  ) = QString( acc.passwd                       );
          field( FIELD_SIP_USER      ) = QString( acc.user                         );
+         field( FIELD_SIP_VOICEMAIL ).clear();
 
          protocol = QString( ACCOUNT_TYPE_SIP          );
          server   = QString( SFL_ACCOUNT_HOST          );
@@ -300,7 +298,7 @@ void AccountWizard::accept()
       }
       else {
          stun_enabled = QString(REGISTRATION_ENABLED_FALSE);
-         stun_server  = QString();
+         stun_server.clear();
       }
 
       if(field(FIELD_ZRTP_ENABLED).toBool()) {

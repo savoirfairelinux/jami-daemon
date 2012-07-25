@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string notr="true">Form</string>
+   <string notr="true">Account configuration dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -59,38 +59,6 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QGridLayout" name="gridLayout_13">
-         <item row="1" column="0">
-          <widget class="QToolButton" name="button_accountUp">
-           <property name="toolTip">
-            <string>Get this account up</string>
-           </property>
-           <property name="whatsThis">
-            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
-           </property>
-           <property name="text">
-            <string>Up</string>
-           </property>
-           <property name="shortcut">
-            <string notr="true">Up, PgUp</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QToolButton" name="button_accountDown">
-           <property name="toolTip">
-            <string>Get this account down</string>
-           </property>
-           <property name="whatsThis">
-            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
-           </property>
-           <property name="text">
-            <string>Down</string>
-           </property>
-           <property name="shortcut">
-            <string notr="true">Down, PgDown</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="2">
           <widget class="QToolButton" name="button_accountAdd">
            <property name="sizePolicy">
@@ -112,50 +80,44 @@
             <string>This button enables you to initialize a new account. You will then be able to edit it using the form on the right.</string>
            </property>
            <property name="text">
-            <string>Add</string>
+            <string comment="Add new account">Add</string>
            </property>
            <property name="shortcut">
             <string notr="true">+</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="3">
-          <widget class="QToolButton" name="button_accountRemove">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
+         <item row="1" column="0">
+          <widget class="QToolButton" name="button_accountUp">
            <property name="toolTip">
-            <string>Remove the selected account</string>
+            <string>Get this account up</string>
            </property>
            <property name="whatsThis">
-            <string>This button will remove the selected account in the list below. Be sure you really don't need it anymore. If you think you might use it again later, just uncheck it.</string>
-           </property>
-           <property name="accessibleDescription">
-            <string/>
+            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
            </property>
            <property name="text">
-            <string>Remove</string>
+            <string comment="Move account up">Up</string>
            </property>
            <property name="shortcut">
-            <string notr="true">-, Del, Backspace</string>
+            <string notr="true">Up, PgUp</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="4">
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+         <item row="1" column="1">
+          <widget class="QToolButton" name="button_accountDown">
+           <property name="toolTip">
+            <string>Get this account down</string>
            </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>41</width>
-             <height>21</height>
-            </size>
+           <property name="whatsThis">
+            <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
            </property>
-          </spacer>
+           <property name="text">
+            <string comment="Move account down">Down</string>
+           </property>
+           <property name="shortcut">
+            <string notr="true">Down, PgDown</string>
+           </property>
+          </widget>
          </item>
          <item row="0" column="0" colspan="5">
           <widget class="QListView" name="listView_accountList">
@@ -185,11 +147,49 @@
            </property>
           </widget>
          </item>
+         <item row="1" column="3">
+          <widget class="QToolButton" name="button_accountRemove">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Remove the selected account</string>
+           </property>
+           <property name="whatsThis">
+            <string>This button will remove the selected account in the list below. Be sure you really don't need it anymore. If you think you might use it again later, just uncheck it.</string>
+           </property>
+           <property name="accessibleDescription">
+            <string/>
+           </property>
+           <property name="text">
+            <string comment="Remove selected account">Remove</string>
+           </property>
+           <property name="shortcut">
+            <string notr="true">-, Del, Backspace</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="4">
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>41</width>
+             <height>21</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
         </layout>
        </widget>
       </item>
       <item>
-       <widget class="QTabWidget" name="frame2_editAccounts">
+       <widget class="KTabWidget" name="frame2_editAccounts">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>3</horstretch>
@@ -207,7 +207,7 @@
         </property>
         <widget class="QWidget" name="tab_basic">
          <attribute name="title">
-          <string>Basic</string>
+          <string comment="Basic settings">Basic</string>
          </attribute>
          <layout class="QFormLayout" name="formLayout">
           <property name="fieldGrowthPolicy">
@@ -266,7 +266,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="label3_server">
             <property name="text">
-             <string>Server</string>
+             <string comment="SIP server">Server</string>
             </property>
             <property name="buddy">
              <cstring>edit3_server</cstring>
@@ -285,8 +285,11 @@
           </item>
           <item row="3" column="0">
            <widget class="QLabel" name="label4_user">
+            <property name="accessibleDescription">
+             <string comment="Account username"/>
+            </property>
             <property name="text">
-             <string>Username</string>
+             <string comment="Account username">Username</string>
             </property>
             <property name="buddy">
              <cstring>edit4_user</cstring>
@@ -299,7 +302,7 @@
           <item row="4" column="0">
            <widget class="QLabel" name="label5_password">
             <property name="text">
-             <string>Password</string>
+             <string comment="Account password">Password</string>
             </property>
             <property name="buddy">
              <cstring>edit5_password</cstring>
@@ -309,14 +312,14 @@
           <item row="4" column="1">
            <widget class="KLineEdit" name="edit5_password">
             <property name="echoMode">
-             <enum>KLineEdit::Password</enum>
+             <enum>QLineEdit::Normal</enum>
             </property>
            </widget>
           </item>
           <item row="5" column="0">
            <widget class="QLabel" name="label6_mailbox">
             <property name="text">
-             <string>Voicemail</string>
+             <string comment="Account voice mail address">Voicemail</string>
             </property>
             <property name="buddy">
              <cstring>edit6_mailbox</cstring>
@@ -355,7 +358,7 @@
           <item row="7" column="1">
            <widget class="QCheckBox" name="m_pDefaultAccount">
             <property name="text">
-             <string>Default account</string>
+             <string>Default account for contact with only extensions as phone number</string>
             </property>
            </widget>
           </item>
@@ -363,7 +366,7 @@
         </widget>
         <widget class="QWidget" name="tab_advanced">
          <attribute name="title">
-          <string>Advanced</string>
+          <string comment="Advanced settings">Advanced</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
@@ -589,7 +592,7 @@
                 <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
                </property>
                <property name="text">
-                <string>Up</string>
+                <string comment="Move audio codec up">Up</string>
                </property>
                <property name="shortcut">
                 <string notr="true">Up, PgUp</string>
@@ -642,7 +645,7 @@
                 <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
                </property>
                <property name="text">
-                <string>Down</string>
+                <string comment="Move audio codec down">Down</string>
                </property>
                <property name="shortcut">
                 <string notr="true">Down, PgDown</string>
@@ -694,14 +697,14 @@
              <item row="1" column="4">
               <widget class="QToolButton" name="m_pVCodecDownPB">
                <property name="text">
-                <string>Down</string>
+                <string comment="Move video codec down">Down</string>
                </property>
               </widget>
              </item>
              <item row="1" column="3">
               <widget class="QToolButton" name="m_pVCodecUpPB">
                <property name="text">
-                <string>Up</string>
+                <string comment="Move video codec up">Up</string>
                </property>
               </widget>
              </item>
@@ -797,7 +800,7 @@
                 <bool>false</bool>
                </property>
                <property name="echoMode">
-                <enum>KLineEdit::Password</enum>
+                <enum>QLineEdit::Normal</enum>
                </property>
               </widget>
              </item>
@@ -823,14 +826,14 @@
           <item row="2" column="1">
            <widget class="QToolButton" name="button_add_credential">
             <property name="text">
-             <string>Add</string>
+             <string comment="Add new credential">Add</string>
             </property>
            </widget>
           </item>
           <item row="2" column="2">
            <widget class="QToolButton" name="button_remove_credential">
             <property name="text">
-             <string>Remove</string>
+             <string comment="Remove selected credential">Remove</string>
             </property>
            </widget>
           </item>
@@ -978,7 +981,7 @@
                   <widget class="KComboBox" name="combo_tls_method">
                    <item>
                     <property name="text">
-                     <string>Default</string>
+                     <string comment="Default TLS method">Default</string>
                     </property>
                    </item>
                    <item>
@@ -1173,7 +1176,7 @@
                    </property>
                    <item>
                     <property name="text">
-                     <string>Disabled</string>
+                     <string comment="Disabled security">Disabled</string>
                     </property>
                    </item>
                    <item>
@@ -1277,8 +1280,13 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>KComboBox</class>
+   <extends>QComboBox</extends>
+   <header>kcombobox.h</header>
+  </customwidget>
+  <customwidget>
    <class>KLineEdit</class>
-   <extends>KLineEdit</extends>
+   <extends>QLineEdit</extends>
    <header>klineedit.h</header>
   </customwidget>
   <customwidget>
@@ -1290,6 +1298,12 @@
    <class>KUrlRequester</class>
    <extends>QFrame</extends>
    <header>kurlrequester.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KTabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>ktabwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

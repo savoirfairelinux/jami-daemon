@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kcfg SYSTEM "http://www.kde.org/standards/kcfg/1.0/kcfg.dtd">
-<kcfg>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+                          http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
   <kcfgfile/>
   <group name="main">
 
@@ -50,7 +53,7 @@
       <label>The minimum number of pixel for a call item</label>
       <default> false </default>
    </entry>
-   <entry name="minimumRowHeight" type="int">
+   <entry name="minimumRowHeight" type="Int">
       <label>The minimum number of pixel for a call item</label>
       <default> 48 </default>
    </entry>
@@ -143,17 +146,17 @@
       <default>{Work,Home,Messenger,Preferred number,Voice,Mobile,Work,Video,Mailbox,Modem,Car,ISDN,PCS,Pager,Other...,Work}</default>
     </entry>
 
-    <entry name="displayOrganisation" type="bool">
+    <entry name="displayOrganisation" type="Bool">
       <label>Defines whether to display the organisation the the contact list item</label>
       <default>true</default>
     </entry>
 
-    <entry name="displayEmail" type="bool">
+    <entry name="displayEmail" type="Bool">
       <label>Defines whether to display the organisation the the contact list item</label>
       <default>false</default>
     </entry>
 
-    <entry name="alwaysShowPhoneNumber" type="bool">
+    <entry name="alwaysShowPhoneNumber" type="Bool">
       <label>Defines if the contact tree should be expanded by default to show all numbers</label>
       <default>false</default>
     </entry>
@@ -190,29 +193,29 @@
     </entry>
 
     <!-- Accessibility Settings -->
-    <entry name="enableVoiceFeedback" type="bool">
+    <entry name="enableVoiceFeedback" type="Bool">
       <label>Enable audio feedback from common actions</label>
       <default> false </default>
     </entry>
-    <entry name="enableReadLabel" type="bool">
+    <entry name="enableReadLabel" type="Bool">
       <label>Automatically read label when an overlay is being displayed</label>
       <default> false </default>
     </entry>
-    <entry name="enableReadDetails" type="bool">
+    <entry name="enableReadDetails" type="Bool">
       <label>Automattically read the call details when it is selected</label>
       <default> false </default>
     </entry>
 
    <!-- Dock settings -->
-    <entry name="displayContactDock" type="bool">
+    <entry name="displayContactDock" type="Bool">
       <label>Enable audio feedback from common actions</label>
       <default> true </default>
     </entry>
-    <entry name="displayHistoryDock" type="bool">
+    <entry name="displayHistoryDock" type="Bool">
       <label>Enable audio feedback from common actions</label>
       <default> true </default>
     </entry>
-    <entry name="displayBookmarkDock" type="bool">
+    <entry name="displayBookmarkDock" type="Bool">
       <label>Enable audio feedback from common actions</label>
       <default> true </default>
     </entry>
