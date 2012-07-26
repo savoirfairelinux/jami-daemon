@@ -42,10 +42,9 @@ AS_IF([test "x$enable_video" = "xyes"], [
 
 AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 
-# Check for gtk+-3.0 and if found, check for webkitgtk-3.0, otherwise
-# check for gtk+-2.0 and if found, check for webkitgtk-1.0.
+# Check for gtk+-3.0, otherwise check for gtk+-2.0
 PKG_CHECK_MODULES(GTK, gtk+-3.0,
-        [PKG_CHECK_MODULES(GTK, gtk+-2.0,
+        [PKG_CHECK_MODULES(GTK, gtk+-2.0, ,
             [PKG_CHECK_MODULES(GTHREAD, gthread-2.0)],
             [AC_MSG_ERROR(gtk-2 not found)])])
 
