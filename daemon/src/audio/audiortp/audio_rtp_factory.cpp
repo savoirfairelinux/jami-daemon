@@ -29,7 +29,9 @@
  */
 
 #include "audio_rtp_factory.h"
+#if HAVE_ZRTP
 #include "audio_zrtp_session.h"
+#endif
 #include "audio_symmetric_rtp_session.h"
 #include "manager.h"
 #include "sip/sdp.h"
@@ -37,6 +39,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sdes_negotiator.h"
 #include "logger.h"
+#include "config.h"
 
 namespace sfl {
 
@@ -69,10 +72,14 @@ void AudioRtpFactory::initConfig()
         srtpEnabled_ = account->getSrtpEnabled();
         std::string key(account->getSrtpKeyExchange());
         if (srtpEnabled_) {
+#if HAVE_ZRTP
             if (key == "sdes")
                 keyExchangeProtocol_ = SDES;
             else if (key == "zrtp")
                 keyExchangeProtocol_ = ZRTP;
+#else
+                keyExchangeProtocol_ = SDES;
+#endif
         } else {
             keyExchangeProtocol_ = NONE;
         }
@@ -93,7 +100,7 @@ void AudioRtpFactory::initSession()
         const std::string zidFilename(Manager::instance().voipPreferences.getZidFile());
 
         switch (keyExchangeProtocol_) {
-
+#if HAVE_ZRTP
             case ZRTP:
                 rtpSession_ = new AudioZrtpSession(*ca_, zidFilename);
                 // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
@@ -101,7 +108,7 @@ void AudioRtpFactory::initSession()
                 if (helloHashEnabled_)
                     ca_->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(rtpSession_)->getHelloHash());
                 break;
-
+#endif
             case SDES:
                 rtpSession_ = new AudioSrtpSession(*ca_);
                 break;
@@ -152,6 +159,7 @@ void AudioRtpFactory::updateDestinationIpAddress()
         rtpSession_->updateDestinationIpAddress();
 }
 
+#if HAVE_ZRTP
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
     if (keyExchangeProtocol_ == ZRTP)
@@ -159,6 +167,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     else
         throw AudioRtpFactoryException("rtpSession_ is NULL in getAudioZrtpSession");
 }
+#endif
 
 void sfl::AudioRtpFactory::initLocalCryptoInfo()
 {

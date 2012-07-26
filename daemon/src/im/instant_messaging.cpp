@@ -105,7 +105,7 @@ void InstantMessaging::send_sip_message(pjsip_inv_session *session, const std::s
         sip_send(session, id, *iter);
 }
 
-
+#if HAVE_IAX
 void InstantMessaging::send_iax_message(iax_session *session, const std::string &/* id */, const std::string &message)
 {
     std::vector<std::string> msgs(split_message(message));
@@ -114,6 +114,7 @@ void InstantMessaging::send_iax_message(iax_session *session, const std::string 
     for (iter = msgs.begin(); iter != msgs.end(); ++iter)
         iax_send_text(session, (*iter).c_str());
 }
+#endif
 
 
 std::vector<std::string> InstantMessaging::split_message(std::string text)

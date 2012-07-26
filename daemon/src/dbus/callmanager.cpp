@@ -37,7 +37,9 @@
 #include "sip/sipvoiplink.h"
 #include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h"
+#if HAVE_ZRTP
 #include "audio/audiortp/audio_zrtp_session.h"
+#endif
 
 #include "logger.h"
 #include "manager.h"
@@ -307,6 +309,7 @@ CallManager::startTone(const int32_t& start , const int32_t& type)
 // for conferencing in order to get
 // the right pointer for the given
 // callID.
+#if HAVE_ZRTP
 sfl::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
@@ -330,60 +333,81 @@ CallManager::getAudioZrtpSession(const std::string& callID)
 
     return zSession;
 }
+#endif
 
 void
 CallManager::setSASVerified(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->SASVerified();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::resetSASVerified(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->resetSASVerified();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::setConfirmGoClear(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->goClearOk();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::requestGoClear(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->requestGoClear();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->acceptEnrollment(accepted);
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void

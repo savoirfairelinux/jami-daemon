@@ -163,23 +163,41 @@ PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
 
 
 
-###############################################################################################################################
-#                                                       TLS                                                                   #
-# required dependency(ies): libssl                                                                                            #
-###############################################################################################################################
+# TLS
+# required dependency(ies): libssl
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
-PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
+AC_ARG_WITH([tls],
+	[ AS_HELP_STRING([--without-tls], [disable tls support]) ],
+	[],
+	[with_tls=yes])
+AS_IF([test "xwith_tls" = "xyes"], [
+	PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
+	]);
+
+AC_DEFINE_UNQUOTED([HAVE_TLS], `if test "x$with_tls" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have tls support])
+AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" )
 
 
 
-###############################################################################################################################
-#                                                       ZRTP                                                                  #
-# required dependency(ies): libzrtp                                                                                           #
-###############################################################################################################################
+# ZRTP
+# required dependency(ies): libzrtp
 dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 LIBZRTPCPP_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
+AC_ARG_WITH([zrtp],
+	[ AS_HELP_STRING([--without-zrtp], [disable zrtp support]) ],
+	[],
+	[with_zrtp=yes])
+AS_IF([test "xwith_zrtp" = "xyes"], [
+	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
+	]);
 
+AC_DEFINE_UNQUOTED([HAVE_ZRTP], `if test "x$with_zrtp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp support])
+AM_CONDITIONAL(BUILD_ZRTP, test "x$with_zrtp" = "xyes" )
+
+
+
+# DBUS
+# required dependency(ies): libdbus-c++
 dnl DBus-C++ detection
 dnl pkg-config doesn't like 0.6.0-pre1 version number, it assumes that it is
 dnl more recent than (unreleased) 0.6.0
@@ -189,10 +207,8 @@ AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSIO
 
 
 
-###############################################################################################################################
-#                                                       Instant Messaging                                                     #
-# required dependency(ies): libxpat                                                                                           #
-###############################################################################################################################
+# Instant Messaging
+# required dependency(ies): libxpat
 AC_ARG_WITH([instant_messaging],
 	[ AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging]) ],
 	[],
@@ -206,14 +222,16 @@ AS_IF([test "x$with_instant_messaging" = "xyes"], [
 AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
 AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )
 
+
+
+# PTHREAD
+# required dependency(ies): libxpat
 AX_PTHREAD
 
 
 
-###############################################################################################################################
-#                                                       SDES Key Exchange                                                     #
-# required dependency(ies): libpcre                                                                                           #
-###############################################################################################################################
+# SDES Key Exchange
+# required dependency(ies): libpcre
 AC_ARG_WITH([sdes],
 	[ AS_HELP_STRING([--without-sdes], [disable support for sdes key exchange]) ],
 	[],
@@ -232,10 +250,8 @@ PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUI
 
 
 
-###############################################################################################################################
-#                                                        GSM CODEC                                                            #
-# required dependency(ies): libgsm                                                                                            #
-###############################################################################################################################
+# GSM CODEC
+# required dependency(ies): libgsm
 dnl check for libgsm1 (doesn't use pkg-config)
 dnl Check for libgsm
 AC_ARG_WITH([gsm], [AS_HELP_STRING([--without-gsm],
@@ -254,10 +270,8 @@ AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
 
 
 
-###############################################################################################################################
-#                                                        SPEEX CODEC                                                          #
-# required dependency(ies): libspeex                                                                                          #
-###############################################################################################################################
+# SPEEX CODEC
+# required dependency(ies): libspeex
 dnl Check for libspeex
 AC_ARG_WITH([speex],
         [AS_HELP_STRING([--without-speex],
@@ -277,10 +291,8 @@ AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 
 
 
-###############################################################################################################################
-#                                                        SPEEX DSP                                                            #
-# required dependency(ies): libspeexdsp                                                                                       #
-###############################################################################################################################
+# SPEEX DSP
+# required dependency(ies): libspeexdsp
 dnl check in case the libspeexdsp is not installed
 AC_ARG_WITH([speexdsp],
 	[AS_HELP_STRING([--without-speexdsp],
@@ -300,10 +312,8 @@ AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
 
 
 
-###############################################################################################################################
-#                                                        IAX                                                                  #
-# required dependency(ies): libiax2 (static)                                                                                  #
-###############################################################################################################################
+# IAX
+# required dependency(ies): libiax2 (static)
 dnl Check for IAX
 AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
             [disable support for the iax2 protocol])], [], [with_iax2=yes])
@@ -313,6 +323,8 @@ AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
 
 
+# NETWORK MANAGER
+# required dependency(ies): libiax2 (static)
 dnl Check for network-manager
 AC_ARG_WITH([networkmanager], [AS_HELP_STRING([--without-networkmanager],
             [disable support for network-manager events])], [],
@@ -322,10 +334,8 @@ AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
 
 
 
-###############################################################################################################################
-#                                                        DOXYGEN                                                              #
-# required dependency(ies): doxygen                                                                                           #
-###############################################################################################################################
+# DOXYGEN
+# required dependency(ies): doxygen
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],

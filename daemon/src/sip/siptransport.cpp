@@ -55,7 +55,9 @@
 #include "sipaccount.h"
 
 #include "pjsip/sip_types.h"
+#if HAVE_TLS
 #include "pjsip/sip_transport_tls.h"
+#endif
 
 #include "dbus/dbusmanager.h"
 #include "dbus/configurationmanager.h"
@@ -248,7 +250,7 @@ pj_status_t SipTransport::destroyStunResolver(const std::string &serverName)
     return PJ_SUCCESS;
 }
 
-
+#if HAVE_TLS
 pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
 {
     pj_sockaddr_in local_addr;
@@ -277,7 +279,6 @@ pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
     RETURN_IF_FAIL(status == PJ_SUCCESS, NULL, "Failed to start TLS listener");
     return listener;
 }
-
 
 pjsip_transport *
 SipTransport::createTlsTransport(SIPAccount &account)
@@ -317,6 +318,7 @@ SipTransport::createTlsTransport(SIPAccount &account)
     RETURN_IF_FAIL(transport != NULL, NULL, "Could not create new TLS transport");
     return transport;
 }
+#endif
 
 namespace {
 std::string transportMapKey(const std::string &interface, int port)
@@ -331,9 +333,13 @@ void SipTransport::createSipTransport(SIPAccount &account)
 {
     shutdownSipTransport(account);
 
+#if HAVE_TLS
     if (account.isTlsEnabled()) {
         account.transport_ = createTlsTransport(account);
     } else if (account.isStunEnabled()) {
+#else
+    if (account.isStunEnabled()) {
+#endif
         account.transport_ = createStunTransport(account);
         if (account.transport_ == NULL) {
             WARN("falling back to UDP transport");
@@ -352,9 +358,11 @@ void SipTransport::createSipTransport(SIPAccount &account)
     }
 
     if (!account.transport_) {
+#if HAVE_TLS
         if (account.isTlsEnabled())
             throw std::runtime_error("Could not create TLS connection");
         else
+#endif
             throw std::runtime_error("Could not create new UDP transport");
     }
 }

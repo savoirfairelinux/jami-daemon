@@ -47,6 +47,8 @@
 
 #include <iax-client.h>
 
+#include "config.h"
+
 #define EMPTY_MESSAGE   pj_str((char*)"")
 #define MAXIMUM_MESSAGE_LENGTH		1560			/* PJSIP's sip message limit */
 
@@ -87,7 +89,9 @@ namespace InstantMessaging {
         void sip_send(pjsip_inv_session*, const std::string& id, const std::string&);
 
         void send_sip_message(pjsip_inv_session*, const std::string& id, const std::string&);
+#if HAVE_IAX
         void send_iax_message(iax_session *session, const std::string& id, const std::string&);
+#endif
 
         std::vector<std::string> split_message(std::string);
 

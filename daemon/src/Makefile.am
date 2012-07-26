@@ -5,30 +5,28 @@ libexec_PROGRAMS = sflphoned
 
 if SFL_VIDEO
 SFL_VIDEO_SUBDIR = video
+SFL_VIDEO_LIB=./video/libvideo.la
 endif
 
 if BUILD_INSTANT_MESSAGING
 INSTANT_MESSAGING_SUBDIR = im
+IM_LIB=./im/libim.la
 endif
-
-SUBDIRS = dbus audio config hooks history sip iax $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
-
-sflphoned_SOURCES = main.cpp
 
 # Redefine the USE_IAX variable here, so that it could be used in managerimpl
 if USE_IAX
+IAX_SUBDIR=iax
 IAX_CXXFLAG=-DUSE_IAX
-IAX_LIB=./iax/libiaxlink.la
-else
-IAX_CXXFLAG=
-IAX_LIB=
+IAX_LIB=./iax/libiaxlink.la $(top_builddir)/libs/iax2/libiax2.la
 endif
 
 if USE_NETWORKMANAGER
 NETWORKMANAGER=-DUSE_NETWORKMANAGER
-else
-NETWORKMANAGER=
 endif
+
+SUBDIRS = dbus audio config hooks history sip $(IAX_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(SFL_VIDEO_SUBDIR)
+
+sflphoned_SOURCES = main.cpp
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG) $(NETWORKMANAGER) \
@@ -62,16 +60,7 @@ noinst_HEADERS = \
 		account_schema.h \
 		registration_states.h
 
-if SFL_VIDEO
-SFL_VIDEO_LIB=./video/libvideo.la
-endif
-
-if BUILD_INSTANT_MESSAGING
-IM_LIB=./im/libim.la
-endif
-
 libsflphone_la_LIBADD = \
-	$(top_builddir)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
