@@ -70,9 +70,11 @@ AudioRtpRecord::AudioRtpRecord() :
     , converterSamplingRate_(0)
     , dtmfQueue_()
     , fadeFactor_(INIT_FADE_IN_FACTOR)
+#if HAVE_SPEEXDSP
     , noiseSuppressEncode_(0)
     , noiseSuppressDecode_(0)
     , audioProcessMutex_()
+#endif
     , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
 {}
@@ -87,8 +89,10 @@ AudioRtpRecord::~AudioRtpRecord()
     delete converterEncode_;
     delete converterDecode_;
     delete audioCodec_;
+#if HAVE_SPEEXDSP
     delete noiseSuppressEncode_;
     delete noiseSuppressDecode_;
+#endif
 }
 
 
@@ -127,6 +131,7 @@ void AudioRtpRecordHandler::initBuffers()
     audioRtpRecord_.converterDecode_ = new SamplerateConverter(getCodecSampleRate());
 }
 
+#if HAVE_SPEEXDSP
 void AudioRtpRecordHandler::initNoiseSuppress()
 {
     ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
@@ -135,6 +140,7 @@ void AudioRtpRecordHandler::initNoiseSuppress()
     delete audioRtpRecord_.noiseSuppressDecode_;
     audioRtpRecord_.noiseSuppressDecode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
 }
+#endif
 
 void AudioRtpRecordHandler::putDtmfEvent(int digit)
 {
@@ -190,11 +196,13 @@ int AudioRtpRecordHandler::processDataEncode()
         out = audioRtpRecord_.resampledData_.data();
     }
 
+#if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
         assert(audioRtpRecord_.noiseSuppressEncode_);
         audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
+#endif
 
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
@@ -217,12 +225,13 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
 
+#if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
         assert(audioRtpRecord_.noiseSuppressDecode_);
         audioRtpRecord_.noiseSuppressDecode_->process(spkrDataDecoded, getCodecFrameSize());
     }
-
+#endif
 
     audioRtpRecord_.fadeInDecodedData(inSamples);
 

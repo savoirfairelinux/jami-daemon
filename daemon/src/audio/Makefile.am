@@ -8,6 +8,11 @@ if BUILD_PULSE
 SUBDIRS += pulseaudio
 endif
 
+if BUILD_SPEEXDSP
+SFL_SPEEXDSP_SRC=echosuppress.cpp speexechocancel.cpp noisesuppress.cpp
+SFL_SPEEXDSP_HEAD=echosuppress.h speexechocancel.h noisesuppress.h
+endif
+
 libaudio_la_SOURCES = \
 		audioloop.cpp \
 		ringbuffer.cpp \
@@ -18,9 +23,7 @@ libaudio_la_SOURCES = \
 		audiolayer.cpp \
 		samplerateconverter.cpp \
 		delaydetection.cpp \
-		echosuppress.cpp \
-		speexechocancel.cpp \
-		noisesuppress.cpp \
+		$(SFL_SPEEXDSP_SRC) \
 		gaincontrol.cpp \
 		dcblocker.cpp
 
@@ -33,9 +36,7 @@ noinst_HEADERS = \
 		audiolayer.h \
 	 	recordable.h \
 		delaydetection.h \
-		echosuppress.h \
-		speexechocancel.h \
-		noisesuppress.h \
+		$(SFL_SPEEXDSP_HEAD) \
 		gaincontrol.h \
 		dcblocker.h \
 		samplerateconverter.h

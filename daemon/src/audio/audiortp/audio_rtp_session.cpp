@@ -68,11 +68,13 @@ void AudioRtpSession::updateSessionMedia(AudioCodec &audioCodec)
 
     Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 
+#if HAVE_SPEEXDSP
     if (lastSamplingRate != audioRtpRecord_.codecSampleRate_) {
         DEBUG("Update noise suppressor with sampling rate %d and frame size %d",
               getCodecSampleRate(), getCodecFrameSize());
         initNoiseSuppress();
     }
+#endif
 }
 
 void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
@@ -233,7 +235,9 @@ int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
     setSessionTimeouts();
     setSessionMedia(audiocodec);
     initBuffers();
+#if HAVE_SPEEXDSP
     initNoiseSuppress();
+#endif
 
     queue_.enableStack();
     thread_.start();

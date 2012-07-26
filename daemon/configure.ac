@@ -161,9 +161,21 @@ PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
         PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
         ])
 
+
+
+###############################################################################################################################
+#                                                       TLS                                                                   #
+# required dependency(ies): libssl                                                                                            #
+###############################################################################################################################
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
 PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
 
+
+
+###############################################################################################################################
+#                                                       ZRTP                                                                  #
+# required dependency(ies): libzrtp                                                                                           #
+###############################################################################################################################
 dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 LIBZRTPCPP_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
@@ -175,6 +187,12 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
+
+
+###############################################################################################################################
+#                                                       Instant Messaging                                                     #
+# required dependency(ies): libxpat                                                                                           #
+###############################################################################################################################
 AC_ARG_WITH([instant_messaging],
 	[ AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging]) ],
 	[],
@@ -190,6 +208,12 @@ AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes"
 
 AX_PTHREAD
 
+
+
+###############################################################################################################################
+#                                                       SDES Key Exchange                                                     #
+# required dependency(ies): libpcre                                                                                           #
+###############################################################################################################################
 AC_ARG_WITH([sdes],
 	[ AS_HELP_STRING([--without-sdes], [disable support for sdes key exchange]) ],
 	[],
@@ -206,6 +230,12 @@ dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
 PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 
+
+
+###############################################################################################################################
+#                                                        GSM CODEC                                                            #
+# required dependency(ies): libgsm                                                                                            #
+###############################################################################################################################
 dnl check for libgsm1 (doesn't use pkg-config)
 dnl Check for libgsm
 AC_ARG_WITH([gsm], [AS_HELP_STRING([--without-gsm],
@@ -222,6 +252,12 @@ AS_IF([test "x$with_gsm" != xno],
 AC_DEFINE_UNQUOTED([HAVE_GSM], `if test "x$with_gsm" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libgsm])
 AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
 
+
+
+###############################################################################################################################
+#                                                        SPEEX CODEC                                                          #
+# required dependency(ies): libspeex                                                                                          #
+###############################################################################################################################
 dnl Check for libspeex
 AC_ARG_WITH([speex],
         [AS_HELP_STRING([--without-speex],
@@ -239,12 +275,35 @@ AS_IF([test "x$with_speex" != xno],
 AC_DEFINE_UNQUOTED([HAVE_SPEEX], `if test "x$with_speex" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 
-dnl check in case the libspeexdsp is not installed
-AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
-AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [
-       AC_MSG_ERROR([Unable to find speexdsp development files])
-])
 
+
+###############################################################################################################################
+#                                                        SPEEX DSP                                                            #
+# required dependency(ies): libspeexdsp                                                                                       #
+###############################################################################################################################
+dnl check in case the libspeexdsp is not installed
+AC_ARG_WITH([speexdsp],
+	[AS_HELP_STRING([--without-speexdsp],
+	[disable support for speexdp Noise Suppression and Automatic Gain Control])],
+	[],
+	[with_speexdsp=yes])
+
+AS_IF([test "x$with_speexdsp" != xno],
+	AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
+	AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp],
+	[],
+	[AC_MSG_ERROR([Unable to find speexdsp development files])])
+	])
+
+AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
+AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
+
+
+
+###############################################################################################################################
+#                                                        IAX                                                                  #
+# required dependency(ies): libiax2 (static)                                                                                  #
+###############################################################################################################################
 dnl Check for IAX
 AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
             [disable support for the iax2 protocol])], [], [with_iax2=yes])
@@ -252,13 +311,21 @@ AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
 AC_DEFINE_UNQUOTED([HAVE_IAX], `if test "x$with_iax2" = "xyes"; then echo 1; else echo 0;fi`, [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
-    dnl Check for network-manager
+
+
+dnl Check for network-manager
 AC_ARG_WITH([networkmanager], [AS_HELP_STRING([--without-networkmanager],
             [disable support for network-manager events])], [],
             [with_networkmanager=yes])
 
 AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
 
+
+
+###############################################################################################################################
+#                                                        DOXYGEN                                                              #
+# required dependency(ies): doxygen                                                                                           #
+###############################################################################################################################
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],
@@ -275,6 +342,8 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 ])
 # Acutally perform the doxygen check
 BB_ENABLE_DOXYGEN
+
+
 
 CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++"
 
