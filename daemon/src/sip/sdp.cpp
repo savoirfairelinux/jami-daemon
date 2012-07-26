@@ -220,13 +220,15 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
         pjmedia_sdp_rtpmap_to_attr(memPool_, &rtpmap, &attr);
 
         med->attr[med->attr_count++] = attr;
+#ifdef SFL_VIDEO
         if (enc_name == "H264") {
             std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            os << "fmtp:" << dynamic_payload << " profile-level-id=428014";
+            os << "fmtp:" << dynamic_payload << " " << libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID;
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
         }
+#endif
         if (not audio)
             dynamic_payload++;
     }

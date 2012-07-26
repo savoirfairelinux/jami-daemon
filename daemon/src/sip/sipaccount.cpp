@@ -160,6 +160,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
         mapNode->setKeyValue(VIDEO_CODEC_NAME, new ScalarNode(codec[VIDEO_CODEC_NAME]));
         mapNode->setKeyValue(VIDEO_CODEC_BITRATE, new ScalarNode(codec[VIDEO_CODEC_BITRATE]));
         mapNode->setKeyValue(VIDEO_CODEC_ENABLED, new ScalarNode(codec[VIDEO_CODEC_ENABLED]));
+        mapNode->setKeyValue(VIDEO_CODEC_PARAMETERS, new ScalarNode(codec[VIDEO_CODEC_PARAMETERS]));
         videoCodecs.addNode(mapNode);
     }
 #endif
@@ -287,6 +288,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
         delete node->getValue(VIDEO_CODEC_NAME);
         delete node->getValue(VIDEO_CODEC_BITRATE);
         delete node->getValue(VIDEO_CODEC_ENABLED);
+        delete node->getValue(VIDEO_CODEC_PARAMETERS);
         delete node;
     }
 #endif
@@ -326,6 +328,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
                 codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
                 codec->getValue(VIDEO_CODEC_BITRATE, &codecMap[VIDEO_CODEC_BITRATE]);
                 codec->getValue(VIDEO_CODEC_ENABLED, &codecMap[VIDEO_CODEC_ENABLED]);
+                codec->getValue(VIDEO_CODEC_PARAMETERS, &codecMap[VIDEO_CODEC_PARAMETERS]);
                 videoCodecDetails.push_back(codecMap);
             }
             // these must be validated

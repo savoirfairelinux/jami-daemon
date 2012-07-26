@@ -185,6 +185,7 @@ class Account : public Serializable {
 
         static const char * const VIDEO_CODEC_ENABLED;
         static const char * const VIDEO_CODEC_NAME;
+        static const char * const VIDEO_CODEC_PARAMETERS;
         static const char * const VIDEO_CODEC_BITRATE;
     private:
         NON_COPYABLE(Account);

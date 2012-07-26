@@ -47,6 +47,7 @@ namespace libav_utils {
 
     std::vector<std::map<std::string, std::string> >
     getDefaultCodecs();
+    const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428014";
 }
 
 #endif // __LIBAV_UTILS_H__

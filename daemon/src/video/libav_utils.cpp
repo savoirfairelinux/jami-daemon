@@ -52,7 +52,6 @@ vector<string> installed_video_codecs_;
 /* application wide mutex to protect concurrent access to avcodec */
 ost::Mutex avcodec_lock_;
 
-
 void findInstalledVideoCodecs()
 {
     vector<string> libav_codecs;
@@ -72,7 +71,6 @@ void findInstalledVideoCodecs()
 } // end anon namespace
 
 namespace libav_utils {
-
 
 vector<string> getVideoCodecList()
 {
@@ -154,6 +152,9 @@ getDefaultCodecs()
         codec["name"] = *iter;
         codec["bitrate"] = DEFAULT_BITRATE;
         codec["enabled"] = "true";
+        // FIXME: make a nicer version of this
+        if (*iter == "H264")
+            codec["parameters"] = DEFAULT_H264_PROFILE_LEVEL_ID;
         result.push_back(codec);
     }
     return result;

@@ -46,6 +46,7 @@ const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/1
 const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";
 const char * const Account::VIDEO_CODEC_ENABLED =   "enabled";
 const char * const Account::VIDEO_CODEC_NAME =      "name";
+const char * const Account::VIDEO_CODEC_PARAMETERS ="parameters";
 const char * const Account::VIDEO_CODEC_BITRATE =   "bitrate";
 const char * const Account::RINGTONE_PATH_KEY =     "ringtonePath";
 const char * const Account::RINGTONE_ENABLED_KEY =  "ringtoneEnabled";
@@ -146,7 +147,7 @@ namespace {
 
     bool isCodecValid(const map<string, string> &codec, const vector<map<string, string> > &defaults)
     {
-        map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
+        const map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
         if (name == codec.end()) {
             ERROR("Field \"name\" missing in codec specification");
             return false;
@@ -154,7 +155,7 @@ namespace {
 
         // check that it's in the list of valid codecs and that it has all the required fields
         for (vector<map<string, string> >::const_iterator i = defaults.begin(); i != defaults.end(); ++i) {
-            map<string, string>::const_iterator defaultName = i->find(Account::VIDEO_CODEC_NAME);
+            const map<string, string>::const_iterator defaultName = i->find(Account::VIDEO_CODEC_NAME);
             if (defaultName->second == name->second) {
                 return isFieldValid(codec, Account::VIDEO_CODEC_BITRATE, isPositiveInteger)
                     and isFieldValid(codec, Account::VIDEO_CODEC_ENABLED, isBoolean);
