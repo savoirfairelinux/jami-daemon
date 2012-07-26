@@ -168,8 +168,16 @@ PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
 # required dependency(ies): libssl                                                                                            #
 ###############################################################################################################################
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
-PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
+AC_ARG_WITH([tls],
+	[ AS_HELP_STRING([--without-tls], [disable support tls]) ],
+	[],
+	[with_tls=yes])
+AS_IF([test "xwith_tls" = "xyes"], [
+	PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
+	]);
 
+AC_DEFINE_UNQUOTED([HAVE_TLS], `if test "x$with_tls" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have tls support])
+AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" )
 
 
 ###############################################################################################################################
