@@ -167,7 +167,8 @@ sfl::AudioCodec* Sdp::getSessionAudioMedia() const
 }
 
 
-pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
+pjmedia_sdp_media *
+Sdp::setMediaDescriptorLine(bool audio)
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
 
@@ -225,7 +226,7 @@ pjmedia_sdp_media *Sdp::setMediaDescriptorLine(bool audio)
             std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            os << "fmtp:" << dynamic_payload << " " << libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID;
+            os << "fmtp:" << dynamic_payload << " " << libav_utils::MAX_H264_PROFILE_LEVEL_ID;
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
         }
 #endif
