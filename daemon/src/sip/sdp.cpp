@@ -481,7 +481,9 @@ string Sdp::getIncomingVideoDescription() const
 std::string Sdp::getOutgoingVideoCodec() const
 {
     string str("a=rtpmap:");
-    str += getOutgoingVideoPayload();
+    std::stringstream os;
+    os << getOutgoingVideoPayload();
+    str += os.str();
     string vCodecLine(getLineFromSession(activeRemoteSession_, str));
     char codec_buf[32];
     codec_buf[0] = '\0';
@@ -514,16 +516,29 @@ Sdp::getOutgoingVideoField(const std::string &codec, const char *key) const
     return "";
 }
 
-std::string
+int
 Sdp::getOutgoingVideoPayload() const
 {
     string videoLine(getLineFromSession(activeRemoteSession_, "m=video"));
     int payload_num;
     if (sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload_num) != 1)
         payload_num = 0;
+    return payload_num;
+}
+
+void
+Sdp::getOutgoingProfileLevelID(std::string &profile, int payload) const
+{
     std::ostringstream os;
-    os << payload_num;
-    return os.str();
+    os << "a=fmtp:" << payload;
+    string fmtpLine(getLineFromSession(activeRemoteSession_, os.str()));
+    const std::string needle("profile-level-id=");
+    const size_t DIGITS_IN_PROFILE_LEVEL_ID = 6;
+    const size_t needleLength = needle.size() + DIGITS_IN_PROFILE_LEVEL_ID;
+    const size_t pos = fmtpLine.find(needle);
+    if (pos != std::string::npos and fmtpLine.size() >= (pos + needleLength))
+        profile = fmtpLine.substr(pos, needleLength);
+    DEBUG("Using %s", profile.c_str());
 }
 
 void Sdp::addSdesAttribute(const vector<std::string>& crypto)
@@ -649,8 +664,13 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
         } else {
             args["codec"] = encoder;
             args["bitrate"] = getOutgoingVideoField(codec, "bitrate");
+            const int payload = getOutgoingVideoPayload();
+            std::ostringstream os;
+            os << payload;
+            args["payload_type"] = os.str();
             args["parameters"] = getOutgoingVideoField(codec, "parameters");
-            args["payload_type"] = getOutgoingVideoPayload();
+            // override with profile-level-id from remote, if present
+            getOutgoingProfileLevelID(args["parameters"], payload);
         }
         return true;
     }
