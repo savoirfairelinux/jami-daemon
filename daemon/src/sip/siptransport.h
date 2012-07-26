@@ -43,6 +43,8 @@
 #include <pjnath/stun_config.h>
 #include "noncopyable.h"
 
+#include "config.h"
+
 class SIPAccount;
 
 class SipTransport {
@@ -136,6 +138,8 @@ class SipTransport {
 
         pjsip_transport *
         createStunTransport(SIPAccount &account);
+
+#if HAVE_TLS
         /**
          * Create a connection oriented TLS transport and register to the specified remote address.
          * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
@@ -154,6 +158,7 @@ class SipTransport {
          */
         pjsip_tpfactory *
         createTlsListener(SIPAccount &account);
+#endif
 
         /**
          * Create a new stun resolver. Store it inside the array. Resolve public address for this
