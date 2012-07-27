@@ -40,8 +40,6 @@
 
 namespace sfl {
 
-static const SFLDataFormat INIT_FADE_IN_FACTOR = 32000;
-
 #ifdef RECTODISK
 std::ofstream rtpResampled ("testRtpOutputResampled.raw", std::ifstream::binary);
 std::ofstream rtpNotResampled("testRtpOutput.raw", std::ifstream::binary);
@@ -69,7 +67,7 @@ AudioRtpRecord::AudioRtpRecord() :
     , codecFrameSize_(0)
     , converterSamplingRate_(0)
     , dtmfQueue_()
-    , fadeFactor_(INIT_FADE_IN_FACTOR)
+    , fadeFactor_(1.0 / 32000.0)
 #if HAVE_SPEEXDSP
     , noiseSuppressEncode_(0)
     , noiseSuppressDecode_(0)
@@ -259,15 +257,15 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
 void AudioRtpRecord::fadeInDecodedData(size_t size)
 {
-    // if factor reaches 0, this function should have no effect
-    if (fadeFactor_ <= 0 or size > decData_.size())
+    // if factor reaches 1, this function should have no effect
+    if (fadeFactor_ >= 1.0 or size > decData_.size())
         return;
 
     std::transform(decData_.begin(), decData_.begin() + size, decData_.begin(),
-            std::bind1st(std::divides<double>(), fadeFactor_));
+            std::bind1st(std::multiplies<double>(), fadeFactor_));
 
     // Factor used to increase volume in fade in
-    const SFLDataFormat FADEIN_STEP_SIZE = 4;
-    fadeFactor_ /= FADEIN_STEP_SIZE;
+    const double FADEIN_STEP_SIZE = 4.0;
+    fadeFactor_ *= FADEIN_STEP_SIZE;
 }
 }

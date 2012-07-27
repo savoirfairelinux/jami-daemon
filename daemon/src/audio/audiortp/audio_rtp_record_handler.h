@@ -89,7 +89,7 @@ class AudioRtpRecord {
         int codecFrameSize_;
         int converterSamplingRate_;
         std::list<DTMFEvent> dtmfQueue_;
-        SFLDataFormat fadeFactor_;
+        double fadeFactor_;
 
 #if HAVE_SPEEXDSP
         NoiseSuppress *noiseSuppressEncode_;
