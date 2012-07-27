@@ -110,7 +110,6 @@ AC_ARG_WITH([pulse],
 	[ AS_HELP_STRING([--without-pulse], [disable support for pulseaudio]) ],
 	[],
 	[with_pulse=yes])
-
 AS_IF([test "x$with_pulse" = "xyes"], [
 	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development package: libpulse-dev]))
       ]);
@@ -167,10 +166,10 @@ PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
 # required dependency(ies): libssl
 dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
 AC_ARG_WITH([tls],
-	[ AS_HELP_STRING([--without-tls], [disable tls support]) ],
+	[ AS_HELP_STRING([--without-tls], [disable support for tls]) ],
 	[],
 	[with_tls=yes])
-AS_IF([test "xwith_tls" = "xyes"], [
+AS_IF([test "x$with_tls" = "xyes"], [
 	PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
 	]);
 
@@ -184,11 +183,11 @@ AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" )
 dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 LIBZRTPCPP_MIN_VERSION=1.3.0
 AC_ARG_WITH([zrtp],
-	[ AS_HELP_STRING([--without-zrtp], [disable zrtp support]) ],
+	[ AS_HELP_STRING([--without-zrtp], [disable support for zrtp]) ],
 	[],
 	[with_zrtp=yes])
-AS_IF([test "xwith_zrtp" = "xyes"], [
-	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
+AS_IF([test "x$with_zrtp" = "xyes"], [
+	PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
 	]);
 
 AC_DEFINE_UNQUOTED([HAVE_ZRTP], `if test "x$with_zrtp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp support])
@@ -213,7 +212,6 @@ AC_ARG_WITH([instant_messaging],
 	[ AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging]) ],
 	[],
 	[with_instant_messaging=yes])
-
 AS_IF([test "x$with_instant_messaging" = "xyes"], [
 	AX_LIB_EXPAT([1.95.0])
 	AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
@@ -236,7 +234,6 @@ AC_ARG_WITH([sdes],
 	[ AS_HELP_STRING([--without-sdes], [disable support for sdes key exchange]) ],
 	[],
 	[with_sdes=yes])
-
 AS_IF([test "x$with_sdes" = "xyes"], [
 	AX_PATH_LIB_PCRE
         ]);
@@ -274,8 +271,7 @@ AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
 # required dependency(ies): libspeex
 dnl Check for libspeex
 AC_ARG_WITH([speex],
-        [AS_HELP_STRING([--without-speex],
-        [disable support for speex codec])],
+        [AS_HELP_STRING([--without-speex], [disable support for speex codec])],
         [],
         [with_speex=yes])
 
@@ -302,10 +298,8 @@ AC_ARG_WITH([speexdsp],
 
 AS_IF([test "x$with_speexdsp" != xno],
 	AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
-	AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp],
-	[],
-	[AC_MSG_ERROR([Unable to find speexdsp development files])])
-	])
+	AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [AC_MSG_ERROR([Unable to find speexdsp development files])])
+	)
 
 AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
