@@ -893,6 +893,18 @@ SIPVoIPLink::answer(Call *call)
     call->answer();
 }
 
+namespace {
+void stopRtpIfCurrent(const std::string &id, SIPCall &call)
+{
+    if (Manager::instance().isCurrentCall(id)) {
+        call.getAudioRtp().stop();
+#ifdef SFL_VIDEO
+        call.getVideoRtp().stop();
+#endif
+    }
+}
+}
+
 void
 SIPVoIPLink::hangup(const std::string& id)
 {
@@ -927,9 +939,7 @@ SIPVoIPLink::hangup(const std::string& id)
     // Make sure user data is NULL in callbacks
     inv->mod_data[mod_ua_.id] = NULL;
 
-    if (Manager::instance().isCurrentCall(id))
-        call->getAudioRtp().stop();
-
+    stopRtpIfCurrent(id, *call);
     removeCall(id);
 }
 
@@ -950,9 +960,7 @@ SIPVoIPLink::peerHungup(const std::string& id)
     // Make sure user data is NULL in callbacks
     call->inv->mod_data[mod_ua_.id ] = NULL;
 
-    if (Manager::instance().isCurrentCall(id))
-        call->getAudioRtp().stop();
-
+    stopRtpIfCurrent(id, *call);
     removeCall(id);
 }
 
@@ -1359,8 +1367,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
 {
     std::string id(call->getCallId());
 
-    if (Manager::instance().isCurrentCall(id))
-        call->getAudioRtp().stop();
+    stopRtpIfCurrent(id, *call);
 
     Manager::instance().peerHungupCall(id);
     removeCall(id);
