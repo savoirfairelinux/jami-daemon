@@ -251,7 +251,7 @@ class Sdp {
         std::string getOutgoingVideoCodec() const;
         std::string getOutgoingVideoField(const std::string &codec, const char *key) const;
         int getOutgoingVideoPayload() const;
-        void getOutgoingProfileLevelID(std::string &dest, int payload) const;
+        void getProfileLevelID(const pjmedia_sdp_session *session, std::string &dest, int payload) const;
 
         /**
          * The pool to allocate memory, ownership to SipCall

@@ -226,7 +226,10 @@ Sdp::setMediaDescriptorLine(bool audio)
             std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            os << "fmtp:" << dynamic_payload << " " << libav_utils::MAX_H264_PROFILE_LEVEL_ID;
+            std::string profileLevelID(video_codec_list_[i]["parameters"]);
+            if (profileLevelID.empty())
+                profileLevelID = libav_utils::MAX_H264_PROFILE_LEVEL_ID;
+            os << "fmtp:" << dynamic_payload << " " << profileLevelID;
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
         }
 #endif
@@ -431,12 +434,16 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
     return "";
 }
 
+// FIXME:
+// Here we filter out parts of the SDP that libavformat doesn't need to
+// know about...we should probably give the video decoder thread the original
+// SDP and deal with the streams properly at that level
 string Sdp::getIncomingVideoDescription() const
 {
     stringstream ss;
     ss << "v=0" << std::endl;
     ss << "o=- 0 0 IN IP4 " << localIpAddr_ << std::endl;
-    ss << "s=sflphone" << std::endl;
+    ss << "s=" << PACKAGE_NAME << std::endl;
     ss << "c=IN IP4 " << remoteIpAddr_ << std::endl;
     ss << "t=0 0" << std::endl;
 
@@ -453,6 +460,11 @@ string Sdp::getIncomingVideoDescription() const
 
     std::string vCodecLine(getLineFromSession(activeLocalSession_, s.str()));
     ss << vCodecLine << std::endl;
+
+    std::string profileLevelID;
+    getProfileLevelID(activeLocalSession_, profileLevelID, payload_num);
+    if (not profileLevelID.empty())
+        ss << "a=fmtp:" << payload_num << " " << profileLevelID << std::endl;
 
     unsigned videoIdx;
     for (videoIdx = 0; videoIdx < activeLocalSession_->media_count and pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0; ++videoIdx)
@@ -527,11 +539,12 @@ Sdp::getOutgoingVideoPayload() const
 }
 
 void
-Sdp::getOutgoingProfileLevelID(std::string &profile, int payload) const
+Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
+                       std::string &profile, int payload) const
 {
     std::ostringstream os;
     os << "a=fmtp:" << payload;
-    string fmtpLine(getLineFromSession(activeRemoteSession_, os.str()));
+    string fmtpLine(getLineFromSession(session, os.str()));
     const std::string needle("profile-level-id=");
     const size_t DIGITS_IN_PROFILE_LEVEL_ID = 6;
     const size_t needleLength = needle.size() + DIGITS_IN_PROFILE_LEVEL_ID;
@@ -669,7 +682,7 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
             os << payload;
             args["payload_type"] = os.str();
             // override with profile-level-id from remote, if present
-            getOutgoingProfileLevelID(args["parameters"], payload);
+            getProfileLevelID(activeRemoteSession_, args["parameters"], payload);
         }
         return true;
     }
