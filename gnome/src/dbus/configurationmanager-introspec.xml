@@ -185,14 +185,17 @@
            </arg>
        </method>
 
+       <method name="registerAllAccounts" tp:name-for-bindings="registerAllAccounts">
+           <tp:docstring>
+                Send account registration (REGISTER) for all accounts, even if they are not enabled.
+           </tp:docstring>
+       </method>
+
        <method name="sendRegister" tp:name-for-bindings="sendRegister">
            <tp:docstring>
                 Send account registration (REGISTER) to the registrar.
+                Register the account if enable=true, unregister if enable=false.
            </tp:docstring>
-           Register the account if enable=true, unregister if enable=false.
-
-           @param[in] input accountID
-           -->
            <arg type="s" name="accountID" direction="in">
                <tp:docstring>
                     The account ID
