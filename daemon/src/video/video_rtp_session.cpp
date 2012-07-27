@@ -145,7 +145,10 @@ void VideoRtpSession::stop()
 
 void VideoRtpSession::forceKeyFrame()
 {
-    sendThread_->forceKeyFrame();
+    if (sendThread_.get())
+        sendThread_->forceKeyFrame();
+    else
+        ERROR("Video sending thread is NULL");
 }
 
 } // end namespace sfl_video
