@@ -103,6 +103,8 @@ static GtkWidget * imToolbar_;
 static GtkWidget * editable_num_;
 static GtkWidget * edit_dialog_;
 
+// GtkToolItem *separator_;
+
 static void
 remove_from_toolbar(GtkWidget *widget)
 {
@@ -439,9 +441,6 @@ update_actions()
         add_to_toolbar(toolbar_, historyButton_, -1);
         gtk_widget_set_sensitive(historyButton_, TRUE);
     }
-
-    GtkToolItem *separator = gtk_separator_tool_item_new();
-    gtk_toolbar_insert(GTK_TOOLBAR(toolbar_), separator, -1);
 
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
@@ -1693,6 +1692,7 @@ create_toolbar_actions(GtkUIManager *ui)
     muteWidget_ = get_widget(ui, "/ToolbarActions/MuteToolbar");
     imToolbar_ = get_widget(ui, "/ToolbarActions/InstantMessagingToolbar");
     historyButton_ = get_widget(ui, "/ToolbarActions/HistoryToolbar");
+//     separator_ = gtk_separator_tool_item_new();
     if (addrbook)
         contactButton_ = get_widget(ui, "/ToolbarActions/AddressbookToolbar");
 
