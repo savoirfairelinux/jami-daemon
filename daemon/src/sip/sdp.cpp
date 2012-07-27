@@ -668,7 +668,6 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
             std::ostringstream os;
             os << payload;
             args["payload_type"] = os.str();
-            args["parameters"] = getOutgoingVideoField(codec, "parameters");
             // override with profile-level-id from remote, if present
             getOutgoingProfileLevelID(args["parameters"], payload);
         }
