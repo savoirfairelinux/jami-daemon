@@ -1,4 +1,4 @@
-/* $Id: pjsua_core.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: pjsua_core.c 4119 2012-05-11 08:41:28Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -193,6 +193,7 @@ PJ_DEF(void) pjsua_acc_config_default(pjsua_acc_config *cfg)
     pj_list_init(&cfg->reg_hdr_list);
     pj_list_init(&cfg->sub_hdr_list);
     cfg->call_hold_type = PJSUA_CALL_HOLD_TYPE_DEFAULT;
+    cfg->register_on_acc_add = PJ_TRUE;
 }
 
 PJ_DEF(void) pjsua_buddy_config_default(pjsua_buddy_config *cfg)
@@ -632,6 +633,10 @@ PJ_DEF(pj_status_t) pjsua_create(void)
     /* Init PJNATH */
     status = pjnath_init();
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+
+    /* Set default sound device ID */
+    pjsua_var.cap_dev = PJMEDIA_AUD_DEFAULT_CAPTURE_DEV;
+    pjsua_var.play_dev = PJMEDIA_AUD_DEFAULT_PLAYBACK_DEV;
 
     /* Init caching pool. */
     pj_caching_pool_init(&pjsua_var.cp, NULL, 0);
@@ -1258,8 +1263,12 @@ pj_status_t resolve_stun_server(pj_bool_t wait)
 	 * result.
 	 */
 	if (wait) {
-	    while (pjsua_var.stun_status == PJ_EPENDING)
-		pjsua_handle_events(10);
+	    while (pjsua_var.stun_status == PJ_EPENDING) {
+		if (pjsua_var.thread[0] == NULL)
+		    pjsua_handle_events(10);
+		else
+		    pj_thread_sleep(10);
+	    }
 	}
     }
 
@@ -1278,9 +1287,13 @@ pj_status_t resolve_stun_server(pj_bool_t wait)
 /*
  * Destroy pjsua.
  */
-PJ_DEF(pj_status_t) pjsua_destroy(void)
+PJ_DEF(pj_status_t) pjsua_destroy2(unsigned flags)
 {
     int i;  /* Must be signed */
+
+    if (pjsua_var.endpt) {
+	PJ_LOG(4,(THIS_FILE, "Shutting down, flags=%d...", flags));
+    }
 
     /* Signal threads to quit: */
     pjsua_var.thread_quit_flag = 1;
@@ -1288,7 +1301,12 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
     /* Wait worker threads to quit: */
     for (i=0; i<(int)pjsua_var.ua_cfg.thread_cnt; ++i) {
 	if (pjsua_var.thread[i]) {
-	    pj_thread_join(pjsua_var.thread[i]);
+	    pj_status_t status;
+	    status = pj_thread_join(pjsua_var.thread[i]);
+	    if (status != PJ_SUCCESS) {
+		PJ_PERROR(4,(THIS_FILE, status, "Error joining worker thread"));
+		pj_thread_sleep(1000);
+	    }
 	    pj_thread_destroy(pjsua_var.thread[i]);
 	    pjsua_var.thread[i] = NULL;
 	}
@@ -1297,10 +1315,10 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
     if (pjsua_var.endpt) {
 	unsigned max_wait;
 
-	PJ_LOG(4,(THIS_FILE, "Shutting down..."));
-
 	/* Terminate all calls. */
-	pjsua_call_hangup_all();
+	if ((flags & PJSUA_DESTROY_NO_TX_MSG) == 0) {
+	    pjsua_call_hangup_all();
+	}
 
 	/* Set all accounts to offline */
 	for (i=0; i<(int)PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
@@ -1311,10 +1329,10 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 	}
 
 	/* Terminate all presence subscriptions. */
-	pjsua_pres_shutdown();
+	pjsua_pres_shutdown(flags);
 
 	/* Destroy media (to shutdown media transports etc) */
-	pjsua_media_subsys_destroy();
+	pjsua_media_subsys_destroy(flags);
 
 	/* Wait for sometime until all publish client sessions are done
 	 * (ticket #364)
@@ -1328,6 +1346,11 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 		max_wait = pjsua_var.acc[i].cfg.unpublish_max_wait_time_msec;
 	}
 	
+	/* No waiting if RX is disabled */
+	if (flags & PJSUA_DESTROY_NO_RX_MSG) {
+	    max_wait = 0;
+	}
+
 	/* Second stage, wait for unpublications to complete */
 	for (i=0; i<(int)(max_wait/50); ++i) {
 	    unsigned j;
@@ -1357,7 +1380,8 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 	    if (!pjsua_var.acc[i].valid)
 		continue;
 
-	    if (pjsua_var.acc[i].regc) {
+	    if (pjsua_var.acc[i].regc && (flags & PJSUA_DESTROY_NO_TX_MSG)==0)
+	    {
 		pjsua_acc_set_registration(i, PJ_FALSE);
 	    }
 	}
@@ -1382,6 +1406,11 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 		max_wait = pjsua_var.acc[i].cfg.unreg_timeout;
 	}
 	
+	/* No waiting if RX is disabled */
+	if (flags & PJSUA_DESTROY_NO_RX_MSG) {
+	    max_wait = 0;
+	}
+
 	/* Second stage, wait for unregistrations to complete */
 	for (i=0; i<(int)(max_wait/50); ++i) {
 	    unsigned j;
@@ -1402,8 +1431,9 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 	/* Wait for some time to allow unregistration and ICE/TURN
 	 * transports shutdown to complete: 
 	 */
-	if (i < 20)
+	if (i < 20 && (flags & PJSUA_DESTROY_NO_RX_MSG) == 0) {
 	    busy_sleep(1000 - i*50);
+	}
 
 	PJ_LOG(4,(THIS_FILE, "Destroying..."));
 
@@ -1461,6 +1491,12 @@ PJ_DEF(pj_status_t) pjsua_destroy(void)
 
     /* Done. */
     return PJ_SUCCESS;
+}
+
+
+PJ_DEF(pj_status_t) pjsua_destroy(void)
+{
+    return pjsua_destroy2(0);
 }
 
 
@@ -2045,7 +2081,7 @@ PJ_DEF(pj_status_t) pjsua_transport_get_info( pjsua_transport_id id,
 
     PJSUA_LOCK();
 
-    if (pjsua_var.tpdata[id].type == PJSIP_TRANSPORT_UDP) {
+    if (t->type == PJSIP_TRANSPORT_UDP) {
 
 	pjsip_transport *tp = t->data.tp;
 
@@ -2066,7 +2102,9 @@ PJ_DEF(pj_status_t) pjsua_transport_get_info( pjsua_transport_id id,
 
 	status = PJ_SUCCESS;
 
-    } else if (pjsua_var.tpdata[id].type == PJSIP_TRANSPORT_TCP) {
+    } else if (t->type == PJSIP_TRANSPORT_TCP ||
+	       t->type == PJSIP_TRANSPORT_TLS)
+    {
 
 	pjsip_tpfactory *factory = t->data.factory;
 
@@ -2077,8 +2115,10 @@ PJ_DEF(pj_status_t) pjsua_transport_get_info( pjsua_transport_id id,
     
 	info->id = id;
 	info->type = t->type;
-	info->type_name = pj_str("TCP");
-	info->info = pj_str("TCP transport");
+	info->type_name = (t->type==PJSIP_TRANSPORT_TCP)? pj_str("TCP"):
+							  pj_str("TLS");
+	info->info = (t->type==PJSIP_TRANSPORT_TCP)? pj_str("TCP transport"):
+						     pj_str("TLS transport");
 	info->flag = factory->flag;
 	info->addr_len = sizeof(factory->local_addr);
 	info->local_addr = factory->local_addr;

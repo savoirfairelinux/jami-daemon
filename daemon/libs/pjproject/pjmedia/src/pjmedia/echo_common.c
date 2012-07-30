@@ -1,4 +1,4 @@
-/* $Id: echo_common.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: echo_common.c 3567 2011-05-15 12:54:28Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -144,6 +144,7 @@ PJ_DEF(pj_status_t) pjmedia_echo_create2(pj_pool_t *pool,
 					 pjmedia_echo_state **p_echo )
 {
     unsigned ptime, lat_cnt;
+    unsigned delay_buf_opt = 0;
     pjmedia_echo_state *ec;
     pj_status_t status;
 
@@ -211,10 +212,12 @@ PJ_DEF(pj_status_t) pjmedia_echo_create2(pj_pool_t *pool,
     }
 
     /* Create delay buffer to compensate drifts */
+    if (options & PJMEDIA_ECHO_USE_SIMPLE_FIFO)
+        delay_buf_opt |= PJMEDIA_DELAY_BUF_SIMPLE_FIFO;
     status = pjmedia_delay_buf_create(ec->pool, ec->obj_name, clock_rate, 
 				      samples_per_frame, channel_count,
 				      (PJMEDIA_SOUND_BUFFER_COUNT+1) * ptime,
-				      0, &ec->delay_buf);
+				      delay_buf_opt, &ec->delay_buf);
     if (status != PJ_SUCCESS) {
 	pj_pool_release(pool);
 	return status;

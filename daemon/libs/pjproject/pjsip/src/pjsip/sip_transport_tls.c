@@ -1,4 +1,4 @@
-/* $Id: sip_transport_tls.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_transport_tls.c 3942 2012-01-16 05:05:47Z nanang $ */
 /* 
  * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -293,6 +293,8 @@ PJ_DEF(pj_status_t) pjsip_tls_transport_start (pjsip_endpoint *endpt,
 	ssock_param.send_buffer_size = PJSIP_MAX_PKT_LEN;
     if (ssock_param.read_buffer_size < PJSIP_MAX_PKT_LEN)
 	ssock_param.read_buffer_size = PJSIP_MAX_PKT_LEN;
+    ssock_param.ciphers_num = listener->tls_setting.ciphers_num;
+    ssock_param.ciphers = listener->tls_setting.ciphers;
     ssock_param.qos_type = listener->tls_setting.qos_type;
     ssock_param.qos_ignore_error = listener->tls_setting.qos_ignore_error;
     pj_memcpy(&ssock_param.qos_params, &listener->tls_setting.qos_params,
@@ -303,6 +305,9 @@ PJ_DEF(pj_status_t) pjsip_tls_transport_start (pjsip_endpoint *endpt,
     switch(listener->tls_setting.method) {
     case PJSIP_TLSV1_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_TLS1;
+	break;
+    case PJSIP_SSLV2_METHOD:
+	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL2;
 	break;
     case PJSIP_SSLV3_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL3;
@@ -859,7 +864,6 @@ static pj_status_t lis_create_transport(pjsip_tpfactory *factory,
     ssock_param.cb.on_data_sent = &on_data_sent;
     ssock_param.async_cnt = 1;
     ssock_param.ioqueue = pjsip_endpt_get_ioqueue(listener->endpt);
-    PJ_TODO(synchronize_tls_cipher_type_with_ssl_sock_cipher_type);
     ssock_param.server_name = remote_name;
     ssock_param.timeout = listener->tls_setting.timeout;
     ssock_param.user_data = NULL; /* pending, must be set later */
@@ -869,6 +873,8 @@ static pj_status_t lis_create_transport(pjsip_tpfactory *factory,
 	ssock_param.send_buffer_size = PJSIP_MAX_PKT_LEN;
     if (ssock_param.read_buffer_size < PJSIP_MAX_PKT_LEN)
 	ssock_param.read_buffer_size = PJSIP_MAX_PKT_LEN;
+    ssock_param.ciphers_num = listener->tls_setting.ciphers_num;
+    ssock_param.ciphers = listener->tls_setting.ciphers;
     ssock_param.qos_type = listener->tls_setting.qos_type;
     ssock_param.qos_ignore_error = listener->tls_setting.qos_ignore_error;
     pj_memcpy(&ssock_param.qos_params, &listener->tls_setting.qos_params,
@@ -877,6 +883,9 @@ static pj_status_t lis_create_transport(pjsip_tpfactory *factory,
     switch(listener->tls_setting.method) {
     case PJSIP_TLSV1_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_TLS1;
+	break;
+    case PJSIP_SSLV2_METHOD:
+	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL2;
 	break;
     case PJSIP_SSLV3_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL3;

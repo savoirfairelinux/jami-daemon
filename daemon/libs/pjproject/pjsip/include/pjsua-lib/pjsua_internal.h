@@ -1,4 +1,4 @@
-/* $Id: pjsua_internal.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: pjsua_internal.h 3829 2011-10-19 12:45:05Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -63,6 +63,7 @@ typedef struct pjsua_call
     int			 secure_level;/**< Signaling security level.	    */
     pjsua_call_hold_type call_hold_type; /**< How to do call hold.	    */
     pj_bool_t		 local_hold;/**< Flag for call-hold by local.	    */
+    void		*hold_msg;  /**< Outgoing hold tx_data.		    */
     pjsua_call_media_status media_st;/**< Media state.			    */
     pjmedia_dir		 media_dir; /**< Media direction.		    */
     pjmedia_session	*session;   /**< The media session.		    */
@@ -327,6 +328,20 @@ struct pjsua_data
     pj_bool_t		 is_mswitch;/**< Are we using audio switchboard
 				         (a.k.a APS-Direct)		*/
 
+    /* Sound device */
+    pjmedia_aud_dev_index cap_dev;  /**< Capture device ID.		*/
+    pjmedia_aud_dev_index play_dev; /**< Playback device ID.		*/
+    pj_uint32_t		 aud_svmask;/**< Which settings to save		*/
+    pjmedia_aud_param	 aud_param; /**< User settings to sound dev	*/
+    pj_bool_t		 aud_open_cnt;/**< How many # device is opened	*/
+    pj_bool_t		 no_snd;    /**< No sound (app will manage it)	*/
+    pj_pool_t		*snd_pool;  /**< Sound's private pool.		*/
+    pjmedia_snd_port	*snd_port;  /**< Sound port.			*/
+    pj_timer_entry	 snd_idle_timer;/**< Sound device idle timer.	*/
+    pjmedia_master_port	*null_snd;  /**< Master port for null sound.	*/
+    pjmedia_port	*null_port; /**< Null port.			*/
+
+
     /* File players: */
     unsigned		 player_cnt;/**< Number of file players.	*/
     pjsua_file_data	 player[PJSUA_MAX_PLAYERS];/**< Array of players.*/
@@ -448,7 +463,7 @@ void pjsua_pres_update_acc(int acc_id, pj_bool_t force);
 /*
  * Shutdown presence.
  */
-void pjsua_pres_shutdown(void);
+void pjsua_pres_shutdown(unsigned flags);
 
 /**
  * Init presence for aoocunt.
@@ -463,12 +478,12 @@ pj_status_t pjsua_pres_init_publish_acc(int acc_id);
 /**
  *  Send un-PUBLISH
  */
-void pjsua_pres_unpublish(pjsua_acc *acc);
+void pjsua_pres_unpublish(pjsua_acc *acc, unsigned flags);
 
 /**
  * Terminate server subscription for the account 
  */
-void pjsua_pres_delete_acc(int acc_id);
+void pjsua_pres_delete_acc(int acc_id, unsigned flags);
 
 /**
  * Init IM module handler to handle incoming MESSAGE outside dialog.
@@ -503,7 +518,7 @@ pj_status_t pjsua_media_subsys_start(void);
 /**
  * Destroy pjsua media subsystem.
  */
-pj_status_t pjsua_media_subsys_destroy(void);
+pj_status_t pjsua_media_subsys_destroy(unsigned flags);
 
 /**
  * Private: check if we can accept the message.

@@ -52,12 +52,9 @@
 #   define wcsicmp	_wcsicmp
 #   define wcsnicmp	_wcsnicmp
 #else
-#ifndef stricmp
 #   define stricmp	strcasecmp
-#endif
-#ifndef strnicmp
 #   define strnicmp	strncasecmp
-#endif
+
 #   if defined(PJ_NATIVE_STRING_IS_UNICODE) && PJ_NATIVE_STRING_IS_UNICODE!=0
 #	error "Implement Unicode string functions"
 #   endif

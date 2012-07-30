@@ -1,4 +1,4 @@
-/* $Id: session.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: session.h 3571 2011-05-19 08:05:23Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -230,6 +230,26 @@ PJ_DECL(pj_status_t) pjmedia_session_pause_stream( pjmedia_session *session,
 PJ_DECL(pj_status_t) pjmedia_session_resume_stream(pjmedia_session *session,
 						   unsigned index,
 						   pjmedia_dir dir);
+
+/**
+ * Send RTCP SDES for the session.
+ *
+ * @param session	The media session.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) 
+pjmedia_session_send_rtcp_sdes( const pjmedia_session *session );
+
+/**
+ * Send RTCP BYE for the session.
+ *
+ * @param session	The media session.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) 
+pjmedia_session_send_rtcp_bye( const pjmedia_session *session );
 
 /**
  * Enumerate media streams in the session.

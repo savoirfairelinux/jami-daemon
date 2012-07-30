@@ -1,4 +1,4 @@
-/* $Id: sip_transport.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_transport.c 4092 2012-04-26 09:24:50Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -659,6 +659,11 @@ PJ_DEF(pj_status_t) pjsip_transport_send(  pjsip_transport *tr,
 	return PJSIP_EPENDINGTX;
     }
 
+    /* Add reference to prevent deletion, and to cancel idle timer if
+     * it's running.
+     */
+    pjsip_transport_add_ref(tr);
+
     /* Fill in tp_info. */
     tdata->tp_info.transport = tr;
     pj_memcpy(&tdata->tp_info.dst_addr, addr, addr_len);
@@ -676,8 +681,10 @@ PJ_DEF(pj_status_t) pjsip_transport_send(  pjsip_transport *tr,
      */
     if (tr->tpmgr->on_tx_msg) {
 	status = (*tr->tpmgr->on_tx_msg)(tr->endpt, tdata);
-	if (status != PJ_SUCCESS)
+	if (status != PJ_SUCCESS) {
+	    pjsip_transport_dec_ref(tr);
 	    return status;
+	}
     }
 
     /* Save callback data. */
@@ -699,6 +706,7 @@ PJ_DEF(pj_status_t) pjsip_transport_send(  pjsip_transport *tr,
 	pjsip_tx_data_dec_ref(tdata);
     }
 
+    pjsip_transport_dec_ref(tr);
     return status;
 }
 
@@ -857,7 +865,9 @@ PJ_DEF(pj_status_t) pjsip_transport_dec_ref( pjsip_transport *tp )
 	    if (tp->is_shutdown) {
 		delay.sec = delay.msec = 0;
 	    } else {
-		delay.sec = PJSIP_TRANSPORT_IDLE_TIME;
+		delay.sec = (tp->dir==PJSIP_TP_DIR_OUTGOING) ?
+				PJSIP_TRANSPORT_IDLE_TIME :
+				PJSIP_TRANSPORT_SERVER_IDLE_TIME;
 		delay.msec = 0;
 	    }
 

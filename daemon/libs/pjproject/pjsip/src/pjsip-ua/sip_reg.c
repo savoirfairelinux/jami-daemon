@@ -1,4 +1,4 @@
-/* $Id: sip_reg.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_reg.c 4037 2012-04-11 09:41:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -437,6 +437,17 @@ PJ_DEF(pj_status_t) pjsip_regc_set_transport( pjsip_regc *regc,
     pj_memcpy(&regc->tp_sel, sel, sizeof(*sel));
     pjsip_tpselector_add_ref(&regc->tp_sel);
 
+    return PJ_SUCCESS;
+}
+
+/* Release transport */
+PJ_DEF(pj_status_t) pjsip_regc_release_transport(pjsip_regc *regc)
+{
+    PJ_ASSERT_RETURN(regc, PJ_EINVAL);
+    if (regc->last_transport) {
+	pjsip_transport_dec_ref(regc->last_transport);
+	regc->last_transport = NULL;
+    }
     return PJ_SUCCESS;
 }
 
@@ -1269,7 +1280,9 @@ PJ_DEF(pj_status_t) pjsip_regc_send(pjsip_regc *regc, pjsip_tx_data *tdata)
     pj_lock_acquire(regc->lock);
 
     /* Get last transport used and add reference to it */
-    if (tdata->tp_info.transport != regc->last_transport) {
+    if (tdata->tp_info.transport != regc->last_transport &&
+	status==PJ_SUCCESS)
+    {
 	if (regc->last_transport) {
 	    pjsip_transport_dec_ref(regc->last_transport);
 	    regc->last_transport = NULL;

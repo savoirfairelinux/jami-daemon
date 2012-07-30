@@ -1,4 +1,4 @@
-/* $Id: sip_auth_client.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_auth_client.c 3954 2012-02-18 02:12:22Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -278,8 +278,8 @@ static pj_status_t respond_digest( pj_pool_t *pool,
 
     /* Check algorithm is supported. We support MD5 and AKAv1-MD5. */
     if (chal->algorithm.slen==0 ||
-	(pj_stricmp(&chal->algorithm, &pjsip_MD5_STR) ||
-	 pj_stricmp(&chal->algorithm, &pjsip_AKAv1_MD5_STR)))
+	(pj_stricmp(&chal->algorithm, &pjsip_MD5_STR)==0 ||
+	 pj_stricmp(&chal->algorithm, &pjsip_AKAv1_MD5_STR)==0))
     {
 	;
     }
@@ -1103,7 +1103,8 @@ PJ_DEF(pj_status_t) pjsip_auth_clt_reinit_req(	pjsip_auth_clt_sess *sess,
 		     PJSIP_EINVALIDSTATUS);
 
     tdata = old_request;
-    
+    tdata->auth_retry = PJ_FALSE;
+
     /*
      * Respond to each authentication challenge.
      */
@@ -1173,6 +1174,9 @@ PJ_DEF(pj_status_t) pjsip_auth_clt_reinit_req(	pjsip_auth_clt_sess *sess,
 
     /* Must invalidate the message! */
     pjsip_tx_data_invalidate_msg(tdata);
+
+    /* Retrying.. */
+    tdata->auth_retry = PJ_TRUE;
 
     /* Increment reference counter. */
     pjsip_tx_data_add_ref(tdata);

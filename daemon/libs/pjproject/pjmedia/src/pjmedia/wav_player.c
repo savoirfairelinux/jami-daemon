@@ -1,4 +1,4 @@
-/* $Id: wav_player.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: wav_player.c 4116 2012-04-30 17:33:03Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -157,6 +157,7 @@ static pj_status_t fill_buffer(struct file_reader_port *fport)
                     int val = pjmedia_linear2alaw(0);
                     pj_memset(fport->eofpos, val, size_left);
                 }
+		size_left = 0;
             }
 
 	    /* Rewind file */
@@ -452,6 +453,7 @@ PJ_DEF(pj_status_t) pjmedia_wav_player_port_set_pos(pjmedia_port *port,
 						    pj_uint32_t bytes )
 {
     struct file_reader_port *fport;
+    pj_status_t status;
 
     /* Sanity check */
     PJ_ASSERT_RETURN(port, PJ_EINVAL);
@@ -462,13 +464,23 @@ PJ_DEF(pj_status_t) pjmedia_wav_player_port_set_pos(pjmedia_port *port,
 
     fport = (struct file_reader_port*) port;
 
-    PJ_ASSERT_RETURN(bytes < fport->fsize - fport->start_data, PJ_EINVAL);
+    /* Check that this offset does not pass the audio-data (in case of
+     * extra chunk after audio data chunk
+     */
+    PJ_ASSERT_RETURN(bytes < fport->data_len, PJ_EINVAL);
 
     fport->fpos = fport->start_data + bytes;
+    fport->data_left = fport->data_len - bytes;
     pj_file_setpos( fport->fd, fport->fpos, PJ_SEEK_SET);
 
     fport->eof = PJ_FALSE;
-    return fill_buffer(fport);
+    status = fill_buffer(fport);
+    if (status != PJ_SUCCESS)
+	return status;
+
+    fport->readpos = fport->buf;
+
+    return PJ_SUCCESS;
 }
 
 

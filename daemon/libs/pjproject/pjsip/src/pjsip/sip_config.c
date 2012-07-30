@@ -1,4 +1,4 @@
-/* $Id: sip_config.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_config.c 3952 2012-02-16 05:35:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -25,7 +25,9 @@ pjsip_cfg_t pjsip_sip_cfg_var =
 {
     /* Global settings */
     {
-       PJSIP_ALLOW_PORT_IN_FROMTO_HDR
+       PJSIP_ALLOW_PORT_IN_FROMTO_HDR,
+       0,
+       PJSIP_DONT_SWITCH_TO_TCP
     },
 
     /* Transaction settings */
