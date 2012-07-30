@@ -43,6 +43,8 @@
 #include "pjsip-ua/sip_regc.h"
 #include "noncopyable.h"
 
+typedef std::vector<pj_ssl_cipher> CipherArray;
+
 namespace Conf {
     class YamlEmitter;
     class MappingNode;
@@ -637,6 +639,11 @@ class SIPAccount : public Account {
          * The TLS settings, used only if tls is chosen as a sip transport.
          */
         pjsip_tls_setting tlsSetting_;
+
+        /**
+         * Allocate a static array to be used by pjsip to store the supported ciphers on this system.
+         */
+        CipherArray ciphers;
 
         /**
          * The CONTACT header used for registration as provided by the registrar, this value could differ

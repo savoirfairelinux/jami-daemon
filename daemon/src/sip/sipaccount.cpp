@@ -75,6 +75,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , transportType_(PJSIP_TRANSPORT_UNSPECIFIED)
     , cred_()
     , tlsSetting_()
+    , ciphers(100)
     , contactHeader_()
     , contactUpdateEnabled_(false)
     , stunServerName_()
@@ -189,7 +190,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode tlsport(portstr.str());
     ScalarNode certificate(tlsCertificateFile_);
     ScalarNode calist(tlsCaListFile_);
-    ScalarNode ciphers(tlsCiphers_);
+    ScalarNode ciphersNode(tlsCiphers_);
     ScalarNode tlsenabled(tlsEnable_);
     ScalarNode tlsmethod(tlsMethod_);
     ScalarNode timeout(tlsNegotiationTimeoutSec_);
@@ -253,7 +254,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     tlsmap.setKeyValue(TLS_PORT_KEY, &tlsport);
     tlsmap.setKeyValue(CERTIFICATE_KEY, &certificate);
     tlsmap.setKeyValue(CALIST_KEY, &calist);
-    tlsmap.setKeyValue(CIPHERS_KEY, &ciphers);
+    tlsmap.setKeyValue(CIPHERS_KEY, &ciphersNode);
     tlsmap.setKeyValue(TLS_ENABLE_KEY, &tlsenabled);
     tlsmap.setKeyValue(METHOD_KEY, &tlsmethod);
     tlsmap.setKeyValue(TIMEOUT_KEY, &timeout);
@@ -723,6 +724,18 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 
 void SIPAccount::initTlsConfiguration()
 {
+    pj_status_t status;
+    unsigned cipherNum;
+
+    // Determine the cipher list supported on this machine
+    cipherNum = PJ_ARRAY_SIZE(ciphers);
+    status = pj_ssl_cipher_get_availables(&ciphers.front(), &cipherNum);
+    if (status != PJ_SUCCESS) {
+        ERROR("Could not determine cipher list on this system");
+    }
+
+    ciphers.resize(cipherNum);
+
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
     pjsip_tls_setting_default(&tlsSetting_);
 
@@ -731,8 +744,8 @@ void SIPAccount::initTlsConfiguration()
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
     tlsSetting_.method = sslMethodStringToPjEnum(tlsMethod_);
-    pj_cstr(&tlsSetting_.ciphers, tlsCiphers_.c_str());
-    pj_cstr(&tlsSetting_.server_name, tlsServerName_.c_str());
+    tlsSetting_.ciphers_num = ciphers.size();
+    tlsSetting_.ciphers = &ciphers.front();
 
     tlsSetting_.verify_server = tlsVerifyServer_ ? PJ_TRUE: PJ_FALSE;
     tlsSetting_.verify_client = tlsVerifyClient_ ? PJ_TRUE: PJ_FALSE;
@@ -740,6 +753,9 @@ void SIPAccount::initTlsConfiguration()
 
     tlsSetting_.timeout.sec = atol(tlsNegotiationTimeoutSec_.c_str());
     tlsSetting_.timeout.msec = atol(tlsNegotiationTimeoutMsec_.c_str());
+
+    tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
+    tlsSetting_.qos_ignore_error = PJ_TRUE;
 }
 
 void SIPAccount::initStunConfiguration()
