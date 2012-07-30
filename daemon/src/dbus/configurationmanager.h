@@ -61,6 +61,7 @@ class ConfigurationManager
         ConfigurationManager(DBus::Connection& connection);
         std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
+        std::map<std::string, std::string> getAccountTemplate();
         std::string addAccount(const std::map< std::string, std::string >& details);
         void removeAccount(const std::string& accoundID);
         void deleteAllCredential(const std::string& accountID);

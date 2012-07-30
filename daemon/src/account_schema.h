@@ -38,68 +38,72 @@
  */
 
 // Account identifier
-static const char *const CONFIG_ACCOUNT_ID                   = "Account.id";
+static const char *const CONFIG_ACCOUNT_ID                      = "Account.id";
 
 // Common account parameters
-static const char *const CONFIG_ACCOUNT_TYPE                 = "Account.type";
-static const char *const CONFIG_ACCOUNT_ALIAS                = "Account.alias";
-static const char *const CONFIG_ACCOUNT_MAILBOX              = "Account.mailbox";
-static const char *const CONFIG_ACCOUNT_ENABLE               = "Account.enable";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE  = "Account.registrationExpire";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS = "Account.registrationStatus";
+static const char *const CONFIG_ACCOUNT_TYPE                    = "Account.type";
+static const char *const CONFIG_ACCOUNT_ALIAS                   = "Account.alias";
+static const char *const CONFIG_ACCOUNT_MAILBOX                 = "Account.mailbox";
+static const char *const CONFIG_ACCOUNT_ENABLE                  = "Account.enable";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE     = "Account.registrationExpire";
+static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.registrationDescription";
-static const char *const CONFIG_CREDENTIAL_NUMBER            = "Credential.count";
-static const char *const CONFIG_ACCOUNT_DTMF_TYPE            = "Account.dtmfType";
-static const char *const CONFIG_RINGTONE_PATH                = "Account.ringtonePath";
-static const char *const CONFIG_RINGTONE_ENABLED             = "Account.ringtoneEnabled";
-static const char *const CONFIG_KEEP_ALIVE_ENABLED           = "Account.keepAliveEnabled";
+static const char *const CONFIG_CREDENTIAL_NUMBER               = "Credential.count";
+static const char *const CONFIG_ACCOUNT_DTMF_TYPE               = "Account.dtmfType";
+static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringtonePath";
+static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
+static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepAliveEnabled";
 
-static const char *const CONFIG_ACCOUNT_HOSTNAME             = "Account.hostname";
-static const char *const CONFIG_ACCOUNT_USERNAME             = "Account.username";
-static const char *const CONFIG_ACCOUNT_ROUTESET             = "Account.routeset";
-static const char *const CONFIG_ACCOUNT_PASSWORD             = "Account.password";
-static const char *const CONFIG_ACCOUNT_REALM                = "Account.realm";
-static const char *const CONFIG_ACCOUNT_DEFAULT_REALM        = "*";
-static const char *const CONFIG_ACCOUNT_USERAGENT            = "Account.useragent";
+static const char *const CONFIG_ACCOUNT_HOSTNAME                = "Account.hostname";
+static const char *const CONFIG_ACCOUNT_USERNAME                = "Account.username";
+static const char *const CONFIG_ACCOUNT_ROUTESET                = "Account.routeset";
+static const char *const CONFIG_ACCOUNT_PASSWORD                = "Account.password";
+static const char *const CONFIG_ACCOUNT_REALM                   = "Account.realm";
+static const char *const CONFIG_ACCOUNT_DEFAULT_REALM           = "*";
+static const char *const CONFIG_ACCOUNT_USERAGENT               = "Account.useragent";
 
-static const char *const CONFIG_LOCAL_INTERFACE              = "Account.localInterface";
-static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL       = "Account.publishedSameAsLocal";
-static const char *const CONFIG_LOCAL_PORT                   = "Account.localPort";
-static const char *const CONFIG_PUBLISHED_PORT               = "Account.publishedPort";
-static const char *const CONFIG_PUBLISHED_ADDRESS            = "Account.publishedAddress";
+static const char *const CONFIG_LOCAL_INTERFACE                 = "Account.localInterface";
+static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL          = "Account.publishedSameAsLocal";
+static const char *const CONFIG_LOCAL_PORT                      = "Account.localPort";
+static const char *const CONFIG_PUBLISHED_PORT                  = "Account.publishedPort";
+static const char *const CONFIG_PUBLISHED_ADDRESS               = "Account.publishedAddress";
+static const char *const CONFIG_DEFAULT_LOCAL_PORT              = "5060";
+static const char *const CONFIG_DEFAULT_PUBLISHED_PORT          = "5060";
+static const char *const CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL  = "true";
+static const char *const CONFIG_DEFAULT_LOCAL_INTERFACE         = "default";
 
-static const char *const CONFIG_DISPLAY_NAME                 = "Account.displayName";
-static const char *const CONFIG_DEFAULT_ADDRESS              = "0.0.0.0";
+static const char *const CONFIG_DISPLAY_NAME                    = "Account.displayName";
+static const char *const CONFIG_DEFAULT_ADDRESS                 = "0.0.0.0";
 
 // SIP specific parameters
-static const char *const CONFIG_SIP_PROXY                    = "SIP.proxy";
-static const char *const CONFIG_STUN_SERVER                  = "STUN.server";
-static const char *const CONFIG_STUN_ENABLE                  = "STUN.enable";
+static const char *const CONFIG_SIP_PROXY                       = "SIP.proxy";
+static const char *const CONFIG_STUN_SERVER                     = "STUN.server";
+static const char *const CONFIG_STUN_ENABLE                     = "STUN.enable";
 
 // SRTP specific parameters
-static const char *const CONFIG_SRTP_ENABLE                  = "SRTP.enable";
-static const char *const CONFIG_SRTP_KEY_EXCHANGE            = "SRTP.keyExchange";
-static const char *const CONFIG_SRTP_ENCRYPTION_ALGO         = "SRTP.encryptionAlgorithm";  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8
-static const char *const CONFIG_SRTP_RTP_FALLBACK            = "SRTP.rtpFallback";
-static const char *const CONFIG_ZRTP_HELLO_HASH              = "ZRTP.helloHashEnable";
-static const char *const CONFIG_ZRTP_DISPLAY_SAS             = "ZRTP.displaySAS";
-static const char *const CONFIG_ZRTP_NOT_SUPP_WARNING        = "ZRTP.notSuppWarning";
-static const char *const CONFIG_ZRTP_DISPLAY_SAS_ONCE        = "ZRTP.displaySasOnce";
+static const char *const CONFIG_SRTP_ENABLE                     = "SRTP.enable";
+static const char *const CONFIG_SRTP_KEY_EXCHANGE               = "SRTP.keyExchange";
+static const char *const CONFIG_SRTP_ENCRYPTION_ALGO            = "SRTP.encryptionAlgorithm";  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8
+static const char *const CONFIG_SRTP_RTP_FALLBACK               = "SRTP.rtpFallback";
+static const char *const CONFIG_ZRTP_HELLO_HASH                 = "ZRTP.helloHashEnable";
+static const char *const CONFIG_ZRTP_DISPLAY_SAS                = "ZRTP.displaySAS";
+static const char *const CONFIG_ZRTP_NOT_SUPP_WARNING           = "ZRTP.notSuppWarning";
+static const char *const CONFIG_ZRTP_DISPLAY_SAS_ONCE           = "ZRTP.displaySasOnce";
 
-static const char *const CONFIG_TLS_LISTENER_PORT            = "TLS.listenerPort";
-static const char *const CONFIG_TLS_ENABLE                   = "TLS.enable";
-static const char *const CONFIG_TLS_CA_LIST_FILE             = "TLS.certificateListFile";
-static const char *const CONFIG_TLS_CERTIFICATE_FILE         = "TLS.certificateFile";
-static const char *const CONFIG_TLS_PRIVATE_KEY_FILE         = "TLS.privateKeyFile";
-static const char *const CONFIG_TLS_PASSWORD                 = "TLS.password";
-static const char *const CONFIG_TLS_METHOD                   = "TLS.method";
-static const char *const CONFIG_TLS_CIPHERS                  = "TLS.ciphers";
-static const char *const CONFIG_TLS_SERVER_NAME              = "TLS.serverName";
-static const char *const CONFIG_TLS_VERIFY_SERVER            = "TLS.verifyServer";
-static const char *const CONFIG_TLS_VERIFY_CLIENT            = "TLS.verifyClient";
-static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE = "TLS.requireClientCertificate";
-static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC  = "TLS.negotiationTimeoutSec";
-static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC = "TLS.negotiationTimemoutMsec";
+static const char *const CONFIG_TLS_LISTENER_PORT               = "TLS.listenerPort";
+static const char *const CONFIG_TLS_ENABLE                      = "TLS.enable";
+static const char *const CONFIG_TLS_CA_LIST_FILE                = "TLS.certificateListFile";
+static const char *const CONFIG_TLS_CERTIFICATE_FILE            = "TLS.certificateFile";
+static const char *const CONFIG_TLS_PRIVATE_KEY_FILE            = "TLS.privateKeyFile";
+static const char *const CONFIG_TLS_PASSWORD                    = "TLS.password";
+static const char *const CONFIG_TLS_METHOD                      = "TLS.method";
+static const char *const CONFIG_TLS_CIPHERS                     = "TLS.ciphers";
+static const char *const CONFIG_TLS_SERVER_NAME                 = "TLS.serverName";
+static const char *const CONFIG_TLS_VERIFY_SERVER               = "TLS.verifyServer";
+static const char *const CONFIG_TLS_VERIFY_CLIENT               = "TLS.verifyClient";
+static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE  = "TLS.requireClientCertificate";
+static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC     = "TLS.negotiationTimeoutSec";
+static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC    = "TLS.negotiationTimemoutMsec";
 
 #endif
