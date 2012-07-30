@@ -36,13 +36,17 @@
  *  as that of the covered work.
  */
 
+#include "config.h"
+
 #include <glib.h>
 #include <string.h>
 #include <pango/pango.h>
 #include "eds.h"
+#if EDS_CHECK_VERSION(3,5,3)
+#include <libedataserver/libedataserver.h>
+#else
 #include <libedataserver/e-source.h>
-
-#include "config.h"
+#endif
 
 /**
  * Structure used to store search callback and data

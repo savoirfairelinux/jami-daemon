@@ -40,7 +40,14 @@
 
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+
+#include <libedataserver/eds-version.h>
+
+#if EDS_CHECK_VERSION(3,5,3)
+#include <libebook/libebook.h>
+#else
 #include <libebook/e-book.h>
+#endif
 
 #include "addressbook.h"
 
