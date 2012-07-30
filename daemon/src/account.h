@@ -141,7 +141,7 @@ class Account : public Serializable {
         getActiveVideoCodecs() const;
 
          /* Accessor to data structures
-         * @return CodecOrder& The list that reflects the user's choice
+         * @return The list that reflects the user's choice
          */
         std::vector<int> getActiveAudioCodecs() const {
             return audioCodecList_;

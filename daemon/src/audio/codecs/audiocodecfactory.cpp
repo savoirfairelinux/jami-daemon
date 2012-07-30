@@ -128,7 +128,7 @@ void AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
 {
     defaultCodecList_.clear();
     // list contains the ordered payload of active codecs picked by the user
-    // we used the CodecOrder vector to save the order.
+    // we used the codec vector to save the order.
 
     for (std::vector<std::string>::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
         int payload = std::atoi(iter->c_str());

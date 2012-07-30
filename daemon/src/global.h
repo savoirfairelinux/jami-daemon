@@ -107,7 +107,4 @@ enum {
     PAYLOAD_CODEC_SPEEX_32000 = 112
 };
 
-/** The struct to reflect the order the user wants to use the codecs */
-typedef std::vector<int> CodecOrder;
-
 #endif	// __GLOBAL_H__
