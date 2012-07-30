@@ -1045,16 +1045,8 @@ dbus_account_list()
     GError *error = NULL;
     char **array = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_account_list(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_account_list) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_account_list: %s", error->message);
-
-        g_error_free(error);
-    } else
-        DEBUG("DBus called get_account_list() on ConfigurationManager");
+    org_sflphone_SFLphone_ConfigurationManager_get_account_list(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -1065,16 +1057,8 @@ dbus_get_account_details(const gchar *accountID)
     GError *error = NULL;
     GHashTable *details = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_account_details(config_proxy, accountID, &details, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_account_details: %s",
-                  error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_account_details(config_proxy, accountID, &details, &error);
+    check_error(error);
 
     return details;
 }
@@ -1094,18 +1078,9 @@ dbus_get_credentials(account_t *a)
 {
     g_assert(a);
     GError *error = NULL;
-    if (org_sflphone_SFLphone_ConfigurationManager_get_credentials(config_proxy, a->accountID,
-                               &a->credential_information, &error))
-        return;
-
-    if (error->domain == DBUS_GERROR &&
-        error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-        ERROR("Caught remote method (get_account_details) exception  %s: %s",
-              dbus_g_error_get_name(error), error->message);
-    else
-        ERROR("Error while calling get_account_details: %s", error->message);
-
-    g_error_free(error);
+    org_sflphone_SFLphone_ConfigurationManager_get_credentials(config_proxy,
+            a->accountID, &a->credential_information, &error);
+    check_error(error);
 }
 
 GHashTable *
@@ -1114,16 +1089,8 @@ dbus_get_ip2_ip_details(void)
     GError *error = NULL;
     GHashTable *details = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_ip2_ip_details(config_proxy, &details, &error)) {
-        if (error->domain == DBUS_GERROR &&
-            error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_ip2_ip_details) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_ip2_ip_details: %s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_ip2_ip_details(config_proxy, &details, &error);
+    check_error(error);
 
     return details;
 }
@@ -1319,15 +1286,8 @@ dbus_get_audio_plugin_list()
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_audio_plugin_list(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_output_plugin_list) exception"
-                    "%s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_out_plugin_list: %s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_audio_plugin_list(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -2054,15 +2014,8 @@ dbus_get_all_ip_interface(void)
     GError *error = NULL;
     gchar **array = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_all_ip_interface) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("%s", error->message);
-
-        g_error_free(error);
-    } else
-        DEBUG("DBus called get_all_ip_interface() on ConfigurationManager");
+    org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -2073,15 +2026,8 @@ dbus_get_all_ip_interface_by_name(void)
     GError *error = NULL;
     gchar **array = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface_by_name(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_all_ip_interface) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("%s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface_by_name(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -2092,15 +2038,8 @@ dbus_get_shortcuts(void)
     GError *error = NULL;
     GHashTable *shortcuts = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_shortcuts(config_proxy, &shortcuts, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_shortcuts) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("%s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_shortcuts(config_proxy, &shortcuts, &error);
+    check_error(error);
 
     return shortcuts;
 }
