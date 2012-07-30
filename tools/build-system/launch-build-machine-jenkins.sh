@@ -1,6 +1,6 @@
 #!/bin/bash
 #####################################################
-# File Name: launch-build-machine.sh
+# File Name: launch-build-machine-jenkins.sh
 #
 # Purpose :
 #
@@ -22,7 +22,7 @@ DO_LOGGING=1
 DO_UPLOAD=1
 SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
-VERSION_NUMBER="2.1.0"
+VERSION_NUMBER="1.1.0"
 
 LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-plugins")
 
