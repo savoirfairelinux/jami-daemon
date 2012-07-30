@@ -306,9 +306,6 @@ PJ_DEF(pj_status_t) pjsip_tls_transport_start (pjsip_endpoint *endpt,
     case PJSIP_TLSV1_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_TLS1;
 	break;
-    case PJSIP_SSLV2_METHOD:
-	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL2;
-	break;
     case PJSIP_SSLV3_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL3;
 	break;
@@ -883,9 +880,6 @@ static pj_status_t lis_create_transport(pjsip_tpfactory *factory,
     switch(listener->tls_setting.method) {
     case PJSIP_TLSV1_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_TLS1;
-	break;
-    case PJSIP_SSLV2_METHOD:
-	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL2;
 	break;
     case PJSIP_SSLV3_METHOD:
 	ssock_param.proto = PJ_SSL_SOCK_PROTO_SSL3;

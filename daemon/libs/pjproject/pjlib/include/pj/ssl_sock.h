@@ -307,15 +307,6 @@ typedef enum pj_ssl_cipher {
     PJ_SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA	= 0x0000001D,
     PJ_SSL_FORTEZZA_KEA_WITH_RC4_128_SHA     	= 0x0000001E,
     
-    /* SSLv2 */
-    PJ_SSL_CK_RC4_128_WITH_MD5               	= 0x00010080,
-    PJ_SSL_CK_RC4_128_EXPORT40_WITH_MD5      	= 0x00020080,
-    PJ_SSL_CK_RC2_128_CBC_WITH_MD5           	= 0x00030080,
-    PJ_SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5  	= 0x00040080,
-    PJ_SSL_CK_IDEA_128_CBC_WITH_MD5          	= 0x00050080,
-    PJ_SSL_CK_DES_64_CBC_WITH_MD5            	= 0x00060040,
-    PJ_SSL_CK_DES_192_EDE3_CBC_WITH_MD5      	= 0x000700C0
-
 } pj_ssl_cipher;
 
 
@@ -488,9 +479,7 @@ typedef enum pj_ssl_sock_proto
     PJ_SSL_SOCK_PROTO_DEFAULT,	    /**< Default protocol of backend.	*/
     PJ_SSL_SOCK_PROTO_TLS1,	    /**< TLSv1.0 protocol.		*/
     PJ_SSL_SOCK_PROTO_SSL3,	    /**< SSLv3.0 protocol.		*/
-    PJ_SSL_SOCK_PROTO_SSL23,	    /**< SSLv3.0 but can roll back to 
-					 SSLv2.0.			*/
-    PJ_SSL_SOCK_PROTO_SSL2,	    /**< SSLv2.0 protocol.		*/
+    PJ_SSL_SOCK_PROTO_SSL23,	    /**< SSLv3.0 but can roll back to   */
     PJ_SSL_SOCK_PROTO_DTLS1	    /**< DTLSv1.0 protocol.		*/
 } pj_ssl_sock_proto;
 
