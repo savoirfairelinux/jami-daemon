@@ -250,6 +250,7 @@ class SIPAccount : public Account {
         bool fullMatch(const std::string& username, const std::string& hostname) const;
         bool userMatch(const std::string& username) const;
         bool hostnameMatch(const std::string& hostname) const;
+        bool proxyMatch(const std::string& hostname) const;
 
         /**
          * Registration flag

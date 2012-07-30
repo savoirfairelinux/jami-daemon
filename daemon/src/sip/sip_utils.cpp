@@ -42,6 +42,13 @@
 #include <pj/list.h>
 #include "sip_utils.h"
 
+// for resolveDns
+#include <list>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 std::string
 sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 {
@@ -123,4 +130,42 @@ sip_utils::stripSipUriPrefix(std::string& sipUri)
 
     if (found != std::string::npos)
         sipUri.erase(found);
+}
+
+/**
+ * This function looks for '@' and replaces the second part with the corresponding ip address (when possible)
+ */
+std::string
+sip_utils::resolveDns(const std::string &url)
+{
+   size_t pos;
+   if ((pos = url.find("@")) == std::string::npos)
+      return url;
+
+   const std::string hostname = url.substr(pos + 1);
+
+   std::list<std::string> ipList(resolveServerDns(hostname));
+   if (not ipList.empty() and ipList.front().size() > 7 )
+       return url.substr(0, pos + 1) + ipList.front();
+   else
+       return hostname;
+}
+
+/**
+ * This function finds the list of IP addresses (when possible) for a given server
+ */
+std::list<std::string>
+sip_utils::resolveServerDns(const std::string &server)
+{
+   struct hostent *he;
+   std::list<std::string> ipList;
+
+   if ((he = gethostbyname(server.c_str())) == NULL)
+      return ipList;
+   struct in_addr **addr_list = (struct in_addr **) he->h_addr_list;
+
+   for (int i = 0; addr_list[i] != NULL; ++i)
+      ipList.push_back(inet_ntoa(*addr_list[i]));
+
+   return ipList;
 }

@@ -2669,7 +2669,8 @@ ManagerImpl::getAccount(const std::string& accountID)
     return accountMap_[SIPAccount::IP2IP_PROFILE];
 }
 
-std::string ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
+std::string
+ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
 {
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
@@ -2699,6 +2700,16 @@ std::string ManagerImpl::getAccountIdFromNameAndServer(const std::string& userNa
 
         if (account and account->isEnabled() and account->userMatch(userName)) {
             DEBUG("Matching account id in request with username %s", userName.c_str());
+            return iter->first;
+        }
+    }
+
+    // We failed! Then only match the hostname against our proxy
+    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
+        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
+
+        if (account and account->isEnabled() and account->proxyMatch(server)) {
+            DEBUG("Matching account id in request with proxy %s", server.c_str());
             return iter->first;
         }
     }

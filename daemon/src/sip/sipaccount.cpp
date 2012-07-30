@@ -36,6 +36,7 @@
 
 #include "account_schema.h"
 #include "sipaccount.h"
+#include "sip_utils.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
@@ -43,7 +44,8 @@
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>
-#include <stdlib.h>
+#include <algorithm>
+#include <cstdlib>
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -792,6 +794,14 @@ bool SIPAccount::userMatch(const std::string& username) const
 bool SIPAccount::hostnameMatch(const std::string& hostname) const
 {
     return hostname == hostname_;
+}
+
+bool SIPAccount::proxyMatch(const std::string& hostname) const
+{
+    if (hostname == serviceRoute_)
+        return true;
+    const std::list<std::string> ipList(sip_utils::resolveServerDns(serviceRoute_));
+    return std::find(ipList.begin(), ipList.end(), hostname) != ipList.end();
 }
 
 std::string SIPAccount::getLoginName()

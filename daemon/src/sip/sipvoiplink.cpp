@@ -725,43 +725,12 @@ bool isValidIpAddress(const std::string &address)
     return result != 0;
 }
 
-/**
- * This function look for '@' and replace the second part with the corresponding ip address (when possible)
- */
-std::string resolvDns(const std::string& url)
-{
-   size_t pos;
-   if ((pos = url.find("@")) == std::string::npos) {
-      return url;
-   }
-   std::string hostname = url.substr(pos+1);
-
-   int i;
-   struct hostent *he;
-   struct in_addr **addr_list;
-
-   if ((he = gethostbyname(hostname.c_str())) == NULL) {
-      return url;
-   }
-
-   addr_list = (struct in_addr **)he->h_addr_list;
-   std::list<std::string> ipList;
-
-   for(i = 0; addr_list[i] != NULL; i++) {
-      ipList.push_back(inet_ntoa(*addr_list[i]));
-   }
-
-   if (ipList.size() > 0 && ipList.front().size() > 7 )
-      return url.substr(0,pos+1)+ipList.front();
-   else
-      return hostname;
-}
 
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
     DEBUG("New outgoing call to %s", toUrl.c_str());
     std::string toCpy = toUrl;
-    std::string resolvedUrl = resolvDns(toUrl);
+    std::string resolvedUrl = sip_utils::resolveDns(toUrl);
     DEBUG("URL resolved to %s", resolvedUrl.c_str());
 
     sip_utils::stripSipUriPrefix(toCpy);
