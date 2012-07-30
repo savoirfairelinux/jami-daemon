@@ -55,6 +55,9 @@ static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringt
 static const char *const CONFIG_RINGTONE_ENABLED                = "Account.ringtoneEnabled";
 static const char *const CONFIG_KEEP_ALIVE_ENABLED              = "Account.keepAliveEnabled";
 
+
+static const char *const CONFIG_DEFAULT_REGISTRATION_EXPIRE     = "60";
+
 static const char *const CONFIG_ACCOUNT_HOSTNAME                = "Account.hostname";
 static const char *const CONFIG_ACCOUNT_USERNAME                = "Account.username";
 static const char *const CONFIG_ACCOUNT_ROUTESET                = "Account.routeset";
