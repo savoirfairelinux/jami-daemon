@@ -6,6 +6,12 @@
             Used to handle the configuration stuff: accounts settings, account registration, user preferences, ...
         </tp:docstring>
 
+        <method name="getAccountTemplate" tp:name-for-bindings="getAccountTemplate">
+            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+            </arg>
+        </method>
+
         <method name="getAccountDetails" tp:name-for-bindings="getAccountDetails">
             <tp:docstring>
                 Get all parameters of the specified account.
