@@ -1232,7 +1232,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
         call.getAudioRtp().sendDtmfDigit(code - '0');
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
-        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead",
+        WARN("Unknown DTMF type %s, defaulting to %s instead",
              dtmf.c_str(), SIPAccount::SIPINFO_STR);
     } // else : dtmf == SIPINFO
 
@@ -1810,7 +1810,7 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     }
 
     if (!param or param->contact_cnt == 0) {
-        WARN("SIPVoIPLink: No contact header in registration callback");
+        WARN("No contact header in registration callback");
         pj_pool_release(pool);
         return;
     }
