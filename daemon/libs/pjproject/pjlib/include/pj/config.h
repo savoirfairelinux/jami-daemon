@@ -238,6 +238,18 @@
 #   	error Endianness must be declared for this processor
 #   endif
 
+#elif defined (PJ_M_S390) || defined(__s390) || defined(__s390__) || \
+       defined(__S390__) || defined(_M_S390)
+    /*
+     * S390, big endian
+     */
+#   undef PJ_M_S390
+#   define PJ_M_S390           1
+#   define PJ_M_NAME           "s390"
+#   define PJ_HAS_PENTIUM      0
+#   define PJ_IS_LITTLE_ENDIAN 0
+#   define PJ_IS_BIG_ENDIAN    1
+
 #elif defined (PJ_M_POWERPC) || defined(__powerpc) || defined(__powerpc__) || \
 	defined(__POWERPC__) || defined(__ppc__) || defined(_M_PPC) || \
 	defined(_ARCH_PPC)
