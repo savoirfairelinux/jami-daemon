@@ -167,16 +167,16 @@ class IAXVoIPLink : public VoIPLink {
         virtual void carryingDTMFdigits(const std::string& id, char code);
 
 
+#if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+#endif
 
         /**
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-#ifdef SFL_VIDEO
-        virtual std::string getCurrentVideoCodecName(const std::string& id);
-#endif
-        virtual std::string getCurrentCodecName(Call *c) const;
+        virtual std::string getCurrentVideoCodecName(Call *c) const;
+        virtual std::string getCurrentAudioCodecName(Call *c) const;
 
     private:
         NON_COPYABLE(IAXVoIPLink);

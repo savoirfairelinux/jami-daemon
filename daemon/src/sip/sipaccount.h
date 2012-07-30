@@ -205,6 +205,10 @@ class SIPAccount : public Account {
             return credentials_.size();
         }
 
+        bool hasCredentials() const {
+            return not credentials_.empty();
+        }
+
         void setCredentials(const std::vector<std::map<std::string, std::string> >& details);
 
         const std::vector<std::map<std::string, std::string> > &
@@ -418,7 +422,7 @@ class SIPAccount : public Account {
          * @return pj_uint16 The port used for that account
          */
         pj_uint16_t getLocalPort() const {
-            return (pj_uint16_t) localPort_;
+            return localPort_;
         }
 
         /**

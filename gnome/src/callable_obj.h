@@ -69,7 +69,6 @@ typedef enum {
     CALL_STATE_FAILURE,
     CALL_STATE_BUSY,
     CALL_STATE_TRANSFER,
-    CALL_STATE_RECORD,
 } call_state_t;
 
 static const char * const TIMESTAMP_START_KEY =   "timestamp_start";

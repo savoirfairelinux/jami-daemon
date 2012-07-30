@@ -55,7 +55,7 @@ class AudioStream {
          * @param audio sampling rate
          * @param device name
          */
-        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, std::string&);
+        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const std::string&);
 
         ~AudioStream();
 

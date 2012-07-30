@@ -112,7 +112,6 @@ Tone::genBuffer(const std::string& definition)
                 count = (sampleRate_ * time) / 1000;
 
             // Generate SAMPLING_RATE samples of sinus, buffer is the result
-            DEBUG("genSin(%d, %d)", freq1, freq2);
             genSin(bufferPos, freq1, freq2, count);
 
             // To concatenate the different buffers for each section.

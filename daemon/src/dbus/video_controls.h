@@ -67,40 +67,58 @@ class VideoControls : public org::sflphone::SFLphone::VideoControls_adaptor,
         VideoControls(DBus::Connection& connection);
         VideoPreference &getVideoPreferences();
 
-        std::vector<std::string> getCodecList();
-        std::map<std::string, std::string> getCodecDetails(const std::string& name);
-        std::vector<std::string>
-        getActiveCodecList(const std::string& accountID);
-        void setActiveCodecList(const std::vector<std::string>& list,
-                                const std::string& accountID);
+        std::vector<std::map<std::string, std::string> >
+        getCodecs(const std::string& accountID);
 
-        std::vector<std::string> getInputDeviceList();
+        void
+        setCodecs(const std::string& accountID,
+                  const std::vector<std::map<std::string, std::string> > &details);
 
         std::vector<std::string>
-        getInputDeviceChannelList(const std::string &dev);
+        getDeviceList();
 
         std::vector<std::string>
-        getInputDeviceSizeList(const std::string &dev,
-                               const std::string &channel);
+        getDeviceChannelList(const std::string &dev);
 
         std::vector<std::string>
-        getInputDeviceRateList(const std::string &dev,
-                               const std::string &channel,
-                               const std::string &size);
-        std::map<std::string, std::string> getSettings();
-        void setInputDevice(const std::string& api);
-        void setInputDeviceChannel(const std::string& api);
-        void setInputDeviceSize(const std::string& api);
-        void setInputDeviceRate(const std::string& api);
-        std::string getInputDevice();
-        std::string getInputDeviceChannel();
-        std::string getInputDeviceSize();
-        std::string getInputDeviceRate();
-        std::string getCurrentCodecName(const std::string &callID);
+        getDeviceSizeList(const std::string &dev, const std::string &channel);
 
-        void startPreview(int32_t &width, int32_t &height, int32_t &shmKey,
-                          int32_t &semKey, int32_t &bufferSize);
+        std::vector<std::string>
+        getDeviceRateList(const std::string &dev, const std::string &channel, const std::string &size);
+
+        std::map<std::string, std::string>
+        getSettings();
+
+        void
+        setActiveDevice(const std::string &dev);
+
+        void
+        setActiveDeviceChannel(const std::string &channel);
+
+        void
+        setActiveDeviceSize(const std::string &size);
+
+        void
+        setActiveDeviceRate(const std::string &rate);
+
+        std::string
+        getActiveDevice();
+
+        std::string
+        getActiveDeviceChannel();
+
+        std::string
+        getActiveDeviceSize();
+
+        std::string
+        getActiveDeviceRate();
+
+        std::string
+        getCurrentCodecName(const std::string &callID);
+
+        void startPreview();
         void stopPreview();
+        bool hasPreviewStarted();
 };
 
 #endif // VIDEO_CONTROLS_H_

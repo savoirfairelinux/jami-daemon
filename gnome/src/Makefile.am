@@ -1,27 +1,17 @@
 include ../globals.mak
 
+SUBDIRS = config contacts dbus widget icons video messaging
+
 bin_PROGRAMS = sflphone-client-gnome
 
-SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
-                 ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
+SFLPHONE_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
+              ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la \
+              ./messaging/libmessaging.la
 
-sflphone_client_gnome_SOURCES = main.c
-sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
-                               @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
-                               @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
-                               @GTHREAD_CFLAGS@
-sflphone_client_gnome_LDADD = ./libsflphone_client.la $(SFLPHONEGTK_LIBS) $(LD_LIBS)
-
-SUBDIRS = config contacts dbus widget icons
-if SFL_VIDEO
-SUBDIRS += video
-endif
-
-NOFIFY_LIBS = -lnotify
-LD_LIBS = -ldl
+DL_LIBS = -ldl
 
 if SFL_VIDEO
-SFLPHONEGTK_LIBS+=./video/libvideo.la
+SFLPHONE_LIBS+=./video/libvideo.la
 endif
 
 noinst_LTLIBRARIES = libsflphone_client.la
@@ -31,7 +21,6 @@ libsflphone_client_la_SOURCES = \
   uimanager.c \
   sflnotify.c \
   mainwindow.c \
-  imwindow.c \
   dialpad.c \
   callable_obj.c \
   conference_obj.c \
@@ -60,22 +49,30 @@ libsflphone_client_la_SOURCES = \
   shortcuts.h \
   eel-gconf-extensions.h \
   logger.h \
-  imwindow.h \
   unused.h \
   str_utils.h \
   gtk2_wrappers.h \
-  seekslider.h
+  seekslider.h \
+  account_schema.h
 
-libsflphone_client_la_LDFLAGS = @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
-                                @NOTIFY_LIBS@ $(SFLPHONEGTK_LIBS) @X11_LIBS@ \
-                                @GTK_LIBS@ @GLIB_LIBS@ @WEBKIT_LIBS@ \
-                                $(LD_LIBS) @GCONF_LIBS@ \
-                                @JAVASCRIPT_CORE_GTK_LIBS@ @GTHREAD_LIBS@
+libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
+libsflphone_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
+                                @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ \
+                                $(DL_LIBS) @GCONF_LIBS@ @JAVASCRIPT_CORE_GTK_LIBS@ \
+                                @GTHREAD_LIBS@ @CLUTTERGTK_LDFLAGS@
 
-libsflphone_client_la_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
-                               @GTK_CFLAGS@ @WEBKIT_CFLAGS@ \
+libsflphone_client_la_CFLAGS = @CLUTTER_CFLAGS@ @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
+                               @GTK_CFLAGS@ \
+                               @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
+                               @GTHREAD_CFLAGS@ @CLUTTERGTK_CFLAGS@
+
+
+sflphone_client_gnome_SOURCES = main.c
+sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
+                               @GTK_CFLAGS@ \
                                @GCONF_CFLAGS@ @JAVASCRIPT_CORE_GTK_CFLAGS@ \
                                @GTHREAD_CFLAGS@
+sflphone_client_gnome_LDADD = libsflphone_client.la
 
 # add symbolic link
 install-exec-local:

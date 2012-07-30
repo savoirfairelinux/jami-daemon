@@ -43,12 +43,19 @@
 #include <pjnath/stun_config.h>
 #include "noncopyable.h"
 
+#include "config.h"
+
 class SIPAccount;
 
 class SipTransport {
     public:
         SipTransport(pjsip_endpoint *endpt, pj_caching_pool *cp, pj_pool_t *pool);
         static std::string getSIPLocalIP();
+
+        /**
+         * Get the IP for the network interface named ifaceName
+         */
+        static std::string getInterfaceAddrFromName(const std::string &ifaceName);
 
         /**
         * List all the interfaces on the system and return
@@ -59,16 +66,6 @@ class SipTransport {
         * the system.
         */
         static std::vector<std::string> getAllIpInterfaceByName();
-
-        /**
-         * List all the interfaces on the system and return
-         * a vector list containing their name (eth0, eth0:1 ...).
-         * @param void
-         * @return std::vector<std::string> A std::string vector
-         * of interface name available on all of the interfaces on
-         * the system.
-         */
-        static std::string getInterfaceAddrFromName(const std::string &ifaceName);
 
         /**
          * List all the interfaces on the system and return
@@ -100,12 +97,6 @@ class SipTransport {
          * @param account The account for which a transport must be created.
          */
         void createSipTransport(SIPAccount &account);
-
-        /**
-         * Create the default sip transport on 5060. In case this port is already used
-         * increme
-         */
-        void createDefaultSipUdpTransport();
 
         /**
          * Initialize the transport selector
@@ -147,6 +138,8 @@ class SipTransport {
 
         pjsip_transport *
         createStunTransport(SIPAccount &account);
+
+#if HAVE_TLS
         /**
          * Create a connection oriented TLS transport and register to the specified remote address.
          * First, initialize the TLS listener sole instance. This means that, for the momment, only one TLS transport
@@ -165,6 +158,7 @@ class SipTransport {
          */
         pjsip_tpfactory *
         createTlsListener(SIPAccount &account);
+#endif
 
         /**
          * Create a new stun resolver. Store it inside the array. Resolve public address for this

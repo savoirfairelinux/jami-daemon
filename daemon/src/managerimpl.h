@@ -35,6 +35,10 @@
 #ifndef MANAGER_IMPL_H_
 #define MANAGER_IMPL_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string>
 #include <vector>
 #include <set>
@@ -386,6 +390,7 @@ class ManagerImpl {
          */
         void peerHungupCall(const std::string& id);
 
+#if HAVE_INSTANT_MESSAGING
         /**
          * Notify the client with an incoming message
          * @param accountId	The account identifier
@@ -401,6 +406,7 @@ class ManagerImpl {
         * @param from	        The sender of this message (could be another participant of a conference)
          */
         bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+#endif // HAVE_INSTANT_MESSAGING
 
         /**
          * Notify the client he has voice mails
@@ -417,6 +423,16 @@ class ManagerImpl {
          *		 true for registration request
          */
         void sendRegister(const std::string& accountId, bool enable);
+
+        /**
+         * Register all account in accountMap_
+         */
+        void registerAllAccounts();
+
+        /**
+         * Unregister all account in accountMap_
+         */
+        void unregisterAllAccounts();
 
         /**
          * Get account list
@@ -500,10 +516,8 @@ class ManagerImpl {
          * @param call id
          * @return std::string The codec name
          */
-        std::string getCurrentCodecName(const std::string& id);
-#ifdef SFL_VIDEO
+        std::string getCurrentAudioCodecName(const std::string& id);
         std::string getCurrentVideoCodecName(const std::string& id);
-#endif
 
         /**
          * Set input audio plugin
@@ -992,11 +1006,6 @@ class ManagerImpl {
         AccountMap accountMap_;
 
         /**
-         * Unregister all account in accountMap_
-         */
-        void unregisterAllAccounts();
-
-        /**
          * Load the account map from configuration
          */
         void loadAccountMap(Conf::YamlParser &parser);
@@ -1059,6 +1068,12 @@ class ManagerImpl {
         DBusManager * getDbusManager() {
             return &dbus_;
         }
+
+#ifdef SFL_VIDEO
+        VideoControls * getVideoControls() {
+            return dbus_.getVideoControls();
+        }
+#endif
 
         /**
         * Tell if an account exists

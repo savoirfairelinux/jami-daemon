@@ -93,7 +93,7 @@ Call::getStateStr()
                     return isIncoming() ? "INCOMING" : "RINGING";
                 case CONNECTED:
                 default:
-                    return isRecording() ? "RECORD" : "CURRENT";
+                    return "CURRENT";
             }
 
         case HOLD:
@@ -161,7 +161,7 @@ Call::setRecording()
         mbuffer->unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }
 
-    Manager::instance().getMainBuffer()->stateInfo();
+    Manager::instance().getMainBuffer()->dumpInfo();
 
     return recordStatus;
 }

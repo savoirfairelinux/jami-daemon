@@ -40,8 +40,6 @@
 
 namespace sfl {
 
-static const SFLDataFormat INIT_FADE_IN_FACTOR = 32000;
-
 #ifdef RECTODISK
 std::ofstream rtpResampled ("testRtpOutputResampled.raw", std::ifstream::binary);
 std::ofstream rtpNotResampled("testRtpOutput.raw", std::ifstream::binary);
@@ -69,10 +67,12 @@ AudioRtpRecord::AudioRtpRecord() :
     , codecFrameSize_(0)
     , converterSamplingRate_(0)
     , dtmfQueue_()
-    , fadeFactor_(INIT_FADE_IN_FACTOR)
+    , fadeFactor_(1.0 / 32000.0)
+#if HAVE_SPEEXDSP
     , noiseSuppressEncode_(0)
     , noiseSuppressDecode_(0)
     , audioProcessMutex_()
+#endif
     , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
 {}
@@ -87,15 +87,16 @@ AudioRtpRecord::~AudioRtpRecord()
     delete converterEncode_;
     delete converterDecode_;
     delete audioCodec_;
+#if HAVE_SPEEXDSP
     delete noiseSuppressEncode_;
     delete noiseSuppressDecode_;
+#endif
 }
 
 
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     id_(call.getCallId()),
-    echoCanceller(call.getMemoryPool()),
     gainController(8000, -10.0)
 {}
 
@@ -128,6 +129,7 @@ void AudioRtpRecordHandler::initBuffers()
     audioRtpRecord_.converterDecode_ = new SamplerateConverter(getCodecSampleRate());
 }
 
+#if HAVE_SPEEXDSP
 void AudioRtpRecordHandler::initNoiseSuppress()
 {
     ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
@@ -136,6 +138,7 @@ void AudioRtpRecordHandler::initNoiseSuppress()
     delete audioRtpRecord_.noiseSuppressDecode_;
     audioRtpRecord_.noiseSuppressDecode_ = new NoiseSuppress(getCodecFrameSize(), getCodecSampleRate());
 }
+#endif
 
 void AudioRtpRecordHandler::putDtmfEvent(int digit)
 {
@@ -173,9 +176,6 @@ int AudioRtpRecordHandler::processDataEncode()
 
     audioRtpRecord_.fadeInDecodedData(samples);
 
-    if (Manager::instance().getEchoCancelState())
-        echoCanceller.getData(micData);
-
     SFLDataFormat *out = micData;
 
     if (codecSampleRate != mainBufferSampleRate) {
@@ -194,11 +194,13 @@ int AudioRtpRecordHandler::processDataEncode()
         out = audioRtpRecord_.resampledData_.data();
     }
 
+#if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
         assert(audioRtpRecord_.noiseSuppressEncode_);
         audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
+#endif
 
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
@@ -221,12 +223,13 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
 
+#if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
         assert(audioRtpRecord_.noiseSuppressDecode_);
         audioRtpRecord_.noiseSuppressDecode_->process(spkrDataDecoded, getCodecFrameSize());
     }
-
+#endif
 
     audioRtpRecord_.fadeInDecodedData(inSamples);
 
@@ -249,23 +252,20 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
                 mainBufferSampleRate, inSamples);
     }
 
-    if (Manager::instance().getEchoCancelState())
-        echoCanceller.putData(out, outSamples);
-
     Manager::instance().getMainBuffer()->putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
 
 void AudioRtpRecord::fadeInDecodedData(size_t size)
 {
-    // if factor reaches 0, this function should have no effect
-    if (fadeFactor_ <= 0 or size > decData_.size())
+    // if factor reaches 1, this function should have no effect
+    if (fadeFactor_ >= 1.0 or size > decData_.size())
         return;
 
     std::transform(decData_.begin(), decData_.begin() + size, decData_.begin(),
-            std::bind1st(std::divides<double>(), fadeFactor_));
+            std::bind1st(std::multiplies<double>(), fadeFactor_));
 
     // Factor used to increase volume in fade in
-    const SFLDataFormat FADEIN_STEP_SIZE = 4;
-    fadeFactor_ /= FADEIN_STEP_SIZE;
+    const double FADEIN_STEP_SIZE = 4.0;
+    fadeFactor_ *= FADEIN_STEP_SIZE;
 }
 }

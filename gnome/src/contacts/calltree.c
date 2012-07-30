@@ -30,9 +30,14 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "calllist.h"
 #include "calltree.h"
 #include "str_utils.h"
+#include "account_schema.h"
 #include <string.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
@@ -49,7 +54,6 @@
 #include "calltree.h"
 #include "uimanager.h"
 #include "actions.h"
-#include "imwindow.h"
 #include "searchbar.h"
 
 #if !GLIB_CHECK_VERSION(2, 30, 0)
@@ -230,13 +234,13 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
             DEBUG("AccountID %s", selectedCall->_accountID);
 
             if (account_details != NULL) {
-                displaySasOnce = g_hash_table_lookup(account_details->properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                displaySasOnce = g_hash_table_lookup(account_details->properties, CONFIG_ZRTP_DISPLAY_SAS_ONCE);
                 DEBUG("Display SAS once %s", displaySasOnce);
             } else {
                 GHashTable *properties = sflphone_get_ip2ip_properties();
 
                 if (properties != NULL) {
-                    displaySasOnce = g_hash_table_lookup(properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                    displaySasOnce = g_hash_table_lookup(properties, CONFIG_ZRTP_DISPLAY_SAS_ONCE);
                     DEBUG("IP2IP displaysasonce %s", displaySasOnce);
                 }
             }
@@ -345,7 +349,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
             break;
         case DISPLAY_TYPE_STATE_CODE :
             if (video_codec && *video_codec)
-                codec = g_strconcat(audio_codec, "/", video_codec, NULL);
+                codec = g_strconcat(audio_codec, " ", video_codec, NULL);
             else
                 codec = g_strdup(audio_codec);
 
@@ -595,13 +599,13 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
     account = account_list_get_by_id(call->_accountID);
 
     if (account != NULL) {
-        srtp_enabled = account_lookup(account, ACCOUNT_SRTP_ENABLED);
-        display_sas = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+        srtp_enabled = account_lookup(account, CONFIG_SRTP_ENABLE);
+        display_sas = utf8_case_equal(account_lookup(account, CONFIG_ZRTP_DISPLAY_SAS), "true");
     } else {
         GHashTable * properties = sflphone_get_ip2ip_properties();
         if (properties != NULL) {
-            srtp_enabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
-            display_sas = utf8_case_equal(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+            srtp_enabled = g_hash_table_lookup(properties, CONFIG_SRTP_ENABLE);
+            display_sas = utf8_case_equal(g_hash_table_lookup(properties, CONFIG_ZRTP_DISPLAY_SAS), "true");
         }
     }
 
@@ -647,7 +651,10 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
                 break;
             case CALL_STATE_CURRENT:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                if (dbus_get_is_recording(call))
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                else
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
                 break;
             case CALL_STATE_DIALING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
@@ -660,9 +667,6 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                 break;
             case CALL_STATE_TRANSFER:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfer.svg", NULL);
-                break;
-            case CALL_STATE_RECORD:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
                 break;
             default:
                 WARN("Update calltree - Should not happen!");
@@ -762,8 +766,8 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
         account_details = account_list_get_by_id(call->_accountID);
 
         if (account_details) {
-            srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
-            key_exchange = g_hash_table_lookup(account_details->properties, ACCOUNT_KEY_EXCHANGE);
+            srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
+            key_exchange = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_KEY_EXCHANGE);
         }
     }
 
@@ -782,14 +786,14 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
                 break;
             case CALL_STATE_CURRENT:
                 // If the call has been initiated by a another client and, when we start, it is already current
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                if (dbus_get_is_recording(call))
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                else
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
                 break;
             case CALL_STATE_HOLD:
                 // If the call has been initiated by a another client and, when we start, it is already current
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-                break;
-            case CALL_STATE_RECORD:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
                 break;
             case CALL_STATE_FAILURE:
                 // If the call has been initiated by a another client and, when we start, it is already current
@@ -963,7 +967,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
                 if (!account_details)
                     ERROR("Could not find account %s in account list", call->_accountID);
                 else
-                    srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
+                    srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
 
                 if (utf8_case_equal(srtp_enabled, "true")) {
                     DEBUG("SRTP enabled for participant %s", call_id);
@@ -1124,9 +1128,15 @@ void calltree_display(calltab_t *tab)
     } else
         ERROR("Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
 
-    gtk_widget_hide(active_calltree_tab->tree);
+    if (active_calltree_tab->mainwidget)
+        gtk_widget_hide(active_calltree_tab->mainwidget);
+    else
+        gtk_widget_hide(active_calltree_tab->tree);
     active_calltree_tab = tab;
-    gtk_widget_show(active_calltree_tab->tree);
+    if (active_calltree_tab->mainwidget)
+        gtk_widget_show(active_calltree_tab->mainwidget);
+    else
+        gtk_widget_show(active_calltree_tab->tree);
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
     g_signal_emit_by_name(sel, "changed");

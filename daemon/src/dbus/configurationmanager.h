@@ -66,6 +66,7 @@ class ConfigurationManager
         void deleteAllCredential(const std::string& accountID);
         std::vector< std::string > getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
+        void registerAllAccounts(void);
 
         std::map< std::string, std::string > getTlsSettingsDefault();
 

@@ -45,6 +45,7 @@ calltab_t* calltab_init(gboolean searchbar_type, const gchar * const name)
 
     ret->callQueue = g_queue_new();
     ret->selectedCall = NULL;
+    ret->mainwidget =  NULL;
 
     return ret;
 }

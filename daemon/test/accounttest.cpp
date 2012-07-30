@@ -31,6 +31,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <map>
 #include "account.h"
+#include "account_schema.h"
 #include "accounttest.h"
 #include "manager.h"
 #include "logger.h"
@@ -43,6 +44,8 @@ void AccountTest::TestAddRemove()
     std::map<std::string, std::string> details;
     details[CONFIG_ACCOUNT_TYPE] = "SIP";
     details[CONFIG_ACCOUNT_ENABLE] = "false";
+    details[CONFIG_LOCAL_INTERFACE] = "default";
+    details[CONFIG_LOCAL_PORT] = "5060";
 
     std::string accountId = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(Validator::isNotNull(accountId));

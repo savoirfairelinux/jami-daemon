@@ -32,6 +32,8 @@
 #include "numbercleaner.h"
 #include <algorithm>
 
+#define INVALID_CHAR " -()"
+
 namespace {
 void strip_chars(const std::string &to_strip, std::string &num)
 {
@@ -43,6 +45,16 @@ void strip_chars(const std::string &to_strip, std::string &num)
 
 std::string NumberCleaner::clean(std::string to_clean, const std::string &prefix)
 {
-    strip_chars(" -()", to_clean);
-    return to_clean.insert(0, prefix);
+   int pos;
+   //Hostname and DNS can have '-'
+   if ((pos = to_clean.find("@")) == std::string::npos) {
+      strip_chars(INVALID_CHAR, to_clean);
+      return to_clean.insert(0, prefix);
+   }
+   else {
+      std::string high = to_clean.substr(0,pos+1);
+      strip_chars(INVALID_CHAR, high);
+      return high+to_clean.substr(pos+1);
+   }
+
 }

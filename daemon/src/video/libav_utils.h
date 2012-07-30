@@ -36,9 +36,19 @@
 #include <string>
 
 namespace libav_utils {
-    void sfl_avcodec_init();
-    std::map<std::string, std::string> encodersMap();
-    std::vector<std::string> getVideoCodecList();
+    void
+    sfl_avcodec_init();
+
+    std::map<std::string, std::string>
+    encodersMap();
+
+    std::vector<std::string>
+    getVideoCodecList();
+
+    std::vector<std::map<std::string, std::string> >
+    getDefaultCodecs();
+    const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428014";
+    const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
 }
 
 #endif // __LIBAV_UTILS_H__

@@ -137,7 +137,14 @@ int main(int argc, char *argv [])
     signal(SIGHUP, signal_handler);
     signal(SIGTERM, signal_handler);
 
-    fileutils::set_program_dir(argv[0]);
+    // make a copy as we don't want to modify argv[0], copy it to a vector to
+    // guarantee that memory is correctly managed/exception safe
+    std::string programName(argv[0]);
+    std::vector<char> writable(programName.size() + 1);
+    std::copy(programName.begin(), programName.end(), writable.begin());
+
+    fileutils::set_program_dir(&*writable.begin());
+
     print_title();
     if (parse_args(argc, argv))
         return 0;
@@ -155,6 +162,10 @@ int main(int argc, char *argv [])
             std::endl;
         return 1;
     }
+
+#ifdef SFL_VIDEO
+    WARN("Built with video support");
+#endif
 
     Manager::instance().run();
     Manager::instance().saveHistory();

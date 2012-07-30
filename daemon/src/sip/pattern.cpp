@@ -105,7 +105,7 @@ void Pattern::compile()
 
 unsigned int Pattern::getCaptureGroupCount()
 {
-    int captureCount;
+    int captureCount = 0;
     pcre_fullinfo(re_, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
     return captureCount;
 }
@@ -116,7 +116,6 @@ std::vector<std::string> Pattern::groups()
 
     pcre_get_substring_list(subject_.c_str(), &ovector_[0], count_, &stringList);
     std::vector<std::string> matchedSubstrings;
-
     for (int i = 1; stringList[i] != NULL; i++)
         matchedSubstrings.push_back(stringList[i]);
 
@@ -128,7 +127,6 @@ std::vector<std::string> Pattern::groups()
 std::string Pattern::group(int groupNumber)
 {
     const char * stringPtr;
-
     int rc = pcre_get_substring(subject_.substr(offset_[0]).c_str(), &ovector_[0],
                                 count_, groupNumber, &stringPtr);
 
@@ -144,7 +142,6 @@ std::string Pattern::group(int groupNumber)
                 throw MatchError("Failed to get named substring.");
         }
     }
-
     std::string matchedStr(stringPtr);
 
     pcre_free_substring(stringPtr);
@@ -171,14 +168,11 @@ std::string Pattern::group(const std::string& groupName)
                 throw MatchError("Failed to get named substring.");
         }
     }
-
     std::string matchedStr;
-
     if (stringPtr) {
         matchedStr = stringPtr;
         pcre_free_substring(stringPtr);
     }
-
     return matchedStr;
 }
 
@@ -194,6 +188,7 @@ size_t Pattern::start(unsigned int groupNumber) const
         return ovector_[(groupNumber + 1) * 2];
     else
         throw std::out_of_range("Invalid group reference.");
+    return 0;
 }
 
 size_t Pattern::start() const
@@ -213,6 +208,7 @@ size_t Pattern::end(unsigned int groupNumber) const
         return ovector_[((groupNumber + 1) * 2) + 1 ] - 1;
     else
         throw std::out_of_range("Invalid group reference.");
+    return 0;
 }
 
 size_t Pattern::end() const
@@ -223,6 +219,7 @@ size_t Pattern::end() const
 bool Pattern::matches()
 {
     return matches(subject_);
+    return true;
 }
 
 bool Pattern::matches(const std::string& subject)
@@ -253,7 +250,6 @@ bool Pattern::matches(const std::string& subject)
     // Matching succeeded. Keep the number of substrings for
     // subsequent calls to group().
     count_ = rc;
-
     return true;
 }
 
@@ -261,9 +257,7 @@ std::vector<std::string> Pattern::split()
 {
     size_t tokenEnd = -1;
     size_t tokenStart = 0;
-
     std::vector<std::string> substringSplitted;
-
     while (matches()) {
         tokenStart = start();
         substringSplitted.push_back(subject_.substr(tokenEnd + 1,

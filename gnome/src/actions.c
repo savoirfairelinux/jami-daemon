@@ -61,15 +61,18 @@
 #include "actions.h"
 #include "dbus/dbus.h"
 #include "logger.h"
+#include "account_schema.h"
 #include "contacts/calltab.h"
 #include "contacts/searchbar.h"
 #include "contacts/addrbookfactory.h"
 #include "icons/icon_factory.h"
-#include "imwindow.h"
 #include "statusicon.h"
 #include "unused.h"
-#include "widget/imwidget.h"
 #include "sliders.h"
+#include "messaging/message_tab.h"
+#ifdef SFL_VIDEO
+#include "video/video_callbacks.h"
+#endif
 
 static GHashTable * ip2ip_profile;
 
@@ -135,13 +138,13 @@ status_bar_display_account()
     if (acc) {
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                                       _("Using account"),
-                                      (gchar*) account_lookup(acc, ACCOUNT_ALIAS),
-                                      (gchar*) account_lookup(acc, ACCOUNT_TYPE));
+                                      (gchar*) account_lookup(acc, CONFIG_ACCOUNT_ALIAS),
+                                      (gchar*) account_lookup(acc, CONFIG_ACCOUNT_TYPE));
     } else {
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
 
-    statusbar_push_message(msg, NULL,  __MSG_ACCOUNT_DEFAULT);
+    statusbar_push_message(msg, NULL, __MSG_ACCOUNT_DEFAULT);
     g_free(msg);
 }
 
@@ -150,6 +153,9 @@ void
 sflphone_quit(gboolean force_quit)
 {
     if (force_quit || calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
+#ifdef SFL_VIDEO
+        video_cleanup();
+#endif
         dbus_unregister(getpid());
         dbus_clean();
         account_list_free();
@@ -180,18 +186,12 @@ void
 sflphone_hung_up(callable_obj_t * c)
 {
     DEBUG("%s", __PRETTY_FUNCTION__);
-
+    disable_messaging_tab(c->_callID);
     calllist_remove_call(current_calls_tab, c->_callID);
     calltree_remove_call(current_calls_tab, c->_callID);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
     update_actions();
-
-    // test whether the widget contains text, if not remove it
-    if ((im_window_get_nb_tabs() > 1) && c->_im_widget && !(IM_WIDGET(c->_im_widget)->containText))
-        im_window_remove_tab(c->_im_widget);
-    else
-        im_widget_update_state(IM_WIDGET(c->_im_widget), FALSE);
 
     status_tray_icon_blink(FALSE);
 
@@ -213,7 +213,7 @@ void sflphone_fill_account_list(void)
         account_list_add(acc);
         /* Fill the actual array of credentials */
         dbus_get_credentials(acc);
-        gchar * status = account_lookup(acc, ACCOUNT_REGISTRATION_STATUS);
+        gchar * status = account_lookup(acc, CONFIG_ACCOUNT_REGISTRATION_STATUS);
 
         if (g_strcmp0(status, "REGISTERED") == 0)
             acc->state = ACCOUNT_STATE_REGISTERED;
@@ -238,10 +238,10 @@ void sflphone_fill_account_list(void)
         else
             acc->state = ACCOUNT_STATE_INVALID;
 
-        gchar * code = account_lookup(acc, ACCOUNT_REGISTRATION_STATE_CODE);
+        gchar * code = account_lookup(acc, CONFIG_ACCOUNT_REGISTRATION_STATE_CODE);
         if (code != NULL)
             acc->protocol_state_code = atoi(code);
-        acc->protocol_state_description = account_lookup(acc, ACCOUNT_REGISTRATION_STATE_DESC);
+        acc->protocol_state_description = account_lookup(acc, CONFIG_ACCOUNT_REGISTRATION_STATE_DESC);
     }
 
     g_strfreev(array);
@@ -295,7 +295,7 @@ sflphone_hang_up()
     DEBUG("%s", __PRETTY_FUNCTION__);
 
     if (selectedConf) {
-        im_widget_update_state(IM_WIDGET(selectedConf->_im_widget), FALSE);
+        disable_messaging_tab(selectedConf->_confID);
         dbus_hang_up_conference(selectedConf);
     } else if (selectedCall) {
         switch (selectedCall->_state) {
@@ -311,13 +311,10 @@ sflphone_hang_up()
             case CALL_STATE_CURRENT:
             case CALL_STATE_HOLD:
             case CALL_STATE_BUSY:
-            case CALL_STATE_RECORD:
                 dbus_hang_up(selectedCall);
                 call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 time(&selectedCall->_time_stop);
-
-                im_widget_update_state(IM_WIDGET(selectedCall->_im_widget), FALSE);
 
                 break;
             case CALL_STATE_FAILURE:
@@ -371,20 +368,10 @@ sflphone_pick_up()
         case CALL_STATE_DIALING:
             sflphone_place_call(selectedCall);
 
-            // if instant messaging window is visible, create new tab (deleted automatically if not used)
-            if (im_window_is_visible())
-                if (!selectedCall->_im_widget)
-                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
-
             break;
         case CALL_STATE_INCOMING:
             selectedCall->_history_state = g_strdup(INCOMING_STRING);
             calltree_update_call(history_tab, selectedCall);
-
-            // if instant messaging window is visible, create new tab (deleted automatically if not used)
-            if (im_window_is_visible())
-                if (!selectedCall->_im_widget)
-                    selectedCall->_im_widget = im_widget_display(selectedCall->_callID);
 
             dbus_accept(selectedCall);
             break;
@@ -397,7 +384,6 @@ sflphone_pick_up()
             break;
         case CALL_STATE_CURRENT:
         case CALL_STATE_HOLD:
-        case CALL_STATE_RECORD:
         case CALL_STATE_RINGING:
             sflphone_new_call();
             break;
@@ -416,7 +402,6 @@ sflphone_on_hold()
     if (selectedCall) {
         switch (selectedCall->_state) {
             case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
                 dbus_hold(selectedCall);
                 break;
             default:
@@ -471,17 +456,6 @@ sflphone_current(callable_obj_t * c)
         time(&c->_time_start);
 
     c->_state = CALL_STATE_CURRENT;
-    calltree_update_call(current_calls_tab, c);
-    update_actions();
-}
-
-void
-sflphone_record(callable_obj_t * c)
-{
-    if (c->_state != CALL_STATE_HOLD)
-        time(&c->_time_start);
-
-    c->_state = CALL_STATE_RECORD;
     calltree_update_call(current_calls_tab, c);
     update_actions();
 }
@@ -658,7 +632,6 @@ sflphone_keypad(guint keyval, gchar * key)
             case CALL_STATE_DIALING: // Currently dialing => edit number
                 process_dialing(c, keyval, key);
                 break;
-            case CALL_STATE_RECORD:
             case CALL_STATE_CURRENT:
 
                 switch (keyval) {
@@ -817,7 +790,7 @@ sflphone_detach_participant(const gchar* callID)
 
     DEBUG("Detach participant %s", selectedCall->_callID);
 
-    im_widget_update_state(IM_WIDGET(selectedCall->_im_widget), TRUE);
+    /*TODO elepage(2012) correct IM conversation*/
     calltree_remove_call(current_calls_tab, selectedCall->_callID);
     calltree_add_call(current_calls_tab, selectedCall, NULL);
     dbus_detach_participant(selectedCall->_callID);
@@ -854,19 +827,6 @@ sflphone_rec_call()
     if (selectedCall) {
         DEBUG("Set record for selected call");
         dbus_set_record(selectedCall->_callID);
-
-        switch (selectedCall->_state) {
-            case CALL_STATE_CURRENT:
-                selectedCall->_state = CALL_STATE_RECORD;
-                break;
-            case CALL_STATE_RECORD:
-                selectedCall->_state = CALL_STATE_CURRENT;
-                break;
-            default:
-                WARN("Should not happen in sflphone_off_hold ()!");
-                break;
-        }
-
         calltree_update_call(current_calls_tab, selectedCall);
     } else if (selectedConf) {
         DEBUG("Set record for selected conf");
@@ -906,41 +866,6 @@ sflphone_mute_call()
     toggle_slider_mute_microphone();
 }
 
-#ifdef SFL_VIDEO
-static void
-sflphone_fill_video_codec_list_per_account(account_t *account)
-{
-    if (!account->vcodecs)
-        account->vcodecs = g_queue_new();
-    else
-        g_queue_clear(account->vcodecs);
-
-    /* First add the active codecs for this account */
-    GQueue* system_vcodecs = get_video_codecs_list();
-    gchar **order = dbus_get_active_video_codec_list(account->accountID);
-    for (gchar **pl = order; *pl; pl++) {
-        codec_t *orig = codec_list_get_by_name(*pl, system_vcodecs);
-        codec_t *c = codec_create_new_from_caps(orig);
-        if (c)
-            g_queue_push_tail(account->vcodecs, c);
-        else
-            ERROR("Couldn't find codec %s %p", *pl, orig);
-        g_free(*pl);
-    }
-    g_free(order);
-
-    /* Here we add installed codecs that aren't active for the account */
-    guint caps_size = g_queue_get_length(system_vcodecs);
-    for (guint i = 0; i < caps_size; ++i) {
-        codec_t * vcodec = g_queue_peek_nth(system_vcodecs, i);
-        if (codec_list_get_by_name(vcodec->name, account->vcodecs) == NULL) {
-            vcodec->is_active = FALSE;
-            g_queue_push_tail(account->vcodecs, vcodec);
-        }
-    }
-}
-#endif
-
 static void
 sflphone_fill_audio_codec_list_per_account(account_t *account)
 {
@@ -978,9 +903,6 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
 void sflphone_fill_codec_list_per_account(account_t *account)
 {
     sflphone_fill_audio_codec_list_per_account(account);
-#ifdef SFL_VIDEO
-    sflphone_fill_video_codec_list_per_account(account);
-#endif
 }
 
 void sflphone_fill_call_list(void)

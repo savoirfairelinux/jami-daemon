@@ -124,6 +124,11 @@ void main_window_show_playback_scale();
  */
 void main_window_hide_playback_scale();
 
+/**
+ * Pause the key grabber while an other widget is focussed
+ */
+void main_window_pause_keygrabber(gboolean value);
+
 
 void main_window_reset_playback_scale();
 #endif

@@ -51,18 +51,18 @@
 #include "assistant.h"
 #include "accountlist.h"
 #include "accountlistconfigdialog.h"
+#include "messaging/message_tab.h"
 
 #include "dbus.h"
 #include "actions.h"
 #include "unused.h"
 
-#include "widget/imwidget.h"
-
 #ifdef SFL_VIDEO
-#include "video/video_renderer.h"
 #include "config/videoconf.h"
+#include "video/video_callbacks.h"
 #endif
 #include "eel-gconf-extensions.h"
+#include "account_schema.h"
 #include "mainwindow.h"
 
 #ifdef SFL_VIDEO
@@ -148,20 +148,17 @@ voice_mail_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, guint nb,
 
 static void
 incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
-                    const gchar *from, const gchar *msg, void *foo UNUSED)
+                    const gchar *from UNUSED, const gchar *msg, void *foo UNUSED)
 {
     // do not display message if instant messaging is disabled
     if (eel_gconf_key_exists(INSTANT_MESSAGING_ENABLED) &&
         !eel_gconf_get_integer(INSTANT_MESSAGING_ENABLED))
         return;
 
-    GtkWidget **widget;
-    gchar *id;
     callable_obj_t *call = calllist_get_call(current_calls_tab, callID);
 
     if (call) {
-        widget = &call->_im_widget;
-        id = call->_callID;
+        new_text_message(call,msg);
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
         if (!conf) {
@@ -169,14 +166,8 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
             return;
         }
 
-        widget = &conf->_im_widget;
-        id = conf->_confID;
+        new_text_message_conf(conf,msg,from);
     }
-
-    if (!*widget)
-        *widget = im_widget_display(id);
-
-    im_widget_add_message(IM_WIDGET(*widget), from, msg, 0);
 }
 
 /**
@@ -202,19 +193,12 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state)
         calltree_update_call(history_tab, c);
         status_bar_display_account();
         sflphone_hung_up(c);
-    }
-    else if (g_strcmp0(state, "UNHOLD_CURRENT") == 0)
+    } else if (g_strcmp0(state, "UNHOLD") == 0 || g_strcmp0(state, "CURRENT") == 0)
         sflphone_current(c);
-    else if (g_strcmp0(state, "UNHOLD_RECORD") == 0)
-        sflphone_record(c);
     else if (g_strcmp0(state, "HOLD") == 0)
         sflphone_hold(c);
     else if (g_strcmp0(state, "RINGING") == 0)
         sflphone_ringing(c);
-    else if (g_strcmp0(state, "CURRENT") == 0)
-        sflphone_current(c);
-    else if (g_strcmp0(state, "RECORD") == 0)
-        sflphone_record(c);
     else if (g_strcmp0(state, "FAILURE") == 0)
         sflphone_fail(c);
     else if (g_strcmp0(state, "BUSY") == 0)
@@ -241,9 +225,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state)
     // The callID is unknown, treat it like a new call
     // If it were an incoming call, we won't be here
     // It means that a new call has been initiated with an other client (cli for instance)
-    if (g_strcmp0(state, "RINGING") == 0 ||
-        g_strcmp0(state, "CURRENT") == 0 ||
-        g_strcmp0(state, "RECORD")) {
+    if (g_strcmp0(state, "RINGING") == 0 || g_strcmp0(state, "CURRENT") == 0) {
 
         DEBUG("New ringing call! accountID: %s", callID);
 
@@ -271,13 +253,12 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
 }
 
 static void
-toggle_im(conference_obj_t *conf, gboolean activate)
+toggle_im(conference_obj_t *conf, gboolean activate UNUSED)
 {
     for (GSList *p = conf->participant_list; p; p = g_slist_next(p)) {
-        callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
+        //callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
 
-        if (call)
-            im_widget_update_state(IM_WIDGET(call->_im_widget), activate);
+        /*TODO elepage(2012) Implement IM messaging toggle here*/
     }
 }
 
@@ -340,10 +321,10 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, void *foo U
     for (gchar **part = participants; part && *part; ++part) {
         callable_obj_t *call = calllist_get_call(current_calls_tab, *part);
 
-        im_widget_update_state(IM_WIDGET(call->_im_widget), FALSE);
+        /*TODO elepage (2012) implement merging IM conversation here*/
 
         // if one of these participants is currently recording, the whole conference will be recorded
-        if (call->_state == CALL_STATE_RECORD)
+        if (dbus_get_is_recording(call))
             new_conf->_state = CONFERENCE_STATE_ACTIVE_ATTACHED_RECORD;
 
         call->_historyConfID = g_strdup(confID);
@@ -370,15 +351,12 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 
     calltree_remove_conference(current_calls_tab, c);
 
-    im_widget_update_state(IM_WIDGET(c->_im_widget), FALSE);
+    /*TODO elepage(2012) implement unmerging of IM here*/
 
     // remove all participants for this conference
     for (GSList *p = c->participant_list; p; p = g_slist_next(p)) {
-        callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
-
-        if (call) {
-            im_widget_update_state(IM_WIDGET(call->_im_widget), TRUE);
-        }
+        //callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
+        /*TODO elepage(2012) implement unmerging of IM here*/
     }
 
     conferencelist_remove(current_calls_tab, c->_confID);
@@ -464,7 +442,7 @@ stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, void *f
     // Disable STUN for the account that tried to create the STUN transport
     account_t *account = account_list_get_by_id(accountID);
     if (account) {
-        account_replace(account, ACCOUNT_SIP_STUN_ENABLED, "false");
+        account_replace(account, CONFIG_STUN_ENABLE, "false");
         dbus_set_account_details(account);
     }
 }
@@ -703,47 +681,52 @@ gboolean dbus_connect(GError **error)
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT,
                                       G_TYPE_NONE, G_TYPE_INT, G_TYPE_INVALID);
 
-    /* Register STRING STRING STRING Marshaller */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register INT INT Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
+                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
-    /* Register STRING STRING INT Marshaller */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING_INT, G_TYPE_NONE,
-        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
-
-    /* Register STRING STRING Marshaller */
-    dbus_g_object_register_marshaller(
-        g_cclosure_user_marshal_VOID__STRING_STRING, G_TYPE_NONE, G_TYPE_STRING,
-        G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register STRING Marshaller */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
 
     /* Register STRING INT Marshaller */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_INT,
                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
-
-    /* Register INT INT Marshaller */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
-                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
     /* Register STRING DOUBLE Marshaller */
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_DOUBLE, G_TYPE_NONE, G_TYPE_STRING,
         G_TYPE_DOUBLE, G_TYPE_INVALID);
 
-    /* Register STRING Marshaller */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
-                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register STRING STRING Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING, G_TYPE_NONE, G_TYPE_STRING,
+        G_TYPE_STRING, G_TYPE_INVALID);
+
+    /* Register STRING INT INT Marshaller */
+    dbus_g_object_register_marshaller(
+            g_cclosure_user_marshal_VOID__STRING_INT_INT, G_TYPE_NONE,
+            G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
     /* Register STRING STRING BOOL Marshaller */
     dbus_g_object_register_marshaller(
         g_cclosure_user_marshal_VOID__STRING_STRING_BOOL, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
 
-    /* Register STRING Marshaller */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
-                                      G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    /* Register STRING STRING INT Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_INT, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
 
+    /* Register STRING STRING STRING Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+
+    /* Register STRING STRING INT INT Marshaller */
+    dbus_g_object_register_marshaller(
+        g_cclosure_user_marshal_VOID__STRING_STRING_INT_INT, G_TYPE_NONE,
+        G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
     DEBUG("Adding callmanager Dbus signals");
 
@@ -892,7 +875,6 @@ gboolean dbus_connect(GError **error)
     const gchar *videocontrols_interface = "org.sflphone.SFLphone.VideoControls";
     video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
             videocontrols_object_instance, videocontrols_interface);
-    g_assert(video_proxy != NULL);
     if (video_proxy == NULL) {
         ERROR("Error: Failed to connect to %s", videocontrols_object_instance);
         return FALSE;
@@ -902,27 +884,16 @@ gboolean dbus_connect(GError **error)
     dbus_g_proxy_connect_signal(video_proxy, "deviceEvent",
             G_CALLBACK(video_device_event_cb), NULL, NULL);
 
-    /* Marshaller for INT INT INT INT INT */
-    dbus_g_object_register_marshaller(
-            g_cclosure_user_marshal_VOID__INT_INT_INT_INT_INT, G_TYPE_NONE,
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
-
-    dbus_g_proxy_add_signal(video_proxy, "receivingEvent", G_TYPE_INT,
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT,
-            G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(video_proxy, "receivingEvent",
-            G_CALLBACK(receiving_video_event_cb), NULL,
+    dbus_g_proxy_add_signal(video_proxy, "startedDecoding", G_TYPE_STRING,
+            G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "startedDecoding",
+            G_CALLBACK(started_decoding_video_cb), NULL,
             NULL);
 
-    /* Marshaller for INT INT */
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT_INT,
-                                      G_TYPE_NONE, G_TYPE_INT, G_TYPE_INT,
-                                      G_TYPE_INVALID);
-
-    dbus_g_proxy_add_signal(video_proxy, "stoppedReceivingEvent",
-            G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
-    dbus_g_proxy_connect_signal(video_proxy, "stoppedReceivingEvent",
-            G_CALLBACK(stopped_receiving_video_event_cb),
+    dbus_g_proxy_add_signal(video_proxy, "stoppedDecoding",
+            G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal(video_proxy, "stoppedDecoding",
+            G_CALLBACK(stopped_decoding_video_cb),
             NULL, NULL);
 #endif
 
@@ -1006,20 +977,22 @@ dbus_stop_recorded_file_playback(const gchar *filepath)
     check_error(error);
 }
 
+static void
+hang_up_reply_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+{
+    check_error(error);
+}
+
 void
 dbus_hang_up(const callable_obj_t *c)
 {
-    GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hang_up(call_proxy, c->_callID, &error);
-    check_error(error);
+    org_sflphone_SFLphone_CallManager_hang_up_async(call_proxy, c->_callID, hang_up_reply_cb, NULL);
 }
 
 void
 dbus_hang_up_conference(const conference_obj_t *c)
 {
-    GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hang_up_conference(call_proxy, c->_confID, &error);
-    check_error(error);
+    org_sflphone_SFLphone_CallManager_hang_up_conference_async(call_proxy, c->_confID, hang_up_reply_cb, NULL);
 }
 
 void
@@ -1072,16 +1045,8 @@ dbus_account_list()
     GError *error = NULL;
     char **array = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_account_list(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_account_list) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_account_list: %s", error->message);
-
-        g_error_free(error);
-    } else
-        DEBUG("DBus called get_account_list() on ConfigurationManager");
+    org_sflphone_SFLphone_ConfigurationManager_get_account_list(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -1092,16 +1057,8 @@ dbus_get_account_details(const gchar *accountID)
     GError *error = NULL;
     GHashTable *details = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_account_details(config_proxy, accountID, &details, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_account_details: %s",
-                  error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_account_details(config_proxy, accountID, &details, &error);
+    check_error(error);
 
     return details;
 }
@@ -1121,18 +1078,9 @@ dbus_get_credentials(account_t *a)
 {
     g_assert(a);
     GError *error = NULL;
-    if (org_sflphone_SFLphone_ConfigurationManager_get_credentials(config_proxy, a->accountID,
-                               &a->credential_information, &error))
-        return;
-
-    if (error->domain == DBUS_GERROR &&
-        error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-        ERROR("Caught remote method (get_account_details) exception  %s: %s",
-              dbus_g_error_get_name(error), error->message);
-    else
-        ERROR("Error while calling get_account_details: %s", error->message);
-
-    g_error_free(error);
+    org_sflphone_SFLphone_ConfigurationManager_get_credentials(config_proxy,
+            a->accountID, &a->credential_information, &error);
+    check_error(error);
 }
 
 GHashTable *
@@ -1141,16 +1089,8 @@ dbus_get_ip2_ip_details(void)
     GError *error = NULL;
     GHashTable *details = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_ip2_ip_details(config_proxy, &details, &error)) {
-        if (error->domain == DBUS_GERROR &&
-            error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_ip2_ip_details) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_ip2_ip_details: %s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_ip2_ip_details(config_proxy, &details, &error);
+    check_error(error);
 
     return details;
 }
@@ -1256,33 +1196,21 @@ dbus_audio_codec_list()
 }
 
 #ifdef SFL_VIDEO
-gchar **
-dbus_video_codec_list()
+GPtrArray *
+dbus_get_video_codecs(const gchar *accountID)
 {
     GError *error = NULL;
-    gchar **array = NULL;
-    org_sflphone_SFLphone_VideoControls_get_codec_list(video_proxy, &array, &error);
+    GPtrArray *array = NULL;
+    org_sflphone_SFLphone_VideoControls_get_codecs(video_proxy, accountID, &array, &error);
     check_error(error);
-
-    return array;
-}
-
-gchar **
-dbus_get_active_video_codec_list(const gchar *accountID)
-{
-    gchar **array = NULL;
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_get_active_codec_list(video_proxy, accountID, &array, &error);
-    check_error(error);
-
     return array;
 }
 
 void
-dbus_set_active_video_codec_list(const gchar** list, const gchar *accountID)
+dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_active_codec_list(video_proxy, list, accountID, &error);
+    org_sflphone_SFLphone_VideoControls_set_codecs(video_proxy, accountID, list, &error);
     check_error(error);
 }
 #endif
@@ -1298,16 +1226,6 @@ dbus_audio_codec_details(int payload)
 }
 
 #ifdef SFL_VIDEO
-GHashTable*
-dbus_video_codec_details(const gchar *codec)
-{
-    GError *error = NULL;
-    GHashTable *details = NULL;
-    org_sflphone_SFLphone_VideoControls_get_codec_details(video_proxy,
-                                                          codec, &details, &error);
-    check_error(error);
-    return details;
-}
 
 gchar *
 dbus_get_current_video_codec_name(const callable_obj_t *c)
@@ -1323,8 +1241,6 @@ dbus_get_current_video_codec_name(const callable_obj_t *c)
         codecName = g_strdup("");
     }
 
-    DEBUG("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
-
     return codecName;
 }
 #endif
@@ -1338,7 +1254,6 @@ dbus_get_current_audio_codec_name(const callable_obj_t *c)
     org_sflphone_SFLphone_CallManager_get_current_audio_codec_name(call_proxy, c->_callID, &codecName,
                                       &error);
     check_error(error);
-    DEBUG("%s: codecName : %s", __PRETTY_FUNCTION__, codecName);
     return codecName;
 }
 
@@ -1371,15 +1286,8 @@ dbus_get_audio_plugin_list()
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_audio_plugin_list(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_output_plugin_list) exception"
-                    "%s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_out_plugin_list: %s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_audio_plugin_list(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -1758,180 +1666,135 @@ dbus_get_audio_manager(void)
 
 #ifdef SFL_VIDEO
 gchar *
-dbus_get_video_input_device_channel()
+dbus_get_active_video_device_channel()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device_channel(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device_channel(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
 gchar *
-dbus_get_video_input_device_size()
+dbus_get_active_video_device_size()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device_size(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device_size(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
 gchar *
-dbus_get_video_input_device_rate()
+dbus_get_active_video_device_rate()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device_rate(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device_rate(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
 gchar *
-dbus_get_video_input_device()
+dbus_get_active_video_device()
 {
     gchar *str = NULL;
     GError *error = NULL;
 
-    org_sflphone_SFLphone_VideoControls_get_input_device(video_proxy, &str, &error);
+    org_sflphone_SFLphone_VideoControls_get_active_device(video_proxy, &str, &error);
     check_error(error);
 
     return str;
 }
 
-/**
- * Set video input device
- */
 void
-dbus_set_video_input_device(const gchar *device)
+dbus_set_active_video_device(const gchar *device)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device(video_proxy, device, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device(video_proxy, device, &error);
     check_error(error);
 }
 
-/**
- * Set video input device channel
- */
 void
-dbus_set_video_input_device_channel(const gchar *channel)
+dbus_set_active_video_device_channel(const gchar *channel)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device_channel(video_proxy, channel, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device_channel(video_proxy, channel, &error);
     check_error(error);
 }
 
-/**
- * Set video input size
- */
 void
-dbus_set_video_input_size(const gchar *size)
+dbus_set_active_video_device_size(const gchar *size)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device_size(video_proxy, size, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device_size(video_proxy, size, &error);
     check_error(error);
 }
 
-/**
- * Set video input rate
- */
 void
-dbus_set_video_input_rate(const gchar *rate)
+dbus_set_active_video_device_rate(const gchar *rate)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_set_input_device_rate(video_proxy, rate, &error);
+    org_sflphone_SFLphone_VideoControls_set_active_device_rate(video_proxy, rate, &error);
     check_error(error);
 }
 
-/**
- * Get a list of video input devices
- */
 gchar **
-dbus_get_video_input_device_list()
+dbus_get_video_device_list()
 {
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_list(video_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_list) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_list: %s", error->message);
-
-        g_error_free (error);
-    }
-
+    org_sflphone_SFLphone_VideoControls_get_device_list(video_proxy, &array, &error);
+    check_error(error);
     return array;
 }
 
 /**
- * Get a list of inputs supported by the video input device
+ * Get the list of channels supported by the given device
  */
 gchar **
-dbus_get_video_input_device_channel_list(const gchar *dev)
+dbus_get_video_device_channel_list(const gchar *dev)
 {
     gchar **array = NULL;
     GError *error = NULL;
-
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_channel_list(
-                video_proxy, dev, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_channel_list) exception  %s: %s",
-                  dbus_g_error_get_name (error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_channel_list: %s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_VideoControls_get_device_channel_list(video_proxy, dev, &array, &error);
+    check_error(error);
     return array;
 }
 
 /**
- * Get a list of resolutions supported by the video input
+ * Get the list of resolutions supported by the given channel of the given device
  */
 gchar **
-dbus_get_video_input_device_size_list(const gchar *dev, const gchar *channel)
+dbus_get_video_device_size_list(const gchar *dev, const gchar *channel)
 {
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_size_list(video_proxy, dev, channel, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_size_list) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_size_list: %s", error->message);
-
-        g_error_free (error);
-        return NULL;
-    } else
-        return array;
+    org_sflphone_SFLphone_VideoControls_get_device_size_list(video_proxy, dev, channel, &array, &error);
+    check_error(error);
+    return array;
 }
 
 /**
- * Get a list of frame rates supported by the video input resolution
+ * Get the list of frame rates supported by the given resolution of the given channel of the given device
  */
 gchar **
-dbus_get_video_input_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size)
+dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gchar *size)
 {
     gchar **array = NULL;
     GError *error = NULL;
 
-    if (!org_sflphone_SFLphone_VideoControls_get_input_device_rate_list(video_proxy, dev, channel, size, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_video_input_device_rate_list) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("Error while calling get_video_input_device_rate_list: %s", error->message);
-        g_error_free(error);
-        return NULL;
-    } else
-        return array;
+    org_sflphone_SFLphone_VideoControls_get_device_rate_list(video_proxy, dev, channel, size, &array, &error);
+    check_error(error);
+    return array;
 }
 #endif
 
@@ -2151,15 +2014,8 @@ dbus_get_all_ip_interface(void)
     GError *error = NULL;
     gchar **array = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_all_ip_interface) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("%s", error->message);
-
-        g_error_free(error);
-    } else
-        DEBUG("DBus called get_all_ip_interface() on ConfigurationManager");
+    org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -2170,15 +2026,8 @@ dbus_get_all_ip_interface_by_name(void)
     GError *error = NULL;
     gchar **array = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface_by_name(config_proxy, &array, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_all_ip_interface) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("%s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface_by_name(config_proxy, &array, &error);
+    check_error(error);
 
     return array;
 }
@@ -2189,15 +2038,8 @@ dbus_get_shortcuts(void)
     GError *error = NULL;
     GHashTable *shortcuts = NULL;
 
-    if (!org_sflphone_SFLphone_ConfigurationManager_get_shortcuts(config_proxy, &shortcuts, &error)) {
-        if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-            ERROR("Caught remote method (get_shortcuts) exception  %s: %s",
-                  dbus_g_error_get_name(error), error->message);
-        else
-            ERROR("%s", error->message);
-
-        g_error_free(error);
-    }
+    org_sflphone_SFLphone_ConfigurationManager_get_shortcuts(config_proxy, &shortcuts, &error);
+    check_error(error);
 
     return shortcuts;
 }
@@ -2219,29 +2061,36 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
 }
 
 #ifdef SFL_VIDEO
+static void
+video_preview_async_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+{
+    check_error(error);
+    // Reactivate it now that we're done, D-Bus wise
+    set_preview_button_sensitivity(TRUE);
+}
+
 void
 dbus_start_video_preview()
 {
-    GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy,
-                                                            video_preview_started_cb,
-                                                            &error);
-    check_error(error);
-}
-
-static void preview_stopped_cb()
-{
-    DEBUG("Video preview has stopped");
+    set_preview_button_sensitivity(FALSE);
+    org_sflphone_SFLphone_VideoControls_start_preview_async(video_proxy, video_preview_async_cb, NULL);
 }
 
 void
 dbus_stop_video_preview()
 {
+    set_preview_button_sensitivity(FALSE);
+    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy, video_preview_async_cb, NULL);
+}
+
+gboolean
+dbus_has_video_preview_started()
+{
     GError *error = NULL;
-    org_sflphone_SFLphone_VideoControls_stop_preview_async(video_proxy,
-                                                           preview_stopped_cb,
-                                                           &error);
+    gboolean started = FALSE;
+    org_sflphone_SFLphone_VideoControls_has_preview_started(video_proxy, &started, &error);
     check_error(error);
+    return started;
 }
 #endif
 

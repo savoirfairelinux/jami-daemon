@@ -84,7 +84,6 @@ typedef struct  {
 
     /* The codec lists */
     GQueue *acodecs;
-    GQueue *vcodecs;
     guint _messages_number;
 } account_t;
 

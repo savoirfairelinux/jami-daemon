@@ -86,8 +86,6 @@ void codec_list_update_to_daemon(const account_t *acc);
 
 codec_t* codec_list_get_by_payload(gint payload, GQueue *q);
 
-GQueue* get_video_codecs_list(void);
-
 GQueue* get_audio_codecs_list(void);
 
 /*

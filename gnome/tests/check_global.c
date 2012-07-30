@@ -33,7 +33,7 @@
 #include <glib.h>
 
 #include "../src/accountlist.h"
-#include "../src/sflphone_const.h"
+#include "../src/account_schema.h"
 #include "../src/str_utils.h"
 
 #define XML_OUTPUT  "gnome-check-global.xml"
@@ -50,15 +50,15 @@ account_t* create_test_account(gchar *alias)
     test->properties = g_hash_table_new(NULL, g_str_equal);
 
     // Populate the properties
-    account_replace(test, ACCOUNT_ENABLED, "1");
-    account_replace(test, ACCOUNT_ALIAS, alias);
-    account_replace(test, ACCOUNT_TYPE, "SIP");
-    account_replace(test, ACCOUNT_HOSTNAME, "sflphone.org");
-    account_replace(test, ACCOUNT_USERNAME, "1260");
-    account_replace(test, ACCOUNT_PASSWORD, "NIPAgmLo");
-    account_replace(test, ACCOUNT_MAILBOX, "");
-    account_replace(test, ACCOUNT_SIP_STUN_SERVER, "");
-    account_replace(test, ACCOUNT_SIP_STUN_ENABLED, "0");
+    account_replace(test, CONFIG_ACCOUNT_ENABLE, "1");
+    account_replace(test, CONFIG_ACCOUNT_ALIAS, alias);
+    account_replace(test, CONFIG_ACCOUNT_TYPE, "SIP");
+    account_replace(test, CONFIG_ACCOUNT_HOSTNAME, "sflphone.org");
+    account_replace(test, CONFIG_ACCOUNT_USERNAME, "1260");
+    account_replace(test, CONFIG_ACCOUNT_PASSWORD, "NIPAgmLo");
+    account_replace(test, CONFIG_ACCOUNT_MAILBOX, "");
+    account_replace(test, CONFIG_STUN_SERVER, "");
+    account_replace(test, CONFIG_STUN_ENABLE, "0");
 
     return test;
 }
@@ -112,8 +112,8 @@ START_TEST(test_get_current_account)
 
     // The current account must be the first we add
     if (current) {
-        fail_unless(utf8_case_equal(account_lookup(current, ACCOUNT_ALIAS),
-                                     account_lookup(test, ACCOUNT_ALIAS)),
+        fail_unless(utf8_case_equal(account_lookup(current, CONFIG_ACCOUNT_ALIAS),
+                                     account_lookup(test, CONFIG_ACCOUNT_ALIAS)),
                     "ERROR - BAD CURRENT ACCOUNT");
     }
 
@@ -124,8 +124,8 @@ START_TEST(test_get_current_account)
 
     // The current account must be the first we add
     if (current) {
-        fail_unless(utf8_case_equal(account_lookup(current, ACCOUNT_ALIAS),
-                                     account_lookup(test2, ACCOUNT_ALIAS)),
+        fail_unless(utf8_case_equal(account_lookup(current, CONFIG_ACCOUNT_ALIAS),
+                                     account_lookup(test2, CONFIG_ACCOUNT_ALIAS)),
                     "ERROR - BAD CURRENT ACCOUNT");
     }
 }

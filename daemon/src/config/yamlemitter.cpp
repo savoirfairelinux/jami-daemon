@@ -97,7 +97,6 @@ void YamlEmitter::serializeAccount(MappingNode *map)
 
     if (isFirstAccount_) {
         int accountid;
-        DEBUG("Create account sequence");
 
         // accountSequence_ need to be static outside this scope since reused each time an account is written
         if ((accountid = yaml_document_add_scalar(&document_, NULL, (yaml_char_t *) "accounts", -1, YAML_PLAIN_SCALAR_STYLE)) == 0)

@@ -32,11 +32,12 @@
 #include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "hooks-config.h"
+#include "eel-gconf-extensions.h"
 #include "dbus.h"
 
 URLHook_Config *_urlhook_config;
 
-GtkWidget *field, *command, *prefix;
+GtkWidget *field, *command, *prefix, *url;
 
 void hooks_load_parameters(URLHook_Config** settings)
 {
@@ -93,6 +94,8 @@ void hooks_save_parameters(void)
 
     // Decrement the reference count
     g_hash_table_unref(params);
+
+    eel_gconf_set_string(MESSAGING_URL_COMMAND, gtk_entry_get_text(GTK_ENTRY(url)));
 
 }
 
@@ -193,6 +196,22 @@ GtkWidget* create_hooks_settings()
     gtk_entry_set_text(GTK_ENTRY(prefix), _urlhook_config->phone_number_prefix);
     gtk_widget_set_sensitive(GTK_WIDGET(prefix), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widg)));
     gtk_table_attach(GTK_TABLE(table), prefix, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+
+    gnome_main_section_new_with_table(_("Messaging"), &frame, &table, 4, 2);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    gtk_widget_show(frame);
+
+    label = gtk_label_new_with_mnemonic(_("Open URL in"));
+    url   = gtk_entry_new();
+    gchar *url_command = eel_gconf_get_string(MESSAGING_URL_COMMAND);
+    if (url_command && *url_command) {
+        gtk_entry_set_text(GTK_ENTRY(url), url_command);
+        g_free(url_command);
+    } else
+        gtk_entry_set_text(GTK_ENTRY(url), "xdg-open");
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), url);
+    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+    gtk_table_attach(GTK_TABLE(table), url  , 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
     gtk_widget_show_all(ret);
 

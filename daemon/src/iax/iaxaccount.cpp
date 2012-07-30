@@ -36,6 +36,7 @@
 #endif
 
 #include "iaxaccount.h"
+#include "account_schema.h"
 #include "iaxvoiplink.h"
 #include "logger.h"
 #include "manager.h"

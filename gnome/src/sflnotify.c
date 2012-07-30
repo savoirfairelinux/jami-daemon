@@ -28,9 +28,13 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <glib.h>
 #include <glib/gi18n.h>
+#include "account_schema.h"
 #include "str_utils.h"
 #include "eel-gconf-extensions.h"
 #include "sflnotify.h"
@@ -104,8 +108,8 @@ notify_incoming_call(callable_obj_t* c)
         title = g_markup_printf_escaped("IP-to-IP call");
     else {
         title = g_markup_printf_escaped(_("%s account : %s") ,
-                                        (gchar*) g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_TYPE) ,
-                                        (gchar*) g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_ALIAS)) ;
+                                        (gchar*) g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties, CONFIG_ACCOUNT_TYPE) ,
+                                        (gchar*) g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties, CONFIG_ACCOUNT_ALIAS)) ;
     }
 
     gchar *callerid = g_markup_printf_escaped(_("<i>From</i> %s"), c->_peer_number);
@@ -123,8 +127,8 @@ notify_voice_mails(guint count, account_t* acc)
 #if USE_NOTIFY
     // the account is different from NULL
     gchar *title = g_markup_printf_escaped(_("%s account : %s") ,
-                                           (gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_TYPE) ,
-                                           (gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS)) ;
+                                           (gchar*) g_hash_table_lookup(acc->properties, CONFIG_ACCOUNT_TYPE) ,
+                                           (gchar*) g_hash_table_lookup(acc->properties, CONFIG_ACCOUNT_ALIAS)) ;
     gchar *body = g_markup_printf_escaped(n_("%d voice mail", "%d voice mails", count), count);
 
     create_new_gnome_notification(title,
@@ -140,8 +144,8 @@ notify_current_account(account_t* acc)
 #if USE_NOTIFY
     // the account is different from NULL
     gchar *body = g_markup_printf_escaped(_("Calling with %s account <i>%s</i>"),
-                                          (gchar*) g_hash_table_lookup(acc->properties, ACCOUNT_TYPE) ,
-                                          (gchar*) g_hash_table_lookup(acc->properties, ACCOUNT_ALIAS));
+                                          (gchar*) g_hash_table_lookup(acc->properties, CONFIG_ACCOUNT_TYPE) ,
+                                          (gchar*) g_hash_table_lookup(acc->properties, CONFIG_ACCOUNT_ALIAS));
 
     gchar *title = g_markup_printf_escaped(_("Current account"));
 

@@ -89,10 +89,14 @@ class AudioRtpRecord {
         int codecFrameSize_;
         int converterSamplingRate_;
         std::list<DTMFEvent> dtmfQueue_;
-        SFLDataFormat fadeFactor_;
+        double fadeFactor_;
+
+#if HAVE_SPEEXDSP
         NoiseSuppress *noiseSuppressEncode_;
         NoiseSuppress *noiseSuppressDecode_;
         ost::Mutex audioProcessMutex_;
+#endif
+
         std::string callId_;
         unsigned int dtmfPayloadType_;
 
@@ -146,7 +150,9 @@ class AudioRtpRecordHandler {
 
         void initBuffers();
 
+#if HAVE_SPEEXDSP
         void initNoiseSuppress();
+#endif
 
         /**
          * Encode audio data from mainbuffer
@@ -174,7 +180,6 @@ class AudioRtpRecordHandler {
     private:
 
         const std::string id_;
-        EchoSuppress echoCanceller;
         GainControl gainController;
 };
 }

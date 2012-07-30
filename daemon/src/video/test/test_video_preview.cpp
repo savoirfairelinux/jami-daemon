@@ -44,12 +44,14 @@ void VideoPreviewTest::testPreview()
     args["height"] = "480";
 
     sfl_video::VideoPreview preview(args);
-    sleep(10);
+    sleep(1);
 }
 
 int main ()
 {
-    VideoPreviewTest test;
-    test.testPreview();
+    for (int i = 0; i < 20; ++i) {
+        VideoPreviewTest test;
+        test.testPreview();
+    }
     return 0;
 }

@@ -37,7 +37,9 @@
 #include "sip/sipvoiplink.h"
 #include "audio/audiolayer.h"
 #include "audio/audiortp/audio_rtp_factory.h"
+#if HAVE_ZRTP
 #include "audio/audiortp/audio_zrtp_session.h"
+#endif
 
 #include "logger.h"
 #include "manager.h"
@@ -270,7 +272,7 @@ CallManager::getIsRecording(const std::string& callID)
 
 std::string CallManager::getCurrentAudioCodecName(const std::string& callID)
 {
-    return Manager::instance().getCurrentCodecName(callID).c_str();
+    return Manager::instance().getCurrentAudioCodecName(callID);
 }
 
 std::map<std::string, std::string>
@@ -307,6 +309,7 @@ CallManager::startTone(const int32_t& start , const int32_t& type)
 // for conferencing in order to get
 // the right pointer for the given
 // callID.
+#if HAVE_ZRTP
 sfl::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
@@ -330,65 +333,90 @@ CallManager::getAudioZrtpSession(const std::string& callID)
 
     return zSession;
 }
+#endif
 
 void
 CallManager::setSASVerified(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->SASVerified();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::resetSASVerified(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->resetSASVerified();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::setConfirmGoClear(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->goClearOk();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::requestGoClear(const std::string& callID)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->requestGoClear();
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 {
+#if HAVE_ZRTP
     try {
         sfl::AudioZrtpSession * zSession;
         zSession = getAudioZrtpSession(callID);
         zSession->acceptEnrollment(accepted);
     } catch (...) {
     }
+#else
+    ERROR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
+#endif
 }
 
 void
 CallManager::sendTextMessage(const std::string& callID, const std::string& message)
 {
+#if HAVE_INSTANT_MESSAGING
     if (!Manager::instance().sendTextMessage(callID, message, "Me"))
         throw CallManagerException();
+#else
+    ERROR("Could not send \"%s\" text message to %s since SFLphone daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
+#endif
 }

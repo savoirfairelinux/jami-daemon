@@ -29,204 +29,92 @@
  */
 
 #include "video_renderer.h"
-
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h> /* semaphore functions and structs. */
-#include <sys/shm.h>
-
-#include <assert.h>
+#include "shm_header.h"
+#include <sys/mman.h>
+#include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
-#include "actions.h"
 #include "logger.h"
 #include "unused.h"
 
-static GtkWidget *receivingVideoWindow = NULL;
-static gboolean receivingWindowFullscreen = FALSE;
-static GtkWidget *receivingVideoArea = NULL;
-static VideoRenderer *video_renderer = NULL;
-
+/* This macro will implement the video_renderer_get_type function
+   and define a parent class pointer accessible from the whole .c file */
+G_DEFINE_TYPE(VideoRenderer, video_renderer, G_TYPE_OBJECT);
 
 #define VIDEO_RENDERER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
             VIDEO_RENDERER_TYPE, VideoRendererPrivate))
 
-/* This macro will implement the video_renderer_get_type function
-   and define a parent class pointer accessible from the whole .c file */
-G_DEFINE_TYPE (VideoRenderer, video_renderer, G_TYPE_OBJECT);
-
 enum
 {
     PROP_0,
-    PROP_RUNNING,
     PROP_WIDTH,
     PROP_HEIGHT,
     PROP_DRAWAREA,
-    PROP_SHMKEY,
-    PROP_SEMKEY,
-    PROP_VIDEO_BUFFER_SIZE,
+    PROP_SHM_PATH,
     PROP_LAST
 };
 
-static GParamSpec *properties[PROP_LAST];
+static GParamSpec *properties[PROP_LAST] = { NULL, };
 
-static void video_renderer_finalize (GObject *gobject);
-static void video_renderer_get_property (GObject *object, guint prop_id,
-                            GValue *value, GParamSpec *pspec);
-static void video_renderer_set_property (GObject *object, guint prop_id,
-                            const GValue *value, GParamSpec *pspec);
+static void video_renderer_finalize(GObject *gobject);
+static void video_renderer_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
+static void video_renderer_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
 
 /* Our private member structure */
 struct _VideoRendererPrivate {
     guint width;
     guint height;
+    gchar *shm_path;
 
-    gchar *shm_buffer;
-    gint sem_set_id;
-
-    gint sem_key;
-    gint shm_key;
-    gint videobuffersize;
     ClutterActor *texture;
 
     gpointer drawarea;
-
-    gboolean is_running;
+    gint fd;
+    SHMHeader *shm_area;
+    gsize shm_area_len;
+    guint buffer_gen;
 };
 
-/* See /bits/sem.h line 55 for why this is necessary */
-#if _SEM_SEMUN_UNDEFINED
-union semun
-{
-    int val;				    /* value for SETVAL */
-    struct semid_ds *buf;		/* buffer for IPC_STAT & IPC_SET */
-    unsigned short int *array;	/* array for GETALL & SETALL */
-    struct seminfo *__buf;		/* buffer for IPC_INFO */
-};
-#endif
-
-/* join and/or create a shared memory segment */
-static int
-getShm(unsigned numBytes, int shmKey)
-{
-    key_t key = shmKey;
-    /* connect to a segment with 600 permissions
-       (r--r--r--) */
-    int shm_id = shmget(key, numBytes, 0644);
-
-    if (shm_id == -1)
-      perror("shmget");
-
-    return shm_id;
-}
-
-
-/* attach a shared memory segment */
-static char *
-attachShm(int shm_id)
-{
-    /* attach to the segment and get a pointer to it */
-    char *data = shmat(shm_id, (void *)0, 0);
-    if (data == (char *)(-1)) {
-        perror("shmat");
-        data = NULL;
-    }
-
-    return data;
-}
-
 static void
-detachShm(char *data)
+video_renderer_class_init(VideoRendererClass *klass)
 {
-    /* detach from the segment: */
-    if (shmdt(data) == -1)
-        perror("shmdt");
-}
+    GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
 
-static int
-get_sem_set(int semKey)
-{
-    /* this variable will contain the semaphore set. */
-    int sem_set_id;
-    key_t key = semKey;
-
-    /* semaphore value, for semctl().                */
-    union semun sem_val;
-
-    /* first we get a semaphore set with a single semaphore, */
-    /* whose counter is initialized to '0'.                     */
-    sem_set_id = semget(key, 1, 0600);
-    if (sem_set_id == -1) {
-        perror("semget");
-        return sem_set_id;
-    }
-    sem_val.val = 0;
-    semctl(sem_set_id, 0, SETVAL, sem_val);
-    return sem_set_id;
-}
-
-static void
-video_renderer_class_init (VideoRendererClass *klass)
-{
-    int i;
-    GObjectClass *gobject_class;
-    gobject_class = G_OBJECT_CLASS (klass);
-
-    g_type_class_add_private (klass, sizeof (VideoRendererPrivate));
+    g_type_class_add_private(klass, sizeof(VideoRendererPrivate));
     gobject_class->finalize = video_renderer_finalize;
     gobject_class->get_property = video_renderer_get_property;
     gobject_class->set_property = video_renderer_set_property;
 
-    properties[PROP_RUNNING] = g_param_spec_boolean ("running", "Running",
-                                                     "True if renderer is running",
-                                                     FALSE,
-                                                     G_PARAM_READABLE);
+    properties[PROP_DRAWAREA] = g_param_spec_pointer("drawarea", "DrawArea",
+                                                    "Pointer to the drawing area",
+                                                    G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
-    properties[PROP_DRAWAREA] = g_param_spec_pointer ("drawarea", "DrawArea",
-                                                     "Pointer to the drawing area",
-                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+    properties[PROP_WIDTH] = g_param_spec_int("width", "Width", "Width of video", G_MININT, G_MAXINT, 0,
+                                              G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
-    properties[PROP_WIDTH] = g_param_spec_int ("width", "Width", "Width of video", G_MININT, G_MAXINT, -1,
-                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
+    properties[PROP_HEIGHT] = g_param_spec_int("height", "Height", "Height of video", G_MININT, G_MAXINT, 0,
+                                               G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
+    properties[PROP_SHM_PATH] = g_param_spec_string("shm-path", "ShmPath", "Unique path for shared memory", "",
+                                                    G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
 
-    properties[PROP_HEIGHT] = g_param_spec_int ("height", "Height", "Height of video", G_MININT, G_MAXINT, -1,
-                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
-
-    properties[PROP_SHMKEY] = g_param_spec_int ("shmkey", "ShmKey", "Unique key for shared memory identifier", G_MININT, G_MAXINT, -1,
-                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
-
-    properties[PROP_SEMKEY] = g_param_spec_int ("semkey", "SemKey", "Unique key for semaphore identifier", G_MININT, G_MAXINT, -1,
-                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
-
-    properties[PROP_VIDEO_BUFFER_SIZE] = g_param_spec_int ("vbsize", "VideoBufferSize", "Size of shared memory buffer", G_MININT, G_MAXINT, -1,
-                                                     G_PARAM_READABLE|G_PARAM_WRITABLE|G_PARAM_CONSTRUCT_ONLY);
-
-    for (i = PROP_0 + 1; i < PROP_LAST; i++)
-        g_object_class_install_property (gobject_class, i, properties[i]);
+    g_object_class_install_properties(gobject_class,
+            PROP_LAST,
+            properties);
 }
 
 static void
-video_renderer_get_property (GObject *object, guint prop_id,
+video_renderer_get_property(GObject *object, guint prop_id,
                             GValue *value, GParamSpec *pspec)
 {
-    VideoRenderer *renderer;
-    VideoRendererPrivate *priv;
+    VideoRenderer *renderer = VIDEO_RENDERER(object);
+    VideoRendererPrivate *priv = renderer->priv;
 
-    renderer = VIDEO_RENDERER(object);
-    priv = renderer->priv;
-
-    switch (prop_id)
-    {
-        case PROP_RUNNING:
-            g_value_set_boolean (value, priv->is_running);
-            break;
+    switch (prop_id) {
         case PROP_DRAWAREA:
             g_value_set_pointer(value, priv->drawarea);
             break;
@@ -236,16 +124,9 @@ video_renderer_get_property (GObject *object, guint prop_id,
         case PROP_HEIGHT:
             g_value_set_int(value, priv->height);
             break;
-        case PROP_SHMKEY:
-            g_value_set_int(value, priv->shm_key);
+        case PROP_SHM_PATH:
+            g_value_set_string(value, priv->shm_path);
             break;
-        case PROP_SEMKEY:
-            g_value_set_int(value, priv->sem_key);
-            break;
-        case PROP_VIDEO_BUFFER_SIZE:
-            g_value_set_int(value, priv->videobuffersize);
-            break;
-
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
             break;
@@ -259,8 +140,7 @@ video_renderer_set_property (GObject *object, guint prop_id,
     VideoRenderer *renderer = VIDEO_RENDERER(object);
     VideoRendererPrivate *priv = renderer->priv;
 
-    switch (prop_id)
-    {
+    switch (prop_id) {
         case PROP_DRAWAREA:
             priv->drawarea = g_value_get_pointer(value);
             break;
@@ -270,94 +150,196 @@ video_renderer_set_property (GObject *object, guint prop_id,
         case PROP_HEIGHT:
             priv->height = g_value_get_int(value);
             break;
-        case PROP_SHMKEY:
-            priv->shm_key = g_value_get_int(value);
-            break;
-        case PROP_SEMKEY:
-            priv->sem_key = g_value_get_int(value);
-            break;
-        case PROP_VIDEO_BUFFER_SIZE:
-            priv->videobuffersize = g_value_get_int(value);
+        case PROP_SHM_PATH:
+            g_free(priv->shm_path);
+            priv->shm_path = g_value_dup_string(value);
             break;
 
         default:
-            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
             break;
     }
 }
 
 
 static void
-video_renderer_init (VideoRenderer *self)
+video_renderer_init(VideoRenderer *self)
 {
-    self->priv = VIDEO_RENDERER_GET_PRIVATE(self);
+    VideoRendererPrivate *priv;
+    self->priv = priv = VIDEO_RENDERER_GET_PRIVATE(self);
+    priv->width = 0;
+    priv->height = 0;
+    priv->shm_path = NULL;
+    priv->texture = NULL;
+    priv->drawarea = NULL;
+    priv->fd = -1;
+    priv->shm_area = MAP_FAILED;
+    priv->shm_area_len = 0;
+    priv->buffer_gen = 0;
 }
 
 static void
-video_renderer_finalize (GObject *obj)
+video_renderer_stop_shm(VideoRenderer *self)
 {
-    VideoRenderer *self = VIDEO_RENDERER (obj);
-    if (self->priv->shm_buffer)
-        detachShm(self->priv->shm_buffer);
+    g_return_if_fail(IS_VIDEO_RENDERER(self));
+    VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(self);
+    if (priv->fd >= 0)
+        close(priv->fd);
+    priv->fd = -1;
+
+    if (priv->shm_area != MAP_FAILED)
+        munmap(priv->shm_area, priv->shm_area_len);
+    priv->shm_area_len = 0;
+    priv->shm_area = MAP_FAILED;
+}
+
+
+static void
+video_renderer_finalize(GObject *obj)
+{
+    VideoRenderer *self = VIDEO_RENDERER(obj);
+    video_renderer_stop_shm(self);
 
     /* Chain up to the parent class */
-    G_OBJECT_CLASS (video_renderer_parent_class)->finalize (obj);
-}
-
-/*
- * function: sem_wait. wait for frame from other process
- * input:    semaphore set ID.
- * output:   none.
- */
-static int
-sem_wait(int sem_set_id)
-{
-    /* structure for semaphore operations.   */
-    struct sembuf sem_op;
-
-    /* wait on the semaphore, unless it's value is non-negative. */
-    sem_op.sem_num = 0;
-    sem_op.sem_op = -1;
-    sem_op.sem_flg = IPC_NOWAIT;
-    return semop(sem_set_id, &sem_op, 1);
-}
-
-static void render_clutter(ClutterActor *texture, gpointer data, int width,
-                           int height, int parent_width, int parent_height)
-{
-    clutter_actor_set_size(texture, parent_width, parent_height);
-
-    const int ROW_STRIDE = 4 * width;
-    const int BPP = 4;
-    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(texture), data, TRUE,
-                                      width, height, ROW_STRIDE, BPP,
-                                      CLUTTER_TEXTURE_RGB_FLAG_BGR, NULL);
+    G_OBJECT_CLASS(video_renderer_parent_class)->finalize(obj);
 }
 
 static gboolean
-readFrameFromShm(VideoRendererPrivate *priv)
+video_renderer_start_shm(VideoRenderer *self)
 {
-    int sem_set_id = priv->sem_set_id;
-
-    if (sem_set_id == -1)
+    /* First test that 'self' is of the correct type */
+    g_return_val_if_fail(IS_VIDEO_RENDERER(self), FALSE);
+    VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(self);
+    if (priv->fd != -1) {
+        ERROR("fd must be -1");
         return FALSE;
-
-    if (sem_wait(sem_set_id) == -1) {
-        if (errno != EAGAIN) {
-            ERROR("Could not read from shared memory!\n");
-            perror("shm: ");
-            return FALSE;
-        } else {
-            return TRUE; /* No new frame, so we'll try later */
-        }
     }
 
-    GtkWidget *parent = gtk_widget_get_parent(priv->drawarea);
-    const gint p_width = gtk_widget_get_allocated_width(parent);
-    const gint p_height = gtk_widget_get_allocated_height(parent);
+    priv->fd = shm_open(priv->shm_path, O_RDWR, 0);
+    if (priv->fd < 0) {
+        DEBUG("could not open shm area \"%s\", shm_open failed:%s", priv->shm_path, strerror(errno));
+        return FALSE;
+    }
+    priv->shm_area_len = sizeof(SHMHeader);
+    priv->shm_area = mmap(NULL, priv->shm_area_len, PROT_READ | PROT_WRITE, MAP_SHARED, priv->fd, 0);
+    if (priv->shm_area == MAP_FAILED) {
+        DEBUG("Could not map shm area, mmap failed");
+        return FALSE;
+    }
+    return TRUE;
+}
 
-    render_clutter(priv->texture, priv->shm_buffer, priv->width,
-                   priv->height, p_width, p_height);
+static const gint TIMEOUT_SEC = 1; // 1 second
+
+static struct timespec
+create_timeout()
+{
+    struct timespec timeout = {0, 0};
+    if (clock_gettime(CLOCK_REALTIME, &timeout) == -1)
+        perror("clock_gettime");
+    timeout.tv_sec += TIMEOUT_SEC;
+    return timeout;
+}
+
+
+static gboolean
+shm_lock(SHMHeader *shm_area)
+{
+    const struct timespec timeout = create_timeout();
+    /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
+    if (sem_timedwait(&shm_area->mutex, &timeout) == ETIMEDOUT) {
+        ERROR("Timed out before shm lock was acquired");
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static void
+shm_unlock(SHMHeader *shm_area)
+{
+    sem_post(&shm_area->mutex);
+}
+
+static gboolean
+video_renderer_resize_shm(VideoRendererPrivate *priv)
+{
+    while ((sizeof(SHMHeader) + priv->shm_area->buffer_size) > priv->shm_area_len) {
+        const size_t new_size = sizeof(SHMHeader) + priv->shm_area->buffer_size;
+
+        shm_unlock(priv->shm_area);
+        if (munmap(priv->shm_area, priv->shm_area_len)) {
+            DEBUG("Could not unmap shared area:%s", strerror(errno));
+            return FALSE;
+        }
+
+        priv->shm_area = mmap(NULL, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, priv->fd, 0);
+        priv->shm_area_len = new_size;
+
+        if (!priv->shm_area) {
+            priv->shm_area = 0;
+            DEBUG("Could not remap shared area");
+            return FALSE;
+        }
+
+        priv->shm_area_len = new_size;
+        if (!shm_lock(priv->shm_area))
+            return FALSE;
+    }
+    return TRUE;
+}
+
+static void
+video_renderer_render_to_texture(VideoRendererPrivate *priv)
+{
+    if (!shm_lock(priv->shm_area))
+        return;
+
+    // wait for a new buffer
+    while (priv->buffer_gen == priv->shm_area->buffer_gen) {
+        shm_unlock(priv->shm_area);
+        const struct timespec timeout = create_timeout();
+        // Could not decrement semaphore in time, returning
+        if (sem_timedwait(&priv->shm_area->notification, &timeout) < 0)
+            return;
+
+        if (!shm_lock(priv->shm_area))
+            return;
+    }
+
+    if (!video_renderer_resize_shm(priv)) {
+        ERROR("Could not resize shared memory");
+        return;
+    }
+
+    const gint BPP = 4;
+    const gint ROW_STRIDE = BPP * priv->width;
+    /* update the clutter texture */
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(priv->texture),
+            (guchar*) priv->shm_area->data,
+            TRUE,
+            priv->width,
+            priv->height,
+            ROW_STRIDE,
+            BPP,
+            CLUTTER_TEXTURE_RGB_FLAG_BGR,
+            NULL);
+    priv->buffer_gen = priv->shm_area->buffer_gen;
+    shm_unlock(priv->shm_area);
+}
+
+
+static gboolean
+render_frame_from_shm(VideoRendererPrivate *priv)
+{
+    if (!GTK_IS_WIDGET(priv->drawarea))
+        return FALSE;
+    GtkWidget *parent = gtk_widget_get_parent(priv->drawarea);
+    if (!parent || !CLUTTER_IS_ACTOR(priv->texture))
+        return FALSE;
+    const gint parent_width = gtk_widget_get_allocated_width(parent);
+    const gint parent_height = gtk_widget_get_allocated_height(parent);
+    clutter_actor_set_size(priv->texture, parent_width, parent_height);
+    video_renderer_render_to_texture(priv);
 
     return TRUE;
 }
@@ -365,36 +347,21 @@ readFrameFromShm(VideoRendererPrivate *priv)
 void video_renderer_stop(VideoRenderer *renderer)
 {
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
-    g_assert(priv);
-    gtk_widget_hide(GTK_WIDGET(priv->drawarea));
-
-    priv->is_running = FALSE;
-
-#if GLIB_CHECK_VERSION(2,26,0)
-    g_object_notify_by_pspec(G_OBJECT(renderer), properties[PROP_RUNNING]);
-#else
-    g_object_notify(G_OBJECT(renderer), "running");
-#endif
+    if (priv && priv->drawarea && GTK_IS_WIDGET(priv->drawarea))
+        gtk_widget_hide(GTK_WIDGET(priv->drawarea));
 
     g_object_unref(G_OBJECT(renderer));
 }
 
 static gboolean
-updateTexture(gpointer data)
+update_texture(gpointer data)
 {
     VideoRenderer *renderer = (VideoRenderer *) data;
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
 
-    if (!priv->is_running) {
-        /* renderer was stopped already */
-        g_object_unref(G_OBJECT(data));
-        return FALSE;
-    }
-
-    gboolean ret = readFrameFromShm(priv);
+    const gboolean ret = render_frame_from_shm(priv);
 
     if (!ret) {
-        priv->is_running = FALSE; // no need to notify daemon
         video_renderer_stop(data);
         g_object_unref(G_OBJECT(data));
     }
@@ -408,42 +375,32 @@ updateTexture(gpointer data)
  * Create a new #VideoRenderer instance.
  */
 VideoRenderer *
-video_renderer_new(GtkWidget *drawarea, int width, int height, int shmkey,
-                    int semkey, int vbsize)
+video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path)
 {
-    return g_object_new(VIDEO_RENDERER_TYPE, "drawarea", (gpointer) drawarea,
-                        "width", width, "height", height, "shmkey", shmkey,
-                        "semkey", semkey, "vbsize", vbsize, NULL);
+    VideoRenderer *rend = g_object_new(VIDEO_RENDERER_TYPE, "drawarea", (gpointer) drawarea,
+            "width", width, "height", height, "shm-path", shm_path, NULL);
+    if (!video_renderer_start_shm(rend)) {
+        ERROR("Could not start SHM");
+        return NULL;
+    }
+    return rend;
 }
 
-int
-video_renderer_run(VideoRenderer *renderer)
+gboolean
+video_renderer_run(VideoRenderer *self)
 {
-    VideoRendererPrivate * priv = VIDEO_RENDERER_GET_PRIVATE(renderer);
-    priv->shm_buffer = NULL;
-
-    int shm_id = getShm(priv->videobuffersize, priv->shm_key);
-    if (shm_id == -1)
-        return 1;
-
-    priv->shm_buffer = attachShm(shm_id);
-    if (!priv->shm_buffer)
-        return 1;
-
-    priv->sem_set_id = get_sem_set(priv->sem_key);
-    if (priv->sem_set_id == -1)
-        return 1;
+    g_return_val_if_fail(IS_VIDEO_RENDERER(self), FALSE);
+    VideoRendererPrivate * priv = VIDEO_RENDERER_GET_PRIVATE(self);
+    g_return_val_if_fail(priv->fd > 0, FALSE);
 
     GtkWindow *win = GTK_WINDOW(gtk_widget_get_toplevel(priv->drawarea));
     GdkGeometry geom = {
-        .min_aspect = (double) priv->width / priv->height,
-        .max_aspect = (double) priv->width / priv->height,
+        .min_aspect = (gdouble) priv->width / priv->height,
+        .max_aspect = (gdouble) priv->width / priv->height,
     };
     gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 
-    if (GTK_CLUTTER_IS_EMBED(priv->drawarea))
-        DEBUG("video_renderer: using clutter\n");
-    else
+    if (!GTK_CLUTTER_IS_EMBED(priv->drawarea))
         ERROR("Drawing area is not a GtkClutterEmbed widget");
 
     ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
@@ -455,134 +412,11 @@ video_renderer_run(VideoRenderer *renderer)
     clutter_actor_show_all(stage);
 
     /* frames are read and saved here */
-    g_object_ref(renderer);
-    const gdouble FPS = 25.0;
-    g_timeout_add(1000 / FPS, updateTexture, renderer);
+    g_object_ref(self);
+    const gint FRAME_INTERVAL = 30; // ms
+    g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, FRAME_INTERVAL, update_texture, self, NULL);
 
-    priv->is_running = TRUE;
-    /* emit the notify signal for this property */
-#if GLIB_CHECK_VERSION(2, 26, 0)
-    g_object_notify_by_pspec(G_OBJECT(renderer), properties[PROP_RUNNING]);
-#else
-    g_object_notify(G_OBJECT(data), "running");
-#endif
     gtk_widget_show_all(GTK_WIDGET(priv->drawarea));
 
-    return 0;
-}
-
-static void
-receiving_video_window_deleted_cb(GtkWidget *widget UNUSED,
-                                  gpointer data UNUSED)
-{
-    sflphone_hang_up();
-}
-
-static void
-receiving_video_window_button_cb(GtkWindow *win, GdkEventButton *event,
-                                 gpointer fullscreen)
-{
-    int *fs = fullscreen;
-    if (event->type == GDK_2BUTTON_PRESS) {
-        *fs = !*fs;
-        if (*fs)
-            gtk_window_fullscreen(win);
-        else
-            gtk_window_unfullscreen(win);
-    }
-}
-
-gboolean
-try_clutter_init()
-{
-    const ClutterInitError clutter_ok = gtk_clutter_init(NULL, NULL);
-    gboolean result = FALSE;
-    switch (clutter_ok) {
-        case CLUTTER_INIT_SUCCESS:
-            result = TRUE;
-            break;
-        case CLUTTER_INIT_ERROR_UNKNOWN:
-            ERROR("Unknown clutter error");
-            break;
-        case CLUTTER_INIT_ERROR_THREADS:
-            ERROR("Clutter thread init error");
-            break;
-        case CLUTTER_INIT_ERROR_BACKEND:
-            ERROR("Clutter backend init error");
-            break;
-        case CLUTTER_INIT_ERROR_INTERNAL:
-            ERROR("Clutter internal init error");
-            break;
-    }
-    return result;
-}
-
-void receiving_video_event_cb(DBusGProxy *proxy UNUSED, gint shmKey,
-                              gint semKey, gint videoBufferSize,
-                              gint destWidth, gint destHeight,
-                              GError *error UNUSED, gpointer userdata UNUSED)
-{
-    if (!receivingVideoWindow) {
-        receivingVideoWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-        receivingWindowFullscreen = FALSE;
-        g_signal_connect(receivingVideoWindow, "button_press_event",
-                         G_CALLBACK(receiving_video_window_button_cb),
-                         &receivingWindowFullscreen);
-        g_signal_connect(receivingVideoWindow, "delete-event",
-                         G_CALLBACK(receiving_video_window_deleted_cb), NULL);
-    }
-
-    if (!try_clutter_init())
-        return;
-
-    if (!receivingVideoArea) {
-        receivingVideoArea = gtk_clutter_embed_new();
-        ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(receivingVideoArea));
-        if (!stage)
-            gtk_widget_destroy(receivingVideoArea);
-        else {
-            ClutterColor stage_color = { 0x61, 0x64, 0x8c, 0xff };
-            clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color);
-        }
-    }
-
-    g_assert(receivingVideoArea);
-    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    gtk_container_add(GTK_CONTAINER(vbox), receivingVideoArea);
-
-    if (shmKey == -1 || semKey == -1 || videoBufferSize == -1)
-        return;
-
-    gtk_widget_set_size_request(receivingVideoArea, destWidth, destHeight);
-    gtk_container_add(GTK_CONTAINER(receivingVideoWindow), vbox);
-    gtk_widget_show_all(receivingVideoWindow);
-
-    DEBUG("Video started for shm:%d sem:%d bufferSz:%d width:%d height:%d",
-           shmKey, semKey, videoBufferSize, destWidth, destHeight);
-
-    video_renderer = video_renderer_new(receivingVideoArea, destWidth,
-                                        destHeight, shmKey, semKey,
-                                        videoBufferSize);
-    g_assert(video_renderer);
-    if (video_renderer_run(video_renderer)) {
-        g_object_unref(video_renderer);
-        video_renderer = NULL;
-        ERROR("Could not run video renderer");
-    }
-}
-
-void stopped_receiving_video_event_cb(DBusGProxy *proxy UNUSED, gint shmKey,
-                                      gint semKey, GError *error UNUSED,
-                                      gpointer userdata UNUSED)
-{
-    DEBUG("Video stopped for shm:%d sem:%d", shmKey, semKey);
-
-    if (video_renderer) {
-        if (receivingVideoWindow) {
-            if (GTK_IS_WIDGET(receivingVideoWindow))
-                gtk_widget_destroy(receivingVideoWindow);
-            receivingVideoArea = receivingVideoWindow = NULL;
-        }
-        video_renderer = NULL;
-    }
+    return TRUE;
 }

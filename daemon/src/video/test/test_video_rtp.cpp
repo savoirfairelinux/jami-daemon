@@ -39,7 +39,7 @@
 int main ()
 {
     VideoPreference preference;
-    sfl_video::VideoRtpSession session(preference.getSettings());
+    sfl_video::VideoRtpSession session("test", preference.getSettings());
     session.start();
     sleep(10);
     session.stop();

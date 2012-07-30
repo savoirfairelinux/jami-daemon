@@ -35,6 +35,7 @@
 #endif
 
 #include "configurationmanager.h"
+#include "account_schema.h"
 #include <cerrno>
 #include <sstream>
 #include "../manager.h"
@@ -142,6 +143,11 @@ void ConfigurationManager::setAccountDetails(const std::string& accountID, const
 void ConfigurationManager::sendRegister(const std::string& accountID, const bool& enable)
 {
     Manager::instance().sendRegister(accountID, enable);
+}
+
+void ConfigurationManager::registerAllAccounts()
+{
+    Manager::instance().registerAllAccounts();
 }
 
 std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
