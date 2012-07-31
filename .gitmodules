@@ -1,3 +1,3 @@
 [submodule "kde"]
 	path = kde
-	url = https://github.com/Elv13/sflphone-kde.git
+	url = http://anongit.kde.org/sflphone-kde
