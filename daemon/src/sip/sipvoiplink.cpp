@@ -725,43 +725,12 @@ bool isValidIpAddress(const std::string &address)
     return result != 0;
 }
 
-/**
- * This function look for '@' and replace the second part with the corresponding ip address (when possible)
- */
-std::string resolvDns(const std::string& url)
-{
-   size_t pos;
-   if ((pos = url.find("@")) == std::string::npos) {
-      return url;
-   }
-   std::string hostname = url.substr(pos+1);
-
-   int i;
-   struct hostent *he;
-   struct in_addr **addr_list;
-
-   if ((he = gethostbyname(hostname.c_str())) == NULL) {
-      return url;
-   }
-
-   addr_list = (struct in_addr **)he->h_addr_list;
-   std::list<std::string> ipList;
-
-   for(i = 0; addr_list[i] != NULL; i++) {
-      ipList.push_back(inet_ntoa(*addr_list[i]));
-   }
-
-   if (ipList.size() > 0 && ipList.front().size() > 7 )
-      return url.substr(0,pos+1)+ipList.front();
-   else
-      return hostname;
-}
 
 Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
 {
     DEBUG("New outgoing call to %s", toUrl.c_str());
     std::string toCpy = toUrl;
-    std::string resolvedUrl = resolvDns(toUrl);
+    std::string resolvedUrl = sip_utils::resolveDns(toUrl);
     DEBUG("URL resolved to %s", resolvedUrl.c_str());
 
     sip_utils::stripSipUriPrefix(toCpy);
@@ -893,6 +862,18 @@ SIPVoIPLink::answer(Call *call)
     call->answer();
 }
 
+namespace {
+void stopRtpIfCurrent(const std::string &id, SIPCall &call)
+{
+    if (Manager::instance().isCurrentCall(id)) {
+        call.getAudioRtp().stop();
+#ifdef SFL_VIDEO
+        call.getVideoRtp().stop();
+#endif
+    }
+}
+}
+
 void
 SIPVoIPLink::hangup(const std::string& id)
 {
@@ -927,9 +908,7 @@ SIPVoIPLink::hangup(const std::string& id)
     // Make sure user data is NULL in callbacks
     inv->mod_data[mod_ua_.id] = NULL;
 
-    if (Manager::instance().isCurrentCall(id))
-        call->getAudioRtp().stop();
-
+    stopRtpIfCurrent(id, *call);
     removeCall(id);
 }
 
@@ -950,9 +929,7 @@ SIPVoIPLink::peerHungup(const std::string& id)
     // Make sure user data is NULL in callbacks
     call->inv->mod_data[mod_ua_.id ] = NULL;
 
-    if (Manager::instance().isCurrentCall(id))
-        call->getAudioRtp().stop();
-
+    stopRtpIfCurrent(id, *call);
     removeCall(id);
 }
 
@@ -1224,7 +1201,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
         call.getAudioRtp().sendDtmfDigit(code - '0');
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
-        WARN("SIPVoIPLink: Unknown DTMF type %s, defaulting to %s instead",
+        WARN("Unknown DTMF type %s, defaulting to %s instead",
              dtmf.c_str(), SIPAccount::SIPINFO_STR);
     } // else : dtmf == SIPINFO
 
@@ -1359,8 +1336,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
 {
     std::string id(call->getCallId());
 
-    if (Manager::instance().isCurrentCall(id))
-        call->getAudioRtp().stop();
+    stopRtpIfCurrent(id, *call);
 
     Manager::instance().peerHungupCall(id);
     removeCall(id);
@@ -1803,7 +1779,7 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     }
 
     if (!param or param->contact_cnt == 0) {
-        WARN("SIPVoIPLink: No contact header in registration callback");
+        WARN("No contact header in registration callback");
         pj_pool_release(pool);
         return;
     }

@@ -113,10 +113,7 @@ class Sdp {
          * Returns a string version of the negotiated SDP fields which pertain
          * to video.
          */
-        std::string getActiveIncomingVideoDescription() const;
-        std::string getActiveOutgoingVideoCodec() const;
-        std::string getActiveOutgoingVideoBitrate(const std::string &codec) const;
-        std::string getActiveOutgoingVideoPayload() const;
+        std::string getIncomingVideoDescription() const;
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -242,12 +239,19 @@ class Sdp {
         std::string getAudioCodecName() const;
         std::string getSessionVideoCodec() const;
         sfl::AudioCodec* getSessionAudioMedia() const;
+        // Sets @param settings with appropriate values and returns true if
+        // we are sending video, false otherwise
+        bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
 
     private:
         NON_COPYABLE(Sdp);
         friend class SDPTest;
 
         std::string getLineFromSession(const pjmedia_sdp_session *sess, const std::string &keyword) const;
+        std::string getOutgoingVideoCodec() const;
+        std::string getOutgoingVideoField(const std::string &codec, const char *key) const;
+        int getOutgoingVideoPayload() const;
+        void getProfileLevelID(const pjmedia_sdp_session *session, std::string &dest, int payload) const;
 
         /**
          * The pool to allocate memory, ownership to SipCall

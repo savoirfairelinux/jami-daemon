@@ -100,6 +100,18 @@ void VideoReceiveThread::loadSDP()
     os.close();
 }
 
+void VideoReceiveThread::openDecoder()
+{
+    if (decoderCtx_)
+        avcodec_close(decoderCtx_);
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
+    int ret = avcodec_open(decoderCtx_, inputDecoder_);
+#else
+    int ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
+#endif
+    EXIT_IF_FAIL(ret == 0, "Could not open codec");
+}
+
 // We do this setup here instead of the constructor because we don't want the
 // main thread to block while this executes, so it happens in the video thread.
 void VideoReceiveThread::setup()
@@ -162,15 +174,10 @@ void VideoReceiveThread::setup()
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
 
     // find the decoder for the video stream
-    AVCodec *inputDecoder = avcodec_find_decoder(decoderCtx_->codec_id);
-    EXIT_IF_FAIL(inputDecoder, "Unsupported codec");
+    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
+    EXIT_IF_FAIL(inputDecoder_, "Unsupported codec");
 
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-    ret = avcodec_open(decoderCtx_, inputDecoder);
-#else
-    ret = avcodec_open2(decoderCtx_, inputDecoder, NULL);
-#endif
-    EXIT_IF_FAIL(ret == 0, "Could not open codec");
+    openDecoder();
 
     scaledPicture_ = avcodec_alloc_frame();
     EXIT_IF_FAIL(scaledPicture_, "Could not allocate output frame");
@@ -207,7 +214,7 @@ int VideoReceiveThread::interruptCb(void *ctx)
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<string, string> &args) :
-    args_(args), frameNumber_(0), decoderCtx_(0), rawFrame_(0),
+    args_(args), frameNumber_(0), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
     bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0)
@@ -261,8 +268,11 @@ void VideoReceiveThread::run()
             int frameFinished = 0;
             const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
                                                   &inpacket);
-            if (len <= 0 and requestKeyFrameCallback_)
+            if (len <= 0 and requestKeyFrameCallback_) {
+                openDecoder();
                 requestKeyFrameCallback_(id_);
+                usleep(250000);
+            }
 
             // we want our rendering code to be called by the shm_sink,
             // because it manages the shared memory synchronization

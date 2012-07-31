@@ -62,6 +62,7 @@ enum {
     COLUMN_CODEC_ACTIVE,
     COLUMN_CODEC_NAME,
     COLUMN_CODEC_BITRATE,
+    COLUMN_CODEC_PARAMETERS,
     CODEC_COLUMN_COUNT
 };
 
@@ -164,12 +165,14 @@ preferences_dialog_fill_codec_list(account_t *acc)
             GtkTreeIter iter;
             gtk_list_store_append(codecStore, &iter);
             const gchar *bitrate = g_hash_table_lookup(c, "bitrate");
+            const gchar *parameters = g_hash_table_lookup(c, "parameters");
             const gboolean is_active = !g_strcmp0(g_hash_table_lookup(c, "enabled"), "true");
             const gchar *name = g_hash_table_lookup(c, "name");
 
             gtk_list_store_set(codecStore, &iter, COLUMN_CODEC_ACTIVE,
                                is_active, COLUMN_CODEC_NAME, name,
-                               COLUMN_CODEC_BITRATE, bitrate, -1);
+                               COLUMN_CODEC_BITRATE, bitrate,
+                               COLUMN_CODEC_PARAMETERS, parameters, -1);
         }
     }
     g_ptr_array_free(vcodecs, TRUE);
@@ -196,6 +199,12 @@ static void
 video_codec_set_bitrate(GHashTable *codec, const gchar *bitrate)
 {
     g_hash_table_replace(codec, g_strdup("bitrate"), g_strdup(bitrate));
+}
+
+static void
+video_codec_set_parameters(GHashTable *codec, const gchar *parameters)
+{
+    g_hash_table_replace(codec, g_strdup("parameters"), g_strdup(parameters));
 }
 
 static GHashTable *
@@ -403,6 +412,46 @@ bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text
 }
 
 
+static void
+parameters_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text, gpointer data)
+{
+    account_t *acc = (account_t*) data;
+
+    if (!acc) {
+        ERROR("No account selected");
+        return;
+    }
+
+    if (strlen(new_text) == 0)
+        return;
+
+    // Get path of edited codec
+    GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
+    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter(model, &iter, tree_path);
+    gtk_tree_path_free(tree_path);
+    gchar *name = NULL;
+    gtk_tree_model_get(model, &iter, COLUMN_CODEC_NAME, &name, -1);
+
+    GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+    if (!vcodecs)
+        return;
+
+    gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_PARAMETERS, new_text, -1);
+
+    GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
+    if (codec) {
+        DEBUG("Setting new parameters \"%s\" for %s", new_text, name);
+        video_codec_set_parameters(codec, new_text);
+        dbus_set_video_codecs(acc->accountID, vcodecs);
+    } else {
+        ERROR("Could not find codec %s", name);
+    }
+    g_ptr_array_free(vcodecs, TRUE);
+}
+
+
 GtkWidget *
 videocodecs_box(account_t *acc)
 {
@@ -423,6 +472,9 @@ videocodecs_box(account_t *acc)
 
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));
+
+    /* The list store model will be destroyed automatically with the view */
+    g_object_unref(G_OBJECT(codecStore));
 
     // Get tree selection manager
     GtkTreeSelection *treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
@@ -450,7 +502,13 @@ videocodecs_box(account_t *acc)
     treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate (kbps)"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
-    g_object_unref(G_OBJECT(codecStore));
+    /* Parameters column */
+    renderer = gtk_cell_renderer_text_new();
+    g_object_set(renderer, "editable", TRUE, NULL);
+    g_signal_connect(G_OBJECT(renderer), "edited", G_CALLBACK(parameters_edited_cb), acc);
+    treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Parameters"), renderer, "text", COLUMN_CODEC_PARAMETERS, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
+
     gtk_container_add(GTK_CONTAINER(scrolledWindow), codecTreeView);
 
     // Create button box
@@ -731,12 +789,10 @@ fill_devices()
         gtk_widget_show_all(v4l2_hbox);
         gtk_widget_hide(v4l2_nodev);
         gtk_widget_set_sensitive(preview_button, TRUE);
-    } else {
-        if (GTK_IS_WIDGET(v4l2_hbox)) {
-            gtk_widget_hide(v4l2_hbox);
-            gtk_widget_show(v4l2_nodev);
-            gtk_widget_set_sensitive(preview_button, FALSE);
-        }
+    } else if (GTK_IS_WIDGET(v4l2_hbox)) {
+        gtk_widget_hide(v4l2_hbox);
+        gtk_widget_show(v4l2_nodev);
+        gtk_widget_set_sensitive(preview_button, FALSE);
     }
 }
 
@@ -750,7 +806,6 @@ video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo UNUSED)
 static GtkWidget *
 v4l2_box()
 {
-    DEBUG("%s", __PRETTY_FUNCTION__);
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     v4l2_nodev = gtk_label_new(_("No devices found"));

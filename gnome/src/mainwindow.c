@@ -292,7 +292,7 @@ create_main_window()
 
     int messaging_height = eel_gconf_get_integer(CONF_MESSAGING_HEIGHT);
     set_message_tab_height(GTK_PANED(vpaned),messaging_height);
-    
+
     gtk_widget_show (vpaned);
     gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
 
@@ -301,7 +301,7 @@ create_main_window()
     history_tab->mainwidget = history_vbox;
     gtk_box_set_homogeneous(GTK_BOX(history_vbox), FALSE);
     gtk_box_pack_start(GTK_BOX(history_vbox), history_tab->tree, TRUE, TRUE, 0);
-    
+
     /* Add tree views */
     gtk_box_pack_start(GTK_BOX(vbox), contacts_tab->tree, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), history_vbox, TRUE, TRUE, 0);

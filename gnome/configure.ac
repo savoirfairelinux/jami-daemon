@@ -35,17 +35,15 @@ dnl Video is default-disabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
 AS_IF([test "x$enable_video" = "xyes"], [
     AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
-
     PKG_CHECK_MODULES(CLUTTER, clutter-1.0)
     PKG_CHECK_MODULES(CLUTTERGTK, clutter-gtk-1.0)
     ]);
 
 AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 
-# Check for gtk+-3.0, otherwise check for gtk+-2.0
-PKG_CHECK_MODULES(GTK, gtk+-3.0,
-        [PKG_CHECK_MODULES(GTK, gtk+-2.0, ,
-            [PKG_CHECK_MODULES(GTHREAD, gthread-2.0)],
+# Check for gtk+-3.0, otherwise check for gtk+-2.0 (and gthread)
+PKG_CHECK_MODULES(GTK, gtk+-3.0, [AC_MSG_NOTICE(Using gtk+-3.0)],
+        [PKG_CHECK_MODULES(GTK, gtk+-2.0, [PKG_CHECK_MODULES(GTHREAD, gthread-2.0)],
             [AC_MSG_ERROR(gtk-2 not found)])])
 
 PKG_CHECK_MODULES(GCONF, gconf-2.0)

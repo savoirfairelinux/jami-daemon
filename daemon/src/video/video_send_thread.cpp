@@ -121,6 +121,53 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     // encoderCtx_->flags |= CODEC_FLAG_GLOBAL_HEADER;
 }
 
+namespace {
+void
+extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx)
+{
+    // From RFC3984:
+    // If no profile-level-id is present, the Baseline Profile without
+    // additional constraints at Level 1 MUST be implied.
+    ctx->profile = FF_PROFILE_H264_BASELINE;
+    ctx->level = 0xa;
+    // ctx->level = 0x0d; // => 13 aka 1.3
+    if (parameters.empty())
+        return;
+
+    const std::string target("profile-level-id=");
+    size_t needle = parameters.find(target);
+    if (needle == std::string::npos)
+        return;
+
+    needle += target.length();
+    const size_t id_length = 6; /* digits */
+    const std::string profileLevelID(parameters.substr(needle, id_length));
+    if (profileLevelID.length() != id_length)
+        return;
+
+    int result;
+    std::stringstream ss;
+    ss << profileLevelID;
+    ss >> std::hex >> result;
+    // profile-level id consists of three bytes
+    const unsigned char profile_idc = result >> 16;             // 42xxxx -> 42
+    const unsigned char profile_iop = ((result >> 8) & 0xff);   // xx80xx -> 80
+    ctx->level = result & 0xff;                                 // xxxx0d -> 0d
+    switch (profile_idc) {
+        case FF_PROFILE_H264_BASELINE:
+            // check constraint_set_1_flag
+            ctx->profile |= (profile_iop & 0x40) >> 6 ? FF_PROFILE_H264_CONSTRAINED : 0;
+            break;
+        case FF_PROFILE_H264_HIGH_10:
+        case FF_PROFILE_H264_HIGH_422:
+        case FF_PROFILE_H264_HIGH_444_PREDICTIVE:
+            // check constraint_set_3_flag
+            ctx->profile |= (profile_iop & 0x10) >> 4 ? FF_PROFILE_H264_INTRA : 0;
+            break;
+    }
+    DEBUG("Using profile %x and level %d", ctx->profile, ctx->level);
+}
+}
 
 void VideoSendThread::setup()
 {
@@ -191,12 +238,11 @@ void VideoSendThread::setup()
 
     /* let x264 preset override our encoder settings */
     if (args_["codec"] == "libx264") {
-        forcePresetX264();
         // FIXME: this should be parsed from the fmtp:profile-level-id
         // attribute of our peer, it will determine what profile and
         // level we are sending (i.e. that they can accept).
-        encoderCtx_->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
-        encoderCtx_->level = 0x0d; // => 13 aka 1.3
+        extractProfileLevelID(args_["parameters"], encoderCtx_);
+        forcePresetX264();
     }
 
     scaledPicture_ = avcodec_alloc_frame();

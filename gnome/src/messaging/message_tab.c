@@ -229,7 +229,7 @@ on_cursor_motion(GtkTextView *view UNUSED, GdkEvent  *event, gpointer data)
             start_real = end_match_b;
             end_real   = cursor_pos ;
         }
-        
+
         /*Get the word under cursor*/
         gchar* text = gtk_text_buffer_get_text(((message_tab*) data)->buffer,&start_real,&end_real,FALSE);
 
@@ -306,7 +306,7 @@ append_message(message_tab* self, const gchar* name, const gchar* message)
     gtk_text_buffer_insert      ( self->buffer, &new_end, "\n"   ,    -1 );
     gtk_text_buffer_get_end_iter( self->buffer, &new_end                 );
     gtk_text_view_scroll_to_iter( self->view  , &new_end,FALSE,0,0,FALSE );
-    
+
     start_link = NULL;
     end_link   = NULL;
 }
@@ -467,7 +467,7 @@ create_messaging_tab(callable_obj_t* call)
     else
        label_text = call->_peer_number ;
     message_tab* self = create_messaging_tab_common(call->_callID,label_text);
-    
+
     self->call   = call;
     self->conf   = NULL;
     return self;

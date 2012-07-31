@@ -60,6 +60,7 @@ class VideoReceiveThread : public ost::Thread {
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
 
+        AVCodec *inputDecoder_;
         AVCodecContext *decoderCtx_;
         AVFrame *rawFrame_;
         AVFrame *scaledPicture_;
@@ -76,6 +77,7 @@ class VideoReceiveThread : public ost::Thread {
         size_t bufferSize_;
         const std::string id_;
         void setup();
+        void openDecoder();
         void createScalingContext();
         void loadSDP();
         void fill_buffer(void *data);

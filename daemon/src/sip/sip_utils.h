@@ -33,6 +33,7 @@
 #define SIP_UTILS_H_
 
 #include <string>
+#include <list>
 
 #include <pjsip/sip_msg.h>
 
@@ -50,6 +51,9 @@ namespace sip_utils {
     void stripSipUriPrefix(std::string& sipUri);
 
     std::string parseDisplayName(const char * buffer);
+
+    std::string resolveDns(const std::string &url);
+    std::list<std::string> resolveServerDns(const std::string &server);
 }
 
 #endif // SIP_UTILS_H_

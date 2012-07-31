@@ -36,6 +36,7 @@
 
 #include "account_schema.h"
 #include "sipaccount.h"
+#include "sip_utils.h"
 #include "sipvoiplink.h"
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
@@ -43,7 +44,8 @@
 #include "manager.h"
 #include <pwd.h>
 #include <sstream>
-#include <stdlib.h>
+#include <algorithm>
+#include <cstdlib>
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -161,6 +163,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
         mapNode->setKeyValue(VIDEO_CODEC_NAME, new ScalarNode(codec[VIDEO_CODEC_NAME]));
         mapNode->setKeyValue(VIDEO_CODEC_BITRATE, new ScalarNode(codec[VIDEO_CODEC_BITRATE]));
         mapNode->setKeyValue(VIDEO_CODEC_ENABLED, new ScalarNode(codec[VIDEO_CODEC_ENABLED]));
+        mapNode->setKeyValue(VIDEO_CODEC_PARAMETERS, new ScalarNode(codec[VIDEO_CODEC_PARAMETERS]));
         videoCodecs.addNode(mapNode);
     }
 #endif
@@ -288,6 +291,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
         delete node->getValue(VIDEO_CODEC_NAME);
         delete node->getValue(VIDEO_CODEC_BITRATE);
         delete node->getValue(VIDEO_CODEC_ENABLED);
+        delete node->getValue(VIDEO_CODEC_PARAMETERS);
         delete node;
     }
 #endif
@@ -327,6 +331,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
                 codec->getValue(VIDEO_CODEC_NAME, &codecMap[VIDEO_CODEC_NAME]);
                 codec->getValue(VIDEO_CODEC_BITRATE, &codecMap[VIDEO_CODEC_BITRATE]);
                 codec->getValue(VIDEO_CODEC_ENABLED, &codecMap[VIDEO_CODEC_ENABLED]);
+                codec->getValue(VIDEO_CODEC_PARAMETERS, &codecMap[VIDEO_CODEC_PARAMETERS]);
                 videoCodecDetails.push_back(codecMap);
             }
             // these must be validated
@@ -805,6 +810,14 @@ bool SIPAccount::userMatch(const std::string& username) const
 bool SIPAccount::hostnameMatch(const std::string& hostname) const
 {
     return hostname == hostname_;
+}
+
+bool SIPAccount::proxyMatch(const std::string& hostname) const
+{
+    if (hostname == serviceRoute_)
+        return true;
+    const std::list<std::string> ipList(sip_utils::resolveServerDns(serviceRoute_));
+    return std::find(ipList.begin(), ipList.end(), hostname) != ipList.end();
 }
 
 std::string SIPAccount::getLoginName()

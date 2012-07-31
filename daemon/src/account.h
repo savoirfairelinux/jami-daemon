@@ -141,7 +141,7 @@ class Account : public Serializable {
         getActiveVideoCodecs() const;
 
          /* Accessor to data structures
-         * @return CodecOrder& The list that reflects the user's choice
+         * @return The list that reflects the user's choice
          */
         std::vector<int> getActiveAudioCodecs() const {
             return audioCodecList_;
@@ -185,6 +185,7 @@ class Account : public Serializable {
 
         static const char * const VIDEO_CODEC_ENABLED;
         static const char * const VIDEO_CODEC_NAME;
+        static const char * const VIDEO_CODEC_PARAMETERS;
         static const char * const VIDEO_CODEC_BITRATE;
     private:
         NON_COPYABLE(Account);
