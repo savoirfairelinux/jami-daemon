@@ -157,7 +157,7 @@ std::map<std::string, std::string> ConfigurationManager::getAccountTemplate()
    accTemplate[ CONFIG_LOCAL_PORT                  ] = CONFIG_DEFAULT_LOCAL_PORT;
    accTemplate[ CONFIG_PUBLISHED_PORT              ] = CONFIG_DEFAULT_PUBLISHED_PORT;
    accTemplate[ CONFIG_PUBLISHED_SAMEAS_LOCAL      ] = CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL;
-   accTemplate[ CONFIG_LOCAL_INTERFACE             ] = CONFIG_DEFAULT_LOCAL_INTERFACE;
+   accTemplate[ CONFIG_INTERFACE                   ] = CONFIG_DEFAULT_INTERFACE;
    accTemplate[ CONFIG_ACCOUNT_REGISTRATION_EXPIRE ] = CONFIG_DEFAULT_REGISTRATION_EXPIRE;
    return accTemplate;
 }

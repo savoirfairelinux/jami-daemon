@@ -67,6 +67,7 @@ static const char *const CONFIG_ACCOUNT_DEFAULT_REALM           = "*";
 static const char *const CONFIG_ACCOUNT_USERAGENT               = "Account.useragent";
 
 static const char *const CONFIG_LOCAL_INTERFACE                 = "Account.localInterface";
+static const char *const CONFIG_INTERFACE                       = "Account.interface";
 static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL          = "Account.publishedSameAsLocal";
 static const char *const CONFIG_LOCAL_PORT                      = "Account.localPort";
 static const char *const CONFIG_PUBLISHED_PORT                  = "Account.publishedPort";
@@ -74,7 +75,7 @@ static const char *const CONFIG_PUBLISHED_ADDRESS               = "Account.publi
 static const char *const CONFIG_DEFAULT_LOCAL_PORT              = "5060";
 static const char *const CONFIG_DEFAULT_PUBLISHED_PORT          = "5060";
 static const char *const CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL  = "true";
-static const char *const CONFIG_DEFAULT_LOCAL_INTERFACE         = "default";
+static const char *const CONFIG_DEFAULT_INTERFACE               = "default";
 
 static const char *const CONFIG_DISPLAY_NAME                    = "Account.displayName";
 static const char *const CONFIG_DEFAULT_ADDRESS                 = "0.0.0.0";
