@@ -241,14 +241,14 @@ END
 		sed -i "s/SYSTEM/${LAUNCHPAD_DISTRIBUTION}/g" ${DEBIAN_DIR}/changelog
 
 		cd ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
-		if [ "$IS_KDE_CLIEN" != "1" ]; then
+		if [ "$IS_KDE_CLIENT" != "1" ]; then
 			./autogen.sh
 		fi
 		debuild -S -sa -kF5362695
 		cd ${LAUNCHPAD_DIR}
 
 		if [ ${DO_UPLOAD} ] ; then
-			dput -f -c ${LAUNCHPAD_DIR}/dput.conf ${LAUNCHPAD_CONF_PREFIX}-${LAUNCHPAD_DISTRIBUTION} ${LAUNCHPAD_PACKAGE}_${LOCAL_VERSION}_source.changes
+			dput -f --debug --no-upload-log --simulate -c ${LAUNCHPAD_DIR}/dput.conf ${LAUNCHPAD_CONF_PREFIX}-${LAUNCHPAD_DISTRIBUTION} ${LAUNCHPAD_PACKAGE}_${LOCAL_VERSION}_source.changes
 		fi
 	done
 
