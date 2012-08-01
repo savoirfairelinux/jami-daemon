@@ -4,6 +4,8 @@
 #
 # Author: Francois Marier <francois@debian.org>
 
+cd ${WORKSPACE}
+
 if [ ! -e daemon/configure.ac ] ; then
     echo "This script must be run in the root directory of the sflphone repository"
     exit 1
