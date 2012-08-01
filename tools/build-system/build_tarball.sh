@@ -97,6 +97,6 @@ find -name autom4te.cache -type d -exec rm -rf {} \;
 find -name *.in~ -type f -exec rm {} \;
 popd # builddir
 
-rm -f sflphone-$VERSION.tar.gz
+rm -f sflphone-*.tar.gz
 tar zcf sflphone-$VERSION.tar.gz sflphone-$VERSION
 rm -rf $BUILDDIR
