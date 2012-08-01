@@ -4,6 +4,8 @@
 #
 # Author: Francois Marier <francois@debian.org>
 
+cd ${WORKSPACE}
+
 if [ ! -e daemon/configure.ac ] ; then
     echo "This script must be run in the root directory of the sflphone repository"
     exit 1
@@ -95,6 +97,6 @@ find -name autom4te.cache -type d -exec rm -rf {} \;
 find -name *.in~ -type f -exec rm {} \;
 popd # builddir
 
-rm -f sflphone-$VERSION.tar.gz
+rm -f sflphone-*.tar.gz
 tar zcf sflphone-$VERSION.tar.gz sflphone-$VERSION
 rm -rf $BUILDDIR
