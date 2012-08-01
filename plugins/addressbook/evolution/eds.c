@@ -324,6 +324,9 @@ init_eds ()
 void
 fill_books_data ()
 {
+#if EDS_CHECK_VERSION(3,5,3)
+#warning FIXME ESource registry API is not supported yet
+#else
     ESourceList *source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
     if (source_list == NULL)
@@ -369,6 +372,7 @@ fill_books_data ()
     g_static_mutex_unlock(&books_data_mutex);
 
     g_object_unref (source_list);
+#endif
 }
 
 void
@@ -423,6 +427,9 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->max_results_remaining = max_results;
     had->equery = create_query (query, current_test, (AddressBook_Config *) (user_data));
 
+#if EDS_CHECK_VERSION(3,5,3)
+#warning FIXME: use EClient API, EBook API is deprecated
+#else
     EBook *book = e_book_new_from_uri(current_uri, NULL);
     if (!book)
         return;
@@ -431,6 +438,7 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     e_book_open_async (book, TRUE, eds_async_open_callback, had);
 #else
     e_book_async_open(book, TRUE, eds_async_open_callback, had);
+#endif
 #endif
 }
 
