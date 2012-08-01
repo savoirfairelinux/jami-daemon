@@ -24,7 +24,7 @@ SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
 VERSION_NUMBER="1.1.0"
 
-LAUNCHPAD_PACKAGES="sflphone-client-kde" #("sflphone-common" "sflphone-client-kde" "sflphone-plugins")
+LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins")
 
 echo
 echo "    /***********************\\"
@@ -149,7 +149,7 @@ if [ ${IS_RELEASE} ]; then
 else
 	SOFTWARE_VERSION="${VERSION_NUMBER}-rc${SNAPSHOT_TAG}"
 	COMMIT_HASH_BEGIN="${CURRENT_RELEASE_COMMIT_HASH}"
-	LAUNCHPAD_CONF_PREFIX="sflphone-nightly"
+	LAUNCHPAD_CONF_PREFIX="sflphone-testing"
 fi
 
 VERSION="${SOFTWARE_VERSION}~ppa${VERSION_INDEX}~SYSTEM"
@@ -221,7 +221,7 @@ END
 	if [ "${LAUNCHPAD_PACKAGE}"  == "sflphone-client-kde" ]; then
 		version_kde=$(echo ${VERSION}  | grep -e '[0-9]*\.[0-9.]*' -o | head -n1)
 		sed -i -e "s/Standards-Version: [0-9.A-Za-z]*/Standards-Version: ${version_kde}/" ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian/control
-		tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
+		# tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
 	fi
 
 	rm -f ${WORKING_DIR}/sfl-git-dch.conf >/dev/null 2>&1
@@ -240,7 +240,7 @@ END
 		sed -i "s/SYSTEM/${LAUNCHPAD_DISTRIBUTION}/g" ${DEBIAN_DIR}/changelog
 
 		cd ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
-		if [ "$IS_KDE_CLIENT" != "1" ]; then
+		if [ "${LAUNCHPAD_PACKAGE}"  == "sflphone-client-kde" ]; then
 			./autogen.sh
 		fi
 		debuild -S -sa -kF5362695
