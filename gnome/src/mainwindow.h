@@ -102,4 +102,33 @@ void main_window_confirm_go_clear (callable_obj_t * c);
 
 void focus_on_searchbar_out();
 void focus_on_searchbar_in();
+
+/**
+ * Given the current position and the full length of the file, update the playback position
+ * if the size is 0 or if the current value is larger than the size, the cursor position
+ * is moved at the end of the scale.
+ */
+void main_window_update_playback_scale(guint current, guint size);
+
+void main_window_set_playback_scale_sensitive();
+
+void main_window_set_playback_scale_unsensitive();
+
+/**
+ * Show the playback scale, (should occur if the user selected an history entry witch has been recorded)
+ */
+void main_window_show_playback_scale();
+
+/**
+ * Hide the playback scale
+ */
+void main_window_hide_playback_scale();
+
+/**
+ * Pause the key grabber while an other widget is focussed
+ */
+void main_window_pause_keygrabber(gboolean value);
+
+
+void main_window_reset_playback_scale();
 #endif

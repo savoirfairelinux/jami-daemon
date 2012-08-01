@@ -33,6 +33,7 @@
 #include "str_utils.h"
 #include "dbus.h"
 #include "accountlist.h"
+#include "account_schema.h"
 #include "logger.h"
 #include "actions.h"
 #include "unused.h"
@@ -100,7 +101,11 @@ account_list_get_by_state(account_state_t state)
 account_t *
 account_list_get_by_id(const gchar * const accountID)
 {
-    g_assert(accountID);
+    if (!accountID) {
+        DEBUG("AccountID is NULL");
+        return NULL;
+    }
+
     GList * c = g_queue_find_custom(accountQueue, accountID, is_accountID_struct);
 
     if (c)
@@ -267,7 +272,7 @@ gboolean current_account_has_mailbox(void)
     account_t *current = account_list_get_current();
 
     if (current) {
-        gchar * account_mailbox = account_lookup(current, ACCOUNT_MAILBOX);
+        gchar * account_mailbox = account_lookup(current, CONFIG_ACCOUNT_MAILBOX);
 
         if (account_mailbox && !utf8_case_equal(account_mailbox, ""))
             return TRUE;
@@ -306,7 +311,7 @@ gboolean account_is_IP2IP(const account_t *account)
 
 static gboolean is_type(const account_t *account, const gchar *type)
 {
-    const gchar *account_type = account_lookup(account, ACCOUNT_TYPE);
+    const gchar *account_type = account_lookup(account, CONFIG_ACCOUNT_TYPE);
     return g_strcmp0(account_type, type) == 0;
 }
 
@@ -345,9 +350,9 @@ void initialize_credential_information(account_t *account)
     if (!account->credential_information) {
         account->credential_information = g_ptr_array_sized_new(1);
         GHashTable * new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-        g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), g_strdup("*"));
-        g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), g_strdup(""));
-        g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), g_strdup(""));
+        g_hash_table_insert(new_table, g_strdup(CONFIG_ACCOUNT_REALM), g_strdup("*"));
+        g_hash_table_insert(new_table, g_strdup(CONFIG_ACCOUNT_USERNAME), g_strdup(""));
+        g_hash_table_insert(new_table, g_strdup(CONFIG_ACCOUNT_PASSWORD), g_strdup(""));
         g_ptr_array_add(account->credential_information, new_table);
     }
 }

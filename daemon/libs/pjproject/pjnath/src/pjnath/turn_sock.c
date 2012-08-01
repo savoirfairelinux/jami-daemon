@@ -1,4 +1,4 @@
-/* $Id: turn_sock.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: turn_sock.c 3596 2011-06-22 10:57:11Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -619,7 +619,8 @@ static pj_status_t turn_on_send_pkt(pj_turn_session *sess,
 
     if (turn_sock == NULL) {
 	/* We've been destroyed */
-	pj_assert(!"We should shutdown gracefully");
+	// https://trac.pjsip.org/repos/ticket/1316
+	//pj_assert(!"We should shutdown gracefully");
 	return PJ_EINVALIDOP;
     }
 

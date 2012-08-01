@@ -35,6 +35,10 @@
 #include "callable_obj.h"
 #include "conference_obj.h"
 
+static const gchar * const CURRENT_CALLS = "current_calls";
+static const gchar * const HISTORY = "history";
+static const gchar * const CONTACTS = "contacts";
+
 /** @file calllist.h
   * @brief A list to hold calls.
   */
@@ -44,6 +48,7 @@ typedef struct {
     GtkWidget* view;
     GtkWidget* tree;
     GtkWidget* searchbar;
+    GtkWidget* mainwidget;
 
     // Calllist vars
     GQueue* callQueue;
@@ -51,7 +56,7 @@ typedef struct {
     gint selectedType;
     callable_obj_t* selectedCall;
     conference_obj_t* selectedConf;
-    gchar *_name;
+    gchar *name;
 } calltab_t;
 
 void

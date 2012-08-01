@@ -596,10 +596,14 @@ ac_main_obj
 ac_host
 ac_linux_poll
 ac_cross_compile
+opencore_amrnb_present
+opencore_amrnb_h_present
+ac_no_opencore_amrnb
 libcrypto_present
 libssl_present
 openssl_h_present
 ac_no_ssl
+ac_resample_dll
 ac_no_ilbc_codec
 ac_no_speex_codec
 ac_no_g7221_codec
@@ -621,6 +625,7 @@ ac_os_objs
 EGREP
 GREP
 CPP
+ac_shlib_suffix
 ac_build_mak_vars
 ac_pjdir
 CC_CFLAGS
@@ -716,11 +721,13 @@ enable_g7221_codec
 enable_speex_codec
 enable_ilbc_codec
 enable_libsamplerate
+enable_resample_dll
 enable_ipp
 with_ipp
 with_ipp_samples
 with_ipp_arch
 enable_ssl
+enable_opencore_amrnb
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1368,11 +1375,16 @@ Optional Features:
   --disable-ilbc-codec    Exclude iLBC codec in the build
   --enable-libsamplerate  Link with libsamplerate when available. Note that
                           PJMEDIA_RESAMPLE_IMP must also be configured
+  --enable-resample-dll   Build libresample as shared library
   --enable-ipp            Enable Intel IPP support. Specify the Intel IPP
                           package and samples location using IPPROOT and
                           IPPSAMPLES env var or with --with-ipp and
                           --with-ipp-samples options
   --disable-ssl           Exclude SSL support the build (default: autodetect)
+
+  --disable-opencore-amrnb
+                          Exclude OpenCORE AMR-NB support from the build
+                          (default: autodetect)
 
 
 Optional Packages:
@@ -2362,12 +2374,18 @@ test -n "$target_alias" &&
   test "$program_prefix$program_suffix$program_transform_name" = \
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
-ac_config_headers="$ac_config_headers pjlib/include/pj/compat/os_auto.h pjlib/include/pj/compat/m_auto.h pjmedia/include/pjmedia/config_auto.h "
+ac_config_headers="$ac_config_headers pjlib/include/pj/compat/os_auto.h pjlib/include/pj/compat/m_auto.h pjmedia/include/pjmedia/config_auto.h pjmedia/include/pjmedia-codec/config_auto.h pjsip/include/pjsip/sip_autoconf.h"
 
-ac_config_files="$ac_config_files build.mak build/os-auto.mak build/cc-auto.mak pjlib/build/os-auto.mak pjlib-util/build/os-auto.mak pjmedia/build/os-auto.mak pjsip/build/os-auto.mak"
+ac_config_files="$ac_config_files build.mak build/os-auto.mak build/cc-auto.mak pjlib/build/os-auto.mak pjlib-util/build/os-auto.mak pjmedia/build/os-auto.mak pjsip/build/os-auto.mak third_party/build/os-auto.mak third_party/build/portaudio/os-auto.mak"
 
-test "$CFLAGS" = "" && CFLAGS="-O2"
-CFLAGS="$CFLAGS -DNDEBUG -g" # no assertions, debug symbols
+
+
+if test "$CFLAGS" = ""; then
+  CFLAGS="-O2"
+else
+  CFLAGS="$CFLAGS"
+fi
+
 CXXFLAGS="$CFLAGS $CXXFLAGS"
 
 ac_ext=c
@@ -3433,7 +3451,7 @@ if test "$AR" = ""; then AR="${CROSS_COMPILE}ar rv"; fi
 
 if test "$LD" = ""; then LD="$CC"; fi
 
-if test "$LDOUT" = ""; then LDOUT="-o"; fi
+if test "$LDOUT" = ""; then LDOUT="-o "; fi
 
 if test "$RANLIB" = ""; then RANLIB="${CROSS_COMPILE}ranlib"; fi
 
@@ -3443,7 +3461,7 @@ if test "$LIBEXT" = ""; then LIBEXT='a'; fi
 
 if test "$LIBEXT2" = ""; then LIBEXT2=""; fi
 
-if test "$CC_OUT" = ""; then CC_OUT="-o"; fi
+if test "$CC_OUT" = ""; then CC_OUT="-o "; fi
 
 if test "$CC_INC" = ""; then CC_INC="-I"; fi
 
@@ -3470,6 +3488,19 @@ case $host in
 	;;
     *)
 	ac_pjdir=`pwd`
+	;;
+esac
+
+
+case $target in
+    *mingw* | *cygw* | *win32* | *w32* )
+	ac_shlib_suffix=dll
+	;;
+    *darwin*)
+	ac_shlib_suffix=dylib
+	;;
+    *)
+	ac_shlib_suffix=so
 	;;
 esac
 
@@ -4567,6 +4598,12 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
  presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
  esac
 
+
+if test "x$ac_cv_c_bigendian" = "xyes"; then
+  CFLAGS="$CFLAGS -DPJ_IS_BIG_ENDIAN=1 -DPJ_IS_LITTLE_ENDIAN=0"
+else
+  CFLAGS="$CFLAGS -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1"
+fi
 
 case $target in
     *mingw* | *cygw* | *win32* | *w32* )
@@ -5828,6 +5865,20 @@ fi
 
 
 
+# Check whether --enable-resample_dll was given.
+if test "${enable_resample_dll+set}" = set; then :
+  enableval=$enable_resample_dll; if test "$enable_resample_dll" = "yes"; then
+		ac_resample_dll=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Building libresample as shared library... yes" >&5
+$as_echo "Building libresample as shared library... yes" >&6; }
+	       fi
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: Building libresample as shared library... no" >&5
+$as_echo "Building libresample as shared library... no" >&6; }
+
+fi
+
+
 # Check whether --enable-ipp was given.
 if test "${enable_ipp+set}" = set; then :
   enableval=$enable_ipp;
@@ -5976,9 +6027,8 @@ $as_echo "ok" >&6; }
 else
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-{ as_fn_set_status run with --help for more info
-as_fn_error "Error: unable to recognize your IPP installation. Make sure the paths and ARCH suffix are set correctly
-See \`config.log' for more details." "$LINENO" 5; }; }
+as_fn_error "Error: unable to recognize your IPP installation. Make sure the paths and ARCH suffix are set correctly, run with --help for more info
+See \`config.log' for more details." "$LINENO" 5; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -6251,6 +6301,83 @@ $as_echo "** OpenSSL libraries not found, disabling SSL support **" >&6; }
 
 fi
 
+
+
+# Check whether --enable-opencore_amrnb was given.
+if test "${enable_opencore_amrnb+set}" = set; then :
+  enableval=$enable_opencore_amrnb;
+		if test "$enable_opencore_amrnb" = "no"; then
+		 ac_no_opencore_amrnb=1
+		 $as_echo "#define PJMEDIA_HAS_OPENCORE_AMRNB_CODEC 0" >>confdefs.h
+
+		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: Checking if OpenCORE AMR-NB support is disabled... yes" >&5
+$as_echo "Checking if OpenCORE AMR-NB support is disabled... yes" >&6; }
+	        fi
+
+else
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for OpenCORE AMR-NB installations.." >&5
+$as_echo "checking for OpenCORE AMR-NB installations.." >&6; }
+
+
+		ac_fn_c_check_header_mongrel "$LINENO" "opencore-amrnb/interf_enc.h" "ac_cv_header_opencore_amrnb_interf_enc_h" "$ac_includes_default"
+if test "x$ac_cv_header_opencore_amrnb_interf_enc_h" = x""yes; then :
+  opencore_amrnb_h_present=1
+fi
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Encoder_Interface_init in -lopencore-amrnb" >&5
+$as_echo_n "checking for Encoder_Interface_init in -lopencore-amrnb... " >&6; }
+if test "${ac_cv_lib_opencore_amrnb_Encoder_Interface_init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lopencore-amrnb  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char Encoder_Interface_init ();
+int
+main ()
+{
+return Encoder_Interface_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_opencore_amrnb_Encoder_Interface_init=yes
+else
+  ac_cv_lib_opencore_amrnb_Encoder_Interface_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_opencore_amrnb_Encoder_Interface_init" >&5
+$as_echo "$ac_cv_lib_opencore_amrnb_Encoder_Interface_init" >&6; }
+if test "x$ac_cv_lib_opencore_amrnb_Encoder_Interface_init" = x""yes; then :
+  opencore_amrnb_present=1 && LIBS="$LIBS -lopencore-amrnb"
+fi
+
+		if test "x$opencore_amrnb_h_present" = "x1" -a "x$opencore_amrnb_present" = "x1"; then
+	        	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: OpenCORE AMR-NB library found, AMR-NB support enabled" >&5
+$as_echo "OpenCORE AMR-NB library found, AMR-NB support enabled" >&6; }
+	        	$as_echo "#define PJMEDIA_HAS_OPENCORE_AMRNB_CODEC 1" >>confdefs.h
+
+		else
+			ac_no_opencore_amrnb=1
+			$as_echo "#define PJMEDIA_HAS_OPENCORE_AMRNB_CODEC 0" >>confdefs.h
+
+		fi
+
+fi
 
 
 
@@ -7036,6 +7163,8 @@ do
     "pjlib/include/pj/compat/os_auto.h") CONFIG_HEADERS="$CONFIG_HEADERS pjlib/include/pj/compat/os_auto.h" ;;
     "pjlib/include/pj/compat/m_auto.h") CONFIG_HEADERS="$CONFIG_HEADERS pjlib/include/pj/compat/m_auto.h" ;;
     "pjmedia/include/pjmedia/config_auto.h") CONFIG_HEADERS="$CONFIG_HEADERS pjmedia/include/pjmedia/config_auto.h" ;;
+    "pjmedia/include/pjmedia-codec/config_auto.h") CONFIG_HEADERS="$CONFIG_HEADERS pjmedia/include/pjmedia-codec/config_auto.h" ;;
+    "pjsip/include/pjsip/sip_autoconf.h") CONFIG_HEADERS="$CONFIG_HEADERS pjsip/include/pjsip/sip_autoconf.h" ;;
     "build.mak") CONFIG_FILES="$CONFIG_FILES build.mak" ;;
     "build/os-auto.mak") CONFIG_FILES="$CONFIG_FILES build/os-auto.mak" ;;
     "build/cc-auto.mak") CONFIG_FILES="$CONFIG_FILES build/cc-auto.mak" ;;
@@ -7043,6 +7172,8 @@ do
     "pjlib-util/build/os-auto.mak") CONFIG_FILES="$CONFIG_FILES pjlib-util/build/os-auto.mak" ;;
     "pjmedia/build/os-auto.mak") CONFIG_FILES="$CONFIG_FILES pjmedia/build/os-auto.mak" ;;
     "pjsip/build/os-auto.mak") CONFIG_FILES="$CONFIG_FILES pjsip/build/os-auto.mak" ;;
+    "third_party/build/os-auto.mak") CONFIG_FILES="$CONFIG_FILES third_party/build/os-auto.mak" ;;
+    "third_party/build/portaudio/os-auto.mak") CONFIG_FILES="$CONFIG_FILES third_party/build/portaudio/os-auto.mak" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

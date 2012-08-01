@@ -54,7 +54,7 @@ class Conference : public Recordable {
         /**
          * Return the current conference state
          */
-        int getState() const;
+        ConferenceState getState() const;
 
         /**
          * Set conference state

@@ -35,16 +35,22 @@
 #endif
 
 #include "configurationmanager.h"
+#include "account_schema.h"
+#include <cerrno>
 #include <sstream>
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/siptransport.h"
 #include "account.h"
 #include "logger.h"
+#include "fileutils.h"
 #include "sip/sipaccount.h"
+#include "../history/historynamecache.h"
+#include "../audio/audiolayer.h"
 
-const char* ConfigurationManager::SERVER_PATH =
-    "/org/sflphone/SFLphone/ConfigurationManager";
+namespace {
+    const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
+}
 
 ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
     DBus::ObjectAdaptor(connection, SERVER_PATH)
@@ -139,6 +145,23 @@ void ConfigurationManager::sendRegister(const std::string& accountID, const bool
     Manager::instance().sendRegister(accountID, enable);
 }
 
+void ConfigurationManager::registerAllAccounts()
+{
+    Manager::instance().registerAllAccounts();
+}
+
+///This function is used as a base for new accounts for clients that support it
+std::map<std::string, std::string> ConfigurationManager::getAccountTemplate()
+{
+   std::map<std::string, std::string> accTemplate;
+   accTemplate[ CONFIG_LOCAL_PORT                  ] = CONFIG_DEFAULT_LOCAL_PORT;
+   accTemplate[ CONFIG_PUBLISHED_PORT              ] = CONFIG_DEFAULT_PUBLISHED_PORT;
+   accTemplate[ CONFIG_PUBLISHED_SAMEAS_LOCAL      ] = CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL;
+   accTemplate[ CONFIG_INTERFACE                   ] = CONFIG_DEFAULT_INTERFACE;
+   accTemplate[ CONFIG_ACCOUNT_REGISTRATION_EXPIRE ] = CONFIG_DEFAULT_REGISTRATION_EXPIRE;
+   return accTemplate;
+}
+
 std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
 {
     return Manager::instance().addAccount(details);
@@ -190,14 +213,14 @@ std::vector<std::string> ConfigurationManager::getAudioCodecDetails(const int32_
 
 std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
 {
-    std::vector<int32_t> v;
-
     Account *acc = Manager::instance().getAccount(accountID);
 
     if (acc)
-        return acc->getActiveCodecs();
-
-    return v;
+        return acc->getActiveAudioCodecs();
+    else {
+        ERROR("Could not find account %s", accountID.c_str());
+        return std::vector<int32_t>();
+    }
 }
 
 void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID)
@@ -205,11 +228,10 @@ void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string
     Account *acc = Manager::instance().getAccount(accountID);
 
     if (acc) {
-        acc->setActiveCodecs(list);
+        acc->setActiveAudioCodecs(list);
         Manager::instance().saveConfig();
     }
 }
-
 
 std::vector<std::string> ConfigurationManager::getAudioPluginList()
 {
@@ -220,7 +242,6 @@ std::vector<std::string> ConfigurationManager::getAudioPluginList()
 
     return v;
 }
-
 
 void ConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 {
@@ -239,17 +260,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
 
 void ConfigurationManager::setAudioOutputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, SFL_PCM_PLAYBACK);
+    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_PLAYBACK);
 }
 
 void ConfigurationManager::setAudioInputDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, SFL_PCM_CAPTURE);
+    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_CAPTURE);
 }
 
 void ConfigurationManager::setAudioRingtoneDevice(const int32_t& index)
 {
-    return Manager::instance().setAudioDevice(index, SFL_PCM_RINGTONE);
+    return Manager::instance().setAudioDevice(index, AudioLayer::SFL_PCM_RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
@@ -282,6 +303,34 @@ void ConfigurationManager::setNoiseSuppressState(const std::string& state)
 std::string ConfigurationManager::getEchoCancelState()
 {
     return Manager::instance().getEchoCancelState() ? "enabled" : "disabled";
+}
+
+std::map<std::string, std::string> ConfigurationManager::getRingtoneList()
+{
+    std::map<std::string, std::string> ringToneList;
+    std::string r_path(fileutils::get_data_dir());
+    struct dirent **namelist;
+    int n = scandir(r_path.c_str(), &namelist, 0, alphasort);
+    if (n == -1) {
+        ERROR("%s", strerror(errno));
+        return ringToneList;
+    }
+
+    while (n--) {
+        if (strcmp(namelist[n]->d_name, ".") and strcmp(namelist[n]->d_name, "..")) {
+            std::string file(namelist[n]->d_name);
+
+            if (file.find(".wav") != std::string::npos)
+                file.replace(file.find(".wav"), 4, "");
+            else
+                file.replace(file.size() - 3, 3, "");
+            if (file[0] <= 0x7A and file[0] >= 0x61) file[0] = file[0] - 32;
+            ringToneList[r_path + namelist[n]->d_name] = file;
+        }
+        free(namelist[n]);
+    }
+    free(namelist);
+    return ringToneList;
 }
 
 void ConfigurationManager::setEchoCancelState(const std::string& state)
@@ -384,8 +433,7 @@ std::vector<std::string> ConfigurationManager::getAddressbookList()
     return Manager::instance().getAddressbookList();
 }
 
-void ConfigurationManager::setAddressbookList(
-    const std::vector<std::string>& list)
+void ConfigurationManager::setAddressbookList(const std::vector<std::string>& list)
 {
     Manager::instance().setAddressbookList(list);
 }

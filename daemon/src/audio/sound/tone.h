@@ -83,9 +83,6 @@ class Tone : public AudioLoop {
          */
         void genBuffer(const std::string& definition);
 
-        /** Sample rate */
-        unsigned int sampleRate_;
-
         static const int TABLE_LENGTH = 4096;
         double wavetable_[TABLE_LENGTH];
 

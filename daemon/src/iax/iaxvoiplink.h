@@ -32,6 +32,10 @@
 #ifndef IAXVOIPLINK_H
 #define IAXVOIPLINK_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "voiplink.h"
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "sfl_types.h"
@@ -163,13 +167,16 @@ class IAXVoIPLink : public VoIPLink {
         virtual void carryingDTMFdigits(const std::string& id, char code);
 
 
+#if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+#endif
 
         /**
          * Return the codec protocol used for this call
          * @param id The call identifier
          */
-        virtual std::string getCurrentCodecName(Call *c) const;
+        virtual std::string getCurrentVideoCodecName(Call *c) const;
+        virtual std::string getCurrentAudioCodecName(Call *c) const;
 
     private:
         NON_COPYABLE(IAXVoIPLink);
@@ -248,7 +255,6 @@ class IAXVoIPLink : public VoIPLink {
 
         /** encoder/decoder/resampler buffers */
         SFLDataFormat decData_[DEC_BUFFER_SIZE];
-#warning FIXME: resampled buffer should be resized as appropriate
         SFLDataFormat resampledData_[DEC_BUFFER_SIZE * 4];
         unsigned char encodedData_[DEC_BUFFER_SIZE];
 

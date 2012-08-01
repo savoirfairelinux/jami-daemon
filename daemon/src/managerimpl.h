@@ -35,6 +35,10 @@
 #ifndef MANAGER_IMPL_H_
 #define MANAGER_IMPL_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string>
 #include <vector>
 #include <set>
@@ -48,6 +52,7 @@
 #include "call.h"
 #include "conference.h"
 
+#include "audio/audiolayer.h"
 #include "audio/sound/tone.h"  // for Tone::TONEID declaration
 #include "audio/codecs/audiocodecfactory.h"
 
@@ -131,9 +136,19 @@ class ManagerImpl {
         void init(const std::string &config_file);
 
         /**
+         * Enter Dbus mainloop
+         */
+        void run();
+
+        /**
          * Terminate all thread (sound, link) and unload AccountMap
          */
         void terminate();
+
+        /*
+         * Terminate all threads and exit DBus loop
+         */
+        void finish();
 
         /**
          * Accessor to audiodriver.
@@ -375,6 +390,7 @@ class ManagerImpl {
          */
         void peerHungupCall(const std::string& id);
 
+#if HAVE_INSTANT_MESSAGING
         /**
          * Notify the client with an incoming message
          * @param accountId	The account identifier
@@ -390,6 +406,7 @@ class ManagerImpl {
         * @param from	        The sender of this message (could be another participant of a conference)
          */
         bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+#endif // HAVE_INSTANT_MESSAGING
 
         /**
          * Notify the client he has voice mails
@@ -406,6 +423,16 @@ class ManagerImpl {
          *		 true for registration request
          */
         void sendRegister(const std::string& accountId, bool enable);
+
+        /**
+         * Register all account in accountMap_
+         */
+        void registerAllAccounts();
+
+        /**
+         * Unregister all account in accountMap_
+         */
+        void unregisterAllAccounts();
 
         /**
          * Get account list
@@ -489,7 +516,8 @@ class ManagerImpl {
          * @param call id
          * @return std::string The codec name
          */
-        std::string getCurrentCodecName(const std::string& id);
+        std::string getCurrentAudioCodecName(const std::string& id);
+        std::string getCurrentVideoCodecName(const std::string& id);
 
         /**
          * Set input audio plugin
@@ -502,7 +530,7 @@ class ManagerImpl {
              * @param index The index of the soundcard
              * @param the type of stream, either SFL_PCM_PLAYBACK, SFL_PCM_CAPTURE, SFL_PCM_RINGTONE
              */
-        void setAudioDevice(const int index, const int streamType);
+        void setAudioDevice(int index, AudioLayer::PCMType streamType);
 
         /**
          * Get list of supported audio output device
@@ -630,6 +658,8 @@ class ManagerImpl {
              */
         bool startRecordedFilePlayback(const std::string&);
 
+        void recordingPlaybackSeek(const double value);
+
         /**
          * Stop playback of recorded file
          * @param File of the file to stop
@@ -713,12 +743,6 @@ class ManagerImpl {
          * @return int The mail notification level
          */
         int32_t getMailNotify() const;
-
-        /**
-         * Get the list of the active codecs
-         * @return std::vector< ::std::string >  The list of active codecs
-         */
-        std::vector<std::string> getActiveCodecList() const;
 
         /**
          * Change a specific value in the configuration tree.
@@ -841,6 +865,12 @@ class ManagerImpl {
         const AudioCodecFactory audioCodecFactory;
 
     private:
+
+        /**
+         * Get the Call referred to by callID. If the Call does not exist, return NULL
+         */
+        Call *getCallFromCallID(const std::string &callID);
+
         /**
          * Play the dtmf-associated sound
          * @param code  The pressed key
@@ -853,7 +883,7 @@ class ManagerImpl {
          * @param current call id
          * @param conference pointer
          */
-        void processRemainingParticipants(const std::string &current_call_id, Conference * &conf);
+        void processRemainingParticipants(Conference &conf);
 
         /**
          * Create config directory in home user and return configuration file path
@@ -864,6 +894,11 @@ class ManagerImpl {
          * Initialize zeroconf module and scanning
          */
         void initZeroconf();
+
+        /**
+         * Set current call ID to empty string
+         */
+        void unsetCurrentCall();
 
         /**
          * Switch of current call id
@@ -971,11 +1006,6 @@ class ManagerImpl {
         AccountMap accountMap_;
 
         /**
-         * Unregister all account in accountMap_
-         */
-        void unregisterAllAccounts();
-
-        /**
          * Load the account map from configuration
          */
         void loadAccountMap(Conf::YamlParser &parser);
@@ -1039,6 +1069,12 @@ class ManagerImpl {
             return &dbus_;
         }
 
+#ifdef SFL_VIDEO
+        VideoControls * getVideoControls() {
+            return dbus_.getVideoControls();
+        }
+#endif
+
         /**
         * Tell if an account exists
         * @param accountID account ID check
@@ -1047,7 +1083,7 @@ class ManagerImpl {
         */
         bool accountExists(const std::string& accountID);
 
-        std::vector<std::map<std::string, std::string> > getHistory() const;
+        std::vector<std::map<std::string, std::string> > getHistory();
         void clearHistory();
 
         /**
@@ -1070,7 +1106,7 @@ class ManagerImpl {
          * @param accountID	  Account ID to get
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
-        VoIPLink* getAccountLink(const std::string& accountID="");
+        VoIPLink* getAccountLink(const std::string& accountID);
 
         std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
 
@@ -1097,5 +1133,6 @@ class ManagerImpl {
           * TODO: move this to ConfigurationManager
           */
         History history_;
+        bool finished_;
 };
 #endif // MANAGER_IMPL_H_

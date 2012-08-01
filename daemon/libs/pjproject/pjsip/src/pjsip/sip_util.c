@@ -1,4 +1,4 @@
-/* $Id: sip_util.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_util.c 3952 2012-02-16 05:35:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -813,6 +813,8 @@ static pj_status_t get_dest_info(const pjsip_uri *target_uri,
     if (PJSIP_URI_SCHEME_IS_SIPS(target_uri)) {
 	pjsip_uri *uri = (pjsip_uri*) target_uri;
 	const pjsip_sip_uri *url=(const pjsip_sip_uri*)pjsip_uri_get_uri(uri);
+	unsigned flag;
+
 	dest_info->flag |= (PJSIP_TRANSPORT_SECURE | PJSIP_TRANSPORT_RELIABLE);
 	if (url->maddr_param.slen)
 	    pj_strdup(pool, &dest_info->addr.host, &url->maddr_param);
@@ -821,6 +823,18 @@ static pj_status_t get_dest_info(const pjsip_uri *target_uri,
         dest_info->addr.port = url->port;
 	dest_info->type = 
             pjsip_transport_get_type_from_name(&url->transport_param);
+	/* Double-check that the transport parameter match.
+	 * Sample case:     sips:host;transport=tcp
+	 * See https://trac.pjsip.org/repos/ticket/1319
+	 */
+	flag = pjsip_transport_get_flag_from_type(dest_info->type);
+	if ((flag & dest_info->flag) != dest_info->flag) {
+	    pjsip_transport_type_e t;
+
+	    t = pjsip_transport_get_type_from_flag(dest_info->flag);
+	    if (t != PJSIP_TRANSPORT_UNSPECIFIED)
+		dest_info->type = t;
+	}
 
     } else if (PJSIP_URI_SCHEME_IS_SIP(target_uri)) {
 	pjsip_uri *uri = (pjsip_uri*) target_uri;
@@ -1234,14 +1248,14 @@ stateless_send_resolver_callback( pj_status_t status,
     }
     pj_assert(tdata->dest_info.addr.count != 0);
 
-#if !defined(PJSIP_DONT_SWITCH_TO_TCP) || PJSIP_DONT_SWITCH_TO_TCP==0
     /* RFC 3261 section 18.1.1:
      * If a request is within 200 bytes of the path MTU, or if it is larger
      * than 1300 bytes and the path MTU is unknown, the request MUST be sent
      * using an RFC 2914 [43] congestion controlled transport protocol, such
      * as TCP.
      */
-    if (tdata->msg->type == PJSIP_REQUEST_MSG &&
+    if (pjsip_cfg()->endpt.disable_tcp_switch==0 &&
+	tdata->msg->type == PJSIP_REQUEST_MSG &&
 	tdata->dest_info.addr.count > 0 && 
 	tdata->dest_info.addr.entry[0].type == PJSIP_TRANSPORT_UDP)
     {
@@ -1283,7 +1297,6 @@ stateless_send_resolver_callback( pj_status_t status,
 	    tdata->dest_info.addr.count = count * 2;
 	}
     }
-#endif /* !PJSIP_DONT_SWITCH_TO_TCP */
 
     /* Process the addresses. */
     stateless_send_transport_cb( stateless_data, tdata, -PJ_EPENDING);
@@ -1389,6 +1402,9 @@ static void send_raw_resolver_callback( pj_status_t status,
 	pj_size_t data_len;
 
 	pj_assert(addr->count != 0);
+
+	/* Avoid tdata destroyed by pjsip_tpmgr_send_raw(). */
+	pjsip_tx_data_add_ref(sraw_data->tdata);
 
 	data_len = sraw_data->tdata->buf.cur - sraw_data->tdata->buf.start;
 	status = pjsip_tpmgr_send_raw(pjsip_endpt_get_tpmgr(sraw_data->endpt),

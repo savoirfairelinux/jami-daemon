@@ -46,7 +46,9 @@ class SIPCall;
 
 namespace sfl {
 
+#if HAVE_ZRTP
 class AudioZrtpSession;
+#endif
 class AudioCodec;
 
 class UnsupportedRtpSessionType : public std::logic_error {
@@ -115,12 +117,14 @@ class AudioRtpFactory {
             srtpEnabled_ = enable;
         }
 
+#if HAVE_ZRTP
         /**
          * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException
          * if the current rtp thread is null, or if it's not of the correct type.
          * @return The current AudioZrtpSession thread.
          */
-        sfl::AudioZrtpSession * getAudioZrtpSession();
+        sfl::AudioZrtpSession* getAudioZrtpSession();
+#endif
 
         void initLocalCryptoInfo();
         void initLocalCryptoInfoOnOffHold();

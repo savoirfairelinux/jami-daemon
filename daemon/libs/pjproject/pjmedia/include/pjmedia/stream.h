@@ -1,4 +1,4 @@
-/* $Id: stream.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: stream.h 3571 2011-05-19 08:05:23Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -133,6 +133,9 @@ struct pjmedia_stream_info
 					 (see #PJMEDIA_STREAM_ENABLE_KA)
 					 is enabled?			    */
 #endif
+    pj_bool_t           rtcp_sdes_bye_disabled; 
+                                    /**< Disable automatic sending of RTCP
+                                         SDES and BYE.                      */
 };
 
 
@@ -370,6 +373,26 @@ pjmedia_stream_set_dtmf_callback(pjmedia_stream *stream,
 					    void *user_data, 
 					    int digit), 
 				 void *user_data);
+
+/**
+ * Send RTCP SDES for the media stream.
+ *
+ * @param stream	The media stream.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) 
+pjmedia_stream_send_rtcp_sdes( pjmedia_stream *stream );
+
+/**
+ * Send RTCP BYE for the media stream.
+ *
+ * @param stream	The media stream.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t)
+pjmedia_stream_send_rtcp_bye( pjmedia_stream *stream );
 
 /**
  * @}

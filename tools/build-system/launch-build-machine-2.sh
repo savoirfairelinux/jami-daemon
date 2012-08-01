@@ -24,7 +24,7 @@ SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
 VERSION_NUMBER="1.1.0"
 
-LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" "sflphone-plugins")
+LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" "sflphone-client-kde" "sflphone-plugins")
 
 echo
 echo "    /***********************\\"
@@ -40,7 +40,7 @@ do
                 echo "Options :"
                 echo " --skip-push"
                 echo " --skip-upload"
-		echo " --kde-client"
+                echo " --kde-client"
                 echo " --no-logging"
                 echo " --release"
                 echo " --version-index=[1,2,...]"
@@ -118,8 +118,8 @@ if [ ${IS_KDE_CLIENT} ]; then
 	TAG_NAME_PREFIX="kde."
 	LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
 fi
-CURRENT_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=1 | cut -d'/' -f3)
-PREVIOUS_RELEASE_TAG_NAME=$(git for-each-ref refs/tags --sort=-authordate --format='%(refname)' --count=2 | cut -d'/' -f3 | tail -n1)
+CURRENT_RELEASE_TAG_NAME=`git describe --tags --abbrev=0`
+PREVIOUS_RELEASE_TAG_NAME=`git describe --tags --abbrev=0 ${CURRENT_RELEASE_TAG_NAME}^`
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
 PREVIOUS_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
 CURRENT_COMMIT=`git show --pretty=format:"%H"  -s | tail -n 1`
@@ -190,7 +190,7 @@ do
 	git checkout ${DEBIAN_DIR}
 
 	echo "  --> Retrieve new sources"
-    DIRNAME=`get_dir_name ${LAUNCHPAD_PACKAGE}`
+	DIRNAME=`get_dir_name ${LAUNCHPAD_PACKAGE}`
 	cp -r ${REFERENCE_REPOSITORY}/${DIRNAME}/* ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
 
 	echo "  --> Update software version number (${SOFTWARE_VERSION})"
@@ -212,11 +212,18 @@ export DEBEMAIL="julien.bonjean@savoirfairelinux.com"
 export EDITOR="echo"
 END
 
-	${WORKING_DIR}/sfl-git-dch-2.sh ${WORKING_DIR}/sfl-git-dch.conf
+	${WORKING_DIR}/sfl-git-dch-2.sh ${WORKING_DIR}/sfl-git-dch.conf ${REFERENCE_REPOSITORY}/${DIRNAME}/
 	if [ "$?" -ne "0" ]; then
 		echo "!! Cannot update debian changelogs"
 		exit -1
 	fi
+
+	if [ "${LAUNCHPAD_PACKAGE}"  == "sflphone-client-kde" ]; then
+		version_kde=$(echo ${VERSION}  | grep -e '[0-9]*\.[0-9.]*' -o | head -n1)
+		sed -i -e "s/Standards-Version: [0-9.A-Za-z]*/Standards-Version: ${version_kde}/" ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian/control
+		tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
+	fi
+
 	rm -f ${WORKING_DIR}/sfl-git-dch.conf >/dev/null 2>&1
 
 	cd ${LAUNCHPAD_DIR}
@@ -233,7 +240,9 @@ END
 		sed -i "s/SYSTEM/${LAUNCHPAD_DISTRIBUTION}/g" ${DEBIAN_DIR}/changelog
 
 		cd ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
-		./autogen.sh
+		if [ "$IS_KDE_CLIEN" != "1" ]; then
+			./autogen.sh
+		fi
 		debuild -S -sa -kFDFE4451
 		cd ${LAUNCHPAD_DIR}
 

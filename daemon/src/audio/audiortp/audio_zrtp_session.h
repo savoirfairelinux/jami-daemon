@@ -54,25 +54,46 @@ class ZrtpZidException : public std::runtime_error {
 };
 
 class AudioZrtpSession :
-    public AudioRtpSession, protected ost::Thread,
-    public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> {
+     public ost::TimerPort,
+    // public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> {
+    public ost::SymmetricZRTPSession,
+    public AudioRtpSession {
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
         ~AudioZrtpSession();
 
-        // Thread associated method
-        virtual void run();
+        int startZrtpThread() {
+            rtpThread_.start();
+            return 0;
+        }
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
 
     private:
+        NON_COPYABLE(AudioZrtpSession);
+
+        class AudioZrtpThread : public ost::Thread, public ost::TimerPort {
+            public:
+                AudioZrtpThread(AudioZrtpSession &session);
+
+                virtual void run();
+
+                bool running_;
+
+            private:
+                NON_COPYABLE(AudioZrtpThread);
+                AudioZrtpSession &zrtpSession_;
+        };
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
-        void incrementTimestampForDTMF();
         void setSessionMedia(AudioCodec &codec);
+        int startRtpThread(AudioCodec &audiocodec);
+        virtual int getIncrementForDTMF() const;
+
+        AudioZrtpThread rtpThread_;
 };
 
 }

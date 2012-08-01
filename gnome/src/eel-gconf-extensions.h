@@ -38,6 +38,7 @@ BEGIN_EXTERN_C
 #define CONF_PREFIX		"/apps/sflphone-client-gnome"
 #define CONF_MAIN_WINDOW_WIDTH		CONF_PREFIX "/state/window_width"
 #define CONF_MAIN_WINDOW_HEIGHT		CONF_PREFIX "/state/window_height"
+#define CONF_MESSAGING_HEIGHT      CONF_PREFIX "/state/window_height"
 #define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_position_x"
 #define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
 #define CONF_IM_WINDOW_WIDTH		CONF_PREFIX "/state/im_width"
@@ -53,6 +54,7 @@ BEGIN_EXTERN_C
 #define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
 #define HISTORY_ENABLED				CONF_PREFIX "/state/history"
 #define INSTANT_MESSAGING_ENABLED               CONF_PREFIX "/state/instant_messaging"
+#define MESSAGING_URL_COMMAND               CONF_PREFIX "/hook/url_command"
 
 
 #define EEL_GCONF_UNDEFINED_CONNECTION 0

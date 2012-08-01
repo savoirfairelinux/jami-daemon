@@ -29,8 +29,8 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef CALL_H
-#define CALL_H
+#ifndef __CALL_H__
+#define __CALL_H__
 
 #include <sstream>
 #include <map>
@@ -84,9 +84,9 @@ class Call : public Recordable {
         }
 
         /**
-             * Return a reference on the conference id
-             * @return call id
-             */
+         * Return a reference on the conference id
+         * @return call id
+         */
         std::string getConfId() const {
             return confID_;
         }
@@ -118,27 +118,26 @@ class Call : public Recordable {
         }
 
         /**
-             * Set the display name (caller in ingoing)
-             * not protected by mutex (when created)
-             * @return std::string The peer display name
-             */
+         * Set the display name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer display name
+         */
         void setDisplayName(const std::string& name) {
             displayName_ = name;
         }
 
         /**
-             * Get the peer display name (caller in ingoing)
-             * not protected by mutex (when created)
-             * @return std::string The peer name
-             */
+         * Get the peer display name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer name
+         */
         const std::string& getDisplayName() const {
             return displayName_;
         }
 
         /**
          * Tell if the call is incoming
-         * @return true if yes
-         *	      false otherwise
+         * @return true if yes false otherwise
          */
         bool isIncoming() const {
             return type_ == INCOMING;
@@ -180,7 +179,7 @@ class Call : public Recordable {
          * Set my IP [not protected]
          * @param ip  The local IP address
          */
-        void setLocalIp(const std::string& ip)     {
+        void setLocalIp(const std::string& ip) {
             localIPAddress_ = ip;
         }
 
@@ -188,8 +187,16 @@ class Call : public Recordable {
          * Set local audio port, as seen by me [not protected]
          * @param port  The local audio port
          */
-        void setLocalAudioPort(unsigned int port)  {
+        void setLocalAudioPort(unsigned int port) {
             localAudioPort_ = port;
+        }
+
+        /**
+         * Set local video port, as seen by me [not protected]
+         * @param port  The local video port
+         */
+        void setLocalVideoPort(unsigned int port)  {
+            localVideoPort_ = port;
         }
 
         /**
@@ -204,7 +211,15 @@ class Call : public Recordable {
          */
         unsigned int getLocalAudioPort();
 
+        /**
+         * Return port used locally (for my machine) [mutex protected]
+         * @return unsigned int  The local video port
+         */
+        unsigned int getLocalVideoPort();
+
         void time_stop();
+        std::map<std::string, std::string> getDetails();
+        static std::map<std::string, std::string> getNullDetails();
         std::map<std::string, std::string> createHistoryEntry() const;
         virtual bool setRecording();
 
@@ -220,6 +235,9 @@ class Call : public Recordable {
 
         /** Local audio port, as seen by me. */
         unsigned int localAudioPort_;
+
+        /** Local video port, as seen by me. */
+        unsigned int localVideoPort_;
 
         /** Unique ID of the call */
         std::string id_;
@@ -249,4 +267,4 @@ class Call : public Recordable {
         time_t timestamp_stop_;
 };
 
-#endif
+#endif // __CALL_H__

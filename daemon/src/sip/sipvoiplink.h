@@ -36,6 +36,10 @@
 #ifndef SIPVOIPLINK_H_
 #define SIPVOIPLINK_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <map>
 
 #include <pjsip.h>
@@ -73,6 +77,13 @@ class SIPVoIPLink : public VoIPLink {
          * Destroy the singleton instance
          */
         static void destroy();
+
+        /**
+         * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
+         * SIPLOGLEVEL = 0 minimum logging
+         * SIPLOGLEVEL = 6 maximum logging
+         */
+        static void setSipLogLevel();
 
         /**
          * Event listener. Each event send by the call manager is received and handled from here
@@ -214,7 +225,8 @@ class SIPVoIPLink : public VoIPLink {
          * Return the codec protocol used for this call
          * @param c The call identifier
          */
-        std::string getCurrentCodecName(Call *c) const;
+        std::string getCurrentVideoCodecName(Call *c) const;
+        std::string getCurrentAudioCodecName(Call *c) const;
 
         /**
          * Retrive useragent name from account
@@ -228,9 +240,11 @@ class SIPVoIPLink : public VoIPLink {
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
+#if HAVE_INSTANT_MESSAGING
         void sendTextMessage(const std::string& callID,
                              const std::string& message,
                              const std::string& from);
+#endif
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
@@ -238,6 +252,10 @@ class SIPVoIPLink : public VoIPLink {
         void createDefaultSipUdpTransport();
 
         SipTransport sipTransport;
+
+#ifdef SFL_VIDEO
+        static void requestFastPictureUpdate(const std::string &callID);
+#endif
 
     private:
 
@@ -251,8 +269,6 @@ class SIPVoIPLink : public VoIPLink {
          * @return true if all is correct
          */
         bool SIPStartCall(SIPCall* call);
-
-        void dtmfSend(SIPCall *call, char code, const std::string &type);
 
         /**
          * Threading object

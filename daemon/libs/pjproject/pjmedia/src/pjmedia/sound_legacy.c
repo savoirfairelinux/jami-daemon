@@ -26,6 +26,8 @@
  * information.
  */
 
+#include <pjmedia/sound.h>
+#include <pjmedia-audiodev/errno.h>
 #include <pj/assert.h>
 
 #if PJMEDIA_HAS_LEGACY_SOUND_API

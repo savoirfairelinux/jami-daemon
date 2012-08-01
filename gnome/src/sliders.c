@@ -190,7 +190,7 @@ void toggle_slider_mute_microphone(void)
 
 guint get_mute_unmute_audio_state(void)
 {
-    return device_state; 
+    return device_state;
 }
 
 /** Generates the speaker slider and mute button */

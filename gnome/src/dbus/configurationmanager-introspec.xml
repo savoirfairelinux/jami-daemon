@@ -185,14 +185,17 @@
            </arg>
        </method>
 
+       <method name="registerAllAccounts" tp:name-for-bindings="registerAllAccounts">
+           <tp:docstring>
+                Send account registration (REGISTER) for all accounts, even if they are not enabled.
+           </tp:docstring>
+       </method>
+
        <method name="sendRegister" tp:name-for-bindings="sendRegister">
            <tp:docstring>
                 Send account registration (REGISTER) to the registrar.
+                Register the account if enable=true, unregister if enable=false.
            </tp:docstring>
-           Register the account if enable=true, unregister if enable=false.
-
-           @param[in] input accountID
-           -->
            <arg type="s" name="accountID" direction="in">
                <tp:docstring>
                     The account ID
@@ -334,6 +337,16 @@
            </arg>
        </method>
 
+       <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
+           <tp:added version="1.1.1"/>
+           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <tp:docstring>
+                Get a map [Path,Filename] of available ringtone. Note, set the ringtone with the complete path
+           </tp:docstring>
+           <arg type="a{ss}" name="list" direction="out">
+           </arg>
+       </method>
+
        <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
                <arg type="s" name="state" direction="in">
                </arg>
@@ -359,6 +372,7 @@
            </arg>
        </method>
 
+       <!--    General Settings Panel         -->
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getEchoCancelState">
            <arg type="s" name="state" direction="out">
@@ -384,6 +398,7 @@
            <arg type="i" name="level" direction="out">
            </arg>
        </method>
+
 
        <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
            <arg type="i" name="days" direction="out">

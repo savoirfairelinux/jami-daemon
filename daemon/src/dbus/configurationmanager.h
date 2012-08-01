@@ -52,23 +52,22 @@
 
 #include "dbus_cpp.h"
 
-class ConfigurationManager :
-    public org::sflphone::SFLphone::ConfigurationManager_adaptor,
+class ConfigurationManager
+    : public org::sflphone::SFLphone::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor {
 
     public:
-
         ConfigurationManager(DBus::Connection& connection);
-        static const char* SERVER_PATH;
-
         std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
+        std::map<std::string, std::string> getAccountTemplate();
         std::string addAccount(const std::map< std::string, std::string >& details);
         void removeAccount(const std::string& accoundID);
         void deleteAllCredential(const std::string& accountID);
         std::vector< std::string > getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
+        void registerAllAccounts(void);
 
         std::map< std::string, std::string > getTlsSettingsDefault();
 
@@ -76,6 +75,7 @@ class ConfigurationManager :
         std::vector< std::string > getSupportedTlsMethod();
         std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
         std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
+
         void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
 
         std::vector< std::string > getAudioPluginList();
@@ -96,6 +96,8 @@ class ConfigurationManager :
         int getEchoCancelTailLength();
         void setEchoCancelDelay(const int32_t& length);
         int getEchoCancelDelay();
+
+        std::map<std::string, std::string> getRingtoneList();
 
         std::string getAudioManager();
         void setAudioManager(const std::string& api);
@@ -138,9 +140,9 @@ class ConfigurationManager :
         std::vector<std::string> getAllIpInterface();
         std::vector<std::string> getAllIpInterfaceByName();
 
-        std::map< std::string, std::string > getShortcuts();
-        void setShortcuts(const std::map< std::string, std::string >& shortcutsMap);
+        std::map<std::string, std::string> getShortcuts();
+        void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
 };
 
-#endif//CONFIGURATIONMANAGER_H
+#endif //CONFIGURATIONMANAGER_H
 

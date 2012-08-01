@@ -29,11 +29,19 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef SIPCALL_H
-#define SIPCALL_H
+#ifndef __SIPCALL_H__
+#define __SIPCALL_H__
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "call.h"
 #include "audio/audiortp/audio_rtp_factory.h"
+#ifdef SFL_VIDEO
+#include "video/video_rtp_session.h"
+#endif
+
 #include "noncopyable.h"
 
 class pjsip_evsub;
@@ -76,6 +84,15 @@ class SIPCall : public Call {
             return audiortp_;
         }
 
+#ifdef SFL_VIDEO
+        /**
+         * Returns a pointer to the VideoRtp object
+         */
+        sfl_video::VideoRtpSession &getVideoRtp () {
+            return videortp_;
+        }
+#endif
+
         /**
          * Return the local memory pool for this call
          */
@@ -98,6 +115,13 @@ class SIPCall : public Call {
          */
         sfl::AudioRtpFactory audiortp_;
 
+#ifdef SFL_VIDEO
+        /**
+         * Video Rtp Session factory
+         */
+        sfl_video::VideoRtpSession videortp_;
+#endif
+
         /**
          * The pool to allocate memory, released once call hang up
          */
@@ -109,4 +133,4 @@ class SIPCall : public Call {
         Sdp *local_sdp_;
 };
 
-#endif
+#endif // __SIPCALL_H__

@@ -168,7 +168,7 @@ class AudioCodecFactory {
         /**
          * Vector containing a default order for the codecs
          */
-        CodecOrder defaultCodecOrder_;
+        std::vector<int> defaultCodecList_;
 
         /**
          * Vector containing the complete name of the codec shared library scanned

@@ -69,7 +69,6 @@ typedef enum {
     CALL_STATE_FAILURE,
     CALL_STATE_BUSY,
     CALL_STATE_TRANSFER,
-    CALL_STATE_RECORD,
 } call_state_t;
 
 static const char * const TIMESTAMP_START_KEY =   "timestamp_start";
@@ -201,6 +200,8 @@ gchar* get_formatted_start_timestamp(time_t);
 
 gchar* call_get_audio_codec(callable_obj_t *obj);
 
+gchar* call_get_audio_codec(callable_obj_t *obj);
+gchar* call_get_video_codec(callable_obj_t *obj);
 gboolean call_was_outgoing(callable_obj_t * obj);
 
 void restore_call(const gchar *id);

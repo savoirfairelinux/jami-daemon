@@ -69,14 +69,15 @@ void searchbar_addressbook_activated(GtkEntry *entry, gchar *arg1 UNUSED, gpoint
 void searchbar_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
     DEBUG("Searchbar: Entry changed");
-    if (active_calltree_tab == history_tab)
+    if (calltab_has_name(active_calltree_tab, HISTORY))
         history_search();
 }
 
 static gchar *get_combobox_active_text(GtkWidget *widget)
 {
     GtkTreeIter iter;
-    gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter);
+    if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter))
+        return NULL;
     GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
     gchar *string = NULL;
     /* this will return a strdup'd string of the text for the active
@@ -95,6 +96,7 @@ static void cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
         addrbook->set_current_book(string);
         g_free(string);
     }
+
     AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
     addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
@@ -245,10 +247,10 @@ static void icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event,
 {
     DEBUG("Searchbar: Icon pressed");
 
-    if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree_tab == history_tab)
+    if (position == GTK_ENTRY_ICON_PRIMARY && calltab_has_name(active_calltree_tab, HISTORY))
         gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
                        event->button, event->time);
-    else if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree_tab == contacts_tab) {
+    else if (position == GTK_ENTRY_ICON_PRIMARY && calltab_has_name(active_calltree_tab, CONTACTS)) {
         GtkWidget *addrbook_menu = addressbook_menu_new();
         gtk_menu_popup(GTK_MENU(addrbook_menu), NULL, NULL, NULL, NULL,
                        event->button, event->time);
@@ -258,13 +260,9 @@ static void icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event,
 
 static void text_changed_cb(GtkEntry *entry, GParamSpec *pspec UNUSED)
 {
-    gboolean has_text;
-
-    has_text = gtk_entry_get_text_length(entry) > 0;
+    const gboolean has_text = gtk_entry_get_text_length(entry) > 0;
     gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 }
-
-
 
 GtkWidget *addressbook_menu_new(void)
 {

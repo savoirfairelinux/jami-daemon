@@ -33,6 +33,7 @@
 #include "config/yamlemitter.h"
 #include "config/yamlparser.h"
 #include "account.h"
+#include "account_schema.h"
 #include "logger.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
@@ -43,10 +44,10 @@ void ConfigurationTest::testDefaultValueAudio()
 {
     TITLE();
 
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardin() == ALSA_DFT_CARD_ID);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getCardout() == ALSA_DFT_CARD_ID);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getSmplrate() == 44100);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getPlugin() == PCM_DEFAULT);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardin() == ALSA_DFT_CARD_ID);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardout() == ALSA_DFT_CARD_ID);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaSmplrate() == 44100);
+    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaPlugin() == PCM_DEFAULT);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 100);
     CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 100);
 }
@@ -153,14 +154,14 @@ void ConfigurationTest::testYamlEmitter()
     ScalarNode verifyclient(true);
     ScalarNode verifyserver(true);
 
-    accountmap.setKeyValue(ALIAS_KEY, &alias);
-    accountmap.setKeyValue(TYPE_KEY, &type);
-    accountmap.setKeyValue(ID_KEY, &id);
-    accountmap.setKeyValue(USERNAME_KEY, &username);
-    accountmap.setKeyValue(PASSWORD_KEY, &password);
-    accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
-    accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
-    accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
+    accountmap.setKeyValue(Account::ALIAS_KEY, &alias);
+    accountmap.setKeyValue(Account::TYPE_KEY, &type);
+    accountmap.setKeyValue(Account::ID_KEY, &id);
+    accountmap.setKeyValue(Account::USERNAME_KEY, &username);
+    accountmap.setKeyValue(Account::PASSWORD_KEY, &password);
+    accountmap.setKeyValue(Account::HOSTNAME_KEY, &hostname);
+    accountmap.setKeyValue(Account::ACCOUNT_ENABLE_KEY, &enable);
+    accountmap.setKeyValue(Account::MAILBOX_KEY, &mailbox);
     accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, &expire);
     accountmap.setKeyValue(INTERFACE_KEY, &interface);
     accountmap.setKeyValue(PORT_KEY, &port);
@@ -168,7 +169,7 @@ void ConfigurationTest::testYamlEmitter()
     accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
     accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
     accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
-    accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
+    accountmap.setKeyValue(Account::DISPLAY_NAME_KEY, &displayName);
 
     accountmap.setKeyValue(SRTP_KEY, &srtpmap);
     srtpmap.setKeyValue(SRTP_ENABLE_KEY, &srtpenabled);

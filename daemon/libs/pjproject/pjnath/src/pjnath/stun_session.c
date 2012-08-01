@@ -1,4 +1,4 @@
-/* $Id: stun_session.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: stun_session.c 3876 2011-10-31 10:27:12Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -353,6 +353,11 @@ static pj_status_t handle_auth_challenge(pj_stun_session *sess,
 		 pj_stun_msg_find_attr(response, PJ_STUN_ATTR_REALM, 0);
 	if (arealm) {
 	    pj_strdup(sess->pool, &sess->server_realm, &arealm->value);
+	    while (sess->server_realm.slen &&
+		    !sess->server_realm.ptr[sess->server_realm.slen-1])
+	    {
+		--sess->server_realm.slen;
+	    }
 	}
 
 	/* Create new request */

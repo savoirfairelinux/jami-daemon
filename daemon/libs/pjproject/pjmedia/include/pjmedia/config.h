@@ -1,4 +1,4 @@
-/* $Id: config.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: config.h 4124 2012-05-17 03:31:02Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -341,7 +341,7 @@
  * Default is PJMEDIA_RESAMPLE_LIBRESAMPLE
  */
 #ifndef PJMEDIA_RESAMPLE_IMP
-#   define PJMEDIA_RESAMPLE_IMP		    PJMEDIA_RESAMPLE_NONEV
+#   define PJMEDIA_RESAMPLE_IMP		    PJMEDIA_RESAMPLE_LIBRESAMPLE
 #endif
 
 
@@ -387,12 +387,22 @@
 
 
 /**
- * Number of packets received from different source IP address from the
+ * Number of RTP packets received from different source IP address from the
  * remote address required to make the stream switch transmission
  * to the source address.
  */
 #ifndef PJMEDIA_RTP_NAT_PROBATION_CNT	
 #  define PJMEDIA_RTP_NAT_PROBATION_CNT		10
+#endif
+
+
+/**
+ * Number of RTCP packets received from different source IP address from the
+ * remote address required to make the stream switch RTCP transmission
+ * to the source address.
+ */
+#ifndef PJMEDIA_RTCP_NAT_PROBATION_CNT
+#  define PJMEDIA_RTCP_NAT_PROBATION_CNT	3
 #endif
 
 
@@ -443,6 +453,19 @@
 #   define PJMEDIA_RTCP_STAT_HAS_RAW_JITTER	0
 #endif
 
+/**
+ * Specify the factor with wich RTCP RTT statistics should be normalized 
+ * if exceptionally high. For e.g. mobile networks with potentially large
+ * fluctuations, this might be unwanted.
+ *
+ * Use (0) to disable this feature.
+ *
+ * Default: 3.
+ */
+#ifndef PJMEDIA_RTCP_NORMALIZE_FACTOR
+#   define PJMEDIA_RTCP_NORMALIZE_FACTOR	3
+#endif
+
 
 /**
  * Specify whether RTCP statistics includes IP Delay Variation statistics.
@@ -466,7 +489,7 @@
  * if it is enabled on run-time on per stream basis. See  
  * PJMEDIA_STREAM_ENABLE_XR setting for more info.
  *
- * Default: 1 (yes).
+ * Default: 0 (no).
  */
 #ifndef PJMEDIA_HAS_RTCP_XR
 #   define PJMEDIA_HAS_RTCP_XR			0
@@ -483,6 +506,19 @@
 #ifndef PJMEDIA_STREAM_ENABLE_XR
 #   define PJMEDIA_STREAM_ENABLE_XR		0
 #endif
+
+
+/**
+ * Specify the buffer length for storing any received RTCP SDES text
+ * in a stream session. Usually RTCP contains only the mandatory SDES
+ * field, i.e: CNAME.
+ * 
+ * Default: 64 bytes.
+ */
+#ifndef PJMEDIA_RTCP_RX_SDES_BUF_LEN
+#   define PJMEDIA_RTCP_RX_SDES_BUF_LEN		64
+#endif
+
 
 /**
  * Specify how long (in miliseconds) the stream should suspend the
@@ -775,7 +811,7 @@
  * By default it is enabled.
  */
 #ifndef PJMEDIA_HAS_SRTP
-#   define PJMEDIA_HAS_SRTP			    0
+#   define PJMEDIA_HAS_SRTP			    1
 #endif
 
 
@@ -876,7 +912,64 @@
  * Default: 5 seconds
  */
 #ifndef PJMEDIA_STREAM_KA_INTERVAL
-#	define PJMEDIA_STREAM_KA_INTERVAL	    5
+#   define PJMEDIA_STREAM_KA_INTERVAL		    5
+#endif
+
+
+/**
+ * Minimum gap between two consecutive discards in jitter buffer,
+ * in milliseconds.
+ *
+ * Default: 200 ms
+ */
+#ifndef PJMEDIA_JBUF_DISC_MIN_GAP
+#   define PJMEDIA_JBUF_DISC_MIN_GAP		    200
+#endif
+
+
+/**
+ * Minimum burst level reference used for calculating discard duration
+ * in jitter buffer progressive discard algorithm, in frames.
+ * 
+ * Default: 1 frame
+ */
+#ifndef PJMEDIA_JBUF_PRO_DISC_MIN_BURST
+#   define PJMEDIA_JBUF_PRO_DISC_MIN_BURST	    1
+#endif
+
+
+/**
+ * Maximum burst level reference used for calculating discard duration
+ * in jitter buffer progressive discard algorithm, in frames.
+ * 
+ * Default: 200 frames
+ */
+#ifndef PJMEDIA_JBUF_PRO_DISC_MAX_BURST
+#   define PJMEDIA_JBUF_PRO_DISC_MAX_BURST	    100
+#endif
+
+
+/**
+ * Duration for progressive discard algotithm in jitter buffer to discard
+ * an excessive frame when burst is equal to or lower than
+ * PJMEDIA_JBUF_PRO_DISC_MIN_BURST, in milliseconds.
+ *
+ * Default: 2000 ms
+ */
+#ifndef PJMEDIA_JBUF_PRO_DISC_T1
+#   define PJMEDIA_JBUF_PRO_DISC_T1		    2000
+#endif
+
+
+/**
+ * Duration for progressive discard algotithm in jitter buffer to discard
+ * an excessive frame when burst is equal to or greater than
+ * PJMEDIA_JBUF_PRO_DISC_MAX_BURST, in milliseconds.
+ *
+ * Default: 10000 ms
+ */
+#ifndef PJMEDIA_JBUF_PRO_DISC_T2
+#   define PJMEDIA_JBUF_PRO_DISC_T2		    10000
 #endif
 
 

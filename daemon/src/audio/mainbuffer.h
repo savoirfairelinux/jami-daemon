@@ -40,11 +40,7 @@
 
 class RingBuffer;
 
-typedef std::map<std::string, RingBuffer*> RingBufferMap;
-
 typedef std::set<std::string> CallIDSet;
-
-typedef std::map<std::string, CallIDSet*> CallIDMap;
 
 class MainBuffer {
 
@@ -86,21 +82,19 @@ class MainBuffer {
 
         void unBindAll(const std::string &call_id);
 
-        void putData(void *buffer, int toCopy, const std::string &call_id);
+        void putData(void *buffer, size_t toCopy, const std::string &call_id);
 
-        int getData(void *buffer, int toCopy, const std::string &call_id);
+        size_t getData(void *buffer, size_t toCopy, const std::string &call_id);
 
-        int availForGet(const std::string &call_id);
+        size_t availableForGet(const std::string &call_id);
 
-        int discard(int toDiscard, const std::string &call_id);
+        size_t discard(size_t toDiscard, const std::string &call_id);
 
         void flush(const std::string &call_id);
 
         void flushAllBuffers();
 
-        void syncBuffers(const std::string &call_id);
-
-        void stateInfo();
+        void dumpInfo() const;
 
     private:
 
@@ -108,7 +102,7 @@ class MainBuffer {
 
         void createCallIDSet(const std::string &set_id);
 
-        bool removeCallIDSet(const std::string &set_id);
+        void removeCallIDSet(const std::string &set_id);
 
         /**
          * Add a new call id to this set
@@ -120,22 +114,25 @@ class MainBuffer {
         /**
          * Create a new ringbuffer with default readpointer
          */
-        RingBuffer* createRingBuffer(const std::string &call_id);
+        void createRingBuffer(const std::string &call_id);
 
-        bool removeRingBuffer(const std::string &call_id);
+        void removeRingBuffer(const std::string &call_id);
 
         RingBuffer* getRingBuffer(const std::string &call_id);
+        const RingBuffer* getRingBuffer(const std::string & call_id) const;
 
-        int getDataByID(void *buffer, int toCopy, const std::string &call_id, const std::string &reader_id);
+        size_t getDataByID(void *buffer, size_t toCopy, const std::string &call_id, const std::string &reader_id);
 
-        int availForGetByID(const std::string &call_id, const std::string &reader_id);
+        size_t availableForGetByID(const std::string &call_id, const std::string &reader_id) const;
 
-        void discardByID(int toDiscard, const std::string &call_id, const std::string &reader_id);
+        void discardByID(size_t toDiscard, const std::string &call_id, const std::string &reader_id);
 
         void flushByID(const std::string &call_id, const std::string &reader_id);
 
+        typedef std::map<std::string, RingBuffer*> RingBufferMap;
         RingBufferMap ringBufferMap_;
 
+        typedef std::map<std::string, CallIDSet*> CallIDMap;
         CallIDMap callIDMap_;
 
         ost::Mutex mutex_;

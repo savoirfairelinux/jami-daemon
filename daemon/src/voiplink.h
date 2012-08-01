@@ -150,7 +150,8 @@ class VoIPLink {
          * Return the codec protocol used for this call
          * @param call The call
          */
-        virtual std::string getCurrentCodecName(Call *call) const = 0;
+        virtual std::string getCurrentVideoCodecName(Call *call) const = 0;
+        virtual std::string getCurrentAudioCodecName(Call *call) const = 0;
 
         /**
          * Send a message to a call identified by its callid
@@ -159,9 +160,11 @@ class VoIPLink {
          * @param The actual message to be transmitted
          * @param The sender of this message (could be another participant of a conference)
          */
+#if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string &callID,
                                      const std::string &message,
                                      const std::string &from) = 0;
+#endif
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer

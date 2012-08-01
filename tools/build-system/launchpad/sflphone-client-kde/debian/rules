@@ -1,9 +1,4 @@
 #!/usr/bin/make -f
-# debian/rules file - for filelight (1.0)
-# Copyright 2007 Raúl Sánchez Siles
-#           2009 Michael Meskes
-# This packaging is licensed under GPLv2
-# see /usr/share/common-licenses/GPL-2 for details.
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/cmake.mk

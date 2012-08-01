@@ -28,8 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef YAMLEMITTER_H__
-#define YAMLEMITTER_H__
+#ifndef YAMLEMITTER_H_
+#define YAMLEMITTER_H_
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <yaml.h>
 #include <stdexcept>

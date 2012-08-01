@@ -71,8 +71,26 @@ http://www.savoirfairelinux.com/
 How to compile
 --------------
 
-# First compile the SIP library
+# Install libav-0.7 and some encoder/decoder librairies
+sudo apt-get install libtheora-dev libvpx-dev libmp3lame-dev
+
+# x264 doesn't do releases, so grab the last snapshot of it
+wget ftp://ftp.videolan.org/pub/x264/snapshots/last_x264.tar.bz2
+tar -jxf last_x264.tar.bz2
+cd x264-snapshot...
+./configure --enable-shared --enable-pic
+make && sudo make install
+
+# get the libav-0.7 release
+wget http://libav.org/releases/libav-0.7.tar.gz
+tar xzf libav-0.7.tar.gz
+cd libav-0.7
+./configure --enable-libx264 --enable-gpl --enable-swscale --enable-libvpx --enable-libmp3lame --enable-pic --enable-libtheora
+make && sudo make install
+
+# Compile the PJSIP library
 cd libs/pjproject
+
 ./autogen.sh
 ./configure --disable-ilbc-codec && make clean && make dep && make
 sudo make install

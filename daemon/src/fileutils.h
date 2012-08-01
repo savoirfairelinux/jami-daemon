@@ -45,6 +45,7 @@ namespace fileutils {
     bool check_dir(const char *path);
     void set_program_dir(char *program_path);
     const char *get_program_dir();
+    const char *get_data_dir();
     bool create_pidfile();
 }
 

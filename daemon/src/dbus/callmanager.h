@@ -57,7 +57,7 @@ class CallManagerException: public std::runtime_error {
 };
 
 namespace sfl {
-class AudioZrtpSession;
+    class AudioZrtpSession;
 }
 
 class CallManager
@@ -67,7 +67,6 @@ class CallManager
     public:
 
         CallManager(DBus::Connection& connection);
-        static const char* SERVER_PATH;
 
         /* methods exported by this interface,
          * you will have to implement them in your ObjectAdaptor
@@ -97,10 +96,10 @@ class CallManager
         void hangUpConference(const std::string& confID);
         void holdConference(const std::string& confID);
         void unholdConference(const std::string& confID);
-        std::vector< std::string > getConferenceList();
-        std::vector< std::string > getParticipantList(const std::string& confID);
+        std::vector<std::string> getConferenceList();
+        std::vector<std::string> getParticipantList(const std::string& confID);
         std::string getConferenceId(const std::string& callID);
-        std::map< std::string, std::string > getConferenceDetails(const std::string& callID);
+        std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
         /* File Playback methods */
         bool startRecordedFilePlayback(const std::string& filepath);
@@ -110,6 +109,7 @@ class CallManager
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
         void setRecording(const std::string& callID);
+        void recordPlaybackSeek(const double& value);
         bool getIsRecording(const std::string& callID);
         std::string getCurrentAudioCodecName(const std::string& callID);
         void playDTMF(const std::string& key);
@@ -121,15 +121,15 @@ class CallManager
         void setConfirmGoClear(const std::string& callID);
         void requestGoClear(const std::string& callID);
         void acceptEnrollment(const std::string& callID, const bool& accepted);
-        void setPBXEnrollment(const std::string& callID, const bool& yesNo);
 
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
 
     private:
 
+#if HAVE_ZRTP
         sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
+#endif
 };
-
 
 #endif//CALLMANAGER_H

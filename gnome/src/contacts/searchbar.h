@@ -66,16 +66,6 @@ GtkWidget* contacts_searchbar_new (void);
 SearchType get_current_history_search_type (void);
 
 /**
- * Activate a waiting layer during search
- */
-void activateWaitingLayer();
-
-/**
- * Deactivate waiting layer
- */
-void deactivateWaitingLayer();
-
-/**
  * Set focus on addressbook search bar
  */
 void set_focus_on_addressbook_searchbar (void);

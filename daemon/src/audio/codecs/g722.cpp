@@ -758,7 +758,7 @@ class G722 : public sfl::AudioCodec {
 
 // the class factories
 // cppcheck-suppress unusedFunction
-extern "C" sfl::Codec* create()
+extern "C" sfl::Codec* CODEC_ENTRY()
 {
     return new G722;
 }

@@ -35,10 +35,10 @@
 #include <string>
 #include <vector>
 
-#include "global.h"
 #include "noncopyable.h"
 #include "config/sfl_config.h"
 #include "config/serializable.h"
+#include "registration_states.h"
 
 class VoIPLink;
 
@@ -48,101 +48,6 @@ class VoIPLink;
  * It can be enable on loading or activate after.
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
-
-/** Contains all the state an Voip can be in */
-enum RegistrationState {
-    Unregistered,
-    Trying,
-    Registered,
-    Error,
-    ErrorAuth ,
-    ErrorNetwork ,
-    ErrorHost,
-    ErrorExistStun,
-    ErrorNotAcceptable,
-    NumberOfStates
-};
-
-// Account identifier
-static const char *const CONFIG_ACCOUNT_ID                   = "Account.id";
-
-// Common account parameters
-static const char *const CONFIG_ACCOUNT_TYPE                 = "Account.type";
-static const char *const CONFIG_ACCOUNT_ALIAS                = "Account.alias";
-static const char *const CONFIG_ACCOUNT_MAILBOX	             = "Account.mailbox";
-static const char *const CONFIG_ACCOUNT_ENABLE               = "Account.enable";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE  = "Account.registrationExpire";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS = "Account.registrationStatus";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
-static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.registrationDescription";
-static const char *const CONFIG_CREDENTIAL_NUMBER            = "Credential.count";
-static const char *const CONFIG_ACCOUNT_DTMF_TYPE            = "Account.dtmfType";
-static const char *const CONFIG_RINGTONE_PATH                = "Account.ringtonePath";
-static const char *const CONFIG_RINGTONE_ENABLED             = "Account.ringtoneEnabled";
-static const char *const CONFIG_KEEP_ALIVE_ENABLED           = "Account.keepAliveEnabled";
-
-static const char *const CONFIG_ACCOUNT_HOSTNAME             = "Account.hostname";
-static const char *const CONFIG_ACCOUNT_USERNAME             = "Account.username";
-static const char *const CONFIG_ACCOUNT_ROUTESET             = "Account.routeset";
-static const char *const CONFIG_ACCOUNT_PASSWORD             = "Account.password";
-static const char *const CONFIG_ACCOUNT_REALM                = "Account.realm";
-static const char *const CONFIG_ACCOUNT_DEFAULT_REALM        = "*";
-static const char *const CONFIG_ACCOUNT_USERAGENT            = "Account.useragent";
-
-static const char *const CONFIG_LOCAL_INTERFACE              = "Account.localInterface";
-static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL       = "Account.publishedSameAsLocal";
-static const char *const CONFIG_LOCAL_PORT                   = "Account.localPort";
-static const char *const CONFIG_PUBLISHED_PORT               = "Account.publishedPort";
-static const char *const CONFIG_PUBLISHED_ADDRESS            = "Account.publishedAddress";
-
-static const char *const CONFIG_DISPLAY_NAME                 = "Account.displayName";
-static const char *const CONFIG_DEFAULT_ADDRESS              = "0.0.0.0";
-
-// SIP specific parameters
-static const char *const CONFIG_SIP_PROXY                    = "SIP.proxy";
-static const char *const CONFIG_STUN_SERVER                  = "STUN.server";
-static const char *const CONFIG_STUN_ENABLE                  = "STUN.enable";
-
-// SRTP specific parameters
-static const char *const CONFIG_SRTP_ENABLE                  = "SRTP.enable";
-static const char *const CONFIG_SRTP_KEY_EXCHANGE            = "SRTP.keyExchange";
-static const char *const CONFIG_SRTP_ENCRYPTION_ALGO         = "SRTP.encryptionAlgorithm";  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8
-static const char *const CONFIG_SRTP_RTP_FALLBACK            = "SRTP.rtpFallback";
-static const char *const CONFIG_ZRTP_HELLO_HASH              = "ZRTP.helloHashEnable";
-static const char *const CONFIG_ZRTP_DISPLAY_SAS             = "ZRTP.displaySAS";
-static const char *const CONFIG_ZRTP_NOT_SUPP_WARNING        = "ZRTP.notSuppWarning";
-static const char *const CONFIG_ZRTP_DISPLAY_SAS_ONCE        = "ZRTP.displaySasOnce";
-
-static const char *const CONFIG_TLS_LISTENER_PORT            = "TLS.listenerPort";
-static const char *const CONFIG_TLS_ENABLE                   = "TLS.enable";
-static const char *const CONFIG_TLS_CA_LIST_FILE             = "TLS.certificateListFile";
-static const char *const CONFIG_TLS_CERTIFICATE_FILE         = "TLS.certificateFile";
-static const char *const CONFIG_TLS_PRIVATE_KEY_FILE         = "TLS.privateKeyFile";
-static const char *const CONFIG_TLS_PASSWORD                 = "TLS.password";
-static const char *const CONFIG_TLS_METHOD                   = "TLS.method";
-static const char *const CONFIG_TLS_CIPHERS                  = "TLS.ciphers";
-static const char *const CONFIG_TLS_SERVER_NAME              = "TLS.serverName";
-static const char *const CONFIG_TLS_VERIFY_SERVER            = "TLS.verifyServer";
-static const char *const CONFIG_TLS_VERIFY_CLIENT            = "TLS.verifyClient";
-static const char *const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE = "TLS.requireClientCertificate";
-static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC  = "TLS.negotiationTimeoutSec";
-static const char *const CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC = "TLS.negotiationTimemoutMsec";
-
-// General configuration keys for accounts
-static const char * const ALIAS_KEY = "alias";
-static const char * const TYPE_KEY = "type";
-static const char * const ID_KEY = "id";
-static const char * const USERNAME_KEY = "username";
-static const char * const AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
-static const char * const PASSWORD_KEY = "password";
-static const char * const HOSTNAME_KEY = "hostname";
-static const char * const ACCOUNT_ENABLE_KEY = "enable";
-static const char * const MAILBOX_KEY = "mailbox";
-
-static const char * const CODECS_KEY = "codecs";  // 0/9/110/111/112/
-static const char * const RINGTONE_PATH_KEY = "ringtonePath";
-static const char * const RINGTONE_ENABLED_KEY = "ringtoneEnabled";
-static const char * const DISPLAY_NAME_KEY = "displayName";
 
 class Account : public Serializable {
 
@@ -224,23 +129,30 @@ class Account : public Serializable {
         std::string getAlias() const {
             return alias_;
         }
+
         void setAlias(const std::string &alias) {
             alias_ = alias;
         }
 
-        /**
-         * Accessor to data structures
-         * @return CodecOrder& The list that reflects the user's choice
+        std::vector<std::map<std::string, std::string> >
+        getAllVideoCodecs() const;
+
+        std::vector<std::map<std::string, std::string> >
+        getActiveVideoCodecs() const;
+
+         /* Accessor to data structures
+         * @return The list that reflects the user's choice
          */
-        const CodecOrder& getActiveCodecs() const {
-            return codecOrder_;
+        std::vector<int> getActiveAudioCodecs() const {
+            return audioCodecList_;
         }
 
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
          */
-        void setActiveCodecs(const std::vector <std::string>& list);
+        void setActiveAudioCodecs(const std::vector<std::string>& list);
+        void setVideoCodecs(const std::vector<std::map<std::string, std::string> > &codecs);
 
         std::string getRingtonePath() const {
             return ringtonePath_;
@@ -271,16 +183,36 @@ class Account : public Serializable {
             mailBox_ = mb;
         }
 
+        static const char * const VIDEO_CODEC_ENABLED;
+        static const char * const VIDEO_CODEC_NAME;
+        static const char * const VIDEO_CODEC_PARAMETERS;
+        static const char * const VIDEO_CODEC_BITRATE;
     private:
         NON_COPYABLE(Account);
 
         /**
          * Helper function used to load the default codec order from the codec factory
-         * setActiveCodecs is called to sync both codecOrder_ and codecStr_
          */
         void loadDefaultCodecs();
 
     protected:
+        friend class ConfigurationTest;
+        // General configuration keys for accounts
+        static const char * const AUDIO_CODECS_KEY;
+        static const char * const VIDEO_CODECS_KEY;
+        static const char * const RINGTONE_PATH_KEY;
+        static const char * const RINGTONE_ENABLED_KEY;
+        static const char * const DISPLAY_NAME_KEY;
+        static const char * const ALIAS_KEY;
+        static const char * const TYPE_KEY;
+        static const char * const ID_KEY;
+        static const char * const USERNAME_KEY;
+        static const char * const AUTHENTICATION_USERNAME_KEY;
+        static const char * const PASSWORD_KEY;
+        static const char * const HOSTNAME_KEY;
+        static const char * const ACCOUNT_ENABLE_KEY;
+        static const char * const MAILBOX_KEY;
+
         static std::string mapStateNumberToString(RegistrationState state);
 
         /**
@@ -325,13 +257,18 @@ class Account : public Serializable {
         /**
          * Vector containing the order of the codecs
          */
-        CodecOrder codecOrder_;
+        std::vector<int> audioCodecList_;
 
         /**
-         * List of codec obtained when parsing configuration and used
+         * Vector containing the video codecs in order
+         */
+        std::vector<std::map<std::string, std::string> > videoCodecList_;
+
+        /**
+         * List of audio codecs obtained when parsing configuration and used
          * to generate codec order list
          */
-        std::string codecStr_;
+        std::string audioCodecStr_;
 
         /**
          * Ringtone .au file used for this account

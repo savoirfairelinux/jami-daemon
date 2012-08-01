@@ -1,4 +1,4 @@
-/* $Id: ice_strans.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: ice_strans.c 3991 2012-03-29 04:17:06Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -1163,8 +1163,11 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto( pj_ice_strans *ice_st,
 
     /* If ICE is available, send data with ICE, otherwise send with the
      * default candidate selected during initialization.
+     *
+     * https://trac.pjsip.org/repos/ticket/1416:
+     * Once ICE has failed, also send data with the default candidate.
      */
-    if (ice_st->ice) {
+    if (ice_st->ice && ice_st->state < PJ_ICE_STRANS_STATE_FAILED) {
 	if (comp->turn_sock) {
 	    pj_turn_sock_lock(comp->turn_sock);
 	}
@@ -1183,6 +1186,12 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto( pj_ice_strans *ice_st,
 				  ~(PJ_STUN_SESS_LOG_TX_IND|
 				    PJ_STUN_SESS_LOG_RX_IND)
 	    };
+
+	    /* https://trac.pjsip.org/repos/ticket/1316 */
+	    if (comp->turn_sock == NULL) {
+		/* TURN socket error */
+		return PJ_EINVALIDOP;
+	    }
 
 	    if (!comp->turn_log_off) {
 		/* Disable logging for Send/Data indications */
@@ -1382,6 +1391,11 @@ static pj_bool_t stun_on_rx_data(pj_stun_sock *stun_sock,
     pj_status_t status;
 
     comp = (pj_ice_strans_comp*) pj_stun_sock_get_user_data(stun_sock);
+    if (comp == NULL) {
+	/* We have disassociated ourselves from the STUN socket */
+	return PJ_FALSE;
+    }
+
     ice_st = comp->ice_st;
 
     sess_add_ref(ice_st);

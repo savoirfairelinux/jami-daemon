@@ -42,6 +42,8 @@
 #include <map>
 #include <vector>
 
+#include "config.h"
+
 const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 
 #define ALSA_DFT_CARD_ID 0          /** Index of the default soundcard */
@@ -51,11 +53,6 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 #define PCM_DMIX	"plug:dmix"		/** Alsa plugin for software mixing */
 #define PCM_DSNOOP	"plug:dsnoop"		/** Alsa plugin for microphone sharing */
 #define PCM_DMIX_DSNOOP "dmix/dsnoop"           /** Audio profile using Alsa dmix/dsnoop */
-
-#define SFL_PCM_BOTH		0x0021		/** To open both playback and capture devices */
-#define SFL_PCM_PLAYBACK	0x0022		/** To open playback device only */
-#define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
-#define SFL_PCM_RINGTONE    0x0024
 
 #define RINGTONE_ENABLED	      TRUE_STR		/** Custom ringtone enable or not */
 #define DISPLAY_DIALPAD		      TRUE_STR		/** Display dialpad or not */
@@ -71,8 +68,15 @@ const char * const ZRTP_ZID_FILENAME = "sfl.zid";
 #define PULSEAUDIO_NOT_RUNNING      0x0100  /** Pulseaudio is not running */
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
+// Define the audio api
 #define PULSEAUDIO_API_STR          "pulseaudio"
 #define ALSA_API_STR                "alsa"
+#if HAVE_PULSE
+#define DEFAULT_AUDIO_API_STR PULSEAUDIO_API_STR
+#else
+#define DEFAULT_AUDIO_API_STR ALSA_API_STR
+#endif
+
 #define UNUSED          __attribute__((__unused__))
 
 #define DEFAULT_SIP_PORT    5060
@@ -102,8 +106,5 @@ enum {
     PAYLOAD_CODEC_SPEEX_16000 = 111,
     PAYLOAD_CODEC_SPEEX_32000 = 112
 };
-
-/** The struct to reflect the order the user wants to use the codecs */
-typedef std::vector<int> CodecOrder;
 
 #endif	// __GLOBAL_H__

@@ -24,6 +24,7 @@
 #include <pjmedia/port.h>
 #include <pjmedia/resample.h>
 #include <pjmedia/silencedet.h>
+#include <pjmedia/sound_port.h>
 #include <pjmedia/stereo.h>
 #include <pjmedia/stream.h>
 #include <pj/array.h>
@@ -226,6 +227,7 @@ struct pjmedia_conf
     unsigned		  max_ports;	/**< Maximum ports.		    */
     unsigned		  port_cnt;	/**< Current number of ports.	    */
     unsigned		  connect_cnt;	/**< Total number of connections    */
+    pjmedia_snd_port	 *snd_dev_port;	/**< Sound device port.		    */
     pjmedia_port	 *master_port;	/**< Port zero's port.		    */
     char		  master_name_buf[80]; /**< Port0 name buffer.	    */
     pj_mutex_t		 *mutex;	/**< Conference mutex.		    */
@@ -445,6 +447,75 @@ static pj_status_t create_pasv_port( pjmedia_conf *conf,
 
 
 /*
+ * Create port zero for the sound device.
+ */
+static pj_status_t create_sound_port( pj_pool_t *pool,
+				      pjmedia_conf *conf )
+{
+    struct conf_port *conf_port;
+    pj_str_t name = { "Master/sound", 12 };
+    pj_status_t status;
+
+
+    status = create_pasv_port(conf, pool, &name, NULL, &conf_port);
+    if (status != PJ_SUCCESS)
+	return status;
+
+
+    /* Create sound device port: */
+
+    if ((conf->options & PJMEDIA_CONF_NO_DEVICE) == 0) {
+	pjmedia_aud_stream *strm;
+	pjmedia_aud_param param;
+
+	/*
+	 * If capture is disabled then create player only port.
+	 * Otherwise create bidirectional sound device port.
+	 */
+	if (conf->options & PJMEDIA_CONF_NO_MIC)  {
+	    status = pjmedia_snd_port_create_player(pool, -1, conf->clock_rate,
+						    conf->channel_count,
+						    conf->samples_per_frame,
+						    conf->bits_per_sample, 
+						    0,	/* options */
+						    &conf->snd_dev_port);
+
+	} else {
+	    status = pjmedia_snd_port_create( pool, -1, -1, conf->clock_rate, 
+					      conf->channel_count, 
+					      conf->samples_per_frame,
+					      conf->bits_per_sample,
+					      0,    /* Options */
+					      &conf->snd_dev_port);
+
+	}
+
+	if (status != PJ_SUCCESS)
+	    return status;
+
+	strm = pjmedia_snd_port_get_snd_stream(conf->snd_dev_port);
+	status = pjmedia_aud_stream_get_param(strm, &param);
+	if (status == PJ_SUCCESS) {
+	    pjmedia_aud_dev_info snd_dev_info;
+	    if (conf->options & PJMEDIA_CONF_NO_MIC)
+		pjmedia_aud_dev_get_info(param.play_id, &snd_dev_info);
+	    else
+		pjmedia_aud_dev_get_info(param.rec_id, &snd_dev_info);
+	    pj_strdup2_with_null(pool, &conf_port->name, snd_dev_info.name);
+	}
+
+	PJ_LOG(5,(THIS_FILE, "Sound device successfully created for port 0"));
+    }
+
+
+     /* Add the port to the bridge */
+    conf->ports[0] = conf_port;
+    conf->port_cnt++;
+
+    return PJ_SUCCESS;
+}
+
+/*
  * Create conference bridge.
  */
 PJ_DEF(pj_status_t) pjmedia_conf_create( pj_pool_t *pool,
@@ -512,6 +583,19 @@ PJ_DEF(pj_status_t) pjmedia_conf_create( pj_pool_t *pool,
 	return status;
     }
 
+    /* If sound device was created, connect sound device to the
+     * master port.
+     */
+    if (conf->snd_dev_port) {
+	status = pjmedia_snd_port_connect( conf->snd_dev_port, 
+					   conf->master_port );
+	if (status != PJ_SUCCESS) {
+	    pjmedia_conf_destroy(conf);
+	    return status;
+	}
+    }
+
+
     /* Done */
 
     *p_conf = conf;
@@ -549,6 +633,12 @@ PJ_DEF(pj_status_t) pjmedia_conf_destroy( pjmedia_conf *conf )
     unsigned i, ci;
 
     PJ_ASSERT_RETURN(conf != NULL, PJ_EINVAL);
+
+    /* Destroy sound device port. */
+    if (conf->snd_dev_port) {
+	pjmedia_snd_port_destroy(conf->snd_dev_port);
+	conf->snd_dev_port = NULL;
+    }
 
     /* Destroy delay buf of all (passive) ports. */
     for (i=0, ci=0; i<conf->max_ports && ci<conf->port_cnt; ++i) {

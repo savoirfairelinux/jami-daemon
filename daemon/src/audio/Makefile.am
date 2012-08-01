@@ -2,7 +2,16 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libaudio.la
 
-SUBDIRS = codecs audiortp sound alsa pulseaudio
+SUBDIRS = codecs audiortp sound alsa
+
+if BUILD_PULSE
+SUBDIRS += pulseaudio
+endif
+
+if BUILD_SPEEXDSP
+SFL_SPEEXDSP_SRC=echosuppress.cpp speexechocancel.cpp noisesuppress.cpp
+SFL_SPEEXDSP_HEAD=echosuppress.h speexechocancel.h noisesuppress.h
+endif
 
 libaudio_la_SOURCES = \
 		audioloop.cpp \
@@ -14,9 +23,7 @@ libaudio_la_SOURCES = \
 		audiolayer.cpp \
 		samplerateconverter.cpp \
 		delaydetection.cpp \
-		echosuppress.cpp \
-		speexechocancel.cpp \
-		noisesuppress.cpp \
+		$(SFL_SPEEXDSP_SRC) \
 		gaincontrol.cpp \
 		dcblocker.cpp
 
@@ -29,9 +36,7 @@ noinst_HEADERS = \
 		audiolayer.h \
 	 	recordable.h \
 		delaydetection.h \
-		echosuppress.h \
-		speexechocancel.h \
-		noisesuppress.h \
+		$(SFL_SPEEXDSP_HEAD) \
 		gaincontrol.h \
 		dcblocker.h \
 		samplerateconverter.h
@@ -40,5 +45,8 @@ libaudio_la_LIBADD = \
 	./audiortp/libaudiortp.la \
 	./codecs/libcodecdescriptor.la \
 	./alsa/libalsalayer.la \
-	./pulseaudio/libpulselayer.la \
 	./sound/libsound.la
+
+if BUILD_PULSE
+libaudio_la_LIBADD += ./pulseaudio/libpulselayer.la
+endif

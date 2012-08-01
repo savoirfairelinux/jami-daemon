@@ -33,6 +33,7 @@
 #include "str_utils.h"
 #include "dbus/dbus.h"
 #include "accountconfigdialog.h"
+#include "account_schema.h"
 #include "accountlist.h"
 #include "actions.h"
 #include "mainwindow.h"
@@ -145,13 +146,13 @@ static void edit_account_cb(GtkButton *button UNUSED, gpointer data)
 
 static void account_store_add(GtkTreeIter *iter, account_t *account)
 {
-    const gchar *enabled = account_lookup(account, ACCOUNT_ENABLED);
-    const gchar *type = account_lookup(account, ACCOUNT_TYPE);
+    const gchar *enabled = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
+    const gchar *type = account_lookup(account, CONFIG_ACCOUNT_TYPE);
     DEBUG("Account is enabled :%s", enabled);
     const gchar *state_name = account_state_name(account->state);
 
     gtk_list_store_set(account_store, iter,
-                       COLUMN_ACCOUNT_ALIAS, account_lookup(account, ACCOUNT_ALIAS),
+                       COLUMN_ACCOUNT_ALIAS, account_lookup(account, CONFIG_ACCOUNT_ALIAS),
                        COLUMN_ACCOUNT_TYPE, type,
                        COLUMN_ACCOUNT_STATUS, state_name,
                        COLUMN_ACCOUNT_ACTIVE, utf8_case_equal(enabled, "true"),
@@ -271,7 +272,7 @@ enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
     const gchar * enabled_str = enable ? "true" : "false";
     DEBUG("Account is enabled: %s", enabled_str);
 
-    account_replace(account, ACCOUNT_ENABLED, enabled_str);
+    account_replace(account, CONFIG_ACCOUNT_ENABLE, enabled_str);
     dbus_send_register(account->accountID, enable);
 }
 

@@ -1,4 +1,4 @@
-/* $Id: hash.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: hash.h 3673 2011-07-20 08:08:46Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -125,8 +125,8 @@ PJ_DECL(void *) pj_hash_get( pj_hash_table_t *ht,
  * @param pool	    the pool to allocate the new entry if a new entry has to be
  *		    created.
  * @param ht	    the hash table.
- * @param key	    the key, which MUST point to buffer that remains valid
- *		    for the duration of the entry.
+ * @param key	    the key. If pool is not specified, the key MUST point to
+ * 		    buffer that remains valid for the duration of the entry.
  * @param keylen    the length of the key, or PJ_HASH_KEY_STRING to use the 
  *		    string length of the key.
  * @param hval	    if the value is not zero, then the hash table will use

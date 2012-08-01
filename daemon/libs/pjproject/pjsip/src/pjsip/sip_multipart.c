@@ -1,4 +1,4 @@
-/* $Id: sip_multipart.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_multipart.c 3815 2011-10-14 02:08:44Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -81,10 +81,13 @@ static int multipart_print_body(struct pjsip_msg_body *msg_body,
 	/* Print optional headers */
 	hdr = part->hdr.next;
 	while (hdr != &part->hdr) {
-	    int printed = pjsip_hdr_print_on((pjsip_hdr*)hdr, p, SIZE_LEFT());
+	    int printed = pjsip_hdr_print_on((pjsip_hdr*)hdr, p,
+	                                     SIZE_LEFT()-2);
 	    if (printed < 0)
 		return -1;
 	    p += printed;
+	    *p++ = '\r';
+	    *p++ = '\n';
 	    hdr = hdr->next;
 	}
 

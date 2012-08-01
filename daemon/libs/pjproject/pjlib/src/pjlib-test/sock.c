@@ -1,4 +1,4 @@
-/* $Id: sock.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sock.c 3761 2011-09-21 04:54:27Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -510,7 +510,7 @@ static int send_recv_test(int sock_type,
 	}
 	if (srclen != addrlen)
 	    return -151;
-	if (pj_memcmp(&addr, srcaddr, srclen) != 0) {
+	if (pj_sockaddr_cmp(&addr, srcaddr) != 0) {
 	    char srcaddr_str[32], addr_str[32];
 	    strcpy(srcaddr_str, pj_inet_ntoa(srcaddr->sin_addr));
 	    strcpy(addr_str, pj_inet_ntoa(addr.sin_addr));

@@ -1,4 +1,4 @@
-/* $Id: types.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: types.h 3987 2012-03-23 08:24:58Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -289,6 +289,9 @@ typedef int pj_exception_id_t;
  * function is to initialize static library data, such as character table used
  * in random string generation, and to initialize operating system dependent
  * functionality (such as WSAStartup() in Windows).
+ *
+ * Apart from calling pj_init(), application typically should also initialize
+ * the random seed by calling pj_srand().
  *
  * @return PJ_SUCCESS on success.
  */

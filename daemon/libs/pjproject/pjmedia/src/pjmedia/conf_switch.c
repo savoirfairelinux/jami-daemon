@@ -1,4 +1,4 @@
-/* $Id: conf_switch.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: conf_switch.c 4117 2012-05-03 04:05:10Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -22,6 +22,7 @@
 #include <pjmedia/errno.h>
 #include <pjmedia/port.h>
 #include <pjmedia/silencedet.h>
+#include <pjmedia/sound_port.h>
 #include <pjmedia/stream.h>
 #include <pj/array.h>
 #include <pj/assert.h>
@@ -539,7 +540,7 @@ PJ_DEF(pj_status_t) pjmedia_conf_connect_port( pjmedia_conf *conf,
     /* Channel count must match. */
     if (src_port->info->channel_count != dst_port->info->channel_count) {
 	pj_mutex_unlock(conf->mutex);
-	return PJMEDIA_ENCCLOCKRATE;
+	return PJMEDIA_ENCCHANNEL;
     }
 
     /* Source and sink ptime must be equal or a multiplication factor. */
@@ -1072,11 +1073,14 @@ static pj_status_t write_frame(struct conf_port *cport_dst,
 	while (f_start < f_end) {
 	    unsigned nsamples_to_copy, nsamples_req;
 
-	    /* Copy frame to listener's TX buffer. */
+	    /* Copy frame to listener's TX buffer.
+	     * Note that if the destination is port 0, just copy the whole
+	     * available samples.
+	     */
 	    nsamples_to_copy = f_end - f_start;
 	    nsamples_req = cport_dst->info->samples_per_frame - 
 			  (frm_dst->size>>1);
-	    if (nsamples_to_copy > nsamples_req)
+	    if (cport_dst->slot && nsamples_to_copy > nsamples_req)
 		nsamples_to_copy = nsamples_req;
 
 	    /* Adjust TX level. */
@@ -1109,16 +1113,19 @@ static pj_status_t write_frame(struct conf_port *cport_dst,
 
 	    /* Check if it's time to deliver the TX buffer to listener, 
 	     * i.e: samples count in TX buffer equal to listener's
-	     * samples per frame.
+	     * samples per frame. Note that for destination port 0 this
+	     * function will just populate all samples in the TX buffer.
 	     */
-	    if ((frm_dst->size >> 1) == cport_dst->info->samples_per_frame)
+	    if (cport_dst->slot == 0) {
+		/* Update TX timestamp. */
+		pj_add_timestamp32(&cport_dst->ts_tx, nsamples_to_copy);
+	    } else if ((frm_dst->size >> 1) == 
+		       cport_dst->info->samples_per_frame)
 	    {
-		if (cport_dst->slot) {
-		    pjmedia_port_put_frame(cport_dst->port, frm_dst);
+		pjmedia_port_put_frame(cport_dst->port, frm_dst);
 
-		    /* Reset TX buffer. */
-		    frm_dst->size = 0;
-		}
+		/* Reset TX buffer. */
+		frm_dst->size = 0;
 
 		/* Update TX timestamp. */
 		pj_add_timestamp32(&cport_dst->ts_tx, 

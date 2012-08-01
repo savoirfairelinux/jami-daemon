@@ -37,7 +37,7 @@ EventThread::EventThread(VoIPLink *link) : ost::Thread(), link_(link)
 void EventThread::run()
 {
     while (link_->getEvent())
-        ;  // noop
+        yield();  // noop
     ost::Thread::exit();
 }
 

@@ -1,8 +1,9 @@
 include build.mak
 include build/host-$(HOST_NAME).mak
 -include user.mak
+include version.mak
 
-DIRS = pjlib/build pjlib-util/build pjnath/build pjmedia/build pjsip/build $(EXTRA_DIRS)
+DIRS = pjlib/build pjlib-util/build pjnath/build third_party/build pjmedia/build pjsip/build pjsip-apps/build $(EXTRA_DIRS)
 
 ifdef MINSIZE
 MAKE_FLAGS := MINSIZE=1
@@ -23,7 +24,7 @@ doc:
 		exit 1; \
 	fi
 	for dir in $(DIRS); do \
-		if $(MAKE) $(MAKE_FLAGS) -C $$dir/build $@; then \
+		if $(MAKE) $(MAKE_FLAGS) -C $$dir $@; then \
 		    true; \
 		else \
 		    exit 1; \
@@ -34,10 +35,13 @@ LIBS = 	pjlib/lib/libpj-$(TARGET_NAME).a \
 	pjlib-util/lib/libpjlib-util-$(TARGET_NAME).a \
 	pjnath/lib/libpjnath-$(TARGET_NAME).a \
 	pjmedia/lib/libpjmedia-$(TARGET_NAME).a \
+	pjmedia/lib/libpjmedia-audiodev-$(TARGET_NAME).a \
+	pjmedia/lib/libpjmedia-codec-$(TARGET_NAME).a \
     	pjsip/lib/libpjsip-$(TARGET_NAME).a \
 	pjsip/lib/libpjsip-ua-$(TARGET_NAME).a \
 	pjsip/lib/libpjsip-simple-$(TARGET_NAME).a \
 	pjsip/lib/libpjsua-$(TARGET_NAME).a
+BINS = 	pjsip-apps/bin/pjsua-$(TARGET_NAME)$(HOST_EXE) 
 
 size:
 	@echo -n 'Date: '
@@ -89,7 +93,6 @@ pjsua-test:
 	cd tests/pjsua && python runall.py
 
 prefix = $(ac_prefix)
-include version.mak
 
 install:
 	mkdir -p $(DESTDIR)$(prefix)/lib

@@ -43,6 +43,8 @@
 #include "pjsip-ua/sip_regc.h"
 #include "noncopyable.h"
 
+typedef std::vector<pj_ssl_cipher> CipherArray;
+
 namespace Conf {
     class YamlEmitter;
     class MappingNode;
@@ -205,6 +207,10 @@ class SIPAccount : public Account {
             return credentials_.size();
         }
 
+        bool hasCredentials() const {
+            return not credentials_.empty();
+        }
+
         void setCredentials(const std::vector<std::map<std::string, std::string> >& details);
 
         const std::vector<std::map<std::string, std::string> > &
@@ -246,6 +252,7 @@ class SIPAccount : public Account {
         bool fullMatch(const std::string& username, const std::string& hostname) const;
         bool userMatch(const std::string& username) const;
         bool hostnameMatch(const std::string& hostname) const;
+        bool proxyMatch(const std::string& hostname) const;
 
         /**
          * Registration flag
@@ -418,7 +425,7 @@ class SIPAccount : public Account {
          * @return pj_uint16 The port used for that account
          */
         pj_uint16_t getLocalPort() const {
-            return (pj_uint16_t) localPort_;
+            return localPort_;
         }
 
         /**
@@ -534,11 +541,11 @@ class SIPAccount : public Account {
         NON_COPYABLE(SIPAccount);
 
         /**
-         * Map of credential for this account 
+         * Map of credential for this account
          */
         std::vector< std::map<std::string, std::string > > credentials_;
 
-        /** 
+        /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation
@@ -574,12 +581,12 @@ class SIPAccount : public Account {
          */
         bool bRegister_;
 
-        /** 
+        /**
          * Network settings
          */
         int registrationExpire_;
 
-        /** 
+        /**
          * interface name on which this account is bound
          */
         std::string interface_;
@@ -607,7 +614,7 @@ class SIPAccount : public Account {
         pj_uint16_t publishedPort_;
 
         /**
-         * Optional list of SIP service this  
+         * Optional list of SIP service this
          */
         std::string serviceRoute_;
 
@@ -633,6 +640,11 @@ class SIPAccount : public Account {
          * The TLS settings, used only if tls is chosen as a sip transport.
          */
         pjsip_tls_setting tlsSetting_;
+
+        /**
+         * Allocate a static array to be used by pjsip to store the supported ciphers on this system.
+         */
+        CipherArray ciphers;
 
         /**
          * The CONTACT header used for registration as provided by the registrar, this value could differ

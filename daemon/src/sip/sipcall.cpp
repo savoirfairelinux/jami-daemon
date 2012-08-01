@@ -32,20 +32,29 @@
  */
 
 #include "sipcall.h"
+#include "logger.h" // for _debug
 #include "sdp.h"
+#include "manager.h"
+#ifdef SFL_VIDEO
+#include "dbus/video_controls.h"
+#endif
 
 namespace {
     static const int INITIAL_SIZE = 16384;
     static const int INCREMENT_SIZE = INITIAL_SIZE;
 }
 
-SIPCall::SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool) : Call(id, type)
+SIPCall::SIPCall(const std::string& id, Call::CallType type,
+                 pj_caching_pool *caching_pool) : Call(id, type)
     , inv(NULL)
     , audiortp_(this)
+#ifdef SFL_VIDEO
+    // The ID is used to associate video streams to calls
+    , videortp_(id, Manager::instance().getDbusManager()->getVideoControls()->getSettings())
+#endif
     , pool_(pj_pool_create(&caching_pool->factory, id.c_str(), INITIAL_SIZE, INCREMENT_SIZE, NULL))
     , local_sdp_(new Sdp(pool_))
-{
-}
+{}
 
 SIPCall::~SIPCall()
 {

@@ -43,7 +43,6 @@ AudioLayer::AudioLayer()
     , sampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
     , mutex_()
     , dcblocker_()
-    , audioPref(Manager::instance().audioPreference)
     , converter_(sampleRate_)
     , lastNotificationTime_(0)
 {
@@ -66,7 +65,7 @@ void AudioLayer::flushUrgent()
 void AudioLayer::putUrgent(void* buffer, int toCopy)
 {
     ost::MutexLock guard(mutex_);
-    urgentRingBuffer_.Put(buffer, toCopy);
+    urgentRingBuffer_.put(buffer, toCopy);
 }
 
 void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)

@@ -46,10 +46,11 @@ if [ -d "sflphone" ]; then
         exit 1
 fi
 
-# Anonymous git http access
-git clone http://sflphone.org/git/sflphone.git
+# Anonymous git http access, also fetch KDE
+git clone http://sflphone.org/git/sflphone.git --recursive
 cd sflphone
 git checkout origin/release -b release
+git submodule update --init
 
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`

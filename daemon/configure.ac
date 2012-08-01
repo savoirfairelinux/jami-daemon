@@ -10,7 +10,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
-m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+#m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
@@ -63,29 +63,29 @@ AC_CHECK_TYPES([ptrdiff_t])
 dnl ********************************
 dnl Check for needed functions
 dnl ********************************
-AC_FUNC_CHOWN
-AC_FUNC_ERROR_AT_LINE
-AC_FUNC_FORK
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
-AC_FUNC_REALLOC
-AC_FUNC_SELECT_ARGTYPES
-AC_DIAGNOSE([obsolete],[your code may safely assume C89 semantics that RETSIGTYPE is void.
-Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
-AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
-[AC_LANG_PROGRAM([#include <sys/types.h>
-#include <signal.h>
-],
-         [return *(signal (0, 0)) (0) == 1;])],
-           [ac_cv_type_signal=int],
-           [ac_cv_type_signal=void])])
-AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
-            (`int' or `void').])
+#AC_FUNC_CHOWN
+#AC_FUNC_ERROR_AT_LINE
+#AC_FUNC_FORK
+#AC_PROG_GCC_TRADITIONAL
+#AC_FUNC_MALLOC
+#AC_FUNC_MEMCMP
+#AC_FUNC_REALLOC
+#AC_FUNC_SELECT_ARGTYPES
+#AC_DIAGNOSE([obsolete],[your code may safely assume C89 semantics that RETSIGTYPE is void.
+#Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
+#AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+#[AC_LANG_PROGRAM([#include <sys/types.h>
+##include <signal.h>
+#],
+#         [return *(signal (0, 0)) (0) == 1;])],
+#           [ac_cv_type_signal=int],
+#           [ac_cv_type_signal=void])])
+#AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+#            (`int' or `void').])
 
-AC_FUNC_STAT
-AC_FUNC_UTIME_NULL
-AC_FUNC_VPRINTF
+#AC_FUNC_STAT
+#AC_FUNC_UTIME_NULL
+#AC_FUNC_VPRINTF
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
@@ -106,11 +106,48 @@ PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa
 
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
-PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development package: libpulse-dev]))
+AC_ARG_WITH([pulse],
+	[ AS_HELP_STRING([--without-pulse], [disable support for pulseaudio]) ],
+	[],
+	[with_pulse=yes])
+AS_IF([test "x$with_pulse" = "xyes"], [
+	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development package: libpulse-dev]))
+      ]);
+
+AC_DEFINE_UNQUOTED([HAVE_PULSE], `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have pulseaudio])
+AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes" )
 
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
+
+dnl Video is default-disabled
+AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
+
+AS_IF([test "x$enable_video" = "xyes"], [
+        AC_DEFINE(SFL_VIDEO, [], [Video support enabled])
+
+        dnl The libav versions correspond to the last libav release: 0.7
+        dnl Check for libavcodec development package - name: libavcodec-dev
+        PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec package: libavcodec-dev]))
+        LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
+
+        dnl Check for libavformat development package - name: libavformat-dev
+        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 53.2.0,, AC_MSG_ERROR([Missing libavformat package: libavformat-dev]))
+
+        dnl Check for libswscale development package - name: libswcale-dev
+        PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale package: libswscale-dev]))
+
+        dnl Check for libavdevice development package - name: libavdevice-dev
+        PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice package: libavdevice-dev]))
+
+        dnl Check for libavutil development package - name: libavutil-dev
+        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.7.0,, AC_MSG_ERROR([Missing libavutil package: libavutil-dev]))
+
+        PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev package: libudev-dev]))
+    ]);
+
+AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES([CCGNU2], [commoncpp] >= ${LIBCCGNU2_MIN_VERSION}, AC_DEFINE_UNQUOTED([COMMONCPP_PREFIX], [1], [Use commoncpp include prefix]), [
@@ -123,13 +160,43 @@ PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
         PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development package: libccrtp-dev]))
         ])
 
-dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
-PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
 
+
+# TLS
+# required dependency(ies): libssl
+dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
+AC_ARG_WITH([tls],
+	[ AS_HELP_STRING([--without-tls], [disable support for tls]) ],
+	[],
+	[with_tls=yes])
+AS_IF([test "x$with_tls" = "xyes"], [
+	PKG_CHECK_MODULES([libssl], libssl,, AC_MSG_ERROR([Missing ssl development package: libssl-dev]))
+	]);
+
+AC_DEFINE_UNQUOTED([HAVE_TLS], `if test "x$with_tls" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have tls support])
+AM_CONDITIONAL(BUILD_TLS, test "x$with_tls" = "xyes" )
+
+
+
+# ZRTP
+# required dependency(ies): libzrtp
 dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 LIBZRTPCPP_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
+AC_ARG_WITH([zrtp],
+	[ AS_HELP_STRING([--without-zrtp], [disable support for zrtp]) ],
+	[],
+	[with_zrtp=yes])
+AS_IF([test "x$with_zrtp" = "xyes"], [
+	PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION},, AC_MSG_ERROR([Missing zrtp development package: libzrtpcpp-dev]))
+	]);
 
+AC_DEFINE_UNQUOTED([HAVE_ZRTP], `if test "x$with_zrtp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have zrtp support])
+AM_CONDITIONAL(BUILD_ZRTP, test "x$with_zrtp" = "xyes" )
+
+
+
+# DBUS
+# required dependency(ies): libdbus-c++
 dnl DBus-C++ detection
 dnl pkg-config doesn't like 0.6.0-pre1 version number, it assumes that it is
 dnl more recent than (unreleased) 0.6.0
@@ -137,16 +204,51 @@ DBUS_CPP_REQUIRED_VERSION=0.6.0-pre1
 PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
 AC_MSG_ERROR([You need the DBus-c++ libraries (version $DBUS_CPP_REQUIRED_VERSION or better)]))
 
-AX_LIB_EXPAT
 
+
+# Instant Messaging
+# required dependency(ies): libxpat
+AC_ARG_WITH([instant_messaging],
+	[ AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging]) ],
+	[],
+	[with_instant_messaging=yes])
+AS_IF([test "x$with_instant_messaging" = "xyes"], [
+	AX_LIB_EXPAT([1.95.0])
+	AS_IF([test "$HAVE_EXPAT" != "yes"], [AC_MSG_ERROR([libexpat could not be found, which is required to build this package.])], [])
+	]);
+
+AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
+AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )
+
+
+
+# PTHREAD
+# required dependency(ies): libxpat
 AX_PTHREAD
 
-AX_PATH_LIB_PCRE
+
+
+# SDES Key Exchange
+# required dependency(ies): libpcre
+AC_ARG_WITH([sdes],
+	[ AS_HELP_STRING([--without-sdes], [disable support for sdes key exchange]) ],
+	[],
+	[with_sdes=yes])
+AS_IF([test "x$with_sdes" = "xyes"], [
+	AX_PATH_LIB_PCRE
+        ]);
+
+AC_DEFINE_UNQUOTED([HAVE_SDES], `if test "x$with_sdes" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have sdes support])
+AM_CONDITIONAL(BUILD_SDES, test "x$with_sdes" = "xyes" )
 
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
 PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 
+
+
+# GSM CODEC
+# required dependency(ies): libgsm
 dnl check for libgsm1 (doesn't use pkg-config)
 dnl Check for libgsm
 AC_ARG_WITH([gsm], [AS_HELP_STRING([--without-gsm],
@@ -163,10 +265,13 @@ AS_IF([test "x$with_gsm" != xno],
 AC_DEFINE_UNQUOTED([HAVE_GSM], `if test "x$with_gsm" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libgsm])
 AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
 
+
+
+# SPEEX CODEC
+# required dependency(ies): libspeex
 dnl Check for libspeex
 AC_ARG_WITH([speex],
-        [AS_HELP_STRING([--without-speex],
-        [disable support for speex codec])],
+        [AS_HELP_STRING([--without-speex], [disable support for speex codec])],
         [],
         [with_speex=yes])
 
@@ -180,12 +285,29 @@ AS_IF([test "x$with_speex" != xno],
 AC_DEFINE_UNQUOTED([HAVE_SPEEX], `if test "x$with_speex" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 
-dnl check in case the libspeexdsp is not installed
-AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
-AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [
-       AC_MSG_ERROR([Unable to find speexdsp development files])
-])
 
+
+# SPEEX DSP
+# required dependency(ies): libspeexdsp
+dnl check in case the libspeexdsp is not installed
+AC_ARG_WITH([speexdsp],
+	[AS_HELP_STRING([--without-speexdsp],
+	[disable support for speexdp Noise Suppression and Automatic Gain Control])],
+	[],
+	[with_speexdsp=yes])
+
+AS_IF([test "x$with_speexdsp" != xno],
+	AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
+	AC_SEARCH_LIBS([speex_preprocess_run], [speexdsp], [], [AC_MSG_ERROR([Unable to find speexdsp development files])])
+	)
+
+AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
+AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
+
+
+
+# IAX
+# required dependency(ies): libiax2 (static)
 dnl Check for IAX
 AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
             [disable support for the iax2 protocol])], [], [with_iax2=yes])
@@ -193,13 +315,21 @@ AC_ARG_WITH([iax2], [AS_HELP_STRING([--without-iax2],
 AC_DEFINE_UNQUOTED([HAVE_IAX], `if test "x$with_iax2" = "xyes"; then echo 1; else echo 0;fi`, [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
-    dnl Check for network-manager
+
+
+# NETWORK MANAGER
+# required dependency(ies): libiax2 (static)
+dnl Check for network-manager
 AC_ARG_WITH([networkmanager], [AS_HELP_STRING([--without-networkmanager],
             [disable support for network-manager events])], [],
             [with_networkmanager=yes])
 
 AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
 
+
+
+# DOXYGEN
+# required dependency(ies): doxygen
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],
@@ -217,7 +347,9 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 # Acutally perform the doxygen check
 BB_ENABLE_DOXYGEN
 
-CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++ -Wfatal-errors"
+
+
+CXXFLAGS="${CXXFLAGS} -g -Wno-return-type -Wall -Wextra -Wnon-virtual-dtor -Weffc++"
 
 dnl What to generate
 AC_CONFIG_FILES([Makefile])
@@ -237,7 +369,9 @@ AC_CONFIG_FILES([src/Makefile \
         src/config/Makefile \
         src/dbus/Makefile \
         src/hooks/Makefile \
-        src/history/Makefile])
+        src/history/Makefile \
+        src/video/Makefile \
+        src/video/test/Makefile])
 
 
 # Go!

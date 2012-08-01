@@ -2,6 +2,7 @@
  *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Андрей Лухнов <aol.nnov@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,11 +40,12 @@
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
 
+class AudioPreference;
 class AudioStream;
 
 class PulseLayer : public AudioLayer {
     public:
-        PulseLayer();
+        PulseLayer(AudioPreference &pref);
         ~PulseLayer();
 
         /**
@@ -62,12 +64,14 @@ class PulseLayer : public AudioLayer {
 
         bool inSourceList(const std::string &deviceName) const;
 
-        virtual std::vector<std::string> getAudioDeviceList(AudioStreamDirection dir) const;
+        virtual std::vector<std::string> getCaptureDeviceList() const;
+        virtual std::vector<std::string> getPlaybackDeviceList() const;
+        int getAudioDeviceIndex(const std::string& name) const;
+        std::string getAudioDeviceName(int index, PCMType type) const;
 
         virtual void startStream();
 
         virtual void stopStream();
-
 
     private:
         static void context_state_callback(pa_context* c, void* user_data);
@@ -80,6 +84,12 @@ class PulseLayer : public AudioLayer {
         static void sink_input_info_callback(pa_context *c,
                                              const pa_sink_info *i,
                                              int eol, void *userdata);
+
+        virtual void updatePreference(AudioPreference &pref, int index, PCMType type);
+
+        virtual int getIndexCapture() const;
+        virtual int getIndexPlayback() const;
+        virtual int getIndexRingtone() const;
 
         NON_COPYABLE(PulseLayer);
 
@@ -128,6 +138,9 @@ class PulseLayer : public AudioLayer {
         /** PulseAudio context and asynchronous loop */
         pa_context* context_;
         pa_threaded_mainloop* mainloop_;
+        bool enumeratingSinks_;
+        bool enumeratingSources_;
+        AudioPreference &preference_;
 
         friend class AudioLayerTest;
 };

@@ -34,6 +34,7 @@
 #define HISTORY_
 
 #include "historyitem.h"
+#include "cc_thread.h" // for ost::Mutex
 #include <vector>
 
 class Call;
@@ -54,19 +55,18 @@ class History {
         /*
          *@return The number of items found in the history file
          */
-        size_t numberOfItems() const {
-            return items_.size();
-        }
+        size_t numberOfItems();
 
-        bool empty() const {
-            return items_.empty();
-        }
+        bool empty();
 
-        std::vector<std::map<std::string, std::string> > getSerialized() const;
+        std::vector<std::map<std::string, std::string> > getSerialized();
 
         void addCall(Call *call, int limit);
         void clear();
     private:
+        /* Mutex to protext the history items */
+        ost::Mutex historyItemsMutex_;
+
         void setPath(const std::string &path);
         /* If no path has been set, this will initialize path to a
          * system-dependent location */

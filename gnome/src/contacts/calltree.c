@@ -30,9 +30,14 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "calllist.h"
 #include "calltree.h"
 #include "str_utils.h"
+#include "account_schema.h"
 #include <string.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
@@ -49,7 +54,6 @@
 #include "calltree.h"
 #include "uimanager.h"
 #include "actions.h"
-#include "imwindow.h"
 #include "searchbar.h"
 
 #if !GLIB_CHECK_VERSION(2, 30, 0)
@@ -109,10 +113,8 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
     if (!gtk_tree_selection_get_selected(sel, &model, &iter))
         return;
 
-    if (active_calltree_tab == history_tab)
-        DEBUG("Current call tree is history");
-    else if (active_calltree_tab == current_calls_tab)
-        DEBUG("Current call tree is current calls");
+    if (calltab_has_name(active_calltree_tab, HISTORY))
+        main_window_reset_playback_scale();
 
     /* Get ID of selected object, may be a call or a conference */
     gchar *id;
@@ -152,7 +154,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
 
         if (selectedCall) {
             // Get the right event from the right calltree
-            if (active_calltree_tab == current_calls_tab) {
+            if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
                 switch (selectedCall->_state) {
                     case CALL_STATE_INCOMING:
                         dbus_accept(selectedCall);
@@ -186,7 +188,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
     } else if (calltab_get_selected_type(active_calltree_tab) == A_CONFERENCE) {
         DEBUG("Selected a conference");
 
-        if (active_calltree_tab == current_calls_tab) {
+        if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
             conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
             if (selectedConf) {
@@ -220,9 +222,9 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
     callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
     conference_obj_t *selectedConf = calltab_get_selected_conf(active_calltree_tab);
 
-    if (active_calltree_tab == current_calls_tab)
+    if (calltab_has_name(active_calltree_tab, CURRENT_CALLS))
         DEBUG("Active calltree is current_calls");
-    else if (active_calltree_tab == history_tab)
+    else if (calltab_has_name(active_calltree_tab, HISTORY))
         DEBUG("Active calltree is history");
 
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
@@ -232,13 +234,13 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
             DEBUG("AccountID %s", selectedCall->_accountID);
 
             if (account_details != NULL) {
-                displaySasOnce = g_hash_table_lookup(account_details->properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                displaySasOnce = g_hash_table_lookup(account_details->properties, CONFIG_ZRTP_DISPLAY_SAS_ONCE);
                 DEBUG("Display SAS once %s", displaySasOnce);
             } else {
                 GHashTable *properties = sflphone_get_ip2ip_properties();
 
                 if (properties != NULL) {
-                    displaySasOnce = g_hash_table_lookup(properties, ACCOUNT_DISPLAY_SAS_ONCE);
+                    displaySasOnce = g_hash_table_lookup(properties, CONFIG_ZRTP_DISPLAY_SAS_ONCE);
                     DEBUG("IP2IP displaysasonce %s", displaySasOnce);
                 }
             }
@@ -246,7 +248,7 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
             /*  Make sure that we are not in the history tab since
              *  nothing is defined for it yet
              */
-            if (active_calltree_tab == current_calls_tab) {
+            if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
                 switch (selectedCall->_srtp_state) {
                     case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
                         selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
@@ -281,9 +283,9 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     if (event->button != 3 || event->type != GDK_BUTTON_PRESS)
         return FALSE;
 
-    if (active_calltree_tab == current_calls_tab)
+    if (calltab_has_name(active_calltree_tab, CURRENT_CALLS))
         show_popup_menu(widget, event);
-    else if (active_calltree_tab == history_tab)
+    else if (calltab_has_name(active_calltree_tab, HISTORY))
         show_popup_menu_history(widget, event);
     else
         show_popup_menu_contacts(widget, event);
@@ -307,7 +309,9 @@ static gchar *clean_display_number(gchar *name)
 }
 
 static gchar *
-calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type, const gchar *const audio_codec)
+calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
+                           const gchar *const audio_codec,
+                           const gchar *const video_codec)
 {
     gchar display_number[strlen(call->_peer_number) + 1];
     strcpy(display_number, call->_peer_number);
@@ -336,6 +340,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type, 
 
     gchar *desc = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>   ", name, details);
     gchar *suffix = NULL;
+    gchar *codec = NULL;
 
     switch (display_type) {
         case DISPLAY_TYPE_CALL:
@@ -343,14 +348,19 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type, 
                 suffix = g_markup_printf_escaped("\n<i>%s (%d)</i>", call->_state_code_description, call->_state_code);
             break;
         case DISPLAY_TYPE_STATE_CODE :
+            if (video_codec && *video_codec)
+                codec = g_strconcat(audio_codec, " ", video_codec, NULL);
+            else
+                codec = g_strdup(audio_codec);
 
             if (call->_state_code)
                 suffix = g_markup_printf_escaped("\n<i>%s (%d)</i>  <i>%s</i>",
                                                  call->_state_code_description, call->_state_code,
-                                                 audio_codec);
+                                                 codec);
             else
-                suffix = g_markup_printf_escaped("\n<i>%s</i>", audio_codec);
+                suffix = g_markup_printf_escaped("\n<i>%s</i>", codec);
 
+            g_free(codec);
             break;
         case DISPLAY_TYPE_CALL_TRANSFER:
             suffix = g_markup_printf_escaped("\n<i>Transfer to:%s</i> ", call->_trsft_to);
@@ -414,7 +424,7 @@ calltree_create(calltab_t* tab, int searchbar_type)
                      G_CALLBACK(button_pressed),
                      NULL);
 
-    if (g_strcmp0(tab->_name, CURRENT_CALLS) == 0) {
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
 
         gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tab->view), GDK_BUTTON1_MASK, target_list, n_targets, GDK_ACTION_DEFAULT | GDK_ACTION_MOVE);
         gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tab->view), target_list, n_targets, GDK_ACTION_DEFAULT);
@@ -441,6 +451,7 @@ calltree_create(calltab_t* tab, int searchbar_type)
     GtkCellRenderer *calltree_rend = gtk_cell_renderer_pixbuf_new();
     GtkTreeViewColumn *calltree_col = gtk_tree_view_column_new_with_attributes("Icon", calltree_rend, "pixbuf", COLUMN_ACCOUNT_PIXBUF, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tab->view), calltree_col);
+
     calltree_rend = gtk_cell_renderer_text_new();
     calltree_col = gtk_tree_view_column_new_with_attributes("Description", calltree_rend,
                    "markup", COLUMN_ACCOUNT_DESC,
@@ -480,8 +491,12 @@ calltree_create(calltab_t* tab, int searchbar_type)
     if (searchbar_type) {
         calltab_create_searchbar(tab);
 
-        if (tab->searchbar != NULL)
-            gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
+        if (tab->searchbar != NULL) {
+            GtkWidget *alignment =  gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+            gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 3, 6, 6);
+            gtk_container_add(GTK_CONTAINER(alignment), tab->searchbar);
+            gtk_box_pack_start(GTK_BOX(tab->tree), alignment, FALSE, TRUE, 0);
+        }
     }
 
     gtk_widget_show(tab->tree);
@@ -518,11 +533,42 @@ calltree_remove_call(calltab_t* tab, const gchar *target_id)
     statusbar_update_clock("");
 }
 
-GdkPixbuf *history_state_to_pixbuf(const gchar *history_state)
+static GdkPixbuf *history_state_to_pixbuf(callable_obj_t *call)
 {
-    gchar *svg_filename = g_strconcat(ICONS_DIR, "/", history_state, ".svg", NULL);
+    if(call == NULL) {
+        ERROR("Not a valid call in history state to pixbuf");
+        return NULL;
+    }
+
+    gboolean has_rec_file = FALSE;
+    gboolean is_incoming = FALSE;
+    gboolean is_outgoing = FALSE;
+
+    if(call->_recordfile && strlen(call->_recordfile) > 0)
+        has_rec_file = TRUE;
+
+    if(g_strcmp0(call->_history_state, OUTGOING_STRING) == 0)
+        is_outgoing = TRUE;
+    else if(g_strcmp0(call->_history_state, INCOMING_STRING) == 0)
+        is_incoming = TRUE;
+
+    gchar *svg_filename = NULL;
+
+    if(!has_rec_file)
+        svg_filename = g_strconcat(ICONS_DIR, "/", call->_history_state, ".svg", NULL);
+    else {
+        if(is_incoming)
+            svg_filename = g_strconcat(ICONS_DIR, "/", "incoming_rec", ".svg", NULL);
+        else if(is_outgoing)
+            svg_filename = g_strconcat(ICONS_DIR, "/", "outgoing_rec", ".svg", NULL);
+        else
+            svg_filename = g_strconcat(ICONS_DIR, "/", call->_history_state, ".svg", NULL);
+    }
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(svg_filename, NULL);
+
     g_free(svg_filename);
+
     return pixbuf;
 }
 
@@ -553,13 +599,13 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
     account = account_list_get_by_id(call->_accountID);
 
     if (account != NULL) {
-        srtp_enabled = account_lookup(account, ACCOUNT_SRTP_ENABLED);
-        display_sas = utf8_case_equal(account_lookup(account, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+        srtp_enabled = account_lookup(account, CONFIG_SRTP_ENABLE);
+        display_sas = utf8_case_equal(account_lookup(account, CONFIG_ZRTP_DISPLAY_SAS), "true");
     } else {
         GHashTable * properties = sflphone_get_ip2ip_properties();
         if (properties != NULL) {
-            srtp_enabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
-            display_sas = utf8_case_equal(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS), "true");
+            srtp_enabled = g_hash_table_lookup(properties, CONFIG_SRTP_ENABLE);
+            display_sas = utf8_case_equal(g_hash_table_lookup(properties, CONFIG_ZRTP_DISPLAY_SAS), "true");
         }
     }
 
@@ -573,21 +619,27 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
         return FALSE;
 
     /* Update text */
-    gchar * description = NULL;
-    gchar * audio_codec = call_get_audio_codec(call);
+    gchar *description = NULL;
+    gchar *audio_codec = call_get_audio_codec(call);
+#ifdef SFL_VIDEO
+    gchar *video_codec = call_get_video_codec(call);
+#else
+    gchar *video_codec = g_strdup("");
+#endif
 
     if (call->_state == CALL_STATE_TRANSFER)
-        description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "");
+        description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "", "");
     else
         if (call->_sas && display_sas && call->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED && !call->_zrtp_confirmed)
-            description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "");
+            description = calltree_display_call_info(call, DISPLAY_TYPE_SAS, "", "");
         else
-            description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec);
+            description = calltree_display_call_info(call, DISPLAY_TYPE_STATE_CODE, audio_codec, video_codec);
 
+    g_free(video_codec);
     g_free(audio_codec);
 
     /* Update icons */
-    if (tab == current_calls_tab) {
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
         DEBUG("Receiving in state %d", call->_state);
 
         switch (call->_state) {
@@ -599,7 +651,10 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
                 break;
             case CALL_STATE_CURRENT:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                if (dbus_get_is_recording(call))
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                else
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
                 break;
             case CALL_STATE_DIALING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
@@ -612,9 +667,6 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                 break;
             case CALL_STATE_TRANSFER:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfer.svg", NULL);
-                break;
-            case CALL_STATE_RECORD:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
                 break;
             default:
                 WARN("Update calltree - Should not happen!");
@@ -645,11 +697,11 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
                     pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
         }
 
-    } else if (tab == history_tab) {
-        pixbuf = history_state_to_pixbuf(call->_history_state);
+    } else if (calltab_has_name(tab, HISTORY)) {
+        pixbuf = history_state_to_pixbuf(call);
 
         g_free(description);
-        description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
+        description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "", "");
         gchar *date = get_formatted_start_timestamp(call->_time_start);
         gchar *duration = get_call_duration(call);
         gchar *full_duration = g_strconcat(date , duration , NULL);
@@ -706,7 +758,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
 
     // New call in the list
 
-    gchar *description = calltree_display_call_info(call, DISPLAY_TYPE_CALL, "");
+    gchar *description = calltree_display_call_info(call, DISPLAY_TYPE_CALL, "", "");
 
     gtk_tree_store_prepend(tab->store, &iter, parent);
 
@@ -714,14 +766,14 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
         account_details = account_list_get_by_id(call->_accountID);
 
         if (account_details) {
-            srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
-            key_exchange = g_hash_table_lookup(account_details->properties, ACCOUNT_KEY_EXCHANGE);
+            srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
+            key_exchange = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_KEY_EXCHANGE);
         }
     }
 
     DEBUG("Added call key exchange is %s", key_exchange);
 
-    if (tab == current_calls_tab) {
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
         switch (call->_state) {
             case CALL_STATE_INCOMING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
@@ -734,14 +786,14 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
                 break;
             case CALL_STATE_CURRENT:
                 // If the call has been initiated by a another client and, when we start, it is already current
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                if (dbus_get_is_recording(call))
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+                else
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
                 break;
             case CALL_STATE_HOLD:
                 // If the call has been initiated by a another client and, when we start, it is already current
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-                break;
-            case CALL_STATE_RECORD:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
                 break;
             case CALL_STATE_FAILURE:
                 // If the call has been initiated by a another client and, when we start, it is already current
@@ -754,7 +806,7 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
         if (srtp_enabled && utf8_case_equal(srtp_enabled, "true"))
             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/secure_off.svg", NULL);
 
-    } else if (tab == contacts_tab)
+    } else if (calltab_has_name(tab, CONTACTS))
         pixbuf = call->_contact_thumbnail;
     else
         WARN("This widget doesn't exist - This is a bug in the application.");
@@ -799,12 +851,12 @@ void calltree_add_history_entry(callable_obj_t *call)
         return;
 
     // New call in the list
-    gchar * description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "");
+    gchar * description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "", "");
 
     GtkTreeIter iter;
     gtk_tree_store_prepend(history_tab->store, &iter, NULL);
 
-    GdkPixbuf *pixbuf = history_state_to_pixbuf(call->_history_state);
+    GdkPixbuf *pixbuf = history_state_to_pixbuf(call);
 
     gchar *date = get_formatted_start_timestamp(call->_time_start);
     gchar *duration = get_call_duration(call);
@@ -915,7 +967,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
                 if (!account_details)
                     ERROR("Could not find account %s in account list", call->_accountID);
                 else
-                    srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
+                    srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
 
                 if (utf8_case_equal(srtp_enabled, "true")) {
                     DEBUG("SRTP enabled for participant %s", call_id);
@@ -1054,21 +1106,21 @@ void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
 void calltree_display(calltab_t *tab)
 {
     /* If we already are displaying the specified calltree */
-    if (active_calltree_tab == tab)
+    if (calltab_has_name(active_calltree_tab, tab->name))
         return;
 
-    if (tab == current_calls_tab) {
-        if (active_calltree_tab == contacts_tab)
+    if (calltab_has_name(tab, CURRENT_CALLS)) {
+        if (calltab_has_name(active_calltree_tab, CONTACTS))
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), FALSE);
         else
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton_), FALSE);
-    } else if (tab == history_tab) {
-        if (active_calltree_tab == contacts_tab)
+    } else if (calltab_has_name(tab, HISTORY)) {
+        if (calltab_has_name(active_calltree_tab, CONTACTS))
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), FALSE);
 
         gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton_), TRUE);
-    } else if (tab == contacts_tab) {
-        if (active_calltree_tab == history_tab)
+    } else if (calltab_has_name(tab, CONTACTS)) {
+        if (calltab_has_name(active_calltree_tab, HISTORY))
             gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton_), FALSE);
 
         gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), TRUE);
@@ -1076,9 +1128,15 @@ void calltree_display(calltab_t *tab)
     } else
         ERROR("Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
 
-    gtk_widget_hide(active_calltree_tab->tree);
+    if (active_calltree_tab->mainwidget)
+        gtk_widget_hide(active_calltree_tab->mainwidget);
+    else
+        gtk_widget_hide(active_calltree_tab->tree);
     active_calltree_tab = tab;
-    gtk_widget_show(active_calltree_tab->tree);
+    if (active_calltree_tab->mainwidget)
+        gtk_widget_show(active_calltree_tab->mainwidget);
+    else
+        gtk_widget_show(active_calltree_tab->tree);
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
     g_signal_emit_by_name(sel, "changed");

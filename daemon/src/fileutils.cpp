@@ -37,6 +37,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <unistd.h>
 #include "fileutils.h"
 
 namespace fileutils {
@@ -66,6 +67,13 @@ void set_program_dir(char *program_path)
 const char *get_program_dir()
 {
     return program_dir;
+}
+
+//TODO it is faking this, implement proper system 
+const char *get_data_dir()
+{
+    std::string path = std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
+    return path.c_str();
 }
 
 bool create_pidfile()

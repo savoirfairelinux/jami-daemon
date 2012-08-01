@@ -47,24 +47,26 @@
 namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename) :
-    AudioRtpSession(call, *this, *this),
-    ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue>(ost::InetHostAddress(call_.getLocalIp().c_str()),
-    call_.getLocalAudioPort(),
-    0,
-    ost::MembershipBookkeeping::defaultMembersHashSize,
-    ost::defaultApplication()),
-    zidFilename_(zidFilename)
+    ost::TimerPort()
+    , ost::SymmetricZRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    , AudioRtpSession(call, *this, *this)
+    , zidFilename_(zidFilename)
+    , rtpThread_(*this)
 {
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
           call_.getLocalIp().c_str(), call_.getLocalAudioPort());
+    audioRtpRecord_.callId_ = call_.getCallId();
 }
 
 AudioZrtpSession::~AudioZrtpSession()
 {
-    ost::Thread::terminate();
-    Manager::instance().getMainBuffer()->unBindAll(call_.getCallId());
+    if (rtpThread_.running_) {
+        rtpThread_.running_ = false;
+        rtpThread_.join();
+    }
 }
+
 
 void AudioZrtpSession::initializeZid()
 {
@@ -120,56 +122,50 @@ void AudioZrtpSession::sendMicData()
     queue_.sendImmediate(timestamp_, getMicDataEncoded(), compSize);
 }
 
-void AudioZrtpSession::run()
+AudioZrtpSession::AudioZrtpThread::AudioZrtpThread(AudioZrtpSession &session) : running_(true), zrtpSession_(session)
+{}
+
+void AudioZrtpSession::AudioZrtpThread::run()
 {
     // Set recording sampling rate
-    call_.setRecordingSmplRate(getCodecSampleRate());
-    DEBUG("Entering mainloop for call %s", call_.getCallId().c_str());
+    int threadSleep = 20;
 
-    uint32 timeout = 0;
+    DEBUG("Entering Audio zrtp thread main loop %s", running_ ? "running" : "not running");
 
-    while (isActive()) {
-        if (timeout < 1000)
-            timeout = getSchedulingTimeout();
+    TimerPort::setTimer(threadSleep);
 
+    while (running_) {
         // Send session
-        if (DtmfPending())
-            sendDtmfEvent();
+        if (zrtpSession_.hasDTMFPending())
+            zrtpSession_.sendDtmfEvent();
         else
-            sendMicData();
+            zrtpSession_.sendMicData();
 
-        controlReceptionService();
-        controlTransmissionService();
-        uint32 maxWait = timeval2microtimeout(getRTCPCheckInterval());
-        // make sure the scheduling timeout is
-        // <= the check interval for RTCP
-        // packets
-        timeout = (timeout > maxWait) ? maxWait : timeout;
+        Thread::sleep(TimerPort::getTimer());
 
-        if (timeout < 1000) {   // !(timeout/1000)
-            // dispatchDataPacket();
-            timerTick();
-        } else {
-            if (isPendingData(timeout / 1000)) {
-
-                if (isActive())
-                    takeInDataPacket();
-            }
-            timeout = 0;
-        }
+        TimerPort::incTimer(threadSleep);
     }
 
-    DEBUG("Left main loop for call %s", call_.getCallId().c_str());
+    DEBUG("Leaving audio rtp thread loop");
 }
 
-void AudioZrtpSession::incrementTimestampForDTMF()
+int AudioZrtpSession::getIncrementForDTMF() const
 {
-    timestamp_ += 160;
+    return 160;
 }
 
 void AudioZrtpSession::setSessionMedia(AudioCodec &audioCodec)
 {
     AudioRtpSession::setSessionMedia(audioCodec);
+}
+
+int AudioZrtpSession::startRtpThread(AudioCodec &audiocodec)
+{
+    if(isStarted_)
+        return 0;
+
+    AudioRtpSession::startRtpThread(audiocodec);
+    return startZrtpThread();
 }
 
 }
