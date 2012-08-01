@@ -1,4 +1,4 @@
-/* $Id: os_core_symbian.cpp 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: os_core_symbian.cpp 3986 2012-03-22 11:29:20Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -75,14 +75,15 @@ struct pj_sem_t
     int max;
 };
 
+/* Flag and reference counter for PJLIB instance */
+static int initialized;
+
 /* Flags to indicate which TLS variables have been used */
 static int tls_vars[PJ_MAX_TLS];
 
 /* atexit handlers */
 static unsigned atexit_count;
 static void (*atexit_func[32])(void);
-
-
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -335,6 +336,12 @@ PJ_DEF(pj_status_t) pj_init(void)
 	char stack_ptr;
     pj_status_t status;
     
+    /* Check if PJLIB have been initialized */
+    if (initialized) {
+	++initialized;
+	return PJ_SUCCESS;
+    }
+
     pj_ansi_strcpy(main_thread.obj_name, "pjthread");
 
     // Init main thread
@@ -368,6 +375,10 @@ PJ_DEF(pj_status_t) pj_init(void)
     stack_ptr = '\0';
 #endif
 
+    /* Flag PJLIB as initialized */
+    ++initialized;
+    pj_assert(initialized == 1);
+
     PJ_LOG(5,(THIS_FILE, "PJLIB initialized."));
     return PJ_SUCCESS;
 
@@ -390,6 +401,11 @@ PJ_DEF(pj_status_t) pj_atexit(pj_exit_callback func)
 
 PJ_DEF(void) pj_shutdown(void)
 {
+    /* Only perform shutdown operation when 'initialized' reaches zero */
+    pj_assert(initialized > 0);
+    if (--initialized != 0)
+	return;
+
     /* Call atexit() functions */
     while (atexit_count > 0) {
 	(*atexit_func[atexit_count-1])();

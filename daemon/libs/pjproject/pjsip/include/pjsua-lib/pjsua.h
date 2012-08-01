@@ -1,4 +1,4 @@
-/* $Id: pjsua.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: pjsua.h 4045 2012-04-13 04:13:24Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -31,6 +31,9 @@
 
 /* Include all PJMEDIA headers. */
 #include <pjmedia.h>
+
+/* Include all PJMEDIA-CODEC headers. */
+#include <pjmedia-codec.h>
 
 /* Include all PJSIP-UA headers */
 #include <pjsip_ua.h>
@@ -418,6 +421,22 @@ typedef struct pjsua_reg_info
 
 
 /**
+ * This enumeration specifies the options for custom media transport creation.
+ */
+typedef enum pjsua_create_media_transport_flag
+{
+   /**
+    * This flag indicates that the media transport must also close its
+    * "member" or "child" transport when pjmedia_transport_close() is
+    * called. If this flag is not specified, then the media transport
+    * must not call pjmedia_transport_close() of its member transport.
+    */
+   PJSUA_MED_TP_CLOSE_MEMBER = 1
+
+} pjsua_create_media_transport_flag;
+
+
+/**
  * This structure describes application callback to receive various event
  * notification from PJSUA-API. All of these callbacks are OPTIONAL, 
  * although definitely application would want to implement some of
@@ -584,6 +603,18 @@ typedef struct pjsua_callback
 			     pjsua_call_id new_call_id);
 
 
+    /**
+     * Notify application when registration or unregistration has been
+     * initiated. Note that this only notifies the initial registration
+     * and unregistration. Once registration session is active, subsequent
+     * refresh will not cause this callback to be called.
+     *
+     * @param acc_id	    The account ID.
+     * @param renew	    Non-zero for registration and zero for
+     * 			    unregistration.
+     */
+    void (*on_reg_started)(pjsua_acc_id acc_id, pj_bool_t renew);
+    
     /**
      * Notify application when registration status has changed.
      * Application may then query the account info to get the
@@ -915,6 +946,32 @@ typedef struct pjsua_callback
     void (*on_ice_transport_error)(int index, pj_ice_strans_op op,
 				   pj_status_t status, void *param);
 
+    /**
+     * This callback can be used by application to implement custom media
+     * transport adapter for the call, or to replace the media transport
+     * with something completely new altogether.
+     *
+     * This callback is called when a new call is created. The library has
+     * created a media transport for the call, and it is provided as the
+     * \a base_tp argument of this callback. Upon returning, the callback
+     * must return an instance of media transport to be used by the call.
+     *
+     * @param call_id       Call ID
+     * @param media_idx     The media index in the SDP for which this media
+     *                      transport will be used.
+     * @param base_tp       The media transport which otherwise will be
+     *                      used by the call has this callback not been
+     *                      implemented.
+     * @param flags         Bitmask from pjsua_create_media_transport_flag.
+     *
+     * @return              The callback must return an instance of media
+     *                      transport to be used by the call.
+     */
+    pjmedia_transport* (*on_create_media_transport)(pjsua_call_id call_id,
+                                                    unsigned media_idx,
+                                                    pjmedia_transport *base_tp,
+                                                    unsigned flags);
+
 } pjsua_callback;
 
 
@@ -948,6 +1005,34 @@ typedef enum pjsua_sip_timer_use
     PJSUA_SIP_TIMER_ALWAYS
 
 } pjsua_sip_timer_use;
+
+
+/**
+ * This constants controls the use of 100rel extension.
+ */
+typedef enum pjsua_100rel_use
+{
+    /**
+     * Not used. For UAC, support for 100rel will be indicated in Supported
+     * header so that peer can opt to use it if it wants to. As UAS, this
+     * option will NOT cause 100rel to be used even if UAC indicates that
+     * it supports this feature.
+     */
+    PJSUA_100REL_NOT_USED,
+
+    /**
+     * Mandatory. UAC will place 100rel in Require header, and UAS will
+     * reject incoming calls unless it has 100rel in Supported header.
+     */
+    PJSUA_100REL_MANDATORY,
+
+    /**
+     * Optional. Similar to PJSUA_100REL_NOT_USED, except that as UAS, this
+     * option will cause 100rel to be used if UAC indicates that it supports it.
+     */
+    PJSUA_100REL_OPTIONAL
+
+} pjsua_100rel_use;
 
 
 /**
@@ -1086,13 +1171,13 @@ typedef struct pjsua_config
     int		    nat_type_in_sdp;
 
     /**
-     * Specify whether support for reliable provisional response (100rel and
-     * PRACK) should be required by default. Note that this setting can be
+     * Specify how the support for reliable provisional response (100rel/
+     * PRACK) should be used by default. Note that this setting can be
      * further customized in account configuration (#pjsua_acc_config).
      *
-     * Default: PJ_FALSE
+     * Default: PJSUA_100REL_NOT_USED
      */
-    pj_bool_t	    require_100rel;
+    pjsua_100rel_use require_100rel;
 
     /**
      * Specify the usage of Session Timers for all sessions. See the
@@ -1209,6 +1294,35 @@ typedef struct pjsua_config
 
 
 /**
+ * Flags to be given to pjsua_destroy2()
+ */
+typedef enum pjsua_destroy_flag
+{
+    /**
+     * Allow sending outgoing messages (such as unregistration, event
+     * unpublication, BYEs, unsubscription, etc.), but do not wait for
+     * responses. This is useful to perform "best effort" clean up
+     * without delaying the shutdown process waiting for responses.
+     */
+    PJSUA_DESTROY_NO_RX_MSG = 1,
+
+    /**
+     * If this flag is set, do not send any outgoing messages at all.
+     * This flag is useful if application knows that the network which
+     * the messages are to be sent on is currently down.
+     */
+    PJSUA_DESTROY_NO_TX_MSG = 2,
+
+    /**
+     * Do not send or receive messages during destroy. This flag is
+     * shorthand for  PJSUA_DESTROY_NO_RX_MSG + PJSUA_DESTROY_NO_TX_MSG.
+     */
+    PJSUA_DESTROY_NO_NETWORK = PJSUA_DESTROY_NO_RX_MSG |
+			       PJSUA_DESTROY_NO_TX_MSG
+
+} pjsua_destroy_flag;
+
+/**
  * Use this function to initialize pjsua config.
  *
  * @param cfg	pjsua config to be initialized.
@@ -1247,7 +1361,7 @@ struct pjsua_msg_data
      * Additional message headers as linked list. Application can add
      * headers to the list by creating the header, either from the heap/pool
      * or from temporary local variable, and add the header using
-     * linked list operation. See pjsip_apps.c for some sample codes.
+     * linked list operation. See pjsua_app.c for some sample codes.
      */
     pjsip_hdr	hdr_list;
 
@@ -1344,9 +1458,21 @@ PJ_DECL(pj_status_t) pjsua_start(void);
  * Application.may safely call this function more than once if it doesn't
  * keep track of it's state.
  *
+ * @see pjsua_destroy2()
+ *
  * @return		PJ_SUCCESS on success, or the appropriate error code.
  */
 PJ_DECL(pj_status_t) pjsua_destroy(void);
+
+
+/**
+ * Variant of destroy with additional flags.
+ *
+ * @param flags		Combination of pjsua_destroy_flag enumeration.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_destroy2(unsigned flags);
 
 
 /**
@@ -2219,12 +2345,14 @@ typedef struct pjsua_acc_config
     pj_str_t	    contact_uri_params;
 
     /**
-     * Specify whether support for reliable provisional response (100rel and
-     * PRACK) should be required for all sessions of this account.
+     * Specify how support for reliable provisional response (100rel/
+     * PRACK) should be used for all sessions in this account. See the
+     * documentation of pjsua_100rel_use enumeration for more info.
      *
-     * Default: PJ_FALSE
+     * Default: The default value is taken from the value of
+     *          require_100rel in pjsua_config.
      */
-    pj_bool_t	    require_100rel;
+    pjsua_100rel_use require_100rel;
 
     /**
      * Specify the usage of Session Timers for all sessions. See the
@@ -2432,11 +2560,26 @@ typedef struct pjsua_acc_config
     /**
      * Specify interval of auto registration retry upon registration failure
      * (including caused by transport problem), in second. Set to 0 to
-     * disable auto re-registration.
+     * disable auto re-registration. Note that if the registration retry
+     * occurs because of transport failure, the first retry will be done
+     * after \a reg_first_retry_interval seconds instead. Also note that
+     * the interval will be randomized slightly by approximately +/- ten
+     * seconds to avoid all clients re-registering at the same time.
+     *
+     * See also \a reg_first_retry_interval setting.
      *
      * Default: #PJSUA_REG_RETRY_INTERVAL
      */
     unsigned	     reg_retry_interval;
+
+    /**
+     * This specifies the interval for the first registration retry. The
+     * registration retry is explained in \a reg_retry_interval. Note that
+     * the value here will also be randomized by +/- ten seconds.
+     *
+     * Default: 0
+     */
+    unsigned	     reg_first_retry_interval;
 
     /**
      * Specify whether calls of the configured account should be dropped
@@ -2477,6 +2620,16 @@ typedef struct pjsua_acc_config
      * Default: PJSUA_CALL_HOLD_TYPE_DEFAULT
      */
     pjsua_call_hold_type call_hold_type;
+    
+    
+    /**
+     * Specify whether the account should register as soon as it is
+     * added to the UA. Application can set this to PJ_FALSE and control
+     * the registration manually with pjsua_acc_set_registration().
+     *
+     * Default: PJ_TRUE
+     */
+    pj_bool_t         register_on_acc_add;
 
 } pjsua_acc_config;
 
@@ -3960,7 +4113,7 @@ PJ_DECL(pj_status_t) pjsua_im_typing(pjsua_acc_id acc_id,
   {
      pjsua_player_id player_id;
      
-     status = pjsua_player_create("mysong.wav", 0, NULL, &player_id);
+     status = pjsua_player_create("mysong.wav", 0, &player_id);
      if (status != PJ_SUCCESS)
         return status;
 
@@ -4677,6 +4830,282 @@ PJ_DECL(pj_status_t) pjsua_recorder_get_port(pjsua_recorder_id id,
  * @return		PJ_SUCCESS on success, or the appropriate error code.
  */
 PJ_DECL(pj_status_t) pjsua_recorder_destroy(pjsua_recorder_id id);
+
+
+/*****************************************************************************
+ * Sound devices.
+ */
+
+/**
+ * Enum all audio devices installed in the system.
+ *
+ * @param info		Array of info to be initialized.
+ * @param count		On input, specifies max elements in the array.
+ *			On return, it contains actual number of elements
+ *			that have been initialized.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_enum_aud_devs(pjmedia_aud_dev_info info[],
+					 unsigned *count);
+
+/**
+ * Enum all sound devices installed in the system (old API).
+ *
+ * @param info		Array of info to be initialized.
+ * @param count		On input, specifies max elements in the array.
+ *			On return, it contains actual number of elements
+ *			that have been initialized.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_enum_snd_devs(pjmedia_snd_dev_info info[],
+					 unsigned *count);
+
+/**
+ * Get currently active sound devices. If sound devices has not been created
+ * (for example when pjsua_start() is not called), it is possible that
+ * the function returns PJ_SUCCESS with -1 as device IDs.
+ *
+ * @param capture_dev   On return it will be filled with device ID of the 
+ *			capture device.
+ * @param playback_dev	On return it will be filled with device ID of the 
+ *			device ID of the playback device.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_get_snd_dev(int *capture_dev,
+				       int *playback_dev);
+
+
+/**
+ * Select or change sound device. Application may call this function at
+ * any time to replace current sound device.
+ *
+ * @param capture_dev   Device ID of the capture device.
+ * @param playback_dev	Device ID of the playback device.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_set_snd_dev(int capture_dev,
+				       int playback_dev);
+
+
+/**
+ * Set pjsua to use null sound device. The null sound device only provides
+ * the timing needed by the conference bridge, and will not interract with
+ * any hardware.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_set_null_snd_dev(void);
+
+
+/**
+ * Disconnect the main conference bridge from any sound devices, and let
+ * application connect the bridge to it's own sound device/master port.
+ *
+ * @return		The port interface of the conference bridge, 
+ *			so that application can connect this to it's own
+ *			sound device or master port.
+ */
+PJ_DECL(pjmedia_port*) pjsua_set_no_snd_dev(void);
+
+
+/**
+ * Change the echo cancellation settings.
+ *
+ * The behavior of this function depends on whether the sound device is
+ * currently active, and if it is, whether device or software AEC is 
+ * being used. 
+ *
+ * If the sound device is currently active, and if the device supports AEC,
+ * this function will forward the change request to the device and it will
+ * be up to the device on whether support the request. If software AEC is
+ * being used (the software EC will be used if the device does not support
+ * AEC), this function will change the software EC settings. In all cases,
+ * the setting will be saved for future opening of the sound device.
+ *
+ * If the sound device is not currently active, this will only change the
+ * default AEC settings and the setting will be applied next time the 
+ * sound device is opened.
+ *
+ * @param tail_ms	The tail length, in miliseconds. Set to zero to
+ *			disable AEC.
+ * @param options	Options to be passed to pjmedia_echo_create().
+ *			Normally the value should be zero.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjsua_set_ec(unsigned tail_ms, unsigned options);
+
+
+/**
+ * Get current echo canceller tail length. 
+ *
+ * @param p_tail_ms	Pointer to receive the tail length, in miliseconds. 
+ *			If AEC is disabled, the value will be zero.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjsua_get_ec_tail(unsigned *p_tail_ms);
+
+
+/**
+ * Check whether the sound device is currently active. The sound device
+ * may be inactive if the application has set the auto close feature to
+ * non-zero (the snd_auto_close_time setting in #pjsua_media_config), or
+ * if null sound device or no sound device has been configured via the
+ * #pjsua_set_no_snd_dev() function.
+ */
+PJ_DECL(pj_bool_t) pjsua_snd_is_active(void);
+
+    
+/**
+ * Configure sound device setting to the sound device being used. If sound 
+ * device is currently active, the function will forward the setting to the
+ * sound device instance to be applied immediately, if it supports it. 
+ *
+ * The setting will be saved for future opening of the sound device, if the 
+ * "keep" argument is set to non-zero. If the sound device is currently
+ * inactive, and the "keep" argument is false, this function will return
+ * error.
+ * 
+ * Note that in case the setting is kept for future use, it will be applied
+ * to any devices, even when application has changed the sound device to be
+ * used.
+ *
+ * Note also that the echo cancellation setting should be set with 
+ * #pjsua_set_ec() API instead.
+ *
+ * See also #pjmedia_aud_stream_set_cap() for more information about setting
+ * an audio device capability.
+ *
+ * @param cap		The sound device setting to change.
+ * @param pval		Pointer to value. Please see #pjmedia_aud_dev_cap
+ *			documentation about the type of value to be 
+ *			supplied for each setting.
+ * @param keep		Specify whether the setting is to be kept for future
+ *			use.
+ *
+ * @return		PJ_SUCCESS on success or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_snd_set_setting(pjmedia_aud_dev_cap cap,
+					   const void *pval,
+					   pj_bool_t keep);
+
+/**
+ * Retrieve a sound device setting. If sound device is currently active,
+ * the function will forward the request to the sound device. If sound device
+ * is currently inactive, and if application had previously set the setting
+ * and mark the setting as kept, then that setting will be returned.
+ * Otherwise, this function will return error.
+ *
+ * Note that echo cancellation settings should be retrieved with 
+ * #pjsua_get_ec_tail() API instead.
+ *
+ * @param cap		The sound device setting to retrieve.
+ * @param pval		Pointer to receive the value. 
+ *			Please see #pjmedia_aud_dev_cap documentation about
+ *			the type of value to be supplied for each setting.
+ *
+ * @return		PJ_SUCCESS on success or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_snd_get_setting(pjmedia_aud_dev_cap cap,
+					   void *pval);
+
+
+/*****************************************************************************
+ * Codecs.
+ */
+
+/**
+ * Enum all supported codecs in the system.
+ *
+ * @param id		Array of ID to be initialized.
+ * @param count		On input, specifies max elements in the array.
+ *			On return, it contains actual number of elements
+ *			that have been initialized.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_enum_codecs( pjsua_codec_info id[],
+				        unsigned *count );
+
+
+/**
+ * Change codec priority.
+ *
+ * @param codec_id	Codec ID, which is a string that uniquely identify
+ *			the codec (such as "speex/8000"). Please see pjsua
+ *			manual or pjmedia codec reference for details.
+ * @param priority	Codec priority, 0-255, where zero means to disable
+ *			the codec.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_codec_set_priority( const pj_str_t *codec_id,
+					       pj_uint8_t priority );
+
+
+/**
+ * Get codec parameters.
+ *
+ * @param codec_id	Codec ID.
+ * @param param		Structure to receive codec parameters.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_codec_get_param( const pj_str_t *codec_id,
+					    pjmedia_codec_param *param );
+
+
+/**
+ * Set codec parameters.
+ *
+ * @param codec_id	Codec ID.
+ * @param param		Codec parameter to set. Set to NULL to reset
+ *			codec parameter to library default settings.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_codec_set_param( const pj_str_t *codec_id,
+					    const pjmedia_codec_param *param);
+
+
+
+
+/**
+ * Create UDP media transports for all the calls. This function creates
+ * one UDP media transport for each call.
+ *
+ * @param cfg		Media transport configuration. The "port" field in the
+ *			configuration is used as the start port to bind the
+ *			sockets.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) 
+pjsua_media_transports_create(const pjsua_transport_config *cfg);
+
+
+/**
+ * Register custom media transports to be used by calls. There must
+ * enough media transports for all calls.
+ *
+ * @param tp		The media transport array.
+ * @param count		Number of elements in the array. This number MUST
+ *			match the number of maximum calls configured when
+ *			pjsua is created.
+ * @param auto_delete	Flag to indicate whether the transports should be
+ *			destroyed when pjsua is shutdown.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) 
+pjsua_media_transports_attach( pjsua_media_transport tp[],
+			       unsigned count,
+			       pj_bool_t auto_delete);
 
 
 /**

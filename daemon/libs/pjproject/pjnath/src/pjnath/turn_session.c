@@ -1,4 +1,4 @@
-/* $Id: turn_session.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: turn_session.c 3877 2011-10-31 10:28:34Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -391,6 +391,9 @@ static void sess_shutdown(pj_turn_session *sess,
 
     PJ_LOG(4,(sess->obj_name, "Request to shutdown in state %s, cause:%d",
 	      state_names[sess->state], status));
+
+    if (sess->last_status == PJ_SUCCESS && status != PJ_SUCCESS)
+	sess->last_status = status;
 
     switch (sess->state) {
     case PJ_TURN_STATE_NULL:

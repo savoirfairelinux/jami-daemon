@@ -1,4 +1,4 @@
-/* $Id: ssl_sock.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: ssl_sock.h 3942 2012-01-16 05:05:47Z nanang $ */
 /* 
  * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -323,13 +323,35 @@ PJ_DECL(pj_status_t) pj_ssl_cipher_get_availables(pj_ssl_cipher ciphers[],
 
 
 /**
+ * Check if the specified cipher is supported by SSL/TLS backend.
+ *
+ * @param cipher	The cipher.
+ *
+ * @return		PJ_TRUE when supported.
+ */
+PJ_DECL(pj_bool_t) pj_ssl_cipher_is_supported(pj_ssl_cipher cipher);
+
+
+/**
  * Get cipher name string.
  *
  * @param cipher	The cipher.
  *
- * @return		The cipher name or NULL if cipher is not recognized.
+ * @return		The cipher name or NULL if cipher is not recognized/
+ *			supported.
  */
 PJ_DECL(const char*) pj_ssl_cipher_name(pj_ssl_cipher cipher);
+
+
+/**
+ * Get cipher ID from cipher name string.
+ *
+ * @param cipher_name	The cipher name string.
+ *
+ * @return		The cipher ID or PJ_TLS_UNKNOWN_CIPHER if the cipher
+ *			name string is not recognized/supported.
+ */
+PJ_DECL(pj_ssl_cipher) pj_ssl_cipher_id(const char *cipher_name);
 
 
 /**
@@ -457,7 +479,7 @@ typedef enum pj_ssl_sock_proto
     PJ_SSL_SOCK_PROTO_DEFAULT,	    /**< Default protocol of backend.	*/
     PJ_SSL_SOCK_PROTO_TLS1,	    /**< TLSv1.0 protocol.		*/
     PJ_SSL_SOCK_PROTO_SSL3,	    /**< SSLv3.0 protocol.		*/
-    PJ_SSL_SOCK_PROTO_SSL23,	    /**< SSLv3.0 but can roll back to SSLv2.0.			*/
+    PJ_SSL_SOCK_PROTO_SSL23,	    /**< SSLv3.0 but can roll back to   */
     PJ_SSL_SOCK_PROTO_DTLS1	    /**< DTLSv1.0 protocol.		*/
 } pj_ssl_sock_proto;
 

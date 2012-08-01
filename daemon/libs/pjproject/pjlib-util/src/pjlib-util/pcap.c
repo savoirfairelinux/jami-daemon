@@ -1,4 +1,4 @@
-/* $Id: pcap.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: pcap.c 3588 2011-06-20 03:54:49Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -368,8 +368,20 @@ PJ_DEF(pj_status_t) pj_pcap_read_udp(pj_pcap_file *file,
 
 	*udp_payload_size = sz;
 
+	// Some layers may have trailer, e.g: link eth2.
 	/* Check that we've read all the packets */
-	PJ_ASSERT_RETURN(sz_read == rec_incl, PJ_EBUG);
+	//PJ_ASSERT_RETURN(sz_read == rec_incl, PJ_EBUG);
+
+	/* Skip trailer */
+	while (sz_read < rec_incl) {
+	    sz = rec_incl - sz_read;
+	    status = read_file(file, &tmp.eth, &sz);
+	    if (status != PJ_SUCCESS) {
+		TRACE_((file->obj_name, "Error reading trailer: %d", status));
+		return status;
+	    }
+	    sz_read += sz;
+	}
 
 	return PJ_SUCCESS;
     }

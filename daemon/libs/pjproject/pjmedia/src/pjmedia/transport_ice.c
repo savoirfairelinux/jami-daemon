@@ -1,4 +1,4 @@
-/* $Id: transport_ice.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: transport_ice.c 3906 2011-12-09 07:19:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -72,6 +72,7 @@ struct transport_ice
     pj_sockaddr		 rtp_src_addr;	/**< Actual source RTP address.	    */
     pj_sockaddr		 rtcp_src_addr;	/**< Actual source RTCP address.    */
     unsigned		 rtp_src_cnt;	/**< How many pkt from this addr.   */
+    unsigned		 rtcp_src_cnt;  /**< How many pkt from this addr.   */
 
     unsigned		 tx_drop_pct;	/**< Percent of tx pkts to drop.    */
     unsigned		 rx_drop_pct;	/**< Percent of rx pkts to drop.    */
@@ -401,7 +402,9 @@ static pj_status_t encode_session_in_sdp(struct transport_ice *tp_ice,
      * the session, in this case we will answer with full ICE SDP and
      * new ufrag/pwd pair.
      */
-    if (!restart_session && pj_ice_strans_sess_is_complete(tp_ice->ice_st)) {
+    if (!restart_session && pj_ice_strans_sess_is_complete(tp_ice->ice_st) &&
+	pj_ice_strans_get_state(tp_ice->ice_st) != PJ_ICE_STRANS_STATE_FAILED)
+    {
 	const pj_ice_sess_check *check;
 	char *attr_buf;
 	pjmedia_sdp_conn *conn;
@@ -531,7 +534,10 @@ static pj_status_t encode_session_in_sdp(struct transport_ice *tp_ice,
 	    pjmedia_sdp_attr_add(&m->attr_count, m->attr, attr);
 	}
 
-    } else if (pj_ice_strans_has_sess(tp_ice->ice_st)) {
+    } else if (pj_ice_strans_has_sess(tp_ice->ice_st) &&
+	       pj_ice_strans_get_state(tp_ice->ice_st) !=
+		        PJ_ICE_STRANS_STATE_FAILED)
+    {
 	/* Encode all candidates to SDP media */
 	char *attr_buf;
 	unsigned comp;
@@ -1499,6 +1505,8 @@ static pj_status_t transport_get_info(pjmedia_transport *tp,
      */
     if (tp_ice->use_ice || tp_ice->rtp_src_cnt) {
 	info->src_rtp_name  = tp_ice->rtp_src_addr;
+    }
+    if (tp_ice->use_ice || tp_ice->rtcp_src_cnt) {
 	info->src_rtcp_name = tp_ice->rtcp_src_addr;
     }
 
@@ -1564,6 +1572,7 @@ static pj_status_t transport_attach  (pjmedia_transport *tp,
     tp_ice->rtp_src_addr = tp_ice->remote_rtp;
     tp_ice->rtcp_src_addr = tp_ice->remote_rtcp;
     tp_ice->rtp_src_cnt = 0;
+    tp_ice->rtcp_src_cnt = 0;
 
     return PJ_SUCCESS;
 }
@@ -1639,6 +1648,7 @@ static void ice_on_rx_data(pj_ice_strans *ice_st, unsigned comp_id,
 			   unsigned src_addr_len)
 {
     struct transport_ice *tp_ice;
+    pj_bool_t discard = PJ_FALSE;
 
     tp_ice = (struct transport_ice*) pj_ice_strans_get_user_data(ice_st);
 
@@ -1654,20 +1664,23 @@ static void ice_on_rx_data(pj_ice_strans *ice_st, unsigned comp_id,
 	    }
 	}
 
-	(*tp_ice->rtp_cb)(tp_ice->stream, pkt, size);
-
 	/* See if source address of RTP packet is different than the 
 	 * configured address, and switch RTP remote address to 
 	 * source packet address after several consecutive packets
 	 * have been received.
 	 */
 	if (!tp_ice->use_ice) {
+	    pj_bool_t enable_switch =
+		    ((tp_ice->options & PJMEDIA_ICE_NO_SRC_ADDR_CHECKING)==0);
 
-	    /* Increment counter and avoid zero */
-	    if (++tp_ice->rtp_src_cnt == 0) 
-		tp_ice->rtp_src_cnt = 1;
+	    if (!enable_switch ||
+		pj_sockaddr_cmp(&tp_ice->remote_rtp, src_addr) == 0)
+	    {
+		/* Don't switch while we're receiving from remote_rtp */
+		tp_ice->rtp_src_cnt = 0;
+	    } else {
 
-	    if (pj_sockaddr_cmp(&tp_ice->remote_rtp, src_addr) != 0) {
+		++tp_ice->rtp_src_cnt;
 
 		/* Check if the source address is recognized. */
 		if (pj_sockaddr_cmp(src_addr, &tp_ice->rtp_src_addr) != 0) {
@@ -1675,11 +1688,12 @@ static void ice_on_rx_data(pj_ice_strans *ice_st, unsigned comp_id,
 		    pj_sockaddr_cp(&tp_ice->rtp_src_addr, src_addr);
 		    /* Reset counter */
 		    tp_ice->rtp_src_cnt = 0;
+		    discard = PJ_TRUE;
 		}
 
-		if ((tp_ice->options & PJMEDIA_ICE_NO_SRC_ADDR_CHECKING)==0 &&
-		    tp_ice->rtp_src_cnt >= PJMEDIA_RTP_NAT_PROBATION_CNT) 
-		{
+		if (tp_ice->rtp_src_cnt < PJMEDIA_RTP_NAT_PROBATION_CNT) {
+		    discard = PJ_TRUE;
+		} else {
 		    char addr_text[80];
 
 		    /* Set remote RTP address to source address */
@@ -1708,7 +1722,8 @@ static void ice_on_rx_data(pj_ice_strans *ice_st, unsigned comp_id,
 			pj_sockaddr_set_port(&tp_ice->remote_rtcp, port);
 
 			PJ_LOG(4,(tp_ice->base.name,
-				  "Remote RTCP address switched to %s",
+				  "Remote RTCP address switched to predicted "
+				  "address %s",
 				  pj_sockaddr_print(&tp_ice->remote_rtcp, 
 						    addr_text,
 						    sizeof(addr_text), 3)));
@@ -1716,31 +1731,45 @@ static void ice_on_rx_data(pj_ice_strans *ice_st, unsigned comp_id,
 		}
 	    }
 	}
+
+	if (!discard)
+	    (*tp_ice->rtp_cb)(tp_ice->stream, pkt, size);
+
     } else if (comp_id==2 && tp_ice->rtcp_cb) {
-	(*tp_ice->rtcp_cb)(tp_ice->stream, pkt, size);
 
 	/* Check if RTCP source address is the same as the configured
 	 * remote address, and switch the address when they are
 	 * different.
 	 */
 	if (!tp_ice->use_ice &&
-	    pj_sockaddr_cmp(&tp_ice->remote_rtcp, src_addr) != 0)
+	    (tp_ice->options & PJMEDIA_ICE_NO_SRC_ADDR_CHECKING)==0)
 	{
-	    pj_sockaddr_cp(&tp_ice->rtcp_src_addr, src_addr);
-
-	    if ((tp_ice->options & PJMEDIA_ICE_NO_SRC_ADDR_CHECKING)==0) {
+	    if (pj_sockaddr_cmp(&tp_ice->remote_rtcp, src_addr) == 0) {
+		tp_ice->rtcp_src_cnt = 0;
+	    } else {
 		char addr_text[80];
 
-		pj_sockaddr_cp(&tp_ice->remote_rtcp, src_addr);
+		++tp_ice->rtcp_src_cnt;
+		if (tp_ice->rtcp_src_cnt < PJMEDIA_RTCP_NAT_PROBATION_CNT) {
+		    discard = PJ_TRUE;
+		} else {
+		    tp_ice->rtcp_src_cnt = 0;
+		    pj_sockaddr_cp(&tp_ice->rtcp_src_addr, src_addr);
+		    pj_sockaddr_cp(&tp_ice->remote_rtcp, src_addr);
 
-		pj_assert(tp_ice->addr_len == pj_sockaddr_get_len(src_addr));
+		    pj_assert(tp_ice->addr_len==pj_sockaddr_get_len(src_addr));
 
-		PJ_LOG(4,(tp_ice->base.name,
-			  "Remote RTCP address switched to %s",
-			  pj_sockaddr_print(&tp_ice->remote_rtcp, addr_text,
-					    sizeof(addr_text), 3)));
+		    PJ_LOG(4,(tp_ice->base.name,
+			      "Remote RTCP address switched to %s",
+			      pj_sockaddr_print(&tp_ice->remote_rtcp,
+			                        addr_text, sizeof(addr_text),
+			                        3)));
+		}
 	    }
 	}
+
+	if (!discard)
+	    (*tp_ice->rtcp_cb)(tp_ice->stream, pkt, size);
     }
 
     PJ_UNUSED_ARG(src_addr_len);

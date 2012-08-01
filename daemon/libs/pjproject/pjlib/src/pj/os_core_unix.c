@@ -1,4 +1,4 @@
-/* $Id: os_core_unix.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: os_core_unix.c 3986 2012-03-22 11:29:20Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -102,6 +102,11 @@ struct pj_event_t
 #endif	/* PJ_HAS_EVENT_OBJ */
 
 
+/*
+ * Flag and reference counter for PJLIB instance.
+ */
+static int initialized;
+
 #if PJ_HAS_THREADS
     static pj_thread_t main_thread;
     static long thread_tls_id;
@@ -126,6 +131,12 @@ PJ_DEF(pj_status_t) pj_init(void)
     char dummy_guid[PJ_GUID_MAX_LENGTH];
     pj_str_t guid;
     pj_status_t rc;
+
+    /* Check if PJLIB have been initialized */
+    if (initialized) {
+	++initialized;
+	return PJ_SUCCESS;
+    }
 
 #if PJ_HAS_THREADS
     /* Init this thread's TLS. */
@@ -167,6 +178,10 @@ PJ_DEF(pj_status_t) pj_init(void)
     }
 #endif   
 
+    /* Flag PJLIB as initialized */
+    ++initialized;
+    pj_assert(initialized == 1);
+
     PJ_LOG(4,(THIS_FILE, "pjlib %s for POSIX initialized",
 	      PJ_VERSION));
 
@@ -191,6 +206,11 @@ PJ_DEF(pj_status_t) pj_atexit(void (*func)(void))
 PJ_DEF(void) pj_shutdown()
 {
     int i;
+
+    /* Only perform shutdown operation when 'initialized' reaches zero */
+    pj_assert(initialized > 0);
+    if (--initialized != 0)
+	return;
 
     /* Call atexit() functions */
     for (i=atexit_count-1; i>=0; --i) {

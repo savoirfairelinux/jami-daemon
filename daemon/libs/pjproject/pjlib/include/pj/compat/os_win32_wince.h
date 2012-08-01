@@ -1,4 +1,4 @@
-/* $Id: os_win32_wince.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: os_win32_wince.h 3822 2011-10-18 04:26:37Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -97,6 +97,12 @@
  * Default: 0
  */
 #define PJ_SELECT_NEEDS_NFDS	    0
+
+/* Endianness */
+#ifndef PJ_IS_LITTLE_ENDIAN
+#   define PJ_IS_LITTLE_ENDIAN	1
+#   define PJ_IS_BIG_ENDIAN	0
+#endif
 
 /* Default threading is enabled, unless it's overridden. */
 #ifndef PJ_HAS_THREADS

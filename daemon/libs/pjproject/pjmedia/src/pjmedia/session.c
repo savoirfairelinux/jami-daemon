@@ -1,4 +1,4 @@
-/* $Id: session.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: session.c 3571 2011-05-19 08:05:23Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -810,6 +810,40 @@ PJ_DEF(pj_status_t) pjmedia_session_resume_stream( pjmedia_session *session,
     PJ_ASSERT_RETURN(session && index < session->stream_cnt, PJ_EINVAL);
 
     return pjmedia_stream_resume(session->stream[index], dir);
+}
+
+/**
+ * Send RTCP SDES for the session.
+ */
+PJ_DEF(pj_status_t) 
+pjmedia_session_send_rtcp_sdes( const pjmedia_session *session )
+{
+    unsigned i;
+
+    PJ_ASSERT_RETURN(session, PJ_EINVAL);
+
+    for (i=0; i<session->stream_cnt; ++i) {
+	pjmedia_stream_send_rtcp_sdes(session->stream[i]);
+    }
+
+    return PJ_SUCCESS;
+}
+
+/**
+ * Send RTCP BYE for the session.
+ */
+PJ_DEF(pj_status_t) 
+pjmedia_session_send_rtcp_bye( const pjmedia_session *session )
+{
+    unsigned i;
+
+    PJ_ASSERT_RETURN(session, PJ_EINVAL);
+
+    for (i=0; i<session->stream_cnt; ++i) {
+	pjmedia_stream_send_rtcp_bye(session->stream[i]);
+    }
+
+    return PJ_SUCCESS;
 }
 
 /**

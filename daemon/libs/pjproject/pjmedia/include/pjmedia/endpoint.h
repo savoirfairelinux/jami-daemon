@@ -1,4 +1,4 @@
-/* $Id: endpoint.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: endpoint.h 3988 2012-03-28 07:32:42Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -57,6 +57,12 @@ typedef enum pjmedia_endpt_flag
     PJMEDIA_ENDPT_HAS_TELEPHONE_EVENT_FLAG
 
 } pjmedia_endpt_flag;
+
+
+/**
+ * Type of callback to register to pjmedia_endpt_atexit().
+ */
+typedef void (*pjmedia_endpt_exit_callback)(pjmedia_endpt *endpt);
 
 
 /**
@@ -202,6 +208,23 @@ PJ_DECL(pj_status_t) pjmedia_endpt_create_sdp( pjmedia_endpt *endpt,
  * @return		PJ_SUCCESS on success.
  */
 PJ_DECL(pj_status_t) pjmedia_endpt_dump(pjmedia_endpt *endpt);
+
+
+/**
+ * Register cleanup function to be called by media endpoint when 
+ * #pjmedia_endpt_destroy() is called. Note that application should not
+ * use or access any endpoint resource (such as pool, ioqueue) from within
+ * the callback as such resource may have been released when the callback
+ * function is invoked.
+ *
+ * @param endpt		The media endpoint.
+ * @param func		The function to be registered.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjmedia_endpt_atexit(pjmedia_endpt *endpt,
+					  pjmedia_endpt_exit_callback func);
+
 
 
 PJ_END_DECL

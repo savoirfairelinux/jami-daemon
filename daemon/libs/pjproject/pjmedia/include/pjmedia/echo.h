@@ -1,4 +1,4 @@
-/* $Id: echo.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: echo.h 4079 2012-04-24 10:26:07Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -88,7 +88,20 @@ typedef enum pjmedia_echo_flag
      * for the echo canceller, but application will guarantee that echo
      * canceller will not be called by different threads at the same time.
      */
-    PJMEDIA_ECHO_NO_LOCK = 16
+    PJMEDIA_ECHO_NO_LOCK = 16,
+
+    /**
+     * If PJMEDIA_ECHO_USE_SIMPLE_FIFO flag is specified, the delay buffer
+     * created for the echo canceller will use simple FIFO mechanism, i.e.
+     * without using WSOLA to expand and shrink audio samples.
+     */
+    PJMEDIA_ECHO_USE_SIMPLE_FIFO = 32,
+
+    /**
+     * If PJMEDIA_ECHO_USE_SW_ECHO flag is specified, software echo canceller
+     * will be used instead of device EC.
+     */
+    PJMEDIA_ECHO_USE_SW_ECHO = 64
 
 } pjmedia_echo_flag;
 

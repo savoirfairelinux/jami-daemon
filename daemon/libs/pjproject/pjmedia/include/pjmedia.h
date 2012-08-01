@@ -52,6 +52,8 @@
 #include <pjmedia/sdp_neg.h>
 #include <pjmedia/session.h>
 #include <pjmedia/silencedet.h>
+#include <pjmedia/sound.h>
+#include <pjmedia/sound_port.h>
 #include <pjmedia/splitcomb.h>
 #include <pjmedia/stereo.h>
 #include <pjmedia/stream.h>

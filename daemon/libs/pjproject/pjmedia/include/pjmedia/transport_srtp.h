@@ -1,4 +1,4 @@
-/* $Id: transport_srtp.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: transport_srtp.h 3986 2012-03-22 11:29:20Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -200,8 +200,12 @@ typedef struct pjmedia_srtp_info
  * will also invoke this function. This function will also register SRTP
  * library deinitialization to #pj_atexit(), so the deinitialization
  * of SRTP library will be performed automatically by PJLIB destructor.
+ *
+ * @param endpt	    The media endpoint instance.
+ *
+ * @return	    PJ_SUCCESS on success.
  */
-PJ_DECL(pj_status_t) pjmedia_srtp_init_lib(void);
+PJ_DECL(pj_status_t) pjmedia_srtp_init_lib(pjmedia_endpt *endpt);
 
 
 /**

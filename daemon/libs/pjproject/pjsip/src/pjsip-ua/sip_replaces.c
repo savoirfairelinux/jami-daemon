@@ -1,4 +1,4 @@
-/* $Id: sip_replaces.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_replaces.c 3986 2012-03-22 11:29:20Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -162,8 +162,10 @@ static pjsip_hdr *parse_hdr_replaces(pjsip_parse_ctx *ctx)
 
 
 /* Deinitialize Replaces */
-static void pjsip_replaces_deinit_module(void)
+static void pjsip_replaces_deinit_module(pjsip_endpoint *endpt)
 {
+    PJ_TODO(provide_initialized_flag_for_each_endpoint);
+    PJ_UNUSED_ARG(endpt);
     is_initialized = PJ_FALSE;
 }
 
@@ -191,7 +193,8 @@ PJ_DEF(pj_status_t) pjsip_replaces_init_module(pjsip_endpoint *endpt)
 					1, &STR_REPLACES);
 
     /* Register deinit module to be executed when PJLIB shutdown */
-    if (pj_atexit(&pjsip_replaces_deinit_module) != PJ_SUCCESS) {
+    if (pjsip_endpt_atexit(endpt, &pjsip_replaces_deinit_module) != PJ_SUCCESS)
+    {
 	/* Failure to register this function may cause this module won't 
 	 * work properly when the stack is restarted (without quitting 
 	 * application).

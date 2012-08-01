@@ -1,4 +1,4 @@
-/* $Id: regc_test.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: regc_test.c 4093 2012-04-26 09:26:07Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -772,7 +772,7 @@ int regc_test(void)
 
 	    /* client expected results: */
 	    /* error	code	have_reg    expiration	contact_cnt auth?*/
-	    { PJ_FALSE,	503,	PJ_FALSE,   -1,		0,	    PJ_FALSE}
+	    { PJ_FALSE,	502,	PJ_FALSE,   -1,		0,	    PJ_FALSE}
 	},
 
 	/* timeout test */

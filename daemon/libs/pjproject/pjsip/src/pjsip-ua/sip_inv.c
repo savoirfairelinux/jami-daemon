@@ -1,4 +1,4 @@
-/* $Id: sip_inv.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_inv.c 4067 2012-04-23 10:22:49Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -155,6 +155,7 @@ struct tsx_inv_data
 {
     pjsip_inv_session	*inv;	    /* The invite session		    */
     pj_bool_t		 sdp_done;  /* SDP negotiation done for this tsx?   */
+    pj_bool_t		 retrying;  /* Resend (e.g. due to 401/407)         */
     pj_str_t		 done_tag;  /* To tag in RX response with answer    */
     pj_bool_t		 done_early;/* Negotiation was done for early med?  */
 };
@@ -195,14 +196,33 @@ void inv_set_state(pjsip_inv_session *inv, pjsip_inv_state state,
 		   pjsip_event *e)
 {
     pjsip_inv_state prev_state = inv->state;
+    pj_bool_t dont_notify = PJ_FALSE;
     pj_status_t status;
 
+    /* Prevent STATE_CALLING from being reported more than once because
+     * of authentication
+     * https://trac.pjsip.org/repos/ticket/1318
+     */
+    if (state==PJSIP_INV_STATE_CALLING && 
+	(inv->cb_called & (1 << PJSIP_INV_STATE_CALLING)) != 0)
+    {
+	dont_notify = PJ_TRUE;
+    }
 
     /* If state is confirmed, check that SDP negotiation is done,
      * otherwise disconnect the session.
      */
     if (state == PJSIP_INV_STATE_CONFIRMED) {
-	if (pjmedia_sdp_neg_get_state(inv->neg)!=PJMEDIA_SDP_NEG_STATE_DONE) {
+	struct tsx_inv_data *tsx_inv_data = NULL;
+
+	if (inv->invite_tsx) {
+	    tsx_inv_data = (struct tsx_inv_data*)
+			   inv->invite_tsx->mod_data[mod_inv.mod.id];
+	}
+
+	if (pjmedia_sdp_neg_get_state(inv->neg)!=PJMEDIA_SDP_NEG_STATE_DONE &&
+	    (tsx_inv_data && !tsx_inv_data->sdp_done) )
+	{
 	    pjsip_tx_data *bye;
 
 	    PJ_LOG(4,(inv->obj_name, "SDP offer/answer incomplete, ending the "
@@ -224,8 +244,11 @@ void inv_set_state(pjsip_inv_session *inv, pjsip_inv_state state,
     pj_assert(inv->state != PJSIP_INV_STATE_DISCONNECTED ||
 	      inv->cause != 0);
 
+    /* Mark the callback as called for this state */
+    inv->cb_called |= (1 << state);
+
     /* Call on_state_changed() callback. */
-    if (mod_inv.cb.on_state_changed && inv->notify)
+    if (mod_inv.cb.on_state_changed && inv->notify && !dont_notify)
 	(*mod_inv.cb.on_state_changed)(inv, e);
 
     /* Only decrement when previous state is not already DISCONNECTED */
@@ -442,17 +465,25 @@ static pj_bool_t mod_inv_on_rx_request(pjsip_rx_data *rdata)
      */
     if (method->id == PJSIP_ACK_METHOD && inv) {
 
+	/* Ignore if we don't have INVITE in progress */
+	if (!inv->invite_tsx) {
+	    return PJ_TRUE;
+	}
+
 	/* Ignore ACK if pending INVITE transaction has not finished. */
-	if (inv->invite_tsx && 
-	    inv->invite_tsx->state < PJSIP_TSX_STATE_COMPLETED)
-	{
+	if (inv->invite_tsx->state < PJSIP_TSX_STATE_COMPLETED) {
+	    return PJ_TRUE;
+	}
+
+	/* Ignore ACK with different CSeq
+	 * https://trac.pjsip.org/repos/ticket/1391
+	 */
+	if (rdata->msg_info.cseq->cseq != inv->invite_tsx->cseq) {
 	    return PJ_TRUE;
 	}
 
 	/* Terminate INVITE transaction, if it's still present. */
-	if (inv->invite_tsx && 
-	    inv->invite_tsx->state <= PJSIP_TSX_STATE_COMPLETED)
-	{
+	if (inv->invite_tsx->state <= PJSIP_TSX_STATE_COMPLETED) {
 	    /* Before we terminate INVITE transaction, process the SDP
 	     * in the ACK request, if any. 
 	     * Only do this when invite state is not already disconnected
@@ -2128,7 +2159,7 @@ PJ_DEF(pj_status_t) pjsip_inv_end_session(  pjsip_inv_session *inv,
 	return PJSIP_ESESSIONTERMINATED;
 
     default:
-	pj_assert("!Invalid operation!");
+	pj_assert(!"Invalid operation!");
 	return PJ_EINVALIDOP;
     }
 
@@ -2778,6 +2809,12 @@ static void inv_handle_bye_response( pjsip_inv_session *inv,
 	    inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
 	    
 	} else {
+	    struct tsx_inv_data *tsx_inv_data;
+
+	    tsx_inv_data = (struct tsx_inv_data*)tsx->mod_data[mod_inv.mod.id];
+	    if (tsx_inv_data)
+		tsx_inv_data->retrying = PJ_TRUE;
+
 	    /* Re-send BYE. */
 	    status = pjsip_inv_send_msg(inv, tdata);
 	}
@@ -2890,19 +2927,23 @@ on_return:
 /*
  * Handle incoming response to UAC UPDATE request.
  */
-static void inv_handle_update_response( pjsip_inv_session *inv,
-					pjsip_event *e)
+static pj_bool_t inv_handle_update_response( pjsip_inv_session *inv,
+                                             pjsip_event *e)
 {
     pjsip_transaction *tsx = e->body.tsx_state.tsx;
-    struct tsx_inv_data *tsx_inv_data = NULL;
+    struct tsx_inv_data *tsx_inv_data;
+    pj_bool_t handled = PJ_FALSE;
     pj_status_t status = -1;
+
+    tsx_inv_data = (struct tsx_inv_data*)tsx->mod_data[mod_inv.mod.id];
+    pj_assert(tsx_inv_data);
 
     /* Handle 401/407 challenge. */
     if (tsx->state == PJSIP_TSX_STATE_COMPLETED &&
 	(tsx->status_code == 401 || tsx->status_code == 407))
     {
 	pjsip_tx_data *tdata;
-	
+
 	status = pjsip_auth_clt_reinit_req( &inv->dlg->auth_sess, 
 					    e->body.tsx_state.src.rdata,
 					    tsx->last_tx,
@@ -2920,9 +2961,14 @@ static void inv_handle_update_response( pjsip_inv_session *inv,
 	    */
 	    
 	} else {
+	    if (tsx_inv_data)
+		tsx_inv_data->retrying = PJ_TRUE;
+
 	    /* Re-send request. */
 	    status = pjsip_inv_send_msg(inv, tdata);
 	}
+
+	handled = PJ_TRUE;
     }
 
     /* Process 422 response */
@@ -2931,6 +2977,7 @@ static void inv_handle_update_response( pjsip_inv_session *inv,
     {
 	status = handle_timer_response(inv, e->body.tsx_state.src.rdata,
 				       PJ_FALSE);
+	handled = PJ_TRUE;
     }
 
     /* Process 2xx response */
@@ -2942,6 +2989,7 @@ static void inv_handle_update_response( pjsip_inv_session *inv,
 				       PJ_FALSE);
 	status = inv_check_sdp_in_incoming_msg(inv, tsx, 
 					     e->body.tsx_state.src.rdata);
+	handled = PJ_TRUE;
     }
     
     /* Get/attach invite session's transaction data */
@@ -2955,26 +3003,25 @@ static void inv_handle_update_response( pjsip_inv_session *inv,
 	{
 	    status = handle_timer_response(inv, e->body.tsx_state.src.rdata,
 					   PJ_FALSE);
-	}
-
-	tsx_inv_data = (struct tsx_inv_data*)tsx->mod_data[mod_inv.mod.id];
-	if (tsx_inv_data == NULL) {
-	    tsx_inv_data=PJ_POOL_ZALLOC_T(tsx->pool, struct tsx_inv_data);
-	    tsx_inv_data->inv = inv;
-	    tsx->mod_data[mod_inv.mod.id] = tsx_inv_data;
+	    handled = PJ_TRUE;
 	}
     }
 
-    /* Cancel the negotiation if we don't get successful negotiation by now */
+    /* Cancel the negotiation if we don't get successful negotiation by now,
+     * unless it's authentication challenge and the request is being retried.
+     */
     if (pjmedia_sdp_neg_get_state(inv->neg) ==
 		PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER &&
-	tsx_inv_data && tsx_inv_data->sdp_done == PJ_FALSE) 
+	tsx_inv_data && tsx_inv_data->sdp_done == PJ_FALSE &&
+	!tsx_inv_data->retrying)
     {
 	pjmedia_sdp_neg_cancel_offer(inv->neg);
 
 	/* Prevent from us cancelling different offer! */
 	tsx_inv_data->sdp_done = PJ_TRUE;
     }
+
+    return handled;
 }
 
 
@@ -3174,7 +3221,6 @@ static pj_bool_t handle_uac_tsx_response(pjsip_inv_session *inv,
 	     (tsx->status_code == PJSIP_SC_UNAUTHORIZED ||
 	      tsx->status_code == PJSIP_SC_PROXY_AUTHENTICATION_REQUIRED)) 
     {
-
 	pjsip_tx_data *tdata;
 	pj_status_t status;
 
@@ -3196,6 +3242,12 @@ static pj_bool_t handle_uac_tsx_response(pjsip_inv_session *inv,
 	    */
 	    
 	} else {
+	    struct tsx_inv_data *tsx_inv_data;
+
+	    tsx_inv_data = (struct tsx_inv_data*)tsx->mod_data[mod_inv.mod.id];
+	    if (tsx_inv_data)
+		tsx_inv_data->retrying = PJ_TRUE;
+
 	    /* Re-send request. */
 	    status = pjsip_inv_send_msg(inv, tdata);
 	}
@@ -3830,6 +3882,32 @@ static void inv_on_state_connecting( pjsip_inv_session *inv, pjsip_event *e)
 
     } else if (tsx->role == PJSIP_ROLE_UAS &&
 	       tsx->state == PJSIP_TSX_STATE_TRYING &&
+	       pjsip_method_cmp(&tsx->method, &pjsip_invite_method)==0)
+    {
+	pjsip_rx_data *rdata = e->body.tsx_state.src.rdata;
+	pjsip_tx_data *tdata;
+	pj_status_t status;
+
+	/* See https://trac.pjsip.org/repos/ticket/1455
+	 * Handle incoming re-INVITE before current INVITE is confirmed.
+	 * According to RFC 5407:
+	 *  - answer with 200 if we don't have pending offer-answer
+	 *  - answer with 491 if we *have* pending offer-answer
+	 *
+	 *  But unfortunately accepting the re-INVITE would mean we have
+	 *  two outstanding INVITEs, and we don't support that because
+	 *  we will get confused when we handle the ACK.
+	 */
+	status = pjsip_dlg_create_response(inv->dlg, rdata,
+					   PJSIP_SC_REQUEST_PENDING,
+					   NULL, &tdata);
+	if (status != PJ_SUCCESS)
+	    return;
+	pjsip_timer_update_resp(inv, tdata);
+	status = pjsip_dlg_send_response(dlg, tsx, tdata);
+
+    } else if (tsx->role == PJSIP_ROLE_UAS &&
+	       tsx->state == PJSIP_TSX_STATE_TRYING &&
 	       pjsip_method_cmp(&tsx->method, &pjsip_update_method)==0)
     {
 	/*
@@ -3846,8 +3924,8 @@ static void inv_on_state_connecting( pjsip_inv_session *inv, pjsip_event *e)
 	/*
 	 * Handle response to outgoing UPDATE request.
 	 */
-	if (handle_uac_tsx_response(inv, e) == PJ_FALSE)
-	    inv_handle_update_response(inv, e);
+	if (inv_handle_update_response(inv, e) == PJ_FALSE)
+	    handle_uac_tsx_response(inv, e);
 
     } else if (tsx->role == PJSIP_ROLE_UAS &&
 	       tsx->state == PJSIP_TSX_STATE_TRYING &&
@@ -3862,6 +3940,7 @@ static void inv_on_state_connecting( pjsip_inv_session *inv, pjsip_event *e)
 	
 	/* Generic handling for UAC tsx completion */
 	handle_uac_tsx_response(inv, e);
+
     }
 
 }
@@ -4012,6 +4091,16 @@ static void inv_on_state_confirmed( pjsip_inv_session *inv, pjsip_event *e)
 
 		/* Not Acceptable */
 		const pjsip_hdr *accept;
+
+		/* The incoming SDP is unacceptable. If the SDP negotiator
+		 * state has just been changed, i.e: DONE -> REMOTE_OFFER,
+		 * revert it back.
+		 */
+		if (pjmedia_sdp_neg_get_state(inv->neg) ==
+		    PJMEDIA_SDP_NEG_STATE_REMOTE_OFFER)
+		{
+		    pjmedia_sdp_neg_cancel_offer(inv->neg);
+		}
 
 		status = pjsip_dlg_create_response(inv->dlg, rdata, 
 						   488, NULL, &tdata);
@@ -4192,10 +4281,15 @@ static void inv_on_state_confirmed( pjsip_inv_session *inv, pjsip_event *e)
 	} else if (tsx->status_code >= 300 && tsx->status_code < 700) {
 
 	    pjmedia_sdp_neg_state neg_state;
+	    struct tsx_inv_data *tsx_inv_data;
+
+	    tsx_inv_data = (struct tsx_inv_data*)tsx->mod_data[mod_inv.mod.id];
 
 	    /* Outgoing INVITE transaction has failed, cancel SDP nego */
 	    neg_state = pjmedia_sdp_neg_get_state(inv->neg);
-	    if (neg_state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
+	    if (neg_state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER &&
+		tsx_inv_data->retrying == PJ_FALSE)
+	    {
 		pjmedia_sdp_neg_cancel_offer(inv->neg);
 	    }
 
@@ -4220,8 +4314,8 @@ static void inv_on_state_confirmed( pjsip_inv_session *inv, pjsip_event *e)
 	/*
 	 * Handle response to outgoing UPDATE request.
 	 */
-	if (handle_uac_tsx_response(inv, e) == PJ_FALSE)
-	    inv_handle_update_response(inv, e);
+	if (inv_handle_update_response(inv, e) == PJ_FALSE)
+	    handle_uac_tsx_response(inv, e);
 
     } else if (tsx->role == PJSIP_ROLE_UAS &&
 	       tsx->state == PJSIP_TSX_STATE_TRYING &&

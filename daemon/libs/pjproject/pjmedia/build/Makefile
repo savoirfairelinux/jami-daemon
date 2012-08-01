@@ -1,4 +1,7 @@
 include ../../build.mak
+include ../../version.mak
+
+THIRD_PARTY:=$(PJDIR)/third_party
 
 SRTP_INC=$(CC_INC)$(THIRD_PARTY)/build/srtp \
 	 $(CC_INC)$(THIRD_PARTY)/srtp/crypto/include \
@@ -13,7 +16,9 @@ PJLIB_UTIL_LIB:=$(PJDIR)/pjlib-util/lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
 PJNATH_LIB:=$(PJDIR)/pjnath/lib/libpjnath-$(TARGET_NAME)$(LIBEXT)
 
 export PJMEDIA_LIB:=../lib/libpjmedia-$(TARGET_NAME)$(LIBEXT)
+export PJMEDIA_CODEC_LIB:=../lib/libpjmedia-codec-$(TARGET_NAME)$(LIBEXT)
 export PJSDP_LIB:=../lib/libpjsdp-$(TARGET_NAME)$(LIBEXT)
+export PJMEDIA_AUDIODEV_LIB:=../lib/libpjmedia-audiodev-$(TARGET_NAME)$(LIBEXT)
 
 
 ###############################################################################
@@ -34,6 +39,9 @@ export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJMEDIA_LIB)) \
 		   $(subst /,$(HOST_PSEP),$(PJLIB_LIB)) \
 		   $(subst /,$(HOST_PSEP),$(PJLIB_UTIL_LIB)) \
 		   $(subst /,$(HOST_PSEP),$(PJNATH_LIB)) \
+		   -L$(PJDIR)/third_party/lib \
+		   $(APP_THIRD_PARTY_LIBS) \
+		   $(APP_THIRD_PARTY_EXT) \
 		   $(CC_LDFLAGS) $(OS_LDFLAGS) $(M_LDFLAGS) $(HOST_LDFLAGS) \
 		   $(LDFLAGS) 
 
@@ -50,7 +58,7 @@ export PJMEDIA_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			resample_resample.o resample_libsamplerate.o \
 			resample_port.o rtcp.o rtcp_xr.o rtp.o \
 			sdp.o sdp_cmp.o sdp_neg.o session.o silencedet.o \
-			sound_legacy.o stereo_port.o \
+			sound_legacy.o sound_port.o stereo_port.o \
 			stream.o tonegen.o transport_adapter_sample.o \
 			transport_ice.o transport_loop.o \
 			transport_srtp.o transport_udp.o \
@@ -58,6 +66,17 @@ export PJMEDIA_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			wsola.o
 
 export PJMEDIA_CFLAGS += $(_CFLAGS)
+
+
+###############################################################################
+# Defines for building PJMEDIA-AUDIODEV library
+#
+export PJMEDIA_AUDIODEV_SRCDIR = ../src/pjmedia-audiodev
+export PJMEDIA_AUDIODEV_OBJS +=  audiodev.o audiotest.o errno.o \
+				 coreaudio_dev.o legacy_dev.o null_dev.o pa_dev.o wmme_dev.o \
+				 alsa_dev.o
+export PJMEDIA_AUDIODEV_CFLAGS += $(_CFLAGS)
+
 
 ###############################################################################
 # Defines for building PJSDP library
@@ -72,10 +91,21 @@ export PJSDP_CFLAGS += $(_CFLAGS)
 
 
 ###############################################################################
+# Defines for building PJMEDIA-Codec library
+#
+export PJMEDIA_CODEC_SRCDIR = ../src/pjmedia-codec
+export PJMEDIA_CODEC_OBJS += \
+			$(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
+			ipp_codecs.o $(CODEC_OBJS)
+export PJMEDIA_CODEC_CFLAGS += $(_CFLAGS) $(GSM_CFLAGS) $(SPEEX_CFLAGS) \
+			$(ILBC_CFLAGS) $(IPP_CFLAGS) $(G7221_CFLAGS)
+
+
+###############################################################################
 # Defines for building test application
 #
 export PJMEDIA_TEST_SRCDIR = ../src/test
-export PJMEDIA_TEST_OBJS += jbuf_test.o main.o rtp_test.o test.o
+export PJMEDIA_TEST_OBJS += codec_vectors.o jbuf_test.o main.o mips_test.o rtp_test.o test.o
 export PJMEDIA_TEST_OBJS += sdp_neg_test.o 
 export PJMEDIA_TEST_CFLAGS += $(_CFLAGS)
 export PJMEDIA_TEST_LDFLAGS += $(_LDFLAGS)
@@ -88,25 +118,34 @@ export CC_OUT CC AR RANLIB HOST_MV HOST_RM HOST_RMDIR HOST_MKDIR OBJEXT LD LDOUT
 #
 # $(TARGET) is defined in os-$(OS_NAME).mak file in current directory.
 #
-TARGETS := pjmedia pjsdp pjmedia-test
+TARGETS := pjmedia pjmedia-audiodev pjmedia-codec pjsdp pjmedia-test
 
 all: $(TARGETS)
 
 doc:
-	cd .. && rm -rf docs/html docs/latex && doxygen docs/doxygen.cfg
-	@if [ -n "$(WWWDIR)" ]; then \
-		echo "Copying to $(WWWDIR)/pjmedia/docs/html.." ; \
-		rm -rf $(WWWDIR)/pjmedia/docs/html/* ; \
-		cp -a ../docs/html/* $(WWWDIR)/pjmedia/docs/html/ ; \
+	cd .. && rm -rf docs/$(PJ_VERSION) && doxygen docs/doxygen.cfg
+	@if [ -n "$(WWWDIR)" ] && ! [ -d "$(WWWDIR)/docs/$(PJ_VERSION)/pjmedia/docs/html" ] ; then \
+		echo "Creating docs/$(PJ_VERSION)/pjmedia/docs/html" ; \
+		mkdir -p $(WWWDIR)/docs/$(PJ_VERSION)/pjmedia/docs/html ; \
+	fi 
+	@if [ -n "$(WWWDIR)" ] && [ -d "$(WWWDIR)/docs/$(PJ_VERSION)/pjmedia/docs/html" ] ; then \
+		echo "Copying docs/$(PJ_VERSION) to $(WWWDIR)/docs/$(PJ_VERSION)/pjmedia/docs/html.." ; \
+		cp -v -a ../docs/$(PJ_VERSION)/html/* $(WWWDIR)/docs/$(PJ_VERSION)/pjmedia/docs/html/ ; \
 	fi
 
 dep: depend
 distclean: realclean
 
-.PHONY: dep depend pjmedia pjmedia-test clean realclean distclean
+.PHONY: dep depend pjmedia pjmedia-codec pjmedia-audiodev pjmedia-test clean realclean distclean
 
 pjmedia:
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia $(PJMEDIA_LIB)
+
+pjmedia-codec:
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_CODEC app=pjmedia-codec $(PJMEDIA_CODEC_LIB)
+
+pjmedia-audiodev:
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_AUDIODEV app=pjmedia-audiodev $(PJMEDIA_AUDIODEV_LIB)
 
 pjsdp:
 	$(MAKE) -f $(RULES_MAK) APP=PJSDP app=pjsdp $(PJSDP_LIB)
@@ -130,20 +169,28 @@ pjmedia-test: $(PJMEDIA_LIB)
 
 clean:
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_CODEC app=pjmedia-codec $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_AUDIODEV app=pjmedia-audiodev $@
 	$(MAKE) -f $(RULES_MAK) APP=PJSDP app=pjsdp $@
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_TEST app=pjmedia-test $@
 
 realclean:
 	$(subst @@,$(subst /,$(HOST_PSEP),.pjmedia-$(TARGET_NAME).depend),$(HOST_RMR))
+	$(subst @@,$(subst /,$(HOST_PSEP),.pjmedia-audiodev-$(TARGET_NAME).depend),$(HOST_RMR))
+	$(subst @@,$(subst /,$(HOST_PSEP),.pjmedia-codec-$(TARGET_NAME).depend),$(HOST_RMR))
 	$(subst @@,$(subst /,$(HOST_PSEP),.pjmedia-test-$(TARGET_NAME).depend),$(HOST_RMR))
 	$(subst @@,$(subst /,$(HOST_PSEP),.pjsdp-$(TARGET_NAME).depend),$(HOST_RMR))
 	
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_AUDIODEV app=pjmedia-audiodev $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_CODEC app=pjmedia-codec $@
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_TEST app=pjmedia-test $@
 	$(MAKE) -f $(RULES_MAK) APP=PJSDP app=pjsdp $@
 
 depend:
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_AUDIODEV app=pjmedia-audiodev $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_CODEC app=pjmedia-codec $@
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_TEST app=pjmedia-test $@
 	$(MAKE) -f $(RULES_MAK) APP=PJSDP app=pjsdp $@
 	echo '$(PJMEDIA_TEST_EXE): $(PJMEDIA_LIB) $(PJMEDIA_CODEC_LIB) $(PJNATH_LIB) $(PJLIB_UTIL_LIB) $(PJLIB_LIB)' >> .pjmedia-test-$(TARGET_NAME).depend

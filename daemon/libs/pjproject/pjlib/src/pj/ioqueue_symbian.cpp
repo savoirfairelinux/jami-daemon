@@ -1,4 +1,4 @@
-/* $Id: ioqueue_symbian.cpp 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: ioqueue_symbian.cpp 3597 2011-06-22 15:50:57Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -340,6 +340,7 @@ CPjSocket *CIoqueueCallback::HandleAcceptCompletion()
 //
 void CIoqueueCallback::RunL()
 {
+    pj_ioqueue_t *ioq = ioqueue_;
     Type cur_type = type_;
 
     type_ = TYPE_NONE;
@@ -399,7 +400,7 @@ void CIoqueueCallback::RunL()
 	}
     }
 
-    ioqueue_->eventCount++;
+    ioq->eventCount++;
 }
 
 //

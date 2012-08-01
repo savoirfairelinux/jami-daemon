@@ -1,4 +1,4 @@
-/* $Id: sip_inv.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_inv.h 3598 2011-06-24 07:35:28Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -367,6 +367,7 @@ struct pjsip_inv_session
     pjsip_status_code	 cause;			    /**< Disconnect cause.  */
     pj_str_t		 cause_text;		    /**< Cause text.	    */
     pj_bool_t		 notify;		    /**< Internal.	    */
+    unsigned		 cb_called;		    /**< Cb has been called */
     pjsip_dialog	*dlg;			    /**< Underlying dialog. */
     pjsip_role_e	 role;			    /**< Invite role.	    */
     unsigned		 options;		    /**< Options in use.    */

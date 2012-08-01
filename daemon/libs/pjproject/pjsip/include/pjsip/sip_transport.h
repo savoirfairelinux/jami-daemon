@@ -1,4 +1,4 @@
-/* $Id: sip_transport.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_transport.h 3954 2012-02-18 02:12:22Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -572,6 +572,13 @@ struct pjsip_tx_data
      * to allow reference counter to be set properly.
      */
     pjsip_tpselector	    tp_sel;
+
+    /**
+     * Special flag to indicate that this transmit data is a request that has
+     * been updated with proper authentication response and is ready to be
+     * sent for retry.
+     */
+    pj_bool_t		    auth_retry;
 
     /**
      * Arbitrary data attached by PJSIP modules.
