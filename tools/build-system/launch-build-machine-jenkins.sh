@@ -244,7 +244,7 @@ END
 		if [ "$IS_KDE_CLIEN" != "1" ]; then
 			./autogen.sh
 		fi
-		debuild -S -sa -kFDFE4451
+		debuild -S -sa -kF5362695
 		cd ${LAUNCHPAD_DIR}
 
 		if [ ${DO_UPLOAD} ] ; then
