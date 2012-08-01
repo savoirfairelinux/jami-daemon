@@ -24,7 +24,8 @@ SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
 VERSION_NUMBER="1.1.1"
 
-LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins")
+# LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins")
+LAUNCHPAD_PACKAGES=( )
 
 echo
 echo "    /***********************\\"
@@ -262,6 +263,11 @@ done
 #	echo " Pushing commit"
 #	git push origin release
 #fi
+
+
+# Archive source tarball for Debian maintainer
+. `dirname $0`/build_tarball.sh ${SOFTWARE_VERSION}
+
 
 # close file descriptor
 exec 3>&-
