@@ -46,6 +46,7 @@
 #include <libedataserver/libedataserver.h>
 #else
 #include <libedataserver/e-source.h>
+#include <libebook/e-book-client.h>
 #endif
 
 /**
@@ -68,7 +69,9 @@ static GStaticMutex books_data_mutex = G_STATIC_MUTEX_INIT;
 /**
  * Current selected addressbook's uri and uid, initialized with default
  */
+#if !EDS_CHECK_VERSION(3,5,3)
 static gchar *current_uri = NULL;
+#endif
 static gchar *current_uid = NULL;
 static gchar *current_name = "Default";
 
@@ -201,7 +204,7 @@ pixbuf_from_contact (EContact *contact)
  * Final callback after all books have been processed.
  */
 static void
-view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
+view_finish_callback (EBookClientView *book_client_view, Search_Handler_And_Data *had)
 {
     SearchAsyncHandler had_handler = had->search_handler;
     GList *had_hits = had->hits;
@@ -209,8 +212,8 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 
     g_free (had);
 
-    if (book_view != NULL)
-        g_object_unref (book_view);
+    if (book_client_view != NULL)
+        g_object_unref (book_client_view);
 
     // Call display callback
     had_handler (had_hits, had_user_data);
@@ -219,32 +222,23 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 /**
  * Callback called after a contact have been found in EDS by search_async_by_contacts.
  */
-#ifdef LIBEDATASERVER_VERSION_2_32
-static void
-eds_query_result_cb (EBook *book, const GError *error, GList *contacts, gpointer user_data)
-{
-    if (error)
-        return;
-#else
-static void
-eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer user_data)
-{
-    if (status != E_BOOK_ERROR_OK)
-        return;
-#endif
 
+static void
+eds_query_result_cb (GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    EBookClient *book_client = E_BOOK_CLIENT(object);
+    if (!book_client)
+        return;
+    GSList *contacts;
+    if (!e_book_client_get_contacts_finish(book_client, result, &contacts, NULL))
+        return;
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
-
-    if (contacts == NULL) {
-        had->search_handler (NULL, user_data);
-        return;
-    }
 
     // make sure we have a new list of hits
     had->hits = NULL;
 
-    for (GList *l = contacts; l; l = g_list_next (l)) {
-        Hit *hit = g_new (Hit, 1);
+    for (GSList *l = contacts; l; l = l->next) {
+        Hit *hit = g_new0(Hit, 1);
         EContact *contact = E_CONTACT(l->data);
 
         hit->photo = pixbuf_from_contact(contact);
@@ -258,43 +252,30 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
         if (--had->max_results_remaining <= 0)
             break;
     }
+    g_slist_foreach (contacts, (GFunc) g_object_unref, NULL);
+    g_slist_free (contacts);
 
     view_finish_callback (NULL, had);
 
-    g_object_unref (book);
+    g_object_unref (object);
 }
 
 
-
 /**
- * Callback for asynchronous open of books
+ * Callback for asynchronous opening of book client
  */
-#ifdef LIBEDATASERVER_VERSION_2_32
-void
-eds_async_open_callback (EBook *book, const GError *error, gpointer closure)
-{
-    if(error)
-        return;
-#else
 static void
-eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
+client_open_async_callback(GObject *client, GAsyncResult *result, gpointer closure)
 {
-    if(status == E_BOOK_ERROR_OK)
+    if (!client)
         return;
-
-#endif
+    if (!e_client_open_finish(E_CLIENT(client), result, NULL))
+        return;
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) closure;
-
-    if (!e_book_is_opened (book))
-        e_book_open (book, FALSE, NULL);
-
-#ifdef LIBEDATASERVER_VERSION_2_32
-    e_book_get_contacts_async (book, had->equery, eds_query_result_cb, had);
-#else
-    e_book_async_get_contacts (book, had->equery, eds_query_result_cb, had);
-#endif
-
+    gchar *query_str = e_book_query_to_string(had->equery);
+    e_book_client_get_contacts(E_BOOK_CLIENT(client), query_str, NULL, eds_query_result_cb, closure);
+    g_free(query_str);
 }
 
 /**
@@ -308,8 +289,12 @@ init_eds ()
     for (GSList *iter = books_data; iter != NULL; iter = iter->next) {
         book_data_t *book_data = (book_data_t *) iter->data;
 
+#if EDS_CHECK_VERSION(3,5,3)
+        {
+#else
         if (book_data->isdefault) {
             current_uri = book_data->uri;
+#endif
             current_uid = book_data->uid;
             current_name = book_data->name;
         }
@@ -318,15 +303,91 @@ init_eds ()
     g_static_mutex_unlock(&books_data_mutex);
 }
 
+static GSList *
+free_books_data(GSList *list)
+{
+    for (GSList *iter = list; iter != NULL; iter = iter->next) {
+        book_data_t *book_data = (book_data_t *) iter->data;
+
+        g_free (book_data->name);
+        g_free (book_data->uid);
+#if !EDS_CHECK_VERSION(3,5,3)
+        g_free (book_data->uri);
+#endif
+    }
+    return NULL;
+}
+
 /**
- * Fill book data
+ * Fill books data
  */
+#if EDS_CHECK_VERSION(3,5,3)
+
+static book_data_t *
+create_book_data_from_source(ESource *source)
+{
+    book_data_t *book_data = g_new0(book_data_t, 1);
+    book_data->active = e_source_get_enabled(source);
+    book_data->name = g_strdup(e_source_get_display_name(source));
+    book_data->uid = g_strdup(e_source_get_uid(source));
+    return book_data;
+}
+
+static ESourceRegistry *
+get_registry()
+{
+    static ESourceRegistry * registry;
+    if (registry == NULL)
+        registry = e_source_registry_new_sync(NULL, NULL);
+    return registry;
+}
+
 void
 fill_books_data ()
 {
-#if EDS_CHECK_VERSION(3,5,3)
-#warning FIXME ESource registry API is not supported yet
+    // FIXME: add error handling
+    ESourceRegistry *registry = get_registry();
+    const gchar *extension_name = E_SOURCE_EXTENSION_ADDRESS_BOOK;
+    GList *list = e_source_registry_list_sources(registry, extension_name);
+
+    g_static_mutex_lock(&books_data_mutex);
+
+    books_data = free_books_data(books_data);
+
+    for (GList *l = list; l != NULL; l = l->next) {
+        if (l->data) {
+            ESource *source = l->data;
+            book_data_t *book_data = create_book_data_from_source(source);
+            books_data = g_slist_prepend(books_data, book_data);
+        }
+    }
+
+    g_static_mutex_unlock(&books_data_mutex);
+
+    /* Free each source in the list and the list itself */
+    g_list_free_full(list, g_object_unref);
+}
+
 #else
+
+static book_data_t *
+create_book_data_from_source(ESource *source, ESourceGroup *group)
+{
+    book_data_t *book_data = g_new0 (book_data_t, 1);
+    book_data->active = FALSE;
+    book_data->name = g_strdup (e_source_peek_name (source));
+    book_data->uid = g_strdup (e_source_peek_uid (source));
+
+    const gchar *prop = e_source_get_property (source, "default");
+    book_data->isdefault = (prop && !strcmp(prop, "true"));
+    book_data->uri = g_strconcat(e_source_group_peek_base_uri (group), e_source_peek_relative_uri (source), NULL);
+    return book_data;
+}
+
+
+void
+fill_books_data ()
+{
     ESourceList *source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
     if (source_list == NULL)
@@ -341,30 +402,14 @@ fill_books_data ()
 
     g_static_mutex_lock(&books_data_mutex);
 
-    for (GSList *iter = books_data; iter != NULL; iter = iter->next) {
-        book_data_t *book_data = (book_data_t *) iter->data;
-
-        g_free (book_data->name);
-        g_free (book_data->uid);
-        g_free (book_data->uri);
-    }
-    books_data = NULL;
+    books_data = free_books_data(books_data);
 
     for (GSList *l = list; l != NULL; l = l->next) {
         ESourceGroup *group = l->data;
 
         for (GSList *m = e_source_group_peek_sources (group); m != NULL; m = m->next) {
             ESource *source = m->data;
-
-            book_data_t *book_data = g_new (book_data_t, 1);
-            book_data->active = FALSE;
-            book_data->name = g_strdup (e_source_peek_name (source));
-            book_data->uid = g_strdup (e_source_peek_uid (source));
-
-            const gchar *prop = e_source_get_property (source, "default");
-            book_data->isdefault = (prop && !strcmp(prop, "true"));
-            book_data->uri = g_strconcat(e_source_group_peek_base_uri (group), e_source_peek_relative_uri (source), NULL);
-
+            book_data_t *book_data = create_book_data_from_source(source, group);
             books_data = g_slist_prepend (books_data, book_data);
         }
     }
@@ -372,9 +417,10 @@ fill_books_data ()
     g_static_mutex_unlock(&books_data_mutex);
 
     g_object_unref (source_list);
-#endif
 }
+#endif
 
+// FIXME: should be obtained by e_source_registry_ref_default_address_book ()
 void
 determine_default_addressbook()
 {
@@ -385,8 +431,12 @@ determine_default_addressbook()
     for (GSList *elm = books_data; elm ; elm = g_slist_next (elm)) {
         book_data_t *book_data = elm->data;
 
+#if EDS_CHECK_VERSION(3,5,3)
+        {
+#else
         if (book_data->isdefault) {
             current_uri = book_data->uri;
+#endif
             current_uid = book_data->uid;
             current_name = book_data->name;
             default_found = TRUE;
@@ -399,8 +449,10 @@ determine_default_addressbook()
             book_data_t *book_data = elm->data;
 
             if (book_data->active) {
+#if !EDS_CHECK_VERSION(3,5,3)
                 book_data->isdefault = TRUE;
                 current_uri = book_data->uri;
+#endif
                 current_uid = book_data->uid;
                 current_name = book_data->name;
                 break;
@@ -428,18 +480,17 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->equery = create_query (query, current_test, (AddressBook_Config *) (user_data));
 
 #if EDS_CHECK_VERSION(3,5,3)
-#warning FIXME: use EClient API, EBook API is deprecated
+    ESourceRegistry *registry = get_registry();
+    ESource *source = e_source_registry_ref_source(registry, current_uid);
+    EBookClient *book_client = e_book_client_new(source, NULL);
+    g_object_unref(source);
 #else
-    EBook *book = e_book_new_from_uri(current_uri, NULL);
-    if (!book)
+    EBookClient *book_client = e_book_client_new_from_uri(current_uri, NULL);
+#endif
+    if (!book_client)
         return;
+    e_client_open(E_CLIENT(book_client), TRUE, NULL, client_open_async_callback, had);
 
-#ifdef LIBEDATASERVER_VERSION_2_32
-    e_book_open_async (book, TRUE, eds_async_open_callback, had);
-#else
-    e_book_async_open(book, TRUE, eds_async_open_callback, had);
-#endif
-#endif
 }
 
 void
@@ -452,8 +503,10 @@ set_current_addressbook (const gchar *name)
 
     for (GSList *iter = books_data; iter != NULL; iter = iter->next) {
         book_data_t *book_data = (book_data_t *) iter->data;
-        if (strcmp (book_data->name, name) == 0) {
+        if (g_strcmp0(book_data->name, name) == 0) {
+#if !EDS_CHECK_VERSION(3,5,3)
             current_uri = book_data->uri;
+#endif
             current_uid = book_data->uid;
             current_name = book_data->name;
         }

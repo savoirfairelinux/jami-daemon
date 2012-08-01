@@ -47,6 +47,7 @@
 #include <libebook/libebook.h>
 #else
 #include <libebook/e-book.h>
+#include <libebook/e-book-query.h>
 #endif
 
 #include "addressbook.h"

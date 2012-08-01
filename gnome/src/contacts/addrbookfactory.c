@@ -89,10 +89,11 @@ handler_async_search(GList *hits, gpointer user_data)
 
 void abook_init()
 {
-    void *handle = dlopen(PLUGINS_DIR"/libevladdrbook.so", RTLD_LAZY);
+    const gchar *addrbook_path = PLUGINS_DIR "/libevladdrbook.so";
+    void *handle = dlopen(addrbook_path, RTLD_LAZY);
 
     if (handle == NULL) {
-        DEBUG("Did not load addressbook");
+        DEBUG("Did not load addressbook from path %s", addrbook_path);
         return;
     }
 
