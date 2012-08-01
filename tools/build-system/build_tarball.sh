@@ -12,12 +12,12 @@ if [ ! -e daemon/configure.ac ] ; then
 fi
 
 if [ "z$1" = "z" ] ; then
-    echo "Usage: $0 VERSION_NUMBER"
+    echo "Usage: $0 SOFTWARE_VERSION_NUMBER"
     exit 2
 fi
 
-VERSION=$1
-BUILDDIR=sflphone-$VERSION
+SOFTWARE_VERSION=$1
+BUILDDIR=sflphone-$SOFTWARE_VERSION
 
 if [ -e $BUILDDIR ] ; then
     echo "The build directory ($BUILDDIR) already exists. Delete it first."
@@ -98,5 +98,5 @@ find -name *.in~ -type f -exec rm {} \;
 popd # builddir
 
 rm -f sflphone-*.tar.gz
-tar zcf sflphone-$VERSION.tar.gz sflphone-$VERSION
+tar zcf sflphone-$SOFTWARE_VERSION.tar.gz sflphone-$SOFTWARE_VERSION
 rm -rf $BUILDDIR
