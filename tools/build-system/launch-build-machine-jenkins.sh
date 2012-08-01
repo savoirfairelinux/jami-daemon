@@ -248,7 +248,7 @@ END
 		cd ${LAUNCHPAD_DIR}
 
 		if [ ${DO_UPLOAD} ] ; then
-			dput -f --debug --no-upload-log --simulate -c ${LAUNCHPAD_DIR}/dput.conf ${LAUNCHPAD_CONF_PREFIX}-${LAUNCHPAD_DISTRIBUTION} ${LAUNCHPAD_PACKAGE}_${LOCAL_VERSION}_source.changes
+			dput -f --debug --no-upload-log -c ${LAUNCHPAD_DIR}/dput.conf ${LAUNCHPAD_CONF_PREFIX}-${LAUNCHPAD_DISTRIBUTION} ${LAUNCHPAD_PACKAGE}_${LOCAL_VERSION}_source.changes
 		fi
 	done
 
