@@ -22,10 +22,10 @@ DO_LOGGING=1
 DO_UPLOAD=1
 SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
-VERSION_NUMBER="1.1.1"
+VERSION_NUMBER="1.1.0"
 
 # LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins")
-LAUNCHPAD_PACKAGES=( )
+LAUNCHPAD_PACKAGES=("sflphone-client-kde")
 
 echo
 echo "    /***********************\\"
@@ -222,7 +222,7 @@ END
 	if [ "${LAUNCHPAD_PACKAGE}"  == "sflphone-client-kde" ]; then
 		version_kde=$(echo ${VERSION}  | grep -e '[0-9]*\.[0-9.]*' -o | head -n1)
 		sed -i -e "s/Standards-Version: [0-9.A-Za-z]*/Standards-Version: ${version_kde}/" ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian/control
-		# tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
+		tar -C ${LAUNCHPAD_DIR}/ -cjf ${LAUNCHPAD_DIR}/sflphone-client-kde_${version_kde}.orig.tar.bz2  ${LAUNCHPAD_PACKAGE}
 	fi
 
 	rm -f ${WORKING_DIR}/sfl-git-dch.conf >/dev/null 2>&1

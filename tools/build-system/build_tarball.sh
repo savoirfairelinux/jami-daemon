@@ -4,6 +4,7 @@
 #
 # Author: Francois Marier <francois@debian.org>
 
+# This is an environment variable provided by Jenkins. It points to the repository's root
 cd ${WORKSPACE}
 
 if [ ! -e daemon/configure.ac ] ; then
@@ -16,6 +17,7 @@ if [ "z$1" = "z" ] ; then
     exit 2
 fi
 
+# Use the version fed by launch-build-machine-jenkins.sh
 SOFTWARE_VERSION=$1
 BUILDDIR=sflphone-$SOFTWARE_VERSION
 
