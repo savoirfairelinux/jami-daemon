@@ -32,6 +32,7 @@
 #include "video_receive_thread.h"
 #include "dbus/video_controls.h"
 #include "packet_handle.h"
+#include "sip/sip_thread_client.h"
 #include "check.h"
 
 // libav includes
@@ -153,8 +154,10 @@ void VideoReceiveThread::setup()
     EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
     DEBUG("Finding stream info");
-    if (requestKeyFrameCallback_)
+    if (requestKeyFrameCallback_) {
+        sipThreadClient_.reset(new SIPThreadClient);
         requestKeyFrameCallback_(id_);
+    }
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
@@ -217,7 +220,8 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
     args_(args), frameNumber_(0), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
-    bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0)
+    bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0),
+    sipThreadClient_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -281,6 +285,7 @@ void VideoReceiveThread::run()
         }
         yield();
     }
+    sipThreadClient_.reset();
 }
 
 VideoReceiveThread::~VideoReceiveThread()
