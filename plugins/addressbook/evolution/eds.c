@@ -49,6 +49,14 @@
 #include <libebook/e-book-client.h>
 #endif
 
+#define GCC_VERSION (__GNUC__ * 10000 \
+        + __GNUC_MINOR__ * 100 \
+        + __GNUC_PATCHLEVEL__)
+/* Test for GCC < 4.7.0 */
+#if GCC_VERSION < 40700
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
+
 /**
  * Structure used to store search callback and data
  */
