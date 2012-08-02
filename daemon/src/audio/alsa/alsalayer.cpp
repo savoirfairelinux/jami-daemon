@@ -405,6 +405,24 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
             break;
         }
 
+        case -EBADFD: {
+            snd_pcm_status_t* status;
+            snd_pcm_status_alloca(&status);
+
+            if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0) {
+                if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
+                    ERROR("Writing in state SND_PCM_STATE_SETUP, should be "
+                          "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
+                    int error = snd_pcm_prepare(handle);
+                    if (error < 0) {
+                        ERROR("Failed to prepare handle: %s", snd_strerror(error));
+                        stopPlaybackStream();
+                    }
+                }
+            }
+            break;
+        }
+
         default:
             ERROR("Unknown write error, dropping frames: %s", snd_strerror(err));
             stopPlaybackStream();
