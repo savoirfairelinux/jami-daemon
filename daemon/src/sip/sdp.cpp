@@ -470,6 +470,11 @@ string Sdp::getIncomingVideoDescription() const
     for (videoIdx = 0; videoIdx < activeLocalSession_->media_count and pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0; ++videoIdx)
         ;
 
+    if (videoIdx == activeLocalSession_->media_count) {
+        DEBUG("No video present in local session");
+        return ss.str();
+    }
+
     // get direction string
     static const pj_str_t DIRECTIONS[] = {
         {(char*) "sendrecv", 8},
