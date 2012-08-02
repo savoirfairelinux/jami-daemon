@@ -30,9 +30,11 @@
 
 #include "sip_thread_client.h"
 #include "logger.h"
+#include <cstring>
 
-SIPThreadClient::SIPThreadClient() : thread_(0)
+SIPThreadClient::SIPThreadClient() : thread_(0), desc_()
 {
+    memset(desc_, 0, sizeof(desc_));
     // We have to register the external thread so it can access the pjsip frameworks
     if (pj_thread_register(NULL, desc_, &thread_) != PJ_SUCCESS)
         ERROR("Could not register thread");
