@@ -473,7 +473,7 @@ string Sdp::getIncomingVideoDescription() const
 
     if (videoIdx == activeLocalSession_->media_count) {
         DEBUG("No video present in local session");
-        return ss.str();
+        return "";
     }
 
     // get direction string

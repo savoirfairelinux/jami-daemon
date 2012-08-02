@@ -53,13 +53,17 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
     string desc(sdp.getIncomingVideoDescription());
     // if port has changed
-    if (desc != rxArgs_["receiving_sdp"]) {
+    if (not desc.empty() and desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
         DEBUG("Updated incoming SDP to:\n %s",
               rxArgs_["receiving_sdp"].c_str());
     }
 
-    if (desc.find("sendrecv") != string::npos) {
+    if (desc.empty()) {
+        DEBUG("Video is inactive");
+        receiving_ = false;
+        sending_ = false;
+    } else if (desc.find("sendrecv") != string::npos) {
         DEBUG("Sending and receiving video");
         receiving_ = true;
         sending_ = true;
