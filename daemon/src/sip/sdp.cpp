@@ -466,9 +466,10 @@ string Sdp::getIncomingVideoDescription() const
     if (not profileLevelID.empty())
         ss << "a=fmtp:" << payload_num << " " << profileLevelID << std::endl;
 
-    unsigned videoIdx;
-    for (videoIdx = 0; videoIdx < activeLocalSession_->media_count and pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0; ++videoIdx)
-        ;
+    unsigned videoIdx = 0;
+    while (videoIdx < activeLocalSession_->media_count and
+           pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0)
+        ++videoIdx;
 
     if (videoIdx == activeLocalSession_->media_count) {
         DEBUG("No video present in local session");
@@ -554,9 +555,10 @@ Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
     const size_t DIGITS_IN_PROFILE_LEVEL_ID = 6;
     const size_t needleLength = needle.size() + DIGITS_IN_PROFILE_LEVEL_ID;
     const size_t pos = fmtpLine.find(needle);
-    if (pos != std::string::npos and fmtpLine.size() >= (pos + needleLength))
+    if (pos != std::string::npos and fmtpLine.size() >= (pos + needleLength)) {
         profile = fmtpLine.substr(pos, needleLength);
-    DEBUG("Using %s", profile.c_str());
+        DEBUG("Using %s", profile.c_str());
+    }
 }
 
 void Sdp::addSdesAttribute(const vector<std::string>& crypto)
