@@ -44,7 +44,11 @@ SIPThreadClient::~SIPThreadClient()
 {
     if (thread_) {
         WARN("Destroying thread handle");
-        pj_thread_join(thread_);
-        pj_thread_destroy(thread_);
+        if (pj_thread_join(thread_) != PJ_SUCCESS) {
+            ERROR("Error on thread join");
+        } else if (pj_thread_destroy(thread_) != PJ_SUCCESS) {
+            ERROR("Error on thread destroy");
+        }
+        thread_ = 0;
     }
 }

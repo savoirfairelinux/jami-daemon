@@ -285,12 +285,12 @@ void VideoReceiveThread::run()
         }
         yield();
     }
-    sipThreadClient_.reset();
 }
 
 VideoReceiveThread::~VideoReceiveThread()
 {
     receiving_ = false;
+    sipThreadClient_.reset(0);
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     ost::Thread::terminate();
 
