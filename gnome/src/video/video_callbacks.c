@@ -185,6 +185,7 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
     if (!video_renderer_run(renderer)) {
         g_object_unref(renderer);
         ERROR("Could not run video renderer");
+        g_hash_table_remove(video_handles, id);
         return;
     }
 }
