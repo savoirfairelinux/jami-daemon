@@ -1,4 +1,5 @@
-Current authors:
+Current authors
+---------------
 
 Emmanuel Milou <emmanuel dot milou at savoirfairelinux dot com>
 	- ALSA implementation ( replaces portaudio )
@@ -7,6 +8,19 @@ Emmanuel Milou <emmanuel dot milou at savoirfairelinux dot com>
 	- GTK client error handling
 	- Plus many portions of code in sflphoned and sflphone-gtk
 	- Test and debugging
+
+Alexandre Savard <alexandre dot savard at savoirfairelinux dot com>
+
+Tristan Matthews <tristan dot matthews at savoirfairelinux dot com>
+
+Emmanuel Lepage <emmanuel dot lepage at savoirfairelinux dot com>
+
+Former authors
+--------------
+
+Rafaël Carré <rafael dot carre at savoirfairelinux dot com>
+
+Vivien Didelot <vivien dot didelot at savoirfairelinux dot com>
 
 Alexandre Bourget <alexandre dot bourget at savoirfairelinux dot com>
 	- IAX implementation
@@ -32,8 +46,6 @@ Polytechnic School of Montreal:
 Pierre-Luc Beaudoin <pierre-luc.beaudoin at savoirfairelinux dot com>
   - Many portions of code
   - GTK client implementation
-
-Former authors:
 
 Yan Morin <yan dot morin at savoirfairelinux dot com>
 	- zeroconf integration

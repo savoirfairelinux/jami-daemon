@@ -549,7 +549,12 @@ help_about(void * foo UNUSED)
         "Yan Morin <yan.morin@savoirfairelinux.com>",
         "Jérôme Oufella <jerome.oufella@savoirfairelinux.com>",
         "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
-        "Alexandre Savard <alexandre.savard@savoirfairelinux.com>", NULL
+        "Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
+        "Tristan Matthews <tristan.matthews@savoirfairelinux.com>",
+        "Rafaël Carré <rafael.carre@savoirfairelinux.com>",
+        "Vivien Didelot <vivien.didelot@savoirfairelinux.com>",
+        "Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>",
+        NULL
     };
     static const gchar *artists[] = {
         "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
