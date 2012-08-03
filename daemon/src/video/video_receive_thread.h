@@ -92,6 +92,7 @@ class VideoReceiveThread : public ost::Thread {
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
+        void addDetails(std::map<std::string, std::string> &details);
         virtual ~VideoReceiveThread();
         virtual void run();
         void setRequestKeyFrameCallback(void (*)(const std::string &));

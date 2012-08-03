@@ -218,7 +218,7 @@ class Call : public Recordable {
         unsigned int getLocalVideoPort();
 
         void time_stop();
-        std::map<std::string, std::string> getDetails();
+        virtual std::map<std::string, std::string> getDetails();
         static std::map<std::string, std::string> getNullDetails();
         std::map<std::string, std::string> createHistoryEntry() const;
         virtual bool setRecording();

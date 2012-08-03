@@ -316,4 +316,19 @@ void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string
 {
     requestKeyFrameCallback_ = cb;
 }
+
+void
+VideoReceiveThread::addDetails(std::map<std::string, std::string> &details)
+{
+    if (receiving_ and dstWidth_ > 0 and dstHeight_ > 0) {
+        details["VIDEO_SHM_PATH"] = sink_.openedName();
+        std::ostringstream os;
+        os << dstWidth_;
+        details["VIDEO_WIDTH"] = os.str();
+        os.str("");
+        os << dstHeight_;
+        details["VIDEO_HEIGHT"] = os.str();
+    }
+}
+
 } // end namespace sfl_video

@@ -155,4 +155,11 @@ void VideoRtpSession::forceKeyFrame()
         ERROR("Video sending thread is NULL");
 }
 
+void
+VideoRtpSession::addReceivingDetails(std::map<std::string, std::string> &details)
+{
+    if (receiveThread_.get())
+        receiveThread_->addDetails(details);
+}
+
 } // end namespace sfl_video

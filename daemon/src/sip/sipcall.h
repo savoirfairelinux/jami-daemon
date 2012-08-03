@@ -106,6 +106,10 @@ class SIPCall : public Call {
         pjsip_inv_session *inv;
 
     private:
+        // override of Call::getDetails
+        std::map<std::string, std::string>
+        getDetails();
+
         virtual void answer();
 
         NON_COPYABLE(SIPCall);

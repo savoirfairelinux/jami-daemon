@@ -74,3 +74,13 @@ void SIPCall::answer()
     setConnectionState(CONNECTED);
     setState(ACTIVE);
 }
+
+std::map<std::string, std::string>
+SIPCall::getDetails()
+{
+    std::map<std::string, std::string> details(Call::getDetails());
+#ifdef SFL_VIDEO
+    videortp_.addReceivingDetails(details);
+#endif
+    return details;
+}
