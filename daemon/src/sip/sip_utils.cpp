@@ -160,12 +160,17 @@ sip_utils::resolveServerDns(const std::string &server)
    struct hostent *he;
    std::list<std::string> ipList;
 
-   if ((he = gethostbyname(server.c_str())) == NULL)
-      return ipList;
-   struct in_addr **addr_list = (struct in_addr **) he->h_addr_list;
+   // If hostname has a period, assume that it is an IP address and return
+   // as is
+   if (server.find(".") == std::string::npos) {
+      if ((he = gethostbyname(server.c_str())) == NULL)
+         return ipList;
+      struct in_addr **addr_list = (struct in_addr **) he->h_addr_list;
 
-   for (int i = 0; addr_list[i] != NULL; ++i)
-      ipList.push_back(inet_ntoa(*addr_list[i]));
-
+      for (int i = 0; addr_list[i] != NULL; ++i)
+         ipList.push_back(inet_ntoa(*addr_list[i]));
+   } else {
+       ipList.push_back(server);
+   }
    return ipList;
 }
