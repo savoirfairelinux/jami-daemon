@@ -31,13 +31,13 @@
 
 #include "../dbus/dbus.h"
 #include <glib.h>
+#include "logger.h"
 #include "../mainwindow.h"
 #include "eel-gconf-extensions.h"
 #include <string.h>
 
 static GtkWidget  *tab_box    = NULL ;
 static GHashTable *tabs       = NULL ;
-static gboolean   visible     = FALSE;
 static GtkPaned   *paned      = NULL ;
 static int        vpanes_s    = -1   ;
 static int        skip_height = -3   ;
@@ -50,7 +50,7 @@ static GtkTextIter* end_link   = NULL;
 void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
 void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
 message_tab * create_messaging_tab_common(const gchar* call_id, const gchar *label);
-message_tab * create_messaging_tab(callable_obj_t* call UNUSED);
+message_tab * create_messaging_tab(callable_obj_t* call);
 
 /////////////////////HELPERS/////////////////////////
 
@@ -102,39 +102,22 @@ GtkWidget *get_tab_box()
 /////////////////////SETTERS/////////////////////////
 
 void
-hide_show_common()
+toggle_messaging()
 {
-   if (visible) {
-      gtk_widget_show(get_tab_box());
-   }
-   else {
-      gtk_widget_hide(get_tab_box());
-   }
+    GtkWidget *box = get_tab_box();
+    if (gtk_widget_get_visible(box))
+        gtk_widget_show(box);
+    else
+        gtk_widget_hide(box);
 }
 
-void
-toogle_messaging()
-{
-   visible = !visible;
-   hide_show_common();
-}
-
-void
-hide_messaging()
-{
-   visible = TRUE;
-   hide_show_common();
-}
 
 void
 show_messaging()
 {
-   visible = FALSE;
-//    hide_show_common();
-   gtk_widget_show(get_tab_box());
-   if (vpanes_s > 0) {
-      gtk_paned_set_position(GTK_PANED(paned),vpanes_s);
-   }
+    gtk_widget_show(get_tab_box());
+    if (vpanes_s > 0)
+        gtk_paned_set_position(GTK_PANED(paned),vpanes_s);
 }
 
 void
@@ -311,18 +294,17 @@ append_message(message_tab* self, const gchar* name, const gchar* message)
     end_link   = NULL;
 }
 
-void
-new_text_message_common(const gchar* call_id, const gchar* message, const gchar *name, gboolean conf)
+static message_tab *
+new_text_message_common(const gchar* id, const gchar* message, const gchar *name)
 {
-    if (!tabs) return;
+    gtk_widget_show(get_tab_box());
     message_tab *tab = NULL;
     if (tabs)
-        tab = g_hash_table_lookup(tabs,call_id);
-    if (!tab && !conf)
-        tab = create_messaging_tab_common(call_id,name);
-    else if (!tab && conf)
-        tab = create_messaging_tab_common(call_id,name);
-    append_message(tab,name,message);
+        tab = g_hash_table_lookup(tabs, id);
+    if (!tab)
+        tab = create_messaging_tab_common(id, name);
+    append_message(tab, name, message);
+    return tab;
 }
 
 void
@@ -333,14 +315,16 @@ new_text_message(callable_obj_t* call, const gchar* message)
        label_text = call->_display_name;
     else
        label_text = "Peer";
-    new_text_message_common(call->_callID,message,label_text,FALSE);
+    message_tab *tab = new_text_message_common(call->_callID, message, label_text);
+    tab->call = call;
 }
 
 void
-new_text_message_conf(conference_obj_t* call, const gchar* message,const gchar* from)
+new_text_message_conf(conference_obj_t* conf, const gchar* message,const gchar* from)
 {
-    disable_conference_calls(call);
-    new_text_message_common(call->_confID,message,strlen(from)?from:"Conference",TRUE);
+    disable_conference_calls(conf);
+    message_tab *tab = new_text_message_common(conf->_confID,message,strlen(from)?from:"Conference");
+    tab->conf = conf;
 }
 
 
