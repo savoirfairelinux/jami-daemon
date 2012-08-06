@@ -104,7 +104,8 @@ class SipTransport {
          *
          * @return          	A pointer to the transport selector structure
          */
-        pjsip_tpselector *initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const;
+        pjsip_tpselector *
+        createTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const;
 
         /**
          * This function unset the transport for a given account.

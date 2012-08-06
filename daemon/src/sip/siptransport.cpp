@@ -448,7 +448,7 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     return transport;
 }
 
-pjsip_tpselector *SipTransport::initTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
+pjsip_tpselector *SipTransport::createTransportSelector(pjsip_transport *transport, pj_pool_t *tp_pool) const
 {
     RETURN_IF_FAIL(transport != NULL, NULL, "Transport is not initialized");
     pjsip_tpselector *tp = (pjsip_tpselector *) pj_pool_zalloc(tp_pool, sizeof(pjsip_tpselector));
@@ -543,7 +543,7 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
     // initialize a transport selector
     // TODO Need to determine why we exclude TLS here...
     // if (transportType == PJSIP_TRANSPORT_UDP and transport_)
-    pjsip_tpselector *tp_sel = initTransportSelector(transport, pool_);
+    pjsip_tpselector *tp_sel = createTransportSelector(transport, pool_);
     RETURN_IF_NULL(tp_sel, "Could not initialize transport selector, using local address %s:%s", addr.c_str(), port.c_str());
 
     pj_str_t localAddress = {0,0};
