@@ -102,7 +102,16 @@ PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= ${LIBCRYPTO_MIN_VERSION}, HAVE_LIBCRYP
 
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
-PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development package: libasound2-dev or alsa-lib-devel]))
+AC_ARG_WITH([alsa],
+	[ AS_HELP_STRING([--without-alsa], [disable support for alsa]) ],
+	[],
+	[with_alsa=yes])
+AS_IF([test "x$with_alsa" = "xyes"], [
+	PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development package: libasound2-dev or alsa-lib-devel]))
+	]);
+
+AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
+AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
 
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
@@ -115,7 +124,7 @@ AS_IF([test "x$with_pulse" = "xyes"], [
       ]);
 
 AC_DEFINE_UNQUOTED([HAVE_PULSE], `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have pulseaudio])
-AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes" )
+AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes")
 
 dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
