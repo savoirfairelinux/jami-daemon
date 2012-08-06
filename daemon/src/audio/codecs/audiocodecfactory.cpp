@@ -281,6 +281,7 @@ bool AudioCodecFactory::seemsValid(const std::string &lib)
     "ulaw",
     "alaw",
     "g722",
+    "g729",
 #ifdef HAVE_SPEEX_CODEC
     "speex_nb",
     "speex_wb",
