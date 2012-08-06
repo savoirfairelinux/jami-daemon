@@ -193,8 +193,14 @@ void VideoSendThread::setup()
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
-                                  file_iformat, &options);
+                                  file_iformat, options ? &options : NULL);
     EXIT_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+    ret = av_find_stream_info(inputCtx_);
+#else
+    ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
+#endif
+    EXIT_IF_FAIL(ret >= 0, "Couldn't find stream info");
 
     // find the first video stream from the input
     streamIndex_ = -1;
