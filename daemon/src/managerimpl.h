@@ -140,11 +140,6 @@ class ManagerImpl {
          */
         void run();
 
-        /**
-         * Terminate all thread (sound, link) and unload AccountMap
-         */
-        void terminate();
-
         /*
          * Terminate all threads and exit DBus loop
          */

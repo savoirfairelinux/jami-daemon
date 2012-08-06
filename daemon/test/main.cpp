@@ -143,8 +143,8 @@ int main(int argc, char* argv[])
     // Run the tests.
     bool wasSuccessful = runner.run();
 
-    printf("=== Test suite terminate ===\n");
-    Manager::instance().terminate();
+    printf("=== Test suite ending ===\n");
+    Manager::instance().finish();
 
     restore();
 
