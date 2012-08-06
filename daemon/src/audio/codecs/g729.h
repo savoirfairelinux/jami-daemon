@@ -29,10 +29,11 @@
  */
 #ifndef G729_H
 #define G729_H
-#include <stdio.h>
+#include <cstdio>
 #include <dlfcn.h>
 #include <unistd.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include "noncopyable.h"
 #include "g729/decoder.h"
 #include "g729/encoder.h"
 #include "g729/typedef.h"
@@ -52,12 +53,12 @@
 class G729 : public sfl::AudioCodec {
 public:
    G729();
-   G729(const G729& copy);
    ~G729();
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
 
 private:
+   NON_COPYABLE(G729);
    //Attributes
    bcg729DecoderChannelContextStruct* m_pDecStruct;
    bcg729EncoderChannelContextStruct* m_pEncStruct;

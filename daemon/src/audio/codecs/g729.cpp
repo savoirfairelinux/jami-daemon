@@ -29,14 +29,11 @@
  */
 #include "g729.h"
 #include "global.h"
+#include <stdexcept>
 
-G729::G729() : sfl::AudioCodec(14, "G729", 16000, 320, 1),m_pDecStruct(0),m_pEncStruct(0),
-   m_pHandler(0),closeBcg729EncoderChannel(0),bcg729Encoder(0),closeBcg729DecoderChannel(0),bcg729Decoder(0)
-{
-   init();
-}
+static const int G729_PAYLOAD_TYPE = 18;
 
-G729::G729(const G729& copy UNUSED): sfl::AudioCodec(9, "G729", 16000, 320, 1),m_pDecStruct(0),m_pEncStruct(0),
+G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 16000, 320, 1),m_pDecStruct(0),m_pEncStruct(0),
    m_pHandler(0),closeBcg729EncoderChannel(0),bcg729Encoder(0),closeBcg729DecoderChannel(0),bcg729Decoder(0)
 {
    init();
@@ -44,11 +41,11 @@ G729::G729(const G729& copy UNUSED): sfl::AudioCodec(9, "G729", 16000, 320, 1),m
 
 void G729::init()
 {
-   m_pHandler = dlopen("/home/lepagee/prefix/lib/libbcg729.so.0.0.0", RTLD_LAZY);
+   m_pHandler = dlopen("/usr/local/lib/libbcg729.so.0.0.0", RTLD_LAZY);
    if (!m_pHandler)
    {
       fprintf(stderr, "%s\n", dlerror());
-      throw "G729 failed to load";
+      throw std::runtime_error("G729 failed to load");
       return;
    }
    closeBcg729EncoderChannel = G729_TYPE_ENCODERCHANNEL dlsym(m_pHandler, "closeBcg729EncoderChannel");
@@ -91,6 +88,18 @@ void G729::loadError(char* error)
    if ((error) != NULL)
    {
       fprintf(stderr, "%s\n", error);
-      throw "G729 failed to load";
+      throw std::runtime_error("G729 failed to load");
    }
+}
+
+// cppcheck-suppress unusedFunction
+extern "C" sfl::Codec* CODEC_ENTRY()
+{
+    return new G729;
+}
+
+// cppcheck-suppress unusedFunction
+extern "C" void destroy(sfl::Codec* a)
+{
+    delete a;
 }
