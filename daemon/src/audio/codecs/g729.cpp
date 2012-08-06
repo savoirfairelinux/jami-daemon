@@ -30,18 +30,22 @@
  *  as that of the covered work.
  */
 #include "g729.h"
+#include "global.h"
 
-#include <stdio.h>
-#include <dlfcn.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include "decoder.h"
-#include "encoder.h"
-#include "typedef.h"
+G729::G729() : sfl::AudioCodec(9, "G729", 16000, 320, 1),m_pDecStruct(0),m_pEncStruct(0),
+   m_pHandler(0),closeBcg729EncoderChannel(0),bcg729Encoder(0),closeBcg729DecoderChannel(0),bcg729Decoder(0)
+{
+   init();
+}
 
+G729::G729(const G729& copy UNUSED): sfl::AudioCodec(9, "G729", 16000, 320, 1),m_pDecStruct(0),m_pEncStruct(0),
+   m_pHandler(0),closeBcg729EncoderChannel(0),bcg729Encoder(0),closeBcg729DecoderChannel(0),bcg729Decoder(0)
+{
+   init();
+}
 
-G729::G729() {
-   char *error;
+void G729::init()
+{
    m_pHandler = dlopen("/home/lepagee/prefix/lib/libbcg729.so.0.0.0", RTLD_LAZY);
    if (!m_pHandler)
    {
@@ -72,15 +76,16 @@ G729::~G729()
    dlclose(m_pHandler);
 }
 
-int G729::decode_proxy(short *dst, unsigned char *buf, size_t buffer_size)
+int G729::decode(short *dst, unsigned char *buf, size_t buffer_size UNUSED)
 {
    bcg729Decoder(m_pDecStruct,buf,false,dst);
    return 1;
 }
 
-int G729::encode_proxy(unsigned char *dst, short *src, size_t buffer_size)
+int G729::encode(unsigned char *dst, short *src, size_t buffer_size UNUSED)
 {
    bcg729Encoder(m_pEncStruct,src,dst);
+   return 1;
 }
 
 void G729::loadError(char* error)

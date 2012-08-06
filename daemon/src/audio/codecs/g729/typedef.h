@@ -23,8 +23,8 @@
 
 #include <stdint.h>
 #include "codecParameters.h"
-#include "bcg729/encoder.h"
-#include "bcg729/decoder.h"
+#include "encoder.h"
+#include "decoder.h"
 
 typedef int16_t word16_t;
 typedef uint16_t uword16_t;

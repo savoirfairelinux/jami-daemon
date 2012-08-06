@@ -35,9 +35,9 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "decoder.h"
-#include "encoder.h"
-#include "typedef.h"
+#include "g729/decoder.h"
+#include "g729/encoder.h"
+#include "g729/typedef.h"
 
 #include "audiocodec.h"
 #include "sfl_types.h"
@@ -54,6 +54,7 @@
 class G729 : public sfl::AudioCodec {
 public:
    G729();
+   G729(const G729& copy);
    ~G729();
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
@@ -70,6 +71,8 @@ private:
    void (*closeBcg729DecoderChannel) ( bcg729DecoderChannelContextStruct *decoderChannelContext                                                                   );
    void (*bcg729Decoder)             ( bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[] , uint8_t frameErasureFlag, int16_t signal[] );
 
+   //
+   void init();
    void loadError(char* error);
 };
 
