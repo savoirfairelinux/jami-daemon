@@ -46,12 +46,12 @@
 static void
 signal_handler(int code)
 {
-    static int handled_signals;
-    if (handled_signals++) {
-        fprintf(stderr, "Caught another signal %s, exiting rudely!\n", strsignal(code));
-        exit(EXIT_FAILURE);
-    }
-    printf("Caught signal %s, terminating...\n", strsignal(code));
+    // Unset signal handlers
+    signal(SIGHUP, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+
+    printf("Caught signal %s, quitting...\n", strsignal(code));
     sflphone_quit(TRUE);
 }
 
