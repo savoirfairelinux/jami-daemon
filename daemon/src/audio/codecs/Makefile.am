@@ -2,6 +2,8 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libcodecdescriptor.la
 
+SUBDIRS = g729
+
 libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp
 libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
