@@ -1,8 +1,13 @@
 LOCAL_PATH:= $(call my-dir)
 
 # FIXME
-prefix=/sdcard
-datadir=
+MY_PREFIX=/sdcard
+MY_DATADIR=
+MY_PJPROJECT="pjproject/android"
+MY_PJDIR=
+MY_COMMONCPP=commoncpp2-1.8.1-android
+MY_CCRTP=ccrtp-1.8.0-android
+MY_LIBSAMPLE=libsamplerate-0.1.8
 
 # FIXME
 ifneq ($(SFL_VIDEO),)
@@ -38,24 +43,26 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 					$(LOCAL_PATH)/../sip \
 					$(LOCAL_PATH)/../config \
 					$(LOCAL_PATH)/../history \
-					$(APP_PROJECT_PATH)/jni/commoncpp2-1.8.1-android/inc \
-					$(APP_PROJECT_PATH)/jni/ccrtp-1.8.0-android/src \
-					$(APP_PROJECT_PATH)/jni/libsamplerate-0.1.8/src \
-					$(LOCAL_PATH)/../../libs/pjproject/third_party/speex/include \
-					$(LOCAL_PATH)/../../libs/pjproject/pjlib/include \
-					$(LOCAL_PATH)/../../libs/pjproject/pjsip/include \
-					$(LOCAL_PATH)/../../libs/pjproject/pjlib-util/include \
-					$(LOCAL_PATH)/../../libs/pjproject/third_party/build/speex \
-					$(LOCAL_PATH)/../../libs/pjproject/pjmedia/include \
-					$(LOCAL_PATH)/../../libs/pjproject/pjnath/include \
+					$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc \
+					$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
+					$(APP_PROJECT_PATH)/jni/$(MY_LIBSAMPLE)/src \
+					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/third_party/speex/include \
+					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/third_party/build/speex \
+					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip/include \
+					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib/include \
+					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib-util/include \
+					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjmedia/include \
+					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjnath/include \
 
 #LOCAL_CPP_EXTENSION := .cpp .h
 
 LOCAL_MODULE := libdbus-glue
 LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
-				  -DPREFIX=\"$(prefix)\" \
-				  -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-				  -DHAVE_CONFIG_H
+				  -DPREFIX=\"$(MY_PREFIX)\" \
+				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
+				  -DHAVE_CONFIG_H \
+				  -std=gnu++0x -frtti -fpermissive
+
 LOCAL_SHARED_LIBRARIES += libdbus-c++-1
 
 include $(BUILD_STATIC_LIBRARY)
