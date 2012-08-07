@@ -66,8 +66,6 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
     TimerPort::setTimer(threadSleep);
 
-    DEBUG("Entering Audio rtp thread main loop");
-
     while (running_) {
         // Send session
         if (rtpSession_.hasDTMFPending())
@@ -79,8 +77,6 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
         TimerPort::incTimer(threadSleep);
     }
-
-    DEBUG("Leaving audio rtp thread loop");
 }
 
 void AudioSymmetricRtpSession::setSessionMedia(AudioCodec &audioCodec)
