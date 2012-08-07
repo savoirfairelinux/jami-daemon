@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "pinknoise.h"
 #include "opensllayer.h"
 
 #define NB_AUDIO_BUFFER 10
