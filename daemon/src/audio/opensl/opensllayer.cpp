@@ -39,6 +39,8 @@
 
 #define WITH_STATIC_BUFFER 1
 
+AudioBuffer tmpbuffer(SAMPLE_PER_FRAME);
+
 const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 const int OpenSLLayer::NB_BUFFER_CAPTURE_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 
@@ -49,7 +51,7 @@ static void generateSawTooth(short *buffer, int length) {
 
     unsigned int i;
     for (i = 0; i < length; ++i, ++sawPtr) {
-        buffer[i] = 32768 - ((sawPtr % 100) * 660);
+        buffer[i] = 32768 - ((sawPtr % 10) * 6600);
     }
 }
 
@@ -77,6 +79,7 @@ void OpenSLThread::initAudioLayer(void)
 {
     opensl_->initAudioEngine();
     opensl_->initAudioPlayback();
+    opensl_->initAudioCapture();
 }
 
 /**
@@ -87,7 +90,7 @@ void OpenSLThread::run()
     initAudioLayer();
 
     opensl_->startAudioPlayback();
-    // opensl_->startAudioCapture();
+    opensl_->startAudioCapture();
 
     opensl_->isStarted_ = true;
     while (opensl_->isStarted_) {
@@ -117,17 +120,12 @@ OpenSLLayer::OpenSLLayer()
     , recordBufferStack(ANDROID_BUFFER_QUEUE_LENGTH)
 
 {
-    for(int i = 0; i < 2; i++) {
-        playbackBufferStack[i].resize(160);
-    }
-    printf("Length of playback buffer 0: %d\n", playbackBufferStack[0].size());
-    printf("Length of playback buffer 1: %d\n", playbackBufferStack[1].size());
 
-    for(int i = 0; i < 2; i++) {
-        recordBufferStack[i].resize(160);
-    }
-    printf("Length of record buffer 0: %d\n", recordBufferStack[0].size());
-    printf("Length of record buffer 1: %d\n", recordBufferStack[1].size());
+    for(AudioBufferStack::iterator i = playbackBufferStack.begin(); i != playbackBufferStack.end(); i++)
+        i->resize(160);
+
+    for(AudioBufferStack::iterator i = recordBufferStack.begin(); i != recordBufferStack.end(); i++)
+        i->resize(160);
 }
 
 // Destructor
@@ -211,7 +209,7 @@ OpenSLLayer::shutdownAudioEngine()
         (*engineObject)->Destroy(engineObject);
         engineObject = NULL;
         engineInterface = NULL;
-    }
+    }   
 }
 
 void
@@ -245,16 +243,12 @@ OpenSLLayer::initAudioPlayback()
     SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer};
     SLDataSink audioSink = {&mixerLocation, NULL};
 
-#if 1
-    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND,
-            /*SL_IID_MUTESOLO,*/ SL_IID_VOLUME};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
-            /*SL_BOOLEAN_TRUE,*/ SL_BOOLEAN_TRUE};
-#else
-    const SLInterfaceID ids[1] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
-#endif
-
+    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, 
+                                  SL_IID_EFFECTSEND,
+                                  SL_IID_VOLUME};
+    const SLboolean req[3] = {SL_BOOLEAN_TRUE, 
+                              SL_BOOLEAN_TRUE,
+                              SL_BOOLEAN_TRUE};
 
     // create audio player
     printf("Create audio player\n");
@@ -290,17 +284,28 @@ OpenSLLayer::initAudioCapture()
 
     // configure audio source
     printf("Configure audio source\n");
-    SLDataLocator_IODevice deviceLocator = {SL_DATALOCATOR_IODEVICE, SL_IODEVICE_AUDIOINPUT,
-            SL_DEFAULTDEVICEID_AUDIOINPUT, NULL};
-    SLDataSource audioSource = {&deviceLocator, NULL};
+    SLDataLocator_IODevice deviceLocator = {SL_DATALOCATOR_IODEVICE, 
+                                            SL_IODEVICE_AUDIOINPUT,
+                                            SL_DEFAULTDEVICEID_AUDIOINPUT, 
+                                            NULL};
+
+    SLDataSource audioSource = {&deviceLocator,
+                                NULL};
 
     // configure audio sink
     printf("Configure audio sink\n");
-    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1, SL_SAMPLINGRATE_16,
-        SL_PCMSAMPLEFORMAT_FIXED_16, SL_PCMSAMPLEFORMAT_FIXED_16,
-        SL_SPEAKER_FRONT_CENTER, SL_BYTEORDER_LITTLEENDIAN};
-    SLDataSink audioSink = {&bufferLocator, &audioFormat};
+    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 
+                                                            2};
+
+    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1, 
+                                    SL_SAMPLINGRATE_8,
+                                    SL_PCMSAMPLEFORMAT_FIXED_16, 
+                                    16,
+                                    SL_SPEAKER_FRONT_CENTER, 
+                                    SL_BYTEORDER_LITTLEENDIAN};
+
+    SLDataSink audioSink = {&bufferLocator, 
+                            &audioFormat};
 
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
@@ -308,7 +313,7 @@ OpenSLLayer::initAudioCapture()
     const SLInterfaceID id[1] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
     result = (*engineInterface)->CreateAudioRecorder(engineInterface, &recorderObject, &audioSource,
-            &audioSink, 1, id, req);
+                                                       &audioSink, 1, id, req);
     if (SL_RESULT_SUCCESS != result) {
         printf("Error: could not create audio recorder");
         return;
@@ -346,22 +351,18 @@ OpenSLLayer::initAudioCapture()
 void 
 OpenSLLayer::startAudioPlayback()
 {
-    int nbInitialBuf = NB_BUFFER_PLAYBACK_QUEUE;
-
     assert(NULL != playbackBufferQueue);
 
     printf("Start audio playback\n");
 
     SLresult result;
 
-    for(int i = 0; i < nbInitialBuf; i++) { 
-        printf("generate sawtooth\n");
-        // generate_pink_noise((uint8_t*)buffer, 0, bufferSize);
-
+    for(int i = 0; i < NB_BUFFER_PLAYBACK_QUEUE; i++) {
         AudioBuffer &buffer = getNextPlaybackBuffer();
         incrementPlaybackIndex();
 
-        generateSawTooth(&(*buffer.begin()), buffer.size());
+        // generateSawTooth(&(*buffer.begin()), buffer.size());
+        memset(&(*buffer.begin()), 0, buffer.size() * sizeof(short));
 
         result = (*playbackBufferQueue)->Enqueue(playbackBufferQueue, &(*buffer.begin()), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
@@ -378,13 +379,11 @@ OpenSLLayer::startAudioPlayback()
 void
 OpenSLLayer::startAudioCapture()
 {
-    int nbInitialBuf = 2;
+    assert(NULL != playbackBufferQueue);
 
     printf("Start audio capture\n");
 
     SLresult result;
-    // result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_RECORDING);
-    // assert(SL_RESULT_SUCCESS == result);
 
     // in case already recording, stop recording and clear buffer queue
     result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_STOPPED);
@@ -396,6 +395,8 @@ OpenSLLayer::startAudioCapture()
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
     AudioBuffer &buffer = getNextRecordBuffer();
     incrementRecordIndex();
+
+    memset(&(*buffer.begin()), 0, buffer.size() * sizeof(short));
 
     result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, &(*buffer.begin()), buffer.size() * sizeof(short));
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
@@ -452,7 +453,6 @@ bool OpenSLLayer::audioCallback()
 void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
 
-    // assert(queue == playbackBufferQueue);
     assert(NULL != queue);
     assert(NULL != context);
 
@@ -465,8 +465,9 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
 
     AudioBuffer &buffer = opensl->getNextPlaybackBuffer();
     opensl->incrementPlaybackIndex();
-    generateSawTooth(&(*buffer.begin()), buffer.size());
-    // generate_pink_noise((uint8_t*)buffer, 0, bufferSize);
+
+    // generateSawTooth(&(*buffer.begin()), buffer.size());
+    memcpy(&(*buffer.begin()), &(*tmpbuffer.begin()), buffer.size());
 
     result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
     if (SL_RESULT_SUCCESS != result) {
@@ -496,6 +497,9 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
+
+    AudioBuffer &previousbuffer = opensl->getNextRecordBuffer();
+    memcpy(&(*tmpbuffer.begin()), &(*previousbuffer.begin()), buffer.size());
 }
 
 void OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)

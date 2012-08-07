@@ -262,8 +262,6 @@ class OpenSLLayer {// : public AudioLayer {
 
         AudioBufferStack playbackBufferStack;
         AudioBufferStack recordBufferStack;
-        // AudioBuffer playbackBufferStack[ANDROID_BUFFER_QUEUE_LENGTH];
-        // AudioBuffer recordBufferStack[ANDROID_BUFFER_QUEUE_LENGTH];
 };
 
 #endif // _OPENSL_LAYER_H_
