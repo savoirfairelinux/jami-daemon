@@ -118,8 +118,11 @@ class Sdp {
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negotiator instance with it.
+         * @returns true if offer was created, false otherwise
          */
-        void createOffer(const std::vector<int> &selectedCodecs, const std::vector<std::map<std::string, std::string> > &videoCodecs);
+        bool
+        createOffer(const std::vector<int> &selectedCodecs,
+                    const std::vector<std::map<std::string, std::string> > &videoCodecs);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the

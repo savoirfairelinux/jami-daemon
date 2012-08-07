@@ -351,12 +351,19 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     return pjmedia_sdp_validate(localSession_);
 }
 
-void Sdp::createOffer(const vector<int> &selectedCodecs, const vector<map<string, string> > &videoCodecs)
+bool
+Sdp::createOffer(const vector<int> &selectedCodecs,
+                 const vector<map<string, string> > &videoCodecs)
 {
-    if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS)
+    bool result = true;
+    if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
         ERROR("Failed to create initial offer");
-    else if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS)
+        result = false;
+    } else if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS) {
         ERROR("Failed to create an initial SDP negotiator");
+        result = false;
+    }
+    return result;
 }
 
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,

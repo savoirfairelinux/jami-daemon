@@ -785,10 +785,11 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     call->getAudioRtp().start(ac);
 
     // Building the local SDP offer
-    call->getLocalSDP()->setLocalIP(localAddress);
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    Sdp *localSDP = call->getLocalSDP();
+    localSDP->setLocalIP(localAddress);
+    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
-    if (!SIPStartCall(call)) {
+    if (not created or not SIPStartCall(call)) {
         delete call;
         throw VoipLinkException("Could not create new call");
     }
@@ -847,10 +848,11 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
 
     call->initRecFilename(toUrl);
 
-    call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    Sdp *localSDP = call->getLocalSDP();
+    localSDP->setLocalIP(addrSdp);
+    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
-    if (!SIPStartCall(call)) {
+    if (not created or not SIPStartCall(call)) {
         delete call;
         throw VoipLinkException("Could not send outgoing INVITE request for new call");
     }
@@ -1478,10 +1480,11 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     setCallMediaLocal(call, localAddress);
 
-    call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-
-    *p_offer = call->getLocalSDP()->getLocalSdpSession();
+    Sdp *localSDP = call->getLocalSDP();
+    localSDP->setLocalIP(addrSdp);
+    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    if (created)
+        *p_offer = localSDP->getLocalSdpSession();
 }
 
 // This callback is called after SDP offer/answer session has completed.
