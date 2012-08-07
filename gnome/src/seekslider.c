@@ -91,6 +91,7 @@ struct SFLSeekSliderPrivate
     guint size;
     gboolean is_dragging;
     gboolean can_update_scale;
+    gboolean is_playing;
 };
 
 enum
@@ -205,6 +206,7 @@ sfl_seekslider_init (SFLSeekSlider *seekslider)
 
     seekslider->priv->current = 0;
     seekslider->priv->size = 0;
+    seekslider->priv->is_playing = FALSE;
 }
 
 static void
@@ -331,35 +333,32 @@ static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNU
     SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-    if (selectedCall == NULL) {
+    if (selectedCall == NULL)
         return;
-    }
 
     DEBUG("Start selected call file playback %s", selectedCall->_recordfile);
-    selectedCall->_record_is_playing = dbus_start_recorded_file_playback(selectedCall->_recordfile);
+    seekslider->priv->is_playing = selectedCall->_record_is_playing =
+        dbus_start_recorded_file_playback(selectedCall->_recordfile);
 
-    sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PAUSE);
+    if (seekslider->priv->is_playing)
+        sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PAUSE);
 }
 
 static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNUSED, gpointer user_data)
 {
-    SFLSeekSlider *seekslider = (SFLSeekSlider *)user_data;
+    SFLSeekSlider *seekslider = (SFLSeekSlider *) user_data;
 
     callable_obj_t *selectedCall = calltab_get_selected_call(history_tab);
-    if (selectedCall == NULL) {
+    if (selectedCall == NULL)
         return;
-    }
 
-    if (selectedCall) {
-        if (selectedCall->_recordfile == NULL || strlen(selectedCall->_recordfile) == 0)
-            return;
+    if (selectedCall->_recordfile == NULL ||
+        strlen(selectedCall->_recordfile) == 0)
+        return;
 
-        if(selectedCall->_record_is_playing) {
-            dbus_stop_recorded_file_playback(selectedCall->_recordfile);
-            DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
-        }
-        selectedCall->_record_is_playing = FALSE;
-    }
+    dbus_stop_recorded_file_playback(selectedCall->_recordfile);
+    DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
+    seekslider->priv->is_playing = selectedCall->_record_is_playing = FALSE;
 
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
 }
@@ -403,40 +402,48 @@ void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint
         sfl_seekslider_update_timelabel(seekslider, current, size);
         seekslider->priv->current = current;
         seekslider->priv->size = size;
+        if (!seekslider->priv->is_playing) {
+            ERROR("Seek slider state is inconsistent, updating icon");
+            /* State somehow become inconsistent: the seekbar is moving but
+             * the play icon is not set to paused */
+            seekslider->priv->is_playing = TRUE;
+            sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PAUSE);
+        }
     }
 }
 
 void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display) {
 
-    // g_return_if_fail (SFL_IS_SEEKSLIDER (seekslider));
-    if(seekslider == NULL)
+    if (seekslider == NULL)
         return;
 
-    switch(display) {
-    case SFL_SEEKSLIDER_DISPLAY_PAUSE:
-        gtk_widget_hide(seekslider->priv->playRecordWidget);
-        gtk_widget_show(seekslider->priv->stopRecordWidget);
-        break;
-    case SFL_SEEKSLIDER_DISPLAY_PLAY:
-        gtk_widget_hide(seekslider->priv->stopRecordWidget);
-        gtk_widget_show(seekslider->priv->playRecordWidget);
-        break;
-    default:
-        WARN("Unknown display option for seekslider");
-        break;
+    switch (display) {
+        case SFL_SEEKSLIDER_DISPLAY_PAUSE:
+            gtk_widget_hide(seekslider->priv->playRecordWidget);
+            gtk_widget_show(seekslider->priv->stopRecordWidget);
+            break;
+        case SFL_SEEKSLIDER_DISPLAY_PLAY:
+            gtk_widget_hide(seekslider->priv->stopRecordWidget);
+            gtk_widget_show(seekslider->priv->playRecordWidget);
+            break;
+        default:
+            WARN("Unknown display option for seekslider");
+            break;
     }
 }
 
-void sfl_seekslider_reset(SFLSeekSlider *seekslider) {
-    if(seekslider == NULL)
+void sfl_seekslider_reset(SFLSeekSlider *seekslider)
+{
+    if (seekslider == NULL)
         return;
 
     seekslider->priv->can_update_scale = FALSE;
     gtk_range_set_value(GTK_RANGE(seekslider->priv->hscale), 0.0);
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
-    sfl_seekslider_stop_playback_record_cb (NULL, seekslider);
+    sfl_seekslider_stop_playback_record_cb(NULL, seekslider);
     gtk_label_set_text(GTK_LABEL(seekslider->priv->timeLabel), "");
     seekslider->priv->current = 0;
     seekslider->priv->size = 0;
+    seekslider->priv->is_playing = FALSE;
     seekslider->priv->can_update_scale = TRUE;
 }
