@@ -37,7 +37,6 @@
 #include <cassert>
 
 #include "dtmfgenerator.h"
-#include "global.h"
 
 /*
  * Tone frequencies
@@ -81,14 +80,13 @@ DTMFGenerator::~DTMFGenerator()
         delete [] toneBuffers_[i];
 }
 
+using std::vector;
+
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples(SFLDataFormat* buffer, size_t n, unsigned char code)
+void DTMFGenerator::getSamples(vector<SFLDataFormat> &buffer, unsigned char code)
 {
-    if (!buffer)
-        throw DTMFException("Invalid parameter value");
-
     code = toupper(code);
 
     if (code >= '0' and code <= '9')
@@ -112,6 +110,7 @@ void DTMFGenerator::getSamples(SFLDataFormat* buffer, size_t n, unsigned char co
     }
 
     size_t i;
+    const size_t n = buffer.size();
     for (i = 0; i < n; ++i)
         buffer[i] = state.sample[i % sampleRate_];
 
@@ -122,15 +121,13 @@ void DTMFGenerator::getSamples(SFLDataFormat* buffer, size_t n, unsigned char co
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples(SFLDataFormat* buffer, size_t n)
+void DTMFGenerator::getNextSamples(vector<SFLDataFormat> &buffer)
 {
-    if (!buffer)
-        throw DTMFException("Invalid parameter");
-
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
 
     size_t i;
+    const size_t n = buffer.size();
     for (i = 0; i < n; i++)
         buffer[i] = state.sample[(state.offset + i) % sampleRate_];
 

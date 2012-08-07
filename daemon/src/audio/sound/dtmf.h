@@ -58,10 +58,9 @@ class DTMF {
 
         /**
          * Copy the sound inside the sampling* buffer
-         * @param buffer : a SFLDataFormat* buffer
-         * @param n      : The size to generate
+         * @param buffer : a vector of SFLDataFormat
          */
-        bool generateDTMF(SFLDataFormat* buffer, size_t n);
+        bool generateDTMF(std::vector<SFLDataFormat> &buffer);
 
     private:
         char currentTone_;

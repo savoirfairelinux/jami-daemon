@@ -1301,24 +1301,22 @@ void ManagerImpl::playDtmf(char code)
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
-    SFLDataFormat *buf = new SFLDataFormat[size];
+    std::vector<SFLDataFormat> buf(size);
 
     // Handle dtmf
     dtmfKey_->startTone(code);
 
     // copy the sound
-    if (dtmfKey_->generateDTMF(buf, size)) {
+    if (dtmfKey_->generateDTMF(buf)) {
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
         audiodriver_->startStream();
-        audiodriver_->putUrgent(buf, size * sizeof(SFLDataFormat));
+        audiodriver_->putUrgent(&(*buf.begin()), size * sizeof(SFLDataFormat));
     }
 
     // TODO Cache the DTMF
-
-    delete [] buf;
 }
 
 // Multi-thread

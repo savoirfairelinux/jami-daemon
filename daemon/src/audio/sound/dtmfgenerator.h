@@ -38,6 +38,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include "noncopyable.h"
 #include "tone.h"
 
@@ -100,19 +101,17 @@ class DTMFGenerator {
 
         /*
          * Get n samples of the signal of code code
-         * @param buffer a SFLDataFormat pointer to an allocated buffer
-         * @param n      number of sampling to get, should be lower or equal to buffer size
+         * @param buffer a SFLDataFormat vector
          * @param code   dtmf code to get sound
          */
-        void getSamples(SFLDataFormat* buffer, size_t n, unsigned char code);
+        void getSamples(std::vector<SFLDataFormat> &buffer, unsigned char code);
 
         /*
          * Get next n samples (continues where previous call to
          * genSample or genNextSamples stopped
-         * @param buffer a SFLDataFormat pointer to an allocated buffer
-         * @param n      number of sampling to get, should be lower or equal to buffer size
+         * @param buffer a SFLDataFormat vector
          */
-        void getNextSamples(SFLDataFormat* buffer, size_t n);
+        void getNextSamples(std::vector<SFLDataFormat> &buffer);
 
     private:
 
