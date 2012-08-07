@@ -980,8 +980,7 @@ SIPVoIPLink::offhold(const std::string& id)
 
     try {
         int pl = PAYLOAD_CODEC_ULAW;
-        sfl::Codec *sessionMedia = sdpSession->getSessionAudioMedia();
-
+        sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
         if (sessionMedia)
             pl = sessionMedia->getPayloadType();
 
@@ -1611,7 +1610,6 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 #endif // HAVE_SDES
 
     sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
-
     if (!sessionMedia)
         return;
 

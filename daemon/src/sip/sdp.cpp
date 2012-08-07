@@ -150,18 +150,16 @@ string Sdp::getSessionVideoCodec() const
 
 string Sdp::getAudioCodecName() const
 {
-    try {
-        sfl::AudioCodec *codec = getSessionAudioMedia();
-        return codec ? codec->getMimeSubtype() : "";
-    } catch (...) {
-        return "";
-    }
+    sfl::AudioCodec *codec = getSessionAudioMedia();
+    return codec ? codec->getMimeSubtype() : "";
 }
 
 sfl::AudioCodec* Sdp::getSessionAudioMedia() const
 {
-    if (sessionAudioMedia_.empty())
-        throw SdpException("No codec description for this media");
+    if (sessionAudioMedia_.empty()) {
+        ERROR("No codec description for this media");
+        return 0;
+    }
 
     return dynamic_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
 }
