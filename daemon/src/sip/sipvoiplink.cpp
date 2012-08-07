@@ -1518,10 +1518,13 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     // Get active session sessions
-    const pjmedia_sdp_session *remote_sdp = 0;
-    pjmedia_sdp_neg_get_active_remote(inv->neg, &remote_sdp);
+    const pjmedia_sdp_session *remoteSDP = 0;
+    if (pjmedia_sdp_neg_get_active_remote(inv->neg, &remoteSDP) != PJ_SUCCESS) {
+        ERROR("Active remote not present");
+        return;
+    }
 
-    if (pjmedia_sdp_validate(remote_sdp) != PJ_SUCCESS) {
+    if (pjmedia_sdp_validate(remoteSDP) != PJ_SUCCESS) {
         ERROR("Invalid remote SDP session");
         return;
     }
@@ -1535,7 +1538,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Print SDP session
     char buffer[4096];
     memset(buffer, 0, sizeof buffer);
-    if (pjmedia_sdp_print(remote_sdp, buffer, sizeof buffer) == -1) {
+    if (pjmedia_sdp_print(remoteSDP, buffer, sizeof buffer) == -1) {
         ERROR("SDP was too big for buffer");
         return;
     }
@@ -1549,7 +1552,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     DEBUG("Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
-    sdpSession->setActiveRemoteSdpSession(remote_sdp);
+    sdpSession->setActiveRemoteSdpSession(remoteSDP);
     sdpSession->setActiveLocalSdpSession(local_sdp);
 
     // Update internal field for
@@ -1566,7 +1569,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
-    call->getLocalSDP()->getRemoteSdpCryptoFromOffer(remote_sdp, crypto_offer);
+    call->getLocalSDP()->getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
 
 #if HAVE_SDES
     bool nego_success = false;
