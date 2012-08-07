@@ -34,6 +34,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 
 LOCAL_MODULE := libaudio
 LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
+				  -DCCPP_PREFIX \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
 				  -DHAVE_CONFIG_H \

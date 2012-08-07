@@ -39,6 +39,7 @@
 
 #include "cc++/thread.h"
 
+#include "audiolayer.h"
 
 
 enum PCMType {
@@ -64,7 +65,7 @@ typedef std::vector<AudioBuffer> AudioBufferStack;
  * @brief Main sound class for android. Manages the data transfers between the application and the hardware.
  */
 
-class OpenSLLayer {// : public AudioLayer {
+class OpenSLLayer : public AudioLayer {
     public:
         /**
          * Constructor
