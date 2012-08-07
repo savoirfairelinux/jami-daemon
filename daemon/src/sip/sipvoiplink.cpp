@@ -1339,7 +1339,7 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 void
 SIPVoIPLink::SIPCallClosed(SIPCall *call)
 {
-    std::string id(call->getCallId());
+    const std::string id(call->getCallId());
 
     stopRtpIfCurrent(id, *call);
 
@@ -1500,8 +1500,11 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     if (status != PJ_SUCCESS) {
         WARN("Could not negotiate offer");
-        SIPVoIPLink::instance()->hangup(call->getCallId());
-        Manager::instance().callFailure(call->getCallId());
+        const std::string callID(call->getCallId());
+        SIPVoIPLink::instance()->hangup(callID);
+        // call is now a dangling pointer after calling hangup
+        call = 0;
+        Manager::instance().callFailure(callID);
         return;
     }
 
