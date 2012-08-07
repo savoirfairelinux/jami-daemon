@@ -34,7 +34,7 @@
 #define __GLOBAL_H__
 
 #include <cstdio>
-#include <libintl.h>
+//#include <libintl.h>
 #include <locale.h>
 #include <string>
 #include <cstdlib>
