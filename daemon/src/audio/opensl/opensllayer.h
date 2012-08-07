@@ -39,6 +39,8 @@
 
 #include "cc++/thread.h"
 
+
+
 enum PCMType {
     SFL_PCM_BOTH = 0x0021,          /** To open both playback and capture devices */
     SFL_PCM_PLAYBACK = 0x0022,      /** To open playback device only */
@@ -52,8 +54,10 @@ class AudioPreference;
 
 class OpenSLThread;
 
+#define ANDROID_BUFFER_QUEUE_LENGTH 2
+
 typedef std::vector<short> AudioBuffer;
-typedef std::list<AudioBuffer *> BufferList;
+typedef std::vector<AudioBuffer> AudioBufferStack;
 
 /**
  * @file  OpenSLLayer.h
@@ -71,10 +75,6 @@ class OpenSLLayer {// : public AudioLayer {
          * Destructor
          */
         ~OpenSLLayer();
-
-        void initBufferList();
-
-        void cleanupBufferList();
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -120,7 +120,7 @@ class OpenSLLayer {// : public AudioLayer {
         SLObjectItf getRecorderObject(void) { return recorderObject; }
 
         /**
-         *
+         *   
          */
         SLPlayItf getPlayerInterface(void) { return playerInterface; }
 
@@ -132,9 +132,6 @@ class OpenSLLayer {// : public AudioLayer {
         SLAndroidSimpleBufferQueueItf getPLaybackBufferQueue(void) { return playbackBufferQueue; }
 
         SLAndroidSimpleBufferQueueItf getRecorderBufferQueue(void) { return recorderBufferQueue; }
-
-        BufferList &getAudioBufferList(void) { return audioBufferList; }
-        BufferList &getEmptyBufferList(void) { return emptyBufferList; }
 
         void initAudioEngine();
 
@@ -150,7 +147,7 @@ class OpenSLLayer {// : public AudioLayer {
 
         void stopAudioPlayback();
 
-        void stopAudioCapture();
+        void stopAudioCapture(); 
 
         /**
          * Main audio callback method, all data transfer between application and hardware is preformed
@@ -188,8 +185,20 @@ class OpenSLLayer {// : public AudioLayer {
             return indexRing_;
         }
 
+        AudioBuffer &getNextPlaybackBuffer(void) { return playbackBufferStack[playbackBufferIndex]; }
+	
+        AudioBuffer &getNextRecordBuffer(void) { return recordBufferStack[recordBufferIndex]; }
+
+        void incrementPlaybackIndex(void) { playbackBufferIndex = ++playbackBufferIndex % NB_BUFFER_PLAYBACK_QUEUE; }
+
+        void incrementRecordIndex(void) { recordBufferIndex = ++recordBufferIndex % NB_BUFFER_CAPTURE_QUEUE; }
+
     private:
         friend class OpenSLThread;
+
+        static const int NB_BUFFER_PLAYBACK_QUEUE;
+
+        static const int NB_BUFFER_CAPTURE_QUEUE;
 
         /**
          * Number of audio cards on which capture stream has been opened
@@ -234,7 +243,7 @@ class OpenSLLayer {// : public AudioLayer {
         SLObjectItf recorderObject;
 
         /**
-         *
+         *   
          */
         SLPlayItf playerInterface;
 
@@ -247,9 +256,14 @@ class OpenSLLayer {// : public AudioLayer {
 
         SLAndroidSimpleBufferQueueItf recorderBufferQueue;
 
-        BufferList audioBufferList;
-        BufferList emptyBufferList;
+        int playbackBufferIndex;
 
+        int recordBufferIndex; 
+
+        AudioBufferStack playbackBufferStack;
+        AudioBufferStack recordBufferStack;
+        // AudioBuffer playbackBufferStack[ANDROID_BUFFER_QUEUE_LENGTH];
+        // AudioBuffer recordBufferStack[ANDROID_BUFFER_QUEUE_LENGTH];
 };
 
 #endif // _OPENSL_LAYER_H_
