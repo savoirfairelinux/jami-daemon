@@ -30,6 +30,7 @@
 
 #include <string>
 #include <cstring> // for memset
+#include <algorithm>
 #include <vector>
 #include <climits>
 #include <stdexcept>
@@ -256,6 +257,24 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
     return fmt.fmt.pix.pixelformat;
 }
 
+namespace {
+    bool isCIF(const VideoV4l2Size &size)
+    {
+        const unsigned CIF_WIDTH = 352;
+        const unsigned CIF_HEIGHT = 288;
+        return size.width == CIF_WIDTH and size.height == CIF_HEIGHT;
+    }
+}
+
+// Put CIF resolution (352x288) first in the list since it is more prevalent in
+// VoIP
+void VideoV4l2Channel::putCIFFirst()
+{
+    std::vector<VideoV4l2Size>::iterator iter = std::find_if(sizes_.begin(), sizes_.end(), isCIF);
+    if (iter != sizes_.end() and iter != sizes_.begin())
+        std::swap(*iter, *sizes_.begin());
+}
+
 void VideoV4l2Channel::getFormat(int fd)
 {
     if (ioctl(fd, VIDIOC_S_INPUT, &idx))
@@ -288,6 +307,7 @@ void VideoV4l2Channel::getFormat(int fd)
 
     fmt.index = best_idx;
     pixelformat = getSizes(fd, pixelformat);
+    putCIFFirst();
 
     setFourcc(pixelformat);
 }

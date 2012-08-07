@@ -84,6 +84,7 @@ class VideoV4l2Channel {
         std::string name;
 
     private:
+        void putCIFFirst();
         std::vector<VideoV4l2Size> sizes_;
         char fourcc_[5];
 };

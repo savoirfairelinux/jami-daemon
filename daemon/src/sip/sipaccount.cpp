@@ -702,12 +702,13 @@ void SIPAccount::startKeepAliveTimer() {
     link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
-void SIPAccount::stopKeepAliveTimer() {
-    DEBUG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
-
-    keepAliveTimerActive_ = false;
-
-    link_->cancelKeepAliveTimer(keepAliveTimer_);
+void SIPAccount::stopKeepAliveTimer()
+{
+    if (keepAliveTimerActive_) {
+        DEBUG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
+        keepAliveTimerActive_ = false;
+        link_->cancelKeepAliveTimer(keepAliveTimer_);
+    }
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)

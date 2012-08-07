@@ -785,10 +785,11 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     call->getAudioRtp().start(ac);
 
     // Building the local SDP offer
-    call->getLocalSDP()->setLocalIP(localAddress);
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    Sdp *localSDP = call->getLocalSDP();
+    localSDP->setLocalIP(localAddress);
+    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
-    if (!SIPStartCall(call)) {
+    if (not created or not SIPStartCall(call)) {
         delete call;
         throw VoipLinkException("Could not create new call");
     }
@@ -847,10 +848,11 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
 
     call->initRecFilename(toUrl);
 
-    call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    Sdp *localSDP = call->getLocalSDP();
+    localSDP->setLocalIP(addrSdp);
+    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
-    if (!SIPStartCall(call)) {
+    if (not created or not SIPStartCall(call)) {
         delete call;
         throw VoipLinkException("Could not send outgoing INVITE request for new call");
     }
@@ -978,8 +980,7 @@ SIPVoIPLink::offhold(const std::string& id)
 
     try {
         int pl = PAYLOAD_CODEC_ULAW;
-        sfl::Codec *sessionMedia = sdpSession->getSessionAudioMedia();
-
+        sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
         if (sessionMedia)
             pl = sessionMedia->getPayloadType();
 
@@ -1338,7 +1339,7 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 void
 SIPVoIPLink::SIPCallClosed(SIPCall *call)
 {
-    std::string id(call->getCallId());
+    const std::string id(call->getCallId());
 
     stopRtpIfCurrent(id, *call);
 
@@ -1478,10 +1479,11 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     setCallMediaLocal(call, localAddress);
 
-    call->getLocalSDP()->setLocalIP(addrSdp);
-    call->getLocalSDP()->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
-
-    *p_offer = call->getLocalSDP()->getLocalSdpSession();
+    Sdp *localSDP = call->getLocalSDP();
+    localSDP->setLocalIP(addrSdp);
+    const bool created = localSDP->createOffer(account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    if (created)
+        *p_offer = localSDP->getLocalSdpSession();
 }
 
 // This callback is called after SDP offer/answer session has completed.
@@ -1498,8 +1500,11 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     if (status != PJ_SUCCESS) {
         WARN("Could not negotiate offer");
-        SIPVoIPLink::instance()->hangup(call->getCallId());
-        Manager::instance().callFailure(call->getCallId());
+        const std::string callID(call->getCallId());
+        SIPVoIPLink::instance()->hangup(callID);
+        // call is now a dangling pointer after calling hangup
+        call = 0;
+        Manager::instance().callFailure(callID);
         return;
     }
 
@@ -1516,10 +1521,13 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     // Get active session sessions
-    const pjmedia_sdp_session *remote_sdp = 0;
-    pjmedia_sdp_neg_get_active_remote(inv->neg, &remote_sdp);
+    const pjmedia_sdp_session *remoteSDP = 0;
+    if (pjmedia_sdp_neg_get_active_remote(inv->neg, &remoteSDP) != PJ_SUCCESS) {
+        ERROR("Active remote not present");
+        return;
+    }
 
-    if (pjmedia_sdp_validate(remote_sdp) != PJ_SUCCESS) {
+    if (pjmedia_sdp_validate(remoteSDP) != PJ_SUCCESS) {
         ERROR("Invalid remote SDP session");
         return;
     }
@@ -1533,7 +1541,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Print SDP session
     char buffer[4096];
     memset(buffer, 0, sizeof buffer);
-    if (pjmedia_sdp_print(remote_sdp, buffer, sizeof buffer) == -1) {
+    if (pjmedia_sdp_print(remoteSDP, buffer, sizeof buffer) == -1) {
         ERROR("SDP was too big for buffer");
         return;
     }
@@ -1547,7 +1555,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     DEBUG("Local active SDP Session:\n%s", buffer);
 
     // Set active SDP sessions
-    sdpSession->setActiveRemoteSdpSession(remote_sdp);
+    sdpSession->setActiveRemoteSdpSession(remoteSDP);
     sdpSession->setActiveLocalSdpSession(local_sdp);
 
     // Update internal field for
@@ -1564,7 +1572,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
-    call->getLocalSDP()->getRemoteSdpCryptoFromOffer(remote_sdp, crypto_offer);
+    call->getLocalSDP()->getRemoteSdpCryptoFromOffer(remoteSDP, crypto_offer);
 
 #if HAVE_SDES
     bool nego_success = false;
@@ -1608,7 +1616,6 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 #endif // HAVE_SDES
 
     sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
-
     if (!sessionMedia)
         return;
 

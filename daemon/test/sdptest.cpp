@@ -287,7 +287,8 @@ void SDPTest::testReinvite()
 
     CPPUNIT_ASSERT(session_->getLocalIP() == LOCALHOST);
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.example.com");
-    CPPUNIT_ASSERT(session_->getSessionAudioMedia()->getMimeSubtype() == "PCMU");
+    sfl::AudioCodec *codec = session_->getSessionAudioMedia();
+    CPPUNIT_ASSERT(codec and codec->getMimeSubtype() == "PCMU");
 
     pjmedia_sdp_session *reinviteOffer;
     pjmedia_sdp_parse(testPool_, (char*) sdp_reinvite, strlen(sdp_reinvite), &reinviteOffer);

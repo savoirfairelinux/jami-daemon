@@ -131,24 +131,20 @@ void ManagerImpl::run()
 
 void ManagerImpl::finish()
 {
-    if (!finished_) {
-        finished_ = true;
-        // Unset signal handlers
-        signal(SIGHUP, SIG_DFL);
-        signal(SIGINT, SIG_DFL);
-        signal(SIGTERM, SIG_DFL);
-        terminate();
-        dbus_.exit();
-    }
-}
+    if (finished_)
+        return;
 
-void ManagerImpl::terminate()
-{
+    finished_ = true;
+    // Unset signal handlers
+    signal(SIGHUP, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+
     std::vector<std::string> callList(getCallList());
-    DEBUG("Hangup %zu remaining call", callList.size());
+    DEBUG("Hangup %zu remaining call(s)", callList.size());
 
     for (std::vector<std::string>::iterator iter = callList.begin();
-         iter != callList.end(); ++iter)
+            iter != callList.end(); ++iter)
         hangupCall(*iter);
 
     saveConfig();
@@ -160,10 +156,14 @@ void ManagerImpl::terminate()
     // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
     unloadAccountMap();
 
-    ost::MutexLock lock(audioLayerMutex_);
+    {
+        ost::MutexLock lock(audioLayerMutex_);
 
-    delete audiodriver_;
-    audiodriver_ = NULL;
+        delete audiodriver_;
+        audiodriver_ = NULL;
+    }
+
+    dbus_.exit();
 }
 
 bool ManagerImpl::isCurrentCall(const std::string& callId) const
