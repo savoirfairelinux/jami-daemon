@@ -32,7 +32,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 
 #LOCAL_CPP_EXTENSION := .cpp .h
 
-LOCAL_MODULE := libaudio
+LOCAL_MODULE := libopensl
 LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DCCPP_PREFIX \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
