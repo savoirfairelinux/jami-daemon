@@ -33,7 +33,7 @@
 
 static const int G729_PAYLOAD_TYPE = 18;
 
-G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 16000, 320, 1),m_pDecStruct(0),m_pEncStruct(0),
+G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 8000, 160, 1),m_pDecStruct(0),m_pEncStruct(0),
    m_pHandler(0),closeBcg729EncoderChannel(0),bcg729Encoder(0),closeBcg729DecoderChannel(0),bcg729Decoder(0)
 {
    init();
@@ -41,7 +41,7 @@ G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 16000, 320, 1),m_pDecS
 
 void G729::init()
 {
-   m_pHandler = dlopen("/usr/local/lib/libbcg729.so.0.0.0", RTLD_LAZY);
+   m_pHandler = dlopen("/home/lepagee/prefix/lib/libbcg729.so.0.0.0", RTLD_LAZY);
    if (!m_pHandler)
    {
       fprintf(stderr, "%s\n", dlerror());
@@ -74,13 +74,13 @@ G729::~G729()
 int G729::decode(short *dst, unsigned char *buf, size_t buffer_size UNUSED)
 {
    bcg729Decoder(m_pDecStruct,buf,false,dst);
-   return 1;
+   return 20;
 }
 
 int G729::encode(unsigned char *dst, short *src, size_t buffer_size UNUSED)
 {
    bcg729Encoder(m_pEncStruct,src,dst);
-   return 1;
+   return 20;
 }
 
 void G729::loadError(char* error)
