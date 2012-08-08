@@ -1,6 +1,5 @@
 LOCAL_PATH:= $(call my-dir)
 
-MY_LIBEXPAT=libexpat
 MY_LIBYAML=libyaml
 
 include $(CLEAR_VARS)
