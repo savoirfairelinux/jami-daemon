@@ -86,10 +86,16 @@ AudioRtpRecord::~AudioRtpRecord()
 
     delete converterEncode_;
     delete converterDecode_;
-    delete audioCodec_;
+    {
+        ost::MutexLock lock(audioCodecMutex_);
+        delete audioCodec_;
+    }
 #if HAVE_SPEEXDSP
-    delete noiseSuppressEncode_;
-    delete noiseSuppressDecode_;
+    {
+        ost::MutexLock lock(audioProcessMutex_);
+        delete noiseSuppressDecode_;
+        delete noiseSuppressEncode_;
+    }
 #endif
 }
 

@@ -59,10 +59,13 @@ NoiseSuppress::NoiseSuppress(int smplPerFrame, int samplingRate) :
 NoiseSuppress::~NoiseSuppress()
 {
     speex_preprocess_state_destroy(noiseState_);
+    noiseState_ = 0;
 }
 
 void NoiseSuppress::process(SFLDataFormat *data, int samples)
 {
-    assert(smplPerFrame_ == samples);
-    speex_preprocess_run(noiseState_, data);
+    if (noiseState_) {
+        assert(smplPerFrame_ == samples);
+        speex_preprocess_run(noiseState_, data);
+    }
 }

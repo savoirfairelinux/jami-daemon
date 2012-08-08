@@ -43,20 +43,20 @@ void DTMF::startTone(char code)
     newTone_ = code;
 }
 
-bool DTMF::generateDTMF(SFLDataFormat* buffer, size_t n)
-{
-    if (!buffer) return false;
+using std::vector;
 
+bool DTMF::generateDTMF(vector<SFLDataFormat> &buffer)
+{
     try {
         if (currentTone_ != 0) {
             // Currently generating a DTMF tone
             if (currentTone_ == newTone_) {
                 // Continue generating the same tone
-                dtmfgenerator_.getNextSamples(buffer, n);
+                dtmfgenerator_.getNextSamples(buffer);
                 return true;
             } else if (newTone_ != 0) {
                 // New tone requested
-                dtmfgenerator_.getSamples(buffer, n, newTone_);
+                dtmfgenerator_.getSamples(buffer, newTone_);
                 currentTone_ = newTone_;
                 return true;
             } else {
@@ -68,7 +68,7 @@ bool DTMF::generateDTMF(SFLDataFormat* buffer, size_t n)
             // Not generating any DTMF tone
             if (newTone_) {
                 // Requested to generate a DTMF tone
-                dtmfgenerator_.getSamples(buffer, n, newTone_);
+                dtmfgenerator_.getSamples(buffer, newTone_);
                 currentTone_ = newTone_;
                 return true;
             }
