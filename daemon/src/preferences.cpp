@@ -30,7 +30,9 @@
 
 #include "preferences.h"
 #include "logger.h"
+#ifndef ANDROID
 #include "audio/alsa/alsalayer.h"
+#endif
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
 #endif
@@ -374,7 +376,7 @@ AudioLayer* AudioPreference::createAudioLayer()
         else
             WARN("pulseaudio daemon not running, falling back to ALSA");
     }
-#endif
+#elif HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
     checkSoundCard(alsaCardin_, AudioLayer::SFL_PCM_CAPTURE);
@@ -382,6 +384,9 @@ AudioLayer* AudioPreference::createAudioLayer()
     checkSoundCard(alsaCardring_, AudioLayer::SFL_PCM_RINGTONE);
 
     return new AlsaLayer(*this);
+#else
+	return NULL;
+#endif
 }
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()

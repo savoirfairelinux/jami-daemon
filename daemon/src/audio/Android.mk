@@ -1,7 +1,7 @@
-TOP_LOCAL_PATH := $(call my-dir)
+MYAUDIO_LOCAL_PATH := $(call my-dir)
 include $(call all-subdir-makefiles)
 
-LOCAL_PATH := $(TOP_LOCAL_PATH)
+LOCAL_PATH := $(MYAUDIO_LOCAL_PATH)
 
 # FIXME
 MY_PREFIX=/sdcard

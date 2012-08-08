@@ -45,17 +45,23 @@
 #include "global.h"
 #include "fileutils.h"
 #include "sip/sipaccount.h"
+#ifndef ANDROID
 #include "im/instant_messaging.h"
 #include "iax/iaxaccount.h"
+#endif
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
+#ifndef ANDROID
 #include "audio/alsa/alsalayer.h"
+#endif
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "sip/sipvoiplink.h"
+#ifndef ANDROID
 #include "iax/iaxvoiplink.h"
+#endif
 #include "history/historynamecache.h"
 #include "manager.h"
 
