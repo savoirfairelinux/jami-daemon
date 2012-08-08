@@ -10,6 +10,7 @@ MY_CCRTP=ccrtp-1.8.0-android
 MY_LIBSAMPLE=libsamplerate-0.1.8
 MY_DBUS=libdbus-c++-0.9.0-android
 MY_SPEEX=speex
+MY_OPENSSL=openssl
 
 include $(CLEAR_VARS)
 
@@ -37,7 +38,8 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjmedia/include \
 					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjnath/include \
 					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip-apps/src/3rdparty_media_sample \
-					$(APP_PROJECT_PATH)/jni/$(MY_DBUS)/include
+					$(APP_PROJECT_PATH)/jni/$(MY_DBUS)/include \
+					$(APP_PROJECT_PATH)/jni/$(MY_OPENSSL)/include
 
 #LOCAL_CPP_EXTENSION := .cpp .h
 
