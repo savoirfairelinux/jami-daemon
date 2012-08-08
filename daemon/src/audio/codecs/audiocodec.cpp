@@ -32,7 +32,6 @@
 
 #include "audiocodec.h"
 using std::ptrdiff_t;
-#include <ccrtp/rtp.h>
 
 namespace sfl {
 
@@ -45,7 +44,6 @@ AudioCodec::AudioCodec(uint8 payload, const std::string &codecName,
     bitrate_(0.0),
     bandwidth_(0.0),
     payload_(payload),
-    payloadFormat_(payload, clockRate_),
     hasDynamicPayload_((payload_ >= 96 and payload_ <= 127) or payload_ == 9)
 {}
 
@@ -57,7 +55,6 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     bitrate_(c.bitrate_),
     bandwidth_(c.bandwidth_),
     payload_(c.payload_),
-    payloadFormat_(c.payloadFormat_),
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}
 
