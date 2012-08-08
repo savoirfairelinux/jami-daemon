@@ -54,25 +54,24 @@ class G729 : public sfl::AudioCodec {
 public:
    G729();
    ~G729();
+   static bool init();
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
 
 private:
    NON_COPYABLE(G729);
    //Attributes
-   bcg729DecoderChannelContextStruct* m_pDecStruct;
-   bcg729EncoderChannelContextStruct* m_pEncStruct;
-   void* m_pHandler;
+   static bcg729DecoderChannelContextStruct* m_spDecStruct;
+   static bcg729EncoderChannelContextStruct* m_spEncStruct;
+   static void* m_pHandler;
 
    //Extern functions
-   void (*closeBcg729EncoderChannel) ( bcg729EncoderChannelContextStruct *encoderChannelContext                                                                   );
-   void (*bcg729Encoder)             ( bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]                        );
-   void (*closeBcg729DecoderChannel) ( bcg729DecoderChannelContextStruct *decoderChannelContext                                                                   );
-   void (*bcg729Decoder)             ( bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[] , uint8_t frameErasureFlag, int16_t signal[] );
+   static void (*closeBcg729EncoderChannel) ( bcg729EncoderChannelContextStruct *encoderChannelContext                                                                   );
+   static void (*bcg729Encoder)             ( bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]                        );
+   static void (*closeBcg729DecoderChannel) ( bcg729DecoderChannelContextStruct *decoderChannelContext                                                                   );
+   static void (*bcg729Decoder)             ( bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[] , uint8_t frameErasureFlag, int16_t signal[] );
 
-   //
-   void init();
-   void loadError(char* error);
+   static void loadError(char* error);
 };
 
 #endif
