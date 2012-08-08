@@ -65,13 +65,6 @@ void VideoSendThread::print_sdp()
         sdp_ += line + "\n";
     }
     DEBUG("sending\n%s", sdp_.c_str());
-    sdpReady_.signal();
-}
-
-// NOT called from this (the run() ) thread
-void VideoSendThread::waitForSDP()
-{
-    sdpReady_.wait();
 }
 
 void VideoSendThread::forcePresetX264()
@@ -328,7 +321,7 @@ int VideoSendThread::interruptCb(void *ctx)
 }
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
-    sdpReady_(), args_(args), scaledPictureBuf_(0), outbuf_(0),
+    args_(args), scaledPictureBuf_(0), outbuf_(0),
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
     inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
@@ -431,9 +424,6 @@ VideoSendThread::~VideoSendThread()
     // FIXME
     sending_ = false;
     ost::Thread::terminate();
-    // make sure no one is waiting for the SDP which will never come if we've
-    // error'd out
-    sdpReady_.signal();
 
     sws_freeContext(imgConvertCtx_);
     imgConvertCtx_ = 0;
