@@ -45,7 +45,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 					$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc \
 
 
-LOCAL_MODULE := sflphoned
+LOCAL_MODULE := libsflphone
 
 LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
@@ -91,5 +91,19 @@ LOCAL_SHARED_LIBRARIES += libccgnu2 \
 						  libspeex \
 						  libspeexresampler
 
-include $(BUILD_EXECUTABLE)
+include $(BUILD_STATIC_LIBRARY)
+
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES = main.cpp
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
+LOCAL_MODULE := sflphoned
+LOCAL_CPPFLAGS = \
+		-DPREFIX=\"$(prefix)\" \
+		-DPROGSHAREDIR=\"${datadir}/sflphone\" \
+		$(IAX_CXXFLAG) $(NETWORKMANAGER) \
+		-DVERSION=\"$(VERSION)\"
+
+include $(BUILD_STATIC_LIBRARY)
 

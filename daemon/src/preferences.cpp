@@ -27,10 +27,11 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#define HAVE_ALSA 0
 
 #include "preferences.h"
 #include "logger.h"
-#ifndef ANDROID
+#if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
 #endif
 #if HAVE_PULSE
@@ -85,7 +86,9 @@ static const char * const URL_COMMAND_KEY = "urlCommand";
 static const char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
+#if HAVE_ALSA
 static const char * const ALSAMAP_KEY = "alsa";
+#endif
 #if HAVE_PULSE
 static const char * const PULSEMAP_KEY = "pulse";
 #endif
@@ -358,13 +361,16 @@ AudioPreference::AudioPreference() :
 {}
 
 namespace {
+#if HAVE_ALSA
 void checkSoundCard(int &card, AudioLayer::PCMType stream)
 {
     if (not AlsaLayer::soundCardIndexExists(card, stream)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
+    card = ALSA_DFT_CARD_ID;
 }
+#endif
 }
 
 AudioLayer* AudioPreference::createAudioLayer()
@@ -449,12 +455,14 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(VOLUMESPKR_KEY, &volumespkr);
 
     Conf::MappingNode alsapreferencemap(NULL);
+#if HAVE_ALSA
     preferencemap.setKeyValue(ALSAMAP_KEY, &alsapreferencemap);
     alsapreferencemap.setKeyValue(CARDIN_KEY, &cardin);
     alsapreferencemap.setKeyValue(CARDOUT_KEY, &cardout);
     alsapreferencemap.setKeyValue(CARDRING_KEY, &cardring);
     alsapreferencemap.setKeyValue(PLUGIN_KEY, &plugin);
     alsapreferencemap.setKeyValue(SMPLRATE_KEY, &alsaSmplrate);
+#endif
 
 #if HAVE_PULSE
     Conf::MappingNode pulsepreferencemap(NULL);
