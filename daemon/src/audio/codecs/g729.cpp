@@ -74,7 +74,7 @@ G729::~G729()
 int G729::decode(short *dst, unsigned char *buf, size_t buffer_size UNUSED)
 {
    bcg729Decoder(m_pDecStruct,buf,false,dst);
-//    bcg729Decoder(m_pDecStruct,buf+(buffer_size/2),false,dst+10);
+   bcg729Decoder(m_pDecStruct,buf+(buffer_size/2),false,dst+80);
    return 160;
 }
 
