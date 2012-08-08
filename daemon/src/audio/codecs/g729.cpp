@@ -74,12 +74,14 @@ G729::~G729()
 int G729::decode(short *dst, unsigned char *buf, size_t buffer_size UNUSED)
 {
    bcg729Decoder(m_pDecStruct,buf,false,dst);
+   bcg729Decoder(m_pDecStruct,buf+(buffer_size/2),false,dst+10);
    return 20;
 }
 
 int G729::encode(unsigned char *dst, short *src, size_t buffer_size UNUSED)
 {
    bcg729Encoder(m_pEncStruct,src,dst);
+   bcg729Encoder(m_pEncStruct,src+(buffer_size/2),dst+10);
    return 20;
 }
 
