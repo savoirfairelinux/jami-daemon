@@ -158,16 +158,19 @@ LOCAL_LDFLAGS += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lalaw \
 				 -lulaw \
 				 -lexpat \
-				 -lsflphone
+				 -lsflphone \
+				 -lcrypto \
+				 -lssl \
+				 -lz
 
+				 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)
 #   The list of static libraries modules (built with BUILD_STATIC_LIBRARY)
 #   that should be linked to this module. This only makes sense in
 #   shared library modules.
 LOCAL_STATIC_LIBRARIES := libsflphone
 
-LOCAL_SHARED_LIBRARIES += libyaml \
-						  libdbus-c++-1
+LOCAL_SHARED_LIBRARIES += libyaml
 
 include $(BUILD_EXECUTABLE)
 
