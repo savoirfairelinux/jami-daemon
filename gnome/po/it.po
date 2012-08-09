@@ -7,18 +7,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-11-04 21:45+0000\n"
-"Last-Translator: Maxime Chambreuil (http://www.savoirfairelinux.com) <maxime."
-"chambreuil@savoirfairelinux.com>\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-01-05 19:48+0000\n"
+"Last-Translator: Maxime Chambreuil (http://www.savoirfairelinux.com) "
+"<maxime.chambreuil@savoirfairelinux.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: \n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -433,11 +433,10 @@ msgid "Please select one of the following options"
 msgstr "Scegliere una delle seguenti opzioni"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "Creare un account SIP/IAX2 gratuito  su sflphone.org"
+msgstr ""
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
@@ -572,9 +571,8 @@ msgid "Instant Messaging"
 msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:257
-#, fuzzy
 msgid "Enable instant messaging"
-msgstr "Abilita suonerie"
+msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:377
 msgid "Preferences"
@@ -644,9 +642,8 @@ msgid "Security"
 msgstr "Sicurezza"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "Utilizza trasporto TLS (sips)"
+msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
@@ -973,9 +970,9 @@ msgid "Address book"
 msgstr "Rubrica"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "Segreteria telefonica (%i)"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1246,318 +1243,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to connect to the SFLphone server.\n"
-#~ "Make sure the daemon is running."
-#~ msgstr ""
-#~ "Impossibile connettersi al server SFLphone.\n"
-#~ "Accertarsi che il demone sia in esecuzione."
-
-#~ msgid "Codecs"
-#~ msgstr "Codec"
-
-#~ msgid "Bandwidth"
-#~ msgstr "Banda"
-
-#~ msgid "Codec"
-#~ msgstr "Codec"
-
-#~ msgid "(C) 2009 Savoir-faire Linux"
-#~ msgstr "(C) 2009 Savoir-faire Linux"
-
-#~ msgid "Jérémy Quentin"
-#~ msgstr "Jérémy Quentin"
-
-#~ msgid "Hang up"
-#~ msgstr "Chiudi"
-
-#~ msgid "Pick up"
-#~ msgstr "Accetta"
-
-#~ msgid "Record"
-#~ msgstr "Registra"
-
-#~ msgid "Add"
-#~ msgstr "Aggiungi"
-
-#~ msgid "Remove"
-#~ msgstr "Elimina"
-
-#~ msgid "IAX"
-#~ msgstr "IAX"
-
-#~ msgid "Apply"
-#~ msgstr "Applica"
-
-#~ msgid "Down"
-#~ msgstr "Giù"
-
-#~ msgid "Up"
-#~ msgstr "Su"
-
-#~ msgid "Home"
-#~ msgstr "Casa"
-
-#~ msgid "Mobile"
-#~ msgstr "Cellulare"
-
-#~ msgid "ALSA"
-#~ msgstr "ALSA"
-
-#~ msgid "PulseAudio"
-#~ msgstr "PulseAudio"
-
-#~ msgid "Enable notifications"
-#~ msgstr "Attiva le notifiche"
-
-#~ msgid "SIP Port"
-#~ msgstr "SIP Port"
-
-#~ msgid "Port"
-#~ msgstr "Port"
-
-#~ msgid "PulseAudio sound server"
-#~ msgstr "Server audio PulseAudio"
-
-#~ msgid "You have an incoming call from"
-#~ msgstr "Chiamata in arrivo da"
-
-#~ msgid "Hold on"
-#~ msgstr "Attesa"
-
-#~ msgid "New call"
-#~ msgstr "Chiama"
-
-#~ msgid "Command to run"
-#~ msgstr "Comando da eseguire"
-
-#~ msgid "%i account configured"
-#~ msgid_plural "%i accounts configured"
-#~ msgstr[0] "%i account configurato"
-#~ msgstr[1] "%i account configurati"
-
-#~ msgid "_Enable this account"
-#~ msgstr "Abilita questo account"
-
-#~ msgid "Enable voicemail _notifications"
-#~ msgstr "Abilita notifiche messaggi vocali"
-
-#~ msgid "Voicemail number"
-#~ msgstr "Numero segreteria telefonica"
-
-#~ msgid "Enable STUN"
-#~ msgstr "Abilita STUN"
-
-#~ msgid "Stun Server"
-#~ msgstr "Server STUN"
-
-#~ msgid "Address book loading..."
-#~ msgstr "Caricamento rubrica..."
-
-#~ msgid "Stun parameters will be applied on each SIP account created."
-#~ msgstr "I parametri STUN verranno applicati a tutti gli account SIP creati."
-
-#~ msgid "Enable Stun"
-#~ msgstr "Abilita STUN"
-
-#~ msgid "Format : name.server:port"
-#~ msgstr "Formato: nome.del.server:porta"
-
-#~ msgid "Incoming call"
-#~ msgstr "Chiamata in arrivo"
-
-#~ msgid "Display photo if available"
-#~ msgstr "Mostrare foto se disponibile"
-
-#~ msgid "PulseAudio settings"
-#~ msgstr "Impostazioni PulseAudio"
-
-#~ msgid "Work"
-#~ msgstr "Lavoro"
-
-#~ msgid "Display phone numbers of these types :"
-#~ msgstr "Mostrare numeri telefonici di questi tipi:"
-
-#~ msgid "Show main window"
-#~ msgstr "Mostra finestra principale"
-
-#~ msgid "Prefix dialed numbers with"
-#~ msgstr "Prefisso da aggiungere al numero da chiamare"
-
-#~ msgid "_Mute other applications during a call"
-#~ msgstr "Spegni l'audio delle altre applicazioni durante una chiamata"
-
-#~ msgid "Keep my history for at least"
-#~ msgstr "Mantieni la cronologia per almeno"
-
-#~ msgid "IP call - %s"
-#~ msgstr "Chiamata IP diretta - %s"
-
-#~ msgid "Registration _expire"
-#~ msgstr "Scadenza registrazione"
-
-#~ msgid ""
-#~ "Pressing \"apply\" will restart the network layer. Otherwise, SFLPhone "
-#~ "would have to be restarted."
-#~ msgstr ""
-#~ "Premendo il tasto \"Applica\" il modulo di rete verrà riavviato. In "
-#~ "alternativa occorrerebbe riavviare SFLphone."
-
-#~ msgid "Creation of account has failed for the reason"
-#~ msgstr "La creazione dell'accound è fallita per il seguente motivo"
-
-#~ msgid "Account creation wizard"
-#~ msgstr "Procedura guidata creazione account"
-
-#~ msgid ""
-#~ "<b>Error: No audio codecs found.\n"
-#~ "\n"
-#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
-#~ "sflphone</b> directory in your home( <i>%s</i> )"
-#~ msgstr ""
-#~ "<b>Errore: Non è stato trovato alcun codec audio.</b>\n"
-#~ "\n"
-#~ "I codec audio SFL devono trovarsi in <i>%s</i> o nella sottocartella <b>."
-#~ "sflphone</b> della cartella home dell'utente (</i>%s</i>)"
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr ""
-#~ ",Launchpad Contributions:,Maurizio Porrato,Maxime Chambreuil, ,Launchpad "
-#~ "Contributions:,Maurizio Porrato,Maxime Chambreuil, ,Launchpad "
-#~ "Contributions:,Maurizio Porrato,Maxime Chambreuil, ,Launchpad "
-#~ "Contributions:,Maurizio Porrato,Maxime Chambreuil,Milo Casagrande, ,"
-#~ "Launchpad Contributions:,Maurizio Porrato,Maxime Chambreuil (http://www."
-#~ "savoirfairelinux.com),Milo Casagrande,ftaurino"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ""
-#~ ",,,maxime.chambreuil@gmail.com,,,,maxime.chambreuil@gmail.com,,,,maxime."
-#~ "chambreuil@gmail.com,,,,maxime.chambreuil@gmail.com,milo@casagrande."
-#~ "name,,,,maxime.chambreuil@savoirfairelinux.com,milo@casagrande.name,"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "Soppressione _Eco"
-
-#~ msgid "Custom commands on incoming calls with URL"
-#~ msgstr "Comandi personalizzati su chiamate entranti con URL"
-
-#~ msgid "%s will be replaced with the passed URL."
-#~ msgstr "%s verrà sostituito con la URL passata."
-
-#~ msgctxt "account state"
-#~ msgid "Registered"
-#~ msgstr "Registrato"
-
-#~ msgctxt "account state"
-#~ msgid "Invalid"
-#~ msgstr "Non valido"
-
-#~ msgctxt "account state"
-#~ msgid "Host unreachable"
-#~ msgstr "Host non raggiungibile"
-
-#~ msgctxt "account state"
-#~ msgid "Authentication Failed"
-#~ msgstr "Autenticazione fallita"
-
-#~ msgctxt "account state"
-#~ msgid "Network unreachable"
-#~ msgstr "Rete irraggiungibile"
-
-#~ msgctxt "account state"
-#~ msgid "Error"
-#~ msgstr "Errore"
-
-#~ msgid "Email address"
-#~ msgstr "Indirizzo email"
-
-#~ msgid "Call history"
-#~ msgstr "Cronologia chiamate"
-
-#~ msgctxt "Config section"
-#~ msgid "Display"
-#~ msgstr "Display"
-
-#~ msgctxt "Config section"
-#~ msgid "Accounts"
-#~ msgstr "Account"
-
-#~ msgctxt "Config section"
-#~ msgid "Address Book"
-#~ msgstr "Rubrica"
-
-#~ msgctxt "Config section"
-#~ msgid "General"
-#~ msgstr "Generale"
-
-#~ msgctxt "Config section"
-#~ msgid "Recordings"
-#~ msgstr "Registrazioni"
-
-#~ msgid "Add a new account"
-#~ msgstr "Aggiungi un nuovo account"
-
-#~ msgctxt "End of 'Keep my history for at least n days.'"
-#~ msgid "days"
-#~ msgstr "giorni"
-
-#~ msgid "Connection"
-#~ msgstr "Connessione"
-
-#~ msgid "History"
-#~ msgstr "Cronologia"
-
-#~ msgid "_Call"
-#~ msgstr "_Chiama"
-
-#~ msgctxt "account state"
-#~ msgid "Not Registered"
-#~ msgstr "Non registrato"
-
-#~ msgctxt "account state"
-#~ msgid "Stun server invalid"
-#~ msgstr "Server STUN non valido"
-
-#~ msgctxt "account state"
-#~ msgid "Stun configuration error"
-#~ msgstr "Errore di configurazione STUN"
-
-#~ msgid "Default account"
-#~ msgstr "Account predefinito"
-
-#~ msgid "Transfer"
-#~ msgstr "Inoltra"
-
-#~ msgid "Display volume controls"
-#~ msgstr "Mostra i controlli del volume"
-
-#~ msgid "Display dialpad"
-#~ msgstr "Mostra tastiera"
-
-#~ msgctxt "Beginning of 'Keep my history for at least n days.'"
-#~ msgid "_Keep my history for at least"
-#~ msgstr "Mantieni la cronologia per almeno"
-
-#~ msgid "Transfer to : "
-#~ msgstr "Inoltra a: "
-
-#~ msgctxt "Config section"
-#~ msgid "Audio"
-#~ msgstr "Audio"
-
-#~ msgid "Remove the selected account"
-#~ msgstr "Elimina l'account selezionato"
-
-#~ msgctxt "Beginning of 'Keep my history for at least n days.'"
-#~ msgid "Keep my history for at least"
-#~ msgstr "Mantieni la cronologia per almeno"
-
-#~ msgid "Clear history"
-#~ msgstr "Cancella la cronologia"
-
-#~ msgid "Advanced Settings"
-#~ msgstr "Impostazioni avanzate"

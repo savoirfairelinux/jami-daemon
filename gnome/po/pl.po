@@ -7,18 +7,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-11-06 13:49+0000\n"
-"Last-Translator: Sebastian Bujwid <Unknown>\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-01-05 19:59+0000\n"
+"Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
-"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: pl\n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -949,9 +949,9 @@ msgid "Address book"
 msgstr ""
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "%d głosowa wiadomość"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1222,40 +1222,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
-#~ msgstr ""
-#~ "Nie można połączyć się z serwerem SFLphone.\n"
-#~ "Upewnij się, że został uruchomiony daemon SFLphone"
-
-#~ msgctxt "account state"
-#~ msgid "Registered"
-#~ msgstr "Zarejestrowany"
-
-#~ msgid "IP call - %s"
-#~ msgstr "Telefonów IP - %s"
-
-#~ msgid "Codec"
-#~ msgstr "Kodek"
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr ""
-#~ ",Launchpad Contributions:,Maxime Chambreuil, ,Launchpad Contributions:,"
-#~ "Maxime Chambreuil, ,Launchpad Contributions:,Maxime Chambreuil, ,"
-#~ "Launchpad Contributions:,Mariusz Bednarz,Maxime Chambreuil, ,Launchpad "
-#~ "Contributions:,Mariusz Bednarz,Maxime Chambreuil, ,Launchpad "
-#~ "Contributions:,Mariusz Bednarz,Maxime Chambreuil (http://www."
-#~ "savoirfairelinux.com),Sebastian Bujwid"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ""
-#~ ",,maxime.chambreuil@gmail.com,,,maxime.chambreuil@gmail.com,,,maxime."
-#~ "chambreuil@gmail.com,,,mbednarz@bedmar.pl,maxime.chambreuil@gmail.com,,,"
-#~ "mbednarz@bedmar.pl,maxime.chambreuil@gmail.com,,,mbednarz@bedmar.pl,"
-#~ "maxime.chambreuil@savoirfairelinux.com,"

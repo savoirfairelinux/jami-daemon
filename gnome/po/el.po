@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-06-17 19:26+0000\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-01-05 19:59+0000\n"
 "Last-Translator: jarlaxl lamat <sztaasz@gmail.com>\n"
 "Language-Team: Greek <el@li.org>\n"
-"Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:41+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: el\n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -636,9 +636,8 @@ msgid "Security"
 msgstr "Ασφάλεια"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "Χρήση TLS"
+msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
@@ -956,9 +955,9 @@ msgid "Address book"
 msgstr "Βιβλίο διευθύνσεων"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "Τηλεφωνητής (%i)"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1234,36 +1233,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
-#~ msgstr ""
-#~ "Αδυναμία σύνδεσης στον εξυπηρετητη του  SFLphone\n"
-#~ "Σιγουρευτείτε οτι τρέχει ο daemon"
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr " ,Launchpad Contributions:,jarlaxl lamat"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ",,sztaasz@gmail.com"
-
-#~ msgid "%i account configured"
-#~ msgid_plural "%i accounts configured"
-#~ msgstr[0] "Ο %i λογαριασμός  ρυθμίστηκε"
-#~ msgstr[1] "Οι %i λογαριασμοί  ρυθμίστηκαν"
-
-#~ msgid ""
-#~ "<b>Error: No audio codecs found.\n"
-#~ "\n"
-#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
-#~ "sflphone</b> directory in your home( <i>%s</i> )"
-#~ msgstr ""
-#~ "<b>Σφάλμα: Δεν βρέθηκαν codecs ήχου\n"
-#~ "\n"
-#~ "</b>Οι  codecs ήχου SFL πρέπει να βρίσκονται στον <i>%s</i> είτε στον <b>."
-#~ "sflphone</b> φάκελο στον προσωπικο φάκελο  ( <i>%s</i> )"

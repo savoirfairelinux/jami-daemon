@@ -7,23 +7,22 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-06-17 19:19+0000\n"
-"Last-Translator: Launchpad Translations Administrators <rosetta@launchpad."
-"net>\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-06-17 12:50+0000\n"
+"Last-Translator: bonpu <webmaster@minawa.net>\n"
 "Language-Team: Japanese <ja@li.org>\n"
-"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:41+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: ja\n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
 msgid "%s says:"
-msgstr ""
+msgstr "%s のコメント:"
 
 #: ../gnome/src/sflnotify.c:103 ../gnome/src/sflnotify.c:122
 #, c-format
@@ -33,7 +32,7 @@ msgstr "%s アカウント: %s"
 #: ../gnome/src/sflnotify.c:108
 #, c-format
 msgid "<i>From</i> %s"
-msgstr "</i> %sから <i>"
+msgstr "<i>%s から</i>"
 
 #: ../gnome/src/sflnotify.c:125
 #, c-format
@@ -44,7 +43,7 @@ msgstr[0] "%d ボイスメール"
 #: ../gnome/src/sflnotify.c:139
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr "%s アカウント<i>%s</i>を呼び出し中"
+msgstr "%s アカウント <i>%s</i> を呼び出し中"
 
 #: ../gnome/src/sflnotify.c:143
 msgid "Current account"
@@ -69,27 +68,25 @@ msgid ""
 "<i>With:</i> %s \n"
 "using %s"
 msgstr ""
-"<i>で:</i> %s\n"
-" %sを使ってください。"
 
 #: ../gnome/src/sflnotify.c:194
 #, c-format
 msgid "%s does not support ZRTP."
-msgstr "%s はZRTPをサポートできていません。"
+msgstr "%s は ZRTP をサポートしていません"
 
 #: ../gnome/src/sflnotify.c:207
 #, c-format
 msgid "ZRTP negotiation failed with %s"
-msgstr "ZRTP交渉%sで失敗しました"
+msgstr "%s のZRTP negotiation 失敗"
 
 #: ../gnome/src/sflnotify.c:220
 #, c-format
 msgid "<i>With:</i> %s"
-msgstr "<i>With:</i> %s"
+msgstr ""
 
 #: ../gnome/src/statusicon.c:135
 msgid "_Show main window"
-msgstr "メインウィンドウを開く"
+msgstr "メインウィンドウを表示(_S)"
 
 #: ../gnome/src/statusicon.c:142 ../gnome/src/uimanager.c:970
 #: ../gnome/src/uimanager.c:1286 ../gnome/src/uimanager.c:1346
@@ -105,19 +102,19 @@ msgstr[1] ""
 
 #: ../gnome/src/statusicon.c:194
 msgid "SFLphone"
-msgstr "SFLフォン"
+msgstr "SFLphone"
 
 #: ../gnome/src/actions.c:176
 msgid "Using account"
-msgstr "アカウント使用中"
+msgstr "使用アカウント"
 
 #: ../gnome/src/actions.c:180
 msgid "No registered accounts"
-msgstr "アカウント登録されていません"
+msgstr "アカウント未登録"
 
 #: ../gnome/src/actions.c:609 ../gnome/src/actions.c:881
 msgid "Direct SIP call"
-msgstr "ダイレクトSIPコール"
+msgstr "Direct SIP call"
 
 #: ../gnome/src/callable_obj.c:340
 msgid "today at %R"
@@ -137,7 +134,7 @@ msgstr ""
 
 #: ../gnome/src/main.c:96 ../gnome/src/dbus/dbus.c:515
 msgid "SFLphone Error"
-msgstr "SFLphoneエラー"
+msgstr "SFLphone エラー"
 
 #: ../gnome/src/eel-gconf-extensions.c:73
 msgid ""
@@ -148,35 +145,35 @@ msgstr ""
 
 #: ../gnome/src/accountlist.c:151
 msgid "Registered"
-msgstr "登録しました"
+msgstr "登録済み"
 
 #: ../gnome/src/accountlist.c:154
 msgid "Not Registered"
-msgstr "登録できません"
+msgstr "未登録"
 
 #: ../gnome/src/accountlist.c:157
 msgid "Trying..."
-msgstr "検索中..."
+msgstr ""
 
 #: ../gnome/src/accountlist.c:163
 msgid "Authentication Failed"
-msgstr "認証に失敗"
+msgstr ""
 
 #: ../gnome/src/accountlist.c:166
 msgid "Network unreachable"
-msgstr "ネットワークに接続できません"
+msgstr "ネットワーク接続不可"
 
 #: ../gnome/src/accountlist.c:169
 msgid "Host unreachable"
-msgstr "ホストに接続できません"
+msgstr "ホスト接続不可"
 
 #: ../gnome/src/accountlist.c:172
 msgid "Stun configuration error"
-msgstr "構成エラー"
+msgstr "Stun 設定エラー"
 
 #: ../gnome/src/accountlist.c:175
 msgid "Stun server invalid"
-msgstr "サーバー無効"
+msgstr "Stun サーバー無効"
 
 #: ../gnome/src/accountlist.c:178
 msgid "Ready"
@@ -188,27 +185,27 @@ msgstr "無効"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:51
 msgid "ZRTP Options"
-msgstr "ZRTPオプション"
+msgstr "ZRTP オプション"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:70
 msgid "Send Hello Hash in S_DP"
-msgstr "SDPでハローハッシュ送信"
+msgstr ""
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:75
 msgid "Ask User to Confirm SAS"
-msgstr "ユーザーへSAS確認"
+msgstr ""
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:80
 msgid "_Warn if ZRTP not supported"
-msgstr "ZRTPがサポートされているかどうか警告"
+msgstr ""
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:85
 msgid "Display SAS once for hold events"
-msgstr "イベント管理のためSAS表示"
+msgstr ""
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:124
 msgid "SDES Options"
-msgstr ""
+msgstr "SDES オプション"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:142
 msgid "Fallback on RTP on SDES failure"
@@ -229,35 +226,35 @@ msgstr "ビットレート"
 
 #: ../gnome/src/config/audioconf.c:669
 msgid "ALSA plugin"
-msgstr "ALSAプラグイン"
+msgstr "ALSA プラグイン"
 
 #: ../gnome/src/config/audioconf.c:691
 msgid "Output"
-msgstr "出力"
+msgstr "アウトプット"
 
 #: ../gnome/src/config/audioconf.c:713
 msgid "Input"
-msgstr "入力"
+msgstr "インプット"
 
 #: ../gnome/src/config/audioconf.c:734
 msgid "Ringtone"
-msgstr ""
+msgstr "着信音"
 
 #: ../gnome/src/config/audioconf.c:775
 msgid "Sound Manager"
-msgstr "サウンドマネージャー"
+msgstr "Sound Manager"
 
 #: ../gnome/src/config/audioconf.c:786
 msgid "_Pulseaudio"
-msgstr "パルスオーディオ"
+msgstr "_Pulseaudio"
 
 #: ../gnome/src/config/audioconf.c:790
 msgid "_ALSA"
-msgstr "ALSA"
+msgstr "_ALSA"
 
 #: ../gnome/src/config/audioconf.c:796
 msgid "ALSA settings"
-msgstr "ALSA設定"
+msgstr "ALSA 設定"
 
 #: ../gnome/src/config/audioconf.c:807
 msgid "Recordings"
@@ -265,27 +262,27 @@ msgstr "録音"
 
 #: ../gnome/src/config/audioconf.c:811
 msgid "Destination folder"
-msgstr "インストール先フォルダ"
+msgstr "保存先フォルダー"
 
 #: ../gnome/src/config/audioconf.c:815
 msgid "Select a folder"
-msgstr "フォルダの選択"
+msgstr "フォルダーの選択"
 
 #: ../gnome/src/config/audioconf.c:827
 msgid "_Always recording"
-msgstr ""
+msgstr "常時録音(_A)"
 
 #: ../gnome/src/config/audioconf.c:834
 msgid "Voice enhancement settings"
-msgstr ""
+msgstr "音声詳細設定"
 
 #: ../gnome/src/config/audioconf.c:837
 msgid "_Noise Reduction"
-msgstr ""
+msgstr "ノイズリダクション(_N)"
 
 #: ../gnome/src/config/audioconf.c:851
 msgid "_Echo Cancellation"
-msgstr ""
+msgstr "エコーキャンセラー(_E)"
 
 #: ../gnome/src/config/addressbook-config.c:339
 #: ../gnome/src/config/preferencesdialog.c:416
@@ -295,84 +292,82 @@ msgstr "全般"
 
 #: ../gnome/src/config/addressbook-config.c:343
 msgid "_Use Evolution address books"
-msgstr "展開アドレス帳の使用"
+msgstr "Evolution address books の使用(_A)"
 
 #: ../gnome/src/config/addressbook-config.c:350
 msgid "Download limit :"
-msgstr "ダウンロードの制限"
+msgstr "ダウンロード制限 :"
 
 #: ../gnome/src/config/addressbook-config.c:358
 msgid "cards"
-msgstr "カード"
+msgstr "cards"
 
 #: ../gnome/src/config/addressbook-config.c:363
 msgid "_Display contact photo if available"
-msgstr "可能であれば連絡先の写真を表示"
+msgstr "contact photo がある場合は表示(_D)"
 
 #: ../gnome/src/config/addressbook-config.c:369
 msgid "Fields from Evolution's address books"
-msgstr "展開アドレス帳の項目"
+msgstr "Fields from Evolution's address books"
 
 #: ../gnome/src/config/addressbook-config.c:372
 msgid "_Work"
-msgstr "勤務先"
+msgstr "_Work"
 
 #: ../gnome/src/config/addressbook-config.c:378
 msgid "_Home"
-msgstr "自宅"
+msgstr "_Home"
 
 #: ../gnome/src/config/addressbook-config.c:384
 msgid "_Mobile"
-msgstr "携帯"
+msgstr "_Mobile"
 
 #: ../gnome/src/config/addressbook-config.c:390
 msgid "Address Books"
-msgstr "アドレス帳"
+msgstr "Address Books"
 
 #: ../gnome/src/config/addressbook-config.c:394
 msgid "Select which Evolution address books to use"
-msgstr "展開アドレス帳使用の選択"
+msgstr "使用する Evolution address books の選択"
 
 #: ../gnome/src/config/hooks-config.c:149
 msgid "URL Argument"
-msgstr "URL 引数"
+msgstr "URL Argument"
 
 #: ../gnome/src/config/hooks-config.c:157
 msgid "Trigger on specific _SIP header"
-msgstr "特定SIPヘッダーのトリガ"
+msgstr "Trigger on specific _SIP header"
 
 #: ../gnome/src/config/hooks-config.c:166
 msgid "Trigger on _IAX2 URL"
-msgstr "IAX2 URLのトリガ"
+msgstr "Trigger on _IAX2 URL"
 
 #: ../gnome/src/config/hooks-config.c:171
 msgid "Command to _run"
-msgstr "実行するコマンド"
+msgstr "Command to _run"
 
 #: ../gnome/src/config/hooks-config.c:181
 msgid "Phone number rewriting"
-msgstr "電話番号書き換え"
+msgstr "電話番号のリライト"
 
 #: ../gnome/src/config/hooks-config.c:185
 msgid "_Prefix dialed numbers with"
-msgstr "プレフィックス番号"
+msgstr "プレフィックス番号(_P)"
 
 #: ../gnome/src/config/assistant.c:78
 #, c-format
 msgid "This assistant is now finished."
-msgstr "アシスタントは現在終了"
+msgstr "このアシスタントは完了しました。"
 
 #: ../gnome/src/config/assistant.c:80
 msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
-msgstr ""
-"登録状況の確認またはオプション/アカウントウィンドウでアカウントパラメータを変"
-"更できます"
+msgstr "登録状況の確認及びオプション/アカウントウィンドウからのアカウント設定の変更はいつでも可能です。"
 
 #: ../gnome/src/config/assistant.c:83
 msgid "Alias"
-msgstr "別名"
+msgstr "通称名"
 
 #: ../gnome/src/config/assistant.c:87
 msgid "Server"
@@ -384,43 +379,43 @@ msgstr "ユーザー名"
 
 #: ../gnome/src/config/assistant.c:95
 msgid "Security: "
-msgstr "セキュリティー "
+msgstr "セキュリティ: "
 
 #: ../gnome/src/config/assistant.c:98
 msgid "SRTP/ZRTP draft-zimmermann"
-msgstr "SRTP/ZRTP草稿"
+msgstr "SRTP/ZRTP draft-zimmermann"
 
 #: ../gnome/src/config/assistant.c:100
 msgid "None"
-msgstr "なし"
+msgstr "None"
 
 #: ../gnome/src/config/assistant.c:244
 msgid "SFLphone account creation wizard"
-msgstr "SFLフォンアカウント作成ウィザード"
+msgstr "SFLphone アカウント作成ウィザード"
 
 #: ../gnome/src/config/assistant.c:271
 msgid "Welcome to the Account creation wizard of SFLphone!"
-msgstr "SFLフォンのアカウント作成ウィザードへようこそ"
+msgstr "SFLphone アカウント作成ウィザードへようこそ！"
 
 #: ../gnome/src/config/assistant.c:272
 msgid "This installation wizard will help you configure an account."
-msgstr "このインストールウィザードはアカウント作成を助けます"
+msgstr "このインストールウィザードはアカウント作成を手助けします"
 
 #: ../gnome/src/config/assistant.c:287
 msgid "VoIP Protocols"
-msgstr "VoIPプロトコル"
+msgstr "VoIP プロトコル"
 
 #: ../gnome/src/config/assistant.c:287
 msgid "Select an account type"
-msgstr "勘定タイプの選択"
+msgstr "アカウントタイプの選択"
 
 #: ../gnome/src/config/assistant.c:289
 msgid "SIP (Session Initiation Protocol)"
-msgstr "SIP（セッション開始プロトコル）"
+msgstr "SIP (Session Initiation Protocol)"
 
 #: ../gnome/src/config/assistant.c:291
 msgid "IAX2 (InterAsterix Exchange)"
-msgstr "IAX2（アスタリスク変換）"
+msgstr "IAX2 (InterAsterix Exchange)"
 
 #: ../gnome/src/config/assistant.c:306
 msgid "Account"
@@ -428,46 +423,47 @@ msgstr "アカウント"
 
 #: ../gnome/src/config/assistant.c:306
 msgid "Please select one of the following options"
-msgstr "オプションに従い１つ選択してください"
+msgstr "オプションに従い１つを選択して下さい"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "無料SIP/IAX2アカウントをsflフォン組織に作成"
+msgstr ""
+"sflphone.org でフリーなSIP/IAX2 アカウントを作成\n"
+"(For testing purpose only)"
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
-msgstr "SIPまたは IAX2アカウントの存在を登録"
+msgstr "既得 SIP 又は IAX2 アカウントを登録"
 
 #: ../gnome/src/config/assistant.c:324
 msgid "SIP account settings"
-msgstr "SIPアカウント設定"
+msgstr "SIP アカウント設定"
 
 #: ../gnome/src/config/assistant.c:324 ../gnome/src/config/assistant.c:424
 msgid "Please fill the following information"
-msgstr "情報を入力してください"
+msgstr "情報を入力して下さい"
 
 #: ../gnome/src/config/assistant.c:332 ../gnome/src/config/assistant.c:432
 #: ../gnome/src/config/accountconfigdialog.c:250
 msgid "_Alias"
-msgstr "別名(_A)"
+msgstr "通称名(_A)"
 
 #: ../gnome/src/config/assistant.c:340 ../gnome/src/config/assistant.c:440
 #: ../gnome/src/config/accountconfigdialog.c:289
 msgid "_Host name"
-msgstr "ホスト名"
+msgstr "ホスト名(_H)"
 
 #: ../gnome/src/config/assistant.c:348 ../gnome/src/config/assistant.c:448
 #: ../gnome/src/config/accountconfigdialog.c:298
 msgid "_User name"
-msgstr "ユーザー名"
+msgstr "ユーザー名(_U)"
 
 #: ../gnome/src/config/assistant.c:358 ../gnome/src/config/assistant.c:457
 #: ../gnome/src/config/accountconfigdialog.c:313
 msgid "_Password"
-msgstr "パスワード(_P):"
+msgstr "パスワード(_P)"
 
 #: ../gnome/src/config/assistant.c:367 ../gnome/src/config/assistant.c:466
 #: ../gnome/src/config/accountconfigdialog.c:329
@@ -477,11 +473,11 @@ msgstr "パスワードを表示"
 #: ../gnome/src/config/assistant.c:372 ../gnome/src/config/assistant.c:471
 #: ../gnome/src/config/accountconfigdialog.c:343
 msgid "_Voicemail number"
-msgstr "ボイスメールの番号"
+msgstr "ボイスメール番号(_V)"
 
 #: ../gnome/src/config/assistant.c:380 ../gnome/src/config/assistant.c:410
 msgid "Secure communications with _ZRTP"
-msgstr "ZRTPセキュリティーで保護された通信"
+msgstr "ZRTP で保護された通信(_Z)"
 
 #: ../gnome/src/config/assistant.c:394
 msgid "Optional email address"
@@ -489,31 +485,31 @@ msgstr "任意のメールアドレス"
 
 #: ../gnome/src/config/assistant.c:394
 msgid "This email address will be used to send your voicemail messages."
-msgstr "このメールアドレスはボイスメールメッセージに送られます"
+msgstr "このメールアドレスはボイスメールメッセージの送信に使用されます"
 
 #: ../gnome/src/config/assistant.c:402
 msgid "_Email address"
-msgstr "Eメールアドレス"
+msgstr "Eメールアドレス(_E)"
 
 #: ../gnome/src/config/assistant.c:424
 msgid "IAX2 account settings"
-msgstr "IAX2アカウント設定"
+msgstr "IAX2 アカウント設定"
 
 #: ../gnome/src/config/assistant.c:490
 msgid "Network Address Translation (NAT)"
-msgstr "ネットワークアドレス変換(NAT)"
+msgstr "ネットワークアドレス変換 (NAT)"
 
 #: ../gnome/src/config/assistant.c:490
 msgid "You should probably enable this if you are behind a firewall."
-msgstr "ファイアウォールの内側であれば接続できます"
+msgstr "You should probably enable this if you are behind a firewall."
 
 #: ../gnome/src/config/assistant.c:499
 msgid "E_nable STUN"
-msgstr "STUN有効（E）"
+msgstr "STUN を有効(_E)"
 
 #: ../gnome/src/config/assistant.c:506
 msgid "_STUN server"
-msgstr "STUNサーバー"
+msgstr "STUN サーバー(_S)"
 
 #: ../gnome/src/config/assistant.c:521
 msgid "Account Registration"
@@ -521,7 +517,7 @@ msgstr "アカウント登録"
 
 #: ../gnome/src/config/assistant.c:521
 msgid "Congratulations!"
-msgstr "設定完了"
+msgstr "Congratulations!"
 
 #: ../gnome/src/config/preferencesdialog.c:169
 msgid "Desktop Notifications"
@@ -529,27 +525,27 @@ msgstr "デスクトップ通知"
 
 #: ../gnome/src/config/preferencesdialog.c:174
 msgid "_Enable notifications"
-msgstr "通知可能"
+msgstr "通知を有効(_E)"
 
 #: ../gnome/src/config/preferencesdialog.c:181
 msgid "System Tray Icon"
-msgstr "システムトレイアイコン"
+msgstr "システムトレイ・アイコン"
 
 #: ../gnome/src/config/preferencesdialog.c:189
 msgid "Show SFLphone in the system tray"
-msgstr ""
+msgstr "システムトレイに SFLphone を表示"
 
 #: ../gnome/src/config/preferencesdialog.c:196
 msgid "_Popup main window on incoming call"
-msgstr "着信通話のポップアップメインウィンドウ"
+msgstr "着信時にメインウィンドウをポップアップ(_P)"
 
 #: ../gnome/src/config/preferencesdialog.c:202
 msgid "Ne_ver popup main window"
-msgstr "ポップアップメインウィンドウ非表示"
+msgstr "メインウィンドウをポップアップさせない(_v)"
 
 #: ../gnome/src/config/preferencesdialog.c:215
 msgid "Hide SFLphone window on _startup"
-msgstr "起動SFLphoneウィンドウ非表示"
+msgstr "起動時に SFLphone ウィンドウを表示しない(_s)"
 
 #: ../gnome/src/config/preferencesdialog.c:229
 msgid "Calls History"
@@ -557,66 +553,65 @@ msgstr "着信履歴"
 
 #: ../gnome/src/config/preferencesdialog.c:233
 msgid "_Keep my history for at least"
-msgstr "最後の着信履歴の保護"
+msgstr "_Keep my history for at least"
 
 #: ../gnome/src/config/preferencesdialog.c:248
 msgid "days"
-msgstr "曜日"
+msgstr "days"
 
 #: ../gnome/src/config/preferencesdialog.c:253
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Instant Messaging"
 
 #: ../gnome/src/config/preferencesdialog.c:257
-#, fuzzy
 msgid "Enable instant messaging"
-msgstr "着信音可能"
+msgstr "インスタントメッセージを有効"
 
 #: ../gnome/src/config/preferencesdialog.c:377
 msgid "Preferences"
-msgstr "基本設定"
+msgstr "設定"
 
 #: ../gnome/src/config/preferencesdialog.c:422
 #: ../gnome/src/config/accountconfigdialog.c:1070
 #: ../gnome/src/config/accountconfigdialog.c:1208
 msgid "Audio"
-msgstr "音声"
+msgstr "オーディオ"
 
 #: ../gnome/src/config/preferencesdialog.c:427
 msgid "Hooks"
-msgstr "フック"
+msgstr "Hooks"
 
 #: ../gnome/src/config/preferencesdialog.c:432
 msgid "Shortcuts"
-msgstr ""
+msgstr "ショートカット"
 
 #: ../gnome/src/config/preferencesdialog.c:438
 msgid "Address Book"
-msgstr "アドレス帳"
+msgstr "Address Book"
 
 #: ../gnome/src/config/accountconfigdialog.c:231
 msgid "Account Parameters"
-msgstr "アカウントパラメーター"
+msgstr "アカウント・パラメーター"
 
 #: ../gnome/src/config/accountconfigdialog.c:260
 msgid "_Protocol"
-msgstr "プロトコル"
+msgstr "プロトコル(_P)"
 
 #: ../gnome/src/config/accountconfigdialog.c:277
 msgid "Unknown"
-msgstr "不明"
+msgstr "Unknown"
 
 #: ../gnome/src/config/accountconfigdialog.c:334
 msgid "_Proxy"
-msgstr ""
+msgstr "プロキシ(_P)"
 
 #: ../gnome/src/config/accountconfigdialog.c:352
 msgid "_User-agent"
-msgstr ""
+msgstr "ユーザーエージェント(_U)"
 
 #: ../gnome/src/config/accountconfigdialog.c:413
 msgid "Authentication"
-msgstr "認証"
+msgstr "Authentication"
 
 #: ../gnome/src/config/accountconfigdialog.c:414
 msgid "Secret"
@@ -624,11 +619,11 @@ msgstr "シークレット"
 
 #: ../gnome/src/config/accountconfigdialog.c:658
 msgid "Credential"
-msgstr "資格情報"
+msgstr "Credential"
 
 #: ../gnome/src/config/accountconfigdialog.c:692
 msgid "Authentication name"
-msgstr "名前の認証"
+msgstr "Authentication name"
 
 #: ../gnome/src/config/accountconfigdialog.c:703
 msgid "Password"
@@ -640,13 +635,12 @@ msgid "Security"
 msgstr "セキュリティ"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "TLS トランスポートを使用"
+msgstr "TLS transport(sips) を使用"
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
-msgstr "SRTP キー交換"
+msgstr "SRTP key exchange"
 
 #: ../gnome/src/config/accountconfigdialog.c:779
 msgid "Disabled"
@@ -658,60 +652,60 @@ msgstr "登録"
 
 #: ../gnome/src/config/accountconfigdialog.c:847
 msgid "Registration expire"
-msgstr "登録期間切れ"
+msgstr "登録失効"
 
 #: ../gnome/src/config/accountconfigdialog.c:856
 msgid "_Comply with RFC 3263"
-msgstr "RFC 3263に準拠"
+msgstr "_Comply with RFC 3263"
 
 #: ../gnome/src/config/accountconfigdialog.c:876
 msgid "Network Interface"
-msgstr "ネットワークインターフェース"
+msgstr "Network Interface"
 
 #: ../gnome/src/config/accountconfigdialog.c:887
 msgid "Local address"
-msgstr "ローカルアドレス"
+msgstr "Local address"
 
 #: ../gnome/src/config/accountconfigdialog.c:918
 msgid "Local port"
-msgstr "ローカルポート"
+msgstr "Local port"
 
 #: ../gnome/src/config/accountconfigdialog.c:960
 #: ../gnome/src/config/accountconfigdialog.c:994
 msgid "Published address"
-msgstr "アドレス公開"
+msgstr "Published address"
 
 #: ../gnome/src/config/accountconfigdialog.c:964
 msgid "Using STUN"
-msgstr "STUN使用"
+msgstr "STUN を使用"
 
 #: ../gnome/src/config/accountconfigdialog.c:972
 msgid "STUN server URL"
-msgstr "STUNサーバーのURL"
+msgstr "STUN server URL"
 
 #: ../gnome/src/config/accountconfigdialog.c:980
 msgid "Same as local parameters"
-msgstr "ローカルパラメータと同様"
+msgstr "Same as local parameters"
 
 #: ../gnome/src/config/accountconfigdialog.c:983
 msgid "Set published address and port:"
-msgstr "公開アドレスとポートの設定"
+msgstr "Set published address and port:"
 
 #: ../gnome/src/config/accountconfigdialog.c:1003
 msgid "Published port"
-msgstr "公開ポート"
+msgstr "Published port"
 
 #: ../gnome/src/config/accountconfigdialog.c:1084
 msgid "DTMF"
-msgstr ""
+msgstr "DTMF"
 
 #: ../gnome/src/config/accountconfigdialog.c:1095
 msgid "RTP"
-msgstr ""
+msgstr "RTP"
 
 #: ../gnome/src/config/accountconfigdialog.c:1099
 msgid "SIP"
-msgstr ""
+msgstr "SIP"
 
 #: ../gnome/src/config/accountconfigdialog.c:1107
 msgid "Ringtones"
@@ -719,15 +713,15 @@ msgstr "着信音"
 
 #: ../gnome/src/config/accountconfigdialog.c:1110
 msgid "Choose a ringtone"
-msgstr "着信音選択"
+msgstr "着信音の選択"
 
 #: ../gnome/src/config/accountconfigdialog.c:1115
 msgid "_Enable ringtones"
-msgstr "着信音可能"
+msgstr "着信音を有効(_E)"
 
 #: ../gnome/src/config/accountconfigdialog.c:1127
 msgid "Audio Files"
-msgstr "音声ファイル"
+msgstr "Audio Files"
 
 #: ../gnome/src/config/accountconfigdialog.c:1145
 msgid ""
@@ -735,13 +729,13 @@ msgid ""
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
-"<b>sip:remotepeer</b>.のようなsip URI を入力し単にリモートピアに達成したい時"
-"にこのプロファイルが使用可能\r\n"
-"着信通話または発信通話を照合できないアカウントであれば設定も可能"
+"This profile is used when you want to reach a remote peer simply by typing a "
+"sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
+"also be used if no account can be matched to an incoming or outgoing call."
 
 #: ../gnome/src/config/accountconfigdialog.c:1182
 msgid "Account settings"
-msgstr "アカウントの設定"
+msgstr "アカウント設定"
 
 #: ../gnome/src/config/accountconfigdialog.c:1202
 msgid "Basic"
@@ -753,16 +747,16 @@ msgstr "詳細設定"
 
 #: ../gnome/src/config/accountconfigdialog.c:1235
 msgid "Network"
-msgstr ""
+msgstr "ネットワーク"
 
 #: ../gnome/src/config/shortcuts-config.c:117
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
-msgstr ""
+msgstr "Be careful: these shortcuts might override system-wide shortcuts."
 
 #: ../gnome/src/config/accountlistconfigdialog.c:202
 #, c-format
 msgid "Server returned \"%s\" (%d)"
-msgstr "サーバーが\"%s\" (%d)を返しました"
+msgstr "サーバーが \"%s\" (%d) を通知"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:494
 msgid "Protocol"
@@ -770,7 +764,7 @@ msgstr "プロトコル"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:502
 msgid "Status"
-msgstr "状態"
+msgstr "Status"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:581
 msgid "Accounts"
@@ -778,25 +772,25 @@ msgstr "アカウント"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:590
 msgid "Configured Accounts"
-msgstr "アカウント設定済み"
+msgstr "設定済みアカウント"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:608
 #, c-format
 msgid "There is %d active account"
 msgid_plural "There are %d active accounts"
-msgstr[0] "%dアクティブアカウント"
+msgstr[0] "%d アクティブ・アカウント"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:615
 msgid "You have no active account"
-msgstr "アクティブアカウントが存在しません"
+msgstr "アクティブなアカウントがありません"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:41
 msgid "Advanced options for TLS"
-msgstr "TLSの詳細設定オプション"
+msgstr "TLS 詳細オプション"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:58
 msgid "TLS transport"
-msgstr "TLS転送"
+msgstr "TLS transport"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:62
 msgid ""
@@ -806,10 +800,6 @@ msgid ""
 "dedicated\n"
 "port, different one from each other\n"
 msgstr ""
-"通話はセキュリティーで保護されたSIPトランザクションの要求によりTLS転送はUDPを"
-"使用できます。\n"
-"それぞれのアカウントでTLS転送を確認してください。そうするとそれぞれ専用ポー"
-"ト、異なったものに実行できます。\n"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:109
 msgid "Global TLS listener (all accounts)"
@@ -817,55 +807,55 @@ msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:123
 msgid "Certificate of Authority list"
-msgstr "j証明機関の一覧"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:126
 msgid "Choose a CA list file (optional)"
-msgstr "CAリストファイルの選択"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:138
 msgid "Public endpoint certificate file"
-msgstr "公式エンドポイント証明ファイル"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:141
 msgid "Choose a public endpoint certificate (optional)"
-msgstr "公式エンドポイント証明の選択"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:159
 msgid "Choose a private key file (optional)"
-msgstr "個人キーファイルの選択"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:174
 msgid "Password for the private key"
-msgstr "プライベートキーのパスワード"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:189
 msgid "TLS protocol method"
-msgstr "TLSプロトコルメソッド"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:217
 msgid "TLS cipher list"
-msgstr "TLS暗号一覧"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:226
 msgid "Server name instance for outgoing TLS connection"
-msgstr "TLS接続発信サーバー名インスタンス"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:234
 msgid "Negotiation timeout (sec:msec)"
-msgstr "ネゴシエーションタイムアウト"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:251
 msgid "Verify incoming certificates, as a server"
-msgstr "サーバーの証明受信の確認"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:257
 msgid "Verify certificates from answer, as a client"
-msgstr "クライアント応答証明の確認"
+msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:263
 msgid "Require certificate for incoming tls connections"
-msgstr "受信tls接続のための証明要求"
+msgstr ""
 
 #: ../gnome/src/contacts/searchbar.c:198
 msgid "Search all"
@@ -874,7 +864,7 @@ msgstr "すべて検索"
 #: ../gnome/src/contacts/searchbar.c:199 ../gnome/src/contacts/searchbar.c:214
 #: ../gnome/src/contacts/searchbar.c:226 ../gnome/src/contacts/searchbar.c:238
 msgid "Click here to change the search type"
-msgstr "検索の種類を変更するにはここをクリックしてください"
+msgstr "検索の種類を変更する場合、ここをクリック"
 
 #: ../gnome/src/contacts/searchbar.c:213
 msgid "Search by missed call"
@@ -890,7 +880,7 @@ msgstr "発信通話の検索"
 
 #: ../gnome/src/sliders.c:174
 msgid "Speakers volume"
-msgstr "スピーカーの音量"
+msgstr "スピーカー音量"
 
 #: ../gnome/src/sliders.c:174
 msgid "Mic volume"
@@ -906,25 +896,25 @@ msgstr "呼び出し中"
 
 #: ../gnome/src/mainwindow.c:133
 msgid "Do you still want to quit?"
-msgstr "キャンセルしますか？"
+msgstr "終了しますか？"
 
 #: ../gnome/src/mainwindow.c:425
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
-msgstr "ZRTPが%sにサポートされていません。\n"
+msgstr ""
 
 #: ../gnome/src/mainwindow.c:427
 msgid "Secure Communication Unavailable"
-msgstr "安全なコミュニケーションが利用できません。"
+msgstr ""
 
 #: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:456
 msgid "Continue"
-msgstr "次へ"
+msgstr ""
 
 #: ../gnome/src/mainwindow.c:431 ../gnome/src/mainwindow.c:457
 #: ../gnome/src/mainwindow.c:474
 msgid "Stop Call"
-msgstr "電話をやめてください"
+msgstr ""
 
 #: ../gnome/src/mainwindow.c:449
 #, c-format
@@ -932,12 +922,10 @@ msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
 "Exact reason: %s\n"
 msgstr ""
-"A %s エラーは非暗号化されているため%sの呼び出しを強制終了しました。\n"
-"正確な理由：%s\n"
 
 #: ../gnome/src/mainwindow.c:453
 msgid "ZRTP negotiation failed"
-msgstr "ZRTP交渉失敗"
+msgstr "ZRTP negotiation 失敗"
 
 #: ../gnome/src/mainwindow.c:467
 #, c-format
@@ -945,12 +933,10 @@ msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
 msgstr ""
-"%sはセキュリティーで保護された通信を使うのをやめてください。SRTPなしで会話が"
-"再開するのを確認してください。\n"
 
 #: ../gnome/src/mainwindow.c:469
 msgid "Confirm Go Clear"
-msgstr "クリアを確認してください。"
+msgstr ""
 
 #: ../gnome/src/mainwindow.c:472
 msgid "Confirm"
@@ -958,24 +944,24 @@ msgstr "確認"
 
 #: ../gnome/src/uimanager.c:159
 msgid "No address book selected"
-msgstr "アドレス帳が選択されていません"
+msgstr "address book が未選択です"
 
 #: ../gnome/src/uimanager.c:183 ../gnome/src/uimanager.c:1051
 msgid "Address book"
-msgstr "アドレス帳"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "ボイスメール(%i)"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "SFLフォンはVoIPクライアントとSIP、IAX2プロトコルと互換性があります"
+msgstr "SFLphone は SIP と IAX2 プロトコルに互換性があるVoIPクライアントです"
 
 #: ../gnome/src/uimanager.c:510
 msgid "About SFLphone"
-msgstr "SFLフォンに関して"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:931 ../gnome/src/uimanager.c:990
 msgid "Voicemail"
@@ -983,23 +969,23 @@ msgstr "ボイスメール"
 
 #: ../gnome/src/uimanager.c:960
 msgid "Call"
-msgstr "呼び出し"
+msgstr "発信"
 
 #: ../gnome/src/uimanager.c:962 ../gnome/src/uimanager.c:1435
 msgid "_New call"
-msgstr "通話先"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:963
 msgid "Place a new call"
-msgstr "発信します"
+msgstr "新規に発信"
 
 #: ../gnome/src/uimanager.c:966 ../gnome/src/uimanager.c:1275
 msgid "_Pick up"
-msgstr "選択"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:967
 msgid "Answer the call"
-msgstr "応答する"
+msgstr "応答"
 
 #: ../gnome/src/uimanager.c:971
 msgid "Finish the call"
@@ -1007,7 +993,7 @@ msgstr "通話終了"
 
 #: ../gnome/src/uimanager.c:974
 msgid "O_n hold"
-msgstr "保留"
+msgstr "保留(_n)"
 
 #: ../gnome/src/uimanager.c:975
 msgid "Place the call on hold"
@@ -1015,31 +1001,31 @@ msgstr "保留中"
 
 #: ../gnome/src/uimanager.c:978
 msgid "O_ff hold"
-msgstr "保留解除"
+msgstr "保留解除(_f)"
 
 #: ../gnome/src/uimanager.c:979
 msgid "Place the call off hold"
-msgstr "保留を解除する"
+msgstr "保留を解除"
 
 #: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1331
 msgid "Send _message"
-msgstr ""
+msgstr "メッセージを送信(_m)"
 
 #: ../gnome/src/uimanager.c:983
 msgid "Send message"
-msgstr ""
+msgstr "メッセージを送信します"
 
 #: ../gnome/src/uimanager.c:986
 msgid "Configuration _Assistant"
-msgstr "構成アシスタント"
+msgstr "設定アシスタント(_A)"
 
 #: ../gnome/src/uimanager.c:987
 msgid "Run the configuration assistant"
-msgstr "構成アシスタントを起動します"
+msgstr "設定アシスタントを起動します"
 
 #: ../gnome/src/uimanager.c:991
 msgid "Call your voicemail"
-msgstr "ボイスメールに電話をしてください"
+msgstr "ボイスメールに通話"
 
 #: ../gnome/src/uimanager.c:994
 msgid "_Close"
@@ -1047,7 +1033,7 @@ msgstr "閉じる(_C)"
 
 #: ../gnome/src/uimanager.c:995
 msgid "Minimize to system tray"
-msgstr "システムトレイを最小化する"
+msgstr "システムトレイに最小化する"
 
 #: ../gnome/src/uimanager.c:998
 msgid "_Quit"
@@ -1059,19 +1045,19 @@ msgstr "プログラムの終了"
 
 #: ../gnome/src/uimanager.c:1002
 msgid "_Playback record"
-msgstr ""
+msgstr "録音を再生(_P)"
 
 #: ../gnome/src/uimanager.c:1003
 msgid "Playback recorded file"
-msgstr ""
+msgstr "録音ファイルを再生します"
 
 #: ../gnome/src/uimanager.c:1006
 msgid "_Stop playback"
-msgstr ""
+msgstr "再生をストップ(_S)"
 
 #: ../gnome/src/uimanager.c:1007
 msgid "Stop recorded file playback"
-msgstr ""
+msgstr "録音ファイルの再生をストップします"
 
 #: ../gnome/src/uimanager.c:1011
 msgid "_Edit"
@@ -1083,7 +1069,7 @@ msgstr "コピー(_C)"
 
 #: ../gnome/src/uimanager.c:1014
 msgid "Copy the selection"
-msgstr "選択範囲をコピー"
+msgstr "選択範囲をコピーします"
 
 #: ../gnome/src/uimanager.c:1017
 msgid "_Paste"
@@ -1091,15 +1077,15 @@ msgstr "貼り付け(_P)"
 
 #: ../gnome/src/uimanager.c:1018
 msgid "Paste the clipboard"
-msgstr "クリップボードに貼り付け"
+msgstr "クリップボードへ貼り付けます"
 
 #: ../gnome/src/uimanager.c:1021
 msgid "Clear _history"
-msgstr "履歴消去"
+msgstr "履歴消去(_h)"
 
 #: ../gnome/src/uimanager.c:1022
 msgid "Clear the call history"
-msgstr "通話履歴消去"
+msgstr "通話履歴を消去"
 
 #: ../gnome/src/uimanager.c:1025
 msgid "_Accounts"
@@ -1107,15 +1093,15 @@ msgstr "アカウント(_A)"
 
 #: ../gnome/src/uimanager.c:1026
 msgid "Edit your accounts"
-msgstr "アカウント編集"
+msgstr "アカウントを編集します"
 
 #: ../gnome/src/uimanager.c:1029
 msgid "_Preferences"
-msgstr "基本設定"
+msgstr "設定(_P)"
 
 #: ../gnome/src/uimanager.c:1030
 msgid "Change your preferences"
-msgstr "基本設定の変更"
+msgstr "設定を変更します"
 
 #: ../gnome/src/uimanager.c:1034
 msgid "_View"
@@ -1127,7 +1113,7 @@ msgstr "ヘルプ(_H)"
 
 #: ../gnome/src/uimanager.c:1038
 msgid "Contents"
-msgstr "目次"
+msgstr "コンテンツ"
 
 #: ../gnome/src/uimanager.c:1039
 msgid "Open the manual"
@@ -1135,11 +1121,11 @@ msgstr "手動で開く"
 
 #: ../gnome/src/uimanager.c:1041
 msgid "About this application"
-msgstr "アプリケーションについて"
+msgstr "このアプリケーションについて"
 
 #: ../gnome/src/uimanager.c:1045
 msgid "_Transfer"
-msgstr "転送"
+msgstr "転送(_T)"
 
 #: ../gnome/src/uimanager.c:1045
 msgid "Transfer the call"
@@ -1151,15 +1137,15 @@ msgstr "録音(_R)"
 
 #: ../gnome/src/uimanager.c:1046
 msgid "Record the current conversation"
-msgstr "現在の会話を録音中"
+msgstr "現在の会話を録音します"
 
 #: ../gnome/src/uimanager.c:1047
 msgid "_Show toolbar"
-msgstr "ツールバーの表示"
+msgstr "ツールバーの表示(_S)"
 
 #: ../gnome/src/uimanager.c:1047
 msgid "Show the toolbar"
-msgstr "ツールバーの表示"
+msgstr "ツールバーを表示します"
 
 #: ../gnome/src/uimanager.c:1048
 msgid "_Dialpad"
@@ -1167,15 +1153,15 @@ msgstr "ダイアルパッド(_D)"
 
 #: ../gnome/src/uimanager.c:1048
 msgid "Show the dialpad"
-msgstr "ダイヤルパッドの表示"
+msgstr "ダイヤルパッドを表示します"
 
 #: ../gnome/src/uimanager.c:1049
 msgid "_Volume controls"
-msgstr "ボリュームコントロール"
+msgstr "音量調節(_V)"
 
 #: ../gnome/src/uimanager.c:1049
 msgid "Show the volume controls"
-msgstr "音量調整の表示"
+msgstr "音量を調節します"
 
 #: ../gnome/src/uimanager.c:1050
 msgid "_History"
@@ -1183,19 +1169,19 @@ msgstr "履歴(_H)"
 
 #: ../gnome/src/uimanager.c:1050
 msgid "Calls history"
-msgstr "通話履歴"
+msgstr "発信履歴"
 
 #: ../gnome/src/uimanager.c:1051
 msgid "_Address book"
-msgstr "アドレス帳"
+msgstr "アドレスブック(_A)"
 
 #: ../gnome/src/uimanager.c:1297 ../gnome/src/uimanager.c:1355
 msgid "On _Hold"
-msgstr "保留中"
+msgstr "保留(_H)"
 
 #: ../gnome/src/uimanager.c:1392
 msgid "_Call back"
-msgstr "折り返し電話をする"
+msgstr "折り返し電話(_C)"
 
 #: ../gnome/src/uimanager.c:1488
 msgid "Edit phone number"
@@ -1203,7 +1189,7 @@ msgstr "電話番号の編集"
 
 #: ../gnome/src/uimanager.c:1499
 msgid "Edit the phone number before making a call"
-msgstr "電話をする前に電話番号の編集をする"
+msgstr "通話する前に電話番号を編集します"
 
 #: ../gnome/src/dbus/dbus.c:495
 msgid ""
@@ -1211,9 +1197,9 @@ msgid ""
 "\n"
 "Error while opening playback device"
 msgstr ""
-"ALSA通知\n"
+"ALSA 通知\n"
 "\n"
-"再生デバイスエラー"
+"Error while opening playback device"
 
 #: ../gnome/src/dbus/dbus.c:498
 msgid ""
@@ -1221,9 +1207,9 @@ msgid ""
 "\n"
 "Error while opening capture device"
 msgstr ""
-"ALSA通知\n"
+"ALSA 通知\n"
 "\n"
-"再生ディバイスエラー"
+"Error while opening capture device"
 
 #: ../gnome/src/dbus/dbus.c:501
 msgid ""
@@ -1231,9 +1217,9 @@ msgid ""
 "\n"
 "Pulseaudio is not running"
 msgstr ""
-"Pulseaudio通知\n"
+"Pulseaudio 通知\n"
 "\n"
-"Pulseaudioが動いていません。"
+"Pulseaudioが起動していません"
 
 #: ../gnome/src/dbus/dbus.c:504
 msgid ""
@@ -1241,58 +1227,6 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
-#~ msgstr ""
-#~ "SFLphoneサーバに接続できません\n"
-#~ "デーモンを確認してください。"
-
-#~ msgid "Codecs"
-#~ msgstr "コーデック"
-
-#~ msgid "Bandwidth"
-#~ msgstr "帯域幅"
-
-#~ msgid "Custom commands on incoming calls with URL"
-#~ msgstr "URL着信履歴ユーザー設定コマンド"
-
-#~ msgid "%s will be replaced with the passed URL."
-#~ msgstr "%sはURLに置き換え"
-
-#~ msgid "IP call - %s"
-#~ msgstr "IP 電話 -%s"
-
-#~ msgid "Codec"
-#~ msgstr "コーデック"
-
-#~ msgid ""
-#~ "<b>Error: No audio codecs found.\n"
-#~ "\n"
-#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
-#~ "sflphone</b> directory in your home( <i>%s</i> )"
-#~ msgstr ""
-#~ "<b>エラー：音声コーデック見当たりません。\n"
-#~ "\n"
-#~ "</b>SFL音声コーデックはホームディレクトリー( <i>%s</i> )の<i>%s</i>か<b>."
-#~ "sflphone</b>に 置いてください。"
-
-#~ msgid "%i account configured"
-#~ msgid_plural "%i accounts configured"
-#~ msgstr[0] "%iアカウント構成日"
-
-#~ msgid "_Voice Activity Detection"
-#~ msgstr "ボイスアクティビティ検出"
-
-#~ msgid "_Noise Reduction (Narrow-Band Companding)"
-#~ msgstr "ノイズ除去"
-
-#~ msgid "Direct IP calls"
-#~ msgstr "ダイレクトIPコール"
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr " ,Launchpad Contributions:,DanyBoy"
+"Codecs 通知\n"
+"\n"
+"コーデックが見付かりませんでした"
