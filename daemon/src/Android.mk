@@ -86,10 +86,13 @@ LOCAL_STATIC_LIBRARIES += libpjsua-$(TARGET_NAME) \
 						  librtp \
 						  libhooks \
 						  libhistory \
-						  libspeex
+						  libspeex \
+						  libcrypto \
+						  libssl
 
 LOCAL_SHARED_LIBRARIES += libccgnu2 \
 						  libccrtp1 \
+						  libexpat \
 						  libsamplerate \
 						  libulaw \
 						  libalaw \
