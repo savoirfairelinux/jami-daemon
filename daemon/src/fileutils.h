@@ -31,10 +31,14 @@
 #ifndef FILEUTILS_H_
 #define FILEUTILS_H_
 
-#define HOMEDIR					(getenv ("HOME"))				/** Home directory */
-#define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
-#define XDG_CONFIG_HOME			(getenv ("XDG_CONFIG_HOME"))
-#define XDG_CACHE_HOME			(getenv ("XDG_CACHE_HOME"))
+#define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
+                                                   envvar_ ? envvar_ : "";})
+
+#define HOMEDIR                 (PROTECTED_GETENV("HOME"))
+#define XDG_DATA_HOME           (PROTECTED_GETENV("XDG_DATA_HOME"))
+#define XDG_CONFIG_HOME         (PROTECTED_GETENV("XDG_CONFIG_HOME"))
+#define XDG_CACHE_HOME          (PROTECTED_GETENV("XDG_CACHE_HOME"))
+
 #define PIDFILE "sfl.pid"
 
 

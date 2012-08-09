@@ -58,7 +58,6 @@ class VideoSendThread : public ost::Thread {
         void prepareEncoderContext(AVCodec *encoder);
         void createScalingContext();
         static int interruptCb(void *ctx);
-        ost::Event sdpReady_;
 
         std::map<std::string, std::string> args_;
         /*-------------------------------------------------------------*/
@@ -87,8 +86,6 @@ class VideoSendThread : public ost::Thread {
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
         virtual ~VideoSendThread();
-        // called from main thread 
-        void waitForSDP();
         virtual void run();
         std::string getSDP() const { return sdp_; }
         void forceKeyFrame();

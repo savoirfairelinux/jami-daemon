@@ -78,8 +78,8 @@ const char *get_data_dir()
 
 bool create_pidfile()
 {
-    const char * const xdg_env = XDG_CACHE_HOME;
-    std::string path = xdg_env ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
+    std::string xdg_env(XDG_CACHE_HOME);
+    std::string path = (not xdg_env.empty()) ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
 
     if (!check_dir(path.c_str()))
         return false;
