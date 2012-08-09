@@ -92,11 +92,8 @@ void History::ensurePath()
         string userdata;
         // If the environment variable is set (not null and not empty), we'll use it to save the history
         // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
-        if (XDG_DATA_HOME != NULL) {
-            string xdg_env(XDG_DATA_HOME);
-            (!xdg_env.empty()) ? userdata = xdg_env : userdata = xdg_data;
-        } else
-            userdata = xdg_data;
+        string xdg_env(XDG_DATA_HOME);
+        (not xdg_env.empty()) ? userdata = xdg_env : userdata = xdg_data;
 
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
