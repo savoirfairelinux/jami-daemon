@@ -79,14 +79,21 @@ LOCAL_STATIC_LIBRARIES += libpjsua-$(TARGET_NAME) \
 						  libsiplink \
 						  libaudio \
 						  libdbus-glue \
+						  libconfig \
+						  libopensl \
+						  libsound \
+						  libcodecfactory \
+						  librtp \
 						  libhooks \
-						  libhistory
-#						  libspeex
+						  libhistory \
+						  libspeex
 
 LOCAL_SHARED_LIBRARIES += libccgnu2 \
 						  libccrtp1 \
 						  libsamplerate \
-#						  libspeexresampler
+						  libulaw \
+						  libalaw \
+						  libspeexresampler
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -107,8 +114,6 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 					$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc
 
 LOCAL_SRC_FILES = main.cpp
-
-LOCAL_CPP_EXTENSION += .cpp .a
 
 LOCAL_MODULE := sflphoned
 
