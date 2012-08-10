@@ -127,7 +127,7 @@ static void reset()
 static void
 auto_answer_cb(GtkToggleButton *widget, account_t *account)
 {
-    account_replace(account, CONFIG_SIP_AUTOANSWER,
+    account_replace(account, CONFIG_ACCOUNT_AUTOANSWER,
                     gtk_toggle_button_get_active(widget) ? "true" : "false");
 }
 
@@ -379,6 +379,7 @@ create_basic_tab(account_t *account)
 
     row++;
     GtkWidget *auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
     g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), account);
     gtk_table_attach(GTK_TABLE(table), auto_answer_checkbox, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 

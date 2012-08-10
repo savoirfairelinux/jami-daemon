@@ -183,6 +183,7 @@ void current_account_set_message_number(guint nb);
 
 gboolean current_account_has_new_message(void);
 
+gboolean account_has_autoanswer_on(const account_t *account);
 gboolean account_is_IP2IP(const account_t *account);
 gboolean account_is_SIP(const account_t *account);
 gboolean account_is_IAX(const account_t *account);

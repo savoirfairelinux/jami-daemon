@@ -80,6 +80,13 @@ calltab_get_selected_type(calltab_t* tab)
     return tab->selectedType;
 }
 
+void
+calltab_set_selected_call(calltab_t *tab, callable_obj_t *call)
+{
+    g_assert(tab);
+    tab->selectedCall = call;
+}
+
 callable_obj_t *
 calltab_get_selected_call(calltab_t *tab)
 {

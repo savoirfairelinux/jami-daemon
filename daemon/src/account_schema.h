@@ -45,6 +45,7 @@ static const char *const CONFIG_ACCOUNT_TYPE                    = "Account.type"
 static const char *const CONFIG_ACCOUNT_ALIAS                   = "Account.alias";
 static const char *const CONFIG_ACCOUNT_MAILBOX                 = "Account.mailbox";
 static const char *const CONFIG_ACCOUNT_ENABLE                  = "Account.enable";
+static const char *const CONFIG_ACCOUNT_AUTOANSWER              = "Account.autoAnswer";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE     = "Account.registrationExpire";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATUS     = "Account.registrationStatus";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_CODE = "Account.registrationCode";
