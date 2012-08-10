@@ -1,4 +1,4 @@
-AC_INIT([sflphone],[1.1.0],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
+AC_INIT([sflphone],[1.2.0],[sflphoneteam@savoirfairelinux.com],[sflphone-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE
