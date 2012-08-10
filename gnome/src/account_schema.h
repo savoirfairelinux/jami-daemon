@@ -74,6 +74,7 @@ static const char *const CONFIG_DEFAULT_ADDRESS              = "0.0.0.0";
 
 // SIP specific parameters
 static const char *const CONFIG_SIP_PROXY                    = "SIP.proxy";
+static const char *const CONFIG_SIP_AUTOANSWER               = "SIP.autoAnswer";
 static const char *const CONFIG_STUN_SERVER                  = "STUN.server";
 static const char *const CONFIG_STUN_ENABLE                  = "STUN.enable";
 

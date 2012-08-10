@@ -123,6 +123,14 @@ static void reset()
     entry_mailbox = NULL;
 }
 
+/* GtkCheckButton is derived from GtkToggleButton */
+static void
+auto_answer_cb(GtkToggleButton *widget, account_t *account)
+{
+    account_replace(account, CONFIG_SIP_AUTOANSWER,
+                    gtk_toggle_button_get_active(widget) ? "true" : "false");
+}
+
 /*
  * Display / Hide the password
  */
@@ -202,7 +210,8 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
     }
 }
 
-static GtkWidget* create_basic_tab(const account_t *account)
+static GtkWidget*
+create_basic_tab(account_t *account)
 {
     g_assert(account);
     gchar *password = NULL;
@@ -221,7 +230,7 @@ static GtkWidget* create_basic_tab(const account_t *account)
     GtkWidget *table = NULL;
 
     if (account_is_SIP(account))
-        table = gtk_table_new(9, 2,  FALSE /* homogeneous */);
+        table = gtk_table_new(10, 2,  FALSE /* homogeneous */);
     else if (account_is_IAX(account))
         table = gtk_table_new(8, 2, FALSE);
     else {
@@ -367,6 +376,11 @@ static GtkWidget* create_basic_tab(const account_t *account)
     gchar *user_agent = account_lookup(account, CONFIG_ACCOUNT_USERAGENT);
     gtk_entry_set_text(GTK_ENTRY(entry_user_agent), user_agent);
     gtk_table_attach(GTK_TABLE(table), entry_user_agent, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    row++;
+    GtkWidget *auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
+    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), account);
+    gtk_table_attach(GTK_TABLE(table), auto_answer_checkbox, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     gtk_widget_show_all(table);
     gtk_container_set_border_width(GTK_CONTAINER(table), 10);
@@ -1305,7 +1319,8 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
     gtk_widget_destroy(dialog);
 }
 
-GtkWidget *show_account_window(const account_t *account)
+GtkWidget *
+show_account_window(account_t *account)
 {
     // First we reset
     reset();
