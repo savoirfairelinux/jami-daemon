@@ -137,10 +137,7 @@ YamlParser::~YamlParser()
     for (int i = 0; i < eventNumber_; ++i)
         yaml_event_delete(&events_[i]);
 
-    if (doc_) {
-        doc_->deleteChildNodes();
-        delete doc_;
-    }
+    doc_.deleteChildNodes();
 }
 
 void YamlParser::serializeEvents()
@@ -258,7 +255,7 @@ void YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 }
 
 
-YamlDocument *YamlParser::composeEvents()
+void YamlParser::composeEvents()
 {
     if (eventNumber_ == 0)
         throw YamlParserException("No event available");
@@ -269,8 +266,6 @@ YamlDocument *YamlParser::composeEvents()
     eventIndex_ = 0;
 
     processStream();
-
-    return doc_;
 }
 
 void YamlParser::processStream()
@@ -286,18 +281,17 @@ void YamlParser::processStream()
 void YamlParser::processDocument()
 {
     assert(eventNumber_ > 0);
-    doc_ = new YamlDocument;
 
     for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_DOCUMENT_END_EVENT); ++eventIndex_) {
         switch (events_[eventIndex_].type) {
             case YAML_SCALAR_EVENT:
-                processScalar(doc_);
+                processScalar(&doc_);
                 break;
             case YAML_SEQUENCE_START_EVENT:
-                processSequence(doc_);
+                processSequence(&doc_);
                 break;
             case YAML_MAPPING_START_EVENT:
-                processMapping(doc_);
+                processMapping(&doc_);
                 break;
             default:
                 break;
@@ -315,7 +309,6 @@ void YamlParser::processScalar(YamlNode *topNode)
         throw YamlParserException("No container for scalar");
 
     ScalarNode *sclr = new ScalarNode(std::string((const char*) events_[eventIndex_].data.scalar.value), topNode);
-    std::string tmpstring((const char*) events_[eventIndex_].data.scalar.value);
 
     switch (topNode->getType()) {
         case DOCUMENT:
@@ -407,6 +400,7 @@ void YamlParser::processMapping(YamlNode *topNode)
             throw YamlParserException("Mapping not followed by a key");
 
         map->setTmpKey(std::string((const char *)events_[eventIndex_].data.scalar.value));
+        std::string tmpstring((const char *)events_[eventIndex_].data.scalar.value);
         ++eventIndex_;
 
         switch (events_[eventIndex_].type) {
@@ -432,12 +426,13 @@ void YamlParser::processMapping(YamlNode *topNode)
 
 void YamlParser::constructNativeData()
 {
-    if (!doc_)
-        throw YamlParserException("YAML Document not initialized");
-    Sequence *seq = doc_->getSequence();
+    Sequence *seq = doc_.getSequence();
 
     for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {
         YamlNode *yamlNode = dynamic_cast<YamlNode *>(*iter);
+        if(yamlNode == NULL) {
+            ERROR("Could not retreive yaml node from document sequence");
+        }
         NodeType nodeType = yamlNode->getType();
         switch (nodeType) {
             case SCALAR:
@@ -447,7 +442,7 @@ void YamlParser::constructNativeData()
                 throw YamlParserException("No sequence allowed at document level, expect a mapping");
                 break;
             case MAPPING: {
-                MappingNode *map = dynamic_cast<MappingNode *>(*iter);
+                MappingNode *map = dynamic_cast<MappingNode *>(yamlNode);
                 mainNativeDataMapping(map);
                 break;
             }

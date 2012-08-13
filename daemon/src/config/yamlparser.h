@@ -66,7 +66,7 @@ class YamlParser {
 
         void serializeEvents();
 
-        YamlDocument *composeEvents();
+        void composeEvents();
 
         void constructNativeData();
 
@@ -132,7 +132,7 @@ class YamlParser {
          */
         int eventNumber_;
 
-        YamlDocument *doc_;
+        YamlDocument doc_;
 
         int eventIndex_;
 
