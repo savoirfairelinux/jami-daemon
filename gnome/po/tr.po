@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-10-31 18:09+0000\n"
-"Last-Translator: Translate it <Unknown>\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-07-29 21:12+0000\n"
+"Last-Translator: Yura Cagran <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
-"Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: tr\n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -38,8 +38,7 @@ msgstr "%s <i>Dan</i>"
 #, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d sesli posta"
 
 #: ../gnome/src/sflnotify.c:139
 #, c-format
@@ -52,7 +51,7 @@ msgstr "Geçerli hesap"
 
 #: ../gnome/src/sflnotify.c:154
 msgid "You have no accounts set up"
-msgstr ""
+msgstr "Kurulu bir hesabınız bulunmamaktadır"
 
 #: ../gnome/src/sflnotify.c:155 ../gnome/src/sflnotify.c:168
 #: ../gnome/src/accountlist.c:160
@@ -78,7 +77,7 @@ msgstr "%s ZRTP'yi desteklememektedir"
 #: ../gnome/src/sflnotify.c:207
 #, c-format
 msgid "ZRTP negotiation failed with %s"
-msgstr ""
+msgstr "%s ile ZRTP görüşmesi başarısız oldu"
 
 #: ../gnome/src/sflnotify.c:220
 #, c-format
@@ -92,14 +91,13 @@ msgstr "Ana pencereyi _Göster"
 #: ../gnome/src/statusicon.c:142 ../gnome/src/uimanager.c:970
 #: ../gnome/src/uimanager.c:1286 ../gnome/src/uimanager.c:1346
 msgid "_Hang up"
-msgstr "_Askıya al"
+msgstr ""
 
 #: ../gnome/src/statusicon.c:193
 #, c-format
 msgid "%i active account"
 msgid_plural "%i active accounts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%i geçerli hesap"
 
 #: ../gnome/src/statusicon.c:194
 msgid "SFLphone"
@@ -115,7 +113,7 @@ msgstr "Kayıtlı hesap yok"
 
 #: ../gnome/src/actions.c:609 ../gnome/src/actions.c:881
 msgid "Direct SIP call"
-msgstr ""
+msgstr "Doğrudan SIP araması"
 
 #: ../gnome/src/callable_obj.c:340
 msgid "today at %R"
@@ -135,7 +133,7 @@ msgstr ""
 
 #: ../gnome/src/main.c:96 ../gnome/src/dbus/dbus.c:515
 msgid "SFLphone Error"
-msgstr ""
+msgstr "SFLphone Hatası"
 
 #: ../gnome/src/eel-gconf-extensions.c:73
 msgid ""
@@ -143,6 +141,9 @@ msgid ""
 "Check your gconf setup, look at gpdf FAQ for \n"
 "more info"
 msgstr ""
+"Gpdf tercihlerine yönelik bir şema bulunamadı. \n"
+"Gconf kurulumunuzu kontrol ediniz, daha fazla bilgi için \n"
+"gpdf SSS'a bakınız."
 
 #: ../gnome/src/accountlist.c:151
 msgid "Registered"
@@ -154,11 +155,11 @@ msgstr "Kayıtlı Değil"
 
 #: ../gnome/src/accountlist.c:157
 msgid "Trying..."
-msgstr "Deniyor"
+msgstr "Deniyor..."
 
 #: ../gnome/src/accountlist.c:163
 msgid "Authentication Failed"
-msgstr "Kimlik Doğrulama Başarısız"
+msgstr "Kimlik Doğrulaması Başarısız"
 
 #: ../gnome/src/accountlist.c:166
 msgid "Network unreachable"
@@ -170,11 +171,11 @@ msgstr "Makine erişilemez"
 
 #: ../gnome/src/accountlist.c:172
 msgid "Stun configuration error"
-msgstr ""
+msgstr "Stun ayarı hatası"
 
 #: ../gnome/src/accountlist.c:175
 msgid "Stun server invalid"
-msgstr ""
+msgstr "Geçersiz Stun sunucusu"
 
 #: ../gnome/src/accountlist.c:178
 msgid "Ready"
@@ -186,19 +187,19 @@ msgstr "Geçersiz"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:51
 msgid "ZRTP Options"
-msgstr ""
+msgstr "ZRTP Seçenekleri"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:70
 msgid "Send Hello Hash in S_DP"
-msgstr ""
+msgstr "S_DP içinden Alo Sinyali yolla"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:75
 msgid "Ask User to Confirm SAS"
-msgstr ""
+msgstr "Kullanıcıya SAS Onayını Sor"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:80
 msgid "_Warn if ZRTP not supported"
-msgstr ""
+msgstr "ZRTP desteklenmiyorsa uyar"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:85
 msgid "Display SAS once for hold events"
@@ -206,11 +207,11 @@ msgstr ""
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:124
 msgid "SDES Options"
-msgstr ""
+msgstr "SDES Seçenekleri"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:142
 msgid "Fallback on RTP on SDES failure"
-msgstr ""
+msgstr "SDES hatası durumunda RTP'ye geri çekil"
 
 #: ../gnome/src/config/audioconf.c:549
 #: ../gnome/src/config/addressbook-config.c:425
@@ -239,23 +240,23 @@ msgstr "Giriş"
 
 #: ../gnome/src/config/audioconf.c:734
 msgid "Ringtone"
-msgstr ""
+msgstr "Melodi"
 
 #: ../gnome/src/config/audioconf.c:775
 msgid "Sound Manager"
-msgstr ""
+msgstr "Ses Yönetimi"
 
 #: ../gnome/src/config/audioconf.c:786
 msgid "_Pulseaudio"
-msgstr ""
+msgstr "_Pulseaudio"
 
 #: ../gnome/src/config/audioconf.c:790
 msgid "_ALSA"
-msgstr ""
+msgstr "_ALSA"
 
 #: ../gnome/src/config/audioconf.c:796
 msgid "ALSA settings"
-msgstr ""
+msgstr "ALSA ayarları"
 
 #: ../gnome/src/config/audioconf.c:807
 msgid "Recordings"
@@ -263,7 +264,7 @@ msgstr "Kayıtlar"
 
 #: ../gnome/src/config/audioconf.c:811
 msgid "Destination folder"
-msgstr ""
+msgstr "Hedef dizin"
 
 #: ../gnome/src/config/audioconf.c:815
 msgid "Select a folder"
@@ -271,19 +272,19 @@ msgstr "Bir klasör seç"
 
 #: ../gnome/src/config/audioconf.c:827
 msgid "_Always recording"
-msgstr ""
+msgstr "Kesintisiz k_ayıt"
 
 #: ../gnome/src/config/audioconf.c:834
 msgid "Voice enhancement settings"
-msgstr ""
+msgstr "Ses iyileştirme ayarları"
 
 #: ../gnome/src/config/audioconf.c:837
 msgid "_Noise Reduction"
-msgstr ""
+msgstr "Gürültü Azaltma"
 
 #: ../gnome/src/config/audioconf.c:851
 msgid "_Echo Cancellation"
-msgstr ""
+msgstr "Yankı İptali"
 
 #: ../gnome/src/config/addressbook-config.c:339
 #: ../gnome/src/config/preferencesdialog.c:416
@@ -293,11 +294,11 @@ msgstr "Genel"
 
 #: ../gnome/src/config/addressbook-config.c:343
 msgid "_Use Evolution address books"
-msgstr ""
+msgstr "Evol_ution adres defterini kullan"
 
 #: ../gnome/src/config/addressbook-config.c:350
 msgid "Download limit :"
-msgstr ""
+msgstr "Yükleme limiti :"
 
 #: ../gnome/src/config/addressbook-config.c:358
 msgid "cards"
@@ -305,11 +306,11 @@ msgstr "kartlar"
 
 #: ../gnome/src/config/addressbook-config.c:363
 msgid "_Display contact photo if available"
-msgstr ""
+msgstr "_Kişinin fotoğrafı varsa göster"
 
 #: ../gnome/src/config/addressbook-config.c:369
 msgid "Fields from Evolution's address books"
-msgstr ""
+msgstr "Evolution adres defterinden kullanılacak alanlar"
 
 #: ../gnome/src/config/addressbook-config.c:372
 msgid "_Work"
@@ -329,42 +330,44 @@ msgstr "Adres Defterleri"
 
 #: ../gnome/src/config/addressbook-config.c:394
 msgid "Select which Evolution address books to use"
-msgstr ""
+msgstr "Kullanılacak Evolution adres defterlerini seç"
 
 #: ../gnome/src/config/hooks-config.c:149
 msgid "URL Argument"
-msgstr ""
+msgstr "URL değişkenleri"
 
 #: ../gnome/src/config/hooks-config.c:157
 msgid "Trigger on specific _SIP header"
-msgstr ""
+msgstr "İlgili _SIP başlığında tetikle"
 
 #: ../gnome/src/config/hooks-config.c:166
 msgid "Trigger on _IAX2 URL"
-msgstr ""
+msgstr "_IAX2 URL durumunda tetikle"
 
 #: ../gnome/src/config/hooks-config.c:171
 msgid "Command to _run"
-msgstr ""
+msgstr "Çalıştı_rılacak komut"
 
 #: ../gnome/src/config/hooks-config.c:181
 msgid "Phone number rewriting"
-msgstr ""
+msgstr "Telefon numarası yeniden yazımı"
 
 #: ../gnome/src/config/hooks-config.c:185
 msgid "_Prefix dialed numbers with"
-msgstr ""
+msgstr "Çevrilen numaraya bu öneki koy"
 
 #: ../gnome/src/config/assistant.c:78
 #, c-format
 msgid "This assistant is now finished."
-msgstr ""
+msgstr "Bu kılavuz şu an sonlandırılacak."
 
 #: ../gnome/src/config/assistant.c:80
 msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
+"İstenildiğinde Ayarlar/Hesaplar penceresinden kayıt durumunuzu yada "
+"hesabınızın parametrelerini düzenleyebilirsiniz."
 
 #: ../gnome/src/config/assistant.c:83
 msgid "Alias"
@@ -384,7 +387,7 @@ msgstr "Güvenlik: "
 
 #: ../gnome/src/config/assistant.c:98
 msgid "SRTP/ZRTP draft-zimmermann"
-msgstr ""
+msgstr "SRTP/ZRTP draft-zimmermann"
 
 #: ../gnome/src/config/assistant.c:100
 msgid "None"
@@ -392,19 +395,19 @@ msgstr "Hiçbiri"
 
 #: ../gnome/src/config/assistant.c:244
 msgid "SFLphone account creation wizard"
-msgstr ""
+msgstr "SFLphone hesap oluşturma sihirbazı"
 
 #: ../gnome/src/config/assistant.c:271
 msgid "Welcome to the Account creation wizard of SFLphone!"
-msgstr ""
+msgstr "SFLphone Hesap oluşturma sihirbazına Hoşgeldiniz!"
 
 #: ../gnome/src/config/assistant.c:272
 msgid "This installation wizard will help you configure an account."
-msgstr ""
+msgstr "Bu kurulum sihirbazı bir hesap ayarlamanıza yardımcı olacak."
 
 #: ../gnome/src/config/assistant.c:287
 msgid "VoIP Protocols"
-msgstr ""
+msgstr "VoIP Protokolleri"
 
 #: ../gnome/src/config/assistant.c:287
 msgid "Select an account type"
@@ -412,11 +415,11 @@ msgstr "Bir hesap tipi seçin"
 
 #: ../gnome/src/config/assistant.c:289
 msgid "SIP (Session Initiation Protocol)"
-msgstr ""
+msgstr "SIP (Session Initiation Protocol)"
 
 #: ../gnome/src/config/assistant.c:291
 msgid "IAX2 (InterAsterix Exchange)"
-msgstr ""
+msgstr "IAX2 (InterAsterix Exchange)"
 
 #: ../gnome/src/config/assistant.c:306
 msgid "Account"
@@ -427,11 +430,12 @@ msgid "Please select one of the following options"
 msgstr "Lütfen aşağıdaki ayarlardan birini seçiniz"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "sflphone.org üzerinden bedava SIP/IAX2 hesabı oluşturun"
+msgstr ""
+"sflphone.org üzerinden ücretsiz bir SIP/IAX2 hesabı oluştur \n"
+"(Yalnızca deneme amaçlı)"
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
@@ -443,17 +447,17 @@ msgstr "SIP hesap ayarları"
 
 #: ../gnome/src/config/assistant.c:324 ../gnome/src/config/assistant.c:424
 msgid "Please fill the following information"
-msgstr ""
+msgstr "Lütfen aşağıdaki bilgileri doldurunuz."
 
 #: ../gnome/src/config/assistant.c:332 ../gnome/src/config/assistant.c:432
 #: ../gnome/src/config/accountconfigdialog.c:250
 msgid "_Alias"
-msgstr ""
+msgstr "T_akma isim"
 
 #: ../gnome/src/config/assistant.c:340 ../gnome/src/config/assistant.c:440
 #: ../gnome/src/config/accountconfigdialog.c:289
 msgid "_Host name"
-msgstr ""
+msgstr "Sunucu adı"
 
 #: ../gnome/src/config/assistant.c:348 ../gnome/src/config/assistant.c:448
 #: ../gnome/src/config/accountconfigdialog.c:298
@@ -473,11 +477,11 @@ msgstr "Parolayı göster"
 #: ../gnome/src/config/assistant.c:372 ../gnome/src/config/assistant.c:471
 #: ../gnome/src/config/accountconfigdialog.c:343
 msgid "_Voicemail number"
-msgstr ""
+msgstr "Sesli posta numarası"
 
 #: ../gnome/src/config/assistant.c:380 ../gnome/src/config/assistant.c:410
 msgid "Secure communications with _ZRTP"
-msgstr ""
+msgstr "_ZRTP aracılığıyla güvenli iletişim"
 
 #: ../gnome/src/config/assistant.c:394
 msgid "Optional email address"
@@ -493,27 +497,29 @@ msgstr "_E-Posta adresi"
 
 #: ../gnome/src/config/assistant.c:424
 msgid "IAX2 account settings"
-msgstr ""
+msgstr "IAX2 hesap ayarları"
 
 #: ../gnome/src/config/assistant.c:490
 msgid "Network Address Translation (NAT)"
-msgstr ""
+msgstr "Network Address Translation (NAT)"
 
 #: ../gnome/src/config/assistant.c:490
 msgid "You should probably enable this if you are behind a firewall."
 msgstr ""
+"Bir güvenlik duvarı arkasındaysanız muhtemelen bunu seçili duruma "
+"getireceksiniz."
 
 #: ../gnome/src/config/assistant.c:499
 msgid "E_nable STUN"
-msgstr ""
+msgstr "STUN aktif"
 
 #: ../gnome/src/config/assistant.c:506
 msgid "_STUN server"
-msgstr ""
+msgstr "_STUN sunucusu"
 
 #: ../gnome/src/config/assistant.c:521
 msgid "Account Registration"
-msgstr ""
+msgstr "Hesap kaydı"
 
 #: ../gnome/src/config/assistant.c:521
 msgid "Congratulations!"
@@ -521,11 +527,11 @@ msgstr "Tebrikler!"
 
 #: ../gnome/src/config/preferencesdialog.c:169
 msgid "Desktop Notifications"
-msgstr ""
+msgstr "Masaüstü Uyarıları"
 
 #: ../gnome/src/config/preferencesdialog.c:174
 msgid "_Enable notifications"
-msgstr ""
+msgstr "Bildirimleri seç"
 
 #: ../gnome/src/config/preferencesdialog.c:181
 msgid "System Tray Icon"
@@ -533,23 +539,23 @@ msgstr "Sistem Tepsisi Simgesi"
 
 #: ../gnome/src/config/preferencesdialog.c:189
 msgid "Show SFLphone in the system tray"
-msgstr ""
+msgstr "SFLphone'u sistem çubuğunda göster"
 
 #: ../gnome/src/config/preferencesdialog.c:196
 msgid "_Popup main window on incoming call"
-msgstr ""
+msgstr "Gelen aramalarda ana pencereyi öne çıkart"
 
 #: ../gnome/src/config/preferencesdialog.c:202
 msgid "Ne_ver popup main window"
-msgstr ""
+msgstr "Hiçbir koşulda ana pencereyi öne çıkartma"
 
 #: ../gnome/src/config/preferencesdialog.c:215
 msgid "Hide SFLphone window on _startup"
-msgstr ""
+msgstr "Başlangıçta SFLphone pencere_sini gizle"
 
 #: ../gnome/src/config/preferencesdialog.c:229
 msgid "Calls History"
-msgstr ""
+msgstr "Arama Kayıtları"
 
 #: ../gnome/src/config/preferencesdialog.c:233
 msgid "_Keep my history for at least"
@@ -579,11 +585,11 @@ msgstr "Ses"
 
 #: ../gnome/src/config/preferencesdialog.c:427
 msgid "Hooks"
-msgstr ""
+msgstr "Kancalar"
 
 #: ../gnome/src/config/preferencesdialog.c:432
 msgid "Shortcuts"
-msgstr ""
+msgstr "Kısayollar"
 
 #: ../gnome/src/config/preferencesdialog.c:438
 msgid "Address Book"
@@ -591,7 +597,7 @@ msgstr "Adres Defteri"
 
 #: ../gnome/src/config/accountconfigdialog.c:231
 msgid "Account Parameters"
-msgstr ""
+msgstr "Hesap Parametreleri"
 
 #: ../gnome/src/config/accountconfigdialog.c:260
 msgid "_Protocol"
@@ -603,11 +609,11 @@ msgstr "Bilinmiyor"
 
 #: ../gnome/src/config/accountconfigdialog.c:334
 msgid "_Proxy"
-msgstr ""
+msgstr "_Proxy"
 
 #: ../gnome/src/config/accountconfigdialog.c:352
 msgid "_User-agent"
-msgstr ""
+msgstr "_User-agent"
 
 #: ../gnome/src/config/accountconfigdialog.c:413
 msgid "Authentication"
@@ -619,7 +625,7 @@ msgstr "Gizli"
 
 #: ../gnome/src/config/accountconfigdialog.c:658
 msgid "Credential"
-msgstr ""
+msgstr "Kimlik bilgileri"
 
 #: ../gnome/src/config/accountconfigdialog.c:692
 msgid "Authentication name"
@@ -636,15 +642,15 @@ msgstr "Güvenlik"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
 msgid "Use TLS transport(sips)"
-msgstr ""
+msgstr "TLS naklini(sips) kullan"
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
-msgstr ""
+msgstr "SRTP anahtar değişimi"
 
 #: ../gnome/src/config/accountconfigdialog.c:779
 msgid "Disabled"
-msgstr ""
+msgstr "Pasif"
 
 #: ../gnome/src/config/accountconfigdialog.c:843
 msgid "Registration"
@@ -652,11 +658,11 @@ msgstr "Kayıt"
 
 #: ../gnome/src/config/accountconfigdialog.c:847
 msgid "Registration expire"
-msgstr ""
+msgstr "Kayıt zaman aşımı"
 
 #: ../gnome/src/config/accountconfigdialog.c:856
 msgid "_Comply with RFC 3263"
-msgstr ""
+msgstr "RFC 3263'e bağımlı kal"
 
 #: ../gnome/src/config/accountconfigdialog.c:876
 msgid "Network Interface"
@@ -673,7 +679,7 @@ msgstr "Yerel port"
 #: ../gnome/src/config/accountconfigdialog.c:960
 #: ../gnome/src/config/accountconfigdialog.c:994
 msgid "Published address"
-msgstr ""
+msgstr "Açık adres"
 
 #: ../gnome/src/config/accountconfigdialog.c:964
 msgid "Using STUN"
@@ -685,39 +691,39 @@ msgstr "STUN sunucu adresi"
 
 #: ../gnome/src/config/accountconfigdialog.c:980
 msgid "Same as local parameters"
-msgstr ""
+msgstr "Yerel parametrelerle aynı"
 
 #: ../gnome/src/config/accountconfigdialog.c:983
 msgid "Set published address and port:"
-msgstr ""
+msgstr "Yayındaki adres ve port ayarı:"
 
 #: ../gnome/src/config/accountconfigdialog.c:1003
 msgid "Published port"
-msgstr ""
+msgstr "Yayındaki port"
 
 #: ../gnome/src/config/accountconfigdialog.c:1084
 msgid "DTMF"
-msgstr ""
+msgstr "DTMF"
 
 #: ../gnome/src/config/accountconfigdialog.c:1095
 msgid "RTP"
-msgstr ""
+msgstr "RTP"
 
 #: ../gnome/src/config/accountconfigdialog.c:1099
 msgid "SIP"
-msgstr ""
+msgstr "SIP"
 
 #: ../gnome/src/config/accountconfigdialog.c:1107
 msgid "Ringtones"
-msgstr ""
+msgstr "Melodiler"
 
 #: ../gnome/src/config/accountconfigdialog.c:1110
 msgid "Choose a ringtone"
-msgstr ""
+msgstr "Bir melodi seç"
 
 #: ../gnome/src/config/accountconfigdialog.c:1115
 msgid "_Enable ringtones"
-msgstr ""
+msgstr "Melodiler aktif"
 
 #: ../gnome/src/config/accountconfigdialog.c:1127
 msgid "Audio Files"
@@ -749,6 +755,8 @@ msgstr "Ağ"
 #: ../gnome/src/config/shortcuts-config.c:117
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
 msgstr ""
+"Dikkat! burada yapacağınız değişiklikler sistem bütününe ait kısayolları "
+"geçersiz kılabilir."
 
 #: ../gnome/src/config/accountlistconfigdialog.c:202
 #, c-format
@@ -769,14 +777,13 @@ msgstr "Hesaplar"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:590
 msgid "Configured Accounts"
-msgstr ""
+msgstr "Ayarlı Hesaplar"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:608
 #, c-format
 msgid "There is %d active account"
 msgid_plural "There are %d active accounts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d aktif hesap bulunmaktadır."
 
 #: ../gnome/src/config/accountlistconfigdialog.c:615
 msgid "You have no active account"
@@ -784,11 +791,11 @@ msgstr "Aktif hesabınız bulunmamaktadır"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:41
 msgid "Advanced options for TLS"
-msgstr ""
+msgstr "TLS için gelişmiş seçenekler"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:58
 msgid "TLS transport"
-msgstr ""
+msgstr "TLS nakli"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:62
 msgid ""
@@ -801,63 +808,63 @@ msgstr ""
 
 #: ../gnome/src/config/tlsadvanceddialog.c:109
 msgid "Global TLS listener (all accounts)"
-msgstr ""
+msgstr "Küresel TLS dinleyicisi (tüm hesaplar için)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:123
 msgid "Certificate of Authority list"
-msgstr ""
+msgstr "CA listesi"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:126
 msgid "Choose a CA list file (optional)"
-msgstr ""
+msgstr "Bir yetki belge listesi seçiniz (isteğe bağlı)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:138
 msgid "Public endpoint certificate file"
-msgstr ""
+msgstr "Umumi sonlandırma sertifikası"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:141
 msgid "Choose a public endpoint certificate (optional)"
-msgstr ""
+msgstr "Bir umumi sonlandırma sertifikası seçiniz (isteğe bağlı)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:159
 msgid "Choose a private key file (optional)"
-msgstr ""
+msgstr "Bir özel anahtar dosyası seçiniz"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:174
 msgid "Password for the private key"
-msgstr ""
+msgstr "Özel anahtar şifresi"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:189
 msgid "TLS protocol method"
-msgstr ""
+msgstr "TLS iletişim metodu"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:217
 msgid "TLS cipher list"
-msgstr ""
+msgstr "TLS şifreleme listesi"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:226
 msgid "Server name instance for outgoing TLS connection"
-msgstr ""
+msgstr "Giden TLS bağlantısı için sunucu adı örneği"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:234
 msgid "Negotiation timeout (sec:msec)"
-msgstr ""
+msgstr "Görüşme zaman aşımı (sn:milisn)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:251
 msgid "Verify incoming certificates, as a server"
-msgstr ""
+msgstr "Gelen belgeleri sunucu olarak doğrula"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:257
 msgid "Verify certificates from answer, as a client"
-msgstr ""
+msgstr "Belgeleri yanıtlara göre istemci olarak doğrula"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:263
 msgid "Require certificate for incoming tls connections"
-msgstr ""
+msgstr "Gelen TLS bağlantıları için belge iste"
 
 #: ../gnome/src/contacts/searchbar.c:198
 msgid "Search all"
-msgstr ""
+msgstr "Tamamında ara"
 
 #: ../gnome/src/contacts/searchbar.c:199 ../gnome/src/contacts/searchbar.c:214
 #: ../gnome/src/contacts/searchbar.c:226 ../gnome/src/contacts/searchbar.c:238
@@ -866,15 +873,15 @@ msgstr "Arama türünü değiştirmek için buraya tıklayın"
 
 #: ../gnome/src/contacts/searchbar.c:213
 msgid "Search by missed call"
-msgstr ""
+msgstr "Cevapsız aramalarda ara"
 
 #: ../gnome/src/contacts/searchbar.c:225
 msgid "Search by incoming call"
-msgstr ""
+msgstr "Gelen aramalarda ara"
 
 #: ../gnome/src/contacts/searchbar.c:237
 msgid "Search by outgoing call"
-msgstr ""
+msgstr "Giden aramalarda ara"
 
 #: ../gnome/src/sliders.c:174
 msgid "Speakers volume"
@@ -886,11 +893,11 @@ msgstr "Mikrofon ses ayarı"
 
 #: ../gnome/src/mainwindow.c:127
 msgid "There is one call in progress."
-msgstr ""
+msgstr "Şu an aktif bir çağrı var."
 
 #: ../gnome/src/mainwindow.c:129
 msgid "There are calls in progress."
-msgstr ""
+msgstr "İşlem içersinden çağrılar var."
 
 #: ../gnome/src/mainwindow.c:133
 msgid "Do you still want to quit?"
@@ -899,11 +906,11 @@ msgstr "Hala çıkmak istiyor musunuz?"
 #: ../gnome/src/mainwindow.c:425
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
-msgstr ""
+msgstr "%s noktasınca ZRTP destekleği yok\n"
 
 #: ../gnome/src/mainwindow.c:427
 msgid "Secure Communication Unavailable"
-msgstr ""
+msgstr "Güvenli iletişim bulunmamakta"
 
 #: ../gnome/src/mainwindow.c:430 ../gnome/src/mainwindow.c:456
 msgid "Continue"
@@ -923,7 +930,7 @@ msgstr ""
 
 #: ../gnome/src/mainwindow.c:453
 msgid "ZRTP negotiation failed"
-msgstr ""
+msgstr "ZRTP görüşmesi başarısız oldu"
 
 #: ../gnome/src/mainwindow.c:467
 #, c-format
@@ -931,6 +938,8 @@ msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
 msgstr ""
+"%s güvenli iletişimi kullanımını durdurmak istemekte. Konuşmayı SRTP olmadan "
+"devam ettirmeyi onaylayın.\n"
 
 #: ../gnome/src/mainwindow.c:469
 msgid "Confirm Go Clear"
@@ -949,13 +958,13 @@ msgid "Address book"
 msgstr "Adres Defteri"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "Sesli mesaj (%i)"
+msgstr "Sesli posta(%i)"
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr ""
+msgstr "SFLphone SIP ve IAX2 protokolleri ile uyumlu bir VoIP istemcisidir."
 
 #: ../gnome/src/uimanager.c:510
 msgid "About SFLphone"
@@ -979,7 +988,7 @@ msgstr "Yeni bir arama yap"
 
 #: ../gnome/src/uimanager.c:966 ../gnome/src/uimanager.c:1275
 msgid "_Pick up"
-msgstr ""
+msgstr "Ceva_pla"
 
 #: ../gnome/src/uimanager.c:967
 msgid "Answer the call"
@@ -991,11 +1000,11 @@ msgstr "Aramayı sonlandır"
 
 #: ../gnome/src/uimanager.c:974
 msgid "O_n hold"
-msgstr ""
+msgstr "Beklemede"
 
 #: ../gnome/src/uimanager.c:975
 msgid "Place the call on hold"
-msgstr ""
+msgstr "Aramayı beklemeye al"
 
 #: ../gnome/src/uimanager.c:978
 msgid "O_ff hold"
@@ -1007,11 +1016,11 @@ msgstr ""
 
 #: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1331
 msgid "Send _message"
-msgstr ""
+msgstr "İleti yolla"
 
 #: ../gnome/src/uimanager.c:983
 msgid "Send message"
-msgstr ""
+msgstr "İleti yolla"
 
 #: ../gnome/src/uimanager.c:986
 msgid "Configuration _Assistant"
@@ -1115,7 +1124,7 @@ msgstr "İçerikler"
 
 #: ../gnome/src/uimanager.c:1039
 msgid "Open the manual"
-msgstr ""
+msgstr "Kılavuzu aç"
 
 #: ../gnome/src/uimanager.c:1041
 msgid "About this application"
@@ -1216,17 +1225,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#~ msgid "Codecs"
-#~ msgstr "Çözücüler"
-
-#~ msgid "Bandwidth"
-#~ msgstr "Band Genişliği"
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr " ,Launchpad Contributions:,Translate it,can kaçan,zeugma"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ",,,cankacan.47@gmail.com,"

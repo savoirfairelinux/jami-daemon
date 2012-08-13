@@ -1378,7 +1378,8 @@ int SIPSessionReinvite(SIPCall *call)
 {
     pjmedia_sdp_session *local_sdp = call->getLocalSDP()->getLocalSdpSession();
     pjsip_tx_data *tdata;
-    if (local_sdp && pjsip_inv_reinvite(call->inv, NULL, local_sdp, &tdata) == PJ_SUCCESS)
+    if (local_sdp and call->inv and call->inv->pool_prov and
+        pjsip_inv_reinvite(call->inv, NULL, local_sdp, &tdata) == PJ_SUCCESS)
         return pjsip_inv_send_msg(call->inv, tdata);
 
     return !PJ_SUCCESS;

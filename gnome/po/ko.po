@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-06-17 19:27+0000\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-01-05 19:59+0000\n"
 "Last-Translator: Bundo <bundo@bundo.biz>\n"
 "Language-Team: Korean <ko@li.org>\n"
-"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:41+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: ko\n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -427,11 +427,10 @@ msgid "Please select one of the following options"
 msgstr "옵션에 따라서 1개를 선택"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "무료 SIP/IAX2 계정을 sflphone.org에 만들기"
+msgstr ""
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
@@ -564,9 +563,8 @@ msgid "Instant Messaging"
 msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:257
-#, fuzzy
 msgid "Enable instant messaging"
-msgstr "착신음 가능(_E)"
+msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:377
 msgid "Preferences"
@@ -636,9 +634,8 @@ msgid "Security"
 msgstr "보안"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "TLS 전송을 사용"
+msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
@@ -731,9 +728,8 @@ msgid ""
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
-"<b>sip:remotepeer</b>. 같은 sip URI를 입력하여 간단하게 원격 피어를 달성하고 "
-"싶을 때 이 프로필 사용 가능합니다. 걸려오는 전화 또는 발신 통화가 일치되지 않"
-"는 계정이라도 설정이 가능합니다."
+"<b>sip:remotepeer</b>. 같은 sip URI를 입력하여 간단하게 원격 피어를 달성하고 싶을 때 이 프로필 사용 "
+"가능합니다. 걸려오는 전화 또는 발신 통화가 일치되지 않는 계정이라도 설정이 가능합니다."
 
 #: ../gnome/src/config/accountconfigdialog.c:1182
 msgid "Account settings"
@@ -940,9 +936,7 @@ msgstr "ZRTP 협상 실패"
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
-msgstr ""
-"%s는 보안으로 보호되는 통신을 사용하는 것을 금합니다. SRTP 없이 대화를 재개"
-"할 것인지 확인하십시오.\n"
+msgstr "%s는 보안으로 보호되는 통신을 사용하는 것을 금합니다. SRTP 없이 대화를 재개할 것인지 확인하십시오.\n"
 
 #: ../gnome/src/mainwindow.c:469
 msgid "Confirm Go Clear"
@@ -961,9 +955,9 @@ msgid "Address book"
 msgstr "주소록"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "음성 메일 (%i)"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1237,46 +1231,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
-#~ msgstr ""
-#~ "SFLphone 서버에 연결할 수 없습니다.\n"
-#~ "데몬이 실행중인지 확인하십시오."
-
-#~ msgid "Codecs"
-#~ msgstr "코덱"
-
-#~ msgid "Bandwidth"
-#~ msgstr "대역폭"
-
-#~ msgid "Custom commands on incoming calls with URL"
-#~ msgstr "URL 수신 기록 사용자 지정 명령"
-
-#~ msgid "%s will be replaced with the passed URL."
-#~ msgstr "%s  URL로 바꿉니다."
-
-#~ msgid "_Noise Reduction (Narrow-Band Companding)"
-#~ msgstr "노이즈 제거 (Narrow-Band Companding)(_N)"
-
-#~ msgid "_Voice Activity Detection"
-#~ msgstr "음성 활성화 검색(_V)"
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr ""
-#~ ",Launchpad Contributions:, ,Launchpad Contributions:,Emmanuel Milou,"
-#~ "Scion, ,Launchpad Contributions:,Emmanuel Milou,Scion, ,Launchpad "
-#~ "Contributions:,Emmanuel Milou,Scion, ,Launchpad Contributions:,Bundo,"
-#~ "Emmanuel Milou,Scion, ,Launchpad Contributions:,Bundo,Emmanuel Milou,Scion"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ""
-#~ ",,,,emmanuel.milou@savoirfairelinux.com,,,,emmanuel."
-#~ "milou@savoirfairelinux.com,,,,emmanuel.milou@savoirfairelinux.com,,,,"
-#~ "bundo@bundo.biz,emmanuel.milou@savoirfairelinux.com,,,,bundo@bundo.biz,"
-#~ "emmanuel.milou@savoirfairelinux.com,"

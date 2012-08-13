@@ -15,8 +15,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
-"X-Launchpad-Export-Date: 2012-05-18 00:55+0000\n"
-"X-Generator: Launchpad (build 15259)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
 "Language: ast\n"
 
 #: ../gnome/src/sflnotify.c:85

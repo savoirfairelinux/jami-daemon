@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2011-03-14 09:51+0000\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-01-05 19:54+0000\n"
 "Last-Translator: Daniel Nylander <yeager@ubuntu.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
-"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: sv\n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -434,11 +434,10 @@ msgid "Please select one of the following options"
 msgstr "Välj ett av följande alternativ"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "Skapa ett kostnadsfritt SIP/IAX2-konto på sflphone.org"
+msgstr ""
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
@@ -645,9 +644,8 @@ msgid "Security"
 msgstr "Säkerhet"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "Använd TLS-transport (sips)"
+msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
@@ -966,9 +964,9 @@ msgid "Address book"
 msgstr "Adressbok"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "Röstbrevlåda (%i)"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1242,40 +1240,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#~ msgid ""
-#~ "GConf error:\n"
-#~ "  %s"
-#~ msgstr ""
-#~ "GConf-fel:\n"
-#~ "  %s"
-
-#~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
-#~ msgstr ""
-#~ "Kunde inte initiera.\n"
-#~ "Försäkra dig om att demonen är igång.\n"
-#~ "Fel: %s"
-
-#~ msgid "Codecs"
-#~ msgstr "Kodekar"
-
-#~ msgid "Bandwidth"
-#~ msgstr "Bandbredd"
-
-#~ msgid ""
-#~ "Unable to connect to the SFLphone server.\n"
-#~ "Make sure the daemon is running."
-#~ msgstr ""
-#~ "Kan inte ansluta till SFLphone-servern.\n"
-#~ "Se till att daemonen är igång."
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr " ,Launchpad Contributions:,Daniel Nylander,Gabriel Thörnblad"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ",,yeager@ubuntu.com,"

@@ -7,15 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2011-05-10 15:26+0100\n"
-"Last-Translator: Jan Middelkoop <jan@recreatie-zorg.nl>\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-01-05 19:51+0000\n"
+"Last-Translator: Jan Middelkoop <Unknown>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: \n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -385,7 +387,7 @@ msgstr "Gebruikersnaam"
 
 #: ../gnome/src/config/assistant.c:95
 msgid "Security: "
-msgstr "Beveiliging:"
+msgstr "Beveiliging: "
 
 #: ../gnome/src/config/assistant.c:98
 msgid "SRTP/ZRTP draft-zimmermann"
@@ -417,7 +419,7 @@ msgstr "Kies een type account"
 
 #: ../gnome/src/config/assistant.c:289
 msgid "SIP (Session Initiation Protocol)"
-msgstr "SIP (Sessie Initiatie Protocol) "
+msgstr "SIP (Sessie Initiatie Protocol)"
 
 #: ../gnome/src/config/assistant.c:291
 msgid "IAX2 (InterAsterix Exchange)"
@@ -432,11 +434,10 @@ msgid "Please select one of the following options"
 msgstr "Selecteer één van de volgende opties"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "Maak een gratis SIP/IAX2 account op sflphone.org"
+msgstr ""
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
@@ -642,9 +643,8 @@ msgid "Security"
 msgstr "Beveiliging"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "Gebruik TLS verkeer (SIPS)"
+msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
@@ -827,7 +827,7 @@ msgstr "Certificaat van authoriteit lijst"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:126
 msgid "Choose a CA list file (optional)"
-msgstr " Kies een CA lijst bestand (optioneel)"
+msgstr "Kies een CA lijst bestand (optioneel)"
 
 #: ../gnome/src/config/tlsadvanceddialog.c:138
 msgid "Public endpoint certificate file"
@@ -972,13 +972,14 @@ msgid "Address book"
 msgstr "Adresboek"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "Voicemail (%i)"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "SFLphone is een VoIP telefoon compatibel met SIP en IAX2 protocollen."
+msgstr ""
+"SFLphone is een VoIP telefoon compatibel met SIP en IAX2 protocollen."
 
 #: ../gnome/src/uimanager.c:510
 msgid "About SFLphone"
@@ -1248,25 +1249,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#~ msgid ""
-#~ "GConf error:\n"
-#~ "  %s"
-#~ msgstr ""
-#~ "GConf fout:\n"
-#~ "  %s"
-
-#~ msgid ""
-#~ "Unable to initialize.\n"
-#~ "Make sure the daemon is running.\n"
-#~ "Error: %s"
-#~ msgstr ""
-#~ "Kan niet initialiseren.\n"
-#~ "Controleer of het achtergrondproces gestart is.\n"
-#~ "Fout: %s"
-
-#~ msgid "Codecs"
-#~ msgstr "Codecs"
-
-#~ msgid "Bandwidth"
-#~ msgstr "Bandbreedte"

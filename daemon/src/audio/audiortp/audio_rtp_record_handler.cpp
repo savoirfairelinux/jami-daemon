@@ -27,6 +27,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "audio_rtp_record_handler.h"
 #include <fstream>
 #include <algorithm>
@@ -54,7 +58,10 @@ DTMFEvent::DTMFEvent(int digit) : payload(), newevent(true), length(1000)
 }
 
 AudioRtpRecord::AudioRtpRecord() :
-    audioCodec_(0)
+      callId_("")
+    , codecSampleRate_(0)
+    , dtmfQueue_()
+    , audioCodec_(0)
     , audioCodecMutex_()
     , codecPayloadType_(0)
     , hasDynamicPayloadType_(false)
@@ -63,38 +70,52 @@ AudioRtpRecord::AudioRtpRecord() :
     , encodedData_()
     , converterEncode_(0)
     , converterDecode_(0)
-    , codecSampleRate_(0)
     , codecFrameSize_(0)
     , converterSamplingRate_(0)
-    , dtmfQueue_()
     , fadeFactor_(1.0 / 32000.0)
 #if HAVE_SPEEXDSP
     , noiseSuppressEncode_(0)
     , noiseSuppressDecode_(0)
     , audioProcessMutex_()
 #endif
-    , callId_("")
     , dtmfPayloadType_(101) // same as Asterisk
+    , dead_(false)
 {}
+
+// Call from processData*
+bool AudioRtpRecord::isDead()
+{
+#ifdef CCPP_PREFIX
+    return (int) dead_;
+#else
+    return *dead_;
+#endif
+}
 
 AudioRtpRecord::~AudioRtpRecord()
 {
+    dead_ = true;
 #ifdef RECTODISK
     rtpResampled.close();
     rtpNotResampled.close();
 #endif
 
     delete converterEncode_;
+    converterEncode_ = 0;
     delete converterDecode_;
+    converterDecode_ = 0;
     {
         ost::MutexLock lock(audioCodecMutex_);
         delete audioCodec_;
+        audioCodec_ = 0;
     }
 #if HAVE_SPEEXDSP
     {
         ost::MutexLock lock(audioProcessMutex_);
         delete noiseSuppressDecode_;
+        noiseSuppressDecode_ = 0;
         delete noiseSuppressEncode_;
+        noiseSuppressEncode_ = 0;
     }
 #endif
 }
@@ -152,8 +173,13 @@ void AudioRtpRecordHandler::putDtmfEvent(int digit)
     audioRtpRecord_.dtmfQueue_.push_back(dtmf);
 }
 
+#define RETURN_IF_NULL(A, VAL, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return VAL; }
+
 int AudioRtpRecordHandler::processDataEncode()
 {
+    if (audioRtpRecord_.isDead())
+        return 0;
+
     int codecSampleRate = getCodecSampleRate();
     int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
 
@@ -185,7 +211,7 @@ int AudioRtpRecordHandler::processDataEncode()
     SFLDataFormat *out = micData;
 
     if (codecSampleRate != mainBufferSampleRate) {
-        assert(audioRtpRecord_.converterEncode_);
+        RETURN_IF_NULL(audioRtpRecord_.converterEncode_, 0, "Converter already destroyed");
 
         audioRtpRecord_.converterEncode_->resample(micData,
                 audioRtpRecord_.resampledData_.data(),
@@ -203,21 +229,25 @@ int AudioRtpRecordHandler::processDataEncode()
 #if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
-        assert(audioRtpRecord_.noiseSuppressEncode_);
+        RETURN_IF_NULL(audioRtpRecord_.noiseSuppressEncode_, 0, "Noise suppressor already destroyed");
         audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
 #endif
 
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
+        RETURN_IF_NULL(audioRtpRecord_.audioCodec_, 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
         return audioRtpRecord_.audioCodec_->encode(micDataEncoded, out, getCodecFrameSize());
     }
 }
+#undef RETURN_IF_NULL
+
+#define RETURN_IF_NULL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); return; }
 
 void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
-    if (getCodecPayloadType() != payloadType)
+    if (audioRtpRecord_.isDead() or getCodecPayloadType() != payloadType)
         return;
 
     int inSamples = 0;
@@ -225,6 +255,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
+        RETURN_IF_NULL(audioRtpRecord_.audioCodec_, "Audio codec already destroyed");
         // Return the size of data in samples
         inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
@@ -232,7 +263,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 #if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ost::MutexLock lock(audioRtpRecord_.audioProcessMutex_);
-        assert(audioRtpRecord_.noiseSuppressDecode_);
+        RETURN_IF_NULL(audioRtpRecord_.noiseSuppressDecode_, "Noise suppressor already destroyed");
         audioRtpRecord_.noiseSuppressDecode_->process(spkrDataDecoded, getCodecFrameSize());
     }
 #endif
@@ -250,6 +281,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
+        RETURN_IF_NULL(audioRtpRecord_.converterDecode_, "Converter already destroyed");
         out = audioRtpRecord_.resampledData_.data();
         // Do sample rate conversion
         outSamples = ((float) inSamples * ((float) mainBufferSampleRate / (float) codecSampleRate));
@@ -260,6 +292,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     Manager::instance().getMainBuffer()->putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
+#undef RETURN_IF_NULL
 
 void AudioRtpRecord::fadeInDecodedData(size_t size)
 {

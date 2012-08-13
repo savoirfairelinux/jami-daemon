@@ -7,23 +7,28 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-07-01 20:28+0000\n"
-"Last-Translator: DMG <Unknown>\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-03-17 23:39+0000\n"
+"Last-Translator: Alexandr Bogovik <Unknown>\n"
 "Language-Team: Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: \n"
+
+#: ../gnome/src/config/accountlistconfigdialog.c:202
+#, c-format
+msgid "Server returned \"%s\" (%d)"
+msgstr "Ответ сервера \"%s\" (%d)"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
 msgid "%s says:"
-msgstr ""
+msgstr "%s сказал:"
 
 #: ../gnome/src/sflnotify.c:103 ../gnome/src/sflnotify.c:122
 #, c-format
@@ -39,14 +44,14 @@ msgstr "<i>От:</i> %s"
 #, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
-msgstr[0] "%d голосовое письмо"
-msgstr[1] "%d голосовые письма"
-msgstr[2] "%d голосовые письма"
+msgstr[0] "%d голосовое сообщение"
+msgstr[1] "%d голосовые сообщения"
+msgstr[2] "%d голосовые сообщения"
 
 #: ../gnome/src/sflnotify.c:139
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr "Вызов %s с помощью аккаунта <i>%s</i>"
+msgstr "Вызов %s с помощью учетной записи <i>%s</i>"
 
 #: ../gnome/src/sflnotify.c:143
 msgid "Current account"
@@ -54,7 +59,7 @@ msgstr "Текущий аккаунт"
 
 #: ../gnome/src/sflnotify.c:154
 msgid "You have no accounts set up"
-msgstr "У вас нет настроенных аккаунтов"
+msgstr "У вас нет настроенных учетных записей"
 
 #: ../gnome/src/sflnotify.c:155 ../gnome/src/sflnotify.c:168
 #: ../gnome/src/accountlist.c:160
@@ -63,7 +68,7 @@ msgstr "Ошибка"
 
 #: ../gnome/src/sflnotify.c:167
 msgid "You have no registered accounts"
-msgstr "У вас нет зарегистрированных аккаунтов"
+msgstr "У вас нет зарегистрированных учетных записей"
 
 #: ../gnome/src/sflnotify.c:181
 #, c-format
@@ -116,11 +121,11 @@ msgstr "Использовать аккаунт"
 
 #: ../gnome/src/actions.c:180
 msgid "No registered accounts"
-msgstr "У вас нет зарегистрированных аккаунтов"
+msgstr "У вас нет зарегистрированных учетных записей"
 
 #: ../gnome/src/actions.c:609 ../gnome/src/actions.c:881
 msgid "Direct SIP call"
-msgstr "Прямые IP-звонки"
+msgstr "Прямой SIP вызов"
 
 #: ../gnome/src/callable_obj.c:340
 msgid "today at %R"
@@ -148,6 +153,9 @@ msgid ""
 "Check your gconf setup, look at gpdf FAQ for \n"
 "more info"
 msgstr ""
+"Невозможно найти схему для gpdf предпочтений.\n"
+"Проверьте ваши настройки gconf, для получения подробной информации "
+"обратитесь к справке по gpdf."
 
 #: ../gnome/src/accountlist.c:151
 msgid "Registered"
@@ -159,11 +167,11 @@ msgstr "Не зарегистрирован"
 
 #: ../gnome/src/accountlist.c:157
 msgid "Trying..."
-msgstr "Пытаюсь..."
+msgstr "Попытка..."
 
 #: ../gnome/src/accountlist.c:163
 msgid "Authentication Failed"
-msgstr "Аутентификация не удалась"
+msgstr "Ошибка аутентификации"
 
 #: ../gnome/src/accountlist.c:166
 msgid "Network unreachable"
@@ -183,7 +191,7 @@ msgstr "Неверный сервер Stun"
 
 #: ../gnome/src/accountlist.c:178
 msgid "Ready"
-msgstr "Готово"
+msgstr "Готов"
 
 #: ../gnome/src/accountlist.c:181
 msgid "Invalid"
@@ -191,7 +199,7 @@ msgstr "Неверный"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:51
 msgid "ZRTP Options"
-msgstr "Опции ZRTP"
+msgstr "ZRTP Options"
 
 #: ../gnome/src/config/zrtpadvanceddialog.c:70
 msgid "Send Hello Hash in S_DP"
@@ -236,15 +244,15 @@ msgstr "ALSA-плагин"
 
 #: ../gnome/src/config/audioconf.c:691
 msgid "Output"
-msgstr "Аудиовыход"
+msgstr "Выход"
 
 #: ../gnome/src/config/audioconf.c:713
 msgid "Input"
-msgstr "Аудиовход"
+msgstr "Вход"
 
 #: ../gnome/src/config/audioconf.c:734
 msgid "Ringtone"
-msgstr "Мелодия"
+msgstr "Мелодия вызова"
 
 #: ../gnome/src/config/audioconf.c:775
 msgid "Sound Manager"
@@ -268,19 +276,19 @@ msgstr "Записи"
 
 #: ../gnome/src/config/audioconf.c:811
 msgid "Destination folder"
-msgstr "Сохранять в"
+msgstr "Папка назначения"
 
 #: ../gnome/src/config/audioconf.c:815
 msgid "Select a folder"
-msgstr "Выберите каталог"
+msgstr "Выберите папку"
 
 #: ../gnome/src/config/audioconf.c:827
 msgid "_Always recording"
-msgstr ""
+msgstr "_Всегда записывать"
 
 #: ../gnome/src/config/audioconf.c:834
 msgid "Voice enhancement settings"
-msgstr "Расширенные настройки голоса"
+msgstr "Расширенные голосовые настройки"
 
 #: ../gnome/src/config/audioconf.c:837
 msgid "_Noise Reduction"
@@ -288,7 +296,7 @@ msgstr "_Подавление шума"
 
 #: ../gnome/src/config/audioconf.c:851
 msgid "_Echo Cancellation"
-msgstr ""
+msgstr "_Убрать эхо"
 
 #: ../gnome/src/config/addressbook-config.c:339
 #: ../gnome/src/config/preferencesdialog.c:416
@@ -434,11 +442,12 @@ msgid "Please select one of the following options"
 msgstr "Выберите одну из следующих возможностей"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "Создать бесплатный SIP/IAX2-аккаунт на sflphone.org"
+msgstr ""
+"Создать бесплатный SIP/IAX2 аккаунт на sflphone.org\n"
+"(Только в тестовых целях)"
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
@@ -571,12 +580,11 @@ msgstr "дней"
 
 #: ../gnome/src/config/preferencesdialog.c:253
 msgid "Instant Messaging"
-msgstr ""
+msgstr "Обмен мгновенными сообщениями"
 
 #: ../gnome/src/config/preferencesdialog.c:257
-#, fuzzy
 msgid "Enable instant messaging"
-msgstr "Задействовать мелодии вызова"
+msgstr "Разрешить обмен мгновенными сообщениями"
 
 #: ../gnome/src/config/preferencesdialog.c:377
 msgid "Preferences"
@@ -614,7 +622,7 @@ msgstr "Неизвестный"
 
 #: ../gnome/src/config/accountconfigdialog.c:334
 msgid "_Proxy"
-msgstr ""
+msgstr "_Прокси сервер"
 
 #: ../gnome/src/config/accountconfigdialog.c:352
 msgid "_User-agent"
@@ -646,9 +654,8 @@ msgid "Security"
 msgstr "Шифрование"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "Использовать протокол TLS"
+msgstr "Использовать TLS защиту (для SIP)"
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
@@ -765,11 +772,6 @@ msgstr "Сеть"
 #: ../gnome/src/config/shortcuts-config.c:117
 msgid "Be careful: these shortcuts might override system-wide shortcuts."
 msgstr "ВНИМАНИЕ: эти комбинации могут заменить системные комбинации клавиш"
-
-#: ../gnome/src/config/accountlistconfigdialog.c:202
-#, c-format
-msgid "Server returned \"%s\" (%d)"
-msgstr "Ответ сервера \"%s\" (%d)"
 
 #: ../gnome/src/config/accountlistconfigdialog.c:494
 msgid "Protocol"
@@ -975,9 +977,9 @@ msgid "Address book"
 msgstr "Адресная книга"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "Голосовая почта (%i)"
+msgstr "Голосовое сообщение(%i)"
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1032,14 +1034,12 @@ msgid "Place the call off hold"
 msgstr "Поставить вызов на удержание"
 
 #: ../gnome/src/uimanager.c:982 ../gnome/src/uimanager.c:1331
-#, fuzzy
 msgid "Send _message"
-msgstr "При сообщениях"
+msgstr "Отправить _сообщение"
 
 #: ../gnome/src/uimanager.c:983
-#, fuzzy
 msgid "Send message"
-msgstr "При сообщениях"
+msgstr "Отправить сообщение"
 
 #: ../gnome/src/uimanager.c:986
 msgid "Configuration _Assistant"
@@ -1071,19 +1071,19 @@ msgstr "Выйти из программы"
 
 #: ../gnome/src/uimanager.c:1002
 msgid "_Playback record"
-msgstr ""
+msgstr "_Воспроизвести запись"
 
 #: ../gnome/src/uimanager.c:1003
 msgid "Playback recorded file"
-msgstr ""
+msgstr "Воспроизвести записанный файл"
 
 #: ../gnome/src/uimanager.c:1006
 msgid "_Stop playback"
-msgstr ""
+msgstr "_Остановить воспроизведение"
 
 #: ../gnome/src/uimanager.c:1007
 msgid "Stop recorded file playback"
-msgstr ""
+msgstr "Остановить воспроизведение записанного файла"
 
 #: ../gnome/src/uimanager.c:1011
 msgid "_Edit"
@@ -1253,405 +1253,6 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to connect to the SFLphone server.\n"
-#~ "Make sure the daemon is running."
-#~ msgstr ""
-#~ "Невозможно подключиться к SFLphone-серверу.\n"
-#~ "Убедитесь что он работает."
-
-#~ msgid "Codecs"
-#~ msgstr "Кодеки"
-
-#~ msgid "Bandwidth"
-#~ msgstr "Полоса пропускания"
-
-#~ msgid "Custom commands on incoming calls with URL"
-#~ msgstr "Пользовательская команда при входящих вызовах с URL"
-
-#~ msgid "%s will be replaced with the passed URL."
-#~ msgstr "%s будет заменена на переданную URL"
-
-#~ msgid "_Voice Activity Detection"
-#~ msgstr "Детектор тишины (VAD)"
-
-#~ msgid "_Noise Reduction (Narrow-Band Companding)"
-#~ msgstr "Шумоподавление"
-
-#~ msgid "Account creation wizard"
-#~ msgstr "Мастер настройки SFLphone"
-
-#~ msgid "Voicemail number"
-#~ msgstr "Номер автоответчика #"
-
-#~ msgid "Codec"
-#~ msgstr "Codec"
-
-#~ msgid "Display volume controls"
-#~ msgstr "_Настройки громкости"
-
-#~ msgid "New call"
-#~ msgstr "Новый звонок"
-
-#~ msgid "Hang up"
-#~ msgstr "Положить трубку"
-
-#~ msgid "Hold on"
-#~ msgstr "Удержать звонок"
-
-#~ msgid "Record"
-#~ msgstr "Записать переговор"
-
-#~ msgid "Pick up"
-#~ msgstr "Взять трубку"
-
-#~ msgid "Hold off"
-#~ msgstr "Снова взять"
-
-#~ msgid "Apply"
-#~ msgstr "Применить"
-
-#~ msgid "Stun parameters will be applied on each SIP account created."
-#~ msgstr "STUN-параметры будут эффективны для каждого созданного SIP-аккаунта"
-
-#~ msgid "Format : name.server:port"
-#~ msgstr "Формат: имя.сервер:порт"
-
-#~ msgid "Display photo if available"
-#~ msgstr "_Показать фотографию контакта (если имеется):"
-
-#~ msgid "Work"
-#~ msgstr "Рабочий"
-
-#~ msgid "Mobile"
-#~ msgstr "Мобильный"
-
-#~ msgid "Home"
-#~ msgstr "Домашний"
-
-#~ msgid "Sound manager"
-#~ msgstr "Менеджер звука"
-
-#~ msgid "SIP Port"
-#~ msgstr "SIP-порт"
-
-#~ msgid "Command to run"
-#~ msgstr "Выполнить команду:"
-
-#~ msgid "Prefix dialed numbers with"
-#~ msgstr "Добавить перед на набранными номерами"
-
-#~ msgid "IP call - %s"
-#~ msgstr "IP звонок  - %s"
-
-#~ msgid ""
-#~ "<b>Error: No audio codecs found.\n"
-#~ "\n"
-#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
-#~ "sflphone</b> directory in your home( <i>%s</i> )"
-#~ msgstr ""
-#~ "<b>Ошибка: звуковые кодеки не найдены.\n"
-#~ "\n"
-#~ "</b> Звуковые кодеки SFL должны находиться в <i>%s</i> или в <b>."
-#~ "sflphone</b> каталоге в вашем домашнем каталоге( <i>%s</i> )"
-
-#~ msgid "_Account creation wizard"
-#~ msgstr "Мастер настройки SFLphone"
-
-#~ msgid "_Enable this account"
-#~ msgstr "_Включить"
-
-#~ msgid "Enable voicemail _notifications"
-#~ msgstr "Включить предупреждения о речевых сообщениях"
-
-#~ msgid "PulseAudio sound server"
-#~ msgstr "Сервер звука PulseAudio"
-
-#~ msgid "_Mute other applications during a call"
-#~ msgstr "Приглушать звук других програм во время звонка"
-
-#~ msgid "Port"
-#~ msgstr "Порт"
-
-#~ msgctxt "account state"
-#~ msgid "Error"
-#~ msgstr "Ошибка"
-
-#~ msgctxt "Config section"
-#~ msgid "General"
-#~ msgstr "Общие настройки"
-
-#~ msgid "User"
-#~ msgstr "Пользователь"
-
-#~ msgid "State"
-#~ msgstr "Статус"
-
-#~ msgid "Stun settings will be applied on each account"
-#~ msgstr "STUN-параметры будут эффективны для каждого созданного SIP-аккаунта"
-
-#~ msgid "Audio device"
-#~ msgstr "Звуковые файлы"
-
-#~ msgid "&Codecs"
-#~ msgstr "Кодеки"
-
-#~ msgid "Out"
-#~ msgstr "Выход"
-
-#~ msgid "Custom commands with URL %s will be replaced with the passed URL."
-#~ msgstr "%s будет заменена на переданную URL"
-
-#~ msgid "Phone number formatting"
-#~ msgstr "Переписка номера телефона"
-
-#~ msgid "Add phone number prefix"
-#~ msgstr "Мобильный телефон"
-
-#~ msgid "Hold"
-#~ msgstr "Удержать звонок"
-
-#~ msgctxt "Action record a call"
-#~ msgid "Record"
-#~ msgstr "Записать переговор"
-
-#~ msgid "accounr state"
-#~ msgstr "Настройки аккаунта"
-
-#~ msgid ""
-#~ "After checking the settings you chose, click \"Finish\" to create the "
-#~ "account."
-#~ msgstr ""
-#~ "После проверки выбранных настроек, нажмите \"Завершить\" для создания "
-#~ "учетной записи"
-
-#~ msgid "Stun Server"
-#~ msgstr "Сервер Stun"
-
-#~ msgid "Enable STUN"
-#~ msgstr "Задействовать STUN"
-
-#~ msgid "Default account"
-#~ msgstr "Учетная запись по умолчанию"
-
-#~ msgid "SFLphone KDE Client"
-#~ msgstr "SFLphone клиент для KDE"
-
-#~ msgid "Main screen"
-#~ msgstr "Основной экран"
-
-#~ msgid "Address book loading..."
-#~ msgstr "Загружается адресная книга..."
-
-#~ msgid "You have an incoming call from"
-#~ msgstr "Имеется входящий вызов"
-
-#~ msgid "Display dialpad"
-#~ msgstr "Отобразить панель набора номера"
-
-#~ msgid "Configure SFLphone"
-#~ msgstr "Настроить SFLphone"
-
-#~ msgid "Display"
-#~ msgstr "Отобразить"
-
-#~ msgid "Edit before call"
-#~ msgstr "Редактировать перед вызовом"
-
-#~ msgid "Give up transfer"
-#~ msgstr "Прекратить передачу"
-
-#~ msgid ""
-#~ "This button enables you to initialize a new account. You will then be "
-#~ "able to edit it using the form on the right."
-#~ msgstr ""
-#~ "Эта кнопка позволяет инициализировать новую учетную запись. Редактировать "
-#~ "данные будет возможно в форме справа."
-
-#~ msgid "Get this account down"
-#~ msgstr "Переместить учетную запись вниз"
-
-#~ msgid "Get this account up"
-#~ msgstr "Переместить учетную запись вверх"
-
-#~ msgid "choose Stun server (example : stunserver.org)"
-#~ msgstr "выберите Stun сервер (например : stunserver.org)"
-
-#~ msgid "Enable Stun"
-#~ msgstr "Задействовать Stun"
-
-#~ msgid "Maximum results"
-#~ msgstr "Максимальное количество результатов"
-
-#~ msgid "Mute other applications during a call"
-#~ msgstr "Приглушить другие приложения на время вызова"
-
-#~ msgid "On incoming calls"
-#~ msgstr "При входящих вызовах"
-
-#~ msgid "PulseAudio settings"
-#~ msgstr "Настройки PulseAudio"
-
-#~ msgid "Show main window"
-#~ msgstr "Отобразить главное окно"
-
-#~ msgid "Display phone numbers of these types :"
-#~ msgstr "Отобразить телефонные номера следующих типов:"
-
-#~ msgid "On start"
-#~ msgstr "При запуске"
-
-#~ msgid "Attention:number of results exceeds max displayed."
-#~ msgstr ""
-#~ "Внимание: количество результатов превышает максимально возможное для "
-#~ "отображения."
-
-#~ msgid "Keep my history for at least"
-#~ msgstr "По крайней мере хранить историю"
-
-#~ msgid "Incoming call"
-#~ msgstr "Входящий звонок"
-
-#~ msgid "(C) 2009 Savoir-faire Linux"
-#~ msgstr "(C) 2009 Savoir-faire Linux"
-
-#~ msgid "Jérémy Quentin"
-#~ msgstr "Jérémy Quentin"
-
-#~ msgid "Remove"
-#~ msgstr "Удалить"
-
-#~ msgid "ALSA"
-#~ msgstr "ALSA"
-
-#~ msgid "IAX"
-#~ msgstr "IAX"
-
-#~ msgid "PulseAudio"
-#~ msgstr "PulseAudio"
-
-#~ msgid "Add"
-#~ msgstr "Добавить"
-
-#~ msgid "Enable notifications"
-#~ msgstr "Включить уведомления"
-
-#~ msgid "Manually"
-#~ msgstr "Вручную"
-
-#~ msgid "UDP Transport"
-#~ msgstr "Транспорт UDP"
-
-#~ msgid "There "
-#~ msgstr "Здесь "
-
-#~ msgid "Store SIP credentials as MD5 hash"
-#~ msgstr "Записать параметры доступа SIP с шифровкой MD5."
-
-#~ msgid "s"
-#~ msgstr "a"
-
-#~ msgid "are "
-#~ msgstr "Зарегестрированны "
-
-#~ msgid "is "
-#~ msgstr "Зарегестрирован "
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr ""
-#~ ",Launchpad Contributions:,Hussein Abdallah, ,Launchpad Contributions:,"
-#~ "Emmanuel Milou,Hussein Abdallah,Maxime Chambreuil,Pavlo Kucheriavyi,"
-#~ "Sergei Sedov, ,Launchpad Contributions:,Emmanuel Milou,Hussein Abdallah,"
-#~ "Hussein Abdallah,Maxime Chambreuil,Pavlo Kucheriavyi,Sergei Sedov, ,"
-#~ "Launchpad Contributions:,Emmanuel Milou,Hussein Abdallah,Hussein Abdallah,"
-#~ "Maxime Chambreuil,Pavlo Kucheriavyi,Sergey Sedov, ,Launchpad "
-#~ "Contributions:,DMG,Emmanuel Milou,Hussein Abdallah,Hussein Abdallah,"
-#~ "Lortonix,Maxime Chambreuil,Pavlo Kucheriavyi,Sergey Sedov, ,Launchpad "
-#~ "Contributions:,DMG,Emmanuel Milou,Hussein Abdallah,Hussein Abdallah,"
-#~ "Lortonix,Maxime Chambreuil (http://www.savoirfairelinux.com),Pavlo "
-#~ "Kucheriavyi,Sergey Sedov"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ""
-#~ ",,,,,emmanuel.milou@savoirfairelinux.com,,maxime.chambreuil@gmail.com,,,,,"
-#~ "emmanuel.milou@savoirfairelinux.com,,,maxime.chambreuil@gmail.com,,,,,"
-#~ "emmanuel.milou@savoirfairelinux.com,,,maxime.chambreuil@gmail.com,,,,,,"
-#~ "emmanuel.milou@savoirfairelinux.com,,,,maxime.chambreuil@gmail.com,,,,,,"
-#~ "emmanuel.milou@savoirfairelinux.com,,,,maxime.chambreuil@savoirfairelinux."
-#~ "com,,sedov@webmail.perm.ru"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "Борьба с _эхо"
-
-#~ msgid "Email address"
-#~ msgstr "Адрес эл. почты"
-
-#~ msgid "Transfer"
-#~ msgstr "Переслать звонок на другой номер"
-
-#~ msgid "Enable address book"
-#~ msgstr "Адресная книга"
-
-#~ msgid "_Call"
-#~ msgstr "_Звонок"
-
-#~ msgid "History"
-#~ msgstr "Журнал"
-
-#~ msgid "Configure accounts"
-#~ msgstr "Нынешний аккаунт"
-
-#~ msgid "Configure audio"
-#~ msgstr "Нынешний аккаунт"
-
-#~ msgid "Transfer to : "
-#~ msgstr "Передать : "
-
-#~ msgid "Remove the selected account"
-#~ msgstr "Удалить выбранную учетную запись"
-
-#~ msgid "Conform to RFC 3263"
-#~ msgstr "Соответствует RFC 3263"
-
-#~ msgid "Clear history"
-#~ msgstr "Очистить историю"
-
-#~ msgid "Call history"
-#~ msgstr "История звонков"
-
-#~ msgid "Call back"
-#~ msgstr "Обратный вызов"
-
-#~ msgid "Add a new account"
-#~ msgstr "Добавить новую учётную запись"
-
-#~ msgid "Connection"
-#~ msgstr "Подключение"
-
-#~ msgid "Advanced Settings"
-#~ msgstr "Дополнительные параметры"
-
-#~ msgid "Server returned \""
-#~ msgstr "Сервер ответил \""
-
-#~ msgid "Using STUN "
-#~ msgstr "Использует STUN "
-
-#~ msgid " active account"
-#~ msgstr " действующий аккаунт"
-
-#~ msgid "Configuration File"
-#~ msgstr "Файл конфигурации"
-
-#~ msgid "%i account configured"
-#~ msgid_plural "%i accounts configured"
-#~ msgstr[0] "%i аккаунт настроен"
-#~ msgstr[1] "%i аккаунтов настроено"
-#~ msgstr[2] "%i аккаунтов настроены"
-
-#~ msgid "Direct IP calls"
-#~ msgstr "Прямые IP-вызовы"
+"Оповещение кодеков\n"
+"\n"
+"Кодеки не найдены"

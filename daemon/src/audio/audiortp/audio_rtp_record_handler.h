@@ -74,7 +74,11 @@ class AudioRtpRecord {
     public:
         AudioRtpRecord();
         ~AudioRtpRecord();
+        std::string callId_;
+        int codecSampleRate_;
+        std::list<DTMFEvent> dtmfQueue_;
 
+    private:
         AudioCodec *audioCodec_;
         ost::Mutex audioCodecMutex_;
         int codecPayloadType_;
@@ -85,10 +89,8 @@ class AudioRtpRecord {
         std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
-        int codecSampleRate_;
         int codecFrameSize_;
         int converterSamplingRate_;
-        std::list<DTMFEvent> dtmfQueue_;
         double fadeFactor_;
 
 #if HAVE_SPEEXDSP
@@ -97,16 +99,20 @@ class AudioRtpRecord {
         ost::Mutex audioProcessMutex_;
 #endif
 
-        std::string callId_;
         unsigned int dtmfPayloadType_;
 
-    private:
+        bool isDead();
         friend class AudioRtpRecordHandler;
         /**
         * Ramp In audio data to avoid audio click from peer
         */
         void fadeInDecodedData(size_t size);
         NON_COPYABLE(AudioRtpRecord);
+#ifdef CCPP_PREFIX
+        ost::AtomicCounter dead_;
+#else
+        ucommon::atomic::counter dead_;
+#endif
 };
 
 
@@ -178,7 +184,6 @@ class AudioRtpRecordHandler {
         AudioRtpRecord audioRtpRecord_;
 
     private:
-
         const std::string id_;
         GainControl gainController;
 };
