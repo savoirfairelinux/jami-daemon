@@ -59,6 +59,7 @@ const char * const Account::AUTHENTICATION_USERNAME_KEY = "authenticationUsernam
 const char * const Account::PASSWORD_KEY =          "password";
 const char * const Account::HOSTNAME_KEY =          "hostname";
 const char * const Account::ACCOUNT_ENABLE_KEY =    "enable";
+const char * const Account::ACCOUNT_AUTOANSWER_KEY =    "autoAnswer";
 const char * const Account::MAILBOX_KEY =           "mailbox";
 
 using std::map;
@@ -72,6 +73,7 @@ Account::Account(const string &accountID, const string &type) :
     , hostname_()
     , alias_()
     , enabled_(true)
+    , autoAnswerEnabled_(false)
     , type_(type)
     , registrationState_(UNREGISTERED)
     , audioCodecList_()

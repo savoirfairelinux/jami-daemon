@@ -303,6 +303,11 @@ gboolean current_account_has_new_message(void)
     return current && current->_messages_number > 0;
 }
 
+gboolean account_has_autoanswer_on(const account_t *account)
+{
+    return g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_AUTOANSWER), "true") == 0;
+}
+
 gboolean account_is_IP2IP(const account_t *account)
 {
     g_assert(account);

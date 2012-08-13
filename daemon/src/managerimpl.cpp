@@ -1365,11 +1365,12 @@ void ManagerImpl::removeWaitingCall(const std::string& id)
 void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 {
     stopTone();
+    const std::string callID(call.getCallId());
 
-    associateCallToAccount(call.getCallId(), accountId);
+    associateCallToAccount(callID, accountId);
 
     if (accountId.empty())
-        setIPToIPForCall(call.getCallId(), true);
+        setIPToIPForCall(callID, true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
@@ -1387,12 +1388,12 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
         ringtone(accountId);
     }
 
-    addWaitingCall(call.getCallId());
+    addWaitingCall(callID);
 
     std::string number(call.getPeerNumber());
 
     std::string from("<" + number + ">");
-    dbus_.getCallManager()->incomingCall(accountId, call.getCallId(), call.getDisplayName() + " " + from);
+    dbus_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
 }
 
 

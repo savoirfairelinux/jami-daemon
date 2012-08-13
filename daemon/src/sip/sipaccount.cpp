@@ -58,6 +58,8 @@ const char * const SIPAccount::SIPINFO_STR = "sipinfo";
 namespace {
     const int MIN_REGISTRATION_TIME = 60;
     const int DEFAULT_REGISTRATION_TIME = 3600;
+    const char *const TRUE_STR = "true";
+    const char *const FALSE_STR = "false";
 }
 
 SIPAccount::SIPAccount(const std::string& accountID)
@@ -83,7 +85,7 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , stunServerName_()
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
-    , tlsEnable_("false")
+    , tlsEnable_(FALSE_STR)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -133,6 +135,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode alias(Account::alias_);
     ScalarNode hostname(Account::hostname_);
     ScalarNode enable(enabled_);
+    ScalarNode autoAnswer(autoAnswerEnabled_);
     ScalarNode type(Account::type_);
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
@@ -210,6 +213,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(USERNAME_KEY, &username);
     accountmap.setKeyValue(HOSTNAME_KEY, &hostname);
     accountmap.setKeyValue(ACCOUNT_ENABLE_KEY, &enable);
+    accountmap.setKeyValue(ACCOUNT_AUTOANSWER_KEY, &autoAnswer);
     accountmap.setKeyValue(MAILBOX_KEY, &mailbox);
     accountmap.setKeyValue(Preferences::REGISTRATION_EXPIRE_KEY, &expire);
     accountmap.setKeyValue(INTERFACE_KEY, &interface);
@@ -309,6 +313,7 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
     mapNode.getValue(USERNAME_KEY, &username_);
     if (not isIP2IP()) mapNode.getValue(HOSTNAME_KEY, &hostname_);
     mapNode.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
+    mapNode.getValue(ACCOUNT_AUTOANSWER_KEY, &autoAnswerEnabled_);
     if (not isIP2IP()) mapNode.getValue(MAILBOX_KEY, &mailBox_);
     mapNode.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
     // Update codec list which one is used for SDP offer
@@ -460,7 +465,6 @@ void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
     }
 }
 
-
 void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 {
     // Account setting common to SIP and IAX
@@ -468,9 +472,10 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     type_ = details[CONFIG_ACCOUNT_TYPE];
     username_ = details[CONFIG_ACCOUNT_USERNAME];
     hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
-    enabled_ = details[CONFIG_ACCOUNT_ENABLE] == "true";
+    enabled_ = details[CONFIG_ACCOUNT_ENABLE] == TRUE_STR;
+    autoAnswerEnabled_ = details[CONFIG_ACCOUNT_AUTOANSWER] == TRUE_STR;
     ringtonePath_ = details[CONFIG_RINGTONE_PATH];
-    ringtoneEnabled_ = details[CONFIG_RINGTONE_ENABLED] == "true";
+    ringtoneEnabled_ = details[CONFIG_RINGTONE_ENABLED] == TRUE_STR;
     mailBox_ = details[CONFIG_ACCOUNT_MAILBOX];
 
     // SIP specific account settings
@@ -479,7 +484,7 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     displayName_ = details[CONFIG_DISPLAY_NAME];
     serviceRoute_ = details[CONFIG_ACCOUNT_ROUTESET];
     interface_ = details[CONFIG_LOCAL_INTERFACE];
-    publishedSameasLocal_ = details[CONFIG_PUBLISHED_SAMEAS_LOCAL] == "true";
+    publishedSameasLocal_ = details[CONFIG_PUBLISHED_SAMEAS_LOCAL] == TRUE_STR;
     publishedIpAddress_ = details[CONFIG_PUBLISHED_ADDRESS];
     localPort_ = atoi(details[CONFIG_LOCAL_PORT].c_str());
     publishedPort_ = atoi(details[CONFIG_PUBLISHED_PORT].c_str());
@@ -488,22 +493,22 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
         // pj_stun_sock_destroy(pj_stun_sock *stun_sock);
     }
     stunServer_ = details[CONFIG_STUN_SERVER];
-    stunEnabled_ = details[CONFIG_STUN_ENABLE] == "true";
+    stunEnabled_ = details[CONFIG_STUN_ENABLE] == TRUE_STR;
     dtmfType_ = details[CONFIG_ACCOUNT_DTMF_TYPE];
     registrationExpire_ = atoi(details[CONFIG_ACCOUNT_REGISTRATION_EXPIRE].c_str());
     if(registrationExpire_ < MIN_REGISTRATION_TIME)
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
     userAgent_ = details[CONFIG_ACCOUNT_USERAGENT];
-    keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == "true";
+    keepAliveEnabled_ = details[CONFIG_KEEP_ALIVE_ENABLED] == TRUE_STR;
 
     // srtp settings
-    srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == "true";
-    srtpFallback_ = details[CONFIG_SRTP_RTP_FALLBACK] == "true";
-    zrtpDisplaySas_ = details[CONFIG_ZRTP_DISPLAY_SAS] == "true";
-    zrtpDisplaySasOnce_ = details[CONFIG_ZRTP_DISPLAY_SAS_ONCE] == "true";
-    zrtpNotSuppWarning_ = details[CONFIG_ZRTP_NOT_SUPP_WARNING] == "true";
-    zrtpHelloHash_ = details[CONFIG_ZRTP_HELLO_HASH] == "true";
+    srtpEnabled_ = details[CONFIG_SRTP_ENABLE] == TRUE_STR;
+    srtpFallback_ = details[CONFIG_SRTP_RTP_FALLBACK] == TRUE_STR;
+    zrtpDisplaySas_ = details[CONFIG_ZRTP_DISPLAY_SAS] == TRUE_STR;
+    zrtpDisplaySasOnce_ = details[CONFIG_ZRTP_DISPLAY_SAS_ONCE] == TRUE_STR;
+    zrtpNotSuppWarning_ = details[CONFIG_ZRTP_NOT_SUPP_WARNING] == TRUE_STR;
+    zrtpHelloHash_ = details[CONFIG_ZRTP_HELLO_HASH] == TRUE_STR;
     srtpKeyExchange_ = details[CONFIG_SRTP_KEY_EXCHANGE];
 
     // TLS settings
@@ -516,9 +521,9 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     tlsMethod_ = details[CONFIG_TLS_METHOD];
     tlsCiphers_ = details[CONFIG_TLS_CIPHERS];
     tlsServerName_ = details[CONFIG_TLS_SERVER_NAME];
-    tlsVerifyServer_ = details[CONFIG_TLS_VERIFY_SERVER] == "true";
-    tlsVerifyClient_ = details[CONFIG_TLS_VERIFY_CLIENT] == "true";
-    tlsRequireClientCertificate_ = details[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] == "true";
+    tlsVerifyServer_ = details[CONFIG_TLS_VERIFY_SERVER] == TRUE_STR;
+    tlsVerifyClient_ = details[CONFIG_TLS_VERIFY_CLIENT] == TRUE_STR;
+    tlsRequireClientCertificate_ = details[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] == TRUE_STR;
     tlsNegotiationTimeoutSec_ = details[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC];
     tlsNegotiationTimeoutMsec_ = details[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC];
 
@@ -541,13 +546,14 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     // note: The IP2IP profile will always have IP2IP as an alias
     a[CONFIG_ACCOUNT_ALIAS] = alias_;
 
-    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
+    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ACCOUNT_AUTOANSWER]= autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ACCOUNT_TYPE] = type_;
     a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
     a[CONFIG_ACCOUNT_USERNAME] = username_;
 
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
-    a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? "true" : "false";
+    a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
     RegistrationState state = UNREGISTERED;
@@ -577,7 +583,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     registrationExpireStr << registrationExpire_;
     a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
     a[CONFIG_LOCAL_INTERFACE] = interface_;
-    a[CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? "true" : "false";
+    a[CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
 
     std::stringstream localport;
@@ -586,19 +592,19 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     std::stringstream publishedport;
     publishedport << publishedPort_;
     a[CONFIG_PUBLISHED_PORT] = publishedport.str();
-    a[CONFIG_STUN_ENABLE] = stunEnabled_ ? "true" : "false";
+    a[CONFIG_STUN_ENABLE] = stunEnabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_STUN_SERVER] = stunServer_;
     a[CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
-    a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? "true" : "false";
+    a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? TRUE_STR : FALSE_STR;
 
     a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
-    a[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
+    a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
 
-    a[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
-    a[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
-    a[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
-    a[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
+    a[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     std::stringstream tlslistenerport;
@@ -612,9 +618,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_TLS_METHOD] = tlsMethod_;
     a[CONFIG_TLS_CIPHERS] = tlsCiphers_;
     a[CONFIG_TLS_SERVER_NAME] = tlsServerName_;
-    a[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
-    a[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
-    a[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    a[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
+    a[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
     a[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
@@ -627,7 +633,7 @@ void SIPAccount::registerVoIPLink()
         return;
 
     // Init TLS settings if the user wants to use TLS
-    if (tlsEnable_ == "true") {
+    if (tlsEnable_ == TRUE_STR) {
         DEBUG("TLS is enabled for account %s", accountID_.c_str());
         transportType_ = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
@@ -798,7 +804,7 @@ void SIPAccount::loadConfig()
     if (registrationExpire_ == 0)
         registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
-    if (tlsEnable_ == "true") {
+    if (tlsEnable_ == TRUE_STR) {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
     } else
@@ -1107,12 +1113,12 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
     std::map<std::string, std::string> ip2ipAccountDetails;
     ip2ipAccountDetails[CONFIG_ACCOUNT_ID] = IP2IP_PROFILE;
     ip2ipAccountDetails[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    ip2ipAccountDetails[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? "true" : "false";
-    ip2ipAccountDetails[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? "true" : "false";
-    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? "true" : "false";
-    ip2ipAccountDetails[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? "true" : "false";
-    ip2ipAccountDetails[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? "true" : "false";
-    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? "true" : "false";
+    ip2ipAccountDetails[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
     ip2ipAccountDetails[CONFIG_LOCAL_INTERFACE] = interface_;
     std::stringstream portstr;
     portstr << localPort_;
@@ -1141,9 +1147,9 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
     tlsSettings[CONFIG_TLS_METHOD] = tlsMethod_;
     tlsSettings[CONFIG_TLS_CIPHERS] = tlsCiphers_;
     tlsSettings[CONFIG_TLS_SERVER_NAME] = tlsServerName_;
-    tlsSettings[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? "true" : "false";
-    tlsSettings[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? "true" : "false";
-    tlsSettings[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? "true" : "false";
+    tlsSettings[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
+    tlsSettings[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
+    tlsSettings[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
     tlsSettings[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
     tlsSettings[CONFIG_TLS_NEGOTIATION_TIMEOUT_MSEC] = tlsNegotiationTimeoutMsec_;
 
@@ -1164,7 +1170,7 @@ void set_opt(const std::map<std::string, std::string> &details, const char *key,
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
     if (it != details.end())
-        val = it->second == "true";
+        val = it->second == TRUE_STR;
 }
 
 void set_opt(const std::map<std::string, std::string> &details, const char *key, pj_uint16_t &val)

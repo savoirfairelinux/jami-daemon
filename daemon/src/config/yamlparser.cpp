@@ -28,13 +28,15 @@
  *  as that of the covered work.
  */
 
+#include <cstdio>
+#include <assert.h>
+
 #include "yamlparser.h"
 
 #include "../global.h"
 #include "sfl_config.h"
 #include "yamlnode.h"
 #include "logger.h"
-#include <cstdio>
 
 namespace Conf {
 
@@ -283,6 +285,7 @@ void YamlParser::processStream()
 
 void YamlParser::processDocument()
 {
+    assert(eventNumber_ > 0);
     doc_ = new YamlDocument;
 
     for (; (eventIndex_ < eventNumber_) and (events_[eventIndex_].type != YAML_DOCUMENT_END_EVENT); ++eventIndex_) {
@@ -312,6 +315,7 @@ void YamlParser::processScalar(YamlNode *topNode)
         throw YamlParserException("No container for scalar");
 
     ScalarNode *sclr = new ScalarNode(std::string((const char*) events_[eventIndex_].data.scalar.value), topNode);
+    std::string tmpstring((const char*) events_[eventIndex_].data.scalar.value);
 
     switch (topNode->getType()) {
         case DOCUMENT:
@@ -433,7 +437,9 @@ void YamlParser::constructNativeData()
     Sequence *seq = doc_->getSequence();
 
     for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {
-        switch ((*iter)->getType()) {
+        YamlNode *yamlNode = dynamic_cast<YamlNode *>(*iter);
+        NodeType nodeType = yamlNode->getType();
+        switch (nodeType) {
             case SCALAR:
                 throw YamlParserException("No scalar allowed at document level, expect a mapping");
                 break;
@@ -441,7 +447,7 @@ void YamlParser::constructNativeData()
                 throw YamlParserException("No sequence allowed at document level, expect a mapping");
                 break;
             case MAPPING: {
-                MappingNode *map = (MappingNode *)(*iter);
+                MappingNode *map = dynamic_cast<MappingNode *>(*iter);
                 mainNativeDataMapping(map);
                 break;
             }
@@ -454,18 +460,19 @@ void YamlParser::constructNativeData()
 
 void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
-    std::map<std::string, YamlNode*> *mapping = map->getMapping();
+    std::map<std::string, YamlNode*> *mapping_ptr = map->getMapping();
+    std::map<std::string, YamlNode*> &mapping = *mapping_ptr;
 
-    accountSequence_    = (SequenceNode*)(*mapping)["accounts"];
-    addressbookNode_    = (MappingNode*)(*mapping)["addressbook"];
-    audioNode_          = (MappingNode*)(*mapping)["audio"];
+    accountSequence_    = dynamic_cast<SequenceNode*>(mapping["accounts"]);
+    addressbookNode_    = dynamic_cast<MappingNode *>(mapping["addressbook"]);
+    audioNode_          = dynamic_cast<MappingNode *>(mapping["audio"]);
 #ifdef SFL_VIDEO
-    videoNode_          = (MappingNode*)(*mapping)["video"];
+    videoNode_          = dynamic_cast<MappingNode *>(mapping["video"]);
 #endif
-    hooksNode_          = (MappingNode*)(*mapping)["hooks"];
-    preferenceNode_     = (MappingNode*)(*mapping)["preferences"];
-    voiplinkNode_       = (MappingNode*)(*mapping)["voipPreferences"];
-    shortcutNode_       = (MappingNode*)(*mapping)["shortcuts"];
+    hooksNode_          = dynamic_cast<MappingNode *>(mapping["hooks"]);
+    preferenceNode_     = dynamic_cast<MappingNode *>(mapping["preferences"]);
+    voiplinkNode_       = dynamic_cast<MappingNode *>(mapping["voipPreferences"]);
+    shortcutNode_       = dynamic_cast<MappingNode *>(mapping["shortcuts"]);
 }
 }
 
