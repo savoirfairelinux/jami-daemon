@@ -98,15 +98,27 @@ void ManagerImpl::init(const std::string &config_file)
     DEBUG("Configuration file path: %s", path_.c_str());
 
     try {
-        Conf::YamlParser parser(path_.c_str());
-        parser.serializeEvents();
-        parser.composeEvents();
-        parser.constructNativeData();
-        loadAccountMap(parser);
-    } catch (const Conf::YamlParserException &e) {
+        std::fstream testFileExistence(path_.c_str(), std::fstream::in);
+        bool fileExist = testFileExistence.good();
+        testFileExistence.close();
+
+        if(fileExist) {
+            Conf::YamlParser parser(path_.c_str());
+            parser.serializeEvents();
+            parser.composeEvents();
+            parser.constructNativeData();
+            loadAccountMap(parser);
+        }
+        else {
+            WARN("Config file not found: creating default account map");
+            loadDefaultAccountMap();
+        }
+    }
+    catch (const Conf::YamlParserException &e) {
         ERROR("%s", e.what());
-        fflush(stderr);
-        loadDefaultAccountMap();
+    }
+    catch(std::fstream::failure &e) {
+        ERROR("%s", e.what());
     }
 
     initAudioDriver();
@@ -2372,7 +2384,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     std::string newAccountID(accountID.str());
 
     // Get the type
-    
+
     std::string accountType;
     if (details.find(CONFIG_ACCOUNT_TYPE) == details.end())
         accountType = "SIP";
