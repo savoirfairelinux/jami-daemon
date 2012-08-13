@@ -100,7 +100,7 @@ ManagerImpl::ManagerImpl() :
 
 void ManagerImpl::init(const std::string &config_file)
 {
-    path_ = config_file.empty() ? createConfigFile() : config_file;
+    path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
 
     try {
@@ -1780,10 +1780,14 @@ ManagerImpl::getTelephoneFile()
 /**
  * Initialization: Main Thread
  */
-std::string ManagerImpl::createConfigFile() const
+std::string ManagerImpl::retrieveConfigPath() const
 {
+#if ANDROID
+    std::string configdir = "/data/data";
+#else
     std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
-                            ".config" + DIR_SEPARATOR_STR + PACKAGE;
+                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
+#endif
 
     std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty()) {

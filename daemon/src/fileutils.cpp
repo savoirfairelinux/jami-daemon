@@ -76,17 +76,32 @@ const char *get_data_dir()
     return path.c_str();
 }
 
-bool create_pidfile()
-{
+std::string get_path_for_cache(void) {
     std::string xdg_env(XDG_CACHE_HOME);
     std::string path = (not xdg_env.empty()) ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
+    return path;
+}
 
-    if (!check_dir(path.c_str()))
+std::string get_path_for_cache_android(void) {
+    std::string path = "/data/.cache/";
+    return path;
+}
+
+bool create_pidfile()
+{
+
+#if ANDROID
+    std::string path = get_path_for_cache_android();
+#else
+    std::string path = get_path_for_cache();
+#endif
+
+    if (not check_dir(path.c_str()))
         return false;
 
     path += "sflphone";
 
-    if (!check_dir(path.c_str()))
+    if (not check_dir(path.c_str()))
         return false;
 
     std::string pidfile = path + "/" PIDFILE;

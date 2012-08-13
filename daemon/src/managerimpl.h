@@ -883,7 +883,7 @@ class ManagerImpl {
         /**
          * Create config directory in home user and return configuration file path
          */
-        std::string createConfigFile() const;
+        std::string retrieveConfigPath() const;
 
         /*
          * Initialize zeroconf module and scanning
