@@ -51,6 +51,7 @@ namespace fileutils {
     const char *get_program_dir();
     const char *get_data_dir();
     bool create_pidfile();
+    bool isDirectoryWritable(const std::string &directory);
 }
 
 #endif	// FILEUTILS_H_

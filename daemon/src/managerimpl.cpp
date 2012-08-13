@@ -1970,8 +1970,12 @@ std::string ManagerImpl::getRecordPath() const
 
 void ManagerImpl::setRecordPath(const std::string& recPath)
 {
-    DEBUG("Set record path %s", recPath.c_str());
-    audioPreference.setRecordpath(recPath);
+    if (fileutils::isDirectoryWritable(recPath)) {
+        DEBUG("Set record path %s", recPath.c_str());
+        audioPreference.setRecordpath(recPath);
+    } else {
+        ERROR("%s is not writable", recPath.c_str());
+    }
 }
 
 bool ManagerImpl::getIsAlwaysRecording() const
