@@ -12,7 +12,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc 
 
-LOCAL_MODULE := libulaw
+LOCAL_MODULE := libcodec_ulaw
 
 LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DCCPP_PREFIX \
@@ -32,7 +32,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 			$(LOCAL_PATH)/../.. \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc \
 
-LOCAL_MODULE := libalaw
+LOCAL_MODULE := libcodec_alaw
 LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DCCPP_PREFIX \
 				  -DPREFIX=\"$(MY_PREFIX)\" \

@@ -161,13 +161,13 @@ LOCAL_LDFLAGS += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lyaml \
 				 -ldbus-c++-1 \
 				 -ldbus \
-				 -lalaw \
-				 -lulaw \
 				 -lexpat \
 				 -lsflphone \
 				 -lcrypto \
 				 -lssl \
-				 -lz
+				 -lz \
+				 -lcodec_ulaw \
+				 -lcodec_alaw
 
 				 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)
