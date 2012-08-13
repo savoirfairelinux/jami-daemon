@@ -159,8 +159,8 @@ private:
    static void* m_pHandler;
    static OpusEncoder* m_pEncoder;
    static OpusDecoder* m_pDecoder;
-   static const int FRAME_SIZE = 480;
-   static const int CLOCK_RATE = 48000;
+   static const int FRAME_SIZE = 120;
+   static const int CLOCK_RATE = 12000;
    static const int CHANNAL    = 1;
 
    //Helpers

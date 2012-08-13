@@ -67,7 +67,7 @@
 #define OPUS_TYPE_REPACK_OUT       (int32_t (*)(OpusRepacketizer*,unsigned char*,int32_t))
 //END FUNCTION TYPE
 
-static const int Opus_PAYLOAD_TYPE = 89; //FAKE VALUE
+static const int Opus_PAYLOAD_TYPE = 97; //FAKE VALUE
 
 int               (*Opus::opus_encoder_get_size            )(int channels) = 0;
 Opus::OpusEncoder*(*Opus::opus_encoder_create              )(int32_t Fs, int channels, int application, int *error ) = 0;
@@ -106,6 +106,7 @@ void*              Opus::m_pHandler =0;
 
 Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "OPUS", CLOCK_RATE, FRAME_SIZE, CHANNAL)
 {
+   hasDynamicPayload_ = true;
    init();
 }
 
@@ -205,12 +206,16 @@ Opus::~Opus()
 
 int Opus::decode(short *dst, unsigned char *buf, size_t buffer_size)
 {
-   return opus_decode(m_pDecoder, buf, buffer_size, dst, FRAME_SIZE, 1 );
+   int sample = opus_decode(m_pDecoder, buf, buffer_size, dst, FRAME_SIZE, 1 );
+   printf("OPUS decode %d\n",sample);
+   return sample;
 }
 
 int Opus::encode(unsigned char *dst, short *src, size_t buffer_size)
 {
-   return opus_encode(m_pEncoder, src, FRAME_SIZE, dst, buffer_size);
+   int size = opus_encode(m_pEncoder, src, FRAME_SIZE, dst, buffer_size);
+   printf("OPUS encoding %d\n",size);
+   return size;
 }
 
 void Opus::loadError(char* error)
