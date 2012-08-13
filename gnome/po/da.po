@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 11:43-0500\n"
-"PO-Revision-Date: 2010-10-12 14:55+0000\n"
+"POT-Creation-Date: 2012-01-04 16:32-0500\n"
+"PO-Revision-Date: 2012-01-05 19:59+0000\n"
 "Last-Translator: Jonas Fonseca <fonseca@diku.dk>\n"
 "Language-Team: Danish <da@li.org>\n"
-"Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-04-01 12:40+0000\n"
-"X-Generator: Launchpad (build 12710)\n"
+"X-Launchpad-Export-Date: 2012-08-09 21:36+0000\n"
+"X-Generator: Launchpad (build 15761)\n"
+"Language: da\n"
 
 #: ../gnome/src/sflnotify.c:85
 #, c-format
@@ -432,11 +432,10 @@ msgid "Please select one of the following options"
 msgstr "Vælg en af følgende indstillinger"
 
 #: ../gnome/src/config/assistant.c:308
-#, fuzzy
 msgid ""
 "Create a free SIP/IAX2 account on sflphone.org \n"
 "(For testing purpose only)"
-msgstr "Opret en gratis SIP/IAX2 konto hos sflphone.org"
+msgstr ""
 
 #: ../gnome/src/config/assistant.c:310
 msgid "Register an existing SIP or IAX2 account"
@@ -490,7 +489,8 @@ msgstr "Valgfri emailadresse"
 
 #: ../gnome/src/config/assistant.c:394
 msgid "This email address will be used to send your voicemail messages."
-msgstr "Denne emailadresse vil blive brugt til at sende dig indtalte beskeder"
+msgstr ""
+"Denne emailadresse vil blive brugt til at sende dig indtalte beskeder"
 
 #: ../gnome/src/config/assistant.c:402
 msgid "_Email address"
@@ -569,9 +569,8 @@ msgid "Instant Messaging"
 msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:257
-#, fuzzy
 msgid "Enable instant messaging"
-msgstr "Aktiver _ringetoner"
+msgstr ""
 
 #: ../gnome/src/config/preferencesdialog.c:377
 msgid "Preferences"
@@ -641,9 +640,8 @@ msgid "Security"
 msgstr "Sikkerhed"
 
 #: ../gnome/src/config/accountconfigdialog.c:767
-#, fuzzy
 msgid "Use TLS transport(sips)"
-msgstr "Benyt TLS transport (sips)"
+msgstr ""
 
 #: ../gnome/src/config/accountconfigdialog.c:773
 msgid "SRTP key exchange"
@@ -970,9 +968,9 @@ msgid "Address book"
 msgstr "Adressebog"
 
 #: ../gnome/src/uimanager.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Voicemail(%i)"
-msgstr "Talebesked"
+msgstr ""
 
 #: ../gnome/src/uimanager.c:507
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -1246,236 +1244,3 @@ msgid ""
 "\n"
 "Codecs not found"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to connect to the SFLphone server.\n"
-#~ "Make sure the daemon is running."
-#~ msgstr ""
-#~ "Forbindelse til SFLphone serveren kan ikke oprettes.\n"
-#~ "Sørg for at server-dæmonen kører."
-
-#~ msgid "Codecs"
-#~ msgstr "Codecs"
-
-#~ msgid "Bandwidth"
-#~ msgstr "Båndbredde"
-
-#~ msgid "Custom commands on incoming calls with URL"
-#~ msgstr "Brugerdefinerede kommandoer ved indgående opkald med webadresse"
-
-#~ msgid "%s will be replaced with the passed URL."
-#~ msgstr "%s vil blive erstattet med den givne webadresse."
-
-#~ msgid "_Voice Activity Detection"
-#~ msgstr "_Detektering af taleaktivitet"
-
-#~ msgid "_Noise Reduction (Narrow-Band Companding)"
-#~ msgstr "_Støjreducering (Narrow-Band Companding)"
-
-#~ msgid "SIP Port"
-#~ msgstr "SIP Port"
-
-#~ msgid "Codec"
-#~ msgstr "Kodning"
-
-#~ msgid "%i account configured"
-#~ msgid_plural "%i accounts configured"
-#~ msgstr[0] "%i konto oprettet"
-#~ msgstr[1] "%i konti oprettet"
-
-#~ msgid "There "
-#~ msgstr "Der "
-
-#~ msgid "Manually"
-#~ msgstr "Manuelt"
-
-#~ msgid "s"
-#~ msgstr "s"
-
-#~ msgid "are "
-#~ msgstr "er "
-
-#~ msgid "is "
-#~ msgstr "er "
-
-#~ msgid "_Mute other applications during a call"
-#~ msgstr "_Dæmp andre programmer ved opkald"
-
-#~ msgid "Enable voicemail _notifications"
-#~ msgstr "Aktiver _talebeskedsmeddelelser"
-
-#~ msgid "UDP Transport"
-#~ msgstr "UDP transport"
-
-#~ msgid "Direct IP calls"
-#~ msgstr "Direkte IP opkald"
-
-#~ msgid "IP call - %s"
-#~ msgstr "IP opkald - %s"
-
-#~ msgid ""
-#~ "<b>Error: No audio codecs found.\n"
-#~ "\n"
-#~ "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>."
-#~ "sflphone</b> directory in your home( <i>%s</i> )"
-#~ msgstr ""
-#~ "<b>Fejl: Ingen audio-codec fundet\n"
-#~ "\n"
-#~ "</b>SFL audio-codecs skal installeres i <i>%s</i> eller i mappen <b>."
-#~ "sflphone</b> i dit hjemmekatalog (<i>%s</i>)"
-
-#~ msgid "Store SIP credentials as MD5 hash"
-#~ msgstr "Gem SIP-legitimationsoplysninger som _MD5-hash-værdi"
-
-#~ msgid "_Echo Suppression"
-#~ msgstr "_Fjernelse af ekko"
-
-#~ msgid "Enable STUN"
-#~ msgstr "Aktiver STUN"
-
-#~ msgid "Stun Server"
-#~ msgstr "Stun server"
-
-#~ msgid "Transfer to : "
-#~ msgstr "Viderestil til: "
-
-#~ msgid "Call history"
-#~ msgstr "Opkaldshistorik"
-
-#~ msgid "Address book loading..."
-#~ msgstr "Henter adressebog"
-
-#~ msgid "Hang up"
-#~ msgstr "Læg på"
-
-#~ msgid "New call"
-#~ msgstr "Nyt opkald"
-
-#~ msgid "Apply"
-#~ msgstr "Udfør"
-
-#~ msgid "Add a new account"
-#~ msgstr "Tilføj en ny konto"
-
-#~ msgid "Add"
-#~ msgstr "Tilføj"
-
-#~ msgid "IAX"
-#~ msgstr "IAX"
-
-#~ msgid "Enable Stun"
-#~ msgstr "Aktiver Stun"
-
-#~ msgid "ALSA"
-#~ msgstr "ALSA"
-
-#~ msgid "PulseAudio"
-#~ msgstr "PulseAudio"
-
-#~ msgid "PulseAudio settings"
-#~ msgstr "PulseAudio indstillinger"
-
-#~ msgid "Keep my history for at least"
-#~ msgstr "Gem min historik i mindst"
-
-#~ msgid "Connection"
-#~ msgstr "Forbindelse"
-
-#~ msgid "Clear history"
-#~ msgstr "Ryd historik"
-
-#~ msgid "History"
-#~ msgstr "Historik"
-
-#~ msgid "_Call"
-#~ msgstr "_Ring op"
-
-#~ msgid "_Volume Controls"
-#~ msgstr "_Lydstyrkeopsætning"
-
-#~ msgid "Jérémy Quentin"
-#~ msgstr "Jérémy Quentin"
-
-#~ msgid "Creation of account has failed for the reason"
-#~ msgstr "Oprettelse af kontoen fejlede af følgende årsag"
-
-#~ msgid "Account creation wizard"
-#~ msgstr "Kontooprettelsesvejledning"
-
-#~ msgid "Default account"
-#~ msgstr "Standardkonto"
-
-#~ msgid "Email address"
-#~ msgstr "Email-adresse"
-
-#~ msgid "(C) 2009 Savoir-faire Linux"
-#~ msgstr "(C) 2009 Savoir-faire Linux"
-
-#~ msgid "SFLphone KDE Client"
-#~ msgstr "SFLphone KDE Client"
-
-#~ msgid "Main screen"
-#~ msgstr "Hovedskærmbillede"
-
-#~ msgid "Incoming call"
-#~ msgstr "Indkommende opkald"
-
-#~ msgid "Display volume controls"
-#~ msgstr "Vis lydstyrke"
-
-#~ msgid "Configure SFLphone"
-#~ msgstr "Konfigurerer SFLphone"
-
-#~ msgid "You have an incoming call from"
-#~ msgstr "Du har et indkommende opkald fra"
-
-#~ msgid "Remove the selected account"
-#~ msgstr "Fjern den valgte konto"
-
-#~ msgid "Remove"
-#~ msgstr "Fjern"
-
-#~ msgid ""
-#~ "This button enables you to initialize a new account. You will then be "
-#~ "able to edit it using the form on the right."
-#~ msgstr ""
-#~ "Denne knap giver dig adgang til at oprette en ny konto. Du vil således "
-#~ "kunne ændre ved brug af formularen til højre."
-
-#~ msgid "Display"
-#~ msgstr "Visning"
-
-#~ msgid "Down"
-#~ msgstr "Nede"
-
-#~ msgid "Display photo if available"
-#~ msgstr "Vis billede hvis muligt"
-
-#~ msgid "choose Stun server (example : stunserver.org)"
-#~ msgstr "vælg Stun server (eksempel: stunserver.org)"
-
-#~ msgid "Enable address book"
-#~ msgstr "Aktiver adressebog"
-
-#~ msgid "Mobile"
-#~ msgstr "Mobil"
-
-#~ msgid "Work"
-#~ msgstr "Arbejde"
-
-#~ msgid "Server returned \""
-#~ msgstr "Server svarede \""
-
-#~ msgid " active account"
-#~ msgstr " aktiv konto"
-
-#~ msgid "Configuration File"
-#~ msgstr "Konfigurationsfil"
-
-#~ msgid "Using STUN "
-#~ msgstr "Ved brug af STUN "
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr " ,Launchpad Contributions:,Ask Hjorth Larsen,Jonas Fonseca"

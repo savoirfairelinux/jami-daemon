@@ -27,10 +27,9 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#define HAVE_ALSA 0
-
 #include "preferences.h"
 #include "logger.h"
+#include "audio/audiolayer.h"
 #if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
 #endif

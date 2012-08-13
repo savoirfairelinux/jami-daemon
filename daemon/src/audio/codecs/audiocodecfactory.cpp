@@ -205,6 +205,12 @@ sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
         return NULL;
     }
 
+    //If there is an init function, then call it, useful for optional codecs with dependency check at runtime
+    bool(*init)();
+    init = (bool(*)()) dlsym(codecHandle, "init");
+    if (dlerror() == NULL && !(*init)())
+        return NULL;
+
     dlerror();
 
     create_t* createCodec = (create_t*) dlsym(codecHandle, CODEC_ENTRY_SYMBOL);
@@ -281,6 +287,7 @@ bool AudioCodecFactory::seemsValid(const std::string &lib)
     "ulaw",
     "alaw",
     "g722",
+    "g729", //G729 have to be loaded first, if it is valid or not is checked later
 #ifdef HAVE_SPEEX_CODEC
     "speex_nb",
     "speex_wb",
