@@ -249,11 +249,6 @@ class SIPAccount : public Account {
                 registrationExpire_ = 0;
         }
 
-        bool fullMatch(const std::string& username, const std::string& hostname) const;
-        bool userMatch(const std::string& username) const;
-        bool hostnameMatch(const std::string& hostname) const;
-        bool proxyMatch(const std::string& hostname) const;
-
         /**
          * Registration flag
 	 */
@@ -537,8 +532,16 @@ class SIPAccount : public Account {
          */
         pjsip_transport* transport_;
 
+        /* Returns true if the username and/or hostname match this account */
+        bool matches(const std::string &username, const std::string &hostname) const;
+
     private:
         NON_COPYABLE(SIPAccount);
+
+        bool fullMatch(const std::string &username, const std::string &hostname) const;
+        bool userMatch(const std::string &username) const;
+        bool hostnameMatch(const std::string &hostname) const;
+        bool proxyMatch(const std::string &hostname) const;
 
         /**
          * Map of credential for this account

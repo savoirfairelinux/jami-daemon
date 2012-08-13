@@ -2680,52 +2680,20 @@ ManagerImpl::getAccount(const std::string& accountID)
 }
 
 std::string
-ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
+ManagerImpl::getAccountIdFromNameAndServer(const std::string &userName,
+                                           const std::string &server) const
 {
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
     for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
         SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->fullMatch(userName, server)) {
-            DEBUG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
+        if (account and account->matches(userName, server))
             return iter->first;
-        }
-    }
-
-    // We failed! Then only match the hostname
-    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->hostnameMatch(server)) {
-            DEBUG("Matching account id in request with hostname %s", server.c_str());
-            return iter->first;
-        }
-    }
-
-    // We failed! Then only match the username
-    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->userMatch(userName)) {
-            DEBUG("Matching account id in request with username %s", userName.c_str());
-            return iter->first;
-        }
-    }
-
-    // We failed! Then only match the hostname against our proxy
-    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->proxyMatch(server)) {
-            DEBUG("Matching account id in request with proxy %s", server.c_str());
-            return iter->first;
-        }
     }
 
     DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
-    return "";
+    return SIPAccount::IP2IP_PROFILE;
 }
 
 std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings() const
