@@ -214,7 +214,7 @@ sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
     dlerror();
 
     create_t* createCodec = (create_t*) dlsym(codecHandle, CODEC_ENTRY_SYMBOL);
-    char *error = dlerror();
+    const char *error = dlerror();
 
     if (error) {
         ERROR("%s", error);
@@ -233,7 +233,7 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
 {
     destroy_t* destroyCodec = (destroy_t*) dlsym(p.second , "destroy");
 
-    char *error = dlerror();
+    const char *error = dlerror();
 
     if (error) {
         ERROR("%s", error);
@@ -253,7 +253,7 @@ sfl::Codec* AudioCodecFactory::instantiateCodec(int payload) const
         if (iter->first->getPayloadType() == payload) {
             create_t* createCodec = (create_t*) dlsym(iter->second , CODEC_ENTRY_SYMBOL);
 
-            char *error = dlerror();
+            const char *error = dlerror();
 
             if (error)
                 ERROR("%s", error);
