@@ -1,0 +1,202 @@
+/*
+ *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ * Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
+ */
+#ifndef OPUS_H
+#define OPUS_H
+#include <cstdio>
+#include <dlfcn.h>
+#include <unistd.h>
+#include <cstdlib>
+#include "noncopyable.h"
+#include "opus/opus.h"
+
+#include "audiocodec.h"
+#include "sfl_types.h"
+
+#define MAX_ENCODER_BUFFER 480
+#define OPUS_APPLICATION_VOIP 2048
+
+
+class Opus : public sfl::AudioCodec {
+public:
+   Opus();
+   ~Opus();
+   static bool init();
+   virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
+   virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
+
+   typedef struct {
+      int32_t  nChannelsAPI;
+      int32_t  nChannelsInternal;
+      int32_t  API_sampleRate;
+      int32_t  internalSampleRate;
+      int      payloadSize_ms;
+      int      prevPitchLag;
+   } silk_DecControlStruct;
+
+   struct silk_EncControlStruct {
+      int32_t  nChannelsAPI;
+      int32_t  nChannelsInternal;
+      int32_t  API_sampleRate;
+      int32_t  maxInternalSampleRate;
+      int32_t  minInternalSampleRate;
+      int32_t  desiredInternalSampleRate;
+      int      payloadSize_ms;
+      int32_t  bitRate;
+      int      packetLossPercentage;
+      int      complexity;
+      int      useInBandFEC;
+      int      useDTX;
+      int      useCBR;
+      int      maxBits;
+      int      toMono;
+      int      opusCanSwitch;
+      int32_t  internalSampleRate;
+      int      allowBandwidthSwitch;
+      int      inWBmodeWithoutVariableLP;
+      int      stereoWidth_Q14;
+      int      switchReady;
+   };
+   typedef struct silk_EncControlStruct silk_EncControlStruct;
+
+   struct OpusEncoder {
+      int          celt_enc_offset;
+      int          silk_enc_offset;
+      silk_EncControlStruct silk_mode;
+      int          application;
+      int          channels;
+      int          delay_compensation;
+      int          force_channels;
+      int          signal_type;
+      int          user_bandwidth;
+      int          max_bandwidth;
+      int          user_forced_mode;
+      int          voice_ratio;
+      int32_t      Fs;
+      int          use_vbr;
+      int          vbr_constraint;
+      int32_t      bitrate_bps;
+      int32_t      user_bitrate_bps;
+      int          encoder_buffer;
+
+      #define OPUS_ENCODER_RESET_START stream_channels
+      int          stream_channels;
+      int16_t      hybrid_stereo_width_Q14;
+      int32_t      variable_HP_smth2_Q15;
+      int32_t      hp_mem[4];
+      int          mode;
+      int          prev_mode;
+      int          prev_channels;
+      int          prev_framesize;
+      int          bandwidth;
+      int          silk_bw_switch;
+      /* Sampling rate (at the API level) */
+      int          first;
+      int16_t      delay_buffer[MAX_ENCODER_BUFFER*2];
+
+      uint32_t  rangeFinal;
+   };
+   typedef struct OpusEncoder OpusEncoder;
+
+   struct OpusDecoder {
+      int          celt_dec_offset;
+      int          silk_dec_offset;
+      int          channels;
+      int32_t      Fs;          /** Sampling rate (at the API level) */
+      silk_DecControlStruct DecControl;
+      int          decode_gain;
+
+      /* Everything beyond this point gets cleared on a reset */
+   #define OPUS_DECODER_RESET_START stream_channels
+      int          stream_channels;
+      int          bandwidth;
+      int          mode;
+      int          prev_mode;
+      int          frame_size;
+      int          prev_redundancy;
+      int32_t      rangeFinal;
+   };
+   typedef struct OpusDecoder OpusDecoder;
+
+   struct OpusRepacketizer {
+      unsigned char        toc;
+      int                  nb_frames;
+      const unsigned char* frames[48];
+      short                len[48];
+      int                  framesize;
+   };
+   typedef struct OpusRepacketizer OpusRepacketizer;
+
+private:
+   NON_COPYABLE(Opus);
+   //Attributes
+   static void* m_pHandler;
+   static OpusEncoder* m_pEncoder;
+   static OpusDecoder* m_pDecoder;
+   static const int FRAME_SIZE = 160;
+   static const int CLOCK_RATE = 48000;
+   static const int CHANNAL    = 1;
+
+   //Helpers
+   static void loadError(char* error);
+
+protected:
+
+   //Extern functions
+   static int               (*opus_encoder_get_size            )(int channels);
+   static OpusEncoder*      (*opus_encoder_create              )(int32_t Fs, int channels, int application, int *error );
+   static int               (*opus_encoder_init                )(OpusEncoder *st, int32_t Fs, int channels, int application );
+   static int32_t           (*opus_encode                      )(OpusEncoder *st, const int16_t *pcm, int frame_size, unsigned char *data, int32_t max_data_bytes );
+   static int32_t           (*opus_encode_float                )(OpusEncoder *st, const float *pcm, int frame_size, unsigned char *data, int32_t max_data_bytes );
+   static void              (*opus_encoder_destroy             )(OpusEncoder *st);
+   static int               (*opus_encoder_ctl                 )(OpusEncoder *st, int request, ...);
+   static int               (*opus_decoder_get_size            )(int channels);
+   static OpusDecoder*      (*opus_decoder_create              )(int32_t Fs, int channels, int *error );
+   static int               (*opus_decoder_init                )(OpusDecoder *st, int32_t Fs, int channels );
+   static int               (*opus_decode                      )(OpusDecoder *st, const unsigned char *data, int32_t len, int16_t *pcm, int frame_size, int decode_fec );
+   static int               (*opus_decode_float                )(OpusDecoder *st, const unsigned char *data, int32_t len, float *pcm, int frame_size, int decode_fec );
+   static int               (*opus_decoder_ctl                 )(OpusDecoder *st, int request, ...);
+   static void              (*opus_decoder_destroy             )(OpusDecoder *st);
+   static int               (*opus_packet_parse                )( const unsigned char *data, int32_t len, unsigned char *out_toc, const unsigned char *frames[48], short size[48], int *payload_offset );
+   static int               (*opus_packet_get_bandwidth        )(const unsigned char *data);
+   static int               (*opus_packet_get_samples_per_frame)(const unsigned char *data, int32_t Fs);
+   static int               (*opus_packet_get_nb_channels      )(const unsigned char *data);
+   static int               (*opus_packet_get_nb_frames        )(const unsigned char packet[], int32_t len);
+   static int               (*opus_decoder_get_nb_samples      )(const OpusDecoder *dec, const unsigned char* packet, int32_t len);
+   static int               (*opus_repacketizer_get_size       )(void);
+   static OpusRepacketizer* (*opus_repacketizer_init           )(OpusRepacketizer *rp);
+   static OpusRepacketizer* (*opus_repacketizer_create         )(void);
+   static void              (*opus_repacketizer_destroy        )(OpusRepacketizer *rp);
+   static int               (*opus_repacketizer_cat            )(OpusRepacketizer *rp, const unsigned char *data, int32_t len);
+   static int32_t           (*opus_repacketizer_out_range      )(OpusRepacketizer *rp, int begin, int end, unsigned char *data, int32_t maxlen);
+   static int               (*opus_repacketizer_get_nb_frames  )(OpusRepacketizer *rp);
+   static int32_t           (*opus_repacketizer_out            )(OpusRepacketizer *rp, unsigned char *data, int32_t maxlen);
+};
+
+#endif

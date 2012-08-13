@@ -4,6 +4,7 @@
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -288,6 +289,7 @@ bool AudioCodecFactory::seemsValid(const std::string &lib)
     "alaw",
     "g722",
     "g729", //G729 have to be loaded first, if it is valid or not is checked later
+    "opus", //Opus have to be loaded first, if it is valid or not is checked later
 #ifdef HAVE_SPEEX_CODEC
     "speex_nb",
     "speex_wb",
