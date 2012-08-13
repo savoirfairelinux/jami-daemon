@@ -67,7 +67,7 @@
 #define OPUS_TYPE_REPACK_OUT       (int32_t (*)(OpusRepacketizer*,unsigned char*,int32_t))
 //END FUNCTION TYPE
 
-static const int Opus_PAYLOAD_TYPE = 254; //FAKE VALUE
+static const int Opus_PAYLOAD_TYPE = 89; //FAKE VALUE
 
 int               (*Opus::opus_encoder_get_size            )(int channels) = 0;
 Opus::OpusEncoder*(*Opus::opus_encoder_create              )(int32_t Fs, int channels, int application, int *error ) = 0;
@@ -174,12 +174,18 @@ bool Opus::init()
 
          int err;
          m_pEncoder = opus_encoder_create(CLOCK_RATE, CHANNAL, OPUS_APPLICATION_VOIP, &err);
+         if (err) {
+            return false;
+         }
 //          if (int err = opus_encoder_init(m_pEncoder, CLOCK_RATE, CHANNAL, OPUS_APPLICATION_VOIP )) {
 //             printf("FAILED1 %d\n",err);
 //             return false;
 //          }
 
          m_pDecoder = opus_decoder_create(CLOCK_RATE, CHANNAL, &err );
+         if (err) {
+            return false;
+         }
 //          if (int err = opus_decoder_init(m_pDecoder, CLOCK_RATE, CHANNAL )) {
 //             printf("FAILED2 %d\n",err);
 //             return false;
