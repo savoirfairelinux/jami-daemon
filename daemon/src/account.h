@@ -211,6 +211,7 @@ class Account : public Serializable {
         static const char * const PASSWORD_KEY;
         static const char * const HOSTNAME_KEY;
         static const char * const ACCOUNT_ENABLE_KEY;
+        static const char * const ACCOUNT_AUTOANSWER_KEY;
         static const char * const MAILBOX_KEY;
 
         static std::string mapStateNumberToString(RegistrationState state);
@@ -241,6 +242,9 @@ class Account : public Serializable {
          * Modified by the configuration (key: ENABLED)
          */
         bool enabled_;
+
+        /* If true, automatically answer calls to this account */
+        bool autoAnswerEnabled_;
 
         /*
          * The account type

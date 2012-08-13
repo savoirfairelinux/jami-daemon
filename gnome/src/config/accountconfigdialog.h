@@ -42,7 +42,7 @@
  * @param a The account you want to display
  * @return The dialog with the pertinent account information
  */
-GtkWidget *show_account_window(const account_t *a);
+GtkWidget *show_account_window(account_t *a);
 
 /*
  * @param dialog The dialog the account will be update from
