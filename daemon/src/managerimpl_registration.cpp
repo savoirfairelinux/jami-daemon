@@ -49,7 +49,10 @@
 void
 ManagerImpl::registerAccounts()
 {
-    for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
+    AccountMap concatenatedMap;
+    fillConcatAccountMap(concatenatedMap);
+
+    for (AccountMap::iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
         Account *a = iter->second;
 
         if (!a)

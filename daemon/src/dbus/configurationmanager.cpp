@@ -119,7 +119,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
 void ConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    SIPAccount * sipaccount = Manager::instance().getIP2IPAccount();
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
         DEBUG("No valid account in set TLS settings");

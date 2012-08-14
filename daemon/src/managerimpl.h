@@ -44,6 +44,7 @@
 #include <set>
 #include <map>
 #include <tr1/memory>
+
 #include "cc_thread.h"
 #include "dbus/dbusmanager.h"
 
@@ -55,8 +56,8 @@
 #include "audio/audiolayer.h"
 #include "audio/sound/tone.h"  // for Tone::TONEID declaration
 #include "audio/codecs/audiocodecfactory.h"
-
 #include "audio/mainbuffer.h"
+
 #include "preferences.h"
 #include "history/history.h"
 #include "noncopyable.h"
@@ -79,6 +80,7 @@ class DNSService;
 
 class Account;
 class SIPAccount;
+class IAXAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<std::string, Account*> AccountMap;
@@ -997,8 +999,14 @@ class ManagerImpl {
         bool isIPToIP(const std::string& callID) const;
 
         /**
-         *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
-        AccountMap accountMap_;
+         * Contains a list of all SIP account
+         */
+        AccountMap sipAccountMap_;
+
+        /**
+         * Contains a list of all IAX account
+         */
+        AccountMap iaxAccountMap_;
 
         /**
          * Load the account map from configuration
@@ -1082,12 +1090,37 @@ class ManagerImpl {
         void clearHistory();
 
         /**
-         * Get an account pointer
+         * Get an account pointer, looks for both SIP and IAX
          * @param accountID account ID to get
          * @return Account*	 The account pointer or 0
          */
-        Account* getAccount(const std::string& accountID);
-        SIPAccount* getIP2IPAccount();
+        Account* getAccount(const std::string& accountID) const;
+
+        /**
+         * Get a SIP account pointer
+         * @param accountID account ID to get
+         * @return SIPAccount* The account pointer or 0
+         */
+        SIPAccount *getSipAccount(const std::string& accontID) const;
+
+        /**
+         * Get an IAX account pointer
+         * @param accountID account ID to get
+         * @return IAXAccount* The account pointer or 0
+         */
+        IAXAccount *getIaxAccount(const std::string& accountID) const;
+
+	/**
+         * Get a pointer to the IP2IP account
+         * @return SIPAccount * Pointer to the IP2IP account
+         */
+        SIPAccount *getIP2IPAccount() const;
+
+        /**
+         * Fill a map with all the current SIP and IAX account
+         * @param A reference to a prealocated map to be filled
+         */
+        void fillConcatAccountMap(AccountMap &concatMap) const;
 
         /** Return the std::string from a CallID
          * Protected by mutex
