@@ -365,12 +365,12 @@ int32_t ConfigurationManager::isIax2Enabled()
 
 std::string ConfigurationManager::getRecordPath()
 {
-    return Manager::instance().getRecordPath();
+    return Manager::instance().audioPreference.getRecordPath();
 }
 
 void ConfigurationManager::setRecordPath(const std::string& recPath)
 {
-    Manager::instance().setRecordPath(recPath);
+    Manager::instance().audioPreference.setRecordPath(recPath);
 }
 
 bool ConfigurationManager::getIsAlwaysRecording()

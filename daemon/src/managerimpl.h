@@ -613,18 +613,6 @@ class ManagerImpl {
         void ringtoneEnabled(const std::string& id);
 
         /**
-         * Get the recording path from configuration tree
-         * @return the string correspoding to the path
-         */
-        std::string getRecordPath() const;
-
-        /**
-         * Set the recoding path in the configuration tree
-         * @param a string reresenting the path
-         */
-        void setRecordPath(const std::string& recPath);
-
-        /**
          * Get is always recording functionality
          */
         bool getIsAlwaysRecording() const;

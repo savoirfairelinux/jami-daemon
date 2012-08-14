@@ -375,12 +375,12 @@ class AudioPreference : public Serializable {
         }
 
         // general preference
-        std::string getRecordpath() const {
+        std::string getRecordPath() const {
             return recordpath_;
         }
-        void setRecordpath(const std::string &r) {
-            recordpath_ = r;
-        }
+
+        // Returns true if directory is writeable
+        bool setRecordPath(const std::string &r);
 
         bool getIsAlwaysRecording() const {
             return alwaysRecording_;

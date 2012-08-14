@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "preferences.h"
 #include "logger.h"
 #include "audio/alsa/alsalayer.h"
@@ -40,7 +44,7 @@
 #include "sip/sip_utils.h"
 #include <sstream>
 #include "global.h"
-#include "config.h"
+#include "fileutils.h"
 
 const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
@@ -467,10 +471,27 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     emitter.serializePreference(&preferencemap, "audio");
 }
 
+bool
+AudioPreference::setRecordPath(const std::string &r)
+{
+    if (fileutils::isDirectoryWritable(r)) {
+        recordpath_ = r;
+        return true;
+    } else {
+        ERROR("%s is not writable, cannot be the recording path");
+        return false;
+    }
+}
+
 void AudioPreference::unserialize(const Conf::MappingNode &map)
 {
     map.getValue(AUDIO_API_KEY, &audioApi_);
-    map.getValue(RECORDPATH_KEY, &recordpath_);
+    std::string tmpRecordPath;
+    map.getValue(RECORDPATH_KEY, &tmpRecordPath);
+    if (not setRecordPath(tmpRecordPath)) {
+        DEBUG("Setting record path to %s", HOMEDIR);
+        setRecordPath(HOMEDIR);
+    }
     map.getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
     map.getValue(VOLUMEMIC_KEY, &volumemic_);
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);
