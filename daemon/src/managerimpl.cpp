@@ -83,6 +83,7 @@
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
+#include "org_sflphone_service_SflCallManager.h"
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
@@ -216,6 +217,19 @@ void ManagerImpl::switchCall(const std::string& id)
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
 /* Main Thread */
+
+JNIEXPORT jboolean JNICALL Java_org_sflphone_service_SflCallManager_outgoingCallN(JNIEnv *env, jclass obj, jstring jaccount_id)
+{
+	std::string account_id = std::string(env->GetStringUTFChars(jaccount_id, 0));
+
+	if (account_id == "sflphone-test") {
+		INFO("ManagerImpl::outgoingCallN account_id:%s", account_id.c_str());
+		return true;
+	} else {
+		WARN("ManagerImpl::outgoingCallN account_id %s is not valid!", account_id.c_str());
+		return false;
+	}
+}
 
 bool ManagerImpl::outgoingCall(const std::string& account_id,
                                const std::string& call_id,
