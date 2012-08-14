@@ -56,12 +56,47 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DHAVE_CONFIG_H \
 				  -std=gnu++0x -frtti -fexceptions -fpermissive
 
-LOCAL_LDFLAGS += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
+LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip/lib \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib/lib \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib-util/lib \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjmedia/lib \
-				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjnath/lib
+				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjnath/lib \
+				 -lpjsua-$(TARGET_NAME) \
+				 -lpjsip-ua-$(TARGET_NAME) \
+				 -lpjsip-simple-$(TARGET_NAME) \
+				 -lpjsip-$(TARGET_NAME) \
+				 -lpjmedia-codec-$(TARGET_NAME) \
+				 -lpjmedia-$(TARGET_NAME) \
+				 -lpjnath-$(TARGET_NAME) \
+				 -lpjlib-util-$(TARGET_NAME) \
+				 -lpj-$(TARGET_NAME) \
+				 -lccgnu2 \
+				 -lccrtp1 \
+				 -lsamplerate \
+				 -lconfig \
+				 -lcodecfactory \
+				 -lsound \
+				 -lhistory \
+				 -lrtp \
+				 -lhooks \
+				 -lopensl \
+				 -lsiplink \
+				 -laudio \
+				 -lspeex \
+				 -lspeexresampler \
+				 -lsamplerate \
+				 -lccrtp1 \
+				 -lccgnu2 \
+				 -lyaml \
+				 -ldbus-c++-1 \
+				 -ldbus \
+				 -lexpat \
+				 -lcrypto \
+				 -lssl \
+				 -lz \
+				 -lcodec_ulaw \
+				 -lcodec_alaw
 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)
 #   The list of static libraries modules (built with BUILD_STATIC_LIBRARY)
@@ -94,9 +129,10 @@ LOCAL_SHARED_LIBRARIES += libccgnu2 \
 						  libsamplerate \
 						  libcodec_ulaw \
 						  libcodec_alaw \
-						  libspeexresampler
+						  libspeexresampler \
+						  libyaml
 
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)
@@ -126,7 +162,7 @@ LOCAL_CPPFLAGS = \
 		-DHAVE_CONFIG_H \
 		-std=gnu++0x -frtti -fexceptions -fpermissive
 
-LOCAL_LDFLAGS += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
+LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip/lib \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib/lib \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib-util/lib \
@@ -174,9 +210,10 @@ LOCAL_LDFLAGS += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 #   The list of static libraries modules (built with BUILD_STATIC_LIBRARY)
 #   that should be linked to this module. This only makes sense in
 #   shared library modules.
-LOCAL_STATIC_LIBRARIES := libsflphone
+LOCAL_SHARED_LIBRARIES := libsflphone
 
-LOCAL_SHARED_LIBRARIES += libyaml
+LOCAL_SHARED_LIBRARIES += libyaml \
+						  libsflphone
 
 include $(BUILD_EXECUTABLE)
 
