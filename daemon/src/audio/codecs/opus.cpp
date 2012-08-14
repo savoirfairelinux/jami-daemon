@@ -201,6 +201,8 @@ bool Opus::init()
 
 Opus::~Opus()
 {
+   opus_encoder_destroy(m_pEncoder);
+   opus_decoder_destroy(m_pDecoder);
    dlclose(m_pHandler);
 }
 
