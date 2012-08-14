@@ -514,7 +514,9 @@ sflphone_incoming_call(callable_obj_t * c)
         g_free(msg);
     }
     account_t *account = account_list_get_by_id(c->_accountID);
-    if (account && account_has_autoanswer_on(account)) {
+    if (!account) {
+        ERROR("Account is NULL");
+    } else if (account_has_autoanswer_on(account)) {
         calltab_set_selected_call(active_calltree_tab, c);
         sflphone_pick_up();
     }
