@@ -136,7 +136,7 @@ IAXVoIPLink::getEvent()
     mutexIAX_.leave();
 
     if (nextRefreshStamp_ && nextRefreshStamp_ < time(NULL))
-        sendRegister(dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_)));
+        sendRegister(Manager::instance().getIaxAccount(accountID_));
 
     sendAudioFromMic();
 
@@ -211,7 +211,7 @@ IAXVoIPLink::getIAXCall(const std::string& id)
 void
 IAXVoIPLink::sendRegister(Account *a)
 {
-    IAXAccount *account = dynamic_cast<IAXAccount*>(a);
+    IAXAccount *account = static_cast<IAXAccount*>(a);
 
     if (account->getHostname().empty())
         throw VoipLinkException("Account hostname is empty");
@@ -244,7 +244,7 @@ IAXVoIPLink::sendUnregister(Account *a)
 
     nextRefreshStamp_ = 0;
 
-    dynamic_cast<IAXAccount*>(a)->setRegistrationState(UNREGISTERED);
+    static_cast<IAXAccount*>(a)->setRegistrationState(UNREGISTERED);
 }
 
 Call*
@@ -436,7 +436,7 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 
     call->session = iax_session_new();
 
-    IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_));
+    IAXAccount *account = Manager::instance().getIaxAccount(accountID_);
     std::string username(account->getUsername());
     std::string strNum(username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber());
 
@@ -595,7 +595,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
  */
 void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
-    IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_));
+    IAXAccount *account = Manager::instance().getIaxAccount(accountID_);
 
     if (event->etype != IAX_EVENT_REGREJ && event->etype != IAX_EVENT_REGACK)
         return;
