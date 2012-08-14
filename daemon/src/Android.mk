@@ -90,10 +90,10 @@ LOCAL_STATIC_LIBRARIES += libpjsua-$(TARGET_NAME) \
 
 LOCAL_SHARED_LIBRARIES += libccgnu2 \
 						  libccrtp1 \
-						  libexpat \
+						  libexpat_shared \
 						  libsamplerate \
-						  libulaw \
-						  libalaw \
+						  libcodec_ulaw \
+						  libcodec_alaw \
 						  libspeexresampler
 
 include $(BUILD_STATIC_LIBRARY)
