@@ -46,6 +46,8 @@ class HistoryItem {
         static const char * const RECORDING_PATH_KEY;
         static const char * const TIMESTAMP_START_KEY;
         static const char * const TIMESTAMP_STOP_KEY;
+        static const char * const AUDIO_CODEC_KEY;
+        static const char * const VIDEO_CODEC_KEY;
         static const char * const STATE_KEY;
 
         static const char * const MISSED_STRING;

@@ -44,6 +44,8 @@ const char * const HistoryItem::RECORDING_PATH_KEY =    "recordfile";
 const char * const HistoryItem::STATE_KEY =             "state";
 const char * const HistoryItem::TIMESTAMP_START_KEY =   "timestamp_start";
 const char * const HistoryItem::TIMESTAMP_STOP_KEY =    "timestamp_stop";
+const char * const HistoryItem::AUDIO_CODEC_KEY =       "audio_codec";
+const char * const HistoryItem::VIDEO_CODEC_KEY =       "video_codec";
 
 const char * const HistoryItem::MISSED_STRING =         "missed";
 const char * const HistoryItem::INCOMING_STRING =       "incoming";

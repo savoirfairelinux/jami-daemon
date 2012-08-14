@@ -1966,21 +1966,6 @@ void ManagerImpl::ringtoneEnabled(const std::string& id)
     account->getRingtoneEnabled() ? account->setRingtoneEnabled(false) : account->setRingtoneEnabled(true);
 }
 
-std::string ManagerImpl::getRecordPath() const
-{
-    return audioPreference.getRecordpath();
-}
-
-void ManagerImpl::setRecordPath(const std::string& recPath)
-{
-    if (fileutils::isDirectoryWritable(recPath)) {
-        DEBUG("Set record path %s", recPath.c_str());
-        audioPreference.setRecordpath(recPath);
-    } else {
-        ERROR("%s is not writable", recPath.c_str());
-    }
-}
-
 bool ManagerImpl::getIsAlwaysRecording() const
 {
     return audioPreference.getIsAlwaysRecording();
