@@ -68,7 +68,7 @@ class AudioCodecFactory {
          * @param payload The payload looked for
          * @return AudioCodec* A pointer on a AudioCodec object
          */
-        sfl::Codec* getCodec(int payload) const;
+        sfl::AudioCodec* getCodec(int payload) const;
 
         /**
          * Set the default codecs order.
@@ -100,7 +100,7 @@ class AudioCodecFactory {
          * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
          * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
          */
-        sfl::Codec* instantiateCodec(int payload) const;
+        sfl::AudioCodec* instantiateCodec(int payload) const;
 
         /**
          * For a given codec, return its specification
@@ -135,7 +135,7 @@ class AudioCodecFactory {
          * @param std::string	The path of the shared ( dynamic ) library.
          * @return AudioCodec*  the pointer of the object loaded.
          */
-        sfl::Codec* loadCodec(const std::string &path);
+        sfl::AudioCodec* loadCodec(const std::string &path);
 
         /**
          * Unload a codec

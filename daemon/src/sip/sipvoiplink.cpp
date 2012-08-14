@@ -332,7 +332,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
-    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
+    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac) {
         ERROR("Could not instantiate codec");
         delete call;
@@ -771,7 +771,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     std::string toUri = account->getToUri(to);
     call->setPeerNumber(toUri);
 
-    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
+    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (!ac) {
         delete call;
@@ -829,7 +829,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
+    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (ac == NULL) {
         delete call;
@@ -985,7 +985,7 @@ SIPVoIPLink::offhold(const std::string& id)
             pl = sessionMedia->getPayloadType();
 
         // Create a new instance for this codec
-        sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(pl));
+        sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
 
         if (ac == NULL)
             throw VoipLinkException("Could not instantiate codec");
@@ -1629,7 +1629,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         int pl = sessionMedia->getPayloadType();
 
         if (pl != call->getAudioRtp().getSessionMedia()) {
-            sfl::AudioCodec *ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(pl));
+            sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)
                 throw std::runtime_error("Could not instantiate codec");
             call->getAudioRtp().updateSessionMedia(ac);
