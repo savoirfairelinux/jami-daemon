@@ -207,14 +207,14 @@ Opus::~Opus()
 int Opus::decode(short *dst, unsigned char *buf, size_t buffer_size)
 {
    int sample = opus_decode(m_pDecoder, buf, buffer_size, dst, FRAME_SIZE, 0 );
-   printf("OPUS decode %d %d\n",sample,buffer_size);
+//    printf("OPUS decode %d %d\n",sample,buffer_size);
    return sample;
 }
 
 int Opus::encode(unsigned char *dst, short *src, size_t buffer_size)
 {
-   int size = opus_encode(m_pEncoder, src, FRAME_SIZE, dst, buffer_size);
-   printf("OPUS encode %d %d\n",size,buffer_size);
+   int size = opus_encode(m_pEncoder, src, FRAME_SIZE, dst, buffer_size*2);
+//    printf("OPUS encode %d %d\n",size,buffer_size);
    return size;
 }
 
