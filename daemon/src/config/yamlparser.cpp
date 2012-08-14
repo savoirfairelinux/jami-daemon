@@ -310,20 +310,7 @@ void YamlParser::processScalar(YamlNode *topNode)
 
     ScalarNode *sclr = new ScalarNode(std::string((const char*) events_[eventIndex_].data.scalar.value), topNode);
 
-    switch (topNode->getType()) {
-        case DOCUMENT:
-            ((YamlDocument *)(topNode))->addNode(sclr);
-            break;
-        case SEQUENCE:
-            ((SequenceNode *)(topNode))->addNode(sclr);
-            break;
-        case MAPPING:
-            ((MappingNode *)(topNode))->addNode(sclr);
-            break;
-        case SCALAR:
-        default:
-            break;
-    }
+    topNode->addNode(sclr);
 }
 
 
@@ -334,19 +321,7 @@ void YamlParser::processSequence(YamlNode *topNode)
 
     SequenceNode *seq = new SequenceNode(topNode);
 
-    switch (topNode->getType()) {
-        case DOCUMENT:
-            ((YamlDocument *)(topNode))->addNode(seq);
-            break;
-        case SEQUENCE:
-            ((SequenceNode *)(topNode))->addNode(seq);
-            break;
-        case MAPPING:
-            ((MappingNode *)(topNode))->addNode(seq);
-        case SCALAR:
-        default:
-            break;
-    }
+    topNode->addNode(seq);
 
     ++eventIndex_;
 
@@ -378,19 +353,7 @@ void YamlParser::processMapping(YamlNode *topNode)
 
     MappingNode *map = new MappingNode(topNode);
 
-    switch (topNode->getType()) {
-        case DOCUMENT:
-            ((YamlDocument *)(topNode))->addNode(map);
-            break;
-        case SEQUENCE:
-            ((SequenceNode *)(topNode))->addNode(map);
-            break;
-        case MAPPING:
-            ((MappingNode *)(topNode))->addNode(map);
-        case SCALAR:
-        default:
-            break;
-    }
+    topNode->addNode(map);
 
     ++eventIndex_;
 
@@ -435,17 +398,13 @@ void YamlParser::constructNativeData()
         }
         NodeType nodeType = yamlNode->getType();
         switch (nodeType) {
-            case SCALAR:
-                throw YamlParserException("No scalar allowed at document level, expect a mapping");
-                break;
-            case SEQUENCE:
-                throw YamlParserException("No sequence allowed at document level, expect a mapping");
-                break;
             case MAPPING: {
                 MappingNode *map = dynamic_cast<MappingNode *>(yamlNode);
                 mainNativeDataMapping(map);
                 break;
             }
+            case SCALAR:
+            case SEQUENCE:
             default:
                 throw YamlParserException("Unknown type in configuration file, expect a mapping");
                 break;
@@ -458,16 +417,16 @@ void YamlParser::mainNativeDataMapping(MappingNode *map)
     std::map<std::string, YamlNode*> *mapping_ptr = map->getMapping();
     std::map<std::string, YamlNode*> &mapping = *mapping_ptr;
 
-    accountSequence_    = dynamic_cast<SequenceNode*>(mapping["accounts"]);
-    addressbookNode_    = dynamic_cast<MappingNode *>(mapping["addressbook"]);
-    audioNode_          = dynamic_cast<MappingNode *>(mapping["audio"]);
+    accountSequence_    = static_cast<SequenceNode*>(mapping["accounts"]);
+    addressbookNode_    = static_cast<MappingNode *>(mapping["addressbook"]);
+    audioNode_          = static_cast<MappingNode *>(mapping["audio"]);
 #ifdef SFL_VIDEO
-    videoNode_          = dynamic_cast<MappingNode *>(mapping["video"]);
+    videoNode_          = static_cast<MappingNode *>(mapping["video"]);
 #endif
-    hooksNode_          = dynamic_cast<MappingNode *>(mapping["hooks"]);
-    preferenceNode_     = dynamic_cast<MappingNode *>(mapping["preferences"]);
-    voiplinkNode_       = dynamic_cast<MappingNode *>(mapping["voipPreferences"]);
-    shortcutNode_       = dynamic_cast<MappingNode *>(mapping["shortcuts"]);
+    hooksNode_          = static_cast<MappingNode *>(mapping["hooks"]);
+    preferenceNode_     = static_cast<MappingNode *>(mapping["preferences"]);
+    voiplinkNode_       = static_cast<MappingNode *>(mapping["voipPreferences"]);
+    shortcutNode_       = static_cast<MappingNode *>(mapping["shortcuts"]);
 }
 }
 

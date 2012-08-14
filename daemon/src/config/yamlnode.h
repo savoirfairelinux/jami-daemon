@@ -35,7 +35,9 @@
 #include <list>
 #include <map>
 #include <stdexcept>
+
 #include "noncopyable.h"
+#include "global.h"
 
 namespace Conf {
 
@@ -61,6 +63,8 @@ class YamlNode {
 
         virtual void deleteChildNodes() = 0;
 
+        virtual void addNode(YamlNode *node) = 0;
+
     private:
         NON_COPYABLE(YamlNode);
         NodeType type_;
@@ -72,7 +76,7 @@ class YamlDocument : public YamlNode {
     public:
         YamlDocument(YamlNode* top = NULL) : YamlNode(DOCUMENT, top), doc_() {}
 
-        void addNode(YamlNode *node);
+        virtual void addNode(YamlNode *node);
 
         YamlNode *popNode();
 
@@ -94,7 +98,7 @@ class SequenceNode : public YamlNode {
             return &seq_;
         }
 
-        void addNode(YamlNode *node);
+        virtual void addNode(YamlNode *node);
 
         virtual void deleteChildNodes();
 
@@ -113,7 +117,7 @@ class MappingNode : public YamlNode {
             return &map_;
         }
 
-        void addNode(YamlNode *node);
+        virtual void addNode(YamlNode *node);
 
         void setTmpKey(std::string key) {
             tmpKey_ = key;
@@ -139,6 +143,8 @@ class ScalarNode : public YamlNode {
     public:
         ScalarNode(std::string s="", YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(s) {}
         ScalarNode(bool b, YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(b ? "true" : "false") {}
+
+        virtual void addNode(YamlNode *node UNUSED) {}
 
         const std::string &getValue() const {
             return str_;
