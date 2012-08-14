@@ -96,7 +96,8 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lssl \
 				 -lz \
 				 -lcodec_ulaw \
-				 -lcodec_alaw
+				 -lcodec_alaw \
+				 -llog
 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)
 #   The list of static libraries modules (built with BUILD_STATIC_LIBRARY)
@@ -203,7 +204,8 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lssl \
 				 -lz \
 				 -lcodec_ulaw \
-				 -lcodec_alaw
+				 -lcodec_alaw \
+				 -llog
 
 				 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)

@@ -32,6 +32,9 @@
 #define LOGGER_H_
 
 #include <syslog.h>
+#ifdef ANDROID
+#include <android/log.h>
+#endif
 
 namespace Logger {
 void log(const int, const char*, ...);
@@ -44,10 +47,20 @@ bool getDebugMode();
 #define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d: " M, __FILE__, \
                                           __LINE__, ##__VA_ARGS__)
 
+#ifndef ANDROID
 #define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
 #define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
 #define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
 #define DEBUG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
+#else /* ANDROID */
+#ifndef APP_NAME
+#define APP_NAME "libsflphone"
+#endif
+#define ERROR(M, ...)   __android_log_print(ANDROID_LOG_ERROR, APP_NAME, M, ##__VA_ARGS__)
+#define WARN(M, ...)    __android_log_print(ANDROID_LOG_WARN, APP_NAME, M, ##__VA_ARGS__)
+#define INFO(M, ...)    __android_log_print(ANDROID_LOG_INFO, APP_NAME, M, ##__VA_ARGS__)
+#define DEBUG(M, ...)   __android_log_print(ANDROID_LOG_DEBUG, APP_NAME, M, ##__VA_ARGS__)
+#endif /* ANDROID */
 
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"
