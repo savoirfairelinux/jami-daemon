@@ -52,21 +52,18 @@ search_type_matches_state(SearchType type, const gchar *state)
     }
 }
 
-static gboolean history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
+static gboolean
+history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
-    /* Skip conferences */
-    if (is_conference(model, iter))
-        return TRUE;
-
+    gboolean visible = TRUE;
     // Fetch the call description
     const gchar *text = NULL;
     const gchar *id = NULL;
     gtk_tree_model_get(model, iter, COLUMN_ACCOUNT_DESC, &text, COLUMN_ID, &id, -1);
     if (!id)
-        return FALSE;
+        return visible;
     callable_obj_t *history_entry = calllist_get_call(history_tab, id);
 
-    gboolean ret = TRUE;
     if (text && history_entry) {
         // Filter according to the type of call
         // MISSED, INCOMING, OUTGOING, ALL
@@ -76,15 +73,15 @@ static gboolean history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpoin
             return TRUE;
 
         SearchType search_type = get_current_history_search_type();
-        ret = g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
+        visible = g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
 
         if (search_type == SEARCH_ALL)
-            return ret;
+            return visible;
         else // We need a match on the history_state and the current search type
-            ret = ret && search_type_matches_state(search_type, history_entry->_history_state);
+            visible = visible && search_type_matches_state(search_type, history_entry->_history_state);
     }
 
-    return ret;
+    return visible;
 }
 
 static GtkTreeModel* history_create_filter(GtkTreeModel* child)
@@ -94,7 +91,7 @@ static GtkTreeModel* history_create_filter(GtkTreeModel* child)
     return GTK_TREE_MODEL(ret);
 }
 
-void history_search(void)
+void history_search()
 {
     if (history_filter != NULL)
         gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(history_filter));

@@ -166,7 +166,6 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
     if (call->_peer_number && strlen(call->_peer_number) > 0) {
         calllist_add_call(history_tab, call);
         calltree_add_history_entry(call);
-        calltree_update_history_view();
     }
 }
 

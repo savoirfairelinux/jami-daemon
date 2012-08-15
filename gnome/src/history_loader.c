@@ -94,21 +94,20 @@ load_items(gpointer data)
         id->load_state = STATE_LOADING;
     }
 
-    /* get the item in the list */
-    GHashTable *entry = g_ptr_array_index(id->items, id->n_loaded);
+    /* add items back to front in the list */
+    const gint idx = id->items->len - 1 - id->n_loaded;
+    g_assert(idx >= 0);
+    GHashTable *entry = g_ptr_array_index(id->items, idx);
     g_assert(entry != NULL);
     create_callable_from_entry(id->tab, entry);
 
     ++id->n_loaded;
-    /* we can also update the UI, like with a nice progress bar */
-    /* DEBUG("loaded %d of out of %d", id->n_loaded, id->n_items); */
     if (id->n_loaded == id->n_items) {
         /* we loaded everything, so we can change state
          * and remove the idle callback function; after
          * using the cleanup_load_items function will be
          * called
          */
-        history_search_init();
         id->load_state = STATE_COMPLETE;
         id->n_loaded = 0;
         id->n_items = 0;
@@ -123,10 +122,8 @@ cleanup_load_items(gpointer data)
 {
     IdleData *id = data;
     g_assert(id->load_state == STATE_COMPLETE);
-
-    /* actually load the model inside the view */
-    gtk_tree_view_set_model(GTK_TREE_VIEW(id->tree_view),
-                            GTK_TREE_MODEL(id->tree_store));
+    /* this will actually load the model inside the view */
+    history_search_init();
     g_free(id);
 }
 
