@@ -66,7 +66,7 @@ void AudioRtpFactory::initConfig()
 
     std::string accountId(Manager::instance().getAccountFromCall(ca_->getCallId()));
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountId));
+    SIPAccount *account = Manager::instance().getSipAccount(accountId);
 
     if (account) {
         srtpEnabled_ = account->getSrtpEnabled();
