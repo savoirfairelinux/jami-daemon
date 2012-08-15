@@ -44,8 +44,10 @@
 #include "global.h"
 #include "fileutils.h"
 #include "sip/sipaccount.h"
+#include "sip/sipcall.h"
 #include "im/instant_messaging.h"
 #include "iax/iaxaccount.h"
+#include "iax/iaxcall.h"
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
@@ -377,7 +379,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     if (isIPToIP(callId)) {
         /* Direct IP to IP call */
         try {
-            Call * call = SIPVoIPLink::instance()->getCall(callId);
+            Call * call = SIPVoIPLink::getSipCall(callId);
             if (call) {
                 history_.addCall(call, preferences.getHistoryLimit());
                 SIPVoIPLink::instance()->hangup(callId);
@@ -501,7 +503,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
         /* Classic call, attached to an account */
         const std::string accountId(getAccountFromCall(callId));
         DEBUG("Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
-        Call * call = getAccountLink(accountId)->getCall(callId);
+        Call * call = getCallFromCallID(callId);
 
         if (call)
             getAccountLink(accountId)->offhold(callId);
@@ -869,8 +871,14 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 Call *
 ManagerImpl::getCallFromCallID(const std::string &callID)
 {
-    const std::string accountID(getAccountFromCall(callID));
-    Call *call = getAccountLink(accountID)->getCall(callID);
+    Call *call = NULL;
+
+    call = SIPVoIPLink::getSipCall(callID);
+    if(call != NULL)
+        return call;
+
+    call = IAXVoIPLink::getIaxCall(callID);
+
     return call;
 }
 
@@ -1553,14 +1561,14 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     /* Direct IP to IP call */
     if (isIPToIP(call_id)) {
-        Call * call = SIPVoIPLink::instance()->getCall(call_id);
+        Call * call = SIPVoIPLink::getSipCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         SIPVoIPLink::instance()->hangup(call_id);
         saveHistory();
     } else {
         const std::string account_id(getAccountFromCall(call_id));
         VoIPLink *link = getAccountLink(account_id);
-        Call * call = link->getCall(call_id);
+        Call * call = getCallFromCallID(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         link->peerHungup(call_id);
         saveHistory();
@@ -1836,7 +1844,7 @@ std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 {
     std::string accountid = getAccountFromCall(id);
     VoIPLink* link = getAccountLink(accountid);
-    Call* call = link->getCall(id);
+    Call* call = getCallFromCallID(id);
     std::string codecName;
 
     if (call) {
@@ -1984,7 +1992,7 @@ void ManagerImpl::setRecordingCall(const std::string& id)
     if (it == conferenceMap_.end()) {
         DEBUG("Set recording for call %s", id.c_str());
         std::string accountid(getAccountFromCall(id));
-        rec = getAccountLink(accountid)->getCall(id);
+        rec = getCallFromCallID(id);
     } else {
         DEBUG("Set recording for conference %s", id.c_str());
         Conference *conf = it->second;
@@ -2009,8 +2017,7 @@ void ManagerImpl::setRecordingCall(const std::string& id)
 
 bool ManagerImpl::isRecording(const std::string& id)
 {
-    const std::string accountid(getAccountFromCall(id));
-    Recordable* rec = getAccountLink(accountid)->getCall(id);
+    Recordable* rec = getCallFromCallID(id);
     return rec and rec->isRecording();
 }
 

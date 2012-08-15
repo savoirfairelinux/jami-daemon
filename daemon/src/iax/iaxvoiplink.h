@@ -52,6 +52,8 @@ class IAXAccount;
 class AudioCodec;
 class AudioLayer;
 
+typedef std::map<std::string, IAXCall*> IAXCallMap;
+
 /**
  * @file iaxvoiplink.h
  * @brief VoIPLink contains a thread that listen to external events
@@ -176,10 +178,10 @@ class IAXVoIPLink : public VoIPLink {
 #if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 #endif
-        virtual void clearCallMap();
-        virtual void addCall(Call* call);
-        virtual Call* getCall(const std::string& id);
-        virtual void removeCall(const std::string &id);
+        static void clearIaxCallMap();
+        static void addIaxCall(IAXCall* call);
+        static IAXCall* getIaxCall(const std::string& id);
+        static void removeIaxCall(const std::string &id);
 
         /**
          * Return the codec protocol used for this call
@@ -197,7 +199,7 @@ class IAXVoIPLink : public VoIPLink {
         static AccountMap iaxAccountMap_;
 
         static ost::Mutex iaxCallMapMutex_;
-        static CallMap iaxCallMap_;
+        static IAXCallMap iaxCallMap_;
 
         /*
          * Decode the message count IAX send.

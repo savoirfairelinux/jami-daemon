@@ -83,7 +83,7 @@ SIPVoIPLink *SIPVoIPLink::instance_ = 0;
 bool SIPVoIPLink::destroyed_ = false;
 
 AccountMap SIPVoIPLink::sipAccountMap_ = AccountMap();
-CallMap SIPVoIPLink::sipCallMap_ = CallMap();
+SipCallMap SIPVoIPLink::sipCallMap_ = SipCallMap();
 ost::Mutex SIPVoIPLink::sipCallMapMutex_ = ost::Mutex();
 
 namespace {
@@ -408,7 +408,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         call->setConnectionState(Call::RINGING);
 
         Manager::instance().incomingCall(*call, account_id);
-        Manager::instance().getAccountLink(account_id)->addCall(call);
+        SIPVoIPLink::addSipCall(call);
     }
 
     return PJ_FALSE;
@@ -516,8 +516,7 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_caching_pool_destroy(cp_);
 
     pj_shutdown();
-
-    clearCallMap();
+    clearSipCallMap();
 }
 
 SIPVoIPLink* SIPVoIPLink::instance()
@@ -922,7 +921,7 @@ SIPVoIPLink::hangup(const std::string& id)
     inv->mod_data[mod_ua_.id] = NULL;
 
     stopRtpIfCurrent(id, *call);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -943,7 +942,7 @@ SIPVoIPLink::peerHungup(const std::string& id)
     call->inv->mod_data[mod_ua_.id ] = NULL;
 
     stopRtpIfCurrent(id, *call);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -1046,26 +1045,26 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
 #endif // HAVE_INSTANT_MESSAGING
 
 void
-SIPVoIPLink::clearCallMap()
+SIPVoIPLink::clearSipCallMap()
 {
     ost::MutexLock m(sipCallMapMutex_);
 
-    for (CallMap::const_iterator iter = sipCallMap_.begin();
+    for (SipCallMap::const_iterator iter = sipCallMap_.begin();
             iter != sipCallMap_.end(); ++iter)
         delete iter->second;
 
     sipCallMap_.clear();
 }
 
-void SIPVoIPLink::addCall(Call* call)
+void SIPVoIPLink::addSipCall(SIPCall* call)
 {
-    if (call and getCall(call->getCallId()) == NULL) {
+    if (call and getSipCall(call->getCallId()) == NULL) {
         ost::MutexLock m(sipCallMapMutex_);
         sipCallMap_[call->getCallId()] = call;
     }
 }
 
-void SIPVoIPLink::removeCall(const std::string& id)
+void SIPVoIPLink::removeSipCall(const std::string& id)
 {
     ost::MutexLock m(sipCallMapMutex_);
 
@@ -1075,10 +1074,10 @@ void SIPVoIPLink::removeCall(const std::string& id)
     sipCallMap_.erase(id);
 }
 
-Call*
-SIPVoIPLink::getCall(const std::string& id)
+SIPCall*
+SIPVoIPLink::getSipCall(const std::string& id)
 {
-    CallMap::iterator iter = sipCallMap_.find(id);
+    SipCallMap::iterator iter = sipCallMap_.find(id);
 
     if (iter != sipCallMap_.end())
         return iter->second;
@@ -1199,13 +1198,13 @@ SIPVoIPLink::refuse(const std::string& id)
     // Make sure the pointer is NULL in callbacks
     call->inv->mod_data[mod_ua_.id] = NULL;
 
-    removeCall(id);
+    removeSipCall(id);
 }
 
 std::string
 SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
 {
-    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getSessionVideoCodec();
+    return static_cast<SIPCall*>(call)->getLocalSDP()->getSessionVideoCodec();
 }
 
 std::string
@@ -1371,7 +1370,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     call->setConnectionState(Call::PROGRESSING);
     call->setState(Call::ACTIVE);
-    addCall(call);
+    addSipCall(call);
 
     return true;
 }
@@ -1381,7 +1380,7 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 {
     std::string id(call->getCallId());
     Manager::instance().callFailure(id);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -1392,7 +1391,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
     stopRtpIfCurrent(id, *call);
 
     Manager::instance().peerHungupCall(id);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -1409,7 +1408,7 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data * /*rdata*/)
 SIPCall*
 SIPVoIPLink::getSIPCall(const std::string& id)
 {
-    SIPCall *result = dynamic_cast<SIPCall*>(getCall(id));
+    SIPCall *result = dynamic_cast<SIPCall*>(getSipCall(id));
 
     if (result == NULL)
         throw VoipLinkException("Could not find SIPCall " + id);
@@ -2074,7 +2073,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             if (r_data->msg_info.cid)
                 return;
             std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
-            SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(transferCallID[transferID]));
+            SIPCall *call = SIPVoIPLink::getSipCall(transferCallID[transferID]);
 
             if (!call)
                 return;

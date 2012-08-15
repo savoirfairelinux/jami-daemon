@@ -43,9 +43,6 @@
 class Call;
 class Account;
 
-/** Define a map that associate a Call object to a call identifier */
-typedef std::map<std::string, Call*> CallMap;
-
 class VoipLinkException : public std::runtime_error {
     public:
         VoipLinkException(const std::string &str = "") :
@@ -167,26 +164,6 @@ class VoIPLink {
                                      const std::string &message,
                                      const std::string &from) = 0;
 #endif
-        virtual void clearCallMap() = 0;
-
-        /** Add a call to the call map (protected by mutex)
-         * @param call A call pointer with a unique pointer
-         * @return bool True if the call was unique and added
-         */
-        virtual void addCall(Call* call) = 0;
-
-        /**
-         * Get the call pointer from the call map (protected by mutex)
-         * @param id A Call ID
-         * @return Call*  Call pointer or 0
-         */
-        virtual Call* getCall(const std::string &id) = 0;
-
-        /** Remove a call from the call map (protected by mutex)
-         * @param id A Call ID
-         */
-        virtual void removeCall(const std::string &id) = 0;
-
     protected:
 
         bool handlingEvents_;

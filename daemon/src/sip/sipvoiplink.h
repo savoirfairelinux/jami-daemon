@@ -57,6 +57,7 @@
 class SIPCall;
 class SIPAccount;
 
+typedef std::map<std::string, SIPCall*> SipCallMap;
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
@@ -256,10 +257,10 @@ class SIPVoIPLink : public VoIPLink {
                              const std::string& message,
                              const std::string& from);
 #endif
-        virtual void clearCallMap();
-        virtual void addCall(Call* call);
-        virtual Call* getCall(const std::string& id);
-        virtual void removeCall(const std::string &id);
+        static void clearSipCallMap();
+        static void addSipCall(SIPCall* call);
+        static SIPCall* getSipCall(const std::string& id);
+        static void removeSipCall(const std::string &id);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
@@ -288,7 +289,7 @@ class SIPVoIPLink : public VoIPLink {
         static AccountMap sipAccountMap_;
 
         static ost::Mutex sipCallMapMutex_;
-        static CallMap sipCallMap_;
+        static SipCallMap sipCallMap_;
 
         /**
          * Start a SIP Call
