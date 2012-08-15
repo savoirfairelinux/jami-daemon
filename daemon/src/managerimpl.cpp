@@ -84,8 +84,8 @@ ManagerImpl::ManagerImpl() :
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
-    callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(), sipAccountMap_(),
-    iaxAccountMap_(), mainBuffer_(), conferenceMap_(), history_(), finished_(false)
+    callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(),
+    mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
     // initialize random generator for call id
     srand(time(NULL));
@@ -1248,10 +1248,11 @@ void ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (AccountMap::iterator iter = sipAccountMap_.begin(); iter != sipAccountMap_.end(); ++iter)
+        for (AccountMap::iterator iter = SIPVoIPLink::getInternalAccountMap().begin();
+					iter != SIPVoIPLink::getInternalAccountMap().end(); ++iter)
             iter->second->serialize(emitter);
 
-        for (AccountMap::iterator iter = iaxAccountMap_.begin(); iter != iaxAccountMap_.end(); ++iter)
+        for (AccountMap::iterator iter = IAXVoIPLink::getInternalAccountMap().begin(); iter != IAXVoIPLink::getInternalAccountMap().end(); ++iter)
             iter->second->serialize(emitter);
 
         preferences.serialize(emitter);
@@ -2390,12 +2391,12 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     if (accountType == "SIP") {
         newAccount = new SIPAccount(newAccountID);
-        sipAccountMap_[newAccountID] = newAccount;
+        SIPVoIPLink::getInternalAccountMap()[newAccountID] = newAccount;
     }
 #if HAVE_IAX
     else if (accountType == "IAX") {
         newAccount = new IAXAccount(newAccountID);
-        iaxAccountMap_[newAccountID] = newAccount;
+        IAXVoIPLink::getInternalAccountMap()[newAccountID] = newAccount;
     }
 #endif
     else {
@@ -2437,8 +2438,8 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
     if (remAccount != NULL) {
         remAccount->unregisterVoIPLink();
-        sipAccountMap_.erase(accountID);
-        iaxAccountMap_.erase(accountID);
+        SIPVoIPLink::getInternalAccountMap().erase(accountID);
+        IAXVoIPLink::getInternalAccountMap().erase(accountID);
         // http://projects.savoirfairelinux.net/issues/show/2355
         // delete remAccount;
     }
@@ -2592,21 +2593,21 @@ namespace {
 void ManagerImpl::loadDefaultAccountMap()
 {
     // build a default IP2IP account with default parameters only if does not exist
-    AccountMap::const_iterator iter = sipAccountMap_.find(SIPAccount::IP2IP_PROFILE);
-    if(iter == sipAccountMap_.end()) {
-        sipAccountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
+    AccountMap::const_iterator iter = SIPVoIPLink::getInternalAccountMap().find(SIPAccount::IP2IP_PROFILE);
+    if(iter == SIPVoIPLink::getInternalAccountMap().end()) {
+        SIPVoIPLink::getInternalAccountMap()[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
     }
 
-    sipAccountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
+    SIPVoIPLink::getInternalAccountMap()[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 }
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
     // build a default IP2IP account with default parameters
-    AccountMap::const_iterator iter = sipAccountMap_.find(SIPAccount::IP2IP_PROFILE);
-    if(iter == sipAccountMap_.end()) {
-        sipAccountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
+    AccountMap::const_iterator iter = SIPVoIPLink::getInternalAccountMap().find(SIPAccount::IP2IP_PROFILE);
+    if(iter == SIPVoIPLink::getInternalAccountMap().end()) {
+        SIPVoIPLink::getInternalAccountMap()[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
     }
 
     // load saved preferences for IP2IP account from configuration file
@@ -2616,12 +2617,12 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     if (ip2ip != seq->end()) {
         MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
         if (node)
-            sipAccountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
+            SIPVoIPLink::getInternalAccountMap()[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
     }
 
     // Force IP2IP settings to be loaded
     // No registration in the sense of the REGISTER method is performed.
-    sipAccountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
+    SIPVoIPLink::getInternalAccountMap()[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
     // build preferences
     preferences.unserialize(*parser.getPreferenceNode());
@@ -2646,46 +2647,46 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     // std::for_each(seq->begin(), seq->end(),
     //        std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
     std::for_each(seq->begin(), seq->end(),
-            std::tr1::bind(loadAccount, _1, std::tr1::ref(sipAccountMap_), std::tr1::ref(iaxAccountMap_)));
+            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::getInternalAccountMap()), std::tr1::ref(IAXVoIPLink::getInternalAccountMap())));
 }
 
 void ManagerImpl::registerAllAccounts()
 {
-    std::for_each(sipAccountMap_.begin(), sipAccountMap_.end(), registerAccount);
-    std::for_each(iaxAccountMap_.begin(), iaxAccountMap_.end(), registerAccount);
+    std::for_each(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end(), registerAccount);
+    std::for_each(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end(), registerAccount);
 }
 
 void ManagerImpl::unregisterAllAccounts()
 {
-    std::for_each(sipAccountMap_.begin(), sipAccountMap_.end(), unregisterAccount);
-    std::for_each(iaxAccountMap_.begin(), iaxAccountMap_.end(), unregisterAccount);
+    std::for_each(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end(), unregisterAccount);
+    std::for_each(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end(), unregisterAccount);
 }
 
 void ManagerImpl::unloadAccountMap()
 {
-    std::for_each(sipAccountMap_.begin(), sipAccountMap_.end(), unloadAccount);
-    sipAccountMap_.clear();
+    std::for_each(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end(), unloadAccount);
+    SIPVoIPLink::getInternalAccountMap().clear();
 
-    std::for_each(iaxAccountMap_.begin(), iaxAccountMap_.end(), unloadAccount);
-    iaxAccountMap_.clear();
+    std::for_each(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end(), unloadAccount);
+    IAXVoIPLink::getInternalAccountMap().clear();
 }
 
 bool ManagerImpl::accountExists(const std::string &accountID)
 {
     bool ret = false;
 
-    ret = sipAccountMap_.find(accountID) != sipAccountMap_.end();
+    ret = SIPVoIPLink::getInternalAccountMap().find(accountID) != SIPVoIPLink::getInternalAccountMap().end();
     if(ret)
         return ret;
 
-    return iaxAccountMap_.find(accountID) != iaxAccountMap_.end();
+    return IAXVoIPLink::getInternalAccountMap().find(accountID) != IAXVoIPLink::getInternalAccountMap().end();
 }
 
 SIPAccount*
 ManagerImpl::getIP2IPAccount() const
 {
-    AccountMap::const_iterator iter = sipAccountMap_.find(SIPAccount::IP2IP_PROFILE);
-    if(iter == sipAccountMap_.end())
+    AccountMap::const_iterator iter = SIPVoIPLink::getInternalAccountMap().find(SIPAccount::IP2IP_PROFILE);
+    if(iter == SIPVoIPLink::getInternalAccountMap().end())
         return NULL;
 
     return static_cast<SIPAccount *>(iter->second);
@@ -2710,8 +2711,8 @@ ManagerImpl::getAccount(const std::string& accountID) const
 SIPAccount *
 ManagerImpl::getSipAccount(const std::string& accountID) const
 {
-    AccountMap::const_iterator iter = sipAccountMap_.find(accountID);
-    if(iter != sipAccountMap_.end())
+    AccountMap::const_iterator iter = SIPVoIPLink::getInternalAccountMap().find(accountID);
+    if(iter != SIPVoIPLink::getInternalAccountMap().end())
         return static_cast<SIPAccount *>(iter->second);
 
     return NULL;
@@ -2720,8 +2721,8 @@ ManagerImpl::getSipAccount(const std::string& accountID) const
 IAXAccount *
 ManagerImpl::getIaxAccount(const std::string& accountID) const
 {
-    AccountMap::const_iterator iter = iaxAccountMap_.find(accountID);
-    if(iter != iaxAccountMap_.end())
+    AccountMap::const_iterator iter = IAXVoIPLink::getInternalAccountMap().find(accountID);
+    if(iter != IAXVoIPLink::getInternalAccountMap().end())
         return static_cast<IAXAccount *>(iter->second);
 
     return NULL;
@@ -2729,8 +2730,8 @@ ManagerImpl::getIaxAccount(const std::string& accountID) const
 
 void
 ManagerImpl::fillConcatAccountMap(AccountMap &concatMap) const{
-    concatMap.insert(sipAccountMap_.begin(), sipAccountMap_.end());
-    concatMap.insert(iaxAccountMap_.begin(), iaxAccountMap_.end());
+    concatMap.insert(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end());
+    concatMap.insert(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end());
 }
 
 std::string

@@ -36,6 +36,7 @@
 #include "config.h"
 #endif
 
+#include "account.h"
 #include "voiplink.h"
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "sfl_types.h"
@@ -66,7 +67,12 @@ class IAXVoIPLink : public VoIPLink {
         /**
          *	Listen to events sent by the call manager ( asterisk, etc .. )
          */
-        bool getEvent();
+        virtual bool getEvent();
+
+        /**
+         * Return the internal account map for this VOIP link
+         */
+        static AccountMap &getInternalAccountMap() { return iaxAccountMap_; }
 
         /**
          * Init the voip link
@@ -180,6 +186,12 @@ class IAXVoIPLink : public VoIPLink {
 
     private:
         NON_COPYABLE(IAXVoIPLink);
+
+        /**
+         * Contains a list of all IAX account
+         */
+        static AccountMap iaxAccountMap_;
+
         /*
          * Decode the message count IAX send.
          * Returns only the new messages number

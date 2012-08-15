@@ -91,6 +91,11 @@ class SIPVoIPLink : public VoIPLink {
         virtual bool getEvent();
 
         /**
+         * Return the internal account map for this VOIP link
+         */
+        static AccountMap &getInternalAccountMap() { return sipAccountMap_; }
+
+        /**
          * Build and send SIP registration request
          */
         virtual void sendRegister(Account *a);
@@ -272,6 +277,11 @@ class SIPVoIPLink : public VoIPLink {
 
         SIPVoIPLink();
         ~SIPVoIPLink();
+
+        /**
+         * Contains a list of all SIP account
+         */
+        static AccountMap sipAccountMap_;
 
         /**
          * Start a SIP Call

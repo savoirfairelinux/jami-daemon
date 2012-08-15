@@ -44,7 +44,6 @@
 
 #include "sip/sdp.h"
 #include "sipcall.h"
-#include "sipaccount.h"
 #include "eventthread.h"
 #if HAVE_SDES
 #include "sdes_negotiator.h"
@@ -82,6 +81,7 @@ using namespace sfl;
 
 SIPVoIPLink *SIPVoIPLink::instance_ = 0;
 bool SIPVoIPLink::destroyed_ = false;
+AccountMap SIPVoIPLink::sipAccountMap_ = AccountMap();
 
 namespace {
 
@@ -100,6 +100,7 @@ static std::map<std::string, std::string> transferCallID;
  * @param call a SIPCall valid pointer
  */
 void setCallMediaLocal(SIPCall* call, const std::string &localIP);
+
 
 static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
@@ -413,7 +414,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
 /*************************************************************************************************/
 
-SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
+SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_)
+                           , evThread_(this)
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \

@@ -983,18 +983,7 @@ class ManagerImpl {
 
         std::map<std::string, bool> IPToIPMap_;
 
-
         bool isIPToIP(const std::string& callID) const;
-
-        /**
-         * Contains a list of all SIP account
-         */
-        AccountMap sipAccountMap_;
-
-        /**
-         * Contains a list of all IAX account
-         */
-        AccountMap iaxAccountMap_;
 
         /**
          * Load the account map from configuration

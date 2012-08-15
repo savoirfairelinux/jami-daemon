@@ -43,6 +43,8 @@
 #include <cmath>
 #include <dlfcn.h>
 
+AccountMap IAXVoIPLink::iaxAccountMap_ = AccountMap();
+
 IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     regSession_(NULL)
     , nextRefreshStamp_(0)
