@@ -125,6 +125,8 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     : indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
+    , watchdogTotalCount_(0)
+    , watchdogTotalErr_(0)
     , playbackHandle_(NULL)
     , ringtoneHandle_(NULL)
     , captureHandle_(NULL)
@@ -190,6 +192,9 @@ AlsaLayer::startStream()
     if (audioThread_ == NULL) {
         audioThread_ = new AlsaThread(this);
         audioThread_->start();
+    }
+    else if (!audioThread_->isRunning()) {
+      audioThread_->start();
     }
 
     isStarted_ = true;
@@ -379,12 +384,19 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 void
 AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
 {
+    //Do not waste CPU cycle to handle void
+    if (!length)
+       return;
+
     snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames(handle, length);
+    watchdogTotalCount_++;
 
     int err = snd_pcm_writei(handle, buffer , frames);
 
     if (err >= 0)
         return;
+
+    watchdogTotalErr_++;
 
     switch (err) {
 
@@ -427,6 +439,14 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
             ERROR("Unknown write error, dropping frames: %s", snd_strerror(err));
             stopPlaybackStream();
             break;
+    }
+
+    //Detect when something is going wrong. This can be caused by alsa bugs or faulty encoder on the other side
+    //TODO do something useful instead of just warning and flushing buffers
+    if (watchdogTotalErr_ > 0 && watchdogTotalCount_ / watchdogTotalErr_ >=4 && watchdogTotalCount_ > 50) {
+        ERROR("Alsa: too many errors (%d error on %d frame)",watchdogTotalErr_,watchdogTotalCount_);
+        flushUrgent();
+        flushMain();
     }
 }
 
