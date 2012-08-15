@@ -81,7 +81,10 @@ using namespace sfl;
 
 SIPVoIPLink *SIPVoIPLink::instance_ = 0;
 bool SIPVoIPLink::destroyed_ = false;
+
 AccountMap SIPVoIPLink::sipAccountMap_ = AccountMap();
+CallMap SIPVoIPLink::sipCallMap_ = CallMap();
+ost::Mutex SIPVoIPLink::sipCallMapMutex_ = ost::Mutex();
 
 namespace {
 
@@ -1039,6 +1042,47 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
     send_sip_message(call->inv, callID, appendUriList(message, list));
 }
 #endif // HAVE_INSTANT_MESSAGING
+
+void
+SIPVoIPLink::clearCallMap(Call *call)
+{
+    ost::MutexLock m(sipCallMapMutex_);
+
+    for (CallMap::const_iterator iter = sipCallMap_.begin();
+            iter != sipCallMap_.end(); ++iter)
+        delete iter->second;
+
+    sipCallMap_.clear();
+}
+
+void SIPVoIPLink::addCall(Call* call)
+{
+    if (call and getCall(call->getCallId()) == NULL) {
+        ost::MutexLock m(sipCallMapMutex_);
+        sipCallMap_[call->getCallId()] = call;
+    }
+}
+
+void SIPVoIPLink::removeCall(const std::string& id)
+{
+    ost::MutexLock m(sipCallMapMutex_);
+
+    DEBUG("Removing call %s from list", id.c_str());
+
+    delete sipCallMap_[id];
+    sipCallMap_.erase(id);
+}
+
+Call*
+SIPVoIPLink::getCall(const std::string& id)
+{
+    CallMap::iterator iter = sipCallMap_.find(id);
+
+    if (iter != sipCallMap_.end())
+        return iter->second;
+    else
+        return NULL;
+}
 
 bool
 SIPVoIPLink::transferCommon(SIPCall *call, pj_str_t *dst)

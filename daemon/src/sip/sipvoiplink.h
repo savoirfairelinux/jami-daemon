@@ -256,6 +256,10 @@ class SIPVoIPLink : public VoIPLink {
                              const std::string& message,
                              const std::string& from);
 #endif
+        virtual void clearCallMap(Call* call);
+        virtual void addCall(Call* call);
+        virtual Call* getCall(const std::string& id);
+        virtual void removeCall(const std::string &id);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
@@ -282,6 +286,9 @@ class SIPVoIPLink : public VoIPLink {
          * Contains a list of all SIP account
          */
         static AccountMap sipAccountMap_;
+
+        static ost::Mutex sipCallMapMutex_;
+        static CallMap sipCallMap_;
 
         /**
          * Start a SIP Call

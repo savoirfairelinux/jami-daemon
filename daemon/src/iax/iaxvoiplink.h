@@ -176,6 +176,10 @@ class IAXVoIPLink : public VoIPLink {
 #if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 #endif
+        virtual void clearCallMap(Call* call);
+        virtual void addCall(Call* call);
+        virtual Call* getCall(const std::string& id);
+        virtual void removeCall(const std::string &id);
 
         /**
          * Return the codec protocol used for this call
@@ -191,6 +195,9 @@ class IAXVoIPLink : public VoIPLink {
          * Contains a list of all IAX account
          */
         static AccountMap iaxAccountMap_;
+
+        static ost::Mutex iaxCallMapMutex_;
+        static CallMap iaxCallMap_;
 
         /*
          * Decode the message count IAX send.

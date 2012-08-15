@@ -44,6 +44,8 @@
 #include <dlfcn.h>
 
 AccountMap IAXVoIPLink::iaxAccountMap_ = AccountMap();
+CallMap IAXVoIPLink::iaxCallMap_ = CallMap();
+ost::Mutex IAXVoIPLink::iaxCallMapMutex_ = ost::Mutex();
 
 IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     regSession_(NULL)
@@ -90,9 +92,9 @@ IAXVoIPLink::terminate()
     if (!initDone_)
         return;
 
-    ost::MutexLock m(callMapMutex_);
+    ost::MutexLock m(iaxCallMapMutex_);
 
-    for (CallMap::iterator iter = callMap_.begin(); iter != callMap_.end(); ++iter) {
+    for (CallMap::iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
         IAXCall *call = dynamic_cast<IAXCall*>(iter->second);
 
         if (call) {
@@ -102,7 +104,7 @@ IAXVoIPLink::terminate()
         }
     }
 
-    callMap_.clear();
+    iaxCallMap_.clear();
 
     initDone_ = false;
 }
@@ -150,7 +152,7 @@ IAXVoIPLink::getEvent()
 void
 IAXVoIPLink::sendAudioFromMic()
 {
-    for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end() ; ++iter) {
+    for (CallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end() ; ++iter) {
         IAXCall *currentCall = dynamic_cast<IAXCall*>(iter->second);
 
         if (!currentCall or currentCall->getState() != Call::ACTIVE)
@@ -416,6 +418,51 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
 }
 #endif
 
+void
+IAXVoIPLink::clearCallMap(Call *call)
+{
+    ost::MutexLock m(iaxCallMapMutex_);
+
+    for (CallMap::const_iterator iter = iaxCallMap_.begin();
+            iter != iaxCallMap_.end(); ++iter)
+        delete iter->second;
+
+    iaxCallMap_.clear();
+
+}
+
+void
+IAXVoIPLink::addCall(Call* call)
+{
+    if (call and getCall(call->getCallId()) == NULL) {
+        ost::MutexLock m(iaxCallMapMutex_);
+        iaxCallMap_[call->getCallId()] = call;
+    }
+}
+
+void
+IAXVoIPLink::removeCall(const std::string& id)
+{
+    ost::MutexLock m(iaxCallMapMutex_);
+
+    DEBUG("Removing call %s from list", id.c_str());
+
+    delete iaxCallMap_[id];
+    iaxCallMap_.erase(id);
+}
+
+Call*
+IAXVoIPLink::getCall(const std::string& id)
+{
+    CallMap::iterator iter = iaxCallMap_.find(id);
+
+    if (iter != iaxCallMap_.end())
+
+        return iter->second;
+    else
+        return NULL;
+}
+
 std::string
 IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
 {
@@ -454,9 +501,9 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 IAXCall*
 IAXVoIPLink::iaxFindCallBySession(iax_session* session)
 {
-    ost::MutexLock m(callMapMutex_);
+    ost::MutexLock m(iaxCallMapMutex_);
 
-    for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end(); ++iter) {
+    for (CallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
         IAXCall* call = dynamic_cast<IAXCall*>(iter->second);
 
         if (call and call->session == session)

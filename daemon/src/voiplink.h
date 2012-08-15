@@ -70,7 +70,7 @@ class VoIPLink {
         /**
          * Virtual method
          * Build and send account registration request
-         */
+         *SIP/
         virtual void sendRegister(Account *a) = 0;
 
         /**
@@ -167,33 +167,29 @@ class VoIPLink {
                                      const std::string &message,
                                      const std::string &from) = 0;
 #endif
+        virtual void clearCallMap(Call* call) = 0;
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer
          * @return bool True if the call was unique and added
          */
-        void addCall(Call* call);
+        virtual void addCall(Call* call) = 0;
 
         /**
          * Get the call pointer from the call map (protected by mutex)
          * @param id A Call ID
          * @return Call*  Call pointer or 0
          */
-        Call* getCall(const std::string &id);
-
-    protected:
-        /** Contains all the calls for this Link, protected by mutex */
-        CallMap callMap_;
-
-        /** Mutex to protect call map */
-        ost::Mutex callMapMutex_;
-
-        bool handlingEvents_;
+        virtual Call* getCall(const std::string &id) = 0;
 
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID
          */
-        void removeCall(const std::string &id);
+        virtual void removeCall(const std::string &id) = 0;
+
+    protected:
+
+        bool handlingEvents_;
 };
 
 #endif // __VOIP_LINK_H__
