@@ -43,6 +43,7 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     , ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this, *this)
     , rtpThread_(*this)
+    , audiocodec_(0)
 {
     DEBUG("Setting new RTP session with destination %s:%d",
             call_.getLocalIp().c_str(), call_.getLocalAudioPort());
@@ -62,7 +63,13 @@ AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSessio
 
 void AudioSymmetricRtpSession::AudioRtpThread::run()
 {
-    int threadSleep = 20;
+    int threadSleep = 10;
+
+    //That should be the way to get the "real" threadSleep, but "clockRate" seem to change from the original codec one
+    /*if (rtpSession_.audiocodec_)
+        threadSleep = rtpSession_.audiocodec_->getFrameSize() / (rtpSession_.audiocodec_->getClockRate()/10);
+    else
+        threadSleep = 20;*/
 
     TimerPort::setTimer(threadSleep);
 
@@ -91,6 +98,7 @@ int AudioSymmetricRtpSession::startRtpThread(AudioCodec &audiocodec)
     if (isStarted_)
         return 0;
 
+    audiocodec_ = &audiocodec;
     AudioRtpSession::startRtpThread(audiocodec);
     return startSymmetricRtpThread();
 }
