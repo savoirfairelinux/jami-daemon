@@ -215,10 +215,8 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
 void sfl::AudioRtpFactory::saveLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
-        assert(srtp);
-        cachedLocalMasterKey_ = srtp->getLocalMasterKey();
-        cachedLocalMasterSalt_ = srtp->getLocalMasterSalt();
+        cachedLocalMasterKey_ = rtpSession_->getLocalMasterKey();
+        cachedLocalMasterSalt_ = rtpSession_->getLocalMasterSalt();
     }
 }
 

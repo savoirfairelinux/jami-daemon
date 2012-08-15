@@ -70,6 +70,10 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
             return 0;
         }
 
+        virtual std::vector<uint8> getLocalMasterKey() const { std::vector<uint8> vec; return vec; }
+
+        virtual std::vector<uint8> getLocalMasterSalt() const { std::vector<uint8> vec; return vec; }
+
     private:
         NON_COPYABLE(AudioSymmetricRtpSession);
 
