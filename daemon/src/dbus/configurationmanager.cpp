@@ -34,19 +34,19 @@
 #include "config.h"
 #endif
 
-#include "configurationmanager.h"
-#include "account_schema.h"
 #include <cerrno>
 #include <sstream>
-#include "../manager.h"
+
+#include "configurationmanager.h"
+#include "account_schema.h"
+#include "manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/siptransport.h"
-#include "account.h"
 #include "logger.h"
 #include "fileutils.h"
 #include "sip/sipaccount.h"
-#include "../history/historynamecache.h"
-#include "../audio/audiolayer.h"
+#include "history/historynamecache.h"
+#include "audio/audiolayer.h"
 
 namespace {
     const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";

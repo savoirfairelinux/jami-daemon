@@ -164,6 +164,9 @@ class SIPVoIPLink : public VoIPLink {
          */
         virtual void offhold(const std::string& id);
 
+        /**
+         * Transfer method used for both type of transfer
+         */
         bool transferCommon(SIPCall *call, pj_str_t *dst);
 
         /**
@@ -212,6 +215,9 @@ class SIPVoIPLink : public VoIPLink {
          */
         void SIPCallClosed(SIPCall *call);
 
+        /**
+         * Get the memory pool factory since each calls has its own memory pool
+         */
         pj_caching_pool *getMemoryPoolFactory();
 
         /**
@@ -251,6 +257,9 @@ class SIPVoIPLink : public VoIPLink {
          */
         void createDefaultSipUdpTransport();
 
+        /**
+         * Instance that maintain and manage transport (UDP, TLS)
+         */
         SipTransport sipTransport;
 
 #ifdef SFL_VIDEO
@@ -263,6 +272,7 @@ class SIPVoIPLink : public VoIPLink {
 
         SIPVoIPLink();
         ~SIPVoIPLink();
+
         /**
          * Start a SIP Call
          * @param call  The current call
@@ -275,9 +285,10 @@ class SIPVoIPLink : public VoIPLink {
          */
         EventThread evThread_;
 
-        friend class SIPTest;
         static bool destroyed_;
         static SIPVoIPLink *instance_;
+
+        friend class SIPTest;
 };
 
 #endif // SIPVOIPLINK_H_

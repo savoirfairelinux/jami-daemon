@@ -40,7 +40,11 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 
+class Account;
 class VoIPLink;
+
+/** Define a type for a AccountMap container */
+typedef std::map<std::string, Account*> AccountMap;
 
 /**
  * @file account.h

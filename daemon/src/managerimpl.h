@@ -50,6 +50,8 @@
 
 #include "config/sfl_config.h"
 
+#include "account.h"
+
 #include "call.h"
 #include "conference.h"
 
@@ -82,8 +84,6 @@ class Account;
 class SIPAccount;
 class IAXAccount;
 
-/** Define a type for a AccountMap container */
-typedef std::map<std::string, Account*> AccountMap;
 
 /** Define a type for a std::string to std::string Map inside ManagerImpl */
 typedef std::map<std::string, std::string> CallAccountMap;
