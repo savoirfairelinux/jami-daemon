@@ -62,6 +62,8 @@ static gboolean history_is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpoin
     const gchar *text = NULL;
     const gchar *id = NULL;
     gtk_tree_model_get(model, iter, COLUMN_ACCOUNT_DESC, &text, COLUMN_ID, &id, -1);
+    if (!id)
+        return FALSE;
     callable_obj_t *history_entry = calllist_get_call(history_tab, id);
 
     gboolean ret = TRUE;

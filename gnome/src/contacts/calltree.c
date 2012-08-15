@@ -886,12 +886,14 @@ void calltree_add_history_entry(callable_obj_t *call)
 
     if (pixbuf != NULL)
         g_object_unref(G_OBJECT(pixbuf));
-
-    gtk_tree_view_set_model(GTK_TREE_VIEW(history_tab->view), GTK_TREE_MODEL(history_tab->store));
-
-    history_search();
 }
 
+// Slower so we don't want to do this for every entry if adding a lot of entries at once
+void calltree_update_history_view()
+{
+    gtk_tree_view_set_model(GTK_TREE_VIEW(history_tab->view), GTK_TREE_MODEL(history_tab->store));
+    history_search();
+}
 
 void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 {

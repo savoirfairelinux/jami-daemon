@@ -71,8 +71,6 @@ main(int argc, char *argv[])
     // Start GTK application
     gtk_init(&argc, &argv);
 
-    // Handle logging
-
     // Check arguments if debug mode is activated
     for (int i = 0; i < argc; i++)
         if (g_strcmp0(argv[i], "--debug") == 0)
@@ -129,10 +127,9 @@ main(int argc, char *argv[])
 
     status_bar_display_account();
 
-    sflphone_fill_history();
+    sflphone_fill_history_lazy();
     sflphone_fill_conference_list();
     sflphone_fill_call_list();
-    history_search_init();
 
     // Update the GUI
     update_actions();
