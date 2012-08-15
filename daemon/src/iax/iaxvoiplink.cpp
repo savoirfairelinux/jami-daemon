@@ -68,6 +68,7 @@ IAXVoIPLink::~IAXVoIPLink()
     handlingEvents_ = false;
     regSession_ = NULL; // shall not delete it // XXX: but why?
     terminate();
+    clearCallMap();
 }
 
 void
@@ -419,7 +420,7 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
 #endif
 
 void
-IAXVoIPLink::clearCallMap(Call *call)
+IAXVoIPLink::clearCallMap()
 {
     ost::MutexLock m(iaxCallMapMutex_);
 

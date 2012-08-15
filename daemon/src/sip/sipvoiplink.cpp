@@ -516,6 +516,8 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_caching_pool_destroy(cp_);
 
     pj_shutdown();
+
+    clearCallMap();
 }
 
 SIPVoIPLink* SIPVoIPLink::instance()
@@ -1044,7 +1046,7 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
 #endif // HAVE_INSTANT_MESSAGING
 
 void
-SIPVoIPLink::clearCallMap(Call *call)
+SIPVoIPLink::clearCallMap()
 {
     ost::MutexLock m(sipCallMapMutex_);
 

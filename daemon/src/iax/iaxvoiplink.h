@@ -176,7 +176,7 @@ class IAXVoIPLink : public VoIPLink {
 #if HAVE_INSTANT_MESSAGING
         virtual void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 #endif
-        virtual void clearCallMap(Call* call);
+        virtual void clearCallMap();
         virtual void addCall(Call* call);
         virtual Call* getCall(const std::string& id);
         virtual void removeCall(const std::string &id);
