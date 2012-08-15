@@ -392,14 +392,14 @@ void YamlParser::constructNativeData()
     Sequence *seq = doc_.getSequence();
 
     for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {
-        YamlNode *yamlNode = dynamic_cast<YamlNode *>(*iter);
+        YamlNode *yamlNode = static_cast<YamlNode *>(*iter);
         if(yamlNode == NULL) {
             ERROR("Could not retreive yaml node from document sequence");
         }
         NodeType nodeType = yamlNode->getType();
         switch (nodeType) {
             case MAPPING: {
-                MappingNode *map = dynamic_cast<MappingNode *>(yamlNode);
+                MappingNode *map = static_cast<MappingNode *>(yamlNode);
                 mainNativeDataMapping(map);
                 break;
             }
@@ -414,8 +414,7 @@ void YamlParser::constructNativeData()
 
 void YamlParser::mainNativeDataMapping(MappingNode *map)
 {
-    std::map<std::string, YamlNode*> *mapping_ptr = map->getMapping();
-    std::map<std::string, YamlNode*> &mapping = *mapping_ptr;
+    std::map<std::string, YamlNode*> &mapping = map->getMapping();
 
     accountSequence_    = static_cast<SequenceNode*>(mapping["accounts"]);
     addressbookNode_    = static_cast<MappingNode *>(mapping["addressbook"]);

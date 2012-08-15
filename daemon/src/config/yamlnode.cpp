@@ -66,7 +66,6 @@ void MappingNode::addNode(YamlNode *node)
     setKeyValue(tmpKey_, node);
 }
 
-typedef std::map<std::string, YamlNode*> Mapping;
 
 void MappingNode::setKeyValue(const std::string &key, YamlNode *value)
 {
@@ -75,13 +74,13 @@ void MappingNode::setKeyValue(const std::string &key, YamlNode *value)
 
 void MappingNode::removeKeyValue(const std::string &key)
 {
-    Mapping::iterator it = map_.find(key);
+    YamlNodeMap::iterator it = map_.find(key);
     map_.erase(it);
 }
 
 YamlNode *MappingNode::getValue(const std::string &key) const
 {
-    Mapping::const_iterator it = map_.find(key);
+    YamlNodeMap::const_iterator it = map_.find(key);
 
     if (it != map_.end())
         return it->second;
@@ -125,7 +124,7 @@ void MappingNode::getValue(const std::string &key, std::string *v) const
 
 void MappingNode::deleteChildNodes()
 {
-    for (Mapping::iterator it = map_.begin(); it != map_.end(); ++it) {
+    for (YamlNodeMap::iterator it = map_.begin(); it != map_.end(); ++it) {
         YamlNode *yamlNode = static_cast<YamlNode *>(it->second);
 
         if (!yamlNode)
