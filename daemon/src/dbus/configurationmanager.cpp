@@ -490,7 +490,7 @@ void ConfigurationManager::setShortcuts(
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
     const std::string& accountID)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
     std::vector<std::map<std::string, std::string> > credentialInformation;
 
     if (!account)
@@ -502,7 +502,7 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getCreden
 void ConfigurationManager::setCredentials(const std::string& accountID,
         const std::vector<std::map<std::string, std::string> >& details)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
     if (account)
         account->setCredentials(details);
 }
