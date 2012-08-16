@@ -301,7 +301,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 #endif
 }
 
-void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
+void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 {
     using namespace Conf;
     using std::vector;

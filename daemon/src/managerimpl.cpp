@@ -2521,30 +2521,29 @@ std::vector<std::string> ManagerImpl::loadAccountOrder() const
 namespace {
     bool isIP2IP(const Conf::YamlNode *node)
     {
-        std::string id;
-        const Conf::MappingNode *m = dynamic_cast<const Conf::MappingNode *>(node);
-        if (!m)
+        if (!node)
             return false;
-        m->getValue("id", &id);
+
+        std::string id;
+        node->getValue("id", &id);
         return id == "IP2IP";
     }
 
     void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap)
     {
-        const Conf::MappingNode *node = dynamic_cast<const Conf::MappingNode *>(item);
-        if (!node) {
+        if (!item) {
             ERROR("Could not load account");
             return;
         }
 
         std::string accountType;
-        node->getValue("type", &accountType);
+        item->getValue("type", &accountType);
 
         std::string accountid;
-        node->getValue("id", &accountid);
+        item->getValue("id", &accountid);
 
         std::string accountAlias;
-        node->getValue("alias", &accountAlias);
+        item->getValue("alias", &accountAlias);
 
         if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
             Account *a;
@@ -2561,7 +2560,7 @@ namespace {
             }
 #endif
 
-            a->unserialize(*node);
+            a->unserialize(*item);
         }
     }
 
@@ -2622,9 +2621,7 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
     if (ip2ip != seq->end()) {
-        MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
-        if (node)
-            SIPVoIPLink::getInternalAccountMap()[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
+        SIPVoIPLink::getInternalAccountMap()[SIPAccount::IP2IP_PROFILE]->unserialize(**ip2ip);
     }
 
     // Force IP2IP settings to be loaded

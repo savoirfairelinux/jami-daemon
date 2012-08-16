@@ -38,7 +38,7 @@
 class HistoryNameCache : public Serializable {
 public:
    virtual void serialize(Conf::YamlEmitter &emitter);
-   virtual void unserialize(const Conf::MappingNode &map);
+   virtual void unserialize(const Conf::YamlNode &map);
    static HistoryNameCache& getInstance();
    std::string getNameFromHistory(const std::string &number, const std::string &accountid);
 private:

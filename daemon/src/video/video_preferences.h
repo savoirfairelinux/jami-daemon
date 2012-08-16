@@ -56,7 +56,7 @@ class VideoPreference : public Serializable
 
         virtual void serialize(Conf::YamlEmitter &emitter);
 
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         std::map<std::string, std::string> getSettings();
 

@@ -33,7 +33,7 @@
 
 namespace Conf {
     class YamlEmitter;
-    class MappingNode;
+    class YamlNode;
 }
 
 class Serializable {
@@ -41,7 +41,7 @@ class Serializable {
     public:
         virtual ~Serializable() {};
         virtual void serialize(Conf::YamlEmitter &emitter) = 0;
-        virtual void unserialize(const Conf::MappingNode &map) = 0;
+        virtual void unserialize(const Conf::YamlNode &map) = 0;
 };
 
 #endif

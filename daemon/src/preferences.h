@@ -45,7 +45,7 @@ class Preferences : public Serializable {
         Preferences();
 
         virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         std::string getAccountOrder() const {
             return accountOrder_;
@@ -143,7 +143,7 @@ class VoipPreference : public Serializable {
         VoipPreference();
 
         virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         bool getPlayDtmf() const {
             return playDtmf_;
@@ -197,7 +197,7 @@ class AddressbookPreference : public Serializable {
         AddressbookPreference();
 
         virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         bool getPhoto() const {
             return photo_;
@@ -273,7 +273,7 @@ class HookPreference : public Serializable {
         HookPreference(const std::map<std::string, std::string> &settings);
 
         virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         std::string getNumberAddPrefix() const {
             if (numberEnabled_)
@@ -309,7 +309,7 @@ class AudioPreference : public Serializable {
         }
 
         virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         // alsa preference
         int getAlsaCardin() const {
@@ -467,7 +467,7 @@ class ShortcutPreferences : public Serializable {
     public:
         ShortcutPreferences();
         virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         void setShortcuts(std::map<std::string, std::string> shortcuts);
         std::map<std::string, std::string> getShortcuts() const;

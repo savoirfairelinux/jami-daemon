@@ -78,7 +78,7 @@ void VideoPreference::serialize(Conf::YamlEmitter &emitter)
     emitter.serializePreference(&preferencemap, "video");
 }
 
-void VideoPreference::unserialize(const Conf::MappingNode &map)
+void VideoPreference::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(videoDeviceKey, &device_);
     map.getValue(videoChannelKey, &channel_);

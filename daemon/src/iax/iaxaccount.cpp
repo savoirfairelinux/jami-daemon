@@ -82,7 +82,7 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     }
 }
 
-void IAXAccount::unserialize(const Conf::MappingNode &map)
+void IAXAccount::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(ALIAS_KEY, &alias_);
     map.getValue(TYPE_KEY,  &type_);
