@@ -1408,7 +1408,7 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data * /*rdata*/)
 SIPCall*
 SIPVoIPLink::getSIPCall(const std::string& id)
 {
-    SIPCall *result = dynamic_cast<SIPCall*>(getSipCall(id));
+    SIPCall *result = getSipCall(id);
 
     if (result == NULL)
         throw VoipLinkException("Could not find SIPCall " + id);
