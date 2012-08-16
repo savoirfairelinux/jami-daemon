@@ -232,6 +232,15 @@ class SIPVoIPLink : public VoIPLink {
          * @return SIPCall*	  A pointer on SIPCall object
          */
         SIPCall* getSIPCall(const std::string& id);
+        /**
+         * A non-blocking SIPCall accessor
+         *
+         * Will return NULL if the callMapMutex could not be locked
+         *
+         * @param id  The call identifier
+         * @return SIPCall* A pointer to the SIPCall object
+         */
+        SIPCall* tryGetSIPCall(const std::string &id);
 
         /**
          * Return the codec protocol used for this call
@@ -260,6 +269,7 @@ class SIPVoIPLink : public VoIPLink {
         static void clearSipCallMap();
         static void addSipCall(SIPCall* call);
         static SIPCall* getSipCall(const std::string& id);
+        static SIPCall* tryGetSipCall(const std::string& id);
         static void removeSipCall(const std::string &id);
 
         /**

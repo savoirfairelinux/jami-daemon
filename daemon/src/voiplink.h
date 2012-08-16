@@ -164,6 +164,7 @@ class VoIPLink {
                                      const std::string &message,
                                      const std::string &from) = 0;
 #endif
+
     protected:
 
         bool handlingEvents_;

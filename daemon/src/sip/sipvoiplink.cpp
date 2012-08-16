@@ -1077,12 +1077,29 @@ void SIPVoIPLink::removeSipCall(const std::string& id)
 SIPCall*
 SIPVoIPLink::getSipCall(const std::string& id)
 {
+    ost::MutexLock m(sipCallMapMutex_);
+
     SipCallMap::iterator iter = sipCallMap_.find(id);
 
     if (iter != sipCallMap_.end())
         return iter->second;
     else
         return NULL;
+}
+
+SIPCall*
+SIPVoIPLink::tryGetSipCall(const std::string &id)
+{
+    if (not sipCallMapMutex_.tryEnterMutex()) {
+        ERROR("Could not lock call map mutex");
+        return 0;
+    }
+    SipCallMap::iterator iter = sipCallMap_.find(id);
+    SIPCall *call = 0;
+    if (iter != sipCallMap_.end())
+        call = iter->second;
+    sipCallMapMutex_.leaveMutex();
+    return call;
 }
 
 bool
@@ -1268,13 +1285,9 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 void
 SIPVoIPLink::requestFastPictureUpdate(const std::string &callID)
 {
-    SIPCall *call;
-    try {
-         call = SIPVoIPLink::instance()->getSIPCall(callID);
-    } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+    SIPCall *call = SIPVoIPLink::tryGetSipCall(callID);
+    if (!call)
         return;
-    }
 
     const char * const BODY =
         "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
@@ -1409,12 +1422,11 @@ SIPCall*
 SIPVoIPLink::getSIPCall(const std::string& id)
 {
     SIPCall *result = getSipCall(id);
-
     if (result == NULL)
-        throw VoipLinkException("Could not find SIPCall " + id);
-
+        throw VoipLinkException("Could not get SIPCall");
     return result;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
