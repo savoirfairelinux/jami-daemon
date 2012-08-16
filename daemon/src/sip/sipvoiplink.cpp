@@ -64,6 +64,11 @@
 #include "dbus/video_controls.h"
 #endif
 
+#ifdef ANDROID
+#include <pjsua-lib/pjsua.h>
+#include <android/log.h>
+#endif
+
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_uri.h"
 #include "pjnath.h"
@@ -116,6 +121,8 @@ void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx
 void registration_cb(pjsip_regc_cbparam *param);
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata);
 pj_bool_t transaction_response_cb(pjsip_rx_data *rdata) ;
+void showLog(int level, const char *data, int len);
+void showMsg(const char *format, ...);
 
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event);
 
@@ -186,6 +193,26 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
 
     return PJ_FALSE;
 }
+
+#ifdef ANDROID
+void showMsg(const char *format, ...)
+{
+    va_list arg;
+
+    va_start(arg, format);
+    __android_log_vprint(ANDROID_LOG_INFO, "apjsua", format, arg);
+    //vsnprintf(app_var.out_buf, sizeof(app_var.out_buf), format, arg);
+    va_end(arg);
+
+    /* pj_sem_post(app_var.output_sem);
+    pj_sem_wait(app_var.out_print_sem); */
+}
+
+void showLog(int level, const char *data, int len)
+{
+    showMsg("%s", data);
+}
+#endif
 
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
@@ -423,8 +450,12 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
     TRY(pj_init());
+
     TRY(pjlib_util_init());
 
+#ifdef ANDROID
+	setSipLogFunc();
+#endif
     setSipLogLevel();
     TRY(pjnath_init());
 
@@ -531,7 +562,7 @@ void SIPVoIPLink::destroy()
 void SIPVoIPLink::setSipLogLevel()
 {
     char *envvar = getenv(SIPLOGLEVEL);
-    int level = 0;
+    int level = 0, result;
 
     if(envvar != NULL) {
         std::string loglevel = envvar;
@@ -542,9 +573,25 @@ void SIPVoIPLink::setSipLogLevel()
         level = level < 0 ? 0 : level;
     }
 
+#ifdef ANDROID
+	level = 5;
+#endif
+
     // From 0 (min) to 6 (max)
     pj_log_set_level(level);
+	DEBUG("SIP log level set to %d", level);
 }
+
+#ifdef ANDROID
+void SIPVoIPLink::setSipLogFunc()
+{
+	static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();
+
+	DEBUG("setting SIP log func");
+
+    pj_log_set_log_func(&showLog);
+}
+#endif
 
 // Called from EventThread::run (not main thread)
 bool SIPVoIPLink::getEvent()

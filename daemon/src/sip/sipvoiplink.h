@@ -85,6 +85,10 @@ class SIPVoIPLink : public VoIPLink {
          */
         static void setSipLogLevel();
 
+#ifdef ANDROID
+        static void setSipLogFunc();
+#endif
+
         /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
