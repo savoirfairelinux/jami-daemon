@@ -223,10 +223,8 @@ void sfl::AudioRtpFactory::saveLocalContext()
 void sfl::AudioRtpFactory::restoreLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
-        assert(srtp);
-        srtp->setLocalMasterKey(cachedLocalMasterKey_);
-        srtp->setLocalMasterSalt(cachedLocalMasterSalt_);
+        rtpSession_->setLocalMasterKey(cachedLocalMasterKey_);
+        rtpSession_->setLocalMasterSalt(cachedLocalMasterSalt_);
     }
 }
 }

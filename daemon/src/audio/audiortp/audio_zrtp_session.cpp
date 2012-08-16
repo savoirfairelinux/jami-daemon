@@ -47,8 +47,7 @@
 namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename) :
-    ost::TimerPort()
-    , ost::SymmetricZRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    ost::SymmetricZRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this, *this)
     , zidFilename_(zidFilename)
     , rtpThread_(*this)

@@ -314,7 +314,7 @@ sfl::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
     // IP2IP profile is associated with IP2IP profile anyway
-    SIPVoIPLink * link = static_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(IP2IP_PROFILE));
+    SIPVoIPLink * link = static_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(SIPAccount::IP2IP_PROFILE));
 
     if (!link)
         throw CallManagerException("Failed to get sip link");
