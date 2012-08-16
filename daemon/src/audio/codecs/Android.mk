@@ -18,7 +18,8 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DCCPP_PREFIX \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
-				  -std=gnu++0x -frtti -fpermissive -fexceptions
+				  -std=gnu++0x -frtti -fpermissive -fexceptions \
+				  -DAPP_NAME=\"codec_ulaw\"
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -37,7 +38,8 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DCCPP_PREFIX \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
-				  -std=gnu++0x -frtti -fpermissive -fexceptions
+				  -std=gnu++0x -frtti -fpermissive -fexceptions \
+				  -DAPP_NAME=\"codec_alaw\"
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -58,6 +60,7 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
 				  -DHAVE_COFIG_H \
-				  -std=gnu++0x -frtti -fpermissive -fexceptions
+				  -std=gnu++0x -frtti -fpermissive -fexceptions \
+				  -DAPP_NAME=\"codecfactory\"
 
 include $(BUILD_STATIC_LIBRARY)

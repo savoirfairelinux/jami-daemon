@@ -36,6 +36,7 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
 				  -DHAVE_CONFIG_H \
-				  -std=gnu++0x -frtti -fpermissive -fexceptions
+				  -std=gnu++0x -frtti -fpermissive -fexceptions \
+				  -DAPP_NAME=\"audio\"
 
 include $(BUILD_STATIC_LIBRARY)

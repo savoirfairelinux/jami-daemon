@@ -15,7 +15,8 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 					$(LOCAL_PATH)/../.. \
 					$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc
 LOCAL_MODULE := libconfig
-LOCAL_CPPFLAGS += -std=gnu++0x -fexceptions -frtti
+LOCAL_CPPFLAGS += -std=gnu++0x -fexceptions -frtti \
+				  -DAPP_NAME=\"config\"
 LOCAL_LDFLAGS += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lyaml
 LOCAL_SHARED_LIBRARIES += libyaml

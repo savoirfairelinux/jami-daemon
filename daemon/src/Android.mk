@@ -54,7 +54,8 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
 				  -DHAVE_CONFIG_H \
-				  -std=gnu++0x -frtti -fexceptions -fpermissive
+				  -std=gnu++0x -frtti -fexceptions -fpermissive \
+				  -DAPP_NAME=\"libsflphone\"
 
 LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip/lib \
@@ -161,7 +162,8 @@ LOCAL_CPPFLAGS = \
 		$(IAX_CXXFLAG) $(NETWORKMANAGER) \
 		-DVERSION=\"$(VERSION)\" \
 		-DHAVE_CONFIG_H \
-		-std=gnu++0x -frtti -fexceptions -fpermissive
+		-std=gnu++0x -frtti -fexceptions -fpermissive \
+		-DAPP_NAME=\"sflphoned\"
 
 LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip/lib \

@@ -53,7 +53,8 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
 				  -DHAVE_CONFIG_H \
-				  -std=gnu++0x -frtti -fpermissive
+				  -std=gnu++0x -frtti -fpermissive \
+				  -DAPP_NAME=\"sip\"
 
 LOCAL_SHARED_LIBRARIES += libdbus-c++-1
 
