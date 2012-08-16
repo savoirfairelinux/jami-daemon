@@ -49,6 +49,7 @@ extern "C" {
 #include <map>
 #include <ctime>
 #include <cstdlib>
+#include <cstdio> // for remove()
 #include <fstream>
 
 #include "manager.h"
@@ -152,6 +153,8 @@ void VideoReceiveThread::setup()
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
     EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
+    if (not sdpFilename_.empty() and remove(sdpFilename_.c_str()) != 0)
+        ERROR("Could not remove %s", sdpFilename_.c_str());
 
     DEBUG("Finding stream info");
     if (requestKeyFrameCallback_) {
