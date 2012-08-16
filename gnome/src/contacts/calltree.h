@@ -92,6 +92,9 @@ void
 calltree_add_history_entry(callable_obj_t *);
 
 void
+calltree_update_history_view();
+
+void
 calltree_add_conference_to_current_calls(conference_obj_t *);
 
 void

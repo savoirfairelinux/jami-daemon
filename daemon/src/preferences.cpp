@@ -478,7 +478,7 @@ AudioPreference::setRecordPath(const std::string &r)
         recordpath_ = r;
         return true;
     } else {
-        ERROR("%s is not writable, cannot be the recording path");
+        ERROR("%s is not writable, cannot be the recording path", r.c_str());
         return false;
     }
 }
