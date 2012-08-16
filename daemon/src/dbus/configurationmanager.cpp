@@ -218,8 +218,8 @@ std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::st
     if (acc)
         return acc->getActiveAudioCodecs();
     else {
-        ERROR("Could not find account %s", accountID.c_str());
-        return std::vector<int32_t>();
+        ERROR("Could not find account %s, returning default", accountID.c_str());
+        return Account::getDefaultAudioCodecs();
     }
 }
 

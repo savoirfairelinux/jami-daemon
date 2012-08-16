@@ -144,6 +144,8 @@ class Account : public Serializable {
         std::vector<std::map<std::string, std::string> >
         getActiveVideoCodecs() const;
 
+        static std::vector<int> getDefaultAudioCodecs();
+
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
