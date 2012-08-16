@@ -1210,7 +1210,7 @@ SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
 std::string
 SIPVoIPLink::getCurrentAudioCodecName(Call *call) const
 {
-    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
+    return static_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
 }
 
 /* Only use this macro with string literals or character arrays, will not work
