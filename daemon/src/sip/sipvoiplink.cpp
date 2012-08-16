@@ -1402,8 +1402,10 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         if (statusCode) {
             const pj_str_t * description = pjsip_get_status_text(statusCode);
             std::string desc(description->ptr, description->slen);
+#if HAVE_DBUS
             CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
             cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
+#endif
         }
     }
 
@@ -1885,7 +1887,9 @@ void registration_cb(pjsip_regc_cbparam *param)
 
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
+#if HAVE_DBUS
         Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(accountID, state, param->code);
+#endif
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         account->setRegistrationStateDetailed(details);

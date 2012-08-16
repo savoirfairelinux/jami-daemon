@@ -88,7 +88,11 @@
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(),
+    hasTriedToRegister_(false), audioCodecFactory(),
+#if HAVE_DBUS
+	dbus_(),
+#endif
+	config_(),
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
@@ -142,11 +146,13 @@ void ManagerImpl::init(const std::string &config_file)
     registerAccounts();
 }
 
+#if HAVE_DBUS
 void ManagerImpl::run()
 {
     DEBUG("Starting DBus event loop");
     dbus_.exec();
 }
+#endif
 
 void ManagerImpl::finish()
 {
@@ -182,7 +188,9 @@ void ManagerImpl::finish()
         audiodriver_ = NULL;
     }
 
+#if HAVE_DBUS
     dbus_.exit();
+#endif
 }
 
 bool ManagerImpl::isCurrentCall(const std::string& callId) const
@@ -360,8 +368,11 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     if (audioPreference.getIsAlwaysRecording())
         setRecordingCall(call_id);
 
+#if HAVE_DBUS
     // update call state on client side
     dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
+#endif
+
     return true;
 }
 
@@ -375,9 +386,11 @@ void ManagerImpl::hangupCall(const std::string& callId)
 
     stopTone();
 
+#if HAVE_DBUS
     /* Broadcast a signal over DBus */
     DEBUG("Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
     dbus_.getCallManager()->callStateChanged(callId, "HUNGUP");
+#endif
 
     if (not isValidCall(callId) and not isIPToIP(callId)) {
         ERROR("Could not hang up call, call not valid");
@@ -489,7 +502,9 @@ void ManagerImpl::onHoldCall(const std::string& callId)
     if (current_call_id == callId)
         unsetCurrentCall();
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
+#endif
 
     getMainBuffer()->dumpInfo();
 }
@@ -528,7 +543,9 @@ void ManagerImpl::offHoldCall(const std::string& callId)
             getAccountLink(accountId)->offhold(callId);
     }
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(callId, "UNHOLD");
+#endif
 
     if (isConferenceParticipant(callId)) {
         Call *call = getCallFromCallID(callId);
@@ -574,12 +591,16 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 
 void ManagerImpl::transferFailed()
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->transferFailed();
+#endif
 }
 
 void ManagerImpl::transferSucceeded()
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->transferSucceeded();
+#endif
 }
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
@@ -623,7 +644,9 @@ void ManagerImpl::refuseCall(const std::string& id)
     }
 
     removeWaitingCall(id);
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "HUNGUP");
+#endif
 
     // Disconnect streams
     removeStream(id);
@@ -644,8 +667,10 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
     // Add conference to map
     conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
 
+#if HAVE_DBUS
     // broadcast a signal over dbus
     dbus_.getCallManager()->conferenceCreated(conf->getConfID());
+#endif
 
     return conf;
 }
@@ -666,8 +691,10 @@ void ManagerImpl::removeConference(const std::string& conference_id)
         return;
     }
 
+#if HAVE_DBUS
     // broadcast a signal over dbus
     dbus_.getCallManager()->conferenceRemoved(conference_id);
+#endif
 
     // We now need to bind the audio to the remain participant
 
@@ -728,7 +755,9 @@ void ManagerImpl::holdConference(const std::string& id)
     }
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
+#if HAVE_DBUS
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#endif
 }
 
 void ManagerImpl::unHoldConference(const std::string& id)
@@ -754,7 +783,9 @@ void ManagerImpl::unHoldConference(const std::string& id)
         }
 
         conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#endif
     }
 }
 
@@ -880,7 +911,9 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
         else
             WARN("Invalid conference state while adding main participant");
 
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+#endif
         }
     }
 
@@ -1025,7 +1058,9 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
         if (!callSuccess)
             conf->remove(generatedCallID);
         else {
+#if HAVE_DBUS
             dbus_.getCallManager()->newCallCreated(account, generatedCallID, tostr);
+#endif
             successCounter++;
         }
     }
@@ -1033,7 +1068,9 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
         conferenceMap_[conf->getConfID()] = conf;
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceCreated(conf->getConfID());
+#endif
 
         {
             ost::MutexLock lock(audioLayerMutex_);
@@ -1110,8 +1147,10 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         else
             WARN("Undefined behavior, invalid conference state in detach participant");
 
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conf->getConfID(),
                                                   conf->getStateStr());
+#endif
 
         unsetCurrentCall();
     }
@@ -1141,7 +1180,9 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
 
     removeStream(call_id);
     getMainBuffer()->dumpInfo();
+#if HAVE_DBUS
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#endif
     processRemainingParticipants(*conf);
 }
 
@@ -1407,7 +1448,9 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
     std::string number(call.getPeerNumber());
 
     std::string from("<" + number + ">");
+#if HAVE_DBUS
     dbus_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
+#endif
 }
 
 
@@ -1442,11 +1485,15 @@ void ManagerImpl::incomingMessage(const std::string& callID,
             account->getVoIPLink()->sendTextMessage(callID, message, from);
         }
 
+#if HAVE_DBUS
         // in case of a conference we must notify client using conference id
         dbus_.getCallManager()->incomingMessage(conf->getConfID(), from, message);
 
     } else
         dbus_.getCallManager()->incomingMessage(callID, from, message);
+#else
+    }
+#endif
 }
 
 //THREAD=VoIP
@@ -1542,7 +1589,9 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     if (audioPreference.getIsAlwaysRecording())
         setRecordingCall(id);
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "CURRENT");
+#endif
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1553,7 +1602,9 @@ void ManagerImpl::peerRingingCall(const std::string& id)
     if (isCurrentCall(id))
         ringback();
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "RINGING");
+#endif
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -1583,8 +1634,10 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         saveHistory();
     }
 
+#if HAVE_DBUS
     /* Broadcast a signal over DBus */
     dbus_.getCallManager()->callStateChanged(call_id, "HUNGUP");
+#endif
 
     removeWaitingCall(call_id);
     removeCallAccount(call_id);
@@ -1601,7 +1654,9 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 void ManagerImpl::callBusy(const std::string& id)
 {
     DEBUG("Call %s busy", id.c_str());
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "BUSY");
+#endif
 
     if (isCurrentCall(id)) {
         playATone(Tone::TONE_BUSY);
@@ -1615,7 +1670,9 @@ void ManagerImpl::callBusy(const std::string& id)
 //THREAD=VoIP
 void ManagerImpl::callFailure(const std::string& call_id)
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(call_id, "FAILURE");
+#endif
 
     if (isCurrentCall(call_id)) {
         playATone(Tone::TONE_BUSY);
@@ -1636,7 +1693,9 @@ void ManagerImpl::callFailure(const std::string& call_id)
 void ManagerImpl::startVoiceMessageNotification(const std::string& accountId,
         int nb_msg)
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->voiceMailNotify(accountId, nb_msg);
+#endif
 }
 
 /**
@@ -1680,7 +1739,9 @@ void ManagerImpl::stopTone()
 
     if (audiofile_.get()) {
         std::string filepath(audiofile_->getFilePath());
+#if HAVE_DBUS
         dbus_.getCallManager()->recordPlaybackStopped(filepath);
+#endif
         audiofile_.reset();
     }
 }
@@ -1759,7 +1820,9 @@ void ManagerImpl::ringtone(const std::string& accountID)
         ost::MutexLock m(toneMutex_);
 
         if (audiofile_.get()) {
+#if HAVE_DBUS
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+#endif
             audiofile_.reset();
         }
 
@@ -2036,7 +2099,9 @@ void ManagerImpl::setRecordingCall(const std::string& id)
     }
 
     rec->setRecording();
+#if HAVE_DBUS
     dbus_.getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
+#endif
 }
 
 bool ManagerImpl::isRecording(const std::string& id)
@@ -2066,7 +2131,9 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         ost::MutexLock m(toneMutex_);
 
         if (audiofile_.get()) {
+#if HAVE_DBUS
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+#endif
             audiofile_.reset();
         }
 
@@ -2395,8 +2462,10 @@ void ManagerImpl::setAccountDetails(const std::string& accountID,
     else
         account->unregisterVoIPLink();
 
+#if HAVE_DBUS
     // Update account details to the client side
     dbus_.getConfigurationManager()->accountsChanged();
+#endif
 }
 
 std::string
@@ -2457,7 +2526,9 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     saveConfig();
 
+#if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
+#endif
 
     return accountID.str();
 }
@@ -2478,7 +2549,9 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
     saveConfig();
 
+#if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
+#endif
 }
 
 // ACCOUNT handling
@@ -2893,8 +2966,10 @@ void ManagerImpl::saveHistory()
 {
     if (!history_.save())
         ERROR("Could not save history!");
+#if HAVE_DBUS
     else
         dbus_.getConfigurationManager()->historyChanged();
+#endif
 }
 
 void ManagerImpl::clearHistory()

@@ -906,9 +906,9 @@ class ManagerImpl {
          * @return false if the driver is uninitialize
          */
         void playATone(Tone::TONEID toneId);
-
+#if HAVE_DBUS
         DBusManager dbus_;
-
+#endif
         /** The configuration tree. It contains accounts parameters, general user settings ,audio settings, ... */
         Conf::ConfigTree config_;
 
@@ -1055,7 +1055,7 @@ class ManagerImpl {
          * @return bool True if there is a current call
          */
         bool hasCurrentCall() const;
-
+#if HAVE_DBUS
         /**
          * Return the current DBusManager
          * @return A pointer to the DBusManager instance
@@ -1063,12 +1063,12 @@ class ManagerImpl {
         DBusManager * getDbusManager() {
             return &dbus_;
         }
-
 #ifdef SFL_VIDEO
         VideoControls * getVideoControls() {
             return dbus_.getVideoControls();
         }
 #endif
+#endif /* HAVE_DBUS */
 
         /**
         * Tell if an account exists
