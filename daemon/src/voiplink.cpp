@@ -67,6 +67,22 @@ void VoIPLink::removeCall(const std::string& id)
     callMap_.erase(id);
 }
 
+Call*
+VoIPLink::tryGetCall(const std::string &id)
+{
+    if (not callMapMutex_.tryEnterMutex()) {
+        ERROR("Could not lock call map mutex");
+        return 0;
+    }
+
+    CallMap::iterator iter = callMap_.find(id);
+    Call *call = 0;
+    if (iter != callMap_.end())
+        call = iter->second;
+    callMapMutex_.leaveMutex();
+    return call;
+}
+
 Call* VoIPLink::getCall(const std::string& id)
 {
     ost::MutexLock m(callMapMutex_);

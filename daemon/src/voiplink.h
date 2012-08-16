@@ -178,6 +178,7 @@ class VoIPLink {
          * @return Call*  Call pointer or 0
          */
         Call* getCall(const std::string &id);
+        Call* tryGetCall(const std::string &id);
 
     protected:
         /** Contains all the calls for this Link, protected by mutex */

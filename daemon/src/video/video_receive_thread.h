@@ -74,7 +74,11 @@ class VideoReceiveThread : public ost::Thread {
         int dstHeight_;
 
         SHMSink sink_;
-        bool receiving_;
+#ifdef CCPP_PREFIX
+        ost::AtomicCounter threadRunning_;
+#else
+        ucommon::atomic::counter threadRunning_;
+#endif
         std::string sdpFilename_;
         size_t bufferSize_;
         const std::string id_;
@@ -94,6 +98,8 @@ class VideoReceiveThread : public ost::Thread {
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
         void addDetails(std::map<std::string, std::string> &details);
         virtual ~VideoReceiveThread();
+        // overrides of ost::Thread()
+        virtual void start();
         virtual void run();
         void setRequestKeyFrameCallback(void (*)(const std::string &));
 };

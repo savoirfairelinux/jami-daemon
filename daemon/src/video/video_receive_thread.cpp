@@ -213,19 +213,26 @@ void VideoReceiveThread::createScalingContext()
 int VideoReceiveThread::interruptCb(void *ctx)
 {
     VideoReceiveThread *context = static_cast<VideoReceiveThread*>(ctx);
-    return not context->receiving_;
+    return not context->threadRunning_;
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<string, string> &args) :
     args_(args), frameNumber_(0), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
-    dstWidth_(0), dstHeight_(0), sink_(), receiving_(false), sdpFilename_(),
-    bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0),
+    dstWidth_(0), dstHeight_(0), sink_(), threadRunning_(false),
+    sdpFilename_(), bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0),
     sipThreadClient_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
 }
+
+void VideoReceiveThread::start()
+{
+    threadRunning_ = true;
+    ost::Thread::start();
+}
+
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
 void VideoReceiveThread::fill_buffer(void *data)
@@ -247,7 +254,6 @@ void VideoReceiveThread::fill_buffer(void *data)
 
 void VideoReceiveThread::run()
 {
-    receiving_ = true;
     setup();
 
     createScalingContext();
@@ -255,7 +261,7 @@ void VideoReceiveThread::run()
     AVFrame rawFrame;
     rawFrame_ = &rawFrame;
 
-    while (receiving_) {
+    while (threadRunning_) {
         AVPacket inpacket;
 
         int ret = 0;
@@ -275,7 +281,7 @@ void VideoReceiveThread::run()
             if (len <= 0 and requestKeyFrameCallback_) {
                 openDecoder();
                 requestKeyFrameCallback_(id_);
-                usleep(250000);
+                ost::Thread::sleep(25 /* ms */);
             }
 
             // we want our rendering code to be called by the shm_sink,
@@ -289,9 +295,10 @@ void VideoReceiveThread::run()
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    receiving_ = false;
+    threadRunning_ = false;
     sipThreadClient_.reset(0);
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
+    // this calls join, which waits for the run() method (in separate thread) to return
     ost::Thread::terminate();
 
     if (imgConvertCtx_)
@@ -320,7 +327,7 @@ void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string
 void
 VideoReceiveThread::addDetails(std::map<std::string, std::string> &details)
 {
-    if (receiving_ and dstWidth_ > 0 and dstHeight_ > 0) {
+    if (threadRunning_ and dstWidth_ > 0 and dstHeight_ > 0) {
         details["VIDEO_SHM_PATH"] = sink_.openedName();
         std::ostringstream os;
         os << dstWidth_;

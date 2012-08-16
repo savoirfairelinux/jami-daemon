@@ -1221,13 +1221,9 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 void
 SIPVoIPLink::requestFastPictureUpdate(const std::string &callID)
 {
-    SIPCall *call;
-    try {
-         call = SIPVoIPLink::instance()->getSIPCall(callID);
-    } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+    SIPCall *call = SIPVoIPLink::instance()->tryGetSIPCall(callID);
+    if (!call)
         return;
-    }
 
     const char * const BODY =
         "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
@@ -1362,10 +1358,15 @@ SIPCall*
 SIPVoIPLink::getSIPCall(const std::string& id)
 {
     SIPCall *result = dynamic_cast<SIPCall*>(getCall(id));
-
     if (result == NULL)
-        throw VoipLinkException("Could not find SIPCall " + id);
+        throw VoipLinkException("Could not get SIPCall");
+    return result;
+}
 
+SIPCall*
+SIPVoIPLink::tryGetSIPCall(const std::string& id)
+{
+    SIPCall *result = dynamic_cast<SIPCall*>(tryGetCall(id));
     return result;
 }
 
