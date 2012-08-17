@@ -46,7 +46,9 @@
 #include <tr1/memory>
 
 #include "cc_thread.h"
+#if HAVE_DBUS
 #include "dbus/dbusmanager.h"
+#endif
 
 #include "config/sfl_config.h"
 
