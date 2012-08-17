@@ -415,6 +415,10 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
 SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     sipCallMapMutex_(), sipCallMap_(), evThread_(this)
+#ifdef SFL_VIDEO
+    , keyframeRequestsMutex_()
+    , keyframeRequests_()
+#endif
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -561,6 +565,9 @@ bool SIPVoIPLink::getEvent()
 
     static const pj_time_val timeout = {0, 10};
     pjsip_endpt_handle_events(endpt_, &timeout);
+#ifdef SFL_VIDEO
+    dequeKeyframeRequests();
+#endif
     return handlingEvents_;
 }
 
@@ -1084,10 +1091,11 @@ SIPVoIPLink::getSipCall(const std::string& id)
 }
 
 SIPCall*
-SIPVoIPLink::tryGetSipCall(const std::string &id)
+SIPVoIPLink::tryGetSIPCall(const std::string &id)
 {
     if (not sipCallMapMutex_.tryEnterMutex()) {
         ERROR("Could not lock call map mutex");
+        sipCallMapMutex_.leaveMutex();
         return 0;
     }
     SipCallMap::iterator iter = sipCallMap_.find(id);
@@ -1278,13 +1286,35 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 }
 
 #ifdef SFL_VIDEO
+// Called from a video thread
 void
-SIPVoIPLink::requestFastPictureUpdate(const std::string &callID)
+SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
+{
+    ost::MutexLock m(instance_->keyframeRequestsMutex_);
+    instance_->keyframeRequests_.push(id);
+}
+
+// Called from SIP event thread
+void
+SIPVoIPLink::dequeKeyframeRequests()
+{
+    int max_requests = 20;
+    while (not keyframeRequests_.empty() and max_requests--) {
+        ost::MutexLock m(keyframeRequestsMutex_);
+        const std::string &id(keyframeRequests_.front());
+        requestKeyframe(id);
+        keyframeRequests_.pop();
+    }
+}
+
+// Called from SIP event thread
+void
+SIPVoIPLink::requestKeyframe(const std::string &callID)
 {
     SIPCall *call = 0;
     const int tries = 10;
     for (int i = 0; !call and i < tries; ++i)
-        call = SIPVoIPLink::instance()->tryGetSipCall(callID);
+        call = SIPVoIPLink::instance()->tryGetSIPCall(callID);
     if (!call)
         return;
 

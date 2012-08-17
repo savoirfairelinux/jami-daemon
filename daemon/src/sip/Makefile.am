@@ -14,9 +14,7 @@ libsiplink_la_SOURCES = \
 		sipvoiplink.h \
 		siptransport.h \
 		sip_utils.cpp \
-		sip_utils.h \
-		sip_thread_client.h \
-		sip_thread_client.cpp
+		sip_utils.h
 
 if BUILD_SDES
 libsiplink_la_SOURCES+= sdes_negotiator.cpp \

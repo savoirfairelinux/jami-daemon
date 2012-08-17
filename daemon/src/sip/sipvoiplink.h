@@ -48,6 +48,9 @@
 #include <pjlib-util.h>
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
+#ifdef SFL_VIDEO
+#include <queue>
+#endif
 
 #include "sipaccount.h"
 #include "voiplink.h"
@@ -283,9 +286,8 @@ class SIPVoIPLink : public VoIPLink {
         SipTransport sipTransport;
 
 #ifdef SFL_VIDEO
-        static void requestFastPictureUpdate(const std::string &callID);
+        static void enqueueKeyframeRequest(const std::string &callID);
 #endif
-
     private:
 
         NON_COPYABLE(SIPVoIPLink);
@@ -312,6 +314,13 @@ class SIPVoIPLink : public VoIPLink {
          * Threading object
          */
         EventThread evThread_;
+
+#ifdef SFL_VIDEO
+        void dequeKeyframeRequests();
+        void requestKeyframe(const std::string &callID);
+        ost::Mutex keyframeRequestsMutex_;
+        std::queue<std::string> keyframeRequests_;
+#endif
 
         static bool destroyed_;
         static SIPVoIPLink *instance_;
