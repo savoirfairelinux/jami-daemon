@@ -74,7 +74,7 @@ class IAXVoIPLink : public VoIPLink {
         /**
          * Return the internal account map for this VOIP link
          */
-        static AccountMap &getInternalAccountMap() { return iaxAccountMap_; }
+        static AccountMap &getAccounts() { return iaxAccountMap_; }
 
         /**
          * Init the voip link

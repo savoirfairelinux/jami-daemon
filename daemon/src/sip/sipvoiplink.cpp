@@ -87,10 +87,6 @@ using namespace sfl;
 SIPVoIPLink *SIPVoIPLink::instance_ = 0;
 bool SIPVoIPLink::destroyed_ = false;
 
-AccountMap SIPVoIPLink::sipAccountMap_;
-SipCallMap SIPVoIPLink::sipCallMap_;
-ost::Mutex SIPVoIPLink::sipCallMapMutex_;
-
 namespace {
 
 /** Environment variable used to set pjsip's logging level */
@@ -435,7 +431,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         call->setConnectionState(Call::RINGING);
 
         Manager::instance().incomingCall(*call, account_id);
-        SIPVoIPLink::addSipCall(call);
+        SIPVoIPLink::instance()->addSipCall(call);
     }
 
     return PJ_FALSE;
@@ -444,8 +440,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
 /*************************************************************************************************/
 
-SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_)
-                           , evThread_(this)
+SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
+    sipCallMapMutex_(), sipCallMap_(), evThread_(this)
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -1332,7 +1328,10 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 void
 SIPVoIPLink::requestFastPictureUpdate(const std::string &callID)
 {
-    SIPCall *call = SIPVoIPLink::tryGetSipCall(callID);
+    SIPCall *call = 0;
+    const int tries = 10;
+    for (int i = 0; !call and i < tries; ++i)
+        call = SIPVoIPLink::instance()->tryGetSipCall(callID);
     if (!call)
         return;
 
@@ -1418,8 +1417,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     pjsip_tpselector *tp_sel = sipTransport.createTransportSelector(account->transport_, call->inv->pool);
 
-    if (pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
-        ERROR("Unable to associate transport fir invite session dialog");
+    if (!dialog or !tp_sel or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
+        ERROR("Unable to associate transport for invite session dialog");
         return false;
     }
 
@@ -2136,7 +2135,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             if (r_data->msg_info.cid)
                 return;
             std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
-            SIPCall *call = SIPVoIPLink::getSipCall(transferCallID[transferID]);
+            SIPCall *call = SIPVoIPLink::instance()->getSipCall(transferCallID[transferID]);
 
             if (!call)
                 return;
