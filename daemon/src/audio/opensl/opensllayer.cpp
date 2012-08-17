@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "manager.h"
 #include "opensllayer.h"
 
 #define NB_AUDIO_BUFFER 10
@@ -445,8 +446,115 @@ OpenSLLayer::getPlaybackDeviceList() const
     return playbackDeviceList;
 }
 
+enum {TONE, RINGTONE, VOICE, URGENT};
+
 bool OpenSLLayer::audioCallback()
 {
+}
+
+void OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
+    AudioLoop *tone = Manager::instance().getTelephoneTone();
+    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
+
+    SFLDataFormat * const out_ptr = &(*buffer.begin());
+    if (tone)
+        tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
+    else if (file_tone)
+        file_tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
+}
+
+void OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesToGet) {
+    // Urgent data (dtmf, incoming call signal) come first.
+    const size_t bytesToPut = buffer.size() * sizeof(SFLDataFormat);
+    bytesToGet = std::min(bytesToGet, bytesToPut);
+    const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
+    SFLDataFormat * const out_ptr = &(*buffer.begin());
+    urgentRingBuffer_.get(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
+    AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+
+    // Consume the regular one as well (same amount of bytes)
+    Manager::instance().getMainBuffer()->discard(bytesToGet, MainBuffer::DEFAULT_ID);
+}
+
+void OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail) {
+    const size_t bytesToCpy = buffer.size() * sizeof(SFLDataFormat);
+
+    const size_t mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    const bool resample = sampleRate_ != mainBufferSampleRate;
+
+    double resampleFactor = 1.0;
+    size_t maxNbBytesToGet = bytesToCpy;
+    if (resample) {
+        resampleFactor = mainBufferSampleRate / static_cast<double>(sampleRate_);
+        maxNbBytesToGet = bytesToCpy * resampleFactor;
+    }
+
+    size_t bytesToGet = std::min(maxNbBytesToGet, bytesAvail);
+
+    const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
+    std::vector<SFLDataFormat> out(samplesToGet, 0);
+    SFLDataFormat * out_ptr = NULL;
+    if(resample)
+        out_ptr = &(*out.begin());
+    else
+        out_ptr = &(*buffer.begin());
+
+    Manager::instance().getMainBuffer()->getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
+    AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+
+    if (resample) {
+        SFLDataFormat * const rsmpl_out_ptr = &(*buffer.begin());
+        const size_t outSamples = samplesToGet * resampleFactor;
+        const size_t outBytes = outSamples * sizeof(SFLDataFormat);
+        converter_.resample(out_ptr, rsmpl_out_ptr, outSamples,
+                mainBufferSampleRate, sampleRate_, samplesToGet);
+    } 
+}
+
+void OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
+    // Looks if there's any voice audio from rtp to be played
+    size_t bytesToGet = Manager::instance().getMainBuffer()->availableForGet(MainBuffer::DEFAULT_ID);
+
+    // 
+    size_t urgentBytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+
+    if (urgentBytesToGet > 0) {
+        audioPlaybackFillWithUrgent(buffer, urgentBytesToGet);
+        return;
+    }
+
+    if (bytesToGet <= 0) {
+        audioPlaybackFillWithToneOrRingtone(buffer);
+    }
+    else {
+	audioPlaybackFillWithVoice(buffer, bytesToGet);
+    }
+}
+
+void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
+    const int toGetBytes = buffer.size() * sizeof(SFLDataFormat);
+    const int toGetSamples = buffer.size();
+
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    bool resample = sampleRate_ != mainBufferSampleRate;
+
+    SFLDataFormat *in_ptr = &(*buffer.begin());
+    AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
+
+    if (resample) {
+        int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
+        AudioBuffer rsmpl_out(outSamples);
+        SFLDataFormat * const rsmpl_out_ptr = &(*rsmpl_out.begin());
+        converter_.resample(in_ptr, rsmpl_out_ptr,
+                rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
+                toGetSamples);
+        dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
+        Manager::instance().getMainBuffer()->putData(rsmpl_out_ptr,
+                rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
+    } else {
+        dcblocker_.process(in_ptr, in_ptr, toGetSamples);
+        Manager::instance().getMainBuffer()->putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
+    }
 }
 
 void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
@@ -466,7 +574,8 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
     opensl->incrementPlaybackIndex();
 
     // generateSawTooth(&(*buffer.begin()), buffer.size());
-    memcpy(&(*buffer.begin()), &(*tmpbuffer.begin()), buffer.size());
+    // memcpy(&(*buffer.begin()), &(*tmpbuffer.begin()), buffer.size());
+    opensl->audioPlaybackFillBuffer(buffer);
 
     result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
     if (SL_RESULT_SUCCESS != result) {
@@ -498,7 +607,9 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
     assert(SL_RESULT_SUCCESS == result);
 
     AudioBuffer &previousbuffer = opensl->getNextRecordBuffer();
-    memcpy(&(*tmpbuffer.begin()), &(*previousbuffer.begin()), buffer.size());
+    // memcpy(&(*tmpbuffer.begin()), &(*previousbuffer.begin()), buffer.size());
+
+    opensl->audioCaptureFillBuffer(previousbuffer);
 }
 
 void OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)

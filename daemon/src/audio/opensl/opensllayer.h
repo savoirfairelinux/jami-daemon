@@ -57,7 +57,7 @@ class OpenSLThread;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2
 
-typedef std::vector<short> AudioBuffer;
+typedef std::vector<SFLDataFormat> AudioBuffer;
 typedef std::vector<AudioBuffer> AudioBufferStack;
 
 /**
@@ -156,7 +156,29 @@ class OpenSLLayer : public AudioLayer {
          */
         bool audioCallback();
 
+        /**
+         * Here fill the input buffer with tone or ringtone samples
+         */  
+        void audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer);
+
+        void audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail); 
+        void audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
+
+        /**
+         * The main logic to determine what should be played is determined here
+         */
+        void audioPlaybackFillBuffer(AudioBuffer &buffer);
+
+        void audioCaptureFillBuffer(AudioBuffer &buffer);
+
+        /**
+         * This is the main audio playabck callback called by the OpenSL layer
+         */
         static void audioPlaybackCallback(SLAndroidSimpleBufferQueueItf bq, void *context);
+
+        /**
+         * This is the main audio capture callback called by the OpenSL layer
+         */
         static void audioCaptureCallback(SLAndroidSimpleBufferQueueItf bq, void *context);
 
         /**
