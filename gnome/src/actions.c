@@ -890,9 +890,10 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
         codec_t *orig = codec_list_get_by_payload(payload, system_acodecs);
         codec_t *c = codec_create_new_from_caps(orig);
 
-        if (c)
+        if (c) {
+            c->is_active = TRUE;
             g_queue_push_tail(account->acodecs, c);
-        else
+        } else
             ERROR("Couldn't find codec %d %p", payload, orig);
     }
     g_array_unref(order);

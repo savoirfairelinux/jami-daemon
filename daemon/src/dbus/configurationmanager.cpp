@@ -230,6 +230,8 @@ void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string
     if (acc) {
         acc->setActiveAudioCodecs(list);
         Manager::instance().saveConfig();
+    } else {
+        ERROR("Could not find account %s", accountID.c_str());
     }
 }
 
