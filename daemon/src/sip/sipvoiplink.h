@@ -94,7 +94,7 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Return the internal account map for this VOIP link
          */
-        static AccountMap &getInternalAccountMap() { return sipAccountMap_; }
+        AccountMap &getAccounts() { return sipAccountMap_; }
 
         /**
          * Build and send SIP registration request
@@ -266,11 +266,11 @@ class SIPVoIPLink : public VoIPLink {
                              const std::string& message,
                              const std::string& from);
 #endif
-        static void clearSipCallMap();
-        static void addSipCall(SIPCall* call);
-        static SIPCall* getSipCall(const std::string& id);
-        static SIPCall* tryGetSipCall(const std::string& id);
-        static void removeSipCall(const std::string &id);
+        void clearSipCallMap();
+        void addSipCall(SIPCall* call);
+        SIPCall* getSipCall(const std::string& id);
+        SIPCall* tryGetSipCall(const std::string& id);
+        void removeSipCall(const std::string &id);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
@@ -296,10 +296,10 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Contains a list of all SIP account
          */
-        static AccountMap sipAccountMap_;
+        AccountMap sipAccountMap_;
 
-        static ost::Mutex sipCallMapMutex_;
-        static SipCallMap sipCallMap_;
+        ost::Mutex sipCallMapMutex_;
+        SipCallMap sipCallMap_;
 
         /**
          * Start a SIP Call
