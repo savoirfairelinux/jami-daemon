@@ -1080,12 +1080,14 @@ class ManagerImpl {
          */
         SIPAccount *getSipAccount(const std::string& accontID) const;
 
+#if HAVE_IAX
         /**
          * Get an IAX account pointer
          * @param accountID account ID to get
          * @return IAXAccount* The account pointer or 0
          */
         IAXAccount *getIaxAccount(const std::string& accountID) const;
+#endif
 
 	/**
          * Get a pointer to the IP2IP account

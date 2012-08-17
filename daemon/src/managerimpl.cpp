@@ -43,30 +43,36 @@
 #include "dbus/callmanager.h"
 #include "global.h"
 #include "fileutils.h"
+#include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
+#include "sip/sipcall.h"
+
 #ifndef ANDROID
 #include "im/instant_messaging.h"
+#endif
+
+#if HAVE_IAX
 #include "iax/iaxaccount.h"
 #include "iax/iaxcall.h"
+#include "iax/iaxvoiplink.h"
 #endif
-#include "sip/sipcall.h"
+
+
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
+
 #ifndef ANDROID
 #include "audio/alsa/alsalayer.h"
 #endif
+
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
-#include "sip/sipvoiplink.h"
-#ifndef ANDROID
-#include "iax/iaxvoiplink.h"
-#endif
 #include "history/historynamecache.h"
 #include "manager.h"
-
 #include "dbus/configurationmanager.h"
+
 #ifdef SFL_VIDEO
 #include "dbus/video_controls.h"
 #endif
@@ -927,10 +933,12 @@ ManagerImpl::getCallFromCallID(const std::string &callID)
     Call *call = NULL;
 
     call = SIPVoIPLink::getSipCall(callID);
+#if HAVE_IAX
     if(call != NULL)
         return call;
 
     call = IAXVoIPLink::getIaxCall(callID);
+#endif
 
     return call;
 }
@@ -1321,8 +1329,10 @@ void ManagerImpl::saveConfig()
 					iter != SIPVoIPLink::getInternalAccountMap().end(); ++iter)
             iter->second->serialize(emitter);
 
+#if HAVE_IAX
         for (AccountMap::iterator iter = IAXVoIPLink::getInternalAccountMap().begin(); iter != IAXVoIPLink::getInternalAccountMap().end(); ++iter)
             iter->second->serialize(emitter);
+#endif
 
         preferences.serialize(emitter);
         voipPreferences.serialize(emitter);
@@ -2541,7 +2551,9 @@ void ManagerImpl::removeAccount(const std::string& accountID)
     if (remAccount != NULL) {
         remAccount->unregisterVoIPLink();
         SIPVoIPLink::getInternalAccountMap().erase(accountID);
+#if HAVE_IAX
         IAXVoIPLink::getInternalAccountMap().erase(accountID);
+#endif
         // http://projects.savoirfairelinux.net/issues/show/2355
         // delete remAccount;
     }
@@ -2626,7 +2638,11 @@ namespace {
         return id == "IP2IP";
     }
 
+#if HAVE_IAX
     void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap)
+#else
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap)
+#endif
     {
         if (!item) {
             ERROR("Could not load account");
@@ -2747,20 +2763,29 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     // Each valid account element in sequence is a new account to load
     // std::for_each(seq->begin(), seq->end(),
     //        std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
+#if HAVE_IAX
     std::for_each(seq->begin(), seq->end(),
             std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::getInternalAccountMap()), std::tr1::ref(IAXVoIPLink::getInternalAccountMap())));
+#else
+    std::for_each(seq->begin(), seq->end(),
+            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::getInternalAccountMap())));
+#endif
 }
 
 void ManagerImpl::registerAllAccounts()
 {
     std::for_each(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end(), registerAccount);
+#if HAVE_IAX
     std::for_each(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end(), registerAccount);
+#endif
 }
 
 void ManagerImpl::unregisterAllAccounts()
 {
     std::for_each(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end(), unregisterAccount);
+#if HAVE_IAX
     std::for_each(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end(), unregisterAccount);
+#endif
 }
 
 void ManagerImpl::unloadAccountMap()
@@ -2768,8 +2793,10 @@ void ManagerImpl::unloadAccountMap()
     std::for_each(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end(), unloadAccount);
     SIPVoIPLink::getInternalAccountMap().clear();
 
+#if HAVE_IAX
     std::for_each(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end(), unloadAccount);
     IAXVoIPLink::getInternalAccountMap().clear();
+#endif
 }
 
 bool ManagerImpl::accountExists(const std::string &accountID)
@@ -2777,10 +2804,14 @@ bool ManagerImpl::accountExists(const std::string &accountID)
     bool ret = false;
 
     ret = SIPVoIPLink::getInternalAccountMap().find(accountID) != SIPVoIPLink::getInternalAccountMap().end();
+#if HAVE_IAX
     if(ret)
         return ret;
 
-    return IAXVoIPLink::getInternalAccountMap().find(accountID) != IAXVoIPLink::getInternalAccountMap().end();
+    ret = IAXVoIPLink::getInternalAccountMap().find(accountID) != IAXVoIPLink::getInternalAccountMap().end();
+#endif
+
+    return ret;
 }
 
 SIPAccount*
@@ -2802,9 +2833,11 @@ ManagerImpl::getAccount(const std::string& accountID) const
     if(account != NULL)
         return account;
 
+#if HAVE_IAX
     account = getIaxAccount(accountID);
     if(account != NULL)
         return account;
+#endif
 
     return NULL;
 }
@@ -2819,6 +2852,7 @@ ManagerImpl::getSipAccount(const std::string& accountID) const
     return NULL;
 }
 
+#if HAVE_IAX
 IAXAccount *
 ManagerImpl::getIaxAccount(const std::string& accountID) const
 {
@@ -2828,11 +2862,14 @@ ManagerImpl::getIaxAccount(const std::string& accountID) const
 
     return NULL;
 }
+#endif
 
 void
 ManagerImpl::fillConcatAccountMap(AccountMap &concatMap) const{
     concatMap.insert(SIPVoIPLink::getInternalAccountMap().begin(), SIPVoIPLink::getInternalAccountMap().end());
+#if HAVE_IAX
     concatMap.insert(IAXVoIPLink::getInternalAccountMap().begin(), IAXVoIPLink::getInternalAccountMap().end());
+#endif
 }
 
 std::string
