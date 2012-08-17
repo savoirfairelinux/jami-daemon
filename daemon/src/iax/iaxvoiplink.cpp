@@ -43,9 +43,9 @@
 #include <cmath>
 #include <dlfcn.h>
 
-AccountMap IAXVoIPLink::iaxAccountMap_ = AccountMap();
-IAXCallMap IAXVoIPLink::iaxCallMap_ = IAXCallMap();
-ost::Mutex IAXVoIPLink::iaxCallMapMutex_ = ost::Mutex();
+AccountMap IAXVoIPLink::iaxAccountMap_;
+IAXCallMap IAXVoIPLink::iaxCallMap_;
+ost::Mutex IAXVoIPLink::iaxCallMapMutex_;
 
 IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     regSession_(NULL)
@@ -68,7 +68,10 @@ IAXVoIPLink::~IAXVoIPLink()
     handlingEvents_ = false;
     regSession_ = NULL; // shall not delete it // XXX: but why?
     terminate();
-    clearIaxCallMap();
+
+    // This is our last account
+    if (iaxAccountMap_.size() == 1)
+        clearIaxCallMap();
 }
 
 void
