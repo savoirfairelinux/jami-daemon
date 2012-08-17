@@ -82,9 +82,9 @@ using namespace sfl;
 SIPVoIPLink *SIPVoIPLink::instance_ = 0;
 bool SIPVoIPLink::destroyed_ = false;
 
-AccountMap SIPVoIPLink::sipAccountMap_ = AccountMap();
-SipCallMap SIPVoIPLink::sipCallMap_ = SipCallMap();
-ost::Mutex SIPVoIPLink::sipCallMapMutex_ = ost::Mutex();
+AccountMap SIPVoIPLink::sipAccountMap_;
+SipCallMap SIPVoIPLink::sipCallMap_;
+ost::Mutex SIPVoIPLink::sipCallMapMutex_;
 
 namespace {
 
