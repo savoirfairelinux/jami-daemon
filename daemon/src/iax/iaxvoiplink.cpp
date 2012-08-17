@@ -68,7 +68,10 @@ IAXVoIPLink::~IAXVoIPLink()
     handlingEvents_ = false;
     regSession_ = NULL; // shall not delete it // XXX: but why?
     terminate();
-    clearIaxCallMap();
+
+    // This is our last account
+    if (iaxAccountMap_.size() == 1)
+        clearIaxCallMap();
 }
 
 void
