@@ -103,26 +103,20 @@ void ManagerImpl::init(const std::string &config_file)
     DEBUG("Configuration file path: %s", path_.c_str());
 
     try {
-        std::fstream testFileExistence(path_.c_str(), std::fstream::in);
-        bool fileExist = testFileExistence.good();
-        testFileExistence.close();
+        FILE *file = fopen(path_.c_str(), "rb");
 
-        if(fileExist) {
-            Conf::YamlParser parser(path_.c_str());
+        if (file) {
+            Conf::YamlParser parser(file);
             parser.serializeEvents();
             parser.composeEvents();
             parser.constructNativeData();
             loadAccountMap(parser);
-        }
-        else {
+            fclose(file);
+        } else {
             WARN("Config file not found: creating default account map");
             loadDefaultAccountMap();
         }
-    }
-    catch (const Conf::YamlParserException &e) {
-        ERROR("%s", e.what());
-    }
-    catch(std::fstream::failure &e) {
+    } catch (const Conf::YamlParserException &e) {
         ERROR("%s", e.what());
     }
 

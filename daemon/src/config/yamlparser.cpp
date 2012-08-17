@@ -40,8 +40,7 @@
 
 namespace Conf {
 
-YamlParser::YamlParser(const char *file) : filename_(file)
-    , fd_(0)
+YamlParser::YamlParser(FILE *fd) : fd_(fd)
     , parser_()
     , events_()
     , eventNumber_(0)
@@ -58,7 +57,6 @@ YamlParser::YamlParser(const char *file) : filename_(file)
     , voiplinkNode_(NULL)
     , shortcutNode_(NULL)
 {
-    fd_ = fopen(filename_.c_str(), "rb");
     if (!fd_)
         throw YamlParserException("Could not open file descriptor");
 
@@ -129,10 +127,8 @@ YamlParser::getShortcutNode()
 
 YamlParser::~YamlParser()
 {
-    if (fd_) {
-        fclose(fd_);
+    if (fd_)
         yaml_parser_delete(&parser_);
-    }
 
     for (int i = 0; i < eventNumber_; ++i)
         yaml_event_delete(&events_[i]);

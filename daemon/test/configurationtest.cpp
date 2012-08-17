@@ -91,10 +91,13 @@ void ConfigurationTest::testInitAudioDriver()
 void ConfigurationTest::testYamlParser()
 {
     try {
-        Conf::YamlParser parser("ymlParser.yml");
+        FILE *file = fopen("ymlParser.yml", "rb");
+        Conf::YamlParser parser(file);
         parser.serializeEvents();
         parser.composeEvents();
         parser.constructNativeData();
+        if (file)
+            fclose(file);
     } catch (const Conf::YamlParserException &e) {
        ERROR("ConfigTree: %s", e.what());
     }
