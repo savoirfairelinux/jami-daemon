@@ -18,6 +18,8 @@ MY_LIBSAMPLE=libsamplerate-0.1.8
 MY_YAML=libyaml
 MY_DBUSCPP=libdbus-c++-0.9.0-android
 
+MY_SPEEX=speex
+
 
 include $(CLEAR_VARS)
 
@@ -46,7 +48,8 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
 					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib-util/include \
 					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjmedia/include \
 					$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjnath/include \
-					$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc
+					$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc \
+                                        $(APP_PROJECT_PATH)/jni/$(MY_SPEEX)/include
 
 LOCAL_MODULE := libsflphone
 
