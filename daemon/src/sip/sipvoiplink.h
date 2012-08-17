@@ -57,6 +57,7 @@
 class SIPCall;
 class SIPAccount;
 
+typedef std::map<std::string, SIPCall*> SipCallMap;
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
@@ -93,6 +94,11 @@ class SIPVoIPLink : public VoIPLink {
          * Event listener. Each event send by the call manager is received and handled from here
          */
         virtual bool getEvent();
+
+        /**
+         * Return the internal account map for this VOIP link
+         */
+        static AccountMap &getInternalAccountMap() { return sipAccountMap_; }
 
         /**
          * Build and send SIP registration request
@@ -168,6 +174,9 @@ class SIPVoIPLink : public VoIPLink {
          */
         virtual void offhold(const std::string& id);
 
+        /**
+         * Transfer method used for both type of transfer
+         */
         bool transferCommon(SIPCall *call, pj_str_t *dst);
 
         /**
@@ -216,6 +225,9 @@ class SIPVoIPLink : public VoIPLink {
          */
         void SIPCallClosed(SIPCall *call);
 
+        /**
+         * Get the memory pool factory since each calls has its own memory pool
+         */
         pj_caching_pool *getMemoryPoolFactory();
 
         /**
@@ -224,6 +236,15 @@ class SIPVoIPLink : public VoIPLink {
          * @return SIPCall*	  A pointer on SIPCall object
          */
         SIPCall* getSIPCall(const std::string& id);
+        /**
+         * A non-blocking SIPCall accessor
+         *
+         * Will return NULL if the callMapMutex could not be locked
+         *
+         * @param id  The call identifier
+         * @return SIPCall* A pointer to the SIPCall object
+         */
+        SIPCall* tryGetSIPCall(const std::string &id);
 
         /**
          * Return the codec protocol used for this call
@@ -249,12 +270,20 @@ class SIPVoIPLink : public VoIPLink {
                              const std::string& message,
                              const std::string& from);
 #endif
+        static void clearSipCallMap();
+        static void addSipCall(SIPCall* call);
+        static SIPCall* getSipCall(const std::string& id);
+        static SIPCall* tryGetSipCall(const std::string& id);
+        static void removeSipCall(const std::string &id);
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
          */
         void createDefaultSipUdpTransport();
 
+        /**
+         * Instance that maintain and manage transport (UDP, TLS)
+         */
         SipTransport sipTransport;
 
 #ifdef SFL_VIDEO
@@ -267,6 +296,15 @@ class SIPVoIPLink : public VoIPLink {
 
         SIPVoIPLink();
         ~SIPVoIPLink();
+
+        /**
+         * Contains a list of all SIP account
+         */
+        static AccountMap sipAccountMap_;
+
+        static ost::Mutex sipCallMapMutex_;
+        static SipCallMap sipCallMap_;
+
         /**
          * Start a SIP Call
          * @param call  The current call
@@ -279,9 +317,10 @@ class SIPVoIPLink : public VoIPLink {
          */
         EventThread evThread_;
 
-        friend class SIPTest;
         static bool destroyed_;
         static SIPVoIPLink *instance_;
+
+        friend class SIPTest;
 };
 
 #endif // SIPVOIPLINK_H_

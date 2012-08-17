@@ -110,6 +110,10 @@ class SIPCall : public Call {
         std::map<std::string, std::string>
         getDetails();
 
+        // override of Call::createHistoryEntry
+        std::map<std::string, std::string>
+        createHistoryEntry() const;
+
         virtual void answer();
 
         NON_COPYABLE(SIPCall);

@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,20 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef SERIALIZABLE_H__
-#define SERIALIZABLE_H__
+#ifndef HISTORY_LOADER_H_
+#define HISTORY_LOADER_H_
 
-namespace Conf {
-    class YamlEmitter;
-    class YamlNode;
-}
+#include "calllist.h"
 
-class Serializable {
-
-    public:
-        virtual ~Serializable() {};
-        virtual void serialize(Conf::YamlEmitter &emitter) = 0;
-        virtual void unserialize(const Conf::YamlNode &map) = 0;
-};
+void
+lazy_load_items(calltab_t *tab);
 
 #endif

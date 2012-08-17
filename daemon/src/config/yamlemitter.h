@@ -39,6 +39,8 @@
 #include <stdexcept>
 #include <string>
 #include <map>
+
+#include "yamlnode.h"
 #include "noncopyable.h"
 
 namespace Conf {
@@ -46,8 +48,6 @@ namespace Conf {
 #define EMITTER_BUFFERSIZE 65536
 #define EMITTER_MAXEVENT 1024
 
-class MappingNode;
-class YamlNode;
 
 class YamlEmitterException : public std::runtime_error {
     public:
@@ -80,7 +80,7 @@ class YamlEmitter {
     private:
 
         NON_COPYABLE(YamlEmitter);
-        void addMappingItems(int mappingid, std::map<std::string, YamlNode*> *mapping);
+        void addMappingItems(int mappingid, YamlNodeMap &iMap);
         void addMappingItem(int mappingid, const std::string &key, YamlNode *node);
 
         std::string filename_;

@@ -140,11 +140,9 @@ void YamlEmitter::serializePreference(MappingNode *map, const char *preference_s
     addMappingItems(preferenceMapping, map->getMapping());
 }
 
-typedef std::map<std::string, YamlNode*> Mapping;
-
-void YamlEmitter::addMappingItems(int mappingID, Mapping *iMap)
+void YamlEmitter::addMappingItems(int mappingID, YamlNodeMap &iMap)
 {
-    for (Mapping::const_iterator i = iMap->begin(); i != iMap->end(); ++i)
+    for (YamlNodeMap::const_iterator i = iMap.begin(); i != iMap.end(); ++i)
         addMappingItem(mappingID, i->first, i->second);
 }
 

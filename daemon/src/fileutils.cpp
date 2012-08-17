@@ -137,4 +137,9 @@ bool create_pidfile()
 
     return true;
 }
+
+bool isDirectoryWritable(const std::string &directory)
+{
+    return access(directory.c_str(), W_OK) == 0;
+}
 }

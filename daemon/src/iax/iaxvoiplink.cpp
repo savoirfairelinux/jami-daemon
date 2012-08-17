@@ -43,6 +43,10 @@
 #include <cmath>
 #include <dlfcn.h>
 
+AccountMap IAXVoIPLink::iaxAccountMap_ = AccountMap();
+IAXCallMap IAXVoIPLink::iaxCallMap_ = IAXCallMap();
+ost::Mutex IAXVoIPLink::iaxCallMapMutex_ = ost::Mutex();
+
 IAXVoIPLink::IAXVoIPLink(const std::string& accountID) :
     regSession_(NULL)
     , nextRefreshStamp_(0)
@@ -64,6 +68,7 @@ IAXVoIPLink::~IAXVoIPLink()
     handlingEvents_ = false;
     regSession_ = NULL; // shall not delete it // XXX: but why?
     terminate();
+    clearIaxCallMap();
 }
 
 void
@@ -88,10 +93,10 @@ IAXVoIPLink::terminate()
     if (!initDone_)
         return;
 
-    ost::MutexLock m(callMapMutex_);
+    ost::MutexLock m(iaxCallMapMutex_);
 
-    for (CallMap::iterator iter = callMap_.begin(); iter != callMap_.end(); ++iter) {
-        IAXCall *call = dynamic_cast<IAXCall*>(iter->second);
+    for (IAXCallMap::iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
+        IAXCall *call = static_cast<IAXCall*>(iter->second);
 
         if (call) {
             ost::MutexLock lock(mutexIAX_);
@@ -100,7 +105,7 @@ IAXVoIPLink::terminate()
         }
     }
 
-    callMap_.clear();
+    iaxCallMap_.clear();
 
     initDone_ = false;
 }
@@ -136,7 +141,7 @@ IAXVoIPLink::getEvent()
     mutexIAX_.leave();
 
     if (nextRefreshStamp_ && nextRefreshStamp_ < time(NULL))
-        sendRegister(dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_)));
+        sendRegister(Manager::instance().getIaxAccount(accountID_));
 
     sendAudioFromMic();
 
@@ -148,8 +153,8 @@ IAXVoIPLink::getEvent()
 void
 IAXVoIPLink::sendAudioFromMic()
 {
-    for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end() ; ++iter) {
-        IAXCall *currentCall = dynamic_cast<IAXCall*>(iter->second);
+    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end() ; ++iter) {
+        IAXCall *currentCall = static_cast<IAXCall*>(iter->second);
 
         if (!currentCall or currentCall->getState() != Call::ACTIVE)
             continue;
@@ -205,13 +210,13 @@ IAXVoIPLink::sendAudioFromMic()
 IAXCall*
 IAXVoIPLink::getIAXCall(const std::string& id)
 {
-    return dynamic_cast<IAXCall*>(getCall(id));
+    return getIaxCall(id);
 }
 
 void
 IAXVoIPLink::sendRegister(Account *a)
 {
-    IAXAccount *account = dynamic_cast<IAXAccount*>(a);
+    IAXAccount *account = static_cast<IAXAccount*>(a);
 
     if (account->getHostname().empty())
         throw VoipLinkException("Account hostname is empty");
@@ -244,7 +249,7 @@ IAXVoIPLink::sendUnregister(Account *a)
 
     nextRefreshStamp_ = 0;
 
-    dynamic_cast<IAXAccount*>(a)->setRegistrationState(UNREGISTERED);
+    static_cast<IAXAccount*>(a)->setRegistrationState(UNREGISTERED);
 }
 
 Call*
@@ -258,7 +263,7 @@ IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
     iaxOutgoingInvite(call);
     call->setConnectionState(Call::PROGRESSING);
     call->setState(Call::ACTIVE);
-    addCall(call);
+    addIaxCall(call);
 
     return call;
 }
@@ -295,7 +300,7 @@ IAXVoIPLink::hangup(const std::string& id)
 
     call->session = NULL;
 
-    removeCall(id);
+    removeIaxCall(id);
 }
 
 
@@ -311,7 +316,7 @@ IAXVoIPLink::peerHungup(const std::string& id)
 
     call->session = NULL;
 
-    removeCall(id);
+    removeIaxCall(id);
 }
 
 
@@ -382,7 +387,7 @@ IAXVoIPLink::refuse(const std::string& id)
         iax_reject(call->session, (char*) "Call rejected manually.");
         mutexIAX_.leave();
 
-        removeCall(id);
+        removeIaxCall(id);
     }
 }
 
@@ -414,6 +419,51 @@ IAXVoIPLink::sendTextMessage(const std::string& callID,
 }
 #endif
 
+void
+IAXVoIPLink::clearIaxCallMap()
+{
+    ost::MutexLock m(iaxCallMapMutex_);
+
+    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin();
+            iter != iaxCallMap_.end(); ++iter)
+        delete iter->second;
+
+    iaxCallMap_.clear();
+
+}
+
+void
+IAXVoIPLink::addIaxCall(IAXCall* call)
+{
+    if (call and getIaxCall(call->getCallId()) == NULL) {
+        ost::MutexLock m(iaxCallMapMutex_);
+        iaxCallMap_[call->getCallId()] = call;
+    }
+}
+
+void
+IAXVoIPLink::removeIaxCall(const std::string& id)
+{
+    ost::MutexLock m(iaxCallMapMutex_);
+
+    DEBUG("Removing call %s from list", id.c_str());
+
+    delete iaxCallMap_[id];
+    iaxCallMap_.erase(id);
+}
+
+IAXCall*
+IAXVoIPLink::getIaxCall(const std::string& id)
+{
+    IAXCallMap::iterator iter = iaxCallMap_.find(id);
+
+    if (iter != iaxCallMap_.end())
+
+        return iter->second;
+    else
+        return NULL;
+}
+
 std::string
 IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
 {
@@ -424,7 +474,7 @@ IAXVoIPLink::getCurrentVideoCodecName(Call * /*call*/) const
 std::string
 IAXVoIPLink::getCurrentAudioCodecName(Call *c) const
 {
-    IAXCall *call = dynamic_cast<IAXCall*>(c);
+    IAXCall *call = static_cast<IAXCall*>(c);
     sfl::Codec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
     return audioCodec ? audioCodec->getMimeSubtype() : "";
 }
@@ -436,7 +486,7 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 
     call->session = iax_session_new();
 
-    IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_));
+    IAXAccount *account = Manager::instance().getIaxAccount(accountID_);
     std::string username(account->getUsername());
     std::string strNum(username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber());
 
@@ -452,10 +502,10 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 IAXCall*
 IAXVoIPLink::iaxFindCallBySession(iax_session* session)
 {
-    ost::MutexLock m(callMapMutex_);
+    ost::MutexLock m(iaxCallMapMutex_);
 
-    for (CallMap::const_iterator iter = callMap_.begin(); iter != callMap_.end(); ++iter) {
-        IAXCall* call = dynamic_cast<IAXCall*>(iter->second);
+    for (IAXCallMap::const_iterator iter = iaxCallMap_.begin(); iter != iaxCallMap_.end(); ++iter) {
+        IAXCall* call = static_cast<IAXCall*>(iter->second);
 
         if (call and call->session == session)
             return call;
@@ -473,14 +523,14 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
         case IAX_EVENT_HANGUP:
             Manager::instance().peerHungupCall(id);
 
-            removeCall(id);
+            removeIaxCall(id);
             break;
 
         case IAX_EVENT_REJECT:
             call->setConnectionState(Call::CONNECTED);
             call->setState(Call::ERROR);
             Manager::instance().callFailure(id);
-            removeCall(id);
+            removeIaxCall(id);
             break;
 
         case IAX_EVENT_ACCEPT:
@@ -515,7 +565,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             call->setConnectionState(Call::CONNECTED);
             call->setState(Call::BUSY);
             Manager::instance().callBusy(id);
-            removeCall(id);
+            removeIaxCall(id);
             break;
 
         case IAX_EVENT_VOICE:
@@ -595,7 +645,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
  */
 void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
-    IAXAccount *account = dynamic_cast<IAXAccount *>(Manager::instance().getAccount(accountID_));
+    IAXAccount *account = Manager::instance().getIaxAccount(accountID_);
 
     if (event->etype != IAX_EVENT_REGREJ && event->etype != IAX_EVENT_REGACK)
         return;
@@ -641,7 +691,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
             iax_accept(event->session, format);
             iax_ring_announce(event->session);
-            addCall(call);
+            addIaxCall(call);
             call->format = format;
 
             break;
@@ -649,7 +699,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         case IAX_EVENT_HANGUP:
             id = iaxFindCallBySession(event->session)->getCallId();
             Manager::instance().peerHungupCall(id);
-            removeCall(id);
+            removeIaxCall(id);
             break;
 
         case IAX_EVENT_TIMEOUT: // timeout for an unknown session

@@ -70,6 +70,7 @@
 #include "unused.h"
 #include "sliders.h"
 #include "messaging/message_tab.h"
+#include "history_loader.h"
 #ifdef SFL_VIDEO
 #include "video/video_callbacks.h"
 #endif
@@ -514,7 +515,9 @@ sflphone_incoming_call(callable_obj_t * c)
         g_free(msg);
     }
     account_t *account = account_list_get_by_id(c->_accountID);
-    if (account_has_autoanswer_on(account)) {
+    if (!account) {
+        ERROR("Account is NULL");
+    } else if (account_has_autoanswer_on(account)) {
         calltab_set_selected_call(active_calltree_tab, c);
         sflphone_pick_up();
     }
@@ -951,34 +954,9 @@ void sflphone_fill_conference_list(void)
     g_strfreev(conferences);
 }
 
-static void
-create_callable_from_entry(gpointer data, gpointer user_data UNUSED)
+void sflphone_fill_history_lazy()
 {
-    GHashTable *entry = (GHashTable *) data;
-    callable_obj_t *history_call = create_history_entry_from_hashtable(entry);
-
-    /* Add it and update the GUI */
-    calllist_add_call_to_front(history_tab, history_call);
-}
-
-static void fill_treeview_with_calls(void)
-{
-    guint n = calllist_get_size(history_tab);
-
-    for (guint i = 0; i < n; ++i) {
-        callable_obj_t *call = calllist_get_nth(history_tab, i);
-        if (call)
-            calltree_add_history_entry(call);
-    }
-}
-
-void sflphone_fill_history(void)
-{
-    GPtrArray *entries = dbus_get_history();
-    if (entries)
-        g_ptr_array_foreach(entries, create_callable_from_entry, NULL);
-
-    fill_treeview_with_calls();
+    lazy_load_items(history_tab);
 }
 
 void

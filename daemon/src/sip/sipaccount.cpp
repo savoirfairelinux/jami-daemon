@@ -301,7 +301,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
 #endif
 }
 
-void SIPAccount::unserialize(const Conf::MappingNode &mapNode)
+void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
 {
     using namespace Conf;
     using std::vector;
@@ -1208,4 +1208,24 @@ VoIPLink* SIPAccount::getVoIPLink()
 bool SIPAccount::isIP2IP() const
 {
     return accountID_ == IP2IP_PROFILE;
+}
+
+bool SIPAccount::matches(const std::string &userName, const std::string &server) const
+{
+    if (not enabled_) {
+        return false;
+    } else if (fullMatch(userName, server)) {
+        DEBUG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
+        return true;
+    } else if (hostnameMatch(server)) {
+        DEBUG("Matching account id in request with hostname %s", server.c_str());
+        return true;
+    } else if (userMatch(userName)) {
+        DEBUG("Matching account id in request with username %s", userName.c_str());
+        return true;
+    } else if (proxyMatch(server)) {
+        DEBUG("Matching account id in request with proxy %s", server.c_str());
+        return true;
+    }
+    return false;
 }

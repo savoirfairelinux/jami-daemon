@@ -66,7 +66,7 @@ void AudioRtpFactory::initConfig()
 
     std::string accountId(Manager::instance().getAccountFromCall(ca_->getCallId()));
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountId));
+    SIPAccount *account = Manager::instance().getSipAccount(accountId);
 
     if (account) {
         srtpEnabled_ = account->getSrtpEnabled();
@@ -215,20 +215,16 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
 void sfl::AudioRtpFactory::saveLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
-        assert(srtp);
-        cachedLocalMasterKey_ = srtp->getLocalMasterKey();
-        cachedLocalMasterSalt_ = srtp->getLocalMasterSalt();
+        cachedLocalMasterKey_ = rtpSession_->getLocalMasterKey();
+        cachedLocalMasterSalt_ = rtpSession_->getLocalMasterSalt();
     }
 }
 
 void sfl::AudioRtpFactory::restoreLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = dynamic_cast<AudioSrtpSession *>(rtpSession_);
-        assert(srtp);
-        srtp->setLocalMasterKey(cachedLocalMasterKey_);
-        srtp->setLocalMasterSalt(cachedLocalMasterSalt_);
+        rtpSession_->setLocalMasterKey(cachedLocalMasterKey_);
+        rtpSession_->setLocalMasterSalt(cachedLocalMasterSalt_);
     }
 }
 }

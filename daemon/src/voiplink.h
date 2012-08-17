@@ -36,13 +36,12 @@
 
 #include <stdexcept>
 #include <map>
+
 #include "cc_thread.h" // for ost::Mutex
+#include "account.h"
 
 class Call;
 class Account;
-
-/** Define a map that associate a Call object to a call identifier */
-typedef std::map<std::string, Call*> CallMap;
 
 class VoipLinkException : public std::runtime_error {
     public:
@@ -166,32 +165,9 @@ class VoIPLink {
                                      const std::string &from) = 0;
 #endif
 
-        /** Add a call to the call map (protected by mutex)
-         * @param call A call pointer with a unique pointer
-         * @return bool True if the call was unique and added
-         */
-        void addCall(Call* call);
-
-        /**
-         * Get the call pointer from the call map (protected by mutex)
-         * @param id A Call ID
-         * @return Call*  Call pointer or 0
-         */
-        Call* getCall(const std::string &id);
-
     protected:
-        /** Contains all the calls for this Link, protected by mutex */
-        CallMap callMap_;
-
-        /** Mutex to protect call map */
-        ost::Mutex callMapMutex_;
 
         bool handlingEvents_;
-
-        /** Remove a call from the call map (protected by mutex)
-         * @param id A Call ID
-         */
-        void removeCall(const std::string &id);
 };
 
 #endif // __VOIP_LINK_H__

@@ -34,19 +34,19 @@
 #include "config.h"
 #endif
 
-#include "configurationmanager.h"
-#include "account_schema.h"
 #include <cerrno>
 #include <sstream>
-#include "../manager.h"
+
+#include "configurationmanager.h"
+#include "account_schema.h"
+#include "manager.h"
 #include "sip/sipvoiplink.h"
 #include "sip/siptransport.h"
-#include "account.h"
 #include "logger.h"
 #include "fileutils.h"
 #include "sip/sipaccount.h"
-#include "../history/historynamecache.h"
-#include "../audio/audiolayer.h"
+#include "history/historynamecache.h"
+#include "audio/audiolayer.h"
 
 namespace {
     const char* SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
@@ -119,7 +119,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 
 void ConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    SIPAccount * sipaccount = Manager::instance().getIP2IPAccount();
+    SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
         DEBUG("No valid account in set TLS settings");
@@ -218,8 +218,8 @@ std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::st
     if (acc)
         return acc->getActiveAudioCodecs();
     else {
-        ERROR("Could not find account %s", accountID.c_str());
-        return std::vector<int32_t>();
+        ERROR("Could not find account %s, returning default", accountID.c_str());
+        return Account::getDefaultAudioCodecs();
     }
 }
 
@@ -365,12 +365,12 @@ int32_t ConfigurationManager::isIax2Enabled()
 
 std::string ConfigurationManager::getRecordPath()
 {
-    return Manager::instance().getRecordPath();
+    return Manager::instance().audioPreference.getRecordPath();
 }
 
 void ConfigurationManager::setRecordPath(const std::string& recPath)
 {
-    Manager::instance().setRecordPath(recPath);
+    Manager::instance().audioPreference.setRecordPath(recPath);
 }
 
 bool ConfigurationManager::getIsAlwaysRecording()
@@ -490,7 +490,7 @@ void ConfigurationManager::setShortcuts(
 std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
     const std::string& accountID)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
     std::vector<std::map<std::string, std::string> > credentialInformation;
 
     if (!account)
@@ -502,7 +502,7 @@ std::vector<std::map<std::string, std::string> > ConfigurationManager::getCreden
 void ConfigurationManager::setCredentials(const std::string& accountID,
         const std::vector<std::map<std::string, std::string> >& details)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
     if (account)
         account->setCredentials(details);
 }

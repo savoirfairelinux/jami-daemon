@@ -44,7 +44,6 @@
 
 #include "sip/sdp.h"
 #include "sipcall.h"
-#include "sipaccount.h"
 #include "eventthread.h"
 #if HAVE_SDES
 #include "sdes_negotiator.h"
@@ -88,6 +87,10 @@ using namespace sfl;
 SIPVoIPLink *SIPVoIPLink::instance_ = 0;
 bool SIPVoIPLink::destroyed_ = false;
 
+AccountMap SIPVoIPLink::sipAccountMap_ = AccountMap();
+SipCallMap SIPVoIPLink::sipCallMap_ = SipCallMap();
+ost::Mutex SIPVoIPLink::sipCallMapMutex_ = ost::Mutex();
+
 namespace {
 
 /** Environment variable used to set pjsip's logging level */
@@ -105,6 +108,7 @@ static std::map<std::string, std::string> transferCallID;
  * @param call a SIPCall valid pointer
  */
 void setCallMediaLocal(SIPCall* call, const std::string &localIP);
+
 
 static pj_caching_pool pool_cache, *cp_ = &pool_cache;
 static pj_pool_t *pool_;
@@ -269,7 +273,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
     if (!account) {
         ERROR("Could not find account %s", account_id.c_str());
         return PJ_FALSE;
@@ -359,7 +363,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     call->getLocalSDP()->receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
 
-    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
+    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac) {
         ERROR("Could not instantiate codec");
         delete call;
@@ -377,7 +381,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_inv_create_uas(dialog, rdata, call->getLocalSDP()->getLocalSdpSession(), 0, &call->inv);
 
-    if (pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
+    if (!dialog or !tp_sel or pjsip_dlg_set_transport(dialog, tp_sel) != PJ_SUCCESS) {
         ERROR("Could not set transport for dialog");
         delete call;
         return PJ_FALSE;
@@ -431,7 +435,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         call->setConnectionState(Call::RINGING);
 
         Manager::instance().incomingCall(*call, account_id);
-        Manager::instance().getAccountLink(account_id)->addCall(call);
+        SIPVoIPLink::addSipCall(call);
     }
 
     return PJ_FALSE;
@@ -440,7 +444,8 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
 /*************************************************************************************************/
 
-SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), evThread_(this)
+SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_)
+                           , evThread_(this)
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
@@ -542,6 +547,7 @@ SIPVoIPLink::~SIPVoIPLink()
     pj_caching_pool_destroy(cp_);
 
     pj_shutdown();
+    clearSipCallMap();
 }
 
 SIPVoIPLink* SIPVoIPLink::instance()
@@ -611,7 +617,7 @@ bool SIPVoIPLink::getEvent()
 
 void SIPVoIPLink::sendRegister(Account *a)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount*>(a);
+    SIPAccount *account = static_cast<SIPAccount*>(a);
 
     if (!account)
         throw VoipLinkException("SipVoipLink: Account is not SIPAccount");
@@ -709,7 +715,7 @@ void SIPVoIPLink::sendRegister(Account *a)
 
 void SIPVoIPLink::sendUnregister(Account *a)
 {
-    SIPAccount *account = dynamic_cast<SIPAccount *>(a);
+    SIPAccount *account = static_cast<SIPAccount *>(a);
 
     // This may occurs if account failed to register and is in state INVALID
     if (!account->isRegistered()) {
@@ -818,7 +824,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     std::string toUri = account->getToUri(to);
     call->setPeerNumber(toUri);
 
-    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
+    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (!ac) {
         delete call;
@@ -848,7 +854,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
 {
     DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
+    SIPAccount *account = Manager::instance().getSipAccount(Manager::instance().getAccountFromCall(id));
 
     if (account == NULL) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
         throw VoipLinkException("Could not get account for this call");
@@ -876,7 +882,7 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW));
+    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (ac == NULL) {
         delete call;
@@ -933,7 +939,7 @@ SIPVoIPLink::hangup(const std::string& id)
     SIPCall* call = getSIPCall(id);
 
     std::string account_id(Manager::instance().getAccountFromCall(id));
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
     if (account == NULL)
         throw VoipLinkException("Could not find account for this call");
@@ -962,7 +968,7 @@ SIPVoIPLink::hangup(const std::string& id)
     inv->mod_data[mod_ua_.id] = NULL;
 
     stopRtpIfCurrent(id, *call);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -983,7 +989,7 @@ SIPVoIPLink::peerHungup(const std::string& id)
     call->inv->mod_data[mod_ua_.id ] = NULL;
 
     stopRtpIfCurrent(id, *call);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -1032,7 +1038,7 @@ SIPVoIPLink::offhold(const std::string& id)
             pl = sessionMedia->getPayloadType();
 
         // Create a new instance for this codec
-        sfl::AudioCodec* ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(pl));
+        sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
 
         if (ac == NULL)
             throw VoipLinkException("Could not instantiate codec");
@@ -1085,6 +1091,64 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
 }
 #endif // HAVE_INSTANT_MESSAGING
 
+void
+SIPVoIPLink::clearSipCallMap()
+{
+    ost::MutexLock m(sipCallMapMutex_);
+
+    for (SipCallMap::const_iterator iter = sipCallMap_.begin();
+            iter != sipCallMap_.end(); ++iter)
+        delete iter->second;
+
+    sipCallMap_.clear();
+}
+
+void SIPVoIPLink::addSipCall(SIPCall* call)
+{
+    if (call and getSipCall(call->getCallId()) == NULL) {
+        ost::MutexLock m(sipCallMapMutex_);
+        sipCallMap_[call->getCallId()] = call;
+    }
+}
+
+void SIPVoIPLink::removeSipCall(const std::string& id)
+{
+    ost::MutexLock m(sipCallMapMutex_);
+
+    DEBUG("Removing call %s from list", id.c_str());
+
+    delete sipCallMap_[id];
+    sipCallMap_.erase(id);
+}
+
+SIPCall*
+SIPVoIPLink::getSipCall(const std::string& id)
+{
+    ost::MutexLock m(sipCallMapMutex_);
+
+    SipCallMap::iterator iter = sipCallMap_.find(id);
+
+    if (iter != sipCallMap_.end())
+        return iter->second;
+    else
+        return NULL;
+}
+
+SIPCall*
+SIPVoIPLink::tryGetSipCall(const std::string &id)
+{
+    if (not sipCallMapMutex_.tryEnterMutex()) {
+        ERROR("Could not lock call map mutex");
+        return 0;
+    }
+    SipCallMap::iterator iter = sipCallMap_.find(id);
+    SIPCall *call = 0;
+    if (iter != sipCallMap_.end())
+        call = iter->second;
+    sipCallMapMutex_.leaveMutex();
+    return call;
+}
+
 bool
 SIPVoIPLink::transferCommon(SIPCall *call, pj_str_t *dst)
 {
@@ -1133,7 +1197,7 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
     call->stopRecording();
 
     std::string account_id(Manager::instance().getAccountFromCall(id));
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
     if (account == NULL)
         throw VoipLinkException("Could not find account");
@@ -1198,19 +1262,19 @@ SIPVoIPLink::refuse(const std::string& id)
     // Make sure the pointer is NULL in callbacks
     call->inv->mod_data[mod_ua_.id] = NULL;
 
-    removeCall(id);
+    removeSipCall(id);
 }
 
 std::string
 SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
 {
-    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getSessionVideoCodec();
+    return static_cast<SIPCall*>(call)->getLocalSDP()->getSessionVideoCodec();
 }
 
 std::string
 SIPVoIPLink::getCurrentAudioCodecName(Call *call) const
 {
-    return dynamic_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
+    return static_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
 }
 
 /* Only use this macro with string literals or character arrays, will not work
@@ -1268,13 +1332,9 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 void
 SIPVoIPLink::requestFastPictureUpdate(const std::string &callID)
 {
-    SIPCall *call;
-    try {
-         call = SIPVoIPLink::instance()->getSIPCall(callID);
-    } catch (const VoipLinkException &e) {
-        ERROR("%s", e.what());
+    SIPCall *call = SIPVoIPLink::tryGetSipCall(callID);
+    if (!call)
         return;
-    }
 
     const char * const BODY =
         "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
@@ -1291,7 +1351,7 @@ void
 SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
     std::string accountID(Manager::instance().getAccountFromCall(id));
-    SIPAccount *account = dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID));
+    SIPAccount *account = Manager::instance().getSipAccount(accountID);
     if (!account)
         return;
 
@@ -1308,7 +1368,7 @@ bool
 SIPVoIPLink::SIPStartCall(SIPCall *call)
 {
     std::string id(Manager::instance().getAccountFromCall(call->getCallId()));
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(id));
+    SIPAccount *account = Manager::instance().getSipAccount(id);
 
     if (account == NULL) {
         ERROR("Account is NULL in SIPStartCall");
@@ -1370,7 +1430,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
 
     call->setConnectionState(Call::PROGRESSING);
     call->setState(Call::ACTIVE);
-    addCall(call);
+    addSipCall(call);
 
     return true;
 }
@@ -1380,7 +1440,7 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 {
     std::string id(call->getCallId());
     Manager::instance().callFailure(id);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -1391,7 +1451,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
     stopRtpIfCurrent(id, *call);
 
     Manager::instance().peerHungupCall(id);
-    removeCall(id);
+    removeSipCall(id);
 }
 
 void
@@ -1408,13 +1468,12 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data * /*rdata*/)
 SIPCall*
 SIPVoIPLink::getSIPCall(const std::string& id)
 {
-    SIPCall *result = dynamic_cast<SIPCall*>(getCall(id));
-
+    SIPCall *result = getSipCall(id);
     if (result == NULL)
-        throw VoipLinkException("Could not find SIPCall " + id);
-
+        throw VoipLinkException("Could not get SIPCall");
     return result;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
@@ -1503,7 +1562,7 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
         return;
 
     std::string accId(Manager::instance().getAccountFromCall(call->getCallId()));
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accId));
+    SIPAccount *account = Manager::instance().getSipAccount(accId);
     if (!account)
         return;
 
@@ -1522,7 +1581,7 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
         return;
     std::string accountid(Manager::instance().getAccountFromCall(call->getCallId()));
 
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountid));
+    SIPAccount *account = Manager::instance().getSipAccount(accountid);
 
     std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
     std::string addrSdp(localAddress);
@@ -1660,7 +1719,8 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
         std::string accountID = Manager::instance().getAccountFromCall(call->getCallId());
 
-        if (dynamic_cast<SIPAccount*>(Manager::instance().getAccount(accountID))->getSrtpFallback())
+        SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
+        if (sipaccount and sipaccount->getSrtpFallback())
             call->getAudioRtp().initSession();
     }
 #endif // HAVE_SDES
@@ -1677,7 +1737,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         int pl = sessionMedia->getPayloadType();
 
         if (pl != call->getAudioRtp().getSessionMedia()) {
-            sfl::AudioCodec *ac = dynamic_cast<sfl::AudioCodec*>(Manager::instance().audioCodecFactory.instantiateCodec(pl));
+            sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)
                 throw std::runtime_error("Could not instantiate codec");
             call->getAudioRtp().updateSessionMedia(ac);
@@ -1827,7 +1887,7 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 
 void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
 {
-    SIPVoIPLink *siplink = dynamic_cast<SIPVoIPLink *>(account->getVoIPLink());
+    SIPVoIPLink *siplink = static_cast<SIPVoIPLink *>(account->getVoIPLink());
     if (siplink == NULL) {
         ERROR("Could not find voip link from account");
         return;
@@ -2076,7 +2136,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             if (r_data->msg_info.cid)
                 return;
             std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
-            SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(transferCallID[transferID]));
+            SIPCall *call = SIPVoIPLink::getSipCall(transferCallID[transferID]);
 
             if (!call)
                 return;
@@ -2110,7 +2170,7 @@ namespace {
 void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 {
     std::string account_id(Manager::instance().getAccountFromCall(call->getCallId()));
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
     if (!account)
         return;
 

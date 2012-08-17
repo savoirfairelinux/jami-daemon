@@ -40,7 +40,11 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 
+class Account;
 class VoIPLink;
+
+/** Define a type for a AccountMap container */
+typedef std::map<std::string, Account*> AccountMap;
 
 /**
  * @file account.h
@@ -139,6 +143,8 @@ class Account : public Serializable {
 
         std::vector<std::map<std::string, std::string> >
         getActiveVideoCodecs() const;
+
+        static std::vector<int> getDefaultAudioCodecs();
 
          /* Accessor to data structures
          * @return The list that reflects the user's choice

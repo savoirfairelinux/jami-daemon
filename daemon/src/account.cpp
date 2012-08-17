@@ -249,6 +249,21 @@ namespace {
     }
 }
 
+vector<int>
+Account::getDefaultAudioCodecs()
+{
+    vector<int> result;
+    result.push_back(0);
+    result.push_back(3);
+    result.push_back(8);
+    result.push_back(9);
+    result.push_back(110);
+    result.push_back(111);
+    result.push_back(112);
+
+    return result;
+}
+
 vector<map<string, string> >
 Account::getActiveVideoCodecs() const
 {

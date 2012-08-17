@@ -61,7 +61,7 @@ void HistoryNameCache::serialize(Conf::YamlEmitter &emitter UNUSED)
     //TODO
 }
 
-void HistoryNameCache::unserialize(const Conf::MappingNode &map UNUSED)
+void HistoryNameCache::unserialize(const Conf::YamlNode &map UNUSED)
 {
     //TODO
 }

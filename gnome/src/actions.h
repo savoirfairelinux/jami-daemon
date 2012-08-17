@@ -198,7 +198,7 @@ void sflphone_mute_call(void);
 
 void status_bar_display_account();
 
-void sflphone_fill_history(void);
+void sflphone_fill_history_lazy();
 
 /**
  * Action called when a new participant is dragged in

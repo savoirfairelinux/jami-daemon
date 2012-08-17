@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cstddef>
 
+#include "global.h"
 #include "audio_rtp_session.h"
 #include "noncopyable.h"
 
@@ -70,6 +71,16 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
             return 0;
         }
 
+        virtual void setLocalMasterKey(const std::vector<uint8>& key UNUSED) const {}
+
+        virtual void setLocalMasterSalt(const std::vector<uint8>& key UNUSED) const {};
+
+        /** Not used for symmetric rtp session, return an empty vector */
+        virtual std::vector<uint8> getLocalMasterKey() const { std::vector<uint8> vec; return vec; }
+
+        /** Not used for symmetric rtp session, return an empty vector */
+        virtual std::vector<uint8> getLocalMasterSalt() const { std::vector<uint8> vec; return vec; }
+
     private:
         NON_COPYABLE(AudioSymmetricRtpSession);
 
@@ -88,7 +99,8 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
         void setSessionMedia(AudioCodec &codec);
         int startRtpThread(AudioCodec &audiocodec);
 
-        AudioRtpThread rtpThread_;
+        AudioRtpThread rtpThread_    ;
+        unsigned int   transportRate_;
 };
 
 }

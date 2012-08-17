@@ -68,6 +68,14 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         virtual int getIncrementForDTMF() const;
 
+        virtual void setLocalMasterKey(const std::vector<uint8>& key) const = 0;
+
+        virtual void setLocalMasterSalt(const std::vector<uint8>& key) const = 0;
+
+        virtual std::vector<uint8> getLocalMasterKey() const = 0;
+
+        virtual std::vector<uint8> getLocalMasterSalt() const = 0;
+
     protected:
         /**
          * Set the audio codec for this RTP session

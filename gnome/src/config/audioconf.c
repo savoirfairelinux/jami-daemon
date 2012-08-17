@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <glib/gstdio.h>
 #include <glib/gi18n.h>
 #include "gtk2_wrappers.h"
 #include "str_utils.h"
@@ -822,10 +823,23 @@ active_is_always_recording(void)
     dbus_set_is_always_recording(!dbus_get_is_always_recording());
 }
 
-static void record_path_changed(GtkFileChooserButton *chooser, gpointer data UNUSED)
+static void restore_recording_path(GtkFileChooser *chooser)
 {
-    gchar* path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
-    dbus_set_record_path(path);
+    gchar *recording_path = dbus_get_record_path();
+    if (recording_path && strlen(recording_path) > 0)
+        gtk_file_chooser_set_current_folder(chooser, recording_path);
+    g_free(recording_path);
+}
+
+static void record_path_changed(GtkFileChooser *chooser, gpointer data UNUSED)
+{
+    gchar* path = gtk_file_chooser_get_filename(chooser);
+    if (!g_access(path, W_OK)) {
+        dbus_set_record_path(path);
+    } else {
+        ERROR("Directory %s is not writable", path);
+        restore_recording_path(chooser);
+    }
     g_free(path);
 }
 
@@ -888,10 +902,7 @@ GtkWidget* create_audio_configuration()
     GtkWidget *folderChooser = gtk_file_chooser_button_new(_("Select a folder"),
                                                            GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
     /* Get the path where to save audio files */
-    gchar *recordingPath = dbus_get_record_path();
-    DEBUG("Load recording path %s", recordingPath);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(folderChooser), recordingPath);
-    g_free(recordingPath);
+    restore_recording_path(GTK_FILE_CHOOSER(folderChooser));
 
     g_signal_connect(G_OBJECT(folderChooser) , "selection-changed", G_CALLBACK(record_path_changed),
                      NULL);

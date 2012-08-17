@@ -134,7 +134,7 @@ class SIPAccount : public Account {
          * Populate the internal state for this account based on info stored in the configuration file
          * @param The configuration node for this account
          */
-        virtual void unserialize(const Conf::MappingNode &map);
+        virtual void unserialize(const Conf::YamlNode &map);
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.
@@ -248,11 +248,6 @@ class SIPAccount : public Account {
             if (registrationExpire_ < 0)
                 registrationExpire_ = 0;
         }
-
-        bool fullMatch(const std::string& username, const std::string& hostname) const;
-        bool userMatch(const std::string& username) const;
-        bool hostnameMatch(const std::string& hostname) const;
-        bool proxyMatch(const std::string& hostname) const;
 
         /**
          * Registration flag
@@ -537,8 +532,16 @@ class SIPAccount : public Account {
          */
         pjsip_transport* transport_;
 
+        /* Returns true if the username and/or hostname match this account */
+        bool matches(const std::string &username, const std::string &hostname) const;
+
     private:
         NON_COPYABLE(SIPAccount);
+
+        bool fullMatch(const std::string &username, const std::string &hostname) const;
+        bool userMatch(const std::string &username) const;
+        bool hostnameMatch(const std::string &hostname) const;
+        bool proxyMatch(const std::string &hostname) const;
 
         /**
          * Map of credential for this account
