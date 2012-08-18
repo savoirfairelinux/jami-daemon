@@ -74,6 +74,7 @@
 #include <istream>
 // #include <fstream>
 #include <utility> // for std::pair
+#include <algorithm>
 
 #include <map>
 
@@ -517,6 +518,9 @@ SIPVoIPLink::~SIPVoIPLink()
 
     pj_shutdown();
     clearSipCallMap();
+
+    std::for_each(sipAccountMap_.begin(), sipAccountMap_.end(), unloadAccount);
+    sipAccountMap_.clear();
 }
 
 SIPVoIPLink* SIPVoIPLink::instance()

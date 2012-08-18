@@ -163,9 +163,9 @@ void ManagerImpl::finish()
     unregisterAllAccounts();
 
     SIPVoIPLink::destroy();
-    // Unload account map AFTER destroying
-    // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
-    unloadAccountMap();
+#if HAVE_IAX
+    IAXVoIPLink::unloadAccountMap();
+#endif
 
     {
         ost::MutexLock lock(audioLayerMutex_);
@@ -2582,15 +2582,6 @@ namespace {
         item.second->unregisterVoIPLink();
     }
 
-    void unloadAccount(std::pair<const std::string, Account*> &item)
-    {
-        // avoid deleting IP2IP account twice
-        if (not item.first.empty()) {
-            delete item.second;
-            item.second = 0;
-        }
-    }
-
     SIPAccount *createIP2IPAccount()
     {
         SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE);
@@ -2678,17 +2669,6 @@ void ManagerImpl::unregisterAllAccounts()
     std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), unregisterAccount);
 #if HAVE_IAX
     std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), unregisterAccount);
-#endif
-}
-
-void ManagerImpl::unloadAccountMap()
-{
-    std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), unloadAccount);
-    SIPVoIPLink::instance()->getAccounts().clear();
-
-#if HAVE_IAX
-    std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), unloadAccount);
-    IAXVoIPLink::getAccounts().clear();
 #endif
 }
 

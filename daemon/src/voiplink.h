@@ -35,10 +35,7 @@
 #define __VOIP_LINK_H__
 
 #include <stdexcept>
-#include <map>
-
-#include "cc_thread.h" // for ost::Mutex
-#include "account.h"
+#include <string>
 
 class Call;
 class Account;
@@ -166,7 +163,7 @@ class VoIPLink {
 #endif
 
     protected:
-
+        static void unloadAccount(std::pair<const std::string, Account*> &item);
         bool handlingEvents_;
 };
 

@@ -41,7 +41,7 @@
 #include "array_size.h"
 
 #include <cmath>
-#include <dlfcn.h>
+#include <algorithm>
 
 AccountMap IAXVoIPLink::iaxAccountMap_;
 IAXCallMap IAXVoIPLink::iaxCallMap_;
@@ -715,4 +715,11 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         default:
             break;
     }
+}
+
+void
+IAXVoIPLink::unloadAccountMap()
+{
+    std::for_each(iaxAccountMap_.begin(), iaxAccountMap_.end(), unloadAccount);
+    iaxAccountMap_.clear();
 }
