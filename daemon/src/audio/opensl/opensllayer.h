@@ -161,6 +161,8 @@ class OpenSLLayer : public AudioLayer {
          */
         bool audioCallback();
 
+        void audioBufferFillWithZeros(AudioBuffer &buffer);
+
         /**
          * Here fill the input buffer with tone or ringtone samples
          */  

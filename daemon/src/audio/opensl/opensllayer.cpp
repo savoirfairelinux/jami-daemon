@@ -452,15 +452,29 @@ bool OpenSLLayer::audioCallback()
 {
 }
 
+void OpenSLLayer::audioBufferFillWithZeros(AudioBuffer &buffer) {
+
+    SFLDataFormat * out_ptr = &(*buffer.begin()); 
+    
+    memset(out_ptr, 0, buffer.size() * sizeof(SFLDataFormat));
+}
+
+
 void OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
+    // printf("== Audio playback fill with tone or ringtone\n");
     AudioLoop *tone = Manager::instance().getTelephoneTone();
     AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
     SFLDataFormat * const out_ptr = &(*buffer.begin());
-    if (tone)
+    if (tone) {
         tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
-    else if (file_tone)
+    }
+    else if (file_tone) {
         file_tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
+    }
+    else {
+        audioBufferFillWithZeros(buffer);
+    }
 }
 
 void OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesToGet) {
@@ -525,10 +539,15 @@ void OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
 
     if (bytesToGet <= 0) {
         audioPlaybackFillWithToneOrRingtone(buffer);
+        return;
     }
     else {
 	audioPlaybackFillWithVoice(buffer, bytesToGet);
+        return;
     }
+
+    audioBufferFillWithZeros(buffer);
+
 }
 
 void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
@@ -552,14 +571,14 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
         Manager::instance().getMainBuffer()->putData(rsmpl_out_ptr,
                 rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
     } else {
-        dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-        Manager::instance().getMainBuffer()->putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
+        printf("send audio to mainbuffer\n");
+        // dcblocker_.process(in_ptr, in_ptr, toGetSamples);
+        // Manager::instance().getMainBuffer()->putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
     }
 }
 
 void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
-
     assert(NULL != queue);
     assert(NULL != context);
 
@@ -609,7 +628,7 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
     AudioBuffer &previousbuffer = opensl->getNextRecordBuffer();
     // memcpy(&(*tmpbuffer.begin()), &(*previousbuffer.begin()), buffer.size());
 
-    opensl->audioCaptureFillBuffer(previousbuffer);
+    // opensl->audioCaptureFillBuffer(previousbuffer);
 }
 
 void OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)
