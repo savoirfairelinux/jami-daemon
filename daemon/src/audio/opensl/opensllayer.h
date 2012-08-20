@@ -39,7 +39,7 @@
 
 #include "cc++/thread.h"
 
-#include "audiolayer.h"
+#include "../audiolayer.h"
 
 
 enum PCMType {
@@ -150,6 +150,11 @@ class OpenSLLayer : public AudioLayer {
 
         void stopAudioCapture(); 
 
+        virtual int getAudioDeviceIndex(const std::string&) const { return 0; }
+
+        virtual std::string getAudioDeviceName(int, AudioLayer::PCMType) const { return ""; }
+
+
         /**
          * Main audio callback method, all data transfer between application and hardware is preformed
          * inside this method.
@@ -162,6 +167,7 @@ class OpenSLLayer : public AudioLayer {
         void audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer);
 
         void audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail); 
+
         void audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
 
         /**

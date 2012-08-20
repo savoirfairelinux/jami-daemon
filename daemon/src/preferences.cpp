@@ -41,6 +41,9 @@
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
 #endif
+#if ANDROID
+#include "audio/opensl/opensllayer.h"
+#endif
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 #include "hooks/urlhook.h"
@@ -379,6 +382,9 @@ void checkSoundCard(int &card, AudioLayer::PCMType stream)
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
+#if ANDROID
+    return new OpenSLLayer();
+#else
 #if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR) {
         if (system("pactl info > /dev/null") == 0)
@@ -396,6 +402,7 @@ AudioLayer* AudioPreference::createAudioLayer()
     return new AlsaLayer(*this);
 #else
 	return NULL;
+#endif
 #endif
 }
 
