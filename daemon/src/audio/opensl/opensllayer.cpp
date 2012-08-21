@@ -114,8 +114,11 @@ OpenSLLayer::OpenSLLayer()
     , engineInterface(NULL)
     , outputMixer(NULL)
     , playerObject(NULL)
+    , recorderObject(NULL)
     , playerInterface(NULL)
+    , recorderInterface(NULL)
     , playbackBufferQueue(NULL)
+    , recorderBufferQueue(NULL)
     , playbackBufferIndex(0)
     , recordBufferIndex(0)
     , playbackBufferStack(ANDROID_BUFFER_QUEUE_LENGTH)
@@ -141,7 +144,6 @@ void
 OpenSLLayer::startStream()
 {
     MainBuffer *buffer = &Manager::instance().getMainBuffer();
-    Manager::instance().printMainBufferSR();
     isStarted_ = true;
     if (audioThread_ == NULL) {
         audioThread_ = new OpenSLThread(this);
@@ -359,7 +361,6 @@ OpenSLLayer::startAudioPlayback()
     assert(NULL != playbackBufferQueue);
 
     printf("Start audio playback\n");
-    MainBuffer &buffer = Manager::instance().getMainBuffer();
 
     SLresult result;
 
