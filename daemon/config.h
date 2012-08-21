@@ -1,6 +1,8 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+#define HAVE_DBUS 0
+
 /* Use cc++ include prefix */
 #define CCPP_PREFIX 1
 
