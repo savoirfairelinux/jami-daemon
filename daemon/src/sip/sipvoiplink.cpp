@@ -54,7 +54,9 @@
 #include "dbus/callmanager.h"
 #include "dbus/configurationmanager.h"
 
+#if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
+#endif
 
 #include "audio/audiolayer.h"
 
