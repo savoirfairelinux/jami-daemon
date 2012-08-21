@@ -27,8 +27,7 @@ LOCAL_SRC_FILES := \
 		sipcall.cpp \
 		sipvoiplink.cpp \
 		siptransport.cpp \
-		sip_utils.cpp \
-		sip_thread_client.cpp
+		sip_utils.cpp
 
 # FIXME
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/.. \
