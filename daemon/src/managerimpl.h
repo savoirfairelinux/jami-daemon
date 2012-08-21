@@ -997,11 +997,6 @@ class ManagerImpl {
         void loadDefaultAccountMap();
 
         /**
-         * Unload the account (delete them)
-         */
-        void unloadAccountMap();
-
-        /**
          * Instance of the MainBuffer for the whole application
          *
          * In order to send signal to other parts of the application, one must pass through the mainbuffer.
@@ -1033,8 +1028,8 @@ class ManagerImpl {
         /**
          * Return a pointer to the  instance of the mainbuffer
          */
-        MainBuffer *getMainBuffer() {
-            return &mainBuffer_;
+        MainBuffer &getMainBuffer() {
+            return mainBuffer_;
         }
 
         /**

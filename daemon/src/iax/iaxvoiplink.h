@@ -72,9 +72,14 @@ class IAXVoIPLink : public VoIPLink {
         virtual bool getEvent();
 
         /**
-         * Return the internal account map for this VOIP link
+         * Return the internal account map for all VOIP links
          */
         static AccountMap &getAccounts() { return iaxAccountMap_; }
+
+        /**
+         * Empty the account map for all VOIP links
+         */
+        static void unloadAccountMap();
 
         /**
          * Init the voip link

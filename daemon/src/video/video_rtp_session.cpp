@@ -133,7 +133,7 @@ void VideoRtpSession::start()
         if (receiveThread_.get())
             WARN("restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
-        receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::requestFastPictureUpdate);
+        receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiveThread_->start();
     } else {
         DEBUG("Video receiving disabled");

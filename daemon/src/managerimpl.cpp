@@ -139,7 +139,7 @@ void ManagerImpl::init(const std::string &config_file)
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
             telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
-            dtmfKey_.reset(new DTMF(getMainBuffer()->getInternalSamplingRate()));
+            dtmfKey_.reset(new DTMF(getMainBuffer().getInternalSamplingRate()));
         }
     }
 
@@ -178,9 +178,9 @@ void ManagerImpl::finish()
     unregisterAllAccounts();
 
     SIPVoIPLink::destroy();
-    // Unload account map AFTER destroying
-    // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
-    unloadAccountMap();
+#if HAVE_IAX
+    IAXVoIPLink::unloadAccountMap();
+#endif
 
     {
         ost::MutexLock lock(audioLayerMutex_);
@@ -308,7 +308,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         return false;
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -363,7 +363,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     // Connect streams
     addStream(call_id);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
@@ -433,7 +433,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         }
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 bool ManagerImpl::hangupConference(const std::string& id)
@@ -459,7 +459,7 @@ bool ManagerImpl::hangupConference(const std::string& id)
 
     unsetCurrentCall();
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -507,7 +507,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
 #endif
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 //THREAD=Main
@@ -558,7 +558,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
     addStream(callId);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 //THREAD=Main
@@ -585,7 +585,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     // remove waiting call in case we make transfer without even answer
     removeWaitingCall(callId);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -652,7 +652,7 @@ void ManagerImpl::refuseCall(const std::string& id)
     // Disconnect streams
     removeStream(id);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 Conference*
@@ -700,7 +700,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
     // We now need to bind the audio to the remain participant
 
     // Unbind main participant audio from conference
-    getMainBuffer()->unBindAll(MainBuffer::DEFAULT_ID);
+    getMainBuffer().unBindAll(MainBuffer::DEFAULT_ID);
 
     ParticipantSet participants(conf->getParticipantList());
 
@@ -708,7 +708,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
     ParticipantSet::iterator iter_p = participants.begin();
 
     if (iter_p != participants.end())
-        getMainBuffer()->bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
+        getMainBuffer().bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
 
     // Then remove the conference from the conference map
     if (conferenceMap_.erase(conference_id))
@@ -844,7 +844,7 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
     conf->add(callId);
 
     // Connect new audio streams together
-    getMainBuffer()->unBindAll(callId);
+    getMainBuffer().unBindAll(callId);
 
     std::map<std::string, std::string> callDetails(getCallDetails(callId));
     std::string callState(callDetails.find("CALL_STATE")->second);
@@ -867,9 +867,9 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
     // flush conference participants only
     for (ParticipantSet::const_iterator p = participants.begin();
             p != participants.end(); ++p)
-        getMainBuffer()->flush(*p);
+        getMainBuffer().flush(*p);
 
-    getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+    getMainBuffer().flush(MainBuffer::DEFAULT_ID);
 
     // Connect stream
     addStream(callId);
@@ -898,12 +898,12 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end(); ++iter_p) {
-            getMainBuffer()->bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
+            getMainBuffer().bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
             // Reset ringbuffer's readpointers
-            getMainBuffer()->flush(*iter_p);
+            getMainBuffer().flush(*iter_p);
         }
 
-        getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+        getMainBuffer().flush(MainBuffer::DEFAULT_ID);
 
         if (conf->getState() == Conference::ACTIVE_DETACHED)
             conf->setState(Conference::ACTIVE_ATTACHED);
@@ -980,10 +980,10 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     Conference *conf = createConference(callId1, callId2);
 
     call1->setConfId(conf->getConfID());
-    getMainBuffer()->unBindAll(callId1);
+    getMainBuffer().unBindAll(callId1);
 
     call2->setConfId(conf->getConfID());
-    getMainBuffer()->unBindAll(callId2);
+    getMainBuffer().unBindAll(callId2);
 
     // Process call1 according to its state
     std::string call1_state_str(call1Details.find("CALL_STATE")->second);
@@ -1032,7 +1032,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)
@@ -1088,7 +1088,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
                 conf->setRecordingSmplRate(audiodriver_->getSampleRate());
         }
 
-        getMainBuffer()->dumpInfo();
+        getMainBuffer().dumpInfo();
     } else {
         delete conf;
     }
@@ -1134,7 +1134,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         }
     } else {
         DEBUG("Unbind main participant from conference %d");
-        getMainBuffer()->unBindAll(MainBuffer::DEFAULT_ID);
+        getMainBuffer().unBindAll(MainBuffer::DEFAULT_ID);
 
         if (not isConference(current_call_id)) {
             ERROR("Current call id (%s) is not a conference", current_call_id.c_str());
@@ -1188,7 +1188,8 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     call->setConfId("");
 
     removeStream(call_id);
-    getMainBuffer()->dumpInfo();
+
+    getMainBuffer().dumpInfo();
 #if HAVE_DBUS
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 #endif
@@ -1207,9 +1208,9 @@ void ManagerImpl::processRemainingParticipants(Conference &conf)
         // Reset ringbuffer's readpointers
         for (ParticipantSet::const_iterator p = participants.begin();
              p != participants.end(); ++p)
-            getMainBuffer()->flush(*p);
+            getMainBuffer().flush(*p);
 
-        getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+        getMainBuffer().flush(MainBuffer::DEFAULT_ID);
     } else if (n == 1) {
         // this call is the last participant, hence
         // the conference is over
@@ -1280,30 +1281,30 @@ void ManagerImpl::addStream(const std::string& call_id)
             // reset ring buffer for all conference participant
             for (ParticipantSet::const_iterator iter_p = participants.begin();
                     iter_p != participants.end(); ++iter_p)
-                getMainBuffer()->flush(*iter_p);
+                getMainBuffer().flush(*iter_p);
 
-            getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+            getMainBuffer().flush(MainBuffer::DEFAULT_ID);
         }
 
     } else {
         DEBUG("Add stream to call");
 
         // bind to main
-        getMainBuffer()->bindCallID(call_id, MainBuffer::DEFAULT_ID);
+        getMainBuffer().bindCallID(call_id, MainBuffer::DEFAULT_ID);
 
         ost::MutexLock lock(audioLayerMutex_);
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 void ManagerImpl::removeStream(const std::string& call_id)
 {
     DEBUG("Remove audio stream %s", call_id.c_str());
-    getMainBuffer()->unBindAll(call_id);
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().unBindAll(call_id);
+    getMainBuffer().dumpInfo();
 }
 
 //THREAD=Main
@@ -2681,15 +2682,6 @@ namespace {
         item.second->unregisterVoIPLink();
     }
 
-    void unloadAccount(std::pair<const std::string, Account*> &item)
-    {
-        // avoid deleting IP2IP account twice
-        if (not item.first.empty()) {
-            delete item.second;
-            item.second = 0;
-        }
-    }
-
     SIPAccount *createIP2IPAccount()
     {
         SIPAccount *ip2ip = new SIPAccount(SIPAccount::IP2IP_PROFILE);
@@ -2777,17 +2769,6 @@ void ManagerImpl::unregisterAllAccounts()
     std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), unregisterAccount);
 #if HAVE_IAX
     std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), unregisterAccount);
-#endif
-}
-
-void ManagerImpl::unloadAccountMap()
-{
-    std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), unloadAccount);
-    SIPVoIPLink::instance()->getAccounts().clear();
-
-#if HAVE_IAX
-    std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), unloadAccount);
-    IAXVoIPLink::getAccounts().clear();
 #endif
 }
 
