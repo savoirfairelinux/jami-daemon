@@ -1026,8 +1026,8 @@ class ManagerImpl {
         /**
          * Return a pointer to the  instance of the mainbuffer
          */
-        MainBuffer *getMainBuffer() {
-            return &mainBuffer_;
+        MainBuffer &getMainBuffer() {
+            return mainBuffer_;
         }
 
         /**

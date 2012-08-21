@@ -356,7 +356,7 @@ void PulseLayer::writeToSpeaker()
         applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer()->discard(urgentBytes, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().discard(urgentBytes, MainBuffer::DEFAULT_ID);
         return;
     }
 
@@ -375,7 +375,7 @@ void PulseLayer::writeToSpeaker()
 
     flushUrgent(); // flush remaining samples in _urgentRingBuffer
 
-    size_t availSamples = Manager::instance().getMainBuffer()->availableForGet(MainBuffer::DEFAULT_ID) / sizeof(SFLDataFormat);
+    size_t availSamples = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID) / sizeof(SFLDataFormat);
 
     if (availSamples == 0) {
         pa_stream_begin_write(s, &data, &writableBytes);
@@ -392,7 +392,7 @@ void PulseLayer::writeToSpeaker()
 
     double resampleFactor = 1.;
 
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
     if (resample) {
         resampleFactor = (double) sampleRate_ / mainBufferSampleRate;
@@ -404,7 +404,7 @@ void PulseLayer::writeToSpeaker()
 
     size_t readableBytes = readableSamples * sizeof(SFLDataFormat);
     pa_stream_begin_write(s, &data, &readableBytes);
-    Manager::instance().getMainBuffer()->getData(data, readableBytes, MainBuffer::DEFAULT_ID);
+    Manager::instance().getMainBuffer().getData(data, readableBytes, MainBuffer::DEFAULT_ID);
 
     if (resample) {
         const size_t nResampled = (double) readableSamples * resampleFactor;
@@ -432,7 +432,7 @@ void PulseLayer::readFromMic()
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
 
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
     if (resample) {
@@ -457,7 +457,7 @@ void PulseLayer::readFromMic()
 
     dcblocker_.process(mic_buffer_, (SFLDataFormat*)data, samples);
     applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());
-    Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes, MainBuffer::DEFAULT_ID);
+    Manager::instance().getMainBuffer().putData(mic_buffer_, bytes, MainBuffer::DEFAULT_ID);
 #ifdef RECTODISK
     outfileResampled.write((const char *)mic_buffer_, bytes);
 #endif
