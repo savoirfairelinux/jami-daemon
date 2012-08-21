@@ -92,7 +92,7 @@ void OpenSLThread::run()
     initAudioLayer();
 
     opensl_->startAudioPlayback();
-    // opensl_->startAudioCapture();
+    opensl_->startAudioCapture();
 
     opensl_->isStarted_ = true;
     while (opensl_->isStarted_) {
@@ -578,8 +578,8 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
         Manager::instance().getMainBuffer().putData(rsmpl_out_ptr,
                 rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
     } else {
-        // dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-        // Manager::instance().getMainBuffer()->putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
+        dcblocker_.process(in_ptr, in_ptr, toGetSamples);
+        Manager::instance().getMainBuffer().putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
     }
 }
 
