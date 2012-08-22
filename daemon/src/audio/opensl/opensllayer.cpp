@@ -35,13 +35,6 @@
 #include "mainbuffer.h"
 #include "opensllayer.h"
 
-#define NB_AUDIO_BUFFER 10
-#define SAMPLE_PER_FRAME 160
-
-#define WITH_STATIC_BUFFER 1
-
-AudioBuffer tmpbuffer(SAMPLE_PER_FRAME);
-
 const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 const int OpenSLLayer::NB_BUFFER_CAPTURE_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
 
@@ -228,7 +221,8 @@ OpenSLLayer::initAudioPlayback()
 
     // Initialize the location of the buffer queue
     printf("Create playback queue\n");
-    SLDataLocator_AndroidSimpleBufferQueue bufferLocation = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
+    SLDataLocator_AndroidSimpleBufferQueue bufferLocation = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
+                                                             NB_BUFFER_PLAYBACK_QUEUE}; 
 
     // Initnialize the audio format for this queue
     printf("Setting audio format\n");
@@ -248,7 +242,7 @@ OpenSLLayer::initAudioPlayback()
     SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer};
     SLDataSink audioSink = {&mixerLocation, NULL};
 
-    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, 
+    const SLInterfaceID ids[2] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, 
                                   SL_IID_VOLUME};
     const SLboolean req[2] = {SL_BOOLEAN_TRUE, 
                               SL_BOOLEAN_TRUE};
@@ -300,7 +294,7 @@ OpenSLLayer::initAudioCapture()
     // configure audio sink
     printf("Configure audio sink\n");
     SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 
-                                                            2};
+                                                            NB_BUFFER_CAPTURE_QUEUE};
 
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1, 
                                     SL_SAMPLINGRATE_8,
@@ -451,8 +445,6 @@ OpenSLLayer::getPlaybackDeviceList() const
     return playbackDeviceList;
 }
 
-enum {TONE, RINGTONE, VOICE, URGENT};
-
 bool OpenSLLayer::audioCallback()
 {
 }
@@ -470,14 +462,18 @@ void OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
     AudioLoop *tone = Manager::instance().getTelephoneTone();
     AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
+
     SFLDataFormat * const out_ptr = &(*buffer.begin());
     if (tone) {
+        printf("fill with tone\n");
         tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
     }
     else if (file_tone) {
+        printf("fill with file tone\n");
         file_tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
     }
     else {
+        printf("fill with zeros\n");
         audioBufferFillWithZeros(buffer);
     }
 }
@@ -500,6 +496,8 @@ void OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
 
     const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     const bool resample = sampleRate_ != mainBufferSampleRate;
+
+    printf("fill with voice\n");
 
     double resampleFactor = 1.0;
     size_t maxNbBytesToGet = bytesToCpy;
@@ -542,7 +540,8 @@ void OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
         return;
     }
 
-    if (bytesToGet <= 0) {
+    printf("bytesToGet %d\n", bytesToGet);
+    if (bytesToGet == 0) {
         audioPlaybackFillWithToneOrRingtone(buffer);
         return;
     }
@@ -597,7 +596,6 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
     opensl->incrementPlaybackIndex();
 
     // generateSawTooth(&(*buffer.begin()), buffer.size());
-    // memcpy(&(*buffer.begin()), &(*tmpbuffer.begin()), buffer.size());
     opensl->audioPlaybackFillBuffer(buffer);
 
     result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
@@ -630,7 +628,6 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
     assert(SL_RESULT_SUCCESS == result);
 
     AudioBuffer &previousbuffer = opensl->getNextRecordBuffer();
-    // memcpy(&(*tmpbuffer.begin()), &(*previousbuffer.begin()), buffer.size());
 
     opensl->audioCaptureFillBuffer(previousbuffer);
 }
