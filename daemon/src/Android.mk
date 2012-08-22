@@ -2,6 +2,7 @@
 # and defining targets in the "same Android.mk"
 MYSRC_LOCAL_PATH := $(call my-dir)
 #include $(call all-subdir-makefiles)
+include $(MYSRC_LOCAL_PATH)/audio/codecs/Android.mk
 
 LOCAL_PATH := $(MYSRC_LOCAL_PATH)
 
@@ -124,7 +125,6 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 #-L$(APP_PROJECT_PATH)/obj/local/armeabi \
 
 LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
-		 -L/home/sfl/android/android-ndk-r8b/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi \
 		 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip/lib \
 		 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib/lib \
 		 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib-util/lib \
@@ -142,14 +142,6 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 		 -lccgnu2 \
 		 -lccrtp1 \
 		 -lsamplerate \
-		 -lconfig \
-		 -lcodecfactory \
-		 -lsound \
-		 -lhistory \
-		 -lrtp \
-		 -lhooks \
-		 -lsiplink \
-		 -laudio \
 		 -lspeex \
 		 -lspeexresampler \
 		 -lsamplerate \
@@ -165,7 +157,6 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 		 -lcodec_ulaw \
 		 -lcodec_alaw \
 		 -llog \
-		 -lopensl \
 		 -lOpenSLES \
 		 -lgnustl_static
 
@@ -182,17 +173,10 @@ LOCAL_STATIC_LIBRARIES += libpjsua-$(TARGET_NAME) \
 						  libpjnath-$(TARGET_NAME) \
 						  libpjlib-util-$(TARGET_NAME) \
 						  libpj-$(TARGET_NAME) \
-#						  libsiplink \
-						  libaudio \
-						  libdbus-glue \
-						  libconfig \
-						  libopensl \
-						  libsound \
-						  libcodecfactory \
-						  librtp \
-						  libhooks \
-						  libhistory \
-						  libspeex
+						  libspeex \
+						  libdbus-c++-1 \
+						  libdbus \
+
 
 LOCAL_SHARED_LIBRARIES += libccgnu2 \
 						  libccrtp1 \
@@ -235,7 +219,6 @@ LOCAL_CPPFLAGS = \
 		-DAPP_NAME=\"sflphoned\"
 
 LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
-				 -L/home/sfl/android/android-ndk-r8b/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjsip/lib \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib/lib \
 				 -L$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib-util/lib \
@@ -253,15 +236,6 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lccgnu2 \
 				 -lccrtp1 \
 				 -lsamplerate \
-				 -lconfig \
-				 -lcodecfactory \
-				 -lsound \
-				 -lhistory \
-				 -lrtp \
-				 -lhooks \
-				 -lopensl \
-				 -lsiplink \
-				 -laudio \
 				 -lspeex \
 				 -lspeexresampler \
 				 -lsamplerate \
@@ -280,7 +254,6 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lOpenSLES \
 				 -llog \
 				 -lgnustl_static
-
 				 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)
 #   The list of static libraries modules (built with BUILD_STATIC_LIBRARY)
