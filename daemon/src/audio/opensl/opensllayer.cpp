@@ -178,9 +178,7 @@ OpenSLLayer::initAudioEngine()
     assert(SL_RESULT_SUCCESS == result);
 
     printf("Create Output Mixer\n");
-    const SLInterfaceID ids[1] = {SL_IID_ENVIRONMENTALREVERB};
-    const SLboolean req[1] = {SL_BOOLEAN_FALSE};
-    result = (*engineInterface)->CreateOutputMix(engineInterface, &outputMixer, 1, ids, req);
+    result = (*engineInterface)->CreateOutputMix(engineInterface, &outputMixer, 0, NULL, NULL);
     assert(SL_RESULT_SUCCESS == result);
 
     printf("Realize Output Mixer\n");
@@ -250,16 +248,16 @@ OpenSLLayer::initAudioPlayback()
     SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer};
     SLDataSink audioSink = {&mixerLocation, NULL};
 
-    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, 
-                                  SL_IID_EFFECTSEND,
+    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, 
                                   SL_IID_VOLUME};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE, 
-                              SL_BOOLEAN_TRUE,
+    const SLboolean req[2] = {SL_BOOLEAN_TRUE, 
                               SL_BOOLEAN_TRUE};
+
+    int nbInterface = 2;
 
     // create audio player
     printf("Create audio player\n");
-    result = (*engineInterface)->CreateAudioPlayer(engineInterface, &playerObject, &audioSource, &audioSink, 3, ids, req);
+    result = (*engineInterface)->CreateAudioPlayer(engineInterface, &playerObject, &audioSource, &audioSink, nbInterface, ids, req);
     assert(SL_RESULT_SUCCESS == result);
 
     printf("Realize audio player\n");
