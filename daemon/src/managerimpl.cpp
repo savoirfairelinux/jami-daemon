@@ -292,7 +292,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     stopTone();
 
     // set playback mode to VOICE
-    AudioLayer al = getAudioDriver();
+    AudioLayer *al = getAudioDriver();
     if(al) al->setPlaybackMode(AudioLayer::VOICE);
 
     // store the current call id
@@ -359,7 +359,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     stopTone();
 
     // set playback mode to NONE
-    AudioLayer al = getAudioDriver();
+    AudioLayer *al = getAudioDriver();
     if(al) al->setPlaybackMode(AudioLayer::NONE);
 
     /* Broadcast a signal over DBus */
@@ -1532,7 +1532,7 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
         stopTone();
 
         // set playback mode to VOICE
-        AudioLayer al = getAudioDriver();
+        AudioLayer *al = getAudioDriver();
         if(al) al->setPlaybackMode(AudioLayer::VOICE);
     }
 
@@ -1574,7 +1574,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         unsetCurrentCall();
 
         // set playback mode to NONE
-        AudioLayer al = getAudioDriver();
+        AudioLayer *al = getAudioDriver();
         if(al) al->setPlaybackMode(AudioLayer::NONE);
     }
 
