@@ -1736,7 +1736,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
     }
 
-    int samplerate;
+    int audioLayerSmplr = 8000;
     {
         ost::MutexLock lock(audioLayerMutex_);
 
@@ -1745,7 +1745,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
             return;
         }
 
-        samplerate = audiodriver_->getSampleRate();
+        audioLayerSmplr = audiodriver_->getSampleRate();
     }
 
     {
@@ -1758,7 +1758,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
 
         try {
             if (ringchoice.find(".wav") != std::string::npos)
-                audiofile_.reset(new WaveFile(ringchoice, samplerate));
+                audiofile_.reset(new WaveFile(ringchoice, audioLayerSmplr));
             else {
                 sfl::Codec *codec;
                 if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
@@ -1766,7 +1766,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
                 else
                     throw AudioFileException("Couldn't guess an appropriate decoder");
 
-                audiofile_.reset(new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate));
+                audiofile_.reset(new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), audioLayerSmplr));
             }
         } catch (const AudioFileException &e) {
             ERROR("Exception: %s", e.what());
