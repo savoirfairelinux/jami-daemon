@@ -291,6 +291,10 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     // If sflphone is ringing
     stopTone();
 
+    // set playback mode to VOICE
+    AudioLayer al = getAudioDriver();
+    if(al) al->setPlaybackMode(AudioLayer::VOICE);
+
     // store the current call id
     std::string current_call_id(getCurrentCallId());
 
@@ -353,6 +357,10 @@ void ManagerImpl::hangupCall(const std::string& callId)
     std::string currentCallId(getCurrentCallId());
 
     stopTone();
+
+    // set playback mode to NONE
+    AudioLayer al = getAudioDriver();
+    if(al) al->setPlaybackMode(AudioLayer::NONE);
 
     /* Broadcast a signal over DBus */
     DEBUG("Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
@@ -1520,8 +1528,13 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     DEBUG("Peer answered call %s", id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
-    if (isCurrentCall(id))
+    if (isCurrentCall(id)) {
         stopTone();
+
+        // set playback mode to VOICE
+        AudioLayer al = getAudioDriver();
+        if(al) al->setPlaybackMode(AudioLayer::VOICE);
+    }
 
     // Connect audio streams
     addStream(id);
@@ -1559,6 +1572,10 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     } else if (isCurrentCall(call_id)) {
         stopTone();
         unsetCurrentCall();
+
+        // set playback mode to NONE
+        AudioLayer al = getAudioDriver();
+        if(al) al->setPlaybackMode(AudioLayer::NONE);
     }
 
     /* Direct IP to IP call */
