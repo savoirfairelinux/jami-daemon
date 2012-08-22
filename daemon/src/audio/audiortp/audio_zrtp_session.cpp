@@ -126,12 +126,9 @@ AudioZrtpSession::AudioZrtpThread::AudioZrtpThread(AudioZrtpSession &session) : 
 
 void AudioZrtpSession::AudioZrtpThread::run()
 {
-    // Set recording sampling rate
-    int threadSleep = 20;
-
     DEBUG("Entering Audio zrtp thread main loop %s", running_ ? "running" : "not running");
 
-    TimerPort::setTimer(threadSleep);
+    TimerPort::setTimer(zrtpSession_.transportRate_);
 
     while (running_) {
         // Send session
@@ -142,7 +139,7 @@ void AudioZrtpSession::AudioZrtpThread::run()
 
         Thread::sleep(TimerPort::getTimer());
 
-        TimerPort::incTimer(threadSleep);
+        TimerPort::incTimer(zrtpSession_.transportRate_);
     }
 
     DEBUG("Leaving audio rtp thread loop");
@@ -151,11 +148,6 @@ void AudioZrtpSession::AudioZrtpThread::run()
 int AudioZrtpSession::getIncrementForDTMF() const
 {
     return 160;
-}
-
-void AudioZrtpSession::setSessionMedia(AudioCodec &audioCodec)
-{
-    AudioRtpSession::setSessionMedia(audioCodec);
 }
 
 int AudioZrtpSession::startRtpThread(AudioCodec &audiocodec)

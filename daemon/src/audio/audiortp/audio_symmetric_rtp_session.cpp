@@ -43,7 +43,6 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     , ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this, *this)
     , rtpThread_(*this)
-    , transportRate_(20)
 {
     DEBUG("Setting new RTP session with destination %s:%d",
             call_.getLocalIp().c_str(), call_.getLocalAudioPort());
@@ -76,16 +75,6 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
         TimerPort::incTimer(rtpSession_.transportRate_);
     }
-}
-
-void AudioSymmetricRtpSession::setSessionMedia(AudioCodec &audioCodec)
-{
-    AudioRtpSession::setSessionMedia(audioCodec);
-    call_.setRecordingSmplRate(getCodecSampleRate());
-
-    int transportRate = audioCodec.getFrameSize() / (audioCodec.getClockRate()/1000);
-    transportRate_ = (transportRate > 0)?transportRate:20;
-    DEBUG("Switching to a transport rate of %d ms",transportRate_);
 }
 
 int AudioSymmetricRtpSession::startRtpThread(AudioCodec &audiocodec)

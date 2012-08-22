@@ -45,6 +45,7 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue, ost::T
     , call_(call)
     , timestamp_(0)
     , timestampIncrement_(0)
+    , transportRate_(20)
     , queue_(queue)
     , isStarted_(false)
     , remote_ip_()
@@ -98,6 +99,12 @@ void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
         else
             queue_.setPayloadFormat(ost::StaticPayloadFormat(static_cast<ost::StaticPayloadType>(payloadType)));
     }
+
+    call_.setRecordingSmplRate(getCodecSampleRate());
+
+    int transportRate = getCodecFrameSize() / (getCodecSampleRate() / 1000);
+    transportRate_ = (transportRate > 0)?transportRate:20;
+    DEBUG("Switching to a transport rate of %d ms",transportRate_);
 }
 
 void AudioRtpSession::sendDtmfEvent()
