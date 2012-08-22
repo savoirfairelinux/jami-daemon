@@ -68,6 +68,7 @@ class AudioLayer {
         };
 
         enum PlaybackMode {
+            NONE = 0,
             TONE,
             RINGTONE,
             VOICE,
