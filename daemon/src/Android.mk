@@ -167,7 +167,7 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 		 -llog \
 		 -lopensl \
 		 -lOpenSLES \
-		 -lgnustl_shared
+		 -lgnustl_static
 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)
 #   The list of static libraries modules (built with BUILD_STATIC_LIBRARY)
@@ -279,7 +279,7 @@ LOCAL_LDLIBS  += -L$(APP_PROJECT_PATH)/obj/local/armeabi \
 				 -lcodec_alaw \
 				 -lOpenSLES \
 				 -llog \
-				 -lgnustl_shared
+				 -lgnustl_static
 
 				 
 # LOCAL_STATIC_LIBRARIES (NDK documentation)
