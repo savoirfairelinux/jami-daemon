@@ -96,11 +96,9 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
                 NON_COPYABLE(AudioRtpThread);
                 AudioSymmetricRtpSession &rtpSession_;
         };
-        void setSessionMedia(AudioCodec &codec);
         int startRtpThread(AudioCodec &audiocodec);
 
-        AudioRtpThread rtpThread_    ;
-        unsigned int   transportRate_;
+        AudioRtpThread rtpThread_;
 };
 
 }

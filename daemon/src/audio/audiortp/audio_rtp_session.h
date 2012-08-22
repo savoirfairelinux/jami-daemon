@@ -80,7 +80,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         /**
          * Set the audio codec for this RTP session
          */
-        virtual void setSessionMedia(AudioCodec &codec) = 0;
+        void setSessionMedia(AudioCodec &codec);
 
 
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
@@ -110,6 +110,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          * except for G722 which require a 8 kHz incrementation.
          */
         int timestampIncrement_;
+
+        /**
+         * Rate at which the transport layer handle packets, should be
+         * synchronized with codec requirements.
+         */
+        unsigned int transportRate_;
 
         ost::RTPDataQueue &queue_;
 
