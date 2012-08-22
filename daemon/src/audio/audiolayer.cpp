@@ -39,6 +39,7 @@ unsigned int AudioLayer::playbackGain_ = 100;
 
 AudioLayer::AudioLayer()
     : isStarted_(false)
+    , playbackMode_(NONE)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
     , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
     , mutex_()
