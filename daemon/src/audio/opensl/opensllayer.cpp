@@ -361,7 +361,7 @@ OpenSLLayer::startAudioPlayback()
         incrementPlaybackIndex();
 
         // generateSawTooth(&(*buffer.begin()), buffer.size());
-        memset(&(*buffer.begin()), 0, buffer.size() * sizeof(short));
+        memset(&(*buffer.begin()), 0, buffer.size() * sizeof(SFLDataFormat));
 
         result = (*playbackBufferQueue)->Enqueue(playbackBufferQueue, &(*buffer.begin()), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
@@ -449,36 +449,38 @@ bool OpenSLLayer::audioCallback()
 {
 }
 
-void OpenSLLayer::audioBufferFillWithZeros(AudioBuffer &buffer) {
+bool OpenSLLayer::audioBufferFillWithZeros(AudioBuffer &buffer) {
 
     SFLDataFormat * out_ptr = &(*buffer.begin()); 
     
     memset(out_ptr, 0, buffer.size() * sizeof(SFLDataFormat));
+
+    return true;
 }
 
 
-void OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
-    // printf("== Audio playback fill with tone or ringtone\n");
+bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
     AudioLoop *tone = Manager::instance().getTelephoneTone();
     AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
-
     SFLDataFormat * const out_ptr = &(*buffer.begin());
+
+    // In case of a dtmf, the pointers will be set to NULL once the dtmf length is 
+    // reached. For this reason we need to fill audio buffer with zeros if pointer is NULL
     if (tone) {
-        printf("fill with tone\n");
         tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
     }
     else if (file_tone) {
-        printf("fill with file tone\n");
         file_tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
     }
     else {
-        printf("fill with zeros\n");
         audioBufferFillWithZeros(buffer);
     }
+
+    return true;
 }
 
-void OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesToGet) {
+bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesToGet) {
     // Urgent data (dtmf, incoming call signal) come first.
     const size_t bytesToPut = buffer.size() * sizeof(SFLDataFormat);
     bytesToGet = std::min(bytesToGet, bytesToPut);
@@ -489,15 +491,15 @@ void OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesT
 
     // Consume the regular one as well (same amount of bytes)
     Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
+
+    return true;
 }
 
-void OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail) {
+bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail) {
     const size_t bytesToCpy = buffer.size() * sizeof(SFLDataFormat);
 
     const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     const bool resample = sampleRate_ != mainBufferSampleRate;
-
-    printf("fill with voice\n");
 
     double resampleFactor = 1.0;
     size_t maxNbBytesToGet = bytesToCpy;
@@ -525,33 +527,43 @@ void OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
         const size_t outBytes = outSamples * sizeof(SFLDataFormat);
         converter_.resample(out_ptr, rsmpl_out_ptr, outSamples,
                 mainBufferSampleRate, sampleRate_, samplesToGet);
-    } 
+    }
+
+    return true;
 }
 
-void OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
+bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
     // Looks if there's any voice audio from rtp to be played
     size_t bytesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
 
     // 
     size_t urgentBytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
-    if (urgentBytesToGet > 0) {
-        audioPlaybackFillWithUrgent(buffer, urgentBytesToGet);
-        return;
+    PlaybackMode mode = getPlaybackMode();
+
+    bool bufferFilled = false;
+
+    switch(mode) {
+    case NONE:
+    case TONE:
+    case RINGTONE:
+    case URGENT: {
+        if (urgentBytesToGet > 0)
+            bufferFilled = audioPlaybackFillWithUrgent(buffer, urgentBytesToGet);
+        else
+            bufferFilled = audioPlaybackFillWithToneOrRingtone(buffer);
+        }
+        break;
+    case VOICE: {
+        if(bytesToGet > 0)
+            bufferFilled = audioPlaybackFillWithVoice(buffer, bytesToGet);
+        }
+        break;
+    default:
+        bufferFilled = audioBufferFillWithZeros(buffer);
     }
 
-    printf("bytesToGet %d\n", bytesToGet);
-    if (bytesToGet == 0) {
-        audioPlaybackFillWithToneOrRingtone(buffer);
-        return;
-    }
-    else {
-	audioPlaybackFillWithVoice(buffer, bytesToGet);
-        return;
-    }
-
-    audioBufferFillWithZeros(buffer);
-
+    return bufferFilled;
 }
 
 void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
@@ -585,24 +597,19 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
     assert(NULL != queue);
     assert(NULL != context);
 
-    SLresult result;
-
-    // std::vector<SFLDataFormat> out(maxSamples, 0);
-    // SFLDataFormat * const out_ptr = &(*out.begin());
-    // generate_pink_noise((uint8_t*)out_ptr, 0, out.size());
     OpenSLLayer *opensl = (OpenSLLayer *)context;
 
     AudioBuffer &buffer = opensl->getNextPlaybackBuffer();
-    opensl->incrementPlaybackIndex();
 
-    // generateSawTooth(&(*buffer.begin()), buffer.size());
-    opensl->audioPlaybackFillBuffer(buffer);
+    bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
+    if(bufferFilled) {
+        opensl->incrementPlaybackIndex();
 
-    result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
-    if (SL_RESULT_SUCCESS != result) {
-        printf("Error could not enqueue buffers in playback callback\n");
+        SLresult result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
+        if (SL_RESULT_SUCCESS != result) {
+            printf("Error could not enqueue buffers in playback callback\n");
+        }
     }
-
 }
 
 void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *context)

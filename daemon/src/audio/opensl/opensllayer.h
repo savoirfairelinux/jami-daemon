@@ -161,21 +161,21 @@ class OpenSLLayer : public AudioLayer {
          */
         bool audioCallback();
 
-        void audioBufferFillWithZeros(AudioBuffer &buffer);
+        bool audioBufferFillWithZeros(AudioBuffer &buffer);
 
         /**
          * Here fill the input buffer with tone or ringtone samples
          */  
-        void audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer);
+        bool audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer);
 
-        void audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail); 
+        bool audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail); 
 
-        void audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
+        bool audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
 
         /**
          * The main logic to determine what should be played is determined here
          */
-        void audioPlaybackFillBuffer(AudioBuffer &buffer);
+        bool audioPlaybackFillBuffer(AudioBuffer &buffer);
 
         void audioCaptureFillBuffer(AudioBuffer &buffer);
 
