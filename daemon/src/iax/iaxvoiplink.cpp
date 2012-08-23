@@ -168,19 +168,19 @@ IAXVoIPLink::sendAudioFromMic()
         if (!audioCodec)
             continue;
 
-        Manager::instance().getMainBuffer()->setInternalSamplingRate(audioCodec->getClockRate());
+        Manager::instance().getMainBuffer().setInternalSamplingRate(audioCodec->getClockRate());
 
-        unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+        unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
         const size_t bytesNeeded = mainBufferSampleRate * 20 / 1000 * sizeof(SFLDataFormat);
 
-        if (Manager::instance().getMainBuffer()->availableForGet(currentCall->getCallId()) < bytesNeeded)
+        if (Manager::instance().getMainBuffer().availableForGet(currentCall->getCallId()) < bytesNeeded)
             continue;
 
         // Get bytes from micRingBuffer to data_from_mic
-        int bytes = Manager::instance().getMainBuffer()->getData(decData_, bytesNeeded, currentCall->getCallId());
+        int bytes = Manager::instance().getMainBuffer().getData(decData_, bytesNeeded, currentCall->getCallId());
         int samples = bytes / sizeof(SFLDataFormat);
 
         int compSize;
@@ -284,7 +284,7 @@ IAXVoIPLink::answer(Call *call)
     call->setState(Call::ACTIVE);
     call->setConnectionState(Call::CONNECTED);
 
-    Manager::instance().getMainBuffer()->flushAllBuffers();
+    Manager::instance().getMainBuffer().flushAllBuffers();
 }
 
 void
@@ -295,7 +295,7 @@ IAXVoIPLink::hangup(const std::string& id)
     if (call == NULL)
         throw VoipLinkException("Could not find call");
 
-    Manager::instance().getMainBuffer()->unBindAll(call->getCallId());
+    Manager::instance().getMainBuffer().unBindAll(call->getCallId());
 
     mutexIAX_.enter();
     iax_hangup(call->session, (char*) "Dumped Call");
@@ -315,7 +315,7 @@ IAXVoIPLink::peerHungup(const std::string& id)
     if (call == NULL)
         throw VoipLinkException("Could not find call");
 
-    Manager::instance().getMainBuffer()->unBindAll(call->getCallId());
+    Manager::instance().getMainBuffer().unBindAll(call->getCallId());
 
     call->session = NULL;
 
@@ -332,7 +332,7 @@ IAXVoIPLink::onhold(const std::string& id)
     if (call == NULL)
         throw VoipLinkException("Call does not exist");
 
-    Manager::instance().getMainBuffer()->unBindAll(call->getCallId());
+    Manager::instance().getMainBuffer().unBindAll(call->getCallId());
 
     mutexIAX_.enter();
     iax_quelch_moh(call->session, true);
@@ -560,7 +560,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             Manager::instance().peerAnsweredCall(id);
 
             Manager::instance().getAudioDriver()->startStream();
-            Manager::instance().getMainBuffer()->flushAllBuffers();
+            Manager::instance().getMainBuffer().flushAllBuffers();
 
             break;
 
@@ -614,8 +614,8 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     if (!audioCodec)
         return;
 
-    Manager::instance().getMainBuffer()->setInternalSamplingRate(audioCodec->getClockRate());
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    Manager::instance().getMainBuffer().setInternalSamplingRate(audioCodec->getClockRate());
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
 
     if (event->subclass)
         call->format = event->subclass;
@@ -640,7 +640,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
         out = resampledData_;
     }
 
-    Manager::instance().getMainBuffer()->putData(out, outSize, call->getCallId());
+    Manager::instance().getMainBuffer().putData(out, outSize, call->getCallId());
 }
 
 /**
