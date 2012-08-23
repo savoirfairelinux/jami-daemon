@@ -76,7 +76,8 @@ void CallManager::placeCallFirstAccount(const std::string& callID,
         accountList = Manager::instance().getAccountList();
 
     for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
-        if ((*iter != SIPAccount::IP2IP_PROFILE) && Manager::instance().getAccount(*iter)->isEnabled()) {
+        Account *account = Manager::instance().getAccount(*iter);
+        if (account && (*iter != SIPAccount::IP2IP_PROFILE) && account->isEnabled()) {
             Manager::instance().outgoingCall(*iter, callID, to);
             return;
         }
@@ -313,7 +314,8 @@ CallManager::startTone(const int32_t& start , const int32_t& type)
 sfl::AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
-    SIPVoIPLink * link = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(""));
+    // IP2IP profile is associated with IP2IP profile anyway
+    SIPVoIPLink * link = static_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(SIPAccount::IP2IP_PROFILE));
 
     if (!link)
         throw CallManagerException("Failed to get sip link");

@@ -181,7 +181,7 @@ int AudioRtpRecordHandler::processDataEncode()
         return 0;
 
     int codecSampleRate = getCodecSampleRate();
-    int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
 
     double resampleFactor = (double) mainBufferSampleRate / codecSampleRate;
 
@@ -189,11 +189,11 @@ int AudioRtpRecordHandler::processDataEncode()
     int samplesToGet = resampleFactor * getCodecFrameSize();
     const size_t bytesToGet = samplesToGet * sizeof(SFLDataFormat);
 
-    if (Manager::instance().getMainBuffer()->availableForGet(id_) < bytesToGet)
+    if (Manager::instance().getMainBuffer().availableForGet(id_) < bytesToGet)
         return 0;
 
     SFLDataFormat *micData = audioRtpRecord_.decData_.data();
-    const size_t bytes = Manager::instance().getMainBuffer()->getData(micData, bytesToGet, id_);
+    const size_t bytes = Manager::instance().getMainBuffer().getData(micData, bytesToGet, id_);
 
 #ifdef RECTODISK
     rtpNotResampled.write((const char *)micData, bytes);
@@ -277,7 +277,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     int outSamples = inSamples;
 
     int codecSampleRate = getCodecSampleRate();
-    int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
 
     // test if resampling is required
     if (codecSampleRate != mainBufferSampleRate) {
@@ -290,7 +290,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
                 mainBufferSampleRate, inSamples);
     }
 
-    Manager::instance().getMainBuffer()->putData(out, outSamples * sizeof(SFLDataFormat), id_);
+    Manager::instance().getMainBuffer().putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
 #undef RETURN_IF_NULL
 

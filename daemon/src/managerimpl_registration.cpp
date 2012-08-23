@@ -38,6 +38,7 @@
 #include "account.h"
 #include "dbus/callmanager.h"
 #include "global.h"
+#include "logger.h"
 
 #include "audio/audiolayer.h"
 #include "sip/sipvoiplink.h"
@@ -49,7 +50,10 @@
 void
 ManagerImpl::registerAccounts()
 {
-    for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
+    AccountMap concatenatedMap;
+    fillConcatAccountMap(concatenatedMap);
+
+    for (AccountMap::iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
         Account *a = iter->second;
 
         if (!a)
@@ -65,10 +69,18 @@ ManagerImpl::registerAccounts()
 
 VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
 {
-    if (not accountID.empty())
-        return getAccount(accountID)->getVoIPLink();
-    else
+    Account *account = getAccount(accountID);
+    if(account == NULL) {
+        DEBUG("Could not find account for voip link, returning sip voip");
         return SIPVoIPLink::instance();
+    }
+
+    if (not accountID.empty())
+        return account->getVoIPLink();
+    else {
+        DEBUG("Account id is empty for voip link, returning sip voip");
+        return SIPVoIPLink::instance();
+    }
 }
 
 

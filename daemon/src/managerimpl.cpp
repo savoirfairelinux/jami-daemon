@@ -40,13 +40,20 @@
 #include "managerimpl.h"
 #include "account_schema.h"
 
-#include "account.h"
 #include "dbus/callmanager.h"
 #include "global.h"
 #include "fileutils.h"
+#include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
+#include "sip/sipcall.h"
 #include "im/instant_messaging.h"
+
+#if HAVE_IAX
 #include "iax/iaxaccount.h"
+#include "iax/iaxcall.h"
+#include "iax/iaxvoiplink.h"
+#endif
+
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
@@ -54,8 +61,6 @@
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
-#include "sip/sipvoiplink.h"
-#include "iax/iaxvoiplink.h"
 #include "history/historynamecache.h"
 #include "manager.h"
 
@@ -85,7 +90,7 @@ ManagerImpl::ManagerImpl() :
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
-    callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(), accountMap_(),
+    callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(),
     mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
     // initialize random generator for call id
@@ -98,26 +103,20 @@ void ManagerImpl::init(const std::string &config_file)
     DEBUG("Configuration file path: %s", path_.c_str());
 
     try {
-        std::fstream testFileExistence(path_.c_str(), std::fstream::in);
-        bool fileExist = testFileExistence.good();
-        testFileExistence.close();
+        FILE *file = fopen(path_.c_str(), "rb");
 
-        if(fileExist) {
-            Conf::YamlParser parser(path_.c_str());
+        if (file) {
+            Conf::YamlParser parser(file);
             parser.serializeEvents();
             parser.composeEvents();
             parser.constructNativeData();
             loadAccountMap(parser);
-        }
-        else {
+            fclose(file);
+        } else {
             WARN("Config file not found: creating default account map");
             loadDefaultAccountMap();
         }
-    }
-    catch (const Conf::YamlParserException &e) {
-        ERROR("%s", e.what());
-    }
-    catch(std::fstream::failure &e) {
+    } catch (const Conf::YamlParserException &e) {
         ERROR("%s", e.what());
     }
 
@@ -127,7 +126,7 @@ void ManagerImpl::init(const std::string &config_file)
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
             telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
-            dtmfKey_.reset(new DTMF(getMainBuffer()->getInternalSamplingRate()));
+            dtmfKey_.reset(new DTMF(getMainBuffer().getInternalSamplingRate()));
         }
     }
 
@@ -164,9 +163,9 @@ void ManagerImpl::finish()
     unregisterAllAccounts();
 
     SIPVoIPLink::destroy();
-    // Unload account map AFTER destroying
-    // the SIPVoIPLink, the link still needs the accounts for pjsip cleanup
-    unloadAccountMap();
+#if HAVE_IAX
+    IAXVoIPLink::unloadAccountMap();
+#endif
 
     {
         ost::MutexLock lock(audioLayerMutex_);
@@ -277,9 +276,13 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         callFailure(call_id);
         ERROR("%s", e.what());
         return false;
+    } catch (ost::Socket *) {
+        callFailure(call_id);
+        ERROR("Could not bind socket");
+        return false;
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -291,6 +294,10 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     // If sflphone is ringing
     stopTone();
+
+    // set playback mode to VOICE
+    AudioLayer *al = getAudioDriver();
+    if(al) al->setPlaybackMode(AudioLayer::VOICE);
 
     // store the current call id
     std::string current_call_id(getCurrentCallId());
@@ -334,7 +341,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     // Connect streams
     addStream(call_id);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
@@ -354,6 +361,10 @@ void ManagerImpl::hangupCall(const std::string& callId)
     std::string currentCallId(getCurrentCallId());
 
     stopTone();
+
+    // set playback mode to NONE
+    AudioLayer *al = getAudioDriver();
+    if(al) al->setPlaybackMode(AudioLayer::NONE);
 
     /* Broadcast a signal over DBus */
     DEBUG("Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
@@ -378,7 +389,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     if (isIPToIP(callId)) {
         /* Direct IP to IP call */
         try {
-            Call * call = SIPVoIPLink::instance()->getCall(callId);
+            Call * call = SIPVoIPLink::instance()->getSipCall(callId);
             if (call) {
                 history_.addCall(call, preferences.getHistoryLimit());
                 SIPVoIPLink::instance()->hangup(callId);
@@ -399,7 +410,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         }
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 bool ManagerImpl::hangupConference(const std::string& id)
@@ -425,7 +436,7 @@ bool ManagerImpl::hangupConference(const std::string& id)
 
     unsetCurrentCall();
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -471,7 +482,7 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 //THREAD=Main
@@ -502,7 +513,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
         /* Classic call, attached to an account */
         const std::string accountId(getAccountFromCall(callId));
         DEBUG("Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
-        Call * call = getAccountLink(accountId)->getCall(callId);
+        Call * call = getCallFromCallID(callId);
 
         if (call)
             getAccountLink(accountId)->offhold(callId);
@@ -520,7 +531,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
     addStream(callId);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 //THREAD=Main
@@ -547,7 +558,7 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
     // remove waiting call in case we make transfer without even answer
     removeWaitingCall(callId);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 
     return true;
 }
@@ -608,7 +619,7 @@ void ManagerImpl::refuseCall(const std::string& id)
     // Disconnect streams
     removeStream(id);
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 Conference*
@@ -652,7 +663,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
     // We now need to bind the audio to the remain participant
 
     // Unbind main participant audio from conference
-    getMainBuffer()->unBindAll(MainBuffer::DEFAULT_ID);
+    getMainBuffer().unBindAll(MainBuffer::DEFAULT_ID);
 
     ParticipantSet participants(conf->getParticipantList());
 
@@ -660,7 +671,7 @@ void ManagerImpl::removeConference(const std::string& conference_id)
     ParticipantSet::iterator iter_p = participants.begin();
 
     if (iter_p != participants.end())
-        getMainBuffer()->bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
+        getMainBuffer().bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
 
     // Then remove the conference from the conference map
     if (conferenceMap_.erase(conference_id))
@@ -792,7 +803,7 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
     conf->add(callId);
 
     // Connect new audio streams together
-    getMainBuffer()->unBindAll(callId);
+    getMainBuffer().unBindAll(callId);
 
     std::map<std::string, std::string> callDetails(getCallDetails(callId));
     std::string callState(callDetails.find("CALL_STATE")->second);
@@ -815,9 +826,9 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
     // flush conference participants only
     for (ParticipantSet::const_iterator p = participants.begin();
             p != participants.end(); ++p)
-        getMainBuffer()->flush(*p);
+        getMainBuffer().flush(*p);
 
-    getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+    getMainBuffer().flush(MainBuffer::DEFAULT_ID);
 
     // Connect stream
     addStream(callId);
@@ -846,12 +857,12 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 
         for (ParticipantSet::const_iterator iter_p = participants.begin();
                 iter_p != participants.end(); ++iter_p) {
-            getMainBuffer()->bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
+            getMainBuffer().bindCallID(*iter_p, MainBuffer::DEFAULT_ID);
             // Reset ringbuffer's readpointers
-            getMainBuffer()->flush(*iter_p);
+            getMainBuffer().flush(*iter_p);
         }
 
-        getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+        getMainBuffer().flush(MainBuffer::DEFAULT_ID);
 
         if (conf->getState() == Conference::ACTIVE_DETACHED)
             conf->setState(Conference::ACTIVE_ATTACHED);
@@ -870,8 +881,16 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 Call *
 ManagerImpl::getCallFromCallID(const std::string &callID)
 {
-    const std::string accountID(getAccountFromCall(callID));
-    Call *call = getAccountLink(accountID)->getCall(callID);
+    Call *call = NULL;
+
+    call = SIPVoIPLink::instance()->getSipCall(callID);
+#if HAVE_IAX
+    if(call != NULL)
+        return call;
+
+    call = IAXVoIPLink::getIaxCall(callID);
+#endif
+
     return call;
 }
 
@@ -918,10 +937,10 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     Conference *conf = createConference(callId1, callId2);
 
     call1->setConfId(conf->getConfID());
-    getMainBuffer()->unBindAll(callId1);
+    getMainBuffer().unBindAll(callId1);
 
     call2->setConfId(conf->getConfID());
-    getMainBuffer()->unBindAll(callId2);
+    getMainBuffer().unBindAll(callId2);
 
     // Process call1 according to its state
     std::string call1_state_str(call1Details.find("CALL_STATE")->second);
@@ -970,7 +989,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)
@@ -1022,7 +1041,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
                 conf->setRecordingSmplRate(audiodriver_->getSampleRate());
         }
 
-        getMainBuffer()->dumpInfo();
+        getMainBuffer().dumpInfo();
     } else {
         delete conf;
     }
@@ -1068,7 +1087,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         }
     } else {
         DEBUG("Unbind main participant from conference %d");
-        getMainBuffer()->unBindAll(MainBuffer::DEFAULT_ID);
+        getMainBuffer().unBindAll(MainBuffer::DEFAULT_ID);
 
         if (not isConference(current_call_id)) {
             ERROR("Current call id (%s) is not a conference", current_call_id.c_str());
@@ -1120,7 +1139,7 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     call->setConfId("");
 
     removeStream(call_id);
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
     processRemainingParticipants(*conf);
 }
@@ -1137,9 +1156,9 @@ void ManagerImpl::processRemainingParticipants(Conference &conf)
         // Reset ringbuffer's readpointers
         for (ParticipantSet::const_iterator p = participants.begin();
              p != participants.end(); ++p)
-            getMainBuffer()->flush(*p);
+            getMainBuffer().flush(*p);
 
-        getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+        getMainBuffer().flush(MainBuffer::DEFAULT_ID);
     } else if (n == 1) {
         // this call is the last participant, hence
         // the conference is over
@@ -1210,30 +1229,30 @@ void ManagerImpl::addStream(const std::string& call_id)
             // reset ring buffer for all conference participant
             for (ParticipantSet::const_iterator iter_p = participants.begin();
                     iter_p != participants.end(); ++iter_p)
-                getMainBuffer()->flush(*iter_p);
+                getMainBuffer().flush(*iter_p);
 
-            getMainBuffer()->flush(MainBuffer::DEFAULT_ID);
+            getMainBuffer().flush(MainBuffer::DEFAULT_ID);
         }
 
     } else {
         DEBUG("Add stream to call");
 
         // bind to main
-        getMainBuffer()->bindCallID(call_id, MainBuffer::DEFAULT_ID);
+        getMainBuffer().bindCallID(call_id, MainBuffer::DEFAULT_ID);
 
         ost::MutexLock lock(audioLayerMutex_);
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
     }
 
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().dumpInfo();
 }
 
 void ManagerImpl::removeStream(const std::string& call_id)
 {
     DEBUG("Remove audio stream %s", call_id.c_str());
-    getMainBuffer()->unBindAll(call_id);
-    getMainBuffer()->dumpInfo();
+    getMainBuffer().unBindAll(call_id);
+    getMainBuffer().dumpInfo();
 }
 
 //THREAD=Main
@@ -1249,8 +1268,14 @@ void ManagerImpl::saveConfig()
     try {
         Conf::YamlEmitter emitter(path_.c_str());
 
-        for (AccountMap::iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter)
+        for (AccountMap::iterator iter = SIPVoIPLink::instance()->getAccounts().begin();
+             iter != SIPVoIPLink::instance()->getAccounts().end(); ++iter)
             iter->second->serialize(emitter);
+
+#if HAVE_IAX
+        for (AccountMap::iterator iter = IAXVoIPLink::getAccounts().begin(); iter != IAXVoIPLink::getAccounts().end(); ++iter)
+            iter->second->serialize(emitter);
+#endif
 
         preferences.serialize(emitter);
         voipPreferences.serialize(emitter);
@@ -1507,8 +1532,13 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     DEBUG("Peer answered call %s", id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
-    if (isCurrentCall(id))
+    if (isCurrentCall(id)) {
         stopTone();
+
+        // set playback mode to VOICE
+        AudioLayer *al = getAudioDriver();
+        if(al) al->setPlaybackMode(AudioLayer::VOICE);
+    }
 
     // Connect audio streams
     addStream(id);
@@ -1546,18 +1576,22 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     } else if (isCurrentCall(call_id)) {
         stopTone();
         unsetCurrentCall();
+
+        // set playback mode to NONE
+        AudioLayer *al = getAudioDriver();
+        if(al) al->setPlaybackMode(AudioLayer::NONE);
     }
 
     /* Direct IP to IP call */
     if (isIPToIP(call_id)) {
-        Call * call = SIPVoIPLink::instance()->getCall(call_id);
+        Call * call = SIPVoIPLink::instance()->getSipCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         SIPVoIPLink::instance()->hangup(call_id);
         saveHistory();
     } else {
         const std::string account_id(getAccountFromCall(call_id));
         VoIPLink *link = getAccountLink(account_id);
-        Call * call = link->getCall(call_id);
+        Call * call = getCallFromCallID(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
         link->peerHungup(call_id);
         saveHistory();
@@ -1723,7 +1757,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
     }
 
-    int samplerate;
+    int audioLayerSmplr = 8000;
     {
         ost::MutexLock lock(audioLayerMutex_);
 
@@ -1732,7 +1766,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
             return;
         }
 
-        samplerate = audiodriver_->getSampleRate();
+        audioLayerSmplr = audiodriver_->getSampleRate();
     }
 
     {
@@ -1745,7 +1779,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
 
         try {
             if (ringchoice.find(".wav") != std::string::npos)
-                audiofile_.reset(new WaveFile(ringchoice, samplerate));
+                audiofile_.reset(new WaveFile(ringchoice, audioLayerSmplr));
             else {
                 sfl::Codec *codec;
                 if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
@@ -1753,7 +1787,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
                 else
                     throw AudioFileException("Couldn't guess an appropriate decoder");
 
-                audiofile_.reset(new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), samplerate));
+                audiofile_.reset(new RawFile(ringchoice, static_cast<sfl::AudioCodec *>(codec), audioLayerSmplr));
             }
         } catch (const AudioFileException &e) {
             ERROR("Exception: %s", e.what());
@@ -1833,7 +1867,7 @@ std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 {
     std::string accountid = getAccountFromCall(id);
     VoIPLink* link = getAccountLink(accountid);
-    Call* call = link->getCall(id);
+    Call* call = getCallFromCallID(id);
     std::string codecName;
 
     if (call) {
@@ -1963,17 +1997,6 @@ void ManagerImpl::ringtoneEnabled(const std::string& id)
     account->getRingtoneEnabled() ? account->setRingtoneEnabled(false) : account->setRingtoneEnabled(true);
 }
 
-std::string ManagerImpl::getRecordPath() const
-{
-    return audioPreference.getRecordpath();
-}
-
-void ManagerImpl::setRecordPath(const std::string& recPath)
-{
-    DEBUG("Set record path %s", recPath.c_str());
-    audioPreference.setRecordpath(recPath);
-}
-
 bool ManagerImpl::getIsAlwaysRecording() const
 {
     return audioPreference.getIsAlwaysRecording();
@@ -1992,7 +2015,7 @@ void ManagerImpl::setRecordingCall(const std::string& id)
     if (it == conferenceMap_.end()) {
         DEBUG("Set recording for call %s", id.c_str());
         std::string accountid(getAccountFromCall(id));
-        rec = getAccountLink(accountid)->getCall(id);
+        rec = getCallFromCallID(id);
     } else {
         DEBUG("Set recording for conference %s", id.c_str());
         Conference *conf = it->second;
@@ -2017,8 +2040,7 @@ void ManagerImpl::setRecordingCall(const std::string& id)
 
 bool ManagerImpl::isRecording(const std::string& id)
 {
-    const std::string accountid(getAccountFromCall(id));
-    Recordable* rec = getAccountLink(accountid)->getCall(id);
+    Recordable* rec = getCallFromCallID(id);
     return rec and rec->isRecording();
 }
 
@@ -2287,18 +2309,21 @@ std::vector<std::string> ManagerImpl::getAccountList() const
     vector<string> account_order(loadAccountOrder());
 
     // The IP2IP profile is always available, and first in the list
-
-    AccountMap::const_iterator ip2ip_iter = accountMap_.find(SIPAccount::IP2IP_PROFILE);
+    Account *account = getIP2IPAccount();
 
     vector<string> v;
-    if (ip2ip_iter->second)
-        v.push_back(ip2ip_iter->second->getAccountID());
+    if (account)
+        v.push_back(account->getAccountID());
     else
         ERROR("could not find IP2IP profile in getAccount list");
 
+    // Concatenate all account pointers in a single map
+    AccountMap concatenatedMap;
+    fillConcatAccountMap(concatenatedMap);
+
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
+        for (AccountMap::const_iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
             if (iter->first == SIPAccount::IP2IP_PROFILE || iter->first.empty())
                 continue;
 
@@ -2311,9 +2336,9 @@ std::vector<std::string> ManagerImpl::getAccountList() const
             if (*iter == SIPAccount::IP2IP_PROFILE or iter->empty())
                 continue;
 
-            AccountMap::const_iterator account_iter = accountMap_.find(*iter);
+            AccountMap::const_iterator account_iter = concatenatedMap.find(*iter);
 
-            if (account_iter != accountMap_.end() and account_iter->second)
+            if (account_iter != concatenatedMap.end() and account_iter->second)
                 v.push_back(account_iter->second->getAccountID());
         }
     }
@@ -2332,16 +2357,12 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails(
         return DEFAULT_ACCOUNT.getAccountDetails();
     }
 
-    AccountMap::const_iterator iter = accountMap_.find(accountID);
-    Account * account = NULL;
-
-    if (iter != accountMap_.end())
-        account = iter->second;
+    Account * account = getAccount(accountID);
 
     if (account)
         return account->getAccountDetails();
     else {
-        DEBUG("Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
+        ERROR("Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
         return DEFAULT_ACCOUNT.getAccountDetails();
     }
 }
@@ -2398,19 +2419,21 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     Account* newAccount = NULL;
 
-    if (accountType == "SIP")
+    if (accountType == "SIP") {
         newAccount = new SIPAccount(newAccountID);
+        SIPVoIPLink::instance()->getAccounts()[newAccountID] = newAccount;
+    }
 #if HAVE_IAX
-    else if (accountType == "IAX")
+    else if (accountType == "IAX") {
         newAccount = new IAXAccount(newAccountID);
+        IAXVoIPLink::getAccounts()[newAccountID] = newAccount;
+    }
 #endif
     else {
         ERROR("Unknown %s param when calling addAccount(): %s",
                CONFIG_ACCOUNT_TYPE, accountType.c_str());
         return "";
     }
-
-    accountMap_[newAccountID] = newAccount;
 
     newAccount->setAccountDetails(details);
 
@@ -2445,7 +2468,10 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
     if (remAccount != NULL) {
         remAccount->unregisterVoIPLink();
-        accountMap_.erase(accountID);
+        SIPVoIPLink::instance()->getAccounts().erase(accountID);
+#if HAVE_IAX
+        IAXVoIPLink::getAccounts().erase(accountID);
+#endif
         // http://projects.savoirfairelinux.net/issues/show/2355
         // delete remAccount;
     }
@@ -2520,42 +2546,50 @@ std::vector<std::string> ManagerImpl::loadAccountOrder() const
 namespace {
     bool isIP2IP(const Conf::YamlNode *node)
     {
-        std::string id;
-        const Conf::MappingNode *m = dynamic_cast<const Conf::MappingNode *>(node);
-        if (!m)
+        if (!node)
             return false;
-        m->getValue("id", &id);
+
+        std::string id;
+        node->getValue("id", &id);
         return id == "IP2IP";
     }
 
-    void loadAccount(const Conf::YamlNode *item, AccountMap &accountMap)
+#if HAVE_IAX
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap)
+#else
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap)
+#endif
     {
-        const Conf::MappingNode *node = dynamic_cast<const Conf::MappingNode *>(item);
-        if (!node) {
+        if (!item) {
             ERROR("Could not load account");
             return;
         }
 
         std::string accountType;
-        node->getValue("type", &accountType);
+        item->getValue("type", &accountType);
 
         std::string accountid;
-        node->getValue("id", &accountid);
+        item->getValue("id", &accountid);
 
         std::string accountAlias;
-        node->getValue("alias", &accountAlias);
+        item->getValue("alias", &accountAlias);
 
         if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
             Account *a;
 #if HAVE_IAX
-            if (accountType == "IAX")
+            if (accountType == "IAX") {
                 a = new IAXAccount(accountid);
-            else // assume SIP
+                iaxAccountMap[accountid] = a;
+            }
+            else { // assume SIP
 #endif
                 a = new SIPAccount(accountid);
+                sipAccountMap[accountid] = a;
+#if HAVE_IAX
+            }
+#endif
 
-            accountMap[accountid] = a;
-            a->unserialize(*node);
+            a->unserialize(*item);
         }
     }
 
@@ -2567,15 +2601,6 @@ namespace {
     void unregisterAccount(std::pair<const std::string, Account*> &item)
     {
         item.second->unregisterVoIPLink();
-    }
-
-    void unloadAccount(std::pair<const std::string, Account*> &item)
-    {
-        // avoid deleting IP2IP account twice
-        if (not item.first.empty()) {
-            delete item.second;
-            item.second = 0;
-        }
     }
 
     SIPAccount *createIP2IPAccount()
@@ -2593,30 +2618,33 @@ namespace {
 
 void ManagerImpl::loadDefaultAccountMap()
 {
-    // build a default IP2IP account with default parameters
-    accountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
-    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
+    // build a default IP2IP account with default parameters only if does not exist
+    AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(SIPAccount::IP2IP_PROFILE);
+    if (iter == SIPVoIPLink::instance()->getAccounts().end())
+        SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
+
+    SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 }
 
 void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
     // build a default IP2IP account with default parameters
-    accountMap_[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
+    AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(SIPAccount::IP2IP_PROFILE);
+    if (iter == SIPVoIPLink::instance()->getAccounts().end())
+        SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE] = createIP2IPAccount();
 
     // load saved preferences for IP2IP account from configuration file
     Sequence *seq = parser.getAccountSequence()->getSequence();
 
     Sequence::const_iterator ip2ip = std::find_if(seq->begin(), seq->end(), isIP2IP);
     if (ip2ip != seq->end()) {
-        MappingNode *node = dynamic_cast<MappingNode*>(*ip2ip);
-        if (node)
-            accountMap_[SIPAccount::IP2IP_PROFILE]->unserialize(*node);
+        SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->unserialize(**ip2ip);
     }
 
     // Force IP2IP settings to be loaded
     // No registration in the sense of the REGISTER method is performed.
-    accountMap_[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
+    SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 
     // build preferences
     preferences.unserialize(*parser.getPreferenceNode());
@@ -2638,94 +2666,124 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 
     using std::tr1::placeholders::_1;
     // Each valid account element in sequence is a new account to load
+    // std::for_each(seq->begin(), seq->end(),
+    //        std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
+#if HAVE_IAX
     std::for_each(seq->begin(), seq->end(),
-            std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
+            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::instance()->getAccounts()), std::tr1::ref(IAXVoIPLink::getAccounts())));
+#else
+    std::for_each(seq->begin(), seq->end(),
+            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::instance()->getAccounts())));
+#endif
 }
 
 void ManagerImpl::registerAllAccounts()
 {
-    std::for_each(accountMap_.begin(), accountMap_.end(), registerAccount);
+    std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), registerAccount);
+#if HAVE_IAX
+    std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), registerAccount);
+#endif
 }
 
 void ManagerImpl::unregisterAllAccounts()
 {
-    std::for_each(accountMap_.begin(), accountMap_.end(), unregisterAccount);
-}
-
-void ManagerImpl::unloadAccountMap()
-{
-    std::for_each(accountMap_.begin(), accountMap_.end(), unloadAccount);
-    accountMap_.clear();
+    std::for_each(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end(), unregisterAccount);
+#if HAVE_IAX
+    std::for_each(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end(), unregisterAccount);
+#endif
 }
 
 bool ManagerImpl::accountExists(const std::string &accountID)
 {
-    return accountMap_.find(accountID) != accountMap_.end();
+    bool ret = false;
+
+    ret = SIPVoIPLink::instance()->getAccounts().find(accountID) != SIPVoIPLink::instance()->getAccounts().end();
+#if HAVE_IAX
+    if(ret)
+        return ret;
+
+    ret = IAXVoIPLink::getAccounts().find(accountID) != IAXVoIPLink::getAccounts().end();
+#endif
+
+    return ret;
 }
 
 SIPAccount*
-ManagerImpl::getIP2IPAccount()
+ManagerImpl::getIP2IPAccount() const
 {
-    return static_cast<SIPAccount*>(accountMap_[SIPAccount::IP2IP_PROFILE]);
+    AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(SIPAccount::IP2IP_PROFILE);
+    if(iter == SIPVoIPLink::instance()->getAccounts().end())
+        return NULL;
+
+    return static_cast<SIPAccount *>(iter->second);
 }
 
 Account*
-ManagerImpl::getAccount(const std::string& accountID)
+ManagerImpl::getAccount(const std::string& accountID) const
 {
-    AccountMap::const_iterator iter = accountMap_.find(accountID);
-    if (iter != accountMap_.end())
-        return iter->second;
+    Account *account = NULL;
 
-    return accountMap_[SIPAccount::IP2IP_PROFILE];
+    account = getSipAccount(accountID);
+    if(account != NULL)
+        return account;
+
+#if HAVE_IAX
+    account = getIaxAccount(accountID);
+    if(account != NULL)
+        return account;
+#endif
+
+    return NULL;
+}
+
+SIPAccount *
+ManagerImpl::getSipAccount(const std::string& accountID) const
+{
+    AccountMap::const_iterator iter = SIPVoIPLink::instance()->getAccounts().find(accountID);
+    if(iter != SIPVoIPLink::instance()->getAccounts().end())
+        return static_cast<SIPAccount *>(iter->second);
+
+    return NULL;
+}
+
+#if HAVE_IAX
+IAXAccount *
+ManagerImpl::getIaxAccount(const std::string& accountID) const
+{
+    AccountMap::const_iterator iter = IAXVoIPLink::getAccounts().find(accountID);
+    if(iter != IAXVoIPLink::getAccounts().end())
+        return static_cast<IAXAccount *>(iter->second);
+
+    return NULL;
+}
+#endif
+
+void
+ManagerImpl::fillConcatAccountMap(AccountMap &concatMap) const
+{
+    concatMap.insert(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end());
+#if HAVE_IAX
+    concatMap.insert(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end());
+#endif
 }
 
 std::string
-ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const
+ManagerImpl::getAccountIdFromNameAndServer(const std::string &userName,
+                                           const std::string &server) const
 {
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->fullMatch(userName, server)) {
-            DEBUG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
+    AccountMap concatenatedMap;
+    fillConcatAccountMap(concatenatedMap);
+    for (AccountMap::const_iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
+        SIPAccount *account = static_cast<SIPAccount *>(iter->second);
+        if (account and account->matches(userName, server))
             return iter->first;
-        }
-    }
-
-    // We failed! Then only match the hostname
-    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->hostnameMatch(server)) {
-            DEBUG("Matching account id in request with hostname %s", server.c_str());
-            return iter->first;
-        }
-    }
-
-    // We failed! Then only match the username
-    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->userMatch(userName)) {
-            DEBUG("Matching account id in request with username %s", userName.c_str());
-            return iter->first;
-        }
-    }
-
-    // We failed! Then only match the hostname against our proxy
-    for (AccountMap::const_iterator iter = accountMap_.begin(); iter != accountMap_.end(); ++iter) {
-        SIPAccount *account = dynamic_cast<SIPAccount *>(iter->second);
-
-        if (account and account->isEnabled() and account->proxyMatch(server)) {
-            DEBUG("Matching account id in request with proxy %s", server.c_str());
-            return iter->first;
-        }
     }
 
     DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
-    return "";
+    return SIPAccount::IP2IP_PROFILE;
 }
 
 std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings() const

@@ -35,6 +35,7 @@
 #include "audiorecord.h"
 #include <unistd.h>
 #include <sstream> // for stringstream
+#include <algorithm>
 #include <cstdio>
 #include "logger.h"
 #include "fileutils.h"
@@ -57,6 +58,54 @@ struct wavhdr {
     SINT32 data_length;     // in bytes
 };
 
+namespace {
+std::string
+createFilename()
+{
+    time_t rawtime = time(NULL);
+    struct tm * timeinfo = localtime(&rawtime);
+
+    std::stringstream out;
+
+    // DATE
+    out << timeinfo->tm_year + 1900;
+
+    if (timeinfo->tm_mon < 9) // january is 01, not 1
+        out << 0;
+
+    out << timeinfo->tm_mon + 1;
+
+    if (timeinfo->tm_mday < 10) // 01 02 03, not 1 2 3
+        out << 0;
+
+    out << timeinfo->tm_mday;
+
+    out << '-';
+
+    // hour
+    if (timeinfo->tm_hour < 10) // 01 02 03, not 1 2 3
+        out << 0;
+
+    out << timeinfo->tm_hour;
+
+    out << ':';
+
+    if (timeinfo->tm_min < 10) // 01 02 03, not 1 2 3
+        out << 0;
+
+    out << timeinfo->tm_min;
+
+    out << ':';
+
+    if (timeinfo->tm_sec < 10) // 01 02 03,  not 1 2 3
+        out << 0;
+
+    out << timeinfo->tm_sec;
+    return out.str();
+}
+}
+
+
 AudioRecord::AudioRecord() : fileHandle_(NULL)
     , fileType_(FILE_INVALID)
     , channels_(1)
@@ -68,10 +117,10 @@ AudioRecord::AudioRecord() : fileHandle_(NULL)
     , mixBuffer_()
     , micBuffer_()
     , spkBuffer_()
-    , filename_()
+    , filename_(createFilename())
     , savePath_()
 {
-    createFilename();
+    WARN("Generate filename for this call %s ", filename_.c_str());
 }
 
 void AudioRecord::setSndSamplingRate(int smplRate)
@@ -85,11 +134,9 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std:
     std::string filePath;
 
     // use HOME directory if path is empty, or if path does not exist
-    if (path.empty() || !fileutils::check_dir(path.c_str())) {
-        s << getenv("HOME");
-        filePath = s.str();
-    }
-    else {
+    if (path.empty() or not fileutils::check_dir(path.c_str())) {
+        filePath = HOMEDIR;
+    } else {
         filePath = path;
     }
 
@@ -99,10 +146,26 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std:
     savePath_ = (*filePath.rbegin() == '/') ? filePath : filePath + "/";
 }
 
+namespace {
+bool
+nonFilenameCharacter(char c)
+{
+    return not (std::isalnum(c) or c == '_' or c == '.');
+}
+
+// Replace any character that is inappropriate for a filename with '_'
+std::string
+sanitize(std::string s)
+{
+    std::replace_if(s.begin(), s.end(), nonFilenameCharacter, '_');
+    return s;
+}
+}
+
 void AudioRecord::initFilename(const std::string &peerNumber)
 {
     std::string fName(filename_);
-    fName.append("-" + peerNumber + "-" PACKAGE);
+    fName.append("-" + sanitize(peerNumber) + "-" PACKAGE);
 
     if (fileType_ == FILE_RAW) {
         if (filename_.find(".raw") == std::string::npos) {
@@ -186,52 +249,6 @@ void AudioRecord::stopRecording()
 {
     DEBUG("Stop recording");
     recordingEnabled_ = false;
-}
-
-void AudioRecord::createFilename()
-{
-    time_t rawtime = time(NULL);
-    struct tm * timeinfo = localtime(&rawtime);
-
-    std::stringstream out;
-
-    // DATE
-    out << timeinfo->tm_year + 1900;
-
-    if (timeinfo->tm_mon < 9) // january is 01, not 1
-        out << 0;
-
-    out << timeinfo->tm_mon+1;
-
-    if (timeinfo->tm_mday < 10) // 01 02 03, not 1 2 3
-        out << 0;
-
-    out << timeinfo->tm_mday;
-
-    out << '-';
-
-    // hour
-    if (timeinfo->tm_hour < 10) // 01 02 03, not 1 2 3
-        out << 0;
-
-    out << timeinfo->tm_hour;
-
-    out << ':';
-
-    if (timeinfo->tm_min < 10) // 01 02 03, not 1 2 3
-        out << 0;
-
-    out << timeinfo->tm_min;
-
-    out << ':';
-
-    if (timeinfo->tm_sec < 10) // 01 02 03,  not 1 2 3
-        out << 0;
-
-    out << timeinfo->tm_sec;
-    filename_ = out.str();
-
-    DEBUG("Generate filename for this call %s ", filename_.c_str());
 }
 
 bool AudioRecord::setRawFile()

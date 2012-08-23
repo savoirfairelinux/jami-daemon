@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "preferences.h"
 #include "logger.h"
 #include "audio/alsa/alsalayer.h"
@@ -40,7 +44,7 @@
 #include "sip/sip_utils.h"
 #include <sstream>
 #include "global.h"
-#include "config.h"
+#include "fileutils.h"
 
 const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
@@ -168,7 +172,7 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     emiter.serializePreference(&preferencemap, "preferences");
 }
 
-void Preferences::unserialize(const Conf::MappingNode &map)
+void Preferences::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(ORDER_KEY, &accountOrder_);
     map.getValue(HISTORY_LIMIT_KEY, &historyLimit_);
@@ -211,7 +215,7 @@ void VoipPreference::serialize(Conf::YamlEmitter &emitter)
     emitter.serializePreference(&preferencemap, "voipPreferences");
 }
 
-void VoipPreference::unserialize(const Conf::MappingNode &map)
+void VoipPreference::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(PLAY_DTMF_KEY, &playDtmf_);
     map.getValue(PLAY_TONES_KEY, &playTones_);
@@ -254,7 +258,7 @@ void AddressbookPreference::serialize(Conf::YamlEmitter &emitter)
     emitter.serializePreference(&preferencemap, "addressbook");
 }
 
-void AddressbookPreference::unserialize(const Conf::MappingNode &map)
+void AddressbookPreference::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(PHOTO_KEY, &photo_);
     map.getValue(ENABLED_KEY, &enabled_);
@@ -317,7 +321,7 @@ void HookPreference::serialize(Conf::YamlEmitter &emitter)
     emitter.serializePreference(&preferencemap, "hooks");
 }
 
-void HookPreference::unserialize(const Conf::MappingNode &map)
+void HookPreference::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(IAX2_ENABLED_KEY, &iax2Enabled_);
     map.getValue(NUMBER_ADD_PREFIX_KEY, &numberAddPrefix_);
@@ -467,10 +471,27 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     emitter.serializePreference(&preferencemap, "audio");
 }
 
-void AudioPreference::unserialize(const Conf::MappingNode &map)
+bool
+AudioPreference::setRecordPath(const std::string &r)
+{
+    if (fileutils::isDirectoryWritable(r)) {
+        recordpath_ = r;
+        return true;
+    } else {
+        ERROR("%s is not writable, cannot be the recording path", r.c_str());
+        return false;
+    }
+}
+
+void AudioPreference::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(AUDIO_API_KEY, &audioApi_);
-    map.getValue(RECORDPATH_KEY, &recordpath_);
+    std::string tmpRecordPath;
+    map.getValue(RECORDPATH_KEY, &tmpRecordPath);
+    if (not setRecordPath(tmpRecordPath)) {
+        DEBUG("Setting record path to %s", HOMEDIR);
+        setRecordPath(HOMEDIR);
+    }
     map.getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
     map.getValue(VOLUMEMIC_KEY, &volumemic_);
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);
@@ -543,7 +564,7 @@ void ShortcutPreferences::serialize(Conf::YamlEmitter &emitter)
     emitter.serializePreference(&preferencemap, "shortcuts");
 }
 
-void ShortcutPreferences::unserialize(const Conf::MappingNode &map)
+void ShortcutPreferences::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(HANGUP_SHORT_KEY, &hangup_);
     map.getValue(PICKUP_SHORT_KEY, &pickup_);

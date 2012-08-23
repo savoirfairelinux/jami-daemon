@@ -107,11 +107,6 @@ class AudioRecord {
     protected:
 
         /**
-         * Create name file according to current date
-         */
-        void createFilename();
-
-        /**
          * Set the header for raw files
          */
         bool setRawFile();

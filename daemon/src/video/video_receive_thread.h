@@ -35,7 +35,6 @@
 #include <map>
 #include <string>
 #include <climits>
-#include <memory>
 #include "shm_sink.h"
 #include "noncopyable.h"
 
@@ -48,8 +47,6 @@ class AVCodecContext;
 class AVStream;
 class AVFormatContext;
 class AVFrame;
-class SIPThreadClient;
-
 namespace sfl_video {
 
 class VideoReceiveThread : public ost::Thread {
@@ -74,14 +71,16 @@ class VideoReceiveThread : public ost::Thread {
         int dstHeight_;
 
         SHMSink sink_;
-        bool receiving_;
+#ifdef CCPP_PREFIX
+        ost::AtomicCounter threadRunning_;
+#else
+        ucommon::atomic::counter threadRunning_;
+#endif
         std::string sdpFilename_;
         size_t bufferSize_;
         const std::string id_;
         AVIOInterruptCB interruptCb_;
         void (* requestKeyFrameCallback_)(const std::string &);
-        // XXX: This must be allocated in the video thread, not the main thread
-        std::auto_ptr<SIPThreadClient> sipThreadClient_;
 
         void setup();
         void openDecoder();
@@ -94,6 +93,8 @@ class VideoReceiveThread : public ost::Thread {
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
         void addDetails(std::map<std::string, std::string> &details);
         virtual ~VideoReceiveThread();
+        // overrides of ost::Thread()
+        virtual void start();
         virtual void run();
         void setRequestKeyFrameCallback(void (*)(const std::string &));
 };

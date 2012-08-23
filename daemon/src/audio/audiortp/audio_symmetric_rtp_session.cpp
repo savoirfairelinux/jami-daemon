@@ -63,15 +63,7 @@ AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSessio
 
 void AudioSymmetricRtpSession::AudioRtpThread::run()
 {
-    int threadSleep = 10;
-
-    //That should be the way to get the "real" threadSleep, but "clockRate" seem to change from the original codec one
-    /*if (rtpSession_.audiocodec_)
-        threadSleep = rtpSession_.audiocodec_->getFrameSize() / (rtpSession_.audiocodec_->getClockRate()/10);
-    else
-        threadSleep = 20;*/
-
-    TimerPort::setTimer(threadSleep);
+    TimerPort::setTimer(rtpSession_.transportRate_);
 
     while (running_) {
         // Send session
@@ -82,14 +74,8 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
 
         Thread::sleep(TimerPort::getTimer());
 
-        TimerPort::incTimer(threadSleep);
+        TimerPort::incTimer(rtpSession_.transportRate_);
     }
-}
-
-void AudioSymmetricRtpSession::setSessionMedia(AudioCodec &audioCodec)
-{
-    AudioRtpSession::setSessionMedia(audioCodec);
-    call_.setRecordingSmplRate(getCodecSampleRate());
 }
 
 int AudioSymmetricRtpSession::startRtpThread(AudioCodec &audiocodec)

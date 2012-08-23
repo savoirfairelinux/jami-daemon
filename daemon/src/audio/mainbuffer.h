@@ -94,7 +94,7 @@ class MainBuffer {
 
         void flushAllBuffers();
 
-        void dumpInfo() const;
+        void dumpInfo();
 
     private:
 

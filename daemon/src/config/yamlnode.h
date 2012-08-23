@@ -35,13 +35,16 @@
 #include <list>
 #include <map>
 #include <stdexcept>
+
 #include "noncopyable.h"
+#include "global.h"
 
 namespace Conf {
 
 class YamlNode;
 
 typedef std::list<YamlNode *> Sequence;
+typedef std::map<std::string, YamlNode*> YamlNodeMap;
 
 enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
 
@@ -51,15 +54,18 @@ class YamlNode {
 
         virtual ~YamlNode() {}
 
-        NodeType getType() const {
-            return type_;
-        }
+        NodeType getType() const { return type_; }
 
-        YamlNode *getTopNode() {
-            return topNode_;
-        }
+        YamlNode *getTopNode() { return topNode_; }
 
         virtual void deleteChildNodes() = 0;
+
+        virtual void addNode(YamlNode *node) = 0;
+
+        virtual YamlNode *getValue(const std::string &key) const = 0;
+        virtual void getValue(const std::string &key UNUSED, bool *b) const = 0;
+        virtual void getValue(const std::string &key UNUSED, int *i) const = 0;
+        virtual void getValue(const std::string &key UNUSED, std::string *s) const = 0;
 
     private:
         NON_COPYABLE(YamlNode);
@@ -72,15 +78,18 @@ class YamlDocument : public YamlNode {
     public:
         YamlDocument(YamlNode* top = NULL) : YamlNode(DOCUMENT, top), doc_() {}
 
-        void addNode(YamlNode *node);
+        virtual void addNode(YamlNode *node);
 
         YamlNode *popNode();
 
-        Sequence *getSequence() {
-            return &doc_;
-        }
+        Sequence *getSequence() { return &doc_; }
 
         virtual void deleteChildNodes();
+
+        virtual YamlNode *getValue(const std::string &key UNUSED) const { return NULL; }
+        virtual void getValue(const std::string &key UNUSED, bool *b) const { *b = false; }
+        virtual void getValue(const std::string &key UNUSED, int *i) const { *i = 0; }
+        virtual void getValue(const std::string &key UNUSED, std::string *s) const { *s = ""; }
 
     private:
         Sequence doc_;
@@ -94,9 +103,15 @@ class SequenceNode : public YamlNode {
             return &seq_;
         }
 
-        void addNode(YamlNode *node);
+        virtual void addNode(YamlNode *node);
 
         virtual void deleteChildNodes();
+
+        virtual YamlNode *getValue(const std::string &key UNUSED) const { return NULL; }
+        virtual void getValue(const std::string &key UNUSED, bool *b) const { *b = false; }
+        virtual void getValue(const std::string &key UNUSED, int *i) const { *i = 0; }
+        virtual void getValue(const std::string &key UNUSED, std::string *s) const { *s = ""; }
+
 
     private:
         Sequence seq_;
@@ -108,16 +123,11 @@ class MappingNode : public YamlNode {
         MappingNode(YamlNode *top) :
             YamlNode(MAPPING, top), map_(), tmpKey_() {}
 
-        std::map<std::string, YamlNode*> *
-        getMapping() {
-            return &map_;
-        }
+        YamlNodeMap &getMapping() { return map_; }
 
-        void addNode(YamlNode *node);
+        virtual void addNode(YamlNode *node);
 
-        void setTmpKey(std::string key) {
-            tmpKey_ = key;
-        }
+        void setTmpKey(std::string key) { tmpKey_ = key; }
 
         void setKeyValue(const std::string &key, YamlNode *value);
 
@@ -131,7 +141,7 @@ class MappingNode : public YamlNode {
         virtual void deleteChildNodes();
 
     private:
-        std::map<std::string, YamlNode*> map_;
+        YamlNodeMap map_;
         std::string tmpKey_;
 };
 
@@ -140,13 +150,15 @@ class ScalarNode : public YamlNode {
         ScalarNode(std::string s="", YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(s) {}
         ScalarNode(bool b, YamlNode *top=NULL) : YamlNode(SCALAR, top), str_(b ? "true" : "false") {}
 
-        const std::string &getValue() const {
-            return str_;
-        }
+        virtual void addNode(YamlNode *node UNUSED) {}
 
-        void setValue(const std::string &s) {
-            str_ = s;
-        }
+        const std::string &getValue() const { return str_; }
+        void setValue(const std::string &s) { str_ = s; }
+
+        virtual YamlNode *getValue(const std::string &key UNUSED) const { return NULL; }
+        virtual void getValue(const std::string &key UNUSED, bool *b) const { *b = false; }
+        virtual void getValue(const std::string &key UNUSED, int *i) const { *i = 0; }
+        virtual void getValue(const std::string &key UNUSED, std::string *s) const { *s = ""; }
 
         virtual void deleteChildNodes() {}
 

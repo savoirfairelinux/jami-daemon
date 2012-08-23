@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,23 +28,12 @@
  *  as that of the covered work.
  */
 
-#ifndef SIP_THREAD_CLIENT_H_
-#define SIP_THREAD_CLIENT_H_
+#ifndef HISTORY_LOADER_H_
+#define HISTORY_LOADER_H_
 
-#include "pj/os.h"
-#include "noncopyable.h"
+#include "calllist.h"
 
-class pj_thread_t;
+void
+lazy_load_items(calltab_t *tab);
 
-class SIPThreadClient {
-    private:
-        NON_COPYABLE(SIPThreadClient);
-        pj_thread_t *thread_;
-        pj_thread_desc desc_;
-
-    public:
-        SIPThreadClient();
-        ~SIPThreadClient();
-};
-
-#endif // SIP_THREAD_CLIENT_H_
+#endif

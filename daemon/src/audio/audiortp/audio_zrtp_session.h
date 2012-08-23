@@ -39,6 +39,7 @@ using std::ptrdiff_t;
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
 
+#include "global.h"
 #include "audio_rtp_session.h"
 // #include <commoncpp/numbers.h> // OST::Time
 
@@ -54,8 +55,6 @@ class ZrtpZidException : public std::runtime_error {
 };
 
 class AudioZrtpSession :
-     public ost::TimerPort,
-    // public ost::TRTPSessionBase<ost::SymmetricRTPChannel, ost::SymmetricRTPChannel, ost::ZrtpQueue> {
     public ost::SymmetricZRTPSession,
     public AudioRtpSession {
     public:
@@ -70,6 +69,14 @@ class AudioZrtpSession :
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
+
+        virtual std::vector<uint8> getLocalMasterKey() const { std::vector<uint8> vec; return vec; }
+
+        virtual std::vector<uint8> getLocalMasterSalt() const { std::vector<uint8> vec; return vec; }
+
+        virtual void setLocalMasterKey(const std::vector<unsigned char>& vec UNUSED) const {}
+
+        virtual void setLocalMasterSalt(const std::vector<unsigned char>& vec UNUSED) const {}
 
     private:
         NON_COPYABLE(AudioZrtpSession);
@@ -89,7 +96,6 @@ class AudioZrtpSession :
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
-        void setSessionMedia(AudioCodec &codec);
         int startRtpThread(AudioCodec &audiocodec);
         virtual int getIncrementForDTMF() const;
 

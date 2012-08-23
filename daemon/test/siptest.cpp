@@ -177,8 +177,8 @@ void SIPTest::testSimpleIncomingIpCall()
     // gtrab call id from sipvoiplink
     SIPVoIPLink *siplink = SIPVoIPLink::instance();
 
-    CPPUNIT_ASSERT(siplink->callMap_.size() == 1);
-    CallMap::iterator iterCallId = siplink->callMap_.begin();
+    CPPUNIT_ASSERT(siplink->sipCallMap_.size() == 1);
+    SipCallMap::iterator iterCallId = siplink->sipCallMap_.begin();
     std::string testcallid = iterCallId->first;
 
     // Answer this call
@@ -285,8 +285,8 @@ void SIPTest::testTwoIncomingIpCall()
     // gtrab call id from sipvoiplink
     SIPVoIPLink *sipLink = SIPVoIPLink::instance();
 
-    CPPUNIT_ASSERT(sipLink->callMap_.size() == 1);
-    CallMap::iterator iterCallId = sipLink->callMap_.begin();
+    CPPUNIT_ASSERT(sipLink->sipCallMap_.size() == 1);
+    SipCallMap::iterator iterCallId = sipLink->sipCallMap_.begin();
     std::string firstCallID = iterCallId->first;
 
     // Answer this call
@@ -301,8 +301,8 @@ void SIPTest::testTwoIncomingIpCall()
 
     sleep(1);
 
-    CPPUNIT_ASSERT(sipLink->callMap_.size() == 2);
-    iterCallId = sipLink->callMap_.begin();
+    CPPUNIT_ASSERT(sipLink->sipCallMap_.size() == 2);
+    iterCallId = sipLink->sipCallMap_.begin();
 
     if (iterCallId->first == firstCallID)
         ++iterCallId;
@@ -377,8 +377,8 @@ void SIPTest::testIncomingIpCallSdp()
     // gtrab call id from sipvoiplink
     SIPVoIPLink *siplink = SIPVoIPLink::instance();
 
-    CPPUNIT_ASSERT(siplink->callMap_.size() == 1);
-    CallMap::iterator iterCallId = siplink->callMap_.begin();
+    CPPUNIT_ASSERT(siplink->sipCallMap_.size() == 1);
+    SipCallMap::iterator iterCallId = siplink->sipCallMap_.begin();
     std::string testcallid = iterCallId->first;
 
     // TODO: hmmm, should IP2IP call be stored in call list....

@@ -654,7 +654,7 @@ AlsaLayer::getAudioDeviceName(int index, PCMType type) const
 
 void AlsaLayer::capture()
 {
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
     int toGetSamples = snd_pcm_avail_update(captureHandle_);
@@ -687,18 +687,18 @@ void AlsaLayer::capture()
                 rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
                 toGetSamples);
         dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
-        Manager::instance().getMainBuffer()->putData(rsmpl_out_ptr,
+        Manager::instance().getMainBuffer().putData(rsmpl_out_ptr,
                 rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
     } else {
         dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-        Manager::instance().getMainBuffer()->putData(in_ptr, toGetBytes,
+        Manager::instance().getMainBuffer().putData(in_ptr, toGetBytes,
                                                      MainBuffer::DEFAULT_ID);
     }
 }
 
 void AlsaLayer::playback(int maxSamples)
 {
-    size_t bytesToGet = Manager::instance().getMainBuffer()->availableForGet(MainBuffer::DEFAULT_ID);
+    size_t bytesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
 
     const size_t bytesToPut = maxSamples * sizeof(SFLDataFormat);
     // no audio available, play tone or silence
@@ -717,7 +717,7 @@ void AlsaLayer::playback(int maxSamples)
     } else {
         // play the regular sound samples
 
-        const size_t mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+        const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
         const bool resample = sampleRate_ != mainBufferSampleRate;
 
         double resampleFactor = 1.0;
@@ -732,7 +732,7 @@ void AlsaLayer::playback(int maxSamples)
         const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
         std::vector<SFLDataFormat> out(samplesToGet, 0);
         SFLDataFormat * const out_ptr = &(*out.begin());
-        Manager::instance().getMainBuffer()->getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
         AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
 
         if (resample) {
@@ -776,7 +776,7 @@ void AlsaLayer::audioCallback()
 
         write(out_ptr, bytesToGet, playbackHandle_);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer()->discard(bytesToGet, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
     } else {
         // regular audio data
         playback(playbackAvailSmpl);

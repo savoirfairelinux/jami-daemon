@@ -31,49 +31,17 @@
  *  as that of the covered work.
  */
 
-#include "call.h"
-#include "logger.h"
 #include "voiplink.h"
 
-VoIPLink::VoIPLink() : callMap_(), callMapMutex_(), handlingEvents_(false) {}
+VoIPLink::VoIPLink() : handlingEvents_(false) {}
 
-VoIPLink::~VoIPLink()
+VoIPLink::~VoIPLink() {}
+
+void VoIPLink::unloadAccount(std::pair<const std::string, Account*> &item)
 {
-    ost::MutexLock m(callMapMutex_);
-
-    for (CallMap::const_iterator iter = callMap_.begin();
-            iter != callMap_.end(); ++iter)
-        delete iter->second;
-
-    callMap_.clear();
-
-}
-
-void VoIPLink::addCall(Call* call)
-{
-    if (call and getCall(call->getCallId()) == NULL) {
-        ost::MutexLock m(callMapMutex_);
-        callMap_[call->getCallId()] = call;
+    // avoid deleting a nameless account twice
+    if (not item.first.empty()) {
+        delete item.second;
+        item.second = 0;
     }
-}
-
-void VoIPLink::removeCall(const std::string& id)
-{
-    ost::MutexLock m(callMapMutex_);
-
-    DEBUG("Removing call %s from list", id.c_str());
-
-    delete callMap_[id];
-    callMap_.erase(id);
-}
-
-Call* VoIPLink::getCall(const std::string& id)
-{
-    ost::MutexLock m(callMapMutex_);
-    CallMap::iterator iter = callMap_.find(id);
-
-    if (iter != callMap_.end())
-        return iter->second;
-    else
-        return NULL;
 }

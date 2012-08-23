@@ -68,11 +68,19 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         virtual int getIncrementForDTMF() const;
 
+        virtual void setLocalMasterKey(const std::vector<uint8>& key) const = 0;
+
+        virtual void setLocalMasterSalt(const std::vector<uint8>& key) const = 0;
+
+        virtual std::vector<uint8> getLocalMasterKey() const = 0;
+
+        virtual std::vector<uint8> getLocalMasterSalt() const = 0;
+
     protected:
         /**
          * Set the audio codec for this RTP session
          */
-        virtual void setSessionMedia(AudioCodec &codec) = 0;
+        void setSessionMedia(AudioCodec &codec);
 
 
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
@@ -102,6 +110,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          * except for G722 which require a 8 kHz incrementation.
          */
         int timestampIncrement_;
+
+        /**
+         * Rate at which the transport layer handle packets, should be
+         * synchronized with codec requirements.
+         */
+        unsigned int transportRate_;
 
         ost::RTPDataQueue &queue_;
 

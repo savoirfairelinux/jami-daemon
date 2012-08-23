@@ -51,8 +51,7 @@ typedef std::vector<yaml_event_t> YamlEventVector;
 
 class YamlParserException : public std::runtime_error {
     public:
-        YamlParserException(const std::string& str="") :
-            std::runtime_error("YamlParserException occured: " + str) {}
+        YamlParserException(const char *err) : std::runtime_error(err) {}
 };
 
 
@@ -60,13 +59,13 @@ class YamlParser {
 
     public:
 
-        YamlParser(const char *file);
+        YamlParser(FILE *fd);
 
         ~YamlParser();
 
         void serializeEvents();
 
-        YamlDocument *composeEvents();
+        void composeEvents();
 
         void constructNativeData();
 
@@ -108,11 +107,6 @@ class YamlParser {
         void mainNativeDataMapping(MappingNode *map);
 
         /**
-         * Configuration file name
-         */
-        std::string filename_;
-
-        /**
          * Configuration file descriptor
          */
         FILE *fd_;
@@ -132,7 +126,7 @@ class YamlParser {
          */
         int eventNumber_;
 
-        YamlDocument *doc_;
+        YamlDocument doc_;
 
         int eventIndex_;
 

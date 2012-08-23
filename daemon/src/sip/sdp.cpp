@@ -161,7 +161,7 @@ sfl::AudioCodec* Sdp::getSessionAudioMedia() const
         return 0;
     }
 
-    return dynamic_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
+    return static_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
 }
 
 

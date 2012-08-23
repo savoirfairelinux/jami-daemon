@@ -211,6 +211,15 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
 }
 
 static GtkWidget*
+create_auto_answer_checkbox(account_t *account)
+{
+    GtkWidget *auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
+    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), account);
+    return auto_answer_checkbox;
+}
+
+static GtkWidget*
 create_basic_tab(account_t *account)
 {
     g_assert(account);
@@ -378,9 +387,7 @@ create_basic_tab(account_t *account)
     gtk_table_attach(GTK_TABLE(table), entry_user_agent, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     row++;
-    GtkWidget *auto_answer_checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_answer_checkbox), account_has_autoanswer_on(account));
-    g_signal_connect(auto_answer_checkbox, "toggled", G_CALLBACK(auto_answer_cb), account);
+    GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_table_attach(GTK_TABLE(table), auto_answer_checkbox, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     gtk_widget_show_all(table);
@@ -1156,7 +1163,7 @@ create_videocodecs_configuration(const account_t *a)
 }
 #endif
 
-static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
+static GtkWidget* create_direct_ip_calls_tab(account_t *account)
 {
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
@@ -1176,6 +1183,9 @@ static GtkWidget* create_direct_ip_calls_tab(const account_t *account)
 
     GtkWidget *frame = create_network(account);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+    GtkWidget *auto_answer_checkbox = create_auto_answer_checkbox(account);
+    gtk_box_pack_start(GTK_BOX(vbox), auto_answer_checkbox, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);
     return vbox;

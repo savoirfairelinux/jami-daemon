@@ -220,7 +220,10 @@ class Call : public Recordable {
         void time_stop();
         virtual std::map<std::string, std::string> getDetails();
         static std::map<std::string, std::string> getNullDetails();
-        std::map<std::string, std::string> createHistoryEntry() const;
+
+        virtual std::map<std::string, std::string>
+        createHistoryEntry() const;
+
         virtual bool setRecording();
 
     private:

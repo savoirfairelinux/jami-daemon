@@ -84,3 +84,14 @@ SIPCall::getDetails()
 #endif
     return details;
 }
+
+std::map<std::string, std::string>
+SIPCall::createHistoryEntry() const
+{
+    std::map<std::string, std::string> entry(Call::createHistoryEntry());
+    entry[HistoryItem::AUDIO_CODEC_KEY] = local_sdp_->getAudioCodecName();
+#ifdef SFL_VIDEO
+    entry[HistoryItem::VIDEO_CODEC_KEY] = local_sdp_->getSessionVideoCodec();
+#endif
+    return entry;
+}

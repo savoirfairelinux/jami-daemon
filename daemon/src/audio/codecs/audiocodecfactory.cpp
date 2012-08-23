@@ -36,11 +36,13 @@
 #include "config.h"
 #endif
 
-#include "audiocodecfactory.h"
 #include <cstdlib>
 #include <dlfcn.h>
 #include <algorithm> // for std::find
 #include <dlfcn.h>
+
+#include "audiocodec.h"
+#include "audiocodecfactory.h"
 #include "fileutils.h"
 #include "array_size.h"
 #include "logger.h"
@@ -91,13 +93,13 @@ AudioCodecFactory::getAudioCodecList() const
     return list;
 }
 
-sfl::Codec*
+sfl::AudioCodec*
 AudioCodecFactory::getCodec(int payload) const
 {
     CodecsMap::const_iterator iter = codecsMap_.find(payload);
 
     if (iter != codecsMap_.end())
-        return iter->second;
+        return static_cast<sfl::AudioCodec *>(iter->second);
     else {
         ERROR("Cannot find codec %i", payload);
         return NULL;
@@ -197,7 +199,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
     return codecs;
 }
 
-sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
+sfl::AudioCodec *AudioCodecFactory::loadCodec(const std::string &path)
 {
     void * codecHandle = dlopen(path.c_str(), RTLD_LAZY);
 
@@ -215,14 +217,14 @@ sfl::Codec* AudioCodecFactory::loadCodec(const std::string &path)
     dlerror();
 
     create_t* createCodec = (create_t*) dlsym(codecHandle, CODEC_ENTRY_SYMBOL);
-    char *error = dlerror();
+    const char *error = dlerror();
 
     if (error) {
         ERROR("%s", error);
         return NULL;
     }
 
-    sfl::Codec* a = createCodec();
+    sfl::AudioCodec *a = static_cast<sfl::AudioCodec *>(createCodec());
 
     codecInMemory_.push_back(CodecHandlePointer(a, codecHandle));
 
@@ -234,7 +236,7 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
 {
     destroy_t* destroyCodec = (destroy_t*) dlsym(p.second , "destroy");
 
-    char *error = dlerror();
+    const char *error = dlerror();
 
     if (error) {
         ERROR("%s", error);
@@ -246,7 +248,7 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
     dlclose(p.second);
 }
 
-sfl::Codec* AudioCodecFactory::instantiateCodec(int payload) const
+sfl::AudioCodec* AudioCodecFactory::instantiateCodec(int payload) const
 {
     std::vector< CodecHandlePointer >::const_iterator iter;
 
@@ -254,12 +256,12 @@ sfl::Codec* AudioCodecFactory::instantiateCodec(int payload) const
         if (iter->first->getPayloadType() == payload) {
             create_t* createCodec = (create_t*) dlsym(iter->second , CODEC_ENTRY_SYMBOL);
 
-            char *error = dlerror();
+            const char *error = dlerror();
 
             if (error)
                 ERROR("%s", error);
             else
-                return createCodec();
+                return static_cast<sfl::AudioCodec *>(createCodec());
         }
     }
 

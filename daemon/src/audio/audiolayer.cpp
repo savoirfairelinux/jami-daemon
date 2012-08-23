@@ -39,8 +39,9 @@ unsigned int AudioLayer::playbackGain_ = 100;
 
 AudioLayer::AudioLayer()
     : isStarted_(false)
+    , playbackMode_(NONE)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
-    , sampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
+    , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
     , mutex_()
     , dcblocker_()
     , converter_(sampleRate_)
@@ -53,7 +54,7 @@ void AudioLayer::flushMain()
 {
     ost::MutexLock guard(mutex_);
     // should pass call id
-    Manager::instance().getMainBuffer()->flushAllBuffers();
+    Manager::instance().getMainBuffer().flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent()
