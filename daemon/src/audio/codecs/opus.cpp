@@ -29,6 +29,7 @@
  */
 #include "opus.h"
 #include <stdexcept>
+#include <iostream>
 #include <dlfcn.h>
 
 //BEGIN FUNCTION TYPE
