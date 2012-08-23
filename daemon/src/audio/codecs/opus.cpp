@@ -30,6 +30,7 @@
 #include "opus.h"
 #include <stdexcept>
 #include <dlfcn.h>
+#include "logger.h"
 
 //BEGIN FUNCTION TYPE
 #define OPUS_TYPE_ENCODER_CREATE   (OpusEncoder* (*)(int32_t,int,int,int*))
@@ -51,79 +52,75 @@ Opus::OpusDecoder*(*Opus::opus_decoder_create              )(int32_t Fs, int cha
 int               (*Opus::opus_decode                      )(Opus::OpusDecoder *st, const unsigned char *data, int32_t len, int16_t *pcm, int frame_size, int decode_fec ) = 0;
 void              (*Opus::opus_decoder_destroy             )(Opus::OpusDecoder *st) = 0;
 
-Opus::OpusEncoder* Opus::m_pEncoder = 0;
-Opus::OpusDecoder* Opus::m_pDecoder = 0;
-void*              Opus::m_pHandler = 0;
-
-
-Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "OPUS", CLOCK_RATE, FRAME_SIZE, CHANNELS)
+Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "OPUS", CLOCK_RATE, FRAME_SIZE, CHANNELS),
+    handler_(0),
+    encoder_(0),
+    decoder_(0)
 {
    hasDynamicPayload_ = true;
-   init();
-}
 
-bool Opus::init()
-{
-   m_pHandler = dlopen("libopus.so.0", RTLD_LAZY);
-   if (!m_pHandler)
-      return false;
-   try {
-       opus_encoder_create               = OPUS_TYPE_ENCODER_CREATE   dlsym(m_pHandler, "opus_encoder_create");
-       loadError(dlerror());
-       opus_encode                       = OPUS_TYPE_ENCODE           dlsym(m_pHandler, "opus_encode");
-       loadError(dlerror());
-       opus_encoder_destroy              = OPUS_TYPE_ENCODER_DESTROY  dlsym(m_pHandler, "opus_encoder_destroy");
-       loadError(dlerror());
-       opus_decoder_create               = OPUS_TYPE_DECODER_CREATE   dlsym(m_pHandler, "opus_decoder_create");
-       loadError(dlerror());
-       opus_decode                       = OPUS_TYPE_DECODE           dlsym(m_pHandler, "opus_decode");
-       loadError(dlerror());
-       opus_decoder_destroy              = OPUS_TYPE_DECODER_DESTROY  dlsym(m_pHandler, "opus_decoder_destroy");
-       loadError(dlerror());
+   handler_ = dlopen("libopus.so.0", RTLD_LAZY);
+   if (!handler_)
+       throw std::runtime_error("opus: could not open shared lib");
 
-       int err = 0;
-       m_pEncoder = opus_encoder_create(CLOCK_RATE, CHANNELS, OPUS_APPLICATION_VOIP, &err);
-       if (err)
-           return false;
+   opus_encoder_create  = OPUS_TYPE_ENCODER_CREATE dlsym(handler_, "opus_encoder_create");
+   loadError(dlerror());
+   opus_encode          = OPUS_TYPE_ENCODE dlsym(handler_, "opus_encode");
+   loadError(dlerror());
+   opus_encoder_destroy = OPUS_TYPE_ENCODER_DESTROY dlsym(handler_, "opus_encoder_destroy");
+   loadError(dlerror());
+   opus_decoder_create  = OPUS_TYPE_DECODER_CREATE dlsym(handler_, "opus_decoder_create");
+   loadError(dlerror());
+   opus_decode          = OPUS_TYPE_DECODE dlsym(handler_, "opus_decode");
+   loadError(dlerror());
+   opus_decoder_destroy = OPUS_TYPE_DECODER_DESTROY dlsym(handler_, "opus_decoder_destroy");
+   loadError(dlerror());
 
-       m_pDecoder = opus_decoder_create(CLOCK_RATE, CHANNELS, &err);
-       if (err)
-           return false;
+   int err = 0;
+   encoder_ = opus_encoder_create(CLOCK_RATE, CHANNELS, OPUS_APPLICATION_VOIP, &err);
+   if (err)
+       throw std::runtime_error("opus: could not create encoder");
 
-   } catch (const std::exception & e) {
-      return false;
-   }
-
-   return true;
+   decoder_ = opus_decoder_create(CLOCK_RATE, CHANNELS, &err);
+   if (err)
+       throw std::runtime_error("opus: could not create decoder");
 }
 
 Opus::~Opus()
 {
-   opus_encoder_destroy(m_pEncoder);
-   opus_decoder_destroy(m_pDecoder);
-   dlclose(m_pHandler);
+    if (encoder_)
+        opus_encoder_destroy(encoder_);
+    if (decoder_)
+        opus_decoder_destroy(decoder_);
+    if (handler_)
+        dlclose(handler_);
 }
 
 int Opus::decode(short *dst, unsigned char *buf, size_t buffer_size)
 {
-   return opus_decode(m_pDecoder, buf, buffer_size, dst, FRAME_SIZE, 0);
+   return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
 }
 
 int Opus::encode(unsigned char *dst, short *src, size_t buffer_size)
 {
-   return opus_encode(m_pEncoder, src, FRAME_SIZE, dst, buffer_size * 2);
+   return opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
 }
 
-void Opus::loadError(char* error)
+void Opus::loadError(const char *error)
 {
    if (error != NULL)
-      throw std::runtime_error("Opus failed to load");
+      throw std::runtime_error("opus failed to load");
 }
 
 // cppcheck-suppress unusedFunction
 extern "C" sfl::Codec* CODEC_ENTRY()
 {
-    return new Opus;
+    try {
+        return new Opus;
+    } catch (const std::runtime_error &e) {
+        WARN("%s", e.what());
+        return 0;
+    }
 }
 
 // cppcheck-suppress unusedFunction
@@ -131,13 +128,6 @@ extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }
-
-// cppcheck-suppress unusedFunction
-extern "C" bool init()
-{
-    return Opus::init();
-}
-
 
 #undef OPUS_TYPE_ENCODER_CREATE
 #undef OPUS_TYPE_ENCODE

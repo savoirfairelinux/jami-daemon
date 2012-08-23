@@ -53,7 +53,6 @@ class Opus : public sfl::AudioCodec {
 public:
    Opus();
    ~Opus();
-   static bool init();
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
 
@@ -151,15 +150,15 @@ public:
 private:
    NON_COPYABLE(Opus);
    //Attributes
-   static void* m_pHandler;
-   static OpusEncoder* m_pEncoder;
-   static OpusDecoder* m_pDecoder;
+   void * handler_;
+   OpusEncoder *encoder_;
+   OpusDecoder *decoder_;
    static const int FRAME_SIZE = 160;
    static const int CLOCK_RATE = 16000;
    static const int CHANNELS   = 1;
 
    //Helpers
-   static void loadError(char* error);
+   static void loadError(const char *error);
 
 protected:
 

@@ -184,7 +184,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
                 continue;
 
             if (seemsValid(file) && !alreadyInCache(file)) {
-                sfl::Codec* audioCodec = loadCodec(dirStr+file);
+                sfl::Codec* audioCodec = loadCodec(dirStr + file);
 
                 if (audioCodec) {
                     codecs.push_back(audioCodec);
@@ -225,8 +225,8 @@ sfl::AudioCodec *AudioCodecFactory::loadCodec(const std::string &path)
     }
 
     sfl::AudioCodec *a = static_cast<sfl::AudioCodec *>(createCodec());
-
-    codecInMemory_.push_back(CodecHandlePointer(a, codecHandle));
+    if (a)
+        codecInMemory_.push_back(CodecHandlePointer(a, codecHandle));
 
     return a;
 }
@@ -243,9 +243,11 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
         return;
     }
 
-    destroyCodec(p.first);
+    if (p.first)
+        destroyCodec(p.first);
 
-    dlclose(p.second);
+    if (p.second)
+        dlclose(p.second);
 }
 
 sfl::AudioCodec* AudioCodecFactory::instantiateCodec(int payload) const
