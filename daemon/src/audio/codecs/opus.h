@@ -27,17 +27,13 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef OPUS_H
-#define OPUS_H
-#include <cstdio>
-#include <dlfcn.h>
-#include <unistd.h>
-#include <cstdlib>
+#ifndef OPUS_H_
+#define OPUS_H_
+
 #include "noncopyable.h"
 #include "opus/opus.h"
 
 #include "audiocodec.h"
-#include "sfl_types.h"
 
 #define MAX_ENCODER_BUFFER 480
 #define OPUS_APPLICATION_VOIP 2048
@@ -171,7 +167,7 @@ private:
    static OpusDecoder* m_pDecoder;
    static const int FRAME_SIZE = 160;
    static const int CLOCK_RATE = 16000;
-   static const int CHANNAL    = 1;
+   static const int CHANNELS   = 1;
 
    //Helpers
    static void loadError(char* error);

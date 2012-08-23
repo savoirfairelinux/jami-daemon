@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 #include "opus.h"
-#include "global.h"
 #include <stdexcept>
+#include <dlfcn.h>
 
 //BEGIN FUNCTION TYPE
 //Make the code more readable, keep in .cpp. There is no point to make them "public" in the .h. Internal use only
@@ -67,6 +67,7 @@
 #define OPUS_TYPE_REPACK_OUT       (int32_t (*)(OpusRepacketizer*,unsigned char*,int32_t))
 //END FUNCTION TYPE
 
+// FIXME: this will conflict with video payload types
 static const int Opus_PAYLOAD_TYPE = 97; //FAKE VALUE
 
 int               (*Opus::opus_encoder_get_size            )(int channels) = 0;
@@ -99,12 +100,12 @@ int               (*Opus::opus_repacketizer_get_nb_frames  )(Opus::OpusRepacketi
 int32_t           (*Opus::opus_repacketizer_out            )(Opus::OpusRepacketizer *rp, unsigned char *data, int32_t maxlen) = 0;
 
 
-Opus::OpusEncoder* Opus::m_pEncoder =0;
-Opus::OpusDecoder* Opus::m_pDecoder =0;
-void*              Opus::m_pHandler =0;
+Opus::OpusEncoder* Opus::m_pEncoder = 0;
+Opus::OpusDecoder* Opus::m_pDecoder = 0;
+void*              Opus::m_pHandler = 0;
 
 
-Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "OPUS", CLOCK_RATE, FRAME_SIZE, CHANNAL)
+Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "OPUS", CLOCK_RATE, FRAME_SIZE, CHANNELS)
 {
    hasDynamicPayload_ = true;
    init();
@@ -116,83 +117,73 @@ bool Opus::init()
    if (!m_pHandler)
       return false;
    try {
-         opus_encoder_get_size             = OPUS_TYPE_ENCODER_SIZE     dlsym(m_pHandler, "opus_encoder_get_size");
-         loadError(dlerror());
-         opus_encoder_create               = OPUS_TYPE_ENCODER_CREATE   dlsym(m_pHandler, "opus_encoder_create");
-         loadError(dlerror());
-         opus_encoder_init                 = OPUS_TYPE_ENCODER_INIT     dlsym(m_pHandler, "opus_encoder_init");
-         loadError(dlerror());
-         opus_encode                       = OPUS_TYPE_ENCODER          dlsym(m_pHandler, "opus_encode");
-         loadError(dlerror());
-         opus_encode_float                 = OPUS_TYPE_ENCODER_FLOAT    dlsym(m_pHandler, "opus_encode_float");
-         loadError(dlerror());
-         opus_encoder_destroy              = OPUS_TYPE_ENCODER_DESTROY  dlsym(m_pHandler, "opus_encoder_destroy");
-         loadError(dlerror());
-         opus_encoder_ctl                  = OPUS_TYPE_ENCODER_CTL      dlsym(m_pHandler, "opus_encoder_ctl");
-         loadError(dlerror());
-         opus_decoder_get_size             = OPUS_TYPE_DECODER_SIZE     dlsym(m_pHandler, "opus_decoder_get_size");
-         loadError(dlerror());
-         opus_decoder_create               = OPUS_TYPE_DECODER_CREATE   dlsym(m_pHandler, "opus_decoder_create");
-         loadError(dlerror());
-         opus_decoder_init                 = OPUS_TYPE_DECODER_INIT     dlsym(m_pHandler, "opus_decoder_init");
-         loadError(dlerror());
-         opus_decode                       = OPUS_TYPE_DECODER          dlsym(m_pHandler, "opus_decode");
-         loadError(dlerror());
-         opus_decode_float                 = OPUS_TYPE_DECODER_FLOAT    dlsym(m_pHandler, "opus_decode_float");
-         loadError(dlerror());
-         opus_decoder_ctl                  = OPUS_TYPE_DECODER_CTL      dlsym(m_pHandler, "opus_decoder_ctl");
-         loadError(dlerror());
-         opus_decoder_destroy              = OPUS_TYPE_DECODER_DESTROY  dlsym(m_pHandler, "opus_decoder_destroy");
-         loadError(dlerror());
-         opus_decoder_get_nb_samples       = OPUS_TYPE_DECODER_NBSAMPLE dlsym(m_pHandler, "opus_decoder_get_nb_samples");
-         loadError(dlerror());
-         opus_packet_parse                 = OPUS_TYPE_PACKET_PARSE     dlsym(m_pHandler, "opus_packet_parse");
-         loadError(dlerror());
-         opus_packet_get_bandwidth         = OPUS_TYPE_PACKET_BANDWIDTH dlsym(m_pHandler, "opus_packet_get_bandwidth");
-         loadError(dlerror());
-         opus_packet_get_samples_per_frame = OPUS_TYPE_PACKET_SAMPLE    dlsym(m_pHandler, "opus_packet_get_samples_per_frame");
-         loadError(dlerror());
-         opus_packet_get_nb_channels       = OPUS_TYPE_PACKET_NBCHAN    dlsym(m_pHandler, "opus_packet_get_nb_channels");
-         loadError(dlerror());
-         opus_packet_get_nb_frames         = OPUS_TYPE_PACKET_NBFRM     dlsym(m_pHandler, "opus_packet_get_nb_frames");
-         loadError(dlerror());
-         opus_repacketizer_get_size        = OPUS_TYPE_REPACK_SIZE      dlsym(m_pHandler, "opus_repacketizer_get_size");
-         loadError(dlerror());
-         opus_repacketizer_init            = OPUS_TYPE_REPACK_INIT      dlsym(m_pHandler, "opus_repacketizer_init");
-         loadError(dlerror());
-         opus_repacketizer_create          = OPUS_TYPE_REPACK_CREATE    dlsym(m_pHandler, "opus_repacketizer_create");
-         loadError(dlerror());
-         opus_repacketizer_destroy         = OPUS_TYPE_REPACK_DESTROY   dlsym(m_pHandler, "opus_repacketizer_destroy");
-         loadError(dlerror());
-         opus_repacketizer_cat             = OPUS_TYPE_REPACK_CAT       dlsym(m_pHandler, "opus_repacketizer_cat");
-         loadError(dlerror());
-         opus_repacketizer_out_range       = OPUS_TYPE_REPACK_RANGE     dlsym(m_pHandler, "opus_repacketizer_out_range");
-         loadError(dlerror());
-         opus_repacketizer_get_nb_frames   = OPUS_TYPE_REPACK_NBFRM     dlsym(m_pHandler, "opus_repacketizer_get_nb_frames");
-         loadError(dlerror());
-         opus_repacketizer_out             = OPUS_TYPE_REPACK_OUT       dlsym(m_pHandler, "opus_repacketizer_out");
-         loadError(dlerror());
+       opus_encoder_get_size             = OPUS_TYPE_ENCODER_SIZE     dlsym(m_pHandler, "opus_encoder_get_size");
+       loadError(dlerror());
+       opus_encoder_create               = OPUS_TYPE_ENCODER_CREATE   dlsym(m_pHandler, "opus_encoder_create");
+       loadError(dlerror());
+       opus_encoder_init                 = OPUS_TYPE_ENCODER_INIT     dlsym(m_pHandler, "opus_encoder_init");
+       loadError(dlerror());
+       opus_encode                       = OPUS_TYPE_ENCODER          dlsym(m_pHandler, "opus_encode");
+       loadError(dlerror());
+       opus_encode_float                 = OPUS_TYPE_ENCODER_FLOAT    dlsym(m_pHandler, "opus_encode_float");
+       loadError(dlerror());
+       opus_encoder_destroy              = OPUS_TYPE_ENCODER_DESTROY  dlsym(m_pHandler, "opus_encoder_destroy");
+       loadError(dlerror());
+       opus_encoder_ctl                  = OPUS_TYPE_ENCODER_CTL      dlsym(m_pHandler, "opus_encoder_ctl");
+       loadError(dlerror());
+       opus_decoder_get_size             = OPUS_TYPE_DECODER_SIZE     dlsym(m_pHandler, "opus_decoder_get_size");
+       loadError(dlerror());
+       opus_decoder_create               = OPUS_TYPE_DECODER_CREATE   dlsym(m_pHandler, "opus_decoder_create");
+       loadError(dlerror());
+       opus_decoder_init                 = OPUS_TYPE_DECODER_INIT     dlsym(m_pHandler, "opus_decoder_init");
+       loadError(dlerror());
+       opus_decode                       = OPUS_TYPE_DECODER          dlsym(m_pHandler, "opus_decode");
+       loadError(dlerror());
+       opus_decode_float                 = OPUS_TYPE_DECODER_FLOAT    dlsym(m_pHandler, "opus_decode_float");
+       loadError(dlerror());
+       opus_decoder_ctl                  = OPUS_TYPE_DECODER_CTL      dlsym(m_pHandler, "opus_decoder_ctl");
+       loadError(dlerror());
+       opus_decoder_destroy              = OPUS_TYPE_DECODER_DESTROY  dlsym(m_pHandler, "opus_decoder_destroy");
+       loadError(dlerror());
+       opus_decoder_get_nb_samples       = OPUS_TYPE_DECODER_NBSAMPLE dlsym(m_pHandler, "opus_decoder_get_nb_samples");
+       loadError(dlerror());
+       opus_packet_parse                 = OPUS_TYPE_PACKET_PARSE     dlsym(m_pHandler, "opus_packet_parse");
+       loadError(dlerror());
+       opus_packet_get_bandwidth         = OPUS_TYPE_PACKET_BANDWIDTH dlsym(m_pHandler, "opus_packet_get_bandwidth");
+       loadError(dlerror());
+       opus_packet_get_samples_per_frame = OPUS_TYPE_PACKET_SAMPLE    dlsym(m_pHandler, "opus_packet_get_samples_per_frame");
+       loadError(dlerror());
+       opus_packet_get_nb_channels       = OPUS_TYPE_PACKET_NBCHAN    dlsym(m_pHandler, "opus_packet_get_nb_channels");
+       loadError(dlerror());
+       opus_packet_get_nb_frames         = OPUS_TYPE_PACKET_NBFRM     dlsym(m_pHandler, "opus_packet_get_nb_frames");
+       loadError(dlerror());
+       opus_repacketizer_get_size        = OPUS_TYPE_REPACK_SIZE      dlsym(m_pHandler, "opus_repacketizer_get_size");
+       loadError(dlerror());
+       opus_repacketizer_init            = OPUS_TYPE_REPACK_INIT      dlsym(m_pHandler, "opus_repacketizer_init");
+       loadError(dlerror());
+       opus_repacketizer_create          = OPUS_TYPE_REPACK_CREATE    dlsym(m_pHandler, "opus_repacketizer_create");
+       loadError(dlerror());
+       opus_repacketizer_destroy         = OPUS_TYPE_REPACK_DESTROY   dlsym(m_pHandler, "opus_repacketizer_destroy");
+       loadError(dlerror());
+       opus_repacketizer_cat             = OPUS_TYPE_REPACK_CAT       dlsym(m_pHandler, "opus_repacketizer_cat");
+       loadError(dlerror());
+       opus_repacketizer_out_range       = OPUS_TYPE_REPACK_RANGE     dlsym(m_pHandler, "opus_repacketizer_out_range");
+       loadError(dlerror());
+       opus_repacketizer_get_nb_frames   = OPUS_TYPE_REPACK_NBFRM     dlsym(m_pHandler, "opus_repacketizer_get_nb_frames");
+       loadError(dlerror());
+       opus_repacketizer_out             = OPUS_TYPE_REPACK_OUT       dlsym(m_pHandler, "opus_repacketizer_out");
+       loadError(dlerror());
 
-         int err;
-         m_pEncoder = opus_encoder_create(CLOCK_RATE, CHANNAL, OPUS_APPLICATION_VOIP, &err);
-         if (err) {
-            return false;
-         }
-//          if (int err = opus_encoder_init(m_pEncoder, CLOCK_RATE, CHANNAL, OPUS_APPLICATION_VOIP )) {
-//             printf("FAILED1 %d\n",err);
-//             return false;
-//          }
+       int err = 0;
+       m_pEncoder = opus_encoder_create(CLOCK_RATE, CHANNELS, OPUS_APPLICATION_VOIP, &err);
+       if (err)
+           return false;
 
-         m_pDecoder = opus_decoder_create(CLOCK_RATE, CHANNAL, &err );
-         if (err) {
-            return false;
-         }
-//          if (int err = opus_decoder_init(m_pDecoder, CLOCK_RATE, CHANNAL )) {
-//             printf("FAILED2 %d\n",err);
-//             return false;
-//          }
-   }
-   catch(std::exception const& e) {
+       m_pDecoder = opus_decoder_create(CLOCK_RATE, CHANNELS, &err);
+       if (err)
+           return false;
+
+   } catch (const std::exception & e) {
       return false;
    }
 
@@ -208,21 +199,17 @@ Opus::~Opus()
 
 int Opus::decode(short *dst, unsigned char *buf, size_t buffer_size)
 {
-   int sample = opus_decode(m_pDecoder, buf, buffer_size, dst, FRAME_SIZE, 0 );
-//    printf("OPUS decode %d %d\n",sample,buffer_size);
-   return sample;
+   return opus_decode(m_pDecoder, buf, buffer_size, dst, FRAME_SIZE, 0);
 }
 
 int Opus::encode(unsigned char *dst, short *src, size_t buffer_size)
 {
-   int size = opus_encode(m_pEncoder, src, FRAME_SIZE, dst, buffer_size*2);
-//    printf("OPUS encode %d %d\n",size,buffer_size);
-   return size;
+   return opus_encode(m_pEncoder, src, FRAME_SIZE, dst, buffer_size * 2);
 }
 
 void Opus::loadError(char* error)
 {
-   if ((error) != NULL)
+   if (error != NULL)
       throw std::runtime_error("Opus failed to load");
 }
 
