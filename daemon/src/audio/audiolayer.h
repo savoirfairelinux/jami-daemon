@@ -72,7 +72,8 @@ class AudioLayer {
             TONE,
             RINGTONE,
             VOICE,
-            URGENT
+            URGENT,
+            ZEROS
         };
 
         AudioLayer();
