@@ -208,14 +208,6 @@ sfl::AudioCodec *AudioCodecFactory::loadCodec(const std::string &path)
         return NULL;
     }
 
-    //If there is an init function, then call it, useful for optional codecs with dependency check at runtime
-    bool(*init)();
-    init = (bool(*)()) dlsym(codecHandle, "init");
-    if (dlerror() == NULL && !(*init)())
-        return NULL;
-
-    dlerror();
-
     create_t* createCodec = (create_t*) dlsym(codecHandle, CODEC_ENTRY_SYMBOL);
     const char *error = dlerror();
 

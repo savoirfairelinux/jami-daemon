@@ -27,51 +27,36 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef G729_H
-#define G729_H
-#include <cstdio>
-#include <dlfcn.h>
-#include <unistd.h>
+#ifndef G729_H_
+#define G729_H_
+
 #include <cstdlib>
 #include "noncopyable.h"
-#include "g729/decoder.h"
-#include "g729/encoder.h"
-#include "g729/typedef.h"
 
 #include "audiocodec.h"
-#include "sfl_types.h"
 
-#define G729_TYPE_ENCODERCHANNEL (void (*)(bcg729EncoderChannelContextStruct*))
-#define G729_TYPE_ENCODER        (void (*)(bcg729EncoderChannelContextStruct*, int16_t[], uint8_t[]))
-#define G729_TYPE_DECODERCHANNEL (void(*)(bcg729DecoderChannelContextStruct*))
-#define G729_TYPE_DECODER        (void (*)(bcg729DecoderChannelContextStruct*, uint8_t[], uint8_t, int16_t[]))
-
-#define G729_TYPE_DECODER_INIT   (bcg729DecoderChannelContextStruct*(*)())
-#define G729_TYPE_ENCODER_INIT   (bcg729EncoderChannelContextStruct*(*)())
-
+class bcg729DecoderChannelContextStruct;
+class bcg729EncoderChannelContextStruct;
 
 class G729 : public sfl::AudioCodec {
 public:
    G729();
    ~G729();
-   static bool init();
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
 
 private:
    NON_COPYABLE(G729);
    //Attributes
-   static bcg729DecoderChannelContextStruct* m_spDecStruct;
-   static bcg729EncoderChannelContextStruct* m_spEncStruct;
-   static void* m_pHandler;
+   bcg729DecoderChannelContextStruct* decoderContext_;
+   bcg729EncoderChannelContextStruct* encoderContext_;
+   void* handler_;
 
    //Extern functions
-   static void (*closeBcg729EncoderChannel) ( bcg729EncoderChannelContextStruct *encoderChannelContext                                                                   );
-   static void (*bcg729Encoder)             ( bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]                        );
-   static void (*closeBcg729DecoderChannel) ( bcg729DecoderChannelContextStruct *decoderChannelContext                                                                   );
-   static void (*bcg729Decoder)             ( bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[] , uint8_t frameErasureFlag, int16_t signal[] );
+   void (*encoder_) (bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]);
+   void (*decoder_) (bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, int16_t signal[]);
 
-   static void loadError(char* error);
+   static void loadError(const char *error);
 };
 
-#endif
+#endif  // G729_H_

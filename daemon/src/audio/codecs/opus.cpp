@@ -30,7 +30,6 @@
 #include "opus.h"
 #include <stdexcept>
 #include <dlfcn.h>
-#include "logger.h"
 
 //BEGIN FUNCTION TYPE
 #define OPUS_TYPE_ENCODER_CREATE   (OpusEncoder* (*)(int32_t,int,int,int*))
@@ -118,7 +117,7 @@ extern "C" sfl::Codec* CODEC_ENTRY()
     try {
         return new Opus;
     } catch (const std::runtime_error &e) {
-        WARN("%s", e.what());
+        std::cerr << e.what() << std::endl;
         return 0;
     }
 }
@@ -128,11 +127,3 @@ extern "C" void destroy(sfl::Codec* a)
 {
     delete a;
 }
-
-#undef OPUS_TYPE_ENCODER_CREATE
-#undef OPUS_TYPE_ENCODE
-#undef OPUS_TYPE_ENCODER_DESTROY
-
-#undef OPUS_TYPE_DECODE
-#undef OPUS_TYPE_DECODER_CREATE
-#undef OPUS_TYPE_DECODER_DESTROY
