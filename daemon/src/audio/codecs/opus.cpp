@@ -42,8 +42,7 @@
 
 //END FUNCTION TYPE
 
-// FIXME: this will conflict with video payload types
-static const int Opus_PAYLOAD_TYPE = 97; //FAKE VALUE
+static const int Opus_PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
 
 Opus::OpusEncoder*(*Opus::opus_encoder_create              )(int32_t Fs, int channels, int application, int *error ) = 0;
 int32_t           (*Opus::opus_encode                      )(Opus::OpusEncoder *st, const int16_t *pcm, int frame_size, unsigned char *data, int32_t max_data_bytes ) = 0;
