@@ -47,9 +47,9 @@ G729::G729() : sfl::AudioCodec(G729_PAYLOAD_TYPE, "G729", 8000, 160, 1),
     encoder_(0),
     decoder_(0)
 {
-   handler_ = dlopen("libbcg729.so.0", RTLD_LAZY);
+   handler_ = dlopen("libbcg729.so.0", RTLD_NOW);
    if (!handler_)
-       throw std::runtime_error("g729: could not open shared lib");
+       throw std::runtime_error("g729: did not open shared lib");
 
    encoder_ = G729_TYPE_ENCODER dlsym(handler_, "bcg729Encoder");
    loadError(dlerror());

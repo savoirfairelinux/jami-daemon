@@ -59,9 +59,9 @@ Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "OPUS", CLOCK_RATE, FRAME_SIZE
 {
    hasDynamicPayload_ = true;
 
-   handler_ = dlopen("libopus.so.0", RTLD_LAZY);
+   handler_ = dlopen("libopus.so.0", RTLD_NOW);
    if (!handler_)
-       throw std::runtime_error("opus: could not open shared lib");
+       throw std::runtime_error("opus: did not open shared lib");
 
    opus_encoder_create  = OPUS_TYPE_ENCODER_CREATE dlsym(handler_, "opus_encoder_create");
    loadError(dlerror());
