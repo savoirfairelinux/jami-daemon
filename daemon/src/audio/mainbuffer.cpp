@@ -383,8 +383,9 @@ void MainBuffer::flushAllBuffers()
         iter->second->flushAll();
 }
 
-void MainBuffer::dumpInfo() const
+void MainBuffer::dumpInfo()
 {
+    ost::MutexLock guard(mutex_);
     // print each call and bound call ids
     for (CallIDMap::const_iterator iter_call = callIDMap_.begin(); iter_call != callIDMap_.end(); ++iter_call) {
         std::string dbg_str("    Call: \t");

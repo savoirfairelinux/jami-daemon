@@ -306,6 +306,10 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         callFailure(call_id);
         ERROR("%s", e.what());
         return false;
+    } catch (ost::Socket *) {
+        callFailure(call_id);
+        ERROR("Could not bind socket");
+        return false;
     }
 
     getMainBuffer().dumpInfo();
