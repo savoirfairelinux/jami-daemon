@@ -85,7 +85,7 @@ void OpenSLThread::run()
     initAudioLayer();
 
     opensl_->startAudioPlayback();
-    opensl_->startAudioCapture();
+    // opensl_->startAudioCapture();
 
     opensl_->isStarted_ = true;
     while (opensl_->isStarted_) {
@@ -116,7 +116,6 @@ OpenSLLayer::OpenSLLayer()
     , recordBufferIndex(0)
     , playbackBufferStack(ANDROID_BUFFER_QUEUE_LENGTH)
     , recordBufferStack(ANDROID_BUFFER_QUEUE_LENGTH)
-
 {
 
     for(AudioBufferStack::iterator i = playbackBufferStack.begin(); i != playbackBufferStack.end(); i++)
@@ -129,14 +128,12 @@ OpenSLLayer::OpenSLLayer()
 // Destructor
 OpenSLLayer::~OpenSLLayer()
 {
-    isStarted_ = false;
-    delete audioThread_;
+    stopStream();
 }
 
 void
 OpenSLLayer::startStream()
 {
-    MainBuffer *buffer = &Manager::instance().getMainBuffer();
     isStarted_ = true;
     if (audioThread_ == NULL) {
         audioThread_ = new OpenSLThread(this);
@@ -501,6 +498,9 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
     const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     const bool resample = sampleRate_ != mainBufferSampleRate;
 
+    if(bytesAvail == 0)
+        return false;
+
     double resampleFactor = 1.0;
     size_t maxNbBytesToGet = bytesToCpy;
     if (resample) {
@@ -519,7 +519,6 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
         out_ptr = &(*buffer.begin());
 
     Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-    AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
 
     if (resample) {
         SFLDataFormat * const rsmpl_out_ptr = &(*buffer.begin());
@@ -534,9 +533,8 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
 
 bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
     // Looks if there's any voice audio from rtp to be played
-    size_t bytesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
-
-    // 
+    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    size_t bytesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
     size_t urgentBytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
     PlaybackMode mode = getPlaybackMode();
@@ -554,14 +552,19 @@ bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
             bufferFilled = audioPlaybackFillWithToneOrRingtone(buffer);
         }
         break;
-    case VOICE: {
+    case VOICE:
         if(bytesToGet > 0)
             bufferFilled = audioPlaybackFillWithVoice(buffer, bytesToGet);
-        }
+        else
+            bufferFilled = audioBufferFillWithZeros(buffer);
         break;
+    case ZEROS:
     default:
         bufferFilled = audioBufferFillWithZeros(buffer);
     }
+
+    if(!bufferFilled)
+        printf("Error buffer not filled in audio playback\n");
 
     return bufferFilled;
 }
@@ -570,8 +573,10 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
     const int toGetBytes = buffer.size() * sizeof(SFLDataFormat);
     const int toGetSamples = buffer.size();
 
-    const int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
-    const bool resample = Manager::instance().getMainBuffer().getInternalSamplingRate() != sampleRate_;
+    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+
+    const int mainBufferSampleRate = mbuffer.getInternalSamplingRate();
+    const bool resample = mbuffer.getInternalSamplingRate() != sampleRate_;
 
     SFLDataFormat *in_ptr = &(*buffer.begin());
     AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
@@ -584,11 +589,10 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
                 rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
                 toGetSamples);
         dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
-        Manager::instance().getMainBuffer().putData(rsmpl_out_ptr,
-                rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
+        mbuffer.putData(rsmpl_out_ptr, rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
     } else {
         dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-        Manager::instance().getMainBuffer().putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
+        mbuffer.putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
     }
 }
 
@@ -601,10 +605,12 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
 
     AudioBuffer &buffer = opensl->getNextPlaybackBuffer();
 
-    bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
-    if(bufferFilled) {
-        opensl->incrementPlaybackIndex();
+    memset(&(*buffer.begin()), 0, buffer.size() * sizeof(SFLDataFormat));
 
+    bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
+    opensl->incrementPlaybackIndex();
+
+    if(bufferFilled) {
         SLresult result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
             printf("Error could not enqueue buffers in playback callback\n");

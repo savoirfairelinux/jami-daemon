@@ -290,7 +290,8 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
                 mainBufferSampleRate, inSamples);
     }
 
-    Manager::instance().getMainBuffer().putData(out, outSamples * sizeof(SFLDataFormat), id_);
+    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    mbuffer.putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
 #undef RETURN_IF_NULL
 

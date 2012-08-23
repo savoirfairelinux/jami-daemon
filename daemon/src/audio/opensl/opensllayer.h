@@ -220,6 +220,8 @@ class OpenSLLayer : public AudioLayer {
 	
         AudioBuffer &getNextRecordBuffer(void) { return recordBufferStack[recordBufferIndex]; }
 
+        int getCurrentPlaybackIndex(void) { return playbackBufferIndex; }
+
         void incrementPlaybackIndex(void) { playbackBufferIndex = ++playbackBufferIndex % NB_BUFFER_PLAYBACK_QUEUE; }
 
         void incrementRecordIndex(void) { recordBufferIndex = ++recordBufferIndex % NB_BUFFER_CAPTURE_QUEUE; }
