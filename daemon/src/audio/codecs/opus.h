@@ -128,7 +128,6 @@ public:
 
       uint32_t  rangeFinal;
    };
-   typedef struct OpusEncoder OpusEncoder;
 
    struct OpusDecoder {
       int          celt_dec_offset;
@@ -148,16 +147,6 @@ public:
       int          prev_redundancy;
       int32_t      rangeFinal;
    };
-   typedef struct OpusDecoder OpusDecoder;
-
-   struct OpusRepacketizer {
-      unsigned char        toc;
-      int                  nb_frames;
-      const unsigned char* frames[48];
-      short                len[48];
-      int                  framesize;
-   };
-   typedef struct OpusRepacketizer OpusRepacketizer;
 
 private:
    NON_COPYABLE(Opus);
@@ -175,34 +164,12 @@ private:
 protected:
 
    //Extern functions
-   static int               (*opus_encoder_get_size            )(int channels);
-   static OpusEncoder*      (*opus_encoder_create              )(int32_t Fs, int channels, int application, int *error );
-   static int               (*opus_encoder_init                )(OpusEncoder *st, int32_t Fs, int channels, int application );
-   static int32_t           (*opus_encode                      )(OpusEncoder *st, const int16_t *pcm, int frame_size, unsigned char *data, int32_t max_data_bytes );
-   static int32_t           (*opus_encode_float                )(OpusEncoder *st, const float *pcm, int frame_size, unsigned char *data, int32_t max_data_bytes );
+   static OpusEncoder*      (*opus_encoder_create              )(int32_t Fs, int channels, int application, int *error);
+   static int32_t           (*opus_encode                      )(OpusEncoder *st, const int16_t *pcm, int frame_size, unsigned char *data, int32_t max_data_bytes);
    static void              (*opus_encoder_destroy             )(OpusEncoder *st);
-   static int               (*opus_encoder_ctl                 )(OpusEncoder *st, int request, ...);
-   static int               (*opus_decoder_get_size            )(int channels);
-   static OpusDecoder*      (*opus_decoder_create              )(int32_t Fs, int channels, int *error );
-   static int               (*opus_decoder_init                )(OpusDecoder *st, int32_t Fs, int channels );
-   static int               (*opus_decode                      )(OpusDecoder *st, const unsigned char *data, int32_t len, int16_t *pcm, int frame_size, int decode_fec );
-   static int               (*opus_decode_float                )(OpusDecoder *st, const unsigned char *data, int32_t len, float *pcm, int frame_size, int decode_fec );
-   static int               (*opus_decoder_ctl                 )(OpusDecoder *st, int request, ...);
+   static OpusDecoder*      (*opus_decoder_create              )(int32_t Fs, int channels, int *error);
+   static int               (*opus_decode                      )(OpusDecoder *st, const unsigned char *data, int32_t len, int16_t *pcm, int frame_size, int decode_fec);
    static void              (*opus_decoder_destroy             )(OpusDecoder *st);
-   static int               (*opus_packet_parse                )( const unsigned char *data, int32_t len, unsigned char *out_toc, const unsigned char *frames[48], short size[48], int *payload_offset );
-   static int               (*opus_packet_get_bandwidth        )(const unsigned char *data);
-   static int               (*opus_packet_get_samples_per_frame)(const unsigned char *data, int32_t Fs);
-   static int               (*opus_packet_get_nb_channels      )(const unsigned char *data);
-   static int               (*opus_packet_get_nb_frames        )(const unsigned char packet[], int32_t len);
-   static int               (*opus_decoder_get_nb_samples      )(const OpusDecoder *dec, const unsigned char* packet, int32_t len);
-   static int               (*opus_repacketizer_get_size       )(void);
-   static OpusRepacketizer* (*opus_repacketizer_init           )(OpusRepacketizer *rp);
-   static OpusRepacketizer* (*opus_repacketizer_create         )(void);
-   static void              (*opus_repacketizer_destroy        )(OpusRepacketizer *rp);
-   static int               (*opus_repacketizer_cat            )(OpusRepacketizer *rp, const unsigned char *data, int32_t len);
-   static int32_t           (*opus_repacketizer_out_range      )(OpusRepacketizer *rp, int begin, int end, unsigned char *data, int32_t maxlen);
-   static int               (*opus_repacketizer_get_nb_frames  )(OpusRepacketizer *rp);
-   static int32_t           (*opus_repacketizer_out            )(OpusRepacketizer *rp, unsigned char *data, int32_t maxlen);
 };
 
 #endif
