@@ -53,7 +53,7 @@ class OpenSLThread : public ost::Thread {
     public:
         OpenSLThread(OpenSLLayer *opensl);
 
-        ~OpenSLThread() { ost::Thread::terminate(); }
+        ~OpenSLThread();
 
         void initAudioLayer();
 
@@ -68,6 +68,13 @@ OpenSLThread::OpenSLThread(OpenSLLayer *opensl)
     : ost::Thread(), opensl_(opensl)
 {
     MainBuffer &buffer = Manager::instance().getMainBuffer();
+}
+
+OpenSLThread::~OpenSLThread() 
+{
+    opensl_->shutdownAudioEngine();
+
+    ost::Thread::terminate();
 }
 
 void OpenSLThread::initAudioLayer(void)
@@ -87,13 +94,9 @@ void OpenSLThread::run()
     opensl_->startAudioPlayback();
     // opensl_->startAudioCapture();
 
-    opensl_->isStarted_ = true;
     while (opensl_->isStarted_) {
-        opensl_->audioCallback();
         ost::Thread::sleep(20 /* ms */);
     }
-
-    opensl_->shutdownAudioEngine();
 }
 
 // Constructor
@@ -134,16 +137,23 @@ OpenSLLayer::~OpenSLLayer()
 void
 OpenSLLayer::startStream()
 {
-    isStarted_ = true;
+    if(isStarted_)
+        return;
+
     if (audioThread_ == NULL) {
         audioThread_ = new OpenSLThread(this);
+        isStarted_ = true;
         audioThread_->start();
     }
+
 }
 
 void
 OpenSLLayer::stopStream()
 {
+    if(not isStarted_)
+        return;
+
     isStarted_ = false;
 
     delete audioThread_;
@@ -448,6 +458,8 @@ bool OpenSLLayer::audioCallback()
 
 bool OpenSLLayer::audioBufferFillWithZeros(AudioBuffer &buffer) {
 
+    printf("Fill with zeros\n");
+
     SFLDataFormat * out_ptr = &(*buffer.begin()); 
     
     memset(out_ptr, 0, buffer.size() * sizeof(SFLDataFormat));
@@ -497,6 +509,8 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
 
     const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     const bool resample = sampleRate_ != mainBufferSampleRate;
+
+    printf("Fill with voice\n");
 
     if(bytesAvail == 0)
         return false;
@@ -608,13 +622,14 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
     memset(&(*buffer.begin()), 0, buffer.size() * sizeof(SFLDataFormat));
 
     bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
-    opensl->incrementPlaybackIndex();
 
     if(bufferFilled) {
         SLresult result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
             printf("Error could not enqueue buffers in playback callback\n");
         }
+
+        opensl->incrementPlaybackIndex();
     }
 }
 
