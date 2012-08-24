@@ -34,7 +34,7 @@
 
 #include "accountlist.h"
 
-void show_account_list_config_dialog(void);
+void show_account_list_config_dialog(GSettings *settings);
 void update_account_list_status_bar(account_t *account);
 
 #endif // ACCOUNTLISTDIALOG_H_

@@ -607,7 +607,7 @@ void update_account_list_status_bar(account_t *account)
         gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS, state_name, -1);
 }
 
-void show_account_list_config_dialog(void)
+void show_account_list_config_dialog(GSettings *settings)
 {
     account_list_dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Accounts"),
                                      GTK_WINDOW(get_main_window()),
@@ -662,6 +662,6 @@ void show_account_list_config_dialog(void)
     move_up_button = NULL;
     account_store = NULL;
 
-    update_actions();
+    update_actions(settings);
 }
 

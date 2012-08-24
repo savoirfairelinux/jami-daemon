@@ -54,7 +54,7 @@ GtkWidget *waitingLayer;
 /**
  * Build the main window
  */
-void create_main_window ();
+void create_main_window (GSettings *settings);
 
 /**
  * Display a dialog window
@@ -67,7 +67,7 @@ gboolean main_window_ask_quit() ;
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_dialpad (gboolean state);
+void main_window_dialpad (gboolean state, GSettings *settings);
 
 /**
   * Shows/Hides the dialpad on the mainwindow
@@ -94,11 +94,11 @@ void statusbar_pop_message (guint id);
  */
 void statusbar_update_clock (const gchar * time);
 
-void main_window_zrtp_not_supported (callable_obj_t * c);
+void main_window_zrtp_not_supported (callable_obj_t * c, GSettings *settings);
 
-void main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason, const gchar* severity);
+void main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason, const gchar* severity, GSettings *settings);
 
-void main_window_confirm_go_clear (callable_obj_t * c);
+void main_window_confirm_go_clear (callable_obj_t * c, GSettings *settings);
 
 void focus_on_searchbar_out();
 void focus_on_searchbar_in();

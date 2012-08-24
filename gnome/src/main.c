@@ -35,7 +35,6 @@
 #include "dbus/dbus.h"
 #include "mainwindow.h"
 #include "statusicon.h"
-#include "eel-gconf-extensions.h"
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -98,7 +97,8 @@ main(int argc, char *argv[])
     textdomain(PACKAGE);
 
     GError *error = NULL;
-    if (!sflphone_init(&error)) {
+    GSettings *settings = g_settings_new("org.sflphone.SFLphone");
+    if (!sflphone_init(&error, settings)) {
         ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
                                 GTK_WINDOW(get_main_window()),
@@ -115,12 +115,13 @@ main(int argc, char *argv[])
         goto OUT;
     }
 
-    if (eel_gconf_get_integer(SHOW_STATUSICON))
-        show_status_icon();
+    const gboolean show_status = g_settings_get_boolean(settings, "show-status-icon");
+    if (show_status)
+        show_status_icon(settings);
 
-    create_main_window();
+    create_main_window(settings);
 
-    if (eel_gconf_get_integer(SHOW_STATUSICON) && eel_gconf_get_integer(START_HIDDEN)) {
+    if (show_status && g_settings_get_boolean(settings, "start-hidden")) {
         gtk_widget_hide(GTK_WIDGET(get_main_window()));
         set_minimized(TRUE);
     }
@@ -128,20 +129,21 @@ main(int argc, char *argv[])
     status_bar_display_account();
 
     sflphone_fill_history_lazy();
-    sflphone_fill_conference_list();
+    sflphone_fill_conference_list(settings);
     sflphone_fill_call_list();
 
     // Update the GUI
-    update_actions();
+    update_actions(settings);
 
-    shortcuts_initialize_bindings();
+    shortcuts_initialize_bindings(settings);
 
     gtk_main();
 
     codecs_unload();
     shortcuts_destroy_bindings();
 
-    eel_gconf_global_client_free();
+    g_object_unref(settings);
+
 OUT:
 #if !GTK_CHECK_VERSION(2,32,0)
     gdk_threads_leave();

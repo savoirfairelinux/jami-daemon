@@ -40,7 +40,7 @@ calltab_t* current_calls_tab;
 calltab_t* history_tab;
 calltab_t* contacts_tab;
 
-calltab_t* calltab_init (gboolean, const gchar * const);
+calltab_t* calltab_init (gboolean, const gchar * const, GSettings *settings);
 
 /** Mark a call as selected.  There can be only one selected call.  This call
   * is the currently highlighted one in the list.

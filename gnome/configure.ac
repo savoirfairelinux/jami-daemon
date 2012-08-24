@@ -17,9 +17,6 @@ LT_INIT
 
 CFLAGS="$CFLAGS -Wall -Wextra -Wshadow"
 
-dnl GCONF utilities
-AM_GCONF_SOURCE_2
-
 dnl uninstalled gsr ui dir
 AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
   [path to uninstalled SFLphone UI dir])
@@ -46,7 +43,11 @@ PKG_CHECK_MODULES(GTK, gtk+-3.0, [AC_MSG_NOTICE(Using gtk+-3.0)],
         [PKG_CHECK_MODULES(GTK, gtk+-2.0, [PKG_CHECK_MODULES(GTHREAD, gthread-2.0)],
             [AC_MSG_ERROR(gtk-2 not found)])])
 
-PKG_CHECK_MODULES(GCONF, gconf-2.0)
+AC_SUBST([GETTEXT_PACKAGE], [$PACKAGE_TARNAME])
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [GETTEXT package name])
+
+IT_PROG_INTLTOOL([0.40.0])
+
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
 PKG_CHECK_MODULES(X11, x11)
 PKG_CHECK_MODULES(JAVASCRIPT_CORE_GTK, javascriptcoregtk-3.0, ,
@@ -54,6 +55,8 @@ PKG_CHECK_MODULES(JAVASCRIPT_CORE_GTK, javascriptcoregtk-3.0, ,
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4],,
                   AC_MSG_RESULT([check not installed]))
+
+GLIB_GSETTINGS
 
 AC_CONFIG_FILES([
 Makefile

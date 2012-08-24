@@ -56,8 +56,8 @@ typedef struct {
  * Create a new message tab or use the existing on if the call exist
  * @param call the conversation call
  */
-message_tab* create_messaging_tab(callable_obj_t* call);
-message_tab* create_messaging_tab_conf(conference_obj_t* call);
+message_tab* create_messaging_tab(callable_obj_t* call, GSettings *settings);
+message_tab* create_messaging_tab_conf(conference_obj_t* call, GSettings *settings);
 
 /** Return the main conversation notebook */
 GtkWidget *get_tab_box();
@@ -66,8 +66,8 @@ GtkWidget *get_tab_box();
  * @param call the call
  * @param message the new message
  */
-void new_text_message(callable_obj_t *call, const gchar *message);
-void new_text_message_conf(conference_obj_t *call, const gchar *message,const gchar* from);
+void new_text_message(callable_obj_t *call, const gchar *message, GSettings *settings);
+void new_text_message_conf(conference_obj_t *call, const gchar *message,const gchar* from, GSettings *settings);
 
 
 /**

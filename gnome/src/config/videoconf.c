@@ -34,7 +34,6 @@
 #include "logger.h"
 #include "utils.h"
 #include "unused.h"
-#include "eel-gconf-extensions.h"
 #include "dbus.h"
 #include "codeclist.h"
 

@@ -102,14 +102,10 @@ GtkWidget * create_recording_settings();
 /**
  * Display the main configuration window
  */
-guint show_preferences_dialog();
+guint show_preferences_dialog(GSettings *settings);
 
 void preferences_dialog_set_stun_visible();
 
-void save_configuration_parameters (void);
-
-void history_load_configuration (void);
-
-void instant_messaging_load_configuration (void);
+void save_configuration_parameters (GSettings *settings);
 
 #endif

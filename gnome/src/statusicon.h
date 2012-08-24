@@ -47,7 +47,7 @@ void popup_main_window (void);
 /**
  * Create the system tray icon
  */
-void show_status_icon ();
+void show_status_icon (GSettings *settings);
 
 
 /**

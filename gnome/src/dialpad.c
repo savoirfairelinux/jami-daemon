@@ -36,15 +36,23 @@
 /**
  * button pressed event
  */
+
+typedef struct
+{
+    const gchar *number;
+    GSettings *settings;
+} DialpadData;
+
 static void
-dialpad_pressed(GtkWidget * widget UNUSED, gpointer data)
+dialpad_pressed(GtkWidget * widget UNUSED, DialpadData *data)
 {
     gtk_widget_grab_focus(GTK_WIDGET(current_calls_tab->view));
-    sflphone_keypad(0, (gchar*) data);
+    sflphone_keypad(0, data->number, data->settings);
+    g_free(data);
 }
 
 GtkWidget *
-get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters)
+get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters, GSettings *settings)
 {
     GtkWidget *button = gtk_button_new();
     GtkWidget *label = gtk_label_new("1");
@@ -53,15 +61,18 @@ get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters)
     gchar *markup = g_markup_printf_escaped("<big><b>%s</b></big>%s%s", number, (twolines == TRUE ? "\n": ""), letters);
     gtk_label_set_markup(GTK_LABEL(label), markup);
     gtk_container_add(GTK_CONTAINER(button), label);
+    DialpadData * dialpad_data = g_new0(DialpadData, 1);
+    dialpad_data->number = number;
+    dialpad_data->settings = settings;
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(dialpad_pressed),(gchar*) number);
+                     G_CALLBACK(dialpad_pressed), dialpad_data);
 
     g_free(markup);
     return button;
 }
 
 GtkWidget *
-create_dialpad()
+create_dialpad(GSettings *settings)
 {
     static const gchar * const key_strings[] = {
         "1", "",
@@ -85,7 +96,7 @@ create_dialpad()
 
     for (int row = 0, entry = 0; row != ROWS; ++row)
         for (int col = 0; col != COLS; ++col) {
-            GtkWidget *button = get_numpad_button(key_strings[entry], TRUE, key_strings[entry + 1]);
+            GtkWidget *button = get_numpad_button(key_strings[entry], TRUE, key_strings[entry + 1], settings);
             gtk_table_attach(GTK_TABLE(table), button, col, col + 1, row, row + 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
             entry += 2;
         }

@@ -40,6 +40,6 @@
  * Build the dialpad
  * @return GtkWidget* The widge representing the dialpad
  */
-GtkWidget * create_dialpad();
+GtkWidget * create_dialpad(GSettings *settings);
 
 #endif
