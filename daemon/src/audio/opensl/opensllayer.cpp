@@ -137,7 +137,7 @@ OpenSLLayer::~OpenSLLayer()
 // #define RECORD_AUDIO_TODISK
 #ifdef RECORD_AUDIO_TODISK
 #include <fstream>
-std::ofstream outfile;
+std::ofstream opensl_outfile;
 #endif
 
 void
@@ -148,7 +148,7 @@ OpenSLLayer::startStream()
 
     if (audioThread_ == NULL) {
 #ifdef RECORD_AUDIO_TODISK
-        outfile.open("/data/data/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
+        opensl_outfile.open("/data/data/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
 #endif
 
         audioThread_ = new OpenSLThread(this);
@@ -169,7 +169,7 @@ OpenSLLayer::stopStream()
     delete audioThread_;
     audioThread_ = NULL;
 #ifdef RECORD_AUDIO_TODISK
-    outfile.close();
+    opensl_outfile.close();
 #endif
 }
 
@@ -639,7 +639,7 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
 
     if(bufferFilled) {
 #ifdef RECORD_AUDIO_TODISK
-        outfile.write((char const *)(&(*buffer.begin())), buffer.size() * sizeof(SFLDataFormat));
+        opensl_outfile.write((char const *)(&(*buffer.begin())), buffer.size() * sizeof(SFLDataFormat));
 #endif
         SLresult result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size() * sizeof(SFLDataFormat));
         if (SL_RESULT_SUCCESS != result) {
