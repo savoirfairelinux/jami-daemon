@@ -454,6 +454,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     if (ret != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
 } while (0)
+	DEBUG("SIP constructor");
 
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
@@ -558,6 +559,7 @@ SIPVoIPLink::~SIPVoIPLink()
 
 SIPVoIPLink* SIPVoIPLink::instance()
 {
+	DEBUG("creating SIPVoIPLink instance");
     assert(!destroyed_);
     if (!instance_)
         instance_ = new SIPVoIPLink;
@@ -626,6 +628,8 @@ bool SIPVoIPLink::getEvent()
 
 void SIPVoIPLink::sendRegister(Account *a)
 {
+	DEBUG("registering account in SIP");
+
     SIPAccount *account = static_cast<SIPAccount*>(a);
 
     if (!account)
