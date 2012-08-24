@@ -1910,7 +1910,7 @@ ManagerImpl::getTelephoneFile()
 std::string ManagerImpl::retrieveConfigPath() const
 {
 #if ANDROID
-    std::string configdir = "/data/data/org.sflphone.service";
+    std::string configdir = "/data/data/com.savoirfairelinux.sflphone.client";
 #else
     std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
                              ".config" + DIR_SEPARATOR_STR + PACKAGE;
