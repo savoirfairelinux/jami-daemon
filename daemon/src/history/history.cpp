@@ -40,12 +40,44 @@
 #include "logger.h"
 #include "call.h"
 
+#include <string.h>
+#include <stdio.h>
+#include <jni.h>
+
 using std::map;
 using std::string;
 using std::vector;
 
 History::History() : historyItemsMutex_(), items_(), path_("")
 {}
+
+JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getJniString(JNIEnv* env, jclass obj){
+
+    jstring jstr = env->NewStringUTF("This comes from jni.");
+    jclass clazz;
+    jmethodID getSipLogLevel;
+
+	DEBUG("Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getJniString");
+	/* could be GetObjectClass instead of FindClass */
+	clazz = env->FindClass("com/savoirfairelinux/sflphone/client/ManagerImpl");
+	if (!getSipLogLevel) {
+        DEBUG("whoops, class does not exist");
+		return NULL;
+	}
+	getSipLogLevel = env->GetMethodID(clazz, "getSipLogLevel", "()Ljava/lang/String;");
+	if (!getSipLogLevel) {
+        DEBUG("whoops, method does not exist");
+		return NULL;
+	}
+
+    jobject result = env->CallObjectMethod(obj, getSipLogLevel);
+
+	// should be released but what a heck, it's a tutorial :)
+    const char* str = env->GetStringUTFChars((jstring) result, NULL);
+	DEBUG("%s", str);
+
+    return env->NewStringUTF(str);
+}
 
 bool History::load(int limit)
 {
