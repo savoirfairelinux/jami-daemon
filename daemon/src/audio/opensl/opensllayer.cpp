@@ -134,6 +134,12 @@ OpenSLLayer::~OpenSLLayer()
     stopStream();
 }
 
+// #define RECORD_AUDIO_TODISK
+#ifdef RECORD_AUDIO_TODISK
+#include <fstream>
+std::ofstream outfile;
+#endif
+
 void
 OpenSLLayer::startStream()
 {
@@ -141,6 +147,10 @@ OpenSLLayer::startStream()
         return;
 
     if (audioThread_ == NULL) {
+#ifdef RECORD_AUDIO_TODISK
+        outfile.open("/data/data/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
+#endif
+
         audioThread_ = new OpenSLThread(this);
         isStarted_ = true;
         audioThread_->start();
@@ -158,6 +168,9 @@ OpenSLLayer::stopStream()
 
     delete audioThread_;
     audioThread_ = NULL;
+#ifdef RECORD_AUDIO_TODISK
+    outfile.close();
+#endif
 }
 
 void
@@ -458,8 +471,6 @@ bool OpenSLLayer::audioCallback()
 
 bool OpenSLLayer::audioBufferFillWithZeros(AudioBuffer &buffer) {
 
-    printf("Fill with zeros\n");
-
     SFLDataFormat * out_ptr = &(*buffer.begin()); 
     
     memset(out_ptr, 0, buffer.size() * sizeof(SFLDataFormat));
@@ -496,7 +507,7 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesT
     const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
     SFLDataFormat * const out_ptr = &(*buffer.begin());
     urgentRingBuffer_.get(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-    AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+    // AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
 
     // Consume the regular one as well (same amount of bytes)
     Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
@@ -509,8 +520,6 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
 
     const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     const bool resample = sampleRate_ != mainBufferSampleRate;
-
-    printf("Fill with voice\n");
 
     if(bytesAvail == 0)
         return false;
@@ -533,6 +542,7 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
         out_ptr = &(*buffer.begin());
 
     Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
+    // AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
 
     if (resample) {
         SFLDataFormat * const rsmpl_out_ptr = &(*buffer.begin());
@@ -551,6 +561,8 @@ bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
     size_t bytesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
     size_t urgentBytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
+    usleep(20000);
+
     PlaybackMode mode = getPlaybackMode();
 
     bool bufferFilled = false;
@@ -566,11 +578,12 @@ bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
             bufferFilled = audioPlaybackFillWithToneOrRingtone(buffer);
         }
         break;
-    case VOICE:
+    case VOICE: {
         if(bytesToGet > 0)
             bufferFilled = audioPlaybackFillWithVoice(buffer, bytesToGet);
         else
             bufferFilled = audioBufferFillWithZeros(buffer);
+        }
         break;
     case ZEROS:
     default:
@@ -623,8 +636,12 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
 
     bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
 
+
     if(bufferFilled) {
-        SLresult result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size());
+#ifdef RECORD_AUDIO_TODISK
+        outfile.write((char const *)(&(*buffer.begin())), buffer.size() * sizeof(SFLDataFormat));
+#endif
+        SLresult result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size() * sizeof(SFLDataFormat));
         if (SL_RESULT_SUCCESS != result) {
             printf("Error could not enqueue buffers in playback callback\n");
         }
