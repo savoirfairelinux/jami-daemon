@@ -198,23 +198,15 @@ JNIEXPORT jobject JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_
 	}
 	INFO("getNewData: Data Class found");
 
-	jmethodID dataDefaultConstructor = env->GetMethodID(dataClass, "<init>", "()V");
-	if (dataDefaultConstructor) {
-		ERROR("getNewData: failed to get default constructor");
-		return NULL;
-	}
-	INFO("getNewData: Data default constructor found");
-
 	jmethodID dataConstructor = env->GetMethodID(dataClass, "<init>", "(ILjava/lang/String;)V");
-	if (dataConstructor) {
+	if (!dataConstructor) {
 		ERROR("getNewData: failed to get constructor");
-		return NULL;
 	}
 	INFO("getNewData: Data constructor found");
 
 	jobject dataObject = env->NewObject(dataClass, dataConstructor, i, s);
 	if (!dataObject) {
-		ERROR("getNewData: failed to create an object");
+		ERROR("getNewData: failed to create object");
 		return NULL;
 	}
 	return dataObject;
@@ -245,13 +237,6 @@ JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_
 
 	jstring dataStringValue = (jstring) env->GetObjectField(dataObject, dataStringField);
 	return dataStringValue;
-}
-
-JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString2
-(JNIEnv *env, jclass cls) {
-	INFO("getDataString2");
-
-    return env->NewStringUTF("getDataString2: successfully sending string from native to java");
 }
 
 void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
@@ -313,11 +298,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 			"getDataString",
 			"(Lcom/savoirfairelinux/sflphone/client/Data;)Ljava/lang/String;",
 			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
-		},
-		{
-			"getDataString2",
-			"()Ljava/lang/String;",
-			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString2
 		}
 	};
 	int numMethods = sizeof(methods) / sizeof(methods[0]);
