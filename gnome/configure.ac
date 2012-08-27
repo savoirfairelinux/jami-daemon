@@ -74,6 +74,7 @@ tests/Makefile
 man/Makefile
 po/Makefile
 doc/Makefile
+data/Makefile
 ])
 AC_OUTPUT
 
