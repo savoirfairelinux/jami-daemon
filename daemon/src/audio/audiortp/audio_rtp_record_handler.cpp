@@ -44,9 +44,10 @@
 
 namespace sfl {
 
-#ifdef RECTODISK
-std::ofstream rtpResampled ("testRtpOutputResampled.raw", std::ifstream::binary);
-std::ofstream rtpNotResampled("testRtpOutput.raw", std::ifstream::binary);
+// #define RTP_RECTODISK
+#ifdef RTP_RECTODISK
+std::ofstream beforedecode("/data/data/beforedecoding.raw", std::ofstream::binary);
+std::ofstream afterdecode("/data/data/afterdecoding.raw", std::ofstream::binary);
 #endif
 
 DTMFEvent::DTMFEvent(int digit) : payload(), newevent(true), length(1000)
@@ -95,9 +96,9 @@ bool AudioRtpRecord::isDead()
 AudioRtpRecord::~AudioRtpRecord()
 {
     dead_ = true;
-#ifdef RECTODISK
-    rtpResampled.close();
-    rtpNotResampled.close();
+#ifdef RTP_RECTODISK
+    beforedecode.close();
+    afterdecode.close();
 #endif
 
     delete converterEncode_;
@@ -120,15 +121,16 @@ AudioRtpRecord::~AudioRtpRecord()
 #endif
 }
 
-
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     id_(call.getCallId()),
     gainController(8000, -10.0)
-{}
+{
+}
 
-
-AudioRtpRecordHandler::~AudioRtpRecordHandler() {}
+AudioRtpRecordHandler::~AudioRtpRecordHandler() 
+{
+}
 
 void AudioRtpRecordHandler::setRtpMedia(AudioCodec *audioCodec)
 {
@@ -195,10 +197,6 @@ int AudioRtpRecordHandler::processDataEncode()
     SFLDataFormat *micData = audioRtpRecord_.decData_.data();
     const size_t bytes = Manager::instance().getMainBuffer().getData(micData, bytesToGet, id_);
 
-#ifdef RECTODISK
-    rtpNotResampled.write((const char *)micData, bytes);
-#endif
-
     if (bytes != bytesToGet) {
         ERROR("Asked for %d bytes from mainbuffer, got %d", bytesToGet, bytes);
         return 0;
@@ -218,10 +216,6 @@ int AudioRtpRecordHandler::processDataEncode()
                 audioRtpRecord_.resampledData_.size(),
                 mainBufferSampleRate, codecSampleRate,
                 samplesToGet);
-
-#ifdef RECTODISK
-        rtpResampled.write((const char *)audioRtpRecord_.resampledData_.data(), samplesToGet*sizeof(SFLDataFormat)/2 );
-#endif
 
         out = audioRtpRecord_.resampledData_.data();
     }
@@ -250,6 +244,10 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     if (audioRtpRecord_.isDead() or getCodecPayloadType() != payloadType)
         return;
 
+#ifdef RTP_RECTODISK
+    beforedecode.write((const char *)spkrData, size);
+#endif
+
     int inSamples = 0;
     size = std::min(size, audioRtpRecord_.decData_.size());
     SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
@@ -259,6 +257,11 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         // Return the size of data in samples
         inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
+
+#ifdef RTP_RECTODISK
+    afterdecode.write((const char *)spkrDataDecoded, inSamples*sizeof(SFLDataFormat));
+#endif
+#undef RTP_RECTODISK
 
 #if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
@@ -290,7 +293,8 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
                 mainBufferSampleRate, inSamples);
     }
 
-    Manager::instance().getMainBuffer().putData(out, outSamples * sizeof(SFLDataFormat), id_);
+    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    mbuffer.putData(out, outSamples * sizeof(SFLDataFormat), id_);
 }
 #undef RETURN_IF_NULL
 

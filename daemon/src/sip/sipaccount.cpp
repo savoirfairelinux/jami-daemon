@@ -734,6 +734,7 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
+#if HAVE_TLS
 void SIPAccount::initTlsConfiguration()
 {
     pj_status_t status;
@@ -769,6 +770,12 @@ void SIPAccount::initTlsConfiguration()
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     tlsSetting_.qos_ignore_error = PJ_TRUE;
 }
+#else
+void SIPAccount::initTlsConfiguration()
+{
+	return;
+}
+#endif
 
 void SIPAccount::initStunConfiguration()
 {

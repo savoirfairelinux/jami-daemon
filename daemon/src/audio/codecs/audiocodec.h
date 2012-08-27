@@ -33,9 +33,7 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
-#include "cc_config.h"
-#include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
-
+//#include "cc_config.h"
 #include "codec.h"
 
 /* bump when codec binary interface changes */
@@ -134,8 +132,6 @@ class AudioCodec : public Codec {
     private:
         AudioCodec& operator=(const AudioCodec&);
         uint8 payload_;
-
-        ost::DynamicPayloadFormat payloadFormat_;
 
 protected:
         bool hasDynamicPayload_;

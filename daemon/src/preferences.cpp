@@ -34,9 +34,15 @@
 
 #include "preferences.h"
 #include "logger.h"
+#include "audio/audiolayer.h"
+#if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
+#endif
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
+#endif
+#if ANDROID
+#include "audio/opensl/opensllayer.h"
 #endif
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
@@ -87,7 +93,9 @@ static const char * const URL_COMMAND_KEY = "urlCommand";
 static const char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
+#if HAVE_ALSA
 static const char * const ALSAMAP_KEY = "alsa";
+#endif
 #if HAVE_PULSE
 static const char * const PULSEMAP_KEY = "pulse";
 #endif
@@ -360,17 +368,23 @@ AudioPreference::AudioPreference() :
 {}
 
 namespace {
+#if HAVE_ALSA
 void checkSoundCard(int &card, AudioLayer::PCMType stream)
 {
     if (not AlsaLayer::soundCardIndexExists(card, stream)) {
         WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
+    card = ALSA_DFT_CARD_ID;
 }
+#endif
 }
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
+#if ANDROID
+    return new OpenSLLayer();
+#else
 #if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR) {
         if (system("pactl info > /dev/null") == 0)
@@ -378,7 +392,7 @@ AudioLayer* AudioPreference::createAudioLayer()
         else
             WARN("pulseaudio daemon not running, falling back to ALSA");
     }
-#endif
+#elif HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
     checkSoundCard(alsaCardin_, AudioLayer::SFL_PCM_CAPTURE);
@@ -386,6 +400,10 @@ AudioLayer* AudioPreference::createAudioLayer()
     checkSoundCard(alsaCardring_, AudioLayer::SFL_PCM_RINGTONE);
 
     return new AlsaLayer(*this);
+#else
+	return NULL;
+#endif
+#endif
 }
 
 AudioLayer* AudioPreference::switchAndCreateAudioLayer()
@@ -448,12 +466,14 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     preferencemap.setKeyValue(VOLUMESPKR_KEY, &volumespkr);
 
     Conf::MappingNode alsapreferencemap(NULL);
+#if HAVE_ALSA
     preferencemap.setKeyValue(ALSAMAP_KEY, &alsapreferencemap);
     alsapreferencemap.setKeyValue(CARDIN_KEY, &cardin);
     alsapreferencemap.setKeyValue(CARDOUT_KEY, &cardout);
     alsapreferencemap.setKeyValue(CARDRING_KEY, &cardring);
     alsapreferencemap.setKeyValue(PLUGIN_KEY, &plugin);
     alsapreferencemap.setKeyValue(SMPLRATE_KEY, &alsaSmplrate);
+#endif
 
 #if HAVE_PULSE
     Conf::MappingNode pulsepreferencemap(NULL);

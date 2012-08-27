@@ -459,11 +459,15 @@ pjsip_tpselector *SipTransport::createTransportSelector(pjsip_transport *transpo
 
 pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 {
+#if HAVE_DBUS
 #define RETURN_IF_STUN_FAIL(A, M, ...) \
     if (!(A)) { \
         ERROR(M, ##__VA_ARGS__); \
         Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID()); \
         return NULL; }
+#else /* HAVE_DBUS */
+#define RETURN_IF_STUN_FAIL(A, M, ...)
+#endif /* HAVE_DBUS */
 
     pj_str_t serverName = account.getStunServerName();
     pj_uint16_t port = account.getStunPort();
@@ -487,7 +491,9 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
     if (pjstun_get_mapped_addr(&cp_->factory, 1, &sock, &serverName, port, &serverName, port, &pub_addr) != PJ_SUCCESS) {
         ERROR("Can't contact STUN server");
         pj_sock_close(sock);
+#if HAVE_DBUS
         Manager::instance().getDbusManager()->getConfigurationManager()->stunStatusFailure(account.getAccountID());
+#endif
         return NULL;
     }
 

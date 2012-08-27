@@ -57,7 +57,11 @@ bool check_dir(const char *path)
     return true;
 }
 
+#if ANDROID
+static char *program_dir = "/data/data/org.sflphone.service";
+#else
 static char *program_dir = NULL;
+#endif
 
 void set_program_dir(char *program_path)
 {
@@ -76,17 +80,32 @@ const char *get_data_dir()
     return path.c_str();
 }
 
-bool create_pidfile()
-{
+std::string get_path_for_cache(void) {
     std::string xdg_env(XDG_CACHE_HOME);
     std::string path = (not xdg_env.empty()) ? xdg_env : std::string(HOMEDIR) + DIR_SEPARATOR_STR ".cache/";
+    return path;
+}
 
-    if (!check_dir(path.c_str()))
+std::string get_path_for_cache_android(void) {
+    std::string path = std::string(get_program_dir()) + "/cache";
+    return path;
+}
+
+bool create_pidfile()
+{
+
+#if ANDROID
+    std::string path = get_path_for_cache_android();
+#else
+    std::string path = get_path_for_cache();
+#endif
+
+    if (not check_dir(path.c_str()))
         return false;
 
-    path += "sflphone";
+    //path += "sflphone";
 
-    if (!check_dir(path.c_str()))
+    if (not check_dir(path.c_str()))
         return false;
 
     std::string pidfile = path + "/" PIDFILE;

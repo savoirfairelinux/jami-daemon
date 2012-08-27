@@ -46,7 +46,10 @@
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
 #include "sip/sipcall.h"
+
+#ifndef ANDROID
 #include "im/instant_messaging.h"
+#endif
 
 #if HAVE_IAX
 #include "iax/iaxaccount.h"
@@ -54,17 +57,22 @@
 #include "iax/iaxvoiplink.h"
 #endif
 
+
 #include "numbercleaner.h"
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
+
+#ifndef ANDROID
 #include "audio/alsa/alsalayer.h"
+#endif
+
 #include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "history/historynamecache.h"
 #include "manager.h"
-
 #include "dbus/configurationmanager.h"
+
 #ifdef SFL_VIDEO
 #include "dbus/video_controls.h"
 #endif
@@ -82,11 +90,22 @@
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
+#include "com_savoirfairelinux_sflphone_client_ManagerImpl.h"
+#include <android/native_activity.h>
+
+static JavaVM *gJavaVM;
+static jobject gInterfaceObject, gDataObject;
+const char *kInterfacePath = "com/savoirfairelinux/sflphone/client/ManagerImpl";
+const char *kDataPath = "com/savoirfairelinux/sflphone/client/Data";
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(),
+    hasTriedToRegister_(false), audioCodecFactory(),
+#if HAVE_DBUS
+	dbus_(),
+#endif
+	config_(),
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
@@ -97,9 +116,252 @@ ManagerImpl::ManagerImpl() :
     srand(time(NULL));
 }
 
+
+static void callback_handler(char *s) {
+	int status;
+	JNIEnv *env;
+	bool isAttached = false;
+
+	//INFO("callback_handler");
+
+	// FIXME
+	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
+	if (status < 0) {
+		WARN("callback_handler: failed to get JNI environment, assuming native thread");
+		status = gJavaVM->AttachCurrentThread(&env, NULL);
+		if (status < 0) {
+			ERROR("callback_handler: failed to attach current thread");
+			return;
+		}
+		isAttached = true;
+	}
+
+	/* construct a java struct */
+	jstring js = env->NewStringUTF(s);
+	jclass interfaceClass = env->GetObjectClass(gInterfaceObject);
+	if (!interfaceClass) {
+		ERROR("callback_handler: failed to get class reference");
+		if(isAttached)
+			gJavaVM->DetachCurrentThread();
+		return;
+	}
+
+	/* Find the callBack method ID */
+	jmethodID method = env->GetStaticMethodID(interfaceClass, "callBack", "(Ljava/lang/String;)V");
+	if (!method) {
+		ERROR("callback_handler: failed to get callBack method ID");
+		if(isAttached)
+			gJavaVM->DetachCurrentThread();
+		return;
+	}
+
+	env->CallStaticVoidMethod(interfaceClass, method, js);
+	if (isAttached) {
+		gJavaVM->DetachCurrentThread();
+		isAttached = false;
+	}
+}
+
+void *native_thread_start(void *arg) {
+	sleep(1);
+	INFO("native_thread");
+	callback_handler((char *) "Called from native thread");
+}
+
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_callVoid
+  (JNIEnv *env, jclass cls) {
+	pthread_t native_thread;
+
+	INFO("callVoid");
+
+	callback_handler((char *) "Called from Java thread");
+	if (pthread_create(&native_thread, NULL, native_thread_start, NULL)) {
+		ERROR("callVoid: failed to create a native thread");
+	}
+}
+
+JNIEXPORT jobject JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getNewData
+(JNIEnv *env, jclass cls, jint i, jstring s) {
+	INFO("getNewData");
+
+	jclass dataCachedClass = env->GetObjectClass(gDataObject);
+	if(!dataCachedClass) {
+		ERROR("getNewData: failed to get cached Data Class");
+		return  NULL;
+	}
+	INFO("getNewData: cached Data Class found");
+
+	jclass dataClass = env->FindClass(kDataPath);
+	if(!dataClass) {
+		ERROR("getNewData: failed to get Data Class");
+		return  NULL;
+	}
+	INFO("getNewData: Data Class found");
+
+	jmethodID dataDefaultConstructor = env->GetMethodID(dataClass, "<init>", "()V");
+	if (dataDefaultConstructor) {
+		ERROR("getNewData: failed to get default constructor");
+		return NULL;
+	}
+	INFO("getNewData: Data default constructor found");
+
+	jmethodID dataConstructor = env->GetMethodID(dataClass, "<init>", "(ILjava/lang/String;)V");
+	if (dataConstructor) {
+		ERROR("getNewData: failed to get constructor");
+		return NULL;
+	}
+	INFO("getNewData: Data constructor found");
+
+	jobject dataObject = env->NewObject(dataClass, dataConstructor, i, s);
+	if (!dataObject) {
+		ERROR("getNewData: failed to create an object");
+		return NULL;
+	}
+	return dataObject;
+}
+
+/*
+ * Class: org_wooyd_android_JNIExample_JNIExampleInterface
+ * Method: getDataString
+ * Signature: (Lorg/wooyd/android/JNIExample/Data;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
+(JNIEnv *env, jclass cls, jobject dataObject) {
+	INFO("getDataString");
+
+	jclass dataClass = env->GetObjectClass(gDataObject);
+	if(!dataClass) {
+		ERROR("getDataString: failed to get class reference");
+		return NULL;
+	}
+	INFO("getDataString: ObjectClass Data found");
+
+	jfieldID dataStringField = env->GetFieldID(dataClass, "s", "Ljava/lang/String;");
+	if(!dataStringField) {
+		ERROR("getDataString: failed to get field ID");
+		return NULL;
+	}
+	INFO("getDataString: FieldID s found");
+
+	jstring dataStringValue = (jstring) env->GetObjectField(dataObject, dataStringField);
+	return dataStringValue;
+}
+
+JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString2
+(JNIEnv *env, jclass cls) {
+	INFO("getDataString2");
+
+    return env->NewStringUTF("getDataString2: successfully sending string from native to java");
+}
+
+void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
+    jclass cls;
+
+	INFO("initClassHelper");
+
+	cls= env->FindClass(path);
+	if(!cls) {
+        ERROR("initClassHelper: failed to get %s class reference", path);
+        return;
+    }
+    jmethodID constr = env->GetMethodID(cls, "<init>", "()V");
+	INFO("%s method found", path);
+
+    if(!constr) {
+        ERROR("initClassHelper: failed to get %s constructor", path);
+        return;
+    }
+    jobject obj = env->NewObject(cls, constr);
+	INFO("%s constructor found", path);
+
+    if(!obj) {
+        ERROR("initClassHelper: failed to create a %s object", path);
+        return;
+    }
+	/* protect cached object instances from Android GC */
+    (*objptr) = env->NewGlobalRef(obj);
+	INFO("object found %x", objptr);
+}
+
+jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+    JNIEnv* env;
+	jclass clazz;
+	JNINativeMethod methods[] =
+	{
+		/*
+		 * name,
+		 * signature,
+		 * funcPtr
+		 */
+		{
+			"initN",
+			"(Ljava/lang/String;)V",
+			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_initN
+		},
+		{
+			"callVoid",
+			"()V",
+			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_callVoid
+		},
+		{
+			"getNewData",
+			"(ILjava/lang/String;)Lcom/savoirfairelinux/sflphone/client/Data;",
+			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getNewData
+		},
+		{
+			"getDataString",
+			"(Lcom/savoirfairelinux/sflphone/client/Data;)Ljava/lang/String;",
+			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
+		},
+		{
+			"getDataString2",
+			"()Ljava/lang/String;",
+			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString2
+		}
+	};
+	int numMethods = sizeof(methods) / sizeof(methods[0]);
+
+	INFO("JNI_OnLoad");
+
+	/* get env */
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+		ERROR("JNI_OnLoad: failed to get the environment using GetEnv()");
+        return -1;
+    }
+	INFO("JNI_Onload: GetEnv %p", env);
+
+	/* cache VM object as it won't change in near future */
+	gJavaVM = vm;
+	INFO("JNI_Onload: JavaVM %p", gJavaVM);
+
+    /* Get jclass with env->FindClass */
+	clazz = env->FindClass(kInterfacePath);
+	if (!clazz) {
+        ERROR("whoops, %s class not found!", kInterfacePath);
+	}
+
+    // Register methods with env->RegisterNatives.
+	//env->RegisterNatives(clazz, methods, numMethods);
+
+	/* put instances of class object we need into cache */
+    initClassHelper(env, kInterfacePath, &gInterfaceObject);
+    initClassHelper(env, kDataPath, &gDataObject);
+
+	if(env->RegisterNatives(clazz, methods, numMethods) != JNI_OK)
+	{
+		ERROR("JNI_Onload: Failed to register native methods");
+		return -1;
+	}
+
+	INFO("JNI_Onload: Native functions registered");
+
+    return JNI_VERSION_1_6;
+}
+
 void ManagerImpl::init(const std::string &config_file)
 {
-    path_ = config_file.empty() ? createConfigFile() : config_file;
+    path_ = config_file.empty() ? retrieveConfigPath() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
 
     try {
@@ -134,11 +396,103 @@ void ManagerImpl::init(const std::string &config_file)
     registerAccounts();
 }
 
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_initN
+  (JNIEnv *env, jclass obj, jstring jconfig_file)
+{
+	//const std::string config_file = std::string(env->GetStringUTFChars(jconfig_file, 0));
+	jclass activityClazz, classLoader, sflPhoneHomeClazz;
+    jmethodID getAppPath, loadClass, getClassLoader;
+	jobject appPath, cls;
+	std::string str, strClassName;
+	jstring jstrClassName;
+
+	DEBUG("initN");
+	/* attach current thread, using 'global' VM variable */
+	//gJavaVM->AttachCurrentThread(&env, NULL);
+
+	/* here we go: 20 lines of code to simply call a java method... JNI sucks... */
+
+	/* first get the application path to set env variables */
+	activityClazz = env->FindClass("com/savoirfairelinux/sflphone/client/SFLPhoneHome");
+	if (!activityClazz) {
+        ERROR("whoops, Class SFLPhoneHome does not exist!");
+		return;
+	}
+	DEBUG("com/savoirfairelinux/sflphone/client/SFLPhoneHome class found");
+
+	getClassLoader = env->GetMethodID(activityClazz,"getClassLoader", "()Ljava/lang/ClassLoader;");
+	if (!getClassLoader) {
+        ERROR("whoops, getClassLoader method does not exist!");
+		return;
+	}
+	DEBUG("java/lang/getClassLoader method found");
+	cls = env->CallObjectMethod(activityClazz, getClassLoader);
+
+	classLoader = env->FindClass("java/lang/ClassLoader");
+	if (!classLoader) {
+        ERROR("whoops, ClassLoader class does not exist!");
+		goto end;
+	}
+	DEBUG("java/lang/ClassLoader class found");
+
+	loadClass = env->GetMethodID(classLoader, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	if (!loadClass) {
+        ERROR("whoops, loadClass method does not exist!");
+		goto end;
+	}
+	DEBUG("loadClass method found");
+	jstrClassName = env->NewStringUTF("com/savoirfairelinux/sflphone/client/SFLPhoneHome");
+	strClassName = env->GetStringUTFChars((jstring) jstrClassName, NULL);
+	DEBUG("strClassName = %s", strClassName.c_str());
+
+	/* get SFLPhoneHome class by calling ClassLoader.loadClass with one parameter */
+	sflPhoneHomeClazz = (jclass) env->CallObjectMethod(cls, loadClass, jstrClassName);
+	if (!sflPhoneHomeClazz) {
+        ERROR("whoops, SFLPhoneHome cannot be loaded!");
+		goto end;
+	}
+	DEBUG("SFLPhoneHome loaded");
+
+	/* get the getAppPath method defined in java */
+	getAppPath = env->GetMethodID(sflPhoneHomeClazz, "getAppPath", "()Ljava/lang/String;");
+	if (!getAppPath) {
+        ERROR("whoops, getAppPath method does not exist!");
+		goto end;
+	}
+	DEBUG("getAppPath method found");
+
+	/* call getAppPath method */
+	appPath = env->CallObjectMethod(obj, getAppPath);
+	if (!appPath) {
+        ERROR("whoops, getAppPath cannot be called!");
+		goto end;
+	}
+	DEBUG("getAppPath called");
+
+	/* convert it to c++ string */
+	str = env->GetStringUTFChars((jstring) appPath, NULL);
+	if (str.empty()) {
+		ERROR("whoops, appPath is empty!");
+		goto end;
+	}
+	INFO("Application path: %s", str.c_str());
+
+	DEBUG("initializing manager");
+	Manager::instance().init("");
+
+end:
+	/* detach current thread */
+	//gJavaVM->DetachCurrentThread();
+	INFO("End");
+}
+
+#if HAVE_DBUS
 void ManagerImpl::run()
 {
     DEBUG("Starting DBus event loop");
     dbus_.exec();
 }
+#endif
 
 void ManagerImpl::finish()
 {
@@ -174,7 +528,9 @@ void ManagerImpl::finish()
         audiodriver_ = NULL;
     }
 
+#if HAVE_DBUS
     dbus_.exit();
+#endif
 }
 
 bool ManagerImpl::isCurrentCall(const std::string& callId) const
@@ -209,6 +565,19 @@ void ManagerImpl::switchCall(const std::string& id)
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
 /* Main Thread */
+
+JNIEXPORT jboolean JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_outgoingCallN(JNIEnv *env, jclass obj, jstring jaccount_id)
+{
+	std::string account_id = std::string(env->GetStringUTFChars(jaccount_id, 0));
+
+	if (account_id == "sflphone-test") {
+		INFO("ManagerImpl::outgoingCallN account_id:%s", account_id.c_str());
+		return true;
+	} else {
+		WARN("ManagerImpl::outgoingCallN account_id %s is not valid!", account_id.c_str());
+		return false;
+	}
+}
 
 bool ManagerImpl::outgoingCall(const std::string& account_id,
                                const std::string& call_id,
@@ -347,8 +716,11 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     if (audioPreference.getIsAlwaysRecording())
         setRecordingCall(call_id);
 
+#if HAVE_DBUS
     // update call state on client side
     dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
+#endif
+
     return true;
 }
 
@@ -366,9 +738,11 @@ void ManagerImpl::hangupCall(const std::string& callId)
     AudioLayer *al = getAudioDriver();
     if(al) al->setPlaybackMode(AudioLayer::NONE);
 
+#if HAVE_DBUS
     /* Broadcast a signal over DBus */
     DEBUG("Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
     dbus_.getCallManager()->callStateChanged(callId, "HUNGUP");
+#endif
 
     if (not isValidCall(callId) and not isIPToIP(callId)) {
         ERROR("Could not hang up call, call not valid");
@@ -480,7 +854,9 @@ void ManagerImpl::onHoldCall(const std::string& callId)
     if (current_call_id == callId)
         unsetCurrentCall();
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
+#endif
 
     getMainBuffer().dumpInfo();
 }
@@ -519,7 +895,9 @@ void ManagerImpl::offHoldCall(const std::string& callId)
             getAccountLink(accountId)->offhold(callId);
     }
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(callId, "UNHOLD");
+#endif
 
     if (isConferenceParticipant(callId)) {
         Call *call = getCallFromCallID(callId);
@@ -565,12 +943,16 @@ bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 
 void ManagerImpl::transferFailed()
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->transferFailed();
+#endif
 }
 
 void ManagerImpl::transferSucceeded()
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->transferSucceeded();
+#endif
 }
 
 bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::string& targetID)
@@ -614,7 +996,9 @@ void ManagerImpl::refuseCall(const std::string& id)
     }
 
     removeWaitingCall(id);
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "HUNGUP");
+#endif
 
     // Disconnect streams
     removeStream(id);
@@ -635,8 +1019,10 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
     // Add conference to map
     conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
 
+#if HAVE_DBUS
     // broadcast a signal over dbus
     dbus_.getCallManager()->conferenceCreated(conf->getConfID());
+#endif
 
     return conf;
 }
@@ -657,8 +1043,10 @@ void ManagerImpl::removeConference(const std::string& conference_id)
         return;
     }
 
+#if HAVE_DBUS
     // broadcast a signal over dbus
     dbus_.getCallManager()->conferenceRemoved(conference_id);
+#endif
 
     // We now need to bind the audio to the remain participant
 
@@ -719,7 +1107,9 @@ void ManagerImpl::holdConference(const std::string& id)
     }
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
+#if HAVE_DBUS
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#endif
 }
 
 void ManagerImpl::unHoldConference(const std::string& id)
@@ -745,7 +1135,9 @@ void ManagerImpl::unHoldConference(const std::string& id)
         }
 
         conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#endif
     }
 }
 
@@ -871,7 +1263,9 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
         else
             WARN("Invalid conference state while adding main participant");
 
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+#endif
         }
     }
 
@@ -1024,7 +1418,9 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
         if (!callSuccess)
             conf->remove(generatedCallID);
         else {
+#if HAVE_DBUS
             dbus_.getCallManager()->newCallCreated(account, generatedCallID, tostr);
+#endif
             successCounter++;
         }
     }
@@ -1032,7 +1428,9 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
         conferenceMap_[conf->getConfID()] = conf;
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceCreated(conf->getConfID());
+#endif
 
         {
             ost::MutexLock lock(audioLayerMutex_);
@@ -1109,8 +1507,10 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         else
             WARN("Undefined behavior, invalid conference state in detach participant");
 
+#if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conf->getConfID(),
                                                   conf->getStateStr());
+#endif
 
         unsetCurrentCall();
     }
@@ -1139,8 +1539,11 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     call->setConfId("");
 
     removeStream(call_id);
+
     getMainBuffer().dumpInfo();
+#if HAVE_DBUS
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#endif
     processRemainingParticipants(*conf);
 }
 
@@ -1412,7 +1815,9 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
     std::string number(call.getPeerNumber());
 
     std::string from("<" + number + ">");
+#if HAVE_DBUS
     dbus_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
+#endif
 }
 
 
@@ -1447,11 +1852,15 @@ void ManagerImpl::incomingMessage(const std::string& callID,
             account->getVoIPLink()->sendTextMessage(callID, message, from);
         }
 
+#if HAVE_DBUS
         // in case of a conference we must notify client using conference id
         dbus_.getCallManager()->incomingMessage(conf->getConfID(), from, message);
 
     } else
         dbus_.getCallManager()->incomingMessage(callID, from, message);
+#else
+    }
+#endif
 }
 
 //THREAD=VoIP
@@ -1552,7 +1961,9 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     if (audioPreference.getIsAlwaysRecording())
         setRecordingCall(id);
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "CURRENT");
+#endif
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1563,7 +1974,9 @@ void ManagerImpl::peerRingingCall(const std::string& id)
     if (isCurrentCall(id))
         ringback();
 
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "RINGING");
+#endif
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -1597,8 +2010,10 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
         saveHistory();
     }
 
+#if HAVE_DBUS
     /* Broadcast a signal over DBus */
     dbus_.getCallManager()->callStateChanged(call_id, "HUNGUP");
+#endif
 
     removeWaitingCall(call_id);
     removeCallAccount(call_id);
@@ -1615,7 +2030,9 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 void ManagerImpl::callBusy(const std::string& id)
 {
     DEBUG("Call %s busy", id.c_str());
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "BUSY");
+#endif
 
     if (isCurrentCall(id)) {
         playATone(Tone::TONE_BUSY);
@@ -1629,7 +2046,9 @@ void ManagerImpl::callBusy(const std::string& id)
 //THREAD=VoIP
 void ManagerImpl::callFailure(const std::string& call_id)
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(call_id, "FAILURE");
+#endif
 
     if (isCurrentCall(call_id)) {
         playATone(Tone::TONE_BUSY);
@@ -1650,7 +2069,9 @@ void ManagerImpl::callFailure(const std::string& call_id)
 void ManagerImpl::startVoiceMessageNotification(const std::string& accountId,
         int nb_msg)
 {
+#if HAVE_DBUS
     dbus_.getCallManager()->voiceMailNotify(accountId, nb_msg);
+#endif
 }
 
 /**
@@ -1694,7 +2115,9 @@ void ManagerImpl::stopTone()
 
     if (audiofile_.get()) {
         std::string filepath(audiofile_->getFilePath());
+#if HAVE_DBUS
         dbus_.getCallManager()->recordPlaybackStopped(filepath);
+#endif
         audiofile_.reset();
     }
 }
@@ -1773,7 +2196,9 @@ void ManagerImpl::ringtone(const std::string& accountID)
         ost::MutexLock m(toneMutex_);
 
         if (audiofile_.get()) {
+#if HAVE_DBUS
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+#endif
             audiofile_.reset();
         }
 
@@ -1821,10 +2246,14 @@ ManagerImpl::getTelephoneFile()
 /**
  * Initialization: Main Thread
  */
-std::string ManagerImpl::createConfigFile() const
+std::string ManagerImpl::retrieveConfigPath() const
 {
+#if ANDROID
+    std::string configdir = "/data/data/com.savoirfairelinux.sflphone.client";
+#else
     std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
-                            ".config" + DIR_SEPARATOR_STR + PACKAGE;
+                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
+#endif
 
     std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty()) {
@@ -2035,7 +2464,9 @@ void ManagerImpl::setRecordingCall(const std::string& id)
     }
 
     rec->setRecording();
+#if HAVE_DBUS
     dbus_.getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
+#endif
 }
 
 bool ManagerImpl::isRecording(const std::string& id)
@@ -2064,7 +2495,9 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         ost::MutexLock m(toneMutex_);
 
         if (audiofile_.get()) {
+#if HAVE_DBUS
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+#endif
             audiofile_.reset();
         }
 
@@ -2392,8 +2825,10 @@ void ManagerImpl::setAccountDetails(const std::string& accountID,
     else
         account->unregisterVoIPLink();
 
+#if HAVE_DBUS
     // Update account details to the client side
     dbus_.getConfigurationManager()->accountsChanged();
+#endif
 }
 
 std::string
@@ -2456,7 +2891,9 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     saveConfig();
 
+#if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
+#endif
 
     return accountID.str();
 }
@@ -2480,7 +2917,9 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
     saveConfig();
 
+#if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
+#endif
 }
 
 // ACCOUNT handling
@@ -2927,8 +3366,10 @@ void ManagerImpl::saveHistory()
 {
     if (!history_.save())
         ERROR("Could not save history!");
+#if HAVE_DBUS
     else
         dbus_.getConfigurationManager()->historyChanged();
+#endif
 }
 
 void ManagerImpl::clearHistory()
