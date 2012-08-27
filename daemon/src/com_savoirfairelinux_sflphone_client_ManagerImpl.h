@@ -33,14 +33,6 @@ JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_
 
 /*
  * Class:     com_savoirfairelinux_sflphone_client_ManagerImpl
- * Method:    getDataString2
- * Signature: ()Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString2
-  (JNIEnv *, jclass);
-
-/*
- * Class:     com_savoirfairelinux_sflphone_client_ManagerImpl
  * Method:    setSipLogLevel
  * Signature: (Ljava/lang/String;)V
  */
