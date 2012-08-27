@@ -1,0 +1,74 @@
+<schemalist>
+    <schema id="org.sflphone.SFLphone" path="/org/sflphone/sflphone-client-gnome/">
+        <key name="window-width" type="i">
+            <default>240</default>
+            <summary>Main window width</summary>
+            <description>Main window width.</description>
+        </key>
+        <key name="window-height" type="i">
+            <default>320</default>
+            <summary>Main window height</summary>
+            <description>Main window height.</description>
+        </key>
+        <key name="window-position-x" type="i">
+            <default>0</default>
+            <summary>Main window X position</summary>
+            <description>Main window X position.</description>
+        </key>
+        <key name="window-position-y" type="i">
+            <default>0</default>
+            <summary>Main window Y position</summary>
+            <description>Main window Y position.</description>
+        </key>
+        <key name="show-dialpad" type="b">
+            <default>true</default>
+            <summary>Display dialpad</summary>
+            <description>Display dialpad.</description>
+        </key>
+        <key name="show-volume-controls" type="b">
+            <default>true</default>
+            <summary>Display volume controls</summary>
+            <description>Display volume controls.</description>
+        </key>
+        <key name="show-status-icon" type="b">
+            <default>true</default>
+            <summary>Show status icon</summary>
+            <description>Show status icon.</description>
+        </key>
+        <key name="history-enabled" type="b">
+            <default>true</default>
+            <summary>History is enabled</summary>
+            <description>History is enabled.</description>
+        </key>
+        <key name="instant-messaging-enabled" type="b">
+            <default>true</default>
+            <summary>Instant messaging is enabled</summary>
+            <description>Instant messaging is enabled.</description>
+        </key>
+        <key name="start-hidden" type="b">
+            <default>false</default>
+            <summary>Start hidden</summary>
+            <description>Start hidden.</description>
+        </key>
+        <key name="message-tab-height" type="i">
+            <default>20</default>
+            <summary>Message tab height</summary>
+            <description>Message tab height.</description>
+        </key>
+        <key name="notify-all" type="b">
+            <default>true</default>
+            <summary>Notify all</summary>
+            <description>Notify all.</description>
+        </key>
+        <key name="popup-main-window" type="b">
+            <default>true</default>
+            <summary>Popup main window</summary>
+            <description>Popup main window.</description>
+        </key>
+        <key name='messaging-url-command' type='s'>
+            <summary>Messaging URL command</summary>
+            <description>Command to execute when opening a URL from an instant message.</description>
+            <default>''</default>
+        </key>
+    </schema>
+</schemalist>

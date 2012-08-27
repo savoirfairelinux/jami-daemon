@@ -1,14 +1,17 @@
-@INTLTOOL_XML_NOMERGE_RULE@
-gsettings_in_file = org.sflphone.SFLphone.gschema.xml.in
-gsettings_SCHEMAS = $(gsettings_in_file:.xml.in=.xml)
+# gsettings_SCHEMAS is a list of all the schemas you want to install
+gsettings_SCHEMAS = org.sflphone.SFLphone.gschema.xml
+# include the appropriate makefile rules for schema handling
 @GSETTINGS_RULES@
 
-CLEANFILES = $(gsettings_SCHEMAS)
+EXTRA_DIST = $(gsettings_SCHEMAS)
 
 MAINTAINERCLEANFILES = $(gsettings_SCHEMAS:.xml=.valid)
 
 
 #FIXME: is there a way to avoid calling this every time we do make?
 all-local: $(gsettings_SCHEMAS)
-	$(MKDIR_P) glib-2.0/schemas
-	$(GLIB_COMPILE_SCHEMAS) . --targetdir glib-2.0/schemas
+	$(MKDIR_P) $(top_builddir)/data/glib-2.0/schemas
+	$(GLIB_COMPILE_SCHEMAS) $(top_srcdir)/data --targetdir $(top_builddir)/data/glib-2.0/schemas
+
+clean-local:
+	rm -rf $(top_builddir)/data/glib-2.0

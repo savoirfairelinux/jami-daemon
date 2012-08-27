@@ -35,8 +35,11 @@
 
 START_TEST(test_dbus_connect)
 {
+    g_type_init();
     GError *error = NULL;
-    fail_unless(dbus_connect(&error) == TRUE, "dbus_connect () returns FALSE");
+    GSettings *settings = g_settings_new("org.sflphone.SFLphone");
+    fail_unless(dbus_connect(&error, settings) == TRUE, "dbus_connect () returns FALSE");
+    g_object_unref(settings);
 }
 END_TEST
 
