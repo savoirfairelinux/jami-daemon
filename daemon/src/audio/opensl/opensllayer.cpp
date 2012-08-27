@@ -120,12 +120,6 @@ OpenSLLayer::OpenSLLayer()
     , playbackBufferStack(ANDROID_BUFFER_QUEUE_LENGTH)
     , recordBufferStack(ANDROID_BUFFER_QUEUE_LENGTH)
 {
-
-    for(AudioBufferStack::iterator i = playbackBufferStack.begin(); i != playbackBufferStack.end(); i++)
-        i->resize(160);
-
-    for(AudioBufferStack::iterator i = recordBufferStack.begin(); i != recordBufferStack.end(); i++)
-        i->resize(160);
 }
 
 // Destructor
@@ -381,9 +375,9 @@ OpenSLLayer::startAudioPlayback()
         incrementPlaybackIndex();
 
         // generateSawTooth(&(*buffer.begin()), buffer.size());
-        memset(&(*buffer.begin()), 0, buffer.size() * sizeof(SFLDataFormat));
+        memset(buffer.data(), 0, buffer.size());
 
-        result = (*playbackBufferQueue)->Enqueue(playbackBufferQueue, &(*buffer.begin()), buffer.size());
+        result = (*playbackBufferQueue)->Enqueue(playbackBufferQueue, buffer.data(), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
             printf("Error could not enqueue initial buffers\n");
         }
@@ -415,9 +409,9 @@ OpenSLLayer::startAudioCapture()
     AudioBuffer &buffer = getNextRecordBuffer();
     incrementRecordIndex();
 
-    memset(&(*buffer.begin()), 0, buffer.size() * sizeof(short));
+    memset(buffer.data(), 0, buffer.size());
 
-    result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, &(*buffer.begin()), buffer.size() * sizeof(short));
+    result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, buffer.data(), buffer.size());
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
@@ -469,11 +463,12 @@ bool OpenSLLayer::audioCallback()
 {
 }
 
+#if 0
 bool OpenSLLayer::audioBufferFillWithZeros(AudioBuffer &buffer) {
 
-    SFLDataFormat * out_ptr = &(*buffer.begin()); 
+    SFLDataFormat * out_ptr = buffer.data(); 
     
-    memset(out_ptr, 0, buffer.size() * sizeof(SFLDataFormat));
+    memset(out_ptr, 0, buffer.size());
 
     return true;
 }
@@ -483,15 +478,15 @@ bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
     AudioLoop *tone = Manager::instance().getTelephoneTone();
     AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
-    SFLDataFormat * const out_ptr = &(*buffer.begin());
+    SFLDataFormat * const out_ptr = buffer.data();
 
     // In case of a dtmf, the pointers will be set to NULL once the dtmf length is 
     // reached. For this reason we need to fill audio buffer with zeros if pointer is NULL
     if (tone) {
-        tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
+        tone->getNext(out_ptr, buffer.length(), getPlaybackGain());
     }
     else if (file_tone) {
-        file_tone->getNext(out_ptr, buffer.size(), getPlaybackGain());
+        file_tone->getNext(out_ptr, buffer.length(), getPlaybackGain());
     }
     else {
         audioBufferFillWithZeros(buffer);
@@ -502,10 +497,10 @@ bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
 
 bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesToGet) {
     // Urgent data (dtmf, incoming call signal) come first.
-    const size_t bytesToPut = buffer.size() * sizeof(SFLDataFormat);
+    const size_t bytesToPut = buffer.size();
     bytesToGet = std::min(bytesToGet, bytesToPut);
     const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
-    SFLDataFormat * const out_ptr = &(*buffer.begin());
+    SFLDataFormat * const out_ptr = buffer.data();
     urgentRingBuffer_.get(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
     // AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
 
@@ -516,7 +511,7 @@ bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesT
 }
 
 bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail) {
-    const size_t bytesToCpy = buffer.size() * sizeof(SFLDataFormat);
+    const size_t bytesToCpy = buffer.size();
 
     const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     const bool resample = sampleRate_ != mainBufferSampleRate;
@@ -534,12 +529,12 @@ bool OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAv
     size_t bytesToGet = std::min(maxNbBytesToGet, bytesAvail);
 
     const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
-    std::vector<SFLDataFormat> out(samplesToGet, 0);
+    AudioBuffer out(samplesToGet);
     SFLDataFormat * out_ptr = NULL;
     if(resample)
-        out_ptr = &(*out.begin());
+        out_ptr = out.data();
     else
-        out_ptr = &(*buffer.begin());
+        out_ptr = buffer.data();
 
     Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
     // AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
@@ -597,7 +592,7 @@ bool OpenSLLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
 }
 
 void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
-    const int toGetBytes = buffer.size() * sizeof(SFLDataFormat);
+    const int toGetBytes = buffer.size();
     const int toGetSamples = buffer.size();
 
     MainBuffer &mbuffer = Manager::instance().getMainBuffer();
@@ -605,23 +600,24 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
     const int mainBufferSampleRate = mbuffer.getInternalSamplingRate();
     const bool resample = mbuffer.getInternalSamplingRate() != sampleRate_;
 
-    SFLDataFormat *in_ptr = &(*buffer.begin());
+    SFLDataFormat *in_ptr = buffer.data();
     AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
         AudioBuffer rsmpl_out(outSamples);
-        SFLDataFormat * const rsmpl_out_ptr = &(*rsmpl_out.begin());
+        SFLDataFormat * const rsmpl_out_ptr = rsmpl_out.data();
         converter_.resample(in_ptr, rsmpl_out_ptr,
                 rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
                 toGetSamples);
         dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
-        mbuffer.putData(rsmpl_out_ptr, rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
+        mbuffer.putData(rsmpl_out_ptr, rsmpl_out.size(), MainBuffer::DEFAULT_ID);
     } else {
         dcblocker_.process(in_ptr, in_ptr, toGetSamples);
         mbuffer.putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
     }
 }
+#endif
 
 void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
 {
@@ -632,16 +628,16 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
 
     AudioBuffer &buffer = opensl->getNextPlaybackBuffer();
 
-    memset(&(*buffer.begin()), 0, buffer.size() * sizeof(SFLDataFormat));
+    memset(buffer.data(), 0, buffer.size());
 
     bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
 
 
     if(bufferFilled) {
 #ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.write((char const *)(&(*buffer.begin())), buffer.size() * sizeof(SFLDataFormat));
+        opensl_outfile.write((char const *)(buffer.data()), buffer.size());
 #endif
-        SLresult result = (*queue)->Enqueue(queue, &(*buffer.begin()), buffer.size() * sizeof(SFLDataFormat));
+        SLresult result = (*queue)->Enqueue(queue, buffer.data(), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
             printf("Error could not enqueue buffers in playback callback\n");
         }
@@ -667,7 +663,7 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
 
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, &(*buffer.begin()), buffer.size() * sizeof(short));
+    result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, buffer.data(), buffer.size());
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);

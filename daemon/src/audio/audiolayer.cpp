@@ -106,3 +106,149 @@ void AudioLayer::notifyIncomingCall()
     Manager::instance().audioLayerMutexUnlock();
 }
 
+bool AudioLayer::audioBufferFillWithZeros(AudioBuffer &buffer) {
+
+    memset(buffer.data(), 0, buffer.size());
+
+    return true;
+}
+
+bool AudioLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer) {
+    AudioLoop *tone = Manager::instance().getTelephoneTone();
+    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
+
+    // In case of a dtmf, the pointers will be set to NULL once the dtmf length is
+    // reached. For this reason we need to fill audio buffer with zeros if pointer is NULL
+    if (tone) {
+        tone->getNext(buffer.data(), buffer.length(), getPlaybackGain());
+    }
+    else if (file_tone) {
+        file_tone->getNext(buffer.data(), buffer.length(), getPlaybackGain());
+    }
+    else {
+        audioBufferFillWithZeros(buffer);
+    }
+
+    return true;
+}
+
+bool AudioLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesToGet) {
+    // Urgent data (dtmf, incoming call signal) come first.
+    bytesToGet = std::min(bytesToGet, buffer.size());
+    const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
+    urgentRingBuffer_.get(buffer.data(), bytesToGet, MainBuffer::DEFAULT_ID);
+    // AudioLayer::applyGain(buffer.size, samplesToGet, getPlaybackGain());
+
+    // Consume the regular one as well (same amount of bytes)
+    Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
+
+    return true;
+}
+
+bool AudioLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail) {
+    const size_t bytesToCpy = buffer.size();
+
+    const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
+    const bool resample = sampleRate_ != mainBufferSampleRate;
+
+    if(bytesAvail == 0)
+        return false;
+
+    double resampleFactor = 1.0;
+    size_t maxNbBytesToGet = bytesToCpy;
+    if (resample) {
+        resampleFactor = mainBufferSampleRate / static_cast<double>(sampleRate_);
+        maxNbBytesToGet = bytesToCpy * resampleFactor;
+    }
+
+    size_t bytesToGet = std::min(maxNbBytesToGet, bytesAvail);
+
+    const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
+    AudioBuffer out(samplesToGet);
+    SFLDataFormat * out_ptr = NULL;
+    if(resample)
+        out_ptr = &(*out.data());
+    else
+        out_ptr = &(*buffer.data());
+
+    Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
+    // AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+
+    if (resample) {
+        SFLDataFormat * const rsmpl_out_ptr = buffer.data();
+        const size_t outSamples = samplesToGet * resampleFactor;
+        const size_t outBytes = outSamples * sizeof(SFLDataFormat);
+        converter_.resample(out_ptr, rsmpl_out_ptr, outSamples,
+                mainBufferSampleRate, sampleRate_, samplesToGet);
+    }
+
+    return true;
+}
+
+bool AudioLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
+    // Looks if there's any voice audio from rtp to be played
+    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+    size_t bytesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
+    size_t urgentBytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+
+    usleep(20000);
+
+    PlaybackMode mode = getPlaybackMode();
+
+    bool bufferFilled = false;
+
+    switch(mode) {
+    case NONE:
+    case TONE:
+    case RINGTONE:
+    case URGENT: {
+        if (urgentBytesToGet > 0)
+            bufferFilled = audioPlaybackFillWithUrgent(buffer, urgentBytesToGet);
+        else
+            bufferFilled = audioPlaybackFillWithToneOrRingtone(buffer);
+        }
+        break;
+    case VOICE: {
+        if(bytesToGet > 0)
+            bufferFilled = audioPlaybackFillWithVoice(buffer, bytesToGet);
+        else
+            bufferFilled = audioBufferFillWithZeros(buffer);
+        }
+        break;
+    case ZEROS:
+    default:
+        bufferFilled = audioBufferFillWithZeros(buffer);
+    }
+
+    if(!bufferFilled)
+        printf("Error buffer not filled in audio playback\n");
+
+    return bufferFilled;
+}
+
+void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
+    const int toGetBytes = buffer.size();
+    const int toGetSamples = buffer.length();
+
+    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
+
+    const int mainBufferSampleRate = mbuffer.getInternalSamplingRate();
+    const bool resample = mbuffer.getInternalSamplingRate() != sampleRate_;
+
+    SFLDataFormat *in_ptr = buffer.data();
+    AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
+
+    if (resample) {
+        int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
+        AudioBuffer rsmpl_out(outSamples);
+        SFLDataFormat * const rsmpl_out_ptr = rsmpl_out.data();
+        converter_.resample(in_ptr, rsmpl_out_ptr,
+                rsmpl_out.length(), mainBufferSampleRate, sampleRate_,
+                toGetSamples);
+        dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
+        mbuffer.putData(rsmpl_out_ptr, rsmpl_out.size(), MainBuffer::DEFAULT_ID);
+    } else {
+        dcblocker_.process(in_ptr, in_ptr, toGetSamples);
+        mbuffer.putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
+    }
+}

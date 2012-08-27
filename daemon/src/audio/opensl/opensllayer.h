@@ -57,8 +57,6 @@ class OpenSLThread;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2
 
-typedef std::vector<SFLDataFormat> AudioBuffer;
-typedef std::vector<AudioBuffer> AudioBufferStack;
 
 /**
  * @file  OpenSLLayer.h
@@ -161,6 +159,7 @@ class OpenSLLayer : public AudioLayer {
          */
         bool audioCallback();
 
+#if 0
         bool audioBufferFillWithZeros(AudioBuffer &buffer);
 
         /**
@@ -178,6 +177,7 @@ class OpenSLLayer : public AudioLayer {
         bool audioPlaybackFillBuffer(AudioBuffer &buffer);
 
         void audioCaptureFillBuffer(AudioBuffer &buffer);
+#endif
 
         /**
          * This is the main audio playabck callback called by the OpenSL layer

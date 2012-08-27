@@ -50,6 +50,52 @@
 class MainBuffer;
 class AudioPreference;
 
+class AudioBuffer {
+public:
+    AudioBuffer(int len = 160) : length_(len)
+                         , channels_(1)
+                         , buffer_(length_ * channels_, 0)
+                         , size_(length_ * channels_ * sizeof(SFLDataFormat))
+                         , data_(&(*buffer_.begin()))
+    {}
+
+    AudioBuffer(SFLDataFormat *ptr, int len, int chan) : length_(len)
+                                                        , channels_(chan)
+                                                        , buffer_()
+                                                        , size_(length_ * channels_ * sizeof(SFLDataFormat))
+                                                        , data_(ptr)
+    {}
+
+    AudioBuffer(AudioBuffer& buf) : length_(buf.length())
+                             , channels_(buf.channels())
+                             , buffer_()
+                             , size_(length_ * channels_ * sizeof(SFLDataFormat))
+                             , data_(&(*buffer_.begin()))
+    {
+        buffer_ = buf.buffer_;
+    }
+
+
+    unsigned int length() { return length_; }
+
+    unsigned int channels() { return channels_; }
+
+    size_t size() { return size_; }
+
+    SFLDataFormat *data() { return data_; }
+
+private:
+    NON_COPYABLE(AudioBuffer);
+
+    unsigned int length_;    // in samples
+    unsigned int channels_;  // number of channels
+    std::vector<SFLDataFormat> buffer_;
+    size_t size_;            // size in bytes
+    SFLDataFormat *data_;
+};
+
+typedef std::vector<AudioBuffer> AudioBufferStack;
+
 namespace ost {
 class Time;
 }
@@ -215,6 +261,24 @@ class AudioLayer {
 
         virtual void updatePreference(AudioPreference &pref, int index, PCMType type) = 0;
 
+        bool audioBufferFillWithZeros(AudioBuffer &buffer);
+
+        /**
+         * Here fill the input buffer with tone or ringtone samples
+         */
+        bool audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer);
+
+        bool audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t bytesAvail);
+
+        bool audioPlaybackFillWithVoice(AudioBuffer &buffer, size_t bytesAvail);
+
+        /**
+         * The main logic to determine what should be played is determined here
+         */
+        bool audioPlaybackFillBuffer(AudioBuffer &buffer);
+
+        void audioCaptureFillBuffer(AudioBuffer &buffer);
+
     protected:
         /**
          * Whether or not the audio layer stream is started
@@ -250,6 +314,7 @@ class AudioLayer {
         SamplerateConverter converter_;
 
     private:
+
         /**
          * Time of the last incoming call notification
          */
