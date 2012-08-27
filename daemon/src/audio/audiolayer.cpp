@@ -191,7 +191,6 @@ bool AudioLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
     size_t bytesToGet = mbuffer.availableForGet(MainBuffer::DEFAULT_ID);
     size_t urgentBytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
-    usleep(20000);
 
     PlaybackMode mode = getPlaybackMode();
 

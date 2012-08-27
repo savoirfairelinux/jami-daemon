@@ -468,6 +468,8 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
     assert(NULL != queue);
     assert(NULL != context);
 
+    usleep(20000);
+
     OpenSLLayer *opensl = (OpenSLLayer *)context;
 
     AudioBuffer &buffer = opensl->getNextPlaybackBuffer();
