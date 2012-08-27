@@ -29,6 +29,7 @@
  */
 
 #ifndef UNUSED_H_
+#define UNUSED_H_
 
 #define UNUSED  __attribute__((__unused__))
 
