@@ -71,6 +71,14 @@ main(int argc, char *argv[])
     signal(SIGHUP, signal_handler);
     signal(SIGTERM, signal_handler);
 
+    /* Must be called prior to any GLib calls (i.e. in update_schema_dir) */
+    g_type_init();
+
+    /* Tell glib to look for our schema in gnome/data in case SFLphone is not
+     * installed. We have to do this early for it to work properly for older
+     * versions of GLib. */
+    update_schema_dir(argv[0]);
+
 #if !GTK_CHECK_VERSION(2,32,0)
     g_thread_init(NULL);
     gdk_threads_init();
