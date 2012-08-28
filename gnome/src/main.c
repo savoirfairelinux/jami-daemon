@@ -59,7 +59,7 @@ void update_schema_dir(const gchar *argv_0)
     gchar *current_dir = g_path_get_dirname(argv_0);
     gchar *updated_data_dirs = g_strdup_printf("%s/../data", current_dir);
     g_free(current_dir);
-    const gboolean overwrite = TRUE;
+    const gboolean overwrite = FALSE;
     g_setenv("GSETTINGS_SCHEMA_DIR", updated_data_dirs, overwrite);
     g_free(updated_data_dirs);
 }
