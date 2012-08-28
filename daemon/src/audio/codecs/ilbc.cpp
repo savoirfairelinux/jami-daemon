@@ -43,7 +43,6 @@ class Ilbc: public sfl::AudioCodec {
             ilbc_enc_()
         {
             bitrate_ = 13.3;
-            bandwidth_ = 31.3;
 
             initDecode(&ilbc_dec_, 20, 1);
             initEncode(&ilbc_enc_, 20);

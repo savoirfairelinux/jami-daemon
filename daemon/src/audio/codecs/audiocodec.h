@@ -128,9 +128,6 @@ class AudioCodec : public Codec {
         /** Bitrate */
         double bitrate_;
 
-        /** Bandwidth */
-        double bandwidth_;
-
     private:
         AudioCodec& operator=(const AudioCodec&);
         uint8 payload_;
