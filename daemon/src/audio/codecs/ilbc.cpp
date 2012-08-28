@@ -29,6 +29,8 @@
  */
 
 #include "audiocodec.h"
+#include <tr1/array>
+#include <algorithm>
 
 extern "C" {
 #include "pjproject/third_party/ilbc/iLBC_encode.h"
@@ -38,7 +40,9 @@ extern "C" {
 class Ilbc: public sfl::AudioCodec {
     public:
         Ilbc() :
-            sfl::AudioCodec(ILBC_PAYLOAD, "iLBC", 8000, 160, 1),
+            sfl::AudioCodec(ILBC_PAYLOAD, "iLBC", 8000, ILBC_FRAME_SIZE, 1),
+            dst_float_(),
+            src_float_(),
             ilbc_dec_(),
             ilbc_enc_()
         {
@@ -48,18 +52,34 @@ class Ilbc: public sfl::AudioCodec {
             initEncode(&ilbc_enc_, 20);
         }
 
+        // iLBC expects floating point data, so we have to convert
         int decode(short *dst, unsigned char *src, size_t /*buf_size*/) {
-            iLBC_decode((float*) dst, src, &ilbc_dec_, 0);
-            return 160;
+            /* zero out the buffer */
+            std::fill(dst_float_.begin(), dst_float_.end(), 0);
+
+            const int NORMAL_MODE = 1;
+            iLBC_decode(dst_float_.data(), src, &ilbc_dec_, NORMAL_MODE);
+
+            std::copy(dst_float_.begin(), dst_float_.end(), dst);
+
+            return frameSize_;
         }
 
         int encode(unsigned char *dst, short* src, size_t /*buf_size*/) {
-            iLBC_encode(dst, (float*) src, &ilbc_enc_);
-            return 160;
+            /* zero out the buffer */
+            std::fill(src_float_.begin(), src_float_.end(), 0);
+            std::copy(src, src + ILBC_FRAME_SIZE, src_float_.begin());
+
+            iLBC_encode(dst, src_float_.data(), &ilbc_enc_);
+
+            return frameSize_;
         }
 
     private:
+        static const int ILBC_FRAME_SIZE = 160;
         static const int ILBC_PAYLOAD = 105;
+        std::tr1::array<float, ILBC_FRAME_SIZE> dst_float_;
+        std::tr1::array<float, ILBC_FRAME_SIZE> src_float_;
         iLBC_Dec_Inst_t ilbc_dec_;
         iLBC_Enc_Inst_t ilbc_enc_;
 };
