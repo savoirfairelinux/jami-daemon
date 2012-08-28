@@ -49,14 +49,6 @@ JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_
 
 /*
  * Class:     com_savoirfairelinux_sflphone_client_ManagerImpl
- * Method:    outgoingCallN
- * Signature: (Ljava/lang/String;)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_outgoingCallN
-  (JNIEnv *, jclass, jstring);
-
-/*
- * Class:     com_savoirfairelinux_sflphone_client_ManagerImpl
  * Method:    initN
  * Signature: (Ljava/lang/String;)V
  */

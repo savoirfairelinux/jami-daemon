@@ -391,7 +391,7 @@ void JNI_OnUnLoad(JavaVM* vm, void* reserved)
 	/* get env */
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
 		ERROR("JNI_OnUnLoad: failed to get the environment using GetEnv()");
-        return -1;
+        return;
     }
 	INFO("JNI_OnUnLoad: GetEnv %p", env);
 
@@ -449,12 +449,10 @@ void ManagerImpl::init(const std::string &config_file)
 JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_initN
   (JNIEnv *jenv, jclass obj, jstring jconfig_file)
 {
-	//const std::string config_file = std::string(env->GetStringUTFChars(jconfig_file, 0));
-	jclass activityClazz, classLoader, sflPhoneHomeClazz;
-    jmethodID getAppPath, loadClass, getClassLoader;
-	jobject appPath, cls;
-	std::string str, strClassName;
-	jstring jstrClassName;
+	const std::string config_file;
+    jmethodID getAppPath;
+	jobject appPath;
+	std::string str;
 	int status;
 	JNIEnv *env;
 	bool isAttached = false;
@@ -464,15 +462,16 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_ini
 	// FIXME
 	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
 	if (status < 0) {
-		WARN("callback_handler: failed to get JNI environment, assuming native thread");
+		WARN("initN: failed to get JNI environment, assuming native thread");
 		status = gJavaVM->AttachCurrentThread(&env, NULL);
 		if (status < 0) {
-			ERROR("callback_handler: failed to attach current thread");
+			ERROR("initN: failed to attach current thread");
 			return;
 		}
 		isAttached = true;
 	}
 
+	config_file = std::string(env->GetStringUTFChars(jconfig_file, 0));
 	/* here we go: 20 lines of code to simply call a java method... JNI sucks... */
 	jclass managerImplClass = env->GetObjectClass(gManagerObject);
 	if (!managerImplClass) {
@@ -494,8 +493,9 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_ini
         ERROR("initN: whoops, getAppPath cannot be called!");
 		return;
 	}
-	DEBUG("initN: getAppPath returned ", appPath);
+	DEBUG("initN: getAppPath returned");
 
+	/* detach current thread */
 	if (isAttached) {
 		gJavaVM->DetachCurrentThread();
 		isAttached = false;
@@ -510,14 +510,11 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_ini
 	INFO("initN: Application path: %s", str.c_str());
 
 	DEBUG("initN: creating manager");
-	DEBUG("initN: setting history path");
+	DEBUG("initN: setting application path");
 	Manager::instance().setPath(str);
 	DEBUG("initN: initializing manager");
-	Manager::instance().init("");
+	Manager::instance().init(config_file);
 
-end:
-	/* detach current thread */
-	//gJavaVM->DetachCurrentThread();
 	INFO("initN: End");
 	return;
 }
@@ -605,19 +602,6 @@ void ManagerImpl::switchCall(const std::string& id)
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
 /* Main Thread */
-
-JNIEXPORT jboolean JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_outgoingCallN(JNIEnv *env, jclass obj, jstring jaccount_id)
-{
-	std::string account_id = std::string(env->GetStringUTFChars(jaccount_id, 0));
-
-	if (account_id == "sflphone-test") {
-		INFO("ManagerImpl::outgoingCallN account_id:%s", account_id.c_str());
-		return true;
-	} else {
-		WARN("ManagerImpl::outgoingCallN account_id %s is not valid!", account_id.c_str());
-		return false;
-	}
-}
 
 bool ManagerImpl::outgoingCall(const std::string& account_id,
                                const std::string& call_id,
