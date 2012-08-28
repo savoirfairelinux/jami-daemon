@@ -95,8 +95,8 @@
 #include <android/native_activity.h>
 
 static JavaVM *gJavaVM;
-static jobject gInterfaceObject, gDataObject;
-const char *kInterfacePath = "com/savoirfairelinux/sflphone/client/ManagerImpl";
+static jobject gManagerObject, gDataObject;
+const char *kManagerPath = "com/savoirfairelinux/sflphone/client/ManagerImpl";
 const char *kDataPath = "com/savoirfairelinux/sflphone/client/Data";
 
 ManagerImpl::ManagerImpl() :
@@ -117,6 +117,48 @@ ManagerImpl::ManagerImpl() :
     srand(time(NULL));
 }
 
+static std::string getAppPath() {
+	JNIEnv *env;
+	int status;
+	bool isAttached = false;
+	std::string path;
+
+	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
+	if (status < 0) {
+		WARN("getAppPath: failed to get JNI environment, assuming native thread");
+		status = gJavaVM->AttachCurrentThread(&env, NULL);
+		if (status < 0) {
+			ERROR("getAppPath: failed to attach current thread");
+			return;
+		}
+		isAttached = true;
+	}
+
+	jclass managerImplClass = env->GetObjectClass(gManagerObject);
+	if (!managerImplClass) {
+		ERROR("getAppPath: failed to get class reference");
+		if(isAttached)
+			gJavaVM->DetachCurrentThread();
+		return;
+	}
+
+	/* Find the callBack method ID */
+	jmethodID method = env->GetStaticMethodID(managerImplClass, "getAppPath", "()Ljava/lang/String;");
+	if (!method) {
+		ERROR("getAppPath: failed to get callBack method ID");
+		if(isAttached)
+			gJavaVM->DetachCurrentThread();
+		return;
+	}
+
+	jstring jstr = env->CallStaticObjectMethod(managerImplClass, method);
+	if (isAttached) {
+		gJavaVM->DetachCurrentThread();
+		isAttached = false;
+	}
+    path = env->GetStringUTFChars(jstr, NULL);
+	return path;
+}
 
 static void callback_handler(char *s) {
 	int status;
@@ -139,8 +181,8 @@ static void callback_handler(char *s) {
 
 	/* construct a java struct */
 	jstring js = env->NewStringUTF(s);
-	jclass interfaceClass = env->GetObjectClass(gInterfaceObject);
-	if (!interfaceClass) {
+	jclass managerImplClass = env->GetObjectClass(gManagerObject);
+	if (!managerImplClass) {
 		ERROR("callback_handler: failed to get class reference");
 		if(isAttached)
 			gJavaVM->DetachCurrentThread();
@@ -148,7 +190,7 @@ static void callback_handler(char *s) {
 	}
 
 	/* Find the callBack method ID */
-	jmethodID method = env->GetStaticMethodID(interfaceClass, "callBack", "(Ljava/lang/String;)V");
+	jmethodID method = env->GetStaticMethodID(managerImplClass, "callBack", "(Ljava/lang/String;)V");
 	if (!method) {
 		ERROR("callback_handler: failed to get callBack method ID");
 		if(isAttached)
@@ -156,7 +198,7 @@ static void callback_handler(char *s) {
 		return;
 	}
 
-	env->CallStaticVoidMethod(interfaceClass, method, js);
+	env->CallStaticVoidMethod(managerImplClass, method, js);
 	if (isAttached) {
 		gJavaVM->DetachCurrentThread();
 		isAttached = false;
@@ -192,20 +234,13 @@ JNIEXPORT jobject JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_
 	}
 	INFO("getNewData: cached Data Class found");
 
-	jclass dataClass = env->FindClass(kDataPath);
-	if(!dataClass) {
-		ERROR("getNewData: failed to get Data Class");
-		return  NULL;
-	}
-	INFO("getNewData: Data Class found");
-
-	jmethodID dataConstructor = env->GetMethodID(dataClass, "<init>", "(ILjava/lang/String;)V");
+	jmethodID dataConstructor = env->GetMethodID(dataCachedClass, "<init>", "(ILjava/lang/String;)V");
 	if (!dataConstructor) {
 		ERROR("getNewData: failed to get constructor");
 	}
 	INFO("getNewData: Data constructor found");
 
-	jobject dataObject = env->NewObject(dataClass, dataConstructor, i, s);
+	jobject dataObject = env->NewObject(dataCachedClass, dataConstructor, i, s);
 	if (!dataObject) {
 		ERROR("getNewData: failed to create object");
 		return NULL;
@@ -216,20 +251,20 @@ JNIEXPORT jobject JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_
 /*
  * Class: org_wooyd_android_JNIExample_JNIExampleInterface
  * Method: getDataString
- * Signature: (Lorg/wooyd/android/JNIExample/Data;)Ljava/lang/String;
+ * Signature: (Lcom/savoirfairelinux/sflphone/client/Data;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
 (JNIEnv *env, jclass cls, jobject dataObject) {
 	INFO("getDataString");
 
-	jclass dataClass = env->GetObjectClass(gDataObject);
-	if(!dataClass) {
+	jclass dataCachedClass = env->GetObjectClass(gDataObject);
+	if(!dataCachedClass) {
 		ERROR("getDataString: failed to get class reference");
 		return NULL;
 	}
 	INFO("getDataString: ObjectClass Data found");
 
-	jfieldID dataStringField = env->GetFieldID(dataClass, "s", "Ljava/lang/String;");
+	jfieldID dataStringField = env->GetFieldID(dataCachedClass, "s", "Ljava/lang/String;");
 	if(!dataStringField) {
 		ERROR("getDataString: failed to get field ID");
 		return NULL;
@@ -251,14 +286,14 @@ void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
         return;
     }
     jmethodID constr = env->GetMethodID(cls, "<init>", "()V");
-	INFO("%s method found", path);
+	INFO("initClassHelper: %s method found", path);
 
     if(!constr) {
         ERROR("initClassHelper: failed to get %s constructor", path);
         return;
     }
     jobject obj = env->NewObject(cls, constr);
-	INFO("%s constructor found", path);
+	INFO("initClassHelper: %s constructor found", path);
 
     if(!obj) {
         ERROR("initClassHelper: failed to create a %s object", path);
@@ -266,41 +301,50 @@ void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
     }
 	/* protect cached object instances from Android GC */
     (*objptr) = env->NewGlobalRef(obj);
-	INFO("object found %x", objptr);
+	INFO("initClassHelper: object found %x", objptr);
 }
+
+void deinitClassHelper(JNIEnv *env, jobject obj) {
+	INFO("deinitClassHelper");
+
+	/* delete cached object instances */
+    env->DeleteGlobalRef(obj);
+	INFO("deinitClassHelper: object %x deleted", obj);
+}
+
+JNINativeMethod methods[] =
+{
+	/*
+	 * name,
+	 * signature,
+	 * funcPtr
+	 */
+	{
+		"initN",
+		"(Ljava/lang/String;)V",
+		(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_initN
+	},
+	{
+		"callVoid",
+		"()V",
+		(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_callVoid
+	},
+	{
+		"getNewData",
+		"(ILjava/lang/String;)Lcom/savoirfairelinux/sflphone/client/Data;",
+		(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getNewData
+	},
+	{
+		"getDataString",
+		"(Lcom/savoirfairelinux/sflphone/client/Data;)Ljava/lang/String;",
+		(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
+	}
+};
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     JNIEnv* env;
 	jclass clazz;
-	JNINativeMethod methods[] =
-	{
-		/*
-		 * name,
-		 * signature,
-		 * funcPtr
-		 */
-		{
-			"initN",
-			"(Ljava/lang/String;)V",
-			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_initN
-		},
-		{
-			"callVoid",
-			"()V",
-			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_callVoid
-		},
-		{
-			"getNewData",
-			"(ILjava/lang/String;)Lcom/savoirfairelinux/sflphone/client/Data;",
-			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getNewData
-		},
-		{
-			"getDataString",
-			"(Lcom/savoirfairelinux/sflphone/client/Data;)Ljava/lang/String;",
-			(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
-		}
-	};
 	int numMethods = sizeof(methods) / sizeof(methods[0]);
 
 	INFO("JNI_OnLoad");
@@ -317,16 +361,13 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 	INFO("JNI_Onload: JavaVM %p", gJavaVM);
 
     /* Get jclass with env->FindClass */
-	clazz = env->FindClass(kInterfacePath);
+	clazz = env->FindClass(kManagerPath);
 	if (!clazz) {
-        ERROR("whoops, %s class not found!", kInterfacePath);
+        ERROR("JNI_Onload: whoops, %s class not found!", kManagerPath);
 	}
 
-    // Register methods with env->RegisterNatives.
-	//env->RegisterNatives(clazz, methods, numMethods);
-
 	/* put instances of class object we need into cache */
-    initClassHelper(env, kInterfacePath, &gInterfaceObject);
+    initClassHelper(env, kManagerPath, &gManagerObject);
     initClassHelper(env, kDataPath, &gDataObject);
 
 	if(env->RegisterNatives(clazz, methods, numMethods) != JNI_OK)
@@ -338,6 +379,34 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 	INFO("JNI_Onload: Native functions registered");
 
     return JNI_VERSION_1_6;
+}
+
+void JNI_OnUnLoad(JavaVM* vm, void* reserved)
+{
+    JNIEnv* env;
+	jclass clazz;
+
+	INFO("JNI_OnUnLoad");
+
+	/* get env */
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+		ERROR("JNI_OnUnLoad: failed to get the environment using GetEnv()");
+        return -1;
+    }
+	INFO("JNI_OnUnLoad: GetEnv %p", env);
+
+    /* Get jclass with env->FindClass */
+	clazz = env->FindClass(kManagerPath);
+	if (!clazz) {
+        ERROR("JNI_OnUnLoad: whoops, %s class not found!", kManagerPath);
+	}
+
+	/* put instances of class object we need into cache */
+    deinitClassHelper(env, gManagerObject);
+    deinitClassHelper(env, gDataObject);
+
+	env->UnregisterNatives(clazz);
+	INFO("JNI_OnUnLoad: Native functions unregistered");
 }
 
 void ManagerImpl::init(const std::string &config_file)
@@ -378,7 +447,7 @@ void ManagerImpl::init(const std::string &config_file)
 }
 
 JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_initN
-  (JNIEnv *env, jclass obj, jstring jconfig_file)
+  (JNIEnv *jenv, jclass obj, jstring jconfig_file)
 {
 	//const std::string config_file = std::string(env->GetStringUTFChars(jconfig_file, 0));
 	jclass activityClazz, classLoader, sflPhoneHomeClazz;
@@ -386,88 +455,71 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_ini
 	jobject appPath, cls;
 	std::string str, strClassName;
 	jstring jstrClassName;
+	int status;
+	JNIEnv *env;
+	bool isAttached = false;
 
 	DEBUG("initN");
-	/* attach current thread, using 'global' VM variable */
-	//gJavaVM->AttachCurrentThread(&env, NULL);
+
+	// FIXME
+	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
+	if (status < 0) {
+		WARN("callback_handler: failed to get JNI environment, assuming native thread");
+		status = gJavaVM->AttachCurrentThread(&env, NULL);
+		if (status < 0) {
+			ERROR("callback_handler: failed to attach current thread");
+			return;
+		}
+		isAttached = true;
+	}
 
 	/* here we go: 20 lines of code to simply call a java method... JNI sucks... */
-
-	/* first get the application path to set env variables */
-	activityClazz = env->FindClass("com/savoirfairelinux/sflphone/client/SFLPhoneHome");
-	if (!activityClazz) {
-        ERROR("whoops, Class SFLPhoneHome does not exist!");
+	jclass managerImplClass = env->GetObjectClass(gManagerObject);
+	if (!managerImplClass) {
+		ERROR("initN: failed to get ManagerImpl class");
 		return;
 	}
-	DEBUG("com/savoirfairelinux/sflphone/client/SFLPhoneHome class found");
-
-	getClassLoader = env->GetMethodID(activityClazz,"getClassLoader", "()Ljava/lang/ClassLoader;");
-	if (!getClassLoader) {
-        ERROR("whoops, getClassLoader method does not exist!");
-		return;
-	}
-	DEBUG("java/lang/getClassLoader method found");
-	cls = env->CallObjectMethod(activityClazz, getClassLoader);
-
-	classLoader = env->FindClass("java/lang/ClassLoader");
-	if (!classLoader) {
-        ERROR("whoops, ClassLoader class does not exist!");
-		goto end;
-	}
-	DEBUG("java/lang/ClassLoader class found");
-
-	loadClass = env->GetMethodID(classLoader, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-	if (!loadClass) {
-        ERROR("whoops, loadClass method does not exist!");
-		goto end;
-	}
-	DEBUG("loadClass method found");
-	jstrClassName = env->NewStringUTF("com/savoirfairelinux/sflphone/client/SFLPhoneHome");
-	strClassName = env->GetStringUTFChars((jstring) jstrClassName, NULL);
-	DEBUG("strClassName = %s", strClassName.c_str());
-
-	/* get SFLPhoneHome class by calling ClassLoader.loadClass with one parameter */
-	sflPhoneHomeClazz = (jclass) env->CallObjectMethod(cls, loadClass, jstrClassName);
-	if (!sflPhoneHomeClazz) {
-        ERROR("whoops, SFLPhoneHome cannot be loaded!");
-		goto end;
-	}
-	DEBUG("SFLPhoneHome loaded");
 
 	/* get the getAppPath method defined in java */
-	getAppPath = env->GetMethodID(sflPhoneHomeClazz, "getAppPath", "()Ljava/lang/String;");
+	getAppPath = env->GetStaticMethodID(managerImplClass, "getAppPath", "()Ljava/lang/String;");
 	if (!getAppPath) {
-        ERROR("whoops, getAppPath method does not exist!");
-		goto end;
+        ERROR("initN: whoops, getAppPath method not found!");
+		return;
 	}
-	DEBUG("getAppPath method found");
+	DEBUG("initN: getAppPath method found");
 
 	/* call getAppPath method */
-	appPath = env->CallObjectMethod(obj, getAppPath);
+	appPath = env->CallStaticObjectMethod(obj, getAppPath);
 	if (!appPath) {
-        ERROR("whoops, getAppPath cannot be called!");
-		goto end;
+        ERROR("initN: whoops, getAppPath cannot be called!");
+		return;
 	}
-	DEBUG("getAppPath called");
+	DEBUG("initN: getAppPath returned ", appPath);
+
+	if (isAttached) {
+		gJavaVM->DetachCurrentThread();
+		isAttached = false;
+	}
 
 	/* convert it to c++ string */
 	str = env->GetStringUTFChars((jstring) appPath, NULL);
 	if (str.empty()) {
-		ERROR("whoops, appPath is empty!");
-		goto end;
+		ERROR("initN: whoops, appPath is empty!");
+		return;
 	}
-	INFO("Application path: %s", str.c_str());
+	INFO("initN: Application path: %s", str.c_str());
 
-	DEBUG("creating manager");
-	DEBUG("setting history path");
+	DEBUG("initN: creating manager");
+	DEBUG("initN: setting history path");
 	Manager::instance().setPath(str);
-	DEBUG("initializing manager");
+	DEBUG("initN: initializing manager");
 	Manager::instance().init("");
 
 end:
 	/* detach current thread */
 	//gJavaVM->DetachCurrentThread();
-	INFO("End");
+	INFO("initN: End");
+	return;
 }
 
 void ManagerImpl::setPath(const std::string &path) {
