@@ -559,10 +559,11 @@ SIPVoIPLink::~SIPVoIPLink()
 
 SIPVoIPLink* SIPVoIPLink::instance()
 {
-	DEBUG("creating SIPVoIPLink instance");
     assert(!destroyed_);
-    if (!instance_)
+    if (!instance_) {
+		DEBUG("creating SIPVoIPLink instance");
         instance_ = new SIPVoIPLink;
+	}
     return instance_;
 }
 
