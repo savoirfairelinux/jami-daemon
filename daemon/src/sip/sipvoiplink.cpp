@@ -588,7 +588,7 @@ void SIPVoIPLink::setSipLogLevel()
     }
 
 #ifdef ANDROID
-	level = 5;
+	level = Manager::instance().getSipLogLevel();
 #endif
 
     // From 0 (min) to 6 (max)

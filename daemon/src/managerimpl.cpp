@@ -409,6 +409,47 @@ void JNI_OnUnLoad(JavaVM* vm, void* reserved)
 	INFO("JNI_OnUnLoad: Native functions unregistered");
 }
 
+static int ManagerImpl::getSipLogLevel() {
+	JNIEnv *env;
+	int status;
+	bool isAttached = false;
+
+	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
+	if (status < 0) {
+		WARN("getSipLogLevel: failed to get JNI environment, assuming native thread");
+		status = gJavaVM->AttachCurrentThread(&env, NULL);
+		if (status < 0) {
+			ERROR("getSipLogLevel: failed to attach current thread");
+			return 6;
+		}
+		isAttached = true;
+	}
+
+	jclass managerImplClass = env->GetObjectClass(gManagerObject);
+	if (!managerImplClass) {
+		ERROR("getSipLogLevel: failed to get class reference");
+		if(isAttached)
+			gJavaVM->DetachCurrentThread();
+		return 6;
+	}
+
+	/* Find the callBack method ID */
+	jmethodID method = env->GetStaticMethodID(managerImplClass, "getSipLogLevel", "()I");
+	if (!method) {
+		ERROR("getSipLogLevel: failed to get callBack method ID");
+		if(isAttached)
+			gJavaVM->DetachCurrentThread();
+		return 6;
+	}
+
+	int level = (int) env->CallStaticIntMethod(managerImplClass, method);
+	if (isAttached) {
+		gJavaVM->DetachCurrentThread();
+		isAttached = false;
+	}
+	return level;
+}
+
 void ManagerImpl::init(const std::string &config_file)
 {
     path_ = config_file.empty() ? retrieveConfigPath() : config_file;
