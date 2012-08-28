@@ -54,7 +54,7 @@ class Ilbc: public sfl::AudioCodec {
             return 160;
         }
 
-        virtual int encode(unsigned char *dst, short* src, size_t /*buf_size*/) {
+        int encode(unsigned char *dst, short* src, size_t /*buf_size*/) {
             iLBC_encode(dst, (float*) src, &ilbc_enc_);
             return 160;
         }
