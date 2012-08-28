@@ -304,7 +304,7 @@ AS_IF([test "x$with_speexdsp" != xno],
 AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
 
-
+AM_CONDITIONAL(BUILD_ILBC, test "x$with_ilbc" = "xyes")
 
 # IAX
 # required dependency(ies): libiax2 (static)
