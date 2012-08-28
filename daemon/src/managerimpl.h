@@ -158,6 +158,8 @@ class ManagerImpl {
             return audiodriver_;
         }
 
+		void setPath(const std::string &path);
+
         /**
          * Functions which occur with a user's action
          * Place a new call

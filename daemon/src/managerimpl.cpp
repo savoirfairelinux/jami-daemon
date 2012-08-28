@@ -70,6 +70,7 @@
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "history/historynamecache.h"
+#include "history/history.h"
 #include "manager.h"
 #include "dbus/configurationmanager.h"
 
@@ -457,6 +458,9 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_ini
 	}
 	INFO("Application path: %s", str.c_str());
 
+	DEBUG("creating manager");
+	DEBUG("setting history path");
+	Manager::instance().setPath(str);
 	DEBUG("initializing manager");
 	Manager::instance().init("");
 
@@ -464,6 +468,10 @@ end:
 	/* detach current thread */
 	//gJavaVM->DetachCurrentThread();
 	INFO("End");
+}
+
+void ManagerImpl::setPath(const std::string &path) {
+	history_.setPath(path);
 }
 
 #if HAVE_DBUS
@@ -2229,7 +2237,7 @@ ManagerImpl::getTelephoneFile()
 std::string ManagerImpl::retrieveConfigPath() const
 {
 #if ANDROID
-    std::string configdir = "/data/data/com.savoirfairelinux.sflphone.client";
+    std::string configdir = "/data/data/com.savoirfairelinux.sflphone";
 #else
     std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
                              ".config" + DIR_SEPARATOR_STR + PACKAGE;
@@ -2243,7 +2251,7 @@ std::string ManagerImpl::retrieveConfigPath() const
     if (mkdir(configdir.data(), 0700) != 0) {
         // If directory creation failed
         if (errno != EEXIST)
-           DEBUG("Cannot create directory: %m");
+           DEBUG("Cannot create directory: %s!", configdir.c_str());
     }
 
     static const char * const PROGNAME = "sflphoned";

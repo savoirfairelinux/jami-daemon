@@ -119,7 +119,11 @@ void History::addEntry(const HistoryItem &item, int oldest)
 void History::ensurePath()
 {
     if (path_.empty()) {
+#ifdef ANDROID
+        string xdg_data = path_;
+#else
         string xdg_data = string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
+#endif
 
         string userdata;
         // If the environment variable is set (not null and not empty), we'll use it to save the history
@@ -130,7 +134,7 @@ void History::ensurePath()
         if (mkdir(userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                DEBUG("Cannot create directory: %m");
+                DEBUG("Cannot create directory: %s!", userdata.c_str());
                 return;
             }
         }
