@@ -7,11 +7,11 @@ EXTRA_DIST = $(gsettings_SCHEMAS)
 
 MAINTAINERCLEANFILES = $(gsettings_SCHEMAS:.xml=.valid)
 
-
 #FIXME: is there a way to avoid calling this every time we do make?
-all-local: $(gsettings_SCHEMAS)
-	$(MKDIR_P) $(top_builddir)/data/glib-2.0/schemas
-	$(GLIB_COMPILE_SCHEMAS) $(top_srcdir)/data --targetdir $(top_builddir)/data/glib-2.0/schemas
+all-local: gschemas.compiled
+
+gschemas.compiled: $(gsettings_SCHEMAS)
+	$(GLIB_COMPILE_SCHEMAS) $(top_srcdir)/data --targetdir $(top_builddir)/data
 
 clean-local:
-	rm -rf $(top_builddir)/data/glib-2.0
+	rm -rf $(top_builddir)/data/gschemas.compiled

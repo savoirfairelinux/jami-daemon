@@ -54,6 +54,16 @@ signal_handler(int code)
     sflphone_quit(TRUE);
 }
 
+void update_schema_dir(const gchar *argv_0)
+{
+    gchar *current_dir = g_path_get_dirname(argv_0);
+    gchar *updated_data_dirs = g_strdup_printf("%s/../data", current_dir);
+    g_free(current_dir);
+    const gboolean overwrite = TRUE;
+    g_setenv("GSETTINGS_SCHEMA_DIR", updated_data_dirs, overwrite);
+    g_free(updated_data_dirs);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -69,6 +79,9 @@ main(int argc, char *argv[])
 
     // Start GTK application
     gtk_init(&argc, &argv);
+
+    /* Tell glib to look for our schema in gnome/data in case SFLphone is not installed */
+    update_schema_dir(argv[0]);
 
     // Check arguments if debug mode is activated
     for (int i = 0; i < argc; i++)
