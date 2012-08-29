@@ -409,7 +409,7 @@ void JNI_OnUnLoad(JavaVM* vm, void* reserved)
 	INFO("JNI_OnUnLoad: Native functions unregistered");
 }
 
-static int ManagerImpl::getSipLogLevel() {
+int ManagerImpl::getSipLogLevel() {
 	JNIEnv *env;
 	int status;
 	bool isAttached = false;
@@ -483,7 +483,7 @@ void ManagerImpl::init(const std::string &config_file)
         }
     }
 
-    history_.load(preferences.getHistoryLimit());
+    //history_.load(preferences.getHistoryLimit());
     registerAccounts();
 }
 
