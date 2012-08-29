@@ -296,6 +296,23 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_pla
 	return;
 }
 
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_hangUp
+(JNIEnv *env, jclass cls, jstring jcallID) {
+	const char *callID;
+
+	INFO("hangUp");
+
+	callID = env->GetStringUTFChars(jcallID, 0);
+
+	DEBUG("CallManager::hangup(%s)", callID);
+    Manager::instance().hangupCall(callID);
+
+	/* release string */
+	env->ReleaseStringUTFChars(jcallID, callID);
+
+	return;
+}
+
 void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
     jclass cls;
 
