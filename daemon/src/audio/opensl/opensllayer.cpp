@@ -92,7 +92,7 @@ void OpenSLThread::run()
     initAudioLayer();
 
     opensl_->startAudioPlayback();
-    // opensl_->startAudioCapture();
+    opensl_->startAudioCapture();
 
     while (opensl_->isStarted_) {
         ost::Thread::sleep(20 /* ms */);
