@@ -2318,12 +2318,11 @@ std::vector<std::string> ManagerImpl::getAccountList() const
         ERROR("could not find IP2IP profile in getAccount list");
 
     // Concatenate all account pointers in a single map
-    AccountMap concatenatedMap;
-    fillConcatAccountMap(concatenatedMap);
+    AccountMap allAccounts(getAllAccounts());
 
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (AccountMap::const_iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
+        for (AccountMap::const_iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
             if (iter->first == SIPAccount::IP2IP_PROFILE || iter->first.empty())
                 continue;
 
@@ -2336,9 +2335,9 @@ std::vector<std::string> ManagerImpl::getAccountList() const
             if (*iter == SIPAccount::IP2IP_PROFILE or iter->empty())
                 continue;
 
-            AccountMap::const_iterator account_iter = concatenatedMap.find(*iter);
+            AccountMap::const_iterator account_iter = allAccounts.find(*iter);
 
-            if (account_iter != concatenatedMap.end() and account_iter->second)
+            if (account_iter != allAccounts.end() and account_iter->second)
                 v.push_back(account_iter->second->getAccountID());
         }
     }
@@ -2758,13 +2757,15 @@ ManagerImpl::getIaxAccount(const std::string& accountID) const
 }
 #endif
 
-void
-ManagerImpl::fillConcatAccountMap(AccountMap &concatMap) const
+AccountMap
+ManagerImpl::getAllAccounts() const
 {
-    concatMap.insert(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end());
+    AccountMap all;
+    all.insert(SIPVoIPLink::instance()->getAccounts().begin(), SIPVoIPLink::instance()->getAccounts().end());
 #if HAVE_IAX
-    concatMap.insert(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end());
+    all.insert(IAXVoIPLink::getAccounts().begin(), IAXVoIPLink::getAccounts().end());
 #endif
+    return all;
 }
 
 std::string
@@ -2774,9 +2775,8 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string &userName,
     DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
     // Try to find the account id from username and server name by full match
 
-    AccountMap concatenatedMap;
-    fillConcatAccountMap(concatenatedMap);
-    for (AccountMap::const_iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
+    AccountMap allAccounts(getAllAccounts());
+    for (AccountMap::const_iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
         SIPAccount *account = static_cast<SIPAccount *>(iter->second);
         if (account and account->matches(userName, server))
             return iter->first;
