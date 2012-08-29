@@ -63,11 +63,11 @@ class History {
 
         void addCall(Call *call, int limit);
         void clear();
+        void setPath(const std::string &path);
     private:
         /* Mutex to protext the history items */
         ost::Mutex historyItemsMutex_;
 
-        void setPath(const std::string &path);
         /* If no path has been set, this will initialize path to a
          * system-dependent location */
         void ensurePath();

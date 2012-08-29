@@ -559,10 +559,11 @@ SIPVoIPLink::~SIPVoIPLink()
 
 SIPVoIPLink* SIPVoIPLink::instance()
 {
-	DEBUG("creating SIPVoIPLink instance");
     assert(!destroyed_);
-    if (!instance_)
+    if (!instance_) {
+		DEBUG("creating SIPVoIPLink instance");
         instance_ = new SIPVoIPLink;
+	}
     return instance_;
 }
 
@@ -588,7 +589,7 @@ void SIPVoIPLink::setSipLogLevel()
     }
 
 #ifdef ANDROID
-	level = 5;
+	level = Manager::instance().getSipLogLevel();
 #endif
 
     // From 0 (min) to 6 (max)

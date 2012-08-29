@@ -58,7 +58,7 @@ bool check_dir(const char *path)
 }
 
 #if ANDROID
-static char *program_dir = "/data/data/org.sflphone.service";
+static char *program_dir = "/data/data/com.savoirfairelinux.sflphone";
 #else
 static char *program_dir = NULL;
 #endif

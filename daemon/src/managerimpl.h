@@ -158,6 +158,10 @@ class ManagerImpl {
             return audiodriver_;
         }
 
+		void setPath(const std::string &path);
+
+		int getSipLogLevel();
+
         /**
          * Functions which occur with a user's action
          * Place a new call
