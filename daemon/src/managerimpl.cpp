@@ -511,13 +511,13 @@ void ManagerImpl::init(const std::string &config_file)
 JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_initN
   (JNIEnv *jenv, jclass obj, jstring jconfig_file)
 {
-	const std::string config_file;
+	char *config_file, *str;
     jmethodID getAppPath;
 	jobject appPath;
-	std::string str;
 	int status;
 	JNIEnv *env;
 	bool isAttached = false;
+	jclass managerImplClass;
 
 	DEBUG("initN");
 
@@ -533,19 +533,25 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_ini
 		isAttached = true;
 	}
 
-	config_file = std::string(env->GetStringUTFChars(jconfig_file, 0));
+	config_file = env->GetStringUTFChars(jconfig_file, 0);
+	if (!config_file) {
+		ERROR("initN: whoops, config_file is null!");
+		goto end;
+	}
+	INFO("initN: config_file: %s", config_file);
+
 	/* here we go: 20 lines of code to simply call a java method... JNI sucks... */
-	jclass managerImplClass = env->GetObjectClass(gManagerObject);
+	managerImplClass = env->GetObjectClass(gManagerObject);
 	if (!managerImplClass) {
 		ERROR("initN: failed to get ManagerImpl class");
-		return;
+		goto release_config;
 	}
 
 	/* get the getAppPath method defined in java */
 	getAppPath = env->GetStaticMethodID(managerImplClass, "getAppPath", "()Ljava/lang/String;");
 	if (!getAppPath) {
         ERROR("initN: whoops, getAppPath method not found!");
-		return;
+		goto release_config;
 	}
 	DEBUG("initN: getAppPath method found");
 
@@ -553,29 +559,36 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_ini
 	appPath = env->CallStaticObjectMethod(obj, getAppPath);
 	if (!appPath) {
         ERROR("initN: whoops, getAppPath cannot be called!");
-		return;
+		goto release_config;
 	}
 	DEBUG("initN: getAppPath returned");
 
-	/* detach current thread */
-	if (isAttached) {
-		gJavaVM->DetachCurrentThread();
-		isAttached = false;
-	}
-
 	/* convert it to c++ string */
 	str = env->GetStringUTFChars((jstring) appPath, NULL);
-	if (str.empty()) {
-		ERROR("initN: whoops, appPath is empty!");
-		return;
+	if (!str) {
+		ERROR("initN: whoops, appPath is null!");
+		goto release_config;
 	}
-	INFO("initN: Application path: %s", str.c_str());
+	INFO("initN: Application path: %s", str);
 
 	DEBUG("initN: creating manager");
 	DEBUG("initN: setting application path");
 	Manager::instance().setPath(str);
 	DEBUG("initN: initializing manager");
 	Manager::instance().init(config_file);
+
+	/* release string */
+release_str:
+	env->ReleaseStringUTFChars(appPath, str);
+release_config:
+	env->ReleaseStringUTFChars(jconfig_file, config_file);
+
+end:
+	/* detach current thread */
+	if (isAttached) {
+		gJavaVM->DetachCurrentThread();
+		isAttached = false;
+	}
 
 	INFO("initN: End");
 	return;
