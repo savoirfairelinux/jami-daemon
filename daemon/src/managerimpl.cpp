@@ -288,6 +288,11 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_pla
 	DEBUG("CallManager::placeCall(%s, %s, %s)", accountID, callID, to);
 	Manager::instance().outgoingCall(accountID, callID, to);
 
+	/* release string */
+	env->ReleaseStringUTFChars(jaccountID, accountID);
+	env->ReleaseStringUTFChars(jcallID, callID);
+	env->ReleaseStringUTFChars(jto, to);
+
 	return;
 }
 
