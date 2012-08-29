@@ -275,6 +275,22 @@ JNIEXPORT jstring JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_
 	return dataStringValue;
 }
 
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_placeCall
+(JNIEnv *env, jclass cls, jstring jaccountID, jstring jcallID, jstring jto) {
+	const char *accountID, *callID, *to;
+
+	INFO("placeCall");
+
+	accountID = env->GetStringUTFChars(jaccountID, 0);
+	callID = env->GetStringUTFChars(jcallID, 0);
+	to = env->GetStringUTFChars(jto, 0);
+
+	DEBUG("CallManager::placeCall(%s, %s, %s)", accountID, callID, to);
+	Manager::instance().outgoingCall(accountID, callID, to);
+
+	return;
+}
+
 void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
     jclass cls;
 
@@ -338,6 +354,11 @@ JNINativeMethod methods[] =
 		"getDataString",
 		"(Lcom/savoirfairelinux/sflphone/client/Data;)Ljava/lang/String;",
 		(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_getDataString
+	},
+	{
+		"placeCall",
+		"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
+		(void *) Java_com_savoirfairelinux_sflphone_client_ManagerImpl_placeCall
 	}
 };
 
