@@ -217,7 +217,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     }
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    std::string account_id(Manager::instance().getAccountIdFromNameAndServer(userName, server));
+    std::string account_id(SIPVoIPLink::instance()->getAccountIdFromNameAndServer(userName, server));
 
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
 
@@ -538,6 +538,23 @@ void SIPVoIPLink::destroy()
     delete instance_;
     destroyed_ = true;
     instance_ = 0;
+}
+
+std::string
+SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
+                                           const std::string &server) const
+{
+    DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
+    // Try to find the account id from username and server name by full match
+
+    for (AccountMap::const_iterator iter = sipAccountMap_.begin(); iter != sipAccountMap_.end(); ++iter) {
+        SIPAccount *account = static_cast<SIPAccount*>(iter->second);
+        if (account and account->matches(userName, server))
+            return iter->first;
+    }
+
+    DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
+    return SIPAccount::IP2IP_PROFILE;
 }
 
 void SIPVoIPLink::setSipLogLevel()

@@ -1104,8 +1104,6 @@ class ManagerImpl {
          */
         VoIPLink* getAccountLink(const std::string& accountID);
 
-        std::string getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) const;
-
         std::string getStunServer() const;
         void setStunServer(const std::string &server);
 

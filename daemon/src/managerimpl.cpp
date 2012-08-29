@@ -2768,23 +2768,6 @@ ManagerImpl::getAllAccounts() const
     return all;
 }
 
-std::string
-ManagerImpl::getAccountIdFromNameAndServer(const std::string &userName,
-                                           const std::string &server) const
-{
-    DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
-    // Try to find the account id from username and server name by full match
-
-    AccountMap allAccounts(getAllAccounts());
-    for (AccountMap::const_iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
-        SIPAccount *account = static_cast<SIPAccount *>(iter->second);
-        if (account and account->matches(userName, server))
-            return iter->first;
-    }
-
-    DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
-    return SIPAccount::IP2IP_PROFILE;
-}
 
 std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings() const
 {
