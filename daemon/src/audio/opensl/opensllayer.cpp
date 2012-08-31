@@ -172,27 +172,27 @@ OpenSLLayer::initAudioEngine()
 {
     SLresult result;
 
-    printf("Create Audio Engine\n");
+    DEBUG("Create Audio Engine\n");
     result = slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Realize Audio Engine\n");
+    DEBUG("Realize Audio Engine\n");
     result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Create Audio Engine Interface\n");
+    DEBUG("Create Audio Engine Interface\n");
     result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineInterface);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Create Output Mixer\n");
+    DEBUG("Create Output Mixer\n");
     result = (*engineInterface)->CreateOutputMix(engineInterface, &outputMixer, 0, NULL, NULL);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Realize Output Mixer\n");
+    DEBUG("Realize Output Mixer\n");
     result = (*outputMixer)->Realize(outputMixer, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Audio Engine Initialization Done\n");
+    DEBUG("Audio Engine Initialization Done\n");
 }
 
 void 
@@ -200,7 +200,7 @@ OpenSLLayer::shutdownAudioEngine()
 {
 
     // destroy buffer queue audio player object, and invalidate all associated interfaces
-    printf("Shutdown audio player\n");
+    DEBUG("Shutdown audio player\n");
     if (playerObject != NULL) {
         (*playerObject)->Destroy(playerObject);
         playerObject = NULL;
@@ -209,14 +209,14 @@ OpenSLLayer::shutdownAudioEngine()
     }
         
     // destroy output mix object, and invalidate all associated interfaces
-    printf("Shutdown audio mixer\n");
+    DEBUG("Shutdown audio mixer\n");
     if (outputMixer != NULL) {
         (*outputMixer)->Destroy(outputMixer);
         outputMixer= NULL;
     }
 
     // destroy engine object, and invalidate all associated interfaces
-    printf("Shutdown audio engine\n");
+    DEBUG("Shutdown audio engine\n");
     if (engineObject != NULL) {
         (*engineObject)->Destroy(engineObject);
         engineObject = NULL;
@@ -234,12 +234,12 @@ OpenSLLayer::initAudioPlayback()
     SLresult result;
 
     // Initialize the location of the buffer queue
-    printf("Create playback queue\n");
+    DEBUG("Create playback queue\n");
     SLDataLocator_AndroidSimpleBufferQueue bufferLocation = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
                                                              NB_BUFFER_PLAYBACK_QUEUE}; 
 
     // Initnialize the audio format for this queue
-    printf("Setting audio format\n");
+    DEBUG("Setting audio format\n");
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1, 
                                     SL_SAMPLINGRATE_8,
                                     SL_PCMSAMPLEFORMAT_FIXED_16, 
@@ -248,11 +248,11 @@ OpenSLLayer::initAudioPlayback()
                                     SL_BYTEORDER_LITTLEENDIAN};
 
     // Create the audio source
-    printf("Set Audio Sources\n");
+    DEBUG("Set Audio Sources\n");
     SLDataSource audioSource = {&bufferLocation, &audioFormat};
 
     // Cofiguration fo the audio sink as an output mixer 
-    printf("Set output mixer location\n");
+    DEBUG("Set output mixer location\n");
     SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer};
     SLDataSink audioSink = {&mixerLocation, NULL};
 
@@ -264,30 +264,30 @@ OpenSLLayer::initAudioPlayback()
     int nbInterface = 2;
 
     // create audio player
-    printf("Create audio player\n");
+    DEBUG("Create audio player\n");
     result = (*engineInterface)->CreateAudioPlayer(engineInterface, &playerObject, &audioSource, &audioSink, nbInterface, ids, req);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Realize audio player\n");
+    DEBUG("Realize audio player\n");
     result = (*playerObject)->Realize(playerObject, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
 
     // create audio interface
-    printf("Create audio player interface\n");
+    DEBUG("Create audio player interface\n");
     result = (*playerObject)->GetInterface(playerObject, SL_IID_PLAY, &playerInterface);
     assert(SL_RESULT_SUCCESS == result);
 
     // create the buffer queue interface
-    printf("Create buffer queue interface\n");
+    DEBUG("Create buffer queue interface\n");
     result = (*playerObject)->GetInterface(playerObject, SL_IID_BUFFERQUEUE, &playbackBufferQueue);
     assert(SL_RESULT_SUCCESS == result);
 
     // register the buffer queue on the buffer object
-    printf("Register audio callback\n");
+    DEBUG("Register audio callback\n");
     result = (*playbackBufferQueue)->RegisterCallback(playbackBufferQueue, audioPlaybackCallback, this);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Audio Playback Initialization Done\n");
+    DEBUG("Audio Playback Initialization Done\n");
 }
 
 void
@@ -296,7 +296,7 @@ OpenSLLayer::initAudioCapture()
     SLresult result;
 
     // configure audio source
-    printf("Configure audio source\n");
+    DEBUG("Configure audio source\n");
     SLDataLocator_IODevice deviceLocator = {SL_DATALOCATOR_IODEVICE, 
                                             SL_IODEVICE_AUDIOINPUT,
                                             SL_DEFAULTDEVICEID_AUDIOINPUT, 
@@ -306,14 +306,16 @@ OpenSLLayer::initAudioCapture()
                                 NULL};
 
     // configure audio sink
-    printf("Configure audio sink\n");
-    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 
+    DEBUG("Configure audio sink\n");
+
+//    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 
+    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, 
                                                             NB_BUFFER_CAPTURE_QUEUE};
 
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1, 
                                     SL_SAMPLINGRATE_8,
                                     SL_PCMSAMPLEFORMAT_FIXED_16, 
-                                    16,
+                                    SL_PCMSAMPLEFORMAT_FIXED_16, 
                                     SL_SPEAKER_FRONT_CENTER, 
                                     SL_BYTEORDER_LITTLEENDIAN};
 
@@ -322,41 +324,41 @@ OpenSLLayer::initAudioCapture()
 
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
-    printf("Create audio recorder\n");
+    DEBUG("Create audio recorder\n");
     const SLInterfaceID id[1] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
     result = (*engineInterface)->CreateAudioRecorder(engineInterface, &recorderObject, &audioSource,
                                                        &audioSink, 1, id, req);
     if (SL_RESULT_SUCCESS != result) {
-        printf("Error: could not create audio recorder");
+        DEBUG("Error: could not create audio recorder");
         return;
     }
 
     // realize the audio recorder
-    printf("Realize the audio recorder\n");
+    DEBUG("Realize the audio recorder\n");
     result = (*recorderObject)->Realize(recorderObject, SL_BOOLEAN_FALSE);
     if (SL_RESULT_SUCCESS != result) {
-        printf("Error: could not realize audio recorder");
+        DEBUG("Error: could not realize audio recorder");
         return;
     }
 
     // get the record interface
-    printf("Create the record interface\n");
+    DEBUG("Create the record interface\n");
     result = (*recorderObject)->GetInterface(recorderObject, SL_IID_RECORD, &recorderInterface);
     assert(SL_RESULT_SUCCESS == result);
 
     // get the buffer queue interface
-    printf("Create the buffer queue interface\n");
+    DEBUG("Create the buffer queue interface\n");
     result = (*recorderObject)->GetInterface(recorderObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
             &recorderBufferQueue);
     assert(SL_RESULT_SUCCESS == result);
 
     // register callback on the buffer queue
-    printf("Register the audio capture callback\n");
+    DEBUG("Register the audio capture callback\n");
     result = (*recorderBufferQueue)->RegisterCallback(recorderBufferQueue, audioCaptureCallback, this);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Audio capture initialized\n");
+    DEBUG("Audio capture initialized\n");
 }
 
 
@@ -366,7 +368,7 @@ OpenSLLayer::startAudioPlayback()
 {
     assert(NULL != playbackBufferQueue);
 
-    printf("Start audio playback\n");
+    DEBUG("Start audio playback\n");
 
     SLresult result;
 
@@ -379,14 +381,14 @@ OpenSLLayer::startAudioPlayback()
 
         result = (*playbackBufferQueue)->Enqueue(playbackBufferQueue, buffer.data(), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
-            printf("Error could not enqueue initial buffers\n");
+            DEBUG("Error could not enqueue initial buffers\n");
         }
     }
 
     result = (*playerInterface)->SetPlayState(playerInterface, SL_PLAYSTATE_PLAYING);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Audio playback started\n");
+    DEBUG("Audio playback started\n");
 }
 
 void
@@ -394,7 +396,7 @@ OpenSLLayer::startAudioCapture()
 {
     assert(NULL != playbackBufferQueue);
 
-    printf("Start audio capture\n");
+    DEBUG("Start audio capture\n");
 
     SLresult result;
 
@@ -420,13 +422,13 @@ OpenSLLayer::startAudioCapture()
     result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_RECORDING);
     assert(SL_RESULT_SUCCESS == result);
 
-    printf("Audio capture started\n");
+    DEBUG("Audio capture started\n");
 }
 
 void
 OpenSLLayer::stopAudioPlayback()
 {
-    printf("Stop audio playback\n");
+    DEBUG("Stop audio playback\n");
 
     SLresult result;
     result = (*playerInterface)->SetPlayState(playerInterface, SL_PLAYSTATE_STOPPED);
@@ -436,7 +438,7 @@ OpenSLLayer::stopAudioPlayback()
 void
 OpenSLLayer::stopAudioCapture()
 {
-    printf("Stop audio capture\n");
+    DEBUG("Stop audio capture\n");
 
     SLresult result;
     result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_STOPPED);
@@ -485,7 +487,7 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
 #endif
         SLresult result = (*queue)->Enqueue(queue, buffer.data(), buffer.size());
         if (SL_RESULT_SUCCESS != result) {
-            printf("Error could not enqueue buffers in playback callback\n");
+            DEBUG("Error could not enqueue buffers in playback callback\n");
         }
 
         opensl->incrementPlaybackIndex();
@@ -496,8 +498,6 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
 {
     assert(NULL != queue);
     assert(NULL != context);
-
-    usleep(20000);
 
     OpenSLLayer *opensl = (OpenSLLayer *)context;
 
