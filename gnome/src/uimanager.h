@@ -39,19 +39,19 @@ GtkWidget *historyButton_;
 GtkWidget *contactButton_;
 GtkAction *volumeToggle_;
 
-GtkUIManager *uimanager_new (void);
+GtkUIManager *uimanager_new (GSettings *settings);
 
 void update_voicemail_status (void);
 
-void update_actions (void);
+void update_actions (GSettings *settings);
 
-void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);
+void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event, GSettings *settings);
 
-void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event);
+void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event, GSettings *settings);
 
 void show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event);
 
-GtkWidget *create_menus (GtkUIManager *ui_manager);
+GtkWidget *create_menus (GtkUIManager *ui_manager, GSettings *settings);
 
 GtkWidget *create_toolbar_actions (GtkUIManager *ui_manager);
 

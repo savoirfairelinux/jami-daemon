@@ -33,10 +33,10 @@
 #include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "codeclist.h"
+#include "sflphone_const.h"
 #include "audioconf.h"
 #include "utils.h"
 #include "logger.h"
-#include "eel-gconf-extensions.h"
 #include "dbus/dbus.h"
 #include "uimanager.h"
 #include "mainwindow.h"
@@ -759,7 +759,7 @@ static GtkWidget* pulse_box()
 
 
 static void
-select_audio_manager(GtkWidget *alsa_button, gpointer data UNUSED)
+select_audio_manager(GtkWidget *alsa_button, GSettings *settings)
 {
     if (!must_show_alsa_conf() && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alsa_button))) {
         dbus_set_audio_manager(ALSA_API_STR);
@@ -784,7 +784,7 @@ select_audio_manager(GtkWidget *alsa_button, gpointer data UNUSED)
 
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
             main_window_volume_controls(FALSE);
-            eel_gconf_set_integer(SHOW_VOLUME_CONTROLS, FALSE);
+            g_settings_set_boolean(settings, "show-volume-controls", FALSE);
             gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
         }
 
@@ -843,7 +843,7 @@ static void record_path_changed(GtkFileChooser *chooser, gpointer data UNUSED)
     g_free(path);
 }
 
-GtkWidget* create_audio_configuration()
+GtkWidget* create_audio_configuration(GSettings *settings)
 {
     /* Main widget */
     GtkWidget *audio_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -870,7 +870,7 @@ GtkWidget* create_audio_configuration()
 
     GtkWidget *alsa_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse_button), _("_ALSA"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(alsa_button), !using_pulse);
-    g_signal_connect(G_OBJECT(alsa_button), "clicked", G_CALLBACK(select_audio_manager), NULL);
+    g_signal_connect(G_OBJECT(alsa_button), "clicked", G_CALLBACK(select_audio_manager), settings);
     gtk_table_attach(GTK_TABLE(table), alsa_button, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL,
                      GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -968,4 +968,10 @@ gboolean must_show_alsa_conf()
     int ret = g_strcmp0(api, ALSA_API_STR);
     g_free(api);
     return ret == 0;
+}
+
+gboolean
+must_show_volume(GSettings *settings)
+{
+    return g_settings_get_boolean(settings, "show-volume-controls") && must_show_alsa_conf();
 }

@@ -60,7 +60,7 @@ struct conference_obj_t;
  * @return GtkWidget* A new widget
  */
 void
-calltree_create (calltab_t *, int searchbar_type);
+calltree_create (calltab_t *, int searchbar_type, GSettings *settings);
 
 /**
  * Add a call in the calltree
@@ -74,7 +74,7 @@ calltree_add_call (calltab_t *, callable_obj_t *, GtkTreeIter *);
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t *, callable_obj_t *);
+calltree_update_call (calltab_t *, callable_obj_t *, GSettings *settings);
 
 /**
  * Remove a call from the call tree
@@ -89,19 +89,19 @@ calltree_remove_call(calltab_t *, const gchar*);
  * @param The parent item in case of a conference, should be NULL in case of a normal call
  */
 void
-calltree_add_history_entry(callable_obj_t *);
+calltree_add_history_entry(callable_obj_t *call);
 
 void
 calltree_update_history_view();
 
 void
-calltree_add_conference_to_current_calls(conference_obj_t *);
+calltree_add_conference_to_current_calls(conference_obj_t *, GSettings *settings);
 
 void
-calltree_remove_conference(calltab_t *, const conference_obj_t *);
+calltree_remove_conference(calltab_t *, const conference_obj_t *, GSettings *settings);
 
 void
-calltree_display (calltab_t *);
+calltree_display (calltab_t *, GSettings *settings);
 
 /**
  * Update elapsed time based on selected calltree's call

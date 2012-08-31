@@ -50,10 +50,9 @@
 void
 ManagerImpl::registerAccounts()
 {
-    AccountMap concatenatedMap;
-    fillConcatAccountMap(concatenatedMap);
+    AccountMap allAccounts(getAllAccounts());
 
-    for (AccountMap::iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
+    for (AccountMap::iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
         Account *a = iter->second;
 
         if (!a)

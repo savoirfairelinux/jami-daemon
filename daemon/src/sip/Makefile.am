@@ -24,5 +24,5 @@ libsiplink_la_SOURCES+= sdes_negotiator.cpp \
 
 
 libsiplink_la_CXXFLAGS = \
-		@PCRE_LIBS@
+		@PCRE_CFLAGS@
 endif

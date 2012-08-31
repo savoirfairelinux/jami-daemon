@@ -42,7 +42,6 @@ AudioCodec::AudioCodec(uint8 payload, const std::string &codecName,
     channel_(channel),
     frameSize_(frameSize),
     bitrate_(0.0),
-    bandwidth_(0.0),
     payload_(payload),
     hasDynamicPayload_((payload_ >= 96 and payload_ <= 127) or payload_ == 9)
 {}
@@ -53,7 +52,6 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     channel_(c.channel_),
     frameSize_(c.frameSize_),
     bitrate_(c.bitrate_),
-    bandwidth_(c.bandwidth_),
     payload_(c.payload_),
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}

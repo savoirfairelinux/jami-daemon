@@ -37,12 +37,12 @@ typedef struct {
     gchar *action;
     guint key;
     GdkModifierType mask;
-    void
-    (*callback) (void);
+    void (*callback) (gpointer data);
+    gpointer data;
 } Accelerator;
 
 void
-shortcuts_initialize_bindings ();
+shortcuts_initialize_bindings (GSettings *settings);
 
 void
 shortcuts_update_bindings (guint index, guint key, GdkModifierType mask);

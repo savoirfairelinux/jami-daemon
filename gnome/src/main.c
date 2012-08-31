@@ -35,7 +35,6 @@
 #include "dbus/dbus.h"
 #include "mainwindow.h"
 #include "statusicon.h"
-#include "eel-gconf-extensions.h"
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -55,12 +54,30 @@ signal_handler(int code)
     sflphone_quit(TRUE);
 }
 
+void update_schema_dir(const gchar *argv_0)
+{
+    gchar *current_dir = g_path_get_dirname(argv_0);
+    gchar *updated_data_dirs = g_strdup_printf("%s/../data", current_dir);
+    g_free(current_dir);
+    const gboolean overwrite = FALSE;
+    g_setenv("GSETTINGS_SCHEMA_DIR", updated_data_dirs, overwrite);
+    g_free(updated_data_dirs);
+}
+
 int
 main(int argc, char *argv[])
 {
     signal(SIGINT, signal_handler);
     signal(SIGHUP, signal_handler);
     signal(SIGTERM, signal_handler);
+
+    /* Must be called prior to any GLib calls (i.e. in update_schema_dir) */
+    g_type_init();
+
+    /* Tell glib to look for our schema in gnome/data in case SFLphone is not
+     * installed. We have to do this early for it to work properly for older
+     * versions of GLib. */
+    update_schema_dir(argv[0]);
 
 #if !GTK_CHECK_VERSION(2,32,0)
     g_thread_init(NULL);
@@ -70,6 +87,9 @@ main(int argc, char *argv[])
 
     // Start GTK application
     gtk_init(&argc, &argv);
+
+    /* Tell glib to look for our schema in gnome/data in case SFLphone is not installed */
+    update_schema_dir(argv[0]);
 
     // Check arguments if debug mode is activated
     for (int i = 0; i < argc; i++)
@@ -98,7 +118,8 @@ main(int argc, char *argv[])
     textdomain(PACKAGE);
 
     GError *error = NULL;
-    if (!sflphone_init(&error)) {
+    GSettings *settings = g_settings_new("org.sflphone.SFLphone");
+    if (!sflphone_init(&error, settings)) {
         ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
                                 GTK_WINDOW(get_main_window()),
@@ -115,12 +136,13 @@ main(int argc, char *argv[])
         goto OUT;
     }
 
-    if (eel_gconf_get_integer(SHOW_STATUSICON))
-        show_status_icon();
+    const gboolean show_status = g_settings_get_boolean(settings, "show-status-icon");
+    if (show_status)
+        show_status_icon(settings);
 
-    create_main_window();
+    create_main_window(settings);
 
-    if (eel_gconf_get_integer(SHOW_STATUSICON) && eel_gconf_get_integer(START_HIDDEN)) {
+    if (show_status && g_settings_get_boolean(settings, "start-hidden")) {
         gtk_widget_hide(GTK_WIDGET(get_main_window()));
         set_minimized(TRUE);
     }
@@ -128,20 +150,21 @@ main(int argc, char *argv[])
     status_bar_display_account();
 
     sflphone_fill_history_lazy();
-    sflphone_fill_conference_list();
+    sflphone_fill_conference_list(settings);
     sflphone_fill_call_list();
 
     // Update the GUI
-    update_actions();
+    update_actions(settings);
 
-    shortcuts_initialize_bindings();
+    shortcuts_initialize_bindings(settings);
 
     gtk_main();
 
     codecs_unload();
     shortcuts_destroy_bindings();
 
-    eel_gconf_global_client_free();
+    g_object_unref(settings);
+
 OUT:
 #if !GTK_CHECK_VERSION(2,32,0)
     gdk_threads_leave();

@@ -32,7 +32,6 @@
 #include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "hooks-config.h"
-#include "eel-gconf-extensions.h"
 #include "dbus.h"
 
 URLHook_Config *_urlhook_config;
@@ -71,7 +70,7 @@ void hooks_load_parameters(URLHook_Config** settings)
 }
 
 
-void hooks_save_parameters(void)
+void hooks_save_parameters(GSettings *settings)
 {
 
     GHashTable *params = NULL;
@@ -95,8 +94,7 @@ void hooks_save_parameters(void)
     // Decrement the reference count
     g_hash_table_unref(params);
 
-    eel_gconf_set_string(MESSAGING_URL_COMMAND, gtk_entry_get_text(GTK_ENTRY(url)));
-
+    g_settings_set_string(settings, "messaging-url-command", gtk_entry_get_text(GTK_ENTRY(url)));
 }
 
 static void sip_enabled_cb(GtkWidget *widget)
@@ -142,7 +140,7 @@ static void phone_number_enabled_cb(GtkWidget *widget)
 }
 
 
-GtkWidget* create_hooks_settings()
+GtkWidget* create_hooks_settings(GSettings *settings)
 {
     GtkWidget *ret, *frame, *table, *label, *widg;
 
@@ -203,7 +201,8 @@ GtkWidget* create_hooks_settings()
 
     label = gtk_label_new_with_mnemonic(_("Open URL in"));
     url   = gtk_entry_new();
-    gchar *url_command = eel_gconf_get_string(MESSAGING_URL_COMMAND);
+
+    gchar *url_command = g_settings_get_string(settings, "messaging-url-command");
     if (url_command && *url_command) {
         gtk_entry_set_text(GTK_ENTRY(url), url_command);
         g_free(url_command);

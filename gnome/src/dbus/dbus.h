@@ -49,7 +49,7 @@
  * Try to connect to DBus services
  * @return TRUE if connection succeeded, FALSE otherwise
  */
-gboolean dbus_connect(GError **error);
+gboolean dbus_connect(GError **error, GSettings *settings);
 
 /**
  * Unreferences the proxies

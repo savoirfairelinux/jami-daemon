@@ -35,7 +35,6 @@
 #include "calltree.h"
 #include "unused.h"
 #include "logger.h"
-#include "eel-gconf-extensions.h"
 
 // Must return 0 when a match is found
 static gint
@@ -129,7 +128,7 @@ calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
 }
 
 void
-calllist_clean_history(void)
+calllist_clean_history()
 {
     guint size = calllist_get_size(history_tab);
 
@@ -143,14 +142,14 @@ calllist_clean_history(void)
 }
 
 void
-calllist_remove_from_history(callable_obj_t* c)
+calllist_remove_from_history(callable_obj_t* c, GSettings *settings)
 {
-    calllist_remove_call(history_tab, c->_callID);
+    calllist_remove_call(history_tab, c->_callID, settings);
     calltree_remove_call(history_tab, c->_callID);
 }
 
 void
-calllist_remove_call(calltab_t* tab, const gchar * callID)
+calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings)
 {
     GList *c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
@@ -165,7 +164,8 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
     /* Don't save empty (i.e. started dialing, then deleted) calls */
     if (call->_peer_number && strlen(call->_peer_number) > 0) {
         calllist_add_call(history_tab, call);
-        calltree_add_history_entry(call);
+        if (g_settings_get_boolean(settings, "history-enabled"))
+            calltree_add_history_entry(call);
     }
 }
 

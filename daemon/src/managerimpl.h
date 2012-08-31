@@ -1096,12 +1096,6 @@ class ManagerImpl {
          */
         SIPAccount *getIP2IPAccount() const;
 
-        /**
-         * Fill a map with all the current SIP and IAX account
-         * @param A reference to a prealocated map to be filled
-         */
-        void fillConcatAccountMap(AccountMap &concatMap) const;
-
         /** Return the std::string from a CallID
          * Protected by mutex
          * @param callID the CallID in the list
@@ -1135,6 +1129,11 @@ class ManagerImpl {
 
     private:
         NON_COPYABLE(ManagerImpl);
+
+        /**
+         * Get a map with all the current SIP and IAX accounts
+         */
+        AccountMap getAllAccounts() const;
 
         /**
           * To handle the persistent history

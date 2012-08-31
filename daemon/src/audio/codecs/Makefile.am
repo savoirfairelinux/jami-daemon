@@ -37,7 +37,19 @@ libcodec_speex_ub_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so libcodec_opus.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB)
+if BUILD_ILBC
+include $(src)/libs/pjproject/build.mak
+
+ILBC_LIB = libcodec_ilbc.so
+libcodecdescriptor_la_CXXFLAGS = -DBUILD_ILBC
+libcodec_ilbc_so_SOURCES = ilbc.cpp
+libcodec_ilbc_so_CXXFLAGS = -fPIC -g -Wall
+libcodec_ilbc_so_LDFLAGS = --shared -lc $(top_builddir)/libs/pjproject/third_party/lib/libilbccodec-$(TARGET_NAME).a
+libcodec_ilbc_so_LDADD = libcodecdescriptor.la
+INSTALL_ILBC_RULE = install-libcodec_ilbc_so
+endif
+
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so libcodec_opus.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
 
 noinst_HEADERS = audiocodec.h audiocodecfactory.h speexcodec.h g722.h g729.h opus.h
 
@@ -67,8 +79,7 @@ libcodec_opus_so_LDADD    = libcodecdescriptor.la
 libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++
 
 install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so install-libcodec_opus_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
-uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_g729_so uninstall-libcodec_opus_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so
-
+uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_g729_so uninstall-libcodec_opus_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_ilbc_so
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
 	mkdir -p $(sflcodecdir)
@@ -97,6 +108,9 @@ install-libcodec_speex_wb_so: libcodec_speex_wb.so
 install-libcodec_speex_ub_so: libcodec_speex_ub.so
 	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_speex_ub.so $(sflcodecdir)
+install-libcodec_ilbc_so: libcodec_ilbc.so
+	mkdir -p $(sflcodecdir)
+	$(INSTALL_PROGRAM)  libcodec_ilbc.so $(sflcodecdir)
 
 uninstall-libcodec_ulaw_so:
 	rm -f $(sflcodecdir)/libcodec_ulaw.so
@@ -116,4 +130,6 @@ uninstall-libcodec_speex_wb_so:
 	rm -f $(sflcodecdir)/libcodec_speex_wb.so
 uninstall-libcodec_speex_ub_so:
 	rm -f $(sflcodecdir)/libcodec_speex_ub.so
+uninstall-libcodec_ilbc_so:
+	rm -f $(sflcodecdir)/libcodec_ilbc.so
 

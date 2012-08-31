@@ -33,10 +33,11 @@
 
 #include <gtk/gtk.h>
 
-GtkWidget* create_audio_configuration();
+GtkWidget* create_audio_configuration(GSettings *settings);
 
 GtkWidget* api_box();
 GtkWidget* audiocodecs_box(const account_t *a);
+gboolean must_show_volume(GSettings *settings);
 gboolean must_show_alsa_conf();
 
 #endif // AUDIO_CONF_H_
