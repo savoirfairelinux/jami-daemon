@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "logger.h"
 #include "manager.h"
 #include "mainbuffer.h"
 #include "opensllayer.h"
@@ -308,8 +309,7 @@ OpenSLLayer::initAudioCapture()
     // configure audio sink
     DEBUG("Configure audio sink\n");
 
-//    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 
-    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, 
+    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 
                                                             NB_BUFFER_CAPTURE_QUEUE};
 
     SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1, 
