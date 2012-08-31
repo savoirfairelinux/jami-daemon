@@ -71,6 +71,22 @@ JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_pla
 JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_hangUp
   (JNIEnv *, jclass, jstring);
 
+/*
+ * Class:     com_savoirfairelinux_sflphone_client_ManagerImpl
+ * Method:    answerCall
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_answerCall
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     com_savoirfairelinux_sflphone_client_ManagerImpl
+ * Method:    refuseCall
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_refuseCall
+  (JNIEnv *, jclass, jstring);
+
 #ifdef __cplusplus
 }
 #endif

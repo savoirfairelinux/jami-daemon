@@ -160,6 +160,88 @@ static std::string getAppPath() {
 	return path;
 }
 
+static void incoming_call(const std::string& accountID, const std::string& callID, const std::string& from) {
+	int status;
+	JNIEnv *env;
+	bool isAttached = false;
+	jstring jaccountID, jcallID, jfrom;
+	jclass managerImplClass;
+	jmethodID method;
+
+	INFO("incoming_call");
+
+	// FIXME
+	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
+	if (status < 0) {
+		WARN("incoming_call: failed to get JNI environment, assuming native thread");
+		status = gJavaVM->AttachCurrentThread(&env, NULL);
+		if (status < 0) {
+			ERROR("incoming_call: failed to attach current thread");
+			return;
+		}
+		isAttached = true;
+	}
+
+	INFO("incoming_call: constructing jstring");
+	/* construct a java struct */
+	jaccountID = env->NewStringUTF(accountID.c_str());
+	jcallID = env->NewStringUTF(callID.c_str());
+	jfrom = env->NewStringUTF(from.c_str());
+
+	managerImplClass = env->GetObjectClass(gManagerObject);
+	if (!managerImplClass) {
+		ERROR("incoming_call: failed to get ManagerImpl class reference");
+		goto end;
+	}
+
+	/* Find the callBack method ID */
+	method = env->GetStaticMethodID(managerImplClass, "incomingCall",
+			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+	if (!method) {
+		ERROR("incoming_call: failed to get incomingCall method ID");
+		goto end;
+	}
+
+	env->CallStaticVoidMethod(managerImplClass, method, jaccountID, jcallID, jfrom);
+
+end:
+	if(isAttached) {
+		gJavaVM->DetachCurrentThread();
+		isAttached = false;
+	}
+	return;
+}
+
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_answerCall
+(JNIEnv *env, jclass cls, jstring jcallID)  {
+	const char *callID;
+
+	callID = env->GetStringUTFChars(jcallID, 0);
+
+	DEBUG("CallManager::answerCall(%s)", callID);
+	Manager::instance().answerCall(callID);
+
+	/* release string */
+	env->ReleaseStringUTFChars(jcallID, callID);
+
+	return;
+}
+
+JNIEXPORT void JNICALL Java_com_savoirfairelinux_sflphone_client_ManagerImpl_refuseCall
+(JNIEnv *env, jclass cls, jstring jcallID)  {
+	const char *callID;
+
+	callID = env->GetStringUTFChars(jcallID, 0);
+
+	DEBUG("CallManager::refuseCall(%s)", callID);
+	Manager::instance().refuseCall(callID);
+
+	/* release string */
+	env->ReleaseStringUTFChars(jcallID, callID);
+
+	return;
+}
+
 static void callback_handler(char *s) {
 	int status;
 	JNIEnv *env;
@@ -1938,6 +2020,8 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
     std::string from("<" + number + ">");
 #if HAVE_DBUS
     dbus_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
+#else
+	incoming_call(accountId, callID, call.getDisplayName() + " " + from);
 #endif
 }
 
