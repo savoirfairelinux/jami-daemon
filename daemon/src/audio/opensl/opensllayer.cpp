@@ -497,6 +497,8 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
     assert(NULL != queue);
     assert(NULL != context);
 
+    usleep(20000);
+
     OpenSLLayer *opensl = (OpenSLLayer *)context;
 
     AudioBuffer &buffer = opensl->getNextRecordBuffer();
