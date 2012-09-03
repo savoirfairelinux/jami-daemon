@@ -129,10 +129,11 @@ OpenSLLayer::~OpenSLLayer()
     stopStream();
 }
 
-// #define RECORD_AUDIO_TODISK
+//#define RECORD_AUDIO_TODISK
 #ifdef RECORD_AUDIO_TODISK
 #include <fstream>
 std::ofstream opensl_outfile;
+std::ofstream opensl_infile;
 #endif
 
 void
@@ -141,9 +142,12 @@ OpenSLLayer::startStream()
     if(isStarted_)
         return;
 
+    DEBUG("Start OpenSL audio layer");
+
     if (audioThread_ == NULL) {
 #ifdef RECORD_AUDIO_TODISK
-        opensl_outfile.open("/data/data/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
+        opensl_outfile.open("/data/data/com.savoirfairelinux.sflphone/opensl_playback.raw", std::ofstream::out | std::ofstream::binary);
+        opensl_infile.open("/data/data/com.savoirfairelinux.sflphone/opensl_record.raw", std::ofstream::out | std::ofstream::binary);
 #endif
 
         audioThread_ = new OpenSLThread(this);
@@ -159,12 +163,18 @@ OpenSLLayer::stopStream()
     if(not isStarted_)
         return;
 
+    DEBUG("Stop OpenSL audio layer");
+
+    stopAudioPlayback();
+    stopAudioCapture();
+
     isStarted_ = false;
 
     delete audioThread_;
     audioThread_ = NULL;
 #ifdef RECORD_AUDIO_TODISK
     opensl_outfile.close();
+    opensl_infile.close();
 #endif
 }
 
@@ -480,7 +490,6 @@ void OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, voi
 
     bool bufferFilled = opensl->audioPlaybackFillBuffer(buffer);
 
-
     if(bufferFilled) {
 #ifdef RECORD_AUDIO_TODISK
         opensl_outfile.write((char const *)(buffer.data()), buffer.size());
@@ -516,9 +525,13 @@ void OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void
     // which for this code example would indicate a programming error
     assert(SL_RESULT_SUCCESS == result);
 
-    AudioBuffer &previousbuffer = opensl->getNextRecordBuffer();
+    // AudioBuffer &previousbuffer = opensl->getNextRecordBuffer();
 
-    opensl->audioCaptureFillBuffer(previousbuffer);
+    opensl->audioCaptureFillBuffer(buffer);
+#ifdef RECORD_AUDIO_TODISK
+    opensl_infile.write((char const *)(buffer.data()), buffer.size());
+#endif
+    // opensl->audioCaptureFillBuffer(previousbuffer);
 }
 
 void OpenSLLayer::updatePreference(AudioPreference &preference, int index, PCMType type)

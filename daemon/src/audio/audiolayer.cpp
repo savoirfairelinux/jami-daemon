@@ -225,6 +225,12 @@ bool AudioLayer::audioPlaybackFillBuffer(AudioBuffer &buffer) {
     return bufferFilled;
 }
 
+// #define RECORD_TOMAIN_TODISK
+#ifdef RECORD_TOMAIN_TODISK
+#include <fstream>
+std::ofstream opensl_tomainbuffer("/data/data/com.savoirfairelinux.sflphone/opensl_tomain.raw", std::ofstream::out | std::ofstream::binary);
+#endif
+
 void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
     const int toGetBytes = buffer.size();
     const int toGetSamples = buffer.length();
@@ -248,6 +254,9 @@ void AudioLayer::audioCaptureFillBuffer(AudioBuffer &buffer) {
         mbuffer.putData(rsmpl_out_ptr, rsmpl_out.size(), MainBuffer::DEFAULT_ID);
     } else {
         dcblocker_.process(in_ptr, in_ptr, toGetSamples);
+#ifdef RECORD_TOMAIN_TODISK
+        opensl_tomainbuffer.write((char const *)in_ptr, toGetBytes/); 
+#endif
         mbuffer.putData(in_ptr, toGetBytes, MainBuffer::DEFAULT_ID);
     }
 }

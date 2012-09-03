@@ -137,7 +137,11 @@ void AudioZrtpSession::AudioZrtpThread::run()
         else
             zrtpSession_.sendMicData();
 
+#ifdef ANDROID
+        usleep(20000);
+#else
         Thread::sleep(TimerPort::getTimer());
+#endif
 
         TimerPort::incTimer(zrtpSession_.transportRate_);
     }

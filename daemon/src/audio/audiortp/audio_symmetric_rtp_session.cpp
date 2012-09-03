@@ -72,7 +72,11 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
         else
             rtpSession_.sendMicData();
 
+#ifdef ANDROID
+        usleep(20000);
+#else
         Thread::sleep(TimerPort::getTimer());
+#endif
 
         TimerPort::incTimer(rtpSession_.transportRate_);
     }

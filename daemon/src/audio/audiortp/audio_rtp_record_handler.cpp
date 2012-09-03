@@ -44,10 +44,16 @@
 
 namespace sfl {
 
-// #define RTP_RECTODISK
-#ifdef RTP_RECTODISK
-std::ofstream beforedecode("/data/data/beforedecoding.raw", std::ofstream::binary);
-std::ofstream afterdecode("/data/data/afterdecoding.raw", std::ofstream::binary);
+// #define RTP_DECODE_RECTODISK
+#ifdef RTP_DECODE_RECTODISK
+std::ofstream beforedecode("/data/data/com.savoirfairelinux.sflphone/beforedecoding.raw", std::ofstream::binary);
+std::ofstream afterdecode("/data/data/com.savoirfairelinux.sflphone/afterdecoding.raw", std::ofstream::binary);
+#endif
+
+// #define RTP_ENCODE_RECTODISK
+#ifdef RTP_ENCODE_RECTODISK
+std::ofstream beforeencode("/data/data/com.savoirfairelinux.sflphone/beforeencode.raw", std::ofstream::binary);
+std::ofstream beforesend("/data/data/com.savoirfairelinux.sflphone/beforesend.raw", std::ofstream::binary);
 #endif
 
 DTMFEvent::DTMFEvent(int digit) : payload(), newevent(true), length(1000)
@@ -96,7 +102,7 @@ bool AudioRtpRecord::isDead()
 AudioRtpRecord::~AudioRtpRecord()
 {
     dead_ = true;
-#ifdef RTP_RECTODISK
+#ifdef RTP_DECODE_RECTODISK
     beforedecode.close();
     afterdecode.close();
 #endif
@@ -197,6 +203,10 @@ int AudioRtpRecordHandler::processDataEncode()
     SFLDataFormat *micData = audioRtpRecord_.decData_.data();
     const size_t bytes = Manager::instance().getMainBuffer().getData(micData, bytesToGet, id_);
 
+#ifdef RTP_ENCODE_RECTODISK
+    beforeencode.write((const char *)micData, bytesToGet); 
+#endif
+
     if (bytes != bytesToGet) {
         ERROR("Asked for %d bytes from mainbuffer, got %d", bytesToGet, bytes);
         return 0;
@@ -228,6 +238,10 @@ int AudioRtpRecordHandler::processDataEncode()
     }
 #endif
 
+#ifdef RTP_ENCODE_RECTODISK
+    beforesend.write((const char *)(micData), getCodecFrameSize()*2);
+#endif
+
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.audioCodec_, 0, "Audio codec already destroyed");
@@ -244,7 +258,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     if (audioRtpRecord_.isDead() or getCodecPayloadType() != payloadType)
         return;
 
-#ifdef RTP_RECTODISK
+#ifdef RTP_DECODE_RECTODISK
     beforedecode.write((const char *)spkrData, size);
 #endif
 
@@ -258,10 +272,10 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
     }
 
-#ifdef RTP_RECTODISK
+#ifdef RTP_DECODE_RECTODISK
     afterdecode.write((const char *)spkrDataDecoded, inSamples*sizeof(SFLDataFormat));
 #endif
-#undef RTP_RECTODISK
+#undef RTP_DECODE_RECTODISK
 
 #if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
