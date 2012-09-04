@@ -480,6 +480,8 @@ class SIPAccount : public Account {
             return serviceRoute_;
         }
 
+        bool hasServiceRoute() const { return not serviceRoute_.empty(); }
+
         std::string getDtmfType() const {
             return dtmfType_;
         }
@@ -533,15 +535,15 @@ class SIPAccount : public Account {
         pjsip_transport* transport_;
 
         /* Returns true if the username and/or hostname match this account */
-        bool matches(const std::string &username, const std::string &hostname) const;
+        bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
     private:
         NON_COPYABLE(SIPAccount);
 
-        bool fullMatch(const std::string &username, const std::string &hostname) const;
+        bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool userMatch(const std::string &username) const;
-        bool hostnameMatch(const std::string &hostname) const;
-        bool proxyMatch(const std::string &hostname) const;
+        bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
+        bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
         /**
          * Map of credential for this account

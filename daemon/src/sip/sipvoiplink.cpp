@@ -549,7 +549,7 @@ SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
 
     for (AccountMap::const_iterator iter = sipAccountMap_.begin(); iter != sipAccountMap_.end(); ++iter) {
         SIPAccount *account = static_cast<SIPAccount*>(iter->second);
-        if (account and account->matches(userName, server))
+        if (account and account->matches(userName, server, endpt_, pool_))
             return iter->first;
     }
 
@@ -645,7 +645,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
-    if (not account->getServiceRoute().empty())
+    if (account->hasServiceRoute())
         pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(account->getServiceRoute(), pool_));
 
     pjsip_regc_set_credentials(regc, account->getCredentialCount(), account->getCredInfo());
@@ -766,7 +766,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 {
     DEBUG("New outgoing call to %s", toUrl.c_str());
     std::string toCpy = toUrl;
-    std::string resolvedUrl = sip_utils::resolveDns(toUrl);
+    std::string resolvedUrl = sip_utils::resolveDns(toUrl, endpt_, pool_);
     DEBUG("URL resolved to %s", resolvedUrl.c_str());
 
     sip_utils::stripSipUriPrefix(toCpy);
@@ -929,8 +929,8 @@ SIPVoIPLink::hangup(const std::string& id)
         throw VoipLinkException("No invite session for this call");
 
     // Looks for sip routes
-    if (not account->getServiceRoute().empty()) {
-        pjsip_route_hdr *route_set = sip_utils::createRouteSet(account->getServiceRoute(), inv->pool);
+    if (account->hasServiceRoute()) {
+        pjsip_route_hdr *route_set = sip_utils::createRouteSetList(account->getServiceRoute(), inv->pool);
         pjsip_dlg_set_route_set(inv->dlg, route_set);
     }
 
@@ -1404,7 +1404,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
     }
 
-    if (not account->getServiceRoute().empty())
+    if (account->hasServiceRoute())
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 
     if (account->hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {

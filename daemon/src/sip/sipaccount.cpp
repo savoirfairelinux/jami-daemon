@@ -804,9 +804,9 @@ void SIPAccount::loadConfig()
         transportType_ = PJSIP_TRANSPORT_UDP;
 }
 
-bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname) const
+bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const
 {
-    return userMatch(username) and hostnameMatch(hostname);
+    return userMatch(username) and hostnameMatch(hostname, endpt, pool);
 }
 
 bool SIPAccount::userMatch(const std::string& username) const
@@ -814,17 +814,32 @@ bool SIPAccount::userMatch(const std::string& username) const
     return !username.empty() and username == username_;
 }
 
-bool SIPAccount::hostnameMatch(const std::string& hostname) const
-{
-    return hostname == hostname_;
+namespace {
+    bool haveValueInCommon(const std::set<std::string> &a, const std::set<std::string> &b)
+    {
+        for (std::set<std::string>::const_iterator i = a.begin(); i != a.end(); ++i)
+            if (std::find(b.begin(), b.end(), *i) != b.end())
+                return true;
+        return false;
+    }
 }
 
-bool SIPAccount::proxyMatch(const std::string& hostname) const
+bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
+{
+    if (hostname == hostname_)
+        return true;
+    const std::set<std::string> a(sip_utils::getIPList(hostname));
+    const std::set<std::string> b(sip_utils::getIPList(hostname_));
+    return haveValueInCommon(a, b);
+}
+
+bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
 {
     if (hostname == serviceRoute_)
         return true;
-    const std::list<std::string> ipList(sip_utils::resolveServerDns(serviceRoute_));
-    return std::find(ipList.begin(), ipList.end(), hostname) != ipList.end();
+    const std::set<std::string> a(sip_utils::getIPList(hostname));
+    const std::set<std::string> b(sip_utils::getIPList(serviceRoute_));
+    return haveValueInCommon(a, b);
 }
 
 std::string SIPAccount::getLoginName()
@@ -1203,22 +1218,21 @@ bool SIPAccount::isIP2IP() const
     return accountID_ == IP2IP_PROFILE;
 }
 
-bool SIPAccount::matches(const std::string &userName, const std::string &server) const
+bool SIPAccount::matches(const std::string &userName, const std::string &server,
+                         pjsip_endpoint *endpt, pj_pool_t *pool) const
 {
-    if (not enabled_) {
-        return false;
-    } else if (fullMatch(userName, server)) {
+    if (fullMatch(userName, server, endpt, pool)) {
         DEBUG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
         return true;
-    } else if (hostnameMatch(server)) {
+    } else if (hostnameMatch(server, endpt, pool)) {
         DEBUG("Matching account id in request with hostname %s", server.c_str());
         return true;
     } else if (userMatch(userName)) {
         DEBUG("Matching account id in request with username %s", userName.c_str());
         return true;
-    } else if (proxyMatch(server)) {
+    } else if (proxyMatch(server, endpt, pool)) {
         DEBUG("Matching account id in request with proxy %s", server.c_str());
         return true;
-    }
-    return false;
+    } else
+        return false;
 }
