@@ -110,6 +110,8 @@ LT_INIT([dlopen win32-dll shared disable-static])
 dnl Define C++ as default language
 LT_LANG(C++)
 
+DOLT
+
 lt_cv_deplibs_check_method=pass_all
 
 dnl Check for C++11 support
