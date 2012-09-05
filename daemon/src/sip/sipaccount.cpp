@@ -81,7 +81,6 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , tlsSetting_()
     , ciphers(100)
     , contactHeader_()
-    , contactUpdateEnabled_(false)
     , stunServerName_()
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
@@ -145,7 +144,6 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     portstr << localPort_;
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
-    ScalarNode contactUpdateEnabled(contactUpdateEnabled_);
     ScalarNode keepAliveEnabled(keepAliveEnabled_);
 
     ScalarNode mailbox(mailBox_);
@@ -224,7 +222,6 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
     accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
     accountmap.setKeyValue(SERVICE_ROUTE_KEY, &serviceRoute);
-    accountmap.setKeyValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled);
     accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
     accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
     accountmap.setKeyValue(AUDIO_CODECS_KEY, &audioCodecs);
@@ -368,7 +365,6 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     dtmfType_ = dtmfType;
 
     if (not isIP2IP()) mapNode.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
-    mapNode.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
     if (not isIP2IP()) mapNode.getValue(STUN_ENABLED_KEY, &stunEnabled_);
@@ -912,23 +908,6 @@ std::string SIPAccount::getServerUri() const
     }
 
     return "<" + scheme + hostname_ + transport + ">";
-}
-
-void SIPAccount::setContactHeader(std::string address, std::string port)
-{
-    std::string scheme;
-    std::string transport;
-
-    // UDP does not require the transport specification
-    if (transportType_ == PJSIP_TRANSPORT_TLS) {
-        scheme = "sips:";
-        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
-    } else
-        scheme = "sip:";
-
-    contactHeader_ = displayName_ + (displayName_.empty() ? "" : " ") + "<" +
-                     scheme + username_ + (username_.empty() ? "":"@") +
-                     address + ":" + port + transport + ">";
 }
 
 

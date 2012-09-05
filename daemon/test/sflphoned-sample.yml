@@ -42,7 +42,6 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
-  updateContact: false
   username: sfltest
   videoCodecs:
   zrtp:
@@ -91,7 +90,6 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
-  updateContact: false
   username:
   videoCodecs:
   - bitrate: 400

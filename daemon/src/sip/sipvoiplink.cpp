@@ -1888,62 +1888,6 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 #endif
 }
 
-void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
-{
-    SIPVoIPLink *siplink = static_cast<SIPVoIPLink *>(account->getVoIPLink());
-    if (siplink == NULL) {
-        ERROR("Could not find voip link from account");
-        return;
-    }
-
-    if (!param or param->contact_cnt == 0) {
-        WARN("No contact header in registration callback");
-        return;
-    }
-
-    pjsip_contact_hdr *contact_hdr = param->contact[0];
-    if (!contact_hdr)
-        return;
-
-    pjsip_sip_uri *uri = (pjsip_sip_uri*) contact_hdr->uri;
-    if (uri == NULL) {
-        ERROR("Could not find uri in contact header");
-        return;
-    }
-
-    // TODO: make this based on transport type
-    // with pjsip_transport_get_default_port_for_type(tp_type);
-    if (uri->port == 0) {
-        ERROR("Port is 0 in uri");
-        uri->port = DEFAULT_SIP_PORT;
-    }
-
-    std::string recvContactHost(uri->host.ptr, uri->host.slen);
-    std::stringstream ss;
-    ss << uri->port;
-    std::string recvContactPort = ss.str();
-
-    std::string currentAddress, currentPort;
-    siplink->sipTransport.findLocalAddressFromTransport(account->transport_, PJSIP_TRANSPORT_UDP, currentAddress, currentPort);
-
-    bool updateContact = false;
-    std::string currentContactHeader = account->getContactHeader();
-
-    size_t foundHost = currentContactHeader.find(recvContactHost);
-    if (foundHost == std::string::npos)
-        updateContact = true;
-
-    size_t foundPort = currentContactHeader.find(recvContactPort);
-    if (foundPort == std::string::npos)
-        updateContact = true;
-
-    if (updateContact) {
-        DEBUG("Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str());
-        account->setContactHeader(recvContactHost, recvContactPort);
-        siplink->sendRegister(account);
-    }
-}
-
 void lookForReceivedParameter(pjsip_regc_cbparam &param, SIPAccount &account)
 {
     if (!param.rdata or !param.rdata->msg_info.via)
@@ -1978,9 +1922,6 @@ void registration_cb(pjsip_regc_cbparam *param)
         ERROR("account doesn't exist in registration callback");
         return;
     }
-
-    if (account->isContactUpdateEnabled())
-        update_contact_header(param, account);
 
     const pj_str_t *description = pjsip_get_status_text(param->code);
 
