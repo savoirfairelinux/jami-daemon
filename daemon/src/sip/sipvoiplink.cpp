@@ -1294,7 +1294,7 @@ void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
-        call.getAudioRtp().sendDtmfDigit(code - '0');
+        call.getAudioRtp().sendDtmfDigit(code);
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
         WARN("Unknown DTMF type %s, defaulting to %s instead",

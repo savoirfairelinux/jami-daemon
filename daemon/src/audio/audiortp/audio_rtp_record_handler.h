@@ -59,7 +59,7 @@ timeval2microtimeout(const timeval& t)
 }
 
 struct DTMFEvent {
-    DTMFEvent(int digit);
+    DTMFEvent(char digit);
     ost::RTPPacket::RFC2833Payload payload;
     bool newevent;
     int length;
@@ -178,7 +178,7 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.dtmfPayloadType_;
         }
 
-        void putDtmfEvent(int digit);
+        void putDtmfEvent(char digit);
 
     protected:
         AudioRtpRecord audioRtpRecord_;
