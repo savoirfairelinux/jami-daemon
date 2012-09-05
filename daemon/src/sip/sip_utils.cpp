@@ -243,34 +243,41 @@ sip_utils::resolve(pjsip_endpoint *endpt, pj_pool_t *pool, const std::string &na
 }
 #endif
 
-
 std::set<std::string>
 sip_utils::getIPList(const std::string &name)
 {
     std::set<std::string> ipList;
+    if (name.empty())
+        return ipList;
+
     struct addrinfo *result;
+    struct addrinfo hints;
+    memset(&hints, '\0', sizeof(hints));
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_ADDRCONFIG;
     /* resolve the domain name into a list of addresses */
-    const int error = getaddrinfo(name.c_str(), NULL, NULL, &result);
+    const int error = getaddrinfo(name.c_str(), NULL, &hints, &result);
     if (error != 0) {
-        DEBUG("getaddrinfo %s failed: %s", name.c_str(), gai_strerror(error));
+        DEBUG("getaddrinfo on \"%s\" failed: %s", name.c_str(), gai_strerror(error));
         return ipList;
     }
 
-    const int IP_LENGTH = 45;
     for (struct addrinfo *res = result; res != NULL; res = res->ai_next) {
-        char addrstr[IP_LENGTH];
-        inet_ntop(res->ai_family, res->ai_addr->sa_data, addrstr, IP_LENGTH);
 
         void *ptr = 0;
+        std::string addrstr;
+        static const int AF_INET_STRLEN = 16, AF_INET6_STRLEN = 40;
         switch (res->ai_family) {
             case AF_INET:
+                addrstr.resize(AF_INET_STRLEN);
                 ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
                 break;
             case AF_INET6:
+                addrstr.resize(AF_INET6_STRLEN);
                 ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
                 break;
         }
-        inet_ntop(res->ai_family, ptr, addrstr, IP_LENGTH);
+        inet_ntop(res->ai_family, ptr, &(*addrstr.begin()), addrstr.size());
         ipList.insert(addrstr);
     }
 
