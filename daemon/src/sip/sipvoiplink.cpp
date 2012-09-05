@@ -1896,15 +1896,8 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
         return;
     }
 
-    pj_pool_t *pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL);
-    if (pool == NULL) {
-        ERROR("Could not create temporary memory pool in transport header");
-        return;
-    }
-
     if (!param or param->contact_cnt == 0) {
         WARN("No contact header in registration callback");
-        pj_pool_release(pool);
         return;
     }
 
@@ -1915,7 +1908,6 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
     pjsip_sip_uri *uri = (pjsip_sip_uri*) contact_hdr->uri;
     if (uri == NULL) {
         ERROR("Could not find uri in contact header");
-        pj_pool_release(pool);
         return;
     }
 
@@ -1950,7 +1942,6 @@ void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
         account->setContactHeader(recvContactHost, recvContactPort);
         siplink->sendRegister(account);
     }
-    pj_pool_release(pool);
 }
 
 void lookForReceivedParameter(pjsip_regc_cbparam &param, SIPAccount &account)
