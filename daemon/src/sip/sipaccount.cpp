@@ -810,9 +810,9 @@ bool SIPAccount::userMatch(const std::string& username) const
 }
 
 namespace {
-    bool haveValueInCommon(const std::set<std::string> &a, const std::set<std::string> &b)
+    bool haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
     {
-        for (std::set<std::string>::const_iterator i = a.begin(); i != a.end(); ++i)
+        for (std::vector<std::string>::const_iterator i = a.begin(); i != a.end(); ++i)
             if (std::find(b.begin(), b.end(), *i) != b.end())
                 return true;
         return false;
@@ -823,8 +823,8 @@ bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*e
 {
     if (hostname == hostname_)
         return true;
-    const std::set<std::string> a(sip_utils::getIPList(hostname));
-    const std::set<std::string> b(sip_utils::getIPList(hostname_));
+    const std::vector<std::string> a(sip_utils::getIPList(hostname));
+    const std::vector<std::string> b(sip_utils::getIPList(hostname_));
     return haveValueInCommon(a, b);
 }
 
@@ -832,8 +832,8 @@ bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endp
 {
     if (hostname == serviceRoute_)
         return true;
-    const std::set<std::string> a(sip_utils::getIPList(hostname));
-    const std::set<std::string> b(sip_utils::getIPList(serviceRoute_));
+    const std::vector<std::string> a(sip_utils::getIPList(hostname));
+    const std::vector<std::string> b(sip_utils::getIPList(serviceRoute_));
     return haveValueInCommon(a, b);
 }
 

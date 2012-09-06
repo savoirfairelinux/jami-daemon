@@ -43,7 +43,7 @@
 #include "sip_utils.h"
 
 #include <vector>
-#include <set>
+#include <algorithm>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -111,8 +111,8 @@ sip_utils::createRouteSetList(const std::string &route, pj_pool_t *hdr_pool)
     } else
         host = route;
 
-    std::set<std::string> ipList(getIPList(host));
-    for (std::set<std::string>::const_iterator iter = ipList.begin(); iter != ipList.end(); ++iter) {
+    std::vector<std::string> ipList(getIPList(host));
+    for (std::vector<std::string>::const_iterator iter = ipList.begin(); iter != ipList.end(); ++iter) {
 
         pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
         pjsip_sip_uri *url = pjsip_sip_uri_create(hdr_pool, 0);
@@ -164,10 +164,10 @@ sip_utils::stripSipUriPrefix(std::string& sipUri)
         sipUri.erase(found);
 }
 
-std::set<std::string>
+std::vector<std::string>
 sip_utils::getIPList(const std::string &name)
 {
-    std::set<std::string> ipList;
+    std::vector<std::string> ipList;
     if (name.empty())
         return ipList;
 
@@ -199,7 +199,10 @@ sip_utils::getIPList(const std::string &name)
                 break;
         }
         inet_ntop(res->ai_family, ptr, &(*addrstr.begin()), addrstr.size());
-        ipList.insert(addrstr);
+        // don't add duplicates, and don't use an std::set because
+        // we want this order preserved.
+        if (std::find(ipList.begin(), ipList.end(), addrstr) == ipList.end())
+            ipList.push_back(addrstr);
     }
 
     freeaddrinfo(result);

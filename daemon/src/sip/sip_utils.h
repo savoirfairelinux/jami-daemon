@@ -34,7 +34,6 @@
 
 #include <string>
 #include <vector>
-#include <set>
 
 #include <pjsip/sip_msg.h>
 
@@ -57,7 +56,7 @@ namespace sip_utils {
 
     std::string parseDisplayName(const char * buffer);
 
-    std::set<std::string> getIPList(const std::string &name);
+    std::vector<std::string> getIPList(const std::string &name);
 }
 
 #endif // SIP_UTILS_H_
