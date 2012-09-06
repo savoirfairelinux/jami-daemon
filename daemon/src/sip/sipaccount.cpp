@@ -80,7 +80,6 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , cred_()
     , tlsSetting_()
     , ciphers(100)
-    , contactHeader_()
     , stunServerName_()
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
@@ -921,10 +920,6 @@ std::string SIPAccount::getContactHeader() const
     if (transportType == PJSIP_TRANSPORT_START_OTHER)
         transportType = PJSIP_TRANSPORT_UDP;
 
-    // Use the CONTACT header provided by the registrar if any
-    if (!contactHeader_.empty())
-        return contactHeader_;
-
     // Else we determine this infor based on transport information
     std::string address, port;
     std::ostringstream portstr;
@@ -952,6 +947,7 @@ std::string SIPAccount::getContactHeader() const
            scheme + username_ + (username_.empty() ? "" : "@") +
            address + ":" + port + transport + ">";
 }
+
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {

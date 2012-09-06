@@ -292,7 +292,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     std::string remove_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
     if (remote_user.size() > 0 && remove_hostname.size() > 0) {
-      peerNumber = remote_user+"@"+remove_hostname;
+        peerNumber = remote_user + "@" + remove_hostname;
     }
 
     call->setConnectionState(Call::PROGRESSING);
@@ -766,8 +766,6 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 {
     DEBUG("New outgoing call to %s", toUrl.c_str());
     std::string toCpy = toUrl;
-    std::string resolvedUrl = sip_utils::resolveDns(toUrl, endpt_, pool_);
-    DEBUG("URL resolved to %s", resolvedUrl.c_str());
 
     sip_utils::stripSipUriPrefix(toCpy);
 
@@ -776,9 +774,9 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
     if (IPToIP) {
         Manager::instance().associateCallToAccount(id, SIPAccount::IP2IP_PROFILE);
-        return SIPNewIpToIpCall(id, resolvedUrl);
+        return SIPNewIpToIpCall(id, toUrl);
     } else {
-        return newRegisteredAccountCall(id, resolvedUrl);
+        return newRegisteredAccountCall(id, toUrl);
     }
 }
 
@@ -939,6 +937,15 @@ SIPVoIPLink::hangup(const std::string& id)
     // User hangup current call. Notify peer
     if (pjsip_inv_end_session(inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
+
+    // add contact header
+    const std::string contactStr(account->getContactHeader());
+    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
+
+    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
+    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
+                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
@@ -1395,7 +1402,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
-        ERROR("Unable to sip create dialogs for user agent client");
+        ERROR("Unable to create SIP dialogs for user agent client when "
+              "calling %s", toUri.c_str());
         return false;
     }
 

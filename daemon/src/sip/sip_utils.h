@@ -57,8 +57,6 @@ namespace sip_utils {
 
     std::string parseDisplayName(const char * buffer);
 
-    std::string resolveDns(const std::string &url, pjsip_endpoint *endpt, pj_pool_t *pool);
-    //std::vector<std::string> resolve(pjsip_endpoint *endpt, pj_pool_t *pool, const std::string &name);
     std::set<std::string> getIPList(const std::string &name);
 }
 

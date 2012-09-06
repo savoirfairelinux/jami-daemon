@@ -42,7 +42,6 @@
 #include <pj/list.h>
 #include "sip_utils.h"
 
-// for resolveDns
 #include <vector>
 #include <set>
 #include <netdb.h>
@@ -164,84 +163,6 @@ sip_utils::stripSipUriPrefix(std::string& sipUri)
     if (found != std::string::npos)
         sipUri.erase(found);
 }
-
-/**
- * This function looks for '@' and replaces the second part with the corresponding ip address (when possible)
- */
-std::string
-sip_utils::resolveDns(const std::string &url, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/)
-{
-   size_t pos;
-   if ((pos = url.find("@")) == std::string::npos)
-      return url;
-
-   const std::string hostname = url.substr(pos + 1);
-
-   std::set<std::string> ipList(getIPList(hostname));
-   if (not ipList.empty() and ipList.begin()->size() > 7)
-       return url.substr(0, pos + 1) + *ipList.begin();
-   else
-       return hostname;
-}
-
-#if 0
-static const int UNRESOLVED = 0x12345678;
-struct ResolveResult {
-    ResolveResult() : status(UNRESOLVED), servers() {}
-    pj_status_t status;
-    pjsip_server_addresses servers;
-};
-
-static void resolve_cb(pj_status_t status, void *token,
-                       const struct pjsip_server_addresses *addr)
-{
-    ResolveResult *result = static_cast<ResolveResult*>(token);
-
-    result->status = status;
-    if (status == PJ_SUCCESS)
-        pj_memcpy(&result->servers, addr, sizeof(*addr));
-    else
-        ERROR("Could not resolve");
-}
-
-std::vector<std::string>
-sip_utils::resolve(pjsip_endpoint *endpt, pj_pool_t *pool, const std::string &name)
-{
-    pjsip_host_info dest;
-    ResolveResult result;
-
-    dest.type = PJSIP_TRANSPORT_UDP;
-    dest.flag = pjsip_transport_get_flag_from_type(dest.type);
-    dest.addr.host = pj_str((char *) (name.c_str()));
-    dest.addr.port = 0;
-
-    pjsip_endpt_resolve(endpt, pool, &dest, &result, &resolve_cb);
-
-    // We'll try for up to 5 seconds to resolve the address
-    int tries = 5;
-    while (result.status == UNRESOLVED and --tries) {
-        pj_time_val timeout = { 1, 0 };
-        pjsip_endpt_handle_events(endpt, &timeout);
-    }
-
-    if (!tries) {
-        ERROR("Could not resolve address");
-        return std::vector<std::string>();
-    }
-
-    std::vector<std::string> ipList;
-    for (size_t i = 0; i < result.servers.count; ++i) {
-        // get each address
-        pj_sockaddr_in *rb = (pj_sockaddr_in *) &result.servers.entry[i].addr;
-        std::string addr;
-        addr.reserve(pj_sockaddr_get_len(rb));
-        pj_sockaddr_print(rb, &*addr.begin(), addr.size(), 0);
-        DEBUG("Added address %s of size %u", addr.c_str(), addr.size());
-        ipList.push_back(addr);
-    }
-    return ipList;
-}
-#endif
 
 std::set<std::string>
 sip_utils::getIPList(const std::string &name)
