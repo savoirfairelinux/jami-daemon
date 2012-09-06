@@ -935,7 +935,7 @@ SIPVoIPLink::hangup(const std::string& id)
     pjsip_tx_data *tdata = NULL;
 
     // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
+    if (pjsip_inv_end_session(inv, 0, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
     // add contact header
