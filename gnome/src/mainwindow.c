@@ -390,7 +390,7 @@ main_window_dialpad(gboolean state, GSettings *settings)
         gtk_box_pack_end(GTK_BOX(subvbox), dialpad, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all(dialpad);
-    } else
+    } else if (GTK_IS_WIDGET(dialpad))
         gtk_container_remove(GTK_CONTAINER(subvbox), dialpad);
 }
 
@@ -407,8 +407,10 @@ main_window_volume_controls(gboolean state)
                          TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all(mic_control);
     } else {
-        gtk_container_remove(GTK_CONTAINER(subvbox), speaker_control);
-        gtk_container_remove(GTK_CONTAINER(subvbox), mic_control);
+        if (GTK_IS_WIDGET(speaker_control))
+            gtk_container_remove(GTK_CONTAINER(subvbox), speaker_control);
+        if (GTK_IS_WIDGET(mic_control))
+            gtk_container_remove(GTK_CONTAINER(subvbox), mic_control);
     }
 }
 
