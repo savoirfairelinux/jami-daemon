@@ -626,13 +626,6 @@ class SIPAccount : public Account {
         CipherArray ciphers;
 
         /**
-         * The CONTACT header used for registration as provided by the registrar, this value could differ
-         * from the host name in case the registrar is inside a subnetwork (such as a VPN).
-         * The header will be stored
-         */
-        std::string contactHeader_;
-
-        /**
          * The STUN server name (hostname)
          */
         pj_str_t stunServerName_;
