@@ -672,19 +672,6 @@ class ManagerImpl {
         int getHistoryLimit() const;
 
         /**
-         * Configure the start-up option
-         * @return int	1 if SFLphone should start in the system tray
-         *	        0 otherwise
-         */
-        int isStartHidden();
-
-        /**
-         * Configure the start-up option
-         * At startup, SFLphone can be displayed or start hidden in the system tray
-         */
-        void startHidden();
-
-        /**
          * Set the desktop mail notification level
          */
         void setMailNotify();
@@ -767,13 +754,6 @@ class ManagerImpl {
          * @return sdt::string    The string value
          */
         std::string getConfigString(const std::string& section, const std::string& name) const;
-
-        /**
-         * Retrieve the soundcards index in the user config file and try to open audio devices
-         * with a specific alsa plugin.
-         * Set the audio layer sample rate
-         */
-        void selectAudioDriver();
 
         /**
          * Handle audio sounds heard by a caller while they wait for their
@@ -1111,12 +1091,6 @@ class ManagerImpl {
          * @return VoIPLink*   The voip link from the account pointer or 0
          */
         VoIPLink* getAccountLink(const std::string& accountID);
-
-        std::string getStunServer() const;
-        void setStunServer(const std::string &server);
-
-        int isStunEnabled();
-        void enableStun();
 
         // Map containing conference pointers
         ConferenceMap conferenceMap_;
