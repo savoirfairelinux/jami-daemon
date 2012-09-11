@@ -21,6 +21,7 @@ MY_DBUS=libdbus-c++-0.9.0-android
 MY_SPEEX=speex
 MY_OPENSSL=openssl
 MY_LIBYAML=libyaml
+MY_JNI_WRAP=callmanager_wrap.cpp
 
 
 include $(CLEAR_VARS)
@@ -67,6 +68,7 @@ LOCAL_SRC_FILES := \
 		config/yamlnode.cpp \
 		dbus/callmanager.cpp \
     		dbus/configurationmanager.cpp  \
+		dbus/$(MY_JNI_WRAP) \
     		dbus/instance.cpp  \
     		dbus/dbusmanager.cpp \
 		history/historyitem.cpp \

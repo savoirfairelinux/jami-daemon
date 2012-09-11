@@ -75,3 +75,7 @@ ID
 
 # IDE stuffs
 nbproject
+
+# JNI generated files
+*_wrap.cpp
+*_loader.c

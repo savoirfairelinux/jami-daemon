@@ -91,7 +91,9 @@
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
+#include <jni.h>
 
+extern JavaVM *gJavaVM;
 static jobject gManagerObject, gDataObject;
 
 ManagerImpl::ManagerImpl() :
@@ -314,6 +316,7 @@ void ManagerImpl::init(const std::string &config_file)
 
     //history_.load(preferences.getHistoryLimit());
     registerAccounts();
+    INFO("init ended");
 }
 
 void ManagerImpl::setPath(const std::string &path) {
