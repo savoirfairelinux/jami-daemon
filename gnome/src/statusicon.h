@@ -71,21 +71,12 @@ void show_status_hangup_icon();
  */
 void hide_status_hangup_icon();
 
-
-
 /**
- * Tells if the main window if minimized or not
- * @return gboolean TRUE if the main window is minimized
- *		    FALSE otherwise
- */
-gboolean main_widget_minimized();
-
-/**
- * Change the menu status
- * @param state	TRUE if the  main window is minimized
+ * Toggle window minimization
+ * @param state  TRUE to minimize the main window
  *               FALSE otherwise
  */
-void set_minimized (gboolean state);
+void set_minimized(gboolean state);
 
 /**
  * Make the system tray icon blink on incoming call

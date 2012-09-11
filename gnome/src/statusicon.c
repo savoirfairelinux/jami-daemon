@@ -40,7 +40,12 @@
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
-static gboolean minimized_ = TRUE;
+
+void
+set_minimized(gboolean state)
+{
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
+}
 
 void
 popup_main_window()
@@ -86,12 +91,6 @@ void
 status_icon_unminimize()
 {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
-}
-
-gboolean
-main_widget_minimized()
-{
-    return minimized_;
 }
 
 void
@@ -214,11 +213,4 @@ GtkStatusIcon*
 get_status_icon(void)
 {
     return status;
-}
-
-void
-set_minimized(gboolean state)
-{
-    minimized_ = state;
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }
