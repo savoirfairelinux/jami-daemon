@@ -20,8 +20,13 @@ def usage():
 # main
 inputfile = "./dbus/callmanager-introspec.xml"
 outputfile = "./dbus/callmanager-jni.h"
-opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["help", "input=", "output="])
-print opts
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["help", "input=", "output="])
+except getopt.GetoptError, err:
+    usage()
+    print str(err)
+    #print opts
+    sys.exit(2)
 
 for opt, arg in opts:
     if opt in ("-h", "--help"):
