@@ -926,10 +926,15 @@ SIPVoIPLink::hangup(const std::string& id)
     if (inv == NULL)
         throw VoipLinkException("No invite session for this call");
 
-    // Looks for sip routes
-    if (account->hasServiceRoute()) {
-        pjsip_route_hdr *route_set = sip_utils::createRouteSetList(account->getServiceRoute(), inv->pool);
-        pjsip_dlg_set_route_set(inv->dlg, route_set);
+    pjsip_route_hdr *route = inv->dlg->route_set.next;
+    while (route and route != &inv->dlg->route_set) {
+        char buf[1024];
+        int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
+        if (printed >= 0) {
+            buf[printed] = '\0';
+            DEBUG("Route header %s", buf);
+        }
+        route = route->next;
     }
 
     pjsip_tx_data *tdata = NULL;
