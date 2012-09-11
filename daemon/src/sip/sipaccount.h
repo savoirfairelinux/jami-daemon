@@ -56,7 +56,6 @@ namespace Conf {
     const char *const SAME_AS_LOCAL_KEY = "sameasLocal";
     const char *const DTMF_TYPE_KEY = "dtmfType";
     const char *const SERVICE_ROUTE_KEY = "serviceRoute";
-    const char *const UPDATE_CONTACT_HEADER_KEY = "updateContact";
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
 
     // TODO: write an object to store credential which implement serializable
@@ -368,35 +367,10 @@ class SIPAccount : public Account {
         std::string getServerUri() const;
 
         /**
-         * Set the contact header
-         * @param port Optional port. Otherwise set to the port defined for that account.
-         * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
-         */
-        void setContactHeader(std::string address, std::string port);
-
-        /**
          * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
-        std::string getContactHeader(void) const;
-
-        /**
-         * The contact header can be rewritten based on the contact provided by the registrar in 200 OK
-         */
-        void enableContactUpdate(void) {
-            contactUpdateEnabled_ = true;
-        }
-
-        /**
-         * The contact header is not updated even if the registrar
-         */
-        void disableContactUpdate(void) {
-            contactUpdateEnabled_ = false;
-        }
-
-        bool isContactUpdateEnabled(void) {
-            return contactUpdateEnabled_;
-        }
+        std::string getContactHeader() const;
 
         /**
          * Get the local interface name on which this account is bound.
@@ -480,6 +454,8 @@ class SIPAccount : public Account {
             return serviceRoute_;
         }
 
+        bool hasServiceRoute() const { return not serviceRoute_.empty(); }
+
         std::string getDtmfType() const {
             return dtmfType_;
         }
@@ -533,15 +509,15 @@ class SIPAccount : public Account {
         pjsip_transport* transport_;
 
         /* Returns true if the username and/or hostname match this account */
-        bool matches(const std::string &username, const std::string &hostname) const;
+        bool matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
     private:
         NON_COPYABLE(SIPAccount);
 
-        bool fullMatch(const std::string &username, const std::string &hostname) const;
+        bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool userMatch(const std::string &username) const;
-        bool hostnameMatch(const std::string &hostname) const;
-        bool proxyMatch(const std::string &hostname) const;
+        bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
+        bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
         /**
          * Map of credential for this account
@@ -648,18 +624,6 @@ class SIPAccount : public Account {
          * Allocate a static array to be used by pjsip to store the supported ciphers on this system.
          */
         CipherArray ciphers;
-
-        /**
-         * The CONTACT header used for registration as provided by the registrar, this value could differ
-         * from the host name in case the registrar is inside a subnetwork (such as a VPN).
-         * The header will be stored
-         */
-        std::string contactHeader_;
-
-        /**
-         * Enble the contact header based on the header received from the registrar in 200 OK
-         */
-        bool contactUpdateEnabled_;
 
         /**
          * The STUN server name (hostname)

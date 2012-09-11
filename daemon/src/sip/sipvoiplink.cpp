@@ -244,7 +244,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     }
     std::string userName(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string server(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    std::string account_id(Manager::instance().getAccountIdFromNameAndServer(userName, server));
+    std::string account_id(SIPVoIPLink::instance()->getAccountIdFromNameAndServer(userName, server));
 
     std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
 
@@ -319,7 +319,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     std::string remove_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
     if (remote_user.size() > 0 && remove_hostname.size() > 0) {
-      peerNumber = remote_user+"@"+remove_hostname;
+        peerNumber = remote_user + "@" + remove_hostname;
     }
 
     call->setConnectionState(Call::PROGRESSING);
@@ -574,6 +574,23 @@ void SIPVoIPLink::destroy()
     instance_ = 0;
 }
 
+std::string
+SIPVoIPLink::getAccountIdFromNameAndServer(const std::string &userName,
+                                           const std::string &server) const
+{
+    DEBUG("username = %s, server = %s", userName.c_str(), server.c_str());
+    // Try to find the account id from username and server name by full match
+
+    for (AccountMap::const_iterator iter = sipAccountMap_.begin(); iter != sipAccountMap_.end(); ++iter) {
+        SIPAccount *account = static_cast<SIPAccount*>(iter->second);
+        if (account and account->matches(userName, server, endpt_, pool_))
+            return iter->first;
+    }
+
+    DEBUG("Username %s or server %s doesn't match any account, using IP2IP", userName.c_str(), server.c_str());
+    return SIPAccount::IP2IP_PROFILE;
+}
+
 void SIPVoIPLink::setSipLogLevel()
 {
     char *envvar = getenv(SIPLOGLEVEL);
@@ -680,7 +697,7 @@ void SIPVoIPLink::sendRegister(Account *a)
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
-    if (not account->getServiceRoute().empty())
+    if (account->hasServiceRoute())
         pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(account->getServiceRoute(), pool_));
 
     pjsip_regc_set_credentials(regc, account->getCredentialCount(), account->getCredInfo());
@@ -801,8 +818,6 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 {
     DEBUG("New outgoing call to %s", toUrl.c_str());
     std::string toCpy = toUrl;
-    std::string resolvedUrl = sip_utils::resolveDns(toUrl);
-    DEBUG("URL resolved to %s", resolvedUrl.c_str());
 
     sip_utils::stripSipUriPrefix(toCpy);
 
@@ -811,9 +826,9 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
 
     if (IPToIP) {
         Manager::instance().associateCallToAccount(id, SIPAccount::IP2IP_PROFILE);
-        return SIPNewIpToIpCall(id, resolvedUrl);
+        return SIPNewIpToIpCall(id, toUrl);
     } else {
-        return newRegisteredAccountCall(id, resolvedUrl);
+        return newRegisteredAccountCall(id, toUrl);
     }
 }
 
@@ -964,16 +979,25 @@ SIPVoIPLink::hangup(const std::string& id)
         throw VoipLinkException("No invite session for this call");
 
     // Looks for sip routes
-    if (not account->getServiceRoute().empty()) {
-        pjsip_route_hdr *route_set = sip_utils::createRouteSet(account->getServiceRoute(), inv->pool);
+    if (account->hasServiceRoute()) {
+        pjsip_route_hdr *route_set = sip_utils::createRouteSetList(account->getServiceRoute(), inv->pool);
         pjsip_dlg_set_route_set(inv->dlg, route_set);
     }
 
     pjsip_tx_data *tdata = NULL;
 
     // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv, 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
+    if (pjsip_inv_end_session(inv, 0, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
+
+    // add contact header
+    const std::string contactStr(account->getContactHeader());
+    pj_str_t pjContact = pj_str((char*) contactStr.c_str());
+
+    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
+    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr,
+                                   pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
         return;
@@ -1329,7 +1353,7 @@ void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
-        call.getAudioRtp().sendDtmfDigit(code - '0');
+        call.getAudioRtp().sendDtmfDigit(code);
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
         WARN("Unknown DTMF type %s, defaulting to %s instead",
@@ -1430,7 +1454,8 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
     pjsip_dialog *dialog = NULL;
 
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog) != PJ_SUCCESS) {
-        ERROR("Unable to sip create dialogs for user agent client");
+        ERROR("Unable to create SIP dialogs for user agent client when "
+              "calling %s", toUri.c_str());
         return false;
     }
 
@@ -1439,7 +1464,7 @@ SIPVoIPLink::SIPStartCall(SIPCall *call)
         return false;
     }
 
-    if (not account->getServiceRoute().empty())
+    if (account->hasServiceRoute())
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(account->getServiceRoute(), call->inv->pool));
 
     if (account->hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, account->getCredentialCount(), account->getCredInfo()) != PJ_SUCCESS) {
@@ -1925,71 +1950,6 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 #endif
 }
 
-void update_contact_header(pjsip_regc_cbparam *param, SIPAccount *account)
-{
-    SIPVoIPLink *siplink = static_cast<SIPVoIPLink *>(account->getVoIPLink());
-    if (siplink == NULL) {
-        ERROR("Could not find voip link from account");
-        return;
-    }
-
-    pj_pool_t *pool = pj_pool_create(&cp_->factory, "tmp", 512, 512, NULL);
-    if (pool == NULL) {
-        ERROR("Could not create temporary memory pool in transport header");
-        return;
-    }
-
-    if (!param or param->contact_cnt == 0) {
-        WARN("No contact header in registration callback");
-        pj_pool_release(pool);
-        return;
-    }
-
-    pjsip_contact_hdr *contact_hdr = param->contact[0];
-    if (!contact_hdr)
-        return;
-
-    pjsip_sip_uri *uri = (pjsip_sip_uri*) contact_hdr->uri;
-    if (uri == NULL) {
-        ERROR("Could not find uri in contact header");
-        pj_pool_release(pool);
-        return;
-    }
-
-    // TODO: make this based on transport type
-    // with pjsip_transport_get_default_port_for_type(tp_type);
-    if (uri->port == 0) {
-        ERROR("Port is 0 in uri");
-        uri->port = DEFAULT_SIP_PORT;
-    }
-
-    std::string recvContactHost(uri->host.ptr, uri->host.slen);
-    std::stringstream ss;
-    ss << uri->port;
-    std::string recvContactPort = ss.str();
-
-    std::string currentAddress, currentPort;
-    siplink->sipTransport.findLocalAddressFromTransport(account->transport_, PJSIP_TRANSPORT_UDP, currentAddress, currentPort);
-
-    bool updateContact = false;
-    std::string currentContactHeader = account->getContactHeader();
-
-    size_t foundHost = currentContactHeader.find(recvContactHost);
-    if (foundHost == std::string::npos)
-        updateContact = true;
-
-    size_t foundPort = currentContactHeader.find(recvContactPort);
-    if (foundPort == std::string::npos)
-        updateContact = true;
-
-    if (updateContact) {
-        DEBUG("Update contact header: %s:%s\n", recvContactHost.c_str(), recvContactPort.c_str());
-        account->setContactHeader(recvContactHost, recvContactPort);
-        siplink->sendRegister(account);
-    }
-    pj_pool_release(pool);
-}
-
 void lookForReceivedParameter(pjsip_regc_cbparam &param, SIPAccount &account)
 {
     if (!param.rdata or !param.rdata->msg_info.via)
@@ -2024,9 +1984,6 @@ void registration_cb(pjsip_regc_cbparam *param)
         ERROR("account doesn't exist in registration callback");
         return;
     }
-
-    if (account->isContactUpdateEnabled())
-        update_contact_header(param, account);
 
     const pj_str_t *description = pjsip_get_status_text(param->code);
 

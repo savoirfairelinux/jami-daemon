@@ -69,8 +69,8 @@ ManagerImpl::registerAccounts()
 VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
 {
     Account *account = getAccount(accountID);
-    if(account == NULL) {
-        DEBUG("Could not find account for voip link, returning sip voip");
+    if (account == NULL) {
+        DEBUG("Could not find account for account %s, returning sip voip", accountID.c_str());
         return SIPVoIPLink::instance();
     }
 

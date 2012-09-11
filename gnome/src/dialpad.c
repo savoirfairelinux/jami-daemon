@@ -48,6 +48,11 @@ dialpad_pressed(GtkWidget * widget UNUSED, DialpadData *data)
 {
     gtk_widget_grab_focus(GTK_WIDGET(current_calls_tab->view));
     sflphone_keypad(0, data->number, data->settings);
+}
+
+static void
+dialpad_cleanup(GtkWidget * widget UNUSED, DialpadData *data)
+{
     g_free(data);
 }
 
@@ -66,6 +71,8 @@ get_numpad_button(const gchar* number, gboolean twolines, const gchar * letters,
     dialpad_data->settings = settings;
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(dialpad_pressed), dialpad_data);
+    g_signal_connect(G_OBJECT(button), "destroy",
+                     G_CALLBACK(dialpad_cleanup), dialpad_data);
 
     g_free(markup);
     return button;

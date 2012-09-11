@@ -33,7 +33,7 @@
 #define SIP_UTILS_H_
 
 #include <string>
-#include <list>
+#include <vector>
 
 #include <pjsip/sip_msg.h>
 
@@ -46,14 +46,17 @@ namespace sip_utils {
      */
     std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
 
-    pjsip_route_hdr *createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
+    pjsip_route_hdr *
+    createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
+
+    pjsip_route_hdr *
+    createRouteSetList(const std::string &route, pj_pool_t *hdr_pool);
 
     void stripSipUriPrefix(std::string& sipUri);
 
     std::string parseDisplayName(const char * buffer);
 
-    std::string resolveDns(const std::string &url);
-    std::list<std::string> resolveServerDns(const std::string &server);
+    std::vector<std::string> getIPList(const std::string &name);
 }
 
 #endif // SIP_UTILS_H_

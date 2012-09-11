@@ -41,7 +41,7 @@ except ImportError, e:
 	raise SflPhoneError("No python-dbus module found")
 
 
-from sflphonectrlsimple import SflPhoneCtrlSimple
+from sflphonectrl import SflPhoneCtrl
 
 #
 # Main application
@@ -96,7 +96,7 @@ except getopt.GetoptError,err:
 
 
 # SFLPhone instance.
-sflphone = SflPhoneCtrlSimple()
+sflphone = SflPhoneCtrl()
 
 # If no arguments, run the d-bus event loop.
 if len(sys.argv) == 1:

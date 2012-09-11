@@ -69,6 +69,7 @@ typedef std::map<std::string, SIPCall*> SipCallMap;
  */
 
 class SIPVoIPLink : public VoIPLink {
+
     public:
 
         /**
@@ -101,7 +102,8 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Return the internal account map for this VOIP link
          */
-        AccountMap &getAccounts() { return sipAccountMap_; }
+        AccountMap &
+        getAccounts() { return sipAccountMap_; }
 
         /**
          * Build and send SIP registration request
@@ -292,6 +294,11 @@ class SIPVoIPLink : public VoIPLink {
 #ifdef SFL_VIDEO
         static void enqueueKeyframeRequest(const std::string &callID);
 #endif
+
+        std::string
+        getAccountIdFromNameAndServer(const std::string &userName,
+                                      const std::string &server) const;
+
     private:
 
         NON_COPYABLE(SIPVoIPLink);

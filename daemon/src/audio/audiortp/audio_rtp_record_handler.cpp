@@ -56,8 +56,37 @@ std::ofstream beforeencode("/data/data/com.savoirfairelinux.sflphone/beforeencod
 std::ofstream beforesend("/data/data/com.savoirfairelinux.sflphone/beforesend.raw", std::ofstream::binary);
 #endif
 
-DTMFEvent::DTMFEvent(int digit) : payload(), newevent(true), length(1000)
+DTMFEvent::DTMFEvent(char digit) : payload(), newevent(true), length(1000)
 {
+/*
+   From RFC2833:
+
+   Event  encoding (decimal)
+   _________________________
+   0--9                0--9
+   *                     10
+   #                     11
+   A--D              12--15
+   Flash                 16
+*/
+
+    switch (digit) {
+        case '*':
+            digit = 10;
+            break;
+        case '#':
+            digit = 11;
+            break;
+        case 'A' ... 'D':
+            digit = digit - 'A' + 12;
+            break;
+        case '0' ... '9':
+            digit = digit - '0';
+            break;
+        default:
+            ERROR("Unexpected DTMF %c", digit);
+    }
+
     payload.event = digit;
     payload.ebit = false; // end of event bit
     payload.rbit = false; // reserved bit
@@ -175,7 +204,7 @@ void AudioRtpRecordHandler::initNoiseSuppress()
 }
 #endif
 
-void AudioRtpRecordHandler::putDtmfEvent(int digit)
+void AudioRtpRecordHandler::putDtmfEvent(char digit)
 {
     DTMFEvent dtmf(digit);
     audioRtpRecord_.dtmfQueue_.push_back(dtmf);

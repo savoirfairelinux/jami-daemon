@@ -80,8 +80,6 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , cred_()
     , tlsSetting_()
     , ciphers(100)
-    , contactHeader_()
-    , contactUpdateEnabled_(false)
     , stunServerName_()
     , stunPort_(PJ_STUN_PORT)
     , dtmfType_(OVERRTP_STR)
@@ -145,7 +143,6 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     portstr << localPort_;
     ScalarNode port(portstr.str());
     ScalarNode serviceRoute(serviceRoute_);
-    ScalarNode contactUpdateEnabled(contactUpdateEnabled_);
     ScalarNode keepAliveEnabled(keepAliveEnabled_);
 
     ScalarNode mailbox(mailBox_);
@@ -224,7 +221,6 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     accountmap.setKeyValue(PUBLISH_PORT_KEY, &publishPort);
     accountmap.setKeyValue(SAME_AS_LOCAL_KEY, &sameasLocal);
     accountmap.setKeyValue(SERVICE_ROUTE_KEY, &serviceRoute);
-    accountmap.setKeyValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled);
     accountmap.setKeyValue(DTMF_TYPE_KEY, &dtmfType);
     accountmap.setKeyValue(DISPLAY_NAME_KEY, &displayName);
     accountmap.setKeyValue(AUDIO_CODECS_KEY, &audioCodecs);
@@ -368,7 +364,6 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     dtmfType_ = dtmfType;
 
     if (not isIP2IP()) mapNode.getValue(SERVICE_ROUTE_KEY, &serviceRoute_);
-    mapNode.getValue(UPDATE_CONTACT_HEADER_KEY, &contactUpdateEnabled_);
 
     // stun enabled
     if (not isIP2IP()) mapNode.getValue(STUN_ENABLED_KEY, &stunEnabled_);
@@ -811,9 +806,9 @@ void SIPAccount::loadConfig()
         transportType_ = PJSIP_TRANSPORT_UDP;
 }
 
-bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname) const
+bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const
 {
-    return userMatch(username) and hostnameMatch(hostname);
+    return userMatch(username) and hostnameMatch(hostname, endpt, pool);
 }
 
 bool SIPAccount::userMatch(const std::string& username) const
@@ -821,17 +816,32 @@ bool SIPAccount::userMatch(const std::string& username) const
     return !username.empty() and username == username_;
 }
 
-bool SIPAccount::hostnameMatch(const std::string& hostname) const
-{
-    return hostname == hostname_;
+namespace {
+    bool haveValueInCommon(const std::vector<std::string> &a, const std::vector<std::string> &b)
+    {
+        for (std::vector<std::string>::const_iterator i = a.begin(); i != a.end(); ++i)
+            if (std::find(b.begin(), b.end(), *i) != b.end())
+                return true;
+        return false;
+    }
 }
 
-bool SIPAccount::proxyMatch(const std::string& hostname) const
+bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
+{
+    if (hostname == hostname_)
+        return true;
+    const std::vector<std::string> a(sip_utils::getIPList(hostname));
+    const std::vector<std::string> b(sip_utils::getIPList(hostname_));
+    return haveValueInCommon(a, b);
+}
+
+bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
 {
     if (hostname == serviceRoute_)
         return true;
-    const std::list<std::string> ipList(sip_utils::resolveServerDns(serviceRoute_));
-    return std::find(ipList.begin(), ipList.end(), hostname) != ipList.end();
+    const std::vector<std::string> a(sip_utils::getIPList(hostname));
+    const std::vector<std::string> b(sip_utils::getIPList(serviceRoute_));
+    return haveValueInCommon(a, b);
 }
 
 std::string SIPAccount::getLoginName()
@@ -906,23 +916,6 @@ std::string SIPAccount::getServerUri() const
     return "<" + scheme + hostname_ + transport + ">";
 }
 
-void SIPAccount::setContactHeader(std::string address, std::string port)
-{
-    std::string scheme;
-    std::string transport;
-
-    // UDP does not require the transport specification
-    if (transportType_ == PJSIP_TRANSPORT_TLS) {
-        scheme = "sips:";
-        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType_));
-    } else
-        scheme = "sip:";
-
-    contactHeader_ = displayName_ + (displayName_.empty() ? "" : " ") + "<" +
-                     scheme + username_ + (username_.empty() ? "":"@") +
-                     address + ":" + port + transport + ">";
-}
-
 
 std::string SIPAccount::getContactHeader() const
 {
@@ -933,10 +926,6 @@ std::string SIPAccount::getContactHeader() const
     pjsip_transport_type_e transportType = transportType_;
     if (transportType == PJSIP_TRANSPORT_START_OTHER)
         transportType = PJSIP_TRANSPORT_UDP;
-
-    // Use the CONTACT header provided by the registrar if any
-    if (!contactHeader_.empty())
-        return contactHeader_;
 
     // Else we determine this infor based on transport information
     std::string address, port;
@@ -965,6 +954,7 @@ std::string SIPAccount::getContactHeader() const
            scheme + username_ + (username_.empty() ? "" : "@") +
            address + ":" + port + transport + ">";
 }
+
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
 {
@@ -1210,22 +1200,21 @@ bool SIPAccount::isIP2IP() const
     return accountID_ == IP2IP_PROFILE;
 }
 
-bool SIPAccount::matches(const std::string &userName, const std::string &server) const
+bool SIPAccount::matches(const std::string &userName, const std::string &server,
+                         pjsip_endpoint *endpt, pj_pool_t *pool) const
 {
-    if (not enabled_) {
-        return false;
-    } else if (fullMatch(userName, server)) {
+    if (fullMatch(userName, server, endpt, pool)) {
         DEBUG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
         return true;
-    } else if (hostnameMatch(server)) {
+    } else if (hostnameMatch(server, endpt, pool)) {
         DEBUG("Matching account id in request with hostname %s", server.c_str());
         return true;
     } else if (userMatch(userName)) {
         DEBUG("Matching account id in request with username %s", userName.c_str());
         return true;
-    } else if (proxyMatch(server)) {
+    } else if (proxyMatch(server, endpt, pool)) {
         DEBUG("Matching account id in request with proxy %s", server.c_str());
         return true;
-    }
-    return false;
+    } else
+        return false;
 }
