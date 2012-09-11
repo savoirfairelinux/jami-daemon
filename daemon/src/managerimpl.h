@@ -139,10 +139,12 @@ class ManagerImpl {
          */
         void init(const std::string &config_file);
 
+#ifdef HAVE_DBUS
         /**
          * Enter Dbus mainloop
          */
         void run();
+#endif
 
         /*
          * Terminate all threads and exit DBus loop
