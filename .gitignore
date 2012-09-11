@@ -70,6 +70,8 @@ config_auto.h
 # Cscope/Ctags files
 cscope.*
 tags
+TAGS.LST
+ID
 
 # IDE stuffs
 nbproject
