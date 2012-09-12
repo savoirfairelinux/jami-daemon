@@ -53,6 +53,8 @@ AudioCodecFactory::AudioCodecFactory() :
     typedef std::vector<sfl::Codec*> CodecVector;
     CodecVector codecDynamicList(scanCodecDirectory());
 
+    DEBUG("AudioCodecFactory constructor");
+
     if (codecDynamicList.empty())
         ERROR("No codecs available");
     else {
@@ -144,6 +146,8 @@ void AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
 
 AudioCodecFactory::~AudioCodecFactory()
 {
+    DEBUG("AudioCodecFactory destructor");
+
     for (std::vector<CodecHandlePointer>::const_iterator iter =
                 codecInMemory_.begin(); iter != codecInMemory_.end(); ++iter)
         unloadCodec(*iter);
@@ -153,6 +157,8 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
 {
     std::vector<sfl::Codec*> codecs;
     std::vector<std::string> dirToScan;
+
+    DEBUG("AudioCodecFactory::scanCodecDirectory");
 
     dirToScan.push_back(std::string(HOMEDIR) + DIR_SEPARATOR_STR "." PACKAGE "/");
     dirToScan.push_back(CODECS_DIR "/");

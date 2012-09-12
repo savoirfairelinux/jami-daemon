@@ -110,6 +110,8 @@ ManagerImpl::ManagerImpl() :
     callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(),
     mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
+	DEBUG("ManagerImpl() constructor");
+
     // initialize random generator for call id
     srand(time(NULL));
 }
