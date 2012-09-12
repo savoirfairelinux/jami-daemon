@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ * Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  * Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  * Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 /**
  * @file noncopyable.h
  * @brief Simple macro to hide class' copy constructor and assignment operator.
- *        Useful to avoid shallow copying (i.e. class' with pointer members)
+ *        Useful to avoid shallow copying (i.e. classes with pointer members)
  *        Usage: For a class named MyClass, the macro call
  *        NON_COPYABLE(MyClass) should go in the private section of MyClass
  */
@@ -43,4 +43,4 @@
     ClassName(const ClassName&); \
     ClassName& operator=(const ClassName&)
 
-#endif	// NON_COPYABLE_H_
+#endif  // NON_COPYABLE_H_
