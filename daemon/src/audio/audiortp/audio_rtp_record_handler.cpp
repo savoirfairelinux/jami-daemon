@@ -153,7 +153,8 @@ AudioRtpRecord::~AudioRtpRecord()
 AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
     audioRtpRecord_(),
     id_(call.getCallId()),
-    gainController(8000, -10.0)
+    gainController(8000, -10.0),
+    warningInterval_(0)
 {}
 
 
@@ -276,8 +277,16 @@ int AudioRtpRecordHandler::processDataEncode()
 
 void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t size, int payloadType)
 {
-    if (audioRtpRecord_.isDead() or getCodecPayloadType() != payloadType)
+    if (audioRtpRecord_.isDead())
         return;
+    if (audioRtpRecord_.codecPayloadType_ != payloadType) {
+        if (!warningInterval_) {
+            warningInterval_ = 250;
+            WARN("Invalid payload type %d, expected %d", payloadType, audioRtpRecord_.codecPayloadType_);
+        }
+        warningInterval_--;
+        return;
+    }
 
     int inSamples = 0;
     size = std::min(size, audioRtpRecord_.decData_.size());
