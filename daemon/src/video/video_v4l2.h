@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify

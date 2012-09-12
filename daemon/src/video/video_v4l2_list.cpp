@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
  *  Copyright © 2009 Rémi Denis-Courmont
  *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
