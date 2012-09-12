@@ -28,8 +28,6 @@ test_SOURCES = constants.h \
 			   siptest.cpp \
 			   sdptest.h \
 			   sdptest.cpp \
-			   echocanceltest.h \
-			   echocanceltest.cpp \
 			   gaincontroltest.h \
 			   gaincontroltest.cpp \
 			   mainbuffertest.h \

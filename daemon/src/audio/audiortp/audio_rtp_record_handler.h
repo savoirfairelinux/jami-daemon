@@ -42,8 +42,6 @@ class SIPCall;
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "audio/noisesuppress.h"
-#include "audio/speexechocancel.h"
-#include "audio/echosuppress.h"
 #include "audio/gaincontrol.h"
 
 namespace sfl {
