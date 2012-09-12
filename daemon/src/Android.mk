@@ -21,10 +21,13 @@ MY_DBUS=libdbus-c++-0.9.0-android
 MY_SPEEX=speex
 MY_OPENSSL=openssl
 MY_LIBYAML=libyaml
-MY_JNI_WRAP=callmanager_wrap.cpp
-
+MY_JNI_WRAP := $(LOCAL_PATH)/dbus/callmanager_wrap.cpp
 
 include $(CLEAR_VARS)
+
+$(MY_JNI_WRAP): $(LOCAL_PATH)/dbus/callmanager.i $(LOCAL_PATH)/sflphoneservice.c.template
+	@echo "in $(MY_JNI_WRAP) target"
+	./make-swig.sh
 
 LOCAL_SRC_FILES := \
 		conference.cpp \
@@ -68,7 +71,7 @@ LOCAL_SRC_FILES := \
 		config/yamlnode.cpp \
 		dbus/callmanager.cpp \
     		dbus/configurationmanager.cpp  \
-		dbus/$(MY_JNI_WRAP) \
+		dbus/callmanager_wrap.cpp \
     		dbus/instance.cpp  \
     		dbus/dbusmanager.cpp \
 		history/historyitem.cpp \
