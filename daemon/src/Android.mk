@@ -126,7 +126,8 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
 				  -DHAVE_CONFIG_H \
 				  -std=gnu++0x -frtti -fexceptions -fpermissive \
-				  -DAPP_NAME=\"sflphone\"
+				  -DAPP_NAME=\"sflphone\" \
+				  -DSWIG_JAVA_ATTACH_CURRENT_THREAD_AS_DAEMON
 
 #-L$(APP_PROJECT_PATH)/obj/local/armeabi \
 
