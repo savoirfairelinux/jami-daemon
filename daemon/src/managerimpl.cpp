@@ -1874,7 +1874,7 @@ std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
         Call::CallState state = call->getState();
 
         if (state == Call::ACTIVE or state == Call::CONFERENCING)
-            codecName = link->getCurrentAudioCodecName(call);
+            codecName = link->getCurrentAudioCodecNames(call);
     }
 
     return codecName;

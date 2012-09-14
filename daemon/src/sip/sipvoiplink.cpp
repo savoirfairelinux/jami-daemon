@@ -1030,19 +1030,23 @@ SIPVoIPLink::offhold(const std::string& id)
         throw VoipLinkException("Could not find sdp session");
 
     try {
-        int pl = PAYLOAD_CODEC_ULAW;
-        sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
-        if (sessionMedia)
-            pl = sessionMedia->getPayloadType();
+        std::vector<sfl::AudioCodec*> sessionMedia;
+        sdpSession->getSessionAudioMedia(sessionMedia);
+        std::vector<sfl::AudioCodec*> audioCodecs;
+        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin();
+             i != sessionMedia.end(); ++i) {
 
-        // Create a new instance for this codec
-        sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
+            if (!*i)
+                continue;
 
-        if (ac == NULL)
-            throw VoipLinkException("Could not instantiate codec");
+            // Create a new instance for this codec
+            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec((*i)->getPayloadType());
 
-        std::vector<sfl::AudioCodec *> audioCodecs;
-        audioCodecs.push_back(ac);
+            if (ac == NULL)
+                throw VoipLinkException("Could not instantiate codec");
+
+            audioCodecs.push_back(ac);
+        }
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
@@ -1274,9 +1278,9 @@ SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
 }
 
 std::string
-SIPVoIPLink::getCurrentAudioCodecName(Call *call) const
+SIPVoIPLink::getCurrentAudioCodecNames(Call *call) const
 {
-    return static_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
+    return static_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecNames();
 }
 
 /* Only use this macro with string literals or character arrays, will not work
@@ -1751,8 +1755,9 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 #endif // HAVE_SDES
 
-    sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
-    if (!sessionMedia)
+    std::vector<sfl::AudioCodec*> sessionMedia;
+    sdpSession->getSessionAudioMedia(sessionMedia);
+    if (sessionMedia.empty())
         return;
 
     try {
@@ -1760,16 +1765,19 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         Manager::instance().getAudioDriver()->startStream();
         Manager::instance().audioLayerMutexUnlock();
 
-        int pl = sessionMedia->getPayloadType();
+        std::vector<AudioCodec*> audioCodecs;
+        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin(); i != sessionMedia.end(); ++i) {
+            if (!*i)
+                continue;
+            const int pl = (*i)->getPayloadType();
 
-        if (pl != call->getAudioRtp().getSessionMedia()) {
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)
                 throw std::runtime_error("Could not instantiate codec");
-            std::vector<AudioCodec*> audioCodecs;
             audioCodecs.push_back(ac);
-            call->getAudioRtp().updateSessionMedia(audioCodecs);
         }
+        if (not audioCodecs.empty())
+            call->getAudioRtp().updateSessionMedia(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
     } catch (const std::exception &rtpException) {

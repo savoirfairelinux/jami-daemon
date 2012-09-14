@@ -73,6 +73,8 @@ class AudioRtpRecord {
         AudioRtpRecord();
         ~AudioRtpRecord();
         void deleteCodecs();
+        bool tryToSwitchPayloadTypes(int newPt);
+        sfl::AudioCodec* getCurrentCodec() const;
         std::string callId_;
         int codecSampleRate_;
         std::list<DTMFEvent> dtmfQueue_;
@@ -112,6 +114,7 @@ class AudioRtpRecord {
 #else
         ucommon::atomic::counter dead_;
 #endif
+        size_t currentCodecIndex_;
 };
 
 
@@ -180,6 +183,7 @@ class AudioRtpRecordHandler {
         void putDtmfEvent(char digit);
 
     protected:
+        bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
         AudioRtpRecord audioRtpRecord_;
 
     private:

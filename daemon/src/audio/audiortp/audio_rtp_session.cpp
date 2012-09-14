@@ -65,7 +65,8 @@ void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCo
 {
     int lastSamplingRate = audioRtpRecord_.codecSampleRate_;
 
-    setSessionMedia(audioCodecs);
+    if (codecsDiffer(audioCodecs))
+        setSessionMedia(audioCodecs);
 
     Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 

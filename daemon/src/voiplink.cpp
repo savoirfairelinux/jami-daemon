@@ -32,6 +32,7 @@
  */
 
 #include "voiplink.h"
+#include "account.h"
 
 VoIPLink::VoIPLink() : handlingEvents_(false) {}
 

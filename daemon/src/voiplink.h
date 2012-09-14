@@ -147,7 +147,7 @@ class VoIPLink {
          * @param call The call
          */
         virtual std::string getCurrentVideoCodecName(Call *call) const = 0;
-        virtual std::string getCurrentAudioCodecName(Call *call) const = 0;
+        virtual std::string getCurrentAudioCodecNames(Call *call) const = 0;
 
         /**
          * Send a message to a call identified by its callid

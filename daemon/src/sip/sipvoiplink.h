@@ -252,7 +252,7 @@ class SIPVoIPLink : public VoIPLink {
          * @param c The call identifier
          */
         std::string getCurrentVideoCodecName(Call *c) const;
-        std::string getCurrentAudioCodecName(Call *c) const;
+        std::string getCurrentAudioCodecNames(Call *c) const;
 
         /**
          * Retrive useragent name from account

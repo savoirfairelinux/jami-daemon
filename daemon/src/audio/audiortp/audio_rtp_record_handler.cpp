@@ -109,6 +109,7 @@ AudioRtpRecord::AudioRtpRecord() :
 #endif
     , dtmfPayloadType_(101) // same as Asterisk
     , dead_(false)
+    , currentCodecIndex_(0)
 {}
 
 // Call from processData*
@@ -121,12 +122,39 @@ bool AudioRtpRecord::isDead()
 #endif
 }
 
+sfl::AudioCodec *
+AudioRtpRecord::getCurrentCodec() const
+{
+    if (audioCodecs_.empty() or currentCodecIndex_ >= audioCodecs_.size()) {
+        ERROR("No codec found");
+        return 0;
+    }
+    return audioCodecs_[currentCodecIndex_];
+}
+
 void
 AudioRtpRecord::deleteCodecs()
 {
     for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
         delete *i;
     audioCodecs_.clear();
+}
+
+bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
+{
+    for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
+        if (*i and (*i)->getPayloadType() == newPt) {
+            codecPayloadType_ = (*i)->getPayloadType();
+            codecSampleRate_ = (*i)->getClockRate();
+            codecFrameSize_ = (*i)->getFrameSize();
+            hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
+            currentCodecIndex_ = std::distance(audioCodecs_.begin(), i);
+            DEBUG("Switched payload type to %d", newPt);
+            return true;
+        }
+
+    ERROR("Could not switch payload types");
+    return false;
 }
 
 AudioRtpRecord::~AudioRtpRecord()
@@ -174,6 +202,8 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
     audioRtpRecord_.deleteCodecs();
     // Set varios codec info to reduce indirection
     audioRtpRecord_.audioCodecs_ = audioCodecs;
+
+    audioRtpRecord_.currentCodecIndex_ = 0;
     audioRtpRecord_.codecPayloadType_ = audioCodecs[0]->getPayloadType();
     audioRtpRecord_.codecSampleRate_ = audioCodecs[0]->getClockRate();
     audioRtpRecord_.codecFrameSize_ = audioCodecs[0]->getFrameSize();
@@ -273,13 +303,9 @@ int AudioRtpRecordHandler::processDataEncode()
 
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
-        if (audioRtpRecord_.audioCodecs_.empty()) {
-            ERROR("Audio codecs already destroyed");
-            return 0;
-        }
-        RETURN_IF_NULL(audioRtpRecord_.audioCodecs_[0], 0, "Audio codec already destroyed");
+        RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
-        return audioRtpRecord_.audioCodecs_[0]->encode(micDataEncoded, out, getCodecFrameSize());
+        return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out, getCodecFrameSize());
     }
 }
 #undef RETURN_IF_NULL
@@ -291,27 +317,24 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     if (audioRtpRecord_.isDead())
         return;
     if (audioRtpRecord_.codecPayloadType_ != payloadType) {
-        if (!warningInterval_) {
-            warningInterval_ = 250;
-            WARN("Invalid payload type %d, expected %d", payloadType, audioRtpRecord_.codecPayloadType_);
-            WARN("We have %u codecs total", audioRtpRecord_.audioCodecs_.size());
+        const bool switched = audioRtpRecord_.tryToSwitchPayloadTypes(payloadType);
+        if (not switched) {
+            if (!warningInterval_) {
+                warningInterval_ = 250;
+                WARN("Invalid payload type %d, expected %d", payloadType, audioRtpRecord_.codecPayloadType_);
+            }
+            warningInterval_--;
+            return;
         }
-        warningInterval_--;
-        return;
     }
 
     int inSamples = 0;
     size = std::min(size, audioRtpRecord_.decData_.size());
     SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
-        ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
-        if (audioRtpRecord_.audioCodecs_.empty()) {
-            ERROR("Audio codecs already destroyed");
-            return;
-        }
-        RETURN_IF_NULL(audioRtpRecord_.audioCodecs_[0], "Audio codecs already destroyed");
+        RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
-        inSamples = audioRtpRecord_.audioCodecs_[0]->decode(spkrDataDecoded, spkrData, size);
+        inSamples = audioRtpRecord_.getCurrentCodec()->decode(spkrDataDecoded, spkrData, size);
     }
 
 #if HAVE_SPEEXDSP
@@ -354,6 +377,7 @@ void AudioRtpRecord::fadeInDecodedData(size_t size)
     if (fadeFactor_ >= 1.0 or size > decData_.size())
         return;
 
+    // FIXME: this takes a lot more cycles than a plain old loop
     std::transform(decData_.begin(), decData_.begin() + size, decData_.begin(),
             std::bind1st(std::multiplies<double>(), fadeFactor_));
 
@@ -361,4 +385,23 @@ void AudioRtpRecord::fadeInDecodedData(size_t size)
     const double FADEIN_STEP_SIZE = 4.0;
     fadeFactor_ *= FADEIN_STEP_SIZE;
 }
+
+bool
+AudioRtpRecordHandler::codecsDiffer(const std::vector<AudioCodec*> &codecs) const
+{
+    const std::vector<AudioCodec*> &current = audioRtpRecord_.audioCodecs_;
+    if (codecs.size() != current.size())
+        return true;
+    for (std::vector<AudioCodec*>::const_iterator i = codecs.begin(); i != codecs.end(); ++i) {
+        if (*i) {
+            bool matched = false;
+            for (std::vector<AudioCodec*>::const_iterator j = current.begin(); !matched and j != current.end(); ++j)
+                matched = (*i)->getPayloadType() == (*j)->getPayloadType();
+            if (not matched)
+                return true;
+        }
+    }
+    return false;
+}
+
 }
