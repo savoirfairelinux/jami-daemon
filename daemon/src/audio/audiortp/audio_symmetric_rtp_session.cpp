@@ -43,7 +43,7 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     , ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this, *this)
     , rtpThread_(*this)
-    , audiocodec_(0)
+    , audioCodecs_()
 {
     DEBUG("Setting new RTP session with destination %s:%d",
             call_.getLocalIp().c_str(), call_.getLocalAudioPort());
@@ -78,14 +78,14 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
     }
 }
 
-int AudioSymmetricRtpSession::startRtpThread(AudioCodec &audiocodec)
+int AudioSymmetricRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 {
     DEBUG("Starting main thread");
     if (isStarted_)
         return 0;
 
-    audiocodec_ = &audiocodec;
-    AudioRtpSession::startRtpThread(audiocodec);
+    audioCodecs_ = audioCodecs;
+    AudioRtpSession::startRtpThread(audioCodecs);
     return startSymmetricRtpThread();
 }
 }

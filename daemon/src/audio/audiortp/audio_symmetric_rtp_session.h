@@ -96,10 +96,10 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
                 NON_COPYABLE(AudioRtpThread);
                 AudioSymmetricRtpSession &rtpSession_;
         };
-        int startRtpThread(AudioCodec &audiocodec);
+        int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
 
         AudioRtpThread   rtpThread_ ;
-        sfl::AudioCodec* audiocodec_;
+        std::vector<sfl::AudioCodec*> audioCodecs_;
 };
 
 }

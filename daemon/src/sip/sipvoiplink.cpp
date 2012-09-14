@@ -341,7 +341,9 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         delete call;
         return PJ_FALSE;
     }
-    call->getAudioRtp().start(ac);
+    std::vector<sfl::AudioCodec *> audioCodecs;
+    audioCodecs.push_back(ac);
+    call->getAudioRtp().start(audioCodecs);
 
     pjsip_dialog *dialog = 0;
 
@@ -807,12 +809,15 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
         delete call;
         throw VoipLinkException("Could not instantiate codec");
     }
+    std::vector<sfl::AudioCodec *> audioCodecs;
+    audioCodecs.push_back(ac);
+
     // Audio Rtp Session must be initialized before creating initial offer in SDP session
     // since SDES require crypto attribute.
     call->getAudioRtp().initConfig();
     call->getAudioRtp().initSession();
     call->getAudioRtp().initLocalCryptoInfo();
-    call->getAudioRtp().start(ac);
+    call->getAudioRtp().start(audioCodecs);
 
     // Building the local SDP offer
     Sdp *localSDP = call->getLocalSDP();
@@ -865,12 +870,14 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
         delete call;
         throw VoipLinkException("Could not instantiate codec for early media");
     }
+    std::vector<sfl::AudioCodec *> audioCodecs;
+    audioCodecs.push_back(ac);
 
     try {
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
         call->getAudioRtp().initLocalCryptoInfo();
-        call->getAudioRtp().start(ac);
+        call->getAudioRtp().start(audioCodecs);
     } catch (...) {
         delete call;
         throw VoipLinkException("Could not start rtp session for early media");
@@ -1034,11 +1041,14 @@ SIPVoIPLink::offhold(const std::string& id)
         if (ac == NULL)
             throw VoipLinkException("Could not instantiate codec");
 
+        std::vector<sfl::AudioCodec *> audioCodecs;
+        audioCodecs.push_back(ac);
+
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
         call->getAudioRtp().restoreLocalContext();
         call->getAudioRtp().initLocalCryptoInfoOnOffHold();
-        call->getAudioRtp().start(ac);
+        call->getAudioRtp().start(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
     } catch (...) {
@@ -1756,7 +1766,9 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)
                 throw std::runtime_error("Could not instantiate codec");
-            call->getAudioRtp().updateSessionMedia(ac);
+            std::vector<AudioCodec*> audioCodecs;
+            audioCodecs.push_back(ac);
+            call->getAudioRtp().updateSessionMedia(audioCodecs);
         }
     } catch (const SdpException &e) {
         ERROR("%s", e.what());

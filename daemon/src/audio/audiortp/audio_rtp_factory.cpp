@@ -120,12 +120,12 @@ void AudioRtpFactory::initSession()
         rtpSession_ = new AudioSymmetricRtpSession(*ca_);
 }
 
-void sfl::AudioRtpFactory::start(AudioCodec* audiocodec)
+void sfl::AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
-    if (rtpSession_->startRtpThread(*audiocodec) != 0)
+    if (rtpSession_->startRtpThread(audioCodecs) != 0)
         throw AudioRtpFactoryException("Failed to start AudioRtpSession thread");
 }
 
@@ -145,12 +145,12 @@ int AudioRtpFactory::getSessionMedia()
     return rtpSession_->getCodecPayloadType();
 }
 
-void AudioRtpFactory::updateSessionMedia(AudioCodec *audiocodec)
+void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("rtpSession_ was NULL when trying to update IP address");
 
-    rtpSession_->updateSessionMedia(*audiocodec);
+    rtpSession_->updateSessionMedia(audioCodecs);
 }
 
 void AudioRtpFactory::updateDestinationIpAddress()

@@ -72,12 +72,13 @@ class AudioRtpRecord {
     public:
         AudioRtpRecord();
         ~AudioRtpRecord();
+        void deleteCodecs();
         std::string callId_;
         int codecSampleRate_;
         std::list<DTMFEvent> dtmfQueue_;
 
     private:
-        AudioCodec *audioCodec_;
+        std::vector<AudioCodec*> audioCodecs_;
         ost::Mutex audioCodecMutex_;
         int codecPayloadType_;
         bool hasDynamicPayloadType_;
@@ -122,10 +123,10 @@ class AudioRtpRecordHandler {
         /**
          *  Set rtp media for this session
          */
-        void setRtpMedia(AudioCodec* audioCodec);
+        void setRtpMedia(const std::vector<AudioCodec*> &audioCodec);
 
         AudioCodec *getAudioCodec() const {
-            return audioRtpRecord_.audioCodec_;
+            return audioRtpRecord_.audioCodecs_[0];
         }
 
         int getCodecPayloadType() const {

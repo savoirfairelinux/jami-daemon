@@ -61,11 +61,11 @@ AudioRtpSession::~AudioRtpSession()
     queue_.disableStack();
 }
 
-void AudioRtpSession::updateSessionMedia(AudioCodec &audioCodec)
+void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     int lastSamplingRate = audioRtpRecord_.codecSampleRate_;
 
-    setSessionMedia(audioCodec);
+    setSessionMedia(audioCodecs);
 
     Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 
@@ -78,9 +78,9 @@ void AudioRtpSession::updateSessionMedia(AudioCodec &audioCodec)
 #endif
 }
 
-void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
+void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    setRtpMedia(&audioCodec);
+    setRtpMedia(audioCodecs);
 
     // G722 requires timestamp to be incremented at 8kHz
     const ost::PayloadType payloadType = getCodecPayloadType();
@@ -231,7 +231,7 @@ void AudioRtpSession::updateDestinationIpAddress()
 }
 
 
-int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
+int AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (isStarted_)
         return 0;
@@ -240,7 +240,7 @@ int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
 
     isStarted_ = true;
     setSessionTimeouts();
-    setSessionMedia(audiocodec);
+    setSessionMedia(audioCodecs);
     initBuffers();
 #if HAVE_SPEEXDSP
     initNoiseSuppress();

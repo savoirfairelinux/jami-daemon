@@ -90,7 +90,7 @@ AudioRtpRecord::AudioRtpRecord() :
       callId_("")
     , codecSampleRate_(0)
     , dtmfQueue_()
-    , audioCodec_(0)
+    , audioCodecs_()
     , audioCodecMutex_()
     , codecPayloadType_(0)
     , hasDynamicPayloadType_(false)
@@ -121,6 +121,14 @@ bool AudioRtpRecord::isDead()
 #endif
 }
 
+void
+AudioRtpRecord::deleteCodecs()
+{
+    for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
+        delete *i;
+    audioCodecs_.clear();
+}
+
 AudioRtpRecord::~AudioRtpRecord()
 {
     dead_ = true;
@@ -135,8 +143,7 @@ AudioRtpRecord::~AudioRtpRecord()
     converterDecode_ = 0;
     {
         ost::MutexLock lock(audioCodecMutex_);
-        delete audioCodec_;
-        audioCodec_ = 0;
+        deleteCodecs();
     }
 #if HAVE_SPEEXDSP
     {
@@ -160,17 +167,17 @@ AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
 
 AudioRtpRecordHandler::~AudioRtpRecordHandler() {}
 
-void AudioRtpRecordHandler::setRtpMedia(AudioCodec *audioCodec)
+void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
 
-    delete audioRtpRecord_.audioCodec_;
+    audioRtpRecord_.deleteCodecs();
     // Set varios codec info to reduce indirection
-    audioRtpRecord_.audioCodec_ = audioCodec;
-    audioRtpRecord_.codecPayloadType_ = audioCodec->getPayloadType();
-    audioRtpRecord_.codecSampleRate_ = audioCodec->getClockRate();
-    audioRtpRecord_.codecFrameSize_ = audioCodec->getFrameSize();
-    audioRtpRecord_.hasDynamicPayloadType_ = audioCodec->hasDynamicPayload();
+    audioRtpRecord_.audioCodecs_ = audioCodecs;
+    audioRtpRecord_.codecPayloadType_ = audioCodecs[0]->getPayloadType();
+    audioRtpRecord_.codecSampleRate_ = audioCodecs[0]->getClockRate();
+    audioRtpRecord_.codecFrameSize_ = audioCodecs[0]->getFrameSize();
+    audioRtpRecord_.hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
 }
 
 void AudioRtpRecordHandler::initBuffers()
@@ -266,9 +273,13 @@ int AudioRtpRecordHandler::processDataEncode()
 
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.audioCodec_, 0, "Audio codec already destroyed");
+        if (audioRtpRecord_.audioCodecs_.empty()) {
+            ERROR("Audio codecs already destroyed");
+            return 0;
+        }
+        RETURN_IF_NULL(audioRtpRecord_.audioCodecs_[0], 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
-        return audioRtpRecord_.audioCodec_->encode(micDataEncoded, out, getCodecFrameSize());
+        return audioRtpRecord_.audioCodecs_[0]->encode(micDataEncoded, out, getCodecFrameSize());
     }
 }
 #undef RETURN_IF_NULL
@@ -283,6 +294,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         if (!warningInterval_) {
             warningInterval_ = 250;
             WARN("Invalid payload type %d, expected %d", payloadType, audioRtpRecord_.codecPayloadType_);
+            WARN("We have %u codecs total", audioRtpRecord_.audioCodecs_.size());
         }
         warningInterval_--;
         return;
@@ -293,9 +305,13 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
         ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
-        RETURN_IF_NULL(audioRtpRecord_.audioCodec_, "Audio codec already destroyed");
+        if (audioRtpRecord_.audioCodecs_.empty()) {
+            ERROR("Audio codecs already destroyed");
+            return;
+        }
+        RETURN_IF_NULL(audioRtpRecord_.audioCodecs_[0], "Audio codecs already destroyed");
         // Return the size of data in samples
-        inSamples = audioRtpRecord_.audioCodec_->decode(spkrDataDecoded, spkrData, size);
+        inSamples = audioRtpRecord_.audioCodecs_[0]->decode(spkrDataDecoded, spkrData, size);
     }
 
 #if HAVE_SPEEXDSP

@@ -57,9 +57,9 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue, ost::Thread &thread);
         virtual ~AudioRtpSession();
 
-        void updateSessionMedia(AudioCodec &audioCodec);
+        void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
-        virtual int startRtpThread(AudioCodec&);
+        virtual int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Used mostly when receiving a reinvite
@@ -80,7 +80,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         /**
          * Set the audio codec for this RTP session
          */
-        void setSessionMedia(AudioCodec &codec);
+        void setSessionMedia(const std::vector<AudioCodec*> &codec);
 
 
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);

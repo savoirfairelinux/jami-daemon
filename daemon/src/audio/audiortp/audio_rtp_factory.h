@@ -81,7 +81,7 @@ class AudioRtpFactory {
          * file. initAudioSymmetricRtpSession must have been called prior to that.
          * @param None
          */
-        void start(AudioCodec*);
+        void start(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Stop the audio rtp thread of the type specified in the configuration
@@ -98,7 +98,7 @@ class AudioRtpFactory {
         /**
          * Dynamically update session media
          */
-        void updateSessionMedia(AudioCodec *);
+        void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Update current RTP destination address with one stored in call

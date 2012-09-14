@@ -96,7 +96,7 @@ class AudioZrtpSession :
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
-        int startRtpThread(AudioCodec &audiocodec);
+        int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
         virtual int getIncrementForDTMF() const;
 
         AudioZrtpThread rtpThread_;
