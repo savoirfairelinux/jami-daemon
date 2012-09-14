@@ -95,6 +95,10 @@
 
 extern JavaVM *gJavaVM;
 static jobject gManagerObject, gDataObject;
+extern struct callmanager_callback wrapper_callback_struct;
+extern void on_incoming_call_wrapper (const std::string& accountID,
+                               const std::string& callID,
+                               const std::string& from);
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
@@ -1644,7 +1648,8 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 #if HAVE_DBUS
     dbus_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
 #else
-	incoming_call(accountId, callID, call.getDisplayName() + " " + from);
+	//incoming_call(accountId, callID, call.getDisplayName() + " " + from);
+	on_incoming_call_wrapper(accountId, callID, call.getDisplayName() + " " + from);
 #endif
 }
 

@@ -74,6 +74,7 @@ LOCAL_SRC_FILES := \
 		dbus/callmanager_wrap.cpp \
     		dbus/instance.cpp  \
     		dbus/dbusmanager.cpp \
+		android-jni/callmanagerJNI.cpp \
 		history/historyitem.cpp \
 		history/history.cpp \
 		history/historynamecache.cpp \
