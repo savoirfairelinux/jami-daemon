@@ -377,9 +377,8 @@ void AudioRtpRecord::fadeInDecodedData(size_t size)
     if (fadeFactor_ >= 1.0 or size > decData_.size())
         return;
 
-    // FIXME: this takes a lot more cycles than a plain old loop
-    std::transform(decData_.begin(), decData_.begin() + size, decData_.begin(),
-            std::bind1st(std::multiplies<double>(), fadeFactor_));
+    for (size_t i = 0; i < size; ++i)
+        decData_[i] *= fadeFactor_;
 
     // Factor used to increase volume in fade in
     const double FADEIN_STEP_SIZE = 4.0;
