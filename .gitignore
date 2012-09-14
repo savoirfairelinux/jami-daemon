@@ -78,4 +78,5 @@ nbproject
 
 # JNI generated files
 *_wrap.cpp
+*_wrap.h
 *_loader.c
