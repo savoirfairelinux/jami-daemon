@@ -79,6 +79,11 @@ namespace {
                 return true;
         return false;
     }
+
+    bool hasCodec(const std::vector<std::string> &codecs, const std::string &codec)
+    {
+        return std::find(codecs.begin(), codecs.end(), codec) != codecs.end();
+    }
 }
 
 
@@ -91,18 +96,18 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 
         for (unsigned fmt = 0; fmt < current->desc.fmt_count; ++fmt) {
             static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
-            pjmedia_sdp_attr *attribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, NULL);
+            pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, &current->desc.fmt[fmt]);
 
-            if (!attribute) {
+            if (!rtpMapAttribute) {
                 ERROR("Could not find rtpmap attribute");
                 break;
             }
 
             pjmedia_sdp_rtpmap *rtpmap;
-            pjmedia_sdp_attr_to_rtpmap(memPool_, attribute, &rtpmap);
+            pjmedia_sdp_attr_to_rtpmap(memPool_, rtpMapAttribute, &rtpmap);
 
             if (!pj_stricmp2(&current->desc.media, "audio")) {
-                const int pt = pj_strtoul(&rtpmap->pt);
+                const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
                 if (not hasPayload(sessionAudioMedia_, pt)) {
                     sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
                     if (codec)
@@ -110,8 +115,11 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
                     else
                         ERROR("Could not get codec for payload type %lu", pt);
                 }
-            } else if (!pj_stricmp2(&current->desc.media, "video"))
-                sessionVideoMedia_.push_back(string(rtpmap->enc_name.ptr, rtpmap->enc_name.slen));
+            } else if (!pj_stricmp2(&current->desc.media, "video")) {
+                const string codec(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
+                if (not hasCodec(sessionVideoMedia_, codec))
+                    sessionVideoMedia_.push_back(codec);
+            }
         }
     }
 }
@@ -119,41 +127,35 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 
 void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 {
-    activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
-
     if (!sdp) {
-        ERROR("Remote sdp is NULL while parsing telephone event attribute");
+        ERROR("Remote sdp is NULL");
         return;
     }
 
+    activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
+
+    bool parsedTelelphoneEvent = false;
     for (unsigned i = 0; i < sdp->media_count; i++) {
         pjmedia_sdp_media *r_media = sdp->media[i];
         if (!pj_stricmp2(&r_media->desc.media, "audio")) {
-            static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
-            pjmedia_sdp_attr *telephoneEvent = pjmedia_sdp_attr_find(r_media->attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
 
-            if (telephoneEvent != NULL) {
-                pjmedia_sdp_rtpmap *rtpmap;
-                pjmedia_sdp_attr_to_rtpmap(memPool_, telephoneEvent, &rtpmap);
-                telephoneEventPayload_ = pj_strtoul(&rtpmap->pt);
+            if (not parsedTelelphoneEvent) {
+                static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
+                pjmedia_sdp_attr *telephoneEvent = pjmedia_sdp_attr_find(r_media->attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
+
+                if (telephoneEvent != NULL) {
+                    pjmedia_sdp_rtpmap *rtpmap;
+                    pjmedia_sdp_attr_to_rtpmap(memPool_, telephoneEvent, &rtpmap);
+                    telephoneEventPayload_ = pj_strtoul(&rtpmap->pt);
+                    parsedTelelphoneEvent = true;
+                }
             }
 
             // add audio codecs from remote as needed
             for (unsigned fmt = 0; fmt < r_media->desc.fmt_count; ++fmt) {
 
-                static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
-                pjmedia_sdp_attr *rtpMapAttr = pjmedia_sdp_media_find_attr(r_media, &STR_RTPMAP, NULL);
-
-                if (!rtpMapAttr) {
-                    ERROR("Could not find rtpmap attribute");
-                    continue;
-                }
-
-                pjmedia_sdp_rtpmap *rtpmap;
-                pjmedia_sdp_attr_to_rtpmap(memPool_, rtpMapAttr, &rtpmap);
-
-                const int pt = pj_strtoul(&rtpmap->pt);
-                if (not hasPayload(sessionAudioMedia_, pt)) {
+                const unsigned long pt = pj_strtoul(&r_media->desc.fmt[fmt]);
+                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMedia_, pt)) {
                     sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
                     if (codec) {
                         DEBUG("Adding codec with new payload type %d", pt);
@@ -164,7 +166,7 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
             }
         }
     }
-    DEBUG("Using %u audio codecs total", sessionAudioMedia_.size());
+    DEBUG("Ready to decode %u audio codecs", sessionAudioMedia_.size());
 }
 
 string Sdp::getSessionVideoCodec() const
