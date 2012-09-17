@@ -150,8 +150,6 @@ void VideoReceiveThread::setup()
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
-    if (not sdpFilename_.empty() and remove(sdpFilename_.c_str()) != 0)
-        ERROR("Could not remove %s", sdpFilename_.c_str());
     EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
     DEBUG("Finding stream info");
@@ -314,6 +312,8 @@ VideoReceiveThread::~VideoReceiveThread()
         avformat_close_input(&inputCtx_);
 #endif
     }
+    if (not sdpFilename_.empty() and remove(sdpFilename_.c_str()) != 0)
+        ERROR("Could not remove %s", sdpFilename_.c_str());
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string &))
