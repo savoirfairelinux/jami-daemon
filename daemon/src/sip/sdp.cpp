@@ -478,60 +478,39 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
 // SDP and deal with the streams properly at that level
 string Sdp::getIncomingVideoDescription() const
 {
-    stringstream ss;
-    ss << "v=0" << std::endl;
-    ss << "o=- 0 0 IN IP4 " << localIpAddr_ << std::endl;
-    ss << "s=" << PACKAGE_NAME << std::endl;
-    ss << "c=IN IP4 " << remoteIpAddr_ << std::endl;
-    ss << "t=0 0" << std::endl;
-
-    std::string videoLine(getLineFromSession(activeLocalSession_, "m=video"));
-    ss << videoLine << std::endl;
-
-    int payload_num;
-    if (sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload_num) != 1)
-        payload_num = 0;
-
-    std::ostringstream s;
-    s << "a=rtpmap:";
-    s << payload_num;
-
-    std::string vCodecLine(getLineFromSession(activeLocalSession_, s.str()));
-    ss << vCodecLine << std::endl;
-
-    std::string profileLevelID;
-    getProfileLevelID(activeLocalSession_, profileLevelID, payload_num);
-    if (not profileLevelID.empty())
-        ss << "a=fmtp:" << payload_num << " " << profileLevelID << std::endl;
-
-    unsigned videoIdx = 0;
-    while (videoIdx < activeLocalSession_->media_count and
-           pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0)
-        ++videoIdx;
-
-    if (videoIdx == activeLocalSession_->media_count) {
-        DEBUG("No video present in local session");
+    pjmedia_sdp_session *videoSession = pjmedia_sdp_session_clone(memPool_, activeLocalSession_);
+    if (!videoSession) {
+        ERROR("Could not clone SDP");
         return "";
     }
 
-    // get direction string
-    static const pj_str_t DIRECTIONS[] = {
-        {(char*) "sendrecv", 8},
-        {(char*) "sendonly", 8},
-        {(char*) "recvonly", 8},
-        {(char*) "inactive", 8},
-        {NULL, 0}
-    };
-    pjmedia_sdp_attr *direction = NULL;
+    // deactivate non-video media
+    bool hasVideo = false;
+    for (unsigned i = 0; i < videoSession->media_count; i++)
+        if (pj_stricmp2(&videoSession->media[i]->desc.media, "video")) {
+            if (pjmedia_sdp_media_deactivate(memPool_, videoSession->media[i]) != PJ_SUCCESS)
+                ERROR("Could not deactivate media");
+        } else {
+            hasVideo = true;
+        }
 
-    const pj_str_t *guess = DIRECTIONS;
-    while (!direction and guess->ptr)
-        direction = pjmedia_sdp_media_find_attr(activeLocalSession_->media[videoIdx], guess++, NULL);
+    if (not hasVideo) {
+        DEBUG("No video present in active local SDP");
+        return "";
+    }
 
-    if (direction)
-        ss << "a=" + std::string(direction->name.ptr, direction->name.slen) << std::endl;
+    char buffer[4096];
+    size_t size = pjmedia_sdp_print(videoSession, buffer, sizeof(buffer));
+    string sessionStr(buffer, std::min(size, sizeof(buffer)));
 
-    return ss.str();
+    // FIXME: find a way to get rid of the "m=audio..." line with PJSIP
+
+    const size_t audioPos = sessionStr.find("m=audio");
+    const size_t newline2 = sessionStr.find('\n', audioPos);
+    const size_t newline1 = sessionStr.rfind('\n', audioPos);
+
+    sessionStr.erase(newline1, newline2 - newline1);
+    return sessionStr;
 }
 
 std::string Sdp::getOutgoingVideoCodec() const

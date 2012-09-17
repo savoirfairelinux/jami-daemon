@@ -147,13 +147,12 @@ void VideoReceiveThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
-    DEBUG("Opening input");
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
-    EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
     if (not sdpFilename_.empty() and remove(sdpFilename_.c_str()) != 0)
         ERROR("Could not remove %s", sdpFilename_.c_str());
+    EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
 
     DEBUG("Finding stream info");
     if (requestKeyFrameCallback_)
@@ -167,7 +166,6 @@ void VideoReceiveThread::setup()
     EXIT_IF_FAIL(ret >= 0, "Could not find stream info!");
 
     // find the first video stream from the input
-    streamIndex_ = -1;
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
@@ -309,7 +307,7 @@ VideoReceiveThread::~VideoReceiveThread()
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
-    if (inputCtx_) {
+    if (streamIndex_ != -1 and inputCtx_) {
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
         av_close_input_file(inputCtx_);
 #else
