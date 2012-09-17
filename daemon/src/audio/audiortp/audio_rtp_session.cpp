@@ -84,7 +84,7 @@ void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodec
     setRtpMedia(audioCodecs);
 
     // G722 requires timestamp to be incremented at 8kHz
-    const ost::PayloadType payloadType = getCodecPayloadType();
+    const ost::PayloadType payloadType = getEncoderPayloadType();
     if (payloadType == ost::sptG722) {
         const int G722_RTP_TIME_INCREMENT = 160;
         timestampIncrement_ = G722_RTP_TIME_INCREMENT;
@@ -134,7 +134,7 @@ void AudioRtpSession::sendDtmfEvent()
     }
 
     // restore the payload to audio
-    const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getCodecPayloadType()));
+    const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getEncoderPayloadType()));
     queue_.setPayloadFormat(pf);
 
     // decrease length remaining to process for this event

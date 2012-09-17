@@ -82,7 +82,10 @@ class AudioRtpRecord {
     private:
         std::vector<AudioCodec*> audioCodecs_;
         ost::Mutex audioCodecMutex_;
-        int codecPayloadType_;
+        // these will have the same value unless we are sending
+        // a different codec than we are receiving (asymmetric RTP)
+        int encoderPayloadType_;
+        int decoderPayloadType_;
         bool hasDynamicPayloadType_;
         std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> decData_;
 // FIXME: resampledData should be resized as needed
@@ -132,8 +135,8 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.audioCodecs_[0];
         }
 
-        int getCodecPayloadType() const {
-            return audioRtpRecord_.codecPayloadType_;
+        int getEncoderPayloadType() const {
+            return audioRtpRecord_.encoderPayloadType_;
         }
 
         int getCodecSampleRate() const {

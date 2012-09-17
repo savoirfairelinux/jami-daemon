@@ -92,7 +92,8 @@ AudioRtpRecord::AudioRtpRecord() :
     , dtmfQueue_()
     , audioCodecs_()
     , audioCodecMutex_()
-    , codecPayloadType_(0)
+    , encoderPayloadType_(0)
+    , decoderPayloadType_(0)
     , hasDynamicPayloadType_(false)
     , decData_()     // std::tr1::arrays will be 0-initialized
     , resampledData_()
@@ -144,7 +145,7 @@ bool AudioRtpRecord::tryToSwitchPayloadTypes(int newPt)
 {
     for (std::vector<AudioCodec *>::iterator i = audioCodecs_.begin(); i != audioCodecs_.end(); ++i)
         if (*i and (*i)->getPayloadType() == newPt) {
-            codecPayloadType_ = (*i)->getPayloadType();
+            decoderPayloadType_ = (*i)->getPayloadType();
             codecSampleRate_ = (*i)->getClockRate();
             codecFrameSize_ = (*i)->getFrameSize();
             hasDynamicPayloadType_ = (*i)->hasDynamicPayload();
@@ -204,7 +205,7 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
     audioRtpRecord_.audioCodecs_ = audioCodecs;
 
     audioRtpRecord_.currentCodecIndex_ = 0;
-    audioRtpRecord_.codecPayloadType_ = audioCodecs[0]->getPayloadType();
+    audioRtpRecord_.encoderPayloadType_ = audioRtpRecord_.decoderPayloadType_ = audioCodecs[0]->getPayloadType();
     audioRtpRecord_.codecSampleRate_ = audioCodecs[0]->getClockRate();
     audioRtpRecord_.codecFrameSize_ = audioCodecs[0]->getFrameSize();
     audioRtpRecord_.hasDynamicPayloadType_ = audioCodecs[0]->hasDynamicPayload();
@@ -316,12 +317,12 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 {
     if (audioRtpRecord_.isDead())
         return;
-    if (audioRtpRecord_.codecPayloadType_ != payloadType) {
+    if (audioRtpRecord_.decoderPayloadType_ != payloadType) {
         const bool switched = audioRtpRecord_.tryToSwitchPayloadTypes(payloadType);
         if (not switched) {
             if (!warningInterval_) {
                 warningInterval_ = 250;
-                WARN("Invalid payload type %d, expected %d", payloadType, audioRtpRecord_.codecPayloadType_);
+                WARN("Invalid payload type %d, expected %d", payloadType, audioRtpRecord_.decoderPayloadType_);
             }
             warningInterval_--;
             return;
