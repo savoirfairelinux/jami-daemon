@@ -333,6 +333,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     size = std::min(size, audioRtpRecord_.decData_.size());
     SFLDataFormat *spkrDataDecoded = audioRtpRecord_.decData_.data();
     {
+        ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
         inSamples = audioRtpRecord_.getCurrentCodec()->decode(spkrDataDecoded, spkrData, size);
