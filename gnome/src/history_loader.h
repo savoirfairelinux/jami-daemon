@@ -36,4 +36,20 @@
 void
 lazy_load_items(calltab_t *tab);
 
+typedef struct
+{
+    guint load_state;
+
+    GtkTreeStore *tree_store;
+    GtkWidget *tree_view;
+
+    gint n_items;
+    gint n_loaded;
+    GPtrArray *items;
+    calltab_t *tab;
+    guint load_id;
+    gboolean dbus_called;
+    gboolean dbus_finished;
+} IdleData;
+
 #endif

@@ -46,20 +46,6 @@ enum {
     STATE_FINISHED  /* finish state - not used */
 };
 
-typedef struct
-{
-    guint load_state;
-
-    GtkTreeStore *tree_store;
-    GtkWidget *tree_view;
-
-    gint n_items;
-    gint n_loaded;
-    GPtrArray *items;
-    calltab_t *tab;
-    guint load_id;
-} IdleData;
-
 static void
 create_callable_from_entry(calltab_t *history_tab, GHashTable *entry)
 {
@@ -78,13 +64,22 @@ load_items(gpointer data)
     /* make sure we're in the right state */
     g_assert(id->load_state == STATE_STARTED || id->load_state == STATE_LOADING);
 
-    /* no items */
+    /* empty list */
     if (!id->items) {
-        id->items = dbus_get_history();
-        if (!id->items || id->items->len == 0) {
-            id->load_state = STATE_COMPLETE;
-            return FALSE;
-        }
+        /* we either have to call the asynchronous dbus_get_history, or if it's
+         * been called but has not finished yet, try again later */
+        if (!id->dbus_called) {
+            dbus_get_history(id);
+            id->dbus_called = TRUE;
+            return TRUE;
+        } else if (!id->dbus_finished)
+            return TRUE;
+    }
+
+    /* We made the call but the list was empty, so we're done */
+    if (!id->items || id->items->len == 0) {
+        id->load_state = STATE_COMPLETE;
+        return FALSE;
     }
 
     /* is this the first run */
@@ -138,6 +133,8 @@ lazy_load_items(calltab_t *tab)
     data->n_loaded = 0;
     data->items = NULL;
     data->tab = tab;
+    data->dbus_called = FALSE;
+    data->dbus_finished = FALSE;
     data->load_id = g_idle_add_full(G_PRIORITY_HIGH_IDLE,
                                     load_items,
                                     data,

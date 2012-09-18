@@ -40,6 +40,7 @@
 #include "conferencelist.h"
 #include "conference_obj.h"
 #include "sflnotify.h"
+#include "history_loader.h"
 
 /** @file dbus.h
   * @brief General DBus functions wrappers.
@@ -527,7 +528,7 @@ void dbus_set_accounts_order(const gchar *order);
  * Get a the history
  * @return The PtrArray of history entries
  */
-GPtrArray *dbus_get_history(void);
+void dbus_get_history(IdleData *id);
 
 void dbus_clear_history(void);
 

@@ -1922,15 +1922,19 @@ dbus_set_accounts_order(const gchar *order)
     check_error(error);
 }
 
-GPtrArray *
-dbus_get_history(void)
+static void
+get_history_async_cb(DBusGProxy *proxy UNUSED, GPtrArray *items, GError *error, gpointer userdata)
 {
-    GError *error = NULL;
-    GPtrArray *entries = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_history(config_proxy, &entries, &error);
+    IdleData *id = userdata;
     check_error(error);
+    id->items = items;
+    id->dbus_finished = TRUE;
+}
 
-    return entries;
+void
+dbus_get_history(IdleData *id)
+{
+    org_sflphone_SFLphone_ConfigurationManager_get_history_async(config_proxy, get_history_async_cb, id);
 }
 
 void
