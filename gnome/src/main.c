@@ -142,11 +142,6 @@ main(int argc, char *argv[])
 
     create_main_window(settings);
 
-    if (show_status && g_settings_get_boolean(settings, "start-hidden")) {
-        gtk_widget_hide(GTK_WIDGET(get_main_window()));
-        set_minimized(TRUE);
-    }
-
     status_bar_display_account();
 
     sflphone_fill_history_lazy();
