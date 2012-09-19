@@ -62,10 +62,10 @@ SIPCall::~SIPCall()
     pj_pool_release(pool_);
 }
 
-void SIPCall::answer()
+void SIPCall::answer(bool needsSdp)
 {
     pjsip_tx_data *tdata;
-    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
+    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, needsSdp ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)

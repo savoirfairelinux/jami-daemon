@@ -278,7 +278,7 @@ IAXVoIPLink::answer(Call *call)
     Manager::instance().addStream(call->getCallId());
 
     mutexIAX_.enter();
-    call->answer();
+    static_cast<IAXCall*>(call)->answer();
     mutexIAX_.leave();
 
     call->setState(Call::ACTIVE);

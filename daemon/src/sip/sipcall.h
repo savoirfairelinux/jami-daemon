@@ -100,6 +100,10 @@ class SIPCall : public Call {
             return pool_;
         }
 
+        // @param needsSdp: true if the invite was received without an SDP
+        // and thus one must been added, false otherwise
+        void answer(bool needsSdp);
+
         /**
          * The invite session to be reused in case of transfer
          */
@@ -113,8 +117,6 @@ class SIPCall : public Call {
         // override of Call::createHistoryEntry
         std::map<std::string, std::string>
         createHistoryEntry() const;
-
-        virtual void answer();
 
         NON_COPYABLE(SIPCall);
 

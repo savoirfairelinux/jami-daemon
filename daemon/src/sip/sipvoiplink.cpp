@@ -902,7 +902,17 @@ SIPVoIPLink::answer(Call *call)
 {
     if (!call)
         return;
-    call->answer();
+
+    SIPCall *sipCall = static_cast<SIPCall*>(call);
+    bool needsSdp = false;
+    if (!sipCall->inv->neg) {
+        WARN("Negotiator is NULL, we've received an INVITE without an SDP");
+        pjmedia_sdp_session *dummy;
+        sdp_create_offer_cb(sipCall->inv, &dummy);
+        needsSdp = true;
+    }
+
+    sipCall->answer(needsSdp);
 }
 
 namespace {
@@ -946,8 +956,15 @@ SIPVoIPLink::hangup(const std::string& id)
 
     pjsip_tx_data *tdata = NULL;
 
+    const int status =
+        inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
+                      PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
+        inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE :
+        0;
+
+
     // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv, 0, NULL, &tdata) != PJ_SUCCESS || !tdata)
+    if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
     // add contact header
