@@ -78,6 +78,11 @@ static gboolean check_error(GError *error)
 {
     if (error) {
         ERROR("%s", error->message);
+        if (g_error_matches(error, DBUS_GERROR, DBUS_GERROR_SERVICE_UNKNOWN)) {
+            g_error_free(error);
+            ERROR("daemon crashed, quitting rudely...");
+            exit(EXIT_FAILURE);
+        }
         g_error_free(error);
         return TRUE;
     }
