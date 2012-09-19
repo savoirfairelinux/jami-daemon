@@ -127,15 +127,9 @@ static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *ev
  * Minimize the main window.
  */
 static gboolean
-on_delete(GtkWidget * widget UNUSED, GSettings *settings)
+on_delete(GtkWidget * widget UNUSED)
 {
-    if (g_settings_get_boolean(settings, "show-status-icon")) {
-        gtk_widget_hide(get_main_window());
-        set_minimized(TRUE);
-    } else {
-        sflphone_quit(FALSE);
-    }
-
+    sflphone_quit(FALSE);
     return TRUE;
 }
 
@@ -245,7 +239,7 @@ create_main_window(GSettings *settings)
      * stop the main GTK loop
      */
     g_signal_connect(G_OBJECT(window), "delete-event",
-                     G_CALLBACK(on_delete), settings);
+                     G_CALLBACK(on_delete), NULL);
 
     g_signal_connect(G_OBJECT(window), "key-release-event",
                      G_CALLBACK(on_key_released), settings);
