@@ -1,7 +1,7 @@
 #include "logger.h"
 
 JavaVM *gJavaVM;
-const char *ksflphoneservicePath = "com/savoirfairelinux/sflphone/client/sflphoneserviceJNI";
+const char *ksflphoneservicePath = "com/savoirfairelinux/sflphone/service/SFLPhoneserviceJNI";
 //const char *kManagerPath = "com/savoirfairelinux/sflphone/client/ManagerImpl";
 //static jobject gManagerObject, gDataObject;
 

@@ -28,7 +28,7 @@
  */
 
 /* File : callmanager.i */
-%module (directors="1") sflphoneservice
+%module (directors="1") SFLPhoneservice
 
 #define SWIG_JAVA_ATTACH_CURRENT_THREAD_AS_DAEMON
 %include "typemaps.i"
