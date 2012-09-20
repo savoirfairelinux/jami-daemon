@@ -58,6 +58,7 @@
 
 #include <managerimpl.h>
 #include <android-jni/callmanagerJNI.h>
+#include <logger.h>
 
 typedef struct callmanager_callback
 {

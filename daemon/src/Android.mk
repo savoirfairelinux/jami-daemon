@@ -127,7 +127,8 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DHAVE_CONFIG_H \
 				  -std=gnu++0x -frtti -fexceptions -fpermissive \
 				  -DAPP_NAME=\"sflphone\" \
-				  -DSWIG_JAVA_ATTACH_CURRENT_THREAD_AS_DAEMON
+				  -DSWIG_JAVA_ATTACH_CURRENT_THREAD_AS_DAEMON \
+				  -DDEBUG_DIRECTOR_OWNED
 
 #-L$(APP_PROJECT_PATH)/obj/local/armeabi \
 
