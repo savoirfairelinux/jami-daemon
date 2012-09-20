@@ -172,21 +172,24 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, GSettings *setting
         }
 
         // If a modifier key is pressed, it's a shortcut, pass along
-        if (event->state & GDK_CONTROL_MASK || event->state & GDK_MOD1_MASK ||
-                 event->keyval == '<' ||
-                 event->keyval == '>' ||
-                 event->keyval == '\"'||
-                 event->keyval == GDK_KEY_Tab ||
-                 event->keyval == GDK_KEY_Return ||
-                 event->keyval == GDK_KEY_Left ||
-                 event->keyval == GDK_KEY_Up ||
-                 event->keyval == GDK_KEY_Right ||
-                 event->keyval == GDK_KEY_Down ||
-                 (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
-                 event->keyval == ' ')
+        if (event->state & GDK_CONTROL_MASK ||
+            event->keyval == '<' ||
+            event->keyval == '>' ||
+            event->keyval == '\"'||
+            event->keyval == GDK_KEY_Tab ||
+            event->keyval == GDK_KEY_Return ||
+            event->keyval == GDK_KEY_Left ||
+            event->keyval == GDK_KEY_Up ||
+            event->keyval == GDK_KEY_Right ||
+            event->keyval == GDK_KEY_Down ||
+            (event->keyval >= GDK_KEY_Shift_L  && event->keyval <= GDK_KEY_Hyper_R) ||
+            (event->keyval >= GDK_KEY_ISO_Lock && event->keyval <= GDK_KEY_ISO_Enter) ||
+            (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
+            event->keyval == ' ') {
            return FALSE;
-        else
-           sflphone_keypad(event->keyval, event->string, settings);
+        } else {
+            sflphone_keypad(event->keyval, event->string, settings);
+        }
 
         return TRUE;
     }
