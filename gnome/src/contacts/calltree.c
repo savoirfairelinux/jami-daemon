@@ -402,7 +402,13 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
                                     G_TYPE_BOOLEAN   /* True if this is conference */
                                    );
 
-    tab->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tab->store));
+    // For history, we want to associate the model to the view, after we've inserted
+    // all the calls into the model, otherwise it will slow down application startup
+    if (calltab_has_name(tab, HISTORY))
+        tab->view = gtk_tree_view_new();
+    else
+        tab->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tab->store));
+
     gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tab->view), FALSE);
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tab->view), FALSE);
     g_signal_connect(G_OBJECT(tab->view), "row-activated",
@@ -477,7 +483,6 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
     g_object_set(calltree_rend, "yalign", (gfloat) 0.0, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tab->view), calltree_col);
 
-    g_object_unref(G_OBJECT(tab->store));
     gtk_container_add(GTK_CONTAINER(calltree_sw), tab->view);
 
     GtkTreeSelection *calltree_sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
@@ -499,7 +504,8 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
         }
     }
 
-    gtk_widget_show(tab->tree);
+    if (!calltab_has_name(tab, HISTORY))
+        gtk_widget_show(tab->tree);
 }
 
 static gboolean
