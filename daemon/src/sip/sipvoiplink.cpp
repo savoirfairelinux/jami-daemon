@@ -955,6 +955,20 @@ SIPVoIPLink::hangup(const std::string& id)
 
     pjsip_tx_data *tdata = NULL;
 
+// See https://projects.savoirfairelinux.com/issues/15866
+    switch (inv->state) {
+        case PJSIP_INV_STATE_CALLING:
+        case PJSIP_INV_STATE_EARLY:
+        case PJSIP_INV_STATE_INCOMING:
+        case PJSIP_INV_STATE_CONNECTING:
+        case PJSIP_INV_STATE_CONFIRMED:
+        case PJSIP_INV_STATE_DISCONNECTED:
+        break;
+        default:
+            ERROR("Invalid invite state, cannot end session");
+            return;
+    }
+
     // User hangup current call. Notify peer
     if (pjsip_inv_end_session(inv, 0, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
