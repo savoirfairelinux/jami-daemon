@@ -961,8 +961,16 @@ SIPVoIPLink::hangup(const std::string& id)
         return;
     }
 
+    int code;
+    if (call->inv->state == PJSIP_INV_STATE_CONFIRMED)
+        code = PJSIP_SC_OK;
+    else if (call->inv->role == PJSIP_ROLE_UAS)
+        code = PJSIP_SC_DECLINE;
+    else
+        code = PJSIP_SC_REQUEST_TERMINATED;
+
     // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv, 0, NULL, &tdata) != PJ_SUCCESS || !tdata)
+    if (pjsip_inv_end_session(inv, code, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
     // add contact header
