@@ -481,7 +481,16 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     };
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
-    static const pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7}, { (char*) "MESSAGE", 7 } };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
+    static const pj_str_t allowed[] = {
+        {(char *) "INFO", 4},
+        {(char *) "REGISTER", 8},
+        {(char *) "OPTIONS", 7},
+        {(char *) "MESSAGE", 7},
+        {(char *) "INVITE", 6},
+        {(char *) "ACK", 3},
+        {(char *) "BYE", 3},
+        {(char *) "CANCEL",6}};
+
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
 
     static const pj_str_t text_plain = { (char*) "text/plain", 10 };

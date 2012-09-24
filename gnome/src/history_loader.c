@@ -119,6 +119,7 @@ cleanup_load_items(gpointer data)
     g_assert(id->load_state == STATE_COMPLETE);
     /* this will actually load the model inside the view */
     history_search_init();
+    gtk_widget_show(id->tab->tree);
     g_free(id);
 }
 
@@ -135,7 +136,7 @@ lazy_load_items(calltab_t *tab)
     data->tab = tab;
     data->dbus_called = FALSE;
     data->dbus_finished = FALSE;
-    data->load_id = g_idle_add_full(G_PRIORITY_HIGH_IDLE,
+    data->load_id = g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
                                     load_items,
                                     data,
                                     cleanup_load_items);

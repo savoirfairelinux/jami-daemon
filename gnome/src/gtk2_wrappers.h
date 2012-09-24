@@ -53,6 +53,10 @@ gtk_scale_new_with_range(GtkOrientation orientation, gdouble min, gdouble max,
 
 GtkWidget *
 gtk_scale_new(GtkOrientation orientation, GtkAdjustment *adjustment);
+
+GtkWidget *
+gtk_separator_new(GtkOrientation orientation);
+
 #endif
 
 #endif // BOX_H_

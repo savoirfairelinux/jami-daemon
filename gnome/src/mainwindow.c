@@ -127,15 +127,9 @@ static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *ev
  * Minimize the main window.
  */
 static gboolean
-on_delete(GtkWidget * widget UNUSED, GSettings *settings)
+on_delete(GtkWidget * widget UNUSED)
 {
-    if (g_settings_get_boolean(settings, "show-status-icon")) {
-        gtk_widget_hide(get_main_window());
-        set_minimized(TRUE);
-    } else {
-        sflphone_quit(FALSE);
-    }
-
+    sflphone_quit(FALSE);
     return TRUE;
 }
 
@@ -178,21 +172,24 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, GSettings *setting
         }
 
         // If a modifier key is pressed, it's a shortcut, pass along
-        if (event->state & GDK_CONTROL_MASK || event->state & GDK_MOD1_MASK ||
-                 event->keyval == '<' ||
-                 event->keyval == '>' ||
-                 event->keyval == '\"'||
-                 event->keyval == GDK_KEY_Tab ||
-                 event->keyval == GDK_KEY_Return ||
-                 event->keyval == GDK_KEY_Left ||
-                 event->keyval == GDK_KEY_Up ||
-                 event->keyval == GDK_KEY_Right ||
-                 event->keyval == GDK_KEY_Down ||
-                 (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
-                 event->keyval == ' ')
-           return FALSE;
+        if (event->state & GDK_CONTROL_MASK ||
+            event->state & GDK_MOD1_MASK ||
+            event->keyval == '<' ||
+            event->keyval == '>' ||
+            event->keyval == '\"'||
+            event->keyval == GDK_KEY_Tab ||
+            event->keyval == GDK_KEY_Return ||
+            event->keyval == GDK_KEY_Left ||
+            event->keyval == GDK_KEY_Up ||
+            event->keyval == GDK_KEY_Right ||
+            event->keyval == GDK_KEY_Down ||
+            (event->keyval >= GDK_KEY_Shift_L  && event->keyval <= GDK_KEY_Hyper_R) ||
+            (event->keyval >= GDK_KEY_ISO_Lock && event->keyval <= GDK_KEY_ISO_Enter) ||
+            (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
+            event->keyval == ' ')
+            return FALSE;
         else
-           sflphone_keypad(event->keyval, event->string, settings);
+            sflphone_keypad(event->keyval, event->string, settings);
 
         return TRUE;
     }
@@ -245,7 +242,7 @@ create_main_window(GSettings *settings)
      * stop the main GTK loop
      */
     g_signal_connect(G_OBJECT(window), "delete-event",
-                     G_CALLBACK(on_delete), settings);
+                     G_CALLBACK(on_delete), NULL);
 
     g_signal_connect(G_OBJECT(window), "key-release-event",
                      G_CALLBACK(on_key_released), settings);

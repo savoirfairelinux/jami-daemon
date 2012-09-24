@@ -547,8 +547,11 @@ process_dialing(callable_obj_t *c, guint keyval, const gchar *key, GSettings *se
         }
         case GDK_Tab:
         case GDK_Alt_L:
+        case GDK_Alt_R:
         case GDK_Control_L:
+        case GDK_Control_R:
         case GDK_Super_L:
+        case GDK_Super_R:
         case GDK_Caps_Lock:
             break;
         default:

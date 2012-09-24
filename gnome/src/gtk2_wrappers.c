@@ -79,4 +79,14 @@ gtk_scale_new_with_range(GtkOrientation orientation, gdouble min, gdouble max,
         return gtk_vscale_new_with_range(min, max, step);
 }
 
+GtkWidget *
+gtk_separator_new(GtkOrientation orientation)
+{
+    if (orientation == GTK_ORIENTATION_HORIZONTAL)
+        return gtk_hseparator_new();
+    else
+        return gtk_vseparator_new();
+
+}
+
 #endif

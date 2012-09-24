@@ -161,7 +161,18 @@ void VideoReceiveThread::setup()
 #else
     ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
-    EXIT_IF_FAIL(ret >= 0, "Could not find stream info!");
+    if (ret < 0) {
+        // workaround for this bug:
+        // http://patches.libav.org/patch/22541/
+        if (ret == -1)
+            ret = AVERROR_INVALIDDATA;
+        char errBuf[64] = {0};
+        // print nothing for unknown errors
+        if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
+            errBuf[0] = '\0';
+        ERROR("Could not find stream info: %s", errBuf);
+        ost::Thread::exit();
+    }
 
     // find the first video stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
