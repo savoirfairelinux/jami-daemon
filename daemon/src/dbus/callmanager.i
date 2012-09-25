@@ -58,6 +58,7 @@
 
 #include <managerimpl.h>
 #include <android-jni/callmanagerJNI.h>
+#include <android-jni/configurationmanagerJNI.h>
 #include <logger.h>
 
 typedef struct callmanager_callback
@@ -165,6 +166,11 @@ static Callback* registeredCallbackObject = NULL;
 void setCallbackObject(Callback* callback) {
 	registeredCallbackObject = callback;
 }
+
+class ConfigurationManagerJNI {
+public:
+    void setAudioPlugin(const std::string& audioPlugin);
+};
 
 #ifndef SWIG
 /* some bad declarations */
