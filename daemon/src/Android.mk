@@ -25,7 +25,7 @@ MY_JNI_WRAP := $(LOCAL_PATH)/dbus/callmanager_wrap.cpp
 
 include $(CLEAR_VARS)
 
-$(MY_JNI_WRAP): $(LOCAL_PATH)/dbus/callmanager.i $(LOCAL_PATH)/sflphoneservice.c.template
+$(MY_JNI_WRAP): $(LOCAL_PATH)/dbus/jni_interface.i $(LOCAL_PATH)/sflphoneservice.c.template
 	@echo "in $(MY_JNI_WRAP) target"
 	./make-swig.sh
 

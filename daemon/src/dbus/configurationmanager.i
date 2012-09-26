@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -27,61 +27,13 @@
  *  as that of the covered work.
  */
 
-/* File : jni_interface.i */
-%module (directors="1") SFLPhoneservice
-
-#define SWIG_JAVA_ATTACH_CURRENT_THREAD_AS_DAEMON
-%include "typemaps.i"
-%include "std_string.i" /* std::string typemaps */
-%include "enums.swg"
-%include "arrays_java.i";
-%include "carrays.i";
-%include "std_map.i";
-
-/* void* shall be handled as byte arrays */
-%typemap(jni) void * "void *"
-%typemap(jtype) void * "byte[]"
-%typemap(jstype) void * "byte[]"
-%typemap(javain) void * "$javainput"
-%typemap(in) void * %{
-	$1 = $input;
-%}
-%typemap(javadirectorin) void * "$jniinput"
-%typemap(out) void * %{
-	$result = $1;
-%}
-%typemap(javaout) void * {
-	return $jnicall;
-}
-
-namespace std {
-    %template(StringMap) map<string, string>;
-}
-
-/* not parsed by SWIG but needed by generated C files */
 %header %{
-
-#include <logger.h>
-
+#include <android-jni/configurationmanagerJNI.h>
 %}
 
-%inline %{
-/* some functions that need to be declared in *_wrap.cpp
- * that are not declared elsewhere in the c++ code
- */
-%}
+class ConfigurationManagerJNI {
+public:
+    std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
+    void setAudioPlugin(const std::string& audioPlugin);
+};
 
-/* parsed by SWIG to generate all the glue */
-/* %include "../managerimpl.h" */
-/* %include <dbus/callmanager.h> */
-
-//%constant struct callmanager_callback* WRAPPER_CALLBACK_STRUCT = &wrapper_callback_struct;
-
-
-%include "managerimpl.i"
-%include "callmanager.i"
-%include "configurationmanager.i"
-
-#ifndef SWIG
-/* some bad declarations */
-#endif
