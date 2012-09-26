@@ -36,6 +36,7 @@
 %include "enums.swg"
 %include "arrays_java.i";
 %include "carrays.i";
+%include "std_map.i";
 
 /* void* shall be handled as byte arrays */
 %typemap(jni) void * "void *"
@@ -51,6 +52,11 @@
 %}
 %typemap(javaout) void * {
 	return $jnicall;
+}
+
+namespace std {
+    %template(IntVector) vector<int>;
+    %template(StringMap) map<string, string>;
 }
 
 /* not parsed by SWIG but needed by generated C files */
@@ -169,6 +175,7 @@ void setCallbackObject(Callback* callback) {
 
 class ConfigurationManagerJNI {
 public:
+    std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
     void setAudioPlugin(const std::string& audioPlugin);
 };
 
