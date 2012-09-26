@@ -55,14 +55,15 @@
 }
 
 namespace std {
-    %template(IntVector) vector<int>;
     %template(StringMap) map<string, string>;
 }
 
 /* not parsed by SWIG but needed by generated C files */
 %header %{
 
+/*
 #include <managerimpl.h>
+*/
 #include <android-jni/callmanagerJNI.h>
 #include <android-jni/configurationmanagerJNI.h>
 #include <logger.h>
@@ -74,9 +75,11 @@ typedef struct callmanager_callback
                              const std::string& from);
 } callmanager_callback_t;
 
+/*
 namespace Manager {
 extern ManagerImpl& instance();
 }
+*/
 
 class Callback {
 public:
@@ -119,6 +122,12 @@ void setCallbackObject(Callback* callback) {
 
 /* %nodefaultctor ManagerImpl;
 %nodefaultdtor ManagerImpl; */
+%header %{
+#include <managerimpl.h>
+namespace Manager {
+extern ManagerImpl& instance();
+}
+%}
 
 class ManagerImpl {
 public:

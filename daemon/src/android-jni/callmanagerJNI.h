@@ -48,6 +48,9 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
+#include <vector>
+#include <map>
+
 namespace sfl {
     class AudioZrtpSession;
 }
