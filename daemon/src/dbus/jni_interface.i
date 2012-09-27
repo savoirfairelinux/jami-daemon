@@ -37,6 +37,7 @@
 %include "arrays_java.i";
 %include "carrays.i";
 %include "std_map.i";
+%include "std_vector.i";
 
 /* void* shall be handled as byte arrays */
 %typemap(jni) void * "void *"
@@ -56,6 +57,7 @@
 
 namespace std {
     %template(StringMap) map<string, string>;
+    %template(StringVect) vector<string>;
 }
 
 /* not parsed by SWIG but needed by generated C files */
