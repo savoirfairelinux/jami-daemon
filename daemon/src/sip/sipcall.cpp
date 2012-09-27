@@ -65,6 +65,9 @@ SIPCall::~SIPCall()
 void SIPCall::answer()
 {
     pjsip_tx_data *tdata;
+    if (!inv->last_answer)
+        throw std::runtime_error("Should only be called for initial answer");
+
     if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
