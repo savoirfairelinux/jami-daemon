@@ -201,8 +201,12 @@ void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCod
     ost::MutexLock lock(audioRtpRecord_.audioCodecMutex_);
 
     audioRtpRecord_.deleteCodecs();
-    // Set varios codec info to reduce indirection
+    // Set various codec info to reduce indirection
     audioRtpRecord_.audioCodecs_ = audioCodecs;
+    if (audioCodecs.empty()) {
+        ERROR("Audio codecs empty");
+        return;
+    }
 
     audioRtpRecord_.currentCodecIndex_ = 0;
     audioRtpRecord_.encoderPayloadType_ = audioRtpRecord_.decoderPayloadType_ = audioCodecs[0]->getPayloadType();

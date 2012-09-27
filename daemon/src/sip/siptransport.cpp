@@ -262,7 +262,7 @@ pjsip_tpfactory* SipTransport::createTlsListener(SIPAccount &account)
     std::string interface(account.getLocalInterface());
     std::string listeningAddress;
     if (interface == DEFAULT_INTERFACE)
-        listeningAddress = getSIPLocalIP();
+        listeningAddress = ANY_HOSTS;
     else
         listeningAddress = getInterfaceAddrFromName(interface);
 
@@ -376,7 +376,7 @@ SipTransport::createUdpTransport(const std::string &interface, unsigned int port
     // determine the IP address for this transport
     std::string listeningAddress;
     if (interface == DEFAULT_INTERFACE)
-        listeningAddress = getSIPLocalIP();
+        listeningAddress = ANY_HOSTS;
     else
         listeningAddress = getInterfaceAddrFromName(interface);
 
@@ -557,10 +557,6 @@ void SipTransport::findLocalAddressFromTransport(pjsip_transport *transport, pjs
 
     // Update local address based on the transport type
     addr = std::string(localAddress.ptr, localAddress.slen);
-
-    // Fallback on local ip provided by pj_gethostip()
-    if (addr == ANY_HOSTS)
-        addr = getSIPLocalIP();
 
     // Determine the local port based on transport information
     ss.str("");

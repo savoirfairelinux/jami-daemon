@@ -1074,6 +1074,9 @@ SIPVoIPLink::offhold(const std::string& id)
             audioCodecs.push_back(ac);
         }
 
+        if (audioCodecs.empty())
+            throw VoipLinkException("Could not instantiate codec");
+
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
         call->getAudioRtp().restoreLocalContext();
