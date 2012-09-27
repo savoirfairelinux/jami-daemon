@@ -71,11 +71,11 @@ class IAXCall : public Call {
 
         int getAudioCodec() const;
 
-        void answer();
-
         int format;
         iax_session* session;
     private:
+        void answer();
+
         NON_COPYABLE(IAXCall);
 };
 

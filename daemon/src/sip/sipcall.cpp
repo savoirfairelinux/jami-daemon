@@ -62,13 +62,14 @@ SIPCall::~SIPCall()
     pj_pool_release(pool_);
 }
 
-void SIPCall::answer(bool needsSdp)
+void SIPCall::answer()
 {
     pjsip_tx_data *tdata;
     if (!inv->last_answer)
         throw std::runtime_error("Should only be called for initial answer");
 
-    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, needsSdp ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
+    // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
+    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)

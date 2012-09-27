@@ -913,15 +913,13 @@ SIPVoIPLink::answer(Call *call)
         return;
 
     SIPCall *sipCall = static_cast<SIPCall*>(call);
-    bool needsSdp = false;
     if (!sipCall->inv->neg) {
         WARN("Negotiator is NULL, we've received an INVITE without an SDP");
         pjmedia_sdp_session *dummy;
         sdp_create_offer_cb(sipCall->inv, &dummy);
-        needsSdp = true;
     }
 
-    sipCall->answer(needsSdp);
+    call->answer();
 }
 
 namespace {

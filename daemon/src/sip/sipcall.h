@@ -100,9 +100,7 @@ class SIPCall : public Call {
             return pool_;
         }
 
-        // @param needsSdp: true if the invite was received without an SDP
-        // and thus one must been added, false otherwise
-        void answer(bool needsSdp);
+        void answer();
 
         /**
          * The invite session to be reused in case of transfer
