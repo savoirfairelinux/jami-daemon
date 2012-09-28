@@ -305,7 +305,13 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     call->getLocalSDP()->setLocalIP(addrSdp);
 
     call->getAudioRtp().initConfig();
-    call->getAudioRtp().initSession();
+    try {
+        call->getAudioRtp().initSession();
+    } catch (const ost::Socket::Error &err) {
+        ERROR("AudioRtp socket error");
+        delete call;
+        return PJ_FALSE;
+    }
 
     if (body and body->len > 0) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
