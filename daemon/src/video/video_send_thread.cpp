@@ -187,12 +187,19 @@ void VideoSendThread::setup()
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                   file_iformat, options ? &options : NULL);
-    EXIT_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
+    if (ret < 0) {
+        if (options)
+            av_dict_free(&options);
+        ERROR("Could not open input file %s", args_["input"].c_str());
+        ost::Thread::exit();
+    }
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
     ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
+    if (options)
+        av_dict_free(&options);
     EXIT_IF_FAIL(ret >= 0, "Couldn't find stream info");
 
     // find the first video stream from the input
@@ -277,8 +284,13 @@ void VideoSendThread::setup()
         DEBUG("Writing stream header for payload type %s", args_["payload_type"].c_str());
         av_dict_set(&outOptions, "payload_type", args_["payload_type"].c_str(), 0);
     }
-    EXIT_IF_FAIL(avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL) >= 0, "Could not write "
-                 "header for output file...check codec parameters")
+
+
+    ret = avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL);
+    if (outOptions)
+        av_dict_free(&outOptions);
+    EXIT_IF_FAIL(ret >= 0, "Could not write header for output file...check codec parameters");
+
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_sdp();
 
