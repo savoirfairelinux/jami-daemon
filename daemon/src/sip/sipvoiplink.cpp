@@ -313,7 +313,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    if (body and body->len > 0) {
+    if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
         size_t start = sdpOffer.find("a=crypto:");
 

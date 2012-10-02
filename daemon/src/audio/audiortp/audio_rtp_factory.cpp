@@ -194,11 +194,15 @@ void sfl::AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 
 void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
-    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-        srtp->setRemoteCryptoInfo(nego);
+    if (rtpSession_ ) {
+        if (keyExchangeProtocol_ == SDES) {
+            AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
+            srtp->setRemoteCryptoInfo(nego);
+        } else {
+            ERROR("Should not store remote crypto info for non-SDES sessions");
+        }
     } else
-        throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in setRemoteCryptoInfo");
+        throw AudioRtpFactoryException("rtpSession_ is NULL in setRemoteCryptoInfo");
 }
 
 void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
