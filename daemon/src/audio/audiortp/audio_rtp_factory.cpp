@@ -213,7 +213,8 @@ void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 
 void AudioRtpFactory::sendDtmfDigit(int digit)
 {
-    rtpSession_->putDtmfEvent(digit);
+    if (rtpSession_)
+        rtpSession_->putDtmfEvent(digit);
 }
 
 void sfl::AudioRtpFactory::saveLocalContext()
