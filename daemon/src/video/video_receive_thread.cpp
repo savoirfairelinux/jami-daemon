@@ -150,7 +150,13 @@ void VideoReceiveThread::setup()
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
-    EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
+
+    if (ret < 0) {
+        if (options)
+            av_dict_free(&options);
+        ERROR("Could not open input \"%s\"", input.c_str());
+        ost::Thread::exit();
+    }
 
     DEBUG("Finding stream info");
     if (requestKeyFrameCallback_)
@@ -161,6 +167,8 @@ void VideoReceiveThread::setup()
 #else
     ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
+    if (options)
+        av_dict_free(&options);
     if (ret < 0) {
         // workaround for this bug:
         // http://patches.libav.org/patch/22541/

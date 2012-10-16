@@ -28,6 +28,8 @@
  *  as that of the covered work.
  */
 
+#include <sys/types.h>
+#include <unistd.h>
 #include <libgen.h>
 #include <dirent.h>
 #include <sys/stat.h>

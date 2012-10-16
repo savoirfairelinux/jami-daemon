@@ -275,6 +275,20 @@
 #   define PJ_HAS_PENTIUM	0
 #   define PJ_IS_LITTLE_ENDIAN	1
 #   define PJ_IS_BIG_ENDIAN	0
+
+#elif defined(PJ_M_SH) || defined(__sh__) || defined(__sh) || \
+	defined(__SH__) || defined(_ARCH_SH) || defined(_SH_)
+    /*
+     * Renesas SuperH, default to little endian
+     */
+#   undef PJ_M_SH
+#   define PJ_M_SH		1
+#   define PJ_M_NAME		"sh"
+#   define PJ_HAS_PENTIUM	0
+#   if !defined(PJ_IS_LITTLE_ENDIAN) && !defined(PJ_IS_BIG_ENDIAN)
+#   	define PJ_IS_LITTLE_ENDIAN	1
+#   	define PJ_IS_BIG_ENDIAN		0
+#   endif
 		
 #else
 #   error "Please specify target machine."
