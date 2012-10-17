@@ -65,7 +65,7 @@ int getBufferSize(int width, int height, int format)
 {
     enum PixelFormat fmt = (enum PixelFormat) format;
     // determine required buffer size and allocate buffer
-    return sizeof(unsigned char) * avpicture_get_size(fmt, width, height);
+    return avpicture_get_size(fmt, width, height);
 }
 
 string openTemp(string path, std::ofstream& os)
