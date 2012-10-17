@@ -29,7 +29,36 @@
 
 %header %{
 #include <android-jni/configurationmanagerJNI.h>
+
+typedef struct configurationmanager_callback
+{
+    void (*on_account_state_changed)(void);
+} configurationmanager_callback_t;
+
+
+class ConfigurationCallback {
+public:
+    virtual ~ConfigurationCallback() {}
+    virtual void on_account_state_changed(void) {}
+};
+
+static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;
+
+void on_account_state_changed_wrapper (void) {
+    registeredConfigurationCallbackObject->on_account_state_changed();
+}
+
+static struct configurationmanager_callback wrapper_configurationcallback_struct = {
+    &on_account_state_changed_wrapper
+};
+
+void setConfigurationCallbackObject(ConfigurationCallback *callback) {
+    registeredConfigurationCallbackObject = callback;
+}
+
 %}
+
+%feature("director") ConfigurationCallback;
 
 class ConfigurationManagerJNI {
 public:
@@ -98,3 +127,14 @@ public:
     void setCredentials(const std::string& accountID, const std::vector<std::map<std::string, std::string> >& details);
 };
 
+class ConfigurationCallback {
+public:
+    virtual ~ConfigurationCallback();
+    virtual void on_account_state_changed(void);
+};
+
+static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;
+
+void setConfigurationCallbackObject(ConfigurationCallback *callback) {
+    registeredConfigurationCallbackObject = callback;
+}

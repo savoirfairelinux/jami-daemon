@@ -219,6 +219,7 @@ void showLog(int level, const char *data, int len)
 
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
+
     if (!rdata or !rdata->msg_info.msg) {
         ERROR("rx_data is NULL");
         return PJ_FALSE;
@@ -436,8 +437,15 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         Manager::instance().incomingCall(*call, account_id);
         SIPVoIPLink::instance()->addSipCall(call);
     }
-
     return PJ_FALSE;
+
+#if 0
+    DEBUG("================== INCOMING FROM SIP ======================");
+    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
+    std::string account_id = "dsfjds";
+    Manager::instance().incomingCall(*call, account_id);
+    return PJ_FALSE;
+#endif
 }
 } // end anonymous namespace
 

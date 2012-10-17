@@ -99,6 +99,9 @@ extern struct callmanager_callback wrapper_callback_struct;
 extern void on_incoming_call_wrapper (const std::string& accountID,
                                const std::string& callID,
                                const std::string& from);
+extern struct configurationmanager_callback wrapper_configurationcallback_struct;
+extern void on_account_state_changed_wrapper ();
+
 
 ManagerImpl::ManagerImpl() :
     preferences(), voipPreferences(), addressbookPreference(),
@@ -1616,6 +1619,14 @@ void ManagerImpl::removeWaitingCall(const std::string& id)
 // SipEvent Thread
 void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 {
+#if 0
+    DEBUG("================= INCOMING FROM MANAGER ==================");
+    const std::string callID(call.getCallId());
+    std::string number(call.getPeerNumber());
+    std::string from("<" + number + ">");
+    on_incoming_call_wrapper(accountId, callID, call.getDisplayName() + " " + from);
+#endif
+
     stopTone();
     const std::string callID(call.getCallId());
 
@@ -1648,8 +1659,8 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 #if HAVE_DBUS
     dbus_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
 #else
-	//incoming_call(accountId, callID, call.getDisplayName() + " " + from);
-	on_incoming_call_wrapper(accountId, callID, call.getDisplayName() + " " + from);
+    //incoming_call(accountId, callID, call.getDisplayName() + " " + from);
+    on_incoming_call_wrapper(accountId, callID, call.getDisplayName() + " " + from);
 #endif
 }
 
@@ -2660,6 +2671,9 @@ void ManagerImpl::setAccountDetails(const std::string& accountID,
 #if HAVE_DBUS
     // Update account details to the client side
     dbus_.getConfigurationManager()->accountsChanged();
+#else
+    DEBUG("Notify the client on account state changed ===========");
+    on_account_state_changed_wrapper();
 #endif
 }
 
@@ -2725,6 +2739,9 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
 #if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
+#else
+    DEBUG("Notify the client on account state changed ===========");
+    on_account_state_changed_wrapper();
 #endif
 
     return accountID.str();
@@ -2751,6 +2768,8 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
 #if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
+#else
+    on_account_state_changed_wrapper();
 #endif
 }
 
