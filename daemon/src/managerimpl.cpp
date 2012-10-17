@@ -125,7 +125,10 @@ void ManagerImpl::init(const std::string &config_file)
     {
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
-            telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
+            {
+                ost::MutexLock toneLock(toneMutex_);
+                telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
+            }
             dtmfKey_.reset(new DTMF(getMainBuffer().getInternalSamplingRate()));
         }
     }
@@ -1673,9 +1676,10 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
         audiodriver_->startStream();
     }
 
-    if (telephoneTone_.get() != 0) {
+    {
         ost::MutexLock lock(toneMutex_);
-        telephoneTone_->setCurrentTone(toneId);
+        if (telephoneTone_.get() != 0)
+            telephoneTone_->setCurrentTone(toneId);
     }
 }
 
@@ -1688,7 +1692,6 @@ void ManagerImpl::stopTone()
         return;
 
     ost::MutexLock lock(toneMutex_);
-
     if (telephoneTone_.get() != NULL)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
 
@@ -1801,10 +1804,10 @@ void ManagerImpl::ringtone(const std::string& accountID)
 
 AudioLoop* ManagerImpl::getTelephoneTone()
 {
-    if (telephoneTone_.get()) {
-        ost::MutexLock m(toneMutex_);
+    ost::MutexLock m(toneMutex_);
+    if (telephoneTone_.get())
         return telephoneTone_->getCurrentTone();
-    } else
+    else
         return NULL;
 }
 
@@ -2084,9 +2087,9 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
 void ManagerImpl::recordingPlaybackSeek(const double value)
 {
-    if(audiofile_.get()) {
+    ost::MutexLock m(toneMutex_);
+    if (audiofile_.get())
         audiofile_.get()->seek(value);
-    }
 }
 
 
@@ -2262,7 +2265,10 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     unsigned int sampleRate = audiodriver_->getSampleRate();
 
-    telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
+    {
+        ost::MutexLock toneLock(toneMutex_);
+        telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
+    }
     dtmfKey_.reset(new DTMF(sampleRate));
 
     if (wasActive)

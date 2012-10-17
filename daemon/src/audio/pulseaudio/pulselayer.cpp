@@ -360,6 +360,8 @@ void PulseLayer::writeToSpeaker()
         return;
     }
 
+    // FIXME: not thread safe! we only lock the mutex when we get the
+    // pointer, we have no guarantee that it will stay safe to use
     AudioLoop *toneToPlay = Manager::instance().getTelephoneTone();
 
     if (toneToPlay) {

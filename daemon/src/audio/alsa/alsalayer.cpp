@@ -703,6 +703,8 @@ void AlsaLayer::playback(int maxSamples)
     const size_t bytesToPut = maxSamples * sizeof(SFLDataFormat);
     // no audio available, play tone or silence
     if (bytesToGet <= 0) {
+        // FIXME: not thread safe! we only lock the mutex when we get the
+        // pointer, we have no guarantee that it will stay safe to use
         AudioLoop *tone = Manager::instance().getTelephoneTone();
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 

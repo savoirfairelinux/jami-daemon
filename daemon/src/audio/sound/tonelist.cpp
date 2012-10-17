@@ -127,7 +127,7 @@ TelephoneTone::setCurrentTone(Tone::TONEID toneId)
 Tone*
 TelephoneTone::getCurrentTone()
 {
-    if (currentTone_ == Tone::TONE_NULL)
+    if (currentTone_ < Tone::TONE_DIALTONE or currentTone_ >= Tone::TONE_NULL)
         return NULL;
 
     return tone_[currentTone_];
