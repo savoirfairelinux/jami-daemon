@@ -232,9 +232,17 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
     switch (type) {
         case SFL_PCM_PLAYBACK:
         case SFL_PCM_RINGTONE:
-            return sinkList_.at(index);
+            if (index < 0 or index >= sinkList_.size()) {
+                ERROR("Index %d out of range", index);
+                return "";
+            }
+            return sinkList_[index];
         case SFL_PCM_CAPTURE:
-            return sourceList_.at(index);
+            if (index < 0 or index >= sourceList_.size()) {
+                ERROR("Index %d out of range", index);
+                return "";
+            }
+            return sourceList_[index];
         default:
             return "";
     }
