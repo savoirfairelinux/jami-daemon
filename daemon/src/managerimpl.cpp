@@ -1829,10 +1829,9 @@ std::string ManagerImpl::createConfigFile() const
     std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
 
-    std::string xdg_env(XDG_CONFIG_HOME);
-    if (not xdg_env.empty()) {
-        configdir = xdg_env;
-    }
+    const std::string xdg_env(XDG_CONFIG_HOME);
+    if (not xdg_env.empty())
+        configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
 
     if (mkdir(configdir.data(), 0700) != 0) {
         // If directory creation failed
