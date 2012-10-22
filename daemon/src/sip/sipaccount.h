@@ -538,6 +538,11 @@ class SIPAccount : public Account {
         void initTlsConfiguration();
 
         /**
+         * Display the list of ciphers currently supported on the
+         */
+        void displayCipherSuite();
+
+        /**
          * Initializes STUN config from the config file
          */
         void initStunConfiguration();

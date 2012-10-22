@@ -729,13 +729,20 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
+void SIPAccount::displayCipherSuite()
+{
+    CipherArray::iterator iter;
+    for(iter = ciphers.begin(); iter != ciphers.end(); iter++)
+        DEBUG("Cipher: %s", pj_ssl_cipher_name(*iter));
+}
+
 void SIPAccount::initTlsConfiguration()
 {
     pj_status_t status;
     unsigned cipherNum;
 
     // Determine the cipher list supported on this machine
-    cipherNum = PJ_ARRAY_SIZE(ciphers);
+    cipherNum = ciphers.size();
     status = pj_ssl_cipher_get_availables(&ciphers.front(), &cipherNum);
     if (status != PJ_SUCCESS) {
         ERROR("Could not determine cipher list on this system");
