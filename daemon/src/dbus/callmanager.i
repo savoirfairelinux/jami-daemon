@@ -34,6 +34,10 @@
 
 typedef struct callmanager_callback
 {
+    void (*on_new_call_created)(const std::string& accountID,
+                                const std::string& callID,
+                                const std::string& to);
+
     void (*on_incoming_call)(const std::string& accountID,
                              const std::string& callID,
                              const std::string& from);
@@ -43,14 +47,24 @@ typedef struct callmanager_callback
 class Callback {
 public:
     virtual ~Callback() {}
+
+    virtual void on_new_call_created(const std::string& arg1,
+                                     const std::string& arg2,
+                                     const std::string& arg3) {}
+
     virtual void on_incoming_call(const std::string& arg1,
                                   const std::string& arg2,
                                   const std::string& arg3) {}
-
 };
 
 
 static Callback* registeredCallbackObject = NULL;
+
+void on_new_call_created_wrapper (const std::string& accountID,
+                                  const std::string& callID,
+                                  const std::string& to) {
+    registeredCallbackObject->on_new_call_created(accountID, callID, to);
+}
 
 void on_incoming_call_wrapper (const std::string& accountID,
                                const std::string& callID,
@@ -59,7 +73,8 @@ void on_incoming_call_wrapper (const std::string& accountID,
 }
 
 static struct callmanager_callback wrapper_callback_struct = {
-    &on_incoming_call_wrapper
+    &on_new_call_created_wrapper,
+    &on_incoming_call_wrapper,
 };
 
 void setCallbackObject(Callback* callback) {
@@ -87,6 +102,11 @@ public:
 class Callback {
 public:
     virtual ~Callback();
+
+    virtual void on_new_call_created(const std::string& arg1,
+                                     const std::string& arg2,
+                                     const std::string& arg3);
+
     virtual void on_incoming_call(const std::string& arg1,
                                   const std::string& arg2,
                                   const std::string& arg3);

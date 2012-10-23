@@ -96,9 +96,12 @@
 extern JavaVM *gJavaVM;
 static jobject gManagerObject, gDataObject;
 extern struct callmanager_callback wrapper_callback_struct;
+extern void on_new_call_created_wrapper (const std::string& accountID,
+                                         const std::string& callID,
+                                         const std::string& to);
 extern void on_incoming_call_wrapper (const std::string& accountID,
-                               const std::string& callID,
-                               const std::string& from);
+                                      const std::string& callID,
+                                      const std::string& from);
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_account_state_changed_wrapper ();
 
@@ -1253,6 +1256,8 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
         else {
 #if HAVE_DBUS
             dbus_.getCallManager()->newCallCreated(account, generatedCallID, tostr);
+#else
+            on_new_call_created_wrapper (account, generatedCallID, tostr);
 #endif
             successCounter++;
         }
