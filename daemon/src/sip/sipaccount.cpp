@@ -731,8 +731,8 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 
 void SIPAccount::displayCipherSuite()
 {
-    CipherArray::iterator iter;
-    for(iter = ciphers.begin(); iter != ciphers.end(); iter++)
+    CipherArray::const_iterator iter;
+    for (iter = ciphers.begin(); iter != ciphers.end(); ++iter)
         DEBUG("Cipher: %s", pj_ssl_cipher_name(*iter));
 }
 
