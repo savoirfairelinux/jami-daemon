@@ -99,6 +99,8 @@ extern struct callmanager_callback wrapper_callback_struct;
 extern void on_new_call_created_wrapper (const std::string& accountID,
                                          const std::string& callID,
                                          const std::string& to);
+extern void on_call_state_changed_wrapper(const std::string& callID,
+                                          const std::string& to);
 extern void on_incoming_call_wrapper (const std::string& accountID,
                                       const std::string& callID,
                                       const std::string& from);
@@ -555,6 +557,8 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 #if HAVE_DBUS
     // update call state on client side
     dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
+#else
+    on_call_state_changed_wrapper(call_id, "CURRENT");
 #endif
 
     return true;
@@ -578,6 +582,8 @@ void ManagerImpl::hangupCall(const std::string& callId)
     /* Broadcast a signal over DBus */
     DEBUG("Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
     dbus_.getCallManager()->callStateChanged(callId, "HUNGUP");
+#else
+    on_call_state_changed_wrapper(callId, "HUNGUP");
 #endif
 
     if (not isValidCall(callId) and not isIPToIP(callId)) {
@@ -692,6 +698,8 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 
 #if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
+#else
+    on_call_state_changed_wrapper(callId, "HOLD");
 #endif
 
     getMainBuffer().dumpInfo();
@@ -733,6 +741,8 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
 #if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(callId, "UNHOLD");
+#else
+    on_call_state_changed_wrapper(callId, "UNHOLD");
 #endif
 
     if (isConferenceParticipant(callId)) {
@@ -834,6 +844,8 @@ void ManagerImpl::refuseCall(const std::string& id)
     removeWaitingCall(id);
 #if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "HUNGUP");
+#else
+    on_call_state_changed_wrapper(id, "HUNGUP");
 #endif
 
     // Disconnect streams
@@ -1812,6 +1824,8 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
 
 #if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "CURRENT");
+#else
+    on_call_state_changed_wrapper(id, "CURRENT");
 #endif
 }
 
@@ -1825,6 +1839,8 @@ void ManagerImpl::peerRingingCall(const std::string& id)
 
 #if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "RINGING");
+#else
+    on_call_state_changed_wrapper(id, "RINGING");
 #endif
 }
 
@@ -1862,6 +1878,8 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 #if HAVE_DBUS
     /* Broadcast a signal over DBus */
     dbus_.getCallManager()->callStateChanged(call_id, "HUNGUP");
+#else
+    on_call_state_changed_wrapper(call_id, "HUNGUP");
 #endif
 
     removeWaitingCall(call_id);
@@ -1881,6 +1899,8 @@ void ManagerImpl::callBusy(const std::string& id)
     DEBUG("Call %s busy", id.c_str());
 #if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(id, "BUSY");
+#else
+    on_call_state_changed_wrapper(id, "BUSY");
 #endif
 
     if (isCurrentCall(id)) {
@@ -1897,6 +1917,8 @@ void ManagerImpl::callFailure(const std::string& call_id)
 {
 #if HAVE_DBUS
     dbus_.getCallManager()->callStateChanged(call_id, "FAILURE");
+#else
+    on_call_state_changed_wrapper(call_id, "FAILURE");
 #endif
 
     if (isCurrentCall(call_id)) {

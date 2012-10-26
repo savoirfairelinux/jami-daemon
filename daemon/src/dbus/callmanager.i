@@ -38,6 +38,9 @@ typedef struct callmanager_callback
                                 const std::string& callID,
                                 const std::string& to);
 
+    void (*on_call_state_changed)(const std::string& callID,
+                                  const std::string& state);
+
     void (*on_incoming_call)(const std::string& accountID,
                              const std::string& callID,
                              const std::string& from);
@@ -51,6 +54,9 @@ public:
     virtual void on_new_call_created(const std::string& arg1,
                                      const std::string& arg2,
                                      const std::string& arg3) {}
+
+    virtual void on_call_state_changed(const std::string& arg1,
+                                       const std::string& arg2) {}
 
     virtual void on_incoming_call(const std::string& arg1,
                                   const std::string& arg2,
@@ -66,6 +72,11 @@ void on_new_call_created_wrapper (const std::string& accountID,
     registeredCallbackObject->on_new_call_created(accountID, callID, to);
 }
 
+void on_call_state_changed_wrapper(const std::string& callID,
+                           const std::string& state) {
+    registeredCallbackObject->on_call_state_changed(callID, state);
+}
+
 void on_incoming_call_wrapper (const std::string& accountID,
                                const std::string& callID,
                                const std::string& from) {
@@ -74,6 +85,7 @@ void on_incoming_call_wrapper (const std::string& accountID,
 
 static struct callmanager_callback wrapper_callback_struct = {
     &on_new_call_created_wrapper,
+    &on_call_state_changed_wrapper,
     &on_incoming_call_wrapper,
 };
 
@@ -106,6 +118,9 @@ public:
     virtual void on_new_call_created(const std::string& arg1,
                                      const std::string& arg2,
                                      const std::string& arg3);
+
+    virtual void on_call_state_changed(const std::string& arg1,
+                                       const std::string& arg2);
 
     virtual void on_incoming_call(const std::string& arg1,
                                   const std::string& arg2,
