@@ -263,8 +263,13 @@ sfl::AudioCodec* AudioCodecFactory::instantiateCodec(int payload) const
 
             const char *error = dlerror();
 
+#if ANDROID
+            if (createCodec == NULL)
+                ERROR("Could not instantiate codec");
+#else
             if (error)
                 ERROR("%s", error);
+#endif
             else
                 return static_cast<sfl::AudioCodec *>(createCodec());
         }
