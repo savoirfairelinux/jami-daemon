@@ -109,6 +109,8 @@ public:
     void accept(const std::string& callID);
     /* Manager::instance().hangupCall */
     void hangUp(const std::string& callID);
+    void hold(const std::string& callID);
+    void unhold(const std::string& callID);
 };
 
 class Callback {
