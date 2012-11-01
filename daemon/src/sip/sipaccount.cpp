@@ -533,8 +533,26 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
     }
 }
 
+static std::string retrievePassword(const std::map<std::string, std::string>& map, const std::string &username)
+{
+    std::map<std::string, std::string>::const_iterator map_iter_username;
+    std::map<std::string, std::string>::const_iterator map_iter_password;
+    map_iter_username = map.find(CONFIG_ACCOUNT_USERNAME);
+    if(map_iter_username != map.end()) {
+        if(map_iter_username->second == username) {
+            map_iter_password = map.find(CONFIG_ACCOUNT_PASSWORD);
+            if(map_iter_password != map.end()) {
+                return map_iter_password->second;
+            }
+        }
+    }
+
+    return "";
+}
+
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
+    ERROR("GET ACCOUNT DETAIL");
     std::map<std::string, std::string> a;
 
     a[CONFIG_ACCOUNT_ID] = accountID_;
@@ -546,6 +564,16 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[CONFIG_ACCOUNT_TYPE] = type_;
     a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
     a[CONFIG_ACCOUNT_USERNAME] = username_;
+    // get password for this username
+    a[CONFIG_ACCOUNT_PASSWORD] = "";
+    if(hasCredentials()) {
+        std::vector<std::map<std::string, std::string> >::const_iterator vect_iter;
+        for(vect_iter = credentials_.begin(); vect_iter != credentials_.end(); vect_iter++) {
+            std::string passwrd = retrievePassword(*vect_iter, username_);
+            if(passwrd != "")
+                a[CONFIG_ACCOUNT_PASSWORD] = passwrd;
+        }
+    }
 
     a[CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
