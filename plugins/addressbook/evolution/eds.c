@@ -23,7 +23,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *e_book
+ *
  *  Additional permission under GNU GPL version 3 section 7:
  *
  *  If you modify this program, or any covered work, by linking or
@@ -81,7 +81,6 @@ static GStaticMutex books_data_mutex = G_STATIC_MUTEX_INIT;
 static gchar *current_uri = NULL;
 #endif
 static gchar *current_uid = NULL;
-static gchar *current_name = "Default";
 
 static EBookQueryTest current_test = E_BOOK_QUERY_BEGINS_WITH;
 
@@ -304,7 +303,6 @@ init_eds ()
             current_uri = book_data->uri;
 #endif
             current_uid = book_data->uid;
-            current_name = book_data->name;
         }
     }
 
@@ -446,7 +444,6 @@ determine_default_addressbook()
             current_uri = book_data->uri;
 #endif
             current_uid = book_data->uid;
-            current_name = book_data->name;
             default_found = TRUE;
             break;
         }
@@ -462,7 +459,6 @@ determine_default_addressbook()
                 current_uri = book_data->uri;
 #endif
                 current_uid = book_data->uid;
-                current_name = book_data->name;
                 break;
             }
         }
@@ -516,7 +512,6 @@ set_current_addressbook (const gchar *name)
             current_uri = book_data->uri;
 #endif
             current_uid = book_data->uid;
-            current_name = book_data->name;
         }
     }
 
