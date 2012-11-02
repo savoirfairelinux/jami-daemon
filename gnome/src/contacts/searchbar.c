@@ -113,8 +113,10 @@ void update_searchbar_addressbook_list()
     book_data_t *book_data;
     GSList *books_data = NULL;
 
-    if (addrbook)
-        books_data = addrbook->get_books_data(dbus_get_addressbook_list());
+    gchar **book_names = dbus_get_addressbook_list();
+
+    if (addrbook && g_strv_length(book_names) > 0)
+        books_data = addrbook->get_books_data(book_names);
 
     if (books_data == NULL) {
         ERROR("Searchbar: No books data found");
@@ -365,6 +367,10 @@ GtkWidget* contacts_searchbar_new()
         return NULL;
 
     gchar **book_list = dbus_get_addressbook_list();
+    if (g_strv_length(book_list) == 0) {
+        DEBUG("Address book list is empty");
+        return NULL;
+    }
 
     addrbook->init(book_list);
 

@@ -97,7 +97,7 @@ void abook_init()
         return;
     }
 
-    addrbook = g_malloc(sizeof(AddrBookHandle));
+    addrbook = g_new0(AddrBookHandle, 1);
 
 #define LOAD(func) do { \
         addrbook-> func = dlsym(handle, "addressbook_" #func); \
