@@ -258,6 +258,8 @@ void VideoReceiveThread::fill_buffer(void *data)
                    dstWidth_,
                    dstHeight_);
 
+    createScalingContext();
+
     sws_scale(imgConvertCtx_,
             rawFrame_->data,
             rawFrame_->linesize,
