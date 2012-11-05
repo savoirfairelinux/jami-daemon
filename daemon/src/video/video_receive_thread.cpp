@@ -48,7 +48,6 @@ extern "C" {
 #include <map>
 #include <ctime>
 #include <cstdlib>
-#include <cstdio> // for remove()
 #include <fstream>
 
 #include "manager.h"
@@ -87,19 +86,17 @@ string openTemp(string path, std::ofstream& os)
     }
     return path;
 }
-} // end anonymous namespace
 
-void VideoReceiveThread::loadSDP()
+int readFunction(void *opaque, uint8_t *buf, int buf_size)
 {
-    EXIT_IF_FAIL(not args_["receiving_sdp"].empty(), "Cannot load empty SDP");
-
-    std::ofstream os;
-    sdpFilename_ = openTemp("/tmp", os);
-    os << args_["receiving_sdp"];
-    DEBUG("loaded SDP\n%s", args_["receiving_sdp"].c_str());
-
-    os.close();
+    std::istream &is = *static_cast<std::istream*>(opaque);
+    is.read(reinterpret_cast<char*>(buf), buf_size);
+    return is.gcount();
 }
+
+const int SDP_BUFFER_SIZE = 8192;
+
+} // end anonymous namespace
 
 void VideoReceiveThread::openDecoder()
 {
@@ -125,9 +122,8 @@ void VideoReceiveThread::setup()
     std::string format_str;
     std::string input;
     if (args_["input"].empty()) {
-        loadSDP();
         format_str = "sdp";
-        input = sdpFilename_;
+        input = "dummyFilename";
     } else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
         // FIXME: This is not a robust way of checking if we mean to use a
@@ -151,6 +147,7 @@ void VideoReceiveThread::setup()
     // Open video file
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
+    inputCtx_->pb = avioContext_.get();
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
 
     if (ret < 0) {
@@ -238,7 +235,12 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
     args_(args), frameNumber_(0), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), threadRunning_(false),
-    sdpFilename_(), bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0)
+    bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0),
+    sdpBuffer_(reinterpret_cast<unsigned char*>(av_malloc(SDP_BUFFER_SIZE)), &av_free),
+    stream_(args_["receiving_sdp"]),
+    avioContext_(avio_alloc_context(sdpBuffer_.get(), SDP_BUFFER_SIZE, 0,
+                                    reinterpret_cast<void*>(static_cast<std::istream*>(&stream_)),
+                                    &readFunction, 0, 0), &av_free)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -249,7 +251,6 @@ void VideoReceiveThread::start()
     threadRunning_ = true;
     ost::Thread::start();
 }
-
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
 void VideoReceiveThread::fill_buffer(void *data)
@@ -335,8 +336,6 @@ VideoReceiveThread::~VideoReceiveThread()
         avformat_close_input(&inputCtx_);
 #endif
     }
-    if (not sdpFilename_.empty() and remove(sdpFilename_.c_str()) != 0)
-        ERROR("Could not remove %s", sdpFilename_.c_str());
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string &))

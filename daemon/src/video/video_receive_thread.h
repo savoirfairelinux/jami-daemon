@@ -35,6 +35,8 @@
 #include <map>
 #include <string>
 #include <climits>
+#include <sstream>
+#include <tr1/memory>
 #include "shm_sink.h"
 #include "noncopyable.h"
 
@@ -76,16 +78,17 @@ class VideoReceiveThread : public ost::Thread {
 #else
         ucommon::atomic::counter threadRunning_;
 #endif
-        std::string sdpFilename_;
         size_t bufferSize_;
         const std::string id_;
         AVIOInterruptCB interruptCb_;
         void (* requestKeyFrameCallback_)(const std::string &);
+        std::tr1::shared_ptr<unsigned char> sdpBuffer_;
+        std::istringstream stream_;
+        std::tr1::shared_ptr<AVIOContext> avioContext_;
 
         void setup();
         void openDecoder();
         void createScalingContext();
-        void loadSDP();
         void fill_buffer(void *data);
         static int interruptCb(void *ctx);
 
