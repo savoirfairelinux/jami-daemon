@@ -32,6 +32,7 @@
 #define LOGGER_H_
 
 #include <syslog.h>
+#include <pthread.h>
 
 namespace Logger {
 void log(const int, const char*, ...);
@@ -41,8 +42,8 @@ void setDebugMode(bool);
 bool getDebugMode();
 };
 
-#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d: " M, __FILE__, \
-                                          __LINE__, ##__VA_ARGS__)
+#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d:tid %llu:\t" M, __FILE__, \
+                                          __LINE__, pthread_self() & 0xffff, ##__VA_ARGS__)
 
 #define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
 #define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
