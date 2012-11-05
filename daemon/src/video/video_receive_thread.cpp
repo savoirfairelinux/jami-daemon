@@ -105,6 +105,8 @@ void VideoReceiveThread::openDecoder()
 {
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
+    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
+    decoderCtx_->thread_count = 1;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     int ret = avcodec_open(decoderCtx_, inputDecoder_);
 #else
