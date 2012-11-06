@@ -119,11 +119,12 @@ void VideoReceiveThread::setup()
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
 
+    const std::string SDP_FILENAME = "dummyFilename";
     std::string format_str;
     std::string input;
     if (args_["input"].empty()) {
         format_str = "sdp";
-        input = "dummyFilename";
+        input = SDP_FILENAME;
     } else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
         // FIXME: This is not a robust way of checking if we mean to use a
@@ -147,7 +148,10 @@ void VideoReceiveThread::setup()
     // Open video file
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
-    inputCtx_->pb = avioContext_.get();
+    if (input == SDP_FILENAME) {
+        EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
+        inputCtx_->pb = avioContext_.get();
+    }
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
 
     if (ret < 0) {
