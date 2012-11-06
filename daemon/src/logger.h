@@ -42,7 +42,7 @@ void setDebugMode(bool);
 bool getDebugMode();
 };
 
-#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d:tid %llu:\t" M, __FILE__, \
+#define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d:tid %lu:\t" M, __FILE__, \
                                           __LINE__, pthread_self() & 0xffff, ##__VA_ARGS__)
 
 #define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
