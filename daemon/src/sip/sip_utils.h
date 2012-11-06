@@ -49,9 +49,6 @@ namespace sip_utils {
     pjsip_route_hdr *
     createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
 
-    pjsip_route_hdr *
-    createRouteSetList(const std::string &route, pj_pool_t *hdr_pool);
-
     void stripSipUriPrefix(std::string& sipUri);
 
     std::string parseDisplayName(const char * buffer);
