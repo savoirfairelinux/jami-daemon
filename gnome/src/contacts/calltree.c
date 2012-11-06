@@ -380,7 +380,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
 }
 
 void
-calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
+calltree_create(calltab_t* tab, gboolean has_searchbar, GSettings *settings)
 {
     tab->tree = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
@@ -493,7 +493,7 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
     gtk_box_pack_start(GTK_BOX(tab->tree), calltree_sw, TRUE, TRUE, 0);
 
     // search bar if tab is either "history" or "addressbook"
-    if (searchbar_type) {
+    if (has_searchbar) {
         calltab_create_searchbar(tab);
 
         if (tab->searchbar != NULL) {

@@ -59,7 +59,7 @@ struct conference_obj_t;
  * @return GtkWidget* A new widget
  */
 void
-calltree_create (calltab_t *, int searchbar_type, GSettings *settings);
+calltree_create(calltab_t *, gboolean has_searchbar, GSettings *settings);
 
 /**
  * Add a call in the calltree
