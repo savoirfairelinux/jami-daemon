@@ -397,15 +397,6 @@
            </arg>
        </method>
 
-       <method name="setMailNotify" tp:name-for-bindings="setMailNotify">
-       </method>
-
-       <method name="getMailNotify" tp:name-for-bindings="getMailNotify">
-           <arg type="i" name="level" direction="out">
-           </arg>
-       </method>
-
-
        <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
            <arg type="i" name="days" direction="out">
            </arg>

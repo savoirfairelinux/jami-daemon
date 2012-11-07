@@ -112,9 +112,6 @@ class ConfigurationManager
         int32_t getHistoryLimit();
         void clearHistory();
 
-        int32_t getMailNotify();
-        void setMailNotify();
-
         void setAccountsOrder(const std::string& order);
 
         std::map<std::string, std::string> getHookSettings();

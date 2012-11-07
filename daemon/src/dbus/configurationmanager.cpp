@@ -410,17 +410,6 @@ std::string ConfigurationManager::getAudioManager()
     return Manager::instance().getAudioManager();
 }
 
-void ConfigurationManager::setMailNotify()
-{
-    Manager::instance().setMailNotify();
-}
-
-int32_t ConfigurationManager::getMailNotify()
-{
-    return Manager::instance().getMailNotify();
-}
-
-
 std::map<std::string, std::string> ConfigurationManager::getHookSettings()
 {
     return Manager::instance().hookPreference.toMap();

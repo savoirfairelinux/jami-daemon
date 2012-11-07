@@ -71,14 +71,6 @@ class Preferences : public Serializable {
             historyMaxCalls_ = max;
         }
 
-        bool getNotifyMails() const {
-            return notifyMails_;
-        }
-
-        void setNotifyMails(bool mails) {
-            notifyMails_ = mails;
-        }
-
         std::string getZoneToneChoice() const {
             return zoneToneChoice_;
         }
@@ -129,7 +121,6 @@ class Preferences : public Serializable {
         std::string accountOrder_;
         int historyLimit_;
         int historyMaxCalls_;
-        bool notifyMails_;
         std::string zoneToneChoice_;
         int registrationExpire_;
         int portNum_;

@@ -672,11 +672,6 @@ class ManagerImpl {
         void startHidden();
 
         /**
-         * Set the desktop mail notification level
-         */
-        void setMailNotify();
-
-        /**
          * Get the audio manager
          * @return int The audio manager
          *		    "alsa"
@@ -696,12 +691,6 @@ class ManagerImpl {
          * reopen stream at different rate,
          */
         void audioSamplingRateChanged(int);
-
-        /**
-         * Get the desktop mail notification level
-         * @return int The mail notification level
-         */
-        int32_t getMailNotify() const;
 
         /**
          * Change a specific value in the configuration tree.

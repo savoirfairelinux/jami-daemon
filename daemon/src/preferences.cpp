@@ -55,7 +55,6 @@ static const char * const ORDER_KEY = "order";
 static const char * const AUDIO_API_KEY = "audioApi";
 static const char * const HISTORY_LIMIT_KEY = "historyLimit";
 static const char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
-static const char * const NOTIFY_MAILS_KEY = "notifyMails";
 static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
 static const char * const PORT_NUM_KEY = "portNum";
 static const char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
@@ -117,7 +116,6 @@ Preferences::Preferences() :
     accountOrder_("")
     , historyLimit_(30)
     , historyMaxCalls_(20)
-    , notifyMails_(false)
     , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
     , registrationExpire_(180)
     , portNum_(5060)
@@ -137,7 +135,6 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     std::stringstream histmaxstr;
     histmaxstr << historyMaxCalls_;
     Conf::ScalarNode historyMaxCalls(histmaxstr.str());
-    Conf::ScalarNode notifyMails(notifyMails_);
     Conf::ScalarNode zoneToneChoice(zoneToneChoice_);
     std::stringstream expirestr;
     expirestr << registrationExpire_;
@@ -152,7 +149,6 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     preferencemap.setKeyValue(ORDER_KEY, &order);
     preferencemap.setKeyValue(HISTORY_LIMIT_KEY, &historyLimit);
     preferencemap.setKeyValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls);
-    preferencemap.setKeyValue(NOTIFY_MAILS_KEY, &notifyMails);
     preferencemap.setKeyValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice);
     preferencemap.setKeyValue(REGISTRATION_EXPIRE_KEY, &registrationExpire);
     preferencemap.setKeyValue(PORT_NUM_KEY, &portNum);
@@ -168,7 +164,6 @@ void Preferences::unserialize(const Conf::YamlNode &map)
     map.getValue(ORDER_KEY, &accountOrder_);
     map.getValue(HISTORY_LIMIT_KEY, &historyLimit_);
     map.getValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls_);
-    map.getValue(NOTIFY_MAILS_KEY, &notifyMails_);
     map.getValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice_);
     map.getValue(REGISTRATION_EXPIRE_KEY, &registrationExpire_);
     map.getValue(PORT_NUM_KEY, &portNum_);

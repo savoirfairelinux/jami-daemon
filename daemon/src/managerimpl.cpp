@@ -2118,18 +2118,6 @@ int ManagerImpl::getHistoryLimit() const
     return preferences.getHistoryLimit();
 }
 
-int32_t ManagerImpl::getMailNotify() const
-{
-    return preferences.getNotifyMails();
-}
-
-void ManagerImpl::setMailNotify()
-{
-    DEBUG("Set mail notify");
-    preferences.getNotifyMails() ? preferences.setNotifyMails(true) : preferences.setNotifyMails(false);
-    saveConfig();
-}
-
 void ManagerImpl::setAudioManager(const std::string &api)
 {
     {
