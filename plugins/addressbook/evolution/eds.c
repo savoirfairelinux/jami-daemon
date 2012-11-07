@@ -380,7 +380,7 @@ static book_data_t *
 create_book_data_from_source(ESource *source, ESourceGroup *group)
 {
     book_data_t *book_data = g_new0(book_data_t, 1);
-    book_data->active = FALSE;
+    book_data->active = TRUE;
     book_data->name = g_strdup(e_source_peek_name(source));
     book_data->uid = g_strdup(e_source_peek_uid(source));
 

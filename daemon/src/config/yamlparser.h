@@ -73,8 +73,6 @@ class YamlParser {
 
         MappingNode *getPreferenceNode();
 
-        MappingNode *getAddressbookNode();
-
         MappingNode *getAudioNode();
 
 #ifdef SFL_VIDEO
@@ -132,7 +130,6 @@ class YamlParser {
 
         SequenceNode *accountSequence_;
         MappingNode *preferenceNode_;
-        MappingNode *addressbookNode_;
         MappingNode *audioNode_;
 #ifdef SFL_VIDEO
         MappingNode *videoNode_;

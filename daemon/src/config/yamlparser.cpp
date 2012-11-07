@@ -48,7 +48,6 @@ YamlParser::YamlParser(FILE *fd) : fd_(fd)
     , eventIndex_(0)
     , accountSequence_(NULL)
     , preferenceNode_(NULL)
-    , addressbookNode_(NULL)
     , audioNode_(NULL)
 #ifdef SFL_VIDEO
     , videoNode_(NULL)
@@ -83,12 +82,6 @@ MappingNode *
 YamlParser::getPreferenceNode()
 {
     CHECK_AND_RETURN(preferenceNode_);
-}
-
-MappingNode *
-YamlParser::getAddressbookNode()
-{
-    CHECK_AND_RETURN(addressbookNode_);
 }
 
 MappingNode *
@@ -413,7 +406,6 @@ void YamlParser::mainNativeDataMapping(MappingNode *map)
     std::map<std::string, YamlNode*> &mapping = map->getMapping();
 
     accountSequence_    = static_cast<SequenceNode*>(mapping["accounts"]);
-    addressbookNode_    = static_cast<MappingNode *>(mapping["addressbook"]);
     audioNode_          = static_cast<MappingNode *>(mapping["audio"]);
 #ifdef SFL_VIDEO
     videoNode_          = static_cast<MappingNode *>(mapping["video"]);

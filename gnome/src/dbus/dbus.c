@@ -1793,44 +1793,6 @@ dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gc
 }
 #endif
 
-GHashTable *
-dbus_get_addressbook_settings(void)
-{
-    GError *error = NULL;
-    GHashTable *results = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings(config_proxy, &results, &error);
-    check_error(error);
-
-    return results;
-}
-
-void
-dbus_set_addressbook_settings(GHashTable *settings)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings(config_proxy, settings, &error);
-    check_error(error);
-}
-
-gchar **
-dbus_get_addressbook_list(void)
-{
-    GError *error = NULL;
-    gchar **array = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list(config_proxy, &array, &error);
-    check_error(error);
-
-    return array;
-}
-
-void
-dbus_set_addressbook_list(const gchar **list)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list(config_proxy, list, &error);
-
-    check_error(error);
-}
 
 GHashTable *
 dbus_get_hook_settings(void)

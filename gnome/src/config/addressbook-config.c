@@ -68,21 +68,7 @@ AddressBook_Config *addressbook_config_load_parameters()
         .search_phone_mobile = 1,
     };
 
-    static AddressBook_Config config;
-
-    GHashTable *params = dbus_get_addressbook_settings();
-
-    if (params) {
-        config.enable = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_ENABLE));
-        config.max_results = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_MAX_RESULTS));
-        config.display_contact_photo = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
-        config.search_phone_business = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
-        config.search_phone_home = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_PHONE_HOME));
-        config.search_phone_mobile = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
-    } else
-        config = defconfig;
-
-    return &config;
+    return &defconfig;
 }
 
 void
@@ -104,8 +90,6 @@ addressbook_config_save_parameters(void)
                          (gpointer)(size_t) addressbook_config->search_phone_home);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_MOBILE,
                          (gpointer)(size_t) addressbook_config->search_phone_mobile);
-
-    dbus_set_addressbook_settings(params);
 
     update_searchbar_addressbook_list();
 
@@ -274,9 +258,6 @@ addressbook_config_book_active_toggled(
         list[i] = g_ptr_array_index(array, i);
     g_ptr_array_free(array, TRUE);
 
-    // Call daemon to store in config file
-    dbus_set_addressbook_list(list);
-
     // free the list, but not its elements as they live in the tree model
     g_free(list);
 }
@@ -288,21 +269,18 @@ addressbook_config_fill_book_list()
     GSList *book_list_iterator;
     GtkListStore *store;
     book_data_t *book_data;
-    gchar **book_list;
 
     if (!addrbook)
         return;
 
-    book_list = dbus_get_addressbook_list();
-    GSList *books_data = addrbook->get_books_data(book_list);
+    GSList *books_data = addrbook->get_books_data();
 
-    if (!books_data) {
-        DEBUG("No valid books data (%s:%d)", __FILE__, __LINE__);
-    }
+    if (!books_data)
+        DEBUG("No valid books data");
 
     // Get model of view and clear it
     if (!(store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view))))) {
-        DEBUG("Could not find model from treeview (%s:%d)", __FILE__, __LINE__);
+        DEBUG("Could not find model from treeview");
         return;
     }
 

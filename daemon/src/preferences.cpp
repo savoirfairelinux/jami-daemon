@@ -69,15 +69,6 @@ static const char * const PULSE_LENGTH_KEY = "pulseLength";
 static const char * const SYMMETRIC_RTP_KEY = "symmetric";
 static const char * const ZID_FILE_KEY = "zidFile";
 
-// addressbook preferences
-static const char * const PHOTO_KEY = "photo";
-static const char * const ENABLED_KEY = "enabled";
-static const char * const LIST_KEY = "list";
-static const char * const MAX_RESULTS_KEY = "maxResults";
-static const char * const BUSINESS_KEY = "business";
-static const char * const HOME_KEY = "home";
-static const char * const MOBILE_KEY = "mobile";
-
 // hooks preferences
 static const char * const IAX2_ENABLED_KEY = "iax2Enabled";
 static const char * const NUMBER_ADD_PREFIX_KEY = "numberAddPrefix";
@@ -222,51 +213,6 @@ void VoipPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(PULSE_LENGTH_KEY, &pulseLength_);
     map.getValue(SYMMETRIC_RTP_KEY, &symmetricRtp_);
     map.getValue(ZID_FILE_KEY, &zidFile_);
-}
-
-AddressbookPreference::AddressbookPreference() : photo_(true)
-    , enabled_(true)
-    , list_("")
-    , maxResults_(25)
-    , business_(true)
-    , home_(true)
-    , mobile_(true)
-{}
-
-void AddressbookPreference::serialize(Conf::YamlEmitter &emitter)
-{
-    Conf::MappingNode preferencemap(NULL);
-
-    Conf::ScalarNode photo(photo_);
-    Conf::ScalarNode enabled(enabled_);
-    Conf::ScalarNode list(list_);
-    std::stringstream maxresultstr;
-    maxresultstr << maxResults_;
-    Conf::ScalarNode maxResults(maxresultstr.str());
-    Conf::ScalarNode business(business_);
-    Conf::ScalarNode home(home_);
-    Conf::ScalarNode mobile(mobile_);
-
-    preferencemap.setKeyValue(PHOTO_KEY, &photo);
-    preferencemap.setKeyValue(ENABLED_KEY, &enabled);
-    preferencemap.setKeyValue(LIST_KEY, &list);
-    preferencemap.setKeyValue(MAX_RESULTS_KEY, &maxResults);
-    preferencemap.setKeyValue(BUSINESS_KEY, &business);
-    preferencemap.setKeyValue(HOME_KEY, &home);
-    preferencemap.setKeyValue(MOBILE_KEY, &mobile);
-
-    emitter.serializePreference(&preferencemap, "addressbook");
-}
-
-void AddressbookPreference::unserialize(const Conf::YamlNode &map)
-{
-    map.getValue(PHOTO_KEY, &photo_);
-    map.getValue(ENABLED_KEY, &enabled_);
-    map.getValue(LIST_KEY, &list_);
-    map.getValue(MAX_RESULTS_KEY, &maxResults_);
-    map.getValue(BUSINESS_KEY, &business_);
-    map.getValue(HOME_KEY, &home_);
-    map.getValue(MOBILE_KEY, &mobile_);
 }
 
 HookPreference::HookPreference() :

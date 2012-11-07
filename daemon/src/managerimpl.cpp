@@ -84,7 +84,7 @@
 #include <sys/stat.h>  // mkdir(2)
 
 ManagerImpl::ManagerImpl() :
-    preferences(), voipPreferences(), addressbookPreference(),
+    preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(), dbus_(), config_(),
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
@@ -1282,7 +1282,6 @@ void ManagerImpl::saveConfig()
 
         preferences.serialize(emitter);
         voipPreferences.serialize(emitter);
-        addressbookPreference.serialize(emitter);
         hookPreference.serialize(emitter);
         audioPreference.serialize(emitter);
 #ifdef SFL_VIDEO
@@ -2653,7 +2652,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     // build preferences
     preferences.unserialize(*parser.getPreferenceNode());
     voipPreferences.unserialize(*parser.getVoipPreferenceNode());
-    addressbookPreference.unserialize(*parser.getAddressbookNode());
     hookPreference.unserialize(*parser.getHookNode());
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
@@ -2773,41 +2771,6 @@ ManagerImpl::getAllAccounts() const
     return all;
 }
 
-
-std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings() const
-{
-    std::map<std::string, int32_t> settings;
-
-    settings["ADDRESSBOOK_ENABLE"] = addressbookPreference.getEnabled();
-    settings["ADDRESSBOOK_MAX_RESULTS"] = addressbookPreference.getMaxResults();
-    settings["ADDRESSBOOK_DISPLAY_CONTACT_PHOTO"] = addressbookPreference.getPhoto();
-    settings["ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"] = addressbookPreference.getBusiness();
-    settings["ADDRESSBOOK_DISPLAY_PHONE_HOME"] = addressbookPreference.getHome();
-    settings["ADDRESSBOOK_DISPLAY_PHONE_MOBILE"] = addressbookPreference.getMobile();
-
-    return settings;
-}
-
-void ManagerImpl::setAddressbookSettings(const std::map<std::string, int32_t>& settings)
-{
-    addressbookPreference.setEnabled(settings.find("ADDRESSBOOK_ENABLE")->second == 1);
-    addressbookPreference.setMaxResults(settings.find("ADDRESSBOOK_MAX_RESULTS")->second);
-    addressbookPreference.setPhoto(settings.find("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")->second == 1);
-    addressbookPreference.setBusiness(settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")->second == 1);
-    addressbookPreference.setHone(settings.find("ADDRESSBOOK_DISPLAY_PHONE_HOME")->second == 1);
-    addressbookPreference.setMobile(settings.find("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")->second == 1);
-}
-
-void ManagerImpl::setAddressbookList(const std::vector<std::string>& list)
-{
-    addressbookPreference.setList(ManagerImpl::join_string(list));
-    saveConfig();
-}
-
-std::vector<std::string> ManagerImpl::getAddressbookList() const
-{
-    return split_string(addressbookPreference.getList());
-}
 
 void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)
 {

@@ -416,32 +416,6 @@
            </arg>
        </method>
 
-       <!-- Addressbook configuration -->
-       <method name="getAddressbookSettings" tp:name-for-bindings="getAddressbookSettings">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
-           <arg type="a{si}" name="settings" direction="out">
-           </arg>
-       </method>
-
-       <method name="setAddressbookSettings" tp:name-for-bindings="setAddressbookSettings">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
-           <arg type="a{si}" name="settings" direction="in">
-           </arg>
-       </method>
-
-       <!-- Addressbook list -->
-       <method name="getAddressbookList" tp:name-for-bindings="getAddressbookList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="as" name="settings" direction="out">
-           </arg>
-       </method>
-
-       <method name="setAddressbookList" tp:name-for-bindings="setAddressbookList">
-           <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
-           <arg type="as" name="settings" direction="in">
-           </arg>
-       </method>
-
        <!-- Hook configuration -->
        <method name="getHookSettings" tp:name-for-bindings="getHookSettings">
            <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>

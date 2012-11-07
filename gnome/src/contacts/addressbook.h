@@ -78,11 +78,11 @@ typedef struct _AddressBook_Config {
 typedef struct AddrBookHandle AddrBookHandle;
 
 struct AddrBookHandle {
-    void (*init) (gchar **);
+    void (*init) ();
     gboolean (*is_ready) (void);
     gboolean (*is_active) (void);
     void (*search) (void (*search_cb)(GList *, gpointer), GtkEntry *, AddressBook_Config *);
-    GSList *(*get_books_data)(gchar **);
+    GSList *(*get_books_data)();
     book_data_t *(*get_book_data_by_uid)(gchar *);
     void (*set_current_book)(gchar *);
     void (*set_search_type)(AddrbookSearchType);

@@ -90,7 +90,7 @@ typedef struct _AddressBook_Config {
 /**
  * Initialize addressbook
  */
-void addressbook_init(gchar **book_list);
+void addressbook_init();
 
 /**
  * Return addressbook state
@@ -116,7 +116,7 @@ void addressbook_search(void (*search_cb)(GList *, gpointer), GtkEntry *, Addres
 /**
  * Get a list of addressbook book
  */
-GSList *addressbook_get_books_data(gchar **book_list);
+GSList *addressbook_get_books_data();
 
 book_data_t *addressbook_get_book_data_by_uid(gchar *);
 

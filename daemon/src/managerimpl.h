@@ -112,11 +112,6 @@ class ManagerImpl {
         VoipPreference voipPreferences;
 
         /**
-         * Addressbook related preferences
-         */
-        AddressbookPreference addressbookPreference;
-
-        /**
          * Hook preferences
          */
         HookPreference hookPreference;
@@ -680,27 +675,6 @@ class ManagerImpl {
          * Set the desktop mail notification level
          */
         void setMailNotify();
-
-
-        /**
-         * Addressbook configuration
-         */
-        std::map<std::string, int32_t> getAddressbookSettings() const;
-
-        /**
-         * Addressbook configuration
-         */
-        void setAddressbookSettings(const std::map<std::string, int32_t>& settings);
-
-        /**
-         * Addressbook list
-         */
-        void setAddressbookList(const std::vector<  std::string >& list);
-
-        /**
-         * Addressbook list
-         */
-        std::vector <std::string> getAddressbookList() const;
 
         /**
          * Get the audio manager

@@ -469,22 +469,6 @@ void dbus_set_is_always_recording(gboolean);
 gboolean dbus_get_is_always_recording(void);
 
 /**
- * Encapsulate all the address book-related configuration
- * Get the configuration
- */
-GHashTable* dbus_get_addressbook_settings(void);
-
-/**
- * Encapsulate all the address book-related configuration
- * Set the configuration
- */
-void dbus_set_addressbook_settings(GHashTable *);
-
-gchar **dbus_get_addressbook_list(void);
-
-void dbus_set_addressbook_list(const gchar **list);
-
-/**
  * Resolve the local address given an interface name
  */
 gchar * dbus_get_address_from_interface_name(const gchar *interface);
