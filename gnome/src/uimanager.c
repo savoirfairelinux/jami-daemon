@@ -1670,10 +1670,10 @@ create_menus(GtkUIManager *ui, GSettings *settings)
     pasteAction_ = get_action(ui, "/MenuBar/EditMenu/Paste");
     volumeToggle_ = get_action(ui, "/MenuBar/ViewMenu/VolumeControls");
     // Set the toggle buttons
-    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_ui_manager_get_action(ui, "/MenuBar/ViewMenu/Dialpad")), g_settings_get_boolean(settings, "show-dialpad"));
+    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(get_action(ui, "/MenuBar/ViewMenu/Dialpad")), g_settings_get_boolean(settings, "show-dialpad"));
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), must_show_volume(settings));
     gtk_action_set_sensitive(volumeToggle_, must_show_alsa_conf());
-    gtk_action_set_sensitive(gtk_ui_manager_get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
+    gtk_action_set_sensitive(get_action(ui, "/MenuBar/ViewMenu/Toolbar"), FALSE);
 
     /* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
     waitingLayer = create_waiting_icon();
