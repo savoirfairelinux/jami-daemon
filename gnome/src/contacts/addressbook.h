@@ -61,7 +61,6 @@ typedef struct {
     gchar *uri;
     gchar *name;
     gboolean active;
-    gboolean isdefault;
 } book_data_t;
 
 typedef struct _AddressBook_Config {

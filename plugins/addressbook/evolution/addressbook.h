@@ -60,21 +60,12 @@ typedef struct _Hit {
 /**
  * Book structure for "outside world"
  */
-#if EDS_CHECK_VERSION(3,5,3)
-typedef struct {
-    gchar *uid;
-    gchar *name;
-    gboolean active;
-} book_data_t;
-#else
 typedef struct {
     gchar *uid;
     gchar *uri;
     gchar *name;
     gboolean active;
-    gboolean isdefault;
 } book_data_t;
-#endif
 
 typedef struct _AddressBook_Config {
     // gint64: a signed integer guaranteed to be 64 bits on all platforms

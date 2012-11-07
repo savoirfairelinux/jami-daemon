@@ -386,11 +386,8 @@ GtkWidget* contacts_searchbar_new()
 
             gtk_list_store_set(liststore, &iter, 0, book_data->name, -1);
 
-            if (book_data->isdefault) {
-                activeIter = iter;
-                activeIsSet = TRUE;
-            }
-
+            activeIter = iter;
+            activeIsSet = TRUE;
             count++;
         }
     }

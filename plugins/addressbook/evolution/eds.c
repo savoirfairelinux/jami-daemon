@@ -296,14 +296,10 @@ init_eds()
     for (GSList *iter = books_data; iter != NULL; iter = iter->next) {
         book_data_t *book_data = (book_data_t *) iter->data;
 
-#if EDS_CHECK_VERSION(3,5,3)
-        {
-#else
-        if (book_data->isdefault) {
-            current_uri = book_data->uri;
+#if !EDS_CHECK_VERSION(3,5,3)
+        current_uri = book_data->uri;
 #endif
-            current_uid = book_data->uid;
-        }
+        current_uid = book_data->uid;
     }
 
     g_static_mutex_unlock(&books_data_mutex);
@@ -317,9 +313,7 @@ free_books_data(GSList *list)
 
         g_free(book_data->name);
         g_free(book_data->uid);
-#if !EDS_CHECK_VERSION(3,5,3)
         g_free(book_data->uri);
-#endif
     }
     return NULL;
 }
@@ -335,6 +329,7 @@ create_book_data_from_source(ESource *source)
     book_data_t *book_data = g_new0(book_data_t, 1);
     book_data->active = e_source_get_enabled(source);
     book_data->name = g_strdup(e_source_get_display_name(source));
+    book_data->uri = g_strdup(""); // No longer used
     book_data->uid = g_strdup(e_source_get_uid(source));
     return book_data;
 }
@@ -384,8 +379,6 @@ create_book_data_from_source(ESource *source, ESourceGroup *group)
     book_data->name = g_strdup(e_source_peek_name(source));
     book_data->uid = g_strdup(e_source_peek_uid(source));
 
-    const gchar *prop = e_source_get_property(source, "default");
-    book_data->isdefault = (prop && !strcmp(prop, "true"));
     book_data->uri = g_strconcat(e_source_group_peek_base_uri(group), e_source_peek_relative_uri(source), NULL);
     return book_data;
 }
@@ -432,36 +425,28 @@ determine_default_addressbook()
 {
     g_static_mutex_lock(&books_data_mutex);
 
-    gboolean default_found = FALSE;
+    /* Just grabbing first addressbook as default */
+    for (GSList *elm = books_data; elm ; elm = g_slist_next(elm)) {
+        book_data_t *book_data = elm->data;
+
+#if !EDS_CHECK_VERSION(3,5,3)
+        current_uri = book_data->uri;
+#endif
+        current_uid = book_data->uid;
+        break;
+    }
 
     for (GSList *elm = books_data; elm ; elm = g_slist_next(elm)) {
         book_data_t *book_data = elm->data;
 
-#if EDS_CHECK_VERSION(3,5,3)
-        {
-#else /* < EDS 3.5.3 */
-        if (book_data->isdefault) {
+        if (book_data->active) {
+#if !EDS_CHECK_VERSION(3,5,3)
             current_uri = book_data->uri;
 #endif
             current_uid = book_data->uid;
-            default_found = TRUE;
             break;
         }
     }
-
-    if (!default_found)
-        for (GSList *elm = books_data; elm ; elm = g_slist_next(elm)) {
-            book_data_t *book_data = elm->data;
-
-            if (book_data->active) {
-#if !EDS_CHECK_VERSION(3,5,3)
-                book_data->isdefault = TRUE;
-                current_uri = book_data->uri;
-#endif
-                current_uid = book_data->uid;
-                break;
-            }
-        }
 
     g_static_mutex_unlock(&books_data_mutex);
 }
