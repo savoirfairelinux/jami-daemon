@@ -53,32 +53,6 @@ class ConfigurationTest: public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE_END();
 
     public:
-        /*
-         * Unit tests related to the audio preferences
-         */
-        void testDefaultValueAudio();
-
-        /*
-         * Unit tests related to the global settings
-         */
-        void testDefaultValuePreferences();
-
-        /*
-         * Unit tests related to the global settings
-         */
-        void testDefaultValueSignalisation();
-
-        /*
-         * Try to load one SIP account.
-         * So be sure to have only one SIP account so that the test could succeed
-         */
-        void testLoadSIPAccount();
-
-        void testUnloadSIPAccount();
-
-        void testInitAudioDriver();
-
-        void testYamlParser();
 
         void testYamlEmitter();
 };
