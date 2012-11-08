@@ -55,7 +55,6 @@ class VideoReceiveThread : public ost::Thread {
     private:
         NON_COPYABLE(VideoReceiveThread);
         std::map<std::string, std::string> args_;
-        unsigned frameNumber_;
 
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */

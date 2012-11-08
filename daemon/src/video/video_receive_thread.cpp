@@ -236,7 +236,7 @@ int VideoReceiveThread::interruptCb(void *ctx)
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<string, string> &args) :
-    args_(args), frameNumber_(0), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
+    args_(args), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), threadRunning_(false),
     bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0),
