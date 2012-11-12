@@ -77,7 +77,7 @@ class VideoSendThread : public ost::Thread {
         SwsContext *imgConvertCtx_;
         std::string sdp_;
         AVIOInterruptCB interruptCb_;
-        bool sending_;
+        bool threadRunning_;
 #ifdef CCPP_PREFIX
         ost::AtomicCounter forceKeyFrame_;
 #else

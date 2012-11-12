@@ -329,7 +329,7 @@ void VideoSendThread::createScalingContext()
 int VideoSendThread::interruptCb(void *ctx)
 {
     VideoSendThread *context = static_cast<VideoSendThread*>(ctx);
-    return not context->sending_;
+    return not context->threadRunning_;
 }
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
@@ -337,7 +337,7 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
     inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    sending_(false), forceKeyFrame_(0)
+    threadRunning_(false), forceKeyFrame_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -345,13 +345,13 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
 
 void VideoSendThread::run()
 {
-    sending_ = true;
+    threadRunning_ = true;
     // We don't want setup() called in the main thread in case it exits or blocks
     setup();
     createScalingContext();
 
     int frameNumber = 0;
-    while (sending_) {
+    while (threadRunning_) {
         AVPacket inpacket;
         {
             int ret = av_read_frame(inputCtx_, &inpacket);
@@ -435,7 +435,7 @@ void VideoSendThread::run()
 VideoSendThread::~VideoSendThread()
 {
     // FIXME
-    sending_ = false;
+    threadRunning_ = false;
     ost::Thread::terminate();
 
     sws_freeContext(imgConvertCtx_);
