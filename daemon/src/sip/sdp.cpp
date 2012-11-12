@@ -657,6 +657,22 @@ void Sdp::addAttributeToLocalVideoMedia(const char *attr)
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
 
+
+void
+Sdp::updateRemoteIP(unsigned index)
+{
+    // Remote connection information may be in the SDP Session or in the media
+    // for that session
+    pjmedia_sdp_conn *conn = activeRemoteSession_->conn ? activeRemoteSession_->conn :
+                             activeRemoteSession_->media[index]->conn ? activeRemoteSession_->media[index]->conn :
+                             NULL;
+    if (conn)
+        remoteIpAddr_ = std::string(conn->addr.ptr, conn->addr.slen);
+    else
+        ERROR("Could not get remote IP from SDP or SDP Media");
+}
+
+
 void Sdp::setMediaTransportInfoFromRemoteSdp()
 {
     if (!activeRemoteSession_) {
@@ -667,10 +683,10 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
     for (unsigned i = 0; i < activeRemoteSession_->media_count; ++i) {
         if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "audio") == 0) {
             remoteAudioPort_ = activeRemoteSession_->media[i]->desc.port;
-            remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
+            updateRemoteIP(i);
         } else if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "video") == 0) {
             remoteVideoPort_ = activeRemoteSession_->media[i]->desc.port;
-            remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
+            updateRemoteIP(i);
         }
     }
 }
