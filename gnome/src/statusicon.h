@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -71,21 +71,12 @@ void show_status_hangup_icon();
  */
 void hide_status_hangup_icon();
 
-
-
 /**
- * Tells if the main window if minimized or not
- * @return gboolean TRUE if the main window is minimized
- *		    FALSE otherwise
- */
-gboolean main_widget_minimized();
-
-/**
- * Change the menu status
- * @param state	TRUE if the  main window is minimized
+ * Toggle window minimization
+ * @param state  TRUE to minimize the main window
  *               FALSE otherwise
  */
-void set_minimized (gboolean state);
+void set_minimized(gboolean state);
 
 /**
  * Make the system tray icon blink on incoming call

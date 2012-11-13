@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -81,7 +81,7 @@ class AudioRtpFactory {
          * file. initAudioSymmetricRtpSession must have been called prior to that.
          * @param None
          */
-        void start(AudioCodec*);
+        void start(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Stop the audio rtp thread of the type specified in the configuration
@@ -98,7 +98,7 @@ class AudioRtpFactory {
         /**
          * Dynamically update session media
          */
-        void updateSessionMedia(AudioCodec *);
+        void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Update current RTP destination address with one stored in call

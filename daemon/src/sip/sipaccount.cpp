@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
 *
 *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -16,7 +16,7 @@
 *
 *  You should have received a copy of the GNU General Public License
 *  along with this program; if not, write to the Free Software
-*   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -758,13 +758,20 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
 }
 
 #if HAVE_TLS
+void SIPAccount::displayCipherSuite()
+{
+    CipherArray::const_iterator iter;
+    for (iter = ciphers.begin(); iter != ciphers.end(); ++iter)
+        DEBUG("Cipher: %s", pj_ssl_cipher_name(*iter));
+}
+
 void SIPAccount::initTlsConfiguration()
 {
     pj_status_t status;
     unsigned cipherNum;
 
     // Determine the cipher list supported on this machine
-    cipherNum = PJ_ARRAY_SIZE(ciphers);
+    cipherNum = ciphers.size();
     status = pj_ssl_cipher_get_availables(&ciphers.front(), &cipherNum);
     if (status != PJ_SUCCESS) {
         ERROR("Could not determine cipher list on this system");

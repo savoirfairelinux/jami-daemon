@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -380,7 +380,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
 }
 
 void
-calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
+calltree_create(calltab_t* tab, gboolean has_searchbar, GSettings *settings)
 {
     tab->tree = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
@@ -402,7 +402,13 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
                                     G_TYPE_BOOLEAN   /* True if this is conference */
                                    );
 
-    tab->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tab->store));
+    // For history, we want to associate the model to the view, after we've inserted
+    // all the calls into the model, otherwise it will slow down application startup
+    if (calltab_has_name(tab, HISTORY))
+        tab->view = gtk_tree_view_new();
+    else
+        tab->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tab->store));
+
     gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tab->view), FALSE);
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tab->view), FALSE);
     g_signal_connect(G_OBJECT(tab->view), "row-activated",
@@ -477,7 +483,6 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
     g_object_set(calltree_rend, "yalign", (gfloat) 0.0, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tab->view), calltree_col);
 
-    g_object_unref(G_OBJECT(tab->store));
     gtk_container_add(GTK_CONTAINER(calltree_sw), tab->view);
 
     GtkTreeSelection *calltree_sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
@@ -488,7 +493,7 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
     gtk_box_pack_start(GTK_BOX(tab->tree), calltree_sw, TRUE, TRUE, 0);
 
     // search bar if tab is either "history" or "addressbook"
-    if (searchbar_type) {
+    if (has_searchbar) {
         calltab_create_searchbar(tab);
 
         if (tab->searchbar != NULL) {
@@ -499,7 +504,8 @@ calltree_create(calltab_t* tab, int searchbar_type, GSettings *settings)
         }
     }
 
-    gtk_widget_show(tab->tree);
+    if (!calltab_has_name(tab, HISTORY))
+        gtk_widget_show(tab->tree);
 }
 
 static gboolean

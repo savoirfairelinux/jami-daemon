@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -40,7 +40,12 @@
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
-static gboolean minimized_ = TRUE;
+
+void
+set_minimized(gboolean state)
+{
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
+}
 
 void
 popup_main_window()
@@ -86,12 +91,6 @@ void
 status_icon_unminimize()
 {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
-}
-
-gboolean
-main_widget_minimized()
-{
-    return minimized_;
 }
 
 void
@@ -214,11 +213,4 @@ GtkStatusIcon*
 get_status_icon(void)
 {
     return status;
-}
-
-void
-set_minimized(gboolean state)
-{
-    minimized_ = state;
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }

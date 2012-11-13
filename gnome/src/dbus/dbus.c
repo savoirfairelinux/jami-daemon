@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -78,6 +78,11 @@ static gboolean check_error(GError *error)
 {
     if (error) {
         ERROR("%s", error->message);
+        if (g_error_matches(error, DBUS_GERROR, DBUS_GERROR_SERVICE_UNKNOWN)) {
+            g_error_free(error);
+            ERROR("daemon crashed, quitting rudely...");
+            exit(EXIT_FAILURE);
+        }
         g_error_free(error);
         return TRUE;
     }
@@ -1788,44 +1793,6 @@ dbus_get_video_device_rate_list(const gchar *dev, const gchar *channel, const gc
 }
 #endif
 
-GHashTable *
-dbus_get_addressbook_settings(void)
-{
-    GError *error = NULL;
-    GHashTable *results = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings(config_proxy, &results, &error);
-    check_error(error);
-
-    return results;
-}
-
-void
-dbus_set_addressbook_settings(GHashTable *settings)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings(config_proxy, settings, &error);
-    check_error(error);
-}
-
-gchar **
-dbus_get_addressbook_list(void)
-{
-    GError *error = NULL;
-    gchar **array = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list(config_proxy, &array, &error);
-    check_error(error);
-
-    return array;
-}
-
-void
-dbus_set_addressbook_list(const gchar **list)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list(config_proxy, list, &error);
-
-    check_error(error);
-}
 
 GHashTable *
 dbus_get_hook_settings(void)
@@ -1922,15 +1889,19 @@ dbus_set_accounts_order(const gchar *order)
     check_error(error);
 }
 
-GPtrArray *
-dbus_get_history(void)
+static void
+get_history_async_cb(DBusGProxy *proxy UNUSED, GPtrArray *items, GError *error, gpointer userdata)
 {
-    GError *error = NULL;
-    GPtrArray *entries = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_history(config_proxy, &entries, &error);
+    IdleData *id = userdata;
     check_error(error);
+    id->items = items;
+    id->dbus_finished = TRUE;
+}
 
-    return entries;
+void
+dbus_get_history(IdleData *id)
+{
+    org_sflphone_SFLphone_ConfigurationManager_get_history_async(config_proxy, get_history_async_cb, id);
 }
 
 void

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -111,15 +111,6 @@ class ConfigurationManager
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
         void clearHistory();
-
-        int32_t getMailNotify();
-        void setMailNotify();
-
-
-        std::map<std::string, int32_t> getAddressbookSettings();
-        void setAddressbookSettings(const std::map<std::string, int32_t>& settings);
-        std::vector< std::string > getAddressbookList();
-        void setAddressbookList(const std::vector< std::string >& list);
 
         void setAccountsOrder(const std::string& order);
 

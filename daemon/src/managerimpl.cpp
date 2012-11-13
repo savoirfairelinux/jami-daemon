@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -109,7 +109,7 @@ extern void on_account_state_changed_wrapper ();
 
 
 ManagerImpl::ManagerImpl() :
-    preferences(), voipPreferences(), addressbookPreference(),
+    preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(),
 #if HAVE_DBUS
@@ -323,7 +323,10 @@ void ManagerImpl::init(const std::string &config_file)
     {
         ost::MutexLock lock(audioLayerMutex_);
         if (audiodriver_) {
-            telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
+            {
+                ost::MutexLock toneLock(toneMutex_);
+                telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
+            }
             dtmfKey_.reset(new DTMF(getMainBuffer().getInternalSamplingRate()));
         }
     }
@@ -1532,7 +1535,6 @@ void ManagerImpl::saveConfig()
 
         preferences.serialize(emitter);
         voipPreferences.serialize(emitter);
-        addressbookPreference.serialize(emitter);
         hookPreference.serialize(emitter);
         audioPreference.serialize(emitter);
 #ifdef SFL_VIDEO
@@ -1965,9 +1967,10 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
         audiodriver_->startStream();
     }
 
-    if (telephoneTone_.get() != 0) {
+    {
         ost::MutexLock lock(toneMutex_);
-        telephoneTone_->setCurrentTone(toneId);
+        if (telephoneTone_.get() != 0)
+            telephoneTone_->setCurrentTone(toneId);
     }
 }
 
@@ -1980,7 +1983,6 @@ void ManagerImpl::stopTone()
         return;
 
     ost::MutexLock lock(toneMutex_);
-
     if (telephoneTone_.get() != NULL)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
 
@@ -2097,10 +2099,10 @@ void ManagerImpl::ringtone(const std::string& accountID)
 
 AudioLoop* ManagerImpl::getTelephoneTone()
 {
-    if (telephoneTone_.get()) {
-        ost::MutexLock m(toneMutex_);
+    ost::MutexLock m(toneMutex_);
+    if (telephoneTone_.get())
         return telephoneTone_->getCurrentTone();
-    } else
+    else
         return NULL;
 }
 
@@ -2126,10 +2128,9 @@ std::string ManagerImpl::retrieveConfigPath() const
                              ".config" + DIR_SEPARATOR_STR + PACKAGE;
 #endif
 
-    std::string xdg_env(XDG_CONFIG_HOME);
-    if (not xdg_env.empty()) {
-        configdir = xdg_env;
-    }
+    const std::string xdg_env(XDG_CONFIG_HOME);
+    if (not xdg_env.empty())
+        configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
 
     if (mkdir(configdir.data(), 0700) != 0) {
         // If directory creation failed
@@ -2174,7 +2175,7 @@ std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
         Call::CallState state = call->getState();
 
         if (state == Call::ACTIVE or state == Call::CONFERENCING)
-            codecName = link->getCurrentAudioCodecName(call);
+            codecName = link->getCurrentAudioCodecNames(call);
     }
 
     return codecName;
@@ -2388,9 +2389,9 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
 void ManagerImpl::recordingPlaybackSeek(const double value)
 {
-    if(audiofile_.get()) {
+    ost::MutexLock m(toneMutex_);
+    if (audiofile_.get())
         audiofile_.get()->seek(value);
-    }
 }
 
 
@@ -2419,18 +2420,6 @@ void ManagerImpl::setHistoryLimit(int days)
 int ManagerImpl::getHistoryLimit() const
 {
     return preferences.getHistoryLimit();
-}
-
-int32_t ManagerImpl::getMailNotify() const
-{
-    return preferences.getNotifyMails();
-}
-
-void ManagerImpl::setMailNotify()
-{
-    DEBUG("Set mail notify");
-    preferences.getNotifyMails() ? preferences.setNotifyMails(true) : preferences.setNotifyMails(false);
-    saveConfig();
 }
 
 void ManagerImpl::setAudioManager(const std::string &api)
@@ -2566,7 +2555,10 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
 
     unsigned int sampleRate = audiodriver_->getSampleRate();
 
-    telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
+    {
+        ost::MutexLock toneLock(toneMutex_);
+        telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
+    }
     dtmfKey_.reset(new DTMF(sampleRate));
 
     if (wasActive)
@@ -2966,7 +2958,6 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     // build preferences
     preferences.unserialize(*parser.getPreferenceNode());
     voipPreferences.unserialize(*parser.getVoipPreferenceNode());
-    addressbookPreference.unserialize(*parser.getAddressbookNode());
     hookPreference.unserialize(*parser.getHookNode());
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
@@ -3086,41 +3077,6 @@ ManagerImpl::getAllAccounts() const
     return all;
 }
 
-
-std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings() const
-{
-    std::map<std::string, int32_t> settings;
-
-    settings["ADDRESSBOOK_ENABLE"] = addressbookPreference.getEnabled();
-    settings["ADDRESSBOOK_MAX_RESULTS"] = addressbookPreference.getMaxResults();
-    settings["ADDRESSBOOK_DISPLAY_CONTACT_PHOTO"] = addressbookPreference.getPhoto();
-    settings["ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"] = addressbookPreference.getBusiness();
-    settings["ADDRESSBOOK_DISPLAY_PHONE_HOME"] = addressbookPreference.getHome();
-    settings["ADDRESSBOOK_DISPLAY_PHONE_MOBILE"] = addressbookPreference.getMobile();
-
-    return settings;
-}
-
-void ManagerImpl::setAddressbookSettings(const std::map<std::string, int32_t>& settings)
-{
-    addressbookPreference.setEnabled(settings.find("ADDRESSBOOK_ENABLE")->second == 1);
-    addressbookPreference.setMaxResults(settings.find("ADDRESSBOOK_MAX_RESULTS")->second);
-    addressbookPreference.setPhoto(settings.find("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")->second == 1);
-    addressbookPreference.setBusiness(settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")->second == 1);
-    addressbookPreference.setHone(settings.find("ADDRESSBOOK_DISPLAY_PHONE_HOME")->second == 1);
-    addressbookPreference.setMobile(settings.find("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")->second == 1);
-}
-
-void ManagerImpl::setAddressbookList(const std::vector<std::string>& list)
-{
-    addressbookPreference.setList(ManagerImpl::join_string(list));
-    saveConfig();
-}
-
-std::vector<std::string> ManagerImpl::getAddressbookList() const
-{
-    return split_string(addressbookPreference.getList());
-}
 
 void ManagerImpl::setIPToIPForCall(const std::string& callID, bool IPToIP)
 {

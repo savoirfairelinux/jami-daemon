@@ -119,14 +119,6 @@ voipPreferences:
   pulseLength: 250
   symmetric: true
   zidFile: true
-addressbook:
-  business: true
-  enabled: true
-  home: true
-  list:
-  maxResults: 25
-  mobile: true
-  photo: true
 hooks:
   iax2Enabled: false
   numberAddPrefix:

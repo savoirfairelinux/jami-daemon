@@ -108,12 +108,12 @@ public:
     void setHistoryLimit(const int32_t& days);
     void setAudioManager(const std::string& api);
     std::string getAudioManager();
-    void setMailNotify();
+    /*void setMailNotify();
     int32_t getMailNotify();
     std::map<std::string, int32_t> getAddressbookSettings();
     void setAddressbookSettings(const std::map<std::string, int32_t>& settings);
     std::vector<std::string> getAddressbookList();
-    void setAddressbookList(const std::vector<std::string>& list);
+    void setAddressbookList(const std::vector<std::string>& list);*/
     std::map<std::string, std::string> getHookSettings();
     void setHookSettings(const std::map<std::string, std::string>& settings);
     void setAccountsOrder(const std::string& order);

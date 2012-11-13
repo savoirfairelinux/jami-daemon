@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -48,7 +48,6 @@ extern "C" {
 #include <map>
 #include <ctime>
 #include <cstdlib>
-#include <cstdio> // for remove()
 #include <fstream>
 
 #include "manager.h"
@@ -65,7 +64,7 @@ int getBufferSize(int width, int height, int format)
 {
     enum PixelFormat fmt = (enum PixelFormat) format;
     // determine required buffer size and allocate buffer
-    return sizeof(unsigned char) * avpicture_get_size(fmt, width, height);
+    return avpicture_get_size(fmt, width, height);
 }
 
 string openTemp(string path, std::ofstream& os)
@@ -87,24 +86,24 @@ string openTemp(string path, std::ofstream& os)
     }
     return path;
 }
-} // end anonymous namespace
 
-void VideoReceiveThread::loadSDP()
+int readFunction(void *opaque, uint8_t *buf, int buf_size)
 {
-    EXIT_IF_FAIL(not args_["receiving_sdp"].empty(), "Cannot load empty SDP");
-
-    std::ofstream os;
-    sdpFilename_ = openTemp("/tmp", os);
-    os << args_["receiving_sdp"];
-    DEBUG("loaded SDP\n%s", args_["receiving_sdp"].c_str());
-
-    os.close();
+    std::istream &is = *static_cast<std::istream*>(opaque);
+    is.read(reinterpret_cast<char*>(buf), buf_size);
+    return is.gcount();
 }
+
+const int SDP_BUFFER_SIZE = 8192;
+
+} // end anonymous namespace
 
 void VideoReceiveThread::openDecoder()
 {
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
+    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
+    decoderCtx_->thread_count = 1;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
     int ret = avcodec_open(decoderCtx_, inputDecoder_);
 #else
@@ -120,12 +119,12 @@ void VideoReceiveThread::setup()
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
 
+    const std::string SDP_FILENAME = "dummyFilename";
     std::string format_str;
     std::string input;
     if (args_["input"].empty()) {
-        loadSDP();
         format_str = "sdp";
-        input = sdpFilename_;
+        input = SDP_FILENAME;
     } else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
         // FIXME: This is not a robust way of checking if we mean to use a
@@ -147,13 +146,20 @@ void VideoReceiveThread::setup()
         av_dict_set(&options, "channel", args_["channel"].c_str(), 0);
 
     // Open video file
-    DEBUG("Opening input");
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
+    if (input == SDP_FILENAME) {
+        EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
+        inputCtx_->pb = avioContext_.get();
+    }
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
-    EXIT_IF_FAIL(ret == 0, "Could not open input \"%s\"", input.c_str());
-    if (not sdpFilename_.empty() and remove(sdpFilename_.c_str()) != 0)
-        ERROR("Could not remove %s", sdpFilename_.c_str());
+
+    if (ret < 0) {
+        if (options)
+            av_dict_free(&options);
+        ERROR("Could not open input \"%s\"", input.c_str());
+        ost::Thread::exit();
+    }
 
     DEBUG("Finding stream info");
     if (requestKeyFrameCallback_)
@@ -164,10 +170,22 @@ void VideoReceiveThread::setup()
 #else
     ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
-    EXIT_IF_FAIL(ret >= 0, "Could not find stream info!");
+    if (options)
+        av_dict_free(&options);
+    if (ret < 0) {
+        // workaround for this bug:
+        // http://patches.libav.org/patch/22541/
+        if (ret == -1)
+            ret = AVERROR_INVALIDDATA;
+        char errBuf[64] = {0};
+        // print nothing for unknown errors
+        if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
+            errBuf[0] = '\0';
+        ERROR("Could not find stream info: %s", errBuf);
+        ost::Thread::exit();
+    }
 
     // find the first video stream from the input
-    streamIndex_ = -1;
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
@@ -218,10 +236,15 @@ int VideoReceiveThread::interruptCb(void *ctx)
 }
 
 VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<string, string> &args) :
-    args_(args), frameNumber_(0), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
+    args_(args), inputDecoder_(0), decoderCtx_(0), rawFrame_(0),
     scaledPicture_(0), streamIndex_(-1), inputCtx_(0), imgConvertCtx_(0),
     dstWidth_(0), dstHeight_(0), sink_(), threadRunning_(false),
-    sdpFilename_(), bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0)
+    bufferSize_(0), id_(id), interruptCb_(), requestKeyFrameCallback_(0),
+    sdpBuffer_(reinterpret_cast<unsigned char*>(av_malloc(SDP_BUFFER_SIZE)), &av_free),
+    stream_(args_["receiving_sdp"]),
+    avioContext_(avio_alloc_context(sdpBuffer_.get(), SDP_BUFFER_SIZE, 0,
+                                    reinterpret_cast<void*>(static_cast<std::istream*>(&stream_)),
+                                    &readFunction, 0, 0), &av_free)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -233,7 +256,6 @@ void VideoReceiveThread::start()
     ost::Thread::start();
 }
 
-
 /// Copies and scales our rendered frame to the buffer pointed to by data
 void VideoReceiveThread::fill_buffer(void *data)
 {
@@ -242,6 +264,8 @@ void VideoReceiveThread::fill_buffer(void *data)
                    VIDEO_RGB_FORMAT,
                    dstWidth_,
                    dstHeight_);
+
+    createScalingContext();
 
     sws_scale(imgConvertCtx_,
             rawFrame_->data,
@@ -309,7 +333,7 @@ VideoReceiveThread::~VideoReceiveThread()
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
-    if (inputCtx_) {
+    if (streamIndex_ != -1 and inputCtx_) {
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
         av_close_input_file(inputCtx_);
 #else

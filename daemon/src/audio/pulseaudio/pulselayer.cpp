@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -232,9 +232,17 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
     switch (type) {
         case SFL_PCM_PLAYBACK:
         case SFL_PCM_RINGTONE:
-            return sinkList_.at(index);
+            if (index < 0 or index >= sinkList_.size()) {
+                ERROR("Index %d out of range", index);
+                return "";
+            }
+            return sinkList_[index];
         case SFL_PCM_CAPTURE:
-            return sourceList_.at(index);
+            if (index < 0 or index >= sourceList_.size()) {
+                ERROR("Index %d out of range", index);
+                return "";
+            }
+            return sourceList_[index];
         default:
             return "";
     }
@@ -360,6 +368,8 @@ void PulseLayer::writeToSpeaker()
         return;
     }
 
+    // FIXME: not thread safe! we only lock the mutex when we get the
+    // pointer, we have no guarantee that it will stay safe to use
     AudioLoop *toneToPlay = Manager::instance().getTelephoneTone();
 
     if (toneToPlay) {

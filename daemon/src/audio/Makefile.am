@@ -13,8 +13,8 @@ SUBDIRS += pulseaudio
 endif
 
 if BUILD_SPEEXDSP
-SFL_SPEEXDSP_SRC=echosuppress.cpp speexechocancel.cpp noisesuppress.cpp
-SFL_SPEEXDSP_HEAD=echosuppress.h speexechocancel.h noisesuppress.h
+SFL_SPEEXDSP_SRC=noisesuppress.cpp
+SFL_SPEEXDSP_HEAD=noisesuppress.h
 endif
 
 libaudio_la_SOURCES = \

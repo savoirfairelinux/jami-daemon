@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -35,5 +35,21 @@
 
 void
 lazy_load_items(calltab_t *tab);
+
+typedef struct
+{
+    guint load_state;
+
+    GtkTreeStore *tree_store;
+    GtkWidget *tree_view;
+
+    gint n_items;
+    gint n_loaded;
+    GPtrArray *items;
+    calltab_t *tab;
+    guint load_id;
+    gboolean dbus_called;
+    gboolean dbus_finished;
+} IdleData;
 
 #endif

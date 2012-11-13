@@ -45,11 +45,6 @@
             <summary>Instant messaging is enabled</summary>
             <description>Instant messaging is enabled.</description>
         </key>
-        <key name="start-hidden" type="b">
-            <default>false</default>
-            <summary>Start hidden</summary>
-            <description>Start hidden.</description>
-        </key>
         <key name="message-tab-height" type="i">
             <default>20</default>
             <summary>Message tab height</summary>

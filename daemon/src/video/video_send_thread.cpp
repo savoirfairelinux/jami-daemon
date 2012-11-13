@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -187,12 +187,19 @@ void VideoSendThread::setup()
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                   file_iformat, options ? &options : NULL);
-    EXIT_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
+    if (ret < 0) {
+        if (options)
+            av_dict_free(&options);
+        ERROR("Could not open input file %s", args_["input"].c_str());
+        ost::Thread::exit();
+    }
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
     ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
+    if (options)
+        av_dict_free(&options);
     EXIT_IF_FAIL(ret >= 0, "Couldn't find stream info");
 
     // find the first video stream from the input
@@ -277,8 +284,13 @@ void VideoSendThread::setup()
         DEBUG("Writing stream header for payload type %s", args_["payload_type"].c_str());
         av_dict_set(&outOptions, "payload_type", args_["payload_type"].c_str(), 0);
     }
-    EXIT_IF_FAIL(avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL) >= 0, "Could not write "
-                 "header for output file...check codec parameters")
+
+
+    ret = avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL);
+    if (outOptions)
+        av_dict_free(&outOptions);
+    EXIT_IF_FAIL(ret >= 0, "Could not write header for output file...check codec parameters");
+
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_sdp();
 
@@ -317,7 +329,7 @@ void VideoSendThread::createScalingContext()
 int VideoSendThread::interruptCb(void *ctx)
 {
     VideoSendThread *context = static_cast<VideoSendThread*>(ctx);
-    return not context->sending_;
+    return not context->threadRunning_;
 }
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
@@ -325,7 +337,7 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
     inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    sending_(false), forceKeyFrame_(0)
+    threadRunning_(false), forceKeyFrame_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -333,13 +345,13 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
 
 void VideoSendThread::run()
 {
-    sending_ = true;
+    threadRunning_ = true;
     // We don't want setup() called in the main thread in case it exits or blocks
     setup();
     createScalingContext();
 
     int frameNumber = 0;
-    while (sending_) {
+    while (threadRunning_) {
         AVPacket inpacket;
         {
             int ret = av_read_frame(inputCtx_, &inpacket);
@@ -363,6 +375,7 @@ void VideoSendThread::run()
         if (!frameFinished)
             continue;
 
+        createScalingContext();
         sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
                   inputDecoderCtx_->height, scaledPicture_->data,
                   scaledPicture_->linesize);
@@ -422,7 +435,7 @@ void VideoSendThread::run()
 VideoSendThread::~VideoSendThread()
 {
     // FIXME
-    sending_ = false;
+    threadRunning_ = false;
     ost::Thread::terminate();
 
     sws_freeContext(imgConvertCtx_);
@@ -432,8 +445,11 @@ VideoSendThread::~VideoSendThread()
     // before you close the CodecContexts open when you wrote the
     // header; otherwise write_trailer may try to use memory that
     // was freed on av_codec_close()
-    if (outputCtx_ and outputCtx_->priv_data)
+    if (outputCtx_ and outputCtx_->priv_data) {
         av_write_trailer(outputCtx_);
+        if (outputCtx_->pb)
+            avio_close(outputCtx_->pb);
+    }
 
     if (scaledPictureBuf_)
         av_free(scaledPictureBuf_);

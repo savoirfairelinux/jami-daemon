@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -97,36 +97,6 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     return route_set;
 }
 
-pjsip_route_hdr *
-sip_utils::createRouteSetList(const std::string &route, pj_pool_t *hdr_pool)
-{
-    pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
-
-    std::string host;
-    int port = 0;
-    size_t found = route.find(":");
-    if (found != std::string::npos) {
-        host = route.substr(0, found);
-        port = atoi(route.substr(found + 1, route.length() - found).c_str());
-    } else
-        host = route;
-
-    std::vector<std::string> ipList(getIPList(host));
-    for (std::vector<std::string>::const_iterator iter = ipList.begin(); iter != ipList.end(); ++iter) {
-
-        pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
-        pjsip_sip_uri *url = pjsip_sip_uri_create(hdr_pool, 0);
-        url->lr_param = 1;
-        routing->name_addr.uri = (pjsip_uri*) url;
-        pj_strdup2(hdr_pool, &url->host, iter->c_str());
-        url->port = port;
-
-        DEBUG("Adding route %s", iter->c_str());
-        pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
-    }
-
-    return route_set;
-}
 
 std::string
 sip_utils::parseDisplayName(const char * buffer)

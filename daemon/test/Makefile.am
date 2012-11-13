@@ -5,7 +5,7 @@ check_PROGRAMS = test
 
 TESTS = run_tests.sh
 
-test_CXXFLAGS = -DWORKSPACE="$(top_srcdir)/test/"
+test_CXXFLAGS = -DWORKSPACE="$(top_srcdir)/test/" @PTHREAD_CFLAGS@
 test_LDADD = $(top_builddir)/src/libsflphone.la @ZRTPCPP_LIBS@ @LIBCRYPTO_LIBS@ @CPPUNIT_LIBS@ @YAML_LIBS@
 
 EXTRA_DIST = sflphoned-sample.yml history-sample.tpl run_tests.sh
@@ -28,8 +28,6 @@ test_SOURCES = constants.h \
 			   siptest.cpp \
 			   sdptest.h \
 			   sdptest.cpp \
-			   echocanceltest.h \
-			   echocanceltest.cpp \
 			   gaincontroltest.h \
 			   gaincontroltest.cpp \
 			   mainbuffertest.h \

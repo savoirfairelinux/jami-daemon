@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -68,21 +68,7 @@ AddressBook_Config *addressbook_config_load_parameters()
         .search_phone_mobile = 1,
     };
 
-    static AddressBook_Config config;
-
-    GHashTable *params = dbus_get_addressbook_settings();
-
-    if (params) {
-        config.enable = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_ENABLE));
-        config.max_results = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_MAX_RESULTS));
-        config.display_contact_photo = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
-        config.search_phone_business = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
-        config.search_phone_home = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_PHONE_HOME));
-        config.search_phone_mobile = (size_t)(g_hash_table_lookup(params, ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
-    } else
-        config = defconfig;
-
-    return &config;
+    return &defconfig;
 }
 
 void
@@ -104,8 +90,6 @@ addressbook_config_save_parameters(void)
                          (gpointer)(size_t) addressbook_config->search_phone_home);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_MOBILE,
                          (gpointer)(size_t) addressbook_config->search_phone_mobile);
-
-    dbus_set_addressbook_settings(params);
 
     update_searchbar_addressbook_list();
 
@@ -250,38 +234,32 @@ addressbook_config_book_active_toggled(
     // Save data
     gboolean valid;
 
-    // Initiate double array char list for one string
-    const gchar** list = (void*) malloc(sizeof(void*));
-    int c = 0;
-
     /* Get the first iter in the list */
     valid = gtk_tree_model_get_iter_first(model, &iter);
+
+    GPtrArray *array = g_ptr_array_new();
 
     while (valid) {
         // Get active value at iteration
         gtk_tree_model_get(model, &iter, COLUMN_BOOK_ACTIVE, &active,
                            COLUMN_BOOK_UID, &uid, COLUMN_BOOK_NAME, &name, -1);
 
-        if (active) {
-            // Reallocate memory each time
-            if (c != 0)
-                list = (void*) realloc(list, (c + 1) * sizeof(void*));
-
-            *(list + c) = uid;
-            c++;
-        }
+        if (active)
+            g_ptr_array_add(array, uid);
 
         valid = gtk_tree_model_iter_next(model, &iter);
     }
 
     // Allocate NULL array at the end for Dbus
-    list = (void*) realloc(list, (c + 1) * sizeof(void*));
-    *(list + c) = NULL;
+    g_ptr_array_add(array, NULL);
+    // copy to a gchar ** for Dbus
+    const gchar **list = g_malloc(sizeof(gchar *) * array->len);
+    for (guint i = 0; i < array->len; ++i)
+        list[i] = g_ptr_array_index(array, i);
+    g_ptr_array_free(array, TRUE);
 
-    // Call daemon to store in config file
-    dbus_set_addressbook_list(list);
-
-    free(list);
+    // free the list, but not its elements as they live in the tree model
+    g_free(list);
 }
 
 static void
@@ -291,21 +269,18 @@ addressbook_config_fill_book_list()
     GSList *book_list_iterator;
     GtkListStore *store;
     book_data_t *book_data;
-    gchar **book_list;
 
     if (!addrbook)
         return;
 
-    book_list = dbus_get_addressbook_list();
-    GSList *books_data = addrbook->get_books_data(book_list);
+    GSList *books_data = addrbook->get_books_data();
 
-    if (!books_data) {
-        DEBUG("No valid books data (%s:%d)", __FILE__, __LINE__);
-    }
+    if (!books_data)
+        DEBUG("No valid books data");
 
     // Get model of view and clear it
     if (!(store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view))))) {
-        DEBUG("Could not find model from treeview (%s:%d)", __FILE__, __LINE__);
+        DEBUG("Could not find model from treeview");
         return;
     }
 

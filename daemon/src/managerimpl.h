@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -112,11 +112,6 @@ class ManagerImpl {
          * Voip related preferences
          */
         VoipPreference voipPreferences;
-
-        /**
-         * Addressbook related preferences
-         */
-        AddressbookPreference addressbookPreference;
 
         /**
          * Hook preferences
@@ -698,6 +693,19 @@ class ManagerImpl {
         std::vector <std::string> getAddressbookList() const;
 
         /**
+         * Configure the start-up option
+         * @return int	1 if SFLphone should start in the system tray
+         *	        0 otherwise
+         */
+        int isStartHidden();
+
+        /**
+         * Configure the start-up option
+         * At startup, SFLphone can be displayed or start hidden in the system tray
+         */
+        void startHidden();
+
+        /**
          * Get the audio manager
          * @return int The audio manager
          *		    "alsa"
@@ -717,12 +725,6 @@ class ManagerImpl {
          * reopen stream at different rate,
          */
         void audioSamplingRateChanged(int);
-
-        /**
-         * Get the desktop mail notification level
-         * @return int The mail notification level
-         */
-        int32_t getMailNotify() const;
 
         /**
          * Change a specific value in the configuration tree.

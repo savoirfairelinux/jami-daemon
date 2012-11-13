@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -65,7 +65,6 @@
  */
 static GtkWidget * history_value;
 
-static GtkWidget *starthidden;
 static GtkWidget *popupwindow;
 static GtkWidget *neverpopupwindow;
 
@@ -84,13 +83,6 @@ static gboolean history_enabled = TRUE;
 
 // instant messaging preference parameters
 static gboolean instant_messaging_enabled = TRUE;
-
-static void
-start_hidden(GtkWidget *widget UNUSED, GSettings *settings)
-{
-    const gboolean currentstate = g_settings_get_boolean(settings, "start-hidden");
-    g_settings_set_boolean(settings, "start-hidden", !currentstate);
-}
 
 static void
 set_popup_mode(GtkToggleButton *widget, GSettings *settings)
@@ -139,7 +131,6 @@ void showstatusicon_cb(GtkToggleButton *widget, GSettings *settings)
     // Update the widget states
     gtk_widget_set_sensitive(GTK_WIDGET(popupwindow), currentstatus);
     gtk_widget_set_sensitive(GTK_WIDGET(neverpopupwindow), currentstatus);
-    gtk_widget_set_sensitive(GTK_WIDGET(starthidden), currentstatus);
 
     currentstatus ? show_status_icon(settings) : hide_status_icon();
 
@@ -222,19 +213,9 @@ create_general_settings(GSettings *settings)
         GTK_TOGGLE_BUTTON(neverpopupwindow),
         TRUE);
 
-    starthidden = gtk_check_button_new_with_mnemonic(
-                      _("Hide SFLphone window on _startup"));
-
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(starthidden),
-                                 g_settings_get_boolean(settings, "start-hidden"));
-    g_signal_connect(G_OBJECT(starthidden) , "clicked" , G_CALLBACK(start_hidden), settings);
-    gtk_table_attach(GTK_TABLE(table), starthidden, 0, 1, 3, 4, GTK_EXPAND
-                     | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-
     // Update the widget states
     gtk_widget_set_sensitive(GTK_WIDGET(popupwindow),statusicon);
     gtk_widget_set_sensitive(GTK_WIDGET(neverpopupwindow),statusicon);
-    gtk_widget_set_sensitive(GTK_WIDGET(starthidden),statusicon);
 
     // HISTORY CONFIGURATION
     gnome_main_section_new_with_table(_("Calls History"), &frame, &table, 3, 1);

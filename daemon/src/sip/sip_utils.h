@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -48,9 +48,6 @@ namespace sip_utils {
 
     pjsip_route_hdr *
     createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
-
-    pjsip_route_hdr *
-    createRouteSetList(const std::string &route, pj_pool_t *hdr_pool);
 
     void stripSipUriPrefix(std::string& sipUri);
 

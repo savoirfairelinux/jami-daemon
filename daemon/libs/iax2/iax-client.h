@@ -11,6 +11,8 @@
  * the GNU Lesser General Public License (LGPL)
  */
 
+#include <sys/socket.h>
+
 #ifndef _ASTERISK_IAX_CLIENT_H
 #define _ASTERISK_IAX_CLIENT_H
 

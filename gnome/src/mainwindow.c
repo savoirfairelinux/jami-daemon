@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -127,15 +127,9 @@ static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *ev
  * Minimize the main window.
  */
 static gboolean
-on_delete(GtkWidget * widget UNUSED, GSettings *settings)
+on_delete(GtkWidget * widget UNUSED)
 {
-    if (g_settings_get_boolean(settings, "show-status-icon")) {
-        gtk_widget_hide(get_main_window());
-        set_minimized(TRUE);
-    } else {
-        sflphone_quit(FALSE);
-    }
-
+    sflphone_quit(FALSE);
     return TRUE;
 }
 
@@ -178,21 +172,24 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, GSettings *setting
         }
 
         // If a modifier key is pressed, it's a shortcut, pass along
-        if (event->state & GDK_CONTROL_MASK || event->state & GDK_MOD1_MASK ||
-                 event->keyval == '<' ||
-                 event->keyval == '>' ||
-                 event->keyval == '\"'||
-                 event->keyval == GDK_KEY_Tab ||
-                 event->keyval == GDK_KEY_Return ||
-                 event->keyval == GDK_KEY_Left ||
-                 event->keyval == GDK_KEY_Up ||
-                 event->keyval == GDK_KEY_Right ||
-                 event->keyval == GDK_KEY_Down ||
-                 (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
-                 event->keyval == ' ')
-           return FALSE;
+        if (event->state & GDK_CONTROL_MASK ||
+            event->state & GDK_MOD1_MASK ||
+            event->keyval == '<' ||
+            event->keyval == '>' ||
+            event->keyval == '\"'||
+            event->keyval == GDK_KEY_Tab ||
+            event->keyval == GDK_KEY_Return ||
+            event->keyval == GDK_KEY_Left ||
+            event->keyval == GDK_KEY_Up ||
+            event->keyval == GDK_KEY_Right ||
+            event->keyval == GDK_KEY_Down ||
+            (event->keyval >= GDK_KEY_Shift_L  && event->keyval <= GDK_KEY_Hyper_R) ||
+            (event->keyval >= GDK_KEY_ISO_Lock && event->keyval <= GDK_KEY_ISO_Enter) ||
+            (event->keyval >= GDK_KEY_F1 && event->keyval <= GDK_KEY_F12) ||
+            event->keyval == ' ')
+            return FALSE;
         else
-           sflphone_keypad(event->keyval, event->string, settings);
+            sflphone_keypad(event->keyval, event->string, settings);
 
         return TRUE;
     }
@@ -245,7 +242,7 @@ create_main_window(GSettings *settings)
      * stop the main GTK loop
      */
     g_signal_connect(G_OBJECT(window), "delete-event",
-                     G_CALLBACK(on_delete), settings);
+                     G_CALLBACK(on_delete), NULL);
 
     g_signal_connect(G_OBJECT(window), "key-release-event",
                      G_CALLBACK(on_key_released), settings);

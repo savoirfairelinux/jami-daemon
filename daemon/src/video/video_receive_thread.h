@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -35,6 +35,8 @@
 #include <map>
 #include <string>
 #include <climits>
+#include <sstream>
+#include <tr1/memory>
 #include "shm_sink.h"
 #include "noncopyable.h"
 
@@ -53,7 +55,6 @@ class VideoReceiveThread : public ost::Thread {
     private:
         NON_COPYABLE(VideoReceiveThread);
         std::map<std::string, std::string> args_;
-        unsigned frameNumber_;
 
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
@@ -76,16 +77,17 @@ class VideoReceiveThread : public ost::Thread {
 #else
         ucommon::atomic::counter threadRunning_;
 #endif
-        std::string sdpFilename_;
         size_t bufferSize_;
         const std::string id_;
         AVIOInterruptCB interruptCb_;
         void (* requestKeyFrameCallback_)(const std::string &);
+        std::tr1::shared_ptr<unsigned char> sdpBuffer_;
+        std::istringstream stream_;
+        std::tr1::shared_ptr<AVIOContext> avioContext_;
 
         void setup();
         void openDecoder();
         void createScalingContext();
-        void loadSDP();
         void fill_buffer(void *data);
         static int interruptCb(void *ctx);
 

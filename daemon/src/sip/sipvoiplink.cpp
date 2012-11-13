@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -333,9 +333,15 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     call->getLocalSDP()->setLocalIP(addrSdp);
 
     call->getAudioRtp().initConfig();
-    call->getAudioRtp().initSession();
+    try {
+        call->getAudioRtp().initSession();
+    } catch (const ost::Socket::Error &err) {
+        ERROR("AudioRtp socket error");
+        delete call;
+        return PJ_FALSE;
+    }
 
-    if (body and body->len > 0) {
+    if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
         size_t start = sdpOffer.find("a=crypto:");
 
@@ -369,7 +375,9 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         delete call;
         return PJ_FALSE;
     }
-    call->getAudioRtp().start(ac);
+    std::vector<sfl::AudioCodec *> audioCodecs;
+    audioCodecs.push_back(ac);
+    call->getAudioRtp().start(audioCodecs);
 
     pjsip_dialog *dialog = 0;
 
@@ -519,7 +527,16 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     };
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
-    static const pj_str_t allowed[] = { { (char*) "INFO", 4}, { (char*) "REGISTER", 8}, { (char*) "OPTIONS", 7}, { (char*) "MESSAGE", 7 } };       //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6}
+    static const pj_str_t allowed[] = {
+        {(char *) "INFO", 4},
+        {(char *) "REGISTER", 8},
+        {(char *) "OPTIONS", 7},
+        {(char *) "MESSAGE", 7},
+        {(char *) "INVITE", 6},
+        {(char *) "ACK", 3},
+        {(char *) "BYE", 3},
+        {(char *) "CANCEL",6}};
+
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
 
     static const pj_str_t text_plain = { (char*) "text/plain", 10 };
@@ -868,12 +885,15 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
         delete call;
         throw VoipLinkException("Could not instantiate codec");
     }
+    std::vector<sfl::AudioCodec *> audioCodecs;
+    audioCodecs.push_back(ac);
+
     // Audio Rtp Session must be initialized before creating initial offer in SDP session
     // since SDES require crypto attribute.
     call->getAudioRtp().initConfig();
     call->getAudioRtp().initSession();
     call->getAudioRtp().initLocalCryptoInfo();
-    call->getAudioRtp().start(ac);
+    call->getAudioRtp().start(audioCodecs);
 
     // Building the local SDP offer
     Sdp *localSDP = call->getLocalSDP();
@@ -926,12 +946,14 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
         delete call;
         throw VoipLinkException("Could not instantiate codec for early media");
     }
+    std::vector<sfl::AudioCodec *> audioCodecs;
+    audioCodecs.push_back(ac);
 
     try {
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
         call->getAudioRtp().initLocalCryptoInfo();
-        call->getAudioRtp().start(ac);
+        call->getAudioRtp().start(audioCodecs);
     } catch (...) {
         delete call;
         throw VoipLinkException("Could not start rtp session for early media");
@@ -956,6 +978,14 @@ SIPVoIPLink::answer(Call *call)
 {
     if (!call)
         return;
+
+    SIPCall *sipCall = static_cast<SIPCall*>(call);
+    if (!sipCall->inv->neg) {
+        WARN("Negotiator is NULL, we've received an INVITE without an SDP");
+        pjmedia_sdp_session *dummy;
+        sdp_create_offer_cb(sipCall->inv, &dummy);
+    }
+
     call->answer();
 }
 
@@ -987,16 +1017,28 @@ SIPVoIPLink::hangup(const std::string& id)
     if (inv == NULL)
         throw VoipLinkException("No invite session for this call");
 
-    // Looks for sip routes
-    if (account->hasServiceRoute()) {
-        pjsip_route_hdr *route_set = sip_utils::createRouteSetList(account->getServiceRoute(), inv->pool);
-        pjsip_dlg_set_route_set(inv->dlg, route_set);
+    pjsip_route_hdr *route = inv->dlg->route_set.next;
+    while (route and route != &inv->dlg->route_set) {
+        char buf[1024];
+        int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
+        if (printed >= 0) {
+            buf[printed] = '\0';
+            DEBUG("Route header %s", buf);
+        }
+        route = route->next;
     }
 
     pjsip_tx_data *tdata = NULL;
 
+    const int status =
+        inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
+                      PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
+        inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE :
+        0;
+
+
     // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv, 0, NULL, &tdata) != PJ_SUCCESS || !tdata)
+    if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
     // add contact header
@@ -1079,22 +1121,32 @@ SIPVoIPLink::offhold(const std::string& id)
         throw VoipLinkException("Could not find sdp session");
 
     try {
-        int pl = PAYLOAD_CODEC_ULAW;
-        sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
-        if (sessionMedia)
-            pl = sessionMedia->getPayloadType();
+        std::vector<sfl::AudioCodec*> sessionMedia;
+        sdpSession->getSessionAudioMedia(sessionMedia);
+        std::vector<sfl::AudioCodec*> audioCodecs;
+        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin();
+             i != sessionMedia.end(); ++i) {
 
-        // Create a new instance for this codec
-        sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
+            if (!*i)
+                continue;
 
-        if (ac == NULL)
+            // Create a new instance for this codec
+            sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec((*i)->getPayloadType());
+
+            if (ac == NULL)
+                throw VoipLinkException("Could not instantiate codec");
+
+            audioCodecs.push_back(ac);
+        }
+
+        if (audioCodecs.empty())
             throw VoipLinkException("Could not instantiate codec");
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
         call->getAudioRtp().restoreLocalContext();
         call->getAudioRtp().initLocalCryptoInfoOnOffHold();
-        call->getAudioRtp().start(ac);
+        call->getAudioRtp().start(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
     } catch (...) {
@@ -1320,9 +1372,9 @@ SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
 }
 
 std::string
-SIPVoIPLink::getCurrentAudioCodecName(Call *call) const
+SIPVoIPLink::getCurrentAudioCodecNames(Call *call) const
 {
-    return static_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecName();
+    return static_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecNames();
 }
 
 /* Only use this macro with string literals or character arrays, will not work
@@ -1799,8 +1851,9 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 #endif // HAVE_SDES
 
-    sfl::AudioCodec *sessionMedia = sdpSession->getSessionAudioMedia();
-    if (!sessionMedia)
+    std::vector<sfl::AudioCodec*> sessionMedia;
+    sdpSession->getSessionAudioMedia(sessionMedia);
+    if (sessionMedia.empty())
         return;
 
     try {
@@ -1808,14 +1861,19 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         Manager::instance().getAudioDriver()->startStream();
         Manager::instance().audioLayerMutexUnlock();
 
-        int pl = sessionMedia->getPayloadType();
+        std::vector<AudioCodec*> audioCodecs;
+        for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin(); i != sessionMedia.end(); ++i) {
+            if (!*i)
+                continue;
+            const int pl = (*i)->getPayloadType();
 
-        if (pl != call->getAudioRtp().getSessionMedia()) {
             sfl::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
             if (!ac)
                 throw std::runtime_error("Could not instantiate codec");
-            call->getAudioRtp().updateSessionMedia(ac);
+            audioCodecs.push_back(ac);
         }
+        if (not audioCodecs.empty())
+            call->getAudioRtp().updateSessionMedia(audioCodecs);
     } catch (const SdpException &e) {
         ERROR("%s", e.what());
     } catch (const std::exception &rtpException) {

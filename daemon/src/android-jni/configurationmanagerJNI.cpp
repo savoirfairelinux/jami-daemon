@@ -409,6 +409,7 @@ std::string ConfigurationManagerJNI::getAudioManager()
     return Manager::instance().getAudioManager();
 }
 
+/*
 void ConfigurationManagerJNI::setMailNotify()
 {
     Manager::instance().setMailNotify();
@@ -438,6 +439,7 @@ void ConfigurationManagerJNI::setAddressbookList(const std::vector<std::string>&
 {
     Manager::instance().setAddressbookList(list);
 }
+*/
 
 std::map<std::string, std::string> ConfigurationManagerJNI::getHookSettings()
 {

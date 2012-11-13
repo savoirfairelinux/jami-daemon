@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -39,69 +39,6 @@
 #include "audio/pulseaudio/pulselayer.h"
 #include "sip/sipaccount.h"
 #include "test_utils.h"
-
-void ConfigurationTest::testDefaultValueAudio()
-{
-    TITLE();
-
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardin() == ALSA_DFT_CARD_ID);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaCardout() == ALSA_DFT_CARD_ID);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaSmplrate() == 44100);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getAlsaPlugin() == PCM_DEFAULT);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumespkr() == 100);
-    CPPUNIT_ASSERT(Manager::instance().audioPreference.getVolumemic() == 100);
-}
-
-void ConfigurationTest::testDefaultValuePreferences()
-{
-    TITLE();
-    CPPUNIT_ASSERT(Manager::instance().preferences.getZoneToneChoice() == Preferences::DFT_ZONE);
-}
-
-void ConfigurationTest::testDefaultValueSignalisation()
-{
-    TITLE();
-    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getSymmetricRtp());
-    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayDtmf());
-    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPlayTones());
-    CPPUNIT_ASSERT(Manager::instance().voipPreferences.getPulseLength() == 250);
-}
-
-void ConfigurationTest::testInitAudioDriver()
-{
-    TITLE();
-    // Load the audio driver
-    Manager::instance().initAudioDriver();
-
-    // Check the creation
-
-    if (Manager::instance().getAudioDriver() == NULL)
-        CPPUNIT_FAIL("Error while loading audio layer");
-
-    // Check if it has been created with the right type
-    if (Manager::instance().audioPreference.getAudioApi() == "alsa")
-        CPPUNIT_ASSERT(!dynamic_cast<PulseLayer*>(Manager::instance().getAudioDriver()));
-    else if (Manager::instance().audioPreference.getAudioApi() == "pulseaudio")
-        CPPUNIT_ASSERT(!dynamic_cast<AlsaLayer*>(Manager::instance().getAudioDriver()));
-    else
-        CPPUNIT_FAIL("Wrong audio layer type");
-}
-
-
-void ConfigurationTest::testYamlParser()
-{
-    try {
-        FILE *file = fopen("ymlParser.yml", "rb");
-        Conf::YamlParser parser(file);
-        parser.serializeEvents();
-        parser.composeEvents();
-        parser.constructNativeData();
-        if (file)
-            fclose(file);
-    } catch (const Conf::YamlParserException &e) {
-       ERROR("ConfigTree: %s", e.what());
-    }
-}
 
 void ConfigurationTest::testYamlEmitter()
 {

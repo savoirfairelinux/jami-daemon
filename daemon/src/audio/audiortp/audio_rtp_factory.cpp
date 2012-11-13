@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -120,12 +120,12 @@ void AudioRtpFactory::initSession()
         rtpSession_ = new AudioSymmetricRtpSession(*ca_);
 }
 
-void sfl::AudioRtpFactory::start(AudioCodec* audiocodec)
+void sfl::AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
-    if (rtpSession_->startRtpThread(*audiocodec) != 0)
+    if (rtpSession_->startRtpThread(audioCodecs) != 0)
         throw AudioRtpFactoryException("Failed to start AudioRtpSession thread");
 }
 
@@ -142,15 +142,15 @@ int AudioRtpFactory::getSessionMedia()
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("RTP session was null when trying to get session media type");
 
-    return rtpSession_->getCodecPayloadType();
+    return rtpSession_->getEncoderPayloadType();
 }
 
-void AudioRtpFactory::updateSessionMedia(AudioCodec *audiocodec)
+void AudioRtpFactory::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("rtpSession_ was NULL when trying to update IP address");
 
-    rtpSession_->updateSessionMedia(*audiocodec);
+    rtpSession_->updateSessionMedia(audioCodecs);
 }
 
 void AudioRtpFactory::updateDestinationIpAddress()
@@ -194,11 +194,15 @@ void sfl::AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 
 void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
-    if (rtpSession_ and keyExchangeProtocol_ == SDES) {
-        AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
-        srtp->setRemoteCryptoInfo(nego);
+    if (rtpSession_ ) {
+        if (keyExchangeProtocol_ == SDES) {
+            AudioSrtpSession *srtp = static_cast<AudioSrtpSession *>(rtpSession_);
+            srtp->setRemoteCryptoInfo(nego);
+        } else {
+            ERROR("Should not store remote crypto info for non-SDES sessions");
+        }
     } else
-        throw AudioRtpFactoryException("RTP: Error: rtpSession_ is NULL in setRemoteCryptoInfo");
+        throw AudioRtpFactoryException("rtpSession_ is NULL in setRemoteCryptoInfo");
 }
 
 void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
@@ -209,7 +213,8 @@ void AudioRtpFactory::setDtmfPayloadType(unsigned int payloadType)
 
 void AudioRtpFactory::sendDtmfDigit(int digit)
 {
-    rtpSession_->putDtmfEvent(digit);
+    if (rtpSession_)
+        rtpSession_->putDtmfEvent(digit);
 }
 
 void sfl::AudioRtpFactory::saveLocalContext()

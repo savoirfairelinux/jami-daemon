@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -40,6 +40,7 @@
 #include "conferencelist.h"
 #include "conference_obj.h"
 #include "sflnotify.h"
+#include "history_loader.h"
 
 /** @file dbus.h
   * @brief General DBus functions wrappers.
@@ -468,22 +469,6 @@ void dbus_set_is_always_recording(gboolean);
 gboolean dbus_get_is_always_recording(void);
 
 /**
- * Encapsulate all the address book-related configuration
- * Get the configuration
- */
-GHashTable* dbus_get_addressbook_settings(void);
-
-/**
- * Encapsulate all the address book-related configuration
- * Set the configuration
- */
-void dbus_set_addressbook_settings(GHashTable *);
-
-gchar **dbus_get_addressbook_list(void);
-
-void dbus_set_addressbook_list(const gchar **list);
-
-/**
  * Resolve the local address given an interface name
  */
 gchar * dbus_get_address_from_interface_name(const gchar *interface);
@@ -527,7 +512,7 @@ void dbus_set_accounts_order(const gchar *order);
  * Get a the history
  * @return The PtrArray of history entries
  */
-GPtrArray *dbus_get_history(void);
+void dbus_get_history(IdleData *id);
 
 void dbus_clear_history(void);
 

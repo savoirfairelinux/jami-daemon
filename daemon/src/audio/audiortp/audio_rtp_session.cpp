@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -61,11 +61,12 @@ AudioRtpSession::~AudioRtpSession()
     queue_.disableStack();
 }
 
-void AudioRtpSession::updateSessionMedia(AudioCodec &audioCodec)
+void AudioRtpSession::updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     int lastSamplingRate = audioRtpRecord_.codecSampleRate_;
 
-    setSessionMedia(audioCodec);
+    if (codecsDiffer(audioCodecs))
+        setSessionMedia(audioCodecs);
 
     Manager::instance().audioSamplingRateChanged(audioRtpRecord_.codecSampleRate_);
 
@@ -78,12 +79,12 @@ void AudioRtpSession::updateSessionMedia(AudioCodec &audioCodec)
 #endif
 }
 
-void AudioRtpSession::setSessionMedia(AudioCodec &audioCodec)
+void AudioRtpSession::setSessionMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
-    setRtpMedia(&audioCodec);
+    setRtpMedia(audioCodecs);
 
     // G722 requires timestamp to be incremented at 8kHz
-    const ost::PayloadType payloadType = getCodecPayloadType();
+    const ost::PayloadType payloadType = getEncoderPayloadType();
     if (payloadType == ost::sptG722) {
         const int G722_RTP_TIME_INCREMENT = 160;
         timestampIncrement_ = G722_RTP_TIME_INCREMENT;
@@ -133,7 +134,7 @@ void AudioRtpSession::sendDtmfEvent()
     }
 
     // restore the payload to audio
-    const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getCodecPayloadType()));
+    const ost::StaticPayloadFormat pf(static_cast<ost::StaticPayloadType>(getEncoderPayloadType()));
     queue_.setPayloadFormat(pf);
 
     // decrease length remaining to process for this event
@@ -231,7 +232,7 @@ void AudioRtpSession::updateDestinationIpAddress()
 }
 
 
-int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
+int AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (isStarted_)
         return 0;
@@ -240,7 +241,7 @@ int AudioRtpSession::startRtpThread(AudioCodec &audiocodec)
 
     isStarted_ = true;
     setSessionTimeouts();
-    setSessionMedia(audiocodec);
+    setSessionMedia(audioCodecs);
     initBuffers();
 #if HAVE_SPEEXDSP
     initNoiseSuppress();
