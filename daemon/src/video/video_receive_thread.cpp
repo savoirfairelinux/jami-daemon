@@ -308,7 +308,7 @@ VideoReceiveThread::~VideoReceiveThread()
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
-    if (streamIndex_ != -1 and inputCtx_) {
+    if (inputCtx_ and inputCtx_->nb_streams > 0) {
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
         av_close_input_file(inputCtx_);
 #else
