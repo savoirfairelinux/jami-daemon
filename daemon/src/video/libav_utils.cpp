@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Luca Barbato <lu_zero@gentoo.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,8 +50,6 @@ using std::vector;
 
 map<string, string> encoders_;
 vector<string> installed_video_codecs_;
-/* application wide mutex to protect concurrent access to avcodec */
-ost::Mutex avcodec_lock_;
 
 void findInstalledVideoCodecs()
 {
@@ -79,38 +78,37 @@ vector<string> getVideoCodecList()
     return installed_video_codecs_;
 }
 
-static int avcodecManageMutex(void ** /*mutex*/, enum AVLockOp op)
+namespace {
+// protect libav/ffmpeg access with pthreads
+int avcodecManageMutex(void **data, enum AVLockOp op)
 {
-    switch(op) {
+    pthread_mutex_t **mutex = reinterpret_cast<pthread_mutex_t**>(data);
+    int ret = 0;
+    switch (op) {
         case AV_LOCK_CREATE:
-            break; // our mutex is already created
-        case AV_LOCK_DESTROY:
-            break; // our mutex doesn't need to be destroyed
+            *mutex = static_cast<pthread_mutex_t*>(av_malloc(sizeof(pthread_mutex_t)));
+            if (!mutex)
+                return AVERROR(ENOMEM);
+            ret = pthread_mutex_init(*mutex, NULL);
+            break;
         case AV_LOCK_OBTAIN:
-            avcodec_lock_.enter();
+            ret = pthread_mutex_lock(*mutex);
             break;
         case AV_LOCK_RELEASE:
-            avcodec_lock_.leave();
+            ret = pthread_mutex_unlock(*mutex);
             break;
+        case AV_LOCK_DESTROY:
+            ret = pthread_mutex_destroy(*mutex);
+            av_freep(mutex);
+            break;
+        default:
+            return AVERROR_BUG;
     }
-
-    return 0;
+    return AVERROR(ret);
 }
 
-map<string, string> encodersMap()
+void init_once()
 {
-    return encoders_;
-}
-
-void sfl_avcodec_init()
-{
-    static bool done = false;
-    ost::MutexLock lock(avcodec_lock_);
-    if (done)
-        return;
-
-    done = true;
-
     av_register_all();
     avdevice_register_all();
 #if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(53, 13, 0)
@@ -137,6 +135,20 @@ void sfl_avcodec_init()
     //encoders["H263"]          = "h263";
 
     findInstalledVideoCodecs();
+}
+
+}
+
+map<string, string> encodersMap()
+{
+    return encoders_;
+}
+
+static pthread_once_t already_called = PTHREAD_ONCE_INIT;
+
+void sfl_avcodec_init()
+{
+    (void) pthread_once(&already_called, init_once);
 }
 
 std::vector<std::map<std::string, std::string> >
