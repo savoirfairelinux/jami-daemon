@@ -43,12 +43,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
-
-#include <stdexcept>
 #include <map>
-#include <ctime>
-#include <cstdlib>
-#include <fstream>
 
 #include "manager.h"
 
@@ -65,26 +60,6 @@ int getBufferSize(int width, int height, int format)
     enum PixelFormat fmt = (enum PixelFormat) format;
     // determine required buffer size and allocate buffer
     return avpicture_get_size(fmt, width, height);
-}
-
-string openTemp(string path, std::ofstream& os)
-{
-    path += "/";
-    // POSIX the mktemp family of functions requires names to end with 6 x's
-    const char * const X_SUFFIX = "XXXXXX";
-
-    path += X_SUFFIX;
-    std::vector<char> dst_path(path.begin(), path.end());
-    dst_path.push_back('\0');
-    for (int fd = -1; fd == -1; ) {
-        fd = mkstemp(&dst_path[0]);
-        if (fd != -1) {
-            path.assign(dst_path.begin(), dst_path.end() - 1);
-            os.open(path.c_str(), std::ios_base::trunc | std::ios_base::out);
-            close(fd);
-        }
-    }
-    return path;
 }
 
 int readFunction(void *opaque, uint8_t *buf, int buf_size)
