@@ -108,6 +108,7 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     // emit one intra frame every gop_size frames
     encoderCtx_->max_b_frames = 0;
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
+
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
     // This is to place global headers in extradata instead of every keyframe.
@@ -343,10 +344,64 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     interruptCb_.opaque = this;
 }
 
+struct VideoTxContextHandle {
+    VideoTxContextHandle(VideoSendThread &tx) : tx_(tx) {}
+
+    ~VideoTxContextHandle()
+    {
+        if (tx_.imgConvertCtx_)
+            sws_freeContext(tx_.imgConvertCtx_);
+
+        // write the trailer, if any.  the trailer must be written
+        // before you close the CodecContexts open when you wrote the
+        // header; otherwise write_trailer may try to use memory that
+        // was freed on av_codec_close()
+        if (tx_.outputCtx_ and tx_.outputCtx_->priv_data) {
+            av_write_trailer(tx_.outputCtx_);
+            if (tx_.outputCtx_->pb)
+                avio_close(tx_.outputCtx_->pb);
+        }
+
+        if (tx_.scaledPictureBuf_)
+            av_free(tx_.scaledPictureBuf_);
+
+        if (tx_.outbuf_)
+            av_free(tx_.outbuf_);
+
+        // free the scaled frame
+        if (tx_.scaledPicture_)
+            av_free(tx_.scaledPicture_);
+
+        // free the YUV frame
+        if (tx_.rawFrame_)
+            av_free(tx_.rawFrame_);
+
+        // close the codecs
+        if (tx_.encoderCtx_) {
+            avcodec_close(tx_.encoderCtx_);
+            av_freep(&tx_.encoderCtx_);
+        }
+
+        // doesn't need to be freed, we didn't use avcodec_alloc_context
+        if (tx_.inputDecoderCtx_)
+            avcodec_close(tx_.inputDecoderCtx_);
+
+        // close the video file
+        if (tx_.inputCtx_)
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+            av_close_input_file(tx_.inputCtx_);
+#else
+        avformat_close_input(&tx_.inputCtx_);
+#endif
+    }
+    VideoSendThread &tx_;
+};
+
 void VideoSendThread::run()
 {
     threadRunning_ = true;
     // We don't want setup() called in the main thread in case it exits or blocks
+    VideoTxContextHandle handle(*this);
     setup();
     createScalingContext();
 
@@ -357,8 +412,11 @@ void VideoSendThread::run()
             int ret = av_read_frame(inputCtx_, &inpacket);
             if (ret == AVERROR(EAGAIN))
                 continue;
-            else
-                EXIT_IF_FAIL(ret >= 0, "Could not read frame");
+            else if (ret < 0) {
+                ERROR("Could not read frame");
+                threadRunning_ = false;
+                break;
+            }
         }
 
         /* Guarantees that we free the packet allocated by av_read_frame */
@@ -426,7 +484,11 @@ void VideoSendThread::run()
         // write the compressed frame in the media file
         {
             int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-            EXIT_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
+            if (ret < 0) {
+                ERROR("av_interleaved_write_frame() error");
+                threadRunning_ = false;
+                break;
+            }
         }
         yield();
     }
@@ -437,51 +499,6 @@ VideoSendThread::~VideoSendThread()
     // FIXME
     threadRunning_ = false;
     ost::Thread::terminate();
-
-    sws_freeContext(imgConvertCtx_);
-    imgConvertCtx_ = 0;
-
-    // write the trailer, if any.  the trailer must be written
-    // before you close the CodecContexts open when you wrote the
-    // header; otherwise write_trailer may try to use memory that
-    // was freed on av_codec_close()
-    if (outputCtx_ and outputCtx_->priv_data) {
-        av_write_trailer(outputCtx_);
-        if (outputCtx_->pb)
-            avio_close(outputCtx_->pb);
-    }
-
-    if (scaledPictureBuf_)
-        av_free(scaledPictureBuf_);
-
-    if (outbuf_)
-        av_free(outbuf_);
-
-    // free the scaled frame
-    if (scaledPicture_)
-        av_free(scaledPicture_);
-
-    // free the YUV frame
-    if (rawFrame_)
-        av_free(rawFrame_);
-
-    // close the codecs
-    if (encoderCtx_) {
-        avcodec_close(encoderCtx_);
-        av_freep(&encoderCtx_);
-    }
-
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
-    if (inputDecoderCtx_)
-        avcodec_close(inputDecoderCtx_);
-
-    // close the video file
-    if (inputCtx_)
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-        av_close_input_file(inputCtx_);
-#else
-        avformat_close_input(&inputCtx_);
-#endif
 }
 
 void VideoSendThread::forceKeyFrame()

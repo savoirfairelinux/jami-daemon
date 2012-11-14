@@ -83,6 +83,7 @@ class VideoSendThread : public ost::Thread {
 #else
         ucommon::atomic::counter forceKeyFrame_;
 #endif
+        friend struct VideoTxContextHandle;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
         virtual ~VideoSendThread();

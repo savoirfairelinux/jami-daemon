@@ -251,8 +251,34 @@ void VideoReceiveThread::fill_buffer(void *data)
             scaledPicture_->linesize);
 }
 
+struct VideoRxContextHandle {
+    VideoRxContextHandle(VideoReceiveThread &rx) : rx_(rx) {}
+
+    ~VideoRxContextHandle()
+    {
+        if (rx_.imgConvertCtx_)
+            sws_freeContext(rx_.imgConvertCtx_);
+
+        if (rx_.scaledPicture_)
+            av_free(rx_.scaledPicture_);
+
+        if (rx_.decoderCtx_)
+            avcodec_close(rx_.decoderCtx_);
+
+        if (rx_.inputCtx_ and rx_.inputCtx_->nb_streams > 0) {
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+            av_close_input_file(rx_.inputCtx_);
+#else
+            avformat_close_input(&rx_.inputCtx_);
+#endif
+        }
+    }
+    VideoReceiveThread &rx_;
+};
+
 void VideoReceiveThread::run()
 {
+    VideoRxContextHandle handle(*this);
     setup();
 
     createScalingContext();
@@ -266,6 +292,7 @@ void VideoReceiveThread::run()
         int ret = 0;
         if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
             ERROR("Couldn't read frame: %s\n", strerror(ret));
+            threadRunning_ = false;
             break;
         }
         // Guarantee that we free the packet every iteration
@@ -298,23 +325,6 @@ VideoReceiveThread::~VideoReceiveThread()
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     // this calls join, which waits for the run() method (in separate thread) to return
     ost::Thread::terminate();
-
-    if (imgConvertCtx_)
-        sws_freeContext(imgConvertCtx_);
-
-    if (scaledPicture_)
-        av_free(scaledPicture_);
-
-    if (decoderCtx_)
-        avcodec_close(decoderCtx_);
-
-    if (inputCtx_ and inputCtx_->nb_streams > 0) {
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-        av_close_input_file(inputCtx_);
-#else
-        avformat_close_input(&inputCtx_);
-#endif
-    }
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string &))

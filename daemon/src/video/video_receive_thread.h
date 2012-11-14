@@ -90,6 +90,7 @@ class VideoReceiveThread : public ost::Thread {
         void createScalingContext();
         void fill_buffer(void *data);
         static int interruptCb(void *ctx);
+        friend struct VideoRxContextHandle;
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
