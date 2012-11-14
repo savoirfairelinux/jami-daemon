@@ -101,6 +101,7 @@ calllist_free_element(gpointer data, gpointer user_data UNUSED)
 void
 calllist_clean(calltab_t* tab)
 {
+    g_return_if_fail(tab != NULL);
     g_queue_foreach(tab->callQueue, calllist_free_element, NULL);
     g_queue_free(tab->callQueue);
     tab->callQueue = 0;
@@ -109,6 +110,7 @@ calllist_clean(calltab_t* tab)
 void
 calllist_reset(calltab_t* tab)
 {
+    g_return_if_fail(tab != NULL);
     calllist_clean(tab);
     tab->callQueue = g_queue_new();
 }
