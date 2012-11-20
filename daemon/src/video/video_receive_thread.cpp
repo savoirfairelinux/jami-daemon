@@ -132,8 +132,7 @@ void VideoReceiveThread::setup()
     if (ret < 0) {
         if (options)
             av_dict_free(&options);
-        ERROR("Could not open input \"%s\"", input.c_str());
-        return;
+        EXIT_IF_FAIL(false, "Could not open input \"%s\"", input.c_str());
     }
 
     DEBUG("Finding stream info");
