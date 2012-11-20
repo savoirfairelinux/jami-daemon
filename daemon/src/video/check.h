@@ -33,7 +33,11 @@
 
 #include "logger.h"
 
+#define set_false_atomic(x) __sync_fetch_and_and(x, false)
+#define atomic_increment(x) __sync_fetch_and_add(x, 1)
+#define atomic_decrement(x) __sync_fetch_and_sub(x, 1)
+
 // If condition A is false, print the error message in M and exit thread
-#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); threadRunning_ = false; pthread_exit(NULL); }
+#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); __sync_fetch_and_and(&threadRunning_, false); pthread_exit(NULL); }
 
 #endif // CHECK_H_

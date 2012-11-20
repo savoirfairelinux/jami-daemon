@@ -331,7 +331,7 @@ void VideoReceiveThread::run()
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    threadRunning_ = false;
+    set_false_atomic(&threadRunning_);
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     // waits for the run() method (in separate thread) to return
     pthread_join(thread_, NULL);

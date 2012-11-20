@@ -425,11 +425,8 @@ void VideoSendThread::run()
         int ret = av_read_frame(inputCtx_, &inpacket);
         if (ret == AVERROR(EAGAIN))
             continue;
-        else if (ret < 0) {
-            ERROR("Could not read frame");
-            threadRunning_ = false;
-            break;
-        }
+        else if (ret < 0)
+            EXIT_IF_FAIL(false, "Could not read frame");
 
         /* Guarantees that we free the packet allocated by av_read_frame */
         PacketHandle inpacket_handle(inpacket);
@@ -459,7 +456,7 @@ void VideoSendThread::run()
 #else
             scaledPicture_->pict_type = FF_I_TYPE;
 #endif
-            __sync_fetch_and_sub(&forceKeyFrame_, 1);
+            atomic_decrement(&forceKeyFrame_);
         }
         const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
                                                      outbufSize_, scaledPicture_);
@@ -496,14 +493,13 @@ void VideoSendThread::run()
 
 VideoSendThread::~VideoSendThread()
 {
-    // FIXME
-    threadRunning_ = false;
+    set_false_atomic(&threadRunning_);
     pthread_join(thread_, NULL);
 }
 
 void VideoSendThread::forceKeyFrame()
 {
-    __sync_fetch_and_add(&forceKeyFrame_, 1);
+    atomic_increment(&forceKeyFrame_);
 }
 
 } // end namespace sfl_video
