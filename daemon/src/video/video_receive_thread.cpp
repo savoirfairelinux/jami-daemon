@@ -321,7 +321,6 @@ void VideoReceiveThread::run()
             if (len <= 0 and requestKeyFrameCallback_) {
                 openDecoder();
                 requestKeyFrameCallback_(id_);
-                ost::Thread::sleep(25 /* ms */);
             }
 
             // we want our rendering code to be called by the shm_sink,

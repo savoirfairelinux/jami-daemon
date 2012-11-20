@@ -72,11 +72,7 @@ class VideoReceiveThread {
         int dstHeight_;
 
         SHMSink sink_;
-#ifdef CCPP_PREFIX
-        ost::AtomicCounter threadRunning_;
-#else
-        ucommon::atomic::counter threadRunning_;
-#endif
+        bool threadRunning_;
         size_t bufferSize_;
         const std::string id_;
         AVIOInterruptCB interruptCb_;
