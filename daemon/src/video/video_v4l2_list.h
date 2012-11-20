@@ -33,7 +33,6 @@
 
 #include <string>
 #include <vector>
-#include "cc_thread.h"
 #include <libudev.h>
 
 #include "video_v4l2.h"
@@ -41,12 +40,11 @@
 
 namespace sfl_video {
 
-class VideoV4l2ListThread : public ost::Thread {
+class VideoV4l2ListThread {
     public:
         VideoV4l2ListThread();
         ~VideoV4l2ListThread();
-
-        virtual void run();
+        void start();
 
         std::vector<std::string> getDeviceList();
         std::vector<std::string> getChannelList(const std::string &dev);
@@ -57,12 +55,16 @@ class VideoV4l2ListThread : public ost::Thread {
         unsigned getChannelNum(const std::string &dev, const std::string &name);
 
     private:
+        static void *runCallback(void *);
+        void run();
+
         std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
         NON_COPYABLE(VideoV4l2ListThread);
         void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices_;
-        ost::Mutex mutex_;
+        pthread_t thread_;
+        pthread_mutex_t mutex_;
 
         udev *udev_;
         udev_monitor *udev_mon_;
