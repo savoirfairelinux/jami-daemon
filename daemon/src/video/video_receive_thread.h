@@ -51,7 +51,7 @@ class AVFormatContext;
 class AVFrame;
 namespace sfl_video {
 
-class VideoReceiveThread : public ost::Thread {
+class VideoReceiveThread {
     private:
         NON_COPYABLE(VideoReceiveThread);
         std::map<std::string, std::string> args_;
@@ -91,14 +91,15 @@ class VideoReceiveThread : public ost::Thread {
         void fill_buffer(void *data);
         static int interruptCb(void *ctx);
         friend struct VideoRxContextHandle;
+        static void *runCallback(void *);
+        pthread_t thread_;
+        void run();
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
         void addDetails(std::map<std::string, std::string> &details);
-        virtual ~VideoReceiveThread();
-        // overrides of ost::Thread()
-        virtual void start();
-        virtual void run();
+        ~VideoReceiveThread();
+        void start();
         void setRequestKeyFrameCallback(void (*)(const std::string &));
 };
 }

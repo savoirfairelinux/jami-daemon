@@ -32,7 +32,7 @@
 #include "video_receive_thread.h"
 #include "dbus/video_controls.h"
 #include "packet_handle.h"
-#include "check.h"
+#include "logger.h"
 
 // libav includes
 extern "C" {
@@ -73,6 +73,8 @@ const int SDP_BUFFER_SIZE = 8192;
 
 } // end anonymous namespace
 
+#define RETURN_IF_FAIL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); threadRunning_ = false; pthread_exit(NULL); }
+
 void VideoReceiveThread::openDecoder()
 {
     if (decoderCtx_)
@@ -84,7 +86,7 @@ void VideoReceiveThread::openDecoder()
 #else
     int ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
 #endif
-    EXIT_IF_FAIL(ret == 0, "Could not open codec");
+    RETURN_IF_FAIL(ret == 0, "Could not open codec");
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -110,7 +112,7 @@ void VideoReceiveThread::setup()
 
     DEBUG("Using %s format", format_str.c_str());
     AVInputFormat *file_iformat = av_find_input_format(format_str.c_str());
-    EXIT_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
+    RETURN_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
 
     AVDictionary *options = NULL;
     if (!args_["framerate"].empty())
@@ -124,7 +126,7 @@ void VideoReceiveThread::setup()
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
     if (input == SDP_FILENAME) {
-        EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
+        RETURN_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
         inputCtx_->pb = avioContext_.get();
     }
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
@@ -133,7 +135,7 @@ void VideoReceiveThread::setup()
         if (options)
             av_dict_free(&options);
         ERROR("Could not open input \"%s\"", input.c_str());
-        ost::Thread::exit();
+        return;
     }
 
     DEBUG("Finding stream info");
@@ -156,8 +158,8 @@ void VideoReceiveThread::setup()
         // print nothing for unknown errors
         if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
             errBuf[0] = '\0';
-        ERROR("Could not find stream info: %s", errBuf);
-        ost::Thread::exit();
+        // always fail here
+        RETURN_IF_FAIL(false, "Could not find stream info: %s", errBuf);
     }
 
     // find the first video stream from the input
@@ -165,19 +167,19 @@ void VideoReceiveThread::setup()
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
 
-    EXIT_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
+    RETURN_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
-    EXIT_IF_FAIL(inputDecoder_, "Unsupported codec");
+    RETURN_IF_FAIL(inputDecoder_, "Unsupported codec");
 
     openDecoder();
 
     scaledPicture_ = avcodec_alloc_frame();
-    EXIT_IF_FAIL(scaledPicture_, "Could not allocate output frame");
+    RETURN_IF_FAIL(scaledPicture_, "Could not allocate output frame");
 
     if (dstWidth_ == 0 and dstHeight_ == 0) {
         dstWidth_ = decoderCtx_->width;
@@ -187,7 +189,7 @@ void VideoReceiveThread::setup()
     // determine required buffer size and allocate buffer
     bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
 
-    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    RETURN_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
     DEBUG("shm sink started with size %d, width %d and height %d", bufferSize_, dstWidth_, dstHeight_);
 }
@@ -200,7 +202,10 @@ void VideoReceiveThread::createScalingContext()
                                           decoderCtx_->pix_fmt, dstWidth_,
                                           dstHeight_, VIDEO_RGB_FORMAT,
                                           SWS_BICUBIC, NULL, NULL, NULL);
-    EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context!");
+    if (!imgConvertCtx_) {
+        ERROR("Cannot init the conversion context!");
+        pthread_exit(NULL);
+    }
 }
 
 // This callback is used by libav internally to break out of blocking calls
@@ -219,7 +224,8 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
     stream_(args_["receiving_sdp"]),
     avioContext_(avio_alloc_context(sdpBuffer_.get(), SDP_BUFFER_SIZE, 0,
                                     reinterpret_cast<void*>(static_cast<std::istream*>(&stream_)),
-                                    &readFunction, 0, 0), &av_free)
+                                    &readFunction, 0, 0), &av_free),
+    thread_()
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -228,7 +234,15 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
 void VideoReceiveThread::start()
 {
     threadRunning_ = true;
-    ost::Thread::start();
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+
+void *VideoReceiveThread::runCallback(void *data)
+{
+    VideoReceiveThread *context = static_cast<VideoReceiveThread*>(data);
+    context->run();
+    return NULL;
 }
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
@@ -315,7 +329,6 @@ void VideoReceiveThread::run()
             if (frameFinished)
                 sink_.render_callback(this, cb, bufferSize_);
         }
-        yield();
     }
 }
 
@@ -323,8 +336,8 @@ VideoReceiveThread::~VideoReceiveThread()
 {
     threadRunning_ = false;
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
-    // this calls join, which waits for the run() method (in separate thread) to return
-    ost::Thread::terminate();
+    // waits for the run() method (in separate thread) to return
+    pthread_join(thread_, NULL);
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string &))
