@@ -34,6 +34,6 @@
 #include "logger.h"
 
 // If condition A is false, print the error message in M and exit thread
-#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); ost::Thread::exit(); }
+#define EXIT_IF_FAIL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); threadRunning_ = false; pthread_exit(NULL); }
 
 #endif // CHECK_H_

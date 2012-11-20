@@ -31,8 +31,8 @@
 
 #include "video_receive_thread.h"
 #include "dbus/video_controls.h"
+#include "check.h"
 #include "packet_handle.h"
-#include "logger.h"
 
 // libav includes
 extern "C" {
@@ -73,8 +73,6 @@ const int SDP_BUFFER_SIZE = 8192;
 
 } // end anonymous namespace
 
-#define RETURN_IF_FAIL(A, M, ...) if (!(A)) { ERROR(M, ##__VA_ARGS__); threadRunning_ = false; pthread_exit(NULL); }
-
 void VideoReceiveThread::openDecoder()
 {
     if (decoderCtx_)
@@ -86,7 +84,7 @@ void VideoReceiveThread::openDecoder()
 #else
     int ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
 #endif
-    RETURN_IF_FAIL(ret == 0, "Could not open codec");
+    EXIT_IF_FAIL(ret == 0, "Could not open codec");
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -112,7 +110,7 @@ void VideoReceiveThread::setup()
 
     DEBUG("Using %s format", format_str.c_str());
     AVInputFormat *file_iformat = av_find_input_format(format_str.c_str());
-    RETURN_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
+    EXIT_IF_FAIL(file_iformat, "Could not find format \"%s\"", format_str.c_str());
 
     AVDictionary *options = NULL;
     if (!args_["framerate"].empty())
@@ -126,7 +124,7 @@ void VideoReceiveThread::setup()
     inputCtx_ = avformat_alloc_context();
     inputCtx_->interrupt_callback = interruptCb_;
     if (input == SDP_FILENAME) {
-        RETURN_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
+        EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
         inputCtx_->pb = avioContext_.get();
     }
     int ret = avformat_open_input(&inputCtx_, input.c_str(), file_iformat, options ? &options : NULL);
@@ -159,7 +157,7 @@ void VideoReceiveThread::setup()
         if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
             errBuf[0] = '\0';
         // always fail here
-        RETURN_IF_FAIL(false, "Could not find stream info: %s", errBuf);
+        EXIT_IF_FAIL(false, "Could not find stream info: %s", errBuf);
     }
 
     // find the first video stream from the input
@@ -167,19 +165,19 @@ void VideoReceiveThread::setup()
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
 
-    RETURN_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
+    EXIT_IF_FAIL(streamIndex_ != -1, "Could not find video stream");
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
-    RETURN_IF_FAIL(inputDecoder_, "Unsupported codec");
+    EXIT_IF_FAIL(inputDecoder_, "Unsupported codec");
 
     openDecoder();
 
     scaledPicture_ = avcodec_alloc_frame();
-    RETURN_IF_FAIL(scaledPicture_, "Could not allocate output frame");
+    EXIT_IF_FAIL(scaledPicture_, "Could not allocate output frame");
 
     if (dstWidth_ == 0 and dstHeight_ == 0) {
         dstWidth_ = decoderCtx_->width;
@@ -189,7 +187,7 @@ void VideoReceiveThread::setup()
     // determine required buffer size and allocate buffer
     bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
 
-    RETURN_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
     DEBUG("shm sink started with size %d, width %d and height %d", bufferSize_, dstWidth_, dstHeight_);
 }

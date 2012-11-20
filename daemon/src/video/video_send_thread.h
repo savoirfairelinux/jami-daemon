@@ -31,7 +31,6 @@
 #ifndef _VIDEO_SEND_THREAD_H_
 #define _VIDEO_SEND_THREAD_H_
 
-#include "cc_thread.h"
 #include <map>
 #include <string>
 #include "noncopyable.h"
@@ -49,7 +48,7 @@ class AVCodec;
 
 namespace sfl_video {
 
-class VideoSendThread : public ost::Thread {
+class VideoSendThread {
     private:
         NON_COPYABLE(VideoSendThread);
         void forcePresetX264();
@@ -78,16 +77,15 @@ class VideoSendThread : public ost::Thread {
         std::string sdp_;
         AVIOInterruptCB interruptCb_;
         bool threadRunning_;
-#ifdef CCPP_PREFIX
-        ost::AtomicCounter forceKeyFrame_;
-#else
-        ucommon::atomic::counter forceKeyFrame_;
-#endif
+        int forceKeyFrame_;
+        static void *runCallback(void *);
+        pthread_t thread_;
+        void run();
         friend struct VideoTxContextHandle;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
-        virtual ~VideoSendThread();
-        virtual void run();
+        ~VideoSendThread();
+        void start();
         std::string getSDP() const { return sdp_; }
         void forceKeyFrame();
 };

@@ -191,8 +191,7 @@ void VideoSendThread::setup()
     if (ret < 0) {
         if (options)
             av_dict_free(&options);
-        ERROR("Could not open input file %s", args_["input"].c_str());
-        ost::Thread::exit();
+        EXIT_IF_FAIL(false, "Could not open input file %s", args_["input"].c_str());
     }
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
@@ -338,7 +337,7 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
     inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    threadRunning_(false), forceKeyFrame_(0)
+    threadRunning_(false), forceKeyFrame_(0), thread_()
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -397,9 +396,24 @@ struct VideoTxContextHandle {
     VideoSendThread &tx_;
 };
 
-void VideoSendThread::run()
+
+void VideoSendThread::start()
 {
     threadRunning_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+
+void *VideoSendThread::runCallback(void *data)
+{
+    VideoSendThread *context = static_cast<VideoSendThread*>(data);
+    context->run();
+    return NULL;
+}
+
+
+void VideoSendThread::run()
+{
     // We don't want setup() called in the main thread in case it exits or blocks
     VideoTxContextHandle handle(*this);
     setup();
@@ -408,15 +422,13 @@ void VideoSendThread::run()
     int frameNumber = 0;
     while (threadRunning_) {
         AVPacket inpacket;
-        {
-            int ret = av_read_frame(inputCtx_, &inpacket);
-            if (ret == AVERROR(EAGAIN))
-                continue;
-            else if (ret < 0) {
-                ERROR("Could not read frame");
-                threadRunning_ = false;
-                break;
-            }
+        int ret = av_read_frame(inputCtx_, &inpacket);
+        if (ret == AVERROR(EAGAIN))
+            continue;
+        else if (ret < 0) {
+            ERROR("Could not read frame");
+            threadRunning_ = false;
+            break;
         }
 
         /* Guarantees that we free the packet allocated by av_read_frame */
@@ -441,17 +453,13 @@ void VideoSendThread::run()
         // Set presentation timestamp on our scaled frame before encoding it
         scaledPicture_->pts = frameNumber++;
 
-#ifdef CCPP_PREFIX
-        if ((int) forceKeyFrame_ > 0) {
-#else
-        if (*forceKeyFrame_ > 0) {
-#endif
+        if (forceKeyFrame_ > 0) {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
             scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
 #else
             scaledPicture_->pict_type = FF_I_TYPE;
 #endif
-            --forceKeyFrame_;
+            __sync_fetch_and_sub(&forceKeyFrame_, 1);
         }
         const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
                                                      outbufSize_, scaledPicture_);
@@ -468,29 +476,21 @@ void VideoSendThread::run()
 
         // rescale pts from encoded video framerate to rtp
         // clock rate
-        if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE)) {
+        if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE))
             opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
                                     encoderCtx_->time_base,
                                     stream_->time_base);
-        } else {
+        else
             opkt.pts = 0;
-        }
 
         // is it a key frame?
         if (encoderCtx_->coded_frame->key_frame)
             opkt.flags |= AV_PKT_FLAG_KEY;
         opkt.stream_index = stream_->index;
 
-        // write the compressed frame in the media file
-        {
-            int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-            if (ret < 0) {
-                ERROR("av_interleaved_write_frame() error");
-                threadRunning_ = false;
-                break;
-            }
-        }
-        yield();
+        // write the compressed frame to the output
+        EXIT_IF_FAIL(av_interleaved_write_frame(outputCtx_, &opkt) >= 0,
+                     "interleaved_write_frame failed");
     }
 }
 
@@ -498,12 +498,12 @@ VideoSendThread::~VideoSendThread()
 {
     // FIXME
     threadRunning_ = false;
-    ost::Thread::terminate();
+    pthread_join(thread_, NULL);
 }
 
 void VideoSendThread::forceKeyFrame()
 {
-    ++forceKeyFrame_;
+    __sync_fetch_and_add(&forceKeyFrame_, 1);
 }
 
 } // end namespace sfl_video
