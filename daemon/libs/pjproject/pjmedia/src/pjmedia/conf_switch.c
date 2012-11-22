@@ -22,7 +22,6 @@
 #include <pjmedia/errno.h>
 #include <pjmedia/port.h>
 #include <pjmedia/silencedet.h>
-#include <pjmedia/sound_port.h>
 #include <pjmedia/stream.h>
 #include <pj/array.h>
 #include <pj/assert.h>
@@ -177,29 +176,6 @@ static pj_status_t create_conf_port( pj_pool_t *pool,
 }
 
 /*
- * Create port zero for the sound device.
- */
-static pj_status_t create_sound_port( pj_pool_t *pool,
-				      pjmedia_conf *conf )
-{
-    struct conf_port *conf_port;
-    pj_str_t name = { "Master/sound", 12 };
-    pj_status_t status;
-
-    status = create_conf_port(pool, conf, conf->master_port, &name, &conf_port);
-    if (status != PJ_SUCCESS)
-	return status;
-
-     /* Add the port to the bridge */
-    conf_port->slot = 0;
-    conf->ports[0] = conf_port;
-    conf->port_cnt++;
-
-    PJ_LOG(5,(THIS_FILE, "Sound device successfully created for port 0"));
-    return PJ_SUCCESS;
-}
-
-/*
  * Create conference bridge.
  */
 PJ_DEF(pj_status_t) pjmedia_conf_create( pj_pool_t *pool,
@@ -246,12 +222,6 @@ PJ_DEF(pj_status_t) pjmedia_conf_create( pj_pool_t *pool,
     conf->master_port->get_frame = &get_frame;
     conf->master_port->put_frame = &put_frame;
     conf->master_port->on_destroy = &destroy_port;
-
-
-    /* Create port zero for sound device. */
-    status = create_sound_port(pool, conf);
-    if (status != PJ_SUCCESS)
-	return status;
 
     /* Create mutex. */
     status = pj_mutex_create_recursive(pool, "conf", &conf->mutex);

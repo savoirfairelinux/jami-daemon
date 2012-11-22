@@ -76,12 +76,6 @@ int test_main(void)
 #if HAS_JBUF_TEST
     DO_TEST(jbuf_main());
 #endif
-#if HAS_MIPS_TEST
-    DO_TEST(mips_test());
-#endif
-#if HAS_CODEC_VECTOR_TEST
-    DO_TEST(codec_test_vectors());
-#endif
 
     PJ_LOG(3,(THIS_FILE," "));
 
