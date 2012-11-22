@@ -162,6 +162,7 @@ udev_failed:
 
 void VideoV4l2ListThread::start()
 {
+    probing_ = true;
     pthread_create(&thread_, NULL, &runCallback, this);
 }
 
@@ -242,7 +243,6 @@ void VideoV4l2ListThread::run()
     }
 
     const int udev_fd = udev_monitor_get_fd(udev_mon_);
-    probing_ = true;
     while (probing_) {
         timeval timeout = {0 /* sec */, 500000 /* usec */};
         fd_set set;
