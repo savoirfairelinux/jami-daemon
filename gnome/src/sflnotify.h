@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,19 +28,15 @@
  *  as that of the covered work.
  */
 
-#ifndef __GNOME_NOTIFICATION_H__
-#define __GNOME_NOTIFICATION_H__
+#ifndef GNOME_NOTIFICATION_H_
+#define GNOME_NOTIFICATION_H_
 
 /** @file sflnotify.h
   * @brief Implements desktop notification for incoming events.
   */
 
-#include <libnotify/notify.h>
-#include <accountlist.h>
-#include <calllist.h>
-#include <dbus/dbus.h>
-#include <statusicon.h>
-#include <sflphone_const.h>
+#include "accountlist.h"
+#include "calllist.h"
 
 G_BEGIN_DECLS
 
@@ -49,14 +45,14 @@ G_BEGIN_DECLS
  * A dialog box is attached to the status icon
  * @param c The incoming call
  */
-void notify_incoming_call (callable_obj_t* c);
+void notify_incoming_call (callable_obj_t* c, GSettings *settings);
 
 /**
  * Notify an incoming text message
  * A dialog box is attached to the status icon
  * @param c The incoming message
  */
-void notify_incoming_message (const gchar *callID, const gchar *msg);
+void notify_incoming_message (const gchar *callID, const gchar *msg, GSettings *settings);
 
 /**
  * Notify voice mails count
@@ -64,44 +60,44 @@ void notify_incoming_message (const gchar *callID, const gchar *msg);
  * @param count The number of voice mails
  * @param acc The account that received the notification
  */
-void notify_voice_mails (guint count , account_t* acc);
+void notify_voice_mails (guint count , account_t* acc, GSettings *settings);
 
 /**
  * Notify the current account used to make calls with
  * @param acc The current account
  */
-void notify_current_account (account_t* acc);
+void notify_current_account (account_t* acc, GSettings *settings);
 
 /**
  * Notify that no accounts have been setup
  */
-void notify_no_accounts();
+void notify_no_accounts(GSettings *settings);
 
 /**
  * Notify that there is no registered account
  */
-void notify_no_registered_accounts();
+void notify_no_registered_accounts(GSettings *settings);
 
 /**
  * Notify that the RTP session is secured
  */
-void notify_secure_on (callable_obj_t* c);
+void notify_secure_on (callable_obj_t* c, GSettings *settings);
 
 /**
  * Notify that the RTP session is now more secured
  */
-void notify_secure_off (callable_obj_t* c);
+void notify_secure_off (callable_obj_t* c, GSettings *settings);
 
 /**
  * Notify that the ZRTP negotiation failed
  */
 
-void notify_zrtp_negotiation_failed (callable_obj_t* c);
+void notify_zrtp_negotiation_failed (callable_obj_t* c, GSettings *settings);
 
 /**
  * Notify that the RTP session is now more secured
  */
-void notify_zrtp_not_supported (callable_obj_t* c);
+void notify_zrtp_not_supported (callable_obj_t* c, GSettings *settings);
 
 G_END_DECLS
 

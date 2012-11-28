@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -61,7 +61,6 @@ typedef struct {
     gchar *uri;
     gchar *name;
     gboolean active;
-    gboolean isdefault;
 } book_data_t;
 
 typedef struct _AddressBook_Config {
@@ -78,11 +77,11 @@ typedef struct _AddressBook_Config {
 typedef struct AddrBookHandle AddrBookHandle;
 
 struct AddrBookHandle {
-    void (*init) (gchar **);
+    void (*init) ();
     gboolean (*is_ready) (void);
     gboolean (*is_active) (void);
     void (*search) (void (*search_cb)(GList *, gpointer), GtkEntry *, AddressBook_Config *);
-    GSList *(*get_books_data)(gchar **);
+    GSList *(*get_books_data)();
     book_data_t *(*get_book_data_by_uid)(gchar *);
     void (*set_current_book)(gchar *);
     void (*set_search_type)(AddrbookSearchType);

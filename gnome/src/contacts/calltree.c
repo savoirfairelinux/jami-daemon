@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -43,7 +43,6 @@
 #include <gtk/gtk.h>
 
 #include "gtk2_wrappers.h"
-#include "eel-gconf-extensions.h"
 #include "unused.h"
 #include "dbus.h"
 #include "calltab.h"
@@ -63,6 +62,7 @@
 typedef struct {
     gchar *source_ID;
     gchar *dest_ID;
+    GSettings *settings;
 } PopupData;
 
 static PopupData *popup_data = NULL;
@@ -74,7 +74,7 @@ static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
 static GtkWidget *calltree_popupmenu = NULL;
 static GtkWidget *calltree_menu_items = NULL;
 
-static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, gpointer);
+static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, GSettings *settings);
 static void menuitem_response(gchar * string);
 
 static GtkTargetEntry target_list[] = {
@@ -88,9 +88,9 @@ static const guint n_targets = G_N_ELEMENTS(target_list);
  */
 static gboolean
 popup_menu(GtkWidget *widget,
-           gpointer   user_data UNUSED)
+           gpointer data)
 {
-    show_popup_menu(widget, NULL);
+    show_popup_menu(widget, NULL, data);
     return TRUE;
 }
 
@@ -105,7 +105,7 @@ is_conference(GtkTreeModel *model, GtkTreeIter *iter)
 
 /* Call back when the user click on a call in the list */
 static void
-call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
+call_selected_cb(GtkTreeSelection *sel, GSettings *settings)
 {
     GtkTreeModel *model = gtk_tree_view_get_model(gtk_tree_selection_get_tree_view(sel));
 
@@ -138,7 +138,7 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED)
             calltab_select_call(active_calltree_tab, selected_call);
     }
 
-    update_actions();
+    update_actions(settings);
 }
 
 /* A row is activated when it is double clicked */
@@ -146,7 +146,7 @@ static void
 row_activated_cb(GtkTreeView *tree_view UNUSED,
                  GtkTreePath *path UNUSED,
                  GtkTreeViewColumn *column UNUSED,
-                 void * data UNUSED)
+                 GSettings *settings)
 {
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
         DEBUG("Selected a call");
@@ -168,7 +168,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
                     case CALL_STATE_FAILURE:
                         break;
                     case CALL_STATE_DIALING:
-                        sflphone_place_call(selectedCall);
+                        sflphone_place_call(selectedCall, settings);
                         break;
                     default:
                         WARN("Row activated - Should not happen!");
@@ -181,8 +181,8 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
                 calllist_add_call(current_calls_tab, new_call);
                 calltree_add_call(current_calls_tab, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
-                sflphone_place_call(new_call);
-                calltree_display(current_calls_tab);
+                sflphone_place_call(new_call, settings);
+                calltree_display(current_calls_tab, settings);
             }
         }
     } else if (calltab_get_selected_type(active_calltree_tab) == A_CONFERENCE) {
@@ -215,7 +215,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
 
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
 static void
-row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
+row_single_click(GtkTreeView *tree_view UNUSED, GSettings *settings)
 {
     gchar * displaySasOnce = NULL;
 
@@ -257,12 +257,12 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
                             selectedCall->_zrtp_confirmed = TRUE;
 
                         dbus_confirm_sas(selectedCall);
-                        calltree_update_call(current_calls_tab, selectedCall);
+                        calltree_update_call(current_calls_tab, selectedCall, settings);
                         break;
                     case SRTP_STATE_ZRTP_SAS_CONFIRMED:
                         selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
                         dbus_reset_sas(selectedCall);
-                        calltree_update_call(current_calls_tab, selectedCall);
+                        calltree_update_call(current_calls_tab, selectedCall, settings);
                         break;
                     default:
                         DEBUG("Single click but no action");
@@ -278,15 +278,15 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
 }
 
 static gboolean
-button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
+button_pressed(GtkWidget* widget, GdkEventButton *event, GSettings *settings)
 {
     if (event->button != 3 || event->type != GDK_BUTTON_PRESS)
         return FALSE;
 
     if (calltab_has_name(active_calltree_tab, CURRENT_CALLS))
-        show_popup_menu(widget, event);
+        show_popup_menu(widget, event, settings);
     else if (calltab_has_name(active_calltree_tab, HISTORY))
-        show_popup_menu_history(widget, event);
+        show_popup_menu_history(widget, event, settings);
     else
         show_popup_menu_contacts(widget, event);
 
@@ -380,7 +380,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
 }
 
 void
-calltree_create(calltab_t* tab, int searchbar_type)
+calltree_create(calltab_t* tab, gboolean has_searchbar, GSettings *settings)
 {
     tab->tree = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
@@ -402,34 +402,40 @@ calltree_create(calltab_t* tab, int searchbar_type)
                                     G_TYPE_BOOLEAN   /* True if this is conference */
                                    );
 
-    tab->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tab->store));
+    // For history, we want to associate the model to the view, after we've inserted
+    // all the calls into the model, otherwise it will slow down application startup
+    if (calltab_has_name(tab, HISTORY))
+        tab->view = gtk_tree_view_new();
+    else
+        tab->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tab->store));
+
     gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tab->view), FALSE);
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tab->view), FALSE);
     g_signal_connect(G_OBJECT(tab->view), "row-activated",
                      G_CALLBACK(row_activated_cb),
-                     NULL);
+                     settings);
 
     gtk_widget_set_can_focus(calltree_sw, TRUE);
     gtk_widget_grab_focus(calltree_sw);
 
     g_signal_connect(G_OBJECT(tab->view), "cursor-changed",
                      G_CALLBACK(row_single_click),
-                     NULL);
+                     settings);
 
     // Connect the popup menu
     g_signal_connect(G_OBJECT(tab->view), "popup-menu",
                      G_CALLBACK(popup_menu),
-                     NULL);
+                     settings);
     g_signal_connect(G_OBJECT(tab->view), "button-press-event",
                      G_CALLBACK(button_pressed),
-                     NULL);
+                     settings);
 
     if (calltab_has_name(tab, CURRENT_CALLS)) {
 
         gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tab->view), GDK_BUTTON1_MASK, target_list, n_targets, GDK_ACTION_DEFAULT | GDK_ACTION_MOVE);
         gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tab->view), target_list, n_targets, GDK_ACTION_DEFAULT);
         // destination widget drag n drop signals
-        g_signal_connect(G_OBJECT(tab->view), "drag_data_received", G_CALLBACK(drag_data_received_cb), NULL);
+        g_signal_connect(G_OBJECT(tab->view), "drag_data_received", G_CALLBACK(drag_data_received_cb), settings);
 
         calltree_popupmenu = gtk_menu_new();
 
@@ -477,18 +483,17 @@ calltree_create(calltab_t* tab, int searchbar_type)
     g_object_set(calltree_rend, "yalign", (gfloat) 0.0, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(tab->view), calltree_col);
 
-    g_object_unref(G_OBJECT(tab->store));
     gtk_container_add(GTK_CONTAINER(calltree_sw), tab->view);
 
     GtkTreeSelection *calltree_sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
     g_signal_connect(G_OBJECT(calltree_sel), "changed",
                      G_CALLBACK(call_selected_cb),
-                     NULL);
+                     settings);
 
     gtk_box_pack_start(GTK_BOX(tab->tree), calltree_sw, TRUE, TRUE, 0);
 
     // search bar if tab is either "history" or "addressbook"
-    if (searchbar_type) {
+    if (has_searchbar) {
         calltab_create_searchbar(tab);
 
         if (tab->searchbar != NULL) {
@@ -499,7 +504,8 @@ calltree_create(calltab_t* tab, int searchbar_type)
         }
     }
 
-    gtk_widget_show(tab->tree);
+    if (!calltab_has_name(tab, HISTORY))
+        gtk_widget_show(tab->tree);
 }
 
 static gboolean
@@ -731,7 +737,7 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
     return TRUE;
 }
 
-void calltree_update_call(calltab_t* tab, callable_obj_t * call)
+void calltree_update_call(calltab_t* tab, callable_obj_t * call, GSettings *settings)
 {
     if (!call) {
         ERROR("Call is NULL, ignoring");
@@ -741,7 +747,7 @@ void calltree_update_call(calltab_t* tab, callable_obj_t * call)
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);
     gtk_tree_model_foreach(model, update_call, (gpointer) &ctx);
-    update_actions();
+    update_actions(settings);
 }
 
 void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *parent)
@@ -845,9 +851,6 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
 
 void calltree_add_history_entry(callable_obj_t *call)
 {
-    if (!eel_gconf_get_integer(HISTORY_ENABLED))
-        return;
-
     // New call in the list
     gchar * description = calltree_display_call_info(call, DISPLAY_TYPE_HISTORY, "", "");
 
@@ -886,7 +889,7 @@ void calltree_add_history_entry(callable_obj_t *call)
         g_object_unref(G_OBJECT(pixbuf));
 }
 
-void calltree_add_conference_to_current_calls(conference_obj_t* conf)
+void calltree_add_conference_to_current_calls(conference_obj_t* conf, GSettings *settings)
 {
     account_t *account_details = NULL;
 
@@ -1031,7 +1034,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf)
 
     gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls_tab->view), path, FALSE);
 
-    update_actions();
+    update_actions(settings);
 }
 
 static
@@ -1080,7 +1083,7 @@ remove_conference(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *it
     return TRUE;
 }
 
-void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
+void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf, GSettings *settings)
 {
     if(conf == NULL) {
         ERROR("Could not remove conference, conference pointer is NULL");
@@ -1092,11 +1095,11 @@ void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf)
     GtkTreeModel *model = GTK_TREE_MODEL(store);
     gtk_tree_model_foreach(model, remove_conference, (gpointer) &context);
 
-    update_actions();
+    update_actions(settings);
     DEBUG("Finished removing conference %s", conf->_confID);
 }
 
-void calltree_display(calltab_t *tab)
+void calltree_display(calltab_t *tab, GSettings *settings)
 {
     /* If we already are displaying the specified calltree */
     if (calltab_has_name(active_calltree_tab, tab->name))
@@ -1133,7 +1136,7 @@ void calltree_display(calltab_t *tab)
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
     g_signal_emit_by_name(sel, "changed");
-    update_actions();
+    update_actions(settings);
 }
 
 
@@ -1200,7 +1203,7 @@ static gboolean try_detach(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTre
 }
 
 static gboolean
-handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *dest_iter)
+handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *dest_iter, GSettings *settings)
 {
     GValue source_val = G_VALUE_INIT;
     gtk_tree_model_get_value(model, source_iter, COLUMN_ID, &source_val);
@@ -1239,6 +1242,7 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
             popup_data = g_new0(PopupData, 1);
             popup_data->source_ID = g_strdup(source_ID);
             popup_data->dest_ID = g_strdup(dest_ID);
+            popup_data->settings = settings;
             gtk_menu_popup(GTK_MENU(calltree_popupmenu), NULL, NULL, NULL, NULL, 0, 0);
             result = TRUE;
         }
@@ -1278,7 +1282,7 @@ static gboolean valid_drop(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTre
 
 static gboolean
 render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition dest_pos,
-            GtkTreeIter *source_iter)
+            GtkTreeIter *source_iter, GSettings *settings)
 {
     GtkTreeIter dest_iter;
     if (!gtk_tree_model_get_iter(model, &dest_iter, dest_path)) {
@@ -1298,14 +1302,14 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
         case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
             DEBUG("DROP_INTO");
             if (valid_drop(model, source_iter, dest_path))
-                result = handle_drop_into(model, source_iter, &dest_iter);
+                result = handle_drop_into(model, source_iter, &dest_iter, settings);
             break;
     }
     return result;
 }
 
 void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UNUSED,
-                           gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint target_type UNUSED, guint etime, gpointer data UNUSED)
+                           gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint target_type UNUSED, guint etime, GSettings *settings)
 {
     GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreeModel *model = GTK_TREE_MODEL(gtk_tree_view_get_model(tree_view));
@@ -1322,7 +1326,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UN
         return;
     }
 
-    gboolean success = render_drop(model, dest_path, dest_pos, &source_iter);
+    gboolean success = render_drop(model, dest_path, dest_pos, &source_iter, settings);
     if (gdk_drag_context_get_selected_action(context) == GDK_ACTION_MOVE)
         gtk_drag_finish(context, success, TRUE, etime);
 }
@@ -1337,7 +1341,7 @@ menuitem_response(gchar * string)
                               popup_data->dest_ID);
         calltree_remove_call(current_calls_tab, popup_data->source_ID);
         calltree_remove_call(current_calls_tab, popup_data->dest_ID);
-        update_actions();
+        update_actions(popup_data->settings);
     } else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
         callable_obj_t * source_call = calllist_get_call(current_calls_tab, popup_data->source_ID);
         callable_obj_t * dest_call = calllist_get_call(current_calls_tab, popup_data->dest_ID);

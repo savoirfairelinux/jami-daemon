@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -55,7 +55,6 @@ static const char * const ORDER_KEY = "order";
 static const char * const AUDIO_API_KEY = "audioApi";
 static const char * const HISTORY_LIMIT_KEY = "historyLimit";
 static const char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
-static const char * const NOTIFY_MAILS_KEY = "notifyMails";
 static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
 static const char * const PORT_NUM_KEY = "portNum";
 static const char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
@@ -68,15 +67,6 @@ static const char * const PLAY_TONES_KEY = "playTones";
 static const char * const PULSE_LENGTH_KEY = "pulseLength";
 static const char * const SYMMETRIC_RTP_KEY = "symmetric";
 static const char * const ZID_FILE_KEY = "zidFile";
-
-// addressbook preferences
-static const char * const PHOTO_KEY = "photo";
-static const char * const ENABLED_KEY = "enabled";
-static const char * const LIST_KEY = "list";
-static const char * const MAX_RESULTS_KEY = "maxResults";
-static const char * const BUSINESS_KEY = "business";
-static const char * const HOME_KEY = "home";
-static const char * const MOBILE_KEY = "mobile";
 
 // hooks preferences
 static const char * const IAX2_ENABLED_KEY = "iax2Enabled";
@@ -126,7 +116,6 @@ Preferences::Preferences() :
     accountOrder_("")
     , historyLimit_(30)
     , historyMaxCalls_(20)
-    , notifyMails_(false)
     , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
     , registrationExpire_(180)
     , portNum_(5060)
@@ -146,7 +135,6 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     std::stringstream histmaxstr;
     histmaxstr << historyMaxCalls_;
     Conf::ScalarNode historyMaxCalls(histmaxstr.str());
-    Conf::ScalarNode notifyMails(notifyMails_);
     Conf::ScalarNode zoneToneChoice(zoneToneChoice_);
     std::stringstream expirestr;
     expirestr << registrationExpire_;
@@ -161,7 +149,6 @@ void Preferences::serialize(Conf::YamlEmitter &emiter)
     preferencemap.setKeyValue(ORDER_KEY, &order);
     preferencemap.setKeyValue(HISTORY_LIMIT_KEY, &historyLimit);
     preferencemap.setKeyValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls);
-    preferencemap.setKeyValue(NOTIFY_MAILS_KEY, &notifyMails);
     preferencemap.setKeyValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice);
     preferencemap.setKeyValue(REGISTRATION_EXPIRE_KEY, &registrationExpire);
     preferencemap.setKeyValue(PORT_NUM_KEY, &portNum);
@@ -177,7 +164,6 @@ void Preferences::unserialize(const Conf::YamlNode &map)
     map.getValue(ORDER_KEY, &accountOrder_);
     map.getValue(HISTORY_LIMIT_KEY, &historyLimit_);
     map.getValue(HISTORY_MAX_CALLS_KEY, &historyMaxCalls_);
-    map.getValue(NOTIFY_MAILS_KEY, &notifyMails_);
     map.getValue(ZONE_TONE_CHOICE_KEY, &zoneToneChoice_);
     map.getValue(REGISTRATION_EXPIRE_KEY, &registrationExpire_);
     map.getValue(PORT_NUM_KEY, &portNum_);
@@ -222,51 +208,6 @@ void VoipPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(PULSE_LENGTH_KEY, &pulseLength_);
     map.getValue(SYMMETRIC_RTP_KEY, &symmetricRtp_);
     map.getValue(ZID_FILE_KEY, &zidFile_);
-}
-
-AddressbookPreference::AddressbookPreference() : photo_(true)
-    , enabled_(true)
-    , list_("")
-    , maxResults_(25)
-    , business_(true)
-    , home_(true)
-    , mobile_(true)
-{}
-
-void AddressbookPreference::serialize(Conf::YamlEmitter &emitter)
-{
-    Conf::MappingNode preferencemap(NULL);
-
-    Conf::ScalarNode photo(photo_);
-    Conf::ScalarNode enabled(enabled_);
-    Conf::ScalarNode list(list_);
-    std::stringstream maxresultstr;
-    maxresultstr << maxResults_;
-    Conf::ScalarNode maxResults(maxresultstr.str());
-    Conf::ScalarNode business(business_);
-    Conf::ScalarNode home(home_);
-    Conf::ScalarNode mobile(mobile_);
-
-    preferencemap.setKeyValue(PHOTO_KEY, &photo);
-    preferencemap.setKeyValue(ENABLED_KEY, &enabled);
-    preferencemap.setKeyValue(LIST_KEY, &list);
-    preferencemap.setKeyValue(MAX_RESULTS_KEY, &maxResults);
-    preferencemap.setKeyValue(BUSINESS_KEY, &business);
-    preferencemap.setKeyValue(HOME_KEY, &home);
-    preferencemap.setKeyValue(MOBILE_KEY, &mobile);
-
-    emitter.serializePreference(&preferencemap, "addressbook");
-}
-
-void AddressbookPreference::unserialize(const Conf::YamlNode &map)
-{
-    map.getValue(PHOTO_KEY, &photo_);
-    map.getValue(ENABLED_KEY, &enabled_);
-    map.getValue(LIST_KEY, &list_);
-    map.getValue(MAX_RESULTS_KEY, &maxResults_);
-    map.getValue(BUSINESS_KEY, &business_);
-    map.getValue(HOME_KEY, &home_);
-    map.getValue(MOBILE_KEY, &mobile_);
 }
 
 HookPreference::HookPreference() :

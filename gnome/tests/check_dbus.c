@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  If you modify this program, or any covered work, by linking or
  *  combining it with the OpenSSL project's OpenSSL library (or a
@@ -35,8 +35,11 @@
 
 START_TEST(test_dbus_connect)
 {
+    g_type_init();
     GError *error = NULL;
-    fail_unless(dbus_connect(&error) == TRUE, "dbus_connect () returns FALSE");
+    GSettings *settings = g_settings_new("org.sflphone.SFLphone");
+    fail_unless(dbus_connect(&error, settings) == TRUE, "dbus_connect () returns FALSE");
+    g_object_unref(settings);
 }
 END_TEST
 

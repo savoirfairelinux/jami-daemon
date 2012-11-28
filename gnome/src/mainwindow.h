@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -54,7 +54,7 @@ GtkWidget *waitingLayer;
 /**
  * Build the main window
  */
-void create_main_window ();
+void create_main_window (GSettings *settings);
 
 /**
  * Display a dialog window
@@ -67,7 +67,7 @@ gboolean main_window_ask_quit() ;
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_dialpad (gboolean state);
+void main_window_dialpad (gboolean state, GSettings *settings);
 
 /**
   * Shows/Hides the dialpad on the mainwindow
@@ -94,11 +94,11 @@ void statusbar_pop_message (guint id);
  */
 void statusbar_update_clock (const gchar * time);
 
-void main_window_zrtp_not_supported (callable_obj_t * c);
+void main_window_zrtp_not_supported (callable_obj_t * c, GSettings *settings);
 
-void main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason, const gchar* severity);
+void main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason, const gchar* severity, GSettings *settings);
 
-void main_window_confirm_go_clear (callable_obj_t * c);
+void main_window_confirm_go_clear (callable_obj_t * c, GSettings *settings);
 
 void focus_on_searchbar_out();
 void focus_on_searchbar_in();

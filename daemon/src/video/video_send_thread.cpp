@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -108,6 +108,7 @@ void VideoSendThread::prepareEncoderContext(AVCodec *encoder)
     // emit one intra frame every gop_size frames
     encoderCtx_->max_b_frames = 0;
     encoderCtx_->pix_fmt = PIX_FMT_YUV420P;
+
     // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
     // pps and sps to be sent in-band for RTP
     // This is to place global headers in extradata instead of every keyframe.
@@ -187,12 +188,18 @@ void VideoSendThread::setup()
     inputCtx_->interrupt_callback = interruptCb_;
     int ret = avformat_open_input(&inputCtx_, args_["input"].c_str(),
                                   file_iformat, options ? &options : NULL);
-    EXIT_IF_FAIL(ret == 0, "Could not open input file %s", args_["input"].c_str());
+    if (ret < 0) {
+        if (options)
+            av_dict_free(&options);
+        EXIT_IF_FAIL(false, "Could not open input file %s", args_["input"].c_str());
+    }
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
     ret = avformat_find_stream_info(inputCtx_, options ? &options : NULL);
 #endif
+    if (options)
+        av_dict_free(&options);
     EXIT_IF_FAIL(ret >= 0, "Couldn't find stream info");
 
     // find the first video stream from the input
@@ -277,8 +284,13 @@ void VideoSendThread::setup()
         DEBUG("Writing stream header for payload type %s", args_["payload_type"].c_str());
         av_dict_set(&outOptions, "payload_type", args_["payload_type"].c_str(), 0);
     }
-    EXIT_IF_FAIL(avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL) >= 0, "Could not write "
-                 "header for output file...check codec parameters")
+
+
+    ret = avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL);
+    if (outOptions)
+        av_dict_free(&outOptions);
+    EXIT_IF_FAIL(ret >= 0, "Could not write header for output file...check codec parameters");
+
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_sdp();
 
@@ -317,7 +329,7 @@ void VideoSendThread::createScalingContext()
 int VideoSendThread::interruptCb(void *ctx)
 {
     VideoSendThread *context = static_cast<VideoSendThread*>(ctx);
-    return not context->sending_;
+    return not context->threadRunning_;
 }
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
@@ -325,29 +337,96 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
     inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    sending_(false), forceKeyFrame_(0)
+    threadRunning_(false), forceKeyFrame_(0), thread_()
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
 }
 
+struct VideoTxContextHandle {
+    VideoTxContextHandle(VideoSendThread &tx) : tx_(tx) {}
+
+    ~VideoTxContextHandle()
+    {
+        if (tx_.imgConvertCtx_)
+            sws_freeContext(tx_.imgConvertCtx_);
+
+        // write the trailer, if any.  the trailer must be written
+        // before you close the CodecContexts open when you wrote the
+        // header; otherwise write_trailer may try to use memory that
+        // was freed on av_codec_close()
+        if (tx_.outputCtx_ and tx_.outputCtx_->priv_data) {
+            av_write_trailer(tx_.outputCtx_);
+            if (tx_.outputCtx_->pb)
+                avio_close(tx_.outputCtx_->pb);
+        }
+
+        if (tx_.scaledPictureBuf_)
+            av_free(tx_.scaledPictureBuf_);
+
+        if (tx_.outbuf_)
+            av_free(tx_.outbuf_);
+
+        // free the scaled frame
+        if (tx_.scaledPicture_)
+            av_free(tx_.scaledPicture_);
+
+        // free the YUV frame
+        if (tx_.rawFrame_)
+            av_free(tx_.rawFrame_);
+
+        // close the codecs
+        if (tx_.encoderCtx_) {
+            avcodec_close(tx_.encoderCtx_);
+            av_freep(&tx_.encoderCtx_);
+        }
+
+        // doesn't need to be freed, we didn't use avcodec_alloc_context
+        if (tx_.inputDecoderCtx_)
+            avcodec_close(tx_.inputDecoderCtx_);
+
+        // close the video file
+        if (tx_.inputCtx_)
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+            av_close_input_file(tx_.inputCtx_);
+#else
+        avformat_close_input(&tx_.inputCtx_);
+#endif
+    }
+    VideoSendThread &tx_;
+};
+
+
+void VideoSendThread::start()
+{
+    threadRunning_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+
+void *VideoSendThread::runCallback(void *data)
+{
+    VideoSendThread *context = static_cast<VideoSendThread*>(data);
+    context->run();
+    return NULL;
+}
+
+
 void VideoSendThread::run()
 {
-    sending_ = true;
     // We don't want setup() called in the main thread in case it exits or blocks
+    VideoTxContextHandle handle(*this);
     setup();
     createScalingContext();
 
     int frameNumber = 0;
-    while (sending_) {
+    while (threadRunning_) {
         AVPacket inpacket;
-        {
-            int ret = av_read_frame(inputCtx_, &inpacket);
-            if (ret == AVERROR(EAGAIN))
-                continue;
-            else
-                EXIT_IF_FAIL(ret >= 0, "Could not read frame");
-        }
+        int ret = av_read_frame(inputCtx_, &inpacket);
+        if (ret == AVERROR(EAGAIN))
+            continue;
+        else if (ret < 0)
+            EXIT_IF_FAIL(false, "Could not read frame");
 
         /* Guarantees that we free the packet allocated by av_read_frame */
         PacketHandle inpacket_handle(inpacket);
@@ -363,6 +442,7 @@ void VideoSendThread::run()
         if (!frameFinished)
             continue;
 
+        createScalingContext();
         sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
                   inputDecoderCtx_->height, scaledPicture_->data,
                   scaledPicture_->linesize);
@@ -370,17 +450,13 @@ void VideoSendThread::run()
         // Set presentation timestamp on our scaled frame before encoding it
         scaledPicture_->pts = frameNumber++;
 
-#ifdef CCPP_PREFIX
-        if ((int) forceKeyFrame_ > 0) {
-#else
-        if (*forceKeyFrame_ > 0) {
-#endif
+        if (forceKeyFrame_ > 0) {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
             scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
 #else
             scaledPicture_->pict_type = FF_I_TYPE;
 #endif
-            --forceKeyFrame_;
+            atomic_decrement(&forceKeyFrame_);
         }
         const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
                                                      outbufSize_, scaledPicture_);
@@ -397,80 +473,33 @@ void VideoSendThread::run()
 
         // rescale pts from encoded video framerate to rtp
         // clock rate
-        if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE)) {
+        if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE))
             opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
                                     encoderCtx_->time_base,
                                     stream_->time_base);
-        } else {
+        else
             opkt.pts = 0;
-        }
 
         // is it a key frame?
         if (encoderCtx_->coded_frame->key_frame)
             opkt.flags |= AV_PKT_FLAG_KEY;
         opkt.stream_index = stream_->index;
 
-        // write the compressed frame in the media file
-        {
-            int ret = av_interleaved_write_frame(outputCtx_, &opkt);
-            EXIT_IF_FAIL(ret >= 0, "av_interleaved_write_frame() error");
-        }
-        yield();
+        // write the compressed frame to the output
+        EXIT_IF_FAIL(av_interleaved_write_frame(outputCtx_, &opkt) >= 0,
+                     "interleaved_write_frame failed");
     }
 }
 
 VideoSendThread::~VideoSendThread()
 {
-    // FIXME
-    sending_ = false;
-    ost::Thread::terminate();
-
-    sws_freeContext(imgConvertCtx_);
-    imgConvertCtx_ = 0;
-
-    // write the trailer, if any.  the trailer must be written
-    // before you close the CodecContexts open when you wrote the
-    // header; otherwise write_trailer may try to use memory that
-    // was freed on av_codec_close()
-    if (outputCtx_ and outputCtx_->priv_data)
-        av_write_trailer(outputCtx_);
-
-    if (scaledPictureBuf_)
-        av_free(scaledPictureBuf_);
-
-    if (outbuf_)
-        av_free(outbuf_);
-
-    // free the scaled frame
-    if (scaledPicture_)
-        av_free(scaledPicture_);
-
-    // free the YUV frame
-    if (rawFrame_)
-        av_free(rawFrame_);
-
-    // close the codecs
-    if (encoderCtx_) {
-        avcodec_close(encoderCtx_);
-        av_freep(&encoderCtx_);
-    }
-
-    // doesn't need to be freed, we didn't use avcodec_alloc_context
-    if (inputDecoderCtx_)
-        avcodec_close(inputDecoderCtx_);
-
-    // close the video file
-    if (inputCtx_)
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-        av_close_input_file(inputCtx_);
-#else
-        avformat_close_input(&inputCtx_);
-#endif
+    set_false_atomic(&threadRunning_);
+    pthread_join(thread_, NULL);
 }
 
 void VideoSendThread::forceKeyFrame()
 {
-    ++forceKeyFrame_;
+    atomic_increment(&forceKeyFrame_);
 }
 
 } // end namespace sfl_video

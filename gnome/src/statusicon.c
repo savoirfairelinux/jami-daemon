@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -35,31 +35,33 @@
 #include "mainwindow.h"
 #include "accountlist.h"
 #include "statusicon.h"
-#include "eel-gconf-extensions.h"
 #include "logger.h"
 #include "unused.h"
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
-static gboolean minimized_ = MINIMIZED;
 
 void
-popup_main_window(void)
+set_minimized(gboolean state)
 {
-    if (__POPUP_WINDOW) {
-        gtk_widget_show(get_main_window());
-        //gtk_window_move(GTK_WINDOW (get_main_window ()),
-        //    dbus_get_window_position_x(), dbus_get_window_position_y());
-        set_minimized(FALSE);
-    }
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }
 
 void
-show_status_hangup_icon()
+popup_main_window()
 {
-    if (__POPUP_WINDOW) {
+    gtk_widget_show(get_main_window());
+    set_minimized(FALSE);
+}
+
+void
+show_status_hangup_icon(GSettings *settings)
+{
+    if (g_settings_get_boolean(settings, "popup-main-window")) {
         gtk_widget_show(get_main_window());
-        gtk_window_move(GTK_WINDOW(get_main_window()), eel_gconf_get_integer(CONF_MAIN_WINDOW_POSITION_X), eel_gconf_get_integer(CONF_MAIN_WINDOW_POSITION_Y));
+        gtk_window_move(GTK_WINDOW(get_main_window()),
+                        g_settings_get_int(settings, "window-position-x"),
+                        g_settings_get_int(settings, "window-position-y"));
         set_minimized(FALSE);
     }
 }
@@ -79,10 +81,10 @@ status_quit(void * foo UNUSED)
     sflphone_quit(FALSE);
 }
 
-void
-status_hangup()
+static void
+status_hangup(GtkWidget *widget UNUSED, GSettings *settings)
 {
-    sflphone_hang_up();
+    sflphone_hang_up(settings);
 }
 
 void
@@ -91,22 +93,18 @@ status_icon_unminimize()
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
 }
 
-gboolean
-main_widget_minimized()
-{
-    return minimized_;
-}
-
 void
-show_hide(void)
+show_hide(GSettings *settings)
 {
     if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item))) {
         gtk_widget_show(GTK_WIDGET(get_main_window()));
-        gtk_window_move(GTK_WINDOW(get_main_window()), eel_gconf_get_integer(CONF_MAIN_WINDOW_POSITION_X), eel_gconf_get_integer(CONF_MAIN_WINDOW_POSITION_Y));
-        set_minimized(!MINIMIZED);
+        gtk_window_move(GTK_WINDOW(get_main_window()),
+                        g_settings_get_int(settings, "window-position-x"),
+                        g_settings_get_int(settings, "window-position-y"));
+        set_minimized(FALSE);
     } else {
         gtk_widget_hide(GTK_WIDGET(get_main_window()));
-        set_minimized(MINIMIZED);
+        set_minimized(TRUE);
     }
 }
 
@@ -123,8 +121,8 @@ static void menu(GtkStatusIcon *status_icon, guint button, guint activate_time, 
                    status_icon, button, activate_time);
 }
 
-GtkWidget*
-create_menu()
+static GtkWidget*
+create_menu(GSettings *settings)
 {
     GtkWidget * menu_widget;
     GtkWidget * menu_items;
@@ -132,13 +130,12 @@ create_menu()
 
     menu_widget = gtk_menu_new();
 
-    show_menu_item
-    = gtk_check_menu_item_new_with_mnemonic(_("_Show main window"));
+    show_menu_item = gtk_check_menu_item_new_with_mnemonic(_("_Show main window"));
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), show_menu_item);
     g_signal_connect(G_OBJECT(show_menu_item), "toggled",
                      G_CALLBACK(show_hide),
-                     NULL);
+                     settings);
 
     hangup_menu_item = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
     image = gtk_image_new_from_file(ICONS_DIR "/icon_hangup.svg");
@@ -146,7 +143,7 @@ create_menu()
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), hangup_menu_item);
     g_signal_connect(G_OBJECT(hangup_menu_item), "activate",
                      G_CALLBACK(status_hangup),
-                     NULL);
+                     settings);
 
     menu_items = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), menu_items);
@@ -164,7 +161,7 @@ create_menu()
 }
 
 void
-show_status_icon()
+show_status_icon(GSettings *settings)
 {
     status = gtk_status_icon_new_from_file(LOGO);
     g_signal_connect(G_OBJECT(status), "activate",
@@ -172,14 +169,13 @@ show_status_icon()
                      NULL);
     g_signal_connect(G_OBJECT(status), "popup-menu",
                      G_CALLBACK(menu),
-                     create_menu());
+                     create_menu(settings));
 
     statusicon_set_tooltip();
 }
 
 void hide_status_icon(void)
 {
-
     g_object_unref(status);
     status = NULL;
 }
@@ -217,11 +213,4 @@ GtkStatusIcon*
 get_status_icon(void)
 {
     return status;
-}
-
-void
-set_minimized(gboolean state)
-{
-    minimized_ = state;
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }

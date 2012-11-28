@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -31,9 +31,9 @@
 
 #include "../dbus/dbus.h"
 #include <glib.h>
+#include "gtk2_wrappers.h"
 #include "logger.h"
 #include "../mainwindow.h"
-#include "eel-gconf-extensions.h"
 #include <string.h>
 
 static GtkWidget  *tab_box    = NULL ;
@@ -45,12 +45,6 @@ static int        skip_height = -3   ;
 
 static GtkTextIter* start_link = NULL;
 static GtkTextIter* end_link   = NULL;
-
-
-void append_message        ( message_tab* self         , const gchar* name    , const gchar* message);
-void new_text_message      ( callable_obj_t* call      , const gchar* message                       );
-message_tab * create_messaging_tab_common(const gchar* call_id, const gchar *label);
-message_tab * create_messaging_tab(callable_obj_t* call);
 
 /////////////////////HELPERS/////////////////////////
 
@@ -130,7 +124,31 @@ set_message_tab_height(GtkPaned* _paned, int height)
    skip_height++;
 }
 
+static void
+append_message(message_tab* self, const gchar* name, const gchar* message)
+{
+    GtkTextIter current_end,new_end;
+    gtk_text_buffer_get_end_iter( self->buffer, &current_end           );
+    gtk_text_buffer_insert      ( self->buffer, &current_end, name, -1 );
+    gtk_text_buffer_insert      ( self->buffer, &current_end, ": ", -1 );
 
+    gtk_text_buffer_get_end_iter(self->buffer, &current_end);
+    for (unsigned int i=0;i<strlen(name)+2;i++){
+        if (!gtk_text_iter_backward_char(&current_end))
+            break;
+    }
+
+    gtk_text_buffer_get_end_iter(self->buffer, &new_end);
+    gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
+
+    gtk_text_buffer_insert      ( self->buffer, &new_end, message,    -1 );
+    gtk_text_buffer_insert      ( self->buffer, &new_end, "\n"   ,    -1 );
+    gtk_text_buffer_get_end_iter( self->buffer, &new_end                 );
+    gtk_text_view_scroll_to_iter( self->view  , &new_end,FALSE,0,0,FALSE );
+
+    start_link = NULL;
+    end_link   = NULL;
+}
 
 //////////////////////SLOTS//////////////////////////
 
@@ -172,21 +190,23 @@ on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
 }
 
 static void
-on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, gpointer user_data UNUSED)
+on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, GSettings *settings)
 {
    if (start_link && end_link && gtk_text_iter_compare(start_link,location) <= 0 && gtk_text_iter_compare(location,end_link) <= 0) {
        gchar* text = gtk_text_buffer_get_text(textbuffer,start_link,end_link,FALSE);
        start_link = NULL;
        end_link = NULL;
        if (strlen(text)) {
-           gchar* url_command = eel_gconf_get_string(MESSAGING_URL_COMMAND);
-           if (url_command && !strlen(url_command))
-               url_command = "xdg-open";
-           const gchar* argv[3] = {url_command,text,(char*)NULL};
+           gchar* url_command = g_settings_get_string(settings, "messaging-url-command");
+           if (!url_command || !strlen(url_command))
+               url_command = g_strdup("xdg-open");
+
+           const gchar* argv[] = {url_command, text, NULL};
            g_spawn_async(NULL,(gchar**)argv,NULL,G_SPAWN_SEARCH_PATH|G_SPAWN_STDOUT_TO_DEV_NULL|G_SPAWN_STDERR_TO_DEV_NULL,NULL,NULL,NULL,NULL);
            gtk_text_buffer_remove_all_tags(textbuffer,start_link,end_link );
            start_link = NULL;
            end_link   = NULL;
+           g_free(url_command);
        }
    }
 }
@@ -268,70 +288,8 @@ disable_messaging_tab(const gchar * id)
        gtk_widget_hide(get_tab_box());
 }
 
-void
-append_message(message_tab* self, const gchar* name, const gchar* message)
-{
-    GtkTextIter current_end,new_end;
-    gtk_text_buffer_get_end_iter( self->buffer, &current_end           );
-    gtk_text_buffer_insert      ( self->buffer, &current_end, name, -1 );
-    gtk_text_buffer_insert      ( self->buffer, &current_end, ": ", -1 );
-
-    gtk_text_buffer_get_end_iter(self->buffer, &current_end);
-    for (unsigned int i=0;i<strlen(name)+2;i++){
-        if (!gtk_text_iter_backward_char(&current_end))
-            break;
-    }
-
-    gtk_text_buffer_get_end_iter(self->buffer, &new_end);
-    gtk_text_buffer_apply_tag_by_name(self->buffer, "b", &current_end, &new_end);
-
-    gtk_text_buffer_insert      ( self->buffer, &new_end, message,    -1 );
-    gtk_text_buffer_insert      ( self->buffer, &new_end, "\n"   ,    -1 );
-    gtk_text_buffer_get_end_iter( self->buffer, &new_end                 );
-    gtk_text_view_scroll_to_iter( self->view  , &new_end,FALSE,0,0,FALSE );
-
-    start_link = NULL;
-    end_link   = NULL;
-}
-
 static message_tab *
-new_text_message_common(const gchar* id, const gchar* message, const gchar *name)
-{
-    gtk_widget_show(get_tab_box());
-    message_tab *tab = NULL;
-    if (tabs)
-        tab = g_hash_table_lookup(tabs, id);
-    if (!tab)
-        tab = create_messaging_tab_common(id, name);
-    append_message(tab, name, message);
-    return tab;
-}
-
-void
-new_text_message(callable_obj_t* call, const gchar* message)
-{
-    gchar* label_text;
-    if (strcmp(call->_display_name,""))
-       label_text = call->_display_name;
-    else
-       label_text = "Peer";
-    message_tab *tab = new_text_message_common(call->_callID, message, label_text);
-    tab->call = call;
-}
-
-void
-new_text_message_conf(conference_obj_t* conf, const gchar* message,const gchar* from)
-{
-    disable_conference_calls(conf);
-    message_tab *tab = new_text_message_common(conf->_confID,message,strlen(from)?from:"Conference");
-    tab->conf = conf;
-}
-
-
-
-//conference_obj_t
-message_tab *
-create_messaging_tab_common(const gchar* call_id, const gchar *label)
+create_messaging_tab_common(const gchar* call_id, const gchar *label, GSettings *settings)
 {
     show_messaging();
     /* Do not create a new tab if it already exist */
@@ -367,8 +325,8 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label)
 
     gtk_container_add(GTK_CONTAINER(scoll_area), text_box_widget);
 
-   g_signal_connect(G_OBJECT(text_box_widget), "motion-notify-event" , G_CALLBACK(on_cursor_motion), self);
-   g_signal_connect(G_OBJECT(text_buffer    ), "mark-set"            , G_CALLBACK(on_clicked      ), self);
+    g_signal_connect(G_OBJECT(text_box_widget), "motion-notify-event" , G_CALLBACK(on_cursor_motion), self);
+    g_signal_connect(G_OBJECT(text_buffer    ), "mark-set"            , G_CALLBACK(on_clicked      ), settings);
 
     GtkWidget *line_edit    = gtk_entry_new (                               );
     GtkWidget *hbox         = gtk_box_new   ( GTK_ORIENTATION_HORIZONTAL, 1 );
@@ -435,12 +393,45 @@ create_messaging_tab_common(const gchar* call_id, const gchar *label)
     return self;
 }
 
+static message_tab *
+new_text_message_common(const gchar* id, const gchar* message, const gchar *name, GSettings *settings)
+{
+    gtk_widget_show(get_tab_box());
+    message_tab *tab = NULL;
+    if (tabs)
+        tab = g_hash_table_lookup(tabs, id);
+    if (!tab)
+        tab = create_messaging_tab_common(id, name, settings);
+    append_message(tab, name, message);
+    return tab;
+}
+
+void
+new_text_message(callable_obj_t* call, const gchar* message, GSettings *settings)
+{
+    gchar* label_text;
+    if (g_strcmp0(call->_display_name, "") == 0)
+       label_text = call->_display_name;
+    else
+       label_text = "Peer";
+    message_tab *tab = new_text_message_common(call->_callID, message, label_text, settings);
+    tab->call = call;
+}
+
+void
+new_text_message_conf(conference_obj_t* conf, const gchar* message,const gchar* from, GSettings *settings)
+{
+    disable_conference_calls(conf);
+    message_tab *tab = new_text_message_common(conf->_confID,message,strlen(from)?from:"Conference", settings);
+    tab->conf = conf;
+}
+
 message_tab *
-create_messaging_tab(callable_obj_t* call)
+create_messaging_tab(callable_obj_t* call, GSettings *settings)
 {
     const gchar *confID = dbus_get_conference_id(call->_callID);
     if (strlen(confID) > 0 && ((tabs && force_lookup(confID) == NULL) || !tabs)) {
-        return create_messaging_tab_common(confID,"Conference");
+        return create_messaging_tab_common(confID, "Conference", settings);
     }
     else if (strlen(confID) > 0 && tabs) {
         return force_lookup(confID);
@@ -450,7 +441,7 @@ create_messaging_tab(callable_obj_t* call)
        label_text = call->_display_name;
     else
        label_text = call->_peer_number ;
-    message_tab* self = create_messaging_tab_common(call->_callID,label_text);
+    message_tab* self = create_messaging_tab_common(call->_callID, label_text, settings);
 
     self->call   = call;
     self->conf   = NULL;
@@ -458,10 +449,10 @@ create_messaging_tab(callable_obj_t* call)
 }
 
 message_tab *
-create_messaging_tab_conf(conference_obj_t* call)
+create_messaging_tab_conf(conference_obj_t* call, GSettings *settings)
 {
     if (call->_confID && strlen(call->_confID)) {
-        message_tab* self = create_messaging_tab_common(call->_confID,"Conference");
+        message_tab* self = create_messaging_tab_common(call->_confID, "Conference", settings);
         self->conf   = call;
         self->call   = NULL;
         disable_conference_calls(call);

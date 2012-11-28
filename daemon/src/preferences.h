@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -71,14 +71,6 @@ class Preferences : public Serializable {
             historyMaxCalls_ = max;
         }
 
-        bool getNotifyMails() const {
-            return notifyMails_;
-        }
-
-        void setNotifyMails(bool mails) {
-            notifyMails_ = mails;
-        }
-
         std::string getZoneToneChoice() const {
             return zoneToneChoice_;
         }
@@ -129,7 +121,6 @@ class Preferences : public Serializable {
         std::string accountOrder_;
         int historyLimit_;
         int historyMaxCalls_;
-        bool notifyMails_;
         std::string zoneToneChoice_;
         int registrationExpire_;
         int portNum_;
@@ -191,79 +182,6 @@ class VoipPreference : public Serializable {
         bool symmetricRtp_;
         std::string zidFile_;
 };
-
-class AddressbookPreference : public Serializable {
-    public:
-        AddressbookPreference();
-
-        virtual void serialize(Conf::YamlEmitter &emitter);
-        virtual void unserialize(const Conf::YamlNode &map);
-
-        bool getPhoto() const {
-            return photo_;
-        }
-
-        void setPhoto(bool p) {
-            photo_ = p;
-        }
-
-        bool getEnabled() const {
-            return enabled_;
-        }
-
-        void setEnabled(bool e) {
-            enabled_ = e;
-        }
-
-        std::string getList() const {
-            return list_;
-        }
-
-        void setList(const std::string &l) {
-            list_ = l;
-        }
-
-        int getMaxResults() const {
-            return maxResults_;
-        }
-
-        void setMaxResults(int r) {
-            maxResults_ = r;
-        }
-
-        bool getBusiness() const {
-            return business_;
-        }
-
-        void setBusiness(bool b) {
-            business_ = b;
-        }
-
-        bool getHome() const {
-            return home_;
-        }
-        void setHone(bool h) {
-            home_ = h;
-        }
-
-        bool getMobile() const {
-            return mobile_;
-        }
-        void setMobile(bool m) {
-            mobile_ = m;
-        }
-
-    private:
-
-        bool photo_;
-        bool enabled_;
-        std::string list_;
-        int maxResults_;
-        bool business_;
-        bool home_;
-        bool mobile_;
-};
-
 
 class pjsip_msg;
 

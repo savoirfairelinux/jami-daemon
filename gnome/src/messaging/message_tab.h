@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -56,8 +56,8 @@ typedef struct {
  * Create a new message tab or use the existing on if the call exist
  * @param call the conversation call
  */
-message_tab* create_messaging_tab(callable_obj_t* call);
-message_tab* create_messaging_tab_conf(conference_obj_t* call);
+message_tab* create_messaging_tab(callable_obj_t* call, GSettings *settings);
+message_tab* create_messaging_tab_conf(conference_obj_t* call, GSettings *settings);
 
 /** Return the main conversation notebook */
 GtkWidget *get_tab_box();
@@ -66,8 +66,8 @@ GtkWidget *get_tab_box();
  * @param call the call
  * @param message the new message
  */
-void new_text_message(callable_obj_t *call, const gchar *message);
-void new_text_message_conf(conference_obj_t *call, const gchar *message,const gchar* from);
+void new_text_message(callable_obj_t *call, const gchar *message, GSettings *settings);
+void new_text_message_conf(conference_obj_t *call, const gchar *message,const gchar* from, GSettings *settings);
 
 
 /**

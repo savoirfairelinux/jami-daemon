@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -46,20 +46,6 @@ enum {
     STATE_FINISHED  /* finish state - not used */
 };
 
-typedef struct
-{
-    guint load_state;
-
-    GtkTreeStore *tree_store;
-    GtkWidget *tree_view;
-
-    gint n_items;
-    gint n_loaded;
-    GPtrArray *items;
-    calltab_t *tab;
-    guint load_id;
-} IdleData;
-
 static void
 create_callable_from_entry(calltab_t *history_tab, GHashTable *entry)
 {
@@ -78,13 +64,22 @@ load_items(gpointer data)
     /* make sure we're in the right state */
     g_assert(id->load_state == STATE_STARTED || id->load_state == STATE_LOADING);
 
-    /* no items */
+    /* empty list */
     if (!id->items) {
-        id->items = dbus_get_history();
-        if (!id->items || id->items->len == 0) {
-            id->load_state = STATE_COMPLETE;
-            return FALSE;
-        }
+        /* we either have to call the asynchronous dbus_get_history, or if it's
+         * been called but has not finished yet, try again later */
+        if (!id->dbus_called) {
+            dbus_get_history(id);
+            id->dbus_called = TRUE;
+            return TRUE;
+        } else if (!id->dbus_finished)
+            return TRUE;
+    }
+
+    /* We made the call but the list was empty, so we're done */
+    if (!id->items || id->items->len == 0) {
+        id->load_state = STATE_COMPLETE;
+        return FALSE;
     }
 
     /* is this the first run */
@@ -124,6 +119,7 @@ cleanup_load_items(gpointer data)
     g_assert(id->load_state == STATE_COMPLETE);
     /* this will actually load the model inside the view */
     history_search_init();
+    gtk_widget_show(id->tab->tree);
     g_free(id);
 }
 
@@ -138,7 +134,9 @@ lazy_load_items(calltab_t *tab)
     data->n_loaded = 0;
     data->items = NULL;
     data->tab = tab;
-    data->load_id = g_idle_add_full(G_PRIORITY_HIGH_IDLE,
+    data->dbus_called = FALSE;
+    data->dbus_finished = FALSE;
+    data->load_id = g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
                                     load_items,
                                     data,
                                     cleanup_load_items);

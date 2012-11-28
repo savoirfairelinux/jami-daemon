@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -31,7 +31,6 @@
 #ifndef _VIDEO_SEND_THREAD_H_
 #define _VIDEO_SEND_THREAD_H_
 
-#include "cc_thread.h"
 #include <map>
 #include <string>
 #include "noncopyable.h"
@@ -49,7 +48,7 @@ class AVCodec;
 
 namespace sfl_video {
 
-class VideoSendThread : public ost::Thread {
+class VideoSendThread {
     private:
         NON_COPYABLE(VideoSendThread);
         void forcePresetX264();
@@ -77,16 +76,16 @@ class VideoSendThread : public ost::Thread {
         SwsContext *imgConvertCtx_;
         std::string sdp_;
         AVIOInterruptCB interruptCb_;
-        bool sending_;
-#ifdef CCPP_PREFIX
-        ost::AtomicCounter forceKeyFrame_;
-#else
-        ucommon::atomic::counter forceKeyFrame_;
-#endif
+        bool threadRunning_;
+        int forceKeyFrame_;
+        static void *runCallback(void *);
+        pthread_t thread_;
+        void run();
+        friend struct VideoTxContextHandle;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);
-        virtual ~VideoSendThread();
-        virtual void run();
+        ~VideoSendThread();
+        void start();
         std::string getSDP() const { return sdp_; }
         void forceKeyFrame();
 };

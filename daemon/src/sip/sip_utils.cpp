@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -42,12 +42,14 @@
 #include <pj/list.h>
 #include "sip_utils.h"
 
-// for resolveDns
-#include <list>
+#include <vector>
+#include <algorithm>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include "logger.h"
 
 std::string
 sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
@@ -71,18 +73,17 @@ sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 pjsip_route_hdr *
 sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 {
-    int port = 0;
+    pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
+
     std::string host;
-
+    int port = 0;
     size_t found = route.find(":");
-
     if (found != std::string::npos) {
         host = route.substr(0, found);
-        port = atoi(route.substr(found + 1, route.length()).c_str());
+        port = atoi(route.substr(found + 1, route.length() - found).c_str());
     } else
         host = route;
 
-    pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
     pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
     pjsip_sip_uri *url = pjsip_sip_uri_create(hdr_pool, 0);
     url->lr_param = 1;
@@ -90,6 +91,7 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;
 
+    DEBUG("Adding route %s", host.c_str());
     pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
 
     return route_set;
@@ -132,45 +134,47 @@ sip_utils::stripSipUriPrefix(std::string& sipUri)
         sipUri.erase(found);
 }
 
-/**
- * This function looks for '@' and replaces the second part with the corresponding ip address (when possible)
- */
-std::string
-sip_utils::resolveDns(const std::string &url)
+std::vector<std::string>
+sip_utils::getIPList(const std::string &name)
 {
-   size_t pos;
-   if ((pos = url.find("@")) == std::string::npos)
-      return url;
+    std::vector<std::string> ipList;
+    if (name.empty())
+        return ipList;
 
-   const std::string hostname = url.substr(pos + 1);
+    struct addrinfo *result;
+    struct addrinfo hints;
+    memset(&hints, '\0', sizeof(hints));
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_ADDRCONFIG;
+    /* resolve the domain name into a list of addresses */
+    const int error = getaddrinfo(name.c_str(), NULL, &hints, &result);
+    if (error != 0) {
+        DEBUG("getaddrinfo on \"%s\" failed: %s", name.c_str(), gai_strerror(error));
+        return ipList;
+    }
 
-   std::list<std::string> ipList(resolveServerDns(hostname));
-   if (not ipList.empty() and ipList.front().size() > 7 )
-       return url.substr(0, pos + 1) + ipList.front();
-   else
-       return hostname;
-}
+    for (struct addrinfo *res = result; res != NULL; res = res->ai_next) {
 
-/**
- * This function finds the list of IP addresses (when possible) for a given server
- */
-std::list<std::string>
-sip_utils::resolveServerDns(const std::string &server)
-{
-   struct hostent *he;
-   std::list<std::string> ipList;
+        void *ptr = 0;
+        std::string addrstr;
+        static const int AF_INET_STRLEN = 16, AF_INET6_STRLEN = 40;
+        switch (res->ai_family) {
+            case AF_INET:
+                addrstr.resize(AF_INET_STRLEN);
+                ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+                break;
+            case AF_INET6:
+                addrstr.resize(AF_INET6_STRLEN);
+                ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
+                break;
+        }
+        inet_ntop(res->ai_family, ptr, &(*addrstr.begin()), addrstr.size());
+        // don't add duplicates, and don't use an std::set because
+        // we want this order preserved.
+        if (std::find(ipList.begin(), ipList.end(), addrstr) == ipList.end())
+            ipList.push_back(addrstr);
+    }
 
-   // If hostname has a period, assume that it is an IP address and return
-   // as is
-   if (server.find(".") == std::string::npos) {
-      if ((he = gethostbyname(server.c_str())) == NULL)
-         return ipList;
-      struct in_addr **addr_list = (struct in_addr **) he->h_addr_list;
-
-      for (int i = 0; addr_list[i] != NULL; ++i)
-         ipList.push_back(inet_ntoa(*addr_list[i]));
-   } else {
-       ipList.push_back(server);
-   }
-   return ipList;
+    freeaddrinfo(result);
+    return ipList;
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -65,7 +65,11 @@ SIPCall::~SIPCall()
 void SIPCall::answer()
 {
     pjsip_tx_data *tdata;
-    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS)
+    if (!inv->last_answer)
+        throw std::runtime_error("Should only be called for initial answer");
+
+    // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
+    if (pjsip_inv_answer(inv, PJSIP_SC_OK, NULL, !inv->neg ? local_sdp_->getLocalSdpSession() : NULL, &tdata) != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS)
@@ -89,7 +93,7 @@ std::map<std::string, std::string>
 SIPCall::createHistoryEntry() const
 {
     std::map<std::string, std::string> entry(Call::createHistoryEntry());
-    entry[HistoryItem::AUDIO_CODEC_KEY] = local_sdp_->getAudioCodecName();
+    entry[HistoryItem::AUDIO_CODEC_KEY] = local_sdp_->getAudioCodecNames();
 #ifdef SFL_VIDEO
     entry[HistoryItem::VIDEO_CODEC_KEY] = local_sdp_->getSessionVideoCodec();
 #endif

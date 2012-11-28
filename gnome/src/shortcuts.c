@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -79,7 +79,7 @@ filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data
 
     for (int i = 0; accelerators_list[i].action; ++i)
         if (accelerators_list[i].key == key->keycode && accelerators_list[i].mask == keystate) {
-            accelerators_list[i].callback();
+            accelerators_list[i].callback(accelerators_list[i].data);
             return GDK_FILTER_REMOVE;
         }
 
@@ -90,7 +90,7 @@ filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data
  * Callbacks
  */
 static void
-toggle_pick_up_hang_up_callback()
+toggle_pick_up_hang_up_callback(GSettings *settings)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
@@ -101,13 +101,13 @@ toggle_pick_up_hang_up_callback()
         switch (selectedCall->_state) {
             case CALL_STATE_INCOMING:
             case CALL_STATE_TRANSFER:
-                sflphone_pick_up();
+                sflphone_pick_up(settings);
                 break;
             case CALL_STATE_DIALING:
             case CALL_STATE_HOLD:
             case CALL_STATE_CURRENT:
             case CALL_STATE_RINGING:
-                sflphone_hang_up();
+                sflphone_hang_up(settings);
                 break;
             default:
                 break;
@@ -115,23 +115,23 @@ toggle_pick_up_hang_up_callback()
     } else if (selectedConf) {
         dbus_hang_up_conference(selectedConf);
     } else
-        sflphone_pick_up();
+        sflphone_pick_up(settings);
 }
 
 static void
-pick_up_callback()
+pick_up_callback(gpointer data)
 {
-    sflphone_pick_up();
+    sflphone_pick_up(data);
 }
 
 static void
-hang_up_callback()
+hang_up_callback(gpointer data)
 {
-    sflphone_hang_up();
+    sflphone_hang_up(data);
 }
 
 static void
-toggle_hold_callback()
+toggle_hold_callback(gpointer data UNUSED)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
@@ -155,14 +155,14 @@ toggle_hold_callback()
 }
 
 static void
-popup_window_callback()
+popup_window_callback(gpointer data UNUSED)
 {
     gtk_widget_hide(GTK_WIDGET(get_main_window()));
     gtk_widget_show(GTK_WIDGET(get_main_window()));
 }
 
 static void
-default_callback()
+default_callback(gpointer data UNUSED)
 {
     ERROR("Shortcuts: Error: Missing shortcut callback");
 }
@@ -300,7 +300,7 @@ initialize_binding(const gchar* action, guint key, GdkModifierType mask)
  * Prepare accelerators list
  */
 static void
-initialize_accelerators_list()
+initialize_accelerators_list(GSettings *settings)
 {
     GList* shortcutsKeysElement, *shortcutsKeys;
     int i = 0;
@@ -316,6 +316,7 @@ initialize_accelerators_list()
 
         accelerators_list[i].action = g_strdup(action);
         accelerators_list[i].callback = get_action_callback(action);
+        accelerators_list[i].data = settings;
         accelerators_list[i].mask = 0;
         accelerators_list[i].key = 0;
 
@@ -399,7 +400,7 @@ shortcuts_update_bindings(guint shortcut_index, guint key, GdkModifierType mask)
  * Initialize bindings with configuration retrieved from dbus
  */
 void
-shortcuts_initialize_bindings()
+shortcuts_initialize_bindings(GSettings *settings)
 {
     GList* shortcutsKeys, *shortcutsKeysElement = NULL;
     gchar* action, *maskAndKey, *token1, *token2 = NULL;
@@ -411,7 +412,7 @@ shortcuts_initialize_bindings()
     shortcutsMap = dbus_get_shortcuts();
 
     // initialize list of keys
-    initialize_accelerators_list();
+    initialize_accelerators_list(settings);
 
     // iterate through keys to initialize bindings
     shortcutsKeys = g_hash_table_get_keys(shortcutsMap);

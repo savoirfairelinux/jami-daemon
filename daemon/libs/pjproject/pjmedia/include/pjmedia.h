@@ -30,14 +30,12 @@
 #include <pjmedia/bidirectional.h>
 #include <pjmedia/circbuf.h>
 #include <pjmedia/clock.h>
-#include <pjmedia/codec.h>
 #include <pjmedia/conference.h>
 #include <pjmedia/delaybuf.h>
 #include <pjmedia/echo.h>
 #include <pjmedia/echo_port.h>
 #include <pjmedia/errno.h>
 #include <pjmedia/endpoint.h>
-#include <pjmedia/g711.h>
 #include <pjmedia/jbuf.h>
 #include <pjmedia/master_port.h>
 #include <pjmedia/mem_port.h>
@@ -52,8 +50,6 @@
 #include <pjmedia/sdp_neg.h>
 #include <pjmedia/session.h>
 #include <pjmedia/silencedet.h>
-#include <pjmedia/sound.h>
-#include <pjmedia/sound_port.h>
 #include <pjmedia/splitcomb.h>
 #include <pjmedia/stereo.h>
 #include <pjmedia/stream.h>

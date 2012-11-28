@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- * Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
- * Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
+ *  Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -39,8 +39,8 @@
 #include "codec.h"
 
 /* bump when codec binary interface changes */
-#define CODEC_ENTRY create_1_1_0
-#define CODEC_ENTRY_SYMBOL "create_1_1_0"
+#define CODEC_ENTRY create_1_2_0
+#define CODEC_ENTRY_SYMBOL "create_1_2_0"
 
 // We assume all decoders will be fed 20ms of audio or less
 // And we'll resample them to 44.1kHz or less
@@ -127,9 +127,6 @@ class AudioCodec : public Codec {
 
         /** Bitrate */
         double bitrate_;
-
-        /** Bandwidth */
-        double bandwidth_;
 
     private:
         AudioCodec& operator=(const AudioCodec&);

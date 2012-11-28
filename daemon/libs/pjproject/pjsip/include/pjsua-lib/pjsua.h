@@ -32,9 +32,6 @@
 /* Include all PJMEDIA headers. */
 #include <pjmedia.h>
 
-/* Include all PJMEDIA-CODEC headers. */
-#include <pjmedia-codec.h>
-
 /* Include all PJSIP-UA headers */
 #include <pjsip_ua.h>
 

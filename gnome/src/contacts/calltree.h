@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -60,7 +59,7 @@ struct conference_obj_t;
  * @return GtkWidget* A new widget
  */
 void
-calltree_create (calltab_t *, int searchbar_type);
+calltree_create(calltab_t *, gboolean has_searchbar, GSettings *settings);
 
 /**
  * Add a call in the calltree
@@ -74,7 +73,7 @@ calltree_add_call (calltab_t *, callable_obj_t *, GtkTreeIter *);
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t *, callable_obj_t *);
+calltree_update_call (calltab_t *, callable_obj_t *, GSettings *settings);
 
 /**
  * Remove a call from the call tree
@@ -89,19 +88,19 @@ calltree_remove_call(calltab_t *, const gchar*);
  * @param The parent item in case of a conference, should be NULL in case of a normal call
  */
 void
-calltree_add_history_entry(callable_obj_t *);
+calltree_add_history_entry(callable_obj_t *call);
 
 void
 calltree_update_history_view();
 
 void
-calltree_add_conference_to_current_calls(conference_obj_t *);
+calltree_add_conference_to_current_calls(conference_obj_t *, GSettings *settings);
 
 void
-calltree_remove_conference(calltab_t *, const conference_obj_t *);
+calltree_remove_conference(calltab_t *, const conference_obj_t *, GSettings *settings);
 
 void
-calltree_display (calltab_t *);
+calltree_display (calltab_t *, GSettings *settings);
 
 /**
  * Update elapsed time based on selected calltree's call

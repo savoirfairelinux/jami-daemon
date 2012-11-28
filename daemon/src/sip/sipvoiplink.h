@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
@@ -19,7 +19,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -69,6 +69,7 @@ typedef std::map<std::string, SIPCall*> SipCallMap;
  */
 
 class SIPVoIPLink : public VoIPLink {
+
     public:
 
         /**
@@ -97,7 +98,8 @@ class SIPVoIPLink : public VoIPLink {
         /**
          * Return the internal account map for this VOIP link
          */
-        AccountMap &getAccounts() { return sipAccountMap_; }
+        AccountMap &
+        getAccounts() { return sipAccountMap_; }
 
         /**
          * Build and send SIP registration request
@@ -250,7 +252,7 @@ class SIPVoIPLink : public VoIPLink {
          * @param c The call identifier
          */
         std::string getCurrentVideoCodecName(Call *c) const;
-        std::string getCurrentAudioCodecName(Call *c) const;
+        std::string getCurrentAudioCodecNames(Call *c) const;
 
         /**
          * Retrive useragent name from account
@@ -288,6 +290,11 @@ class SIPVoIPLink : public VoIPLink {
 #ifdef SFL_VIDEO
         static void enqueueKeyframeRequest(const std::string &callID);
 #endif
+
+        std::string
+        getAccountIdFromNameAndServer(const std::string &userName,
+                                      const std::string &server) const;
+
     private:
 
         NON_COPYABLE(SIPVoIPLink);

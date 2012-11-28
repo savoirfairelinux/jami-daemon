@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -77,6 +77,16 @@ gtk_scale_new_with_range(GtkOrientation orientation, gdouble min, gdouble max,
         return gtk_hscale_new_with_range(min, max, step);
     else
         return gtk_vscale_new_with_range(min, max, step);
+}
+
+GtkWidget *
+gtk_separator_new(GtkOrientation orientation)
+{
+    if (orientation == GTK_ORIENTATION_HORIZONTAL)
+        return gtk_hseparator_new();
+    else
+        return gtk_vseparator_new();
+
 }
 
 #endif

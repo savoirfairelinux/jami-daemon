@@ -1,9 +1,10 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -183,7 +184,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
                 continue;
 
             if (seemsValid(file) && !alreadyInCache(file)) {
-                sfl::Codec* audioCodec = loadCodec(dirStr+file);
+                sfl::Codec* audioCodec = loadCodec(dirStr + file);
 
                 if (audioCodec) {
                     codecs.push_back(audioCodec);
@@ -200,20 +201,12 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
 
 sfl::AudioCodec *AudioCodecFactory::loadCodec(const std::string &path)
 {
-    void * codecHandle = dlopen(path.c_str(), RTLD_LAZY);
+    void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
 
     if (!codecHandle) {
         ERROR("%s", dlerror());
         return NULL;
     }
-
-    //If there is an init function, then call it, useful for optional codecs with dependency check at runtime
-    bool(*init)();
-    init = (bool(*)()) dlsym(codecHandle, "init");
-    if (dlerror() == NULL && !(*init)())
-        return NULL;
-
-    dlerror();
 
     create_t* createCodec = (create_t*) dlsym(codecHandle, CODEC_ENTRY_SYMBOL);
     const char *error = dlerror();
@@ -224,8 +217,8 @@ sfl::AudioCodec *AudioCodecFactory::loadCodec(const std::string &path)
     }
 
     sfl::AudioCodec *a = static_cast<sfl::AudioCodec *>(createCodec());
-
-    codecInMemory_.push_back(CodecHandlePointer(a, codecHandle));
+    if (a)
+        codecInMemory_.push_back(CodecHandlePointer(a, codecHandle));
 
     return a;
 }
@@ -242,9 +235,11 @@ void AudioCodecFactory::unloadCodec(CodecHandlePointer p)
         return;
     }
 
-    destroyCodec(p.first);
+    if (p.first)
+        destroyCodec(p.first);
 
-    dlclose(p.second);
+    if (p.second)
+        dlclose(p.second);
 }
 
 sfl::AudioCodec* AudioCodecFactory::instantiateCodec(int payload) const
@@ -290,6 +285,7 @@ bool AudioCodecFactory::seemsValid(const std::string &lib)
     "alaw",
     "g722",
     "g729", //G729 have to be loaded first, if it is valid or not is checked later
+    "opus", //Opus have to be loaded first, if it is valid or not is checked later
 #ifdef HAVE_SPEEX_CODEC
     "speex_nb",
     "speex_wb",

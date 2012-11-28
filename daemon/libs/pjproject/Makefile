@@ -3,7 +3,7 @@ include build/host-$(HOST_NAME).mak
 -include user.mak
 include version.mak
 
-DIRS = pjlib/build pjlib-util/build pjnath/build third_party/build pjmedia/build pjsip/build pjsip-apps/build $(EXTRA_DIRS)
+DIRS = pjlib/build pjlib-util/build pjnath/build third_party/build pjmedia/build pjsip/build $(EXTRA_DIRS)
 
 ifdef MINSIZE
 MAKE_FLAGS := MINSIZE=1
@@ -35,13 +35,9 @@ LIBS = 	pjlib/lib/libpj-$(TARGET_NAME).a \
 	pjlib-util/lib/libpjlib-util-$(TARGET_NAME).a \
 	pjnath/lib/libpjnath-$(TARGET_NAME).a \
 	pjmedia/lib/libpjmedia-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-audiodev-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-codec-$(TARGET_NAME).a \
     	pjsip/lib/libpjsip-$(TARGET_NAME).a \
 	pjsip/lib/libpjsip-ua-$(TARGET_NAME).a \
 	pjsip/lib/libpjsip-simple-$(TARGET_NAME).a \
-	pjsip/lib/libpjsua-$(TARGET_NAME).a
-BINS = 	pjsip-apps/bin/pjsua-$(TARGET_NAME)$(HOST_EXE) 
 
 size:
 	@echo -n 'Date: '
@@ -72,7 +68,7 @@ xhdrid:
 		cp /tmp/id $$f; \
 	done
 
-selftest: pjlib-test pjlib-util-test pjnath-test pjmedia-test pjsip-test pjsua-test
+selftest: pjlib-test pjlib-util-test pjnath-test pjmedia-test pjsip-test
 
 pjlib-test: pjlib/bin/pjlib-test-$(TARGET_NAME)
 	cd pjlib/build && ../bin/pjlib-test-$(TARGET_NAME)
@@ -88,9 +84,6 @@ pjmedia-test: pjmedia/bin/pjmedia-test-$(TARGET_NAME)
 
 pjsip-test: pjsip/bin/pjsip-test-$(TARGET_NAME)
 	cd pjsip/build && ../bin/pjsip-test-$(TARGET_NAME)
-
-pjsua-test:
-	cd tests/pjsua && python runall.py
 
 prefix = $(ac_prefix)
 

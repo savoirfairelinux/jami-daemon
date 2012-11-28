@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -33,10 +33,11 @@
 
 #include <gtk/gtk.h>
 
-GtkWidget* create_audio_configuration();
+GtkWidget* create_audio_configuration(GSettings *settings);
 
 GtkWidget* api_box();
 GtkWidget* audiocodecs_box(const account_t *a);
+gboolean must_show_volume(GSettings *settings);
 gboolean must_show_alsa_conf();
 
 #endif // AUDIO_CONF_H_

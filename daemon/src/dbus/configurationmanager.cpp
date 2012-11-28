@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -408,36 +408,6 @@ void ConfigurationManager::setAudioManager(const std::string& api)
 std::string ConfigurationManager::getAudioManager()
 {
     return Manager::instance().getAudioManager();
-}
-
-void ConfigurationManager::setMailNotify()
-{
-    Manager::instance().setMailNotify();
-}
-
-int32_t ConfigurationManager::getMailNotify()
-{
-    return Manager::instance().getMailNotify();
-}
-
-std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings()
-{
-    return Manager::instance().getAddressbookSettings();
-}
-
-void ConfigurationManager::setAddressbookSettings(const std::map<std::string, int32_t>& settings)
-{
-    Manager::instance().setAddressbookSettings(settings);
-}
-
-std::vector<std::string> ConfigurationManager::getAddressbookList()
-{
-    return Manager::instance().getAddressbookList();
-}
-
-void ConfigurationManager::setAddressbookList(const std::vector<std::string>& list)
-{
-    Manager::instance().setAddressbookList(list);
 }
 
 std::map<std::string, std::string> ConfigurationManager::getHookSettings()

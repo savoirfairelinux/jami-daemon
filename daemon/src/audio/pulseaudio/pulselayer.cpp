@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -232,9 +232,17 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
     switch (type) {
         case SFL_PCM_PLAYBACK:
         case SFL_PCM_RINGTONE:
-            return sinkList_.at(index);
+            if (index < 0 or index >= sinkList_.size()) {
+                ERROR("Index %d out of range", index);
+                return "";
+            }
+            return sinkList_[index];
         case SFL_PCM_CAPTURE:
-            return sourceList_.at(index);
+            if (index < 0 or index >= sourceList_.size()) {
+                ERROR("Index %d out of range", index);
+                return "";
+            }
+            return sourceList_[index];
         default:
             return "";
     }
@@ -356,10 +364,12 @@ void PulseLayer::writeToSpeaker()
         applyGain(static_cast<SFLDataFormat *>(data), urgentBytes / sizeof(SFLDataFormat), getPlaybackGain());
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer()->discard(urgentBytes, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().discard(urgentBytes, MainBuffer::DEFAULT_ID);
         return;
     }
 
+    // FIXME: not thread safe! we only lock the mutex when we get the
+    // pointer, we have no guarantee that it will stay safe to use
     AudioLoop *toneToPlay = Manager::instance().getTelephoneTone();
 
     if (toneToPlay) {
@@ -375,7 +385,7 @@ void PulseLayer::writeToSpeaker()
 
     flushUrgent(); // flush remaining samples in _urgentRingBuffer
 
-    size_t availSamples = Manager::instance().getMainBuffer()->availableForGet(MainBuffer::DEFAULT_ID) / sizeof(SFLDataFormat);
+    size_t availSamples = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID) / sizeof(SFLDataFormat);
 
     if (availSamples == 0) {
         pa_stream_begin_write(s, &data, &writableBytes);
@@ -392,7 +402,7 @@ void PulseLayer::writeToSpeaker()
 
     double resampleFactor = 1.;
 
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
     if (resample) {
         resampleFactor = (double) sampleRate_ / mainBufferSampleRate;
@@ -404,7 +414,7 @@ void PulseLayer::writeToSpeaker()
 
     size_t readableBytes = readableSamples * sizeof(SFLDataFormat);
     pa_stream_begin_write(s, &data, &readableBytes);
-    Manager::instance().getMainBuffer()->getData(data, readableBytes, MainBuffer::DEFAULT_ID);
+    Manager::instance().getMainBuffer().getData(data, readableBytes, MainBuffer::DEFAULT_ID);
 
     if (resample) {
         const size_t nResampled = (double) readableSamples * resampleFactor;
@@ -432,7 +442,7 @@ void PulseLayer::readFromMic()
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
 
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
     if (resample) {
@@ -457,7 +467,7 @@ void PulseLayer::readFromMic()
 
     dcblocker_.process(mic_buffer_, (SFLDataFormat*)data, samples);
     applyGain(mic_buffer_, bytes / sizeof(SFLDataFormat), getCaptureGain());
-    Manager::instance().getMainBuffer()->putData(mic_buffer_, bytes, MainBuffer::DEFAULT_ID);
+    Manager::instance().getMainBuffer().putData(mic_buffer_, bytes, MainBuffer::DEFAULT_ID);
 #ifdef RECTODISK
     outfileResampled.write((const char *)mic_buffer_, bytes);
 #endif

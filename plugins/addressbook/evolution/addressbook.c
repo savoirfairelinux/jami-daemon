@@ -64,25 +64,11 @@ addressbook_is_active()
 }
 
 /**
- * Get active addressbook from config.
- */
-static void
-addressbook_config_books(gchar **book_list)
-{
-    for (gchar **book = book_list; book && *book; book++) {
-        book_data_t *book_data = books_get_book_data_by_uid(*book);
-        if (book_data)
-            book_data->active = TRUE;
-    }
-}
-
-/**
  * Good method to get books_data
  */
 GSList *
-addressbook_get_books_data(gchar **book_list)
+addressbook_get_books_data()
 {
-    addressbook_config_books(book_list);
     determine_default_addressbook();
 
     return get_books_data();
@@ -91,7 +77,7 @@ addressbook_get_books_data(gchar **book_list)
 book_data_t *
 addressbook_get_book_data_by_uid(gchar *uid)
 {
-    return books_get_book_data_by_uid (uid);
+    return books_get_book_data_by_uid(uid);
 }
 
 /**
@@ -99,10 +85,9 @@ addressbook_get_book_data_by_uid(gchar *uid)
  * Set active/inactive status depending on config.
  */
 void
-addressbook_init(gchar **book_list)
+addressbook_init()
 {
     fill_books_data();
-    addressbook_config_books(book_list);
     determine_default_addressbook();
 
     // Call books initialization

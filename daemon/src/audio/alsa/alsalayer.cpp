@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -125,6 +125,8 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     : indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
+    , watchdogTotalCount_(0)
+    , watchdogTotalErr_(0)
     , playbackHandle_(NULL)
     , ringtoneHandle_(NULL)
     , captureHandle_(NULL)
@@ -190,6 +192,9 @@ AlsaLayer::startStream()
     if (audioThread_ == NULL) {
         audioThread_ = new AlsaThread(this);
         audioThread_->start();
+    }
+    else if (!audioThread_->isRunning()) {
+      audioThread_->start();
     }
 
     isStarted_ = true;
@@ -379,12 +384,19 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 void
 AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
 {
+    //Do not waste CPU cycle to handle void
+    if (!length)
+       return;
+
     snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames(handle, length);
+    watchdogTotalCount_++;
 
     int err = snd_pcm_writei(handle, buffer , frames);
 
     if (err >= 0)
         return;
+
+    watchdogTotalErr_++;
 
     switch (err) {
 
@@ -427,6 +439,14 @@ AlsaLayer::write(void* buffer, int length, snd_pcm_t * handle)
             ERROR("Unknown write error, dropping frames: %s", snd_strerror(err));
             stopPlaybackStream();
             break;
+    }
+
+    //Detect when something is going wrong. This can be caused by alsa bugs or faulty encoder on the other side
+    //TODO do something useful instead of just warning and flushing buffers
+    if (watchdogTotalErr_ > 0 && watchdogTotalCount_ / watchdogTotalErr_ >=4 && watchdogTotalCount_ > 50) {
+        ERROR("Alsa: too many errors (%d error on %d frame)",watchdogTotalErr_,watchdogTotalCount_);
+        flushUrgent();
+        flushMain();
     }
 }
 
@@ -634,7 +654,7 @@ AlsaLayer::getAudioDeviceName(int index, PCMType type) const
 
 void AlsaLayer::capture()
 {
-    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+    unsigned int mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
     bool resample = sampleRate_ != mainBufferSampleRate;
 
     int toGetSamples = snd_pcm_avail_update(captureHandle_);
@@ -667,22 +687,24 @@ void AlsaLayer::capture()
                 rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
                 toGetSamples);
         dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
-        Manager::instance().getMainBuffer()->putData(rsmpl_out_ptr,
+        Manager::instance().getMainBuffer().putData(rsmpl_out_ptr,
                 rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
     } else {
         dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-        Manager::instance().getMainBuffer()->putData(in_ptr, toGetBytes,
+        Manager::instance().getMainBuffer().putData(in_ptr, toGetBytes,
                                                      MainBuffer::DEFAULT_ID);
     }
 }
 
 void AlsaLayer::playback(int maxSamples)
 {
-    size_t bytesToGet = Manager::instance().getMainBuffer()->availableForGet(MainBuffer::DEFAULT_ID);
+    size_t bytesToGet = Manager::instance().getMainBuffer().availableForGet(MainBuffer::DEFAULT_ID);
 
     const size_t bytesToPut = maxSamples * sizeof(SFLDataFormat);
     // no audio available, play tone or silence
     if (bytesToGet <= 0) {
+        // FIXME: not thread safe! we only lock the mutex when we get the
+        // pointer, we have no guarantee that it will stay safe to use
         AudioLoop *tone = Manager::instance().getTelephoneTone();
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
@@ -697,7 +719,7 @@ void AlsaLayer::playback(int maxSamples)
     } else {
         // play the regular sound samples
 
-        const size_t mainBufferSampleRate = Manager::instance().getMainBuffer()->getInternalSamplingRate();
+        const size_t mainBufferSampleRate = Manager::instance().getMainBuffer().getInternalSamplingRate();
         const bool resample = sampleRate_ != mainBufferSampleRate;
 
         double resampleFactor = 1.0;
@@ -712,7 +734,7 @@ void AlsaLayer::playback(int maxSamples)
         const size_t samplesToGet = bytesToGet / sizeof(SFLDataFormat);
         std::vector<SFLDataFormat> out(samplesToGet, 0);
         SFLDataFormat * const out_ptr = &(*out.begin());
-        Manager::instance().getMainBuffer()->getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
         AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
 
         if (resample) {
@@ -756,7 +778,7 @@ void AlsaLayer::audioCallback()
 
         write(out_ptr, bytesToGet, playbackHandle_);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer()->discard(bytesToGet, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
     } else {
         // regular audio data
         playback(playbackAvailSmpl);

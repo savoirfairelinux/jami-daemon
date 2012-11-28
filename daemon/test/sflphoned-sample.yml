@@ -42,7 +42,6 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
-  updateContact: false
   username: sfltest
   videoCodecs:
   zrtp:
@@ -91,7 +90,6 @@ accounts:
     verifyClient: true
     verifyServer: true
   type: SIP
-  updateContact: false
   username:
   videoCodecs:
   - bitrate: 400
@@ -121,14 +119,6 @@ voipPreferences:
   pulseLength: 250
   symmetric: true
   zidFile: true
-addressbook:
-  business: true
-  enabled: true
-  home: true
-  list:
-  maxResults: 25
-  mobile: true
-  photo: true
 hooks:
   iax2Enabled: false
   numberAddPrefix:

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
  *  Copyright © 2009 Rémi Denis-Courmont
  *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -34,7 +34,6 @@
 #include <stdexcept> // for std::runtime_error
 #include <sstream>
 #include <algorithm>
-#include "cc_thread.h"
 
 #include "logger.h"
 
@@ -58,6 +57,22 @@ namespace sfl_video {
 using std::vector;
 using std::string;
 
+// Helper class to guarantee exception safe mutex locking/unlocking
+class ScopedLock {
+    public:
+        ScopedLock(pthread_mutex_t &mutex) : mutex_(mutex) {
+            pthread_mutex_lock(&mutex_);
+        }
+
+        ~ScopedLock() {
+            pthread_mutex_unlock(&mutex_);
+        }
+
+    private:
+        pthread_mutex_t &mutex_;
+};
+
+
 static int is_v4l2(struct udev_device *dev)
 {
     const char *version = udev_device_get_property_value(dev, "ID_V4L_VERSION");
@@ -65,8 +80,11 @@ static int is_v4l2(struct udev_device *dev)
     return version and strcmp(version, "1");
 }
 
-VideoV4l2ListThread::VideoV4l2ListThread() : devices_(), mutex_(), udev_(0), udev_mon_(0), probing_(false)
+VideoV4l2ListThread::VideoV4l2ListThread() : devices_(),
+    mutex_(), udev_(0),
+    udev_mon_(0), probing_(false), thread_()
 {
+    pthread_mutex_init(&mutex_, NULL);
     udev_list_entry *devlist;
     udev_enumerate *devenum;
 
@@ -141,6 +159,22 @@ udev_failed:
     }
 }
 
+
+void VideoV4l2ListThread::start()
+{
+    probing_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+
+void *VideoV4l2ListThread::runCallback(void *data)
+{
+    VideoV4l2ListThread *context = static_cast<VideoV4l2ListThread*>(data);
+    context->run();
+    return NULL;
+}
+
+
 namespace {
 
     typedef std::vector<VideoV4l2Device> Devices;
@@ -194,7 +228,7 @@ start:
 VideoV4l2ListThread::~VideoV4l2ListThread()
 {
     probing_ = false;
-    ost::Thread::terminate();
+    pthread_join(thread_, NULL);
     if (udev_mon_)
         udev_monitor_unref(udev_mon_);
     if (udev_)
@@ -205,12 +239,10 @@ void VideoV4l2ListThread::run()
 {
     if (!udev_mon_) {
         probing_ = false;
-        ost::Thread::exit();
-        return;
+        pthread_exit(NULL);
     }
 
     const int udev_fd = udev_monitor_get_fd(udev_mon_);
-    probing_ = true;
     while (probing_) {
         timeval timeout = {0 /* sec */, 500000 /* usec */};
         fd_set set;
@@ -252,22 +284,19 @@ void VideoV4l2ListThread::run()
                     continue;
                 ERROR("udev monitoring thread: select failed (%m)");
                 probing_ = false;
-                ost::Thread::exit();
-                return;
+                pthread_exit(NULL);
 
             default:
                 ERROR("select() returned %d (%m)", ret);
                 probing_ = false;
-                ost::Thread::exit();
-                return;
+                pthread_exit(NULL);
         }
-        yield();
     }
 }
 
 void VideoV4l2ListThread::delDevice(const string &node)
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
 
     for (std::vector<VideoV4l2Device>::iterator itr = devices_.begin(); itr != devices_.end(); ++itr) {
         if (itr->device == node) {
@@ -280,7 +309,7 @@ void VideoV4l2ListThread::delDevice(const string &node)
 
 bool VideoV4l2ListThread::addDevice(const string &dev)
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
 
     int fd = open(dev.c_str(), O_RDWR);
     if (fd == -1)
@@ -298,7 +327,7 @@ bool VideoV4l2ListThread::addDevice(const string &dev)
 vector<string>
 VideoV4l2ListThread::getChannelList(const string &dev)
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannelList();
@@ -309,7 +338,7 @@ VideoV4l2ListThread::getChannelList(const string &dev)
 vector<string>
 VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannel(channel).getSizeList();
@@ -320,7 +349,7 @@ VideoV4l2ListThread::getSizeList(const string &dev, const string &channel)
 vector<string>
 VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const std::string &size)
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannel(channel).getSize(size).getRateList();
@@ -330,7 +359,7 @@ VideoV4l2ListThread::getRateList(const string &dev, const string &channel, const
 
 vector<string> VideoV4l2ListThread::getDeviceList()
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
     vector<string> v;
 
     for (std::vector<VideoV4l2Device>::iterator itr = devices_.begin(); itr != devices_.end(); ++itr)
@@ -350,7 +379,7 @@ VideoV4l2ListThread::findDevice(const string &name) const
 
 unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &name)
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
     Devices::const_iterator iter(findDevice(dev));
     if (iter != devices_.end())
         return iter->getChannel(name).idx;
@@ -360,7 +389,7 @@ unsigned VideoV4l2ListThread::getChannelNum(const string &dev, const string &nam
 
 string VideoV4l2ListThread::getDeviceNode(const string &name)
 {
-    ost::MutexLock lock(mutex_);
+    ScopedLock lock(mutex_);
     Devices::const_iterator iter(findDevice(name));
     if (iter != devices_.end())
         return iter->device;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -69,9 +69,9 @@ void Conference::bindParticipant(const std::string &participant_id)
     for (ParticipantSet::const_iterator iter = participants_.begin();
             iter != participants_.end(); ++iter)
         if (participant_id != *iter)
-            Manager::instance().getMainBuffer()->bindCallID(participant_id, *iter);
+            Manager::instance().getMainBuffer().bindCallID(participant_id, *iter);
 
-    Manager::instance().getMainBuffer()->bindCallID(participant_id, MainBuffer::DEFAULT_ID);
+    Manager::instance().getMainBuffer().bindCallID(participant_id, MainBuffer::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const
@@ -104,23 +104,23 @@ bool Conference::setRecording()
     bool recordStatus = Recordable::recAudio_.isRecording();
 
     Recordable::recAudio_.setRecording();
-    MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+    MainBuffer &mbuffer = Manager::instance().getMainBuffer();
 
     std::string process_id(Recordable::recorder_.getRecorderID());
 
     // start recording
     if (!recordStatus) {
         for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
-            mbuffer->bindHalfDuplexOut(process_id, *iter);
+            mbuffer.bindHalfDuplexOut(process_id, *iter);
 
-        mbuffer->bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
+        mbuffer.bindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         for (ParticipantSet::const_iterator iter = participants_.begin(); iter != participants_.end(); ++iter)
-            mbuffer->unBindHalfDuplexOut(process_id, *iter);
+            mbuffer.unBindHalfDuplexOut(process_id, *iter);
 
-        mbuffer->unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
+        mbuffer.unBindHalfDuplexOut(process_id, MainBuffer::DEFAULT_ID);
     }
 
     return recordStatus;

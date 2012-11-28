@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -43,7 +43,7 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     , ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this, *this)
     , rtpThread_(*this)
-    , transportRate_(20)
+    , audioCodecs_()
 {
     DEBUG("Setting new RTP session with destination %s:%d",
             call_.getLocalIp().c_str(), call_.getLocalAudioPort());
@@ -78,23 +78,14 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
     }
 }
 
-void AudioSymmetricRtpSession::setSessionMedia(AudioCodec &audioCodec)
-{
-    AudioRtpSession::setSessionMedia(audioCodec);
-    call_.setRecordingSmplRate(getCodecSampleRate());
-
-    int transportRate = audioCodec.getFrameSize() / (audioCodec.getClockRate()/1000);
-    transportRate_ = (transportRate > 0)?transportRate:20;
-    DEBUG("Switching to a transport rate of %d ms",transportRate_);
-}
-
-int AudioSymmetricRtpSession::startRtpThread(AudioCodec &audiocodec)
+int AudioSymmetricRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 {
     DEBUG("Starting main thread");
     if (isStarted_)
         return 0;
 
-    AudioRtpSession::startRtpThread(audiocodec);
+    audioCodecs_ = audioCodecs;
+    AudioRtpSession::startRtpThread(audioCodecs);
     return startSymmetricRtpThread();
 }
 }

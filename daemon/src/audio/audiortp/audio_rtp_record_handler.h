@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -42,8 +42,6 @@ class SIPCall;
 #include "audio/codecs/audiocodec.h"
 #include "audio/samplerateconverter.h"
 #include "audio/noisesuppress.h"
-#include "audio/speexechocancel.h"
-#include "audio/echosuppress.h"
 #include "audio/gaincontrol.h"
 
 namespace sfl {
@@ -59,7 +57,7 @@ timeval2microtimeout(const timeval& t)
 }
 
 struct DTMFEvent {
-    DTMFEvent(int digit);
+    DTMFEvent(char digit);
     ost::RTPPacket::RFC2833Payload payload;
     bool newevent;
     int length;
@@ -74,14 +72,20 @@ class AudioRtpRecord {
     public:
         AudioRtpRecord();
         ~AudioRtpRecord();
+        void deleteCodecs();
+        bool tryToSwitchPayloadTypes(int newPt);
+        sfl::AudioCodec* getCurrentCodec() const;
         std::string callId_;
         int codecSampleRate_;
         std::list<DTMFEvent> dtmfQueue_;
 
     private:
-        AudioCodec *audioCodec_;
+        std::vector<AudioCodec*> audioCodecs_;
         ost::Mutex audioCodecMutex_;
-        int codecPayloadType_;
+        // these will have the same value unless we are sending
+        // a different codec than we are receiving (asymmetric RTP)
+        int encoderPayloadType_;
+        int decoderPayloadType_;
         bool hasDynamicPayloadType_;
         std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> decData_;
 // FIXME: resampledData should be resized as needed
@@ -113,6 +117,7 @@ class AudioRtpRecord {
 #else
         ucommon::atomic::counter dead_;
 #endif
+        size_t currentCodecIndex_;
 };
 
 
@@ -124,14 +129,14 @@ class AudioRtpRecordHandler {
         /**
          *  Set rtp media for this session
          */
-        void setRtpMedia(AudioCodec* audioCodec);
+        void setRtpMedia(const std::vector<AudioCodec*> &audioCodec);
 
         AudioCodec *getAudioCodec() const {
-            return audioRtpRecord_.audioCodec_;
+            return audioRtpRecord_.audioCodecs_[0];
         }
 
-        int getCodecPayloadType() const {
-            return audioRtpRecord_.codecPayloadType_;
+        int getEncoderPayloadType() const {
+            return audioRtpRecord_.encoderPayloadType_;
         }
 
         int getCodecSampleRate() const {
@@ -178,14 +183,16 @@ class AudioRtpRecordHandler {
             return audioRtpRecord_.dtmfPayloadType_;
         }
 
-        void putDtmfEvent(int digit);
+        void putDtmfEvent(char digit);
 
     protected:
+        bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
         AudioRtpRecord audioRtpRecord_;
 
     private:
         const std::string id_;
         GainControl gainController;
+        int warningInterval_;
 };
 }
 

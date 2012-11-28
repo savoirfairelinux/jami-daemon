@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *
  *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -114,7 +114,7 @@ void update_searchbar_addressbook_list()
     GSList *books_data = NULL;
 
     if (addrbook)
-        books_data = addrbook->get_books_data(dbus_get_addressbook_list());
+        books_data = addrbook->get_books_data();
 
     if (books_data == NULL) {
         ERROR("Searchbar: No books data found");
@@ -364,13 +364,11 @@ GtkWidget* contacts_searchbar_new()
     if (!addrbook)
         return NULL;
 
-    gchar **book_list = dbus_get_addressbook_list();
-
-    addrbook->init(book_list);
+    addrbook->init();
 
     GSList *book_list_iterator;
     book_data_t *book_data;
-    GSList *books_data = addrbook->get_books_data(book_list);
+    GSList *books_data = addrbook->get_books_data();
 
     // Populate menu
     int count = 0;
@@ -388,11 +386,8 @@ GtkWidget* contacts_searchbar_new()
 
             gtk_list_store_set(liststore, &iter, 0, book_data->name, -1);
 
-            if (book_data->isdefault) {
-                activeIter = iter;
-                activeIsSet = TRUE;
-            }
-
+            activeIter = iter;
+            activeIsSet = TRUE;
             count++;
         }
     }
@@ -451,7 +446,6 @@ GtkWidget* contacts_searchbar_new()
     gtk_box_pack_start(GTK_BOX(ret), addressbookentry, TRUE, TRUE, 0);
 
     g_free(tooltip_text);
-    g_strfreev(book_list);
 
     return ret;
 }

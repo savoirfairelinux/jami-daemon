@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -57,9 +57,9 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue, ost::Thread &thread);
         virtual ~AudioRtpSession();
 
-        void updateSessionMedia(AudioCodec &audioCodec);
+        void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
-        virtual int startRtpThread(AudioCodec&);
+        virtual int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Used mostly when receiving a reinvite
@@ -80,7 +80,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         /**
          * Set the audio codec for this RTP session
          */
-        virtual void setSessionMedia(AudioCodec &codec) = 0;
+        void setSessionMedia(const std::vector<AudioCodec*> &codec);
 
 
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
@@ -110,6 +110,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          * except for G722 which require a 8 kHz incrementation.
          */
         int timestampIncrement_;
+
+        /**
+         * Rate at which the transport layer handle packets, should be
+         * synchronized with codec requirements.
+         */
+        unsigned int transportRate_;
 
         ost::RTPDataQueue &queue_;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -71,72 +71,102 @@ Sdp::Sdp(pj_pool_t *pool)
     , telephoneEventPayload_(101) // same as asterisk
 {}
 
+namespace {
+    bool hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
+    {
+        for (std::vector<sfl::AudioCodec*>::const_iterator i = codecs.begin(); i != codecs.end(); ++i)
+            if (*i and (*i)->getPayloadType() == pt)
+                return true;
+        return false;
+    }
+
+    bool hasCodec(const std::vector<std::string> &codecs, const std::string &codec)
+    {
+        return std::find(codecs.begin(), codecs.end(), codec) != codecs.end();
+    }
+}
+
+
 void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 {
     activeLocalSession_ = (pjmedia_sdp_session*) sdp;
 
-    if (activeLocalSession_->media_count < 1)
-        return;
-
-    for (unsigned media = 0; media < activeLocalSession_->media_count; ++media) {
-        pjmedia_sdp_media *current = activeLocalSession_->media[media];
+    for (unsigned i = 0; i < activeLocalSession_->media_count; ++i) {
+        pjmedia_sdp_media *current = activeLocalSession_->media[i];
 
         for (unsigned fmt = 0; fmt < current->desc.fmt_count; ++fmt) {
             static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
-            pjmedia_sdp_attr *attribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, NULL);
+            pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, &current->desc.fmt[fmt]);
 
-            if (!attribute) {
+            if (!rtpMapAttribute) {
                 ERROR("Could not find rtpmap attribute");
                 break;
             }
 
             pjmedia_sdp_rtpmap *rtpmap;
-            pjmedia_sdp_attr_to_rtpmap(memPool_, attribute, &rtpmap);
+            pjmedia_sdp_attr_to_rtpmap(memPool_, rtpMapAttribute, &rtpmap);
 
-            string type(current->desc.media.ptr, current->desc.media.slen);
-            if (type == "audio") {
-                const int pt = pj_strtoul(&rtpmap->pt);
-                sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
-                if (codec)
-                    sessionAudioMedia_.push_back(codec);
-                else {
-                    DEBUG("Could not get codec for payload type %lu", pt);
-                    break;
+            if (!pj_stricmp2(&current->desc.media, "audio")) {
+                const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
+                if (not hasPayload(sessionAudioMedia_, pt)) {
+                    sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
+                    if (codec)
+                        sessionAudioMedia_.push_back(codec);
+                    else
+                        ERROR("Could not get codec for payload type %lu", pt);
                 }
-            } else if (type == "video")
-                sessionVideoMedia_.push_back(string(rtpmap->enc_name.ptr, rtpmap->enc_name.slen));
+            } else if (!pj_stricmp2(&current->desc.media, "video")) {
+                const string codec(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
+                if (not hasCodec(sessionVideoMedia_, codec))
+                    sessionVideoMedia_.push_back(codec);
+            }
         }
     }
 }
 
 
-
 void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 {
-    activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
-
     if (!sdp) {
-        ERROR("Remote sdp is NULL while parsing telephone event attribute");
+        ERROR("Remote sdp is NULL");
         return;
     }
 
-    for (unsigned i = 0; i < sdp->media_count; i++) {
-        if (pj_stricmp2(&sdp->media[i]->desc.media, "audio") == 0) {
-            pjmedia_sdp_media *r_media = sdp->media[i];
-            static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
-            pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_find(r_media->attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
+    activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
 
-            if (attribute != NULL) {
-                pjmedia_sdp_rtpmap *rtpmap;
-                pjmedia_sdp_attr_to_rtpmap(memPool_, attribute, &rtpmap);
-                telephoneEventPayload_ = pj_strtoul(&rtpmap->pt);
+    bool parsedTelelphoneEvent = false;
+    for (unsigned i = 0; i < sdp->media_count; i++) {
+        pjmedia_sdp_media *r_media = sdp->media[i];
+        if (!pj_stricmp2(&r_media->desc.media, "audio")) {
+
+            if (not parsedTelelphoneEvent) {
+                static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
+                pjmedia_sdp_attr *telephoneEvent = pjmedia_sdp_attr_find(r_media->attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
+
+                if (telephoneEvent != NULL) {
+                    pjmedia_sdp_rtpmap *rtpmap;
+                    pjmedia_sdp_attr_to_rtpmap(memPool_, telephoneEvent, &rtpmap);
+                    telephoneEventPayload_ = pj_strtoul(&rtpmap->pt);
+                    parsedTelelphoneEvent = true;
+                }
             }
 
-            return;
+            // add audio codecs from remote as needed
+            for (unsigned fmt = 0; fmt < r_media->desc.fmt_count; ++fmt) {
+
+                const unsigned long pt = pj_strtoul(&r_media->desc.fmt[fmt]);
+                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMedia_, pt)) {
+                    sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(pt);
+                    if (codec) {
+                        DEBUG("Adding codec with new payload type %d", pt);
+                        sessionAudioMedia_.push_back(codec);
+                    } else
+                        DEBUG("Could not get codec for payload type %lu", pt);
+                }
+            }
         }
     }
-
-    ERROR("Could not found dtmf event from remote sdp");
+    DEBUG("Ready to decode %u audio codecs", sessionAudioMedia_.size());
 }
 
 string Sdp::getSessionVideoCodec() const
@@ -148,20 +178,23 @@ string Sdp::getSessionVideoCodec() const
     return sessionVideoMedia_[0];
 }
 
-string Sdp::getAudioCodecName() const
+string Sdp::getAudioCodecNames() const
 {
-    sfl::AudioCodec *codec = getSessionAudioMedia();
-    return codec ? codec->getMimeSubtype() : "";
+    std::string result;
+    char sep = ' ';
+    for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionAudioMedia_.begin();
+         i != sessionAudioMedia_.end(); ++i) {
+        if (i == sessionAudioMedia_.end() - 1)
+            sep = '\0';
+        if (*i)
+            result += (*i)->getMimeSubtype() + sep;
+    }
+    return result;
 }
 
-sfl::AudioCodec* Sdp::getSessionAudioMedia() const
+void Sdp::getSessionAudioMedia(std::vector<sfl::AudioCodec*> &codecs) const
 {
-    if (sessionAudioMedia_.empty()) {
-        ERROR("No codec description for this media");
-        return 0;
-    }
-
-    return static_cast<sfl::AudioCodec *>(sessionAudioMedia_[0]);
+    codecs = sessionAudioMedia_;
 }
 
 
@@ -353,15 +386,16 @@ bool
 Sdp::createOffer(const vector<int> &selectedCodecs,
                  const vector<map<string, string> > &videoCodecs)
 {
-    bool result = true;
     if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
         ERROR("Failed to create initial offer");
-        result = false;
-    } else if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS) {
-        ERROR("Failed to create an initial SDP negotiator");
-        result = false;
+        return false;
     }
-    return result;
+
+    if (pjmedia_sdp_neg_create_w_local_offer(memPool_, localSession_, &negotiator_) != PJ_SUCCESS) {
+        ERROR("Failed to create an initial SDP negotiator");
+        return false;
+    }
+    return true;
 }
 
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
@@ -445,60 +479,39 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
 // SDP and deal with the streams properly at that level
 string Sdp::getIncomingVideoDescription() const
 {
-    stringstream ss;
-    ss << "v=0" << std::endl;
-    ss << "o=- 0 0 IN IP4 " << localIpAddr_ << std::endl;
-    ss << "s=" << PACKAGE_NAME << std::endl;
-    ss << "c=IN IP4 " << remoteIpAddr_ << std::endl;
-    ss << "t=0 0" << std::endl;
-
-    std::string videoLine(getLineFromSession(activeLocalSession_, "m=video"));
-    ss << videoLine << std::endl;
-
-    int payload_num;
-    if (sscanf(videoLine.c_str(), "m=video %*d %*s %d", &payload_num) != 1)
-        payload_num = 0;
-
-    std::ostringstream s;
-    s << "a=rtpmap:";
-    s << payload_num;
-
-    std::string vCodecLine(getLineFromSession(activeLocalSession_, s.str()));
-    ss << vCodecLine << std::endl;
-
-    std::string profileLevelID;
-    getProfileLevelID(activeLocalSession_, profileLevelID, payload_num);
-    if (not profileLevelID.empty())
-        ss << "a=fmtp:" << payload_num << " " << profileLevelID << std::endl;
-
-    unsigned videoIdx = 0;
-    while (videoIdx < activeLocalSession_->media_count and
-           pj_stricmp2(&activeLocalSession_->media[videoIdx]->desc.media, "video") != 0)
-        ++videoIdx;
-
-    if (videoIdx == activeLocalSession_->media_count) {
-        DEBUG("No video present in local session");
+    pjmedia_sdp_session *videoSession = pjmedia_sdp_session_clone(memPool_, activeLocalSession_);
+    if (!videoSession) {
+        ERROR("Could not clone SDP");
         return "";
     }
 
-    // get direction string
-    static const pj_str_t DIRECTIONS[] = {
-        {(char*) "sendrecv", 8},
-        {(char*) "sendonly", 8},
-        {(char*) "recvonly", 8},
-        {(char*) "inactive", 8},
-        {NULL, 0}
-    };
-    pjmedia_sdp_attr *direction = NULL;
+    // deactivate non-video media
+    bool hasVideo = false;
+    for (unsigned i = 0; i < videoSession->media_count; i++)
+        if (pj_stricmp2(&videoSession->media[i]->desc.media, "video")) {
+            if (pjmedia_sdp_media_deactivate(memPool_, videoSession->media[i]) != PJ_SUCCESS)
+                ERROR("Could not deactivate media");
+        } else {
+            hasVideo = true;
+        }
 
-    const pj_str_t *guess = DIRECTIONS;
-    while (!direction and guess->ptr)
-        direction = pjmedia_sdp_media_find_attr(activeLocalSession_->media[videoIdx], guess++, NULL);
+    if (not hasVideo) {
+        DEBUG("No video present in active local SDP");
+        return "";
+    }
 
-    if (direction)
-        ss << "a=" + std::string(direction->name.ptr, direction->name.slen) << std::endl;
+    char buffer[4096];
+    size_t size = pjmedia_sdp_print(videoSession, buffer, sizeof(buffer));
+    string sessionStr(buffer, std::min(size, sizeof(buffer)));
 
-    return ss.str();
+    // FIXME: find a way to get rid of the "m=audio..." line with PJSIP
+
+    const size_t audioPos = sessionStr.find("m=audio");
+    const size_t newline2 = sessionStr.find('\n', audioPos);
+    const size_t newline1 = sessionStr.rfind('\n', audioPos);
+
+    sessionStr.erase(newline1, newline2 - newline1);
+    return sessionStr;
 }
 
 std::string Sdp::getOutgoingVideoCodec() const
@@ -644,6 +657,22 @@ void Sdp::addAttributeToLocalVideoMedia(const char *attr)
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
 
+
+void
+Sdp::updateRemoteIP(unsigned index)
+{
+    // Remote connection information may be in the SDP Session or in the media
+    // for that session
+    pjmedia_sdp_conn *conn = activeRemoteSession_->conn ? activeRemoteSession_->conn :
+                             activeRemoteSession_->media[index]->conn ? activeRemoteSession_->media[index]->conn :
+                             NULL;
+    if (conn)
+        remoteIpAddr_ = std::string(conn->addr.ptr, conn->addr.slen);
+    else
+        ERROR("Could not get remote IP from SDP or SDP Media");
+}
+
+
 void Sdp::setMediaTransportInfoFromRemoteSdp()
 {
     if (!activeRemoteSession_) {
@@ -654,10 +683,10 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
     for (unsigned i = 0; i < activeRemoteSession_->media_count; ++i) {
         if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "audio") == 0) {
             remoteAudioPort_ = activeRemoteSession_->media[i]->desc.port;
-            remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
+            updateRemoteIP(i);
         } else if (pj_stricmp2(&activeRemoteSession_->media[i]->desc.media, "video") == 0) {
             remoteVideoPort_ = activeRemoteSession_->media[i]->desc.port;
-            remoteIpAddr_ = std::string(activeRemoteSession_->conn->addr.ptr, activeRemoteSession_->conn->addr.slen);
+            updateRemoteIP(i);
         }
     }
 }

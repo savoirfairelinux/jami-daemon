@@ -113,7 +113,7 @@ function build_daemon {
 	# Compile pjproject first
 	pushd libs/pjproject
 	./autogen.sh
-	./configure
+	CFLAGS=-fPIC ./configure
 	make && make dep
 	popd
 	./configure --prefix=/usr
@@ -136,7 +136,7 @@ function build_gnome {
   # Compile pjproject first
 	pushd libs/pjproject
 	./autogen.sh
-	./configure
+	CFLAGS=-fPIC ./configure
 	make && make dep
 	popd
 	./configure --prefix=/usr

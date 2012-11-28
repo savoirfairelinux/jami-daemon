@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -35,7 +35,6 @@
 #include "calltree.h"
 #include "unused.h"
 #include "logger.h"
-#include "eel-gconf-extensions.h"
 
 // Must return 0 when a match is found
 static gint
@@ -102,6 +101,7 @@ calllist_free_element(gpointer data, gpointer user_data UNUSED)
 void
 calllist_clean(calltab_t* tab)
 {
+    g_return_if_fail(tab != NULL);
     g_queue_foreach(tab->callQueue, calllist_free_element, NULL);
     g_queue_free(tab->callQueue);
     tab->callQueue = 0;
@@ -110,6 +110,7 @@ calllist_clean(calltab_t* tab)
 void
 calllist_reset(calltab_t* tab)
 {
+    g_return_if_fail(tab != NULL);
     calllist_clean(tab);
     tab->callQueue = g_queue_new();
 }
@@ -129,7 +130,7 @@ calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
 }
 
 void
-calllist_clean_history(void)
+calllist_clean_history()
 {
     guint size = calllist_get_size(history_tab);
 
@@ -143,14 +144,14 @@ calllist_clean_history(void)
 }
 
 void
-calllist_remove_from_history(callable_obj_t* c)
+calllist_remove_from_history(callable_obj_t* c, GSettings *settings)
 {
-    calllist_remove_call(history_tab, c->_callID);
+    calllist_remove_call(history_tab, c->_callID, settings);
     calltree_remove_call(history_tab, c->_callID);
 }
 
 void
-calllist_remove_call(calltab_t* tab, const gchar * callID)
+calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings)
 {
     GList *c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
@@ -165,7 +166,8 @@ calllist_remove_call(calltab_t* tab, const gchar * callID)
     /* Don't save empty (i.e. started dialing, then deleted) calls */
     if (call->_peer_number && strlen(call->_peer_number) > 0) {
         calllist_add_call(history_tab, call);
-        calltree_add_history_entry(call);
+        if (g_settings_get_boolean(settings, "history-enabled"))
+            calltree_add_history_entry(call);
     }
 }
 

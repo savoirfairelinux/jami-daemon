@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -94,7 +94,7 @@ calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c);
   * @param callID The callID of the call you want to remove
   */
 void
-calllist_remove_call(calltab_t* tab, const gchar * callID);
+calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings);
 
 /** Return the first call that corresponds to the state.
   * This is usefull for unique states as DIALING and CURRENT.
@@ -131,7 +131,7 @@ calllist_clean_history();
  * @param c The call to remove
  */
 void
-calllist_remove_from_history(callable_obj_t* c);
+calllist_remove_from_history(callable_obj_t* c, GSettings *settings);
 
 /**
  * Initialize a non-empty call list

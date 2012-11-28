@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2012 Savoir-Faire Linux Inc.
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -33,7 +33,6 @@
 
 #include <string>
 #include <vector>
-#include "cc_thread.h"
 #include <libudev.h>
 
 #include "video_v4l2.h"
@@ -41,12 +40,11 @@
 
 namespace sfl_video {
 
-class VideoV4l2ListThread : public ost::Thread {
+class VideoV4l2ListThread {
     public:
         VideoV4l2ListThread();
         ~VideoV4l2ListThread();
-
-        virtual void run();
+        void start();
 
         std::vector<std::string> getDeviceList();
         std::vector<std::string> getChannelList(const std::string &dev);
@@ -57,12 +55,16 @@ class VideoV4l2ListThread : public ost::Thread {
         unsigned getChannelNum(const std::string &dev, const std::string &name);
 
     private:
+        static void *runCallback(void *);
+        void run();
+
         std::vector<VideoV4l2Device>::const_iterator findDevice(const std::string &name) const;
         NON_COPYABLE(VideoV4l2ListThread);
         void delDevice(const std::string &node);
         bool addDevice(const std::string &dev);
         std::vector<VideoV4l2Device> devices_;
-        ost::Mutex mutex_;
+        pthread_t thread_;
+        pthread_mutex_t mutex_;
 
         udev *udev_;
         udev_monitor *udev_mon_;

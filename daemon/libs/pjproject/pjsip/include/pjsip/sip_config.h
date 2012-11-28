@@ -52,13 +52,6 @@
  * @{
  */
 
-/*
- * Include sip_autoconf.h if autoconf is used (PJ_AUTOCONF is set)
- */
-#if defined(PJ_AUTOCONF)
-#   include <pjsip/sip_autoconf.h>
-#endif
-
 PJ_BEGIN_DECL
 
 /**

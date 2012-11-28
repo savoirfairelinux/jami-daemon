@@ -20,7 +20,6 @@
 #include <pjmedia/endpoint.h>
 #include <pjmedia/errno.h>
 #include <pjmedia/sdp.h>
-#include <pjmedia-audiodev/audiodev.h>
 #include <pj/assert.h>
 #include <pj/ioqueue.h>
 #include <pj/lock.h>
@@ -130,11 +129,6 @@ PJ_DEF(pj_status_t) pjmedia_endpt_create(pj_pool_factory *pf,
     endpt->thread_cnt = worker_cnt;
     endpt->has_telephone_event = PJ_TRUE;
 
-    /* Sound */
-    status = pjmedia_aud_subsys_init(pf);
-    if (status != PJ_SUCCESS)
-	goto on_error;
-
     /* Init codec manager. */
     status = pjmedia_codec_mgr_init(&endpt->codec_mgr, endpt->pf);
     if (status != PJ_SUCCESS)
@@ -185,7 +179,6 @@ on_error:
 	pj_ioqueue_destroy(endpt->ioqueue);
 
     pjmedia_codec_mgr_destroy(&endpt->codec_mgr);
-    pjmedia_aud_subsys_shutdown();
     pj_pool_release(pool);
     return status;
 }
@@ -228,7 +221,6 @@ PJ_DEF(pj_status_t) pjmedia_endpt_destroy (pjmedia_endpt *endpt)
     endpt->pf = NULL;
 
     pjmedia_codec_mgr_destroy(&endpt->codec_mgr);
-    pjmedia_aud_subsys_shutdown();
 
     /* Call all registered exit callbacks */
     ecb = endpt->exit_cb_list.next;

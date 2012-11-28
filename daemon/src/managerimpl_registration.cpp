@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -19,7 +19,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -50,10 +50,9 @@
 void
 ManagerImpl::registerAccounts()
 {
-    AccountMap concatenatedMap;
-    fillConcatAccountMap(concatenatedMap);
+    AccountMap allAccounts(getAllAccounts());
 
-    for (AccountMap::iterator iter = concatenatedMap.begin(); iter != concatenatedMap.end(); ++iter) {
+    for (AccountMap::iterator iter = allAccounts.begin(); iter != allAccounts.end(); ++iter) {
         Account *a = iter->second;
 
         if (!a)
@@ -70,8 +69,8 @@ ManagerImpl::registerAccounts()
 VoIPLink* ManagerImpl::getAccountLink(const std::string& accountID)
 {
     Account *account = getAccount(accountID);
-    if(account == NULL) {
-        DEBUG("Could not find account for voip link, returning sip voip");
+    if (account == NULL) {
+        DEBUG("Could not find account for account %s, returning sip voip", accountID.c_str());
         return SIPVoIPLink::instance();
     }
 

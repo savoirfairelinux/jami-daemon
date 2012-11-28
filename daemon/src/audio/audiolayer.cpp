@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2008, 2009, 2010, 2011 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -39,8 +39,9 @@ unsigned int AudioLayer::playbackGain_ = 100;
 
 AudioLayer::AudioLayer()
     : isStarted_(false)
+    , playbackMode_(NONE)
     , urgentRingBuffer_(SIZEBUF, MainBuffer::DEFAULT_ID)
-    , sampleRate_(Manager::instance().getMainBuffer()->getInternalSamplingRate())
+    , sampleRate_(Manager::instance().getMainBuffer().getInternalSamplingRate())
     , mutex_()
     , dcblocker_()
     , converter_(sampleRate_)
@@ -53,7 +54,7 @@ void AudioLayer::flushMain()
 {
     ost::MutexLock guard(mutex_);
     // should pass call id
-    Manager::instance().getMainBuffer()->flushAllBuffers();
+    Manager::instance().getMainBuffer().flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent()
