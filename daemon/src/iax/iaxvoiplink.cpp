@@ -288,7 +288,7 @@ IAXVoIPLink::answer(Call *call)
 }
 
 void
-IAXVoIPLink::hangup(const std::string& id)
+IAXVoIPLink::hangup(const std::string& id, int reason UNUSED)
 {
     IAXCall* call = getIAXCall(id);
 

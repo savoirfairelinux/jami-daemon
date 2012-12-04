@@ -941,7 +941,7 @@ void stopRtpIfCurrent(const std::string &id, SIPCall &call)
 }
 
 void
-SIPVoIPLink::hangup(const std::string& id)
+SIPVoIPLink::hangup(const std::string& id, int reason)
 {
     SIPCall* call = getSIPCall(id);
 
@@ -969,12 +969,11 @@ SIPVoIPLink::hangup(const std::string& id)
 
     pjsip_tx_data *tdata = NULL;
 
-    const int status =
+    const int status = reason ? reason :
         inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
                       PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
         inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE :
         0;
-
 
     // User hangup current call. Notify peer
     if (pjsip_inv_end_session(inv, status, NULL, &tdata) != PJ_SUCCESS || !tdata)
@@ -1671,9 +1670,13 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     }
 
     if (status != PJ_SUCCESS) {
+        const int reason = inv->state != PJSIP_INV_STATE_NULL and
+            inv->state != PJSIP_INV_STATE_CONFIRMED ?
+            PJSIP_SC_UNSUPPORTED_MEDIA_TYPE : 0;
+
         WARN("Could not negotiate offer");
         const std::string callID(call->getCallId());
-        SIPVoIPLink::instance()->hangup(callID);
+        SIPVoIPLink::instance()->hangup(callID, reason);
         // call is now a dangling pointer after calling hangup
         call = 0;
         Manager::instance().callFailure(callID);

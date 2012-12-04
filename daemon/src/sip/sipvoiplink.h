@@ -153,7 +153,7 @@ class SIPVoIPLink : public VoIPLink {
          * Hang up the call
          * @param id The call identifier
          */
-        virtual void hangup(const std::string& id);
+        virtual void hangup(const std::string& id, int reason);
 
         /**
          * Hang up the call

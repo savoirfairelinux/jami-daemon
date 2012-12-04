@@ -395,7 +395,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
             Call * call = SIPVoIPLink::instance()->getSipCall(callId);
             if (call) {
                 history_.addCall(call, preferences.getHistoryLimit());
-                SIPVoIPLink::instance()->hangup(callId);
+                SIPVoIPLink::instance()->hangup(callId, 0);
                 saveHistory();
             }
         } catch (const VoipLinkException &e) {
@@ -407,7 +407,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
         if (call) {
             history_.addCall(call, preferences.getHistoryLimit());
             VoIPLink *link = getAccountLink(accountId);
-            link->hangup(callId);
+            link->hangup(callId, 0);
             removeCallAccount(callId);
             saveHistory();
         }
@@ -1588,7 +1588,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     if (isIPToIP(call_id)) {
         Call * call = SIPVoIPLink::instance()->getSipCall(call_id);
         history_.addCall(call, preferences.getHistoryLimit());
-        SIPVoIPLink::instance()->hangup(call_id);
+        SIPVoIPLink::instance()->hangup(call_id, 0);
         saveHistory();
     } else {
         const std::string account_id(getAccountFromCall(call_id));
