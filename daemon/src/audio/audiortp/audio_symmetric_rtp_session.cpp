@@ -78,14 +78,14 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
     }
 }
 
-int AudioSymmetricRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioSymmetricRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 {
     DEBUG("Starting main thread");
     if (isStarted_)
-        return 0;
+        return;
 
     audioCodecs_ = audioCodecs;
     AudioRtpSession::startRtpThread(audioCodecs);
-    return startSymmetricRtpThread();
+    startSymmetricRtpThread();
 }
 }

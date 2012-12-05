@@ -61,9 +61,8 @@ class AudioZrtpSession :
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
         ~AudioZrtpSession();
 
-        int startZrtpThread() {
+        void startZrtpThread() {
             rtpThread_.start();
-            return 0;
         }
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
@@ -96,7 +95,7 @@ class AudioZrtpSession :
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
-        int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
+        void startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
         virtual int getIncrementForDTMF() const;
 
         AudioZrtpThread rtpThread_;

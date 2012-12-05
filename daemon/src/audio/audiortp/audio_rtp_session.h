@@ -59,7 +59,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
-        virtual int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
+        virtual void startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Used mostly when receiving a reinvite

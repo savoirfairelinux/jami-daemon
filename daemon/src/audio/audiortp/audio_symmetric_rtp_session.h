@@ -66,9 +66,8 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
 
-        int startSymmetricRtpThread() {
+        void startSymmetricRtpThread() {
             rtpThread_.start();
-            return 0;
         }
 
         virtual void setLocalMasterKey(const std::vector<uint8>& key UNUSED) const {}
@@ -96,7 +95,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
                 NON_COPYABLE(AudioRtpThread);
                 AudioSymmetricRtpSession &rtpSession_;
         };
-        int startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
+        void startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
 
         AudioRtpThread   rtpThread_ ;
         std::vector<sfl::AudioCodec*> audioCodecs_;

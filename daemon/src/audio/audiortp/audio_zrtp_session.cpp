@@ -150,13 +150,13 @@ int AudioZrtpSession::getIncrementForDTMF() const
     return 160;
 }
 
-int AudioZrtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioZrtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 {
-    if(isStarted_)
-        return 0;
+    if (isStarted_)
+        return;
 
     AudioRtpSession::startRtpThread(audioCodecs);
-    return startZrtpThread();
+    startZrtpThread();
 }
 
 }

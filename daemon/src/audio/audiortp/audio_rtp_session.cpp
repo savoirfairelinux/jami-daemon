@@ -232,10 +232,10 @@ void AudioRtpSession::updateDestinationIpAddress()
 }
 
 
-int AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (isStarted_)
-        return 0;
+        return;
 
     DEBUG("Starting main thread");
 
@@ -249,7 +249,6 @@ int AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
 
     queue_.enableStack();
     thread_.start();
-    return 0;
 }
 
 
