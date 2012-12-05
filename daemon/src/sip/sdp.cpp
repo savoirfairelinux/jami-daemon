@@ -272,11 +272,34 @@ Sdp::setMediaDescriptorLines(bool audio)
     if (!zrtpHelloHash_.empty())
         addZrtpAttribute(med, zrtpHelloHash_);
 
-    if (audio)
+    if (audio) {
         setTelephoneEventRtpmap(med);
+        addRTCPAttribute(med); // video has its own RTCP
+    }
 
     return med;
 }
+
+
+void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
+{
+    // FIXME: get this from CCRTP directly, don't just assume that the RTCP port is
+    // RTP + 1
+    std::ostringstream os;
+    os << localIpAddr_ << ":" << (localAudioPort_ + 1);
+    const std::string str(os.str());
+    const pj_str_t input_str = {(char*) str.c_str(), str.size()};
+    pj_sockaddr outputAddr;
+    pj_status_t status = pj_sockaddr_parse(PJ_AF_UNSPEC, 0, &input_str, &outputAddr);
+    if (status != PJ_SUCCESS) {
+        ERROR("Could not parse address %s", str.c_str());
+        return;
+    }
+    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_, &outputAddr);
+    if (attr)
+        pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
+}
+
 
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {

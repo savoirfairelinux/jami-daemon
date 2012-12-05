@@ -357,6 +357,8 @@ class Sdp {
          * @throw SdpException
          */
         void addZrtpAttribute(pjmedia_sdp_media* media, std::string hash);
+
+        void addRTCPAttribute(pjmedia_sdp_media *med);
 };
 
 
