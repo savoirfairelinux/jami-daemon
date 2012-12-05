@@ -199,7 +199,7 @@ void Sdp::getSessionAudioMedia(std::vector<sfl::AudioCodec*> &codecs) const
 
 
 pjmedia_sdp_media *
-Sdp::setMediaDescriptorLine(bool audio)
+Sdp::setMediaDescriptorLines(bool audio)
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_, pjmedia_sdp_media);
 
@@ -367,9 +367,9 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     // For DTMF RTP events
     const bool audio = true;
     localSession_->media_count = 1;
-    localSession_->media[0] = setMediaDescriptorLine(audio);
+    localSession_->media[0] = setMediaDescriptorLines(audio);
     if (not selectedVideoCodecs.empty()) {
-        localSession_->media[1] = setMediaDescriptorLine(!audio);
+        localSession_->media[1] = setMediaDescriptorLines(!audio);
         ++localSession_->media_count;
     }
 

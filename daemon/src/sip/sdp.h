@@ -323,7 +323,7 @@ class Sdp {
          * Build the sdp media section
          * Add rtpmap field if necessary
          */
-        pjmedia_sdp_media *setMediaDescriptorLine(bool audio);
+        pjmedia_sdp_media *setMediaDescriptorLines(bool audio);
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 
