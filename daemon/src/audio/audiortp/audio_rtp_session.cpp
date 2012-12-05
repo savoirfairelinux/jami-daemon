@@ -223,7 +223,7 @@ void AudioRtpSession::updateDestinationIpAddress()
     // Destination address are stored in a list in ccrtp
     // This method remove the current destination entry
 
-    if (!queue_.forgetDestination(remote_ip_, remote_port_, remote_port_ + 1))
+    if (!queue_.forgetDestination(remote_ip_, remote_port_))
         DEBUG("Did not remove previous destination");
 
     // new destination is stored in call
