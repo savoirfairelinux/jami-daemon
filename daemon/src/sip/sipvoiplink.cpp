@@ -2176,23 +2176,30 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     if (!account)
         return;
 
-    const unsigned int callLocalAudioPort = getRandomPort();
+    // We only want to set ports to new values if they haven't been set
+    if (call->getLocalAudioPort() == 0) {
+        const unsigned int callLocalAudioPort = getRandomPort();
 
-    const unsigned int callLocalExternAudioPort = account->isStunEnabled()
-                                            ? account->getStunPort()
-                                            : callLocalAudioPort;
+        const unsigned int callLocalExternAudioPort = account->isStunEnabled()
+            ? account->getStunPort()
+            : callLocalAudioPort;
+
+        call->setLocalAudioPort(callLocalAudioPort);
+        call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
+    }
 
     call->setLocalIp(localIP);
-    call->setLocalAudioPort(callLocalAudioPort);
-    call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
-#ifdef SFL_VIDEO
-    unsigned int callLocalVideoPort = 0;
-    do
-        callLocalVideoPort = getRandomPort();
-    while (callLocalAudioPort == callLocalVideoPort);
 
-    call->setLocalVideoPort(callLocalVideoPort);
-    call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
+#ifdef SFL_VIDEO
+    if (call->getLocalVideoPort() == 0) {
+        unsigned int callLocalVideoPort = 0;
+        do
+            callLocalVideoPort = getRandomPort();
+        while (call->getLocalAudioPort() == callLocalVideoPort);
+
+        call->setLocalVideoPort(callLocalVideoPort);
+        call->getLocalSDP()->setLocalPublishedVideoPort(callLocalVideoPort);
+    }
 #endif
 }
 } // end anonymous namespace
