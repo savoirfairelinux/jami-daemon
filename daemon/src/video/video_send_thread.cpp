@@ -333,11 +333,25 @@ int VideoSendThread::interruptCb(void *ctx)
 }
 
 VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
-    args_(args), scaledPictureBuf_(0), outbuf_(0),
-    inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
-    streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
-    inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    threadRunning_(false), forceKeyFrame_(0), thread_(), frameNumber_(0)
+    args_(args),
+    scaledPictureBuf_(0),
+    outbuf_(0),
+    inputDecoderCtx_(0),
+    rawFrame_(0),
+    scaledPicture_(0),
+    streamIndex_(-1),
+    outbufSize_(0),
+    encoderCtx_(0),
+    stream_(0),
+    inputCtx_(0),
+    outputCtx_(0),
+    imgConvertCtx_(0),
+    sdp_(),
+    interruptCb_(),
+    threadRunning_(false),
+    forceKeyFrame_(0),
+    thread_(),
+    frameNumber_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
