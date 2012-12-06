@@ -54,7 +54,7 @@ SHMSink::SHMSink(const std::string &shm_name) :
     shm_area_(static_cast<SHMHeader*>(MAP_FAILED)),
     shm_area_len_(0),
     opened_name_(),
-    perms_(S_IRUSR | S_IWUSR | S_IRGRP)
+    perms_(S_IRUSR | S_IWUSR)
     {}
 
 SHMSink::~SHMSink()
