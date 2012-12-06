@@ -90,6 +90,8 @@ class VideoReceiveThread {
         static void *runCallback(void *);
         pthread_t thread_;
         void run();
+        bool decodeFrame();
+        void renderFrame();
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);

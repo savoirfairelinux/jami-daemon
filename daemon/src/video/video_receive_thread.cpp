@@ -291,43 +291,56 @@ void VideoReceiveThread::run()
 {
     VideoRxContextHandle handle(*this);
     setup();
-
     createScalingContext();
-    const Callback cb(&VideoReceiveThread::fill_buffer);
+
     AVFrame rawFrame;
     rawFrame_ = &rawFrame;
 
-    while (threadRunning_) {
-        AVPacket inpacket;
-
-        int ret = 0;
-        if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
-            ERROR("Couldn't read frame: %s\n", strerror(ret));
-            threadRunning_ = false;
-            break;
-        }
-        // Guarantee that we free the packet every iteration
-        PacketHandle inpacket_handle(inpacket);
-        avcodec_get_frame_defaults(rawFrame_);
-
-        // is this a packet from the video stream?
-        if (inpacket.stream_index != streamIndex_)
-            continue;
-
-        int frameFinished = 0;
-        const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
-                                              &inpacket);
-        if (len <= 0 and requestKeyFrameCallback_) {
-            openDecoder();
-            requestKeyFrameCallback_(id_);
-        }
-
-        // we want our rendering code to be called by the shm_sink,
-        // because it manages the shared memory synchronization
-        if (frameFinished)
-            sink_.render_callback(this, cb, bufferSize_);
-    }
+    while (threadRunning_)
+        if (decodeFrame())
+            renderFrame();
 }
+
+
+bool VideoReceiveThread::decodeFrame()
+{
+    AVPacket inpacket;
+
+    int ret = 0;
+    if ((ret = av_read_frame(inputCtx_, &inpacket)) < 0) {
+        ERROR("Couldn't read frame: %s\n", strerror(ret));
+        threadRunning_ = false;
+        return false;
+    }
+
+    // Guarantee that we free the packet every iteration
+    PacketHandle inpacket_handle(inpacket);
+    avcodec_get_frame_defaults(rawFrame_);
+
+    // is this a packet from the video stream?
+    if (inpacket.stream_index != streamIndex_)
+        return false;
+
+    int frameFinished = 0;
+    const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
+                                          &inpacket);
+    if (len <= 0 and requestKeyFrameCallback_) {
+        openDecoder();
+        requestKeyFrameCallback_(id_);
+    }
+
+    return frameFinished;
+}
+
+
+void VideoReceiveThread::renderFrame()
+{
+    const Callback cb(&VideoReceiveThread::fill_buffer);
+    // we want our rendering code to be called by the shm_sink,
+    // because it manages the shared memory synchronization
+    sink_.render_callback(this, cb, bufferSize_);
+}
+
 
 VideoReceiveThread::~VideoReceiveThread()
 {
