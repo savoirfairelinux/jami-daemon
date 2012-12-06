@@ -80,7 +80,10 @@ class VideoSendThread {
         int forceKeyFrame_;
         static void *runCallback(void *);
         pthread_t thread_;
+        int frameNumber_;
         void run();
+        bool captureFrame();
+        void encodeAndSendVideo();
         friend struct VideoTxContextHandle;
     public:
         explicit VideoSendThread(const std::map<std::string, std::string> &args);

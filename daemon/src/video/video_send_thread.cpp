@@ -337,7 +337,7 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     inputDecoderCtx_(0), rawFrame_(0), scaledPicture_(0),
     streamIndex_(-1), outbufSize_(0), encoderCtx_(0), stream_(0),
     inputCtx_(0), outputCtx_(0), imgConvertCtx_(0), sdp_(), interruptCb_(),
-    threadRunning_(false), forceKeyFrame_(0), thread_()
+    threadRunning_(false), forceKeyFrame_(0), thread_(), frameNumber_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -419,76 +419,89 @@ void VideoSendThread::run()
     setup();
     createScalingContext();
 
-    int frameNumber = 0;
-    while (threadRunning_) {
-        AVPacket inpacket;
-        int ret = av_read_frame(inputCtx_, &inpacket);
-        if (ret == AVERROR(EAGAIN))
-            continue;
-        else if (ret < 0)
-            EXIT_IF_FAIL(false, "Could not read frame");
+    while (threadRunning_)
+        if (captureFrame())
+            encodeAndSendVideo();
+}
 
-        /* Guarantees that we free the packet allocated by av_read_frame */
-        PacketHandle inpacket_handle(inpacket);
 
-        // is this a packet from the video stream?
-        if (inpacket.stream_index != streamIndex_)
-            continue;
+bool VideoSendThread::captureFrame()
+{
+    AVPacket inpacket;
+    int ret = av_read_frame(inputCtx_, &inpacket);
 
-        // decode video frame from camera
-        int frameFinished = 0;
-        avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished,
-                              &inpacket);
-        if (!frameFinished)
-            continue;
+    if (ret == AVERROR(EAGAIN))
+        return false;
+    else if (ret < 0)
+        EXIT_IF_FAIL(false, "Could not read frame");
 
-        createScalingContext();
-        sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
-                  inputDecoderCtx_->height, scaledPicture_->data,
-                  scaledPicture_->linesize);
+    // Guarantees that we free the packet allocated by av_read_frame
+    PacketHandle inpacket_handle(inpacket);
 
-        // Set presentation timestamp on our scaled frame before encoding it
-        scaledPicture_->pts = frameNumber++;
+    // is this a packet from the video stream?
+    if (inpacket.stream_index != streamIndex_)
+        return false;
 
-        if (forceKeyFrame_ > 0) {
+    // decode video frame from camera
+    int frameFinished = 0;
+    avcodec_decode_video2(inputDecoderCtx_, rawFrame_, &frameFinished,
+                          &inpacket);
+    if (!frameFinished)
+        return false;
+
+    createScalingContext();
+    sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
+            inputDecoderCtx_->height, scaledPicture_->data,
+            scaledPicture_->linesize);
+
+    // Set presentation timestamp on our scaled frame before encoding it
+    scaledPicture_->pts = frameNumber_++;
+
+    return true;
+}
+
+
+void VideoSendThread::encodeAndSendVideo()
+{
+    if (forceKeyFrame_ > 0) {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
-            scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
+        scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
 #else
-            scaledPicture_->pict_type = FF_I_TYPE;
+        scaledPicture_->pict_type = FF_I_TYPE;
 #endif
-            atomic_decrement(&forceKeyFrame_);
-        }
-        const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
-                                                     outbufSize_, scaledPicture_);
-
-        if (encodedSize <= 0)
-            continue;
-
-        AVPacket opkt;
-        av_init_packet(&opkt);
-        PacketHandle opkt_handle(opkt);
-
-        opkt.data = outbuf_;
-        opkt.size = encodedSize;
-
-        // rescale pts from encoded video framerate to rtp
-        // clock rate
-        if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE))
-            opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
-                                    encoderCtx_->time_base,
-                                    stream_->time_base);
-        else
-            opkt.pts = 0;
-
-        // is it a key frame?
-        if (encoderCtx_->coded_frame->key_frame)
-            opkt.flags |= AV_PKT_FLAG_KEY;
-        opkt.stream_index = stream_->index;
-
-        // write the compressed frame to the output
-        EXIT_IF_FAIL(av_interleaved_write_frame(outputCtx_, &opkt) >= 0,
-                     "interleaved_write_frame failed");
+        atomic_decrement(&forceKeyFrame_);
     }
+
+    const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
+                                                 outbufSize_, scaledPicture_);
+
+    if (encodedSize <= 0)
+        return;
+
+    AVPacket opkt;
+    av_init_packet(&opkt);
+    PacketHandle opkt_handle(opkt);
+
+    opkt.data = outbuf_;
+    opkt.size = encodedSize;
+
+    // rescale pts from encoded video framerate to rtp
+    // clock rate
+    if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE))
+        opkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
+                encoderCtx_->time_base,
+                stream_->time_base);
+    else
+        opkt.pts = 0;
+
+    // is it a key frame?
+    if (encoderCtx_->coded_frame->key_frame)
+        opkt.flags |= AV_PKT_FLAG_KEY;
+    opkt.stream_index = stream_->index;
+
+    // write the compressed frame to the output
+    EXIT_IF_FAIL(av_interleaved_write_frame(outputCtx_, &opkt) >= 0,
+                 "interleaved_write_frame failed");
 }
 
 VideoSendThread::~VideoSendThread()
