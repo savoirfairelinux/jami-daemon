@@ -255,7 +255,7 @@ void *VideoReceiveThread::runCallback(void *data)
 }
 
 /// Copies and scales our rendered frame to the buffer pointed to by data
-void VideoReceiveThread::fill_buffer(void *data)
+void VideoReceiveThread::fillBuffer(void *data)
 {
     avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                    static_cast<uint8_t *>(data),
@@ -347,10 +347,9 @@ bool VideoReceiveThread::decodeFrame()
 
 void VideoReceiveThread::renderFrame()
 {
-    const Callback cb(&VideoReceiveThread::fill_buffer);
     // we want our rendering code to be called by the shm_sink,
     // because it manages the shared memory synchronization
-    sink_.render_callback(this, cb, bufferSize_);
+    sink_.render_callback(*this, bufferSize_);
 }
 
 

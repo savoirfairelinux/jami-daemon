@@ -2,11 +2,6 @@
  *  Copyright (C) 2012 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
- *  Portions derived from GStreamer:
- *  Copyright (C) <2009> Collabora Ltd
- *  @author: Olivier Crete <olivier.crete@collabora.co.uk
- *  Copyright (C) <2009> Nokia Inc
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -33,42 +28,17 @@
  *  as that of the covered work.
  */
 
-#ifndef SHM_SINK_H_
-#define SHM_SINK_H_
+#ifndef VIDEO_PROVIDER_H_
+#define VIDEO_PROVIDER_H_
 
-#include <string>
-#include <vector>
-#include "noncopyable.h"
-
-class SHMHeader;
 namespace sfl_video {
-    class VideoProvider;
-}
 
-class SHMSink {
+class VideoProvider {
     public:
-        SHMSink(const std::string &shm_name = "");
-        std::string openedName() const { return opened_name_; }
-        ~SHMSink();
-
-        bool start();
-        bool stop();
-
-        bool resize_area(size_t desired_length);
-
-        void render(const std::vector<unsigned char> &data);
-        void render_callback(sfl_video::VideoProvider &provider, size_t bytes);
-
-    private:
-        NON_COPYABLE(SHMSink);
-
-        void shm_lock();
-        void shm_unlock();
-        std::string shm_name_;
-        int fd_;
-        SHMHeader *shm_area_;
-        size_t shm_area_len_;
-        std::string opened_name_;
+        virtual void fillBuffer(void *data) = 0;
+        virtual ~VideoProvider() {}
 };
 
-#endif // SHM_SINK_H_
+}
+
+#endif // VIDEO_PROVIDER_H_

@@ -39,6 +39,7 @@
 #include <tr1/memory>
 #include "shm_sink.h"
 #include "noncopyable.h"
+#include "video_provider.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -51,7 +52,7 @@ class AVFormatContext;
 class AVFrame;
 namespace sfl_video {
 
-class VideoReceiveThread {
+class VideoReceiveThread : public VideoProvider {
     private:
         NON_COPYABLE(VideoReceiveThread);
         std::map<std::string, std::string> args_;
@@ -84,7 +85,7 @@ class VideoReceiveThread {
         void setup();
         void openDecoder();
         void createScalingContext();
-        void fill_buffer(void *data);
+        void fillBuffer(void *data);
         static int interruptCb(void *ctx);
         friend struct VideoRxContextHandle;
         static void *runCallback(void *);
