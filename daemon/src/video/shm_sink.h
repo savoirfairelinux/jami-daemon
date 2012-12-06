@@ -75,7 +75,6 @@ class SHMSink {
         SHMHeader *shm_area_;
         size_t shm_area_len_;
         std::string opened_name_;
-        unsigned perms_;
 };
 
 #endif // SHM_SINK_H_

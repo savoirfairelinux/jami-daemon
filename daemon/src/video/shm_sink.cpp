@@ -53,8 +53,7 @@ SHMSink::SHMSink(const std::string &shm_name) :
     fd_(-1),
     shm_area_(static_cast<SHMHeader*>(MAP_FAILED)),
     shm_area_len_(0),
-    opened_name_(),
-    perms_(S_IRUSR | S_IWUSR)
+    opened_name_()
     {}
 
 SHMSink::~SHMSink()
@@ -71,8 +70,10 @@ SHMSink::start()
     }
 
     const int flags = O_RDWR | O_CREAT | O_TRUNC | O_EXCL;
+    const int perms = S_IRUSR | S_IWUSR;
+
     if (not shm_name_.empty()) {
-        fd_ = shm_open(shm_name_.c_str(), flags, perms_);
+        fd_ = shm_open(shm_name_.c_str(), flags, perms);
         if (fd_ < 0) {
             ERROR("could not open shm area \"%s\", shm_open failed:%s", shm_name_.c_str(), strerror(errno));
             perror(strerror(errno));
@@ -83,7 +84,7 @@ SHMSink::start()
             std::ostringstream name;
             name << PACKAGE_NAME << "_shm_" << getpid() << "_" << i;
             shm_name_ = name.str();
-            fd_ = shm_open(shm_name_.c_str(), flags, perms_);
+            fd_ = shm_open(shm_name_.c_str(), flags, perms);
             if (fd_ < 0 and errno != EEXIST) {
                 ERROR("%s", strerror(errno));
                 return false;
