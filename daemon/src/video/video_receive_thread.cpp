@@ -38,8 +38,6 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libavutil/opt.h>
-#include <libavutil/pixdesc.h>
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 }
@@ -47,20 +45,11 @@ extern "C" {
 
 #include "manager.h"
 
-static const enum PixelFormat VIDEO_RGB_FORMAT = PIX_FMT_BGRA;
-
 namespace sfl_video {
 
 using std::string;
 
 namespace { // anonymous namespace
-
-int getBufferSize(int width, int height, int format)
-{
-    enum PixelFormat fmt = (enum PixelFormat) format;
-    // determine required buffer size and allocate buffer
-    return avpicture_get_size(fmt, width, height);
-}
 
 int readFunction(void *opaque, uint8_t *buf, int buf_size)
 {
@@ -184,7 +173,7 @@ void VideoReceiveThread::setup()
     }
 
     // determine required buffer size and allocate buffer
-    bufferSize_ = getBufferSize(dstWidth_, dstHeight_, VIDEO_RGB_FORMAT);
+    bufferSize_ = getBufferSize(dstWidth_, dstHeight_);
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
@@ -197,7 +186,7 @@ void VideoReceiveThread::createScalingContext()
     imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_, decoderCtx_->width,
                                           decoderCtx_->height,
                                           decoderCtx_->pix_fmt, dstWidth_,
-                                          dstHeight_, VIDEO_RGB_FORMAT,
+                                          dstHeight_, PIX_FMT_BGRA,
                                           SWS_BICUBIC, NULL, NULL, NULL);
     if (!imgConvertCtx_) {
         ERROR("Cannot init the conversion context!");
@@ -259,7 +248,7 @@ void VideoReceiveThread::fillBuffer(void *data)
 {
     avpicture_fill(reinterpret_cast<AVPicture *>(scaledPicture_),
                    static_cast<uint8_t *>(data),
-                   VIDEO_RGB_FORMAT,
+                   PIX_FMT_BGRA,
                    dstWidth_,
                    dstHeight_);
 

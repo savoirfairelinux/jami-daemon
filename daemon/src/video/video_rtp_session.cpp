@@ -122,7 +122,7 @@ void VideoRtpSession::start()
     if (sending_) {
         if (sendThread_.get())
             WARN("Restarting video sender");
-        sendThread_.reset(new VideoSendThread(txArgs_));
+        sendThread_.reset(new VideoSendThread("local", txArgs_));
         sendThread_->start();
     } else {
         DEBUG("Video sending disabled");

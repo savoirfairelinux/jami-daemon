@@ -28,20 +28,18 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEO_PROVIDER_H_
-#define VIDEO_PROVIDER_H_
+#include "video_provider.h"
 
 namespace sfl_video {
 
-class VideoProvider {
-    public:
-        virtual void fillBuffer(void *data) = 0;
-        virtual ~VideoProvider() {}
-    protected:
-        static int
-        getBufferSize(int width, int height);
-};
-
+extern "C" {
+#include <libavcodec/avcodec.h>
 }
 
-#endif // VIDEO_PROVIDER_H_
+int VideoProvider::getBufferSize(int width, int height)
+{
+    // determine required buffer size and allocate buffer
+    return avpicture_get_size(PIX_FMT_BGRA, width, height);
+}
+
+}  // end namespace sfl_video

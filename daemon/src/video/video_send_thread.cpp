@@ -29,6 +29,7 @@
  */
 
 #include "video_send_thread.h"
+#include "dbus/video_controls.h"
 #include "packet_handle.h"
 #include "check.h"
 
@@ -225,6 +226,13 @@ void VideoSendThread::setup()
 #endif
     EXIT_IF_FAIL(ret >= 0, "Could not open codec");
 
+    // determine required buffer size and allocate buffer
+    bufferSize_ = getBufferSize(inputDecoderCtx_->width, inputDecoderCtx_->height);
+
+    EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
+    Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), inputDecoderCtx_->width, inputDecoderCtx_->height);
+    DEBUG("shm sink started with size %d, width %d and height %d", bufferSize_, inputDecoderCtx_->width, inputDecoderCtx_->height);
+
     outputCtx_ = avformat_alloc_context();
     outputCtx_->interrupt_callback = interruptCb_;
 
@@ -332,7 +340,7 @@ int VideoSendThread::interruptCb(void *ctx)
     return not context->threadRunning_;
 }
 
-VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
+VideoSendThread::VideoSendThread(const std::string &id, const std::map<string, string> &args) :
     args_(args),
     scaledPictureBuf_(0),
     outbuf_(0),
@@ -347,6 +355,9 @@ VideoSendThread::VideoSendThread(const std::map<string, string> &args) :
     outputCtx_(0),
     imgConvertCtx_(0),
     sdp_(),
+    sink_(),
+    bufferSize_(0),
+    id_(id),
     interruptCb_(),
     threadRunning_(false),
     forceKeyFrame_(0),
@@ -434,8 +445,29 @@ void VideoSendThread::run()
     createScalingContext();
 
     while (threadRunning_)
-        if (captureFrame())
+        if (captureFrame()) {
+            renderFrame();
             encodeAndSendVideo();
+        }
+}
+
+/// Copies and scales our rendered frame to the buffer pointed to by data
+void VideoSendThread::fillBuffer(void *data)
+{
+    avpicture_layout(reinterpret_cast<AVPicture *>(rawFrame_),
+                   inputDecoderCtx_->pix_fmt,
+                   inputDecoderCtx_->width,
+                   inputDecoderCtx_->height,
+                   static_cast<unsigned char *>(data),
+                   bufferSize_);
+}
+
+
+void VideoSendThread::renderFrame()
+{
+    // we want our rendering code to be called by the shm_sink,
+    // because it manages the shared memory synchronization
+    sink_.render_callback(*this, bufferSize_);
 }
 
 

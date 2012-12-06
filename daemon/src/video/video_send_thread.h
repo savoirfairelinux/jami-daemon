@@ -34,6 +34,8 @@
 #include <map>
 #include <string>
 #include "noncopyable.h"
+#include "shm_sink.h"
+#include "video_provider.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -48,7 +50,7 @@ class AVCodec;
 
 namespace sfl_video {
 
-class VideoSendThread {
+class VideoSendThread : public VideoProvider {
     private:
         NON_COPYABLE(VideoSendThread);
         void forcePresetX264();
@@ -56,6 +58,7 @@ class VideoSendThread {
         void setup();
         void prepareEncoderContext(AVCodec *encoder);
         void createScalingContext();
+        void fillBuffer(void *data);
         static int interruptCb(void *ctx);
 
         std::map<std::string, std::string> args_;
@@ -76,6 +79,11 @@ class VideoSendThread {
         SwsContext *imgConvertCtx_;
         std::string sdp_;
         AVIOInterruptCB interruptCb_;
+
+        SHMSink sink_;
+        size_t bufferSize_;
+        const std::string id_;
+
         bool threadRunning_;
         int forceKeyFrame_;
         static void *runCallback(void *);
@@ -83,10 +91,12 @@ class VideoSendThread {
         int frameNumber_;
         void run();
         bool captureFrame();
+        void renderFrame();
         void encodeAndSendVideo();
         friend struct VideoTxContextHandle;
+
     public:
-        explicit VideoSendThread(const std::map<std::string, std::string> &args);
+        VideoSendThread(const std::string &id, const std::map<std::string, std::string> &args);
         ~VideoSendThread();
         void start();
         std::string getSDP() const { return sdp_; }
