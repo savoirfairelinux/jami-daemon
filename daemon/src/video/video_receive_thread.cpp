@@ -311,20 +311,21 @@ void VideoReceiveThread::run()
         avcodec_get_frame_defaults(rawFrame_);
 
         // is this a packet from the video stream?
-        if (inpacket.stream_index == streamIndex_) {
-            int frameFinished = 0;
-            const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
-                                                  &inpacket);
-            if (len <= 0 and requestKeyFrameCallback_) {
-                openDecoder();
-                requestKeyFrameCallback_(id_);
-            }
+        if (inpacket.stream_index != streamIndex_)
+            continue;
 
-            // we want our rendering code to be called by the shm_sink,
-            // because it manages the shared memory synchronization
-            if (frameFinished)
-                sink_.render_callback(this, cb, bufferSize_);
+        int frameFinished = 0;
+        const int len = avcodec_decode_video2(decoderCtx_, rawFrame_, &frameFinished,
+                                              &inpacket);
+        if (len <= 0 and requestKeyFrameCallback_) {
+            openDecoder();
+            requestKeyFrameCallback_(id_);
         }
+
+        // we want our rendering code to be called by the shm_sink,
+        // because it manages the shared memory synchronization
+        if (frameFinished)
+            sink_.render_callback(this, cb, bufferSize_);
     }
 }
 
