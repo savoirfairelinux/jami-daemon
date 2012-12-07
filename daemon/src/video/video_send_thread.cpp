@@ -454,12 +454,24 @@ void VideoSendThread::run()
 /// Copies and scales our rendered frame to the buffer pointed to by data
 void VideoSendThread::fillBuffer(void *data)
 {
-    avpicture_layout(reinterpret_cast<AVPicture *>(rawFrame_),
-                   inputDecoderCtx_->pix_fmt,
+    AVFrame preview;
+    avpicture_fill(reinterpret_cast<AVPicture *>(&preview),
+                   static_cast<uint8_t *>(data),
+                   PIX_FMT_BGRA,
                    inputDecoderCtx_->width,
-                   inputDecoderCtx_->height,
-                   static_cast<unsigned char *>(data),
-                   bufferSize_);
+                   inputDecoderCtx_->height);
+    // Just need to convert colour space to BGRA
+    imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_,
+                                          inputDecoderCtx_->width,
+                                          inputDecoderCtx_->height,
+                                          inputDecoderCtx_->pix_fmt,
+                                          inputDecoderCtx_->width,
+                                          inputDecoderCtx_->height,
+                                          PIX_FMT_BGRA, SWS_BICUBIC,
+                                          NULL, NULL, NULL);
+    sws_scale(imgConvertCtx_, scaledPicture_->data, scaledPicture_->linesize, 0,
+              inputDecoderCtx_->height, preview.data,
+              preview.linesize);
 }
 
 
@@ -553,6 +565,7 @@ void VideoSendThread::encodeAndSendVideo()
 VideoSendThread::~VideoSendThread()
 {
     set_false_atomic(&threadRunning_);
+    Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     pthread_join(thread_, NULL);
 }
 
