@@ -469,7 +469,7 @@ void VideoSendThread::fillBuffer(void *data)
                                           inputDecoderCtx_->height,
                                           PIX_FMT_BGRA, SWS_BICUBIC,
                                           NULL, NULL, NULL);
-    sws_scale(imgConvertCtx_, scaledPicture_->data, scaledPicture_->linesize, 0,
+    sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
               inputDecoderCtx_->height, preview.data,
               preview.linesize);
 }
