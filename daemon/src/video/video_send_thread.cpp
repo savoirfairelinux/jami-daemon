@@ -306,7 +306,8 @@ void VideoSendThread::setup()
     rawFrame_ = avcodec_alloc_frame();
 
     // alloc image and output buffer
-    outbufSize_ = encoderCtx_->width * encoderCtx_->height;
+    outbufSize_ = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width,
+                                     encoderCtx_->height);
     outbuf_ = reinterpret_cast<uint8_t*>(av_malloc(outbufSize_));
     // allocate buffer that fits YUV 420
     scaledPictureBuf_ = reinterpret_cast<uint8_t*>(av_malloc((outbufSize_ * 3) / 2));
