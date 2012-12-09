@@ -37,9 +37,6 @@ class VideoProvider {
     public:
         virtual void fillBuffer(void *data) = 0;
         virtual ~VideoProvider() {}
-    protected:
-        static int
-        getBufferSize(int width, int height);
 };
 
 }

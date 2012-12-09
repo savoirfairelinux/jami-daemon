@@ -227,7 +227,7 @@ void VideoSendThread::setup()
     EXIT_IF_FAIL(ret >= 0, "Could not open codec");
 
     // determine required buffer size and allocate buffer
-    bufferSize_ = getBufferSize(inputDecoderCtx_->width, inputDecoderCtx_->height);
+    bufferSize_ = avpicture_get_size(inputDecoderCtx_->pix_fmt, inputDecoderCtx_->width, inputDecoderCtx_->height);
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), inputDecoderCtx_->width, inputDecoderCtx_->height);

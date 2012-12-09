@@ -173,7 +173,7 @@ void VideoReceiveThread::setup()
     }
 
     // determine required buffer size and allocate buffer
-    bufferSize_ = getBufferSize(dstWidth_, dstHeight_);
+    bufferSize_ = avpicture_get_size(PIX_FMT_BGRA, dstWidth_, dstHeight_);
 
     EXIT_IF_FAIL(sink_.start(), "Cannot start shared memory sink");
     Manager::instance().getVideoControls()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_);
