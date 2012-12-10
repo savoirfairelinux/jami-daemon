@@ -48,8 +48,6 @@
 
 GdkPixbuf *waitingPixOff;
 
-SearchType HistorySearchType;
-
 /**
  * Create a new search bar for call hostory
  */

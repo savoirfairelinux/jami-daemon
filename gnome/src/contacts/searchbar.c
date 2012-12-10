@@ -45,6 +45,8 @@
 
 static GtkWidget * searchbox;
 static GtkWidget * addressbookentry;
+static SearchType HistorySearchType;
+
 
 static GtkWidget * cbox;
 static GtkListStore * liststore;
@@ -167,6 +169,11 @@ void update_searchbar_addressbook_list()
     cboxSignalId = g_signal_connect(G_OBJECT(cbox), "changed", G_CALLBACK(cbox_changed_cb), NULL);
 }
 
+static gboolean
+label_matches(const gchar *label, GtkWidget *item)
+{
+    return g_strcmp0(label, gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0;
+}
 
 static void select_search_type(GtkWidget *item, GtkEntry  *entry UNUSED)
 {
@@ -179,65 +186,51 @@ static void select_search_type(GtkWidget *item, GtkEntry  *entry UNUSED)
                                     gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
 
 
-    if (g_strcmp0("Search is", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0)
+    if (label_matches("Search is", item))
         addrbook->set_search_type(ABOOK_QUERY_IS);
-    else if (g_strcmp0("Search begins with", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0)
+    else if (label_matches("Search begins with", item))
         addrbook->set_search_type(ABOOK_QUERY_BEGINS_WITH);
-    else if (g_strcmp0("Search contains", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0)
+    else if (label_matches("Search contains", item))
         addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
 
-    AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
-    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
+    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config_load_parameters());
 }
 
-static void search_all(GtkWidget *item UNUSED, GtkEntry  *entry)
+static void update_search_entry(GtkEntry *entry, const gchar *search_str, const gchar *click_str, SearchType type)
 {
-    HistorySearchType = SEARCH_ALL;
-
-    gtk_entry_set_icon_from_stock(entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
-    gchar *markup = g_markup_printf_escaped("%s\n%s",
-                                            _("Search all"),
-                                            _("Click here to change the search type"));
+    HistorySearchType = type;
+    gchar *markup = g_markup_printf_escaped("%s\n%s", search_str, click_str);
     gtk_entry_set_icon_tooltip_text(entry, GTK_ENTRY_ICON_PRIMARY, markup);
-
     g_free(markup);
     history_search();
 }
 
-static void search_by_missed(GtkWidget *item UNUSED, GtkEntry  *entry)
+static void search_all(GtkWidget *item UNUSED, GtkEntry *entry)
 {
-    HistorySearchType = SEARCH_MISSED;
+    gtk_entry_set_icon_from_stock(entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
+    update_search_entry(entry, _("Search all"),
+                        _("Click here to change the search type"), SEARCH_ALL);
+}
 
+static void search_by_missed(GtkWidget *item UNUSED, GtkEntry *entry)
+{
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, missed_pixbuf);
-    gtk_entry_set_icon_tooltip_text(entry, GTK_ENTRY_ICON_PRIMARY,
-                                    g_markup_printf_escaped("%s\n%s",
-                                            _("Search by missed call"),
-                                            _("Click here to change the search type")));
-    history_search();
+    update_search_entry(entry, _("Search by missed call"),
+                        _("Click here to change the search type"), SEARCH_MISSED);
 }
 
 static void search_by_incoming(GtkWidget *item UNUSED, GtkEntry *entry)
 {
-    HistorySearchType = SEARCH_INCOMING;
-
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, incoming_pixbuf);
-    gtk_entry_set_icon_tooltip_text(entry, GTK_ENTRY_ICON_PRIMARY,
-                                    g_markup_printf_escaped("%s\n%s",
-                                            _("Search by incoming call"),
-                                            _("Click here to change the search type")));
-    history_search();
+    update_search_entry(entry, _("Search by incoming call"),
+                        _("Click here to change the search type"), SEARCH_INCOMING);
 }
 
-static void search_by_outgoing(GtkWidget *item UNUSED, GtkEntry  *entry)
+static void search_by_outgoing(GtkWidget *item UNUSED, GtkEntry *entry)
 {
-    HistorySearchType = SEARCH_OUTGOING;
-
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, outgoing_pixbuf);
-    gtk_entry_set_icon_tooltip_text(entry, GTK_ENTRY_ICON_PRIMARY,
-                                    g_markup_printf_escaped("%s\n%s",
-                                            _("Search by outgoing call"),
-                                            _("Click here to change the search type")));
-    history_search();
+    update_search_entry(entry, _("Search by outgoing call"),
+                        _("Click here to change the search type"), SEARCH_OUTGOING);
 }
 
 static void icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, gpointer data UNUSED)
@@ -261,7 +254,7 @@ static void text_changed_cb(GtkEntry *entry, GParamSpec *pspec UNUSED)
     gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 }
 
-GtkWidget *addressbook_menu_new(void)
+GtkWidget *addressbook_menu_new()
 {
     // Create the menu
     GtkWidget *menu_widget = gtk_menu_new();
@@ -285,7 +278,7 @@ GtkWidget *addressbook_menu_new(void)
     return menu_widget;
 }
 
-GtkWidget* history_searchbar_new(void)
+GtkWidget* history_searchbar_new()
 {
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
@@ -301,7 +294,6 @@ GtkWidget* history_searchbar_new(void)
 
     g_signal_connect(searchbox, "icon-press", G_CALLBACK(icon_press_cb), NULL);
     g_signal_connect(searchbox, "notify::text", G_CALLBACK(text_changed_cb), NULL);
-    //g_signal_connect (searchbox, "activate", G_CALLBACK (activate_cb), NULL);
 
     // Set up the search icon
     search_all(NULL, GTK_ENTRY(searchbox));
@@ -363,24 +355,21 @@ GtkWidget* contacts_searchbar_new()
 
     addrbook->init();
 
-    GSList *book_list_iterator;
-    book_data_t *book_data;
-    GSList *books_data = addrbook->get_books_data();
 
     // Populate menu
     int count = 0;
     gboolean activeIsSet = FALSE;
 
-    for (book_list_iterator = books_data; book_list_iterator != NULL;
-            book_list_iterator = book_list_iterator->next) {
-        book_data = (book_data_t *) book_list_iterator->data;
+    GSList *books_data = addrbook->get_books_data();
+    for (GSList *book_list_iterator = books_data; book_list_iterator != NULL;
+         book_list_iterator = book_list_iterator->next) {
+        book_data_t *book_data = (book_data_t *) book_list_iterator->data;
 
         DEBUG("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ %s", book_data->name);
 
         if (book_data->active) {
 
             gtk_list_store_append(liststore, &iter);
-
             gtk_list_store_set(liststore, &iter, 0, book_data->name, -1);
 
             activeIter = iter;
@@ -389,7 +378,7 @@ GtkWidget* contacts_searchbar_new()
         }
     }
 
-    cbox = gtk_combo_box_new_with_model((GtkTreeModel *) liststore);
+    cbox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(liststore));
 
     if (activeIsSet)
         gtk_combo_box_set_active_iter(GTK_COMBO_BOX(cbox), &activeIter);
@@ -410,14 +399,10 @@ GtkWidget* contacts_searchbar_new()
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(cbox), cell, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(cbox), cell, "text", 0, NULL);
 
-
-    // GdkPixbuf *pixbuf;
-
     gchar *tooltip_text = g_strdup("Search is");
 
     addressbookentry = gtk_entry_new();
     gtk_entry_set_icon_from_stock(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
-    // pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL);
     gtk_entry_set_icon_from_stock(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     gtk_entry_set_icon_tooltip_text(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY,
                                     tooltip_text);
@@ -447,7 +432,7 @@ GtkWidget* contacts_searchbar_new()
     return ret;
 }
 
-SearchType get_current_history_search_type (void)
+SearchType get_current_history_search_type()
 {
     return HistorySearchType;
 }
