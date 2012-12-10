@@ -170,27 +170,24 @@ void update_searchbar_addressbook_list()
 
 static void select_search_type(GtkWidget *item, GtkEntry  *entry UNUSED)
 {
-    if (addrbook) {
-        DEBUG("Searchbar: %s", gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
+    if (!addrbook)
+        return;
 
-        gtk_entry_set_icon_tooltip_text(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY,
-                                        gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
+    DEBUG("Searchbar: %s", gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
+
+    gtk_entry_set_icon_tooltip_text(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY,
+                                    gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
 
 
-        if (g_strcmp0("Search is", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0) {
-            addrbook->set_search_type(ABOOK_QUERY_IS);
-        } else if (g_strcmp0("Search begins with", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0) {
-            addrbook->set_search_type(ABOOK_QUERY_BEGINS_WITH);
-        } else if (g_strcmp0("Search contains", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0) {
-            addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
-        }
-
-        AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
-        addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
-    }
+    if (g_strcmp0("Search is", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0)
+        addrbook->set_search_type(ABOOK_QUERY_IS);
+    else if (g_strcmp0("Search begins with", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0)
+        addrbook->set_search_type(ABOOK_QUERY_BEGINS_WITH);
+    else if (g_strcmp0("Search contains", gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0)
+        addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
 
     AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
-    addrbook->search (addrbook->search_cb, GTK_ENTRY (addressbookentry), addressbook_config);
+    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
 
 static void search_all(GtkWidget *item UNUSED, GtkEntry  *entry)
