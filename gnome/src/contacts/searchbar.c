@@ -93,16 +93,23 @@ get_combobox_active_text(GtkWidget *widget)
 }
 
 static void
-cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
+update_current_addressbook(GtkWidget *widget)
 {
     if (!addrbook)
         return;
-
     gchar *string = get_combobox_active_text(widget);
     if (string) {
         addrbook->set_current_book(string);
         g_free(string);
     }
+}
+
+static void
+cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
+{
+    if (!addrbook)
+        return;
+    update_current_addressbook(widget);
 
     AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
     addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
@@ -166,7 +173,7 @@ update_searchbar_addressbook_list()
             addrbook->set_current_book(activeText);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(cbox), 0);
-            addrbook->set_current_book(get_combobox_active_text(cbox));
+            update_current_addressbook(cbox);
         }
     }
 
@@ -447,6 +454,8 @@ contacts_searchbar_new()
     gtk_box_pack_start(GTK_BOX(ret), addressbookentry, TRUE, TRUE, 0);
 
     g_free(tooltip_text);
+
+    update_current_addressbook(cbox);
 
     return ret;
 }
