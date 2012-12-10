@@ -120,7 +120,7 @@ void AudioRtpFactory::initSession()
         rtpSession_ = new AudioSymmetricRtpSession(*ca_);
 }
 
-void sfl::AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
+void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
@@ -159,7 +159,7 @@ void AudioRtpFactory::updateDestinationIpAddress()
 }
 
 #if HAVE_ZRTP
-sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
+AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
     if (keyExchangeProtocol_ == ZRTP)
         return static_cast<AudioZrtpSession *>(rtpSession_);
@@ -168,7 +168,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 }
 #endif
 
-void sfl::AudioRtpFactory::initLocalCryptoInfo()
+void AudioRtpFactory::initLocalCryptoInfo()
 {
     DEBUG("AudioRtpFactory: Init local crypto info");
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
@@ -179,7 +179,7 @@ void sfl::AudioRtpFactory::initLocalCryptoInfo()
     }
 }
 
-void sfl::AudioRtpFactory::initLocalCryptoInfoOnOffHold()
+void AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 {
     DEBUG("AudioRtpFactory: Init local crypto info");
     if (rtpSession_ && keyExchangeProtocol_ == SDES) {
@@ -191,7 +191,7 @@ void sfl::AudioRtpFactory::initLocalCryptoInfoOnOffHold()
 }
 
 
-void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
+void AudioRtpFactory::setRemoteCryptoInfo(SdesNegotiator& nego)
 {
     if (rtpSession_ ) {
         if (keyExchangeProtocol_ == SDES) {
@@ -216,7 +216,7 @@ void AudioRtpFactory::sendDtmfDigit(int digit)
         rtpSession_->putDtmfEvent(digit);
 }
 
-void sfl::AudioRtpFactory::saveLocalContext()
+void AudioRtpFactory::saveLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         cachedLocalMasterKey_ = rtpSession_->getLocalMasterKey();
@@ -224,7 +224,7 @@ void sfl::AudioRtpFactory::saveLocalContext()
     }
 }
 
-void sfl::AudioRtpFactory::restoreLocalContext()
+void AudioRtpFactory::restoreLocalContext()
 {
     if (rtpSession_ and keyExchangeProtocol_ == SDES) {
         rtpSession_->setLocalMasterKey(cachedLocalMasterKey_);
