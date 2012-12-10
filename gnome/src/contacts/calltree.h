@@ -31,6 +31,8 @@
 #ifndef __CALLTREE_H__
 #define __CALLTREE_H__
 
+#include "calltab.h"
+
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
   */

@@ -47,12 +47,12 @@ enum {
 };
 
 static void
-create_callable_from_entry(calltab_t *history_tab, GHashTable *entry)
+create_callable_from_entry(calltab_t *tab, GHashTable *entry)
 {
     callable_obj_t *history_call = create_history_entry_from_hashtable(entry);
 
     /* Add it and update the GUI */
-    calllist_add_call_to_front(history_tab, history_call);
+    calllist_add_call_to_front(tab, history_call);
     calltree_add_history_entry(history_call);
 }
 

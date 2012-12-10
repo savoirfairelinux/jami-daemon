@@ -38,6 +38,7 @@
 #include "calltab.h"
 #include "dbus.h"
 #include "logger.h"
+#include "mainwindow.h"
 #include "unused.h"
 #include "config/addressbook-config.h"
 #include "contacts/addressbook.h"
@@ -62,20 +63,23 @@ static GdkPixbuf *incoming_pixbuf;
 static GdkPixbuf *outgoing_pixbuf;
 static GdkPixbuf *missed_pixbuf;
 
-void searchbar_addressbook_activated(GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
+static void
+searchbar_addressbook_activated(GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
 {
     if (addrbook)
         addrbook->search(addrbook->search_cb, entry, addressbook_config_load_parameters());
 }
 
-void searchbar_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
+static void
+searchbar_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
     DEBUG("Searchbar: Entry changed");
     if (calltab_has_name(active_calltree_tab, HISTORY))
         history_search();
 }
 
-static gchar *get_combobox_active_text(GtkWidget *widget)
+static gchar *
+get_combobox_active_text(GtkWidget *widget)
 {
     GtkTreeIter iter;
     if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter))
@@ -88,7 +92,8 @@ static gchar *get_combobox_active_text(GtkWidget *widget)
     return string;
 }
 
-static void cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
+static void
+cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
 {
     if (!addrbook)
         return;
@@ -103,16 +108,15 @@ static void cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
     addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
 
-void set_focus_on_addressbook_searchbar()
+void
+set_focus_on_addressbook_searchbar()
 {
     gtk_widget_grab_focus(addressbookentry);
 }
 
-void update_searchbar_addressbook_list()
+void
+update_searchbar_addressbook_list()
 {
-    GtkTreeIter iter, activeIter;
-    GSList *book_list_iterator;
-    book_data_t *book_data;
     GSList *books_data = NULL;
 
     if (addrbook)
@@ -139,9 +143,10 @@ void update_searchbar_addressbook_list()
     // Populate menu
     gboolean activeIsSet = FALSE;
 
-    for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
-            = book_list_iterator->next) {
-        book_data = (book_data_t *) book_list_iterator->data;
+    GtkTreeIter iter, activeIter;
+    for (GSList *book_list_iterator = books_data; book_list_iterator != NULL;
+            book_list_iterator = book_list_iterator->next) {
+        book_data_t *book_data = (book_data_t *) book_list_iterator->data;
 
         if (book_data && book_data->active) {
 
@@ -175,7 +180,8 @@ label_matches(const gchar *label, GtkWidget *item)
     return g_strcmp0(label, gtk_menu_item_get_label(GTK_MENU_ITEM(item))) == 0;
 }
 
-static void select_search_type(GtkWidget *item, GtkEntry  *entry UNUSED)
+static void
+select_search_type(GtkWidget *item, GtkEntry *entry UNUSED)
 {
     if (!addrbook)
         return;
@@ -193,10 +199,13 @@ static void select_search_type(GtkWidget *item, GtkEntry  *entry UNUSED)
     else if (label_matches("Search contains", item))
         addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
 
-    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config_load_parameters());
+    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry),
+                     addressbook_config_load_parameters());
 }
 
-static void update_search_entry(GtkEntry *entry, const gchar *search_str, const gchar *click_str, SearchType type)
+static void
+update_search_entry(GtkEntry *entry, const gchar *search_str,
+                    const gchar *click_str, SearchType type)
 {
     HistorySearchType = type;
     gchar *markup = g_markup_printf_escaped("%s\n%s", search_str, click_str);
@@ -205,56 +214,66 @@ static void update_search_entry(GtkEntry *entry, const gchar *search_str, const 
     history_search();
 }
 
-static void search_all(GtkWidget *item UNUSED, GtkEntry *entry)
+static void
+search_all(GtkWidget *item UNUSED, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_stock(entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     update_search_entry(entry, _("Search all"),
                         _("Click here to change the search type"), SEARCH_ALL);
 }
 
-static void search_by_missed(GtkWidget *item UNUSED, GtkEntry *entry)
+static void
+search_by_missed(GtkWidget *item UNUSED, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, missed_pixbuf);
     update_search_entry(entry, _("Search by missed call"),
                         _("Click here to change the search type"), SEARCH_MISSED);
 }
 
-static void search_by_incoming(GtkWidget *item UNUSED, GtkEntry *entry)
+static void
+search_by_incoming(GtkWidget *item UNUSED, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, incoming_pixbuf);
     update_search_entry(entry, _("Search by incoming call"),
                         _("Click here to change the search type"), SEARCH_INCOMING);
 }
 
-static void search_by_outgoing(GtkWidget *item UNUSED, GtkEntry *entry)
+static void
+search_by_outgoing(GtkWidget *item UNUSED, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, outgoing_pixbuf);
     update_search_entry(entry, _("Search by outgoing call"),
                         _("Click here to change the search type"), SEARCH_OUTGOING);
 }
 
-static void icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, gpointer data UNUSED)
+static void
+icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, gpointer data UNUSED)
 {
     DEBUG("Searchbar: Icon pressed");
 
-    if (position == GTK_ENTRY_ICON_PRIMARY && calltab_has_name(active_calltree_tab, HISTORY))
-        gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-                       event->button, event->time);
-    else if (position == GTK_ENTRY_ICON_PRIMARY && calltab_has_name(active_calltree_tab, CONTACTS)) {
-        GtkWidget *addrbook_menu = addressbook_menu_new();
-        gtk_menu_popup(GTK_MENU(addrbook_menu), NULL, NULL, NULL, NULL,
-                       event->button, event->time);
-    } else
+    if (position == GTK_ENTRY_ICON_PRIMARY)
+       if (calltab_has_name(active_calltree_tab, HISTORY))
+           gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL,
+                          NULL, event->button, event->time);
+       else if (calltab_has_name(active_calltree_tab, CONTACTS))
+           gtk_menu_popup(GTK_MENU(addressbook_menu_new()), NULL, NULL, NULL,
+                          NULL, event->button, event->time);
+       else
+           gtk_entry_set_text(entry, "");
+    else
         gtk_entry_set_text(entry, "");
 }
 
-static void text_changed_cb(GtkEntry *entry, GParamSpec *pspec UNUSED)
+static void
+text_changed_cb(GtkEntry *entry, GParamSpec *pspec UNUSED)
 {
     const gboolean has_text = gtk_entry_get_text_length(entry) > 0;
     gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 }
 
-GtkWidget *addressbook_menu_new()
+
+GtkWidget *
+addressbook_menu_new()
 {
     // Create the menu
     GtkWidget *menu_widget = gtk_menu_new();
@@ -278,7 +297,9 @@ GtkWidget *addressbook_menu_new()
     return menu_widget;
 }
 
-GtkWidget* history_searchbar_new()
+
+GtkWidget*
+history_searchbar_new()
 {
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
@@ -340,14 +361,12 @@ GtkWidget* history_searchbar_new()
     return ret;
 }
 
-GtkWidget* contacts_searchbar_new()
+GtkWidget*
+contacts_searchbar_new()
 {
-    GtkTreeIter iter, activeIter;
-    GtkCellRenderer *cell;
-
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
-    liststore = gtk_list_store_new(1,G_TYPE_STRING);
+    liststore = gtk_list_store_new(1, G_TYPE_STRING);
 
     // Create combo box to select current addressbook
     if (!addrbook)
@@ -355,11 +374,11 @@ GtkWidget* contacts_searchbar_new()
 
     addrbook->init();
 
-
     // Populate menu
     int count = 0;
     gboolean activeIsSet = FALSE;
 
+    GtkTreeIter iter, activeIter;
     GSList *books_data = addrbook->get_books_data();
     for (GSList *book_list_iterator = books_data; book_list_iterator != NULL;
          book_list_iterator = book_list_iterator->next) {
@@ -395,7 +414,7 @@ GtkWidget* contacts_searchbar_new()
 
     cboxSignalId = g_signal_connect(G_OBJECT(cbox), "changed", G_CALLBACK(cbox_changed_cb), NULL);
 
-    cell = gtk_cell_renderer_text_new();
+    GtkCellRenderer *cell = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(cbox), cell, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(cbox), cell, "text", 0, NULL);
 

@@ -43,6 +43,9 @@
 #endif
 
 #include "str_utils.h"
+#include "uimanager.h"
+#include "mainwindow.h"
+#include "calltree.h"
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>

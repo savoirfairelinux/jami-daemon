@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include "history.h"
+#include "calltree.h"
 #include "searchbar.h"
 #include "calltab.h"
 #include "unused.h"
