@@ -441,15 +441,6 @@ class SIPAccount : public Account {
             return publishedIpAddress_;
         }
 
-        /**
-         * Set the public IP address to be used in Contact header.
-         * @param The public IPV4 address in the standard dot notation.
-         * @return void
-         */
-        void setPublishedAddress(const std::string &publishedIpAddress) {
-            publishedIpAddress_ = publishedIpAddress;
-        }
-
         std::string getServiceRoute() const {
             return serviceRoute_;
         }
