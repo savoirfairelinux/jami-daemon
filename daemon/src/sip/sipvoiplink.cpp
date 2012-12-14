@@ -648,6 +648,17 @@ void SIPVoIPLink::sendRegister(Account *a)
     std::string contact = account->getContactHeader();
     pj_str_t pjContact = pj_str((char*) contact.c_str());
 
+    if (not received.empty() and received != account->getPublishedAddress()) {
+        // Set received parameter string to empty in order to avoid creating new transport for each register
+        account->setReceivedParameter("");
+        DEBUG("Creating transport on random port because we have rx param %s", received.c_str());
+        // Explicitly set the bound address port to 0 so that pjsip determines a random port by itself
+        account->transport_= sipTransport.createUdpTransport(account->getLocalInterface(), 0, received, account->getRPort());
+        account->setRPort(-1);
+        if (account->transport_ == NULL)
+            ERROR("Could not create new udp transport with public address: %s:%d", received.c_str(), account->getLocalPort());
+    }
+
     if (pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, account->getRegistrationExpire()) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize account registration structure");
 
