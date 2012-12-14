@@ -1094,7 +1094,7 @@ class ManagerImpl {
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
           */
-        History history_;
+        sfl::History history_;
         bool finished_;
 };
 #endif // MANAGER_IMPL_H_

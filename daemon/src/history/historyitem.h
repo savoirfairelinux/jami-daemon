@@ -36,6 +36,8 @@
 #include <string>
 #include <map>
 
+namespace sfl {
+
 class HistoryItem {
     public:
         static const char * const ACCOUNT_ID_KEY;
@@ -76,5 +78,7 @@ class HistoryItem {
 };
 
 std::ostream& operator << (std::ostream& o, const HistoryItem& item);
+
+}
 
 #endif // HISTORY_ITEM

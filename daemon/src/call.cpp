@@ -196,7 +196,9 @@ namespace {
 
 std::map<std::string, std::string> Call::createHistoryEntry() const
 {
+    using sfl::HistoryItem;
     std::map<std::string, std::string> result;
+
     result[HistoryItem::ACCOUNT_ID_KEY] = Manager::instance().getAccountFromCall(id_);
     result[HistoryItem::CONFID_KEY] = confID_;
     result[HistoryItem::CALLID_KEY] = id_;

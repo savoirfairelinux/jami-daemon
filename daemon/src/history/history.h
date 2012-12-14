@@ -39,6 +39,8 @@
 
 class Call;
 
+namespace sfl {
+
 class History {
 
     public:
@@ -86,5 +88,7 @@ class History {
 
         friend class HistoryTest;
 };
+
+}
 
 #endif // HISTORY_

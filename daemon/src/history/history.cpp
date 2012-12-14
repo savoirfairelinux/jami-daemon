@@ -40,6 +40,8 @@
 #include "logger.h"
 #include "call.h"
 
+namespace sfl {
+
 using std::map;
 using std::string;
 using std::vector;
@@ -151,4 +153,6 @@ size_t History::numberOfItems()
 {
     ost::MutexLock lock(historyItemsMutex_);
     return items_.size();
+}
+
 }
