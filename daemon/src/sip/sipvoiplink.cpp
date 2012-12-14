@@ -679,7 +679,8 @@ void SIPVoIPLink::sendRegister(Account *a)
         throw VoipLinkException("Unable to set transport");
 
     // decrease transport's ref count, counter incrementation is managed when acquiring transport
-    pjsip_transport_dec_ref(account->transport_);
+    if (account->transport_)
+        pjsip_transport_dec_ref(account->transport_);
 
     // pjsip_regc_send increment the transport ref count by one,
     if (pjsip_regc_send(regc, tdata) != PJ_SUCCESS)
@@ -688,7 +689,8 @@ void SIPVoIPLink::sendRegister(Account *a)
     // Decrease transport's ref count, since coresponding reference counter decrementation
     // is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
     // regc data structure is permanently associated to the account at first registration.
-    pjsip_transport_dec_ref(account->transport_);
+    if (account->transport_)
+        pjsip_transport_dec_ref(account->transport_);
 
     account->setRegistrationInfo(regc);
 
