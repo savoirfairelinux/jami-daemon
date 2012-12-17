@@ -81,8 +81,8 @@ static int is_v4l2(struct udev_device *dev)
 }
 
 VideoV4l2ListThread::VideoV4l2ListThread() : devices_(),
-    mutex_(), udev_(0),
-    udev_mon_(0), probing_(false), thread_()
+    thread_(), mutex_(), udev_(0),
+    udev_mon_(0), probing_(false)
 {
     pthread_mutex_init(&mutex_, NULL);
     udev_list_entry *devlist;
