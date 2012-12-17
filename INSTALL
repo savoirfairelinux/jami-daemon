@@ -11,13 +11,12 @@ INSTALLATION GUIDE
     # Go to the root of the application core directory
     cd daemon
     # Compile pjsip
-    cd libs/pjproject
-    ./configure
-    make
+    cd libs
+    ./compile_pjsip.sh
     # Go back to the root
     cd ../..
     ./autogen.sh
-    ./configure --prefix=/usr
+    ./configure
     make && sudo make install
 
     You are done with the core !
@@ -30,7 +29,7 @@ INSTALLATION GUIDE
     # Go to the root of the gnome client directory
     cd gnome
     ./autogen.sh
-    ./configure --prefix=/usr
+    ./configure
     make && sudo make install
 
     You are done with the gnome client !

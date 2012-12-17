@@ -1,3 +1,0 @@
-ifneq (@ac_no_ilbc_codec@,1)
-DIRS += ilbc
-endif

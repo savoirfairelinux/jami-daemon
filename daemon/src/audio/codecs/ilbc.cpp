@@ -33,8 +33,8 @@
 #include <algorithm>
 
 extern "C" {
-#include "pjproject/third_party/ilbc/iLBC_encode.h"
-#include "pjproject/third_party/ilbc/iLBC_decode.h"
+#include "ilbc/iLBC_encode.h"
+#include "ilbc/iLBC_decode.h"
 }
 
 class Ilbc: public sfl::AudioCodec {

@@ -38,13 +38,13 @@ INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
 endif
 
 if BUILD_ILBC
-include $(src)/libs/pjproject/build.mak
+include $(src)/libs/pjproject-2.0.1/build.mak
 
 ILBC_LIB = libcodec_ilbc.so
 libcodecdescriptor_la_CXXFLAGS = -DBUILD_ILBC
 libcodec_ilbc_so_SOURCES = ilbc.cpp
-libcodec_ilbc_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_ilbc_so_LDFLAGS = --shared -lc $(top_builddir)/libs/pjproject/third_party/lib/libilbccodec-$(TARGET_NAME).a
+libcodec_ilbc_so_CXXFLAGS = -fPIC -g -Wall -I$(top_srcdir)/libs/pjproject-2.0.1/third_party/
+libcodec_ilbc_so_LDFLAGS = --shared -lc $(top_srcdir)/libs/pjproject-2.0.1/third_party/lib/libilbccodec-$(TARGET_NAME).a
 libcodec_ilbc_so_LDADD = libcodecdescriptor.la
 INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 endif
