@@ -275,7 +275,7 @@ create_main_window(GSettings *settings)
     GtkWidget *widget = create_menus(ui_manager, settings);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
-    widget = create_toolbar_actions(ui_manager);
+    widget = create_toolbar_actions(ui_manager, settings);
     pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
     /* Setup call main widget*/

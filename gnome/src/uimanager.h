@@ -53,7 +53,7 @@ void show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event);
 
 GtkWidget *create_menus (GtkUIManager *ui_manager, GSettings *settings);
 
-GtkWidget *create_toolbar_actions (GtkUIManager *ui_manager);
+GtkWidget *create_toolbar_actions (GtkUIManager *ui_manager, GSettings *settings);
 
 G_END_DECLS
 

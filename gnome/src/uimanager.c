@@ -1683,7 +1683,7 @@ create_menus(GtkUIManager *ui, GSettings *settings)
 }
 
 GtkWidget *
-create_toolbar_actions(GtkUIManager *ui)
+create_toolbar_actions(GtkUIManager *ui, GSettings *settings)
 {
     toolbar_ = get_widget(ui, "/ToolbarActions");
     holdToolbar_ = get_widget(ui, "/ToolbarActions/OnHoldToolbar");
@@ -1698,15 +1698,14 @@ create_toolbar_actions(GtkUIManager *ui)
     muteWidget_ = get_widget(ui, "/ToolbarActions/MuteToolbar");
     imToolbar_ = get_widget(ui, "/ToolbarActions/InstantMessagingToolbar");
     historyButton_ = get_widget(ui, "/ToolbarActions/HistoryToolbar");
-//     separator_ = gtk_separator_tool_item_new();
     if (addrbook)
         contactButton_ = get_widget(ui, "/ToolbarActions/AddressbookToolbar");
 
     // Set the handler ID for the transfer
     g_assert(transferToolbar_);
-    transferButtonConnId_ = g_signal_connect(G_OBJECT(transferToolbar_), "toggled", G_CALLBACK(call_transfer_cb), NULL);
+    transferButtonConnId_ = g_signal_connect(G_OBJECT(transferToolbar_), "toggled", G_CALLBACK(call_transfer_cb), settings);
     g_assert(recordWidget_);
-    recordButtonConnId_ = g_signal_connect(G_OBJECT(recordWidget_), "toggled", G_CALLBACK(call_record), NULL);
+    recordButtonConnId_ = g_signal_connect(G_OBJECT(recordWidget_), "toggled", G_CALLBACK(call_record), settings);
     active_calltree_tab = current_calls_tab;
 
     return toolbar_;
