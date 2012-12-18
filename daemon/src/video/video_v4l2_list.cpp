@@ -36,6 +36,7 @@
 #include <algorithm>
 
 #include "logger.h"
+#include "scoped_lock.h"
 
 #include <libudev.h>
 #include <cstring>
@@ -56,22 +57,7 @@ namespace sfl_video {
 
 using std::vector;
 using std::string;
-
-// Helper class to guarantee exception safe mutex locking/unlocking
-class ScopedLock {
-    public:
-        ScopedLock(pthread_mutex_t &mutex) : mutex_(mutex) {
-            pthread_mutex_lock(&mutex_);
-        }
-
-        ~ScopedLock() {
-            pthread_mutex_unlock(&mutex_);
-        }
-
-    private:
-        pthread_mutex_t &mutex_;
-};
-
+using sfl::ScopedLock;
 
 static int is_v4l2(struct udev_device *dev)
 {
