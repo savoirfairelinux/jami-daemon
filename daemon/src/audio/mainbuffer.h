@@ -34,8 +34,7 @@
 #include <map>
 #include <set>
 #include <string>
-
-#include "cc_thread.h" // for ost::Mutex
+#include <pthread.h>
 
 class RingBuffer;
 
@@ -134,7 +133,7 @@ class MainBuffer {
         typedef std::map<std::string, CallIDSet*> CallIDMap;
         CallIDMap callIDMap_;
 
-        ost::Mutex mutex_;
+        pthread_mutex_t mutex_;
 
         int internalSamplingRate_;
 
