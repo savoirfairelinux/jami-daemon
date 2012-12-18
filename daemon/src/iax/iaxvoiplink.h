@@ -37,6 +37,7 @@
 #endif
 
 #include "account.h"
+#include "cc_thread.h"
 #include "voiplink.h"
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "sfl_types.h"

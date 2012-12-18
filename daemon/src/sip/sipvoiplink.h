@@ -52,6 +52,8 @@
 #include <queue>
 #endif
 
+#include "cc_thread.h"
+
 #include "sipaccount.h"
 #include "voiplink.h"
 #include "siptransport.h"
