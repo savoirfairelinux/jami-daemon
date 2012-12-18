@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <string>
 #include <iostream>
-#include "cc_thread.h"
 #include "logger.h"
 
 extern "C" {

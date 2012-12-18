@@ -31,7 +31,6 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
-#include "cc_thread.h"
 #include <map>
 #include <string>
 #include <climits>
