@@ -233,6 +233,8 @@ VideoV4l2ListThread::~VideoV4l2ListThread()
         udev_monitor_unref(udev_mon_);
     if (udev_)
         udev_unref(udev_);
+
+    pthread_mutex_destroy(&mutex_);
 }
 
 void VideoV4l2ListThread::run()
