@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "audio_rtp_factory.h"
 #if HAVE_ZRTP
 #include "audio_zrtp_session.h"
@@ -38,8 +42,8 @@
 #include "sip/sipcall.h"
 #include "sip/sipaccount.h"
 #include "sip/sdes_negotiator.h"
+#include "scoped_lock.h"
 #include "logger.h"
-#include "config.h"
 
 namespace sfl {
 
@@ -51,11 +55,14 @@ AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(NULL),
     cachedRemoteMasterSalt_(MAX_MASTER_SALT_LENGTH),
     remoteOfferIsSet_(false), ca_(ca),
     keyExchangeProtocol_(NONE)
-{}
+{
+    pthread_mutex_init(&audioRtpThreadMutex_, NULL);
+}
 
 AudioRtpFactory::~AudioRtpFactory()
 {
     delete rtpSession_;
+    pthread_mutex_destroy(&audioRtpThreadMutex_);
 }
 
 void AudioRtpFactory::initConfig()
@@ -94,7 +101,7 @@ void AudioRtpFactory::initConfig()
 void AudioRtpFactory::initSession()
 {
     DEBUG("AudioRtpFactory: init session2");
-    ost::MutexLock m(audioRtpThreadMutex_);
+    ScopedLock m(audioRtpThreadMutex_);
 
     if (srtpEnabled_) {
         const std::string zidFilename(Manager::instance().voipPreferences.getZidFile());
@@ -130,7 +137,7 @@ void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 
 void AudioRtpFactory::stop()
 {
-    ost::MutexLock mutex(audioRtpThreadMutex_);
+    ScopedLock mutex(audioRtpThreadMutex_);
 
     delete rtpSession_;
     rtpSession_ = NULL;
