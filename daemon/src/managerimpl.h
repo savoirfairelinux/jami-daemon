@@ -151,6 +151,8 @@ class ManagerImpl {
             return audiodriver_;
         }
 
+        void startAudioDriverStream();
+
         /**
          * Functions which occur with a user's action
          * Place a new call
@@ -794,14 +796,6 @@ class ManagerImpl {
         bool isCurrentCall(const std::string& callId) const;
 
         void initAudioDriver();
-
-        void audioLayerMutexLock() {
-            audioLayerMutex_.enterMutex();
-        }
-
-        void audioLayerMutexUnlock() {
-            audioLayerMutex_.leaveMutex();
-        }
 
         /**
          * Load the accounts order set by the user from the sflphonedrc config file

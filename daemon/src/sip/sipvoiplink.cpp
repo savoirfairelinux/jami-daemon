@@ -1805,9 +1805,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         return;
 
     try {
-        Manager::instance().audioLayerMutexLock();
-        Manager::instance().getAudioDriver()->startStream();
-        Manager::instance().audioLayerMutexUnlock();
+        Manager::instance().startAudioDriverStream();
 
         std::vector<AudioCodec*> audioCodecs;
         for (std::vector<sfl::AudioCodec*>::const_iterator i = sessionMedia.begin(); i != sessionMedia.end(); ++i) {

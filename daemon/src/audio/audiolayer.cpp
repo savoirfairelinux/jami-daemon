@@ -107,9 +107,7 @@ void AudioLayer::notifyIncomingCall()
     tone.getNext(buf, nbSample);
 
     /* Put the data in the urgent ring buffer */
-    Manager::instance().audioLayerMutexLock();
     flushUrgent();
     putUrgent(buf, sizeof buf);
-    Manager::instance().audioLayerMutexUnlock();
 }
 

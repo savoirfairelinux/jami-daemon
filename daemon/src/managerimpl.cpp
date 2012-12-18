@@ -2874,3 +2874,9 @@ void ManagerImpl::clearHistory()
 {
     history_.clear();
 }
+
+void ManagerImpl::startAudioDriverStream()
+{
+    ost::MutexLock lock(audioLayerMutex_);
+    audiodriver_->startStream();
+}

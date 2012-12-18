@@ -364,7 +364,7 @@ IAXVoIPLink::offhold(const std::string& id)
         iax_unquelch(call->session);
     }
 
-    Manager::instance().getAudioDriver()->startStream();
+    Manager::instance().startAudioDriverStream();
     call->setState(Call::ACTIVE);
 }
 
@@ -570,7 +570,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 
             Manager::instance().peerAnsweredCall(id);
 
-            Manager::instance().getAudioDriver()->startStream();
+            Manager::instance().startAudioDriverStream();
             Manager::instance().getMainBuffer().flushAllBuffers();
 
             break;
