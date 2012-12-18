@@ -78,12 +78,12 @@ class VideoSendThread : public VideoProvider {
         SwsContext *previewConvertCtx_;
         SwsContext *encoderConvertCtx_;
         std::string sdp_;
-        AVIOInterruptCB interruptCb_;
 
         SHMSink sink_;
         size_t bufferSize_;
         const std::string id_;
 
+        AVIOInterruptCB interruptCb_;
         bool threadRunning_;
         int forceKeyFrame_;
         static void *runCallback(void *);
