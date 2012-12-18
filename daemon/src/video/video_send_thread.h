@@ -57,7 +57,6 @@ class VideoSendThread : public VideoProvider {
         void print_sdp();
         void setup();
         void prepareEncoderContext(AVCodec *encoder);
-        void createScalingContext();
         void fillBuffer(void *data);
         static int interruptCb(void *ctx);
 
@@ -65,18 +64,19 @@ class VideoSendThread : public VideoProvider {
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
-        uint8_t *scaledPictureBuf_;
-        uint8_t *outbuf_;
+        uint8_t *scaledInputBuffer_;
+        uint8_t *encoderBuffer_;
         AVCodecContext *inputDecoderCtx_;
         AVFrame *rawFrame_;
-        AVFrame *scaledPicture_;
+        AVFrame *scaledInput_;
         int streamIndex_;
-        int outbufSize_;
+        int encoderBufferSize_;
         AVCodecContext *encoderCtx_;
         AVStream *stream_;
         AVFormatContext *inputCtx_;
         AVFormatContext *outputCtx_;
-        SwsContext *imgConvertCtx_;
+        SwsContext *previewConvertCtx_;
+        SwsContext *encoderConvertCtx_;
         std::string sdp_;
         AVIOInterruptCB interruptCb_;
 

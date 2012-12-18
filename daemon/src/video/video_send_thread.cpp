@@ -259,7 +259,7 @@ void VideoSendThread::setup()
         forcePresetX264();
     }
 
-    scaledPicture_ = avcodec_alloc_frame();
+    scaledInput_ = avcodec_alloc_frame();
 
     // open encoder
 
@@ -293,7 +293,6 @@ void VideoSendThread::setup()
         av_dict_set(&outOptions, "payload_type", args_["payload_type"].c_str(), 0);
     }
 
-
     ret = avformat_write_header(outputCtx_, outOptions ? &outOptions : NULL);
     if (outOptions)
         av_dict_free(&outOptions);
@@ -302,36 +301,21 @@ void VideoSendThread::setup()
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_sdp();
 
-    // allocate video frame
+    // allocate frame for raw input from camera
     rawFrame_ = avcodec_alloc_frame();
 
-    // alloc image and output buffer
-    outbufSize_ = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width,
-                                     encoderCtx_->height);
-    outbuf_ = reinterpret_cast<uint8_t*>(av_malloc(outbufSize_));
-    // allocate buffer that fits YUV 420
-    scaledPictureBuf_ = reinterpret_cast<uint8_t*>(av_malloc((outbufSize_ * 3) / 2));
-
-    scaledPicture_->data[0] = reinterpret_cast<uint8_t*>(scaledPictureBuf_);
-    scaledPicture_->data[1] = scaledPicture_->data[0] + outbufSize_;
-    scaledPicture_->data[2] = scaledPicture_->data[1] + outbufSize_ / 4;
-    scaledPicture_->linesize[0] = encoderCtx_->width;
-    scaledPicture_->linesize[1] = encoderCtx_->width / 2;
-    scaledPicture_->linesize[2] = encoderCtx_->width / 2;
-}
-
-void VideoSendThread::createScalingContext()
-{
-    // Create scaling context
-    imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_,
-                                          inputDecoderCtx_->width,
-                                          inputDecoderCtx_->height,
-                                          inputDecoderCtx_->pix_fmt,
-                                          encoderCtx_->width,
-                                          encoderCtx_->height,
-                                          encoderCtx_->pix_fmt, SWS_BICUBIC,
-                                          NULL, NULL, NULL);
-    EXIT_IF_FAIL(imgConvertCtx_, "Cannot init the conversion context");
+    // allocate buffers for both scaled (pre-encoder) and encoded frames
+    encoderBufferSize_ = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width,
+                                            encoderCtx_->height);
+    EXIT_IF_FAIL(encoderBufferSize_ > FF_MIN_BUFFER_SIZE, "Encoder buffer too small");
+    encoderBuffer_ = reinterpret_cast<uint8_t*>(av_malloc(encoderBufferSize_));
+    const int scaledInputSize = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width, encoderCtx_->height);
+    scaledInputBuffer_ = reinterpret_cast<uint8_t*>(av_malloc(scaledInputSize));
+    avpicture_fill(reinterpret_cast<AVPicture *>(scaledInput_),
+                   static_cast<uint8_t *>(scaledInputBuffer_),
+                   encoderCtx_->pix_fmt,
+                   encoderCtx_->width,
+                   encoderCtx_->height);
 }
 
 // This callback is used by libav internally to break out of blocking calls
@@ -343,18 +327,19 @@ int VideoSendThread::interruptCb(void *ctx)
 
 VideoSendThread::VideoSendThread(const std::string &id, const std::map<string, string> &args) :
     args_(args),
-    scaledPictureBuf_(0),
-    outbuf_(0),
+    scaledInputBuffer_(0),
+    encoderBuffer_(0),
     inputDecoderCtx_(0),
     rawFrame_(0),
-    scaledPicture_(0),
+    scaledInput_(0),
     streamIndex_(-1),
-    outbufSize_(0),
+    encoderBufferSize_(0),
     encoderCtx_(0),
     stream_(0),
     inputCtx_(0),
     outputCtx_(0),
-    imgConvertCtx_(0),
+    previewConvertCtx_(0),
+    encoderConvertCtx_(0),
     sdp_(),
     sink_(),
     bufferSize_(0),
@@ -374,8 +359,10 @@ struct VideoTxContextHandle {
 
     ~VideoTxContextHandle()
     {
-        if (tx_.imgConvertCtx_)
-            sws_freeContext(tx_.imgConvertCtx_);
+        if (tx_.encoderConvertCtx_)
+            sws_freeContext(tx_.encoderConvertCtx_);
+        if (tx_.previewConvertCtx_)
+            sws_freeContext(tx_.previewConvertCtx_);
 
         // write the trailer, if any.  the trailer must be written
         // before you close the CodecContexts open when you wrote the
@@ -387,15 +374,15 @@ struct VideoTxContextHandle {
                 avio_close(tx_.outputCtx_->pb);
         }
 
-        if (tx_.scaledPictureBuf_)
-            av_free(tx_.scaledPictureBuf_);
+        if (tx_.scaledInputBuffer_)
+            av_free(tx_.scaledInputBuffer_);
 
-        if (tx_.outbuf_)
-            av_free(tx_.outbuf_);
+        if (tx_.encoderBuffer_)
+            av_free(tx_.encoderBuffer_);
 
         // free the scaled frame
-        if (tx_.scaledPicture_)
-            av_free(tx_.scaledPicture_);
+        if (tx_.scaledInput_)
+            av_free(tx_.scaledInput_);
 
         // free the YUV frame
         if (tx_.rawFrame_)
@@ -443,7 +430,6 @@ void VideoSendThread::run()
     // We don't want setup() called in the main thread in case it exits or blocks
     VideoTxContextHandle handle(*this);
     setup();
-    createScalingContext();
 
     while (threadRunning_)
         if (captureFrame()) {
@@ -462,15 +448,16 @@ void VideoSendThread::fillBuffer(void *data)
                    inputDecoderCtx_->width,
                    inputDecoderCtx_->height);
     // Just need to convert colour space to BGRA
-    imgConvertCtx_ = sws_getCachedContext(imgConvertCtx_,
-                                          inputDecoderCtx_->width,
-                                          inputDecoderCtx_->height,
-                                          inputDecoderCtx_->pix_fmt,
-                                          inputDecoderCtx_->width,
-                                          inputDecoderCtx_->height,
-                                          PIX_FMT_BGRA, SWS_BICUBIC,
-                                          NULL, NULL, NULL);
-    sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
+    previewConvertCtx_ = sws_getCachedContext(previewConvertCtx_,
+                                              inputDecoderCtx_->width,
+                                              inputDecoderCtx_->height,
+                                              inputDecoderCtx_->pix_fmt,
+                                              inputDecoderCtx_->width,
+                                              inputDecoderCtx_->height,
+                                              PIX_FMT_BGRA, SWS_BICUBIC,
+                                              NULL, NULL, NULL);
+    EXIT_IF_FAIL(previewConvertCtx_, "Could not get preview context");
+    sws_scale(previewConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
               inputDecoderCtx_->height, preview.data,
               preview.linesize);
 }
@@ -508,13 +495,21 @@ bool VideoSendThread::captureFrame()
     if (!frameFinished)
         return false;
 
-    createScalingContext();
-    sws_scale(imgConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
-            inputDecoderCtx_->height, scaledPicture_->data,
-            scaledPicture_->linesize);
+    encoderConvertCtx_ = sws_getCachedContext(encoderConvertCtx_,
+                                              inputDecoderCtx_->width,
+                                              inputDecoderCtx_->height,
+                                              inputDecoderCtx_->pix_fmt,
+                                              encoderCtx_->width,
+                                              encoderCtx_->height,
+                                              encoderCtx_->pix_fmt, SWS_BICUBIC,
+                                              NULL, NULL, NULL);
+    EXIT_IF_FAIL(encoderConvertCtx_, "Could not get encoder convert context");
+    sws_scale(encoderConvertCtx_, rawFrame_->data, rawFrame_->linesize, 0,
+              inputDecoderCtx_->height, scaledInput_->data,
+              scaledInput_->linesize);
 
     // Set presentation timestamp on our scaled frame before encoding it
-    scaledPicture_->pts = frameNumber_++;
+    scaledInput_->pts = frameNumber_++;
 
     return true;
 }
@@ -524,15 +519,15 @@ void VideoSendThread::encodeAndSendVideo()
 {
     if (forceKeyFrame_ > 0) {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
-        scaledPicture_->pict_type = AV_PICTURE_TYPE_I;
+        scaledInput_->pict_type = AV_PICTURE_TYPE_I;
 #else
-        scaledPicture_->pict_type = FF_I_TYPE;
+        scaledInput_->pict_type = FF_I_TYPE;
 #endif
         atomic_decrement(&forceKeyFrame_);
     }
 
-    const int encodedSize = avcodec_encode_video(encoderCtx_, outbuf_,
-                                                 outbufSize_, scaledPicture_);
+    const int encodedSize = avcodec_encode_video(encoderCtx_, encoderBuffer_,
+                                                 encoderBufferSize_, scaledInput_);
 
     if (encodedSize <= 0)
         return;
@@ -541,7 +536,7 @@ void VideoSendThread::encodeAndSendVideo()
     av_init_packet(&opkt);
     PacketHandle opkt_handle(opkt);
 
-    opkt.data = outbuf_;
+    opkt.data = encoderBuffer_;
     opkt.size = encodedSize;
 
     // rescale pts from encoded video framerate to rtp
