@@ -42,7 +42,9 @@ namespace sfl {
 
 class ScopedLock {
     public:
-        ScopedLock(pthread_mutex_t &mutex);
+        explicit ScopedLock(pthread_mutex_t &mutex);
+        // acquired will be set to true if the mutex was locked immediately
+        ScopedLock(pthread_mutex_t &mutex, bool &acquired);
         ~ScopedLock();
 
     private:

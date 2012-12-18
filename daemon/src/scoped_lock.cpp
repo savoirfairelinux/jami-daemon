@@ -36,6 +36,11 @@ ScopedLock::ScopedLock(pthread_mutex_t &mutex) : mutex_(mutex) {
     pthread_mutex_lock(&mutex_);
 }
 
+ScopedLock::ScopedLock(pthread_mutex_t &mutex, bool &acquired) : mutex_(mutex) {
+    acquired = (pthread_mutex_trylock(&mutex_) == 0);
+}
+
+
 ScopedLock::~ScopedLock() {
     pthread_mutex_unlock(&mutex_);
 }

@@ -41,6 +41,7 @@
 #include "array_size.h"
 #include "manager.h"
 #include "logger.h"
+#include "scoped_lock.h"
 
 #include "sip/sdp.h"
 #include "sipcall.h"
@@ -74,11 +75,8 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <istream>
-// #include <fstream>
 #include <utility> // for std::pair
 #include <algorithm>
-
-#include <map>
 
 using namespace sfl;
 
@@ -436,6 +434,12 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
     throw VoipLinkException(#ret " failed"); \
 } while (0)
 
+    pthread_mutex_init(&sipCallMapMutex_, NULL);
+
+#ifdef SFL_VIDEO
+    pthread_mutex_init(&keyframeRequestsMutex_, NULL);
+#endif
+
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
     TRY(pj_init());
@@ -540,6 +544,11 @@ SIPVoIPLink::~SIPVoIPLink()
 
     std::for_each(sipAccountMap_.begin(), sipAccountMap_.end(), unloadAccount);
     sipAccountMap_.clear();
+
+    pthread_mutex_destroy(&sipCallMapMutex_);
+#ifdef SFL_VIDEO
+    pthread_mutex_destroy(&keyframeRequestsMutex_);
+#endif
 }
 
 SIPVoIPLink* SIPVoIPLink::instance()
@@ -1130,7 +1139,7 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
 void
 SIPVoIPLink::clearSipCallMap()
 {
-    ost::MutexLock m(sipCallMapMutex_);
+    sfl::ScopedLock m(sipCallMapMutex_);
 
     for (SipCallMap::const_iterator iter = sipCallMap_.begin();
             iter != sipCallMap_.end(); ++iter)
@@ -1142,14 +1151,14 @@ SIPVoIPLink::clearSipCallMap()
 void SIPVoIPLink::addSipCall(SIPCall* call)
 {
     if (call and getSipCall(call->getCallId()) == NULL) {
-        ost::MutexLock m(sipCallMapMutex_);
+        sfl::ScopedLock m(sipCallMapMutex_);
         sipCallMap_[call->getCallId()] = call;
     }
 }
 
 void SIPVoIPLink::removeSipCall(const std::string& id)
 {
-    ost::MutexLock m(sipCallMapMutex_);
+    sfl::ScopedLock m(sipCallMapMutex_);
 
     DEBUG("Removing call %s from list", id.c_str());
 
@@ -1160,7 +1169,7 @@ void SIPVoIPLink::removeSipCall(const std::string& id)
 SIPCall*
 SIPVoIPLink::getSipCall(const std::string& id)
 {
-    ost::MutexLock m(sipCallMapMutex_);
+    sfl::ScopedLock m(sipCallMapMutex_);
 
     SipCallMap::iterator iter = sipCallMap_.find(id);
 
@@ -1173,16 +1182,16 @@ SIPVoIPLink::getSipCall(const std::string& id)
 SIPCall*
 SIPVoIPLink::tryGetSIPCall(const std::string &id)
 {
-    if (not sipCallMapMutex_.tryEnterMutex()) {
-        ERROR("Could not lock call map mutex");
-        sipCallMapMutex_.leaveMutex();
-        return 0;
-    }
-    SipCallMap::iterator iter = sipCallMap_.find(id);
+    bool acquired = false;
+    sfl::ScopedLock m(sipCallMapMutex_, acquired);
     SIPCall *call = 0;
-    if (iter != sipCallMap_.end())
-        call = iter->second;
-    sipCallMapMutex_.leaveMutex();
+    if (acquired) {
+        SipCallMap::iterator iter = sipCallMap_.find(id);
+        if (iter != sipCallMap_.end())
+            call = iter->second;
+    } else
+        ERROR("Could not acquire SIPCallMap mutex");
+
     return call;
 }
 
@@ -1370,7 +1379,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
-    ost::MutexLock m(instance_->keyframeRequestsMutex_);
+    sfl::ScopedLock m(instance_->keyframeRequestsMutex_);
     instance_->keyframeRequests_.push(id);
 }
 
@@ -1380,7 +1389,7 @@ SIPVoIPLink::dequeKeyframeRequests()
 {
     int max_requests = 20;
     while (not keyframeRequests_.empty() and max_requests--) {
-        ost::MutexLock m(keyframeRequestsMutex_);
+        sfl::ScopedLock m(keyframeRequestsMutex_);
         const std::string &id(keyframeRequests_.front());
         requestKeyframe(id);
         keyframeRequests_.pop();
