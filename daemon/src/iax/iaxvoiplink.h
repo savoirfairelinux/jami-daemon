@@ -36,8 +36,8 @@
 #include "config.h"
 #endif
 
+#include <pthread.h>
 #include "account.h"
-#include "cc_thread.h"
 #include "voiplink.h"
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "sfl_types.h"
@@ -204,7 +204,7 @@ class IAXVoIPLink : public VoIPLink {
          */
         static AccountMap iaxAccountMap_;
 
-        static ost::Mutex iaxCallMapMutex_;
+        static pthread_mutex_t iaxCallMapMutex_;
         static IAXCallMap iaxCallMap_;
 
         /*
@@ -278,7 +278,7 @@ class IAXVoIPLink : public VoIPLink {
 
         /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
          * iax_stuff inside this class. */
-        ost::Mutex mutexIAX_;
+        pthread_mutex_t mutexIAX_;
 
         /** encoder/decoder/resampler buffers */
         SFLDataFormat decData_[DEC_BUFFER_SIZE];
