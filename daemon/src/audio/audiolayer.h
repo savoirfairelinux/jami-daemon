@@ -34,7 +34,7 @@
 #ifndef AUDIO_LAYER_H_
 #define AUDIO_LAYER_H_
 
-#include "cc_thread.h" // for ost::Mutex
+#include <pthread.h>
 #include <sys/time.h>
 #include <vector>
 #include "ringbuffer.h"
@@ -77,7 +77,7 @@ class AudioLayer {
         };
 
         AudioLayer();
-        virtual ~AudioLayer() {}
+        virtual ~AudioLayer();
 
         virtual std::vector<std::string> getCaptureDeviceList() const = 0;
         virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
@@ -192,13 +192,6 @@ class AudioLayer {
         }
 
         /**
-         * Get the mutex lock for the entire audio layer
-         */
-        ost::Mutex* getMutexLock() {
-            return &mutex_;
-        }
-
-        /**
          * Emit an audio notification on incoming calls
          */
         void notifyIncomingCall();
@@ -237,7 +230,7 @@ class AudioLayer {
         /**
          * Lock for the entire audio layer
          */
-        ost::Mutex mutex_;
+        pthread_mutex_t mutex_;
 
         /**
          * Remove audio offset that can be introduced by certain cheap audio device

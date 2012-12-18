@@ -33,6 +33,7 @@
 #include "audiolayer.h"
 #include "audio/dcblocker.h"
 #include "manager.h"
+#include "scoped_lock.h"
 
 unsigned int AudioLayer::captureGain_ = 100;
 unsigned int AudioLayer::playbackGain_ = 100;
@@ -47,25 +48,31 @@ AudioLayer::AudioLayer()
     , converter_(sampleRate_)
     , lastNotificationTime_(0)
 {
+    pthread_mutex_init(&mutex_, NULL);
     urgentRingBuffer_.createReadPointer(MainBuffer::DEFAULT_ID);
+}
+
+AudioLayer::~AudioLayer()
+{
+    pthread_mutex_destroy(&mutex_);
 }
 
 void AudioLayer::flushMain()
 {
-    ost::MutexLock guard(mutex_);
+    sfl::ScopedLock guard(mutex_);
     // should pass call id
     Manager::instance().getMainBuffer().flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent()
 {
-    ost::MutexLock guard(mutex_);
+    sfl::ScopedLock guard(mutex_);
     urgentRingBuffer_.flushAll();
 }
 
 void AudioLayer::putUrgent(void* buffer, int toCopy)
 {
-    ost::MutexLock guard(mutex_);
+    sfl::ScopedLock guard(mutex_);
     urgentRingBuffer_.put(buffer, toCopy);
 }
 
