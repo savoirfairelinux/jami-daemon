@@ -218,7 +218,7 @@ Sdp::setMediaDescriptorLines(bool audio)
         int payload;
 
         if (audio) {
-            sfl::Codec *codec = audio_codec_list_[i];
+            sfl::AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getClockRate();
@@ -288,7 +288,7 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
     std::ostringstream os;
     os << localIpAddr_ << ":" << (localAudioPort_ + 1);
     const std::string str(os.str());
-    const pj_str_t input_str = {(char*) str.c_str(), str.size()};
+    pj_str_t input_str = pj_str((char*) str.c_str());
     pj_sockaddr outputAddr;
     pj_status_t status = pj_sockaddr_parse(PJ_AF_UNSPEC, 0, &input_str, &outputAddr);
     if (status != PJ_SUCCESS) {
@@ -336,7 +336,7 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
 
     audio_codec_list_.clear();
     for (vector<int>::const_iterator i = selectedCodecs.begin(); i != selectedCodecs.end(); ++i) {
-        sfl::Codec *codec = Manager::instance().audioCodecFactory.getCodec(*i);
+        sfl::AudioCodec *codec = Manager::instance().audioCodecFactory.getCodec(*i);
 
         if (codec)
             audio_codec_list_.push_back(codec);

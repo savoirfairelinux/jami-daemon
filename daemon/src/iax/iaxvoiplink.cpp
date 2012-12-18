@@ -478,7 +478,7 @@ std::string
 IAXVoIPLink::getCurrentAudioCodecNames(Call *c) const
 {
     IAXCall *call = static_cast<IAXCall*>(c);
-    sfl::Codec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
+    sfl::AudioCodec *audioCodec = Manager::instance().audioCodecFactory.getCodec(call->getAudioCodec());
     return audioCodec ? audioCodec->getMimeSubtype() : "";
 }
 

@@ -49,7 +49,6 @@
 
 namespace sfl {
 class AudioCodec;
-class Codec;
 }
 
 class SdpException : public std::runtime_error {
@@ -293,7 +292,7 @@ class Sdp {
         /**
          * Codec Map used for offer
          */
-        std::vector<sfl::Codec *> audio_codec_list_;
+        std::vector<sfl::AudioCodec *> audio_codec_list_;
         std::vector<std::map<std::string, std::string> > video_codec_list_;
 
         /**

@@ -183,7 +183,7 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  */
 std::vector<int32_t> ConfigurationManager::getAudioCodecList()
 {
-    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getAudioCodecList());
+    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getCodecList());
 
     if (list.empty())
         errorAlert(CODECS_NOT_LOADED);

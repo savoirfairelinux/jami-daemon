@@ -1783,7 +1783,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
             if (ringchoice.find(".wav") != std::string::npos)
                 audiofile_.reset(new WaveFile(ringchoice, audioLayerSmplr));
             else {
-                sfl::Codec *codec;
+                sfl::AudioCodec *codec;
                 if (ringchoice.find(".ul") != std::string::npos or ringchoice.find(".au") != std::string::npos)
                     codec = audioCodecFactory.getCodec(PAYLOAD_CODEC_ULAW);
                 else

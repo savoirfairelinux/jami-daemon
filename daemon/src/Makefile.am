@@ -39,7 +39,6 @@ noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
 		global.h \
-		codec.h \
 		conference.h \
 		voiplink.h \
 		preferences.h \

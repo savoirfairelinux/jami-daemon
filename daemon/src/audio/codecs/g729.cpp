@@ -92,7 +92,7 @@ void G729::loadError(const char *error)
 }
 
 // cppcheck-suppress unusedFunction
-extern "C" sfl::Codec* CODEC_ENTRY()
+extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
 {
     try {
         return new G729;
@@ -103,7 +103,7 @@ extern "C" sfl::Codec* CODEC_ENTRY()
 }
 
 // cppcheck-suppress unusedFunction
-extern "C" void destroy(sfl::Codec* a)
+extern "C" void destroy(sfl::AudioCodec* a)
 {
     delete a;
 }
