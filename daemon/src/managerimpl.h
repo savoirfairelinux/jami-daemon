@@ -45,7 +45,7 @@
 #include <map>
 #include <tr1/memory>
 
-#include "cc_thread.h"
+#include <pthread.h>
 #include "dbus/dbusmanager.h"
 
 #include "config/sfl_config.h"
@@ -100,6 +100,7 @@ static const char * const default_conf = "conf";
 class ManagerImpl {
     public:
         ManagerImpl();
+        ~ManagerImpl();
 
         /**
          * General preferences configuration
@@ -863,7 +864,7 @@ class ManagerImpl {
         std::string currentCallId_;
 
         /** Protected current call access */
-        ost::Mutex currentCallMutex_;
+        pthread_mutex_t currentCallMutex_;
 
         /** Audio layer */
         AudioLayer* audiodriver_;
@@ -874,7 +875,7 @@ class ManagerImpl {
         /////////////////////
         // Protected by Mutex
         /////////////////////
-        ost::Mutex toneMutex_;
+        pthread_mutex_t toneMutex_;
         std::tr1::shared_ptr<TelephoneTone> telephoneTone_;
         std::tr1::shared_ptr<AudioFile> audiofile_;
 
@@ -886,7 +887,7 @@ class ManagerImpl {
         /**
          * Mutex used to protect audio layer
          */
-        ost::Mutex audioLayerMutex_;
+        pthread_mutex_t audioLayerMutex_;
 
         /**
          * Waiting Call Vectors
@@ -896,7 +897,7 @@ class ManagerImpl {
         /**
          * Protect waiting call list, access by many voip/audio threads
          */
-        ost::Mutex waitingCallMutex_;
+        pthread_mutex_t waitingCallMutex_;
 
         /**
          * Number of waiting call, synchronize with waitingcall callidvector
@@ -936,7 +937,7 @@ class ManagerImpl {
         CallAccountMap callAccountMap_;
 
         /** Mutex to lock the call account map (main thread + voiplink thread) */
-        ost::Mutex callAccountMapMutex_;
+        pthread_mutex_t callAccountMapMutex_;
 
         std::map<std::string, bool> IPToIPMap_;
 

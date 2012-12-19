@@ -70,6 +70,7 @@
 #endif
 
 #include "conference.h"
+#include "scoped_lock.h"
 
 #include <cerrno>
 #include <algorithm>
@@ -93,8 +94,21 @@ ManagerImpl::ManagerImpl() :
     callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(),
     mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
+    pthread_mutex_init(&currentCallMutex_, NULL);
+    pthread_mutex_init(&toneMutex_, NULL);
+    pthread_mutex_init(&audioLayerMutex_, NULL);
+    pthread_mutex_init(&waitingCallMutex_, NULL);
     // initialize random generator for call id
     srand(time(NULL));
+}
+
+ManagerImpl::~ManagerImpl()
+{
+    // destroy in reverse order of initialization
+    pthread_mutex_destroy(&waitingCallMutex_);
+    pthread_mutex_destroy(&audioLayerMutex_);
+    pthread_mutex_destroy(&toneMutex_);
+    pthread_mutex_destroy(&currentCallMutex_);
 }
 
 void ManagerImpl::init(const std::string &config_file)
@@ -123,10 +137,10 @@ void ManagerImpl::init(const std::string &config_file)
     initAudioDriver();
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         if (audiodriver_) {
             {
-                ost::MutexLock toneLock(toneMutex_);
+                sfl::ScopedLock toneLock(toneMutex_);
                 telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
             }
             dtmfKey_.reset(new DTMF(getMainBuffer().getInternalSamplingRate()));
@@ -171,7 +185,7 @@ void ManagerImpl::finish()
 #endif
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         delete audiodriver_;
         audiodriver_ = NULL;
@@ -203,7 +217,7 @@ void ManagerImpl::unsetCurrentCall()
 
 void ManagerImpl::switchCall(const std::string& id)
 {
-    ost::MutexLock m(currentCallMutex_);
+    sfl::ScopedLock m(currentCallMutex_);
     DEBUG("----- Switch current call id to %s -----", id.c_str());
     currentCallId_ = id;
 }
@@ -596,7 +610,7 @@ void ManagerImpl::refuseCall(const std::string& id)
     stopTone();
 
     if (getCallList().size() <= 1) {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
     }
 
@@ -849,7 +863,7 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
     }
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         ConferenceMap::const_iterator iter = conferenceMap_.find(conference_id);
 
@@ -987,7 +1001,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
 
     // set recording sampling rate
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         if (audiodriver_)
             conf->setRecordingSmplRate(audiodriver_->getSampleRate());
     }
@@ -1038,7 +1052,7 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
         dbus_.getCallManager()->conferenceCreated(conf->getConfID());
 
         {
-            ost::MutexLock lock(audioLayerMutex_);
+            sfl::ScopedLock lock(audioLayerMutex_);
 
             if (audiodriver_)
                 conf->setRecordingSmplRate(audiodriver_->getSampleRate());
@@ -1243,7 +1257,7 @@ void ManagerImpl::addStream(const std::string& call_id)
         // bind to main
         getMainBuffer().bindCallID(call_id, MainBuffer::DEFAULT_ID);
 
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
     }
@@ -1321,7 +1335,7 @@ void ManagerImpl::playDtmf(char code)
         return;
     }
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     // numbers of int = length in milliseconds / 1000 (number of seconds)
     //                = number of seconds * SAMPLING_RATE by SECONDS
@@ -1366,14 +1380,14 @@ bool ManagerImpl::incomingCallWaiting() const
 
 void ManagerImpl::addWaitingCall(const std::string& id)
 {
-    ost::MutexLock m(waitingCallMutex_);
+    sfl::ScopedLock m(waitingCallMutex_);
     waitingCall_.insert(id);
     nbIncomingWaitingCall_++;
 }
 
 void ManagerImpl::removeWaitingCall(const std::string& id)
 {
-    ost::MutexLock m(waitingCallMutex_);
+    sfl::ScopedLock m(waitingCallMutex_);
 
     if (waitingCall_.erase(id))
         nbIncomingWaitingCall_--;
@@ -1546,7 +1560,7 @@ void ManagerImpl::peerAnsweredCall(const std::string& id)
     addStream(id);
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->flushMain();
         audiodriver_->flushUrgent();
     }
@@ -1608,7 +1622,7 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
 
     if (getCallList().empty()) {
         DEBUG("Stop audio stream, there are no calls remaining");
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
     }
 }
@@ -1664,7 +1678,7 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
         return;
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (audiodriver_ == NULL) {
             ERROR("Audio layer not initialized");
@@ -1676,7 +1690,7 @@ void ManagerImpl::playATone(Tone::TONEID toneId)
     }
 
     {
-        ost::MutexLock lock(toneMutex_);
+        sfl::ScopedLock lock(toneMutex_);
         if (telephoneTone_.get() != 0)
             telephoneTone_->setCurrentTone(toneId);
     }
@@ -1690,7 +1704,7 @@ void ManagerImpl::stopTone()
     if (not voipPreferences.getPlayTones())
         return;
 
-    ost::MutexLock lock(toneMutex_);
+    sfl::ScopedLock lock(toneMutex_);
     if (telephoneTone_.get() != NULL)
         telephoneTone_->setCurrentTone(Tone::TONE_NULL);
 
@@ -1761,7 +1775,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
 
     int audioLayerSmplr = 8000;
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (!audiodriver_) {
             ERROR("no audio layer in ringtone");
@@ -1772,7 +1786,7 @@ void ManagerImpl::ringtone(const std::string& accountID)
     }
 
     {
-        ost::MutexLock m(toneMutex_);
+        sfl::ScopedLock m(toneMutex_);
 
         if (audiofile_.get()) {
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
@@ -1796,14 +1810,14 @@ void ManagerImpl::ringtone(const std::string& accountID)
         }
     } // leave mutex
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     // start audio if not started AND flush all buffers (main and urgent)
     audiodriver_->startStream();
 }
 
 AudioLoop* ManagerImpl::getTelephoneTone()
 {
-    ost::MutexLock m(toneMutex_);
+    sfl::ScopedLock m(toneMutex_);
     if (telephoneTone_.get())
         return telephoneTone_->getCurrentTone();
     else
@@ -1813,7 +1827,7 @@ AudioLoop* ManagerImpl::getTelephoneTone()
 AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
-    ost::MutexLock m(toneMutex_);
+    sfl::ScopedLock m(toneMutex_);
     return audiofile_.get();
 }
 
@@ -1898,7 +1912,7 @@ ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
  */
 void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     audioPreference.setAlsaPlugin(audioPlugin);
 
@@ -1917,7 +1931,7 @@ void ManagerImpl::setAudioPlugin(const std::string& audioPlugin)
  */
 void ManagerImpl::setAudioDevice(int index, AudioLayer::PCMType type)
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     if (!audiodriver_) {
         ERROR("Audio driver not initialized");
@@ -1940,7 +1954,7 @@ void ManagerImpl::setAudioDevice(int index, AudioLayer::PCMType type)
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     return audiodriver_->getPlaybackDeviceList();
 }
 
@@ -1950,7 +1964,7 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList()
  */
 std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     return audiodriver_->getCaptureDeviceList();
 }
 
@@ -1959,7 +1973,7 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList()
  */
 std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     std::vector<std::string> v;
 
@@ -2051,7 +2065,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
     int sampleRate;
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (!audiodriver_) {
             ERROR("No audio layer in start recorded file playback");
@@ -2062,7 +2076,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
     }
 
     {
-        ost::MutexLock m(toneMutex_);
+        sfl::ScopedLock m(toneMutex_);
 
         if (audiofile_.get()) {
             dbus_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
@@ -2077,7 +2091,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         }
     } // release toneMutex
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     audiodriver_->startStream();
 
     return true;
@@ -2085,7 +2099,7 @@ bool ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
 
 void ManagerImpl::recordingPlaybackSeek(const double value)
 {
-    ost::MutexLock m(toneMutex_);
+    sfl::ScopedLock m(toneMutex_);
     if (audiofile_.get())
         audiofile_.get()->seek(value);
 }
@@ -2096,12 +2110,12 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
     DEBUG("Stop recorded file playback %s", filepath.c_str());
 
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
         audiodriver_->stopStream();
     }
 
     {
-        ost::MutexLock m(toneMutex_);
+        sfl::ScopedLock m(toneMutex_);
         audiofile_.reset();
     }
 }
@@ -2121,7 +2135,7 @@ int ManagerImpl::getHistoryLimit() const
 void ManagerImpl::setAudioManager(const std::string &api)
 {
     {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (!audiodriver_)
             return;
@@ -2147,7 +2161,7 @@ int ManagerImpl::getAudioDeviceIndex(const std::string &name)
 {
     int soundCardIndex = 0;
 
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     if (audiodriver_ == NULL) {
         ERROR("Audio layer not initialized");
@@ -2208,13 +2222,13 @@ void ManagerImpl::setEchoCancelDelay(int delay)
  */
 void ManagerImpl::initAudioDriver()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     audiodriver_ = audioPreference.createAudioLayer();
 }
 
 void ManagerImpl::switchAudioManager()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     bool wasStarted = audiodriver_->isStarted();
     delete audiodriver_;
@@ -2226,7 +2240,7 @@ void ManagerImpl::switchAudioManager()
 
 void ManagerImpl::audioSamplingRateChanged(int samplerate)
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
 
     if (!audiodriver_) {
         DEBUG("No Audio driver initialized");
@@ -2252,7 +2266,7 @@ void ManagerImpl::audioSamplingRateChanged(int samplerate)
     unsigned int sampleRate = audiodriver_->getSampleRate();
 
     {
-        ost::MutexLock toneLock(toneMutex_);
+        sfl::ScopedLock toneLock(toneMutex_);
         telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), sampleRate));
     }
     dtmfKey_.reset(new DTMF(sampleRate));
@@ -2478,14 +2492,14 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 void ManagerImpl::associateCallToAccount(const std::string& callID,
         const std::string& accountID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     callAccountMap_[callID] = accountID;
     DEBUG("Associate Call %s with Account %s", callID.data(), accountID.data());
 }
 
 std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     CallAccountMap::iterator iter = callAccountMap_.find(callID);
 
     return (iter == callAccountMap_.end()) ? "" : iter->second;
@@ -2493,12 +2507,12 @@ std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 
 void ManagerImpl::removeCallAccount(const std::string& callID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     callAccountMap_.erase(callID);
 
     // Stop audio layer if there is no call anymore
     if (callAccountMap_.empty()) {
-        ost::MutexLock lock(audioLayerMutex_);
+        sfl::ScopedLock lock(audioLayerMutex_);
 
         if (audiodriver_)
             audiodriver_->stopStream();
@@ -2508,7 +2522,7 @@ void ManagerImpl::removeCallAccount(const std::string& callID)
 
 bool ManagerImpl::isValidCall(const std::string& callID)
 {
-    ost::MutexLock m(callAccountMapMutex_);
+    sfl::ScopedLock m(callAccountMapMutex_);
     return callAccountMap_.find(callID) != callAccountMap_.end();
 }
 
@@ -2877,6 +2891,6 @@ void ManagerImpl::clearHistory()
 
 void ManagerImpl::startAudioDriverStream()
 {
-    ost::MutexLock lock(audioLayerMutex_);
+    sfl::ScopedLock lock(audioLayerMutex_);
     audiodriver_->startStream();
 }
