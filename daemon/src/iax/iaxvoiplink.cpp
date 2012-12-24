@@ -29,6 +29,10 @@
  *  as that of the covered work.
  */
 #include "iaxvoiplink.h"
+#include <unistd.h>
+#include <cmath>
+#include <algorithm>
+
 #include "iaxcall.h"
 #include "eventthread.h"
 #include "im/instant_messaging.h"
@@ -40,9 +44,6 @@
 #include "audio/samplerateconverter.h"
 #include "array_size.h"
 #include "scoped_lock.h"
-
-#include <cmath>
-#include <algorithm>
 
 AccountMap IAXVoIPLink::iaxAccountMap_;
 IAXCallMap IAXVoIPLink::iaxCallMap_;
@@ -154,7 +155,7 @@ IAXVoIPLink::getEvent()
     sendAudioFromMic();
 
     // thread wait 3 millisecond
-    ost::Thread::sleep(3);
+    usleep(3000);
     return handlingEvents_;
 }
 
