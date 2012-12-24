@@ -32,37 +32,34 @@
 #define AUDIORECORDER_H_
 
 #include <string>
-#include "cc_thread.h"
+#include <pthread.h>
 #include "audiorecord.h"
 #include "noncopyable.h"
 
 class MainBuffer;
 
-class AudioRecorder : public ost::Thread {
+class AudioRecorder {
 
     public:
         AudioRecorder(AudioRecord  *arec, MainBuffer *mb);
-
-        ~AudioRecorder() {
-            running_ = false;
-            terminate();
-        }
-
-        static int count_;
-
+        ~AudioRecorder();
         std::string getRecorderID() const {
             return recorderId_;
         }
 
-        virtual void run();
+        void start();
 
     private:
         NON_COPYABLE(AudioRecorder);
+        void run();
+        static void * runCallback(void *data);
 
+        static int count_;
         std::string recorderId_;
         MainBuffer *mbuffer_;
         AudioRecord *arecord_;
         bool running_;
+        pthread_t thread_;
 };
 
 #endif

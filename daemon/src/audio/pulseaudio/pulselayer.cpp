@@ -38,6 +38,7 @@
 #include "audio/dcblocker.h"
 #include "logger.h"
 #include "manager.h"
+#include "cc_thread.h"
 
 #include <cstdlib>
 #include <fstream>

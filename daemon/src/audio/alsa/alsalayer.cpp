@@ -39,6 +39,7 @@
 #include "noncopyable.h"
 #include "dbus/configurationmanager.h"
 #include <ctime>
+#include "cc_thread.h"
 
 #define SFL_ALSA_PERIOD_SIZE 160
 #define SFL_ALSA_NB_PERIOD 8
