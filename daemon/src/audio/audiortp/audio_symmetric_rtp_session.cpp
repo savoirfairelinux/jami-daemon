@@ -39,31 +39,44 @@
 namespace sfl {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
-    ost::TimerPort()
-    , ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
-    , AudioRtpSession(call, *this, *this)
-    , rtpThread_(*this)
-    , audioCodecs_()
+    ost::SymmetricRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
+    , AudioRtpSession(call, *this)
+    , rtpSendThread_(*this)
 {
     DEBUG("Setting new RTP session with destination %s:%d",
             call_.getLocalIp().c_str(), call_.getLocalAudioPort());
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 
-AudioSymmetricRtpSession::~AudioSymmetricRtpSession()
-{
-    if (rtpThread_.running_) {
-        rtpThread_.running_ = false;
-        rtpThread_.join();
-    }
-}
-
-AudioSymmetricRtpSession::AudioRtpThread::AudioRtpThread(AudioSymmetricRtpSession &session) : running_(true), rtpSession_(session)
+AudioSymmetricRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioSymmetricRtpSession &session) :
+    running_(false), rtpSession_(session), thread_(0)
 {}
 
-void AudioSymmetricRtpSession::AudioRtpThread::run()
+AudioSymmetricRtpSession::AudioRtpSendThread::~AudioRtpSendThread()
 {
-    TimerPort::setTimer(rtpSession_.transportRate_);
+    running_ = false;
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void AudioSymmetricRtpSession::AudioRtpSendThread::start()
+{
+    running_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+AudioSymmetricRtpSession::AudioRtpSendThread::runCallback(void *data)
+{
+    AudioSymmetricRtpSession::AudioRtpSendThread *context = static_cast<AudioSymmetricRtpSession::AudioRtpSendThread*>(data);
+    context->run();
+    return NULL;
+}
+
+void AudioSymmetricRtpSession::AudioRtpSendThread::run()
+{
+    ost::TimerPort::setTimer(rtpSession_.transportRate_);
+    const int MS_TO_USEC = 1000;
 
     while (running_) {
         // Send session
@@ -72,20 +85,19 @@ void AudioSymmetricRtpSession::AudioRtpThread::run()
         else
             rtpSession_.sendMicData();
 
-        Thread::sleep(TimerPort::getTimer());
+        usleep(ost::TimerPort::getTimer() * MS_TO_USEC);
 
-        TimerPort::incTimer(rtpSession_.transportRate_);
+        ost::TimerPort::incTimer(rtpSession_.transportRate_);
     }
 }
 
-void AudioSymmetricRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioSymmetricRtpSession::startReceiveThread()
 {
-    DEBUG("Starting main thread");
-    if (isStarted_)
-        return;
+    ost::SymmetricRTPSession::start();
+}
 
-    audioCodecs_ = audioCodecs;
-    AudioRtpSession::startRtpThread(audioCodecs);
-    startSymmetricRtpThread();
+void AudioSymmetricRtpSession::startSendThread()
+{
+    rtpSendThread_.start();
 }
 }

@@ -40,9 +40,6 @@
 #include "noncopyable.h"
 
 class SIPCall;
-namespace ost {
-    class Thread;
-}
 
 namespace sfl {
 
@@ -54,12 +51,12 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         * Constructor
         * @param sipcall The pointer on the SIP call
         */
-        AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue, ost::Thread &thread);
+        AudioRtpSession(SIPCall &sipcall, ost::RTPDataQueue &queue);
         virtual ~AudioRtpSession();
 
         void updateSessionMedia(const std::vector<AudioCodec*> &audioCodecs);
 
-        virtual void startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
+        void startRtpThreads(const std::vector<AudioCodec*> &audioCodecs);
 
         /**
          * Used mostly when receiving a reinvite
@@ -77,6 +74,10 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         virtual std::vector<uint8> getLocalMasterSalt() const = 0;
 
     protected:
+        ost::RTPDataQueue &queue_;
+        bool isStarted_;
+
+        void prepareRtpReceiveThread(const std::vector<AudioCodec*> &audioCodecs);
         /**
          * Set the audio codec for this RTP session
          */
@@ -117,11 +118,10 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         unsigned int transportRate_;
 
-        ost::RTPDataQueue &queue_;
-
-        bool isStarted_;
     private:
         NON_COPYABLE(AudioRtpSession);
+        virtual void startReceiveThread() = 0;
+        virtual void startSendThread() = 0;
 
         /**
          * Set RTP Sockets send/receive timeouts
@@ -152,8 +152,6 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          * Timestamp reset frequency specified in number of packet sent
          */
         short timestampCount_;
-
-        ost::Thread &thread_;
 };
 
 }

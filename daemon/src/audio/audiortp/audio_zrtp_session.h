@@ -60,11 +60,6 @@ class AudioZrtpSession :
     public AudioRtpSession {
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
-        ~AudioZrtpSession();
-
-        void startZrtpThread() {
-            rtpThread_.start();
-        }
 
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
@@ -81,25 +76,28 @@ class AudioZrtpSession :
     private:
         NON_COPYABLE(AudioZrtpSession);
 
-        class AudioZrtpThread : public ost::Thread, public ost::TimerPort {
+        class AudioZrtpSendThread : public ost::TimerPort {
             public:
-                AudioZrtpThread(AudioZrtpSession &session);
-
-                virtual void run();
-
+                AudioZrtpSendThread(AudioZrtpSession &session);
+                ~AudioZrtpSendThread();
+                void start();
                 bool running_;
 
             private:
-                NON_COPYABLE(AudioZrtpThread);
+                static void *runCallback(void *data);
+                void run();
+                NON_COPYABLE(AudioZrtpSendThread);
                 AudioZrtpSession &zrtpSession_;
+                pthread_t thread_;
         };
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
-        void startRtpThread(const std::vector<AudioCodec*> &audioCodecs);
+        void startReceiveThread();
+        void startSendThread();
         virtual int getIncrementForDTMF() const;
 
-        AudioZrtpThread rtpThread_;
+        AudioZrtpSendThread rtpSendThread_;
 };
 
 }

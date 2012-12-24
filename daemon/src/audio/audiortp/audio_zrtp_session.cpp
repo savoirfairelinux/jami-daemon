@@ -48,24 +48,15 @@ namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename) :
     ost::SymmetricZRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
-    , AudioRtpSession(call, *this, *this)
+    , AudioRtpSession(call, *this)
     , zidFilename_(zidFilename)
-    , rtpThread_(*this)
+    , rtpSendThread_(*this)
 {
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
           call_.getLocalIp().c_str(), call_.getLocalAudioPort());
     audioRtpRecord_.callId_ = call_.getCallId();
 }
-
-AudioZrtpSession::~AudioZrtpSession()
-{
-    if (rtpThread_.running_) {
-        rtpThread_.running_ = false;
-        rtpThread_.join();
-    }
-}
-
 
 void AudioZrtpSession::initializeZid()
 {
@@ -121,10 +112,32 @@ void AudioZrtpSession::sendMicData()
     queue_.sendImmediate(timestamp_, getMicDataEncoded(), compSize);
 }
 
-AudioZrtpSession::AudioZrtpThread::AudioZrtpThread(AudioZrtpSession &session) : running_(true), zrtpSession_(session)
+AudioZrtpSession::AudioZrtpSendThread::AudioZrtpSendThread(AudioZrtpSession &session) :
+    running_(true), zrtpSession_(session), thread_(0)
 {}
 
-void AudioZrtpSession::AudioZrtpThread::run()
+AudioZrtpSession::AudioZrtpSendThread::~AudioZrtpSendThread()
+{
+    running_ = false;
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void
+AudioZrtpSession::AudioZrtpSendThread::start()
+{
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+AudioZrtpSession::AudioZrtpSendThread::runCallback(void *data)
+{
+    AudioZrtpSession::AudioZrtpSendThread *context = static_cast<AudioZrtpSession::AudioZrtpSendThread*>(data);
+    context->run();
+    return NULL;
+}
+
+void AudioZrtpSession::AudioZrtpSendThread::run()
 {
     DEBUG("Entering Audio zrtp thread main loop %s", running_ ? "running" : "not running");
 
@@ -150,13 +163,14 @@ int AudioZrtpSession::getIncrementForDTMF() const
     return 160;
 }
 
-void AudioZrtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioZrtpSession::startReceiveThread()
 {
-    if (isStarted_)
-        return;
+    ost::SymmetricZRTPSession::start();
+}
 
-    AudioRtpSession::startRtpThread(audioCodecs);
-    startZrtpThread();
+void AudioZrtpSession::startSendThread()
+{
+    rtpSendThread_.start();
 }
 
 }

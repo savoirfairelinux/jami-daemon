@@ -132,7 +132,7 @@ void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
     if (rtpSession_ == NULL)
         throw AudioRtpFactoryException("RTP session was null when trying to start audio thread");
 
-    rtpSession_->startRtpThread(audioCodecs);
+    rtpSession_->startRtpThreads(audioCodecs);
 }
 
 void AudioRtpFactory::stop()

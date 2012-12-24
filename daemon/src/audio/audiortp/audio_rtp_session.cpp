@@ -40,7 +40,7 @@
 #include "manager.h"
 
 namespace sfl {
-AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue, ost::Thread &thread) :
+AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     AudioRtpRecordHandler(call)
     , call_(call)
     , timestamp_(0)
@@ -51,7 +51,6 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue, ost::T
     , remote_ip_()
     , remote_port_(0)
     , timestampCount_(0)
-    , thread_(thread)
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
@@ -232,13 +231,9 @@ void AudioRtpSession::updateDestinationIpAddress()
 }
 
 
-void AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs)
+void AudioRtpSession::prepareRtpReceiveThread(const std::vector<AudioCodec*> &audioCodecs)
 {
-    if (isStarted_)
-        return;
-
-    DEBUG("Starting main thread");
-
+    DEBUG("Preparing receiving thread");
     isStarted_ = true;
     setSessionTimeouts();
     setSessionMedia(audioCodecs);
@@ -248,7 +243,6 @@ void AudioRtpSession::startRtpThread(const std::vector<AudioCodec*> &audioCodecs
 #endif
 
     queue_.enableStack();
-    thread_.start();
 }
 
 
@@ -261,6 +255,17 @@ bool AudioRtpSession::onRTPPacketRecv(ost::IncomingRTPPkt&)
 int AudioRtpSession::getIncrementForDTMF() const
 {
     return timestampIncrement_;
+}
+
+void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodecs)
+{
+    if (isStarted_)
+        return;
+
+    prepareRtpReceiveThread(audioCodecs);
+    // implemented in subclasses
+    startReceiveThread();
+    startSendThread();
 }
 
 }
