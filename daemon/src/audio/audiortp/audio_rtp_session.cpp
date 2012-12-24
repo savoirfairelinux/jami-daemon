@@ -51,6 +51,7 @@ AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     , remote_ip_()
     , remote_port_(0)
     , timestampCount_(0)
+    , rtpSendThread_(*this)
 {
     queue_.setTypeOfService(ost::RTPDataQueue::tosEnhanced);
 }
@@ -268,4 +269,52 @@ void AudioRtpSession::startRtpThreads(const std::vector<AudioCodec*> &audioCodec
     startSendThread();
 }
 
+AudioRtpSession::AudioRtpSendThread::AudioRtpSendThread(AudioRtpSession &session) :
+    running_(false), rtpSession_(session), thread_(0), timer_()
+{}
+
+AudioRtpSession::AudioRtpSendThread::~AudioRtpSendThread()
+{
+    running_ = false;
+    if (thread_)
+        pthread_join(thread_, NULL);
+}
+
+void AudioRtpSession::AudioRtpSendThread::start()
+{
+    running_ = true;
+    pthread_create(&thread_, NULL, &runCallback, this);
+}
+
+void *
+AudioRtpSession::AudioRtpSendThread::runCallback(void *data)
+{
+    AudioRtpSession::AudioRtpSendThread *context = static_cast<AudioRtpSession::AudioRtpSendThread*>(data);
+    context->run();
+    return NULL;
+}
+
+void AudioRtpSession::AudioRtpSendThread::run()
+{
+    timer_.setTimer(rtpSession_.transportRate_);
+    const int MS_TO_USEC = 1000;
+
+    while (running_) {
+        // Send session
+        if (rtpSession_.hasDTMFPending())
+            rtpSession_.sendDtmfEvent();
+        else
+            rtpSession_.sendMicData();
+
+        usleep(timer_.getTimer() * MS_TO_USEC);
+
+        timer_.incTimer(rtpSession_.transportRate_);
+    }
+}
+
+
+void AudioRtpSession::startSendThread()
+{
+    rtpSendThread_.start();
+}
 }

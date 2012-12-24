@@ -78,25 +78,7 @@ class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTP
     private:
         NON_COPYABLE(AudioSymmetricRtpSession);
 
-        class AudioRtpSendThread : public ost::TimerPort {
-            public:
-                AudioRtpSendThread(AudioSymmetricRtpSession &session);
-                ~AudioRtpSendThread();
-                void start();
-                bool running_;
-
-            private:
-                NON_COPYABLE(AudioRtpSendThread);
-                static void *runCallback(void *data);
-                void run();
-                pthread_t thread_;
-                AudioSymmetricRtpSession &rtpSession_;
-        };
-
         void startReceiveThread();
-        void startSendThread();
-
-        AudioRtpSendThread rtpSendThread_ ;
 };
 
 }

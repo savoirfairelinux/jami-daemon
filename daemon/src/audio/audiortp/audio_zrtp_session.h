@@ -42,7 +42,6 @@ using std::ptrdiff_t;
 
 #include "global.h"
 #include "audio_rtp_session.h"
-// #include <commoncpp/numbers.h> // OST::Time
 
 class SIPCall;
 class AudioCodec;
@@ -76,28 +75,11 @@ class AudioZrtpSession :
     private:
         NON_COPYABLE(AudioZrtpSession);
 
-        class AudioZrtpSendThread : public ost::TimerPort {
-            public:
-                AudioZrtpSendThread(AudioZrtpSession &session);
-                ~AudioZrtpSendThread();
-                void start();
-                bool running_;
-
-            private:
-                static void *runCallback(void *data);
-                void run();
-                NON_COPYABLE(AudioZrtpSendThread);
-                AudioZrtpSession &zrtpSession_;
-                pthread_t thread_;
-        };
         void sendMicData();
         void initializeZid();
         std::string zidFilename_;
         void startReceiveThread();
-        void startSendThread();
         virtual int getIncrementForDTMF() const;
-
-        AudioZrtpSendThread rtpSendThread_;
 };
 
 }

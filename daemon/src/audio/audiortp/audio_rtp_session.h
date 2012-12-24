@@ -86,19 +86,6 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
 
-        /**
-         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
-         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
-         * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
-         * back the codec payload for further audio processing.
-         */
-        void sendDtmfEvent();
-
-        /**
-         * Send encoded data to peer
-         */
-        virtual void sendMicData();
-
         SIPCall &call_;
 
         /**
@@ -121,7 +108,37 @@ class AudioRtpSession : public AudioRtpRecordHandler {
     private:
         NON_COPYABLE(AudioRtpSession);
         virtual void startReceiveThread() = 0;
-        virtual void startSendThread() = 0;
+        void startSendThread();
+
+        /**
+         * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
+         * incremented as if it was microphone audio. This function change the payload type of the rtp session,
+         * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
+         * back the codec payload for further audio processing.
+         */
+        void sendDtmfEvent();
+
+        /**
+         * Send encoded data to peer
+         */
+        virtual void sendMicData();
+
+
+        class AudioRtpSendThread {
+            public:
+                AudioRtpSendThread(AudioRtpSession &session);
+                ~AudioRtpSendThread();
+                void start();
+                bool running_;
+
+            private:
+                static void *runCallback(void *data);
+                void run();
+                NON_COPYABLE(AudioRtpSendThread);
+                AudioRtpSession &rtpSession_;
+                pthread_t thread_;
+                ost::TimerPort timer_;
+        };
 
         /**
          * Set RTP Sockets send/receive timeouts
@@ -152,6 +169,8 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          * Timestamp reset frequency specified in number of packet sent
          */
         short timestampCount_;
+
+        AudioRtpSendThread rtpSendThread_;
 };
 
 }

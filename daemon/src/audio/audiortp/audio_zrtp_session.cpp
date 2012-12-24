@@ -50,7 +50,6 @@ AudioZrtpSession::AudioZrtpSession(SIPCall &call, const std::string &zidFilename
     ost::SymmetricZRTPSession(ost::InetHostAddress(call.getLocalIp().c_str()), call.getLocalAudioPort())
     , AudioRtpSession(call, *this)
     , zidFilename_(zidFilename)
-    , rtpSendThread_(*this)
 {
     initializeZid();
     DEBUG("Setting new RTP session with destination %s:%d",
@@ -112,52 +111,6 @@ void AudioZrtpSession::sendMicData()
     queue_.sendImmediate(timestamp_, getMicDataEncoded(), compSize);
 }
 
-AudioZrtpSession::AudioZrtpSendThread::AudioZrtpSendThread(AudioZrtpSession &session) :
-    running_(true), zrtpSession_(session), thread_(0)
-{}
-
-AudioZrtpSession::AudioZrtpSendThread::~AudioZrtpSendThread()
-{
-    running_ = false;
-    if (thread_)
-        pthread_join(thread_, NULL);
-}
-
-void
-AudioZrtpSession::AudioZrtpSendThread::start()
-{
-    pthread_create(&thread_, NULL, &runCallback, this);
-}
-
-void *
-AudioZrtpSession::AudioZrtpSendThread::runCallback(void *data)
-{
-    AudioZrtpSession::AudioZrtpSendThread *context = static_cast<AudioZrtpSession::AudioZrtpSendThread*>(data);
-    context->run();
-    return NULL;
-}
-
-void AudioZrtpSession::AudioZrtpSendThread::run()
-{
-    DEBUG("Entering Audio zrtp thread main loop %s", running_ ? "running" : "not running");
-
-    TimerPort::setTimer(zrtpSession_.transportRate_);
-
-    while (running_) {
-        // Send session
-        if (zrtpSession_.hasDTMFPending())
-            zrtpSession_.sendDtmfEvent();
-        else
-            zrtpSession_.sendMicData();
-
-        Thread::sleep(TimerPort::getTimer());
-
-        TimerPort::incTimer(zrtpSession_.transportRate_);
-    }
-
-    DEBUG("Leaving audio rtp thread loop");
-}
-
 int AudioZrtpSession::getIncrementForDTMF() const
 {
     return 160;
@@ -166,11 +119,6 @@ int AudioZrtpSession::getIncrementForDTMF() const
 void AudioZrtpSession::startReceiveThread()
 {
     ost::SymmetricZRTPSession::start();
-}
-
-void AudioZrtpSession::startSendThread()
-{
-    rtpSendThread_.start();
 }
 
 }
