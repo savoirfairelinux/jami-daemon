@@ -38,7 +38,6 @@
 #include "audio/dcblocker.h"
 #include "logger.h"
 #include "manager.h"
-#include "cc_thread.h"
 
 #include <cstdlib>
 #include <fstream>
@@ -252,7 +251,7 @@ std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
 void PulseLayer::createStreams(pa_context* c)
 {
     while (enumeratingSinks_ or enumeratingSources_)
-        ost::Thread::sleep(20 /* ms */);
+        usleep(20000); // 20 ms
 
     std::string playbackDevice(preference_.getPulseDevicePlayback());
     std::string captureDevice(preference_.getPulseDeviceRecord());
