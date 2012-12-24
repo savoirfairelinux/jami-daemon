@@ -347,7 +347,7 @@ VideoSendThread::VideoSendThread(const std::string &id, const std::map<string, s
     interruptCb_(),
     threadRunning_(false),
     forceKeyFrame_(0),
-    thread_(),
+    thread_(0),
     frameNumber_(0)
 {
     interruptCb_.callback = interruptCb;
@@ -562,7 +562,8 @@ VideoSendThread::~VideoSendThread()
 {
     set_false_atomic(&threadRunning_);
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
-    pthread_join(thread_, NULL);
+    if (thread_)
+        pthread_join(thread_, NULL);
 }
 
 void VideoSendThread::forceKeyFrame()

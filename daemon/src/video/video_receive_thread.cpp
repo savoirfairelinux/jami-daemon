@@ -223,7 +223,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string &id, const std::map<str
     avioContext_(avio_alloc_context(sdpBuffer_.get(), SDP_BUFFER_SIZE, 0,
                                     reinterpret_cast<void*>(static_cast<std::istream*>(&stream_)),
                                     &readFunction, 0, 0), &av_free),
-    thread_()
+    thread_(0)
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
@@ -347,7 +347,8 @@ VideoReceiveThread::~VideoReceiveThread()
     set_false_atomic(&threadRunning_);
     Manager::instance().getVideoControls()->stoppedDecoding(id_, sink_.openedName());
     // waits for the run() method (in separate thread) to return
-    pthread_join(thread_, NULL);
+    if (thread_)
+        pthread_join(thread_, NULL);
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(void (*cb)(const std::string &))

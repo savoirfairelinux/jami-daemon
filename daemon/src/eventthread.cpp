@@ -31,12 +31,13 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
-EventThread::EventThread(VoIPLink *link) : link_(link)
+EventThread::EventThread(VoIPLink *link) : link_(link), thread_(0)
 {}
 
 EventThread::~EventThread()
 {
-    pthread_join(thread_, NULL);
+    if (thread_)
+        pthread_join(thread_, NULL);
 }
 
 void EventThread::start()
