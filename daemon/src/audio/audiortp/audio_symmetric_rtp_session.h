@@ -53,7 +53,7 @@ class SIPCall;
 
 namespace sfl {
 
-class AudioSymmetricRtpSession : public ost::TimerPort, public ost::SymmetricRTPSession, public AudioRtpSession {
+class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession {
     public:
         /**
         * Constructor

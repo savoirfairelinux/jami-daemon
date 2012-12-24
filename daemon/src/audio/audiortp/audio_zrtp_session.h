@@ -50,8 +50,8 @@ namespace sfl {
 
 class ZrtpZidException : public std::runtime_error {
     public:
-        ZrtpZidException(const std::string& str = "") :
-            std::runtime_error("ZRTP ZID initialization failed." + str) {}
+        ZrtpZidException(const char *str):
+            std::runtime_error(str) {}
 };
 
 class AudioZrtpSession :

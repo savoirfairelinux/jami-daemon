@@ -73,8 +73,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         virtual std::vector<uint8> getLocalMasterSalt() const = 0;
 
-    protected:
-        ost::RTPDataQueue &queue_;
+    private:
         bool isStarted_;
 
         void prepareRtpReceiveThread(const std::vector<AudioCodec*> &audioCodecs);
@@ -83,9 +82,10 @@ class AudioRtpSession : public AudioRtpRecordHandler {
          */
         void setSessionMedia(const std::vector<AudioCodec*> &codec);
 
-
+    protected:
         bool onRTPPacketRecv(ost::IncomingRTPPkt&);
 
+        ost::RTPDataQueue &queue_;
         SIPCall &call_;
 
         /**
@@ -106,6 +106,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
         unsigned int transportRate_;
 
     private:
+
         NON_COPYABLE(AudioRtpSession);
         virtual void startReceiveThread() = 0;
         void startSendThread();
