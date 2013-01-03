@@ -59,7 +59,7 @@ class AudioCodec {
 
         virtual ~AudioCodec() {};
 
-        virtual std::string getMimeSubtype() const;
+        std::string getMimeSubtype() const;
 
         /**
          * Decode an input buffer and fill the output buffer with the decoded data
@@ -75,7 +75,7 @@ class AudioCodec {
          */
         virtual int encode(unsigned char *dst, short *src, size_t buffer_size) = 0;
 
-        virtual uint8 getPayloadType() const;
+        uint8 getPayloadType() const;
 
         void setPayloadType(uint8 pt) {
             payload_ = pt;
@@ -86,9 +86,9 @@ class AudioCodec {
          */
         bool hasDynamicPayload() const;
 
-        virtual uint32 getClockRate() const;
+        uint32 getClockRate() const;
 
-        virtual double getBitRate() const;
+        double getBitRate() const;
 
         /**
          * @return the framing size for this codec.
