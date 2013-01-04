@@ -164,10 +164,16 @@ get_dir_name() {
         sflphone-common)
         echo daemon
         ;;
+        sflphone-common-video)
+        echo daemon
+        ;;
         sflphone-plugins)
         echo plugins
         ;;
         sflphone-client-gnome)
+        echo gnome
+        ;;
+        sflphone-client-gnome-video)
         echo gnome
         ;;
         sflphone-client-kde)
