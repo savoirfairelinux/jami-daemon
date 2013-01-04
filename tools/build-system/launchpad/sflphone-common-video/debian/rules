@@ -22,7 +22,7 @@ configure-stamp:
 	# Add here commands to configure the package.
 	./autogen.sh
 	./configure --prefix=/usr --enable-video
-	cd libs/pjproject-2.0.1; CFLAGS=-fPIC ./configure
+	cd libs/pjproject-2.0.1; CFLAGS=-fPIC ./configure --disable-sound --disable-video
 	touch configure-stamp
 
 #Architecture
