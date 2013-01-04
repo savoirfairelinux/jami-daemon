@@ -14,7 +14,7 @@ package=sflphone-client-gnome-video
 
 CXX = g++-4.0
 CFLAGS = -Wall -g
-DEB_INSTALL_MANPAGES_sflphone_client_gnome_video = sflphone.1 sflphone-client-gnome.1
+DEB_INSTALL_MANPAGES_sflphone_client_gnome_video = sflphone.1 sflphone-client-gnome-video.1
 
 configure: configure-stamp
 configure-stamp:
