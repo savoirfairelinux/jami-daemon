@@ -93,7 +93,7 @@ binary-common:
 #	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-	dh_installman
+#	dh_installman
 	dh_link
 	dh_strip
 	dh_compress

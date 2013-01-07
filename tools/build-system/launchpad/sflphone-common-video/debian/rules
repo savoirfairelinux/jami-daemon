@@ -70,7 +70,7 @@ binary-common:
 	dh_installchangelogs ChangeLog
 	dh_installdocs
 	dh_installexamples
-	dh_installman
+#	dh_installman
 	dh_link
 	dh_compress
 	dh_fixperms
