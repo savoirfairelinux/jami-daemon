@@ -2,7 +2,7 @@ Source: sflphone-client-kde
 Section: kde
 Priority: optional
 Maintainer: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
-Build-Depends: debhelper (>= 5.0), cdbs, kdelibs5-dev, cmake, kdepimlibs5-dev, libboost-dev,
+Build-Depends: debhelper (>= 5.0), cdbs, kdelibs5-dev, cmake, kdepimlibs5-dev, libboost-dev, libx11-dev,
 Homepage: http://www.sfphone.org/
 
 Package: sflphone-client-kde
