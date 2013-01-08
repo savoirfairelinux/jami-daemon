@@ -24,7 +24,8 @@ SNAPSHOT_TAG=`date +%Y%m%d`
 TAG_NAME_PREFIX=
 VERSION_NUMBER="1.2.1"
 
-LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins" "sflphone-common-video" "sflphone-client-gnome-video")
+# LAUNCHPAD_PACKAGES=("sflphone-common" "sflphone-client-kde" "sflphone-client-gnome" "sflphone-plugins" "sflphone-common-video" "sflphone-client-gnome-video")
+LAUNCHPAD_PACKAGES=("sflphone-common-video" "sflphone-client-gnome-video")
 # LAUNCHPAD_PACKAGES=("sflphone-client-kde")
 
 echo
