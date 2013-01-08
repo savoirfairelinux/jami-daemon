@@ -1982,7 +1982,10 @@ void processRegistrationError(SIPAccount &account, RegistrationState state)
     account.stopKeepAliveTimer();
     account.setRegistrationState(state);
     account.setRegister(false);
-    SIPVoIPLink::instance()->sipTransport.shutdownSipTransport(account);
+    SIPVoIPLink::instance()->sipTransport.shutdownSTUNResolver(account);
+    // DON'T decrement reference count since we're in an error state, PJSIP
+    // will destroy it automatically
+    account.transport_ = NULL;
 }
 
 void registration_cb(pjsip_regc_cbparam *param)
@@ -2031,7 +2034,7 @@ void registration_cb(pjsip_regc_cbparam *param)
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE: // 503
                 FAILURE_MESSAGE();
-                processRegistrationError(*account, ERROR_HOST);
+                processRegistrationError(*account, ERROR_SERVICE_UNAVAILABLE);
                 break;
             case PJSIP_SC_UNAUTHORIZED: // 401
                 // Automatically answered by PJSIP

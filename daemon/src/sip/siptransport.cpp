@@ -313,9 +313,10 @@ SipTransport::createTlsTransport(SIPAccount &account)
 
     DEBUG("Get new tls transport from transport manager");
     pjsip_transport *transport = NULL;
-    pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
+    pj_status_t status = pjsip_endpt_acquire_transport(endpt_, PJSIP_TRANSPORT_TLS, &rem_addr,
                                   sizeof rem_addr, NULL, &transport);
-    RETURN_IF_FAIL(transport != NULL, NULL, "Could not create new TLS transport");
+    RETURN_IF_FAIL(transport != NULL and status == PJ_SUCCESS, NULL,
+                   "Could not create new TLS transport");
     return transport;
 }
 #endif
@@ -506,14 +507,18 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 #undef RETURN_IF_STUN_FAIL
 }
 
-void SipTransport::shutdownSipTransport(SIPAccount &account)
+void SipTransport::shutdownSTUNResolver(SIPAccount &account)
 {
     if (account.isStunEnabled()) {
         pj_str_t stunServerName = account.getStunServerName();
         std::string server(stunServerName.ptr, stunServerName.slen);
         destroyStunResolver(server);
     }
+}
 
+void SipTransport::shutdownSipTransport(SIPAccount &account)
+{
+    shutdownSTUNResolver(account);
     if (account.transport_) {
         pjsip_transport_dec_ref(account.transport_);
         account.transport_ = NULL;

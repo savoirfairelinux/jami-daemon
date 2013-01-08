@@ -55,6 +55,8 @@ typedef enum {
     ACCOUNT_STATE_ERROR_NETWORK,
     /** Host is unreachable. The account is not registered */
     ACCOUNT_STATE_ERROR_HOST,
+    /** Host does not support requested service (e.g. TLS). The account is not registered */
+    ACCOUNT_STATE_ERROR_SERVICE_UNAVAILABLE,
     /** Stun server is not existing. The account is not registered */
     ACCOUNT_STATE_ERROR_EXIST_STUN,
     /** Stun server configuration error. The account is not registered */

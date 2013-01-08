@@ -167,6 +167,8 @@ const gchar * account_state_name(account_state_t s)
             return _("Network unreachable");
         case ACCOUNT_STATE_ERROR_HOST:
             return _("Host unreachable");
+        case ACCOUNT_STATE_ERROR_SERVICE_UNAVAILABLE:
+            return _("Service unavailable");
         case ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE:
             return _("Not acceptable");
         case ACCOUNT_STATE_ERROR_EXIST_STUN:

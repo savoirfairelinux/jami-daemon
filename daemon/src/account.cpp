@@ -214,7 +214,7 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
 
 string Account::mapStateNumberToString(RegistrationState state)
 {
-    static const char * mapStateToChar[] = {
+    static const char * mapStateToChar[NUMBER_OF_STATES] = {
         "UNREGISTERED",
         "TRYING",
         "REGISTERED",
@@ -222,8 +222,9 @@ string Account::mapStateNumberToString(RegistrationState state)
         "ERRORAUTH",
         "ERRORNETWORK",
         "ERRORHOST",
+        "ERRORSERVICEUNAVAILABLE",
         "ERROREXISTSTUN",
-        "ERRORCONFSTUN"
+        "ERRORNOTACCEPTABLE",
     };
 
     if (state > NUMBER_OF_STATES)
