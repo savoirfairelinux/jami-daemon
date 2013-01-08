@@ -9,7 +9,7 @@ Package: sflphone-client-gnome-video
 Priority: optional
 Architecture: any
 Depends: sflphone-common-video (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
-Replaces: sflphone-client-gnome
+Replaces: sflphone
 Conflicts: sflphone-client-gnome
 Homepage: http://www.sflphone.org
 Description: GNOME client for SFLphone, with video support

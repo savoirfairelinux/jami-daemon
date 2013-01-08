@@ -10,7 +10,7 @@ Priority: optional
 Architecture: any
 Depends: sflphone-common (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
 Replaces: sflphone
-Conflicts: sflphone
+Conflicts: sflphone-client-gnome-video
 Homepage: http://www.sflphone.org
 Description: GNOME client for SFLphone
  Provide a GNOME client for SFLphone.
