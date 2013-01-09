@@ -38,10 +38,9 @@ AS_IF([test "x$enable_video" = "xyes"], [
 
 AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 
-# Check for gtk+-3.0, otherwise check for gtk+-2.0 (and gthread)
+# Check for gtk+-3.0
 PKG_CHECK_MODULES(GTK, gtk+-3.0, [AC_MSG_NOTICE(Using gtk+-3.0)],
-        [PKG_CHECK_MODULES(GTK, gtk+-2.0, [PKG_CHECK_MODULES(GTHREAD, gthread-2.0)],
-            [AC_MSG_ERROR(gtk-2 not found)])])
+                                 [AC_MSG_ERROR(gtk+-3.0 not found)])
 
 AC_SUBST([GETTEXT_PACKAGE], [$PACKAGE_TARNAME])
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [GETTEXT package name])

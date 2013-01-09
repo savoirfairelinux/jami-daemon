@@ -79,12 +79,6 @@ main(int argc, char *argv[])
      * versions of GLib. */
     update_schema_dir(argv[0]);
 
-#if !GTK_CHECK_VERSION(2,32,0)
-    g_thread_init(NULL);
-    gdk_threads_init();
-    gdk_threads_enter();
-#endif
-
     // Start GTK application
     gtk_init(&argc, &argv);
 
@@ -133,7 +127,7 @@ main(int argc, char *argv[])
         gtk_widget_destroy(dialog);
 
         g_error_free(error);
-        goto OUT;
+        return 1;
     }
 
     const gboolean show_status = g_settings_get_boolean(settings, "show-status-icon");
@@ -160,12 +154,7 @@ main(int argc, char *argv[])
 
     g_object_unref(settings);
 
-OUT:
-#if !GTK_CHECK_VERSION(2,32,0)
-    gdk_threads_leave();
-#endif
-
-    return error != NULL;
+    return 0;
 }
 
 /** @mainpage SFLphone GTK+ Client Documentation

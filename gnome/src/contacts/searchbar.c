@@ -32,7 +32,6 @@
  */
 
 #include <glib/gi18n.h>
-#include "gtk2_wrappers.h"
 #include "searchbar.h"
 #include "calltree.h"
 #include "calltab.h"
@@ -47,7 +46,6 @@
 static GtkWidget * searchbox;
 static GtkWidget * addressbookentry;
 static SearchType HistorySearchType;
-
 
 static GtkWidget * cbox;
 static GtkListStore * liststore;

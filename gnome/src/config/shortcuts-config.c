@@ -28,7 +28,6 @@
  *  as that of the covered work.
  */
 
-#include "gtk2_wrappers.h"
 #include <glib/gi18n.h>
 #include <gdk/gdk.h>
 #include <X11/XKBlib.h>

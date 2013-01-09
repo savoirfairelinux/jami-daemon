@@ -34,7 +34,6 @@
 #include "config.h"
 #endif
 
-#include "gtk2_wrappers.h"
 #include "account_schema.h"
 #include "actions.h"
 #include "dbus.h"

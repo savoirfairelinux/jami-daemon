@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 
-#include "gtk2_wrappers.h"
 #include "unused.h"
 #include "dbus.h"
 #include "calltab.h"

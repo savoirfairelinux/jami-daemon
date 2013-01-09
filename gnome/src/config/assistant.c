@@ -30,7 +30,6 @@
 
 #include <string.h>
 #include <glib/gi18n.h>
-#include "gtk2_wrappers.h"
 #include "unused.h"
 #include "assistant.h"
 #include "logger.h"

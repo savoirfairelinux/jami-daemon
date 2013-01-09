@@ -30,7 +30,6 @@
 
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
-#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "codeclist.h"
 #include "sflphone_const.h"

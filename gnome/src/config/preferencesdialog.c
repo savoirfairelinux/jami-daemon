@@ -43,7 +43,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "gtk2_wrappers.h"
 #include "dbus.h"
 #include "logger.h"
 #include "statusicon.h"

@@ -35,12 +35,8 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
-/* Backward compatibility for gtk < 2.22.0 */
-#if GTK_CHECK_VERSION(2,22,0)
+// FIXME: use newer keysyms names
 #include <gdk/gdkkeysyms-compat.h>
-#else
-#include <gdk/gdkkeysyms.h>
-#endif
 
 #include "str_utils.h"
 #include "uimanager.h"

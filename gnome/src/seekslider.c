@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <string.h>
-#include "gtk2_wrappers.h"
 #include "seekslider.h"
 #include "dbus.h"
 #include "logger.h"

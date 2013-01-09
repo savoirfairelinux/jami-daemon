@@ -40,7 +40,6 @@
 #include "utils.h"
 #include "unused.h"
 #include "logger.h"
-#include "gtk2_wrappers.h"
 #include <glib/gi18n.h>
 #include <string.h>
 

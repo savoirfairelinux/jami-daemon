@@ -29,7 +29,6 @@
  */
 
 #include "tlsadvanceddialog.h"
-#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "account_schema.h"
 #include "mainwindow.h"

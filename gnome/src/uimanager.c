@@ -32,7 +32,6 @@
 #include "config.h"
 #endif
 
-#include "gtk2_wrappers.h"
 #include "str_utils.h"
 #include "preferencesdialog.h"
 #include "logger.h"

@@ -31,7 +31,6 @@
 
 #include "../dbus/dbus.h"
 #include <glib.h>
-#include "gtk2_wrappers.h"
 #include "logger.h"
 #include "../mainwindow.h"
 #include <string.h>
