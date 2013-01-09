@@ -122,30 +122,39 @@ IAXVoIPLink::terminate()
 bool
 IAXVoIPLink::getEvent()
 {
+    iax_event *event = NULL;
+
     {
         sfl::ScopedLock lock(mutexIAX_);
-        iax_event *event;
+        event = iax_get_event(0);
+    }
 
-        while ((event = iax_get_event(0)) != NULL) {
+    while (event != NULL) {
 
-            // If we received an 'ACK', libiax2 tells apps to ignore them.
-            if (event->etype == IAX_EVENT_NULL) {
-                iax_event_free(event);
-                continue;
-            }
-
-            IAXCall *call = iaxFindCallBySession(event->session);
-
-            if (call) {
-                iaxHandleCallEvent(event, call);
-            }
-            else if (event->session && event->session == regSession_) {
-                iaxHandleRegReply(event);   // This is a registration session, deal with it
-            }
-            else // We've got an event before it's associated with any call
-                iaxHandlePrecallEvent(event);
-
+        // If we received an 'ACK', libiax2 tells apps to ignore them.
+        if (event->etype == IAX_EVENT_NULL) {
+            sfl::ScopedLock lock(mutexIAX_);
             iax_event_free(event);
+            event = iax_get_event(0);
+            continue;
+        }
+
+        IAXCall *call = iaxFindCallBySession(event->session);
+
+        if (call) {
+            iaxHandleCallEvent(event, call);
+        } else if (event->session && event->session == regSession_) {
+            // This is a registration session, deal with it
+            iaxHandleRegReply(event);
+        } else {
+            // We've got an event before it's associated with any call
+            iaxHandlePrecallEvent(event);
+        }
+
+        {
+            sfl::ScopedLock lock(mutexIAX_);
+            iax_event_free(event);
+            event = iax_get_event(0);
         }
     }
 
@@ -665,9 +674,11 @@ void IAXVoIPLink::iaxHandleRegReply(iax_event* event)
     if (event->etype != IAX_EVENT_REGREJ && event->etype != IAX_EVENT_REGACK)
         return;
 
-    sfl::ScopedLock m(mutexIAX_);
-    iax_destroy(regSession_);
-    regSession_ = NULL;
+    {
+        sfl::ScopedLock m(mutexIAX_);
+        iax_destroy(regSession_);
+        regSession_ = NULL;
+    }
 
     account->setRegistrationState((event->etype == IAX_EVENT_REGREJ) ? ERROR_AUTH : REGISTERED);
 
