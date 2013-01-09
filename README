@@ -7,6 +7,7 @@ Tree information:
  * daemon: contains the core application code. This code is mandatory to run the softphone. It may be considered as the core as it implements all the logic (audio layer, communication layer, account management, codecs management, dbus services).
  * gnome: contains the GTK+ client for SFLphone. It will connect and communicate to the core application through D-Bus.
  * tools: scripts
+ * sflphone-kde:  git clone git://anongit.kde.org/sflphone-kde
 
 
  Please refer to the INSTALL file or our development website (http://projects.savoirfairelinux.net/projects/show/sflphone) for installation guide.
