@@ -159,6 +159,7 @@ std::map<std::string, std::string> ConfigurationManager::getAccountTemplate()
    accTemplate[ CONFIG_PUBLISHED_SAMEAS_LOCAL      ] = CONFIG_DEFAULT_PUBLISHED_SAMEAS_LOCAL;
    accTemplate[ CONFIG_INTERFACE                   ] = CONFIG_DEFAULT_INTERFACE;
    accTemplate[ CONFIG_ACCOUNT_REGISTRATION_EXPIRE ] = CONFIG_DEFAULT_REGISTRATION_EXPIRE;
+   accTemplate[ CONFIG_RINGTONE_ENABLED            ] = CONFIG_DEFAULT_RINGTONE_ENABLED;
    return accTemplate;
 }
 
