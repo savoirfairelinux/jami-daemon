@@ -37,8 +37,8 @@
 #include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
 
 /* bump when codec binary interface changes */
-#define AUDIO_CODEC_ENTRY create_1_2_1
-#define AUDIO_CODEC_ENTRY_SYMBOL "create_1_2_1"
+#define AUDIO_CODEC_ENTRY create_1_2_2
+#define AUDIO_CODEC_ENTRY_SYMBOL "create_1_2_2"
 
 // We assume all decoders will be fed 20ms of audio or less
 // And we'll resample them to 44.1kHz or less
