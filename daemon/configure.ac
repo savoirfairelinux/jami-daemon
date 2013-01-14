@@ -272,9 +272,17 @@ AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then ec
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
 
 
-dnl iLBC is default-enabled, since it's included
-AC_ARG_ENABLE([ilbc], AS_HELP_STRING([--disable-ilbc], [Disable iLBC codec]))
-AM_CONDITIONAL(BUILD_ILBC, test "x$enable_ilbc" != "xno")
+dnl iLBC is enabled if it's installed
+AC_ARG_WITH([with-libilbc],
+  [AS_HELP_STRING([--with-libilbc],
+    [support ilbc audio @<:@default=check@:>@])],
+  [],
+  [with_libilbc=check])
+AS_CASE(["$with_libilbc"],
+  [yes], [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1])],
+  [no], [],
+  [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1], [HAVE_LIBILBC=0])])
+AM_CONDITIONAL([BUILD_ILBC], [test "$with_libilbc" != no -a "$HAVE_LIBILBC" -eq 1])
 
 
 # IAX
