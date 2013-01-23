@@ -149,7 +149,8 @@ int main(int argc, char *argv [])
     if (parse_args(argc, argv))
         return 0;
 
-    if (!fileutils::create_pidfile())
+    fileutils::FileHandle f(fileutils::create_pidfile());
+    if (f.fd == -1)
         return 1;
 
     try {

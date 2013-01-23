@@ -39,7 +39,7 @@
 #define XDG_CONFIG_HOME         (PROTECTED_GETENV("XDG_CONFIG_HOME"))
 #define XDG_CACHE_HOME          (PROTECTED_GETENV("XDG_CACHE_HOME"))
 
-#define PIDFILE "sfl.pid"
+#define PIDFILE ".sfl.pid"
 
 
 #define DIR_SEPARATOR_STR "/"   // Directory separator char
@@ -50,8 +50,14 @@ namespace fileutils {
     void set_program_dir(char *program_path);
     const char *get_program_dir();
     const char *get_data_dir();
-    bool create_pidfile();
     bool isDirectoryWritable(const std::string &directory);
+    struct FileHandle {
+        int fd;
+        const std::string name;
+        FileHandle(const std::string &name);
+        ~FileHandle();
+    };
+    FileHandle create_pidfile();
 }
 
 #endif	// FILEUTILS_H_
