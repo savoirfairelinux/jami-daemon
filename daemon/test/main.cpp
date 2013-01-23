@@ -65,8 +65,11 @@ int main(int argc, char* argv[])
     printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
     Logger::setConsoleLog(true);
     Logger::setDebugMode(true);
-    if (!fileutils::create_pidfile())
+    fileutils::FileHandle f(fileutils::create_pidfile());
+    if (f.fd == -1) {
+        fprintf(stderr, "An sflphoned instance is already running, quitting...\n");
         return 1;
+    }
 
     int argvIndex = 1;
     bool xmlOutput = false;
