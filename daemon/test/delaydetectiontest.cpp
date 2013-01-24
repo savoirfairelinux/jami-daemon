@@ -30,7 +30,6 @@
 
 
 #include "delaydetectiontest.h"
-#include <cstring>
 #include "array_size.h"
 
 void DelayDetectionTest::testCrossCorrelation()
@@ -91,15 +90,13 @@ void DelayDetectionTest::testFirFilter()
         0.0702427, -0.0084497, -0.02274943, -0.0758545, 0.06278034};
     const std::vector<double> irb(bandpassCoefs, bandpassCoefs + ARRAYSIZE(bandpassCoefs));
 
-    float impulse[100];
-    memset(impulse, 0, sizeof(impulse))
+    float impulse[100] = {0};
     impulse[0] = 1.0;
 
     FirFilter decimationFilter_(ird);
     FirFilter bandpassFilter_(irb);
 
-    float impulseresponse[100];
-    memset(impulseresponse, 0, sizeof impulseresponse);
+    float impulseresponse[100] = {0};
 
     // compute impulse response
     for (int i = 0; i < ARRAYSIZE(impulse); i++)
@@ -178,13 +175,11 @@ void DelayDetectionTest::testDownSamplingData()
 
 void DelayDetectionTest::testDelayDetection()
 {
-    SFLDataFormat spkr[WINDOW_SIZE];
-    memset(spkr, 0, sizeof spkr);
+    SFLDataFormat spkr[WINDOW_SIZE] = {0};
     for (size_t i = 0; i < 5; ++i)
         spkr[i] = 32000;
 
-    SFLDataFormat mic[DELAY_BUFF_SIZE];
-    memset(mic, 0, sizeof mic);
+    SFLDataFormat mic[DELAY_BUFF_SIZE] = {0};
     for (size_t delay = 100; delay < 105; ++delay)
         mic[delay] = 32000;
 
