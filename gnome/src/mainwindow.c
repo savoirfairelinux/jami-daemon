@@ -64,7 +64,6 @@
 /** Local variables */
 static GtkUIManager *ui_manager;
 static GtkAccelGroup *accelGroup;
-static GtkWidget *window;
 static GtkWidget *subvbox;
 static GtkWidget *vbox;
 static GtkWidget *dialpad;
@@ -95,29 +94,29 @@ focus_on_searchbar_in()
  * Save the vpaned size
  */
 static void
-on_messaging_paned_position_change(GtkPaned* paned, GtkScrollType scroll_type UNUSED, GSettings *settings)
+on_messaging_paned_position_change(GtkPaned* paned, GtkScrollType scroll_type UNUSED, SFLPhoneClient *client)
 {
     const gint height = gtk_paned_get_position(paned);
-    g_settings_set_int(settings, "message-tab-height", height);
-    set_message_tab_height(paned,height);
+    g_settings_set_int(client->settings, "message-tab-height", height);
+    set_message_tab_height(paned, height);
 }
 
 /**
  * Handle main window resizing
  */
-static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *event, GSettings *settings)
+static gboolean window_configure_cb(GtkWidget *win, GdkEventConfigure *event, SFLPhoneClient *client)
 {
-    g_settings_set_int(settings, "window-width", event->width);
-    g_settings_set_int(settings, "window-height", event->height);
+    g_settings_set_int(client->settings, "window-width", event->width);
+    g_settings_set_int(client->settings, "window-height", event->height);
 
     gint height = 0;
     gint width  = 0;
     gtk_widget_get_size_request(get_tab_box(),&width,&height);
 
     gint pos_x, pos_y;
-    gtk_window_get_position(GTK_WINDOW(window), &pos_x, &pos_y);
-    g_settings_set_int(settings, "window-position-x", pos_x);
-    g_settings_set_int(settings, "window-position-y", pos_y);
+    gtk_window_get_position(GTK_WINDOW(win), &pos_x, &pos_y);
+    g_settings_set_int(client->settings, "window-position-x", pos_x);
+    g_settings_set_int(client->settings, "window-position-y", pos_y);
 
     return FALSE;
 }
@@ -126,15 +125,15 @@ static gboolean window_configure_cb(GtkWidget *win UNUSED, GdkEventConfigure *ev
  * Minimize the main window.
  */
 static gboolean
-on_delete(GtkWidget * widget UNUSED)
+on_delete(SFLPhoneClient *client)
 {
-    sflphone_quit(FALSE);
+    sflphone_quit(FALSE, client);
     return TRUE;
 }
 
 /** Ask the user if he wants to hangup current calls */
 gboolean
-main_window_ask_quit()
+main_window_ask_quit(SFLPhoneClient *client)
 {
     gchar * question;
 
@@ -144,7 +143,7 @@ main_window_ask_quit()
         question = _("There are calls in progress.");
     DEBUG("Currently %d calls in progress", calllist_get_size(current_calls_tab));
 
-    GtkWidget *dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(window),
+    GtkWidget *dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(client->win),
                         GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s\n%s",
                         question, _("Do you still want to quit?"));
 
@@ -156,7 +155,7 @@ main_window_ask_quit()
 }
 
 static gboolean
-on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, GSettings *settings)
+on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, SFLPhoneClient *client)
 {
     if (!pause_grabber) {
         if (focus_is_on_searchbar)
@@ -164,7 +163,7 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, GSettings *setting
 
         if (event->keyval == GDK_KEY_Return) {
            if (calltab_has_name(active_calltree_tab, CURRENT_CALLS)) {
-                 sflphone_keypad(event->keyval, event->string, settings);
+                 sflphone_keypad(event->keyval, event->string, client);
                  return TRUE;
            } else if (calltab_has_name(active_calltree_tab, HISTORY))
                  return FALSE;
@@ -188,7 +187,7 @@ on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, GSettings *setting
             event->keyval == ' ')
             return FALSE;
         else
-            sflphone_keypad(event->keyval, event->string, settings);
+            sflphone_keypad(event->keyval, event->string, client);
 
         return TRUE;
     }
@@ -213,16 +212,16 @@ static void pack_main_window_start(GtkBox *box, GtkWidget *widget, gboolean expa
     gtk_box_pack_start(box, alignment, expand, fill, padding);
 }
 
-GtkWidget *
-create_main_window(GSettings *settings)
+void
+create_main_window(SFLPhoneClient *client)
 {
     // Get configuration stored in GSettings
-    int width =  g_settings_get_int(settings, "window-width");
-    int height =  g_settings_get_int(settings, "window-height");
-    int position_x =  g_settings_get_int(settings, "window-position-x");
-    int position_y =  g_settings_get_int(settings, "window-position-y");
+    int width =  g_settings_get_int(client->settings, "window-width");
+    int height =  g_settings_get_int(client->settings, "window-height");
+    int position_x =  g_settings_get_int(client->settings, "window-position-x");
+    int position_y =  g_settings_get_int(client->settings, "window-position-y");
 
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
     gtk_container_set_border_width(GTK_CONTAINER(window), 0);
 
@@ -241,16 +240,16 @@ create_main_window(GSettings *settings)
      * stop the main GTK loop
      */
     g_signal_connect(G_OBJECT(window), "delete-event",
-                     G_CALLBACK(on_delete), NULL);
+                     G_CALLBACK(on_delete), client);
 
     g_signal_connect(G_OBJECT(window), "key-release-event",
-                     G_CALLBACK(on_key_released), settings);
+                     G_CALLBACK(on_key_released), client);
 
     g_signal_connect(G_OBJECT(window), "configure-event",
-                     G_CALLBACK(window_configure_cb), settings);
+                     G_CALLBACK(window_configure_cb), client);
 
 
-    ui_manager = uimanager_new(settings);
+    ui_manager = uimanager_new(client);
     if (!ui_manager) {
         ERROR("Could not load xml GUI\n");
         exit(1);
@@ -271,10 +270,10 @@ create_main_window(GSettings *settings)
     gtk_widget_show (tab_widget);
 
     /* Populate the main window */
-    GtkWidget *widget = create_menus(ui_manager, settings);
+    GtkWidget *widget = create_menus(ui_manager, client);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
-    widget = create_toolbar_actions(ui_manager, settings);
+    widget = create_toolbar_actions(ui_manager, client);
     pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
     /* Setup call main widget*/
@@ -285,7 +284,7 @@ create_main_window(GSettings *settings)
 #endif
     current_calls_tab->mainwidget = vpaned;
 
-    const gint messaging_height = g_settings_get_int(settings, "message-tab-height");
+    const gint messaging_height = g_settings_get_int(client->settings, "message-tab-height");
     set_message_tab_height(GTK_PANED(vpaned), messaging_height);
 
     gtk_widget_show (vpaned);
@@ -303,7 +302,7 @@ create_main_window(GSettings *settings)
     gtk_paned_pack1 (GTK_PANED (vpaned), current_calls_tab->tree, TRUE, FALSE);
     gtk_paned_pack2 (GTK_PANED (vpaned), tab_widget, FALSE, FALSE);
 
-    g_signal_connect(G_OBJECT(vpaned), "notify::position", G_CALLBACK(on_messaging_paned_position_change), settings);
+    g_signal_connect(G_OBJECT(vpaned), "notify::position", G_CALLBACK(on_messaging_paned_position_change), client);
 
     /* Add playback scale and setup history tab */
     seekslider = GTK_WIDGET(sfl_seekslider_new());
@@ -316,7 +315,7 @@ create_main_window(GSettings *settings)
     g_object_ref(speaker_control);
     g_object_ref(mic_control);
 
-    if (must_show_volume(settings)) {
+    if (must_show_volume(client)) {
         gtk_box_pack_end(GTK_BOX(subvbox), speaker_control, FALSE, TRUE, 0);
         gtk_box_pack_end(GTK_BOX(subvbox), mic_control, FALSE, TRUE, 0);
         gtk_widget_show_all(speaker_control);
@@ -326,8 +325,8 @@ create_main_window(GSettings *settings)
         gtk_widget_hide(mic_control);
     }
 
-    if (g_settings_get_boolean(settings, "show-dialpad")) {
-        dialpad = create_dialpad(settings);
+    if (g_settings_get_boolean(client->settings, "show-dialpad")) {
+        dialpad = create_dialpad(client);
         gtk_box_pack_end(GTK_BOX(subvbox), dialpad, FALSE, TRUE, 0);
         gtk_widget_show_all(dialpad);
     }
@@ -364,7 +363,7 @@ create_main_window(GSettings *settings)
 
     // Restore position according to the configuration stored in gconf
     gtk_window_move(GTK_WINDOW(window), position_x, position_y);
-    return window;
+    client->win = window;
 }
 
 GtkAccelGroup *
@@ -373,17 +372,11 @@ get_accel_group()
     return accelGroup;
 }
 
-GtkWidget *
-get_main_window()
-{
-    return window;
-}
-
 void
-main_window_dialpad(gboolean state, GSettings *settings)
+main_window_dialpad(gboolean state, SFLPhoneClient *client)
 {
     if (state) {
-        dialpad = create_dialpad(settings);
+        dialpad = create_dialpad(client);
         gtk_box_pack_end(GTK_BOX(subvbox), dialpad, FALSE /*expand*/,
                          TRUE /*fill*/, 0 /*padding*/);
         gtk_widget_show_all(dialpad);
@@ -471,7 +464,7 @@ add_error_dialog(GtkWidget *dialog)
 }
 
 void
-main_window_zrtp_not_supported(callable_obj_t * c, GSettings *settings)
+main_window_zrtp_not_supported(callable_obj_t * c, SFLPhoneClient *client)
 {
     gchar* warning_enabled = "";
 
@@ -500,7 +493,7 @@ main_window_zrtp_not_supported(callable_obj_t * c, GSettings *settings)
         g_free(desc);
         pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
         pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"),
-                                      (PidginMiniDialogCallback) sflphone_hang_up, settings);
+                                      (PidginMiniDialogCallback) sflphone_hang_up, client);
 
         add_error_dialog(GTK_WIDGET(mini_dialog));
     }
@@ -508,7 +501,7 @@ main_window_zrtp_not_supported(callable_obj_t * c, GSettings *settings)
 
 void
 main_window_zrtp_negotiation_failed(const gchar* const callID, const gchar* const reason,
-                                    const gchar* const severity, GSettings *settings)
+                                    const gchar* const severity, SFLPhoneClient *client)
 {
     gchar* peer_number = "(number unknown)";
     callable_obj_t * c = NULL;
@@ -526,13 +519,13 @@ main_window_zrtp_negotiation_failed(const gchar* const callID, const gchar* cons
     g_free(desc);
     pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
     pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), (PidginMiniDialogCallback) sflphone_hang_up,
-                                  settings);
+                                  client);
 
     add_error_dialog(GTK_WIDGET(mini_dialog));
 }
 
 void
-main_window_confirm_go_clear(callable_obj_t * c, GSettings *settings)
+main_window_confirm_go_clear(callable_obj_t * c, SFLPhoneClient *client)
 {
     gchar *desc = g_markup_printf_escaped(
                       _("%s wants to stop using secure communication. Confirm will resume conversation without SRTP.\n"),
@@ -543,7 +536,7 @@ main_window_confirm_go_clear(callable_obj_t * c, GSettings *settings)
     pidgin_mini_dialog_add_button(mini_dialog, _("Confirm"),
                                   (PidginMiniDialogCallback) dbus_set_confirm_go_clear, NULL);
     pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), (PidginMiniDialogCallback) sflphone_hang_up,
-                                  settings);
+                                  client);
 
     add_error_dialog(GTK_WIDGET(mini_dialog));
 }

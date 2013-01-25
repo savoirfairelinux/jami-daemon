@@ -35,6 +35,7 @@
 #include <libintl.h>
 #include <locale.h>
 
+#include "sflphone_client.h"
 #include "accountlist.h"
 #include "codeclist.h"
 #include "sflphone_const.h"
@@ -52,17 +53,17 @@
  * Initialize lists and configurations
  * @return TRUE if succeeded, FALSE otherwise
  */
-gboolean sflphone_init(GError **error, GSettings *settings);
+gboolean sflphone_init(GError **error, SFLPhoneClient *client);
 
 /**
  * Steps when closing the application.  Will ask for confirmation if a call is in progress.
  */
-void sflphone_quit(gboolean force_quit);
+void sflphone_quit(gboolean force_quit, SFLPhoneClient *client);
 
 /**
  * Hang up / refuse the current call
  */
-void sflphone_hang_up(GSettings *settings);
+void sflphone_hang_up(SFLPhoneClient *client);
 
 /**
  * Put the selected call on hold
@@ -78,72 +79,72 @@ void sflphone_off_hold();
  * Open a new call
  * @return callable_obj_t* A pointer on the call structure
  */
-callable_obj_t * sflphone_new_call(GSettings *settings);
+callable_obj_t * sflphone_new_call(SFLPhoneClient *client);
 
 /**
  * Notify voice mails to the application
  * @param accountID The account the voice mails are for
  * @param count The number of voice mails
  */
-void sflphone_notify_voice_mail(const gchar* accountID, guint count, GSettings *settings);
+void sflphone_notify_voice_mail(const gchar* accountID, guint count, SFLPhoneClient *client);
 
 /**
  * Prepare SFLphone to transfer a call and wait for the user to dial the number to transfer to
  * Put the selected call in Transfer state
  */
-void sflphone_set_transfer(GSettings *settings);
+void sflphone_set_transfer(SFLPhoneClient *client);
 
 /**
  * Cancel the transfer and puts back the selected call to Current state
  */
-void sflphone_unset_transfer(GSettings *settings);
+void sflphone_unset_transfer(SFLPhoneClient *client);
 
 /**
  * Accept / dial the current call
  */
-void sflphone_pick_up(GSettings *settings);
+void sflphone_pick_up(SFLPhoneClient *client);
 
 /**
  * Put the call on hold state
  * @param c The current call
  */
-void sflphone_hold(callable_obj_t * c, GSettings *settings);
+void sflphone_hold(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Put the call in Ringing state
  * @param c* The current call
  */
-void sflphone_ringing(callable_obj_t * c, GSettings *settings);
+void sflphone_ringing(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Put the call in Busy state
  * @param c* The current call
  */
-void sflphone_busy(callable_obj_t * c, GSettings *settings);
+void sflphone_busy(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Put the call in Failure state
  * @param c* The current call
  */
-void sflphone_fail(callable_obj_t * c, GSettings *settings);
+void sflphone_fail(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Put the call in Current state
  * @param c The current call
  */
-void sflphone_current(callable_obj_t * c, GSettings *settings);
+void sflphone_current(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * The callee has hung up
  * @param c The current call
  */
-void sflphone_hung_up(callable_obj_t * c, GSettings *settings);
+void sflphone_hung_up(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Incoming call
  * @param c The incoming call
  */
-void sflphone_incoming_call(callable_obj_t * c, GSettings *settings);
+void sflphone_incoming_call(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Dial the number
@@ -151,13 +152,13 @@ void sflphone_incoming_call(callable_obj_t * c, GSettings *settings);
  * @param keyval The unique int representing the key
  * @param key The char value of the key
  */
-void sflphone_keypad(guint keyval, const gchar * key, GSettings *settings);
+void sflphone_keypad(guint keyval, const gchar * key, SFLPhoneClient *client);
 
 /**
  * Place a call with a filled callable_obj_t.to
  * @param c A call in CALL_STATE_DIALING state
  */
-int sflphone_place_call(callable_obj_t * c, GSettings *settings);
+int sflphone_place_call(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Fetch the ip2ip profile through dbus and fill
@@ -186,7 +187,7 @@ void sflphone_fill_codec_list_per_account(account_t *);
 
 void sflphone_add_participant();
 
-void sflphone_rec_call(GSettings *settings);
+void sflphone_rec_call(SFLPhoneClient *client);
 
 void sflphone_mute_call(void);
 
@@ -209,7 +210,7 @@ void sflphone_detach_participant(const gchar* callID);
  * now secured using SRTP/SDES.
  * @param c* The current call
  */
-void sflphone_srtp_sdes_on(callable_obj_t * c, GSettings *settings);
+void sflphone_srtp_sdes_on(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Notify that the SRTP/SDES session
@@ -221,14 +222,14 @@ void sflphone_srtp_sdes_on(callable_obj_t * c, GSettings *settings);
  * now secured using ZRTP.
  * @param c* The current call
  */
-void sflphone_srtp_zrtp_on(callable_obj_t * c, GSettings *settings);
+void sflphone_srtp_zrtp_on(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Called when the ZRTP session goes
  * unsecured.
  * @param c* The current call
  */
-void sflphone_srtp_zrtp_off(callable_obj_t * c, GSettings *settings);
+void sflphone_srtp_zrtp_off(callable_obj_t * c, SFLPhoneClient *client);
 
 /**
  * Called when the sas has been computed
@@ -237,7 +238,7 @@ void sflphone_srtp_zrtp_off(callable_obj_t * c, GSettings *settings);
  * @param sas* The Short Authentication String
  * @param verified* Weather the SAS was confirmed or not.
  */
-void sflphone_srtp_zrtp_show_sas(callable_obj_t * c, const gchar* sas, const gboolean verified, GSettings *settings);
+void sflphone_srtp_zrtp_show_sas(callable_obj_t * c, const gchar* sas, const gboolean verified, SFLPhoneClient *client);
 
 /**
  * Called when user wants to clear.
@@ -254,12 +255,12 @@ void sflphone_request_go_clear(void);
  * @param description A textual description of the code
  * @param code The status code as in SIP or IAX
  */
-void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code, GSettings *settings);
+void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code, SFLPhoneClient *client);
 
 void sflphone_add_main_participant(const conference_obj_t * c);
 
-void sflphone_srtp_sdes_off(callable_obj_t * c, GSettings *settings);
+void sflphone_srtp_sdes_off(callable_obj_t * c, SFLPhoneClient *client);
 
-void sflphone_fill_conference_list(GSettings *settings);
+void sflphone_fill_conference_list(SFLPhoneClient *client);
 
 #endif

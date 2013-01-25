@@ -32,6 +32,8 @@
 #define __DIALPAD_H__
 
 #include <gtk/gtk.h>
+#include "sflphone_client.h"
+
 /** @file dialpad.h
   * @brief The dialpad widgets.
   */
@@ -40,6 +42,6 @@
  * Build the dialpad
  * @return GtkWidget* The widge representing the dialpad
  */
-GtkWidget * create_dialpad(GSettings *settings);
+GtkWidget * create_dialpad(SFLPhoneClient *client);
 
 #endif

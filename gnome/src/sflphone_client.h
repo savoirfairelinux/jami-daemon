@@ -40,7 +40,10 @@
 typedef struct
 {
     GtkApplication parent;
+    /* TODO: hide implementation */
     GSettings *settings;
+    /* Main window */
+    GtkWidget *win;
 
 } SFLPhoneClient;
 

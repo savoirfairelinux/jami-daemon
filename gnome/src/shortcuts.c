@@ -90,7 +90,7 @@ filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data
  * Callbacks
  */
 static void
-toggle_pick_up_hang_up_callback(GSettings *settings)
+toggle_pick_up_hang_up_callback(SFLPhoneClient *client)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
@@ -101,13 +101,13 @@ toggle_pick_up_hang_up_callback(GSettings *settings)
         switch (selectedCall->_state) {
             case CALL_STATE_INCOMING:
             case CALL_STATE_TRANSFER:
-                sflphone_pick_up(settings);
+                sflphone_pick_up(client);
                 break;
             case CALL_STATE_DIALING:
             case CALL_STATE_HOLD:
             case CALL_STATE_CURRENT:
             case CALL_STATE_RINGING:
-                sflphone_hang_up(settings);
+                sflphone_hang_up(client);
                 break;
             default:
                 break;
@@ -115,7 +115,7 @@ toggle_pick_up_hang_up_callback(GSettings *settings)
     } else if (selectedConf) {
         dbus_hang_up_conference(selectedConf);
     } else
-        sflphone_pick_up(settings);
+        sflphone_pick_up(client);
 }
 
 static void
@@ -155,10 +155,10 @@ toggle_hold_callback(gpointer data UNUSED)
 }
 
 static void
-popup_window_callback(gpointer data UNUSED)
+popup_window_callback(SFLPhoneClient *client)
 {
-    gtk_widget_hide(GTK_WIDGET(get_main_window()));
-    gtk_widget_show(GTK_WIDGET(get_main_window()));
+    gtk_widget_hide(client->win);
+    gtk_widget_show(client->win);
 }
 
 static void
@@ -300,7 +300,7 @@ initialize_binding(const gchar* action, guint key, GdkModifierType mask)
  * Prepare accelerators list
  */
 static void
-initialize_accelerators_list(GSettings *settings)
+initialize_accelerators_list(SFLPhoneClient *client)
 {
     GList* shortcutsKeysElement, *shortcutsKeys;
     int i = 0;
@@ -316,7 +316,7 @@ initialize_accelerators_list(GSettings *settings)
 
         accelerators_list[i].action = g_strdup(action);
         accelerators_list[i].callback = get_action_callback(action);
-        accelerators_list[i].data = settings;
+        accelerators_list[i].data = client;
         accelerators_list[i].mask = 0;
         accelerators_list[i].key = 0;
 
@@ -400,7 +400,7 @@ shortcuts_update_bindings(guint shortcut_index, guint key, GdkModifierType mask)
  * Initialize bindings with configuration retrieved from dbus
  */
 void
-shortcuts_initialize_bindings(GSettings *settings)
+shortcuts_initialize_bindings(SFLPhoneClient *client)
 {
     GList* shortcutsKeys, *shortcutsKeysElement = NULL;
     gchar* action, *maskAndKey, *token1, *token2 = NULL;
@@ -412,7 +412,7 @@ shortcuts_initialize_bindings(GSettings *settings)
     shortcutsMap = dbus_get_shortcuts();
 
     // initialize list of keys
-    initialize_accelerators_list(settings);
+    initialize_accelerators_list(client);
 
     // iterate through keys to initialize bindings
     shortcutsKeys = g_hash_table_get_keys(shortcutsMap);

@@ -50,10 +50,10 @@ const gchar *get_filename(GtkWidget *chooser)
     return gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
 }
 
-void show_advanced_tls_options(account_t *account)
+void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
 {
     GtkDialog *tlsDialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Advanced options for TLS"),
-                                      GTK_WINDOW(get_main_window()),
+                                      GTK_WINDOW(client->win),
                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                       GTK_STOCK_CANCEL,
                                       GTK_RESPONSE_CANCEL,

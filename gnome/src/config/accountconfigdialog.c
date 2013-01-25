@@ -47,7 +47,6 @@
 #include "str_utils.h"
 #include "logger.h"
 #include "actions.h"
-#include "mainwindow.h"
 #include "accountlist.h"
 #include "audioconf.h"
 #include "videoconf.h"
@@ -97,6 +96,11 @@ static GtkWidget *file_chooser;
 static GtkWidget *security_tab;
 static GtkWidget *advanced_tab;
 static GtkWidget *overrtp;
+
+typedef struct OptionsData {
+    account_t *account;
+    SFLPhoneClient *client;
+} OptionsData;
 
 // Credentials
 enum {
@@ -482,25 +486,23 @@ editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * editable,
         gtk_entry_set_text(GTK_ENTRY(editable), gtk_entry_get_text(GTK_ENTRY(entry_password)));
 }
 
-static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
+static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, OptionsData *data)
 {
-    account_t *account = (account_t *) data;
     gchar *proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
 
     if (utf8_case_equal(proto, "ZRTP"))
-        show_advanced_zrtp_options(account);
+        show_advanced_zrtp_options(data->account, data->client);
     else
-        show_advanced_sdes_options(account);
+        show_advanced_sdes_options(data->account, data->client);
 
     g_free(proto);
 }
 
 
 static void
-show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data)
+show_advanced_tls_options_cb(GtkWidget *widget UNUSED, OptionsData *data)
 {
-    account_t *account = (account_t *) data;
-    show_advanced_tls_options(account);
+    show_advanced_tls_options(data->account, data->client);
 }
 
 static void
@@ -749,7 +751,7 @@ static GtkWidget* create_credential_widget(const account_t *account)
 
 
 static GtkWidget*
-create_security_widget(const account_t *account)
+create_security_widget(account_t *account, SFLPhoneClient *client)
 {
     gchar *curSRTPEnabled = NULL, *curKeyExchange = NULL,
           *curTLSEnabled = NULL;
@@ -778,12 +780,15 @@ create_security_widget(const account_t *account)
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
 
     /* TLS subsection */
+    OptionsData *options = g_new0(OptionsData, 1);
+    options->account = account;
+    options->client = client;
     GtkWidget *sip_tls_advanced_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_table_attach_defaults(GTK_TABLE(table), sip_tls_advanced_button, 2, 3, 0, 1);
     gtk_widget_set_sensitive(sip_tls_advanced_button, FALSE);
     g_signal_connect(G_OBJECT(sip_tls_advanced_button), "clicked",
                      G_CALLBACK(show_advanced_tls_options_cb),
-                     (gpointer) account);
+                     options);
 
     use_sip_tls_check_box = gtk_check_button_new_with_mnemonic(_("Use TLS transport(sips)"));
     g_signal_connect(use_sip_tls_check_box, "toggled", G_CALLBACK(use_sip_tls_cb), sip_tls_advanced_button);
@@ -803,7 +808,7 @@ create_security_widget(const account_t *account)
     zrtp_button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(zrtp_button), "clicked",
                      G_CALLBACK(show_advanced_zrtp_options_cb),
-                     (gpointer) account);
+                     options);
 
     if (g_strcmp0(curSRTPEnabled, "false") == 0) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(key_exchange_combo), 2);
@@ -832,7 +837,8 @@ create_security_widget(const account_t *account)
 }
 
 
-static GtkWidget * create_security_tab(const account_t *account)
+static GtkWidget *
+create_security_tab(account_t *account, SFLPhoneClient *client)
 {
     GtkWidget * ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -842,7 +848,7 @@ static GtkWidget * create_security_tab(const account_t *account)
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     // Security frame
-    frame = create_security_widget(account);
+    frame = create_security_widget(account, client);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     gtk_widget_show_all(ret);
@@ -1330,13 +1336,13 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
 }
 
 GtkWidget *
-show_account_window(account_t *account)
+show_account_window(account_t *account, SFLPhoneClient *client)
 {
     // First we reset
     reset();
 
     GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Account settings"),
-                        GTK_WINDOW(get_main_window()),
+                        GTK_WINDOW(client->win),
                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                         GTK_STOCK_CANCEL,
                         GTK_RESPONSE_CANCEL,
@@ -1380,7 +1386,7 @@ show_account_window(account_t *account)
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), advanced_tab);
 
         /* Security */
-        security_tab = create_security_tab(account);
+        security_tab = create_security_tab(account, client);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), security_tab);
     } else {

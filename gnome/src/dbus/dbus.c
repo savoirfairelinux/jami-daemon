@@ -53,6 +53,7 @@
 #include "accountlistconfigdialog.h"
 #include "messaging/message_tab.h"
 
+#include "sflphone_client.h"
 #include "dbus.h"
 #include "actions.h"
 #include "unused.h"
@@ -91,7 +92,7 @@ static gboolean check_error(GError *error)
 
 static void
 new_call_created_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
-                    const gchar *callID, const gchar *to, GSettings *settings)
+                    const gchar *callID, const gchar *to, SFLPhoneClient *client)
 {
     callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID,
                                         accountID, to, to);
@@ -99,13 +100,13 @@ new_call_created_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
     calllist_add_call(current_calls_tab, c);
     calltree_add_call(current_calls_tab, c, NULL);
 
-    update_actions(settings);
-    calltree_display(current_calls_tab, settings);
+    update_actions(client);
+    calltree_display(current_calls_tab, client);
 }
 
 static void
 incoming_call_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
-                 const gchar *callID, const gchar *from, GSettings *settings)
+                 const gchar *callID, const gchar *from, SFLPhoneClient *client)
 {
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
     gchar *display_name = call_get_display_name(from);
@@ -118,23 +119,23 @@ incoming_call_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
     g_free(display_name);
 
     status_tray_icon_blink(TRUE);
-    if (g_settings_get_boolean(settings, "popup-main-window"))
-        popup_main_window();
+    if (g_settings_get_boolean(client->settings, "popup-main-window"))
+        popup_main_window(client);
 
-    notify_incoming_call(c, settings);
-    sflphone_incoming_call(c, settings);
+    notify_incoming_call(c, client);
+    sflphone_incoming_call(c, client);
 }
 
 static void
 zrtp_negotiation_failed_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
                            const gchar *reason, const gchar *severity,
-                           GSettings *settings)
+                           SFLPhoneClient *client)
 {
-    main_window_zrtp_negotiation_failed(callID, reason, severity, settings);
+    main_window_zrtp_negotiation_failed(callID, reason, severity, client);
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
-        notify_zrtp_negotiation_failed(c, settings);
+        notify_zrtp_negotiation_failed(c, client);
 }
 
 static void
@@ -146,23 +147,23 @@ volume_changed_cb(DBusGProxy *proxy UNUSED, const gchar *device, gdouble value,
 
 static void
 voice_mail_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, guint nb,
-              GSettings *settings)
+              SFLPhoneClient *client)
 {
-    sflphone_notify_voice_mail(accountID, nb, settings);
+    sflphone_notify_voice_mail(accountID, nb, client);
 }
 
 static void
 incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
-                    const gchar *from UNUSED, const gchar *msg, GSettings *settings)
+                    const gchar *from UNUSED, const gchar *msg, SFLPhoneClient *client)
 {
     // do not display message if instant messaging is disabled
-    if (!g_settings_get_boolean(settings, "instant-messaging-enabled"))
+    if (!g_settings_get_boolean(client->settings, "instant-messaging-enabled"))
         return;
 
     callable_obj_t *call = calllist_get_call(current_calls_tab, callID);
 
     if (call) {
-        new_text_message(call,msg, settings);
+        new_text_message(call, msg, client);
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
         if (!conf) {
@@ -170,7 +171,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
             return;
         }
 
-        new_text_message_conf(conf, msg, from, settings);
+        new_text_message_conf(conf, msg, from, client);
     }
 }
 
@@ -178,7 +179,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
  * Perform the right sflphone action based on the requested state
  */
 static void
-process_existing_call_state_change(callable_obj_t *c, const gchar *state, GSettings *settings)
+process_existing_call_state_change(callable_obj_t *c, const gchar *state, SFLPhoneClient *client)
 {
     if (c == NULL) {
         ERROR("Pointer to call is NULL in %s\n", __func__);
@@ -192,19 +193,19 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state, GSetti
         if (c->_state == CALL_STATE_CURRENT)
             time(&c->_time_stop);
 
-        calltree_update_call(history_tab, c, settings);
+        calltree_update_call(history_tab, c, client);
         status_bar_display_account();
-        sflphone_hung_up(c, settings);
+        sflphone_hung_up(c, client);
     } else if (g_strcmp0(state, "UNHOLD") == 0 || g_strcmp0(state, "CURRENT") == 0)
-        sflphone_current(c, settings);
+        sflphone_current(c, client);
     else if (g_strcmp0(state, "HOLD") == 0)
-        sflphone_hold(c, settings);
+        sflphone_hold(c, client);
     else if (g_strcmp0(state, "RINGING") == 0)
-        sflphone_ringing(c, settings);
+        sflphone_ringing(c, client);
     else if (g_strcmp0(state, "FAILURE") == 0)
-        sflphone_fail(c, settings);
+        sflphone_fail(c, client);
     else if (g_strcmp0(state, "BUSY") == 0)
-        sflphone_busy(c, settings);
+        sflphone_busy(c, client);
 }
 
 
@@ -213,7 +214,7 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state, GSetti
  * This mainly occurs when another SFLphone client takes actions.
  */
 static void
-process_nonexisting_call_state_change(const gchar *callID, const gchar *state, GSettings *settings)
+process_nonexisting_call_state_change(const gchar *callID, const gchar *state, SFLPhoneClient *client)
 {
     if (callID == NULL) {
         ERROR("Pointer to call id is NULL in %s\n", __func__);
@@ -235,22 +236,22 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state, G
         callable_obj_t *new_call = calllist_get_call(current_calls_tab, callID);
         if (new_call)
             calltree_add_call(current_calls_tab, new_call, NULL);
-        update_actions(settings);
-        calltree_display(current_calls_tab, settings);
+        update_actions(client);
+        calltree_display(current_calls_tab, client);
     }
 }
 
 static void
 call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
-              const gchar *state, GSettings *settings)
+              const gchar *state, SFLPhoneClient *client)
 {
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
-        process_existing_call_state_change(c, state, settings);
+        process_existing_call_state_change(c, state, client);
     else {
         WARN("Call does not exist");
-        process_nonexisting_call_state_change(callID, state, settings);
+        process_nonexisting_call_state_change(callID, state, client);
     }
 }
 
@@ -266,7 +267,7 @@ toggle_im(conference_obj_t *conf, gboolean activate UNUSED)
 
 static void
 conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
-                      const gchar *state, GSettings *settings)
+                      const gchar *state, SFLPhoneClient *client)
 {
     DEBUG("Conference state changed: %s\n", state);
 
@@ -277,7 +278,7 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
     }
 
     // remove old conference from calltree
-    calltree_remove_conference(current_calls_tab, changed_conf, settings);
+    calltree_remove_conference(current_calls_tab, changed_conf, client);
 
     // update conference state
     if (g_strcmp0(state, "ACTIVE_ATTACHED") == 0)
@@ -304,11 +305,11 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 
     // deactivate instant messaging window for new participants
     toggle_im(changed_conf, FALSE);
-    calltree_add_conference_to_current_calls(changed_conf, settings);
+    calltree_add_conference_to_current_calls(changed_conf, client);
 }
 
 static void
-conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, GSettings *settings)
+conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, SFLPhoneClient *client)
 {
     DEBUG("Conference %s added", confID);
 
@@ -337,12 +338,12 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, GSettings *
     time(&new_conf->_time_start);
 
     conferencelist_add(current_calls_tab, new_conf);
-    calltree_add_conference_to_current_calls(new_conf, settings);
+    calltree_add_conference_to_current_calls(new_conf, client);
 }
 
 static void
 conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
-                      GSettings *settings)
+                      SFLPhoneClient *client)
 {
     DEBUG("Conference removed %s", confID);
     conference_obj_t *c = conferencelist_get(current_calls_tab, confID);
@@ -351,7 +352,7 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
         return;
     }
 
-    calltree_remove_conference(current_calls_tab, c, settings);
+    calltree_remove_conference(current_calls_tab, c, client);
 
     /*TODO elepage(2012) implement unmerging of IM here*/
 
@@ -389,7 +390,7 @@ record_playback_filepath_cb(DBusGProxy *proxy UNUSED, const gchar *id,
 }
 
 static void
-record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath, GSettings *settings)
+record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath, SFLPhoneClient *client)
 {
     DEBUG("Playback stopped for %s", filepath);
     const gint calllist_size = calllist_get_size(history_tab);
@@ -405,7 +406,7 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath, GSet
             call->_record_is_playing = FALSE;
     }
 
-    update_actions(settings);
+    update_actions(client);
 }
 
 static void
@@ -468,97 +469,97 @@ transfer_failed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 }
 
 static void
-secure_sdes_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID, GSettings *settings)
+secure_sdes_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("SRTP using SDES is on");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
-        sflphone_srtp_sdes_on(c, settings);
-        notify_secure_on(c, settings);
+        sflphone_srtp_sdes_on(c, client);
+        notify_secure_on(c, client);
     }
 }
 
 static void
-secure_sdes_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, GSettings *settings)
+secure_sdes_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("SRTP using SDES is off");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
-        sflphone_srtp_sdes_off(c, settings);
-        notify_secure_off(c, settings);
+        sflphone_srtp_sdes_off(c, client);
+        notify_secure_off(c, client);
     }
 }
 
 static void
 secure_zrtp_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
-                  const gchar *cipher, GSettings *settings)
+                  const gchar *cipher, SFLPhoneClient *client)
 {
     DEBUG("SRTP using ZRTP is ON secure_on_cb");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
         c->_srtp_cipher = g_strdup(cipher);
-        sflphone_srtp_zrtp_on(c, settings);
-        notify_secure_on(c, settings);
+        sflphone_srtp_zrtp_on(c, client);
+        notify_secure_on(c, client);
     }
 }
 
 static void
-secure_zrtp_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, GSettings *settings)
+secure_zrtp_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("SRTP using ZRTP is OFF");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
-        sflphone_srtp_zrtp_off(c, settings);
-        notify_secure_off(c, settings);
+        sflphone_srtp_zrtp_off(c, client);
+        notify_secure_off(c, client);
     }
 }
 
 static void
 show_zrtp_sas_cb(DBusGProxy *proxy UNUSED, const gchar *callID, const gchar *sas,
-                 gboolean verified, GSettings *settings)
+                 gboolean verified, SFLPhoneClient *client)
 {
     DEBUG("Showing SAS");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
-        sflphone_srtp_zrtp_show_sas(c, sas, verified, settings);
+        sflphone_srtp_zrtp_show_sas(c, sas, verified, client);
 }
 
 static void
-confirm_go_clear_cb(DBusGProxy *proxy UNUSED, const gchar *callID, GSettings *settings)
+confirm_go_clear_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("Confirm Go Clear request");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
-        main_window_confirm_go_clear(c, settings);
+        main_window_confirm_go_clear(c, client);
 }
 
 static void
-zrtp_not_supported_cb(DBusGProxy *proxy UNUSED, const gchar *callID, GSettings *settings)
+zrtp_not_supported_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("ZRTP not supported on the other end");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
-        main_window_zrtp_not_supported(c, settings);
-        notify_zrtp_not_supported(c, settings);
+        main_window_zrtp_not_supported(c, client);
+        notify_zrtp_not_supported(c, client);
     }
 }
 
 static void
 sip_call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
-                  const gchar *description, guint code, GSettings *settings)
+                  const gchar *description, guint code, SFLPhoneClient *client)
 {
     DEBUG("Sip call state changed %s", callID);
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
-        sflphone_call_state_changed(c, description, code, settings);
+        sflphone_call_state_changed(c, description, code, client);
 }
 
 static void
@@ -628,7 +629,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
     return TRUE;
 }
 
-gboolean dbus_connect(GError **error, GSettings *settings)
+gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 {
     const char *dbus_message_bus_name = "org.sflphone.SFLphone";
     const char *dbus_object_instance = "/org/sflphone/SFLphone/Instance";
@@ -729,27 +730,27 @@ gboolean dbus_connect(GError **error, GSettings *settings)
     dbus_g_proxy_add_signal(call_proxy, "newCallCreated", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "newCallCreated",
-                                G_CALLBACK(new_call_created_cb), settings, NULL);
+                                G_CALLBACK(new_call_created_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "incomingCall", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "incomingCall",
-                                G_CALLBACK(incoming_call_cb), settings, NULL);
+                                G_CALLBACK(incoming_call_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "zrtpNegotiationFailed",
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "zrtpNegotiationFailed",
-                                G_CALLBACK(zrtp_negotiation_failed_cb), settings, NULL);
+                                G_CALLBACK(zrtp_negotiation_failed_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "callStateChanged", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "callStateChanged",
-                                G_CALLBACK(call_state_cb), settings, NULL);
+                                G_CALLBACK(call_state_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "voiceMailNotify", G_TYPE_STRING,
                             G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "voiceMailNotify",
-                                G_CALLBACK(voice_mail_cb), settings, NULL);
+                                G_CALLBACK(voice_mail_cb), client, NULL);
 
     dbus_g_proxy_add_signal(config_proxy, "registrationStateChanged", G_TYPE_STRING,
                             G_TYPE_INT, G_TYPE_INVALID);
@@ -759,7 +760,7 @@ gboolean dbus_connect(GError **error, GSettings *settings)
     dbus_g_proxy_add_signal(call_proxy, "incomingMessage", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "incomingMessage",
-                                G_CALLBACK(incoming_message_cb), settings, NULL);
+                                G_CALLBACK(incoming_message_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "volumeChanged", G_TYPE_STRING,
                             G_TYPE_DOUBLE, G_TYPE_INVALID);
@@ -778,27 +779,27 @@ gboolean dbus_connect(GError **error, GSettings *settings)
     dbus_g_proxy_add_signal(call_proxy, "conferenceChanged", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "conferenceChanged",
-                                G_CALLBACK(conference_changed_cb), settings, NULL);
+                                G_CALLBACK(conference_changed_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "conferenceCreated", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "conferenceCreated",
-                                G_CALLBACK(conference_created_cb), settings, NULL);
+                                G_CALLBACK(conference_created_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "conferenceRemoved", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "conferenceRemoved",
-                                G_CALLBACK(conference_removed_cb), settings, NULL);
+                                G_CALLBACK(conference_removed_cb), client, NULL);
 
     /* Playback related signals */
     dbus_g_proxy_add_signal(call_proxy, "recordPlaybackFilepath", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "recordPlaybackFilepath",
-                                G_CALLBACK(record_playback_filepath_cb), settings, NULL);
+                                G_CALLBACK(record_playback_filepath_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "recordPlaybackStopped", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "recordPlaybackStopped",
-                                G_CALLBACK(record_playback_stopped_cb), settings, NULL);
+                                G_CALLBACK(record_playback_stopped_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "updatePlaybackScale", G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "updatePlaybackScale",
@@ -808,43 +809,43 @@ gboolean dbus_connect(GError **error, GSettings *settings)
     dbus_g_proxy_add_signal(call_proxy, "secureSdesOn", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "secureSdesOn",
-                                G_CALLBACK(secure_sdes_on_cb), settings, NULL);
+                                G_CALLBACK(secure_sdes_on_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "secureSdesOff", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "secureSdesOff",
-                                G_CALLBACK(secure_sdes_off_cb), settings, NULL);
+                                G_CALLBACK(secure_sdes_off_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "showSAS", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "showSAS",
-                                G_CALLBACK(show_zrtp_sas_cb), settings, NULL);
+                                G_CALLBACK(show_zrtp_sas_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "secureZrtpOn", G_TYPE_STRING,
                             G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "secureZrtpOn",
-                                G_CALLBACK(secure_zrtp_on_cb), settings, NULL);
+                                G_CALLBACK(secure_zrtp_on_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "secureZrtpOff", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "secureZrtpOff",
-                                G_CALLBACK(secure_zrtp_off_cb), settings, NULL);
+                                G_CALLBACK(secure_zrtp_off_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "zrtpNotSuppOther", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "zrtpNotSuppOther",
-                                G_CALLBACK(zrtp_not_supported_cb), settings, NULL);
+                                G_CALLBACK(zrtp_not_supported_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "confirmGoClear", G_TYPE_STRING,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "confirmGoClear",
-                                G_CALLBACK(confirm_go_clear_cb), settings, NULL);
+                                G_CALLBACK(confirm_go_clear_cb), client, NULL);
 
     dbus_g_proxy_add_signal(call_proxy, "sipCallStateChanged",
                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT,
                             G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(call_proxy, "sipCallStateChanged",
-                                G_CALLBACK(sip_call_state_cb), settings, NULL);
+                                G_CALLBACK(sip_call_state_cb), client, NULL);
 
 
     DEBUG("Adding configurationmanager Dbus signals");

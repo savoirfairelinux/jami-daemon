@@ -56,12 +56,12 @@ typedef struct {
 #endif
 
 static void
-create_new_gnome_notification(gchar *title, gchar *body, NotifyUrgency urgency, gint timeout, GSettings *settings)
+create_new_gnome_notification(gchar *title, gchar *body, NotifyUrgency urgency, gint timeout, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     GnomeNotification notif;
 
-    if (g_settings_get_boolean(settings, "notify-all")) {
+    if (g_settings_get_boolean(client->settings, "notify-all")) {
         notify_init("SFLphone");
 
         // Set struct fields
@@ -88,7 +88,7 @@ create_new_gnome_notification(gchar *title, gchar *body, NotifyUrgency urgency, 
 }
 
 void
-notify_incoming_message(const gchar *callID, const gchar *msg, GSettings *settings)
+notify_incoming_message(const gchar *callID, const gchar *msg, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar* title = g_markup_printf_escaped(_("%s says:"), callID);
@@ -97,12 +97,12 @@ notify_incoming_message(const gchar *callID, const gchar *msg, GSettings *settin
                                   (gchar *)msg,
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
-                                  settings);
+                                  client);
 #endif
 }
 
 void
-notify_incoming_call(callable_obj_t* c, GSettings *settings)
+notify_incoming_call(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar* title;
@@ -121,12 +121,12 @@ notify_incoming_call(callable_obj_t* c, GSettings *settings)
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
-                                  settings);
+                                  client);
 #endif
 }
 
 void
-notify_voice_mails(guint count, account_t* acc, GSettings *settings)
+notify_voice_mails(guint count, account_t* acc, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     // the account is different from NULL
@@ -139,12 +139,12 @@ notify_voice_mails(guint count, account_t* acc, GSettings *settings)
                                   body,
                                   NOTIFY_URGENCY_LOW,
                                   NOTIFY_EXPIRES_DEFAULT,
-                                  settings);
+                                  client);
 #endif
 }
 
 void
-notify_current_account(account_t* acc, GSettings *settings)
+notify_current_account(account_t* acc, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     // the account is different from NULL
@@ -156,38 +156,38 @@ notify_current_account(account_t* acc, GSettings *settings)
 
     create_new_gnome_notification(title, body, NOTIFY_URGENCY_NORMAL,
                                   NOTIFY_EXPIRES_DEFAULT,
-                                  settings);
+                                  client);
 #endif
 }
 
 void
-notify_no_accounts(GSettings *settings)
+notify_no_accounts(SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar *body = g_markup_printf_escaped(_("You have no accounts set up"));
     gchar *title = g_markup_printf_escaped(_("Error"));
 
     create_new_gnome_notification(title, body, NOTIFY_URGENCY_CRITICAL,
-                                  NOTIFY_EXPIRES_DEFAULT, settings);
+                                  NOTIFY_EXPIRES_DEFAULT, client);
 #endif
 }
 
 
 void
-notify_no_registered_accounts(GSettings *settings)
+notify_no_registered_accounts(SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar *body = g_markup_printf_escaped(_("You have no registered accounts"));
     gchar *title = g_markup_printf_escaped(_("Error"));
 
     create_new_gnome_notification(title, body, NOTIFY_URGENCY_CRITICAL,
-                                  NOTIFY_EXPIRES_DEFAULT, settings);
+                                  NOTIFY_EXPIRES_DEFAULT, client);
 #endif
 }
 
 
 void
-notify_secure_on(callable_obj_t* c, GSettings *settings)
+notify_secure_on(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar *title = g_markup_printf_escaped("Secure mode on.");
@@ -196,12 +196,12 @@ notify_secure_on(callable_obj_t* c, GSettings *settings)
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
-                                  settings);
+                                  client);
 #endif
 }
 
 void
-notify_zrtp_not_supported(callable_obj_t* c, GSettings *settings)
+notify_zrtp_not_supported(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar *title = g_markup_printf_escaped("ZRTP Error.");
@@ -210,12 +210,12 @@ notify_zrtp_not_supported(callable_obj_t* c, GSettings *settings)
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
-                                  settings);
+                                  client);
 #endif
 }
 
 void
-notify_zrtp_negotiation_failed(callable_obj_t* c, GSettings *settings)
+notify_zrtp_negotiation_failed(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar *title = g_markup_printf_escaped("ZRTP Error.");
@@ -224,12 +224,12 @@ notify_zrtp_negotiation_failed(callable_obj_t* c, GSettings *settings)
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
-                                  settings);
+                                  client);
 #endif
 }
 
 void
-notify_secure_off(callable_obj_t* c, GSettings *settings)
+notify_secure_off(callable_obj_t* c, SFLPhoneClient *client)
 {
 #if USE_NOTIFY
     gchar *title = g_markup_printf_escaped("Secure mode is off.");
@@ -238,6 +238,6 @@ notify_secure_off(callable_obj_t* c, GSettings *settings)
                                   callerid,
                                   NOTIFY_URGENCY_CRITICAL,
                                   utf8_case_equal(__TIMEOUT_MODE, "default") ? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
-                                  settings);
+                                  client);
 #endif
 }

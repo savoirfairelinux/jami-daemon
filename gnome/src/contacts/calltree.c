@@ -53,6 +53,7 @@
 #include "uimanager.h"
 #include "actions.h"
 #include "searchbar.h"
+#include "sflphone_client.h"
 
 #if !GLIB_CHECK_VERSION(2, 30, 0)
 #define G_VALUE_INIT  { 0, { { 0 } } }
@@ -61,7 +62,7 @@
 typedef struct {
     gchar *source_ID;
     gchar *dest_ID;
-    GSettings *settings;
+    SFLPhoneClient *client;
 } PopupData;
 
 static PopupData *popup_data = NULL;
@@ -73,7 +74,7 @@ static const gchar * const SFL_TRANSFER_CALL = "Transfer call to";
 static GtkWidget *calltree_popupmenu = NULL;
 static GtkWidget *calltree_menu_items = NULL;
 
-static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, GSettings *settings);
+static void drag_data_received_cb(GtkWidget *, GdkDragContext *, gint, gint, GtkSelectionData *, guint, guint, SFLPhoneClient *client);
 static void menuitem_response(gchar * string);
 
 static GtkTargetEntry target_list[] = {
@@ -104,7 +105,7 @@ is_conference(GtkTreeModel *model, GtkTreeIter *iter)
 
 /* Call back when the user click on a call in the list */
 static void
-call_selected_cb(GtkTreeSelection *sel, GSettings *settings)
+call_selected_cb(GtkTreeSelection *sel, SFLPhoneClient *client)
 {
     GtkTreeModel *model = gtk_tree_view_get_model(gtk_tree_selection_get_tree_view(sel));
 
@@ -137,7 +138,7 @@ call_selected_cb(GtkTreeSelection *sel, GSettings *settings)
             calltab_select_call(active_calltree_tab, selected_call);
     }
 
-    update_actions(settings);
+    update_actions(client);
 }
 
 /* A row is activated when it is double clicked */
@@ -145,7 +146,7 @@ static void
 row_activated_cb(GtkTreeView *tree_view UNUSED,
                  GtkTreePath *path UNUSED,
                  GtkTreeViewColumn *column UNUSED,
-                 GSettings *settings)
+                 SFLPhoneClient *client)
 {
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
         DEBUG("Selected a call");
@@ -167,7 +168,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
                     case CALL_STATE_FAILURE:
                         break;
                     case CALL_STATE_DIALING:
-                        sflphone_place_call(selectedCall, settings);
+                        sflphone_place_call(selectedCall, client);
                         break;
                     default:
                         WARN("Row activated - Should not happen!");
@@ -180,8 +181,8 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
                 calllist_add_call(current_calls_tab, new_call);
                 calltree_add_call(current_calls_tab, new_call, NULL);
                 // Function sflphone_place_call (new_call) is processed in process_dialing
-                sflphone_place_call(new_call, settings);
-                calltree_display(current_calls_tab, settings);
+                sflphone_place_call(new_call, client);
+                calltree_display(current_calls_tab, client);
             }
         }
     } else if (calltab_get_selected_type(active_calltree_tab) == A_CONFERENCE) {
@@ -214,7 +215,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
 
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
 static void
-row_single_click(GtkTreeView *tree_view UNUSED, GSettings *settings)
+row_single_click(GtkTreeView *tree_view UNUSED, SFLPhoneClient *client)
 {
     gchar * displaySasOnce = NULL;
 
@@ -256,12 +257,12 @@ row_single_click(GtkTreeView *tree_view UNUSED, GSettings *settings)
                             selectedCall->_zrtp_confirmed = TRUE;
 
                         dbus_confirm_sas(selectedCall);
-                        calltree_update_call(current_calls_tab, selectedCall, settings);
+                        calltree_update_call(current_calls_tab, selectedCall, client);
                         break;
                     case SRTP_STATE_ZRTP_SAS_CONFIRMED:
                         selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
                         dbus_reset_sas(selectedCall);
-                        calltree_update_call(current_calls_tab, selectedCall, settings);
+                        calltree_update_call(current_calls_tab, selectedCall, client);
                         break;
                     default:
                         DEBUG("Single click but no action");
@@ -277,15 +278,15 @@ row_single_click(GtkTreeView *tree_view UNUSED, GSettings *settings)
 }
 
 static gboolean
-button_pressed(GtkWidget* widget, GdkEventButton *event, GSettings *settings)
+button_pressed(GtkWidget* widget, GdkEventButton *event, SFLPhoneClient *client)
 {
     if (event->button != 3 || event->type != GDK_BUTTON_PRESS)
         return FALSE;
 
     if (calltab_has_name(active_calltree_tab, CURRENT_CALLS))
-        show_popup_menu(widget, event, settings);
+        show_popup_menu(widget, event, client);
     else if (calltab_has_name(active_calltree_tab, HISTORY))
-        show_popup_menu_history(widget, event, settings);
+        show_popup_menu_history(widget, event, client);
     else
         show_popup_menu_contacts(widget, event);
 
@@ -379,7 +380,7 @@ calltree_display_call_info(callable_obj_t * call, CallDisplayType display_type,
 }
 
 void
-calltree_create(calltab_t* tab, gboolean has_searchbar, GSettings *settings)
+calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
 {
     tab->tree = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
@@ -412,29 +413,29 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, GSettings *settings)
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tab->view), FALSE);
     g_signal_connect(G_OBJECT(tab->view), "row-activated",
                      G_CALLBACK(row_activated_cb),
-                     settings);
+                     client);
 
     gtk_widget_set_can_focus(calltree_sw, TRUE);
     gtk_widget_grab_focus(calltree_sw);
 
     g_signal_connect(G_OBJECT(tab->view), "cursor-changed",
                      G_CALLBACK(row_single_click),
-                     settings);
+                     client);
 
     // Connect the popup menu
     g_signal_connect(G_OBJECT(tab->view), "popup-menu",
                      G_CALLBACK(popup_menu),
-                     settings);
+                     client);
     g_signal_connect(G_OBJECT(tab->view), "button-press-event",
                      G_CALLBACK(button_pressed),
-                     settings);
+                     client);
 
     if (calltab_has_name(tab, CURRENT_CALLS)) {
 
         gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tab->view), GDK_BUTTON1_MASK, target_list, n_targets, GDK_ACTION_DEFAULT | GDK_ACTION_MOVE);
         gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tab->view), target_list, n_targets, GDK_ACTION_DEFAULT);
         // destination widget drag n drop signals
-        g_signal_connect(G_OBJECT(tab->view), "drag_data_received", G_CALLBACK(drag_data_received_cb), settings);
+        g_signal_connect(G_OBJECT(tab->view), "drag_data_received", G_CALLBACK(drag_data_received_cb), client);
 
         calltree_popupmenu = gtk_menu_new();
 
@@ -487,7 +488,7 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, GSettings *settings)
     GtkTreeSelection *calltree_sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
     g_signal_connect(G_OBJECT(calltree_sel), "changed",
                      G_CALLBACK(call_selected_cb),
-                     settings);
+                     client);
 
     gtk_box_pack_start(GTK_BOX(tab->tree), calltree_sw, TRUE, TRUE, 0);
 
@@ -736,7 +737,7 @@ update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gp
     return TRUE;
 }
 
-void calltree_update_call(calltab_t* tab, callable_obj_t * call, GSettings *settings)
+void calltree_update_call(calltab_t* tab, callable_obj_t * call, SFLPhoneClient *client)
 {
     if (!call) {
         ERROR("Call is NULL, ignoring");
@@ -746,7 +747,7 @@ void calltree_update_call(calltab_t* tab, callable_obj_t * call, GSettings *sett
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);
     gtk_tree_model_foreach(model, update_call, (gpointer) &ctx);
-    update_actions(settings);
+    update_actions(client);
 }
 
 void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *parent)
@@ -888,7 +889,7 @@ void calltree_add_history_entry(callable_obj_t *call)
         g_object_unref(G_OBJECT(pixbuf));
 }
 
-void calltree_add_conference_to_current_calls(conference_obj_t* conf, GSettings *settings)
+void calltree_add_conference_to_current_calls(conference_obj_t* conf, SFLPhoneClient *client)
 {
     account_t *account_details = NULL;
 
@@ -1033,7 +1034,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf, GSettings 
 
     gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls_tab->view), path, FALSE);
 
-    update_actions(settings);
+    update_actions(client);
 }
 
 static
@@ -1082,7 +1083,7 @@ remove_conference(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *it
     return TRUE;
 }
 
-void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf, GSettings *settings)
+void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf, SFLPhoneClient *client)
 {
     if(conf == NULL) {
         ERROR("Could not remove conference, conference pointer is NULL");
@@ -1094,11 +1095,11 @@ void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf, GS
     GtkTreeModel *model = GTK_TREE_MODEL(store);
     gtk_tree_model_foreach(model, remove_conference, (gpointer) &context);
 
-    update_actions(settings);
+    update_actions(client);
     DEBUG("Finished removing conference %s", conf->_confID);
 }
 
-void calltree_display(calltab_t *tab, GSettings *settings)
+void calltree_display(calltab_t *tab, SFLPhoneClient *client)
 {
     /* If we already are displaying the specified calltree */
     if (calltab_has_name(active_calltree_tab, tab->name))
@@ -1135,7 +1136,7 @@ void calltree_display(calltab_t *tab, GSettings *settings)
 
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(active_calltree_tab->view));
     g_signal_emit_by_name(sel, "changed");
-    update_actions(settings);
+    update_actions(client);
 }
 
 
@@ -1202,7 +1203,7 @@ static gboolean try_detach(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTre
 }
 
 static gboolean
-handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *dest_iter, GSettings *settings)
+handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *dest_iter, SFLPhoneClient *client)
 {
     GValue source_val = G_VALUE_INIT;
     gtk_tree_model_get_value(model, source_iter, COLUMN_ID, &source_val);
@@ -1241,7 +1242,7 @@ handle_drop_into(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTreeIter *des
             popup_data = g_new0(PopupData, 1);
             popup_data->source_ID = g_strdup(source_ID);
             popup_data->dest_ID = g_strdup(dest_ID);
-            popup_data->settings = settings;
+            popup_data->client = client;
             gtk_menu_popup(GTK_MENU(calltree_popupmenu), NULL, NULL, NULL, NULL, 0, 0);
             result = TRUE;
         }
@@ -1281,7 +1282,7 @@ static gboolean valid_drop(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTre
 
 static gboolean
 render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition dest_pos,
-            GtkTreeIter *source_iter, GSettings *settings)
+            GtkTreeIter *source_iter, SFLPhoneClient *client)
 {
     GtkTreeIter dest_iter;
     if (!gtk_tree_model_get_iter(model, &dest_iter, dest_path)) {
@@ -1301,14 +1302,14 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
         case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
             DEBUG("DROP_INTO");
             if (valid_drop(model, source_iter, dest_path))
-                result = handle_drop_into(model, source_iter, &dest_iter, settings);
+                result = handle_drop_into(model, source_iter, &dest_iter, client);
             break;
     }
     return result;
 }
 
 void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UNUSED,
-                           gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint target_type UNUSED, guint etime, GSettings *settings)
+                           gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint target_type UNUSED, guint etime, SFLPhoneClient *client)
 {
     GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreeModel *model = GTK_TREE_MODEL(gtk_tree_view_get_model(tree_view));
@@ -1325,7 +1326,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UN
         return;
     }
 
-    gboolean success = render_drop(model, dest_path, dest_pos, &source_iter, settings);
+    gboolean success = render_drop(model, dest_path, dest_pos, &source_iter, client);
     if (gdk_drag_context_get_selected_action(context) == GDK_ACTION_MOVE)
         gtk_drag_finish(context, success, TRUE, etime);
 }
@@ -1340,7 +1341,7 @@ menuitem_response(gchar * string)
                               popup_data->dest_ID);
         calltree_remove_call(current_calls_tab, popup_data->source_ID);
         calltree_remove_call(current_calls_tab, popup_data->dest_ID);
-        update_actions(popup_data->settings);
+        update_actions(popup_data->client);
     } else if (g_strcmp0(string, SFL_TRANSFER_CALL) == 0) {
         callable_obj_t * source_call = calllist_get_call(current_calls_tab, popup_data->source_ID);
         callable_obj_t * dest_call = calllist_get_call(current_calls_tab, popup_data->dest_ID);

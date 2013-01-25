@@ -33,7 +33,8 @@
 #define __STATUSICON_H__
 
 #include <gtk/gtk.h>
-#include <sflphone_const.h>
+#include "sflphone_client.h"
+
 /**
  * @file statusicon.h
  * @brief The status icon in the system tray.
@@ -42,12 +43,12 @@
 /**
  * Popup the main window. Used on incoming calls
  */
-void popup_main_window (void);
+void popup_main_window(SFLPhoneClient *client);
 
 /**
  * Create the system tray icon
  */
-void show_status_icon (GSettings *settings);
+void show_status_icon(SFLPhoneClient *client);
 
 
 /**

@@ -36,12 +36,13 @@
 #include "contacts/searchbar.h"
 #include "logger.h"
 
-calltab_t* calltab_init(gboolean has_searchbar, const gchar * const name, GSettings *settings)
+calltab_t*
+calltab_init(gboolean has_searchbar, const gchar * const name, SFLPhoneClient *client)
 {
     calltab_t* ret = g_new0(calltab_t, 1);
     ret->name = g_strdup(name);
 
-    calltree_create(ret, has_searchbar, settings);
+    calltree_create(ret, has_searchbar, client);
 
     ret->callQueue = g_queue_new();
     ret->selectedCall = NULL;

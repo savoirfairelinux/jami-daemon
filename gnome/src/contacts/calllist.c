@@ -101,7 +101,7 @@ calllist_free_element(gpointer data, gpointer user_data UNUSED)
 void
 calllist_clean(calltab_t* tab)
 {
-    g_return_if_fail(tab != NULL);
+    g_return_if_fail(tab != NULL && tab->callQueue != NULL);
     g_queue_foreach(tab->callQueue, calllist_free_element, NULL);
     g_queue_free(tab->callQueue);
     tab->callQueue = 0;
@@ -126,6 +126,7 @@ calllist_add_call(calltab_t* tab, callable_obj_t * c)
 void
 calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c)
 {
+    g_return_if_fail(tab != NULL && tab->callQueue != NULL);
     g_queue_push_head(tab->callQueue, c);
 }
 
@@ -144,15 +145,16 @@ calllist_clean_history()
 }
 
 void
-calllist_remove_from_history(callable_obj_t* c, GSettings *settings)
+calllist_remove_from_history(callable_obj_t* c, SFLPhoneClient *client)
 {
-    calllist_remove_call(history_tab, c->_callID, settings);
+    calllist_remove_call(history_tab, c->_callID, client);
     calltree_remove_call(history_tab, c->_callID);
 }
 
 void
-calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings)
+calllist_remove_call(calltab_t* tab, const gchar * callID, SFLPhoneClient *client)
 {
+    g_return_if_fail(tab != NULL && tab->callQueue != NULL);
     GList *c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL)
@@ -160,13 +162,15 @@ calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings)
 
     callable_obj_t *call = c->data;
 
-    DEBUG("Removing call %s from tab %s", callID, tab->name);
-    g_queue_remove(tab->callQueue, call);
+    if (!g_queue_is_empty(tab->callQueue)) {
+        DEBUG("Removing call %s from tab %s", callID, tab->name);
+        g_queue_remove(tab->callQueue, call);
+    }
 
     /* Don't save empty (i.e. started dialing, then deleted) calls */
     if (call->_peer_number && strlen(call->_peer_number) > 0) {
         calllist_add_call(history_tab, call);
-        if (g_settings_get_boolean(settings, "history-enabled"))
+        if (g_settings_get_boolean(client->settings, "history-enabled"))
             calltree_add_history_entry(call);
     }
 }

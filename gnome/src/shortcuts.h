@@ -32,6 +32,7 @@
 #define SHORTCUTS_H_
 
 #include <gdk/gdkx.h>
+#include "sflphone_client.h"
 
 typedef struct {
     gchar *action;
@@ -42,7 +43,7 @@ typedef struct {
 } Accelerator;
 
 void
-shortcuts_initialize_bindings (GSettings *settings);
+shortcuts_initialize_bindings(SFLPhoneClient *client);
 
 void
 shortcuts_update_bindings (guint index, guint key, GdkModifierType mask);

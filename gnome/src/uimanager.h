@@ -31,29 +31,37 @@
 #ifndef UI_MANAGER_H
 #define UI_MANAGER_H
 
-#include "icons/icon_factory.h"
-
 G_BEGIN_DECLS
+
+#include "sflphone_client.h"
 
 GtkWidget *historyButton_;
 GtkWidget *contactButton_;
 GtkAction *volumeToggle_;
 
-GtkUIManager *uimanager_new (GSettings *settings);
+GtkUIManager *
+uimanager_new(SFLPhoneClient *client);
 
-void update_voicemail_status (void);
+void
+update_voicemail_status();
 
-void update_actions (GSettings *settings);
+void
+update_actions(SFLPhoneClient *client);
 
-void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event, GSettings *settings);
+void
+show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *client);
 
-void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event, GSettings *settings);
+void
+show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *client);
 
-void show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event);
+void
+show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event);
 
-GtkWidget *create_menus (GtkUIManager *ui_manager, GSettings *settings);
+GtkWidget *
+create_menus(GtkUIManager *ui_manager, SFLPhoneClient *client);
 
-GtkWidget *create_toolbar_actions (GtkUIManager *ui_manager, GSettings *settings);
+GtkWidget *
+create_toolbar_actions(GtkUIManager *ui_manager, SFLPhoneClient *client);
 
 G_END_DECLS
 

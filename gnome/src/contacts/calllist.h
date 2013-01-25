@@ -34,6 +34,7 @@
 #include <gtk/gtk.h>
 #include "callable_obj.h"
 #include "conference_obj.h"
+#include "sflphone_client.h"
 
 static const gchar * const CURRENT_CALLS = "current_calls";
 static const gchar * const HISTORY = "history";
@@ -94,7 +95,7 @@ calllist_add_call_to_front(calltab_t* tab, callable_obj_t * c);
   * @param callID The callID of the call you want to remove
   */
 void
-calllist_remove_call(calltab_t* tab, const gchar * callID, GSettings *settings);
+calllist_remove_call(calltab_t* tab, const gchar * callID, SFLPhoneClient *client);
 
 /** Return the first call that corresponds to the state.
   * This is usefull for unique states as DIALING and CURRENT.
@@ -131,7 +132,7 @@ calllist_clean_history();
  * @param c The call to remove
  */
 void
-calllist_remove_from_history(callable_obj_t* c, GSettings *settings);
+calllist_remove_from_history(callable_obj_t* c, SFLPhoneClient *client);
 
 /**
  * Initialize a non-empty call list

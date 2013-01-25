@@ -117,29 +117,34 @@ static void delete_account_cb(GtkButton *button UNUSED, gpointer data)
 }
 
 static void
-run_account_dialog(const gchar *selected_accountID)
+run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client)
 {
     account_t *account = account_list_get_by_id(selected_accountID);
-    GtkWidget *dialog = show_account_window(account);
+    GtkWidget *dialog = show_account_window(account, client);
     update_account_from_dialog(dialog, account);
 }
 
 static void row_activated_cb(GtkTreeView *view,
                              GtkTreePath *path UNUSED,
                              GtkTreeViewColumn *col UNUSED,
-                             gpointer user_data UNUSED)
+                             SFLPhoneClient *client)
 {
     gchar *selected_accountID = get_selected_accountID(view);
     RETURN_IF_NULL(selected_accountID, "No selected account ID");
-    run_account_dialog(selected_accountID);
+    run_account_dialog(selected_accountID, client);
     g_free(selected_accountID);
 }
 
-static void edit_account_cb(GtkButton *button UNUSED, gpointer data)
+typedef struct EditData {
+    GtkTreeView *view;
+    SFLPhoneClient *client;
+} EditData;
+
+static void edit_account_cb(GtkButton *button UNUSED, EditData *data)
 {
-    gchar *selected_accountID = get_selected_accountID(data);
+    gchar *selected_accountID = get_selected_accountID(GTK_TREE_VIEW(data->view));
     RETURN_IF_NULL(selected_accountID, "No selected account ID");
-    run_account_dialog(selected_accountID);
+    run_account_dialog(selected_accountID, data->client);
     g_free(selected_accountID);
 }
 
@@ -189,11 +194,11 @@ static void account_store_fill()
     }
 }
 
-static void add_account_cb(void)
+static void add_account_cb(SFLPhoneClient *client)
 {
     account_t *new_account = create_default_account();
     account_list_add(new_account);
-    run_account_dialog(new_account->accountID);
+    run_account_dialog(new_account->accountID, client);
     account_store_fill();
 }
 
@@ -430,7 +435,7 @@ highlight_registration(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
  * Account settings tab
  */
 static GtkWidget*
-create_account_list()
+create_account_list(SFLPhoneClient *client)
 {
     GtkWidget *table = gtk_table_new(1, 2, FALSE /* homogeneous */);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10);
@@ -475,7 +480,7 @@ create_account_list()
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), tree_view_column);
 
     // A double click on the account line opens the window to edit the account
-    g_signal_connect(G_OBJECT(tree_view), "row-activated", G_CALLBACK(row_activated_cb), NULL);
+    g_signal_connect(G_OBJECT(tree_view), "row-activated", G_CALLBACK(row_activated_cb), client);
     gtk_tree_view_column_set_cell_data_func(tree_view_column, renderer,
                                             highlight_ip_profile, NULL, NULL);
 
@@ -527,12 +532,15 @@ create_account_list()
 
     GtkWidget *add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
     g_signal_connect_swapped(G_OBJECT(add_button), "clicked",
-                             G_CALLBACK(add_account_cb), NULL);
+                             G_CALLBACK(add_account_cb), client);
     gtk_box_pack_start(GTK_BOX(button_box), add_button, FALSE, FALSE, 0);
 
     edit_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_widget_set_sensitive(edit_button, FALSE);
-    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), tree_view);
+    EditData *edit_data = g_new0(EditData, 1);
+    edit_data->view = GTK_TREE_VIEW(tree_view);
+    edit_data->client = client;
+    g_signal_connect(G_OBJECT(edit_button), "clicked", G_CALLBACK(edit_account_cb), edit_data);
     gtk_box_pack_start(GTK_BOX(button_box), edit_button, FALSE, FALSE, 0);
 
     delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
@@ -606,10 +614,10 @@ void update_account_list_status_bar(account_t *account)
         gtk_list_store_set(account_store, &iter, COLUMN_ACCOUNT_STATUS, state_name, -1);
 }
 
-void show_account_list_config_dialog(GSettings *settings)
+void show_account_list_config_dialog(SFLPhoneClient *client)
 {
     account_list_dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Accounts"),
-                                     GTK_WINDOW(get_main_window()),
+                                     GTK_WINDOW(client->win),
                                      GTK_DIALOG_DESTROY_WITH_PARENT, NULL,
                                      NULL));
 
@@ -623,7 +631,7 @@ void show_account_list_config_dialog(GSettings *settings)
     gtk_widget_show(accountFrame);
 
     /* Accounts tab */
-    GtkWidget *tab = create_account_list();
+    GtkWidget *tab = create_account_list(client);
     gtk_widget_show(tab);
     gtk_container_add(GTK_CONTAINER(accountFrame), tab);
 
@@ -661,6 +669,6 @@ void show_account_list_config_dialog(GSettings *settings)
     move_up_button = NULL;
     account_store = NULL;
 
-    update_actions(settings);
+    update_actions(client);
 }
 

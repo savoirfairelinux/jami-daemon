@@ -61,11 +61,11 @@ typedef struct _URLHook_Config {
 /**
  * Save the parameters through D-BUS
  */
-void hooks_save_parameters (GSettings *settings);
+void hooks_save_parameters(SFLPhoneClient *client);
 
 void hooks_load_parameters (URLHook_Config** settings);
 
-GtkWidget* create_hooks_settings (GSettings *settings);
+GtkWidget* create_hooks_settings(SFLPhoneClient *client);
 
 G_END_DECLS
 

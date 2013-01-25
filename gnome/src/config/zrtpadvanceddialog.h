@@ -38,9 +38,10 @@
 /**
  * Display the advanced options window for zrtp
  */
+#include "sflphone_client.h"
 
-void show_advanced_zrtp_options (account_t *account);
+void show_advanced_zrtp_options(account_t *account, SFLPhoneClient *client);
 
-void show_advanced_sdes_options (account_t *account);
+void show_advanced_sdes_options(account_t *account, SFLPhoneClient *client);
 
 #endif

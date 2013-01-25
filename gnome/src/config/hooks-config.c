@@ -69,12 +69,9 @@ void hooks_load_parameters(URLHook_Config** settings)
 }
 
 
-void hooks_save_parameters(GSettings *settings)
+void hooks_save_parameters(SFLPhoneClient *client)
 {
-
-    GHashTable *params = NULL;
-
-    params = g_hash_table_new(NULL, g_str_equal);
+    GHashTable *params = g_hash_table_new(NULL, g_str_equal);
     g_hash_table_replace(params, (gpointer) URLHOOK_SIP_FIELD,
                          g_strdup((gchar *) gtk_entry_get_text(GTK_ENTRY(field))));
     g_hash_table_replace(params, (gpointer) URLHOOK_COMMAND,
@@ -93,7 +90,7 @@ void hooks_save_parameters(GSettings *settings)
     // Decrement the reference count
     g_hash_table_unref(params);
 
-    g_settings_set_string(settings, "messaging-url-command", gtk_entry_get_text(GTK_ENTRY(url)));
+    g_settings_set_string(client->settings, "messaging-url-command", gtk_entry_get_text(GTK_ENTRY(url)));
 }
 
 static void sip_enabled_cb(GtkWidget *widget)
@@ -139,7 +136,8 @@ static void phone_number_enabled_cb(GtkWidget *widget)
 }
 
 
-GtkWidget* create_hooks_settings(GSettings *settings)
+GtkWidget*
+create_hooks_settings(SFLPhoneClient *client)
 {
     GtkWidget *ret, *frame, *table, *label, *widg;
 
@@ -201,7 +199,7 @@ GtkWidget* create_hooks_settings(GSettings *settings)
     label = gtk_label_new_with_mnemonic(_("Open URL in"));
     url   = gtk_entry_new();
 
-    gchar *url_command = g_settings_get_string(settings, "messaging-url-command");
+    gchar *url_command = g_settings_get_string(client->settings, "messaging-url-command");
     if (url_command && *url_command) {
         gtk_entry_set_text(GTK_ENTRY(url), url_command);
         g_free(url_command);

@@ -29,19 +29,22 @@
  */
 
 #include "actions.h"
+#include "uimanager.h"
 #include "calllist.h"
 #include "config.h"
 #include "logger.h"
 #include "dbus/dbus.h"
-#include "mainwindow.h"
 #include "statusicon.h"
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
+#include "mainwindow.h"
 #include "sflphone_client.h"
 #include "shortcuts.h"
 #include "history.h"
+
+static volatile sig_atomic_t interrupted;
 
 static void
 signal_handler(int code)
@@ -52,7 +55,17 @@ signal_handler(int code)
     signal(SIGTERM, SIG_DFL);
 
     printf("Caught signal %s, quitting...\n", strsignal(code));
-    sflphone_quit(TRUE);
+    interrupted = 1;
+}
+
+static gboolean
+check_interrupted(gpointer data)
+{
+    if (interrupted) {
+        sflphone_quit(TRUE, data);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 void update_schema_dir(const gchar *argv_0)
@@ -83,11 +96,6 @@ main(int argc, char *argv[])
     // Start GTK application
     gtk_init(&argc, &argv);
 
-    // Check arguments if debug mode is activated
-    for (int i = 0; i < argc; i++)
-        if (g_strcmp0(argv[i], "--debug") == 0)
-            set_log_level(LOG_DEBUG);
-
     g_print("%s %s\n", PACKAGE, VERSION);
     g_print("\nCopyright (c) 2005 - 2012 Savoir-faire Linux Inc.\n\n");
     g_print("This is free software.  You may redistribute copies of it under the terms of\n" \
@@ -111,12 +119,13 @@ main(int argc, char *argv[])
 
     g_set_application_name("SFLphone");
     SFLPhoneClient *client = sflphone_client_new();
+    g_timeout_add(1000, check_interrupted, client);
 
     GError *error = NULL;
-    if (!sflphone_init(&error, client->settings)) {
+    if (!sflphone_init(&error, client)) {
         ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
-                                GTK_WINDOW(get_main_window()),
+                                NULL,
                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                 GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
                                 "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
@@ -130,22 +139,23 @@ main(int argc, char *argv[])
         return 1;
     }
 
+    create_main_window(client);
+    gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(client->win));
+
     const gboolean show_status = g_settings_get_boolean(client->settings, "show-status-icon");
     if (show_status)
-        show_status_icon(client->settings);
-
-    gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(create_main_window(client->settings)));
+        show_status_icon(client);
 
     status_bar_display_account();
 
     sflphone_fill_history_lazy();
-    sflphone_fill_conference_list(client->settings);
+    sflphone_fill_conference_list(client);
     sflphone_fill_call_list();
 
     // Update the GUI
-    update_actions(client->settings);
+    update_actions(client);
 
-    shortcuts_initialize_bindings(client->settings);
+    shortcuts_initialize_bindings(client);
 
     g_application_run(G_APPLICATION(client), argc, argv);
 

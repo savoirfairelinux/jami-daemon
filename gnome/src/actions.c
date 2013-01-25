@@ -75,7 +75,7 @@
 static GHashTable * ip2ip_profile;
 
 void
-sflphone_notify_voice_mail(const gchar* accountID , guint count, GSettings *settings)
+sflphone_notify_voice_mail(const gchar* accountID , guint count, SFLPhoneClient *client)
 {
     // We want to notify only the current account; ie the first in the list
     gchar *id = g_strdup(accountID);
@@ -95,7 +95,7 @@ sflphone_notify_voice_mail(const gchar* accountID , guint count, GSettings *sett
     update_voicemail_status();
 
     if (current)
-        notify_voice_mails(count, current, settings);
+        notify_voice_mails(count, current, client);
 
     DEBUG("sflphone_notify_voice_mail end");
 }
@@ -148,9 +148,9 @@ status_bar_display_account()
 
 
 void
-sflphone_quit(gboolean force_quit)
+sflphone_quit(gboolean force_quit, SFLPhoneClient *client)
 {
-    if (force_quit || calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit()) {
+    if (force_quit || calllist_get_size(current_calls_tab) == 0 || main_window_ask_quit(client)) {
 #ifdef SFL_VIDEO
         video_cleanup();
 #endif
@@ -160,33 +160,34 @@ sflphone_quit(gboolean force_quit)
         calllist_clean(current_calls_tab);
         calllist_clean(contacts_tab);
         calllist_clean(history_tab);
-        gtk_main_quit();
+        if (gtk_main_level() > 0)
+            gtk_main_quit();
     }
 }
 
 void
-sflphone_hold(callable_obj_t * c, GSettings *settings)
+sflphone_hold(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_state = CALL_STATE_HOLD;
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_ringing(callable_obj_t * c, GSettings *settings)
+sflphone_ringing(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_state = CALL_STATE_RINGING;
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_hung_up(callable_obj_t * c, GSettings *settings)
+sflphone_hung_up(callable_obj_t * c, SFLPhoneClient *client)
 {
     disable_messaging_tab(c->_callID);
-    calllist_remove_call(current_calls_tab, c->_callID, settings);
+    calllist_remove_call(current_calls_tab, c->_callID, client);
     calltree_remove_call(current_calls_tab, c->_callID);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
-    update_actions(settings);
+    update_actions(client);
 
     status_tray_icon_blink(FALSE);
 
@@ -245,9 +246,9 @@ void sflphone_fill_account_list(void)
     current_account_set_message_number(current_account_get_message_number());
 }
 
-gboolean sflphone_init(GError **error, GSettings *settings)
+gboolean sflphone_init(GError **error, SFLPhoneClient *client)
 {
-    if (!dbus_connect(error, settings) || !dbus_register(getpid(), "Gtk+ Client", error))
+    if (!dbus_connect(error, client) || !dbus_register(getpid(), "Gtk+ Client", error))
         return FALSE;
 
     abook_init();
@@ -255,9 +256,9 @@ gboolean sflphone_init(GError **error, GSettings *settings)
     // Init icons factory
     init_icon_factory();
 
-    current_calls_tab = calltab_init(FALSE, CURRENT_CALLS, settings);
-    contacts_tab = calltab_init(TRUE, CONTACTS, settings);
-    history_tab = calltab_init(TRUE, HISTORY, settings);
+    current_calls_tab = calltab_init(FALSE, CURRENT_CALLS, client);
+    contacts_tab = calltab_init(TRUE, CONTACTS, client);
+    history_tab = calltab_init(TRUE, HISTORY, client);
 
     codecs_load();
     conferencelist_init(current_calls_tab);
@@ -282,7 +283,7 @@ GHashTable *sflphone_get_ip2ip_properties(void)
 }
 
 void
-sflphone_hang_up(GSettings *settings)
+sflphone_hang_up(SFLPhoneClient *client)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
@@ -332,7 +333,7 @@ sflphone_hang_up(GSettings *settings)
         }
     }
 
-    calltree_update_call(history_tab, selectedCall, settings);
+    calltree_update_call(history_tab, selectedCall, client);
 
     statusbar_update_clock("");
 
@@ -343,7 +344,7 @@ sflphone_hang_up(GSettings *settings)
 }
 
 void
-sflphone_pick_up(GSettings *settings)
+sflphone_pick_up(SFLPhoneClient *client)
 {
     callable_obj_t *selectedCall = calltab_get_selected_call(active_calltree_tab);
 
@@ -353,17 +354,17 @@ sflphone_pick_up(GSettings *settings)
         dbus_screensaver_inhibit();
 
     if (!selectedCall) {
-        sflphone_new_call(settings);
+        sflphone_new_call(client);
         return;
     }
 
     switch (selectedCall->_state) {
         case CALL_STATE_DIALING:
-            sflphone_place_call(selectedCall, settings);
+            sflphone_place_call(selectedCall, client);
             break;
         case CALL_STATE_INCOMING:
             selectedCall->_history_state = g_strdup(INCOMING_STRING);
-            calltree_update_call(history_tab, selectedCall, settings);
+            calltree_update_call(history_tab, selectedCall, client);
 
             dbus_accept(selectedCall);
             break;
@@ -371,13 +372,13 @@ sflphone_pick_up(GSettings *settings)
             dbus_transfer(selectedCall);
             time(&selectedCall->_time_stop);
             calltree_remove_call(current_calls_tab, selectedCall->_callID);
-            update_actions(settings);
-            calllist_remove_call(current_calls_tab, selectedCall->_callID, settings);
+            update_actions(client);
+            calllist_remove_call(current_calls_tab, selectedCall->_callID, client);
             break;
         case CALL_STATE_CURRENT:
         case CALL_STATE_HOLD:
         case CALL_STATE_RINGING:
-            sflphone_new_call(settings);
+            sflphone_new_call(client);
             break;
         default:
             WARN("Should not happen in sflphone_pick_up()!");
@@ -426,31 +427,31 @@ sflphone_off_hold()
 
 
 void
-sflphone_fail(callable_obj_t * c, GSettings *settings)
+sflphone_fail(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_state = CALL_STATE_FAILURE;
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_busy(callable_obj_t * c, GSettings *settings)
+sflphone_busy(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_state = CALL_STATE_BUSY;
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_current(callable_obj_t * c, GSettings *settings)
+sflphone_current(callable_obj_t * c, SFLPhoneClient *client)
 {
     if (c->_state != CALL_STATE_HOLD)
         time(&c->_time_start);
 
     c->_state = CALL_STATE_CURRENT;
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_set_transfer(GSettings *settings)
+sflphone_set_transfer(SFLPhoneClient *client)
 {
     callable_obj_t * c = calltab_get_selected_call(current_calls_tab);
 
@@ -458,14 +459,14 @@ sflphone_set_transfer(GSettings *settings)
         c->_state = CALL_STATE_TRANSFER;
         g_free(c->_trsft_to);
         c->_trsft_to = g_strdup("");
-        calltree_update_call(current_calls_tab, c, settings);
+        calltree_update_call(current_calls_tab, c, client);
     } else {
-        update_actions(settings);
+        update_actions(client);
     }
 }
 
 void
-sflphone_unset_transfer(GSettings *settings)
+sflphone_unset_transfer(SFLPhoneClient *client)
 {
     callable_obj_t * c = calltab_get_selected_call(current_calls_tab);
 
@@ -473,9 +474,9 @@ sflphone_unset_transfer(GSettings *settings)
         c->_state = CALL_STATE_CURRENT;
         g_free(c->_trsft_to);
         c->_trsft_to = g_strdup("");
-        calltree_update_call(current_calls_tab, c, settings);
+        calltree_update_call(current_calls_tab, c, client);
     } else {
-        update_actions(settings);
+        update_actions(client);
     }
 }
 
@@ -486,14 +487,14 @@ sflphone_display_transfer_status(const gchar* message)
 }
 
 void
-sflphone_incoming_call(callable_obj_t * c, GSettings *settings)
+sflphone_incoming_call(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_history_state = g_strdup(MISSED_STRING);
     calllist_add_call(current_calls_tab, c);
     calltree_add_call(current_calls_tab, c, NULL);
 
-    update_actions(settings);
-    calltree_display(current_calls_tab, settings);
+    update_actions(client);
+    calltree_display(current_calls_tab, client);
 
     // Change the status bar if we are dealing with a direct SIP call
     if (is_direct_call(c)) {
@@ -507,12 +508,12 @@ sflphone_incoming_call(callable_obj_t * c, GSettings *settings)
         ERROR("Account is NULL");
     } else if (account_has_autoanswer_on(account)) {
         calltab_set_selected_call(active_calltree_tab, c);
-        sflphone_pick_up(settings);
+        sflphone_pick_up(client);
     }
 }
 
 static void
-process_dialing(callable_obj_t *c, guint keyval, const gchar *key, GSettings *settings)
+process_dialing(callable_obj_t *c, guint keyval, const gchar *key, SFLPhoneClient *client)
 {
     // We stop the tone
     if (!*c->_peer_number && c->_state != CALL_STATE_TRANSFER)
@@ -521,10 +522,10 @@ process_dialing(callable_obj_t *c, guint keyval, const gchar *key, GSettings *se
     switch (keyval) {
         case GDK_KEY_Return:
         case GDK_KEY_KP_Enter:
-            sflphone_place_call(c, settings);
+            sflphone_place_call(c, client);
             break;
         case GDK_KEY_Escape:
-            sflphone_hang_up(settings);
+            sflphone_hang_up(client);
             break;
         case GDK_KEY_BackSpace: {
             gchar *num = (c->_state == CALL_STATE_TRANSFER) ? c->_trsft_to : c->_peer_number;
@@ -533,7 +534,7 @@ process_dialing(callable_obj_t *c, guint keyval, const gchar *key, GSettings *se
             if (len) {
                 len--; // delete one character
                 num[len] = '\0';
-                calltree_update_call(current_calls_tab, c, settings);
+                calltree_update_call(current_calls_tab, c, client);
 
                 /* If number is now empty, hang up immediately */
                 if (c->_state != CALL_STATE_TRANSFER && len == 0)
@@ -567,7 +568,7 @@ process_dialing(callable_obj_t *c, guint keyval, const gchar *key, GSettings *se
                     c->_peer_number = new_peer_number;
                 }
 
-                calltree_update_call(current_calls_tab, c, settings);
+                calltree_update_call(current_calls_tab, c, client);
             }
 
             break;
@@ -576,7 +577,7 @@ process_dialing(callable_obj_t *c, guint keyval, const gchar *key, GSettings *se
 
 
 callable_obj_t *
-sflphone_new_call(GSettings *settings)
+sflphone_new_call(SFLPhoneClient *client)
 {
     // Disable screensaver if the list is empty call
     guint nbcall = calllist_get_size(current_calls_tab);
@@ -602,14 +603,14 @@ sflphone_new_call(GSettings *settings)
 
     calllist_add_call(current_calls_tab, c);
     calltree_add_call(current_calls_tab, c, NULL);
-    update_actions(settings);
+    update_actions(client);
 
     return c;
 }
 
 
 void
-sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
+sflphone_keypad(guint keyval, const gchar * key, SFLPhoneClient *client)
 {
     callable_obj_t * c = calltab_get_selected_call(current_calls_tab);
 
@@ -622,14 +623,14 @@ sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
             case GDK_KEY_BackSpace:
                 break;
             default:
-                calltree_display(current_calls_tab, settings);
-                process_dialing(sflphone_new_call(settings), keyval, key, settings);
+                calltree_display(current_calls_tab, client);
+                process_dialing(sflphone_new_call(client), keyval, key, client);
                 break;
         }
     } else if (c) {
         switch (c->_state) {
             case CALL_STATE_DIALING: // Currently dialing => edit number
-                process_dialing(c, keyval, key, settings);
+                process_dialing(c, keyval, key, client);
                 break;
             case CALL_STATE_CURRENT:
 
@@ -637,7 +638,7 @@ sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
                     case GDK_KEY_Escape:
                         dbus_hang_up(c);
                         time(&c->_time_stop);
-                        calltree_update_call(history_tab, c, settings);
+                        calltree_update_call(history_tab, c, client);
                         break;
                     default:
                         // To play the dtmf when calling mail box for instance
@@ -652,7 +653,7 @@ sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
                     case GDK_KEY_Return:
                     case GDK_KEY_KP_Enter:
                         c->_history_state = g_strdup(INCOMING_STRING);
-                        calltree_update_call(history_tab, c, settings);
+                        calltree_update_call(history_tab, c, client);
                         dbus_accept(c);
                         break;
                     case GDK_KEY_Escape:
@@ -669,13 +670,13 @@ sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
                         dbus_transfer(c);
                         time(&c->_time_stop);
                         calltree_remove_call(current_calls_tab, c->_callID);
-                        update_actions(settings);
+                        update_actions(client);
                         break;
                     case GDK_KEY_Escape:
-                        sflphone_unset_transfer(settings);
+                        sflphone_unset_transfer(client);
                         break;
                     default: // When a call is on transfer, typing new numbers will add it to c->_peer_number
-                        process_dialing(c, keyval, key, settings);
+                        process_dialing(c, keyval, key, client);
                         break;
                 }
 
@@ -691,7 +692,7 @@ sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
                         dbus_hang_up(c);
                         break;
                     default: // When a call is on hold, typing new numbers will create a new call
-                        process_dialing(sflphone_new_call(settings), keyval, key, settings);
+                        process_dialing(sflphone_new_call(client), keyval, key, client);
                         break;
                 }
 
@@ -703,7 +704,7 @@ sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
                 switch (keyval) {
                     case GDK_KEY_Escape:
                         dbus_hang_up(c);
-                        calltree_update_call(history_tab, c, settings);
+                        calltree_update_call(history_tab, c, client);
                         break;
                 }
 
@@ -713,11 +714,11 @@ sflphone_keypad(guint keyval, const gchar * key, GSettings *settings)
         }
 
     } else
-        sflphone_new_call(settings);
+        sflphone_new_call(client);
 }
 
 int
-sflphone_place_call(callable_obj_t * c, GSettings *settings)
+sflphone_place_call(callable_obj_t * c, SFLPhoneClient *client)
 {
     account_t * account = NULL;
 
@@ -770,7 +771,7 @@ sflphone_place_call(callable_obj_t * c, GSettings *settings)
     g_free(c->_accountID);
     c->_accountID = g_strdup(account->accountID);
     dbus_place_call(c);
-    notify_current_account(account, settings);
+    notify_current_account(account, client);
 
     c->_history_state = g_strdup(OUTGOING_STRING);
 
@@ -818,7 +819,7 @@ sflphone_add_main_participant(const conference_obj_t * c)
 }
 
 void
-sflphone_rec_call(GSettings *settings)
+sflphone_rec_call(SFLPhoneClient *client)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
@@ -826,7 +827,7 @@ sflphone_rec_call(GSettings *settings)
     if (selectedCall) {
         DEBUG("Set record for selected call");
         dbus_set_record(selectedCall->_callID);
-        calltree_update_call(current_calls_tab, selectedCall, settings);
+        calltree_update_call(current_calls_tab, selectedCall, client);
     } else if (selectedConf) {
         DEBUG("Set record for selected conf");
         dbus_set_record(selectedConf->_confID);
@@ -850,11 +851,11 @@ sflphone_rec_call(GSettings *settings)
         }
 
         DEBUG("Remove and add conference %s", selectedConf->_confID);
-        calltree_remove_conference(current_calls_tab, selectedConf, settings);
+        calltree_remove_conference(current_calls_tab, selectedConf, client);
         /* This calls update actions */
-        calltree_add_conference_to_current_calls(selectedConf, settings);
+        calltree_add_conference_to_current_calls(selectedConf, client);
     } else {
-        update_actions(settings);
+        update_actions(client);
     }
 }
 
@@ -928,7 +929,7 @@ void sflphone_fill_call_list(void)
 }
 
 
-void sflphone_fill_conference_list(GSettings *settings)
+void sflphone_fill_conference_list(SFLPhoneClient *client)
 {
     // TODO Fetch the active conferences at client startup
 
@@ -941,7 +942,7 @@ void sflphone_fill_conference_list(GSettings *settings)
         conference_obj_t *conf = create_new_conference_from_details(conf_id, conference_details);
 
         conferencelist_add(current_calls_tab, conf);
-        calltree_add_conference_to_current_calls(conf, settings);
+        calltree_add_conference_to_current_calls(conf, client);
     }
 
     g_strfreev(conferences);
@@ -953,43 +954,43 @@ void sflphone_fill_history_lazy()
 }
 
 void
-sflphone_srtp_sdes_on(callable_obj_t * c, GSettings *settings)
+sflphone_srtp_sdes_on(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_srtp_state = SRTP_STATE_SDES_SUCCESS;
 
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_srtp_sdes_off(callable_obj_t * c, GSettings *settings)
+sflphone_srtp_sdes_off(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_srtp_state = SRTP_STATE_UNLOCKED;
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 
 void
-sflphone_srtp_zrtp_on(callable_obj_t * c, GSettings *settings)
+sflphone_srtp_zrtp_on(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
 
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_srtp_zrtp_off(callable_obj_t * c, GSettings *settings)
+sflphone_srtp_zrtp_off(callable_obj_t * c, SFLPhoneClient *client)
 {
     c->_srtp_state = SRTP_STATE_UNLOCKED;
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
-sflphone_srtp_zrtp_show_sas(callable_obj_t * c, const gchar* sas, const gboolean verified, GSettings *settings)
+sflphone_srtp_zrtp_show_sas(callable_obj_t * c, const gchar* sas, const gboolean verified, SFLPhoneClient *client)
 {
     c->_sas = g_strdup(sas);
     c->_srtp_state = verified ? SRTP_STATE_ZRTP_SAS_CONFIRMED : SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
 
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 
 void
@@ -1002,7 +1003,7 @@ sflphone_request_go_clear(void)
 }
 
 void
-sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code, GSettings *settings)
+sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code, SFLPhoneClient *client)
 {
     DEBUG("Call State changed %s", description);
 
@@ -1015,6 +1016,6 @@ sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const
     c->_state_code_description = g_strdup(description);
     c->_state_code = code;
 
-    calltree_update_call(current_calls_tab, c, settings);
+    calltree_update_call(current_calls_tab, c, client);
 }
 

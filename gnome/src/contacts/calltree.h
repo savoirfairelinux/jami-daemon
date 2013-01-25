@@ -32,6 +32,7 @@
 #define __CALLTREE_H__
 
 #include "calltab.h"
+#include "sflphone_client.h"
 
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
@@ -61,7 +62,7 @@ struct conference_obj_t;
  * @return GtkWidget* A new widget
  */
 void
-calltree_create(calltab_t *, gboolean has_searchbar, GSettings *settings);
+calltree_create(calltab_t *, gboolean has_searchbar, SFLPhoneClient *client);
 
 /**
  * Add a call in the calltree
@@ -75,7 +76,7 @@ calltree_add_call (calltab_t *, callable_obj_t *, GtkTreeIter *);
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t *, callable_obj_t *, GSettings *settings);
+calltree_update_call (calltab_t *, callable_obj_t *, SFLPhoneClient *client);
 
 /**
  * Remove a call from the call tree
@@ -96,13 +97,13 @@ void
 calltree_update_history_view();
 
 void
-calltree_add_conference_to_current_calls(conference_obj_t *, GSettings *settings);
+calltree_add_conference_to_current_calls(conference_obj_t *, SFLPhoneClient *client);
 
 void
-calltree_remove_conference(calltab_t *, const conference_obj_t *, GSettings *settings);
+calltree_remove_conference(calltab_t *, const conference_obj_t *, SFLPhoneClient *client);
 
 void
-calltree_display (calltab_t *, GSettings *settings);
+calltree_display(calltab_t *, SFLPhoneClient *client);
 
 /**
  * Update elapsed time based on selected calltree's call

@@ -61,7 +61,9 @@ sflphone_client_new()
 static void
 sflphone_client_init(SFLPhoneClient *self)
 {
+    g_print("init baby!");
     self->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
+    self->win = 0;
 }
 
 static void
@@ -87,8 +89,6 @@ sflphone_client_dispose(GObject *object)
 static void
 sflphone_client_finalize(GObject *object)
 {
-    SFLPhoneClient *self = SFLPHONE_CLIENT(object);
-    g_object_unref(self->settings);
     /* Chain up to the parent class */
     G_OBJECT_CLASS(sflphone_client_parent_class)->finalize(object);
 }

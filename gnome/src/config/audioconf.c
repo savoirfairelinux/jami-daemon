@@ -758,7 +758,7 @@ static GtkWidget* pulse_box()
 
 
 static void
-select_audio_manager(GtkWidget *alsa_button, GSettings *settings)
+select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
 {
     if (!must_show_alsa_conf() && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alsa_button))) {
         dbus_set_audio_manager(ALSA_API_STR);
@@ -783,7 +783,7 @@ select_audio_manager(GtkWidget *alsa_button, GSettings *settings)
 
         if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(volumeToggle_))) {
             main_window_volume_controls(FALSE);
-            g_settings_set_boolean(settings, "show-volume-controls", FALSE);
+            g_settings_set_boolean(client->settings, "show-volume-controls", FALSE);
             gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(volumeToggle_), FALSE);
         }
 
@@ -842,7 +842,7 @@ static void record_path_changed(GtkFileChooser *chooser, gpointer data UNUSED)
     g_free(path);
 }
 
-GtkWidget* create_audio_configuration(GSettings *settings)
+GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 {
     /* Main widget */
     GtkWidget *audio_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -869,7 +869,7 @@ GtkWidget* create_audio_configuration(GSettings *settings)
 
     GtkWidget *alsa_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse_button), _("_ALSA"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(alsa_button), !using_pulse);
-    g_signal_connect(G_OBJECT(alsa_button), "clicked", G_CALLBACK(select_audio_manager), settings);
+    g_signal_connect(G_OBJECT(alsa_button), "clicked", G_CALLBACK(select_audio_manager), client->settings);
     gtk_table_attach(GTK_TABLE(table), alsa_button, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL,
                      GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -970,7 +970,7 @@ gboolean must_show_alsa_conf()
 }
 
 gboolean
-must_show_volume(GSettings *settings)
+must_show_volume(SFLPhoneClient *client)
 {
-    return g_settings_get_boolean(settings, "show-volume-controls") && must_show_alsa_conf();
+    return g_settings_get_boolean(client->settings, "show-volume-controls") && must_show_alsa_conf();
 }

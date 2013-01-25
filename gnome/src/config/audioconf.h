@@ -32,12 +32,13 @@
 #define AUDIO_CONF_H_
 
 #include <gtk/gtk.h>
+#include "sflphone_client.h"
 
-GtkWidget* create_audio_configuration(GSettings *settings);
+GtkWidget* create_audio_configuration(SFLPhoneClient *client);
 
 GtkWidget* api_box();
 GtkWidget* audiocodecs_box(const account_t *a);
-gboolean must_show_volume(GSettings *settings);
+gboolean must_show_volume(SFLPhoneClient *client);
 gboolean must_show_alsa_conf();
 
 #endif // AUDIO_CONF_H_
