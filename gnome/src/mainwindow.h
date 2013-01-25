@@ -54,7 +54,8 @@ GtkWidget *waitingLayer;
 /**
  * Build the main window
  */
-void create_main_window (GSettings *settings);
+GtkWidget *
+create_main_window (GSettings *settings);
 
 /**
  * Display a dialog window

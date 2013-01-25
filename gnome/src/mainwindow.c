@@ -213,7 +213,7 @@ static void pack_main_window_start(GtkBox *box, GtkWidget *widget, gboolean expa
     gtk_box_pack_start(box, alignment, expand, fill, padding);
 }
 
-void
+GtkWidget *
 create_main_window(GSettings *settings)
 {
     // Get configuration stored in GSettings
@@ -364,6 +364,7 @@ create_main_window(GSettings *settings)
 
     // Restore position according to the configuration stored in gconf
     gtk_window_move(GTK_WINDOW(window), position_x, position_y);
+    return window;
 }
 
 GtkAccelGroup *

@@ -39,6 +39,7 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
+#include "sflphone_client.h"
 #include "shortcuts.h"
 #include "history.h"
 
@@ -82,9 +83,6 @@ main(int argc, char *argv[])
     // Start GTK application
     gtk_init(&argc, &argv);
 
-    /* Tell glib to look for our schema in gnome/data in case SFLphone is not installed */
-    update_schema_dir(argv[0]);
-
     // Check arguments if debug mode is activated
     for (int i = 0; i < argc; i++)
         if (g_strcmp0(argv[i], "--debug") == 0)
@@ -111,9 +109,11 @@ main(int argc, char *argv[])
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
 
+    g_set_application_name("SFLphone");
+    SFLPhoneClient *client = sflphone_client_new();
+
     GError *error = NULL;
-    GSettings *settings = g_settings_new("org.sflphone.SFLphone");
-    if (!sflphone_init(&error, settings)) {
+    if (!sflphone_init(&error, client->settings)) {
         ERROR("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
                                 GTK_WINDOW(get_main_window()),
@@ -130,29 +130,29 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    const gboolean show_status = g_settings_get_boolean(settings, "show-status-icon");
+    const gboolean show_status = g_settings_get_boolean(client->settings, "show-status-icon");
     if (show_status)
-        show_status_icon(settings);
+        show_status_icon(client->settings);
 
-    create_main_window(settings);
+    gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(create_main_window(client->settings)));
 
     status_bar_display_account();
 
     sflphone_fill_history_lazy();
-    sflphone_fill_conference_list(settings);
+    sflphone_fill_conference_list(client->settings);
     sflphone_fill_call_list();
 
     // Update the GUI
-    update_actions(settings);
+    update_actions(client->settings);
 
-    shortcuts_initialize_bindings(settings);
+    shortcuts_initialize_bindings(client->settings);
 
-    gtk_main();
+    g_application_run(G_APPLICATION(client), argc, argv);
 
     codecs_unload();
     shortcuts_destroy_bindings();
 
-    g_object_unref(settings);
+    g_object_unref(client);
 
     return 0;
 }

@@ -51,7 +51,9 @@ libsflphone_client_la_SOURCES = \
   seekslider.h \
   account_schema.h \
   history_loader.c \
-  history_loader.h
+  history_loader.h \
+  sflphone_client.h \
+  sflphone_client.c
 
 
 libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
