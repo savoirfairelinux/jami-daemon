@@ -82,7 +82,7 @@ sflphone_client_dispose(GObject *object)
       }
 
       /* Chain up to the parent class */
-      G_OBJECT_CLASS (sflphone_client_parent_class)->dispose(object);
+      G_OBJECT_CLASS(sflphone_client_parent_class)->dispose(object);
 }
 
 static void

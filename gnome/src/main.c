@@ -119,6 +119,7 @@ main(int argc, char *argv[])
 
     g_set_application_name("SFLphone");
     SFLPhoneClient *client = sflphone_client_new();
+    g_application_register(G_APPLICATION(client), NULL, NULL);
     g_timeout_add(1000, check_interrupted, client);
 
     GError *error = NULL;
