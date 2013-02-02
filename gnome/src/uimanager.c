@@ -561,9 +561,9 @@ help_about(SFLPhoneClient *client)
             "authors", authors,
             "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
             "copyright", "Copyright © 2004-2012 Savoir-faire Linux Inc.",
-            "name", PACKAGE,
+            "name", PACKAGE_NAME,
             "title", _("About SFLphone"),
-            "version", VERSION,
+            "version", PACKAGE_VERSION,
             "website", "http://www.sflphone.org",
             NULL);
 }

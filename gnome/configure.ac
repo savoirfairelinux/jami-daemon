@@ -1,19 +1,27 @@
+AC_PREREQ([2.64])
+
 AC_INIT([sflphone],[1.2.2],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
+
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE
-
-GNOME_DOC_INIT
-
+AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
 
-dnl Silent build by default. Use make V=1 to increase verbosity
-m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+AM_INIT_AUTOMAKE([1.11 -Wall -Wno-portability dist-xz no-define no-dist-gzip subdir-objects])
+AM_SILENT_RULES([yes])
+AM_MAINTAINER_MODE([enable])
+
+GNOME_MAINTAINER_MODE_DEFINES
+GNOME_COMPILE_WARNINGS([maximum])
 
 AC_PROG_CC_C99
 AM_PROG_CC_C_O dnl for per target flags, i.e. test_program_CFLAGS
 AC_PROG_INSTALL
 AC_HEADER_STDC
-LT_INIT
+
+# init libtool
+LT_PREREQ([2.2.6])
+LT_INIT(disable-static)
 
 CFLAGS="$CFLAGS -Wall -Wextra -Wshadow"
 
@@ -44,6 +52,10 @@ PKG_CHECK_MODULES(GTK, gtk+-3.0, [AC_MSG_NOTICE(Using gtk+-3.0)],
 
 AC_SUBST([GETTEXT_PACKAGE], [$PACKAGE_TARNAME])
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [GETTEXT package name])
+IT_PROG_INTLTOOL([0.40.0])
+AM_GNU_GETTEXT_VERSION([0.18])
+AM_GNU_GETTEXT([external])
+
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
 PKG_CHECK_MODULES(X11, x11)
@@ -69,9 +81,9 @@ pixmaps/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile
-po/Makefile
 doc/Makefile
 data/Makefile
+po/Makefile.in
 ])
 AC_OUTPUT
 

@@ -1,9 +1,33 @@
-#!/bin/sh -e
+#!/bin/sh
+# Run this to generate all the initial makefiles, etc.
 
-# Workaround for http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=565663
-[ ! -e m4 ] && mkdir m4
+test -n "$srcdir" || srcdir=`dirname "$0"`
+test -n "$srcdir" || srcdir=.
 
-command -v gnome-doc-prepare >/dev/null 2>&1 || { echo >&2 "Please install gnome-doc-utils.  Aborting."; exit 1; }
+OLDDIR=`pwd`
+cd $srcdir
 
-gnome-doc-prepare --force
-autoreconf --force --install --verbose -Wall -I m4
+AUTORECONF=`which autoreconf`
+if test -z $AUTORECONF; then
+        echo "*** No autoreconf found, please intall it ***"
+        exit 1
+fi
+
+INTLTOOLIZE=`which intltoolize`
+if test -z $INTLTOOLIZE; then
+        echo "*** No intltoolize found, please install the intltool package ***"
+        exit 1
+fi
+
+GNOMEDOC=`which yelp-build`
+if test -z $GNOMEDOC; then
+        echo "*** The tools to build the documentation are not found,"
+        echo "    please intall the yelp-tools package ***"
+        exit 1
+fi
+
+autopoint --force || exit $?
+AUTOPOINT='intltoolize --automake --copy' autoreconf --force --install --verbose
+
+cd $OLDDIR
+test -n "$NOCONFIGURE" || "$srcdir/configure" "$@"

@@ -61,7 +61,6 @@ sflphone_client_new()
 static void
 sflphone_client_init(SFLPhoneClient *self)
 {
-    g_print("init baby!");
     self->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
     self->win = 0;
 }

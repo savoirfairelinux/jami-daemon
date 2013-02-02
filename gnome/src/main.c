@@ -96,7 +96,7 @@ main(int argc, char *argv[])
     // Start GTK application
     gtk_init(&argc, &argv);
 
-    g_print("%s %s\n", PACKAGE, VERSION);
+    g_print("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
     g_print("\nCopyright (c) 2005 - 2012 Savoir-faire Linux Inc.\n\n");
     g_print("This is free software.  You may redistribute copies of it under the terms of\n" \
             "the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n" \
@@ -114,8 +114,8 @@ main(int argc, char *argv[])
     srand(time(NULL));
 
     // Internationalization
-    bindtextdomain(PACKAGE, LOCALEDIR);
-    textdomain(PACKAGE);
+    bindtextdomain(PACKAGE_NAME, LOCALEDIR);
+    textdomain(PACKAGE_NAME);
 
     g_set_application_name("SFLphone");
     SFLPhoneClient *client = sflphone_client_new();
