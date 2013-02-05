@@ -905,9 +905,9 @@ edit_paste(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-clear_history(GtkAction *action UNUSED, SFLPhoneClient *client)
+clear_history(GtkAction *action UNUSED, SFLPhoneClient *client UNUSED)
 {
-    calllist_clean_history(client);
+    calllist_clean_history();
     dbus_clear_history();
 }
 
