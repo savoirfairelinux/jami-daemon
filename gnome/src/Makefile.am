@@ -59,19 +59,18 @@ libsflphone_client_la_SOURCES = \
 libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
 libsflphone_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
                                 @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ \
-                                $(DL_LIBS) @JAVASCRIPT_CORE_GTK_LIBS@ \
+                                $(DL_LIBS) \
                                 @CLUTTERGTK_LDFLAGS@
 
 libsflphone_client_la_CFLAGS = @CLUTTER_CFLAGS@ @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
                                @GTK_CFLAGS@ \
-                               @JAVASCRIPT_CORE_GTK_CFLAGS@ \
                                @CLUTTERGTK_CFLAGS@
 
 
 sflphone_client_gnome_SOURCES = main.c
 sflphone_client_gnome_CFLAGS = @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
-                               @GTK_CFLAGS@ \
-                               @JAVASCRIPT_CORE_GTK_CFLAGS@
+                               @GTK_CFLAGS@
+
 sflphone_client_gnome_LDADD = libsflphone_client.la
 
 # add symbolic link

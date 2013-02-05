@@ -59,8 +59,6 @@ AM_GNU_GETTEXT([external])
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.24)
 PKG_CHECK_MODULES(X11, x11)
-PKG_CHECK_MODULES(JAVASCRIPT_CORE_GTK, javascriptcoregtk-3.0, ,
-		  AC_MSG_RESULT(javascriptcoregtk not installed))
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4],,
                   AC_MSG_RESULT([check not installed]))

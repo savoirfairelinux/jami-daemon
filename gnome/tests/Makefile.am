@@ -34,7 +34,7 @@ endif
 check_dbus_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@ \
                    $(top_builddir)/src/widget/libwidget.la \
                    $(top_builddir)/src/icons/libicons.la @X11_LIBS@ \
-                   @JAVASCRIPT_CORE_GTK_LIBS@ -ldl
+                   -ldl
 
 clean-local:
 	rm -rf *.xml
