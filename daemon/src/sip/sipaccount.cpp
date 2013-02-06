@@ -112,7 +112,12 @@ SIPAccount::SIPAccount(const std::string& accountID)
     , link_(SIPVoIPLink::instance())
     , receivedParameter_("")
     , rPort_(-1)
+    , via_addr_()
 {
+    via_addr_.host.ptr = 0;
+    via_addr_.host.slen = 0;
+    via_addr_.port = 0;
+
     if (isIP2IP())
         alias_ = IP2IP_PROFILE;
 }
