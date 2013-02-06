@@ -9,7 +9,7 @@ cd $srcdir
 
 AUTORECONF=`which autoreconf`
 if test -z $AUTORECONF; then
-        echo "*** No autoreconf found, please intall it ***"
+        echo "*** No autoreconf found, please install it ***"
         exit 1
 fi
 
@@ -23,6 +23,19 @@ GNOMEDOC=`which yelp-build`
 if test -z $GNOMEDOC; then
         echo "*** The tools to build the documentation are not found,"
         echo "    please install the yelp-tools package ***"
+        exit 1
+fi
+
+# make sure we have gnome common, which contains macros we need
+GNOMECOMMON=`which gnome-autogen.sh`
+if test -z $GNOMECOMMON; then
+    echo "you need to install gnome-common"
+    exit 1
+fi
+
+AUTOPOINT=`which autopoint`
+if test -z $AUTOPOINT; then
+        echo "*** No autopoint found, please install it ***"
         exit 1
 fi
 
