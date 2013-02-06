@@ -38,3 +38,5 @@ check_dbus_LDADD = $(SFLPHONE_LIBS) @CHECK_LIBS@ \
 
 clean-local:
 	rm -rf *.xml
+
+-include $(top_srcdir)/git.mk

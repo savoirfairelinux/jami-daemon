@@ -26,3 +26,5 @@ libcontacts_la_LIBS = $(DBUSGLIB_LIBS) $(LIBNOTIFY_LIBS) \
 libcontacts_la_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
                         $(GTK_CFLAGS) $(GLIB_CFLAGS) \
                         $(GCONF_CFLAGS)
+
+-include $(top_srcdir)/git.mk

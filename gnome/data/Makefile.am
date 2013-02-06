@@ -15,3 +15,5 @@ gschemas.compiled: $(gsettings_SCHEMAS)
 
 clean-local:
 	rm -rf $(top_builddir)/data/gschemas.compiled
+
+-include $(top_srcdir)/git.mk

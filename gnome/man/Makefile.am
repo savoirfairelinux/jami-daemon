@@ -18,3 +18,5 @@ SUFFIXES=.pod .1
 
 clean-local:
 	rm -rf *.1
+
+-include $(top_srcdir)/git.mk

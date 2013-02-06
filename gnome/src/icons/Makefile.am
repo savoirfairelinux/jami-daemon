@@ -11,3 +11,5 @@ libicons_la_LDFLAGS = $(DBUSGLIB_LDFLAGS) $(LIBNOTIFY_LDFLAGS) \
 
 libicons_la_CFLAGS = $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
 					 $(GTK_CFLAGS) $(GLIB_CFLAGS)
+
+-include $(top_srcdir)/git.mk

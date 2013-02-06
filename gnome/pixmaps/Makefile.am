@@ -51,3 +51,5 @@ buttons_DATA = current.svg \
 
 buttonsdir   = $(datadir)/sflphone
 EXTRA_DIST   = $(buttons_DATA) $(icon_DATA)
+
+-include $(top_srcdir)/git.mk

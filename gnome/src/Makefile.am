@@ -80,3 +80,5 @@ install-exec-local:
 
 uninstall-local:
 	-test -h $(DESTDIR)$(bindir)/sflphone && rm $(DESTDIR)$(bindir)/sflphone
+
+-include $(top_srcdir)/git.mk

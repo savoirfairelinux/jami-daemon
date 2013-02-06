@@ -15,3 +15,5 @@ libvideo_la_CFLAGS = @CLUTTER_CFLAGS@ \
 			@GTK_CFLAGS@ @GLIB_CFLAGS@ @CLUTTERGTK_CFLAGS@ @DBUSGLIB_CFLAGS@
 
 endif
+
+-include $(top_srcdir)/git.mk

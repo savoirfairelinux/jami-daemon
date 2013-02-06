@@ -31,3 +31,5 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/srtp_enabled.png				\
 				figures/zrtp_options.png	
 DOC_LINGUAS = fr es
+
+-include $(top_srcdir)/git.mk

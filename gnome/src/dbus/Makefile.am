@@ -41,3 +41,5 @@ libdbus_la_CFLAGS= $(DBUSGLIB_CFLAGS) $(LIBNOTIFY_CFLAGS) \
 
 EXTRA_DIST= marshaller.list
 CLEANFILES= $(BUILT_SOURCES)
+
+-include $(top_srcdir)/git.mk
