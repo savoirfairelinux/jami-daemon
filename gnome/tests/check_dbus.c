@@ -30,6 +30,7 @@
 #include <stdlib.h>
 
 #include "../src/dbus/dbus.h"
+#include "../src/sflphone_client.h"
 
 #define XML_OUTPUT  "gnome-check-dbus.xml"
 
@@ -37,9 +38,9 @@ START_TEST(test_dbus_connect)
 {
     g_type_init();
     GError *error = NULL;
-    GSettings *settings = g_settings_new("org.sflphone.SFLphone");
-    fail_unless(dbus_connect(&error, settings) == TRUE, "dbus_connect () returns FALSE");
-    g_object_unref(settings);
+    SFLPhoneClient *client = sflphone_client_new();
+    fail_unless(dbus_connect(&error, client) == TRUE, "dbus_connect () returns FALSE");
+    g_object_unref(client);
 }
 END_TEST
 
