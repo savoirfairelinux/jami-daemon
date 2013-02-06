@@ -239,8 +239,8 @@ create_main_window(SFLPhoneClient *client)
      * When the window is about to be destroyed we get a notificaiton and
      * stop the main GTK loop
      */
-    g_signal_connect(G_OBJECT(window), "delete-event",
-                     G_CALLBACK(on_delete), client);
+    g_signal_connect_swapped(G_OBJECT(window), "delete-event",
+                             G_CALLBACK(on_delete), client);
 
     g_signal_connect(G_OBJECT(window), "key-release-event",
                      G_CALLBACK(on_key_released), client);

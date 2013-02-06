@@ -160,8 +160,7 @@ sflphone_quit(gboolean force_quit, SFLPhoneClient *client)
         calllist_clean(current_calls_tab);
         calllist_clean(contacts_tab);
         calllist_clean(history_tab);
-        if (gtk_main_level() > 0)
-            gtk_main_quit();
+        g_application_quit(G_APPLICATION(client));
     }
 }
 

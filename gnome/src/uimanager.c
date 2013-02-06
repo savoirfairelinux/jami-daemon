@@ -519,7 +519,7 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 }
 
 static void
-help_contents_cb(GtkAction *action UNUSED)
+help_contents_cb(GtkAction *action UNUSED, gpointer data UNUSED)
 {
     GError *error = NULL;
     gtk_show_uri(NULL, "ghelp:sflphone", GDK_CURRENT_TIME, &error);
@@ -530,7 +530,7 @@ help_contents_cb(GtkAction *action UNUSED)
 }
 
 static void
-help_about(SFLPhoneClient *client)
+help_about(GtkAction *action UNUSED, SFLPhoneClient *client)
 {
     static const gchar *authors[] = {
         "Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
@@ -578,7 +578,7 @@ call_new_call(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-call_quit(SFLPhoneClient *client)
+call_quit(GtkAction *action UNUSED, SFLPhoneClient *client)
 {
     sflphone_quit(FALSE, client);
 }
@@ -603,7 +603,7 @@ switch_account(GtkWidget* item, gpointer data UNUSED)
 }
 
 static void
-call_hold(void* foo UNUSED)
+call_hold(GtkAction * action UNUSED, gpointer data UNUSED)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
@@ -751,7 +751,7 @@ call_record(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-call_configuration_assistant(void * foo UNUSED)
+call_configuration_assistant(GtkAction *action UNUSED, gpointer data UNUSED)
 {
     build_wizard();
 }
@@ -795,9 +795,9 @@ call_back(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-edit_preferences(GtkAction *action UNUSED, gpointer data)
+edit_preferences(GtkAction *action UNUSED, SFLPhoneClient *client)
 {
-    show_preferences_dialog(data);
+    show_preferences_dialog(client);
 }
 
 static void
@@ -808,7 +808,7 @@ edit_accounts(GtkAction *action UNUSED, SFLPhoneClient *client)
 
 // The menu Edit/Copy should copy the current selected call's number
 static void
-edit_copy(void * foo UNUSED)
+edit_copy(GtkAction *action UNUSED, gpointer data UNUSED)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
@@ -1427,7 +1427,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
                 g_signal_connect(G_OBJECT(menu_items), "activate",
                                  G_CALLBACK(call_im),
-                                 NULL);
+                                 client);
                 gtk_widget_show(menu_items);
             }
         }

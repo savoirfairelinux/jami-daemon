@@ -119,7 +119,14 @@ main(int argc, char *argv[])
 
     g_set_application_name("SFLphone");
     SFLPhoneClient *client = sflphone_client_new();
-    g_application_register(G_APPLICATION(client), NULL, NULL);
+    GError *err = NULL;
+    if (!g_application_register(G_APPLICATION(client), NULL, &err)) {
+        ERROR("Could not register application: %s", err->message);
+        g_error_free(err);
+        g_object_unref(client);
+        return 1;
+    }
+
     g_timeout_add(1000, check_interrupted, client);
 
     GError *error = NULL;
@@ -158,14 +165,14 @@ main(int argc, char *argv[])
 
     shortcuts_initialize_bindings(client);
 
-    g_application_run(G_APPLICATION(client), argc, argv);
+    gint status = g_application_run(G_APPLICATION(client), argc, argv);
 
     codecs_unload();
     shortcuts_destroy_bindings();
 
     g_object_unref(client);
 
-    return 0;
+    return status;
 }
 
 /** @mainpage SFLphone GTK+ Client Documentation
