@@ -6,28 +6,50 @@
  * Callback called after all book have been processed
  */
 
+enum {
+  COLUMN_NAME,
+  COLUMN_PHONE,
+  COLUMN_PIXBUF,
+  N_COLUMNS
+};
+
+// Evil!
+static GtkListStore *list_store;
+
+
 static void
 add_contact(const gchar *name, const char *phone, GdkPixbuf *photo)
 {
+    g_print("name: %s, phone: %s, photo: %p\n", name, phone, photo);
+    GtkTreeIter iter;
+    // Add a new row to the model
+    gtk_list_store_append(list_store, &iter);
+    gtk_list_store_set(list_store, &iter,
+                       COLUMN_NAME, name,
+                       COLUMN_PHONE, phone,
+                       COLUMN_PIXBUF, photo,
+                       -1);
 }
 
 static void
-handler_async_search(GList *hits, gpointer user_data)
+handler_async_search(GList *hits, G_GNUC_UNUSED gpointer data)
 {
-    AddressBook_Config *addressbook_config = user_data;
-
     for (GList *i = hits; i != NULL; i = i->next) {
-        GdkPixbuf *photo = NULL;
-        Hit *entry = i->data;
+        Hit *hit = i->data;
 
-        if (!entry)
+        if (!hit)
             continue;
 
-        add_contact(entry->name, entry->phone_home, photo);
+        const gchar *phone = hit->phone_business ? hit->phone_business :
+                             hit->phone_mobile ? hit->phone_mobile :
+                             hit->phone_home ? hit->phone_home : "";
+        add_contact(hit->name, phone, hit->photo);
 
-        g_free(entry->name);
-        g_free(entry->phone_home);
-        g_free(entry);
+        g_free(hit->name);
+        g_free(hit->phone_home);
+        g_free(hit->phone_mobile);
+        g_free(hit->phone_business);
+        g_free(hit);
     }
 
     g_list_free(hits);
@@ -38,12 +60,44 @@ main(int argc, char *argv[])
 {
     gtk_init(&argc, &argv);
 
+    list_store = gtk_list_store_new(N_COLUMNS,
+                                    G_TYPE_STRING,
+                                    G_TYPE_STRING,
+                                    GDK_TYPE_PIXBUF);
+    GtkWidget *tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
+
+    GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
+    const char *column_header[]= {"Name", "Phone"};
+    for (gint col = COLUMN_NAME; col < COLUMN_PIXBUF; ++col) {
+        GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes(column_header[col],
+                                                                             renderer, "text",
+                                                                             col,
+                                                                             NULL);
+        gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
+    }
+
+    renderer = gtk_cell_renderer_pixbuf_new();
+    GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes("Photo",
+                                                                         renderer, "pixbuf",
+                                                                         COLUMN_PIXBUF,
+                                                                         NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
+
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-    gtk_widget_show(window);
     addressbook_init();
+
+    GtkWidget *entry = gtk_entry_new();
+    //gtk_container_add(GTK_CONTAINER(vbox), entry);
+    gtk_container_add(GTK_CONTAINER(vbox), tree_view);
+    gtk_container_add(GTK_CONTAINER(window), vbox);
+
+    addressbook_search(handler_async_search, GTK_ENTRY(entry), NULL);
+
+    gtk_widget_show_all(window);
 
     gtk_main();
 
