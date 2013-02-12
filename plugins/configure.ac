@@ -48,6 +48,7 @@ AC_CONFIG_FILES([
 Makefile
 addressbook/evolution/Makefile
 addressbook/Makefile
+addressbook/test/Makefile
 ])
 AC_OUTPUT
 
