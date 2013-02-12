@@ -39,8 +39,9 @@
 void
 addressbook_search (void (*search_cb)(GList *, gpointer), GtkEntry* entry, AddressBook_Config *addressbook_config)
 {
+    const gint max_results = addressbook_config ? addressbook_config->max_results : 10;
     search_async_by_contacts (gtk_entry_get_text(entry),
-        addressbook_config->max_results,
+        max_results,
         search_cb,
         addressbook_config);
 }
