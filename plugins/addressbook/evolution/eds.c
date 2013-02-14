@@ -189,8 +189,9 @@ pixbuf_from_contact(EContact *contact)
 
     e_contact_photo_free(photo);
 
-    if (!pixbuf)
+    if (!pixbuf) {
         return NULL;
+    }
 
     // check size and resize if needed
     gint width = gdk_pixbuf_get_width(pixbuf);
@@ -454,11 +455,6 @@ determine_default_addressbook()
 void
 search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data)
 {
-    if (!*query) {
-        handler(NULL, user_data);
-        return;
-    }
-
     Search_Handler_And_Data *had = g_new0(Search_Handler_And_Data, 1);
 
     // initialize search data
@@ -466,7 +462,11 @@ search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler 
     had->user_data = user_data;
     had->hits = NULL;
     had->max_results_remaining = max_results;
-    had->equery = create_query(query, current_test, (AddressBook_Config *) (user_data));
+    if (!g_strcmp0(query, ""))
+        had->equery = e_book_query_any_field_contains("");
+    else
+        had->equery = create_query(query, current_test, (AddressBook_Config *) (user_data));
+
 
 #if EDS_CHECK_VERSION(3,5,3)
     ESourceRegistry *registry = get_registry();

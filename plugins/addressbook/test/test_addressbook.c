@@ -89,10 +89,11 @@ main(int argc, char *argv[])
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     addressbook_init();
+    addressbook_set_current_book("Contacts");
 
     GtkWidget *entry = gtk_entry_new();
-    //gtk_container_add(GTK_CONTAINER(vbox), entry);
     gtk_container_add(GTK_CONTAINER(vbox), tree_view);
+    gtk_container_add(GTK_CONTAINER(vbox), entry);
     gtk_container_add(GTK_CONTAINER(window), vbox);
 
     addressbook_search(handler_async_search, GTK_ENTRY(entry), NULL);
