@@ -33,7 +33,6 @@
 #endif
 
 #include "codeclist.h"
-#include "unused.h"
 #include "logger.h"
 #include <string.h>
 #include <stdlib.h>
@@ -100,7 +99,7 @@ static gboolean codecs_audio_load(void)
 }
 
 static void
-codec_free(gpointer data, gpointer user_data UNUSED)
+codec_free(gpointer data, G_GNUC_UNUSED gpointer user_data)
 {
     codec_t *codec = (codec_t*) data;
     g_free(codec->name);

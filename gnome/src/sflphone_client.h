@@ -44,6 +44,8 @@ typedef struct
     GSettings *settings;
     /* Main window */
     GtkWidget *win;
+    /* Main toolbar */
+    GtkWidget *toolbar;
 
 } SFLPhoneClient;
 

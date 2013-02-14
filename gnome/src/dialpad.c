@@ -31,7 +31,6 @@
 #include "dialpad.h"
 #include "actions.h"
 #include "calltab.h"
-#include "unused.h"
 
 /**
  * button pressed event
@@ -44,14 +43,14 @@ typedef struct
 } DialpadData;
 
 static void
-dialpad_pressed(GtkWidget * widget UNUSED, DialpadData *data)
+dialpad_pressed(G_GNUC_UNUSED GtkWidget * widget, DialpadData *data)
 {
     gtk_widget_grab_focus(GTK_WIDGET(current_calls_tab->view));
     sflphone_keypad(0, data->number, data->client);
 }
 
 static void
-dialpad_cleanup(GtkWidget * widget UNUSED, DialpadData *data)
+dialpad_cleanup(G_GNUC_UNUSED GtkWidget * widget, DialpadData *data)
 {
     g_free(data);
 }

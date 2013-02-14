@@ -46,7 +46,6 @@ libsflphone_client_la_SOURCES = \
   conference_obj.h \
   shortcuts.h \
   logger.h \
-  unused.h \
   str_utils.h \
   seekslider.h \
   account_schema.h \

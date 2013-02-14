@@ -36,7 +36,6 @@
 #include "accountlist.h"
 #include "statusicon.h"
 #include "logger.h"
-#include "unused.h"
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
@@ -82,7 +81,7 @@ status_quit(SFLPhoneClient *client)
 }
 
 static void
-status_hangup(GtkWidget *widget UNUSED, SFLPhoneClient *client)
+status_hangup(G_GNUC_UNUSED GtkWidget *widget, SFLPhoneClient *client)
 {
     sflphone_hang_up(client);
 }
@@ -109,7 +108,7 @@ show_hide(SFLPhoneClient *client)
 }
 
 void
-status_click(GtkStatusIcon *status_icon UNUSED, void * foo UNUSED)
+status_click(G_GNUC_UNUSED GtkStatusIcon *status_icon, G_GNUC_UNUSED gpointer foo)
 {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item),
                                    !gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)));

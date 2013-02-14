@@ -49,7 +49,6 @@
 #include "assistant.h"
 #include "widget/minidialog.h"
 #include "uimanager.h"
-#include "unused.h"
 #include "config/audioconf.h"
 #include "str_utils.h"
 #include "seekslider.h"
@@ -94,7 +93,7 @@ focus_on_searchbar_in()
  * Save the vpaned size
  */
 static void
-on_messaging_paned_position_change(GtkPaned* paned, GtkScrollType scroll_type UNUSED, SFLPhoneClient *client)
+on_messaging_paned_position_change(GtkPaned* paned, G_GNUC_UNUSED GtkScrollType scroll_type, SFLPhoneClient *client)
 {
     const gint height = gtk_paned_get_position(paned);
     g_settings_set_int(client->settings, "message-tab-height", height);
@@ -155,7 +154,7 @@ main_window_ask_quit(SFLPhoneClient *client)
 }
 
 static gboolean
-on_key_released(GtkWidget *widget UNUSED, GdkEventKey *event, SFLPhoneClient *client)
+on_key_released(G_GNUC_UNUSED GtkWidget *widget, GdkEventKey *event, SFLPhoneClient *client)
 {
     if (!pause_grabber) {
         if (focus_is_on_searchbar)
@@ -273,8 +272,8 @@ create_main_window(SFLPhoneClient *client)
     GtkWidget *widget = create_menus(ui_manager, client);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
-    widget = create_toolbar_actions(ui_manager, client);
-    pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+    create_toolbar_actions(ui_manager, client);
+    pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
 
     /* Setup call main widget*/
 #if GTK_MAJOR_VERSION == 2
@@ -447,7 +446,7 @@ statusbar_update_clock(const gchar * msg)
 
 
 static void
-destroy_error_dialog_cb(GtkWidget *dialog UNUSED, GtkWidget *win)
+destroy_error_dialog_cb(G_GNUC_UNUSED GtkWidget *dialog, GtkWidget *win)
 {
     gtk_widget_destroy(win);
 }

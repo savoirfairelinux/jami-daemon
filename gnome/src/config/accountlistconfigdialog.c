@@ -38,7 +38,6 @@
 #include "actions.h"
 #include "mainwindow.h"
 #include "utils.h"
-#include "unused.h"
 #include "logger.h"
 #include <glib/gi18n.h>
 #include <string.h>
@@ -103,7 +102,7 @@ find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
 }
 
 
-static void delete_account_cb(GtkButton *button UNUSED, gpointer data)
+static void delete_account_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     gchar *selected_accountID = get_selected_accountID(data);
     RETURN_IF_NULL(selected_accountID, "No selected account in delete action");
@@ -125,8 +124,8 @@ run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client)
 }
 
 static void row_activated_cb(GtkTreeView *view,
-                             GtkTreePath *path UNUSED,
-                             GtkTreeViewColumn *col UNUSED,
+                             G_GNUC_UNUSED GtkTreePath *path,
+                             G_GNUC_UNUSED GtkTreeViewColumn *col,
                              SFLPhoneClient *client)
 {
     gchar *selected_accountID = get_selected_accountID(view);
@@ -140,7 +139,7 @@ typedef struct EditData {
     SFLPhoneClient *client;
 } EditData;
 
-static void edit_account_cb(GtkButton *button UNUSED, EditData *data)
+static void edit_account_cb(G_GNUC_UNUSED GtkButton *button, EditData *data)
 {
     gchar *selected_accountID = get_selected_accountID(GTK_TREE_VIEW(data->view));
     RETURN_IF_NULL(selected_accountID, "No selected account ID");
@@ -247,7 +246,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 }
 
 static void
-enable_account_cb(GtkCellRendererToggle *rend UNUSED, gchar* path,
+enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
                   gpointer data)
 {
     // The IP2IP profile can't be disabled
@@ -345,7 +344,7 @@ account_move(gboolean move_up, gpointer data)
  * Called from move up account button signal
  */
 static void
-move_up_cb(GtkButton *button UNUSED, gpointer data)
+move_up_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     // Change tree view ordering and get index changed
     account_move(TRUE, data);
@@ -355,15 +354,15 @@ move_up_cb(GtkButton *button UNUSED, gpointer data)
  * Called from move down account button signal
  */
 static void
-move_down_cb(GtkButton *button UNUSED, gpointer data)
+move_down_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     // Change tree view ordering and get index changed
     account_move(FALSE, data);
 }
 
 static void
-help_contents_cb(GtkWidget * widget UNUSED,
-                 gpointer data UNUSED)
+help_contents_cb(G_GNUC_UNUSED GtkWidget * widget,
+                 G_GNUC_UNUSED gpointer data)
 {
     GError *error = NULL;
     gtk_show_uri(NULL, "ghelp:sflphone?accounts", GDK_CURRENT_TIME, &error);
@@ -374,15 +373,15 @@ help_contents_cb(GtkWidget * widget UNUSED,
 }
 
 static void
-close_dialog_cb(GtkWidget * widget UNUSED, gpointer data UNUSED)
+close_dialog_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED gpointer data)
 {
     gtk_dialog_response(GTK_DIALOG(account_list_dialog), GTK_RESPONSE_ACCEPT);
 }
 
 static void
-highlight_ip_profile(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
+highlight_ip_profile(G_GNUC_UNUSED GtkTreeViewColumn *col, GtkCellRenderer *rend,
                      GtkTreeModel *tree_model, GtkTreeIter *iter,
-                     gpointer data UNUSED)
+                     G_GNUC_UNUSED gpointer data)
 {
     GValue val;
     memset(&val, 0, sizeof(val));
@@ -417,9 +416,9 @@ state_color(account_t *a)
 }
 
 static void
-highlight_registration(GtkTreeViewColumn *col UNUSED, GtkCellRenderer *rend,
+highlight_registration(G_GNUC_UNUSED GtkTreeViewColumn *col, GtkCellRenderer *rend,
                        GtkTreeModel *tree_model, GtkTreeIter *iter,
-                       gpointer data UNUSED)
+                       G_GNUC_UNUSED gpointer data)
 {
     GValue val;
     memset(&val, 0, sizeof(val));

@@ -36,7 +36,6 @@
 #include "account_schema.h"
 #include "logger.h"
 #include "actions.h"
-#include "unused.h"
 
 static GQueue * accountQueue;
 
@@ -180,7 +179,7 @@ const gchar * account_state_name(account_state_t s)
     }
 }
 
-void account_list_free_elm(gpointer elm, gpointer data UNUSED)
+void account_list_free_elm(gpointer elm, G_GNUC_UNUSED gpointer data)
 {
     account_t *a = elm;
     g_free(a->accountID);

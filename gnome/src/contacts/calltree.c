@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 
-#include "unused.h"
 #include "dbus.h"
 #include "calltab.h"
 #include "logger.h"
@@ -143,9 +142,9 @@ call_selected_cb(GtkTreeSelection *sel, SFLPhoneClient *client)
 
 /* A row is activated when it is double clicked */
 static void
-row_activated_cb(GtkTreeView *tree_view UNUSED,
-                 GtkTreePath *path UNUSED,
-                 GtkTreeViewColumn *column UNUSED,
+row_activated_cb(G_GNUC_UNUSED GtkTreeView *tree_view,
+                 G_GNUC_UNUSED GtkTreePath *path,
+                 G_GNUC_UNUSED GtkTreeViewColumn *column,
                  SFLPhoneClient *client)
 {
     if (calltab_get_selected_type(active_calltree_tab) == A_CALL) {
@@ -215,7 +214,7 @@ row_activated_cb(GtkTreeView *tree_view UNUSED,
 
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
 static void
-row_single_click(GtkTreeView *tree_view UNUSED, SFLPhoneClient *client)
+row_single_click(G_GNUC_UNUSED GtkTreeView *tree_view, SFLPhoneClient *client)
 {
     gchar * displaySasOnce = NULL;
 
@@ -509,7 +508,7 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
 }
 
 static gboolean
-remove_element_if_match(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gpointer data)
+remove_element_if_match(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeIter *iter, gpointer data)
 {
     const gchar *target_id = (const gchar *) data;
     gchar *id;
@@ -589,7 +588,7 @@ typedef struct {
 } ConferenceRemoveCtx;
 
 static gboolean
-update_call(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gpointer data)
+update_call(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeIter *iter, gpointer data)
 {
     GdkPixbuf *pixbuf = NULL;
     GdkPixbuf *pixbuf_security = NULL;
@@ -1039,7 +1038,7 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf, SFLPhoneCl
 
 static
 gboolean
-remove_conference(GtkTreeModel *model, GtkTreePath *path UNUSED, GtkTreeIter *iter, gpointer data)
+remove_conference(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeIter *iter, gpointer data)
 {
     if (!is_conference(model, iter))
         return FALSE;
@@ -1140,7 +1139,7 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
 }
 
 
-gboolean calltree_update_clock(gpointer data UNUSED)
+gboolean calltree_update_clock(G_GNUC_UNUSED gpointer data)
 {
     char timestr[20];
     const gchar *msg = "";
@@ -1308,8 +1307,11 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
     return result;
 }
 
-void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x UNUSED,
-                           gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint target_type UNUSED, guint etime, SFLPhoneClient *client)
+void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context,
+                           G_GNUC_UNUSED gint x, G_GNUC_UNUSED gint y,
+                           G_GNUC_UNUSED GtkSelectionData *selection_data,
+                           G_GNUC_UNUSED guint target_type, guint etime,
+                           SFLPhoneClient *client)
 {
     GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreeModel *model = GTK_TREE_MODEL(gtk_tree_view_get_model(tree_view));

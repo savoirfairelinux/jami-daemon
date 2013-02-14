@@ -39,7 +39,6 @@
 #include <clutter-gtk/clutter-gtk.h>
 
 #include "logger.h"
-#include "unused.h"
 
 /* This macro will implement the video_renderer_get_type function
    and define a parent class pointer accessible from the whole .c file */

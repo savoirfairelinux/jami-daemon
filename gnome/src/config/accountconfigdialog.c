@@ -56,7 +56,6 @@
 #include "tlsadvanceddialog.h"
 #include "dbus/dbus.h"
 #include "utils.h"
-#include "unused.h"
 
 /**
  * TODO: tidy this up
@@ -137,7 +136,7 @@ auto_answer_cb(GtkToggleButton *widget, account_t *account)
 /*
  * Display / Hide the password
  */
-static void show_password_cb(GtkWidget *widget UNUSED, gpointer data)
+static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 {
     gtk_entry_set_visibility(GTK_ENTRY(data), !gtk_entry_get_visibility(GTK_ENTRY(data)));
 }
@@ -203,7 +202,7 @@ static GPtrArray* get_new_credential(void)
     return credential_array;
 }
 
-static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
+static void update_credential_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     GtkTreeIter iter;
 
@@ -425,7 +424,7 @@ static void select_credential_cb(GtkTreeSelection *selection, GtkTreeModel *mode
     }
 }
 
-static void add_credential_cb(GtkWidget *button UNUSED, gpointer data)
+static void add_credential_cb(G_GNUC_UNUSED GtkWidget *button, gpointer data)
 {
     GtkTreeModel *model = (GtkTreeModel *) data;
 
@@ -438,7 +437,7 @@ static void add_credential_cb(GtkWidget *button UNUSED, gpointer data)
 }
 
 static void
-delete_credential_cb(GtkWidget *button UNUSED, gpointer data)
+delete_credential_cb(G_GNUC_UNUSED GtkWidget *button, gpointer data)
 {
     GtkTreeIter iter;
     GtkTreeView *treeview = (GtkTreeView *) data;
@@ -476,8 +475,8 @@ cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gchar *text,
 }
 
 static void
-editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * editable,
-                   const gchar * path, gpointer data UNUSED)
+editing_started_cb(G_GNUC_UNUSED GtkCellRenderer *cell, GtkCellEditable * editable,
+                   const gchar * path, G_GNUC_UNUSED gpointer data)
 {
     DEBUG("path desc: %s\n", path);
 
@@ -486,7 +485,7 @@ editing_started_cb(GtkCellRenderer *cell UNUSED, GtkCellEditable * editable,
         gtk_entry_set_text(GTK_ENTRY(editable), gtk_entry_get_text(GTK_ENTRY(entry_password)));
 }
 
-static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, OptionsData *data)
+static void show_advanced_zrtp_options_cb(G_GNUC_UNUSED GtkWidget *widget, OptionsData *data)
 {
     gchar *proto = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
 
@@ -500,13 +499,13 @@ static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, OptionsData 
 
 
 static void
-show_advanced_tls_options_cb(GtkWidget *widget UNUSED, OptionsData *data)
+show_advanced_tls_options_cb(G_GNUC_UNUSED GtkWidget *widget, OptionsData *data)
 {
     show_advanced_tls_options(data->account, data->client);
 }
 
 static void
-key_exchange_changed_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+key_exchange_changed_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     gchar *active_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
     DEBUG("Key exchange changed %s", active_text);
@@ -592,7 +591,7 @@ get_interface_addr_from_name(const gchar * const iface_name)
 #undef UC
 }
 
-static void local_interface_changed_cb(GtkWidget * widget UNUSED, gpointer data UNUSED)
+static void local_interface_changed_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
         gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
@@ -609,7 +608,7 @@ static void local_interface_changed_cb(GtkWidget * widget UNUSED, gpointer data 
     }
 }
 
-static void set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
+static void set_published_addr_manually_cb(GtkWidget * widget, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Showing manual publishing options");
@@ -626,7 +625,7 @@ static void set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNU
     }
 }
 
-static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
+static void use_stun_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     /* Widgets have not been created yet */
     if (!stun_server_label)
@@ -660,7 +659,7 @@ static void use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 }
 
 
-static void same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
+static void same_as_local_cb(GtkWidget * widget, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         gchar *local_interface = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
@@ -1066,7 +1065,7 @@ GtkWidget* create_advanced_tab(const account_t *account)
     return vbox;
 }
 
-static void ringtone_enabled_cb(GtkWidget *widget UNUSED, gpointer data, const gchar *accountID UNUSED)
+static void ringtone_enabled_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data, G_GNUC_UNUSED const gchar *accountID)
 {
     /* toggle sensitivity */
     gtk_widget_set_sensitive(data, !gtk_widget_is_sensitive(data));

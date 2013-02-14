@@ -33,7 +33,6 @@
 #include <glib.h>
 #include "logger.h"
 #include "../mainwindow.h"
-#include "unused.h"
 #include <string.h>
 
 static GtkWidget  *tab_box    = NULL ;
@@ -167,7 +166,7 @@ on_enter(GtkEntry *entry, gpointer user_data)
 }
 
 static void
-on_close(GtkWidget *button UNUSED, gpointer data)
+on_close(G_GNUC_UNUSED GtkWidget *button, gpointer data)
 {
     message_tab *tab = (message_tab*)data;
     gtk_widget_destroy(tab->widget);
@@ -178,19 +177,19 @@ on_close(GtkWidget *button UNUSED, gpointer data)
 }
 
 static void
-on_focus_in(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
+on_focus_in(G_GNUC_UNUSED GtkEntry *entry, G_GNUC_UNUSED gpointer user_data)
 {
     main_window_pause_keygrabber(TRUE);
 }
 
 static void
-on_focus_out(GtkEntry *entry UNUSED, gpointer user_data UNUSED)
+on_focus_out(G_GNUC_UNUSED GtkEntry *entry, G_GNUC_UNUSED gpointer user_data)
 {
     main_window_pause_keygrabber(FALSE);
 }
 
 static void
-on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark *mark UNUSED, SFLPhoneClient *client)
+on_clicked(GtkTextBuffer *textbuffer, G_GNUC_UNUSED GtkTextIter *location, G_GNUC_UNUSED GtkTextMark *mark, SFLPhoneClient *client)
 {
    if (start_link && end_link && gtk_text_iter_compare(start_link,location) <= 0 && gtk_text_iter_compare(location,end_link) <= 0) {
        gchar* text = gtk_text_buffer_get_text(textbuffer,start_link,end_link,FALSE);
@@ -212,7 +211,7 @@ on_clicked(GtkTextBuffer *textbuffer, GtkTextIter *location UNUSED, GtkTextMark 
 }
 
 static void
-on_cursor_motion(GtkTextView *view UNUSED, GdkEvent  *event, gpointer data)
+on_cursor_motion(G_GNUC_UNUSED GtkTextView *view, GdkEvent *event, gpointer data)
 {
    /* Convert mouse position into text iterators*/
    gint x,y;
