@@ -27,8 +27,6 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <string.h>
-#include <stdio.h>
 
 #include "eds.h"
 #include "addressbook.h"
@@ -108,6 +106,7 @@ void addressbook_set_search_type(AddrbookSearchType searchType) {
     set_current_addressbook_test(map[searchType]);
 }
 
-void addressbook_set_current_book(gchar *current) {
+void addressbook_set_current_book(const gchar *current) {
+    g_print("Setting addressbook to %s\n", current);
     set_current_addressbook(current);
 }
