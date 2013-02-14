@@ -30,7 +30,6 @@
 
 #include <string.h>
 #include <glib/gi18n.h>
-#include "unused.h"
 #include "assistant.h"
 #include "logger.h"
 #include "dbus.h"
@@ -55,7 +54,7 @@ static gint forward_page_func(gint current_page, gpointer data);
 static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
 void prefill_sip(void);
 
-void set_account_type(GtkWidget* widget, gpointer data UNUSED)
+void set_account_type(GtkWidget* widget, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
         account_type = _SIP;
@@ -63,7 +62,7 @@ void set_account_type(GtkWidget* widget, gpointer data UNUSED)
         account_type = _IAX;
 }
 
-static void show_password_cb(GtkWidget *widget UNUSED, gpointer data)
+static void show_password_cb(G_GNUC_UNUSED GtkWidget *widget, gpointer data)
 {
     gtk_entry_set_visibility(GTK_ENTRY(data), !gtk_entry_get_visibility(GTK_ENTRY(data)));
 }
@@ -101,7 +100,7 @@ void getMessageSummary(const gchar * alias, const gchar * server, const gchar * 
         strcat(message, _("None"));
 }
 
-void set_sflphone_org(GtkWidget* widget, gpointer data UNUSED)
+void set_sflphone_org(GtkWidget* widget, G_GNUC_UNUSED gpointer data)
 {
     use_sflphone_org = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
@@ -568,7 +567,7 @@ typedef enum {
     PAGE_SUMMARY
 } assistant_state;
 
-static gint forward_page_func(gint current_page, gpointer data UNUSED)
+static gint forward_page_func(gint current_page, G_GNUC_UNUSED gpointer data)
 {
     gint next_page = 0;
 

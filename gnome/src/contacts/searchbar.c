@@ -38,7 +38,6 @@
 #include "dbus.h"
 #include "logger.h"
 #include "mainwindow.h"
-#include "unused.h"
 #include "config/addressbook-config.h"
 #include "contacts/addressbook.h"
 #include "contacts/addrbookfactory.h"
@@ -62,14 +61,14 @@ static GdkPixbuf *outgoing_pixbuf;
 static GdkPixbuf *missed_pixbuf;
 
 static void
-searchbar_addressbook_activated(GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
+searchbar_addressbook_activated(GtkEntry *entry, G_GNUC_UNUSED gchar *arg1, G_GNUC_UNUSED gpointer data)
 {
     if (addrbook)
         addrbook->search(addrbook->search_cb, entry, addressbook_config_load_parameters());
 }
 
 static void
-searchbar_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
+searchbar_entry_changed(G_GNUC_UNUSED GtkEntry* entry, G_GNUC_UNUSED gchar* arg1, G_GNUC_UNUSED gpointer data)
 {
     DEBUG("Searchbar: Entry changed");
     if (calltab_has_name(active_calltree_tab, HISTORY))
@@ -103,7 +102,7 @@ update_current_addressbook(GtkWidget *widget)
 }
 
 static void
-cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
+cbox_changed_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer user_data)
 {
     if (!addrbook)
         return;
@@ -186,7 +185,7 @@ label_matches(const gchar *label, GtkWidget *item)
 }
 
 static void
-select_search_type(GtkWidget *item, GtkEntry *entry UNUSED)
+select_search_type(GtkWidget *item, G_GNUC_UNUSED GtkEntry *entry)
 {
     if (!addrbook)
         return;
@@ -220,7 +219,7 @@ update_search_entry(GtkEntry *entry, const gchar *search_str,
 }
 
 static void
-search_all(GtkWidget *item UNUSED, GtkEntry *entry)
+search_all(G_GNUC_UNUSED GtkWidget *item, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_stock(entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     update_search_entry(entry, _("Search all"),
@@ -228,7 +227,7 @@ search_all(GtkWidget *item UNUSED, GtkEntry *entry)
 }
 
 static void
-search_by_missed(GtkWidget *item UNUSED, GtkEntry *entry)
+search_by_missed(G_GNUC_UNUSED GtkWidget *item, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, missed_pixbuf);
     update_search_entry(entry, _("Search by missed call"),
@@ -236,7 +235,7 @@ search_by_missed(GtkWidget *item UNUSED, GtkEntry *entry)
 }
 
 static void
-search_by_incoming(GtkWidget *item UNUSED, GtkEntry *entry)
+search_by_incoming(G_GNUC_UNUSED GtkWidget *item, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, incoming_pixbuf);
     update_search_entry(entry, _("Search by incoming call"),
@@ -244,7 +243,7 @@ search_by_incoming(GtkWidget *item UNUSED, GtkEntry *entry)
 }
 
 static void
-search_by_outgoing(GtkWidget *item UNUSED, GtkEntry *entry)
+search_by_outgoing(G_GNUC_UNUSED GtkWidget *item, GtkEntry *entry)
 {
     gtk_entry_set_icon_from_pixbuf(entry, GTK_ENTRY_ICON_PRIMARY, outgoing_pixbuf);
     update_search_entry(entry, _("Search by outgoing call"),
@@ -252,7 +251,7 @@ search_by_outgoing(GtkWidget *item UNUSED, GtkEntry *entry)
 }
 
 static void
-icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, gpointer data UNUSED)
+icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, G_GNUC_UNUSED gpointer data)
 {
     DEBUG("Searchbar: Icon pressed");
 
@@ -270,7 +269,7 @@ icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, gpointer da
 }
 
 static void
-text_changed_cb(GtkEntry *entry, GParamSpec *pspec UNUSED)
+text_changed_cb(GtkEntry *entry, G_GNUC_UNUSED GParamSpec *pspec)
 {
     const gboolean has_text = gtk_entry_get_text_length(entry) > 0;
     gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);

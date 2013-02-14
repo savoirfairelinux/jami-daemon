@@ -46,7 +46,6 @@
 #include "sflphone_const.h"
 #include "dbus.h"
 #include "actions.h"
-#include "unused.h"
 
 static void
 ungrab_key(guint key, GdkModifierType mask, GdkWindow *root);
@@ -69,7 +68,7 @@ static GHashTable* shortcutsMap;
  * filter used when an event is catched
  */
 static GdkFilterReturn
-filter_keys(const GdkXEvent *xevent, const GdkEvent *event UNUSED, gpointer data UNUSED)
+filter_keys(const GdkXEvent *xevent, G_GNUC_UNUSED const GdkEvent *event, G_GNUC_UNUSED gpointer data)
 {
     if (((XEvent *) xevent)->type != KeyPress)
         return GDK_FILTER_CONTINUE;
@@ -131,7 +130,7 @@ hang_up_callback(gpointer data)
 }
 
 static void
-toggle_hold_callback(gpointer data UNUSED)
+toggle_hold_callback(G_GNUC_UNUSED gpointer data)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree_tab);
@@ -162,7 +161,7 @@ popup_window_callback(SFLPhoneClient *client)
 }
 
 static void
-default_callback(gpointer data UNUSED)
+default_callback(G_GNUC_UNUSED gpointer data)
 {
     ERROR("Shortcuts: Error: Missing shortcut callback");
 }

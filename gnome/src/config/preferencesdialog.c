@@ -58,7 +58,6 @@
 #include "videoconf.h"
 #endif
 #include "uimanager.h"
-#include "unused.h"
 #include "mainwindow.h"
 
 /**
@@ -95,7 +94,7 @@ set_popup_mode(GtkToggleButton *widget, SFLPhoneClient *client)
 }
 
 void
-set_notif_level(GtkWidget *widget UNUSED, SFLPhoneClient *client)
+set_notif_level(G_GNUC_UNUSED GtkWidget *widget, SFLPhoneClient *client)
 {
     const gboolean current_state = g_settings_get_boolean(client->settings, "notify-all");
     g_settings_set_boolean(client->settings, "notify-all", !current_state);
@@ -271,7 +270,7 @@ save_configuration_parameters(SFLPhoneClient *client)
 }
 
 void
-selection_changed_cb(GtkIconView *view, gpointer user_data UNUSED)
+selection_changed_cb(GtkIconView *view, G_GNUC_UNUSED gpointer user_data)
 {
     GtkTreeModel *model;
     GtkTreeIter iter;

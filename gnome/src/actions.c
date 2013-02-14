@@ -64,7 +64,6 @@
 #include "contacts/addrbookfactory.h"
 #include "icons/icon_factory.h"
 #include "statusicon.h"
-#include "unused.h"
 #include "sliders.h"
 #include "messaging/message_tab.h"
 #include "history_loader.h"

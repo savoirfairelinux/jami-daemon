@@ -37,7 +37,6 @@
 #include <string.h>
 #include "logger.h"
 #include "config/videoconf.h"
-#include "unused.h"
 
 typedef struct {
     gchar *id;
@@ -71,7 +70,7 @@ cleanup_handle(gpointer data)
 }
 
 static void
-video_window_deleted_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+video_window_deleted_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     if (dbus_has_video_preview_started())
         dbus_stop_video_preview();
@@ -147,9 +146,9 @@ try_clutter_init()
 #undef PRINT_ERR
 }
 
-void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
+void started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
         gchar *id, gchar *shm_path, gint width, gint height,
-        GError *error UNUSED, gpointer userdata UNUSED)
+        G_GNUC_UNUSED GError *error, G_GNUC_UNUSED gpointer userdata)
 {
     if (!id || !*id || !shm_path || !*shm_path)
         return;
@@ -191,11 +190,11 @@ void started_decoding_video_cb(DBusGProxy *proxy UNUSED,
 }
 
 void
-stopped_decoding_video_cb(DBusGProxy *proxy UNUSED,
+stopped_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
                           gchar *id,
-                          gchar *shm_path UNUSED,
-                          GError *error UNUSED,
-                          gpointer userdata UNUSED)
+                          G_GNUC_UNUSED gchar *shm_path,
+                          G_GNUC_UNUSED GError *error,
+                          G_GNUC_UNUSED gpointer userdata)
 {
     if (video_handles)
         g_hash_table_remove(video_handles, id);

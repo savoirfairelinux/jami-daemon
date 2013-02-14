@@ -56,7 +56,6 @@
 #include "sflphone_client.h"
 #include "dbus.h"
 #include "actions.h"
-#include "unused.h"
 
 #ifdef SFL_VIDEO
 #include "config/videoconf.h"
@@ -91,7 +90,7 @@ static gboolean check_error(GError *error)
 }
 
 static void
-new_call_created_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
+new_call_created_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID,
                     const gchar *callID, const gchar *to, SFLPhoneClient *client)
 {
     callable_obj_t *c = create_new_call(CALL, CALL_STATE_RINGING, callID,
@@ -105,7 +104,7 @@ new_call_created_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
 }
 
 static void
-incoming_call_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
+incoming_call_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID,
                  const gchar *callID, const gchar *from, SFLPhoneClient *client)
 {
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
@@ -127,7 +126,7 @@ incoming_call_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
 }
 
 static void
-zrtp_negotiation_failed_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
+zrtp_negotiation_failed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                            const gchar *reason, const gchar *severity,
                            SFLPhoneClient *client)
 {
@@ -139,22 +138,22 @@ zrtp_negotiation_failed_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
 }
 
 static void
-volume_changed_cb(DBusGProxy *proxy UNUSED, const gchar *device, gdouble value,
-                  void *foo UNUSED)
+volume_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *device, gdouble value,
+                  G_GNUC_UNUSED gpointer foo)
 {
     set_slider_no_update(device, value);
 }
 
 static void
-voice_mail_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, guint nb,
+voice_mail_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID, guint nb,
               SFLPhoneClient *client)
 {
     sflphone_notify_voice_mail(accountID, nb, client);
 }
 
 static void
-incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar *callID UNUSED,
-                    const gchar *from UNUSED, const gchar *msg, SFLPhoneClient *client)
+incoming_message_cb(G_GNUC_UNUSED DBusGProxy *proxy, const G_GNUC_UNUSED gchar *callID,
+                    const G_GNUC_UNUSED gchar *from, const gchar *msg, SFLPhoneClient *client)
 {
     // do not display message if instant messaging is disabled
     if (!g_settings_get_boolean(client->settings, "instant-messaging-enabled"))
@@ -242,7 +241,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state, S
 }
 
 static void
-call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
+call_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
               const gchar *state, SFLPhoneClient *client)
 {
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
@@ -256,7 +255,7 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
 }
 
 static void
-toggle_im(conference_obj_t *conf, gboolean activate UNUSED)
+toggle_im(conference_obj_t *conf, G_GNUC_UNUSED gboolean activate)
 {
     for (GSList *p = conf->participant_list; p; p = g_slist_next(p)) {
         //callable_obj_t *call = calllist_get_call(current_calls_tab, p->data);
@@ -266,7 +265,7 @@ toggle_im(conference_obj_t *conf, gboolean activate UNUSED)
 }
 
 static void
-conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
+conference_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
                       const gchar *state, SFLPhoneClient *client)
 {
     DEBUG("Conference state changed: %s\n", state);
@@ -309,7 +308,7 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 }
 
 static void
-conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, SFLPhoneClient *client)
+conference_created_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID, SFLPhoneClient *client)
 {
     DEBUG("Conference %s added", confID);
 
@@ -342,7 +341,7 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar *confID, SFLPhoneCli
 }
 
 static void
-conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
+conference_removed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
                       SFLPhoneClient *client)
 {
     DEBUG("Conference removed %s", confID);
@@ -366,7 +365,7 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar *confID,
 }
 
 static void
-record_playback_filepath_cb(DBusGProxy *proxy UNUSED, const gchar *id,
+record_playback_filepath_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *id,
                             const gchar *filepath)
 {
     DEBUG("Filepath for %s: %s", id, filepath);
@@ -390,7 +389,7 @@ record_playback_filepath_cb(DBusGProxy *proxy UNUSED, const gchar *id,
 }
 
 static void
-record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath, SFLPhoneClient *client)
+record_playback_stopped_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *filepath, SFLPhoneClient *client)
 {
     DEBUG("Playback stopped for %s", filepath);
     const gint calllist_size = calllist_get_size(history_tab);
@@ -410,14 +409,14 @@ record_playback_stopped_cb(DBusGProxy *proxy UNUSED, const gchar *filepath, SFLP
 }
 
 static void
-update_playback_scale_cb(DBusGProxy *proxy UNUSED, guint position, guint size)
+update_playback_scale_cb(G_GNUC_UNUSED DBusGProxy *proxy, guint position, guint size)
 {
     main_window_update_playback_scale(position, size);
 }
 
 static void
-registration_state_changed_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
-                              guint state, void *foo UNUSED)
+registration_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID,
+                              guint state, G_GNUC_UNUSED void *foo)
 {
     DEBUG("DBus: Registration state changed to %s for account %s",
           account_state_name(state), accountID);
@@ -429,7 +428,7 @@ registration_state_changed_cb(DBusGProxy *proxy UNUSED, const gchar *accountID,
 }
 
 static void
-accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
+accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 {
     sflphone_fill_account_list();
     sflphone_fill_ip2ip_profile();
@@ -438,7 +437,7 @@ accounts_changed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
 }
 
 static void
-stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, void *foo UNUSED)
+stun_status_failure_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID, G_GNUC_UNUSED void *foo)
 {
     ERROR("Error: Stun status failure: account %s failed to setup STUN",
           accountID);
@@ -451,25 +450,25 @@ stun_status_failure_cb(DBusGProxy *proxy UNUSED, const gchar *accountID, void *f
 }
 
 static void
-stun_status_success_cb(DBusGProxy *proxy UNUSED, const gchar *message UNUSED, void *foo UNUSED)
+stun_status_success_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED const gchar *message, G_GNUC_UNUSED void *foo)
 {
     DEBUG("STUN setup successful");
 }
 
 static void
-transfer_succeeded_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
+transfer_succeeded_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 {
     sflphone_display_transfer_status("Transfer successful");
 }
 
 static void
-transfer_failed_cb(DBusGProxy *proxy UNUSED, void *foo UNUSED)
+transfer_failed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 {
     sflphone_display_transfer_status("Transfer failed");
 }
 
 static void
-secure_sdes_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
+secure_sdes_on_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("SRTP using SDES is on");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
@@ -481,7 +480,7 @@ secure_sdes_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient 
 }
 
 static void
-secure_sdes_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
+secure_sdes_off_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("SRTP using SDES is off");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
@@ -493,7 +492,7 @@ secure_sdes_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient
 }
 
 static void
-secure_zrtp_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
+secure_zrtp_on_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                   const gchar *cipher, SFLPhoneClient *client)
 {
     DEBUG("SRTP using ZRTP is ON secure_on_cb");
@@ -507,7 +506,7 @@ secure_zrtp_on_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
 }
 
 static void
-secure_zrtp_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
+secure_zrtp_off_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("SRTP using ZRTP is OFF");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
@@ -519,7 +518,7 @@ secure_zrtp_off_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient
 }
 
 static void
-show_zrtp_sas_cb(DBusGProxy *proxy UNUSED, const gchar *callID, const gchar *sas,
+show_zrtp_sas_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, const gchar *sas,
                  gboolean verified, SFLPhoneClient *client)
 {
     DEBUG("Showing SAS");
@@ -530,7 +529,7 @@ show_zrtp_sas_cb(DBusGProxy *proxy UNUSED, const gchar *callID, const gchar *sas
 }
 
 static void
-confirm_go_clear_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
+confirm_go_clear_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("Confirm Go Clear request");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
@@ -540,7 +539,7 @@ confirm_go_clear_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClien
 }
 
 static void
-zrtp_not_supported_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneClient *client)
+zrtp_not_supported_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
     DEBUG("ZRTP not supported on the other end");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
@@ -552,7 +551,7 @@ zrtp_not_supported_cb(DBusGProxy *proxy UNUSED, const gchar *callID, SFLPhoneCli
 }
 
 static void
-sip_call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
+sip_call_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                   const gchar *description, guint code, SFLPhoneClient *client)
 {
     DEBUG("Sip call state changed %s", callID);
@@ -563,7 +562,7 @@ sip_call_state_cb(DBusGProxy *proxy UNUSED, const gchar *callID,
 }
 
 static void
-error_alert(DBusGProxy *proxy UNUSED, int err, void *foo UNUSED)
+error_alert(G_GNUC_UNUSED DBusGProxy *proxy, int err, G_GNUC_UNUSED void *foo)
 {
     const gchar *msg;
 
@@ -588,7 +587,7 @@ error_alert(DBusGProxy *proxy UNUSED, int err, void *foo UNUSED)
 }
 
 static void
-screensaver_dbus_proxy_new_cb (GObject * source UNUSED, GAsyncResult *result, gpointer user_data UNUSED)
+screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *result, G_GNUC_UNUSED gpointer user_data)
 {
     DEBUG("Session manager connection callback");
 
@@ -974,7 +973,7 @@ dbus_stop_recorded_file_playback(const gchar *filepath)
 }
 
 static void
-hang_up_reply_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+hang_up_reply_cb(G_GNUC_UNUSED DBusGProxy *proxy, GError *error, G_GNUC_UNUSED gpointer userdata)
 {
     check_error(error);
 }
@@ -1891,7 +1890,7 @@ dbus_set_accounts_order(const gchar *order)
 }
 
 static void
-get_history_async_cb(DBusGProxy *proxy UNUSED, GPtrArray *items, GError *error, gpointer userdata)
+get_history_async_cb(G_GNUC_UNUSED DBusGProxy *proxy, GPtrArray *items, GError *error, gpointer userdata)
 {
     IdleData *id = userdata;
     check_error(error);
@@ -2024,7 +2023,7 @@ dbus_send_text_message(const gchar *callID, const gchar *message)
 
 #ifdef SFL_VIDEO
 static void
-video_preview_async_cb(DBusGProxy *proxy UNUSED, GError *error, gpointer userdata UNUSED)
+video_preview_async_cb(G_GNUC_UNUSED DBusGProxy *proxy, GError *error, G_GNUC_UNUSED gpointer userdata)
 {
     check_error(error);
     // Reactivate it now that we're done, D-Bus wise
@@ -2060,7 +2059,7 @@ static guint cookie;
 #define GNOME_SESSION_NO_IDLE_FLAG 8
 
 static void screensaver_inhibit_cb(GObject * source_object, GAsyncResult * res,
-                                   gpointer user_data UNUSED)
+                                   G_GNUC_UNUSED gpointer user_data)
 {
     GDBusProxy *proxy = G_DBUS_PROXY(source_object);
     GError *error = NULL;
@@ -2082,7 +2081,7 @@ static void screensaver_inhibit_cb(GObject * source_object, GAsyncResult * res,
 
 static void screensaver_uninhibit_cb(GObject * source_object,
                                      GAsyncResult * res,
-                                     gpointer user_data UNUSED)
+                                     G_GNUC_UNUSED gpointer user_data)
 {
     GDBusProxy *proxy = G_DBUS_PROXY(source_object);
     GError *error = NULL;

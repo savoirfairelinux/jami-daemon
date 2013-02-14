@@ -33,7 +33,6 @@
 #include "videoconf.h"
 #include "logger.h"
 #include "utils.h"
-#include "unused.h"
 #include "dbus.h"
 #include "codeclist.h"
 
@@ -101,7 +100,7 @@ static const gchar *const PREVIEW_START_STR = "_Start";
 static const gchar *const PREVIEW_STOP_STR = "_Stop";
 
 static void
-preview_button_toggled(GtkButton *button, gpointer data UNUSED)
+preview_button_toggled(GtkButton *button, G_GNUC_UNUSED gpointer data)
 {
     preview_button = GTK_WIDGET(button);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)))
@@ -218,7 +217,7 @@ video_codec_list_get_by_name(GPtrArray *vcodecs, const gchar *name)
 }
 
 static void
-codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path,
+codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
                      gpointer data)
 {
     account_t *acc = (account_t*) data;
@@ -346,7 +345,7 @@ codec_move(gboolean move_up, gpointer data)
  * Called from move up codec button signal
  */
 static void
-codec_move_up(GtkButton *button UNUSED, gpointer data)
+codec_move_up(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     codec_move(TRUE, data);
 }
@@ -355,13 +354,13 @@ codec_move_up(GtkButton *button UNUSED, gpointer data)
  * Called from move down codec button signal
  */
 static void
-codec_move_down(GtkButton *button UNUSED, gpointer data)
+codec_move_down(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     codec_move(FALSE, data);
 }
 
 static void
-bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text, gpointer data)
+bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *new_text, gpointer data)
 {
     // Retrieve userdata
     account_t *acc = (account_t*) data;
@@ -412,7 +411,7 @@ bitrate_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text
 
 
 static void
-parameters_edited_cb(GtkCellRenderer *renderer UNUSED, gchar *path, gchar *new_text, gpointer data)
+parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *new_text, gpointer data)
 {
     account_t *acc = (account_t*) data;
 
@@ -619,7 +618,7 @@ preferences_dialog_fill_video_input_device_rate_list()
  * Set the video input device rate on the server
  */
 static void
-select_video_input_device_rate_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_rate_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str)
@@ -671,7 +670,7 @@ preferences_dialog_fill_video_input_device_size_list()
  * Set the video input device size on the server
  */
 static void
-select_video_input_device_size_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_size_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
@@ -723,7 +722,7 @@ preferences_dialog_fill_video_input_device_channel_list()
  * Set the video input device input on the server
  */
 static void
-select_video_input_device_channel_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_channel_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
@@ -770,7 +769,7 @@ preferences_dialog_fill_video_input_device_list()
  * Set the video input device on the server
  */
 static void
-select_video_input_device_cb(GtkComboBox* comboBox, gpointer data UNUSED)
+select_video_input_device_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
@@ -796,7 +795,7 @@ fill_devices()
 }
 
 void
-video_device_event_cb(DBusGProxy *proxy UNUSED, void * foo UNUSED)
+video_device_event_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED gpointer foo)
 {
     fill_devices();
 }

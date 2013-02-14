@@ -33,7 +33,6 @@
 #include <string.h>
 #include "calltab.h"
 #include "calltree.h"
-#include "unused.h"
 #include "logger.h"
 
 // Must return 0 when a match is found
@@ -92,7 +91,7 @@ void calllist_add_contact(gchar *contact_name, gchar *contact_phone, contact_typ
  * Function passed to calllist_clean to free every callable_obj_t.
  */
 static void
-calllist_free_element(gpointer data, gpointer user_data UNUSED)
+calllist_free_element(gpointer data, G_GNUC_UNUSED gpointer user_data)
 {
     callable_obj_t *call = data;
     free_callable_obj_t(call);

@@ -48,7 +48,6 @@
 #include "statusicon.h"
 
 #include "config/audioconf.h"
-#include "unused.h"
 #include "uimanager.h"
 #include "statusicon.h"
 
@@ -522,7 +521,7 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, SFLPhoneClient *client)
 }
 
 static void
-help_contents_cb(GtkAction *action UNUSED, gpointer data UNUSED)
+help_contents_cb(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
 {
     GError *error = NULL;
     gtk_show_uri(NULL, "ghelp:sflphone", GDK_CURRENT_TIME, &error);
@@ -533,7 +532,7 @@ help_contents_cb(GtkAction *action UNUSED, gpointer data UNUSED)
 }
 
 static void
-help_about(GtkAction *action UNUSED, SFLPhoneClient *client)
+help_about(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     static const gchar *authors[] = {
         "Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
@@ -574,20 +573,20 @@ help_about(GtkAction *action UNUSED, SFLPhoneClient *client)
 /* ----------------------------------------------------------------- */
 
 static void
-call_new_call(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_new_call(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     DEBUG("New call button pressed");
     sflphone_new_call(client);
 }
 
 static void
-call_quit(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_quit(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     sflphone_quit(FALSE, client);
 }
 
 static void
-call_minimize(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_minimize(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     if (g_settings_get_boolean(client->settings, "show-status-icon")) {
         gtk_widget_hide(client->win);
@@ -597,7 +596,7 @@ call_minimize(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-switch_account(GtkWidget* item, gpointer data UNUSED)
+switch_account(GtkWidget* item, G_GNUC_UNUSED gpointer data)
 {
     account_t* acc = g_object_get_data(G_OBJECT(item), "account");
     DEBUG("%s" , acc->accountID);
@@ -606,7 +605,7 @@ switch_account(GtkWidget* item, gpointer data UNUSED)
 }
 
 static void
-call_hold(GtkAction * action UNUSED, gpointer data UNUSED)
+call_hold(G_GNUC_UNUSED GtkAction * action, G_GNUC_UNUSED gpointer data)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
@@ -646,7 +645,7 @@ call_hold(GtkAction * action UNUSED, gpointer data UNUSED)
 }
 
 static void
-call_im(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_im(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     callable_obj_t *selectedCall = calltab_get_selected_call(current_calls_tab);
     conference_obj_t *selectedConf = calltab_get_selected_conf(current_calls_tab);
@@ -665,7 +664,7 @@ call_im(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-conference_hold(void* foo UNUSED)
+conference_hold(G_GNUC_UNUSED gpointer foo)
 {
     conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls_tab);
 
@@ -700,7 +699,7 @@ conference_hold(void* foo UNUSED)
 }
 
 static void
-call_pick_up(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_pick_up(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     if (calllist_get_size(current_calls_tab) > 0) {
         sflphone_pick_up(client);
@@ -725,7 +724,7 @@ call_pick_up(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-call_hang_up(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_hang_up(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     DEBUG("Hang up button pressed(call)");
     /*
@@ -747,20 +746,20 @@ conference_hang_up(void)
 }
 
 static void
-call_record(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_record(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     DEBUG("Record button pressed");
     sflphone_rec_call(client);
 }
 
 static void
-call_configuration_assistant(GtkAction *action UNUSED, gpointer data UNUSED)
+call_configuration_assistant(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
 {
     build_wizard();
 }
 
 static void
-remove_from_history(GtkAction *action UNUSED, SFLPhoneClient *client)
+remove_from_history(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     callable_obj_t* call = calltab_get_selected_call(history_tab);
 
@@ -776,7 +775,7 @@ remove_from_history(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-call_back(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_back(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     callable_obj_t *selected_call = calltab_get_selected_call(active_calltree_tab);
 
@@ -798,20 +797,20 @@ call_back(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-edit_preferences(GtkAction *action UNUSED, SFLPhoneClient *client)
+edit_preferences(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     show_preferences_dialog(client);
 }
 
 static void
-edit_accounts(GtkAction *action UNUSED, SFLPhoneClient *client)
+edit_accounts(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     show_account_list_config_dialog(client);
 }
 
 // The menu Edit/Copy should copy the current selected call's number
 static void
-edit_copy(GtkAction *action UNUSED, gpointer data UNUSED)
+edit_copy(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED gpointer data)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
@@ -830,7 +829,7 @@ edit_copy(GtkAction *action UNUSED, gpointer data UNUSED)
 
 // The menu Edit/Paste should paste the clipboard into the current selected call
 static void
-edit_paste(GtkAction *action UNUSED, SFLPhoneClient *client)
+edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls_tab);
@@ -908,7 +907,7 @@ edit_paste(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-clear_history(GtkAction *action UNUSED, SFLPhoneClient *client UNUSED)
+clear_history(G_GNUC_UNUSED GtkAction *action, G_GNUC_UNUSED SFLPhoneClient *client)
 {
     calllist_clean_history();
     dbus_clear_history();
@@ -918,7 +917,7 @@ clear_history(GtkAction *action UNUSED, SFLPhoneClient *client UNUSED)
  * Transfer the line
  */
 static void
-call_transfer_cb(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_transfer_cb(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(transferToolbar_)))
         sflphone_set_transfer(client);
@@ -927,7 +926,7 @@ call_transfer_cb(GtkAction *action UNUSED, SFLPhoneClient *client)
 }
 
 static void
-call_mailbox_cb(GtkAction *action UNUSED, SFLPhoneClient *client)
+call_mailbox_cb(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
 {
     account_t *current = account_list_get_current();
 
@@ -1198,7 +1197,7 @@ typedef struct
 } EditNumberData;
 
 static void
-edit_number_cb(GtkWidget *widget UNUSED, EditNumberData *data)
+edit_number_cb(G_GNUC_UNUSED GtkWidget *widget, EditNumberData *data)
 {
     show_edit_number(data->call, data->client);
     g_free(data);
@@ -1551,7 +1550,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
 }
 
 static void
-ok_cb(GtkWidget *widget UNUSED, OkData *ok_data)
+ok_cb(G_GNUC_UNUSED GtkWidget *widget, OkData *ok_data)
 {
     // Change the number of the selected call before calling
     const gchar * const new_number = gtk_entry_get_text(GTK_ENTRY(editable_num_));

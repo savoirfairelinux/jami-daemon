@@ -39,7 +39,6 @@
 #include "dbus/dbus.h"
 #include "uimanager.h"
 #include "mainwindow.h"
-#include "unused.h"
 
 /* FIXME: these should be in a struct rather than at file scope */
 static GtkWidget *codecMoveUpButton;
@@ -266,7 +265,7 @@ update_device_widget(const gchar *pluginName, GtkWidget *output, GtkWidget *inpu
 }
 
 static void
-select_output_alsa_plugin(GtkComboBox* widget, gpointer data UNUSED)
+select_output_alsa_plugin(GtkComboBox* widget, G_GNUC_UNUSED gpointer data)
 {
     if (!must_show_alsa_conf())
         return;
@@ -327,21 +326,21 @@ get_device_index_from_combobox(GtkComboBox* comboBox)
 }
 
 static void
-select_audio_output_device(GtkComboBox* comboBox, gpointer data UNUSED)
+select_audio_output_device(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_combo_box_get_active(comboBox) >= 0)
         dbus_set_audio_output_device(get_device_index_from_combobox(comboBox));
 }
 
 static void
-select_audio_input_device(GtkComboBox* comboBox, gpointer data UNUSED)
+select_audio_input_device(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_combo_box_get_active(comboBox) >= 0)
        dbus_set_audio_input_device(get_device_index_from_combobox(comboBox));
 }
 
 static void
-select_audio_ringtone_device(GtkComboBox *comboBox, gpointer data UNUSED)
+select_audio_ringtone_device(GtkComboBox *comboBox, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_combo_box_get_active(comboBox) >= 0)
         dbus_set_audio_ringtone_device(get_device_index_from_combobox(comboBox));
@@ -369,7 +368,7 @@ select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
  * and in configuration files
  */
 static void
-codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data)
+codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path, gpointer data)
 {
     // Get path of clicked codec active toggle box
     GtkTreePath *treePath = gtk_tree_path_new_from_string(path);
@@ -482,7 +481,7 @@ static void codec_move(gboolean moveUp, gpointer data)
 /**
  * Called from move up codec button signal
  */
-static void codec_move_up(GtkButton *button UNUSED, gpointer data)
+static void codec_move_up(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     // Change tree view ordering and get indice changed
     codec_move(TRUE, data);
@@ -491,7 +490,7 @@ static void codec_move_up(GtkButton *button UNUSED, gpointer data)
 /**
  * Called from move down codec button signal
  */
-static void codec_move_down(GtkButton *button UNUSED, gpointer data)
+static void codec_move_down(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     // Change tree view ordering and get indice changed
     codec_move(FALSE, data);
@@ -830,7 +829,7 @@ static void restore_recording_path(GtkFileChooser *chooser)
     g_free(recording_path);
 }
 
-static void record_path_changed(GtkFileChooser *chooser, gpointer data UNUSED)
+static void record_path_changed(GtkFileChooser *chooser, G_GNUC_UNUSED gpointer data)
 {
     gchar* path = gtk_file_chooser_get_filename(chooser);
     if (!g_access(path, W_OK)) {

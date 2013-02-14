@@ -24,7 +24,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111-1301  USA
  */
 #include <gtk/gtk.h>
-#include "unused.h"
 #include "sflphone_const.h"
 #include "minidialog.h"
 
@@ -164,7 +163,7 @@ mini_dialog_button_clicked_cb(GtkButton *button,
 }
 
 static void
-mini_dialog_button_destroy_cb(GtkButton *button UNUSED,
+mini_dialog_button_destroy_cb(G_GNUC_UNUSED GtkButton *button,
                               gpointer user_data)
 {
     struct _mini_dialog_button_clicked_cb_data *data = user_data;

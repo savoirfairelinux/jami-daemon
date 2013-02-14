@@ -31,7 +31,6 @@
 #include "addressbook-config.h"
 #include "str_utils.h"
 #include "dbus.h"
-#include "unused.h"
 #include "logger.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
@@ -185,7 +184,7 @@ search_phone_mobile_cb(GtkWidget *widget)
  */
 static void
 addressbook_config_book_active_toggled(
-    GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data)
+    G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path, gpointer data)
 {
     GtkTreeIter iter;
     GtkTreePath *treePath;

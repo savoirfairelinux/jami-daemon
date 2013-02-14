@@ -33,12 +33,11 @@
 #include <X11/XKBlib.h>
 #include "shortcuts-config.h"
 #include "shortcuts.h"
-#include "unused.h"
 #include "logger.h"
 
 
 static void
-accel_cleared(GtkCellRendererAccel *renderer UNUSED, gchar *path,
+accel_cleared(G_GNUC_UNUSED GtkCellRendererAccel *renderer, gchar *path,
               GtkTreeView *treeview)
 {
     // Update treeview
@@ -54,8 +53,8 @@ accel_cleared(GtkCellRendererAccel *renderer UNUSED, gchar *path,
 }
 
 static void
-accel_edited(GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_key,
-             GdkModifierType mask, guint hardware_keycode UNUSED, GtkTreeView *treeview)
+accel_edited(G_GNUC_UNUSED GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
+             GdkModifierType mask, G_GNUC_UNUSED guint hardware_keycode, GtkTreeView *treeview)
 {
     // Disable existing binding if key already used
     GtkTreeModel *model = gtk_tree_view_get_model(treeview);
