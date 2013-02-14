@@ -273,8 +273,8 @@ create_main_window(SFLPhoneClient *client)
     GtkWidget *widget = create_menus(ui_manager, client);
     gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 
-    widget = create_toolbar_actions(ui_manager, client);
-    pack_main_window_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+    create_toolbar_actions(ui_manager, client);
+    pack_main_window_start(GTK_BOX(vbox), client->toolbar, FALSE, TRUE, 0);
 
     /* Setup call main widget*/
 #if GTK_MAJOR_VERSION == 2
