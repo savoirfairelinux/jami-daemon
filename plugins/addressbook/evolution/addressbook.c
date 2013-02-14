@@ -107,6 +107,5 @@ void addressbook_set_search_type(AddrbookSearchType searchType) {
 }
 
 void addressbook_set_current_book(const gchar *current) {
-    g_print("Setting addressbook to %s\n", current);
     set_current_addressbook(current);
 }

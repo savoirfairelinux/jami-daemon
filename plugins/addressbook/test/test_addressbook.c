@@ -20,6 +20,9 @@ static GtkListStore *list_store;
 static void
 add_contact(const gchar *name, const char *phone, GdkPixbuf *photo)
 {
+    if (g_strcmp0(phone, "") == 0)
+        return;
+
     g_print("name: %s, phone: %s, photo: %p\n", name, phone, photo);
     GtkTreeIter iter;
     // Add a new row to the model
@@ -53,6 +56,14 @@ handler_async_search(GList *hits, G_GNUC_UNUSED gpointer data)
     }
 
     g_list_free(hits);
+}
+
+static void
+text_changed_cb(GtkEntry *entry)
+{
+    g_print("Text changed to %s\n", gtk_entry_get_text(entry));
+    gtk_list_store_clear(list_store);
+    addressbook_search(handler_async_search, entry, NULL);
 }
 
 int
@@ -94,6 +105,7 @@ main(int argc, char *argv[])
     gtk_container_add(GTK_CONTAINER(window), vbox);
 
     addressbook_search(handler_async_search, GTK_ENTRY(entry), NULL);
+    g_signal_connect(entry, "notify::text", G_CALLBACK(text_changed_cb), NULL);
 
     gtk_widget_show_all(window);
 

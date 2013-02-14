@@ -100,6 +100,9 @@ update_current_addressbook(GtkWidget *widget)
         addrbook->set_current_book(string);
         g_free(string);
     }
+
+    AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
+    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
 
 static void
@@ -108,9 +111,6 @@ cbox_changed_cb(GtkWidget *widget, gpointer user_data UNUSED)
     if (!addrbook)
         return;
     update_current_addressbook(widget);
-
-    AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
-    addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
 
 void

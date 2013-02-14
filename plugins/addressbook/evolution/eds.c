@@ -153,14 +153,35 @@ create_query(const char* s, EBookQueryTest test, AddressBook_Config *conf)
 
     queries[cpt++] = e_book_query_field_test(E_CONTACT_FULL_NAME, test, s);
 
-    if (conf->search_phone_home)
+    if (!conf || conf->search_phone_home)
         queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_HOME, test, s);
 
-    if (conf->search_phone_business)
+    if (!conf || conf->search_phone_business)
         queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_BUSINESS, test, s);
 
-    if (conf->search_phone_mobile)
+    if (!conf || conf->search_phone_mobile)
         queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_MOBILE, test, s);
+
+    return e_book_query_or(cpt, queries, TRUE);
+}
+
+/**
+ * Create a query which looks any contact with a phone number
+ */
+static EBookQuery*
+create_query_all_phones(AddressBook_Config *conf)
+{
+    EBookQuery *queries[3];
+    int cpt = 0;
+
+    if (!conf || conf->search_phone_home)
+        queries[cpt++] = e_book_query_field_exists(E_CONTACT_PHONE_HOME);
+
+    if (!conf || conf->search_phone_business)
+        queries[cpt++] = e_book_query_field_exists(E_CONTACT_PHONE_BUSINESS);
+
+    if (!conf || conf->search_phone_mobile)
+        queries[cpt++] = e_book_query_field_exists(E_CONTACT_PHONE_MOBILE);
 
     return e_book_query_or(cpt, queries, TRUE);
 }
@@ -463,9 +484,9 @@ search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler 
     had->hits = NULL;
     had->max_results_remaining = max_results;
     if (!g_strcmp0(query, ""))
-        had->equery = e_book_query_any_field_contains("");
+        had->equery = create_query_all_phones(user_data);
     else
-        had->equery = create_query(query, current_test, (AddressBook_Config *) (user_data));
+        had->equery = create_query(query, current_test, user_data);
 
 
 #if EDS_CHECK_VERSION(3,5,3)
