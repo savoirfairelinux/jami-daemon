@@ -35,7 +35,6 @@
 #include "sflphone_const.h"
 #include "audioconf.h"
 #include "utils.h"
-#include "logger.h"
 #include "dbus/dbus.h"
 #include "uimanager.h"
 #include "mainwindow.h"
@@ -76,7 +75,7 @@ fill_codec_list(const account_t *account)
 
     GQueue *list;
     if (!account) {
-        DEBUG("Account is NULL, using global codec list");
+        g_debug("Account is NULL, using global codec list");
         list = get_audio_codecs_list();
     } else {
         list = account->acodecs;
@@ -87,7 +86,7 @@ fill_codec_list(const account_t *account)
         codec_t *c = g_queue_peek_nth(list, i);
 
         if (c) {
-            DEBUG("%s is %sactive", c->name, c->is_active ? "" : "not ");
+            g_debug("%s is %sactive", c->name, c->is_active ? "" : "not ");
             GtkTreeIter iter;
             gtk_list_store_append(codecStore, &iter);
             gchar *samplerate = g_strdup_printf("%d " KHZ, (gint) (c->sample_rate * 0.001));
@@ -150,7 +149,7 @@ select_active_output_audio_device(GtkWidget *output)
 
         int currentDeviceIndex = atoi(devices[0]);
         g_strfreev(devices);
-        DEBUG("audio device index for output = %d", currentDeviceIndex);
+        g_debug("audio device index for output = %d", currentDeviceIndex);
         GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
 
         // Find the currently set output device
@@ -170,7 +169,7 @@ select_active_output_audio_device(GtkWidget *output)
     }
 
     // No index was found, select first one
-    WARN("No active output device found");
+    g_warning("No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
 }
 
@@ -186,7 +185,7 @@ select_active_ringtone_audio_device(GtkWidget *ringtone)
     if (devices && devices[2]) {
         const gint currentDeviceIndex = atoi(devices[2]);
         g_strfreev(devices);
-        DEBUG("audio device index for ringtone = %d", currentDeviceIndex);
+        g_debug("audio device index for ringtone = %d", currentDeviceIndex);
         GtkTreeModel* model = gtk_combo_box_get_model(GTK_COMBO_BOX(ringtone));
 
         // Find the currently set ringtone device
@@ -206,7 +205,7 @@ select_active_ringtone_audio_device(GtkWidget *ringtone)
     }
 
     // No index was found, select first one
-    WARN("No active ringtone device found");
+    g_warning("No active ringtone device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(ringtone), 0);
 }
 
@@ -251,7 +250,7 @@ select_active_input_audio_device(GtkWidget *input)
     }
 
     // No index was found, select first one
-    WARN("No active input device found");
+    g_warning("No active input device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
 }
 
@@ -310,7 +309,7 @@ select_active_output_alsa_plugin(GtkWidget *alsa_plugin)
     g_free(alsa_pluginname);
 
     // No index was found, select first one
-    WARN("No active output device found");
+    g_warning("No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(alsa_plugin), 0);
 }
 
@@ -380,7 +379,7 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("no account selected");
+        g_error("no account selected");
         return;
     }
 
@@ -392,7 +391,7 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
                        COLUMN_CODEC_NAME, &name, COLUMN_CODEC_FREQUENCY,
                        &samplerate, -1);
 
-    DEBUG("Selected Codec: %s, %s", name, samplerate);
+    g_debug("Selected Codec: %s, %s", name, samplerate);
 
     codec_t* codec = NULL;
 
@@ -587,7 +586,7 @@ static GtkWidget* alsa_box()
     GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
     gtk_table_attach(GTK_TABLE(table), info_bar, 1, 3, 1, 2, GTK_FILL, GTK_SHRINK, 10, 10);
 
-    DEBUG("Configuration plugin");
+    g_debug("Configuration plugin");
     GtkWidget *label = gtk_label_new(_("ALSA plugin"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -608,7 +607,7 @@ static GtkWidget* alsa_box()
 
     // Device : Output device
     // Create title label
-    DEBUG("Configuration output");
+    g_debug("Configuration output");
     label = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -629,7 +628,7 @@ static GtkWidget* alsa_box()
 
     // Device : Input device
     // Create title label
-    DEBUG("Configuration input");
+    g_debug("Configuration input");
     label = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -649,7 +648,7 @@ static GtkWidget* alsa_box()
     gtk_table_attach(GTK_TABLE(table), alsa_input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(alsa_input);
 
-    DEBUG("Configuration rintgtone");
+    g_debug("Configuration rintgtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -689,7 +688,7 @@ static GtkWidget* pulse_box()
 
     // Device : Output device
     // Create title label
-    DEBUG("Configuration output");
+    g_debug("Configuration output");
     GtkWidget *label = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -711,7 +710,7 @@ static GtkWidget* pulse_box()
 
     // Device : Input device
     // Create title label
-    DEBUG("Configuration input");
+    g_debug("Configuration input");
     label = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -731,7 +730,7 @@ static GtkWidget* pulse_box()
     gtk_table_attach(GTK_TABLE(table), pulse_input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(pulse_input);
 
-    DEBUG("Configuration rintgtone");
+    g_debug("Configuration rintgtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -788,7 +787,7 @@ select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
 
         gtk_action_set_sensitive(volumeToggle_, FALSE);
     } else
-        ERROR("Unexpected audio API state");
+        g_error("Unexpected audio API state");
 }
 
 static const gchar *reverse_state(const gchar *state)
@@ -835,7 +834,7 @@ static void record_path_changed(GtkFileChooser *chooser, G_GNUC_UNUSED gpointer 
     if (!g_access(path, W_OK)) {
         dbus_set_record_path(path);
     } else {
-        ERROR("Directory %s is not writable", path);
+        g_error("Directory %s is not writable", path);
         restore_recording_path(chooser);
     }
     g_free(path);

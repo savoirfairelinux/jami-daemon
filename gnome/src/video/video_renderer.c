@@ -38,8 +38,6 @@
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 
-#include "logger.h"
-
 /* This macro will implement the video_renderer_get_type function
    and define a parent class pointer accessible from the whole .c file */
 G_DEFINE_TYPE(VideoRenderer, video_renderer, G_TYPE_OBJECT);
@@ -210,19 +208,19 @@ video_renderer_start_shm(VideoRenderer *self)
     g_return_val_if_fail(IS_VIDEO_RENDERER(self), FALSE);
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(self);
     if (priv->fd != -1) {
-        ERROR("fd must be -1");
+        g_error("fd must be -1");
         return FALSE;
     }
 
     priv->fd = shm_open(priv->shm_path, O_RDWR, 0);
     if (priv->fd < 0) {
-        DEBUG("could not open shm area \"%s\", shm_open failed:%s", priv->shm_path, strerror(errno));
+        g_debug("could not open shm area \"%s\", shm_open failed:%s", priv->shm_path, strerror(errno));
         return FALSE;
     }
     priv->shm_area_len = sizeof(SHMHeader);
     priv->shm_area = mmap(NULL, priv->shm_area_len, PROT_READ | PROT_WRITE, MAP_SHARED, priv->fd, 0);
     if (priv->shm_area == MAP_FAILED) {
-        DEBUG("Could not map shm area, mmap failed");
+        g_debug("Could not map shm area, mmap failed");
         return FALSE;
     }
     return TRUE;
@@ -247,7 +245,7 @@ shm_lock(SHMHeader *shm_area)
     const struct timespec timeout = create_timeout();
     /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
     if (sem_timedwait(&shm_area->mutex, &timeout) == ETIMEDOUT) {
-        ERROR("Timed out before shm lock was acquired");
+        g_error("Timed out before shm lock was acquired");
         return FALSE;
     }
     return TRUE;
@@ -267,7 +265,7 @@ video_renderer_resize_shm(VideoRendererPrivate *priv)
 
         shm_unlock(priv->shm_area);
         if (munmap(priv->shm_area, priv->shm_area_len)) {
-            DEBUG("Could not unmap shared area:%s", strerror(errno));
+            g_debug("Could not unmap shared area:%s", strerror(errno));
             return FALSE;
         }
 
@@ -276,7 +274,7 @@ video_renderer_resize_shm(VideoRendererPrivate *priv)
 
         if (!priv->shm_area) {
             priv->shm_area = 0;
-            DEBUG("Could not remap shared area");
+            g_debug("Could not remap shared area");
             return FALSE;
         }
 
@@ -306,7 +304,7 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
     }
 
     if (!video_renderer_resize_shm(priv)) {
-        ERROR("Could not resize shared memory");
+        g_error("Could not resize shared memory");
         return;
     }
 
@@ -379,7 +377,7 @@ video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path
     VideoRenderer *rend = g_object_new(VIDEO_RENDERER_TYPE, "drawarea", (gpointer) drawarea,
             "width", width, "height", height, "shm-path", shm_path, NULL);
     if (!video_renderer_start_shm(rend)) {
-        ERROR("Could not start SHM");
+        g_error("Could not start SHM");
         return NULL;
     }
     return rend;
@@ -400,7 +398,7 @@ video_renderer_run(VideoRenderer *self)
     gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 
     if (!GTK_CLUTTER_IS_EMBED(priv->drawarea))
-        ERROR("Drawing area is not a GtkClutterEmbed widget");
+        g_error("Drawing area is not a GtkClutterEmbed widget");
 
     ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
     g_assert(stage);

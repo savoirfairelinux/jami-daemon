@@ -35,7 +35,6 @@
 #include "mainwindow.h"
 #include "accountlist.h"
 #include "statusicon.h"
-#include "logger.h"
 
 static GtkStatusIcon *status;
 static GtkWidget *show_menu_item, *hangup_menu_item;
@@ -69,7 +68,7 @@ void
 hide_status_hangup_icon()
 {
     if (status) {
-        DEBUG("Hide Hangup in Systray");
+        g_debug("Hide Hangup in Systray");
         gtk_widget_hide(GTK_WIDGET(hangup_menu_item));
     }
 }

@@ -30,7 +30,6 @@
 
 #include "addrbookfactory.h"
 #include "addressbook-config.h"
-#include "logger.h"
 #include "calltab.h"
 #include "calltree.h"
 
@@ -93,7 +92,7 @@ void abook_init()
     void *handle = dlopen(addrbook_path, RTLD_LAZY);
 
     if (handle == NULL) {
-        DEBUG("Did not load addressbook from path %s", addrbook_path);
+        g_debug("Did not load addressbook from path %s", addrbook_path);
         return;
     }
 
@@ -102,7 +101,7 @@ void abook_init()
 #define LOAD(func) do { \
         addrbook-> func = dlsym(handle, "addressbook_" #func); \
         if (addrbook-> func == NULL) \
-            ERROR("Couldn't load " # func); \
+            g_error("Couldn't load " # func); \
     } while(0)
 
 

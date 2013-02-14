@@ -29,8 +29,6 @@
  */
 
 #include "sflphone_client.h"
-// FIXME: replace with GLib logging
-#include "logger.h"
 
 G_DEFINE_TYPE(SFLPhoneClient, sflphone_client, GTK_TYPE_APPLICATION);
 
@@ -42,8 +40,8 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
     gint argc;
     gchar **argv = g_application_command_line_get_arguments(cmdline, &argc);
     for (gint i = 0; i < argc; i++)
-        if (g_strcmp0(argv[i], "--debug") == 0)
-            set_log_level(LOG_DEBUG);
+        if (g_strcmp0(argv[i], "--debug") == 0) {}
+            ;//set_log_level(LOG_DEBUG);
 
     g_strfreev (argv);
     return 0;

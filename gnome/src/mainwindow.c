@@ -39,7 +39,6 @@
 #include "dbus.h"
 #include "calltree.h"
 #include "calltab.h"
-#include "logger.h"
 #include "preferencesdialog.h"
 #include "dialpad.h"
 #include "mainwindow.h"
@@ -140,7 +139,7 @@ main_window_ask_quit(SFLPhoneClient *client)
         question = _("There is one call in progress.");
     else
         question = _("There are calls in progress.");
-    DEBUG("Currently %d calls in progress", calllist_get_size(current_calls_tab));
+    g_debug("Currently %d calls in progress", calllist_get_size(current_calls_tab));
 
     GtkWidget *dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(client->win),
                         GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s\n%s",
@@ -196,12 +195,12 @@ on_key_released(G_GNUC_UNUSED GtkWidget *widget, GdkEventKey *event, SFLPhoneCli
 static void pack_main_window_start(GtkBox *box, GtkWidget *widget, gboolean expand, gboolean fill, guint padding)
 {
     if(box == NULL) {
-        ERROR("Box is NULL while packing main window");
+        g_error("Box is NULL while packing main window");
         return;
     }
 
     if(widget == NULL) {
-        ERROR("Widget is NULL while packing the mainwindow");
+        g_error("Widget is NULL while packing the mainwindow");
         return;
     }
 
@@ -250,7 +249,7 @@ create_main_window(SFLPhoneClient *client)
 
     ui_manager = uimanager_new(client);
     if (!ui_manager) {
-        ERROR("Could not load xml GUI\n");
+        g_error("Could not load xml GUI\n");
         exit(1);
     }
 
@@ -472,9 +471,9 @@ main_window_zrtp_not_supported(callable_obj_t * c, SFLPhoneClient *client)
     if (account != NULL) {
         warning_enabled = account_lookup(account,
                                          CONFIG_ZRTP_NOT_SUPP_WARNING);
-        DEBUG("Warning Enabled %s", warning_enabled);
+        g_debug("Warning Enabled %s", warning_enabled);
     } else {
-        DEBUG("Account is null callID %s", c->_callID);
+        g_debug("Account is null callID %s", c->_callID);
         GHashTable * properties = sflphone_get_ip2ip_properties();
 
         if (properties)

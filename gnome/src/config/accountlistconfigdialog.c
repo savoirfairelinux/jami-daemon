@@ -38,7 +38,6 @@
 #include "actions.h"
 #include "mainwindow.h"
 #include "utils.h"
-#include "logger.h"
 #include <glib/gi18n.h>
 #include <string.h>
 
@@ -105,7 +104,7 @@ find_account_in_account_store(const gchar *accountID, GtkTreeModel *model,
 static void delete_account_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 {
     gchar *selected_accountID = get_selected_accountID(data);
-    RETURN_IF_NULL(selected_accountID, "No selected account in delete action");
+    g_return_if_fail(selected_accountID != NULL);
     GtkTreeModel *model = GTK_TREE_MODEL(account_store);
     GtkTreeIter iter;
     if (find_account_in_account_store(selected_accountID, model, &iter))
@@ -129,7 +128,7 @@ static void row_activated_cb(GtkTreeView *view,
                              SFLPhoneClient *client)
 {
     gchar *selected_accountID = get_selected_accountID(view);
-    RETURN_IF_NULL(selected_accountID, "No selected account ID");
+    g_return_if_fail(selected_accountID != NULL);
     run_account_dialog(selected_accountID, client);
     g_free(selected_accountID);
 }
@@ -142,7 +141,7 @@ typedef struct EditData {
 static void edit_account_cb(G_GNUC_UNUSED GtkButton *button, EditData *data)
 {
     gchar *selected_accountID = get_selected_accountID(GTK_TREE_VIEW(data->view));
-    RETURN_IF_NULL(selected_accountID, "No selected account ID");
+    g_return_if_fail(selected_accountID != NULL);
     run_account_dialog(selected_accountID, data->client);
     g_free(selected_accountID);
 }
@@ -151,7 +150,7 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
 {
     const gchar *enabled = account_lookup(account, CONFIG_ACCOUNT_ENABLE);
     const gchar *type = account_lookup(account, CONFIG_ACCOUNT_TYPE);
-    DEBUG("Account is enabled :%s", enabled);
+    g_debug("Account is enabled :%s", enabled);
     const gchar *state_name = account_state_name(account->state);
 
     gtk_list_store_set(account_store, iter,
@@ -168,13 +167,13 @@ static void account_store_add(GtkTreeIter *iter, account_t *account)
  */
 static void account_store_fill()
 {
-    RETURN_IF_NULL(account_list_dialog, "No account dialog");
+    g_return_if_fail(account_list_dialog != NULL);
     gtk_list_store_clear(account_store);
 
     // IP2IP account must be first
     account_t *ip2ip = account_list_get_by_id(IP2IP_PROFILE);
     ip2ip->state = ACCOUNT_STATE_IP2IP_READY;
-    RETURN_IF_NULL(ip2ip, "Could not find IP2IP account");
+    g_return_if_fail(ip2ip != NULL);
 
     GtkTreeIter iter;
     gtk_list_store_append(account_store, &iter);
@@ -183,7 +182,7 @@ static void account_store_fill()
 
     for (size_t i = 0; i < account_list_get_size(); ++i) {
         account_t *a = account_list_get_nth(i);
-        RETURN_IF_NULL(a, "Account %d is NULL", i);
+        g_return_if_fail(a != NULL);
 
         // we don't want to process the IP2IP twice
         if (a != ip2ip) {
@@ -224,9 +223,9 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
     gchar *selected_accountID = g_value_dup_string(&val);
     g_value_unset(&val);
 
-    DEBUG("Selected account has accountID %s", selected_accountID);
+    g_debug("Selected account has accountID %s", selected_accountID);
     account_t *selected_account = account_list_get_by_id(selected_accountID);
-    RETURN_IF_NULL(selected_account, "Selected account is NULL");
+    g_return_if_fail(selected_account != NULL);
 
     gtk_widget_set_sensitive(edit_button, TRUE);
 
@@ -273,7 +272,7 @@ enable_account_cb(G_GNUC_UNUSED GtkCellRendererToggle *rend, gchar* path,
 
     // Modify account state
     const gchar * enabled_str = enable ? "true" : "false";
-    DEBUG("Account is enabled: %s", enabled_str);
+    g_debug("Account is enabled: %s", enabled_str);
 
     account_replace(account, CONFIG_ACCOUNT_ENABLE, enabled_str);
     dbus_send_register(account->accountID, enable);

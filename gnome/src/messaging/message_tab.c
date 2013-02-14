@@ -31,7 +31,6 @@
 
 #include "../dbus/dbus.h"
 #include <glib.h>
-#include "logger.h"
 #include "../mainwindow.h"
 #include <string.h>
 

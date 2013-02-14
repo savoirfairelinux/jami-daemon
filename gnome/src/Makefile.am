@@ -17,7 +17,6 @@ endif
 noinst_LTLIBRARIES = libsflphone_client.la
 
 libsflphone_client_la_SOURCES = \
-  logger.c \
   uimanager.c \
   sflnotify.c \
   mainwindow.c \
@@ -45,7 +44,6 @@ libsflphone_client_la_SOURCES = \
   callable_obj.h \
   conference_obj.h \
   shortcuts.h \
-  logger.h \
   str_utils.h \
   seekslider.h \
   account_schema.h \

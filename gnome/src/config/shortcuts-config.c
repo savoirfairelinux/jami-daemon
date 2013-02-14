@@ -33,7 +33,6 @@
 #include <X11/XKBlib.h>
 #include "shortcuts-config.h"
 #include "shortcuts.h"
-#include "logger.h"
 
 
 static void
@@ -67,7 +66,7 @@ accel_edited(G_GNUC_UNUSED GtkCellRendererAccel *renderer, gchar *path, guint ac
         if (list[i].key == code && list[i].mask == mask) {
             gtk_list_store_set(GTK_LIST_STORE(model), &iter, MASK, 0, VALUE, 0,
                                -1);
-            WARN("This key was already affected");
+            g_warning("This key was already affected");
         }
 
         gtk_tree_model_iter_next(model, &iter);

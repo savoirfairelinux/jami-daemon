@@ -45,7 +45,6 @@
 
 #include "config.h"
 #include "str_utils.h"
-#include "logger.h"
 #include "actions.h"
 #include "accountlist.h"
 #include "audioconf.h"
@@ -164,9 +163,9 @@ void
 select_dtmf_type(void)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp)))
-        DEBUG("Selected DTMF over RTP");
+        g_debug("Selected DTMF over RTP");
     else
-        DEBUG("Selected DTMF over SIP");
+        g_debug("Selected DTMF over SIP");
 }
 
 static GPtrArray* get_new_credential(void)
@@ -188,7 +187,7 @@ static GPtrArray* get_new_credential(void)
                            COLUMN_CREDENTIAL_PASSWORD, &password,
                            -1);
 
-        DEBUG("Row %d: %s %s %s", row_count++, username, password, realm);
+        g_debug("Row %d: %s %s %s", row_count++, username, password, realm);
 
         GHashTable * new_table = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                        g_free, g_free);
@@ -245,7 +244,7 @@ create_basic_tab(account_t *account)
     else if (account_is_IAX(account))
         table = gtk_table_new(8, 2, FALSE);
     else {
-        ERROR("Unknown account type");
+        g_error("Unknown account type");
         return NULL;
     }
 
@@ -283,7 +282,7 @@ create_basic_tab(account_t *account)
     else if (account_is_IAX(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 1);
     else {
-        ERROR("Account protocol not valid");
+        g_error("Account protocol not valid");
         /* Should never come here, add debug message. */
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), _("Unknown"));
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 2);
@@ -460,7 +459,7 @@ cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gchar *text,
     GtkTreePath *path = gtk_tree_path_new_from_string(path_desc);
 
     gint column = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(renderer), "column"));
-    DEBUG("path desc: %s\n", text);
+    g_debug("path desc: %s\n", text);
 
     if ((utf8_case_equal(path_desc, "0")) &&
         !utf8_case_equal(text, gtk_entry_get_text(GTK_ENTRY(entry_username))))
@@ -478,7 +477,7 @@ static void
 editing_started_cb(G_GNUC_UNUSED GtkCellRenderer *cell, GtkCellEditable * editable,
                    const gchar * path, G_GNUC_UNUSED gpointer data)
 {
-    DEBUG("path desc: %s\n", path);
+    g_debug("path desc: %s\n", path);
 
     // If we are dealing the first row
     if (utf8_case_equal(path, "0"))
@@ -508,7 +507,7 @@ static void
 key_exchange_changed_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer data)
 {
     gchar *active_text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(key_exchange_combo));
-    DEBUG("Key exchange changed %s", active_text);
+    g_debug("Key exchange changed %s", active_text);
 
     gboolean sensitive = FALSE;
     sensitive |= utf8_case_equal(active_text, "SDES");
@@ -520,7 +519,7 @@ key_exchange_changed_cb(G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer 
 static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Using sips");
+        g_debug("Using sips");
         gtk_widget_set_sensitive(data, TRUE);
         // Uncheck stun
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_stun_check_box), FALSE);
@@ -566,7 +565,7 @@ get_interface_addr_from_name(const gchar * const iface_name)
     int fd;
 
     if ((fd = socket(AF_INET, SOCK_DGRAM,0)) < 0)
-        DEBUG("getInterfaceAddrFromName error could not open socket\n");
+        g_debug("getInterfaceAddrFromName error could not open socket\n");
 
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(struct ifreq));
@@ -575,7 +574,7 @@ get_interface_addr_from_name(const gchar * const iface_name)
     ifr.ifr_addr.sa_family = AF_INET;
 
     if (ioctl(fd, SIOCGIFADDR, &ifr) < 0)
-        DEBUG("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
+        g_debug("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
 
 
     struct sockaddr_in *saddr_in = (struct sockaddr_in *) &ifr.ifr_addr;
@@ -596,7 +595,7 @@ static void local_interface_changed_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
         gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
         if (!local_iface_name) {
-            ERROR("Could not get local interface name");
+            g_error("Could not get local interface name");
             return;
         }
         gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);
@@ -611,13 +610,13 @@ static void local_interface_changed_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_
 static void set_published_addr_manually_cb(GtkWidget * widget, G_GNUC_UNUSED gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Showing manual publishing options");
+        g_debug("Showing manual publishing options");
         gtk_widget_show(published_port_label);
         gtk_widget_show(published_port_spin_box);
         gtk_widget_show(published_address_label);
         gtk_widget_show(published_address_entry);
     } else {
-        DEBUG("Hiding manual publishing options");
+        g_debug("Hiding manual publishing options");
         gtk_widget_hide(published_port_label);
         gtk_widget_hide(published_port_spin_box);
         gtk_widget_hide(published_address_label);
@@ -632,7 +631,7 @@ static void use_stun_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
         return;
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Showing stun options, hiding Local/Published info");
+        g_debug("Showing stun options, hiding Local/Published info");
         gtk_widget_show(stun_server_label);
         gtk_widget_show(stun_server_entry);
         gtk_widget_set_sensitive(stun_server_entry, TRUE);
@@ -644,7 +643,7 @@ static void use_stun_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer data)
         gtk_widget_hide(published_address_entry);
         gtk_widget_hide(published_port_spin_box);
     } else {
-        DEBUG("disabling stun options, showing Local/Published info");
+        g_debug("disabling stun options, showing Local/Published info");
         gtk_widget_set_sensitive(stun_server_entry, FALSE);
         gtk_widget_set_sensitive(same_as_local_radio_button, TRUE);
         gtk_widget_set_sensitive(published_addr_radio_button, TRUE);
@@ -862,7 +861,7 @@ static GtkWidget* create_registration_expire(const account_t *account)
     if (account && account->properties)
         if (!g_hash_table_lookup_extended(account->properties, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
                                           &orig_key, (gpointer) &account_expire))
-            ERROR("Could not retrieve %s from account properties",
+            g_error("Could not retrieve %s from account properties",
                   CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
 
     GtkWidget *table, *frame;
@@ -925,7 +924,7 @@ create_network(const account_t *account)
     local_address_entry = gtk_entry_new();
     gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
     if (!local_iface_name) {
-        ERROR("Could not get local interface name");
+        g_error("Could not get local interface name");
         return frame;
     }
     gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);
@@ -1041,7 +1040,7 @@ GtkWidget* create_published_address(const account_t *account)
 GtkWidget* create_advanced_tab(const account_t *account)
 {
     // Build the advanced tab, to appear on the account configuration panel
-    DEBUG("Build advanced tab");
+    g_debug("Build advanced tab");
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
@@ -1249,10 +1248,10 @@ static void update_account_from_basic_tab(account_t *account)
         }
 
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
-            DEBUG("Set dtmf over rtp");
+            g_debug("Set dtmf over rtp");
             account_replace(account, CONFIG_ACCOUNT_DTMF_TYPE, OVERRTP);
         } else {
-            DEBUG("Set dtmf over sip");
+            g_debug("Set dtmf over sip");
             account_replace(account, CONFIG_ACCOUNT_DTMF_TYPE, SIPINFO);
         }
 

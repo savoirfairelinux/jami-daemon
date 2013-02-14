@@ -46,7 +46,6 @@
 #include <assert.h>
 
 #include "dbus.h"
-#include "logger.h"
 #include "statusicon.h"
 #include "addrbookfactory.h"
 #include "preferencesdialog.h"

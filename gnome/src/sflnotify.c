@@ -40,7 +40,6 @@
 #include "account_schema.h"
 #include "str_utils.h"
 #include "sflnotify.h"
-#include "logger.h"
 
 #if defined(NOTIFY_CHECK_VERSION)
 #define USE_NOTIFY NOTIFY_CHECK_VERSION(0,7,2)
@@ -73,12 +72,12 @@ create_new_gnome_notification(gchar *title, gchar *body, NotifyUrgency urgency, 
         if (notif.icon != NULL)
             notify_notification_set_icon_from_pixbuf(notif.notification, notif.icon);
         else
-            ERROR("notify(), cannot load notification icon");
+            g_error("notify(), cannot load notification icon");
 
         notify_notification_set_timeout(notif.notification, timeout);
 
         if (!notify_notification_show(notif.notification, NULL)) {
-            ERROR("notify(), failed to send notification");
+            g_error("notify(), failed to send notification");
         }
     }
 

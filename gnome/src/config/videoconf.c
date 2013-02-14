@@ -31,7 +31,6 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include "videoconf.h"
-#include "logger.h"
 #include "utils.h"
 #include "dbus.h"
 #include "codeclist.h"
@@ -116,7 +115,7 @@ set_preview_button_sensitivity(gboolean sensitive)
 {
     if (!preview_button || !GTK_IS_WIDGET(preview_button))
         return;
-    DEBUG("%ssetting preview button", sensitive ? "" : "Un");
+    g_debug("%ssetting preview button", sensitive ? "" : "Un");
     gtk_widget_set_sensitive(GTK_WIDGET(preview_button), sensitive);
 }
 
@@ -144,7 +143,7 @@ static void
 preferences_dialog_fill_codec_list(account_t *acc)
 {
     if (!acc) {
-        ERROR("Account is NULL");
+        g_error("Account is NULL");
         return;
     }
     // Get model of view and clear it
@@ -223,7 +222,7 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("No account selected");
+        g_error("No account selected");
         return;
     }
 
@@ -240,12 +239,12 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
     gtk_tree_model_get(model, &iter, COLUMN_CODEC_ACTIVE, &active,
                        COLUMN_CODEC_NAME, &name, -1);
 
-    DEBUG("%s", name);
+    g_debug("%s", name);
     GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
     if (!vcodecs)
         return;
 
-    DEBUG("video codecs length %i", vcodecs->len);
+    g_debug("video codecs length %i", vcodecs->len);
 
     // Toggle active value
     active = !active;
@@ -366,19 +365,19 @@ bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *n
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("No account selected");
+        g_error("No account selected");
         return;
     }
-    DEBUG("updating bitrate for %s", acc->accountID);
+    g_debug("updating bitrate for %s", acc->accountID);
     // Get active value and name at iteration
     const gint base = 10;
     gchar *endptr;
     const long long val = strtoll(new_text, &endptr, base);
     /* Ignore if it's not a number */
     if (*endptr != '\0') {
-        WARN("Ignoring characters %s\n", val, endptr);
+        g_warning("Ignoring %lld characters %s\n", val, endptr);
     } else if (val < 0) {
-        WARN("Ignoring negative bitrate value");
+        g_warning("Ignoring negative bitrate value");
     } else {
         // Get path of edited codec
         GtkTreePath *tree_path = gtk_tree_path_new_from_string(path);
@@ -398,11 +397,11 @@ bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *n
 
         GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
         if (codec) {
-            DEBUG("Setting new bitrate %s for %s", bitrate, name);
+            g_debug("Setting new bitrate %s for %s", bitrate, name);
             video_codec_set_bitrate(codec, bitrate);
             dbus_set_video_codecs(acc->accountID, vcodecs);
         } else {
-            ERROR("Could not find codec %s", name);
+            g_error("Could not find codec %s", name);
         }
         g_free(bitrate);
         g_ptr_array_free(vcodecs, TRUE);
@@ -416,7 +415,7 @@ parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        ERROR("No account selected");
+        g_error("No account selected");
         return;
     }
 
@@ -440,11 +439,11 @@ parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar
 
     GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
     if (codec) {
-        DEBUG("Setting new parameters \"%s\" for %s", new_text, name);
+        g_debug("Setting new parameters \"%s\" for %s", new_text, name);
         video_codec_set_parameters(codec, new_text);
         dbus_set_video_codecs(acc->accountID, vcodecs);
     } else {
-        ERROR("Could not find codec %s", name);
+        g_error("Could not find codec %s", name);
     }
     g_ptr_array_free(vcodecs, TRUE);
 }
@@ -610,7 +609,7 @@ preferences_dialog_fill_video_input_device_rate_list()
         }
         g_free(rate);
     } else
-        ERROR("No video rate list found for device");
+        g_error("No video rate list found for device");
 }
 
 
@@ -663,7 +662,7 @@ preferences_dialog_fill_video_input_device_size_list()
         }
         g_free(size);
     } else
-        ERROR("No device size list found");
+        g_error("No device size list found");
 }
 
 /**
@@ -715,7 +714,7 @@ preferences_dialog_fill_video_input_device_channel_list()
         }
         g_free(channel);
     } else
-        ERROR("No channel list found");
+        g_error("No channel list found");
 }
 
 /**
@@ -743,7 +742,7 @@ preferences_dialog_fill_video_input_device_list()
     // Call dbus to retrieve list
     gchar **list = dbus_get_video_device_list();
     if (!list || !*list) {
-        ERROR("No device list found");
+        g_error("No device list found");
         return FALSE;
     } else {
         // For each device name included in list
@@ -773,7 +772,7 @@ select_video_input_device_cb(GtkComboBox* comboBox, G_GNUC_UNUSED gpointer data)
 {
     gchar *str = get_active_text(comboBox);
     if (str) {
-        DEBUG("Setting video input device to %s", str);
+        g_debug("Setting video input device to %s", str);
         dbus_set_active_video_device(str);
         preferences_dialog_fill_video_input_device_channel_list();
         g_free(str);

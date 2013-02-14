@@ -31,7 +31,6 @@
 #include <string.h>
 #include <glib/gi18n.h>
 #include "assistant.h"
-#include "logger.h"
 #include "dbus.h"
 #include "reqaccount.h"
 #include "account_schema.h"
@@ -169,7 +168,7 @@ static void sip_apply_callback(void)
 
         // select the first interface available
         iface = iface_list;
-        DEBUG("Selected interface %s", *iface);
+        g_debug("Selected interface %s", *iface);
 
         account_insert(current, CONFIG_LOCAL_INTERFACE, *iface);
         account_insert(current, CONFIG_PUBLISHED_ADDRESS, *iface);
@@ -226,7 +225,7 @@ void build_wizard(void)
     current = create_default_account();
 
     if (current->properties == NULL) {
-        DEBUG("Failed to get default values. Creating from scratch");
+        g_debug("Failed to get default values. Creating from scratch");
         current->properties = g_hash_table_new(NULL, g_str_equal);
     }
 

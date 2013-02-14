@@ -35,7 +35,6 @@
 #include "callable_obj.h"
 #include "contacts/history.h"
 #include "dbus.h"
-#include "logger.h"
 #include "calllist.h"
 #include "calltree.h"
 

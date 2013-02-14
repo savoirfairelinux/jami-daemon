@@ -36,7 +36,6 @@
 #include "calltree.h"
 #include "calltab.h"
 #include "dbus.h"
-#include "logger.h"
 #include "mainwindow.h"
 #include "config/addressbook-config.h"
 #include "contacts/addressbook.h"
@@ -70,7 +69,7 @@ searchbar_addressbook_activated(GtkEntry *entry, G_GNUC_UNUSED gchar *arg1, G_GN
 static void
 searchbar_entry_changed(G_GNUC_UNUSED GtkEntry* entry, G_GNUC_UNUSED gchar* arg1, G_GNUC_UNUSED gpointer data)
 {
-    DEBUG("Searchbar: Entry changed");
+    g_debug("Searchbar: Entry changed");
     if (calltab_has_name(active_calltree_tab, HISTORY))
         history_search();
 }
@@ -127,11 +126,11 @@ update_searchbar_addressbook_list()
         books_data = addrbook->get_books_data();
 
     if (books_data == NULL) {
-        ERROR("Searchbar: No books data found");
+        g_error("Searchbar: No books data found");
         return;
     }
 
-    DEBUG("Searchbar: Update addressbook list");
+    g_debug("Searchbar: Update addressbook list");
 
     // we must disconnect signal from the cbox while updating its content
     g_signal_handler_disconnect(cbox, cboxSignalId);
@@ -190,7 +189,7 @@ select_search_type(GtkWidget *item, G_GNUC_UNUSED GtkEntry *entry)
     if (!addrbook)
         return;
 
-    DEBUG("Searchbar: %s", gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
+    g_debug("Searchbar: %s", gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
 
     gtk_entry_set_icon_tooltip_text(GTK_ENTRY(addressbookentry), GTK_ENTRY_ICON_PRIMARY,
                                     gtk_menu_item_get_label(GTK_MENU_ITEM(item)));
@@ -253,7 +252,7 @@ search_by_outgoing(G_GNUC_UNUSED GtkWidget *item, GtkEntry *entry)
 static void
 icon_press_cb(GtkEntry *entry, gint position, GdkEventButton *event, G_GNUC_UNUSED gpointer data)
 {
-    DEBUG("Searchbar: Icon pressed");
+    g_debug("Searchbar: Icon pressed");
 
     if (position == GTK_ENTRY_ICON_PRIMARY)
        if (calltab_has_name(active_calltree_tab, HISTORY))
@@ -388,7 +387,7 @@ contacts_searchbar_new()
          book_list_iterator = book_list_iterator->next) {
         book_data_t *book_data = (book_data_t *) book_list_iterator->data;
 
-        DEBUG("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ %s", book_data->name);
+        g_debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ %s", book_data->name);
 
         if (book_data->active) {
 

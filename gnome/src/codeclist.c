@@ -33,7 +33,6 @@
 #endif
 
 #include "codeclist.h"
-#include "logger.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>

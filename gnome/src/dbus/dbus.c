@@ -35,7 +35,6 @@
 
 #include <glib/gi18n.h>
 #include "str_utils.h"
-#include "logger.h"
 #include "calltab.h"
 #include "callmanager-glue.h"
 #include "configurationmanager-glue.h"
@@ -77,10 +76,10 @@ static GDBusProxy *session_manager_proxy;
 static gboolean check_error(GError *error)
 {
     if (error) {
-        ERROR("%s", error->message);
+        g_error("%s", error->message);
         if (g_error_matches(error, DBUS_GERROR, DBUS_GERROR_SERVICE_UNKNOWN)) {
             g_error_free(error);
-            ERROR("daemon crashed, quitting rudely...");
+            g_error("daemon crashed, quitting rudely...");
             exit(EXIT_FAILURE);
         }
         g_error_free(error);
@@ -166,7 +165,7 @@ incoming_message_cb(G_GNUC_UNUSED DBusGProxy *proxy, const G_GNUC_UNUSED gchar *
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
         if (!conf) {
-            ERROR("Message received, but no recipient found");
+            g_error("Message received, but no recipient found");
             return;
         }
 
@@ -181,10 +180,10 @@ static void
 process_existing_call_state_change(callable_obj_t *c, const gchar *state, SFLPhoneClient *client)
 {
     if (c == NULL) {
-        ERROR("Pointer to call is NULL in %s\n", __func__);
+        g_error("Pointer to call is NULL in %s\n", __func__);
         return;
     } else if (state == NULL) {
-        ERROR("Pointer to state is NULL in %s\n", __func__);
+        g_error("Pointer to state is NULL in %s\n", __func__);
         return;
     }
 
@@ -216,10 +215,10 @@ static void
 process_nonexisting_call_state_change(const gchar *callID, const gchar *state, SFLPhoneClient *client)
 {
     if (callID == NULL) {
-        ERROR("Pointer to call id is NULL in %s\n", __func__);
+        g_error("Pointer to call id is NULL in %s\n", __func__);
         return;
     } else if (state == NULL) {
-        ERROR("Pointer to state is NULL in %s\n", __func__);
+        g_error("Pointer to state is NULL in %s\n", __func__);
         return;
     } else if (g_strcmp0(state, "HUNGUP") == 0)
         return; // Could occur if a user picked up the phone and hung up without making a call
@@ -229,7 +228,7 @@ process_nonexisting_call_state_change(const gchar *callID, const gchar *state, S
     // It means that a new call has been initiated with an other client (cli for instance)
     if (g_strcmp0(state, "RINGING") == 0 || g_strcmp0(state, "CURRENT") == 0) {
 
-        DEBUG("New ringing call! accountID: %s", callID);
+        g_debug("New ringing call! accountID: %s", callID);
 
         restore_call(callID);
         callable_obj_t *new_call = calllist_get_call(current_calls_tab, callID);
@@ -249,7 +248,7 @@ call_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
     if (c)
         process_existing_call_state_change(c, state, client);
     else {
-        WARN("Call does not exist");
+        g_warning("Call does not exist");
         process_nonexisting_call_state_change(callID, state, client);
     }
 }
@@ -268,11 +267,11 @@ static void
 conference_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
                       const gchar *state, SFLPhoneClient *client)
 {
-    DEBUG("Conference state changed: %s\n", state);
+    g_debug("Conference state changed: %s\n", state);
 
     conference_obj_t* changed_conf = conferencelist_get(current_calls_tab, confID);
     if (changed_conf == NULL) {
-        ERROR("Conference is NULL in conference state changed");
+        g_error("Conference is NULL in conference state changed");
         return;
     }
 
@@ -293,7 +292,7 @@ conference_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
     else if (g_strcmp0(state, "HOLD_REC") == 0)
         changed_conf->_state = CONFERENCE_STATE_HOLD_RECORD;
     else
-        DEBUG("Error: conference state not recognized");
+        g_debug("Error: conference state not recognized");
 
     // reactivate instant messaging window for these calls
     toggle_im(changed_conf, TRUE);
@@ -310,7 +309,7 @@ conference_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
 static void
 conference_created_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID, SFLPhoneClient *client)
 {
-    DEBUG("Conference %s added", confID);
+    g_debug("Conference %s added", confID);
 
     conference_obj_t *new_conf = create_new_conference(CONFERENCE_STATE_ACTIVE_ATTACHED, confID);
 
@@ -344,10 +343,10 @@ static void
 conference_removed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
                       SFLPhoneClient *client)
 {
-    DEBUG("Conference removed %s", confID);
+    g_debug("Conference removed %s", confID);
     conference_obj_t *c = conferencelist_get(current_calls_tab, confID);
     if(c == NULL) {
-        ERROR("Could not find conference %s from list", confID);
+        g_error("Could not find conference %s from list", confID);
         return;
     }
 
@@ -368,17 +367,17 @@ static void
 record_playback_filepath_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *id,
                             const gchar *filepath)
 {
-    DEBUG("Filepath for %s: %s", id, filepath);
+    g_debug("Filepath for %s: %s", id, filepath);
     callable_obj_t *call = calllist_get_call(current_calls_tab, id);
     conference_obj_t *conf = conferencelist_get(current_calls_tab, id);
 
     if (call && conf) {
-        ERROR("Two objects for this callid");
+        g_error("Two objects for this callid");
         return;
     }
 
     if (!call && !conf) {
-        ERROR("Could not get object");
+        g_error("Could not get object");
         return;
     }
 
@@ -391,14 +390,14 @@ record_playback_filepath_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *id,
 static void
 record_playback_stopped_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *filepath, SFLPhoneClient *client)
 {
-    DEBUG("Playback stopped for %s", filepath);
+    g_debug("Playback stopped for %s", filepath);
     const gint calllist_size = calllist_get_size(history_tab);
 
     for (gint i = 0; i < calllist_size; i++) {
         callable_obj_t *call = calllist_get_nth(history_tab, i);
 
         if (call == NULL) {
-            ERROR("Could not find %dth call", i);
+            g_error("Could not find %dth call", i);
             break;
         }
         if (g_strcmp0(call->_recordfile, filepath) == 0)
@@ -418,7 +417,7 @@ static void
 registration_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID,
                               guint state, G_GNUC_UNUSED void *foo)
 {
-    DEBUG("DBus: Registration state changed to %s for account %s",
+    g_debug("DBus: Registration state changed to %s for account %s",
           account_state_name(state), accountID);
     account_t *acc = account_list_get_by_id(accountID);
     if (acc) {
@@ -439,7 +438,7 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 static void
 stun_status_failure_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID, G_GNUC_UNUSED void *foo)
 {
-    ERROR("Error: Stun status failure: account %s failed to setup STUN",
+    g_error("Error: Stun status failure: account %s failed to setup STUN",
           accountID);
     // Disable STUN for the account that tried to create the STUN transport
     account_t *account = account_list_get_by_id(accountID);
@@ -452,7 +451,7 @@ stun_status_failure_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID, 
 static void
 stun_status_success_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED const gchar *message, G_GNUC_UNUSED void *foo)
 {
-    DEBUG("STUN setup successful");
+    g_debug("STUN setup successful");
 }
 
 static void
@@ -470,7 +469,7 @@ transfer_failed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 static void
 secure_sdes_on_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
-    DEBUG("SRTP using SDES is on");
+    g_debug("SRTP using SDES is on");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -482,7 +481,7 @@ secure_sdes_on_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhone
 static void
 secure_sdes_off_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
-    DEBUG("SRTP using SDES is off");
+    g_debug("SRTP using SDES is off");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -495,7 +494,7 @@ static void
 secure_zrtp_on_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                   const gchar *cipher, SFLPhoneClient *client)
 {
-    DEBUG("SRTP using ZRTP is ON secure_on_cb");
+    g_debug("SRTP using ZRTP is ON secure_on_cb");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -508,7 +507,7 @@ secure_zrtp_on_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
 static void
 secure_zrtp_off_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
-    DEBUG("SRTP using ZRTP is OFF");
+    g_debug("SRTP using ZRTP is OFF");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -521,7 +520,7 @@ static void
 show_zrtp_sas_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, const gchar *sas,
                  gboolean verified, SFLPhoneClient *client)
 {
-    DEBUG("Showing SAS");
+    g_debug("Showing SAS");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
@@ -531,7 +530,7 @@ show_zrtp_sas_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, const gch
 static void
 confirm_go_clear_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
-    DEBUG("Confirm Go Clear request");
+    g_debug("Confirm Go Clear request");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
@@ -541,7 +540,7 @@ confirm_go_clear_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPho
 static void
 zrtp_not_supported_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID, SFLPhoneClient *client)
 {
-    DEBUG("ZRTP not supported on the other end");
+    g_debug("ZRTP not supported on the other end");
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c) {
@@ -554,7 +553,7 @@ static void
 sip_call_state_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *callID,
                   const gchar *description, guint code, SFLPhoneClient *client)
 {
-    DEBUG("Sip call state changed %s", callID);
+    g_debug("Sip call state changed %s", callID);
     callable_obj_t *c = calllist_get_call(current_calls_tab, callID);
 
     if (c)
@@ -583,17 +582,17 @@ error_alert(G_GNUC_UNUSED DBusGProxy *proxy, int err, G_GNUC_UNUSED void *foo)
             return;
     }
 
-    ERROR("%s", msg);
+    g_error("%s", msg);
 }
 
 static void
 screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *result, G_GNUC_UNUSED gpointer user_data)
 {
-    DEBUG("Session manager connection callback");
+    g_debug("Session manager connection callback");
 
     session_manager_proxy = g_dbus_proxy_new_for_bus_finish (result, NULL);
     if (session_manager_proxy == NULL)
-        ERROR("could not initialize gnome session manager");
+        g_error("could not initialize gnome session manager");
 }
 
 #define GS_SERVICE   "org.gnome.SessionManager"
@@ -604,7 +603,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
 {
 
     if (connection == NULL) {
-        ERROR("connection is NULL");
+        g_error("connection is NULL");
         return FALSE;
     }
 /*
@@ -613,7 +612,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
                             "org.gnome.SessionManager.Inhibitor");
 
     if(session_manager_proxy == NULL) {
-        ERROR("Error, could not create session manager proxy");
+        g_error("Error, could not create session manager proxy");
         return FALSE;
     }
 */
@@ -623,7 +622,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
                              NULL, GS_SERVICE, GS_PATH, GS_INTERFACE, NULL,
                              screensaver_dbus_proxy_new_cb, NULL);
 
-    DEBUG("Connected to gnome session manager");
+    g_debug("Connected to gnome session manager");
 
     return TRUE;
 }
@@ -642,33 +641,33 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
     if (connection == NULL) {
-        ERROR("could not establish connection with session bus");
+        g_error("could not establish connection with session bus");
         return FALSE;
     }
 
     /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
-    DEBUG("Connect to message bus:     %s", dbus_message_bus_name);
-    DEBUG("           object instance: %s", dbus_object_instance);
-    DEBUG("           dbus interface:  %s", dbus_interface);
+    g_debug("Connect to message bus:     %s", dbus_message_bus_name);
+    g_debug("           object instance: %s", dbus_object_instance);
+    g_debug("           dbus interface:  %s", dbus_interface);
 
     instance_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, dbus_object_instance, dbus_interface);
     if (instance_proxy == NULL) {
-        ERROR("Error: Failed to connect to %s", dbus_message_bus_name);
+        g_error("Error: Failed to connect to %s", dbus_message_bus_name);
         return FALSE;
     }
 
-    DEBUG("Connect to object instance: %s", callmanager_object_instance);
-    DEBUG("           dbus interface:  %s", callmanager_interface);
+    g_debug("Connect to object instance: %s", callmanager_object_instance);
+    g_debug("           dbus interface:  %s", callmanager_interface);
 
     call_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, callmanager_object_instance, callmanager_interface);
     if (call_proxy == NULL) {
-        ERROR("Error: Failed to connect to %s", callmanager_object_instance);
+        g_error("Error: Failed to connect to %s", callmanager_object_instance);
         return FALSE;
     }
 
     config_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, configurationmanager_object_instance, configurationmanager_interface);
     if (config_proxy == NULL) {
-        ERROR("Error: Failed to connect to %s", configurationmanager_object_instance);
+        g_error("Error: Failed to connect to %s", configurationmanager_object_instance);
         return FALSE;
     }
 
@@ -723,7 +722,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
         g_cclosure_user_marshal_VOID__STRING_STRING_INT_INT, G_TYPE_NONE,
         G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INVALID);
 
-    DEBUG("Adding callmanager Dbus signals");
+    g_debug("Adding callmanager Dbus signals");
 
     /* Incoming call */
     dbus_g_proxy_add_signal(call_proxy, "newCallCreated", G_TYPE_STRING,
@@ -847,7 +846,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
                                 G_CALLBACK(sip_call_state_cb), client, NULL);
 
 
-    DEBUG("Adding configurationmanager Dbus signals");
+    g_debug("Adding configurationmanager Dbus signals");
 
     dbus_g_proxy_add_signal(config_proxy, "accountsChanged", G_TYPE_INVALID);
     dbus_g_proxy_connect_signal(config_proxy, "accountsChanged",
@@ -871,7 +870,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
             videocontrols_object_instance, videocontrols_interface);
     if (video_proxy == NULL) {
-        ERROR("Error: Failed to connect to %s", videocontrols_object_instance);
+        g_error("Error: Failed to connect to %s", videocontrols_object_instance);
         return FALSE;
     }
     /* Video related signals */
@@ -905,7 +904,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 
     gboolean status = dbus_connect_session_manager(connection);
     if(status == FALSE) {
-        ERROR("could not connect to gnome session manager");
+        g_error("could not connect to gnome session manager");
         return FALSE;
     }
 
@@ -1425,7 +1424,7 @@ dbus_set_noise_suppress_state(const gchar *state)
     org_sflphone_SFLphone_ConfigurationManager_set_noise_suppress_state(config_proxy, state, &error);
 
     if (error) {
-        ERROR("Failed to call set_noise_suppress_state() on "
+        g_error("Failed to call set_noise_suppress_state() on "
               "ConfigurationManager: %s", error->message);
         g_error_free(error);
     }
@@ -1504,7 +1503,7 @@ dbus_is_iax2_enabled()
 void
 dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
-    DEBUG("Join participant %s and %s\n", sel_callID, drag_callID);
+    g_debug("Join participant %s and %s\n", sel_callID, drag_callID);
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID, drag_callID, &error);
     check_error(error);
@@ -1521,7 +1520,7 @@ dbus_create_conf_from_participant_list(const gchar **list)
 void
 dbus_add_participant(const gchar *callID, const gchar *confID)
 {
-    DEBUG("Add participant %s to %s\n", callID, confID);
+    g_debug("Add participant %s to %s\n", callID, confID);
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID, confID, &error);
     check_error(error);
@@ -1546,7 +1545,7 @@ dbus_detach_participant(const gchar *callID)
 void
 dbus_join_conference(const gchar *sel_confID, const gchar *drag_confID)
 {
-    DEBUG("dbus_join_conference %s and %s\n", sel_confID, drag_confID);
+    g_debug("dbus_join_conference %s and %s\n", sel_confID, drag_confID);
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_join_conference(call_proxy, sel_confID, drag_confID, &error);
     check_error(error);
@@ -1853,7 +1852,7 @@ dbus_get_participant_list(const gchar *confID)
     GError *error = NULL;
     gchar **list = NULL;
 
-    DEBUG("Get conference %s participant list", confID);
+    g_debug("Get conference %s participant list", confID);
     org_sflphone_SFLphone_CallManager_get_participant_list(call_proxy, confID, &list, &error);
     check_error(error);
 
@@ -2065,7 +2064,7 @@ static void screensaver_inhibit_cb(GObject * source_object, GAsyncResult * res,
     GError *error = NULL;
     GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        ERROR("%s", error->message);
+        g_error("%s", error->message);
         g_error_free(error);
         return;
     }
@@ -2088,7 +2087,7 @@ static void screensaver_uninhibit_cb(GObject * source_object,
 
     GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        ERROR ("%s",
+        g_error ("%s",
                error->message);
         g_error_free(error);
         return;
@@ -2103,7 +2102,7 @@ void dbus_screensaver_inhibit(void)
 {
     const gchar *appname = g_get_application_name();
     if (appname == NULL) {
-        ERROR("could not retrieve application name");
+        g_error("could not retrieve application name");
         return;
     }
 
@@ -2112,7 +2111,7 @@ void dbus_screensaver_inhibit(void)
                                          "Phone call ongoing",
                                          GNOME_SESSION_NO_IDLE_FLAG);
     if (parameters == NULL) {
-        ERROR("Could not create session manager inhibit parameters");
+        g_error("Could not create session manager inhibit parameters");
         return;
     }
 
@@ -2126,11 +2125,11 @@ dbus_screensaver_uninhibit(void)
 {
     if (cookie == 0)
         return;
-    DEBUG("uninhibit");
+    g_debug("uninhibit");
 
     GVariant *parameters = g_variant_new("(u)", cookie);
     if (parameters == NULL) {
-        ERROR("Could not create session manager uninhibit "
+        g_error("Could not create session manager uninhibit "
                "parameters");
         return;
     }

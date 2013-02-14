@@ -33,7 +33,6 @@
 #include <string.h>
 #include "calltab.h"
 #include "calltree.h"
-#include "logger.h"
 
 // Must return 0 when a match is found
 static gint
@@ -43,7 +42,7 @@ is_callID_callstruct(gconstpointer a, gconstpointer b)
 
     // if it's null or not a call it's not the call we're looking for
     if (c == NULL) {
-        ERROR("NULL element in list");
+        g_error("NULL element in list");
         return 1;
     }
 
@@ -117,9 +116,9 @@ calllist_reset(calltab_t* tab)
 void
 calllist_add_call(calltab_t* tab, callable_obj_t * c)
 {
-    DEBUG("Adding call with callID %s to tab %s", c->_callID, tab->name);
+    g_debug("Adding call with callID %s to tab %s", c->_callID, tab->name);
     g_queue_push_tail(tab->callQueue, c);
-    DEBUG("Tab %s has %d calls", tab->name, calllist_get_size(tab));
+    g_debug("Tab %s has %d calls", tab->name, calllist_get_size(tab));
 }
 
 void
@@ -162,7 +161,7 @@ calllist_remove_call(calltab_t* tab, const gchar * callID, SFLPhoneClient *clien
     callable_obj_t *call = c->data;
 
     if (!g_queue_is_empty(tab->callQueue)) {
-        DEBUG("Removing call %s from tab %s", callID, tab->name);
+        g_debug("Removing call %s from tab %s", callID, tab->name);
         g_queue_remove(tab->callQueue, call);
     }
 
@@ -199,7 +198,7 @@ calllist_get_call(calltab_t* tab, const gchar * callID)
     GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL) {
-        ERROR("Could not find call %s in tab %s", callID, tab->name);
+        g_error("Could not find call %s in tab %s", callID, tab->name);
         return NULL;
     }
 

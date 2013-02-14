@@ -47,7 +47,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "sflphone_const.h"
-#include "logger.h"
 #include "reqaccount.h"
 
 int req(char *host, int port, char *request, char *ret)
@@ -121,14 +120,13 @@ rest_account get_rest_account(char *host,char *email)
     char ret[4096];
     rest_account ra;
     bzero(ret, sizeof(ret));
-    DEBUG("HOST: %s", host);
+    g_debug("HOST: %s", host);
     strcpy(ret,"GET /rest/accountcreator?email=");
     strcat(ret, email);
 
     if (req(host, 80, ret, ret) != -1) {
         strcpy(ra.user, strtok(ret, "\n"));
         strcpy(ra.passwd, strtok(NULL, "\n"));
-        \
         ra.success = 1;
     } else {
         ra.success = 0;
@@ -150,7 +148,7 @@ int main(void)
         puts(acc.user);
         puts(acc.passwd);
     } else {
-        ERROR("FAILED: %s", acc.reason);
+        g_error("FAILED: %s", acc.reason);
     }
 }
 #endif

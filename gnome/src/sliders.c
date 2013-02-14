@@ -32,7 +32,6 @@
 #include "sliders.h"
 #include "dbus/dbus.h"
 #include "actions.h"
-#include "logger.h"
 #include <string.h>
 #include <gtk/gtk.h>
 
@@ -86,7 +85,7 @@ void
 slider_moved(GtkRange* range, gchar* device)
 {
     gdouble slider_value = gtk_range_get_value(range);
-    DEBUG("Volume changed for %s: %f ", device, slider_value);
+    g_debug("Volume changed for %s: %f ", device, slider_value);
     dbus_set_volume(device, slider_value);
 
     if (g_strcmp0(device, "speaker") == 0)
@@ -106,11 +105,11 @@ mute_cb(GtkWidget *widget, gchar*  device)
         dev = DEVICE_MIC;
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {   // Save value
-        DEBUG("Save");
+        g_debug("Save");
         value[dev] = gtk_range_get_value(GTK_RANGE(slider[dev]));
         dbus_set_volume(device, 0);
     } else { //Restore value
-        DEBUG("Restore");
+        g_debug("Restore");
         dbus_set_volume(device, value[dev]);
     }
 
@@ -123,14 +122,14 @@ void set_slider_value(const gchar *device, gdouble newval)
 
     if (g_strcmp0(device, "speaker") == 0) {
         dev = DEVICE_SPEAKER;
-        DEBUG("Set value for speaker: %f\n", newval);
+        g_debug("Set value for speaker: %f\n", newval);
     }
     else if (g_strcmp0(device, "mic") == 0) {
         dev = DEVICE_MIC;
-        DEBUG("Set value for mic: %f\n", newval);
+        g_debug("Set value for mic: %f\n", newval);
     }
     else {
-        ERROR("Unknown device: %s", device);
+        g_error("Unknown device: %s", device);
         return;
     }
 
@@ -147,14 +146,14 @@ void set_slider_no_update (const gchar * device, gdouble newval)
 
     if (g_strcmp0(device, "speaker") == 0) {
         dev = DEVICE_SPEAKER;
-        DEBUG("Set value no update for speaker: %f\n", newval);
+        g_debug("Set value no update for speaker: %f\n", newval);
     }
     else if (g_strcmp0(device, "mic") == 0) {
         dev = DEVICE_MIC;
-        DEBUG("Set value no update for mic: %f\n", newval);
+        g_debug("Set value no update for mic: %f\n", newval);
     }
     else {
-        ERROR("Unknown device: %s", device);
+        g_error("Unknown device: %s", device);
         return;
     }
 
@@ -182,7 +181,7 @@ void toggle_slider_mute_microphone(void)
         device_state = DEVICE_STATE_ACTIVE;
         break;
     default:
-        ERROR("Unknown state");
+        g_error("Unknown state");
         break;
     }
 }

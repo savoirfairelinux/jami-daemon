@@ -36,7 +36,6 @@
 #include <string.h>
 #include "seekslider.h"
 #include "dbus.h"
-#include "logger.h"
 #include "calltab.h"
 
 /**
@@ -305,7 +304,7 @@ static void sfl_seekslider_play_playback_record_cb (GtkButton *button G_GNUC_UNU
     if (selectedCall == NULL)
         return;
 
-    DEBUG("Start selected call file playback %s", selectedCall->_recordfile);
+    g_debug("Start selected call file playback %s", selectedCall->_recordfile);
     seekslider->priv->is_playing = selectedCall->_record_is_playing =
         dbus_start_recorded_file_playback(selectedCall->_recordfile);
 
@@ -326,7 +325,7 @@ static void sfl_seekslider_stop_playback_record_cb (GtkButton *button G_GNUC_UNU
         return;
 
     dbus_stop_recorded_file_playback(selectedCall->_recordfile);
-    DEBUG("Stop selected call file playback %s", selectedCall->_recordfile);
+    g_debug("Stop selected call file playback %s", selectedCall->_recordfile);
     seekslider->priv->is_playing = selectedCall->_record_is_playing = FALSE;
 
     sfl_seekslider_set_display(seekslider, SFL_SEEKSLIDER_DISPLAY_PLAY);
@@ -372,7 +371,7 @@ void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint
         seekslider->priv->current = current;
         seekslider->priv->size = size;
         if (!seekslider->priv->is_playing) {
-            ERROR("Seek slider state is inconsistent, updating icon");
+            g_error("Seek slider state is inconsistent, updating icon");
             /* State somehow become inconsistent: the seekbar is moving but
              * the play icon is not set to paused */
             seekslider->priv->is_playing = TRUE;
@@ -396,7 +395,7 @@ void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay 
             gtk_widget_show(seekslider->priv->playRecordWidget);
             break;
         default:
-            WARN("Unknown display option for seekslider");
+            g_warning("Unknown display option for seekslider");
             break;
     }
 }

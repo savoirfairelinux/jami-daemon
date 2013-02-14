@@ -31,7 +31,6 @@
 #include "addressbook-config.h"
 #include "str_utils.h"
 #include "dbus.h"
-#include "logger.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
 #include <glib/gi18n.h>
@@ -100,7 +99,7 @@ enable_options()
 {
 
     if (!addressbook_config->enable) {
-        DEBUG("Disable addressbook options\n");
+        g_debug("Disable addressbook options\n");
         gtk_widget_set_sensitive(photo, FALSE);
         gtk_widget_set_sensitive(scrolled_label, FALSE);
         gtk_widget_set_sensitive(cards_label, FALSE);
@@ -114,7 +113,7 @@ enable_options()
 
 
     } else {
-        DEBUG("Enable addressbook options\n");
+        g_debug("Enable addressbook options\n");
         gtk_widget_set_sensitive(photo, TRUE);
         gtk_widget_set_sensitive(scrolled_label, TRUE);
         gtk_widget_set_sensitive(cards_label, TRUE);
@@ -201,7 +200,7 @@ addressbook_config_book_active_toggled(
     treePath = gtk_tree_path_new_from_string(path);
 
     if (!(model = gtk_tree_view_get_model(GTK_TREE_VIEW(data)))) {
-        DEBUG("No valid model (%s:%d)", __FILE__, __LINE__);
+        g_debug("No valid model (%s:%d)", __FILE__, __LINE__);
         return;
     }
 
@@ -223,7 +222,7 @@ addressbook_config_book_active_toggled(
     book_data = addrbook->get_book_data_by_uid(uid);
 
     if (book_data == NULL) {
-        ERROR("Could not find addressbook %s", uid);
+        g_error("Could not find addressbook %s", uid);
         return;
     }
 
@@ -274,11 +273,11 @@ addressbook_config_fill_book_list()
     GSList *books_data = addrbook->get_books_data();
 
     if (!books_data)
-        DEBUG("No valid books data");
+        g_debug("No valid books data");
 
     // Get model of view and clear it
     if (!(store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view))))) {
-        DEBUG("Could not find model from treeview");
+        g_debug("Could not find model from treeview");
         return;
     }
 
@@ -289,7 +288,7 @@ addressbook_config_fill_book_list()
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
         gtk_list_store_append(store, &list_store_iterator);
-        DEBUG("-----------------------------------: %s, %s", book_data->name, book_data->active ? "active" : "not-active");
+        g_debug("-----------------------------------: %s, %s", book_data->name, book_data->active ? "active" : "not-active");
         gtk_list_store_set(store, &list_store_iterator, COLUMN_BOOK_ACTIVE,
                            book_data->active, COLUMN_BOOK_UID, book_data->uid, COLUMN_BOOK_NAME,
                            book_data->name, -1);

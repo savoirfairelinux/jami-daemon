@@ -29,7 +29,6 @@
  */
 
 #include "icon_factory.h"
-#include "logger.h"
 #include <gtk/gtk.h>
 #include "icons/pixmap_data.h"
 
@@ -54,7 +53,7 @@ void add_icon(GtkIconFactory *factory, const gchar *stock_id, const guint8 *icon
         gtk_icon_source_free(source);
         gtk_icon_set_unref(icons);
     } else
-        DEBUG("Icon %s already exists in factory\n", stock_id);
+        g_debug("Icon %s already exists in factory\n", stock_id);
 }
 
 void register_sflphone_stock_icons(GtkIconFactory *factory)
