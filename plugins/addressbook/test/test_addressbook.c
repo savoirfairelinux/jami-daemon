@@ -66,22 +66,19 @@ main(int argc, char *argv[])
                                     GDK_TYPE_PIXBUF);
     GtkWidget *tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
 
-    GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
-    const char *column_header[]= {"Name", "Phone"};
-    for (gint col = COLUMN_NAME; col < COLUMN_PIXBUF; ++col) {
+    GtkCellRenderer *text_renderer = gtk_cell_renderer_text_new();
+    GtkCellRenderer *pixbuf_renderer = gtk_cell_renderer_pixbuf_new();
+    GtkCellRenderer *renderers[] = {text_renderer, text_renderer, pixbuf_renderer};
+    const char *column_header[]= {"Name", "Phone", "Photo"};
+    const char *column_type[]= {"text", "text", "pixbuf"};
+
+    for (gint col = 0; col < N_COLUMNS; ++col) {
         GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes(column_header[col],
-                                                                             renderer, "text",
+                                                                             renderers[col], column_type[col],
                                                                              col,
                                                                              NULL);
         gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
     }
-
-    renderer = gtk_cell_renderer_pixbuf_new();
-    GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes("Photo",
-                                                                         renderer, "pixbuf",
-                                                                         COLUMN_PIXBUF,
-                                                                         NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
 
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
