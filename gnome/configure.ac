@@ -11,6 +11,7 @@ AM_INIT_AUTOMAKE([1.11 -Wall -Wno-portability dist-xz no-define no-dist-gzip sub
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([enable])
 
+GNOME_DEBUG_CHECK
 GNOME_MAINTAINER_MODE_DEFINES
 GNOME_COMPILE_WARNINGS([maximum])
 

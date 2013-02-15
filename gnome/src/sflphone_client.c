@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2001-2007 Bastien Nocera <hadess@hadess.net>
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -49,8 +50,9 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
     g_option_context_set_help_enabled(context, TRUE);
     GError *error = NULL;
     if (g_option_context_parse(context, &argc, &argv, &error) == FALSE) {
-        g_print (_("%s\nRun '%s --help' to see a full list of available command line options.\n"),
-                error->message, argv[0]);
+        g_print(_("%s\nRun '%s --help' to see a full list of available command line options.\n"
+                  "For versbose debugging set \"G_MESSAGES_DEBUG=all\"\n"),
+               error->message, argv[0]);
         g_error_free(error);
         g_option_context_free(context);
         return 1;
@@ -60,8 +62,7 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
 
     if (!sflphone_init(&error, client)) {
         g_warning("%s", error->message);
-        GtkWidget *dialog = gtk_message_dialog_new(
-                                NULL,
+        GtkWidget *dialog = gtk_message_dialog_new(NULL,
                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                 GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
                                 "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
