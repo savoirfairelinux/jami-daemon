@@ -222,7 +222,7 @@ addressbook_config_book_active_toggled(
     book_data = addrbook->get_book_data_by_uid(uid);
 
     if (book_data == NULL) {
-        g_error("Could not find addressbook %s", uid);
+        g_warning("Could not find addressbook %s", uid);
         return;
     }
 

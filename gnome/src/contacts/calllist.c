@@ -42,7 +42,7 @@ is_callID_callstruct(gconstpointer a, gconstpointer b)
 
     // if it's null or not a call it's not the call we're looking for
     if (c == NULL) {
-        g_error("NULL element in list");
+        g_warning("NULL element in list");
         return 1;
     }
 
@@ -198,7 +198,7 @@ calllist_get_call(calltab_t* tab, const gchar * callID)
     GList * c = g_queue_find_custom(tab->callQueue, callID, is_callID_callstruct);
 
     if (c == NULL) {
-        g_error("Could not find call %s in tab %s", callID, tab->name);
+        g_warning("Could not find call %s in tab %s", callID, tab->name);
         return NULL;
     }
 

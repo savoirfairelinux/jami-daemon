@@ -371,7 +371,7 @@ void sfl_seekslider_update_scale(SFLSeekSlider *seekslider, guint current, guint
         seekslider->priv->current = current;
         seekslider->priv->size = size;
         if (!seekslider->priv->is_playing) {
-            g_error("Seek slider state is inconsistent, updating icon");
+            g_warning("Seek slider state is inconsistent, updating icon");
             /* State somehow become inconsistent: the seekbar is moving but
              * the play icon is not set to paused */
             seekslider->priv->is_playing = TRUE;

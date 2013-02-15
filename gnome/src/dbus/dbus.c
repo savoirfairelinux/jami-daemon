@@ -76,10 +76,10 @@ static GDBusProxy *session_manager_proxy;
 static gboolean check_error(GError *error)
 {
     if (error) {
-        g_error("%s", error->message);
+        g_warning("%s", error->message);
         if (g_error_matches(error, DBUS_GERROR, DBUS_GERROR_SERVICE_UNKNOWN)) {
             g_error_free(error);
-            g_error("daemon crashed, quitting rudely...");
+            g_warning("daemon crashed, quitting rudely...");
             exit(EXIT_FAILURE);
         }
         g_error_free(error);
@@ -165,7 +165,7 @@ incoming_message_cb(G_GNUC_UNUSED DBusGProxy *proxy, const G_GNUC_UNUSED gchar *
     } else {
         conference_obj_t *conf = conferencelist_get(current_calls_tab, callID);
         if (!conf) {
-            g_error("Message received, but no recipient found");
+            g_warning("Message received, but no recipient found");
             return;
         }
 
@@ -180,10 +180,10 @@ static void
 process_existing_call_state_change(callable_obj_t *c, const gchar *state, SFLPhoneClient *client)
 {
     if (c == NULL) {
-        g_error("Pointer to call is NULL in %s\n", __func__);
+        g_warning("Pointer to call is NULL in %s\n", __func__);
         return;
     } else if (state == NULL) {
-        g_error("Pointer to state is NULL in %s\n", __func__);
+        g_warning("Pointer to state is NULL in %s\n", __func__);
         return;
     }
 
@@ -215,10 +215,10 @@ static void
 process_nonexisting_call_state_change(const gchar *callID, const gchar *state, SFLPhoneClient *client)
 {
     if (callID == NULL) {
-        g_error("Pointer to call id is NULL in %s\n", __func__);
+        g_warning("Pointer to call id is NULL in %s\n", __func__);
         return;
     } else if (state == NULL) {
-        g_error("Pointer to state is NULL in %s\n", __func__);
+        g_warning("Pointer to state is NULL in %s\n", __func__);
         return;
     } else if (g_strcmp0(state, "HUNGUP") == 0)
         return; // Could occur if a user picked up the phone and hung up without making a call
@@ -271,7 +271,7 @@ conference_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
 
     conference_obj_t* changed_conf = conferencelist_get(current_calls_tab, confID);
     if (changed_conf == NULL) {
-        g_error("Conference is NULL in conference state changed");
+        g_warning("Conference is NULL in conference state changed");
         return;
     }
 
@@ -346,7 +346,7 @@ conference_removed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *confID,
     g_debug("Conference removed %s", confID);
     conference_obj_t *c = conferencelist_get(current_calls_tab, confID);
     if(c == NULL) {
-        g_error("Could not find conference %s from list", confID);
+        g_warning("Could not find conference %s from list", confID);
         return;
     }
 
@@ -372,12 +372,12 @@ record_playback_filepath_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *id,
     conference_obj_t *conf = conferencelist_get(current_calls_tab, id);
 
     if (call && conf) {
-        g_error("Two objects for this callid");
+        g_warning("Two objects for this callid");
         return;
     }
 
     if (!call && !conf) {
-        g_error("Could not get object");
+        g_warning("Could not get object");
         return;
     }
 
@@ -397,7 +397,7 @@ record_playback_stopped_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *filepat
         callable_obj_t *call = calllist_get_nth(history_tab, i);
 
         if (call == NULL) {
-            g_error("Could not find %dth call", i);
+            g_warning("Could not find %dth call", i);
             break;
         }
         if (g_strcmp0(call->_recordfile, filepath) == 0)
@@ -438,7 +438,7 @@ accounts_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, G_GNUC_UNUSED void *foo)
 static void
 stun_status_failure_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID, G_GNUC_UNUSED void *foo)
 {
-    g_error("Error: Stun status failure: account %s failed to setup STUN",
+    g_warning("Error: Stun status failure: account %s failed to setup STUN",
           accountID);
     // Disable STUN for the account that tried to create the STUN transport
     account_t *account = account_list_get_by_id(accountID);
@@ -582,7 +582,7 @@ error_alert(G_GNUC_UNUSED DBusGProxy *proxy, int err, G_GNUC_UNUSED void *foo)
             return;
     }
 
-    g_error("%s", msg);
+    g_warning("%s", msg);
 }
 
 static void
@@ -592,7 +592,7 @@ screensaver_dbus_proxy_new_cb (G_GNUC_UNUSED GObject * source, GAsyncResult *res
 
     session_manager_proxy = g_dbus_proxy_new_for_bus_finish (result, NULL);
     if (session_manager_proxy == NULL)
-        g_error("could not initialize gnome session manager");
+        g_warning("could not initialize gnome session manager");
 }
 
 #define GS_SERVICE   "org.gnome.SessionManager"
@@ -603,7 +603,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
 {
 
     if (connection == NULL) {
-        g_error("connection is NULL");
+        g_warning("connection is NULL");
         return FALSE;
     }
 /*
@@ -612,7 +612,7 @@ gboolean dbus_connect_session_manager(DBusGConnection *connection)
                             "org.gnome.SessionManager.Inhibitor");
 
     if(session_manager_proxy == NULL) {
-        g_error("Error, could not create session manager proxy");
+        g_warning("Error, could not create session manager proxy");
         return FALSE;
     }
 */
@@ -641,7 +641,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 
     DBusGConnection *connection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
     if (connection == NULL) {
-        g_error("could not establish connection with session bus");
+        g_warning("could not establish connection with session bus");
         return FALSE;
     }
 
@@ -652,7 +652,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 
     instance_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, dbus_object_instance, dbus_interface);
     if (instance_proxy == NULL) {
-        g_error("Error: Failed to connect to %s", dbus_message_bus_name);
+        g_warning("Error: Failed to connect to %s", dbus_message_bus_name);
         return FALSE;
     }
 
@@ -661,13 +661,13 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 
     call_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, callmanager_object_instance, callmanager_interface);
     if (call_proxy == NULL) {
-        g_error("Error: Failed to connect to %s", callmanager_object_instance);
+        g_warning("Error: Failed to connect to %s", callmanager_object_instance);
         return FALSE;
     }
 
     config_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name, configurationmanager_object_instance, configurationmanager_interface);
     if (config_proxy == NULL) {
-        g_error("Error: Failed to connect to %s", configurationmanager_object_instance);
+        g_warning("Error: Failed to connect to %s", configurationmanager_object_instance);
         return FALSE;
     }
 
@@ -870,7 +870,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
     video_proxy = dbus_g_proxy_new_for_name(connection, dbus_message_bus_name,
             videocontrols_object_instance, videocontrols_interface);
     if (video_proxy == NULL) {
-        g_error("Error: Failed to connect to %s", videocontrols_object_instance);
+        g_warning("Error: Failed to connect to %s", videocontrols_object_instance);
         return FALSE;
     }
     /* Video related signals */
@@ -904,7 +904,7 @@ gboolean dbus_connect(GError **error, SFLPhoneClient *client)
 
     gboolean status = dbus_connect_session_manager(connection);
     if(status == FALSE) {
-        g_error("could not connect to gnome session manager");
+        g_warning("could not connect to gnome session manager");
         return FALSE;
     }
 
@@ -1424,7 +1424,7 @@ dbus_set_noise_suppress_state(const gchar *state)
     org_sflphone_SFLphone_ConfigurationManager_set_noise_suppress_state(config_proxy, state, &error);
 
     if (error) {
-        g_error("Failed to call set_noise_suppress_state() on "
+        g_warning("Failed to call set_noise_suppress_state() on "
               "ConfigurationManager: %s", error->message);
         g_error_free(error);
     }
@@ -2064,7 +2064,7 @@ static void screensaver_inhibit_cb(GObject * source_object, GAsyncResult * res,
     GError *error = NULL;
     GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        g_error("%s", error->message);
+        g_warning("%s", error->message);
         g_error_free(error);
         return;
     }
@@ -2087,8 +2087,7 @@ static void screensaver_uninhibit_cb(GObject * source_object,
 
     GVariant *value = g_dbus_proxy_call_finish(proxy, res, &error);
     if (!value) {
-        g_error ("%s",
-               error->message);
+        g_warning("%s", error->message);
         g_error_free(error);
         return;
     }
@@ -2102,7 +2101,7 @@ void dbus_screensaver_inhibit(void)
 {
     const gchar *appname = g_get_application_name();
     if (appname == NULL) {
-        g_error("could not retrieve application name");
+        g_warning("could not retrieve application name");
         return;
     }
 
@@ -2111,7 +2110,7 @@ void dbus_screensaver_inhibit(void)
                                          "Phone call ongoing",
                                          GNOME_SESSION_NO_IDLE_FLAG);
     if (parameters == NULL) {
-        g_error("Could not create session manager inhibit parameters");
+        g_warning("Could not create session manager inhibit parameters");
         return;
     }
 
@@ -2129,7 +2128,7 @@ dbus_screensaver_uninhibit(void)
 
     GVariant *parameters = g_variant_new("(u)", cookie);
     if (parameters == NULL) {
-        g_error("Could not create session manager uninhibit "
+        g_warning("Could not create session manager uninhibit "
                "parameters");
         return;
     }

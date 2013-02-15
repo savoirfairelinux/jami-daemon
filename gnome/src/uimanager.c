@@ -144,7 +144,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
     g_debug("Update actions for call %s", selectedCall->_callID);
 
     if(selectedCall == NULL) {
-        g_error("Selected call is NULL while updating toolbar");
+        g_warning("Selected call is NULL while updating toolbar");
         return;
     }
 
@@ -291,7 +291,7 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
                 break;
         }
         default:
-            g_error("Unknown state in action update!");
+            g_warning("Unknown state in action update!");
             break;
     }
 }
@@ -670,7 +670,7 @@ conference_hold(G_GNUC_UNUSED gpointer foo)
     g_debug("Hold button pressed for conference");
 
     if (selectedConf == NULL) {
-        g_error("No conference selected");
+        g_warning("No conference selected");
         return;
     }
 
@@ -765,7 +765,7 @@ remove_from_history(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
     g_debug("Remove the call from the history");
 
     if (call == NULL) {
-        g_error("Call is NULL");
+        g_warning("Call is NULL");
         return;
     }
 
@@ -781,7 +781,7 @@ call_back(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
     g_debug("Call back");
 
     if (selected_call == NULL) {
-        g_error("No selected call");
+        g_warning("No selected call");
         return;
     }
 
@@ -1595,7 +1595,7 @@ show_edit_number(callable_obj_t *call, SFLPhoneClient *client)
     if (call)
         gtk_entry_set_text(GTK_ENTRY(editable_num_), call->_peer_number);
     else
-        g_error("This a bug, the call should be defined. menus.c line 1051");
+        g_warning("This a bug, the call should be defined. menus.c line 1051");
 
     gtk_box_pack_start(GTK_BOX(hbox), editable_num_, TRUE, TRUE, 0);
 
@@ -1638,7 +1638,7 @@ get_widget(GtkUIManager *ui, const gchar *ui_path)
 {
     GtkWidget *result = gtk_ui_manager_get_widget(ui, ui_path);
     if (result == NULL)
-        g_error("Could not get %s widget", ui_path);
+        g_warning("Could not get %s widget", ui_path);
     return result;
 }
 

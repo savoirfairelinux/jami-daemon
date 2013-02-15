@@ -41,7 +41,7 @@ conference_obj_t *
 create_new_conference(conference_state_t state, const gchar* const confID)
 {
     if (confID == NULL) {
-        g_error("Conference ID is NULL while creating new conference");
+        g_warning("Conference ID is NULL while creating new conference");
         return NULL;
     }
 
@@ -109,7 +109,7 @@ void conference_add_participant_number(const gchar *call_id, conference_obj_t *c
     callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
     if (!call) {
-        g_error("Could not find %s", call_id);
+        g_warning("Could not find %s", call_id);
         return;
     }
 
@@ -138,7 +138,7 @@ void conference_remove_participant(const gchar* call_id, conference_obj_t* conf)
 void conference_participant_list_update(gchar** participants, conference_obj_t* conf)
 {
     if (!conf) {
-        g_error("Conference is NULL");
+        g_warning("Conference is NULL");
         return;
     }
 

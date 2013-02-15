@@ -72,12 +72,12 @@ create_new_gnome_notification(gchar *title, gchar *body, NotifyUrgency urgency, 
         if (notif.icon != NULL)
             notify_notification_set_icon_from_pixbuf(notif.notification, notif.icon);
         else
-            g_error("notify(), cannot load notification icon");
+            g_warning("notify(), cannot load notification icon");
 
         notify_notification_set_timeout(notif.notification, timeout);
 
         if (!notify_notification_show(notif.notification, NULL)) {
-            g_error("notify(), failed to send notification");
+            g_warning("notify(), failed to send notification");
         }
     }
 

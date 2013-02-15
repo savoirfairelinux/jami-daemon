@@ -195,12 +195,12 @@ on_key_released(G_GNUC_UNUSED GtkWidget *widget, GdkEventKey *event, SFLPhoneCli
 static void pack_main_window_start(GtkBox *box, GtkWidget *widget, gboolean expand, gboolean fill, guint padding)
 {
     if(box == NULL) {
-        g_error("Box is NULL while packing main window");
+        g_warning("Box is NULL while packing main window");
         return;
     }
 
     if(widget == NULL) {
-        g_error("Widget is NULL while packing the mainwindow");
+        g_warning("Widget is NULL while packing the mainwindow");
         return;
     }
 
@@ -249,7 +249,7 @@ create_main_window(SFLPhoneClient *client)
 
     ui_manager = uimanager_new(client);
     if (!ui_manager) {
-        g_error("Could not load xml GUI\n");
+        g_warning("Could not load xml GUI\n");
         exit(1);
     }
 

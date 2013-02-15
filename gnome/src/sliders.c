@@ -129,7 +129,7 @@ void set_slider_value(const gchar *device, gdouble newval)
         g_debug("Set value for mic: %f\n", newval);
     }
     else {
-        g_error("Unknown device: %s", device);
+        g_warning("Unknown device: %s", device);
         return;
     }
 
@@ -153,7 +153,7 @@ void set_slider_no_update (const gchar * device, gdouble newval)
         g_debug("Set value no update for mic: %f\n", newval);
     }
     else {
-        g_error("Unknown device: %s", device);
+        g_warning("Unknown device: %s", device);
         return;
     }
 
@@ -181,7 +181,7 @@ void toggle_slider_mute_microphone(void)
         device_state = DEVICE_STATE_ACTIVE;
         break;
     default:
-        g_error("Unknown state");
+        g_warning("Unknown state");
         break;
     }
 }

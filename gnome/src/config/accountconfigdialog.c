@@ -244,7 +244,7 @@ create_basic_tab(account_t *account)
     else if (account_is_IAX(account))
         table = gtk_table_new(8, 2, FALSE);
     else {
-        g_error("Unknown account type");
+        g_warning("Unknown account type");
         return NULL;
     }
 
@@ -282,7 +282,7 @@ create_basic_tab(account_t *account)
     else if (account_is_IAX(account))
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 1);
     else {
-        g_error("Account protocol not valid");
+        g_warning("Account protocol not valid");
         /* Should never come here, add debug message. */
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), _("Unknown"));
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 2);
@@ -595,7 +595,7 @@ static void local_interface_changed_cb(G_GNUC_UNUSED GtkWidget * widget, G_GNUC_
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button))) {
         gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
         if (!local_iface_name) {
-            g_error("Could not get local interface name");
+            g_warning("Could not get local interface name");
             return;
         }
         gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);
@@ -861,7 +861,7 @@ static GtkWidget* create_registration_expire(const account_t *account)
     if (account && account->properties)
         if (!g_hash_table_lookup_extended(account->properties, CONFIG_ACCOUNT_REGISTRATION_EXPIRE,
                                           &orig_key, (gpointer) &account_expire))
-            g_error("Could not retrieve %s from account properties",
+            g_warning("Could not retrieve %s from account properties",
                   CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
 
     GtkWidget *table, *frame;
@@ -924,7 +924,7 @@ create_network(const account_t *account)
     local_address_entry = gtk_entry_new();
     gchar *local_iface_name = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(local_address_combo));
     if (!local_iface_name) {
-        g_error("Could not get local interface name");
+        g_warning("Could not get local interface name");
         return frame;
     }
     gchar *local_iface_addr = get_interface_addr_from_name(local_iface_name);

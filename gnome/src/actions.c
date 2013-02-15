@@ -199,7 +199,7 @@ void sflphone_fill_account_list(void)
     for (gchar **accountID = array; accountID && *accountID; ++accountID) {
         account_t *acc = create_account_with_ID(*accountID);
         if (acc->properties == NULL) {
-            g_error("SFLphone: Error: Could not fetch details for account %s",
+            g_warning("SFLphone: Error: Could not fetch details for account %s",
                   accountID);
             break;
         }
@@ -214,17 +214,17 @@ void sflphone_fill_account_list(void)
             acc->state = ACCOUNT_STATE_UNREGISTERED;
         else if (g_strcmp0(status, "TRYING") == 0)
             acc->state = ACCOUNT_STATE_TRYING;
-        else if (g_strcmp0(status, "g_error") == 0)
+        else if (g_strcmp0(status, "g_warning") == 0)
             acc->state = ACCOUNT_STATE_ERROR;
-        else if (g_strcmp0(status, "g_error_AUTH") == 0)
+        else if (g_strcmp0(status, "g_warning_AUTH") == 0)
             acc->state = ACCOUNT_STATE_ERROR_AUTH;
-        else if (g_strcmp0(status, "g_error_NETWORK") == 0)
+        else if (g_strcmp0(status, "g_warning_NETWORK") == 0)
             acc->state = ACCOUNT_STATE_ERROR_NETWORK;
-        else if (g_strcmp0(status, "g_error_HOST") == 0)
+        else if (g_strcmp0(status, "g_warning_HOST") == 0)
             acc->state = ACCOUNT_STATE_ERROR_HOST;
-        else if (g_strcmp0(status, "g_error_NOT_ACCEPTABLE") == 0)
+        else if (g_strcmp0(status, "g_warning_NOT_ACCEPTABLE") == 0)
             acc->state = ACCOUNT_STATE_ERROR_NOT_ACCEPTABLE;
-        else if (g_strcmp0(status, "g_error_EXIST_STUN") == 0)
+        else if (g_strcmp0(status, "g_warning_EXIST_STUN") == 0)
             acc->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
         else if (g_strcmp0(status, "ACCOUNT_STATE_IP2IP_READY") == 0)
             acc->state = ACCOUNT_STATE_IP2IP_READY;
@@ -502,7 +502,7 @@ sflphone_incoming_call(callable_obj_t * c, SFLPhoneClient *client)
     }
     account_t *account = account_list_get_by_id(c->_accountID);
     if (!account) {
-        g_error("Account is NULL");
+        g_warning("Account is NULL");
     } else if (account_has_autoanswer_on(account)) {
         calltab_set_selected_call(active_calltree_tab, c);
         sflphone_pick_up(client);
@@ -720,19 +720,19 @@ sflphone_place_call(callable_obj_t * c, SFLPhoneClient *client)
     account_t * account = NULL;
 
     if (c == NULL) {
-        g_error("Callable object is NULL while making new call");
+        g_warning("Callable object is NULL while making new call");
         return -1;
     }
 
     g_debug("Placing call from %s to %s using account %s", c->_display_name, c->_peer_number, c->_accountID);
 
     if (c->_state != CALL_STATE_DIALING) {
-        g_error("Call not in state dialing, cannot place call");
+        g_warning("Call not in state dialing, cannot place call");
         return -1;
     }
 
     if (!c->_peer_number || strlen(c->_peer_number) == 0) {
-        g_error("No peer number set for this call");
+        g_warning("No peer number set for this call");
         return -1;
     }
 
@@ -759,7 +759,7 @@ sflphone_place_call(callable_obj_t * c, SFLPhoneClient *client)
         g_debug("Could not find an account for this call, making ip to ip call");
         account = account_list_get_by_id("IP2IP");
         if (account == NULL) {
-            g_error("Actions: Could not determine any account for this call");
+            g_warning("Actions: Could not determine any account for this call");
             return -1;
         }
     }
@@ -801,7 +801,7 @@ sflphone_add_participant(const gchar* callID, const gchar* confID)
     callable_obj_t *call = calllist_get_call(current_calls_tab, callID);
 
     if (call == NULL) {
-        g_error("Could not find call");
+        g_warning("Could not find call");
         return;
     }
 
@@ -884,7 +884,7 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
             c->is_active = TRUE;
             g_queue_push_tail(account->acodecs, c);
         } else
-            g_error("Couldn't find codec %d %p", payload, orig);
+            g_warning("Couldn't find codec %d %p", payload, orig);
     }
     g_array_unref(order);
 
@@ -1005,7 +1005,7 @@ sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const
     g_debug("Call State changed %s", description);
 
     if (c == NULL) {
-        g_error("SFLphone: Error: callable obj is NULL in %s at %d", __FILE__, __LINE__);
+        g_warning("SFLphone: Error: callable obj is NULL in %s at %d", __FILE__, __LINE__);
         return;
     }
 

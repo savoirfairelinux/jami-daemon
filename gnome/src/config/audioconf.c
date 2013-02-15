@@ -379,7 +379,7 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        g_error("no account selected");
+        g_warning("no account selected");
         return;
     }
 
@@ -787,7 +787,7 @@ select_audio_manager(GtkWidget *alsa_button, SFLPhoneClient *client)
 
         gtk_action_set_sensitive(volumeToggle_, FALSE);
     } else
-        g_error("Unexpected audio API state");
+        g_warning("Unexpected audio API state");
 }
 
 static const gchar *reverse_state(const gchar *state)
@@ -834,7 +834,7 @@ static void record_path_changed(GtkFileChooser *chooser, G_GNUC_UNUSED gpointer 
     if (!g_access(path, W_OK)) {
         dbus_set_record_path(path);
     } else {
-        g_error("Directory %s is not writable", path);
+        g_warning("Directory %s is not writable", path);
         restore_recording_path(chooser);
     }
     g_free(path);

@@ -241,7 +241,7 @@ void account_list_remove(const gchar *accountID)
     if (target) {
 #if GLIB_CHECK_VERSION(2, 30, 0)
         if (!g_queue_remove(accountQueue, target))
-            g_error("Could not remove account with ID %s", accountID);
+            g_warning("Could not remove account with ID %s", accountID);
 #else
         g_queue_remove(accountQueue, target);
 #endif

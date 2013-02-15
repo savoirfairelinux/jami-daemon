@@ -101,7 +101,7 @@ void abook_init()
 #define LOAD(func) do { \
         addrbook-> func = dlsym(handle, "addressbook_" #func); \
         if (addrbook-> func == NULL) \
-            g_error("Couldn't load " # func); \
+            g_warning("Couldn't load " # func); \
     } while(0)
 
 

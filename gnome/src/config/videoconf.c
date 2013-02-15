@@ -143,7 +143,7 @@ static void
 preferences_dialog_fill_codec_list(account_t *acc)
 {
     if (!acc) {
-        g_error("Account is NULL");
+        g_warning("Account is NULL");
         return;
     }
     // Get model of view and clear it
@@ -222,7 +222,7 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        g_error("No account selected");
+        g_warning("No account selected");
         return;
     }
 
@@ -365,7 +365,7 @@ bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *n
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        g_error("No account selected");
+        g_warning("No account selected");
         return;
     }
     g_debug("updating bitrate for %s", acc->accountID);
@@ -401,7 +401,7 @@ bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *n
             video_codec_set_bitrate(codec, bitrate);
             dbus_set_video_codecs(acc->accountID, vcodecs);
         } else {
-            g_error("Could not find codec %s", name);
+            g_warning("Could not find codec %s", name);
         }
         g_free(bitrate);
         g_ptr_array_free(vcodecs, TRUE);
@@ -415,7 +415,7 @@ parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar
     account_t *acc = (account_t*) data;
 
     if (!acc) {
-        g_error("No account selected");
+        g_warning("No account selected");
         return;
     }
 
@@ -443,7 +443,7 @@ parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar
         video_codec_set_parameters(codec, new_text);
         dbus_set_video_codecs(acc->accountID, vcodecs);
     } else {
-        g_error("Could not find codec %s", name);
+        g_warning("Could not find codec %s", name);
     }
     g_ptr_array_free(vcodecs, TRUE);
 }
@@ -609,7 +609,7 @@ preferences_dialog_fill_video_input_device_rate_list()
         }
         g_free(rate);
     } else
-        g_error("No video rate list found for device");
+        g_warning("No video rate list found for device");
 }
 
 
@@ -662,7 +662,7 @@ preferences_dialog_fill_video_input_device_size_list()
         }
         g_free(size);
     } else
-        g_error("No device size list found");
+        g_warning("No device size list found");
 }
 
 /**
@@ -714,7 +714,7 @@ preferences_dialog_fill_video_input_device_channel_list()
         }
         g_free(channel);
     } else
-        g_error("No channel list found");
+        g_warning("No channel list found");
 }
 
 /**
@@ -742,7 +742,7 @@ preferences_dialog_fill_video_input_device_list()
     // Call dbus to retrieve list
     gchar **list = dbus_get_video_device_list();
     if (!list || !*list) {
-        g_error("No device list found");
+        g_warning("No device list found");
         return FALSE;
     } else {
         // For each device name included in list

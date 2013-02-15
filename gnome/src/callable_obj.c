@@ -322,7 +322,7 @@ void restore_call(const gchar *id)
     // We fetch the details associated to the specified call
     GHashTable *call_details = dbus_get_call_details(id);
     if (!call_details) {
-        g_error("Invalid call ID");
+        g_warning("Invalid call ID");
         return;
     }
     callable_obj_t *new_call = create_new_call_from_details(id, call_details);

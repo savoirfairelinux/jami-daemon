@@ -540,7 +540,7 @@ calltree_remove_call(calltab_t* tab, const gchar *target_id)
 static GdkPixbuf *history_state_to_pixbuf(callable_obj_t *call)
 {
     if(call == NULL) {
-        g_error("Not a valid call in history state to pixbuf");
+        g_warning("Not a valid call in history state to pixbuf");
         return NULL;
     }
 
@@ -738,7 +738,7 @@ update_call(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeIter *i
 void calltree_update_call(calltab_t* tab, callable_obj_t * call, SFLPhoneClient *client)
 {
     if (!call) {
-        g_error("Call is NULL, ignoring");
+        g_warning("Call is NULL, ignoring");
         return;
     }
     CallUpdateCtx ctx = {tab, call};
@@ -892,10 +892,10 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf, SFLPhoneCl
     account_t *account_details = NULL;
 
     if (!conf) {
-        g_error("Conference is null");
+        g_warning("Conference is null");
         return;
     } else if (!conf->_confID) {
-        g_error("Conference ID is null");
+        g_warning("Conference ID is null");
         return;
     }
 
@@ -953,13 +953,13 @@ void calltree_add_conference_to_current_calls(conference_obj_t* conf, SFLPhoneCl
             callable_obj_t *call = calllist_get_call(current_calls_tab, call_id);
 
             if (call == NULL)
-                g_error("Could not find call %s in call list", call_id);
+                g_warning("Could not find call %s in call list", call_id);
             else {
                 account_details = account_list_get_by_id(call->_accountID);
                 gchar *srtp_enabled = "";
 
                 if (!account_details)
-                    g_error("Could not find account %s in account list", call->_accountID);
+                    g_warning("Could not find account %s in account list", call->_accountID);
                 else
                     srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
 
@@ -1084,7 +1084,7 @@ remove_conference(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeI
 void calltree_remove_conference(calltab_t* tab, const conference_obj_t* conf, SFLPhoneClient *client)
 {
     if(conf == NULL) {
-        g_error("Could not remove conference, conference pointer is NULL");
+        g_warning("Could not remove conference, conference pointer is NULL");
         return;
     }
 
@@ -1120,7 +1120,7 @@ void calltree_display(calltab_t *tab, SFLPhoneClient *client)
         gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(contactButton_), TRUE);
         set_focus_on_addressbook_searchbar();
     } else
-        g_error("Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
+        g_warning("Not a valid call tab  (%d, %s)", __LINE__, __FILE__);
 
     if (active_calltree_tab->mainwidget)
         gtk_widget_hide(active_calltree_tab->mainwidget);
@@ -1265,13 +1265,13 @@ static gboolean valid_drop(GtkTreeModel *model, GtkTreeIter *source_iter, GtkTre
     gboolean result = TRUE;
     GtkTreePath *source_path = gtk_tree_model_get_path(model, source_iter);
     if (!gtk_tree_path_compare(source_path, dest_path)) {
-        g_error("invalid drop: source and destination are the same");
+        g_warning("invalid drop: source and destination are the same");
         result = FALSE;
     } else if (gtk_tree_path_is_ancestor(source_path, dest_path)) {
-        g_error("invalid drop: source is ancestor of destination");
+        g_warning("invalid drop: source is ancestor of destination");
         result = FALSE;
     } else if (gtk_tree_path_is_descendant(source_path, dest_path)) {
-        g_error("invalid drop: source is descendant of destination");
+        g_warning("invalid drop: source is descendant of destination");
         result = FALSE;
     }
     gtk_tree_path_free(source_path);
@@ -1284,7 +1284,7 @@ render_drop(GtkTreeModel *model, GtkTreePath *dest_path, GtkTreeViewDropPosition
 {
     GtkTreeIter dest_iter;
     if (!gtk_tree_model_get_iter(model, &dest_iter, dest_path)) {
-        g_error("Could not get destination iterator");
+        g_warning("Could not get destination iterator");
         return FALSE;
     }
 
@@ -1317,13 +1317,13 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context,
     GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(tree_view);
     GtkTreeIter source_iter;
     if (!gtk_tree_selection_get_selected(tree_selection, NULL, &source_iter)) {
-        g_error("No tree element selected");
+        g_warning("No tree element selected");
         return;
     }
     GtkTreePath *dest_path;
     GtkTreeViewDropPosition dest_pos;
     if (!gtk_tree_view_get_dest_row_at_pos(tree_view, x, y, &dest_path, &dest_pos)) {
-        g_error("No row at given position");
+        g_warning("No row at given position");
         return;
     }
 
@@ -1352,7 +1352,7 @@ menuitem_response(gchar * string)
         dbus_attended_transfer(source_call, dest_call);
         calltree_remove_call(current_calls_tab, popup_data->source_ID);
     } else
-        g_error("Unknown option in menu %s", string);
+        g_warning("Unknown option in menu %s", string);
 
     // Make sure the create conference option will appear next time the menu pops
     // The create conference option will hide if tow call from the same conference are draged on each other

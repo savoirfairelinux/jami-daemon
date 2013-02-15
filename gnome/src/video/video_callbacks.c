@@ -96,7 +96,7 @@ add_handle(const gchar *id)
     if (!video_handles)
         video_handles = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, cleanup_handle);
     if (g_hash_table_lookup(video_handles, id)) {
-        g_error("Already created handle for video with id %s", id);
+        g_warning("Already created handle for video with id %s", id);
         return NULL;
     }
 
@@ -130,7 +130,7 @@ try_clutter_init()
 {
 #define PRINT_ERR(X) \
     case (X): \
-    g_error("%s", #X); \
+    g_warning("%s", #X); \
     break;
 
     switch (gtk_clutter_init(NULL, NULL)) {
@@ -182,7 +182,7 @@ void started_decoding_video_cb(G_GNUC_UNUSED DBusGProxy *proxy,
     VideoRenderer *renderer = video_renderer_new(video_area, width, height, shm_path);
     if (!video_renderer_run(renderer)) {
         g_object_unref(renderer);
-        g_error("Could not run video renderer");
+        g_warning("Could not run video renderer");
         g_hash_table_remove(video_handles, id);
         return;
     }

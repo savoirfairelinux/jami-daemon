@@ -126,7 +126,7 @@ update_searchbar_addressbook_list()
         books_data = addrbook->get_books_data();
 
     if (books_data == NULL) {
-        g_error("Searchbar: No books data found");
+        g_warning("Searchbar: No books data found");
         return;
     }
 

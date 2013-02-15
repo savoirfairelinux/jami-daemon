@@ -120,7 +120,7 @@ main(int argc, char *argv[])
     SFLPhoneClient *client = sflphone_client_new();
     GError *err = NULL;
     if (!g_application_register(G_APPLICATION(client), NULL, &err)) {
-        g_error("Could not register application: %s", err->message);
+        g_warning("Could not register application: %s", err->message);
         g_error_free(err);
         g_object_unref(client);
         return 1;
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 
     GError *error = NULL;
     if (!sflphone_init(&error, client)) {
-        g_error("%s", error->message);
+        g_warning("%s", error->message);
         GtkWidget *dialog = gtk_message_dialog_new(
                                 NULL,
                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,

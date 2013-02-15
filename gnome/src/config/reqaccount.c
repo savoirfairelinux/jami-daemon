@@ -148,7 +148,7 @@ int main(void)
         puts(acc.user);
         puts(acc.passwd);
     } else {
-        g_error("FAILED: %s", acc.reason);
+        g_warning("FAILED: %s", acc.reason);
     }
 }
 #endif

@@ -148,7 +148,7 @@ toggle_hold_callback(G_GNUC_UNUSED gpointer data)
     } else if (selectedConf)
         dbus_hold_conference(selectedConf);
     else {
-        g_error("Shortcuts: Error: No callable object selected");
+        g_warning("Shortcuts: Error: No callable object selected");
     }
 }
 
@@ -162,7 +162,7 @@ popup_window_callback(SFLPhoneClient *client)
 static void
 default_callback(G_GNUC_UNUSED gpointer data)
 {
-    g_error("Shortcuts: Error: Missing shortcut callback");
+    g_warning("Shortcuts: Error: Missing shortcut callback");
 }
 
 /*
@@ -282,7 +282,7 @@ initialize_binding(const gchar* action, guint key, GdkModifierType mask)
     }
 
     if (accelerators_list[i].action == NULL) {
-        g_error("Shortcut: Error: Cannot find corresponding action");
+        g_warning("Shortcut: Error: Cannot find corresponding action");
         return;
     }
 
@@ -490,7 +490,7 @@ ungrab_key(guint key, GdkModifierType mask, GdkWindow *root)
     gdk_flush();
 
     if (gdk_error_trap_pop())
-        g_error("Shortcuts: Error: Ungrabbing key %d+%d", mask, key);
+        g_warning("Shortcuts: Error: Ungrabbing key %d+%d", mask, key);
 }
 
 /*
@@ -518,5 +518,5 @@ grab_key(guint key, GdkModifierType mask, GdkWindow *root)
     gdk_flush();
 
     if (gdk_error_trap_pop())
-        g_error("Shortcuts: Error: Grabbing key %d+%d", mask, key);
+        g_warning("Shortcuts: Error: Grabbing key %d+%d", mask, key);
 }

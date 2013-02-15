@@ -111,7 +111,7 @@ calltab_create_searchbar(calltab_t* tab)
     else if (calltab_has_name(tab, CONTACTS))
         tab->searchbar = contacts_searchbar_new();
     else
-        g_error("Current calls tab does not need a searchbar\n");
+        g_warning("Current calls tab does not need a searchbar\n");
 }
 
 gboolean

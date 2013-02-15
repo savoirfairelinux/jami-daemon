@@ -208,7 +208,7 @@ video_renderer_start_shm(VideoRenderer *self)
     g_return_val_if_fail(IS_VIDEO_RENDERER(self), FALSE);
     VideoRendererPrivate *priv = VIDEO_RENDERER_GET_PRIVATE(self);
     if (priv->fd != -1) {
-        g_error("fd must be -1");
+        g_warning("fd must be -1");
         return FALSE;
     }
 
@@ -245,7 +245,7 @@ shm_lock(SHMHeader *shm_area)
     const struct timespec timeout = create_timeout();
     /* We need an upper limit on how long we'll wait to avoid locking the whole GUI */
     if (sem_timedwait(&shm_area->mutex, &timeout) == ETIMEDOUT) {
-        g_error("Timed out before shm lock was acquired");
+        g_warning("Timed out before shm lock was acquired");
         return FALSE;
     }
     return TRUE;
@@ -304,7 +304,7 @@ video_renderer_render_to_texture(VideoRendererPrivate *priv)
     }
 
     if (!video_renderer_resize_shm(priv)) {
-        g_error("Could not resize shared memory");
+        g_warning("Could not resize shared memory");
         return;
     }
 
@@ -377,7 +377,7 @@ video_renderer_new(GtkWidget *drawarea, gint width, gint height, gchar *shm_path
     VideoRenderer *rend = g_object_new(VIDEO_RENDERER_TYPE, "drawarea", (gpointer) drawarea,
             "width", width, "height", height, "shm-path", shm_path, NULL);
     if (!video_renderer_start_shm(rend)) {
-        g_error("Could not start SHM");
+        g_warning("Could not start SHM");
         return NULL;
     }
     return rend;
@@ -398,7 +398,7 @@ video_renderer_run(VideoRenderer *self)
     gtk_window_set_geometry_hints(win, NULL, &geom, GDK_HINT_ASPECT);
 
     if (!GTK_CLUTTER_IS_EMBED(priv->drawarea))
-        g_error("Drawing area is not a GtkClutterEmbed widget");
+        g_warning("Drawing area is not a GtkClutterEmbed widget");
 
     ClutterActor *stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(priv->drawarea));
     g_assert(stage);
