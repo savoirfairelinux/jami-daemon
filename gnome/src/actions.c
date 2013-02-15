@@ -200,7 +200,7 @@ void sflphone_fill_account_list(void)
         account_t *acc = create_account_with_ID(*accountID);
         if (acc->properties == NULL) {
             g_warning("SFLphone: Error: Could not fetch details for account %s",
-                  accountID);
+                      *accountID);
             break;
         }
         account_list_add(acc);
