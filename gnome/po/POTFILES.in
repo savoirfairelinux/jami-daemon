@@ -19,6 +19,8 @@ src/contacts/searchbar.c
 src/dbus/dbus.c
 src/main.c
 src/mainwindow.c
+src/sflphone_client.c
+src/sflphone_options.c
 src/sflnotify.c
 src/sliders.c
 src/statusicon.c

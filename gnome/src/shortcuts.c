@@ -199,6 +199,9 @@ get_action_callback(const gchar* action)
 static void
 remove_bindings()
 {
+    if (!accelerators_list)
+        return;
+
     GdkDisplay *display = NULL;
     GdkScreen *screen = NULL;
     GdkWindow *root = NULL;
@@ -446,6 +449,8 @@ void
 shortcuts_destroy_bindings()
 {
     int i = 0;
+    if (!accelerators_list)
+        return;
 
     // remove bindings
     remove_bindings();

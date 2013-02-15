@@ -28,22 +28,72 @@
  *  as that of the covered work.
  */
 
+#include <glib/gi18n.h>
 #include "sflphone_client.h"
+#include "sflphone_options.h"
+#include "actions.h"
+#include "statusicon.h"
+#include "shortcuts.h"
+#include "mainwindow.h"
 
 G_DEFINE_TYPE(SFLPhoneClient, sflphone_client, GTK_TYPE_APPLICATION);
 
 static int
 sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
-                                     GApplicationCommandLine *cmdline)
+                                     GApplicationCommandLine *cmdline,
+                                     SFLPhoneClient *client)
 {
-    // FIXME: replace with GLib logging
     gint argc;
     gchar **argv = g_application_command_line_get_arguments(cmdline, &argc);
-    for (gint i = 0; i < argc; i++)
-        if (g_strcmp0(argv[i], "--debug") == 0) {}
-            ;//set_log_level(LOG_DEBUG);
+    GOptionContext *context = sflphone_options_get_context();
+    g_option_context_set_help_enabled(context, TRUE);
+    GError *error = NULL;
+    if (g_option_context_parse(context, &argc, &argv, &error) == FALSE) {
+        g_print (_("%s\nRun '%s --help' to see a full list of available command line options.\n"),
+                error->message, argv[0]);
+        g_error_free(error);
+        g_option_context_free(context);
+        return 1;
+    }
 
-    g_strfreev (argv);
+    g_option_context_free(context);
+
+    if (!sflphone_init(&error, client)) {
+        g_warning("%s", error->message);
+        GtkWidget *dialog = gtk_message_dialog_new(
+                                NULL,
+                                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
+                                "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
+                                error->message);
+
+        gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));
+        gtk_dialog_run(GTK_DIALOG(dialog));
+        gtk_widget_destroy(dialog);
+
+        g_error_free(error);
+        return 1;
+    }
+
+    create_main_window(client);
+    gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(client->win));
+
+    const gboolean show_status = g_settings_get_boolean(client->settings, "show-status-icon");
+    if (show_status)
+        show_status_icon(client);
+
+    status_bar_display_account();
+
+    sflphone_fill_history_lazy();
+    sflphone_fill_conference_list(client);
+    sflphone_fill_call_list();
+
+    // Update the GUI
+    update_actions(client);
+
+    shortcuts_initialize_bindings(client);
+
+    g_strfreev(argv);
     return 0;
 }
 
@@ -61,6 +111,7 @@ sflphone_client_init(SFLPhoneClient *self)
 {
     self->settings = g_settings_new(SFLPHONE_GSETTINGS_SCHEMA);
     self->win = 0;
+    g_signal_connect(G_OBJECT(self), "command-line", G_CALLBACK(sflphone_client_command_line_handler), self);
 }
 
 static void
@@ -93,11 +144,9 @@ sflphone_client_finalize(GObject *object)
 static void
 sflphone_client_class_init(SFLPhoneClientClass *klass)
 {
-    GApplicationClass *application_class = G_APPLICATION_CLASS(klass);
     GObjectClass *object_class = (GObjectClass *) klass;
 
     object_class->dispose = sflphone_client_dispose;
     object_class->finalize = sflphone_client_finalize;
-    application_class->command_line = sflphone_client_command_line_handler;
     /* TODO: add properties, signals, and signal handlers */
 }

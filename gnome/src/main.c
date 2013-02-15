@@ -33,14 +33,13 @@
 #include "calllist.h"
 #include "config.h"
 #include "dbus/dbus.h"
+#include "shortcuts.h"
 #include "statusicon.h"
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-#include "mainwindow.h"
 #include "sflphone_client.h"
-#include "shortcuts.h"
 #include "history.h"
 
 static volatile sig_atomic_t interrupted;
@@ -94,22 +93,6 @@ main(int argc, char *argv[])
 
     // Start GTK application
     gtk_init(&argc, &argv);
-
-    g_print("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-    g_print("\nCopyright (c) 2005 - 2012 Savoir-faire Linux Inc.\n\n");
-    g_print("This is free software.  You may redistribute copies of it under the terms of\n" \
-            "the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n" \
-            "There is NO WARRANTY, to the extent permitted by law.\n\n" \
-            "Additional permission under GNU GPL version 3 section 7:\n\n" \
-            "If you modify this program, or any covered work, by linking or\n" \
-            "combining it with the OpenSSL project's OpenSSL library (or a\n" \
-            "modified version of that library), containing parts covered by the\n" \
-            "terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.\n" \
-            "grants you additional permission to convey the resulting work.\n" \
-            "Corresponding Source for a non-source form of such a combination\n" \
-            "shall include the source code for the parts of OpenSSL used as well\n" \
-            "as that of the covered work.\n\n");
-
     srand(time(NULL));
 
     // Internationalization
@@ -127,42 +110,6 @@ main(int argc, char *argv[])
     }
 
     g_timeout_add(1000, check_interrupted, client);
-
-    GError *error = NULL;
-    if (!sflphone_init(&error, client)) {
-        g_warning("%s", error->message);
-        GtkWidget *dialog = gtk_message_dialog_new(
-                                NULL,
-                                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
-                                "Unable to initialize.\nMake sure the daemon is running.\nError: %s",
-                                error->message);
-
-        gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));
-        gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
-
-        g_error_free(error);
-        return 1;
-    }
-
-    create_main_window(client);
-    gtk_application_add_window(GTK_APPLICATION(client), GTK_WINDOW(client->win));
-
-    const gboolean show_status = g_settings_get_boolean(client->settings, "show-status-icon");
-    if (show_status)
-        show_status_icon(client);
-
-    status_bar_display_account();
-
-    sflphone_fill_history_lazy();
-    sflphone_fill_conference_list(client);
-    sflphone_fill_call_list();
-
-    // Update the GUI
-    update_actions(client);
-
-    shortcuts_initialize_bindings(client);
 
     gint status = g_application_run(G_APPLICATION(client), argc, argv);
 
