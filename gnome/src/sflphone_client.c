@@ -51,7 +51,7 @@ sflphone_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
     GError *error = NULL;
     if (g_option_context_parse(context, &argc, &argv, &error) == FALSE) {
         g_print(_("%s\nRun '%s --help' to see a full list of available command line options.\n"
-                  "For versbose debugging set \"G_MESSAGES_DEBUG=all\"\n"),
+                  "For verbose debugging set \"G_MESSAGES_DEBUG=all\"\n"),
                error->message, argv[0]);
         g_error_free(error);
         g_option_context_free(context);
