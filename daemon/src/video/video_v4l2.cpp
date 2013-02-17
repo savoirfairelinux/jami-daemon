@@ -241,7 +241,7 @@ VideoV4l2Channel::getSizes(int fd, unsigned int pixelformat)
         }
     }
 
-    v4l2_format fmt = {0};
+    v4l2_format fmt = {(v4l2_buf_type) 0};
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
         throw std::runtime_error("Could not get format");
