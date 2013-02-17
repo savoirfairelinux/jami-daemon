@@ -33,12 +33,8 @@
 
 #include <gtk/gtk.h>
 
-G_BEGIN_DECLS
-
 GtkWidget *gnome_main_section_new(const gchar * const title);
 void gnome_main_section_new_with_table (gchar *title, GtkWidget**, GtkWidget**, gint nb_col, gint nb_row);
 GtkWidget *gnome_info_bar (gchar *message, GtkMessageType type);
-
-G_END_DECLS
 
 #endif // _UTILS_

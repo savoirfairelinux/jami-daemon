@@ -37,8 +37,6 @@
 #include "actions.h"
 #include "utils.h"
 
-G_BEGIN_DECLS
-
 #define DEFAULT_SIP_URL_FIELD       "X-sflphone-url"
 #define DEFAULT_URL_COMMAND         "xdg-open \"%s\""
 #define URLHOOK_COMMAND         "URLHOOK_COMMAND"
@@ -66,7 +64,5 @@ void hooks_save_parameters(SFLPhoneClient *client);
 void hooks_load_parameters (URLHook_Config** settings);
 
 GtkWidget* create_hooks_settings(SFLPhoneClient *client);
-
-G_END_DECLS
 
 #endif // _HOOKS_CONFIG

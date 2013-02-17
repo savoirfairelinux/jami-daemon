@@ -37,15 +37,11 @@
 #include "actions.h"
 #include <utils.h>
 
-G_BEGIN_DECLS
-
 enum {
     ACTION = 0, MASK, VALUE, COLUMNS
 };
 
 GtkWidget*
 create_shortcuts_settings ();
-
-G_END_DECLS
 
 #endif // _SHORTCUTS_CONFIG

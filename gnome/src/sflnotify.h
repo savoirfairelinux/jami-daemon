@@ -39,8 +39,6 @@
 #include "calllist.h"
 #include "sflphone_client.h"
 
-G_BEGIN_DECLS
-
 /**
  * Notify an incoming call
  * A dialog box is attached to the status icon
@@ -99,7 +97,5 @@ void notify_zrtp_negotiation_failed(callable_obj_t* c, SFLPhoneClient *client);
  * Notify that the RTP session is now more secured
  */
 void notify_zrtp_not_supported(callable_obj_t* c, SFLPhoneClient *client);
-
-G_END_DECLS
 
 #endif

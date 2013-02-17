@@ -36,6 +36,4 @@
 GOptionContext *
 sflphone_options_get_context();
 
-G_END_DECLS
-
 #endif /* SFLPHONE_OPTIONS_H_ */

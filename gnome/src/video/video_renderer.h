@@ -34,8 +34,6 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
-G_BEGIN_DECLS
-
 #define VIDEO_RENDERER_TYPE              (video_renderer_get_type())
 #define VIDEO_RENDERER(obj)              (G_TYPE_CHECK_INSTANCE_CAST((obj), VIDEO_RENDERER_TYPE, VideoRenderer))
 #define VIDEO_RENDERER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST((klass), VIDEO_RENDERER_TYPE, VideoRendererClass))
@@ -66,7 +64,5 @@ video_renderer_run(VideoRenderer *self);
 
 void
 video_renderer_stop(VideoRenderer *self);
-
-G_END_DECLS
 
 #endif // __VIDEO_RENDERER_H__

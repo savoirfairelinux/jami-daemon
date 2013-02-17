@@ -31,8 +31,6 @@
 #ifndef UI_MANAGER_H
 #define UI_MANAGER_H
 
-G_BEGIN_DECLS
-
 #include "sflphone_client.h"
 
 GtkWidget *historyButton_;
@@ -62,7 +60,5 @@ create_menus(GtkUIManager *ui_manager, SFLPhoneClient *client);
 
 void
 create_toolbar_actions(GtkUIManager *ui_manager, SFLPhoneClient *client);
-
-G_END_DECLS
 
 #endif

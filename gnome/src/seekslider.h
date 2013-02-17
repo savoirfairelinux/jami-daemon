@@ -30,8 +30,6 @@
 
 #include <gtk/gtk.h>
 
-G_BEGIN_DECLS
-
 #define SFL_TYPE_SEEKSLIDER         (sfl_seekslider_get_type ())
 #define SFL_SEEKSLIDER(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), SFL_TYPE_SEEKSLIDER, SFLSeekSlider))
 #define SFL_SEEKSLIDER_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), SFL_TYPE_SEEKSLIDER, SFLSeekSliderClass))
@@ -71,7 +69,5 @@ void sfl_seekslider_update_timelabel(SFLSeekSlider *seekslider, guint current, g
 void sfl_seekslider_set_display(SFLSeekSlider *seekslider, SFLSeekSliderDisplay display);
 
 void sfl_seekslider_reset(SFLSeekSlider *seekslider);
-
-G_END_DECLS
 
 #endif /* __RB_SEEKSLIDER_H */

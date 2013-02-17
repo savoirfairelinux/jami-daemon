@@ -29,8 +29,6 @@
 
 #include <glib-object.h>
 
-G_BEGIN_DECLS
-
 #define PIDGIN_TYPE_MINI_DIALOG pidgin_mini_dialog_get_type()
 
 #define PIDGIN_MINI_DIALOG(obj) \
@@ -154,7 +152,5 @@ void pidgin_mini_dialog_add_button (PidginMiniDialog *mini_dialog,
  *  @return the number of widgets in @a mini_dialog->contents.
  */
 guint pidgin_mini_dialog_get_num_children (PidginMiniDialog *mini_dialog);
-
-G_END_DECLS
 
 #endif /* __PIDGIN_MINI_DIALOG_H__ */
