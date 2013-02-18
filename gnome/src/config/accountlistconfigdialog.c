@@ -435,17 +435,16 @@ highlight_registration(G_GNUC_UNUSED GtkTreeViewColumn *col, GtkCellRenderer *re
 static GtkWidget*
 create_account_list(SFLPhoneClient *client)
 {
-    GtkWidget *table = gtk_table_new(1, 2, FALSE /* homogeneous */);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
 
     GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window),
                                         GTK_SHADOW_IN);
-    gtk_table_attach(GTK_TABLE(table), scrolled_window, 0, 1, 0, 1,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), scrolled_window, 0, 0, 1, 1);
 
     account_store = gtk_list_store_new(COLUMN_ACCOUNT_COUNT,
                                        G_TYPE_STRING,  // Name
@@ -513,8 +512,7 @@ create_account_list(SFLPhoneClient *client)
     GtkWidget *button_box = gtk_button_box_new(GTK_ORIENTATION_VERTICAL);
     gtk_box_set_spacing(GTK_BOX(button_box), 10);
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_START);
-    gtk_table_attach(GTK_TABLE(table), button_box, 1, 2, 0, 1,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), button_box, 1, 0, 1, 1);
 
     move_up_button = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
     gtk_widget_set_sensitive(move_up_button, FALSE);
@@ -549,8 +547,8 @@ create_account_list(SFLPhoneClient *client)
 
     /* help and close buttons */
     GtkWidget * buttonHbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-    gtk_table_attach(GTK_TABLE(table), buttonHbox, 0, 2, 1, 2,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+    /* this element will be 2x1 cells */
+    gtk_grid_attach(GTK_GRID(grid), buttonHbox, 0, 1, 2, 1);
 
     GtkWidget * helpButton = gtk_button_new_from_stock(GTK_STOCK_HELP);
     g_signal_connect_swapped(G_OBJECT(helpButton), "clicked",
@@ -562,7 +560,7 @@ create_account_list(SFLPhoneClient *client)
                              G_CALLBACK(close_dialog_cb), NULL);
     gtk_box_pack_start(GTK_BOX(buttonHbox), closeButton, FALSE, FALSE, 0);
 
-    gtk_widget_show_all(table);
+    gtk_widget_show_all(grid);
 
     /* Resize the scrolled window for a better view */
     GtkRequisition requisition;
@@ -574,9 +572,9 @@ create_account_list(SFLPhoneClient *client)
     gtk_widget_set_size_request(closeButton, requisitionButton.width, -1);
     gtk_widget_set_size_request(helpButton, requisitionButton.width, -1);
 
-    gtk_widget_show_all(table);
+    gtk_widget_show_all(grid);
 
-    return table;
+    return grid;
 }
 
 void update_account_list_status_bar(account_t *account)
