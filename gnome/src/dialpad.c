@@ -95,17 +95,18 @@ create_dialpad(SFLPhoneClient *client)
         "#", ""
     };
     enum {ROWS = 4, COLS = 3};
-    GtkWidget *table = gtk_table_new(ROWS, COLS, TRUE /* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 5);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 5);
+    GtkWidget *grid = gtk_grid_new();
+    g_object_set(G_OBJECT(grid), "column-homogeneous", TRUE, "row-homogeneous", TRUE, NULL);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 5);
 
     for (int row = 0, entry = 0; row != ROWS; ++row)
         for (int col = 0; col != COLS; ++col) {
             GtkWidget *button = get_numpad_button(key_strings[entry], TRUE, key_strings[entry + 1], client);
-            gtk_table_attach(GTK_TABLE(table), button, col, col + 1, row, row + 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+            gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1);
             entry += 2;
         }
 
-    return table;
+    return grid;
 }
