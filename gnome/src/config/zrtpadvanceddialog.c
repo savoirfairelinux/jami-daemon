@@ -60,35 +60,35 @@ void show_advanced_zrtp_options(account_t *account, SFLPhoneClient *client)
     gtk_window_set_resizable(GTK_WINDOW(securityDialog), FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(securityDialog), 0);
 
-    GtkWidget *tableZrtp = gtk_table_new(4, 2, FALSE /* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(tableZrtp), 10);
-    gtk_table_set_col_spacings(GTK_TABLE(tableZrtp), 10);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(securityDialog)), tableZrtp, FALSE, FALSE, 0);
-    gtk_widget_show(tableZrtp);
+    GtkWidget *gridZrtp = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(gridZrtp), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(gridZrtp), 10);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(securityDialog)), gridZrtp, FALSE, FALSE, 0);
+    gtk_widget_show(gridZrtp);
 
     GtkWidget *enableHelloHash = gtk_check_button_new_with_mnemonic(_("Send Hello Hash in S_DP"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableHelloHash), curHelloEnabled);
-    gtk_table_attach(GTK_TABLE(tableZrtp), enableHelloHash, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(gridZrtp), enableHelloHash, 0, 2, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(enableHelloHash), TRUE);
 
     GtkWidget *enableSASConfirm = gtk_check_button_new_with_mnemonic(_("Ask User to Confirm SAS"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableSASConfirm), curSasConfirm);
-    gtk_table_attach(GTK_TABLE(tableZrtp), enableSASConfirm, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(gridZrtp), enableSASConfirm, 0, 3, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(enableSASConfirm), TRUE);
 
     GtkWidget *enableZrtpNotSuppOther = gtk_check_button_new_with_mnemonic(_("_Warn if ZRTP not supported"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableZrtpNotSuppOther), curZrtpNotSuppOther);
-    gtk_table_attach(GTK_TABLE(tableZrtp), enableZrtpNotSuppOther, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(gridZrtp), enableZrtpNotSuppOther, 0, 4, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(enableZrtpNotSuppOther), TRUE);
 
     GtkWidget *displaySasOnce = gtk_check_button_new_with_mnemonic(_("Display SAS once for hold events"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(displaySasOnce), curDisplaySasOnce);
-    gtk_table_attach(GTK_TABLE(tableZrtp), displaySasOnce, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(gridZrtp), displaySasOnce, 0, 5, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(displaySasOnce), TRUE);
 
-    gtk_widget_show_all(tableZrtp);
+    gtk_widget_show_all(gridZrtp);
 
-    gtk_container_set_border_width(GTK_CONTAINER(tableZrtp), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(gridZrtp), 10);
 
     if (gtk_dialog_run(GTK_DIALOG(securityDialog)) == GTK_RESPONSE_ACCEPT) {
         account_replace(account, CONFIG_ZRTP_DISPLAY_SAS,
