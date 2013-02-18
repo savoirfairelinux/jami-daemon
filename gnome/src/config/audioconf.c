@@ -577,19 +577,20 @@ static GtkWidget* alsa_box()
     GtkWidget *alsa_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_show(alsa_hbox);
 
-    GtkWidget *table = gtk_table_new(6, 3, FALSE);
-    gtk_table_set_col_spacing(GTK_TABLE(table), 0, 40);
-    gtk_box_pack_start(GTK_BOX(alsa_hbox) , table , TRUE , TRUE , 1);
-    gtk_widget_show(table);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 40);
+    gtk_box_pack_start(GTK_BOX(alsa_hbox), grid, TRUE, TRUE, 1);
+    gtk_widget_show(grid);
 
     gchar *message = "<small><i>default</i> plugin always uses internal sound card. Select <i>dmix/dsnoop</i> to use an alternate soundcard.</small>";
     GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
-    gtk_table_attach(GTK_TABLE(table), info_bar, 1, 3, 1, 2, GTK_FILL, GTK_SHRINK, 10, 10);
+    /* Info bar gets a width of 2 cells */
+    gtk_grid_attach(GTK_GRID(grid), info_bar, 1, 1, 2, 1);
 
     g_debug("Configuration plugin");
     GtkWidget *label = gtk_label_new(_("ALSA plugin"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 1);
     gtk_widget_show(label);
     // Set choices of audio managers
     GtkListStore *alsa_pluginlist = create_alsa_plugin_list_store();
@@ -602,7 +603,7 @@ static GtkWidget* alsa_box()
     GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(alsa_plugin), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(alsa_plugin), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), alsa_plugin, 2, 3, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), alsa_plugin, 2, 2, 1, 1);
     gtk_widget_show(alsa_plugin);
 
     // Device : Output device
@@ -610,7 +611,7 @@ static GtkWidget* alsa_box()
     g_debug("Configuration output");
     label = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 3, 1, 1);
     gtk_widget_show(label);
     // Set choices of output devices
     GtkListStore *outputlist = create_output_list_store();
@@ -623,7 +624,7 @@ static GtkWidget* alsa_box()
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(alsa_output), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(alsa_output), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), alsa_output, 2, 3, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), alsa_output, 2, 3, 1, 1);
     gtk_widget_show(alsa_output);
 
     // Device : Input device
@@ -631,7 +632,7 @@ static GtkWidget* alsa_box()
     g_debug("Configuration input");
     label = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 4, 1, 1);
     gtk_widget_show(label);
 
     // Set choices of input devices
@@ -645,13 +646,13 @@ static GtkWidget* alsa_box()
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(alsa_input), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(alsa_input), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), alsa_input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), alsa_input, 2, 4, 1, 1);
     gtk_widget_show(alsa_input);
 
     g_debug("Configuration rintgtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 5, 1, 1);
     gtk_widget_show(label);
     // set choices of ringtone devices
     GtkListStore *ringtonelist = create_output_list_store();
@@ -664,7 +665,7 @@ static GtkWidget* alsa_box()
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(alsa_ringtone), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(alsa_ringtone), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), alsa_ringtone, 2, 3, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), alsa_ringtone, 2, 5, 1, 1);
     gtk_widget_show(alsa_ringtone);
 
     gtk_widget_show_all(alsa_hbox);
@@ -681,17 +682,17 @@ static GtkWidget* pulse_box()
     GtkWidget *pulse_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_show(pulse_hbox);
 
-    GtkWidget *table = gtk_table_new(6, 3, FALSE);
-    gtk_table_set_col_spacing(GTK_TABLE(table), 0, 40);
-    gtk_box_pack_start(GTK_BOX(pulse_hbox), table, TRUE, TRUE, 1);
-    gtk_widget_show(table);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 40);
+    gtk_box_pack_start(GTK_BOX(pulse_hbox), grid, TRUE, TRUE, 1);
+    gtk_widget_show(grid);
 
     // Device : Output device
     // Create title label
     g_debug("Configuration output");
     GtkWidget *label = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 3, 1, 1);
     gtk_widget_show(label);
 
     // Set choices of output devices
@@ -705,7 +706,7 @@ static GtkWidget* pulse_box()
     GtkCellRenderer * renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(pulse_output), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(pulse_output), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), pulse_output, 2, 3, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), pulse_output, 2, 3, 1, 1);
     gtk_widget_show(pulse_output);
 
     // Device : Input device
@@ -713,7 +714,7 @@ static GtkWidget* pulse_box()
     g_debug("Configuration input");
     label = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 4, 1, 1);
     gtk_widget_show(label);
 
     // Set choices of output devices
@@ -727,13 +728,13 @@ static GtkWidget* pulse_box()
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(pulse_input), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(pulse_input), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), pulse_input, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), pulse_input, 2, 4, 1, 1);
     gtk_widget_show(pulse_input);
 
     g_debug("Configuration rintgtone");
     label = gtk_label_new(_("Ringtone"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 1, 2, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 5, 1, 1);
     gtk_widget_show(label);
     // set choices of ringtone devices
     GtkListStore *ringtonelist = create_output_list_store();
@@ -746,7 +747,7 @@ static GtkWidget* pulse_box()
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(ringtone), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(ringtone), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), ringtone, 2, 3, 5, 6, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), ringtone, 2, 5, 1, 1);
     gtk_widget_show(ringtone);
 
     gtk_widget_show_all(pulse_hbox);
