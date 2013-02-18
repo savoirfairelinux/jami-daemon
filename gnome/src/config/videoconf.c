@@ -811,9 +811,9 @@ v4l2_box()
     gtk_box_pack_start(GTK_BOX(ret), v4l2_hbox , TRUE , TRUE , 0);
     gtk_box_pack_start(GTK_BOX(ret), v4l2_nodev, TRUE , TRUE , 0);
 
-    GtkWidget *table = gtk_table_new(6, 3, FALSE);
-    gtk_table_set_col_spacing(GTK_TABLE(table), 0, 40);
-    gtk_box_pack_start(GTK_BOX(v4l2_hbox) , table , TRUE , TRUE , 1);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 40);
+    gtk_box_pack_start(GTK_BOX(v4l2_hbox), grid, TRUE, TRUE, 1);
 
     // Set choices of input devices
     GtkWidget *item = gtk_label_new(_("Device"));
@@ -822,13 +822,13 @@ v4l2_box()
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Device);
 
     g_signal_connect(G_OBJECT(v4l2Device), "changed", G_CALLBACK(select_video_input_device_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 0, 1, 1);
 
     // Set rendering
     GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Device), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Device), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Device, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Device, 1, 0, 1, 1);
 
     // Set choices of input
     item = gtk_label_new(_("Channel"));
@@ -836,13 +836,13 @@ v4l2_box()
     v4l2Channel = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2ChannelList));
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Channel);
     g_signal_connect(G_OBJECT(v4l2Channel), "changed", G_CALLBACK(select_video_input_device_channel_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 1, 1, 1);
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Channel), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Channel), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Channel, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Channel, 1, 1, 1, 1);
 
     // Set choices of sizes
     item = gtk_label_new(_("Size"));
@@ -850,13 +850,13 @@ v4l2_box()
     v4l2Size = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2SizeList));
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Size);
     g_signal_connect(G_OBJECT(v4l2Size), "changed", G_CALLBACK(select_video_input_device_size_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 2, 1, 1);
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Size), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Size), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Size, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Size, 1, 2, 1, 1);
 
     // Set choices of rates
     item = gtk_label_new(_("Rate"));
@@ -864,13 +864,13 @@ v4l2_box()
     v4l2Rate = gtk_combo_box_new_with_model(GTK_TREE_MODEL(v4l2RateList));
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), v4l2Rate);
     g_signal_connect(G_OBJECT(v4l2Rate), "changed", G_CALLBACK(select_video_input_device_rate_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), item, 0, 1, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), item, 0, 3, 1, 1);
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(v4l2Rate), renderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(v4l2Rate), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(table), v4l2Rate, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), v4l2Rate, 1, 3, 1, 1);
 
     return ret;
 }
