@@ -125,20 +125,20 @@ void show_advanced_sdes_options(account_t *account, SFLPhoneClient *client)
     gtk_window_set_resizable(GTK_WINDOW(securityDialog), FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(securityDialog), 0);
 
-    GtkWidget *sdesTable = gtk_table_new(1, 2, FALSE /* homogeneous */);
-    gtk_table_set_row_spacings(GTK_TABLE(sdesTable), 10);
-    gtk_table_set_col_spacings(GTK_TABLE(sdesTable), 10);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(securityDialog)), sdesTable, FALSE, FALSE, 0);
-    gtk_widget_show(sdesTable);
+    GtkWidget *sdesGrid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(sdesGrid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(sdesGrid), 10);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(securityDialog)), sdesGrid, FALSE, FALSE, 0);
+    gtk_widget_show(sdesGrid);
 
     GtkWidget *enableRtpFallback = gtk_check_button_new_with_mnemonic(_("Fallback on RTP on SDES failure"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableRtpFallback), rtpFallback);
-    gtk_table_attach(GTK_TABLE(sdesTable), enableRtpFallback, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(sdesGrid), enableRtpFallback, 0, 2, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(enableRtpFallback), TRUE);
 
-    gtk_widget_show_all(sdesTable);
+    gtk_widget_show_all(sdesGrid);
 
-    gtk_container_set_border_width(GTK_CONTAINER(sdesTable), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(sdesGrid), 10);
 
     if (gtk_dialog_run(GTK_DIALOG(securityDialog)) == GTK_RESPONSE_ACCEPT) {
         account_replace(account, CONFIG_SRTP_RTP_FALLBACK,
