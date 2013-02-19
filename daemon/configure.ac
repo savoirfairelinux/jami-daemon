@@ -3,10 +3,11 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
 AC_INIT([sflphone],[1.2.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012]])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013]])
 AC_REVISION([$Revision$])
 
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR]) # required by automake 1.12
 AC_CONFIG_HEADERS([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
