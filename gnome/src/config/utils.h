@@ -34,7 +34,7 @@
 #include <gtk/gtk.h>
 
 GtkWidget *gnome_main_section_new(const gchar * const title);
-void gnome_main_section_new_with_table (gchar *title, GtkWidget**, GtkWidget**, gint nb_col, gint nb_row);
+void gnome_main_section_new_with_grid(gchar *title, GtkWidget**, GtkWidget**);
 GtkWidget *gnome_info_bar (gchar *message, GtkMessageType type);
 
 #endif // _UTILS_

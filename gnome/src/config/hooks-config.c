@@ -139,7 +139,7 @@ static void phone_number_enabled_cb(GtkWidget *widget)
 GtkWidget*
 create_hooks_settings(SFLPhoneClient *client)
 {
-    GtkWidget *ret, *frame, *table, *label, *widg;
+    GtkWidget *ret, *frame, *label, *widg;
 
     // Load the user value
     hooks_load_parameters(&_urlhook_config);
@@ -147,52 +147,55 @@ create_hooks_settings(SFLPhoneClient *client)
     ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new_with_table(_("URL Argument"), &frame, &table, 5, 2);
+    GtkWidget *grid;
+    gnome_main_section_new_with_grid(_("URL Argument"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show(frame);
 
     gchar *message = "<small>Custom commands on incoming calls with URL. %s will be replaced with the passed URL.</small>";
     GtkWidget *info_bar = gnome_info_bar(message, GTK_MESSAGE_INFO);
-    gtk_table_attach(GTK_TABLE(table), info_bar, 0, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 10, 10);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), info_bar, 0, 0, 2, 1);
 
     widg = gtk_check_button_new_with_mnemonic(_("Trigger on specific _SIP header"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), utf8_case_equal(_urlhook_config->sip_enabled, "true"));
     g_signal_connect(G_OBJECT(widg) , "clicked" , G_CALLBACK(sip_enabled_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), widg, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), widg, 0, 2, 1, 1);
 
     field = gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(field), _urlhook_config->sip_field);
-    gtk_table_attach(GTK_TABLE(table), field, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), field, 1, 2, 1, 1);
 
     widg = gtk_check_button_new_with_mnemonic(_("Trigger on _IAX2 URL"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), utf8_case_equal(_urlhook_config->iax2_enabled, "true"));
     g_signal_connect(G_OBJECT(widg) , "clicked" , G_CALLBACK(iax2_enabled_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), widg, 0, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), widg, 0, 3, 2, 1);
 
     label = gtk_label_new_with_mnemonic(_("Command to _run"));
     gtk_misc_set_alignment(GTK_MISC(label), 0.05, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1);
     command = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), command);
     gtk_entry_set_text(GTK_ENTRY(command), _urlhook_config->command);
-    gtk_table_attach(GTK_TABLE(table), command, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+    gtk_grid_attach(GTK_GRID(grid), command, 1, 4, 1, 1);
 
-    gnome_main_section_new_with_table(_("Phone number rewriting"), &frame, &table, 4, 2);
+    gnome_main_section_new_with_grid(_("Phone number rewriting"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show(frame);
 
     widg = gtk_check_button_new_with_mnemonic(_("_Prefix dialed numbers with"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widg), utf8_case_equal(_urlhook_config->phone_number_enabled, "true"));
     g_signal_connect(G_OBJECT(widg) , "clicked" , G_CALLBACK(phone_number_enabled_cb), NULL);
-    gtk_table_attach(GTK_TABLE(table), widg, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), widg, 0, 0, 1, 1);
 
     prefix = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefix);
     gtk_entry_set_text(GTK_ENTRY(prefix), _urlhook_config->phone_number_prefix);
     gtk_widget_set_sensitive(GTK_WIDGET(prefix), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widg)));
-    gtk_table_attach(GTK_TABLE(table), prefix, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+    gtk_grid_attach(GTK_GRID(grid), prefix, 1, 0, 1, 1);
 
-    gnome_main_section_new_with_table(_("Messaging"), &frame, &table, 4, 2);
+    gnome_main_section_new_with_grid(_("Messaging"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show(frame);
 
@@ -206,8 +209,8 @@ create_hooks_settings(SFLPhoneClient *client)
     } else
         gtk_entry_set_text(GTK_ENTRY(url), "xdg-open");
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), url);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
-    gtk_table_attach(GTK_TABLE(table), url  , 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), url, 1, 4, 1, 1);
 
     gtk_widget_show_all(ret);
 

@@ -884,25 +884,24 @@ create_video_configuration()
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     // Sub boxes
-    GtkWidget *frame, *table;
-    gnome_main_section_new_with_table(_("Video Manager"), &frame, &table, 1, 5);
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("Video Manager"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-    gnome_main_section_new_with_table(_("Video4Linux2"), &frame, &table, 1, 4);
+    gnome_main_section_new_with_grid(_("Video4Linux2"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     GtkWidget *v4l2box = v4l2_box();
-    gtk_table_attach(GTK_TABLE(table), v4l2box, 0, 1, 1, 2,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 6);
+    gtk_grid_attach(GTK_GRID(grid), v4l2box, 0, 1, 1, 1);
 
-    gnome_main_section_new_with_table(_("Preview"), &frame, &table, 1, 2);
+    gnome_main_section_new_with_grid(_("Preview"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     const gboolean started = dbus_has_video_preview_started();
 
     preview_button = gtk_toggle_button_new_with_mnemonic(started ? _(PREVIEW_STOP_STR) : _(PREVIEW_START_STR));
     gtk_widget_set_size_request(preview_button, 80, 30);
-    gtk_table_attach(GTK_TABLE(table), preview_button, 0, 1, 0, 1, 0, 0, 0, 6);
+    gtk_grid_attach(GTK_GRID(grid), preview_button, 0, 0, 1, 1);
     gtk_widget_show(GTK_WIDGET(preview_button));
     if (started)
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preview_button), TRUE);

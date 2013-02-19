@@ -848,8 +848,8 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     gtk_container_set_border_width(GTK_CONTAINER(audio_vbox), 10);
 
     GtkWidget *frame;
-    GtkWidget *table;
-    gnome_main_section_new_with_table(_("Sound Manager"), &frame, &table, 1, 4);
+    GtkWidget *grid;
+    gnome_main_section_new_with_grid(_("Sound Manager"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(audio_vbox), frame, FALSE, FALSE, 0);
 
     gchar *audio_manager = dbus_get_audio_manager();
@@ -858,8 +858,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 
     GtkWidget *pulse_button = gtk_radio_button_new_with_mnemonic(NULL , _("_Pulseaudio"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pulse_button), using_pulse);
-    gtk_table_attach(GTK_TABLE(table), pulse_button, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL,
-                     GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), pulse_button, 0, 0, 1, 1);
 
     // Box for the Pulse configuration
     pulse_conf = gnome_main_section_new(_("Pulseaudio settings"));
@@ -869,8 +868,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     GtkWidget *alsa_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse_button), _("_ALSA"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(alsa_button), !using_pulse);
     g_signal_connect(G_OBJECT(alsa_button), "clicked", G_CALLBACK(select_audio_manager), client->settings);
-    gtk_table_attach(GTK_TABLE(table), alsa_button, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL,
-                     GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), alsa_button, 1, 0, 1, 1);
 
     // Box for the ALSA configuration
     alsa_conf = gnome_main_section_new(_("ALSA settings"));
@@ -888,13 +886,12 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
         gtk_widget_hide(pulse_conf);
     }
 
-    gnome_main_section_new_with_table(_("Recordings"), &frame, &table, 2, 3);
+    gnome_main_section_new_with_grid(_("Recordings"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(audio_vbox), frame, FALSE, FALSE, 0);
 
     // label
     GtkWidget *label = gtk_label_new(_("Destination folder"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL,
-                     0, 5);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
 
     // folder chooser button
     GtkWidget *folderChooser = gtk_file_chooser_button_new(_("Select a folder"),
@@ -904,20 +901,18 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 
     g_signal_connect(G_OBJECT(folderChooser) , "selection-changed", G_CALLBACK(record_path_changed),
                      NULL);
-    gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL,
-                     GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_grid_attach(GTK_GRID(grid), folderChooser, 1, 0, 1, 1);
 
     // isAlwaysRecording functionality checkbox
     gboolean isAlwaysRecording = dbus_get_is_always_recording();
     GtkWidget *enableIsAlwaysRecording = gtk_check_button_new_with_mnemonic(_("_Always recording"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableIsAlwaysRecording), isAlwaysRecording);
     g_signal_connect(G_OBJECT(enableIsAlwaysRecording), "clicked", active_is_always_recording, NULL);
-    gtk_table_attach(GTK_TABLE(table), enableIsAlwaysRecording, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL,
-                     GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_grid_attach(GTK_GRID(grid), enableIsAlwaysRecording, 0, 1, 1, 1);
     gtk_widget_show(GTK_WIDGET(enableIsAlwaysRecording));
 
     // Box for the voice enhancement configuration
-    gnome_main_section_new_with_table(_("Voice enhancement settings"), &frame, &table, 2, 1);
+    gnome_main_section_new_with_grid(_("Voice enhancement settings"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(audio_vbox), frame, FALSE, FALSE, 0);
 
     GtkWidget *enableNoiseReduction = gtk_check_button_new_with_mnemonic(_("_Noise Reduction"));
@@ -932,8 +927,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     state = NULL;
 
     g_signal_connect(G_OBJECT(enableNoiseReduction), "clicked", active_noise_suppress, NULL);
-    gtk_table_attach(GTK_TABLE(table), enableNoiseReduction, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL,
-                     GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), enableNoiseReduction, 0, 1, 1, 1);
 
     GtkWidget *enableEchoCancel = gtk_check_button_new_with_mnemonic(_("_Echo Cancellation"));
     state = dbus_get_echo_cancel_state();
@@ -946,8 +940,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
     g_free(state);
 
     g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
-    gtk_table_attach(GTK_TABLE(table), enableEchoCancel, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL,
-                     GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), enableEchoCancel, 0, 2, 1, 1);
 
     gtk_widget_show_all(audio_vbox);
 

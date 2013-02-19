@@ -68,9 +68,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(tlsDialog)), ret, FALSE, FALSE, 0);
 
-    GtkWidget *frame, *table;
-    gnome_main_section_new_with_table(_("TLS transport"), &frame, &table, 3, 13);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("TLS transport"), &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     gchar * description = g_markup_printf_escaped(_("TLS transport can be used along with UDP for those calls that would\n"\
@@ -83,7 +83,8 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_label_set_markup(GTK_LABEL(label), description);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1);
 
     gchar * tls_listener_port = NULL;
     gchar * tls_ca_list_file = NULL;
@@ -118,9 +119,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
 
     label = gtk_label_new(_("Global TLS listener (all accounts)"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1);
     GtkWidget * hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_table_attach(GTK_TABLE(table), hbox, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), hbox, 1, 2, 1, 1);
     GtkWidget *tlsListenerPort = gtk_spin_button_new_with_range(0, 65535, 1);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsListenerPort);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tlsListenerPort), g_ascii_strtod(tls_listener_port, NULL));
@@ -128,9 +129,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
 
     label = gtk_label_new(_("Certificate of Authority list"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
     GtkWidget * caListFileChooser = gtk_file_chooser_button_new(_("Choose a CA list file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_table_attach(GTK_TABLE(table), caListFileChooser, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), caListFileChooser, 1, 3, 1, 1);
 
     if (tls_ca_list_file && *tls_ca_list_file) {
         GFile *file = g_file_new_for_path(tls_ca_list_file);
@@ -142,9 +143,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
 
     label = gtk_label_new(_("Public endpoint certificate file"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1);
     GtkWidget * certificateFileChooser = gtk_file_chooser_button_new(_("Choose a public endpoint certificate (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_table_attach(GTK_TABLE(table), certificateFileChooser, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), certificateFileChooser, 1, 4, 1, 1);
 
     if (!tls_certificate_file) {
         gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
@@ -160,9 +161,9 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
 
     label = gtk_label_new(("Private key file"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1);
     GtkWidget *privateKeyFileChooser = gtk_file_chooser_button_new(_("Choose a private key file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_table_attach(GTK_TABLE(table), privateKeyFileChooser, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), privateKeyFileChooser, 1, 5, 1, 1);
 
     if (!tls_private_key_file) {
         gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
@@ -178,21 +179,21 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
 
     label = gtk_label_new_with_mnemonic(_("Password for the private key"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 6, 1, 1);
     GtkWidget * privateKeyPasswordEntry;
     privateKeyPasswordEntry = gtk_entry_new();
     gtk_entry_set_icon_from_stock(GTK_ENTRY(privateKeyPasswordEntry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
     gtk_entry_set_visibility(GTK_ENTRY(privateKeyPasswordEntry), FALSE);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), privateKeyPasswordEntry);
     gtk_entry_set_text(GTK_ENTRY(privateKeyPasswordEntry), tls_password);
-    gtk_table_attach(GTK_TABLE(table), privateKeyPasswordEntry, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), privateKeyPasswordEntry, 1, 6, 1, 1);
 
     /* TLS protocol methods */
     GtkTreeIter iter;
 
     GtkListStore * tlsProtocolMethodListStore =  gtk_list_store_new(1, G_TYPE_STRING);
     label = gtk_label_new_with_mnemonic(_("TLS protocol method"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 7, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 
     gchar** supported_tls_method = dbus_get_supported_tls_method();
@@ -208,7 +209,7 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
 
     GtkWidget *tlsProtocolMethodCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(tlsProtocolMethodListStore));
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsProtocolMethodCombo);
-    gtk_table_attach(GTK_TABLE(table), tlsProtocolMethodCombo, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), tlsProtocolMethodCombo, 1, 7, 1, 1);
     g_object_unref(G_OBJECT(tlsProtocolMethodListStore));
 
     GtkCellRenderer *tlsProtocolMethodCellRenderer;
@@ -220,28 +221,28 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     /* Cipher list */
     GtkWidget * cipherListEntry;
     label = gtk_label_new_with_mnemonic(_("TLS cipher list"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 8, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     cipherListEntry = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), cipherListEntry);
     gtk_entry_set_text(GTK_ENTRY(cipherListEntry), tls_ciphers);
-    gtk_table_attach(GTK_TABLE(table), cipherListEntry, 1, 2, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), cipherListEntry, 1, 8, 1, 1);
 
     GtkWidget * serverNameInstance;
     label = gtk_label_new_with_mnemonic(_("Server name instance for outgoing TLS connection"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 9, 10, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 9, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     serverNameInstance = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), serverNameInstance);
     gtk_entry_set_text(GTK_ENTRY(serverNameInstance), tls_server_name);
-    gtk_table_attach(GTK_TABLE(table), serverNameInstance, 1, 2, 9, 10, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), serverNameInstance, 1, 9, 1, 1);
 
     label = gtk_label_new(_("Negotiation timeout (sec:msec)"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 10, 1, 1);
     GtkWidget * tlsTimeOutSec;
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_table_attach(GTK_TABLE(table), hbox, 1, 2, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), hbox, 1, 10, 1, 1);
     tlsTimeOutSec = gtk_spin_button_new_with_range(0, pow(2, sizeof(long)), 1);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), tlsTimeOutSec);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tlsTimeOutSec), g_ascii_strtod(negotiation_timeout_sec, NULL));
@@ -256,19 +257,19 @@ void show_advanced_tls_options(account_t *account, SFLPhoneClient *client)
     verifyCertificateServer = gtk_check_button_new_with_mnemonic(_("Verify incoming certificates, as a server"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(verifyCertificateServer),
                                  utf8_case_equal(verify_server, "true"));
-    gtk_table_attach(GTK_TABLE(table), verifyCertificateServer, 0, 1, 11, 12, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), verifyCertificateServer, 0, 11, 1, 1);
 
     GtkWidget * verifyCertificateClient;
     verifyCertificateClient = gtk_check_button_new_with_mnemonic(_("Verify certificates from answer, as a client"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(verifyCertificateClient),
                                  utf8_case_equal(verify_client, "true"));
-    gtk_table_attach(GTK_TABLE(table), verifyCertificateClient, 0, 1, 12, 13, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), verifyCertificateClient, 0, 12, 1, 1);
 
     GtkWidget * requireCertificate;
     requireCertificate = gtk_check_button_new_with_mnemonic(_("Require certificate for incoming tls connections"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(requireCertificate),
                                  utf8_case_equal(require_client_certificate,"true"));
-    gtk_table_attach(GTK_TABLE(table), requireCertificate, 0, 1, 13, 14, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), requireCertificate, 0, 13, 1, 1);
 
     gtk_widget_show_all(ret);
 

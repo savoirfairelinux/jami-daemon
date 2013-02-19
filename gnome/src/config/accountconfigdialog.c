@@ -667,15 +667,15 @@ static void same_as_local_cb(GtkWidget * widget, G_GNUC_UNUSED gpointer data)
 static GtkWidget* create_credential_widget(const account_t *account)
 {
     /* Credentials tree view */
-    GtkWidget *frame, *table;
-    gnome_main_section_new_with_table(_("Credential"), &frame, &table, 1, 1);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 10);
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("Credential"), &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
 
     GtkWidget *scrolled_window_credential = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window_credential), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window_credential), GTK_SHADOW_IN);
-    gtk_table_attach_defaults(GTK_TABLE(table), scrolled_window_credential, 0, 1, 0, 1);
+    gtk_grid_attach(GTK_GRID(grid), scrolled_window_credential, 0, 0, 1, 1);
 
     credential_store = gtk_list_store_new(COLUMN_CREDENTIAL_COUNT,
                                          G_TYPE_STRING,  // Realm
@@ -721,7 +721,8 @@ static GtkWidget* create_credential_widget(const account_t *account)
 
     /* Credential Buttons */
     GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0, 3, 1, 2);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), hbox, 0, 1, 2, 1);
 
     GtkWidget *addButton = gtk_button_new_from_stock(GTK_STOCK_ADD);
     g_signal_connect(addButton, "clicked", G_CALLBACK(add_credential_cb), credential_store);
@@ -761,18 +762,18 @@ create_security_widget(account_t *account, SFLPhoneClient *client)
             curTLSEnabled = "false";
     }
 
-    GtkWidget *frame, *table;
-    gnome_main_section_new_with_table(_("Security"), &frame, &table, 2, 3);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings(GTK_TABLE(table), 10);
+    GtkWidget *frame, *grid;
+    gnome_main_section_new_with_grid(_("Security"), &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
 
     /* TLS subsection */
     OptionsData *options = g_new0(OptionsData, 1);
     options->account = account;
     options->client = client;
     GtkWidget *sip_tls_advanced_button = gtk_button_new_from_stock(GTK_STOCK_EDIT);
-    gtk_table_attach_defaults(GTK_TABLE(table), sip_tls_advanced_button, 2, 3, 0, 1);
+    gtk_grid_attach(GTK_GRID(grid), sip_tls_advanced_button, 2, 0, 1, 1);
     gtk_widget_set_sensitive(sip_tls_advanced_button, FALSE);
     g_signal_connect(G_OBJECT(sip_tls_advanced_button), "clicked",
                      G_CALLBACK(show_advanced_tls_options_cb),
@@ -782,7 +783,8 @@ create_security_widget(account_t *account, SFLPhoneClient *client)
     g_signal_connect(use_sip_tls_check_box, "toggled", G_CALLBACK(use_sip_tls_cb), sip_tls_advanced_button);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_sip_tls_check_box),
                                  g_strcmp0(curTLSEnabled, "true") == 0);
-    gtk_table_attach_defaults(GTK_TABLE(table), use_sip_tls_check_box, 0, 2, 0, 1);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), use_sip_tls_check_box, 0, 0, 2, 1);
 
     /* ZRTP subsection */
     GtkWidget *label = gtk_label_new_with_mnemonic(_("SRTP key exchange"));
@@ -815,11 +817,11 @@ create_security_widget(account_t *account, SFLPhoneClient *client)
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(key_exchange_combo)), "changed",
                      G_CALLBACK(key_exchange_changed_cb), NULL);
 
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
-    gtk_table_attach_defaults(GTK_TABLE(table), key_exchange_combo, 1, 2, 1, 2);
-    gtk_table_attach_defaults(GTK_TABLE(table), zrtp_button, 2, 3, 1, 2);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), key_exchange_combo, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), zrtp_button, 2, 1, 1, 1);
 
-    gtk_widget_show_all(table);
+    gtk_widget_show_all(grid);
 
     return frame;
 }
@@ -854,18 +856,18 @@ static GtkWidget* create_registration_expire(const account_t *account)
             g_warning("Could not retrieve %s from account properties",
                   CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
 
-    GtkWidget *table, *frame;
-    gnome_main_section_new_with_table(_("Registration"), &frame, &table, 2, 3);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+    GtkWidget *grid, *frame;
+    gnome_main_section_new_with_grid(_("Registration"), &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
 
     GtkWidget *label = gtk_label_new_with_mnemonic(_("Registration expire"));
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     expire_spin_box = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), expire_spin_box);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(expire_spin_box), g_ascii_strtod(account_expire, NULL));
-    gtk_table_attach_defaults(GTK_TABLE(table), expire_spin_box, 1, 2, 0, 1);
+    gtk_grid_attach(GTK_GRID(grid), expire_spin_box, 1, 0, 1, 1);
 
     return frame;
 }
@@ -881,10 +883,10 @@ create_network(const account_t *account)
         local_port = account_lookup(account, CONFIG_LOCAL_PORT);
     }
 
-    GtkWidget *table, *frame;
-    gnome_main_section_new_with_table(_("Network Interface"), &frame, &table, 2, 3);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+    GtkWidget *grid, *frame;
+    gnome_main_section_new_with_grid(_("Network Interface"), &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
 
     /**
      * Retrieve the list of IP interface from the
@@ -893,7 +895,7 @@ create_network(const account_t *account)
     local_address_combo = gtk_combo_box_text_new();
 
     GtkWidget *label = gtk_label_new_with_mnemonic(_("Local address"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 
     gchar **iface_list = dbus_get_all_ip_interface_by_name();
@@ -908,7 +910,7 @@ create_network(const account_t *account)
         gtk_combo_box_set_active(GTK_COMBO_BOX(local_address_combo), 0);
 
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), local_address_combo);
-    gtk_table_attach(GTK_TABLE(table), local_address_combo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), local_address_combo, 1, 0, 1, 1);
 
     // Fill the text entry with the ip address of local interface selected
     local_address_entry = gtk_entry_new();
@@ -922,24 +924,24 @@ create_network(const account_t *account)
     gtk_entry_set_text(GTK_ENTRY(local_address_entry), local_iface_addr);
     g_free(local_iface_addr);
     gtk_widget_set_sensitive(local_address_entry, FALSE);
-    gtk_table_attach(GTK_TABLE(table), local_address_entry, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), local_address_entry, 2, 0, 1, 1);
 
     // Local port widget
     label = gtk_label_new_with_mnemonic(_("Local port"));
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     local_port_spin_box = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), local_port_spin_box);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(local_port_spin_box), g_ascii_strtod(local_port, NULL));
 
-    gtk_table_attach_defaults(GTK_TABLE(table), local_port_spin_box, 1, 2, 1, 2);
+    gtk_grid_attach(GTK_GRID(grid), local_port_spin_box, 1, 1, 1, 1);
 
     return frame;
 }
 
 GtkWidget* create_published_address(const account_t *account)
 {
-    GtkWidget *table, *frame;
+    GtkWidget *frame;
     gchar *use_tls = NULL;
     gchar *published_address = NULL;
     gchar *published_port = NULL;
@@ -965,30 +967,33 @@ GtkWidget* create_published_address(const account_t *account)
         published_sameas_local = account_lookup(account, CONFIG_PUBLISHED_SAMEAS_LOCAL);
     }
 
-    gnome_main_section_new_with_table(_("Published address"), &frame, &table, 2, 3);
-    gtk_container_set_border_width(GTK_CONTAINER(table), 10);
-    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+    GtkWidget *grid;
+    gnome_main_section_new_with_grid(_("Published address"), &frame, &grid);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
 
     use_stun_check_box = gtk_check_button_new_with_mnemonic(_("Using STUN"));
-    gtk_table_attach_defaults(GTK_TABLE(table), use_stun_check_box, 0, 1, 0, 1);
+    gtk_grid_attach(GTK_GRID(grid), use_stun_check_box, 0, 0, 1, 1);
     g_signal_connect(use_stun_check_box, "toggled", G_CALLBACK(use_stun_cb), NULL);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(use_stun_check_box),
                                  utf8_case_equal(stun_enable, "true"));
     gtk_widget_set_sensitive(use_stun_check_box, !utf8_case_equal(use_tls, "true"));
 
     stun_server_label = gtk_label_new_with_mnemonic(_("STUN server URL"));
-    gtk_table_attach_defaults(GTK_TABLE(table), stun_server_label, 0, 1, 1, 2);
+    gtk_grid_attach(GTK_GRID(grid), stun_server_label, 0, 1, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(stun_server_label), 0, 0.5);
     stun_server_entry = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(stun_server_label), stun_server_entry);
     gtk_entry_set_text(GTK_ENTRY(stun_server_entry), stun_server);
-    gtk_table_attach_defaults(GTK_TABLE(table), stun_server_entry, 1, 2, 1, 2);
+    gtk_grid_attach(GTK_GRID(grid), stun_server_entry, 1, 1, 1, 1);
 
     same_as_local_radio_button = gtk_radio_button_new_with_mnemonic_from_widget(NULL, _("Same as local parameters"));
-    gtk_table_attach_defaults(GTK_TABLE(table), same_as_local_radio_button, 0, 2, 3, 4);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), same_as_local_radio_button, 0, 3, 2, 1);
 
     published_addr_radio_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(same_as_local_radio_button), _("Set published address and port:"));
-    gtk_table_attach_defaults(GTK_TABLE(table), published_addr_radio_button, 0, 2, 4, 5);
+    /* 2x1 */
+    gtk_grid_attach(GTK_GRID(grid), published_addr_radio_button, 0, 4, 2, 1);
 
     if (utf8_case_equal(published_sameas_local, "true")) {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(same_as_local_radio_button), TRUE);
@@ -999,22 +1004,22 @@ GtkWidget* create_published_address(const account_t *account)
     }
 
     published_address_label = gtk_label_new_with_mnemonic(_("Published address"));
-    gtk_table_attach_defaults(GTK_TABLE(table), published_address_label, 0, 1, 5, 6);
+    gtk_grid_attach(GTK_GRID(grid), published_address_label, 0, 5, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(published_address_label), 0, 0.5);
     published_address_entry = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(published_address_label), published_address_entry);
 
     gtk_entry_set_text(GTK_ENTRY(published_address_entry), published_address);
-    gtk_table_attach_defaults(GTK_TABLE(table), published_address_entry, 1, 2, 5, 6);
+    gtk_grid_attach(GTK_GRID(grid), published_address_entry, 1, 5, 1, 1);
 
     published_port_label = gtk_label_new_with_mnemonic(_("Published port"));
-    gtk_table_attach_defaults(GTK_TABLE(table), published_port_label, 0, 1, 6, 7);
+    gtk_grid_attach(GTK_GRID(grid), published_port_label, 0, 6, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(published_port_label), 0, 0.5);
     published_port_spin_box = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget(GTK_LABEL(published_port_label), published_port_spin_box);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(published_port_spin_box), g_ascii_strtod(published_port, NULL));
 
-    gtk_table_attach_defaults(GTK_TABLE(table), published_port_spin_box, 1, 2, 6, 7);
+    gtk_grid_attach(GTK_GRID(grid), published_port_spin_box, 1, 6, 1, 1);
 
     // This will trigger a signal, and the above two
     // widgets need to be instanciated before that.
@@ -1077,12 +1082,12 @@ create_audiocodecs_configuration(const account_t *account)
     gtk_container_add(GTK_CONTAINER(audiocodecs), box);
 
     // Add DTMF type selection for SIP account only
-    GtkWidget *table;
+    GtkWidget *grid;
 
     if (account_is_SIP(account)) {
         // Box for dtmf
         GtkWidget *dtmf;
-        gnome_main_section_new_with_table(_("DTMF"), &dtmf, &table, 1, 2);
+        gnome_main_section_new_with_grid(_("DTMF"), &dtmf, &grid);
         gtk_box_pack_start(GTK_BOX(vbox), dtmf, FALSE, FALSE, 0);
         gtk_widget_show(dtmf);
 
@@ -1090,17 +1095,17 @@ create_audiocodecs_configuration(const account_t *account)
         const gchar * const dtmf_type = account_lookup(account, CONFIG_ACCOUNT_DTMF_TYPE);
         const gboolean dtmf_are_rtp = utf8_case_equal(dtmf_type, OVERRTP);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(overrtp), dtmf_are_rtp);
-        gtk_table_attach(GTK_TABLE(table), overrtp, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+        gtk_grid_attach(GTK_GRID(grid), overrtp, 0, 0, 1, 1);
 
         GtkWidget *sipinfo = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(overrtp),  _("SIP"));
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sipinfo), !dtmf_are_rtp);
         g_signal_connect(G_OBJECT(sipinfo), "clicked", G_CALLBACK(select_dtmf_type), NULL);
-        gtk_table_attach(GTK_TABLE(table), sipinfo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+        gtk_grid_attach(GTK_GRID(grid), sipinfo, 1, 0, 1, 1);
     }
 
     // Box for the ringtones
     GtkWidget *frame;
-    gnome_main_section_new_with_table(_("Ringtones"), &frame, &table, 1, 2);
+    gnome_main_section_new_with_grid(_("Ringtones"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     file_chooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
@@ -1110,7 +1115,7 @@ create_audiocodecs_configuration(const account_t *account)
     const gboolean ringtone_enabled = g_strcmp0(ptr, "true") == 0;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_tone), ringtone_enabled);
     g_signal_connect(G_OBJECT(enable_tone) , "clicked", G_CALLBACK(ringtone_enabled_cb), file_chooser);
-    gtk_table_attach(GTK_TABLE(table), enable_tone, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), enable_tone, 0, 0, 1, 1);
 
     // file chooser button
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(file_chooser) , g_get_home_dir());
@@ -1125,8 +1130,7 @@ create_audiocodecs_configuration(const account_t *account)
     gtk_file_filter_add_pattern(filter, "*.au");
 
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(file_chooser), filter);
-    gtk_table_attach(GTK_TABLE(table), file_chooser, 0, 1, 1, 2,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_grid_attach(GTK_GRID(grid), file_chooser, 0, 1, 1, 1);
 
     gtk_widget_show_all(vbox);
 
