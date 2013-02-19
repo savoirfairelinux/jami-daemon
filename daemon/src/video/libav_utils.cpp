@@ -101,7 +101,9 @@ int avcodecManageMutex(void **data, enum AVLockOp op)
             av_freep(mutex);
             break;
         default:
+#ifdef AVERROR_BUG
             return AVERROR_BUG;
+#endif
     }
     return AVERROR(ret);
 }
