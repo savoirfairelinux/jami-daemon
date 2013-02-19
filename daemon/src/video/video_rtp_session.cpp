@@ -55,7 +55,7 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     // if port has changed
     if (not desc.empty() and desc != rxArgs_["receiving_sdp"]) {
         rxArgs_["receiving_sdp"] = desc;
-        DEBUG("Updated incoming SDP to:\n %s",
+        DEBUG("Updated incoming SDP to:\n%s",
               rxArgs_["receiving_sdp"].c_str());
     }
 

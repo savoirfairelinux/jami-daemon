@@ -517,14 +517,21 @@ bool VideoSendThread::captureFrame()
 
 void VideoSendThread::encodeAndSendVideo()
 {
-    if (forceKeyFrame_ > 0) {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
+    if (forceKeyFrame_ > 0) {
         scaledInput_->pict_type = AV_PICTURE_TYPE_I;
-#else
-        scaledInput_->pict_type = FF_I_TYPE;
-#endif
         atomic_decrement(&forceKeyFrame_);
+    } else if (scaledInput_->pict_type == AV_PICTURE_TYPE_I) {
+        scaledInput_->pict_type = AV_PICTURE_TYPE_NONE;
     }
+#else
+    if (forceKeyFrame_ > 0) {
+        scaledInput_->pict_type = FF_I_TYPE;
+        atomic_decrement(&forceKeyFrame_);
+    } else if (scaledInput_->pict_type == FF_I_TYPE) {
+        scaledInput_->pict_type = (AVPictureType) 0;
+    }
+#endif
 
     const int encodedSize = avcodec_encode_video(encoderCtx_, encoderBuffer_,
                                                  encoderBufferSize_, scaledInput_);
