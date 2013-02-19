@@ -867,7 +867,7 @@ GtkWidget* create_audio_configuration(SFLPhoneClient *client)
 
     GtkWidget *alsa_button = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse_button), _("_ALSA"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(alsa_button), !using_pulse);
-    g_signal_connect(G_OBJECT(alsa_button), "clicked", G_CALLBACK(select_audio_manager), client->settings);
+    g_signal_connect(G_OBJECT(alsa_button), "clicked", G_CALLBACK(select_audio_manager), client);
     gtk_grid_attach(GTK_GRID(grid), alsa_button, 1, 0, 1, 1);
 
     // Box for the ALSA configuration

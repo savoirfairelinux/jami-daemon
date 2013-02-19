@@ -174,7 +174,7 @@ create_general_settings(SFLPhoneClient *client)
     // Notification All
     notifAll = gtk_check_button_new_with_mnemonic(_("_Enable notifications"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(notifAll), g_settings_get_boolean(client->settings, "notify-all"));
-    g_signal_connect(G_OBJECT(notifAll), "clicked", G_CALLBACK(set_notif_level), client->settings);
+    g_signal_connect(G_OBJECT(notifAll), "clicked", G_CALLBACK(set_notif_level), client);
     gtk_grid_attach(GTK_GRID(grid), notifAll, 0, 0, 1, 1);
 
     // System Tray option frame
@@ -187,12 +187,12 @@ create_general_settings(SFLPhoneClient *client)
     showstatusicon = gtk_check_button_new_with_mnemonic(
                          _("Show SFLphone in the system tray"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(showstatusicon), statusicon);
-    g_signal_connect(G_OBJECT(showstatusicon) , "clicked" , G_CALLBACK(showstatusicon_cb), client->settings);
+    g_signal_connect(G_OBJECT(showstatusicon), "clicked", G_CALLBACK(showstatusicon_cb), client);
     gtk_grid_attach(GTK_GRID(grid), showstatusicon, 0, 0, 1, 1);
 
     popupwindow = gtk_radio_button_new_with_mnemonic(NULL,
                   _("_Popup main window on incoming call"));
-    g_signal_connect(G_OBJECT(popupwindow), "toggled", G_CALLBACK(set_popup_mode), client->settings);
+    g_signal_connect(G_OBJECT(popupwindow), "toggled", G_CALLBACK(set_popup_mode), client);
     gtk_grid_attach(GTK_GRID(grid), popupwindow, 0, 1, 1, 1);
 
     neverpopupwindow = gtk_radio_button_new_with_mnemonic_from_widget(
@@ -219,12 +219,12 @@ create_general_settings(SFLPhoneClient *client)
                          _("_Keep my history for at least"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkBoxWidget),
                                  history_enabled);
-    g_signal_connect(G_OBJECT(checkBoxWidget) , "clicked" , G_CALLBACK(history_enabled_cb) , client->settings);
+    g_signal_connect(G_OBJECT(checkBoxWidget), "clicked", G_CALLBACK(history_enabled_cb), client);
     gtk_grid_attach(GTK_GRID(grid), checkBoxWidget, 0, 0, 1, 1);
 
     history_value = gtk_spin_button_new_with_range(1, 99, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(history_value), history_limit);
-    g_signal_connect(G_OBJECT(history_value) , "value-changed" , G_CALLBACK(history_limit_cb), NULL);
+    g_signal_connect(G_OBJECT(history_value), "value-changed", G_CALLBACK(history_limit_cb), NULL);
     gtk_widget_set_sensitive(GTK_WIDGET(history_value),
                              gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkBoxWidget)));
     gtk_grid_attach(GTK_GRID(grid), history_value, 1, 0, 1, 1);
@@ -240,7 +240,7 @@ create_general_settings(SFLPhoneClient *client)
                          _("Enable instant messaging"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkBoxWidget),
                                  instant_messaging_enabled);
-    g_signal_connect(G_OBJECT(checkBoxWidget) , "clicked" , G_CALLBACK(instant_messaging_enabled_cb), client->settings);
+    g_signal_connect(G_OBJECT(checkBoxWidget), "clicked", G_CALLBACK(instant_messaging_enabled_cb), client);
     gtk_grid_attach(GTK_GRID(grid), checkBoxWidget, 0, 0, 1, 1);
 
     gtk_widget_show_all(ret);
