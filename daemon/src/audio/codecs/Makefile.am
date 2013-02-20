@@ -37,6 +37,15 @@ libcodec_speex_ub_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
 endif
 
+if BUILD_OPUS
+OPUS_LIB = libcodec_opus.so
+libcodec_opus_so_SOURCES  = opus.cpp opus.h
+libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall $(OPUS_CFLAGS)
+libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++ $(OPUS_LIBS)
+libcodec_opus_so_LDADD    = libcodecdescriptor.la
+INSTALL_OPUS_RULE = install-libcodec_opus_so
+endif
+
 if BUILD_ILBC
 ILBC_LIB = libcodec_ilbc.so
 libcodecdescriptor_la_CXXFLAGS = -DBUILD_ILBC
@@ -47,7 +56,7 @@ libcodec_ilbc_so_LDADD = libcodecdescriptor.la
 INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so libcodec_opus.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so $(OPUS_LIB) $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall
@@ -69,13 +78,7 @@ libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
 libcodec_g729_so_LDFLAGS = --shared -lc -ldl -lstdc++
 
-libcodec_opus_so_SOURCES  = opus.cpp opus.h
-
-libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_opus_so_LDADD    = libcodecdescriptor.la
-libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++
-
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so install-libcodec_opus_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so $(INSTALL_OPUS_RULE) $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_g729_so uninstall-libcodec_opus_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_ilbc_so
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
