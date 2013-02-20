@@ -104,6 +104,7 @@ class SIPAccount : public Account {
         static const char * const IP2IP_PROFILE;
         static const char * const OVERRTP_STR;
         static const char * const SIPINFO_STR;
+        static const char * const ACCOUNT_TYPE;
 
         /**
          * Constructor

@@ -54,6 +54,7 @@
 const char * const SIPAccount::IP2IP_PROFILE = "IP2IP";
 const char * const SIPAccount::OVERRTP_STR = "overrtp";
 const char * const SIPAccount::SIPINFO_STR = "sipinfo";
+const char * const SIPAccount::ACCOUNT_TYPE = "SIP";
 
 namespace {
     const int MIN_REGISTRATION_TIME = 60;
@@ -63,7 +64,7 @@ namespace {
 }
 
 SIPAccount::SIPAccount(const std::string& accountID)
-    : Account(accountID, "SIP")
+    : Account(accountID)
     , transport_(NULL)
     , credentials_()
     , regc_(NULL)
@@ -139,7 +140,7 @@ void SIPAccount::serialize(Conf::YamlEmitter &emitter)
     ScalarNode hostname(Account::hostname_);
     ScalarNode enable(enabled_);
     ScalarNode autoAnswer(autoAnswerEnabled_);
-    ScalarNode type(Account::type_);
+    ScalarNode type(ACCOUNT_TYPE);
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
     ScalarNode expire(registrationExpireStr.str());
@@ -310,7 +311,6 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     using std::string;
 
     mapNode.getValue(ALIAS_KEY, &alias_);
-    mapNode.getValue(TYPE_KEY, &type_);
     mapNode.getValue(USERNAME_KEY, &username_);
     if (not isIP2IP()) mapNode.getValue(HOSTNAME_KEY, &hostname_);
     mapNode.getValue(ACCOUNT_ENABLE_KEY, &enabled_);
@@ -469,7 +469,6 @@ void SIPAccount::setAccountDetails(std::map<std::string, std::string> details)
 {
     // Account setting common to SIP and IAX
     alias_ = details[CONFIG_ACCOUNT_ALIAS];
-    type_ = details[CONFIG_ACCOUNT_TYPE];
     username_ = details[CONFIG_ACCOUNT_USERNAME];
     hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
     enabled_ = details[CONFIG_ACCOUNT_ENABLE] == TRUE_STR;
@@ -548,7 +547,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? TRUE_STR : FALSE_STR;
     a[CONFIG_ACCOUNT_AUTOANSWER]= autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_TYPE] = type_;
+    a[CONFIG_ACCOUNT_TYPE] = ACCOUNT_TYPE;
     a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
     a[CONFIG_ACCOUNT_USERNAME] = username_;
 

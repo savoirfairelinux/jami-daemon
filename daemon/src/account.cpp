@@ -67,14 +67,13 @@ using std::string;
 using std::vector;
 
 
-Account::Account(const string &accountID, const string &type) :
+Account::Account(const string &accountID) :
     accountID_(accountID)
     , username_()
     , hostname_()
     , alias_()
     , enabled_(true)
     , autoAnswerEnabled_(false)
-    , type_(type)
     , registrationState_(UNREGISTERED)
     , audioCodecList_()
     , videoCodecList_()

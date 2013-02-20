@@ -43,8 +43,10 @@
 #include "config/yamlnode.h"
 #include "config/yamlemitter.h"
 
+const char * const IAXAccount::ACCOUNT_TYPE = "IAX";
+
 IAXAccount::IAXAccount(const std::string& accountID)
-    : Account(accountID, "iax2"), password_(), link_(accountID)
+    : Account(accountID), password_(), link_(accountID)
 {}
 
 void IAXAccount::serialize(Conf::YamlEmitter &emitter)
@@ -57,7 +59,7 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode alias(alias_);
     Conf::ScalarNode hostname(hostname_);
     Conf::ScalarNode enable(enabled_);
-    Conf::ScalarNode type(type_);
+    Conf::ScalarNode type(ACCOUNT_TYPE);
     Conf::ScalarNode mailbox(mailBox_);
 
     Conf::ScalarNode codecs(audioCodecStr_);
@@ -85,7 +87,6 @@ void IAXAccount::serialize(Conf::YamlEmitter &emitter)
 void IAXAccount::unserialize(const Conf::YamlNode &map)
 {
     map.getValue(ALIAS_KEY, &alias_);
-    map.getValue(TYPE_KEY,  &type_);
     map.getValue(USERNAME_KEY, &username_);
     map.getValue(PASSWORD_KEY, &password_);
     map.getValue(HOSTNAME_KEY, &hostname_);
@@ -102,7 +103,6 @@ void IAXAccount::setAccountDetails(std::map<std::string, std::string> details)
 {
     // Account setting common to SIP and IAX
     alias_ = details[CONFIG_ACCOUNT_ALIAS];
-    type_ = details[CONFIG_ACCOUNT_TYPE];
     username_ = details[CONFIG_ACCOUNT_USERNAME];
     hostname_ = details[CONFIG_ACCOUNT_HOSTNAME];
     password_ = details[CONFIG_ACCOUNT_PASSWORD];
@@ -119,7 +119,7 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() const
     a[CONFIG_ACCOUNT_ID] = accountID_;
     a[CONFIG_ACCOUNT_ALIAS] = alias_;
     a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
-    a[CONFIG_ACCOUNT_TYPE] = type_;
+    a[CONFIG_ACCOUNT_TYPE] = ACCOUNT_TYPE;
     a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
     a[CONFIG_ACCOUNT_USERNAME] = username_;
     a[CONFIG_ACCOUNT_PASSWORD] = password_;
