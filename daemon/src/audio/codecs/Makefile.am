@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libcodecdescriptor.la
 
-libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp
+libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp audiocodec.h audiocodecfactory.h
 libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
 if BUILD_GSM
@@ -16,21 +16,21 @@ endif
 
 if BUILD_SPEEX
 SPEEX_NB_LIB = libcodec_speex_nb.so
-libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp
+libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp speexcodec.h
 libcodec_speex_nb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_nb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_nb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_NB_RULE = install-libcodec_speex_nb_so
 
 SPEEX_WB_LIB = libcodec_speex_wb.so
-libcodec_speex_wb_so_SOURCES = speexcodec_wb.cpp
+libcodec_speex_wb_so_SOURCES = speexcodec_wb.cpp speexcodec.h
 libcodec_speex_wb_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_wb_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_wb_so_LDADD = libcodecdescriptor.la
 INSTALL_SPEEX_WB_RULE = install-libcodec_speex_wb_so
 
 SPEEX_UB_LIB = libcodec_speex_ub.so
-libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp
+libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp speexcodec.h
 libcodec_speex_ub_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
 libcodec_speex_ub_so_LDFLAGS = --shared -lc -lspeex
 libcodec_speex_ub_so_LDADD = libcodecdescriptor.la
@@ -49,8 +49,6 @@ endif
 
 noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so libcodec_opus.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
 
-noinst_HEADERS = audiocodec.h audiocodecfactory.h speexcodec.h g722.h g729.h opus.h
-
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_ulaw_so_LDADD = libcodecdescriptor.la
@@ -61,17 +59,18 @@ libcodec_alaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDADD = libcodecdescriptor.la
 libcodec_alaw_so_LDFLAGS = --shared -lc
 
-libcodec_g722_so_SOURCES = g722.cpp
+libcodec_g722_so_SOURCES = g722.cpp g722.h
 libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g722_so_LDADD = libcodecdescriptor.la
 libcodec_g722_so_LDFLAGS = --shared -lc
 
-libcodec_g729_so_SOURCES = g729.cpp
+libcodec_g729_so_SOURCES = g729.cpp g729.h
 libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
 libcodec_g729_so_LDFLAGS = --shared -lc -ldl -lstdc++
 
-libcodec_opus_so_SOURCES  = opus.cpp
+libcodec_opus_so_SOURCES  = opus.cpp opus.h opus/opus.h opus/opus_defines.h opus/opus_multistream.h opus/opus_types.h
+
 libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_opus_so_LDADD    = libcodecdescriptor.la
 libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++
