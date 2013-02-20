@@ -88,7 +88,12 @@ private:
 // cppcheck-suppress unusedFunction
 extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
 {
-    return new Gsm;
+    try {
+        return new Gsm;
+    } catch (const std::runtime_error &e) {
+        std::cerr << e.what() << std::endl;
+        return 0;
+    }
 }
 
 // cppcheck-suppress unusedFunction
