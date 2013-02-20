@@ -14,7 +14,15 @@ video_controls-glue.h: video_controls-introspec.xml Makefile.am
 endif
 
 # Rule to generate the binding headers
-%-glue.h: %-introspec.xml Makefile.am
+callmanager-glue.h: callmanager-introspec.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
+
+# Rule to generate the binding headers
+configurationmanager-glue.h: configurationmanager-introspec.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
+
+# Rule to generate the binding headers
+instance-glue.h: instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 libdbus_la_SOURCES = \

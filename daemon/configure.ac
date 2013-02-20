@@ -6,7 +6,8 @@ AC_INIT([sflphone],[1.2.2],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013]])
 AC_REVISION([$Revision$])
 
-AM_INIT_AUTOMAKE
+AC_CONFIG_AUX_DIR([build-aux])
+AM_INIT_AUTOMAKE([-Wno-portability])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR]) # required by automake 1.12
 AC_CONFIG_HEADERS([config.h])
 
