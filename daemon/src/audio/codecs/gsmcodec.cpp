@@ -45,7 +45,7 @@ extern "C" {
 
 class Gsm : public sfl::AudioCodec {
 
-    public:
+public:
         // _payload should be 3
         Gsm() : sfl::AudioCodec(3, "GSM", 8000, 160, 1),
         decode_gsmhandle_(NULL), encode_gsmhandle_(NULL) {
@@ -65,6 +65,7 @@ class Gsm : public sfl::AudioCodec {
             gsm_destroy(encode_gsmhandle_);
         }
 
+private:
         virtual int decode(SFLDataFormat * dst, unsigned char * src, size_t /*buf_size*/)
         {
             if (gsm_decode(decode_gsmhandle_, (gsm_byte*) src, (gsm_signal*) dst) < 0)
@@ -79,7 +80,6 @@ class Gsm : public sfl::AudioCodec {
             return 33;
         }
 
-    private:
         NON_COPYABLE(Gsm);
         gsm decode_gsmhandle_;
         gsm encode_gsmhandle_;

@@ -40,6 +40,7 @@ class Ulaw : public sfl::AudioCodec {
             hasDynamicPayload_ = false;
         }
 
+    private:
         virtual int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size) {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ULawDecode(*src);

@@ -49,6 +49,7 @@ class Ilbc: public sfl::AudioCodec {
             initEncode(&ilbc_enc_, 20);
         }
 
+    private:
         // iLBC expects floating point data, so we have to convert
         int decode(short *dst, unsigned char *src, size_t /*buf_size*/) {
             const int NORMAL_MODE = 1;
@@ -61,7 +62,6 @@ class Ilbc: public sfl::AudioCodec {
             return frameSize_;
         }
 
-    private:
         static const int ILBC_FRAME_SIZE = 160;
         static const int ILBC_PAYLOAD = 105;
         iLBC_Dec_Inst_t ilbc_dec_;
