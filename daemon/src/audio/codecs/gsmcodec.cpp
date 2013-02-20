@@ -34,6 +34,7 @@
 #include "sfl_types.h"
 #include "noncopyable.h"
 #include <stdexcept>
+#include <iostream>
 
 extern "C" {
 #include <gsm/gsm.h>
