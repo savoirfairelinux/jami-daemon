@@ -522,7 +522,8 @@ void VideoSendThread::encodeAndSendVideo()
         scaledInput_->pict_type = AV_PICTURE_TYPE_I;
         atomic_decrement(&forceKeyFrame_);
     } else if (scaledInput_->pict_type == AV_PICTURE_TYPE_I) {
-        scaledInput_->pict_type = AV_PICTURE_TYPE_NONE;
+        /* FIXME: Should be AV_PICTURE_TYPE_NONE for newer libavutil */
+        scaledInput_->pict_type = (AVPictureType) 0;
     }
 #else
     if (forceKeyFrame_ > 0) {
