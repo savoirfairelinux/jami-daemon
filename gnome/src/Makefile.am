@@ -9,6 +9,7 @@ SFLPHONE_LIBS=./contacts/libcontacts.la ./config/libconfig.la \
               ./messaging/libmessaging.la
 
 DL_LIBS = -ldl
+RT_LIBS = -lrt
 
 if SFL_VIDEO
 SFLPHONE_LIBS+=./video/libvideo.la
@@ -57,7 +58,7 @@ libsflphone_client_la_SOURCES = \
 libsflphone_client_la_LIBADD = @CLUTTER_LIBS@ @CLUTTERGTK_LIBS@ $(SFLPHONE_LIBS)
 libsflphone_client_la_LDFLAGS = @CLUTTER_LDFLAGS@ @DBUSGLIB_LIBS@ @LIBNOTIFY_LIBS@ \
                                 @X11_LIBS@ @GTK_LIBS@ @GLIB_LIBS@ \
-                                $(DL_LIBS) \
+                                $(DL_LIBS) $(RT_LIBS) \
                                 @CLUTTERGTK_LDFLAGS@
 
 libsflphone_client_la_CFLAGS = @CLUTTER_CFLAGS@ @DBUSGLIB_CFLAGS@ @LIBNOTIFY_CFLAGS@ \
