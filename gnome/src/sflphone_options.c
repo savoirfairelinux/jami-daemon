@@ -45,8 +45,19 @@ option_version_cb(G_GNUC_UNUSED const gchar *option_name,
     exit(EXIT_SUCCESS);
 }
 
+static gboolean
+option_debug_cb(G_GNUC_UNUSED const gchar *option_name,
+                G_GNUC_UNUSED const gchar *value,
+                G_GNUC_UNUSED gpointer data,
+                G_GNUC_UNUSED GError **error)
+{
+    g_setenv("G_MESSAGES_DEBUG", "all", TRUE);
+    return TRUE;
+}
+
 static const GOptionEntry all_options[] = {
-    { "version", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_version_cb, NULL, NULL },
+    {"version", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_version_cb, NULL, NULL},
+    {"debug", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_debug_cb, N_("Enable debug"), NULL},
     {NULL} /* list must be NULL-terminated */
 };
 
