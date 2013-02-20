@@ -42,7 +42,7 @@ class Alaw : public sfl::AudioCodec {
         }
 
     private:
-        virtual int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
+        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
         {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ALawDecode(*src);
@@ -50,7 +50,7 @@ class Alaw : public sfl::AudioCodec {
             return frameSize_;
         }
 
-        virtual int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
+        int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
         {
             for (unsigned char *end = dst + frameSize_; dst < end; ++src, ++dst)
                 *dst = ALawEncode(*src);
