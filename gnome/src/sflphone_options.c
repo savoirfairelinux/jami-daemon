@@ -46,7 +46,7 @@ option_version_cb(G_GNUC_UNUSED const gchar *option_name,
 }
 
 static const GOptionEntry all_options[] = {
-    { "version", 0, G_OPTION_FLAG_NO_ARG | G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_CALLBACK, option_version_cb, NULL, NULL },
+    { "version", 0, G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, option_version_cb, NULL, NULL },
     {NULL} /* list must be NULL-terminated */
 };
 
