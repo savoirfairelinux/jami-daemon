@@ -69,7 +69,7 @@ libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
 libcodec_g729_so_LDFLAGS = --shared -lc -ldl -lstdc++
 
-libcodec_opus_so_SOURCES  = opus.cpp opus.h opus/opus.h opus/opus_defines.h opus/opus_multistream.h opus/opus_types.h
+libcodec_opus_so_SOURCES  = opus.cpp opus.h
 
 libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_opus_so_LDADD    = libcodecdescriptor.la

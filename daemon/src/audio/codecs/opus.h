@@ -31,23 +31,11 @@
 #define OPUS_H_
 
 #include "noncopyable.h"
-#include "opus/opus.h"
 
 #include "audiocodec.h"
 
 #define MAX_ENCODER_BUFFER 480
 #define OPUS_APPLICATION_VOIP 2048
-#define OPUS_APPLICATION_AUDIO 2049
-#define OPUS_APPLICATION_RESTRICTED_LOWDELAY 2051
-
-
-//From the old opus implementation
-static const int frameLength[]      = {5, 10, 20, 40, 60};
-static const uint32 opusClockRate[] = {8000, 12000, 16000, 24000, 48000};
-static const uint8 opusNbChannel[]  = {1, 2};
-static const double opusBitRate     = 1111;
-static const double opusBandWidt    = 1111;
-static const int operationMode[]    = {OPUS_APPLICATION_VOIP, OPUS_APPLICATION_AUDIO, OPUS_APPLICATION_RESTRICTED_LOWDELAY};
 
 class Opus : public sfl::AudioCodec {
 public:
