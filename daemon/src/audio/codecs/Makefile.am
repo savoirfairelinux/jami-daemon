@@ -40,8 +40,8 @@ endif
 if BUILD_OPUS
 OPUS_LIB = libcodec_opus.so
 libcodec_opus_so_SOURCES  = opus.cpp opus.h
-libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall $(OPUS_CFLAGS)
-libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++ $(OPUS_LIBS)
+libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall $(opus_CFLAGS)
+libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++ $(opus_LIBS)
 libcodec_opus_so_LDADD    = libcodecdescriptor.la
 INSTALL_OPUS_RULE = install-libcodec_opus_so
 endif
