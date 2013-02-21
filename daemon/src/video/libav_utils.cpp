@@ -103,6 +103,8 @@ int avcodecManageMutex(void **data, enum AVLockOp op)
         default:
 #ifdef AVERROR_BUG
             return AVERROR_BUG;
+#else
+            break;
 #endif
     }
     return AVERROR(ret);
