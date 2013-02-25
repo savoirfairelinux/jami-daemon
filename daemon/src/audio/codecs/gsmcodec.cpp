@@ -65,7 +65,6 @@ public:
             gsm_destroy(decode_gsmhandle_);
             gsm_destroy(encode_gsmhandle_);
         }
-
 private:
         int decode(SFLDataFormat * dst, unsigned char * src, size_t /*buf_size*/)
         {
@@ -78,7 +77,7 @@ private:
         int encode(unsigned char * dst, SFLDataFormat * src, size_t /*buf_size*/)
         {
             gsm_encode(encode_gsmhandle_, (gsm_signal*) src, (gsm_byte*) dst);
-            return 33;
+            return sizeof(gsm_frame);
         }
 
         NON_COPYABLE(Gsm);
