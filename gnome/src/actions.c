@@ -371,10 +371,6 @@ sflphone_pick_up(SFLPhoneClient *client)
             break;
         case CALL_STATE_TRANSFER:
             dbus_transfer(selectedCall);
-            time(&selectedCall->_time_stop);
-            calltree_remove_call(current_calls_tab, selectedCall->_callID);
-            update_actions(client);
-            calllist_remove_call(current_calls_tab, selectedCall->_callID, client);
             break;
         case CALL_STATE_CURRENT:
         case CALL_STATE_HOLD:
@@ -669,9 +665,6 @@ sflphone_keypad(guint keyval, const gchar * key, SFLPhoneClient *client)
                     case GDK_KEY_Return:
                     case GDK_KEY_KP_Enter:
                         dbus_transfer(c);
-                        time(&c->_time_stop);
-                        calltree_remove_call(current_calls_tab, c->_callID);
-                        update_actions(client);
                         break;
                     case GDK_KEY_Escape:
                         sflphone_unset_transfer(client);
