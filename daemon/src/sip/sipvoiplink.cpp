@@ -1891,7 +1891,7 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     if (event->body.rx_msg.rdata) {
         pjsip_rx_data *r_data = event->body.rx_msg.rdata;
 
-        if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
+        if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
             std::string request(pjsip_rx_data_get_info(r_data));
             DEBUG("%s", request.c_str());
 
