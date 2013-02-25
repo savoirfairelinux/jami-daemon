@@ -1561,6 +1561,12 @@ int SIPSessionReinvite(SIPCall *call)
     return !PJ_SUCCESS;
 }
 
+void makeCallRing(SIPCall &call)
+{
+    call.setConnectionState(Call::RINGING);
+    Manager::instance().peerRingingCall(call.getCallId());
+}
+
 void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 {
     if (!inv)
@@ -1586,8 +1592,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
     SIPVoIPLink *link = SIPVoIPLink::instance();
     if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
             ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
-        call->setConnectionState(Call::RINGING);
-        Manager::instance().peerRingingCall(call->getCallId());
+        makeCallRing(*call);
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
         // After we sent or received a ACK - The connection is established
         link->SIPCallAnswered(call, ev->body.tsx_state.src.rdata);
@@ -1869,6 +1874,13 @@ bool handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip
     return false;
 }
 
+void sendOK(pjsip_dialog *dlg, pjsip_rx_data *r_data, pjsip_transaction *tsx)
+{
+    pjsip_tx_data* t_data;
+    if (pjsip_dlg_create_response(dlg, r_data, PJSIP_SC_OK, NULL, &t_data) == PJ_SUCCESS)
+        pjsip_dlg_send_response(dlg, tsx, t_data);
+}
+
 void transaction_state_changed_cb(pjsip_inv_session * inv,
                                   pjsip_transaction *tsx, pjsip_event *event)
 {
@@ -1882,11 +1894,12 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
         return;
     }
 
-    pjsip_tx_data* t_data;
     if (tsx->role == PJSIP_ROLE_UAS and tsx->state == PJSIP_TSX_STATE_TRYING) {
         if (handle_media_control(inv, tsx, event))
             return;
     }
+
+    SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (event->body.rx_msg.rdata) {
         pjsip_rx_data *r_data = event->body.rx_msg.rdata;
@@ -1897,9 +1910,26 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
 
             if (request.find("NOTIFY") == std::string::npos and
                 request.find("INFO") != std::string::npos) {
-                pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
-                pjsip_dlg_send_response(inv->dlg, tsx, t_data);
+                sendOK(inv->dlg, r_data, tsx);
                 return;
+            }
+
+            pjsip_msg_body *body(r_data->msg_info.msg->body);
+            if (body and body->len > 0) {
+                const std::string msg(static_cast<char *>(body->data), body->len);
+                DEBUG("%s", msg.c_str());
+                if (msg.find("Not found") != std::string::npos) {
+                    ERROR("Received 404 Not found");
+                    sendOK(inv->dlg, r_data, tsx);
+                    return;
+                } else if (msg.find("Ringing") and call) {
+                    makeCallRing(*call);
+                    sendOK(inv->dlg, r_data, tsx);
+                    return;
+                } else if (msg.find("Ok")) {
+                    sendOK(inv->dlg, r_data, tsx);
+                    return;
+                }
             }
         }
     }
@@ -1910,12 +1940,9 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
     pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
 
     // Respond with a 200/OK
-    pjsip_dlg_create_response(inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
-    pjsip_dlg_send_response(inv->dlg, tsx, t_data);
+    sendOK(inv->dlg, r_data, tsx);
 
 #if HAVE_INSTANT_MESSAGING
-    // Try to determine who is the recipient of the message
-    SIPCall *call = static_cast<SIPCall *>(inv->mod_data[mod_ua_.id]);
 
     if (!call)
         return;
