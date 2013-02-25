@@ -47,15 +47,15 @@ class Alaw : public sfl::AudioCodec {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ALawDecode(*src);
 
-            return frameSize_;
+            return buf_size;
         }
 
-        int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
+        int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size)
         {
-            for (unsigned char *end = dst + frameSize_; dst < end; ++src, ++dst)
+            for (unsigned char *end = dst + buf_size; dst < end; ++src, ++dst)
                 *dst = ALawEncode(*src);
 
-            return frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);
+            return buf_size;
         }
 
         int ALawDecode(uint8 alaw)

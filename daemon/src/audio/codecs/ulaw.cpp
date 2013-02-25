@@ -45,14 +45,14 @@ class Ulaw : public sfl::AudioCodec {
             for (unsigned char* end = src + buf_size; src < end; ++src, ++dst)
                 *dst = ULawDecode(*src);
 
-            return frameSize_;
+            return buf_size;
         }
 
-        int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/) {
-            for (unsigned char * end = dst + frameSize_; dst < end; ++src, ++dst)
+        int encode(unsigned char *dst, SFLDataFormat *src, size_t buf_size) {
+            for (unsigned char * end = dst + buf_size; dst < end; ++src, ++dst)
                 *dst = ULawEncode(*src);
 
-            return frameSize_ / 2 /* compression factor = 2:1 */ * sizeof(SFLDataFormat);;
+            return buf_size;
         }
 
         SFLDataFormat ULawDecode(uint8 ulaw)
