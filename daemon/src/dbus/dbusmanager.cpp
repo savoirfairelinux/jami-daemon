@@ -113,11 +113,11 @@ void DBusManager::exec()
     try {
         dispatcher_.enter();
     } catch (const DBus::Error &err) {
-        ERROR("%s: %s, exiting\n", err.name(), err.what());
-        ::exit(EXIT_FAILURE);
+        ERROR("%s: %s, quitting\n", err.name(), err.what());
+        return;
     } catch (const std::exception &err) {
-        ERROR("%s: exiting\n", err.what());
-        ::exit(EXIT_FAILURE);
+        ERROR("%s: quitting\n", err.what());
+        return;
     }
 }
 
@@ -126,10 +126,10 @@ void DBusManager::exit()
     try {
         dispatcher_.leave();
     } catch (const DBus::Error &err) {
-        ERROR("%s: %s, exiting\n", err.name(), err.what());
-        ::exit(EXIT_FAILURE);
+        ERROR("%s: %s, quitting\n", err.name(), err.what());
+        return;
     } catch (const std::exception &err) {
-        ERROR("%s: exiting\n", err.what());
-        ::exit(EXIT_FAILURE);
+        ERROR("%s: quitting\n", err.what());
+        return;
     }
 }
