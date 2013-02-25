@@ -2120,8 +2120,12 @@ void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
         return;
     }
 
-    SIPVoIPLink::instance()->newOutgoingCall(Manager::instance().getNewCallID(), std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen));
-    Manager::instance().hangupCall(currentCall->getCallId());
+    try {
+        SIPVoIPLink::instance()->newOutgoingCall(Manager::instance().getNewCallID(), std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen));
+        Manager::instance().hangupCall(currentCall->getCallId());
+    } catch (const VoipLinkException &e) {
+        ERROR("%s", e.what());
+    }
 }
 
 void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
