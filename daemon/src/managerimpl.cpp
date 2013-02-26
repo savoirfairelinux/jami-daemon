@@ -2580,21 +2580,21 @@ namespace {
         item->getValue("alias", &accountAlias);
 
         if (!accountid.empty() and !accountAlias.empty() and accountid != SIPAccount::IP2IP_PROFILE) {
-            Account *a;
-#if HAVE_IAX
-            if (accountType == "IAX") {
-                a = new IAXAccount(accountid);
-                iaxAccountMap[accountid] = a;
-            }
-            else { // assume SIP
-#endif
-                a = new SIPAccount(accountid);
+            if (accountType == "SIP") {
+                Account *a = new SIPAccount(accountid);
                 sipAccountMap[accountid] = a;
+                a->unserialize(*item);
+            } else if (accountType == "IAX") {
 #if HAVE_IAX
-            }
+                Account *a = new IAXAccount(accountid);
+                iaxAccountMap[accountid] = a;
+                a->unserialize(*item);
+#else
+                WARN("Ignoring IAX account");
 #endif
-
-            a->unserialize(*item);
+            } else {
+                ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
+            }
         }
     }
 
