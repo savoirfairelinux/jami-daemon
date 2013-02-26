@@ -946,7 +946,7 @@ class ManagerImpl {
         /**
          * Load the account map from configuration
          */
-        void loadAccountMap(Conf::YamlParser &parser);
+        int loadAccountMap(Conf::YamlParser &parser);
         /**
          * Load default account map (no configuration)
          */

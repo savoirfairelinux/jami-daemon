@@ -111,6 +111,20 @@ ManagerImpl::~ManagerImpl()
     pthread_mutex_destroy(&currentCallMutex_);
 }
 
+namespace {
+    // Creates a backup of the file at "path" with a .bak suffix appended
+    void make_backup(const std::string &path)
+    {
+        const std::string backup_path(path + ".bak");
+        std::ifstream src(path.c_str());
+        std::ofstream dest(backup_path.c_str());
+        dest << src.rdbuf();
+        src.close();
+        dest.close();
+    }
+}
+
+
 void ManagerImpl::init(const std::string &config_file)
 {
     path_ = config_file.empty() ? createConfigFile() : config_file;
@@ -124,8 +138,12 @@ void ManagerImpl::init(const std::string &config_file)
             parser.serializeEvents();
             parser.composeEvents();
             parser.constructNativeData();
-            loadAccountMap(parser);
+            const int error_count = loadAccountMap(parser);
             fclose(file);
+            if (error_count > 0) {
+                WARN("Errors while parsing %s, making backup", path_.c_str());
+                make_backup(path_);
+            }
         } else {
             WARN("Config file not found: creating default account map");
             loadDefaultAccountMap();
@@ -2560,13 +2578,14 @@ namespace {
     }
 
 #if HAVE_IAX
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap)
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, AccountMap &iaxAccountMap, int &errorCount)
 #else
-    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap)
+    void loadAccount(const Conf::YamlNode *item, AccountMap &sipAccountMap, int &errorCount)
 #endif
     {
         if (!item) {
             ERROR("Could not load account");
+            ++errorCount;
             return;
         }
 
@@ -2590,10 +2609,12 @@ namespace {
                 iaxAccountMap[accountid] = a;
                 a->unserialize(*item);
 #else
-                WARN("Ignoring IAX account");
+                ERROR("Ignoring IAX account");
+                ++errorCount;
 #endif
             } else {
                 ERROR("Ignoring unknown account type \"%s\"", accountType.c_str());
+                ++errorCount;
             }
         }
     }
@@ -2618,7 +2639,6 @@ namespace {
         }
         return ip2ip;
     }
-
 } // end anonymous namespace
 
 void ManagerImpl::loadDefaultAccountMap()
@@ -2631,7 +2651,7 @@ void ManagerImpl::loadDefaultAccountMap()
     SIPVoIPLink::instance()->getAccounts()[SIPAccount::IP2IP_PROFILE]->registerVoIPLink();
 }
 
-void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
+int ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
 {
     using namespace Conf;
     // build a default IP2IP account with default parameters
@@ -2657,6 +2677,8 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
     hookPreference.unserialize(*parser.getHookNode());
     audioPreference.unserialize(*parser.getAudioNode());
     shortcutPreferences.unserialize(*parser.getShortcutNode());
+
+    int errorCount = 0;
 #ifdef SFL_VIDEO
     VideoControls *controls(getVideoControls());
     try {
@@ -2665,20 +2687,25 @@ void ManagerImpl::loadAccountMap(Conf::YamlParser &parser)
             controls->getVideoPreferences().unserialize(*videoNode);
     } catch (const YamlParserException &e) {
         ERROR("No video node in config file");
+        ++errorCount;
     }
 #endif
 
     using std::tr1::placeholders::_1;
-    // Each valid account element in sequence is a new account to load
-    // std::for_each(seq->begin(), seq->end(),
-    //        std::tr1::bind(loadAccount, _1, std::tr1::ref(accountMap_)));
 #if HAVE_IAX
     std::for_each(seq->begin(), seq->end(),
-            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::instance()->getAccounts()), std::tr1::ref(IAXVoIPLink::getAccounts())));
+            std::tr1::bind(loadAccount, _1,
+                std::tr1::ref(SIPVoIPLink::instance()->getAccounts()),
+                std::tr1::ref(IAXVoIPLink::getAccounts()),
+                std::tr1::ref(errorCount)));
 #else
     std::for_each(seq->begin(), seq->end(),
-            std::tr1::bind(loadAccount, _1, std::tr1::ref(SIPVoIPLink::instance()->getAccounts())));
+            std::tr1::bind(loadAccount, _1,
+                std::tr1::ref(SIPVoIPLink::instance()->getAccounts()),
+                std::tr1::ref(errorCount)));
 #endif
+
+    return errorCount;
 }
 
 void ManagerImpl::registerAllAccounts()
