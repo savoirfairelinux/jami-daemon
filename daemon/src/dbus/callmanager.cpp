@@ -320,13 +320,9 @@ CallManager::getAudioZrtpSession(const std::string& callID)
     if (!link)
         throw CallManagerException("Failed to get sip link");
 
-    SIPCall *call;
-
-    try {
-        call = link->getSIPCall(callID);
-    } catch (const VoipLinkException &e) {
+    SIPCall *call = link->getSipCall(callID);
+    if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
-    }
 
     sfl::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
 

@@ -949,7 +949,9 @@ void stopRtpIfCurrent(const std::string &id, SIPCall &call)
 void
 SIPVoIPLink::hangup(const std::string& id, int reason)
 {
-    SIPCall* call = getSIPCall(id);
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
 
     std::string account_id(Manager::instance().getAccountFromCall(id));
     SIPAccount *account = Manager::instance().getSipAccount(account_id);
@@ -1007,7 +1009,9 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
 void
 SIPVoIPLink::peerHungup(const std::string& id)
 {
-    SIPCall* call = getSIPCall(id);
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
 
     // User hangup current call. Notify peer
     pjsip_tx_data *tdata = NULL;
@@ -1028,7 +1032,10 @@ SIPVoIPLink::peerHungup(const std::string& id)
 void
 SIPVoIPLink::onhold(const std::string& id)
 {
-    SIPCall *call = getSIPCall(id);
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
+
     call->setState(Call::HOLD);
     call->getAudioRtp().saveLocalContext();
     call->getAudioRtp().stop();
@@ -1057,7 +1064,9 @@ SIPVoIPLink::onhold(const std::string& id)
 void
 SIPVoIPLink::offhold(const std::string& id)
 {
-    SIPCall *call = getSIPCall(id);
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
 
     Sdp *sdpSession = call->getLocalSDP();
 
@@ -1117,13 +1126,9 @@ void SIPVoIPLink::sendTextMessage(const std::string &callID,
                                   const std::string &from)
 {
     using namespace sfl::InstantMessaging;
-    SIPCall *call;
-
-    try {
-        call = getSIPCall(callID);
-    } catch (const VoipLinkException &e) {
+    SIPCall *call = getSipCall(callID);
+    if (!call)
         return;
-    }
 
     /* Send IM message */
     UriList list;
@@ -1173,8 +1178,10 @@ SIPVoIPLink::getSipCall(const std::string& id)
 
     if (iter != sipCallMap_.end())
         return iter->second;
-    else
+    else {
+        ERROR("No SIP call with ID %s", id.c_str());
         return NULL;
+    }
 }
 
 SIPCall*
@@ -1237,7 +1244,10 @@ SIPVoIPLink::transferCommon(SIPCall *call, pj_str_t *dst)
 void
 SIPVoIPLink::transfer(const std::string& id, const std::string& to)
 {
-    SIPCall *call = getSIPCall(id);
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
+
     call->stopRecording();
 
     std::string account_id(Manager::instance().getAccountFromCall(id));
@@ -1260,10 +1270,13 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
 
 bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
 {
-    SIPCall *call = getSIPCall(to);
-    if (!call->inv or !call->inv->dlg)
+    SIPCall *toCall = getSipCall(to);
+    if (!toCall)
+        return false;
+
+    if (!toCall->inv or !toCall->inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
-    pjsip_dialog *target_dlg = call->inv->dlg;
+    pjsip_dialog *target_dlg = toCall->inv->dlg;
     pjsip_uri *uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
 
     char str_dest_buf[PJSIP_MAX_URL_SIZE * 2] = { '<' };
@@ -1283,13 +1296,18 @@ bool SIPVoIPLink::attendedTransfer(const std::string& id, const std::string& to)
     (int)target_dlg->local.info->tag.slen,
     target_dlg->local.info->tag.ptr);
 
-    return transferCommon(getSIPCall(id), &dst);
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return false;
+    return transferCommon(call, &dst);
 }
 
 void
 SIPVoIPLink::refuse(const std::string& id)
 {
-    SIPCall *call = getSIPCall(id);
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
 
     if (!call->isIncoming() or call->getConnectionState() == Call::CONNECTED or !call->inv)
         return;
@@ -1424,12 +1442,10 @@ SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
     if (!account)
         return;
 
-    try {
-        SIPCall *call(getSIPCall(id));
-        dtmfSend(*call, code, account->getDtmfType());
-    } catch (const VoipLinkException &e) {
-        // don't do anything if call doesn't exist
-    }
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
+    dtmfSend(*call, code, account->getDtmfType());
 }
 
 
@@ -1533,17 +1549,6 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data * /*rdata*/)
         Manager::instance().peerAnsweredCall(call->getCallId());
     }
 }
-
-
-SIPCall*
-SIPVoIPLink::getSIPCall(const std::string& id)
-{
-    SIPCall *result = getSipCall(id);
-    if (result == NULL)
-        throw VoipLinkException("Could not get SIPCall");
-    return result;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions

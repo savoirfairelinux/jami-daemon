@@ -233,12 +233,6 @@ class SIPVoIPLink : public VoIPLink {
         pj_caching_pool *getMemoryPoolFactory();
 
         /**
-         * SIPCall accessor
-         * @param id  The call identifier
-         * @return SIPCall*	  A pointer on SIPCall object
-         */
-        SIPCall* getSIPCall(const std::string& id);
-        /**
          * A non-blocking SIPCall accessor
          *
          * Will return NULL if the callMapMutex could not be locked
