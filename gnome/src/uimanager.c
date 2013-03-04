@@ -84,7 +84,6 @@ static GtkAction * copyAction_;
 static GtkAction * pasteAction_;
 static GtkAction * recordAction_;
 static GtkAction * muteAction_;
-static GtkAction * voicemailAction_;
 static GtkAction * imAction_;
 
 static GtkWidget * pickUpWidget_;
@@ -1685,7 +1684,6 @@ create_toolbar_actions(GtkUIManager *ui, SFLPhoneClient *client)
     holdToolbar_ = get_widget(ui, "/ToolbarActions/OnHoldToolbar");
     offHoldToolbar_ = get_widget(ui, "/ToolbarActions/OffHoldToolbar");
     transferToolbar_ = get_widget(ui, "/ToolbarActions/TransferToolbar");
-    voicemailAction_ = get_action(ui, "/ToolbarActions/Voicemail");
     voicemailToolbar_ = get_widget(ui, "/ToolbarActions/VoicemailToolbar");
     newCallWidget_ = get_widget(ui, "/ToolbarActions/NewCallToolbar");
     pickUpWidget_ = get_widget(ui, "/ToolbarActions/PickUpToolbar");
