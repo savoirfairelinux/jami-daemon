@@ -62,19 +62,16 @@ void AudioZrtpSession::initializeZid()
     if (zidFilename_.empty())
         throw ZrtpZidException("zid filename empty");
 
+    const std::string cache_home(XDG_CACHE_HOME);
     std::string zidCompleteFilename;
 
-    std::string xdg_config = std::string(HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PACKAGE + "/" + zidFilename_;
-
-    DEBUG("xdg_config %s", xdg_config.c_str());
-
-    if (XDG_CACHE_HOME != NULL) {
-        std::string xdg_env = std::string(XDG_CACHE_HOME) + zidFilename_;
-        DEBUG("xdg_env %s", xdg_env.c_str());
-        (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
-    } else
-        zidCompleteFilename = xdg_config;
-
+    if (not cache_home.empty()) {
+        zidCompleteFilename = cache_home + DIR_SEPARATOR_STR + zidFilename_;
+    } else {
+        zidCompleteFilename = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
+                              ".cache" + DIR_SEPARATOR_STR + PACKAGE +
+                              DIR_SEPARATOR_STR + zidFilename_;
+    }
 
     if (initialize(zidCompleteFilename.c_str()) >= 0) {
         setEnableZrtp(true);
