@@ -97,11 +97,12 @@ void History::addEntry(const HistoryItem &item, int oldest)
 void History::ensurePath()
 {
     if (path_.empty()) {
-        string xdg_data = string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
+        const string xdg_data = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+                                ".local/share/sflphone";
 
         string userdata;
         // If the environment variable is set (not null and not empty), we'll use it to save the history
-        // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
+        // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOME/.local/share/sflphone
         string xdg_env(XDG_DATA_HOME);
         (not xdg_env.empty()) ? userdata = xdg_env : userdata = xdg_data;
 

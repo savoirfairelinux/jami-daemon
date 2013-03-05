@@ -1857,7 +1857,7 @@ ManagerImpl::getTelephoneFile()
  */
 std::string ManagerImpl::createConfigFile() const
 {
-    std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
 
     const std::string xdg_env(XDG_CONFIG_HOME);

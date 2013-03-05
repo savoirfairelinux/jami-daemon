@@ -429,10 +429,9 @@ void AudioPreference::unserialize(const Conf::YamlNode &map)
     map.getValue(AUDIO_API_KEY, &audioApi_);
     std::string tmpRecordPath;
     map.getValue(RECORDPATH_KEY, &tmpRecordPath);
-    if (not setRecordPath(tmpRecordPath)) {
-        DEBUG("Setting record path to %s", HOMEDIR);
-        setRecordPath(HOMEDIR);
-    }
+    if (not setRecordPath(tmpRecordPath))
+        setRecordPath(fileutils::get_home_dir());
+
     map.getValue(ALWAYS_RECORDING_KEY, &alwaysRecording_);
     map.getValue(VOLUMEMIC_KEY, &volumemic_);
     map.getValue(VOLUMESPKR_KEY, &volumespkr_);

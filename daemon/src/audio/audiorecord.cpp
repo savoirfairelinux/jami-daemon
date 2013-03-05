@@ -135,7 +135,7 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std:
 
     // use HOME directory if path is empty, or if path does not exist
     if (path.empty() or not fileutils::check_dir(path.c_str())) {
-        filePath = HOMEDIR;
+        filePath = fileutils::get_home_dir();
     } else {
         filePath = path;
     }

@@ -68,7 +68,7 @@ void AudioZrtpSession::initializeZid()
     if (not cache_home.empty()) {
         zidCompleteFilename = cache_home + DIR_SEPARATOR_STR + zidFilename_;
     } else {
-        zidCompleteFilename = std::string(HOMEDIR) + DIR_SEPARATOR_STR +
+        zidCompleteFilename = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                               ".cache" + DIR_SEPARATOR_STR + PACKAGE +
                               DIR_SEPARATOR_STR + zidFilename_;
     }
