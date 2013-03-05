@@ -35,6 +35,7 @@
 #include <cmath>
 #include <cstring>
 
+#include "audiobuffer.h"
 #include "sfl_types.h"
 #include "noncopyable.h"
 
@@ -47,7 +48,7 @@ class SamplerateConverter {
         * internal buffer size. Converter must be reinitialized
         * every time these parameters change
         */
-        SamplerateConverter(int freq);
+        SamplerateConverter(int freq, size_t channels = 1);
 
         /** Destructor */
         ~SamplerateConverter();
@@ -59,7 +60,8 @@ class SamplerateConverter {
          * @param SamplerateConverter2 The desired sample rate
          * @param nbSamples	  The number of samples to process
          */
-        void resample(SFLDataFormat* dataIn, SFLDataFormat* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
+        //void resample(SFLDataFormat* dataIn, SFLDataFormat* dataOut, size_t dataOutSize, int oldrate, int newrate, size_t nbSamples);
+        void resample(const AudioBuffer *dataIn, AudioBuffer *dataOut);
 
         /**
          * Convert short table to floats for audio processing
@@ -76,6 +78,8 @@ class SamplerateConverter {
         /* temporary buffers */
         float * floatBufferIn_;
         float * floatBufferOut_;
+
+        size_t channels_; // number of channels configured
         size_t samples_; // size in samples of temporary buffers
         int maxFreq_; // maximal output frequency
 

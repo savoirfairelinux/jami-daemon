@@ -41,7 +41,7 @@ void DcBlocker::reset()
     ym1_ = 0;
 }
 
-void DcBlocker::process(SFLDataFormat *out, SFLDataFormat *in, int samples)
+void DcBlocker::process(SFLAudioSample *out, SFLAudioSample *in, int samples)
 {
     for (int i = 0; i < samples; ++i) {
         x_ = in[i];

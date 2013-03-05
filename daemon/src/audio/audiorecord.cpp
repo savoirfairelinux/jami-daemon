@@ -413,7 +413,8 @@ void AudioRecord::closeWavFile()
         WARN("Can't close file");
 }
 
-void AudioRecord::recData(SFLDataFormat* buffer, size_t nSamples)
+//void AudioRecord::recData(SFLDataFormat* buffer, size_t nSamples)
+void AudioRecord::recData(AudioBuffer* buffer)
 {
     if (recordingEnabled_) {
         if (fileHandle_ == 0) {
@@ -421,11 +422,13 @@ void AudioRecord::recData(SFLDataFormat* buffer, size_t nSamples)
             return;
         }
 
-        if (fwrite(buffer, sizeof(SFLDataFormat), nSamples, fileHandle_) != nSamples)
+        size_t nSamples = buffer->sample_num;
+
+        if (fwrite(&(buffer->getChannel(0)), sizeof(SFLAudioSample), nSamples, fileHandle_) != nSamples)
             WARN("Could not record data! ");
         else {
             fflush(fileHandle_);
-            byteCounter_ += nSamples * sizeof(SFLDataFormat);
+            byteCounter_ += nSamples * sizeof(SFLAudioSample);
         }
     }
 }

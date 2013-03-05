@@ -94,9 +94,11 @@ class AudioRtpRecord {
         int encoderPayloadType_;
         int decoderPayloadType_;
         bool hasDynamicPayloadType_;
-        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE> decData_;
+        //std::tr1::array<SFLAudioSample, DEC_BUFFER_SIZE> decData_;
+        AudioBuffer decData_;
 // FIXME: resampledData should be resized as needed
-        std::tr1::array<SFLDataFormat, DEC_BUFFER_SIZE * 4> resampledData_;
+        //std::tr1::array<SFLAudioSample, DEC_BUFFER_SIZE * 4> resampledData_;
+        AudioBuffer resampledData_;
         std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;
         SamplerateConverter *converterDecode_;
@@ -117,7 +119,7 @@ class AudioRtpRecord {
         /**
         * Ramp In audio data to avoid audio click from peer
         */
-        void fadeInDecodedData(size_t size);
+        void fadeInDecodedData();//size_t size);
         NON_COPYABLE(AudioRtpRecord);
 #ifdef CCPP_PREFIX
         ost::AtomicCounter dead_;

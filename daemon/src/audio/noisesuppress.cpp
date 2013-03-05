@@ -62,8 +62,9 @@ NoiseSuppress::~NoiseSuppress()
     noiseState_ = 0;
 }
 
-void NoiseSuppress::process(SFLDataFormat *data, int samples)
+void NoiseSuppress::process(AudioBuffer *buff, int samples)
 {
+    SFLAudioSample* data = buff.getChannel().data();
     if (noiseState_) {
         assert(smplPerFrame_ == samples);
         speex_preprocess_run(noiseState_, data);

@@ -138,7 +138,8 @@ class AudioLayer {
         /**
          * Apply gain to audio frame
          */
-        static void applyGain(SFLDataFormat *src , int samples, int gain);
+        //static void applyGain(SFLDataFormat *src , int samples, int gain);
+      //  static void applyGain(SFLAudioBuffer *src, int gain)
 
         /**
          * Convert audio amplitude value from linear value to dB

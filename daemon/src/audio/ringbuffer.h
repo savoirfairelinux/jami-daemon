@@ -25,10 +25,15 @@
 #include <fstream>
 #include <vector>
 #include <map>
+
 #include "noncopyable.h"
+#include "audiobuffer.h"
 
 typedef std::map<std::string, size_t> ReadPointer;
 
+/**
+ * A ring buffer for mutichannel audio samples
+ */
 class RingBuffer {
     public:
         /**
@@ -92,11 +97,12 @@ class RingBuffer {
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
          */
-        void put(void* buffer, size_t toCopy);
+         void put(AudioBuffer* buf);
+        //void put(void* buffer, size_t toCopy);
 
         /**
-         * To get how much space is available in the buffer to read in
-         * @return int The available size
+         * To get how much samples are available in the buffer to read in
+         * @return int The available (multichannel) samples number
          */
         size_t availableForGet(const std::string &call_id) const;
 
@@ -106,7 +112,8 @@ class RingBuffer {
          * @param toCopy Number of bytes to copy
          * @return size_t Number of bytes copied
          */
-        size_t get(void* buffer, size_t toCopy, const std::string &call_id);
+         size_t get(AudioBuffer* buf, const std::string &call_id);
+        //size_t get(void* buffer, size_t toCopy, const std::string &call_id);
 
         /**
          * Discard data from the buffer
@@ -136,7 +143,7 @@ class RingBuffer {
         /** Buffer size */
         size_t bufferSize_;
         /** Data */
-        std::vector<unsigned char> buffer_;
+        std::vector<std::vector<SFLAudioSample> > buffer_;
 
         ReadPointer readpointers_;
         std::string buffer_id_;

@@ -45,7 +45,7 @@ void DTMF::startTone(char code)
 
 using std::vector;
 
-bool DTMF::generateDTMF(vector<SFLDataFormat> &buffer)
+bool DTMF::generateDTMF(vector<SFLAudioSample> &buffer)
 {
     try {
         if (currentTone_ != 0) {

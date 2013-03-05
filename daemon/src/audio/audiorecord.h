@@ -102,7 +102,8 @@ class AudioRecord {
          * @param buffer  The data chunk to be recorded
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
-        void recData(SFLDataFormat* buffer, size_t nSamples);
+        //void recData(SFLDataFormat* buffer, size_t nSamples);
+        void recData(SFLAudioSample* buffer);
 
     protected:
 
@@ -180,17 +181,17 @@ class AudioRecord {
         /**
          * Buffer used for mixing two channels
          */
-        SFLDataFormat mixBuffer_[NB_SAMPLES_MAX];
+        SFLAudioSample mixBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Buffer used to copy mic info
          */
-        SFLDataFormat micBuffer_[NB_SAMPLES_MAX];
+        SFLAudioSample micBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Buffer used to copy spkr info
          */
-        SFLDataFormat spkBuffer_[NB_SAMPLES_MAX];
+        SFLAudioSample spkBuffer_[NB_SAMPLES_MAX];
 
         /**
          * Filename for this recording

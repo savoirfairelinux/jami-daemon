@@ -36,6 +36,7 @@
 #include "sfl_types.h"
 #include <cstring>
 #include "noncopyable.h"
+#include "audiobuffer.h"
 
 /**
  * @file audioloop.h
@@ -55,7 +56,8 @@ class AudioLoop {
          * @param nb of int16 to send
          * @param volume  The volume
          */
-        void getNext(SFLDataFormat* output, size_t samples, short volume=100);
+        //void getNext(SFLAudioSample* output, size_t samples, short volume=100);
+        void getNext(AudioBuffer* output, short volume=100);
 
         void seek(double relative_position);
 
@@ -70,8 +72,8 @@ class AudioLoop {
          * Accessor to the size of the buffer
          * @return unsigned int The size
          */
-        size_t getSize() const {
-            return size_;
+        size_t getSize() {
+            return buffer_->samples();//size_;
         }
 
         /**
@@ -84,16 +86,17 @@ class AudioLoop {
 
     protected:
         /** The data buffer */
-        SFLDataFormat* buffer_;
+        AudioBuffer * buffer_;
+        //SFLAudioSample* buffer_;
 
         /** Number of samples inside the buffer */
-        size_t size_;
+        //size_t size_;
 
         /** current position, set to 0, when initialize */
         size_t pos_;
 
         /** Sample rate */
-        unsigned int sampleRate_;
+        //unsigned int sampleRate_;
 
         /** Is a playback recording */
         bool isRecording_;

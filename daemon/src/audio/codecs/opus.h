@@ -50,7 +50,7 @@ private:
    OpusDecoder *decoder_;
    static const int FRAME_SIZE = 160;
    static const int CLOCK_RATE = 16000;
-   static const int CHANNELS   = 1;
+   //static const int CHANNELS   = 1;
 };
 
 #endif

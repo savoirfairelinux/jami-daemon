@@ -56,7 +56,12 @@ GainControl::GainControl(double sr, double target) : averager_(sr, SFL_GAIN_ATTA
     DEBUG("Target gain %f dB (%f linear)", targetLeveldB_, targetLevelLinear_);
 }
 
-void GainControl::process(SFLDataFormat *buf, int samples)
+void GainControl::process(AudioBuffer * buf)
+{
+    process(buf->getChannel()->data(), buf->samples());
+}
+
+void GainControl::process(SFLAudioSample *buf, int samples)
 {
     double rms, rmsAvgLevel, in, out, diffRms, maxRms;
 

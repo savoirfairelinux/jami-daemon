@@ -33,11 +33,11 @@
 #include <cassert>
 #include "logger.h"
 
-SamplerateConverter::SamplerateConverter(int freq) : floatBufferIn_(0),
-    floatBufferOut_(0), samples_(0), maxFreq_(freq), src_state_(0)
+SamplerateConverter::SamplerateConverter(int freq, size_t channels /* = 1 */) : floatBufferIn_(0),
+    floatBufferOut_(0), samples_(0), channels_(channels), maxFreq_(freq), src_state_(0)
 {
     int err;
-    src_state_ = src_new(SRC_LINEAR, 1, &err);
+    src_state_ = src_new(SRC_LINEAR, channels_, &err);
 
     samples_ = (freq * 20) / 1000; // start with 20 ms buffers
 
@@ -63,21 +63,40 @@ SamplerateConverter::Short2FloatArray(const short *in, float *out, int len)
         out[len] = (float) in[len] * .000030517578125f;
 }
 
-void SamplerateConverter::resample(SFLDataFormat *dataIn,
+void SamplerateConverter::resample(const AudioBuffer *dataIn, AudioBuffer *dataOut)
+/*void SamplerateConverter::resample(SFLDataFormat *dataIn,
                                    SFLDataFormat *dataOut,
-                                   size_t dataOutSize, int inputFreq,
-                                   int outputFreq, size_t nbSamples)
+                                   size_t dataOutSize,
+                                   int inputFreq,
+                                   int outputFreq,
+                                   size_t nbSamples)*/
 {
+    double inputFreq = dataIn->getSampleRate();
+    double outputFreq = dataIn->getSampleRate();
     double sampleFactor = (double) outputFreq / inputFreq;
+
+    size_t nbSamples = dataIn.samples();
+    size_t nbChans = dataIn.getChannelNum();
+
+    unsigned i, j;
 
     if (sampleFactor == 1.0)
         return;
 
-    size_t outSamples = nbSamples * sampleFactor;
-    const unsigned int maxSamples = std::max(outSamples, nbSamples);
+    if(nbChans != channels_) {
+        // change channel num if needed
+        int err;
+        src_delete(src_state_);
+        src_state_ = src_new(SRC_LINEAR, nbChans, &err);
+        channels_ = nbChans;
+    }
+
+    size_t inSamples = nbChans * nbSamples;
+    size_t outSamples = inSamples * sampleFactor;
+    const unsigned int maxSamples = std::max(inSamples, outSamples);
 
     if (maxSamples > samples_) {
-        /* grow buffer if needed */
+        // grow buffer if needed
         samples_ = maxSamples;
         delete [] floatBufferIn_;
         delete [] floatBufferOut_;
@@ -89,16 +108,27 @@ void SamplerateConverter::resample(SFLDataFormat *dataIn,
     src_data.data_in = floatBufferIn_;
     src_data.data_out = floatBufferOut_;
     src_data.input_frames = nbSamples;
-    src_data.output_frames = outSamples;
+    src_data.output_frames = nbSamples * sampleFactor;
     src_data.src_ratio = sampleFactor;
     src_data.end_of_input = 0; // More data will come
 
-    Short2FloatArray(dataIn, floatBufferIn_, nbSamples);
+    //Short2FloatArray(dataIn, floatBufferIn_, nbSamples);
+    dataIn.interleaveFloat(floatBufferIn_);
+
     src_process(src_state_, &src_data);
 
     if (outSamples > dataOutSize) {
         ERROR("Outsamples exceeds output buffer size, clamping to %u", dataOutSize);
         outSamples = dataOutSize;
     }
-    src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
+
+    //src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
+
+    /*
+    TODO: one-shot desinterleave and float-to-short conversion
+    currently using floatBufferIn_ as scratch
+    */
+    short* scratch_buff = (short*)floatBufferIn_;
+    src_float_to_short_array(floatBufferOut_, scratch_buff, outSamples);
+    dataOut.fromInterleaved(scratch_buff, outSamples, nbChans);
 }

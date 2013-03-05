@@ -41,12 +41,12 @@
 #include <cassert>
 #include "logger.h"
 
-AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0),  size_(0), pos_(0), sampleRate_(sampleRate), isRecording_(false)
+AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0), sampleRate_(sampleRate), isRecording_(false)
 {}
 
 AudioLoop::~AudioLoop()
 {
-    delete [] buffer_;
+    //delete [] buffer_;
 }
 
 void
@@ -60,40 +60,54 @@ AudioLoop::seek(double relative_position)
 static unsigned int updatePlaybackScale = 0;
 
 void
-AudioLoop::getNext(SFLDataFormat* output, size_t total_samples, short volume)
+//AudioLoop::getNext(SFLAudioSample* output, size_t total_samples, short volume)
+AudioLoop::getNext(AudioBuffer* output, short volume)
 {
-    size_t pos = pos_;
+    if(!buffer_) {
+        ERROR("AudioLoop::buffer_ is not set (NULL pointer)");
+        return;
+    }
 
-    if (size_ == 0) {
+    const size_t buf_samples = buffer_.samples();
+    size_t pos = pos_;
+    size_t total_samples = output->samples();
+    size_t output_pos = 0;
+
+    if (buf_samples == 0) {
         ERROR("Audio loop size is 0");
         return;
-    } else if (pos >= size_) {
+    } else if (pos >= buf_samples) {
         ERROR("Invalid loop position %d", pos);
         return;
     }
 
     while (total_samples > 0) {
-        size_t samples = total_samples;
+        size_t samples = std::min(total_samples, buf_samples - pos);
 
-        if (samples > (size_ - pos))
-            samples = size_ - pos;
+       /* if (samples > (buf_samples - pos))
+            samples = buf_samples - pos;*/
 
         // short->char conversion
-        memcpy(output, buffer_ + pos, samples * sizeof(SFLDataFormat));
+        //memcpy(output, buffer_ + pos, samples * sizeof(SFLAudioSample));
+        //buffer_.copy(output, pos, samples);
+        output.copy(buffer_, samples, pos, output_pos);
 
         // Scaling needed
-        if (volume != 100) {
+        /*if (volume != 100) {
             const double gain = volume * 0.01;
 
             for (size_t i = 0; i < samples; ++i, ++output)
                 *output *= gain;
         } else
-            output += samples; // this is the destination...
-
+            output_pos += samples;*/
+            //output += samples; // this is the destination...
+        output_pos += samples;
         pos = (pos + samples) % size_;
 
         total_samples -= samples;
     }
+
+    output.applyGain(volume); // apply volume
 
     pos_ = pos;
 

@@ -48,7 +48,8 @@ class GainControl {
          * /param Input audio buffer
          * /param Input samples
          */
-        void process(SFLDataFormat *, int samples);
+        void process(SFLAudioSample *, int samples);
+        void process(AudioBuffer * buf);
 
     private:
         class DetectionAverage {

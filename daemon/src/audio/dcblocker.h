@@ -37,11 +37,11 @@ class DcBlocker {
     public:
         DcBlocker();
         void reset();
-        void process(SFLDataFormat *out, SFLDataFormat *in, int samples);
+        void process(SFLAudioSample *out, SFLAudioSample *in, int samples);
 
     private:
 
-        SFLDataFormat y_, x_, xm1_, ym1_;
+        SFLAudioSample y_, x_, xm1_, ym1_;
 };
 
 #endif

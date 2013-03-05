@@ -232,17 +232,19 @@ void MainBuffer::unBindAll(const std::string & call_id)
     }
 }
 
-void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
+//void MainBuffer::putData(void *buffer, size_t toCopy, const std::string &call_id)
+void MainBuffer::putData(AudioBuffer* buffer, const std::string &call_id)
 {
     sfl::ScopedLock guard(mutex_);
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
 
     if (ring_buffer)
-        ring_buffer->put(buffer, toCopy);
+        ring_buffer->put(buffer);
 }
 
-size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_id)
+//size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_id)
+size_t MainBuffer::getData(AudioBuffer* buffer, const std::string &call_id)
 {
     sfl::ScopedLock guard(mutex_);
 
@@ -256,25 +258,28 @@ size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if (iter_id != callid_set->end())
-            return getDataByID(buffer, toCopy, *iter_id, call_id);
+            return getDataByID(buffer, *iter_id, call_id); //return getDataByID(buffer, toCopy, *iter_id, call_id);
         else
             return 0;
     } else {
-        memset(buffer, 0, toCopy);
+        buffer->clear();//memset(buffer, 0, toCopy);
 
         size_t size = 0;
+        AudioBuffer mixBuffer(buffer);
 
         for (CallIDSet::iterator iter_id = callid_set->begin();
              iter_id != callid_set->end(); ++iter_id) {
-            size_t nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
+            /*size_t nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
             SFLDataFormat mixBuffer[nbSmplToCopy];
             memset(mixBuffer, 0, toCopy);
-            size = getDataByID(mixBuffer, toCopy, *iter_id, call_id);
+            size = getDataByID(mixBuffer, toCopy, *iter_id, call_id);*/
+            size = getDataByID(mixBuffer, *iter_id, call_id);
 
             if (size > 0) {
-                SFLDataFormat *dest = static_cast<SFLDataFormat*>(buffer);
+                /*SFLDataFormat *dest = static_cast<SFLDataFormat*>(buffer);
                 for (size_t k = 0; k < nbSmplToCopy; ++k)
-                    dest[k] += mixBuffer[k];
+                    dest[k] += mixBuffer[k];*/
+                buffer->mix(mixBuffer);
             }
         }
 
@@ -282,11 +287,17 @@ size_t MainBuffer::getData(void *buffer, size_t toCopy, const std::string &call_
     }
 }
 
-size_t MainBuffer::getDataByID(void *buffer, size_t toCopy, const std::string & call_id, const std::string & reader_id)
+size_t MainBuffer::getDataByID(AudioBuffer *buffer, const std::string & call_id, const std::string & reader_id)
+{
+    RingBuffer* ring_buffer = getRingBuffer(call_id);
+    return ring_buffer ? ring_buffer->get(buffer, reader_id) : 0;
+}
+
+/*size_t MainBuffer::getDataByID(void *buffer, size_t toCopy, const std::string & call_id, const std::string & reader_id)
 {
     RingBuffer* ring_buffer = getRingBuffer(call_id);
     return ring_buffer ? ring_buffer->get(buffer, toCopy, reader_id) : 0;
-}
+}*/
 
 size_t MainBuffer::availableForGet(const std::string &call_id)
 {
@@ -307,15 +318,15 @@ size_t MainBuffer::availableForGet(const std::string &call_id)
 
     } else {
 
-        size_t availableBytes = INT_MAX;
+        size_t availableSamples = INT_MAX;
         for (CallIDSet::iterator i = callid_set->begin(); i != callid_set->end(); ++i) {
-            const size_t nbBytes = availableForGetByID(*i, call_id);
+            const size_t nbSamples = availableForGetByID(*i, call_id);
 
-            if (nbBytes != 0)
-                availableBytes = std::min(availableBytes, nbBytes);
+            if (nbSamples != 0)
+                availableSamples = std::min(availableSamples, nbSamples);
         }
 
-        return availableBytes != INT_MAX ? availableBytes : 0;
+        return availableSamples != INT_MAX ? availableSamples : 0;
     }
 }
 

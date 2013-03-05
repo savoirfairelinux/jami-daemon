@@ -85,7 +85,7 @@ using std::vector;
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples(vector<SFLDataFormat> &buffer, unsigned char code)
+void DTMFGenerator::getSamples(vector<SFLAudioSample> &buffer, unsigned char code)
 {
     code = toupper(code);
 
@@ -121,7 +121,7 @@ void DTMFGenerator::getSamples(vector<SFLDataFormat> &buffer, unsigned char code
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples(vector<SFLDataFormat> &buffer)
+void DTMFGenerator::getNextSamples(vector<SFLAudioSample> &buffer)
 {
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
@@ -134,10 +134,10 @@ void DTMFGenerator::getNextSamples(vector<SFLDataFormat> &buffer)
     state.offset = (state.offset + i) % sampleRate_;
 }
 
-SFLDataFormat* DTMFGenerator::fillToneBuffer(int index)
+SFLAudioSample* DTMFGenerator::fillToneBuffer(int index)
 {
     assert(index >= 0 and index < NUM_TONES);
-    SFLDataFormat* ptr = new SFLDataFormat[sampleRate_];
-    tone_.genSin(ptr, tones_[index].higher, tones_[index].lower,  sampleRate_);
+    SFLAudioSample* ptr = new SFLAudioSample[sampleRate_];
+    tone_.genSin(ptr, tones_[index].higher, tones_[index].lower, sampleRate_);
     return ptr;
 }

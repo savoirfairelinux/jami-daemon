@@ -50,12 +50,12 @@ class G722 : public sfl::AudioCodec {
         }
 
     private:
-        int decode(SFLDataFormat *dst, unsigned char *src, size_t buf_size)
+        int decode(SFLAudioSample *dst, unsigned char *src, size_t buf_size)
         {
             return g722_decode(dst, src, buf_size);
         }
 
-        int encode(unsigned char *dst, SFLDataFormat *src, size_t /*buf_size*/)
+        int encode(unsigned char *dst, SFLAudioSample *src, size_t /*buf_size*/)
         {
             int out = g722_encode(dst, src, frameSize_);
             return out;
@@ -86,12 +86,12 @@ class G722 : public sfl::AudioCodec {
             state.out_bits = 0;
         }
 
-        SFLDataFormat saturate(int32_t amp)
+        SFLAudioSample saturate(int32_t amp)
         {
-            SFLDataFormat amp16 = 0;
+            SFLAudioSample amp16 = 0;
 
             /* Hopefully this is optimised for the common case - not clipping */
-            amp16 = (SFLDataFormat) amp;
+            amp16 = (SFLAudioSample) amp;
 
             if (amp == amp16)
                 return amp16;
@@ -313,7 +313,7 @@ class G722 : public sfl::AudioCodec {
             decode_state_.band[band].s = saturate(decode_state_.band[band].sp + decode_state_.band[band].sz);
         }
 
-        int g722_decode(SFLDataFormat amp[], const uint8_t g722_data[], int len)
+        int g722_decode(SFLAudioSample amp[], const uint8_t g722_data[], int len)
         {
             static const int wl[8] = {-60, -30, 58, 172, 334, 538, 1198, 3042 };
             static const int rl42[16] = {0, 7, 6, 5, 4, 3, 2, 1, 7, 6, 5, 4, 3,  2, 1, 0 };
@@ -508,11 +508,11 @@ class G722 : public sfl::AudioCodec {
                 }
 
                 if (decode_state_.itu_test_mode) {
-                    amp[outlen++] = (SFLDataFormat)(rlow << 1);
-                    amp[outlen++] = (SFLDataFormat)(rhigh << 1);
+                    amp[outlen++] = (SFLAudioSample)(rlow << 1);
+                    amp[outlen++] = (SFLAudioSample)(rhigh << 1);
                 } else {
                     if (decode_state_.eight_k) {
-                        amp[outlen++] = (SFLDataFormat) rlow;
+                        amp[outlen++] = (SFLAudioSample) rlow;
                     } else {
                         /* Apply the receive QMF */
                         for (i = 0;  i < 22;  i++)
@@ -531,9 +531,9 @@ class G722 : public sfl::AudioCodec {
                             xout1 += decode_state_.x[2*i + 1]*qmf_coeffs[11 - i];
                         }
 
-                        amp[outlen++] = (SFLDataFormat)(xout1 >> 12);
+                        amp[outlen++] = (SFLAudioSample)(xout1 >> 12);
 
-                        amp[outlen++] = (SFLDataFormat)(xout2 >> 12);
+                        amp[outlen++] = (SFLAudioSample)(xout2 >> 12);
                     }
                 }
             }
@@ -541,7 +541,7 @@ class G722 : public sfl::AudioCodec {
             return outlen;
         }
 
-        int g722_encode(uint8_t g722_data[], const SFLDataFormat amp[], int len)
+        int g722_encode(uint8_t g722_data[], const SFLAudioSample amp[], int len)
         {
             static const int q6[32] = {
                 0,   35,   72,  110,  150,  190,  233,  276,

@@ -48,10 +48,11 @@ namespace {
 RingBuffer::RingBuffer(size_t size, const std::string &call_id) :
       endPos_(0)
     , bufferSize_(size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
-    , buffer_(bufferSize_)
+    , buffer_(1, vector<SFLAudioSample>(bufferSize_))
     , readpointers_()
     , buffer_id_(call_id)
-{}
+{
+}
 
 void
 RingBuffer::flush(const std::string &call_id)
@@ -160,26 +161,36 @@ bool RingBuffer::hasNoReadPointers() const
 //
 
 // This one puts some data inside the ring buffer.
-void
-RingBuffer::put(void* buffer, size_t toCopy)
+//void RingBuffer::put(void* buffer, size_t toCopy)
+void RingBuffer::put(AudioBuffer* buf)
 {
     const size_t len = putLength();
+    const AudioChannel chans = buf->channels;
+    const size_t sample_num = buf->sample_num;
+    const size_t toCopy = sample_num;
+
+    // Add more channels if the input buffer holds more channels than the ring.
+    if(buffer_.size() < chans)
+        buffer_.resize(chans, vector<SFLAudioSample>(bufferSize_, 0))
 
     if (toCopy > bufferSize_ - len)
         toCopy = bufferSize_ - len;
 
-    unsigned char *src = static_cast<unsigned char *>(buffer);
-
+    //unsigned char *src = static_cast<SFLAudioSample *>(buffer);
+    size_t in_pos = 0;
     size_t pos = endPos_;
 
     while (toCopy) {
         size_t block = toCopy;
+        size_t i;
 
         if (block > bufferSize_ - pos) // Wrap block around ring ?
             block = bufferSize_ - pos; // Fill in to the end of the buffer
 
-        memcpy(&(*buffer_.begin()) + pos, src, block);
-        src += block;
+        for(i=0; i<chans; i++) {
+            copy(buf->getChannel(i)->begin()+in_pos, buf->getChannel(i)->begin()+in_pos+block, buffer_[i].begin()+pos);
+        }
+        in_pos += block;
         pos = (pos + block) % bufferSize_;
         toCopy -= block;
     }
@@ -198,8 +209,8 @@ RingBuffer::availableForGet(const std::string &call_id) const
 }
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
-size_t
-RingBuffer::get(void *buffer, size_t toCopy, const std::string &call_id)
+//size_t RingBuffer::get(void *buffer, size_t toCopy, const std::string &call_id)
+size_t RingBuffer::get(AudioBuffer* buf, const std::string &call_id)
 {
     if (hasNoReadPointers())
         return 0;
@@ -208,22 +219,31 @@ RingBuffer::get(void *buffer, size_t toCopy, const std::string &call_id)
         return 0;
 
     const size_t len = getLength(call_id);
+    const AudioChannel chans = min(buffer_.size(), buf->channels);
+    const size_t sample_num = buf->sample_num;
+    size_t toCopy = min(buf->sample_num, len);
 
-    if (toCopy > len)
-        toCopy = len;
+  /*  if (toCopy > len)
+        toCopy = len;*/
 
     const size_t copied = toCopy;
 
-    unsigned char *dest = (unsigned char *) buffer;
+    size_t dest = 0;
     size_t startPos = getReadPointer(call_id);
 
     while (toCopy > 0) {
         size_t block = toCopy;
+        AudioChannel i;
 
         if (block > bufferSize_ - startPos)
             block = bufferSize_ - startPos;
 
-        memcpy(dest, &(*buffer_.begin()) + startPos, block);
+        for(i=0; i<chans; i++) {
+            copy(buffer_[i].begin()+startPos, buffer_[i].begin()+startPos+block, buf->getChannel(i)->begin()+dest);
+           // memcpy(buf->getChannel(i), &(*buffer_[i].begin()) + startPos, block);
+        }
+
+        //memcpy(dest, &(*buffer_.begin()) + startPos, block);
         dest += block;
         startPos = (startPos + block) % bufferSize_;
         toCopy -= block;

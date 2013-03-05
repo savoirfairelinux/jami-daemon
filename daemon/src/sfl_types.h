@@ -33,9 +33,20 @@
 
 #include <cstddef> // for size_t
 
-typedef short SFLDataFormat;
+typedef short SFLAudioSample;
+//typedef size_t AudioChannel;
+
 typedef signed short SINT16;
 typedef signed int SINT32;
+
+/*
+typedef struct {
+	int sample_rate;
+	size_t channels;
+	size_t sample_num; // number of multichannel samples
+	SFLAudioSample *samples; // buffer, must be able to hold at least channels*sample_num SFLAudioSamples
+} SFLAudioBuffer;
+*/
 
 static const size_t SIZEBUF = 400000; /** About 12 sec of buffering at 8000 Hz*/
 
