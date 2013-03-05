@@ -581,14 +581,6 @@ class ManagerImpl {
          */
         void setEchoCancelState(const std::string &state);
 
-        int getEchoCancelTailLength() const;
-
-        void setEchoCancelTailLength(int);
-
-        int getEchoCancelDelay() const;
-
-        void setEchoCancelDelay(int);
-
         /**
          * Convert a list of payload in a special format, readable by the server.
          * Required format: payloads separated with one slash.

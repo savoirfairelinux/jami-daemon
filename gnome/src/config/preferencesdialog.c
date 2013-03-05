@@ -415,7 +415,7 @@ show_preferences_dialog(SFLPhoneClient *client)
 
     if (addrbook) {
         // Addressbook tab
-        tab = create_addressbook_settings();
+        tab = create_addressbook_settings(client);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
     }

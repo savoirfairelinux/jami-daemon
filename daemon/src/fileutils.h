@@ -34,7 +34,6 @@
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
 
-#define HOMEDIR                 (PROTECTED_GETENV("HOME"))
 #define XDG_DATA_HOME           (PROTECTED_GETENV("XDG_DATA_HOME"))
 #define XDG_CONFIG_HOME         (PROTECTED_GETENV("XDG_CONFIG_HOME"))
 #define XDG_CACHE_HOME          (PROTECTED_GETENV("XDG_CACHE_HOME"))
@@ -43,9 +42,10 @@
 
 
 #define DIR_SEPARATOR_STR "/"   // Directory separator char
-#define DIR_SEPARATOR_CH = '/'  // Directory separator string
+#define DIR_SEPARATOR_CH  '/'  // Directory separator string
 
 namespace fileutils {
+    std::string get_home_dir();
     bool check_dir(const char *path);
     void set_program_dir(char *program_path);
     const char *get_program_dir();

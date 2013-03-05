@@ -91,25 +91,6 @@ const char *get_data_dir()
 }
 
 namespace {
-std::string
-get_home_dir()
-{
-    // 1) try getting user's home directory from the environment
-    const std::string home(HOMEDIR);
-    if (not home.empty())
-        return home;
-
-    // 2) try getting it from getpwuid_r (i.e. /etc/passwd)
-    const long max = sysconf(_SC_GETPW_R_SIZE_MAX);
-    if (max != -1) {
-        char buf[max];
-        struct passwd pwbuf, *pw;
-        if (getpwuid_r(getuid(), &pwbuf, buf, sizeof(buf), &pw) == 0 and pw != NULL)
-            return std::string(pw->pw_dir);
-    } else {
-        return "";
-    }
-}
 
 /* Lock a file region */
 int
@@ -191,4 +172,23 @@ FileHandle::~FileHandle()
     }
 }
 
+std::string
+get_home_dir()
+{
+    // 1) try getting user's home directory from the environment
+    const std::string home(PROTECTED_GETENV("HOME"));
+    if (not home.empty())
+        return home;
+
+    // 2) try getting it from getpwuid_r (i.e. /etc/passwd)
+    const long max = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (max != -1) {
+        char buf[max];
+        struct passwd pwbuf, *pw;
+        if (getpwuid_r(getuid(), &pwbuf, buf, sizeof(buf), &pw) == 0 and pw != NULL)
+            return pw->pw_dir;
+    } else {
+        return "";
+    }
+}
 }

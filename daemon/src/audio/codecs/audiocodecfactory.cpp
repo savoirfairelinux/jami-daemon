@@ -159,7 +159,7 @@ AudioCodecFactory::scanCodecDirectory()
     std::vector<sfl::AudioCodec*> codecs;
     std::vector<std::string> dirToScan;
 
-    dirToScan.push_back(std::string(HOMEDIR) + DIR_SEPARATOR_STR "." PACKAGE "/");
+    dirToScan.push_back(fileutils::get_home_dir() + DIR_SEPARATOR_STR "." PACKAGE "/");
     dirToScan.push_back(CODECS_DIR "/");
     const char *envDir = getenv("CODECS_PATH");
 

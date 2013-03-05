@@ -65,5 +65,10 @@
             <description>Command to execute when opening a URL from an instant message.</description>
             <default>''</default>
         </key>
+        <key name="use-evolution-addressbook" type="b">
+            <default>true</default>
+            <summary>Use Evolution Addressbook</summary>
+            <description>Use Evolution Addressbook (if available)</description>
+        </key>
     </schema>
 </schemalist>

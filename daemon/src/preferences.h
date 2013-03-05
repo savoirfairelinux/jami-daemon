@@ -338,22 +338,6 @@ class AudioPreference : public Serializable {
             echocancel_ = echo;
         }
 
-        int getEchoCancelTailLength() const {
-            return echoCancelTailLength_;
-        }
-
-        void setEchoCancelTailLength(int length) {
-            echoCancelTailLength_ = length;
-        }
-
-        int getEchoCancelDelay() const {
-            return echoCancelDelay_;
-        }
-
-        void setEchoCancelDelay(int delay) {
-            echoCancelDelay_ = delay;
-        }
-
     private:
         std::string audioApi_;
 
@@ -377,8 +361,6 @@ class AudioPreference : public Serializable {
 
         bool noisereduce_;
         bool echocancel_;
-        int echoCancelTailLength_;
-        int echoCancelDelay_;
 };
 
 class ShortcutPreferences : public Serializable {

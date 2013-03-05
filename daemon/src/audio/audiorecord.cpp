@@ -130,12 +130,11 @@ void AudioRecord::setSndSamplingRate(int smplRate)
 
 void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std::string &path)
 {
-    std::stringstream s;
     std::string filePath;
 
     // use HOME directory if path is empty, or if path does not exist
     if (path.empty() or not fileutils::check_dir(path.c_str())) {
-        filePath = HOMEDIR;
+        filePath = fileutils::get_home_dir();
     } else {
         filePath = path;
     }
@@ -143,7 +142,7 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, int sndSmplRate, const std:
     fileType_ = type;
     channels_ = 1;
     sndSmplRate_ = sndSmplRate;
-    savePath_ = (*filePath.rbegin() == '/') ? filePath : filePath + "/";
+    savePath_ = (*filePath.rbegin() == DIR_SEPARATOR_CH) ? filePath : filePath + DIR_SEPARATOR_STR;
 }
 
 namespace {

@@ -53,7 +53,7 @@ void
 show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *client);
 
 void
-show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event);
+show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *client);
 
 GtkWidget *
 create_menus(GtkUIManager *ui_manager, SFLPhoneClient *client);

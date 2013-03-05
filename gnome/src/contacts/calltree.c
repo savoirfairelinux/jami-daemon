@@ -286,7 +286,7 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, SFLPhoneClient *client)
     else if (calltab_has_name(active_calltree_tab, HISTORY))
         show_popup_menu_history(widget, event, client);
     else
-        show_popup_menu_contacts(widget, event);
+        show_popup_menu_contacts(widget, event, client);
 
     return TRUE;
 }

@@ -35,6 +35,7 @@
 #include <glib.h>
 
 #include "addressbook.h"
+#include "sflphone_client.h"
 #include "actions.h"
 #include "utils.h"
 
@@ -60,6 +61,6 @@ gboolean
 addressbook_display (AddressBook_Config *settings, const gchar *field);
 
 GtkWidget*
-create_addressbook_settings();
+create_addressbook_settings(SFLPhoneClient *client);
 
 #endif // _ADDRESS_BOOK_CONFIG

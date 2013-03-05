@@ -60,7 +60,6 @@
 #include <gdk/gdkkeysyms.h>
 
 /** Local variables */
-static GtkUIManager *ui_manager;
 static GtkAccelGroup *accelGroup;
 static GtkWidget *subvbox;
 static GtkWidget *vbox;
@@ -247,7 +246,7 @@ create_main_window(SFLPhoneClient *client)
                      G_CALLBACK(window_configure_cb), client);
 
 
-    ui_manager = uimanager_new(client);
+    GtkUIManager *ui_manager = uimanager_new(client);
     if (!ui_manager) {
         g_warning("Could not load xml GUI\n");
         exit(1);

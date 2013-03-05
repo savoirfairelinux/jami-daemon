@@ -2206,6 +2206,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 }
 
 namespace {
+    // returns port in range [10500, 64998]
     unsigned int getRandomPort()
     {
         return ((rand() % 27250) + 5250) * 2;
@@ -2235,9 +2236,11 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 
 #ifdef SFL_VIDEO
     if (call->getLocalVideoPort() == 0) {
+        // https://projects.savoirfairelinux.com/issues/17498
+        const unsigned int MAX_VIDEO_PORT = 20001;
         unsigned int callLocalVideoPort = 0;
         do
-            callLocalVideoPort = getRandomPort();
+            callLocalVideoPort = getRandomPort() % MAX_VIDEO_PORT;
         while (call->getLocalAudioPort() == callLocalVideoPort);
 
         call->setLocalVideoPort(callLocalVideoPort);

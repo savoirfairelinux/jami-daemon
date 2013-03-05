@@ -1452,44 +1452,6 @@ dbus_set_echo_cancel_state(const gchar *state)
 }
 
 int
-dbus_get_echo_cancel_tail_length(void)
-{
-    GError *error = NULL;
-    int length = 0;
-    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_tail_length(config_proxy, &length, &error);
-    check_error(error);
-    return length;
-}
-
-void
-dbus_set_echo_cancel_tail_length(int length)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_tail_length(config_proxy, length, &error);
-    check_error(error);
-}
-
-int
-dbus_get_echo_cancel_delay(void)
-{
-    GError *error = NULL;
-    int delay = 0;
-    org_sflphone_SFLphone_ConfigurationManager_get_echo_cancel_delay(config_proxy, &delay, &error);
-    check_error(error);
-
-    return delay;
-}
-
-void
-dbus_set_echo_cancel_delay(int delay)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_echo_cancel_delay(config_proxy, delay, &error);
-    check_error(error);
-}
-
-
-int
 dbus_is_iax2_enabled()
 {
     int res = 0;
