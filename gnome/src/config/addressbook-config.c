@@ -33,6 +33,7 @@
 #include "dbus.h"
 #include "searchbar.h"
 #include "contacts/addrbookfactory.h"
+#include "sflphone_client.h"
 #include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
@@ -128,15 +129,12 @@ enable_options()
 }
 
 static void
-enable_cb(GtkWidget *widget)
+enable_cb(GtkWidget *widget, SFLPhoneClient *client)
 {
 
-    addressbook_config->enable
-    = (guint) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
+    addressbook_config->enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    g_settings_set_boolean(client->settings, "use-evolution-addressbook", addressbook_config->enable);
     enable_options();
-
-
 }
 
 static void
@@ -298,7 +296,7 @@ addressbook_config_fill_book_list()
 }
 
 GtkWidget*
-create_addressbook_settings()
+create_addressbook_settings(SFLPhoneClient *client)
 {
     GtkWidget *result_frame, *value, *item;
 
@@ -306,7 +304,7 @@ create_addressbook_settings()
     GtkCellRenderer *renderer;
     GtkTreeViewColumn *tree_view_column;
 
-    // Load the user value
+    // Load the default values
     addressbook_config = addressbook_config_load_parameters();
 
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -318,8 +316,7 @@ create_addressbook_settings()
 
     // PHOTO DISPLAY
     item = gtk_check_button_new_with_mnemonic(_("_Use Evolution address books"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), addressbook_config->enable);
-    g_signal_connect(G_OBJECT(item) , "clicked" , G_CALLBACK(enable_cb), NULL);
+    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(enable_cb), client);
     /* 2x1 */
     gtk_grid_attach(GTK_GRID(grid), item, 1, 0, 2, 1);
 
@@ -412,6 +409,10 @@ create_addressbook_settings()
     addressbook_config_fill_book_list();
 
     gtk_widget_show_all(ret);
+
+    const gboolean enabled = g_settings_get_boolean(client->settings, "use-evolution-addressbook");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), enabled);
+    addressbook_config->enable = enabled;
 
     enable_options();
 

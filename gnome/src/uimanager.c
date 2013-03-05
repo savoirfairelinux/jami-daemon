@@ -446,7 +446,8 @@ update_actions(SFLPhoneClient *client)
     }
 
     // If addressbook support has been enabled and all addressbooks are loaded, display the icon
-    if (addrbook && addrbook->is_ready() && addressbook_config_load_parameters()->enable) {
+    if (addrbook && addrbook->is_ready() &&
+        g_settings_get_boolean(client->settings, "use-evolution-addressbook")) {
         add_to_toolbar(toolbar, contactButton_, -1);
 
         // Make the icon clickable only if at least one address book is active
