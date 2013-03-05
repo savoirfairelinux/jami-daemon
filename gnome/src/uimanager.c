@@ -1342,7 +1342,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
                            get_accel_group());
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), paste);
         g_signal_connect(G_OBJECT(paste), "activate", G_CALLBACK(edit_paste),
-                         NULL);
+                         client);
         gtk_widget_show(paste);
 
         if (pickup || hangup || hold) {
@@ -1358,7 +1358,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
             g_signal_connect(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(call_pick_up),
-                             NULL);
+                             client);
             gtk_widget_show(menu_items);
         }
 
@@ -1369,7 +1369,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *cli
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
             g_signal_connect(G_OBJECT(menu_items), "activate",
                              G_CALLBACK(call_hang_up),
-                             NULL);
+                             client);
             gtk_widget_show(menu_items);
         }
 
@@ -1517,7 +1517,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
 
 
 void
-show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
+show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneClient *client)
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(contacts_tab);
 
@@ -1528,7 +1528,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
         GtkWidget *image = gtk_image_new_from_file(ICONS_DIR "/icon_accept.svg");
         gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(new_call), image);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), new_call);
-        g_signal_connect(new_call, "activate", G_CALLBACK(call_back), NULL);
+        g_signal_connect(new_call, "activate", G_CALLBACK(call_back), client);
         gtk_widget_show(new_call);
 
         GtkWidget *edit = gtk_image_menu_item_new_from_stock(GTK_STOCK_EDIT,
