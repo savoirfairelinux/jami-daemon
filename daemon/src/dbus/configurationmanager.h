@@ -92,10 +92,6 @@ class ConfigurationManager
         void setNoiseSuppressState(const std::string& state);
         std::string getEchoCancelState();
         void setEchoCancelState(const std::string& state);
-        void setEchoCancelTailLength(const int32_t& length);
-        int getEchoCancelTailLength();
-        void setEchoCancelDelay(const int32_t& length);
-        int getEchoCancelDelay();
 
         std::map<std::string, std::string> getRingtoneList();
 

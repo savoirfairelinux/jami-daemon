@@ -95,8 +95,6 @@ static const char * const VOLUMEMIC_KEY = "volumeMic";
 static const char * const VOLUMESPKR_KEY = "volumeSpkr";
 static const char * const NOISE_REDUCE_KEY = "noiseReduce";
 static const char * const ECHO_CANCEL_KEY = "echoCancel";
-static const char * const ECHO_TAIL_KEY = "echoTailLength";
-static const char * const ECHO_DELAY_KEY = "echoDelayLength";
 
 // shortcut preferences
 static const char * const HANGUP_SHORT_KEY = "hangUp";
@@ -296,8 +294,6 @@ AudioPreference::AudioPreference() :
     , volumespkr_(atoi(DFT_VOL_MICRO_STR))
     , noisereduce_(true)
     , echocancel_(false)
-    , echoCancelTailLength_(100)
-    , echoCancelDelay_(0)
 {}
 
 namespace {
@@ -374,12 +370,6 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
     Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
     Conf::ScalarNode noise(noisereduce_);
     Conf::ScalarNode echo(echocancel_);
-    std::stringstream tailstr;
-    tailstr << echoCancelTailLength_;
-    Conf::ScalarNode echotail(tailstr.str());
-    std::stringstream delaystr;
-    delaystr << echoCancelDelay_;
-    Conf::ScalarNode echodelay(delaystr.str());
 
     Conf::MappingNode preferencemap(NULL);
     preferencemap.setKeyValue(AUDIO_API_KEY, &audioapi);
@@ -406,8 +396,6 @@ void AudioPreference::serialize(Conf::YamlEmitter &emitter)
 
     preferencemap.setKeyValue(NOISE_REDUCE_KEY, &noise);
     preferencemap.setKeyValue(ECHO_CANCEL_KEY, &echo);
-    preferencemap.setKeyValue(ECHO_TAIL_KEY, &echotail);
-    preferencemap.setKeyValue(ECHO_DELAY_KEY, &echodelay);
 
     emitter.serializePreference(&preferencemap, "audio");
 }

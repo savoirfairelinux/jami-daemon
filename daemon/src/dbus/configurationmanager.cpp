@@ -341,26 +341,6 @@ void ConfigurationManager::setEchoCancelState(const std::string& state)
     Manager::instance().setEchoCancelState(state);
 }
 
-int ConfigurationManager::getEchoCancelTailLength()
-{
-    return Manager::instance().getEchoCancelTailLength();
-}
-
-void ConfigurationManager::setEchoCancelTailLength(const int32_t& length)
-{
-    Manager::instance().setEchoCancelTailLength(length);
-}
-
-int ConfigurationManager::getEchoCancelDelay()
-{
-    return Manager::instance().getEchoCancelDelay();
-}
-
-void ConfigurationManager::setEchoCancelDelay(const int32_t& delay)
-{
-    Manager::instance().setEchoCancelDelay(delay);
-}
-
 int32_t ConfigurationManager::isIax2Enabled()
 {
     return HAVE_IAX;

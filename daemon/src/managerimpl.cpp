@@ -2215,26 +2215,6 @@ void ManagerImpl::setEchoCancelState(const std::string &state)
     audioPreference.setEchoCancel(state == "enabled");
 }
 
-int ManagerImpl::getEchoCancelTailLength() const
-{
-    return audioPreference.getEchoCancelTailLength();
-}
-
-void ManagerImpl::setEchoCancelTailLength(int length)
-{
-    audioPreference.setEchoCancelTailLength(length);
-}
-
-int ManagerImpl::getEchoCancelDelay() const
-{
-    return audioPreference.getEchoCancelDelay();
-}
-
-void ManagerImpl::setEchoCancelDelay(int delay)
-{
-    audioPreference.setEchoCancelDelay(delay);
-}
-
 /**
  * Initialization: Main Thread
  */
