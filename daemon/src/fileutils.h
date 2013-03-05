@@ -42,7 +42,7 @@
 
 
 #define DIR_SEPARATOR_STR "/"   // Directory separator char
-#define DIR_SEPARATOR_CH = '/'  // Directory separator string
+#define DIR_SEPARATOR_CH  '/'  // Directory separator string
 
 namespace fileutils {
     std::string get_home_dir();
