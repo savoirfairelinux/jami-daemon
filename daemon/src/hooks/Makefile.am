@@ -1,5 +1,3 @@
-SUBDIRS =
-
 noinst_LTLIBRARIES = libhooks.la
 
 libhooks_la_SOURCES = \

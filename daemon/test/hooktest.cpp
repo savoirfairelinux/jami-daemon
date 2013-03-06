@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,14 +28,15 @@
  *  as that of the covered work.
  */
 
-#include "urlhook.h"
-#include <cstdlib>
+#include "hooktest.h"
+#include "hooks/urlhook.h"
 
-int UrlHook::runAction(const std::string &command, const std::string &args)
+void HookTest::RunHookWithNoArgs()
 {
-    //FIXME : use fork and execve, so no need to escape shell arguments
-    const std::string cmd = command + (args.empty() ? "" : " ") +
-                            "\"" + args + "\" &";
-    return system(cmd.c_str());
+    CPPUNIT_ASSERT(!UrlHook::runAction("ls", ""));
 }
 
+void HookTest::RunHookWithArgs()
+{
+    CPPUNIT_ASSERT(!UrlHook::runAction("ls", "-l"));
+}

@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,14 +28,25 @@
  *  as that of the covered work.
  */
 
-#include "urlhook.h"
-#include <cstdlib>
+#ifndef HOOKTEST_H_
+#define HOOKTEST_H_
 
-int UrlHook::runAction(const std::string &command, const std::string &args)
-{
-    //FIXME : use fork and execve, so no need to escape shell arguments
-    const std::string cmd = command + (args.empty() ? "" : " ") +
-                            "\"" + args + "\" &";
-    return system(cmd.c_str());
-}
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
 
+class HookTest : public CppUnit::TestFixture {
+
+        CPPUNIT_TEST_SUITE(HookTest);
+        CPPUNIT_TEST(RunHookWithNoArgs);
+        CPPUNIT_TEST(RunHookWithArgs);
+        CPPUNIT_TEST_SUITE_END();
+
+    public:
+        void RunHookWithNoArgs();
+        void RunHookWithArgs();
+};
+
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HookTest, "HookTest");
+CPPUNIT_TEST_SUITE_REGISTRATION(HookTest);
+
+#endif /* HOOKTEST_H_ */
