@@ -1329,8 +1329,13 @@ void ManagerImpl::saveConfig()
 //THREAD=Main
 void ManagerImpl::sendDtmf(const std::string& id, char code)
 {
-    std::string accountid(getAccountFromCall(id));
     playDtmf(code);
+
+    // return if we're not "in" a call
+    if (id.empty())
+        return;
+
+    std::string accountid(getAccountFromCall(id));
     getAccountLink(accountid)->carryingDTMFdigits(id, code);
 }
 
