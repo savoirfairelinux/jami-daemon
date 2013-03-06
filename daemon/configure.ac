@@ -98,8 +98,8 @@ dnl Coverage is default-disabled
 AC_ARG_ENABLE([coverage], AS_HELP_STRING([--enable-coverage], [Enable coverage]))
 
 AS_IF([test "x$enable_coverage" = "xyes"], [
-        CXXFLAGS="${CXXFLAGS} -fprofile-arcs -ftest-coverage"
-        LDFLAGS="${LDFLAGS} -fprofile-arcs -ftest-coverage"])
+        CXXFLAGS="${CXXFLAGS} --coverage"
+        LDFLAGS="${LDFLAGS} --coverage"])
 
 dnl Video is default-disabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))
