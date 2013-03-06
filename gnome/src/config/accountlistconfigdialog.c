@@ -117,10 +117,10 @@ static void delete_account_cb(G_GNUC_UNUSED GtkButton *button, gpointer data)
 static void account_store_fill();
 
 static void
-run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client)
+run_account_dialog(const gchar *selected_accountID, SFLPhoneClient *client, gboolean is_new)
 {
     account_t *account = account_list_get_by_id(selected_accountID);
-    GtkWidget *dialog = show_account_window(account, client);
+    GtkWidget *dialog = show_account_window(account, client, is_new);
     update_account_from_dialog(dialog, account);
     account_store_fill();
 }
@@ -132,7 +132,7 @@ static void row_activated_cb(GtkTreeView *view,
 {
     gchar *selected_accountID = get_selected_accountID(view);
     g_return_if_fail(selected_accountID != NULL);
-    run_account_dialog(selected_accountID, client);
+    run_account_dialog(selected_accountID, client, FALSE);
     g_free(selected_accountID);
 }
 
@@ -145,7 +145,7 @@ static void edit_account_cb(G_GNUC_UNUSED GtkButton *button, EditData *data)
 {
     gchar *selected_accountID = get_selected_accountID(GTK_TREE_VIEW(data->view));
     g_return_if_fail(selected_accountID != NULL);
-    run_account_dialog(selected_accountID, data->client);
+    run_account_dialog(selected_accountID, data->client, FALSE);
     g_free(selected_accountID);
 }
 
@@ -199,7 +199,7 @@ static void add_account_cb(SFLPhoneClient *client)
 {
     account_t *new_account = create_default_account();
     account_list_add(new_account);
-    run_account_dialog(new_account->accountID, client);
+    run_account_dialog(new_account->accountID, client, TRUE);
 }
 
 /**

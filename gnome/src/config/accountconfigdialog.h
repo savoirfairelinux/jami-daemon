@@ -40,10 +40,12 @@
 /**
  * Display the main account widget
  * @param a The account you want to display
+ * @param client Our client instance
+ * @param is_new TRUE if this account is being added
  * @return The dialog with the pertinent account information
  */
 GtkWidget *
-show_account_window(account_t *a, SFLPhoneClient *client);
+show_account_window(account_t *a, SFLPhoneClient *client, gboolean is_new);
 
 /*
  * @param dialog The dialog the account will be update from

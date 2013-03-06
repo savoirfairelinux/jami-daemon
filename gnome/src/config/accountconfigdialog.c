@@ -221,7 +221,7 @@ create_auto_answer_checkbox(account_t *account)
 }
 
 static GtkWidget*
-create_basic_tab(account_t *account)
+create_basic_tab(account_t *account, gboolean is_new)
 {
     g_assert(account);
     gchar *password = NULL;
@@ -237,17 +237,7 @@ create_basic_tab(account_t *account)
     GtkWidget *frame = gnome_main_section_new(_("Account Parameters"));
     gtk_widget_show(frame);
 
-    GtkWidget *grid = NULL;
-
-    if (account_is_SIP(account))
-        grid = gtk_grid_new();
-    else if (account_is_IAX(account))
-        grid = gtk_grid_new();
-    else {
-        g_warning("Unknown account type");
-        return NULL;
-    }
-
+    GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
     gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
     gtk_widget_show(grid);
@@ -284,6 +274,10 @@ create_basic_tab(account_t *account)
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(protocol_combo), _("Unknown"));
         gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 2);
     }
+
+    /* Can't change account type after creation */
+    if (!is_new)
+        gtk_widget_set_sensitive(protocol_combo, FALSE);
 
     gtk_grid_attach(GTK_GRID(grid), protocol_combo, 1, row, 1, 1);
 
@@ -1328,7 +1322,7 @@ void update_account_from_dialog(GtkWidget *dialog, account_t *account)
 }
 
 GtkWidget *
-show_account_window(account_t *account, SFLPhoneClient *client)
+show_account_window(account_t *account, SFLPhoneClient *client, gboolean is_new)
 {
     // First we reset
     reset();
@@ -1353,7 +1347,7 @@ show_account_window(account_t *account, SFLPhoneClient *client)
     // We do not need the global settings for the IP2IP account
     if (!IS_IP2IP) {
         /* General Settings */
-        GtkWidget *basic_tab = create_basic_tab(account);
+        GtkWidget *basic_tab = create_basic_tab(account, is_new);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), basic_tab, gtk_label_new(_("Basic")));
         gtk_notebook_page_num(GTK_NOTEBOOK(notebook), basic_tab);
     }
