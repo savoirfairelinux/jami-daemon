@@ -47,6 +47,7 @@ AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0), sampleRate_
 AudioLoop::~AudioLoop()
 {
     //delete [] buffer_;
+    delete buffer_;
 }
 
 void

@@ -696,31 +696,27 @@ void AlsaLayer::capture()
     const int framesPerBufferAlsa = 2048;
     toGetSamples = std::min(framesPerBufferAlsa, toGetSamples);
 
-    std::vector<SFLAudioSample> in(toGetSamples);
-    SFLAudioSample * const in_ptr = &(*in.begin());
+    AudioBuffer in(toGetSamples, 1, sampleRate_);
 
-    const int toGetBytes = in.size() * sizeof(in[0]);
+    // TODO: handle ALSA multichannel capture
+    const int toGetBytes = in.samples() * sizeof(SFLAudioSample);
+    SFLAudioSample * const in_ptr = &(*in.getChannel()->begin());
     if (read(in_ptr, toGetBytes) != toGetBytes) {
         ERROR("ALSA MIC : Couldn't read!");
         return;
     }
 
-    AudioLayer::applyGain(in_ptr, toGetSamples, getCaptureGain());
+    in.applyGain(getCaptureGain());
 
     if (resample) {
         int outSamples = toGetSamples * (static_cast<double>(sampleRate_) / mainBufferSampleRate);
-        std::vector<SFLAudioSample> rsmpl_out(outSamples);
-        SFLAudioSample * const rsmpl_out_ptr = &(*rsmpl_out.begin());
-        converter_.resample(in_ptr, rsmpl_out_ptr,
-                rsmpl_out.size(), mainBufferSampleRate, sampleRate_,
-                toGetSamples);
-        dcblocker_.process(rsmpl_out_ptr, rsmpl_out_ptr, outSamples);
-        Manager::instance().getMainBuffer().putData(rsmpl_out_ptr,
-                rsmpl_out.size() * sizeof(rsmpl_out[0]), MainBuffer::DEFAULT_ID);
+        AudioBuffer rsmpl_out(outSamples, 1, mainBufferSampleRate);
+        converter_.resample(&in, &rsmpl_out);
+        dcblocker_.process(&rsmpl_out);
+        Manager::instance().getMainBuffer().putData(&rsmpl_out, MainBuffer::DEFAULT_ID);
     } else {
-        dcblocker_.process(in_ptr, in_ptr, toGetSamples);
-        Manager::instance().getMainBuffer().putData(in_ptr, toGetBytes,
-                                                     MainBuffer::DEFAULT_ID);
+        dcblocker_.process(&in);
+        Manager::instance().getMainBuffer().putData(&in, MainBuffer::DEFAULT_ID);
     }
 }
 
@@ -736,14 +732,13 @@ void AlsaLayer::playback(int maxSamples)
         AudioLoop *tone = Manager::instance().getTelephoneTone();
         AudioLoop *file_tone = Manager::instance().getTelephoneFile();
 
-        std::vector<SFLAudioSample> out(maxSamples, 0);
-        SFLAudioSample * const out_ptr = &(*out.begin());
+        AudioBuffer out(maxSamples, 1, sampleRate_);
         if (tone)
-            tone->getNext(out_ptr, out.size(), getPlaybackGain());
+            tone->getNext(&out, getPlaybackGain());
         else if (file_tone && !ringtoneHandle_)
-            file_tone->getNext(out_ptr, out.size(), getPlaybackGain());
+            file_tone->getNext(&out, getPlaybackGain());
 
-        write(out_ptr, bytesToPut, playbackHandle_);
+        write(out.getChannel()->data(), bytesToPut, playbackHandle_);
     } else {
         // play the regular sound samples
 
@@ -760,21 +755,25 @@ void AlsaLayer::playback(int maxSamples)
         bytesToGet = std::min(maxNbBytesToGet, bytesToGet);
 
         const size_t samplesToGet = bytesToGet / sizeof(SFLAudioSample);
-        std::vector<SFLAudioSample> out(samplesToGet, 0);
-        SFLAudioSample * const out_ptr = &(*out.begin());
-        Manager::instance().getMainBuffer().getData(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-        AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+        //std::vector<SFLAudioSample> out(samplesToGet, 0);
+        AudioBuffer out(samplesToGet, 1, sampleRate_);
+
+        //SFLAudioSample * const out_ptr = &(*out.getChannel()->begin());
+        Manager::instance().getMainBuffer().getData(&out, MainBuffer::DEFAULT_ID);
+        //AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+        out.applyGain(getPlaybackGain());
 
         if (resample) {
             const size_t outSamples = samplesToGet * resampleFactor;
             const size_t outBytes = outSamples * sizeof(SFLAudioSample);
-            std::vector<SFLAudioSample> rsmpl_out(outSamples);
-            SFLAudioSample * const rsmpl_out_ptr = &(*rsmpl_out.begin());
-            converter_.resample(out_ptr, rsmpl_out_ptr, rsmpl_out.size(),
-                    mainBufferSampleRate, sampleRate_, samplesToGet);
-            write(rsmpl_out_ptr, outBytes, playbackHandle_);
+            AudioBuffer rsmpl_out(outSamples, 1, mainBufferSampleRate);
+            //std::vector<SFLAudioSample> rsmpl_out(outSamples);
+            //SFLAudioSample * const rsmpl_out_ptr = &(*rsmpl_out.begin());
+            //converter_.resample(out_ptr, rsmpl_out_ptr, rsmpl_out.size(), mainBufferSampleRate, sampleRate_, samplesToGet);
+            converter_.resample(&out, &rsmpl_out);
+            write(rsmpl_out.getChannel()->data(), outBytes, playbackHandle_);
         } else {
-            write(out_ptr, bytesToGet, playbackHandle_);
+            write(out.getChannel()->data(), bytesToGet, playbackHandle_);
         }
     }
 }
@@ -791,22 +790,19 @@ void AlsaLayer::audioCallback()
     int playbackAvailSmpl = 0;
     if (not safeUpdate(playbackHandle_, playbackAvailSmpl))
         return;
-    const size_t playbackAvailBytes = playbackAvailSmpl * sizeof(SFLAudioSample);
 
-    size_t bytesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
+    unsigned samplesToGet = urgentRingBuffer_.availableForGet(MainBuffer::DEFAULT_ID);
 
-    if (bytesToGet > 0) {
+    if (samplesToGet > 0) {
         // Urgent data (dtmf, incoming call signal) come first.
-        bytesToGet = std::min(bytesToGet, playbackAvailBytes);
-        const size_t samplesToGet = bytesToGet / sizeof(SFLAudioSample);
-        std::vector<SFLAudioSample> out(samplesToGet);
-        SFLAudioSample * const out_ptr = &(*out.begin());
-        urgentRingBuffer_.get(out_ptr, bytesToGet, MainBuffer::DEFAULT_ID);
-        AudioLayer::applyGain(out_ptr, samplesToGet, getPlaybackGain());
+        samplesToGet = std::min(samplesToGet, (unsigned)playbackAvailSmpl);
+        AudioBuffer out(samplesToGet);
+        urgentRingBuffer_.get(&out, MainBuffer::DEFAULT_ID);
+        out.applyGain(getPlaybackGain());
 
-        write(out_ptr, bytesToGet, playbackHandle_);
+        write(out.getChannel()->data(), samplesToGet*sizeof(SFLAudioSample), playbackHandle_);
         // Consume the regular one as well (same amount of bytes)
-        Manager::instance().getMainBuffer().discard(bytesToGet, MainBuffer::DEFAULT_ID);
+        Manager::instance().getMainBuffer().discard(samplesToGet, MainBuffer::DEFAULT_ID);
     } else {
         // regular audio data
         playback(playbackAvailSmpl);
@@ -819,16 +815,14 @@ void AlsaLayer::audioCallback()
             return;
         int ringtoneAvailBytes = ringtoneAvailSmpl * sizeof(SFLAudioSample);
 
-        std::vector<SFLAudioSample> out(ringtoneAvailSmpl, 0);
-        SFLAudioSample * const out_ptr = &(*out.begin());
+        AudioBuffer out(ringtoneAvailSmpl);
 
         if (file_tone) {
             DEBUG("playback gain %d", getPlaybackGain());
-            file_tone->getNext(out_ptr, ringtoneAvailSmpl,
-                               getPlaybackGain());
+            file_tone->getNext(&out, getPlaybackGain());
         }
 
-        write(out_ptr, ringtoneAvailBytes, ringtoneHandle_);
+        write(out.getChannel()->data(), ringtoneAvailBytes, ringtoneHandle_);
     }
 
     // Additionally handle the mic's audio stream

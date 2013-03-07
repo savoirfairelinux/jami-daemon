@@ -72,7 +72,7 @@ void SamplerateConverter::resample(const AudioBuffer *dataIn, AudioBuffer *dataO
                                    size_t nbSamples)*/
 {
     double inputFreq = dataIn->getSampleRate();
-    double outputFreq = dataIn->getSampleRate();
+    double outputFreq = dataOut->getSampleRate();
     double sampleFactor = (double) outputFreq / inputFreq;
 
     size_t nbSamples = dataIn.samples();

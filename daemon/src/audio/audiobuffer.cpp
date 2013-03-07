@@ -29,7 +29,7 @@
  */
 
 AudioBuffer::AudioBuffer(size_t sample_num /* = 0 */, size_t channel_num /* = 1 */, int sample_rate /* = 8000 */)
- :  sampleRate_(8000),
+ :  sampleRate_(sample_rate),
     sampleNum_(sample_num),
     channels_(channel_num),
     samples_(channel_num, vector<SFLAudioSample>(sample_num, 0))
@@ -111,7 +111,7 @@ AudioBuffer::getChannel(size_t chan /* = 0 */)
     return samples_[chan];
 }
 
-void AudioBuffer::applyGain(AudioBuffer *src, int gain)
+void AudioBuffer::applyGain(AudioBuffer *src, unsigned int gain)
 {
     if(gain != 100)
         applyGain(gain*0.01);

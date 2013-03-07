@@ -59,9 +59,13 @@ class AudioBuffer {
 		void setSampleRate(int sr);
 
 		/**
-		 * Returns the number of samples in this buffer.
+		 * Returns the number of channels in this buffer.
 		 */
 		size_t getChannelNum();
+
+		inline size_t channels() {
+			return channels_;
+		}
 
 		/**
 		 * Set the number of channels of this buffer.
@@ -73,22 +77,22 @@ class AudioBuffer {
 		void setChannelNum(size_t n, bool copy_first=false);
 
 		/**
-		 * Returns the number of (multichannel) samples.
+		 * Returns the number of (multichannel) samples in this buffer.
 		 */
 		size_t samples();
 
 		/**
-		 *
+		 * Resize the buffer to make it able to hold sample_num multichannel samples.
 		 */
 		void resize(size_t sample_num);
 
 		/**
-		 * Set the buffer to 0. Buffer size is kept.
+		 * Set all samples in this buffer to 0. Buffer size is not changed.
 		 */
 		void clear();
 
 		/**
-		 * Resize the buffer to 0.
+		 * Resize the buffer to 0. All samples are lost but the number of channels and sample rate are kept.
 		 */
 		void empty();
 
@@ -124,7 +128,7 @@ class AudioBuffer {
 		 *
 		 * @param gain: 0 -> 100 scale
 		 */
-		void applyGain(int gain);
+		void applyGain(unsigned int gain);
 
 		/**
 		 * In-place gain transformation.

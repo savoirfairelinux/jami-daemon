@@ -117,8 +117,8 @@ class RingBuffer {
 
         /**
          * Discard data from the buffer
-         * @param toDiscard Number of bytes to discard
-         * @return size_t Number of bytes discarded
+         * @param toDiscard Number of samples to discard
+         * @return size_t Number of samples discarded
          */
         size_t discard(size_t toDiscard, const std::string &call_id);
 

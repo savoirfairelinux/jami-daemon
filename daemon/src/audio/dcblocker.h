@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,13 +36,24 @@
 
 class DcBlocker {
     public:
-        DcBlocker();
+        DcBlocker(size_t channels = 1);
         void reset();
+
         void process(SFLAudioSample *out, SFLAudioSample *in, int samples);
 
-    private:
+        /**
+         * In-place processing of all samples in buf (each channel treated independently)
+         */
+        void process(AudioBuffer *buf);
 
-        SFLAudioSample y_, x_, xm1_, ym1_;
+    private:
+        struct StreamState {
+            SFLAudioSample y_, x_, xm1_, ym1_;
+        };
+
+        void doProcess(SFLAudioSample *out, SFLAudioSample *in, int samples, struct StreamState * state);
+
+        std::vector<StreamState> state;
 };
 
 #endif
