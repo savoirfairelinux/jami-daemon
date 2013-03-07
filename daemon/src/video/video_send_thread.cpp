@@ -47,6 +47,11 @@ extern "C" {
 #include <map>
 #include "manager.h"
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
+// fallback to av_freep for older libavcodec
+#define avcodec_free_frame av_freep
+#endif
+
 namespace sfl_video {
 
 using std::string;
