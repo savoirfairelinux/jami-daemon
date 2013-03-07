@@ -94,6 +94,12 @@ dnl Check for the samplerate development package - name: libsamplerate0-dev
 LIBSAMPLERATE_MIN_VERSION=0.1.2
 PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development package: libsamplerate0-dev]))
 
+dnl Coverage is default-disabled
+AC_ARG_ENABLE([coverage], AS_HELP_STRING([--enable-coverage], [Enable coverage]))
+
+AS_IF([test "x$enable_coverage" = "xyes"], [
+        CXXFLAGS="${CXXFLAGS} --coverage"
+        LDFLAGS="${LDFLAGS} --coverage"])
 
 dnl Video is default-disabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--enable-video], [Enable video]))

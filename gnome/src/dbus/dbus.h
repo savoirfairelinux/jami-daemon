@@ -500,6 +500,8 @@ gboolean dbus_get_is_recording(const callable_obj_t *);
 
 GHashTable *dbus_get_call_details(const gchar *callID);
 
+gboolean dbus_is_valid_call(const gchar *callID);
+
 gchar **dbus_get_call_list(void);
 
 GHashTable* dbus_get_conference_details(const gchar *confID);

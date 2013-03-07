@@ -390,8 +390,6 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 //THREAD=Main
 void ManagerImpl::hangupCall(const std::string& callId)
 {
-    DEBUG("Hangup call %s", callId.c_str());
-
     // store the current call id
     std::string currentCallId(getCurrentCallId());
 
@@ -405,8 +403,9 @@ void ManagerImpl::hangupCall(const std::string& callId)
     DEBUG("Send DBUS call state change (HUNGUP) for id %s", callId.c_str());
     dbus_.getCallManager()->callStateChanged(callId, "HUNGUP");
 
+    /* We often get here when the call was hungup before being created */
     if (not isValidCall(callId) and not isIPToIP(callId)) {
-        ERROR("Could not hang up call, call not valid");
+        DEBUG("Could not hang up call %s, call not valid", callId.c_str());
         return;
     }
 
@@ -1330,8 +1329,13 @@ void ManagerImpl::saveConfig()
 //THREAD=Main
 void ManagerImpl::sendDtmf(const std::string& id, char code)
 {
-    std::string accountid(getAccountFromCall(id));
     playDtmf(code);
+
+    // return if we're not "in" a call
+    if (id.empty())
+        return;
+
+    std::string accountid(getAccountFromCall(id));
     getAccountLink(accountid)->carryingDTMFdigits(id, code);
 }
 

@@ -160,6 +160,22 @@
             </arg>
         </method>
 
+        <method name="isValidCall" tp:name-for-bindings="isValidCall">
+            <tp:docstring>
+              Tests whether or not a call exists.
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The call ID.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="isValid" direction="out">
+              <tp:docstring>
+                Returns true is the call has already been created/can be retrieved. False otherwise.
+              </tp:docstring>
+            </arg>
+        </method>
+
         <method name="startTone" tp:name-for-bindings="startTone">
             <tp:docstring>
               Start audio stream and play tone.

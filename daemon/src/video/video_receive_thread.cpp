@@ -45,6 +45,11 @@ extern "C" {
 
 #include "manager.h"
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
+// fallback to av_freep for older libavcodec
+#define avcodec_free_frame av_freep
+#endif
+
 namespace sfl_video {
 
 using std::string;
@@ -268,6 +273,9 @@ struct VideoRxContextHandle {
 
     ~VideoRxContextHandle()
     {
+        if (rx_.rawFrame_)
+            avcodec_free_frame(&rx_.rawFrame_);
+
         if (rx_.imgConvertCtx_)
             sws_freeContext(rx_.imgConvertCtx_);
 
@@ -294,9 +302,6 @@ void VideoReceiveThread::run()
     setup();
     createScalingContext();
 
-    AVFrame rawFrame;
-    rawFrame_ = &rawFrame;
-
     while (threadRunning_)
         if (decodeFrame())
             renderFrame();
@@ -316,7 +321,14 @@ bool VideoReceiveThread::decodeFrame()
 
     // Guarantee that we free the packet every iteration
     PacketHandle inpacket_handle(inpacket);
-    avcodec_get_frame_defaults(rawFrame_);
+
+    if (!rawFrame_ and not (rawFrame_ = avcodec_alloc_frame())) {
+        ERROR("Could not allocate video frame");
+        threadRunning_ = false;
+        return false;
+    } else {
+        avcodec_get_frame_defaults(rawFrame_);
+    }
 
     // is this a packet from the video stream?
     if (inpacket.stream_index != streamIndex_)

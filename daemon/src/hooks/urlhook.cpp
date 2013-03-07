@@ -33,12 +33,9 @@
 
 int UrlHook::runAction(const std::string &command, const std::string &args)
 {
-    if (args.empty())
-        return 0;
-
     //FIXME : use fork and execve, so no need to escape shell arguments
-    std::string cmd = command + "\"" + args + "\" &";
+    const std::string cmd = command + (args.empty() ? "" : " ") +
+                            "\"" + args + "\" &";
     return system(cmd.c_str());
 }
-
 

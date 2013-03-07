@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,28 +28,25 @@
  *  as that of the covered work.
  */
 
-#ifndef __ACCOUNTCONFIGDIALOG_H__
-#define __ACCOUNTCONFIGDIALOG_H__
-/** @file accountconfigdialog.h
-  * @brief The window to edit account details.
-  */
+#ifndef HOOKTEST_H_
+#define HOOKTEST_H_
 
-#include "accountlist.h"
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
 
-/**
- * Display the main account widget
- * @param a The account you want to display
- * @param client Our client instance
- * @param is_new TRUE if this account is being added
- * @return The dialog with the pertinent account information
- */
-GtkWidget *
-show_account_window(account_t *a, SFLPhoneClient *client, gboolean is_new);
+class HookTest : public CppUnit::TestFixture {
 
-/*
- * @param dialog The dialog the account will be update from
- * @param a The account you want to display
- */
-void update_account_from_dialog(GtkWidget *dialog, account_t *a);
+        CPPUNIT_TEST_SUITE(HookTest);
+        CPPUNIT_TEST(RunHookWithNoArgs);
+        CPPUNIT_TEST(RunHookWithArgs);
+        CPPUNIT_TEST_SUITE_END();
 
-#endif
+    public:
+        void RunHookWithNoArgs();
+        void RunHookWithArgs();
+};
+
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HookTest, "HookTest");
+CPPUNIT_TEST_SUITE_REGISTRATION(HookTest);
+
+#endif /* HOOKTEST_H_ */

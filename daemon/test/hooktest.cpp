@@ -1,7 +1,6 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,28 +28,15 @@
  *  as that of the covered work.
  */
 
-#ifndef __ACCOUNTCONFIGDIALOG_H__
-#define __ACCOUNTCONFIGDIALOG_H__
-/** @file accountconfigdialog.h
-  * @brief The window to edit account details.
-  */
+#include "hooktest.h"
+#include "hooks/urlhook.h"
 
-#include "accountlist.h"
+void HookTest::RunHookWithNoArgs()
+{
+    CPPUNIT_ASSERT(!UrlHook::runAction("ls", ""));
+}
 
-/**
- * Display the main account widget
- * @param a The account you want to display
- * @param client Our client instance
- * @param is_new TRUE if this account is being added
- * @return The dialog with the pertinent account information
- */
-GtkWidget *
-show_account_window(account_t *a, SFLPhoneClient *client, gboolean is_new);
-
-/*
- * @param dialog The dialog the account will be update from
- * @param a The account you want to display
- */
-void update_account_from_dialog(GtkWidget *dialog, account_t *a);
-
-#endif
+void HookTest::RunHookWithArgs()
+{
+    CPPUNIT_ASSERT(!UrlHook::runAction("ls", "-l"));
+}
