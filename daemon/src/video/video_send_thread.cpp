@@ -301,8 +301,6 @@ void VideoSendThread::setup()
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_sdp();
 
-    // allocate frame for raw input from camera
-    rawFrame_ = avcodec_alloc_frame();
 
     // allocate buffers for both scaled (pre-encoder) and encoded frames
     encoderBufferSize_ = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width,
@@ -386,7 +384,7 @@ struct VideoTxContextHandle {
 
         // free the YUV frame
         if (tx_.rawFrame_)
-            av_free(tx_.rawFrame_);
+            avcodec_free_frame(&tx_.rawFrame_);
 
         // close the codecs
         if (tx_.encoderCtx_) {
@@ -483,6 +481,14 @@ bool VideoSendThread::captureFrame()
 
     // Guarantees that we free the packet allocated by av_read_frame
     PacketHandle inpacket_handle(inpacket);
+
+    if (!rawFrame_ and not (rawFrame_ = avcodec_alloc_frame())) {
+        ERROR("Could not allocate video frame");
+        threadRunning_ = false;
+        return false;
+    } else {
+        avcodec_get_frame_defaults(rawFrame_);
+    }
 
     // is this a packet from the video stream?
     if (inpacket.stream_index != streamIndex_)
