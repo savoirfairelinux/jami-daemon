@@ -1153,10 +1153,16 @@ SIPVoIPLink::clearSipCallMap()
 
 void SIPVoIPLink::addSipCall(SIPCall* call)
 {
-    if (call and getSipCall(call->getCallId()) == NULL) {
-        sfl::ScopedLock m(sipCallMapMutex_);
-        sipCallMap_[call->getCallId()] = call;
-    }
+    if (!call)
+        return;
+
+    const std::string id(call->getCallId());
+
+    sfl::ScopedLock m(sipCallMapMutex_);
+    if (sipCallMap_.find(id) == sipCallMap_.end())
+        sipCallMap_[id] = call;
+    else
+        ERROR("Call %s is already in the call map", id.c_str());
 }
 
 void SIPVoIPLink::removeSipCall(const std::string& id)
