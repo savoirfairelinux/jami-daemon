@@ -374,7 +374,7 @@
             </arg>
         </method>
 
-        <method name="recordPlaybackSeek" tp:name-for-bindings="setVolume">
+        <method name="recordPlaybackSeek" tp:name-for-bindings="recordPlaybackSeek">
             <tp:docstring>
               <p>Sets the playback position using a linear scale [0,100].</p>
             </tp:docstring>
