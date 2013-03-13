@@ -2084,6 +2084,7 @@ void registration_cb(pjsip_regc_cbparam *param)
             case PJSIP_SC_REQUEST_TIMEOUT: // 408
                 FAILURE_MESSAGE();
                 processRegistrationError(*account, ERROR_HOST);
+                account->registerVoIPLink();
                 break;
             case PJSIP_SC_INTERVAL_TOO_BRIEF: // 423
                 // Expiration Interval Too Brief
