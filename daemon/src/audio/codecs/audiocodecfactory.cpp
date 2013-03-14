@@ -234,7 +234,9 @@ AudioCodecFactory::loadCodec(const std::string &path)
 void
 AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
 {
-    destroy_t* destroyCodec = (destroy_t*) dlsym(ptr.second , "destroy");
+    destroy_t *destroyCodec = 0;
+    if (ptr.second)
+        destroyCodec = (destroy_t*) dlsym(ptr.second, "destroy");
 
     const char *error = dlerror();
 
@@ -243,7 +245,7 @@ AudioCodecFactory::unloadCodec(AudioCodecHandlePointer &ptr)
         return;
     }
 
-    if (ptr.first)
+    if (ptr.first and destroyCodec)
         destroyCodec(ptr.first);
 
     if (ptr.second)
