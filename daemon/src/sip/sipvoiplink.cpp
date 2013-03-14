@@ -1672,6 +1672,8 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     std::string accountid(Manager::instance().getAccountFromCall(call->getCallId()));
 
     SIPAccount *account = Manager::instance().getSipAccount(accountid);
+    if (!account)
+        return;
 
     std::string localAddress(SipTransport::getInterfaceAddrFromName(account->getLocalInterface()));
     std::string addrSdp(localAddress);
