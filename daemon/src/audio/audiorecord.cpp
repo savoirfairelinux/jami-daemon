@@ -386,7 +386,9 @@ void AudioRecord::closeWavFile()
 
     SINT32 bytes = byteCounter_ * channels_;
 
-    fseek(fileHandle_, 40, SEEK_SET);  // jump to data length
+    // jump to data length
+    if (fseek(fileHandle_, 40, SEEK_SET) != 0)
+        WARN("Could not seek in file");
 
     if (ferror(fileHandle_))
         WARN("Can't reach offset 40 while closing");
@@ -398,7 +400,9 @@ void AudioRecord::closeWavFile()
 
     bytes = byteCounter_ * channels_ + 44; // + 44 for the wave header
 
-    fseek(fileHandle_, 4, SEEK_SET);  // jump to file size
+    // jump to file size
+    if (fseek(fileHandle_, 4, SEEK_SET) != 0)
+        WARN("Could not seek in file");
 
     if (ferror(fileHandle_))
         WARN("Can't reach offset 4");
