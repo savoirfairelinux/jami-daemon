@@ -325,7 +325,12 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 //THREAD=Main : for outgoing Call
 bool ManagerImpl::answerCall(const std::string& call_id)
 {
-    DEBUG("Answer call %s", call_id.c_str());
+    Call *call = getCallFromCallID(call_id);
+
+    if (call == NULL) {
+        ERROR("Call %s is NULL", call_id.c_str());
+        return false;
+    }
 
     // If sflphone is ringing
     stopTone();
@@ -336,11 +341,6 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     // store the current call id
     std::string current_call_id(getCurrentCallId());
-
-    Call *call = getCallFromCallID(call_id);
-
-    if (call == NULL)
-        ERROR("Call is NULL");
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
@@ -359,7 +359,9 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     try {
         const std::string account_id = getAccountFromCall(call_id);
-        getAccountLink(account_id)->answer(call);
+        VoIPLink *link = getAccountLink(account_id);
+        if (link)
+            link->answer(call);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
     }
