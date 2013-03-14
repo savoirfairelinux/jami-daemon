@@ -65,9 +65,9 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         virtual int getIncrementForDTMF() const;
 
-        virtual void setLocalMasterKey(const std::vector<uint8>& key) const = 0;
+        virtual void setLocalMasterKey(const std::vector<uint8>& key) = 0;
 
-        virtual void setLocalMasterSalt(const std::vector<uint8>& key) const = 0;
+        virtual void setLocalMasterSalt(const std::vector<uint8>& key) = 0;
 
         virtual std::vector<uint8> getLocalMasterKey() const = 0;
 
