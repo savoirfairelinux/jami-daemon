@@ -57,8 +57,8 @@ class AlsaThread {
         static void *runCallback(void *context);
 
         NON_COPYABLE(AlsaThread);
-        AlsaLayer* alsa_;
         pthread_t thread_;
+        AlsaLayer* alsa_;
         bool running_;
 };
 
