@@ -204,6 +204,24 @@ AudioRtpRecordHandler::AudioRtpRecordHandler(SIPCall &call) :
 
 AudioRtpRecordHandler::~AudioRtpRecordHandler() {}
 
+std::string
+AudioRtpRecordHandler::getCurrentAudioCodecNames()
+{
+    std::string result;
+    ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+    {
+        std::string sep = "";
+        for (std::vector<AudioCodec*>::const_iterator i = audioRtpRecord_.audioCodecs_.begin();
+                i != audioRtpRecord_.audioCodecs_.end(); ++i) {
+            if (*i)
+                result += sep + (*i)->getMimeSubtype();
+            sep = " ";
+        }
+    }
+
+    return result;
+}
+
 void AudioRtpRecordHandler::setRtpMedia(const std::vector<AudioCodec*> &audioCodecs)
 {
     ScopedLock lock(audioRtpRecord_.audioCodecMutex_);

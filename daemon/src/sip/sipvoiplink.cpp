@@ -1342,7 +1342,12 @@ SIPVoIPLink::getCurrentVideoCodecName(Call *call) const
 std::string
 SIPVoIPLink::getCurrentAudioCodecNames(Call *call) const
 {
-    return static_cast<SIPCall*>(call)->getLocalSDP()->getAudioCodecNames();
+    try {
+        return static_cast<SIPCall*>(call)->getAudioRtp().getCurrentAudioCodecNames();
+    } catch (const AudioRtpFactoryException &e) {
+        ERROR("%s", e.what());
+        return "";
+    }
 }
 
 /* Only use this macro with string literals or character arrays, will not work

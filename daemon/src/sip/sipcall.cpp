@@ -95,7 +95,7 @@ SIPCall::createHistoryEntry() const
     using sfl::HistoryItem;
 
     std::map<std::string, std::string> entry(Call::createHistoryEntry());
-    entry[HistoryItem::AUDIO_CODEC_KEY] = local_sdp_->getAudioCodecNames();
+    entry[HistoryItem::AUDIO_CODEC_KEY] = audiortp_.getCurrentAudioCodecNames();
 #ifdef SFL_VIDEO
     entry[HistoryItem::VIDEO_CODEC_KEY] = local_sdp_->getSessionVideoCodec();
 #endif
