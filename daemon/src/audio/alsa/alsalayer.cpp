@@ -511,7 +511,7 @@ AlsaLayer::read(void* buffer, int toCopy)
             break;
         }
 
-        case EPERM:
+        case -EPERM:
             ERROR("Can't capture, EPERM (%s)", snd_strerror(err));
             prepareCaptureStream();
             startCaptureStream();
