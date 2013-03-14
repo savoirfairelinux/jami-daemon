@@ -219,6 +219,7 @@ AudioCodecFactory::loadCodec(const std::string &path)
 
     if (error) {
         ERROR("%s", error);
+        dlclose(codecHandle);
         return NULL;
     }
 
