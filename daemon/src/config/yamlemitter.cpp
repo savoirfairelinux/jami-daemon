@@ -36,8 +36,8 @@
 namespace Conf {
 
 YamlEmitter::YamlEmitter(const char *file) : filename_(file), fd_(0),
-    emitter_(), document_(), topLevelMapping_(0), isFirstAccount_(true),
-    accountSequence_(0)
+    emitter_(), events_(), buffer_(), document_(), topLevelMapping_(0),
+    isFirstAccount_(true), accountSequence_(0)
 {
     open();
 }
