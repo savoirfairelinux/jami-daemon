@@ -226,7 +226,7 @@ string Account::mapStateNumberToString(RegistrationState state)
         "ERRORNOTACCEPTABLE",
     };
 
-    if (state > NUMBER_OF_STATES)
+    if (state >= NUMBER_OF_STATES)
         return "ERROR";
 
     return mapStateToChar[state];
