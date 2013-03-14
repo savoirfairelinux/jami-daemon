@@ -76,8 +76,10 @@ void YamlEmitter::close()
 
     // Refererence:
     // http://www.parashift.com/c++-faq-lite/exceptions.html#faq-17.9
-    if (!fd_)
+    if (!fd_) {
         ERROR("File descriptor not valid");
+        return;
+    }
 
     if (fclose(fd_))
         ERROR("Error closing file descriptor");
