@@ -109,7 +109,7 @@ std::string SipTransport::getInterfaceAddrFromName(const std::string &ifaceName)
     RETURN_IF_FAIL(fd >= 0, "", "Could not open socket: %m");
 
     ifreq ifr;
-    strcpy(ifr.ifr_name, ifaceName.c_str());
+    strncpy(ifr.ifr_name, ifaceName.c_str(), sizeof ifr.ifr_name);
     memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
     ifr.ifr_addr.sa_family = AF_INET;
 
