@@ -381,6 +381,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         ERROR("Something wrong with Replaces request.");
         delete call;
         pjsip_endpt_respond_stateless(endpt_, rdata, 500 /* internal server error */, NULL, NULL, NULL);
+        return PJ_FALSE;
     }
 
     // Check if call has been transfered
@@ -398,7 +399,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         // Disconnect the "replaced" INVITE session.
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata)
             pjsip_inv_send_msg(replaced_inv, tdata);
-    } else { // Prooceed with normal call flow
+    } else { // Proceed with normal call flow
         if (pjsip_inv_initial_answer(call->inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             ERROR("Could not answer invite");
             delete call;
