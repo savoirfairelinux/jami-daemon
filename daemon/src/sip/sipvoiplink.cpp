@@ -2193,7 +2193,7 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
                     return;
             }
 
-            if (r_data->msg_info.cid)
+            if (!r_data->msg_info.cid)
                 return;
             std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
             SIPCall *call = SIPVoIPLink::instance()->getSipCall(transferCallID[transferID]);
