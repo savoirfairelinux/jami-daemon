@@ -84,10 +84,10 @@ const char *get_program_dir()
 }
 
 // FIXME: This should use our real DATADIR
-const char *get_data_dir()
+std::string
+get_data_dir()
 {
-    std::string path = std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
-    return path.c_str();
+    return std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
 }
 
 namespace {
