@@ -964,12 +964,12 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 {
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
-    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
-
     if (sipAccount == NULL) {
         ERROR("SIP account is NULL while registering a new keep alive timer");
         return;
     }
+
+    ERROR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
 
     // IP2IP default does not require keep-alive
     if (sipAccount->isIP2IP())

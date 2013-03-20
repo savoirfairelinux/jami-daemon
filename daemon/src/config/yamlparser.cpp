@@ -382,9 +382,11 @@ void YamlParser::constructNativeData()
 
     for (Sequence::iterator iter = seq->begin(); iter != seq->end(); ++iter) {
         YamlNode *yamlNode = static_cast<YamlNode *>(*iter);
-        if(yamlNode == NULL) {
-            ERROR("Could not retreive yaml node from document sequence");
+        if (yamlNode == NULL) {
+            ERROR("Could not retrieve yaml node from document sequence");
+            continue;
         }
+
         NodeType nodeType = yamlNode->getType();
         switch (nodeType) {
             case MAPPING: {

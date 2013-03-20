@@ -1,5 +1,17 @@
 #!/bin/bash
 
+AUTORECONF=`which autoreconf`
+if test -z $AUTORECONF; then
+        echo "*** No autoreconf found, please install it ***"
+        exit 1
+fi
+
+LIBTOOLIZE=`which libtoolize`
+if test -z $LIBTOOLIZE; then
+        echo "*** No libtool found, please install it ***"
+        exit 1
+fi
+
 # Workaround for http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=565663
 mkdir -p m4
 

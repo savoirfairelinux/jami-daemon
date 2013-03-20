@@ -84,10 +84,10 @@ const char *get_program_dir()
 }
 
 // FIXME: This should use our real DATADIR
-const char *get_data_dir()
+std::string
+get_data_dir()
 {
-    std::string path = std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
-    return path.c_str();
+    return std::string(get_program_dir()) + "/../../share/sflphone/ringtones/";
 }
 
 namespace {
@@ -144,7 +144,9 @@ create_pidfile()
     }
 
     snprintf(buf, sizeof(buf), "%ld\n", (long) getpid());
-    if (write(f.fd, buf, strlen(buf)) != strlen(buf)) {
+
+    const int buf_strlen = strlen(buf);
+    if (write(f.fd, buf, buf_strlen) != buf_strlen) {
         ERROR("Problem writing to PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
@@ -187,8 +189,8 @@ get_home_dir()
         struct passwd pwbuf, *pw;
         if (getpwuid_r(getuid(), &pwbuf, buf, sizeof(buf), &pw) == 0 and pw != NULL)
             return pw->pw_dir;
-    } else {
-        return "";
     }
+
+    return "";
 }
 }

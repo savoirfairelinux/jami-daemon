@@ -68,9 +68,9 @@ class AudioZrtpSession :
 
         virtual std::vector<uint8> getLocalMasterSalt() const { std::vector<uint8> vec; return vec; }
 
-        virtual void setLocalMasterKey(const std::vector<unsigned char>& vec UNUSED) const {}
+        virtual void setLocalMasterKey(const std::vector<unsigned char>& vec UNUSED) {}
 
-        virtual void setLocalMasterSalt(const std::vector<unsigned char>& vec UNUSED) const {}
+        virtual void setLocalMasterSalt(const std::vector<unsigned char>& vec UNUSED) {}
 
     private:
         NON_COPYABLE(AudioZrtpSession);

@@ -149,6 +149,9 @@ class AudioRtpFactory {
 
         void restoreLocalContext();
 
+        std::string
+        getCurrentAudioCodecNames() const;
+
     private:
         NON_COPYABLE(AudioRtpFactory);
         enum KeyExchangeProtocol { NONE, SDES, ZRTP };

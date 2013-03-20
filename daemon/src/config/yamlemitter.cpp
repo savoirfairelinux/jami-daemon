@@ -36,8 +36,8 @@
 namespace Conf {
 
 YamlEmitter::YamlEmitter(const char *file) : filename_(file), fd_(0),
-    emitter_(), document_(), topLevelMapping_(0), isFirstAccount_(true),
-    accountSequence_(0)
+    emitter_(), events_(), buffer_(), document_(), topLevelMapping_(0),
+    isFirstAccount_(true), accountSequence_(0)
 {
     open();
 }
@@ -76,8 +76,10 @@ void YamlEmitter::close()
 
     // Refererence:
     // http://www.parashift.com/c++-faq-lite/exceptions.html#faq-17.9
-    if (!fd_)
+    if (!fd_) {
         ERROR("File descriptor not valid");
+        return;
+    }
 
     if (fclose(fd_))
         ERROR("Error closing file descriptor");

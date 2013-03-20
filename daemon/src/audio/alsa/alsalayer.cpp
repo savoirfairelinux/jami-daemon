@@ -57,8 +57,8 @@ class AlsaThread {
         static void *runCallback(void *context);
 
         NON_COPYABLE(AlsaThread);
-        AlsaLayer* alsa_;
         pthread_t thread_;
+        AlsaLayer* alsa_;
         bool running_;
 };
 
@@ -511,7 +511,7 @@ AlsaLayer::read(void* buffer, int toCopy)
             break;
         }
 
-        case EPERM:
+        case -EPERM:
             ERROR("Can't capture, EPERM (%s)", snd_strerror(err));
             prepareCaptureStream();
             startCaptureStream();

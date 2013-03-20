@@ -42,12 +42,12 @@
 namespace sfl {
 AudioRtpSession::AudioRtpSession(SIPCall &call, ost::RTPDataQueue &queue) :
     AudioRtpRecordHandler(call)
+    , isStarted_(false)
+    , queue_(queue)
     , call_(call)
     , timestamp_(0)
     , timestampIncrement_(0)
     , transportRate_(20)
-    , queue_(queue)
-    , isStarted_(false)
     , remote_ip_()
     , remote_port_(0)
     , timestampCount_(0)

@@ -708,7 +708,8 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
                 call->setDisplayName(std::string(event->ies.calling_name));
 
             // if peerNumber exist append it to the name string
-            call->initRecFilename(std::string(event->ies.calling_number));
+            if (event->ies.calling_number)
+                call->initRecFilename(std::string(event->ies.calling_number));
             Manager::instance().incomingCall(*call, accountID_);
 
             format = call->getFirstMatchingFormat(event->ies.format, accountID_);

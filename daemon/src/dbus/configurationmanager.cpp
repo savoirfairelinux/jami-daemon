@@ -58,20 +58,13 @@ ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
 
 std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
 {
-    std::map<std::string, std::string> ip2ipAccountDetails;
     SIPAccount *sipaccount = Manager::instance().getIP2IPAccount();
 
     if (!sipaccount) {
         ERROR("Could not find IP2IP account");
-        return ip2ipAccountDetails;
+        return std::map<std::string, std::string>();
     } else
         return sipaccount->getIp2IpDetails();
-
-    std::map<std::string, std::string> tlsSettings(getTlsSettings());
-    std::copy(tlsSettings.begin(), tlsSettings.end(),
-              std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
-
-    return ip2ipAccountDetails;
 }
 
 

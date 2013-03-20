@@ -31,6 +31,8 @@
 #ifndef FILEUTILS_H_
 #define FILEUTILS_H_
 
+#include <string>
+
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
 
@@ -49,7 +51,7 @@ namespace fileutils {
     bool check_dir(const char *path);
     void set_program_dir(char *program_path);
     const char *get_program_dir();
-    const char *get_data_dir();
+    std::string get_data_dir();
     bool isDirectoryWritable(const std::string &directory);
     struct FileHandle {
         int fd;

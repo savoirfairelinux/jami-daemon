@@ -88,7 +88,10 @@ void MainBuffer::removeCallIDSet(const std::string &set_id)
 void MainBuffer::addCallIDtoSet(const std::string &set_id, const std::string &call_id)
 {
     CallIDSet* callid_set = getCallIDSet(set_id);
-    callid_set->insert(call_id);
+    if (callid_set)
+        callid_set->insert(call_id);
+    else
+        ERROR("CallIDSet %s does not exist!", set_id.c_str());
 }
 
 void MainBuffer::removeCallIDfromSet(const std::string &set_id, const std::string &call_id)

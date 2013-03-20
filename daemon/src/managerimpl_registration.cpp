@@ -87,6 +87,8 @@ void
 ManagerImpl::sendRegister(const std::string& accountID, bool enable)
 {
     Account* acc = getAccount(accountID);
+    if (!acc)
+        return;
 
     acc->setEnabled(enable);
     acc->loadConfig();

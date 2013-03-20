@@ -194,6 +194,8 @@ class AudioRtpRecordHandler {
 
         void putDtmfEvent(char digit);
 
+        std::string getCurrentAudioCodecNames();
+
     protected:
         bool codecsDiffer(const std::vector<AudioCodec*> &codecs) const;
         AudioRtpRecord audioRtpRecord_;
