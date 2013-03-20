@@ -1376,19 +1376,20 @@ void ManagerImpl::playDtmf(char code)
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
-    std::vector<SFLAudioSample> buf(size);
+    //std::vector<SFLAudioSample> buf(size);
+    AudioBuffer buf(size);
 
     // Handle dtmf
     dtmfKey_->startTone(code);
 
     // copy the sound
-    if (dtmfKey_->generateDTMF(buf)) {
+    if (dtmfKey_->generateDTMF(*buf.getChannel())) {
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
         audiodriver_->startStream();
-        audiodriver_->putUrgent(&(*buf.begin()), size * sizeof(SFLAudioSample));
+        audiodriver_->putUrgent(&buf);
     }
 
     // TODO Cache the DTMF

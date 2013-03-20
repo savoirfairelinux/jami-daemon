@@ -32,6 +32,7 @@
 #define GAINCONTROL_H
 
 #include "global.h"
+#include "audiobuffer.h"
 
 class GainControl {
 

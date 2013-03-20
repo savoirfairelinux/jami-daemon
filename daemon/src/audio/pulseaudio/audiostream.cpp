@@ -38,18 +38,19 @@ AudioStream::AudioStream(pa_context *c,
                          const char *desc,
                          int type,
                          unsigned samplrate,
-                         const std::string &deviceName)
+                         const void* infos)
     : audiostream_(0), mainloop_(m)
 {
-    static const pa_channel_map channel_map = {
-        1,
-        { PA_CHANNEL_POSITION_MONO },
-    };
+    // assume pa_source_info and pa_sink_info are similar
+    const pa_source_info* const infos_source = static_cast<const pa_source_info*>(infos);
+    // assume infos->name is NULL-terminated
+    const std::string deviceName(infos_source->name);
+    const pa_channel_map channel_map = infos_source->channel_map;
 
     pa_sample_spec sample_spec = {
         PA_SAMPLE_S16LE, // PA_SAMPLE_FLOAT32LE,
         samplrate,
-        1
+        channel_map.channels
     };
 
     assert(pa_sample_spec_valid(&sample_spec));

@@ -121,9 +121,8 @@ class AudioLayer {
          * Send a chunk of data to the hardware buffer to start the playback
          * Copy data in the urgent buffer.
          * @param buffer The buffer containing the data to be played ( ringtones )
-         * @param toCopy The size of the buffer
          */
-        void putUrgent(void* buffer, int toCopy);
+        void putUrgent(AudioBuffer* buffer);
 
         /**
          * Flush main buffer
@@ -134,12 +133,6 @@ class AudioLayer {
          * Flush urgent buffer
          */
         void flushUrgent();
-
-        /**
-         * Apply gain to audio frame
-         */
-        //static void applyGain(SFLDataFormat *src , int samples, int gain);
-      //  static void applyGain(SFLAudioBuffer *src, int gain)
 
         /**
          * Convert audio amplitude value from linear value to dB

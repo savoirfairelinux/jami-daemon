@@ -41,8 +41,11 @@
 #include <cassert>
 #include "logger.h"
 
-AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(0), pos_(0), sampleRate_(sampleRate), isRecording_(false)
-{}
+AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(), pos_(0), isRecording_(false)
+{
+    buffer_ = new AudioBuffer();
+    buffer_->setSampleRate(sampleRate);
+}
 
 AudioLoop::~AudioLoop()
 {
@@ -53,7 +56,7 @@ AudioLoop::~AudioLoop()
 void
 AudioLoop::seek(double relative_position)
 {
-    size_t new_pos = (size_t)((double)size_ * (relative_position * 0.01));
+    size_t new_pos = (size_t)((double)buffer_->samples() * (relative_position * 0.01));
 
     pos_ = new_pos;
 }
@@ -62,14 +65,14 @@ static unsigned int updatePlaybackScale = 0;
 
 void
 //AudioLoop::getNext(SFLAudioSample* output, size_t total_samples, short volume)
-AudioLoop::getNext(AudioBuffer* output, short volume)
+AudioLoop::getNext(AudioBuffer* output, unsigned int volume)
 {
     if(!buffer_) {
         ERROR("AudioLoop::buffer_ is not set (NULL pointer)");
         return;
     }
 
-    const size_t buf_samples = buffer_.samples();
+    const size_t buf_samples = buffer_->samples();
     size_t pos = pos_;
     size_t total_samples = output->samples();
     size_t output_pos = 0;
@@ -91,7 +94,7 @@ AudioLoop::getNext(AudioBuffer* output, short volume)
         // short->char conversion
         //memcpy(output, buffer_ + pos, samples * sizeof(SFLAudioSample));
         //buffer_.copy(output, pos, samples);
-        output.copy(buffer_, samples, pos, output_pos);
+        output->copy(buffer_, samples, pos, output_pos);
 
         // Scaling needed
         /*if (volume != 100) {
@@ -103,17 +106,17 @@ AudioLoop::getNext(AudioBuffer* output, short volume)
             output_pos += samples;*/
             //output += samples; // this is the destination...
         output_pos += samples;
-        pos = (pos + samples) % size_;
+        pos = (pos + samples) % buf_samples;
 
         total_samples -= samples;
     }
 
-    output.applyGain(volume); // apply volume
+    output->applyGain(volume); // apply volume
 
     pos_ = pos;
 
     // We want to send values in milisecond
-    int divisor = sampleRate_ / 1000;
+    int divisor = buffer_->getSampleRate() / 1000;
     if(divisor == 0) {
         ERROR("Error cannot update playback slider, sampling rate is 0");
         return;
@@ -122,7 +125,7 @@ AudioLoop::getNext(AudioBuffer* output, short volume)
     if(isRecording_) {
         if((updatePlaybackScale % 5) == 0) {
             CallManager *cm = Manager::instance().getDbusManager()->getCallManager();
-            cm->updatePlaybackScale(pos_ / divisor, size_ / divisor);
+            cm->updatePlaybackScale(pos_ / divisor, buf_samples / divisor);
         }
         updatePlaybackScale++;
     }

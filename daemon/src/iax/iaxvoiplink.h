@@ -39,6 +39,7 @@
 #include <pthread.h>
 #include "account.h"
 #include "voiplink.h"
+#include "audio/audiobuffer.h"
 #include "audio/codecs/audiocodec.h" // for DEC_BUFFER_SIZE
 #include "sfl_types.h"
 #include "noncopyable.h"
@@ -281,8 +282,10 @@ class IAXVoIPLink : public VoIPLink {
         pthread_mutex_t mutexIAX_;
 
         /** encoder/decoder/resampler buffers */
-        SFLDataFormat decData_[DEC_BUFFER_SIZE];
-        SFLDataFormat resampledData_[DEC_BUFFER_SIZE * 4];
+        AudioBuffer decData_;
+        AudioBuffer resampledData_;
+        //SFLAudioSample decData_[DEC_BUFFER_SIZE];
+        //SFLAudioSample resampledData_[DEC_BUFFER_SIZE * 4];
         unsigned char encodedData_[DEC_BUFFER_SIZE];
 
         /** Sample rate converter object */

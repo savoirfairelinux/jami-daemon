@@ -36,6 +36,8 @@
 #include <string>
 #include <pthread.h>
 
+#include "audiobuffer.h"
+
 class RingBuffer;
 
 typedef std::set<std::string> CallIDSet;

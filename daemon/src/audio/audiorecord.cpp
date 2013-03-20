@@ -421,9 +421,9 @@ void AudioRecord::recData(AudioBuffer* buffer)
             return;
         }
 
-        size_t nSamples = buffer->sample_num;
+        size_t nSamples = buffer->samples();
 
-        if (fwrite(&(buffer->getChannel(0)), sizeof(SFLAudioSample), nSamples, fileHandle_) != nSamples)
+        if (fwrite(buffer->getChannel(), sizeof(SFLAudioSample), nSamples, fileHandle_) != nSamples)
             WARN("Could not record data! ");
         else {
             fflush(fileHandle_);

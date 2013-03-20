@@ -33,10 +33,11 @@
 #define DCBLOCKER_H
 
 #include "sfl_types.h"
+#include "audiobuffer.h"
 
 class DcBlocker {
     public:
-        DcBlocker(size_t channels = 1);
+        DcBlocker(unsigned channels = 1);
         void reset();
 
         void process(SFLAudioSample *out, SFLAudioSample *in, int samples);
@@ -53,7 +54,7 @@ class DcBlocker {
 
         void doProcess(SFLAudioSample *out, SFLAudioSample *in, int samples, struct StreamState * state);
 
-        std::vector<StreamState> state;
+        std::vector<StreamState> states;
 };
 
 #endif

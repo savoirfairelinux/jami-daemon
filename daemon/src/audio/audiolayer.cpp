@@ -70,23 +70,11 @@ void AudioLayer::flushUrgent()
     urgentRingBuffer_.flushAll();
 }
 
-void AudioLayer::putUrgent(void* buffer, int toCopy)
+void AudioLayer::putUrgent(AudioBuffer* buffer)
 {
     sfl::ScopedLock guard(mutex_);
-    urgentRingBuffer_.put(buffer, toCopy);
+    urgentRingBuffer_.put(buffer);
 }
-
-/*
-//void AudioLayer::applyGain(SFLDataFormat *src , int samples, int gain)
-void AudioLayer::applyGain(AudioBuffer *src, int gain)
-{
-    size_t len = src->sample_num * src->channels;
-    SFLAudioSample *buf = src->samples;
-
-    if (gain != 100)
-        for (int i = 0 ; i < len; i++)
-            buf[i] = buf[i] * gain* 0.01;
-}*/
 
 // Notify (with a beep) an incoming call when there is already a call in progress
 void AudioLayer::notifyIncomingCall()
@@ -108,11 +96,11 @@ void AudioLayer::notifyIncomingCall()
 
     Tone tone("440/160", getSampleRate());
     unsigned int nbSample = tone.getSize();
-    SFLAudioSample buf[nbSample];
-    tone.getNext(buf, nbSample);
+    AudioBuffer buf(nbSample);
+    tone.getNext(&buf);
 
     /* Put the data in the urgent ring buffer */
     flushUrgent();
-    putUrgent(buf, sizeof buf);
+    putUrgent(&buf);
 }
 

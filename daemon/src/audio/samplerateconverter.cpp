@@ -75,8 +75,8 @@ void SamplerateConverter::resample(const AudioBuffer *dataIn, AudioBuffer *dataO
     double outputFreq = dataOut->getSampleRate();
     double sampleFactor = (double) outputFreq / inputFreq;
 
-    size_t nbSamples = dataIn.samples();
-    size_t nbChans = dataIn.getChannelNum();
+    size_t nbSamples = dataIn->samples();
+    size_t nbChans = dataIn->channels();
 
     unsigned i, j;
 
@@ -113,14 +113,14 @@ void SamplerateConverter::resample(const AudioBuffer *dataIn, AudioBuffer *dataO
     src_data.end_of_input = 0; // More data will come
 
     //Short2FloatArray(dataIn, floatBufferIn_, nbSamples);
-    dataIn.interleaveFloat(floatBufferIn_);
+    dataIn->interleaveFloat(floatBufferIn_);
 
     src_process(src_state_, &src_data);
 
-    if (outSamples > dataOutSize) {
+    /*if (outSamples > dataOutSize) {
         ERROR("Outsamples exceeds output buffer size, clamping to %u", dataOutSize);
         outSamples = dataOutSize;
-    }
+    }*/
 
     //src_float_to_short_array(floatBufferOut_, dataOut, outSamples);
 
@@ -130,5 +130,5 @@ void SamplerateConverter::resample(const AudioBuffer *dataIn, AudioBuffer *dataO
     */
     short* scratch_buff = (short*)floatBufferIn_;
     src_float_to_short_array(floatBufferOut_, scratch_buff, outSamples);
-    dataOut.fromInterleaved(scratch_buff, outSamples, nbChans);
+    dataOut->fromInterleaved(scratch_buff, outSamples, nbChans);
 }

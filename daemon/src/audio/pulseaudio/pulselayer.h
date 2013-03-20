@@ -60,13 +60,14 @@ class PulseLayer : public AudioLayer {
 
         void updateSourceList();
 
-        bool inSinkList(const std::string &deviceName) const;
+        bool inSinkList(const std::string &deviceName);
 
-        bool inSourceList(const std::string &deviceName) const;
+        bool inSourceList(const std::string &deviceName);
 
         virtual std::vector<std::string> getCaptureDeviceList() const;
         virtual std::vector<std::string> getPlaybackDeviceList() const;
         int getAudioDeviceIndex(const std::string& name) const;
+
         std::string getAudioDeviceName(int index, PCMType type) const;
 
         virtual void startStream();
@@ -122,18 +123,51 @@ class PulseLayer : public AudioLayer {
         /**
          * Contain the list of playback devices
          */
-        std::vector<std::string> sinkList_;
+        //std::vector<std::string> sinkList_;
+        std::vector<pa_sink_info> sinkList_;
 
         /**
          * Contain the list of capture devices
          */
-        std::vector<std::string> sourceList_;
+        //std::vector<std::string> sourceList_;
+        std::vector<pa_source_info> sourceList_;
+
+        /** Helper unary_function to search for a device name in a list of pa_source_info */
+        struct source_info_compare_name : public std::unary_function<const pa_source_info, bool>
+        {
+            explicit source_info_compare_name(const std::string &baseline) : baseline(baseline) {}
+            bool operator() (const pa_source_info &arg) {
+                return std::strcmp(arg.name, baseline.c_str()) != 0;
+            }
+            std::string baseline;
+        };
+
+        /**  Helper unary_function to search for a device name in a list of pa_sink_info */
+        struct sink_info_compare_name : public std::unary_function<const pa_sink_info, bool>
+        {
+            explicit sink_info_compare_name(const std::string &baseline) : baseline(baseline) {}
+            bool operator() (const pa_sink_info &arg) {
+                return std::strcmp(arg.name, baseline.c_str()) != 0;
+            }
+            std::string baseline;
+        };
+
+        /**
+         * Returns a pointer to the pa_source_info with the given name in sourceList_, or NULL if not found.
+         */
+        const pa_source_info* getCaptureDevice(const std::string& name) const;
+
+        /**
+         * Returns a pointer to the pa_sink_info with the given name in sinkList_, or NULL if not found.
+         */
+        const pa_sink_info* getPlaybackDevice(const std::string& name) const;
 
         /*
          * Buffers used to avoid doing malloc/free in the audio thread
          */
-        SFLDataFormat *mic_buffer_;
-        size_t mic_buf_size_;
+        //SFLAudioSample *mic_buffer_;
+        //size_t mic_buf_size_;
+        AudioBuffer mic_buffer_;
 
         /** PulseAudio context and asynchronous loop */
         pa_context* context_;

@@ -53,9 +53,12 @@ class AudioStream {
          * @param description
          * @param types
          * @param audio sampling rate
-         * @param device name
+         * @param pointer to pa_source_info or pa_sink_info (depending on type).
+         *
+         * //@param channel number
+         * //@param device name
          */
-        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const std::string&);
+        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const void*);
 
         ~AudioStream();
 
@@ -65,6 +68,18 @@ class AudioStream {
          */
         pa_stream* pulseStream() {
             return audiostream_;
+        }
+
+        const pa_sample_spec *sampleSpec() {
+            return pa_stream_get_sample_spec(audiostream_);
+        }
+
+        inline size_t sampleSize() {
+            return pa_sample_size(sampleSpec());
+        }
+
+        inline uint8_t channels() {
+            return sampleSpec()->channels;
         }
 
         bool isReady();

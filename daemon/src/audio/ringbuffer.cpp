@@ -47,8 +47,8 @@ namespace {
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(size_t size, const std::string &call_id) :
       endPos_(0)
-    , bufferSize_(size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
-    , buffer_(1, vector<SFLAudioSample>(bufferSize_))
+    , bufferSize_(std::max(size, MIN_BUFFER_SIZE))
+    , buffer_(1, std::vector<SFLAudioSample>(bufferSize_))
     , readpointers_()
     , buffer_id_(call_id)
 {
@@ -165,13 +165,13 @@ bool RingBuffer::hasNoReadPointers() const
 void RingBuffer::put(AudioBuffer* buf)
 {
     const size_t len = putLength();
-    const AudioChannel chans = buf->channels;
-    const size_t sample_num = buf->sample_num;
-    const size_t toCopy = sample_num;
+    const unsigned chans = buf->channels();
+    const size_t sample_num = buf->samples();
+    size_t toCopy = sample_num;
 
     // Add more channels if the input buffer holds more channels than the ring.
     if(buffer_.size() < chans)
-        buffer_.resize(chans, vector<SFLAudioSample>(bufferSize_, 0))
+        buffer_.resize(chans, std::vector<SFLAudioSample>(bufferSize_, 0));
 
     if (toCopy > bufferSize_ - len)
         toCopy = bufferSize_ - len;
@@ -219,9 +219,9 @@ size_t RingBuffer::get(AudioBuffer* buf, const std::string &call_id)
         return 0;
 
     const size_t len = getLength(call_id);
-    const AudioChannel chans = min(buffer_.size(), buf->channels);
-    const size_t sample_num = buf->sample_num;
-    size_t toCopy = min(buf->sample_num, len);
+    const size_t sample_num = buf->samples();
+    const size_t chans = std::min((unsigned)buffer_.size(), buf->channels());
+    size_t toCopy = std::min(sample_num, len);
 
   /*  if (toCopy > len)
         toCopy = len;*/
@@ -233,7 +233,7 @@ size_t RingBuffer::get(AudioBuffer* buf, const std::string &call_id)
 
     while (toCopy > 0) {
         size_t block = toCopy;
-        AudioChannel i;
+        unsigned i;
 
         if (block > bufferSize_ - startPos)
             block = bufferSize_ - startPos;

@@ -263,9 +263,10 @@ size_t MainBuffer::getData(AudioBuffer* buffer, const std::string &call_id)
             return 0;
     } else {
         buffer->clear();//memset(buffer, 0, toCopy);
+        buffer->setSampleRate(internalSamplingRate_);
 
         size_t size = 0;
-        AudioBuffer mixBuffer(buffer);
+        AudioBuffer mixBuffer(*buffer);
 
         for (CallIDSet::iterator iter_id = callid_set->begin();
              iter_id != callid_set->end(); ++iter_id) {
@@ -273,7 +274,7 @@ size_t MainBuffer::getData(AudioBuffer* buffer, const std::string &call_id)
             SFLDataFormat mixBuffer[nbSmplToCopy];
             memset(mixBuffer, 0, toCopy);
             size = getDataByID(mixBuffer, toCopy, *iter_id, call_id);*/
-            size = getDataByID(mixBuffer, *iter_id, call_id);
+            size = getDataByID(&mixBuffer, *iter_id, call_id);
 
             if (size > 0) {
                 /*SFLDataFormat *dest = static_cast<SFLDataFormat*>(buffer);

@@ -37,6 +37,7 @@
 
 #include "sfl_types.h"
 #include "noncopyable.h"
+#include "audiobuffer.h"
 
 class AudioRecord {
 
@@ -103,7 +104,7 @@ class AudioRecord {
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
         //void recData(SFLDataFormat* buffer, size_t nSamples);
-        void recData(SFLAudioSample* buffer);
+        void recData(AudioBuffer* buffer);
 
     protected:
 

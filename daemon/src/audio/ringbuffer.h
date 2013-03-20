@@ -136,6 +136,7 @@ class RingBuffer {
         void debug();
 
     private:
+        /* POULET! */
         NON_COPYABLE(RingBuffer);
 
         /** Pointer on the last data */
