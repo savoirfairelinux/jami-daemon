@@ -152,7 +152,7 @@ class AudioBuffer {
 		 * The number of channels is changed to match the in channel number.
 		 * Buffer sample number is also increased if required to hold the new requested samples.
 		 */
-		size_t copy(AudioBuffer* in, int sample_num=-1, size_t pos_in=0, size_t pos_out=0);
+		size_t copy(AudioBuffer& in, int sample_num=-1, size_t pos_in=0, size_t pos_out=0);
 
 		/**
 		 * Copy sample_num samples from in to this (at sample pos_out).

@@ -41,7 +41,7 @@ void DcBlocker::reset()
 
 void DcBlocker::doProcess(SFLAudioSample *out, SFLAudioSample *in, int samples, struct StreamState * state)
 {
-    for (int i = 0; i < samples; ++i) {
+    for (unsigned i = 0; i < samples; ++i) {
         state->x_ = in[i];
 
         state->y_ = (SFLAudioSample) ((float) state->x_ - (float) state->xm1_ + 0.9999 * (float) state->y_);
@@ -50,24 +50,24 @@ void DcBlocker::doProcess(SFLAudioSample *out, SFLAudioSample *in, int samples, 
 
         out[i] = state->y_;
     }
-
 }
 
 void DcBlocker::process(SFLAudioSample *out, SFLAudioSample *in, int samples)
 {
+    if(out == NULL or in == NULL or samples == 0) return;
     doProcess(out, in, samples, &states[0]);
 }
 
-void DcBlocker::process(AudioBuffer *buf)
+void DcBlocker::process(AudioBuffer& buf)
 {
-    const size_t chans = buf->channels();
-    const size_t samples = buf->samples();
+    const size_t chans = buf.channels();
+    const size_t samples = buf.samples();
     if(chans > states.size())
-        states.resize(buf->channels(), (struct StreamState){0, 0, 0, 0});
+        states.resize(buf.channels(), (struct StreamState){0, 0, 0, 0});
 
     unsigned i;
     for(i=0; i<chans; i++) {
-        SFLAudioSample *chan = buf->getChannel(i)->data();
+        SFLAudioSample *chan = buf.getChannel(i)->data();
         doProcess(chan, chan, samples, &states[i]);
     }
 }

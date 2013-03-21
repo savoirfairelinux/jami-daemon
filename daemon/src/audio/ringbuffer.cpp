@@ -162,11 +162,11 @@ bool RingBuffer::hasNoReadPointers() const
 
 // This one puts some data inside the ring buffer.
 //void RingBuffer::put(void* buffer, size_t toCopy)
-void RingBuffer::put(AudioBuffer* buf)
+void RingBuffer::put(AudioBuffer& buf)
 {
     const size_t len = putLength();
-    const unsigned chans = buf->channels();
-    const size_t sample_num = buf->samples();
+    const unsigned chans = buf.channels();
+    const size_t sample_num = buf.samples();
     size_t toCopy = sample_num;
 
     // Add more channels if the input buffer holds more channels than the ring.
@@ -188,7 +188,7 @@ void RingBuffer::put(AudioBuffer* buf)
             block = bufferSize_ - pos; // Fill in to the end of the buffer
 
         for(i=0; i<chans; i++) {
-            copy(buf->getChannel(i)->begin()+in_pos, buf->getChannel(i)->begin()+in_pos+block, buffer_[i].begin()+pos);
+            copy(buf.getChannel(i)->begin()+in_pos, buf.getChannel(i)->begin()+in_pos+block, buffer_[i].begin()+pos);
         }
         in_pos += block;
         pos = (pos + block) % bufferSize_;
@@ -210,7 +210,7 @@ RingBuffer::availableForGet(const std::string &call_id) const
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 //size_t RingBuffer::get(void *buffer, size_t toCopy, const std::string &call_id)
-size_t RingBuffer::get(AudioBuffer* buf, const std::string &call_id)
+size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 {
     if (hasNoReadPointers())
         return 0;
@@ -219,8 +219,8 @@ size_t RingBuffer::get(AudioBuffer* buf, const std::string &call_id)
         return 0;
 
     const size_t len = getLength(call_id);
-    const size_t sample_num = buf->samples();
-    const size_t chans = std::min((unsigned)buffer_.size(), buf->channels());
+    const size_t sample_num = buf.samples();
+    const size_t chans = std::min((unsigned)buffer_.size(), buf.channels());
     size_t toCopy = std::min(sample_num, len);
 
   /*  if (toCopy > len)
@@ -239,7 +239,7 @@ size_t RingBuffer::get(AudioBuffer* buf, const std::string &call_id)
             block = bufferSize_ - startPos;
 
         for(i=0; i<chans; i++) {
-            copy(buffer_[i].begin()+startPos, buffer_[i].begin()+startPos+block, buf->getChannel(i)->begin()+dest);
+            copy(buffer_[i].begin()+startPos, buffer_[i].begin()+startPos+block, buf.getChannel(i)->begin()+dest);
            // memcpy(buf->getChannel(i), &(*buffer_[i].begin()) + startPos, block);
         }
 

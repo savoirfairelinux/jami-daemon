@@ -45,7 +45,7 @@ class DcBlocker {
         /**
          * In-place processing of all samples in buf (each channel treated independently)
          */
-        void process(AudioBuffer *buf);
+        void process(AudioBuffer& buf);
 
     private:
         struct StreamState {

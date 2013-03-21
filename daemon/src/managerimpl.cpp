@@ -1391,7 +1391,7 @@ void ManagerImpl::playDtmf(char code)
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
         audiodriver_->startStream();
-        audiodriver_->putUrgent(&buf);
+        audiodriver_->putUrgent(buf);
     }
 
     // TODO Cache the DTMF

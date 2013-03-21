@@ -295,7 +295,7 @@ int AudioRtpRecordHandler::processDataEncode()
     SFLAudioSample *micData = audioRtpRecord_.decData_.data();
     const size_t bytes = Manager::instance().getMainBuffer().getData(micData, bytesToGet, id_);*/
     AudioBuffer micData(samplesToGet);
-    const size_t samps = Manager::instance().getMainBuffer().getData(&micData, id_);
+    const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
 
 #ifdef RECTODISK
     rtpNotResampled.write((const char *)micData, bytes);
@@ -326,7 +326,7 @@ int AudioRtpRecordHandler::processDataEncode()
                 */
 
         audioRtpRecord_.resampledData_.setSampleRate(codecSampleRate);
-        audioRtpRecord_.converterEncode_->resample(&micData, &(audioRtpRecord_.resampledData_));
+        audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledData_);
 
 #ifdef RECTODISK
         rtpResampled.write((const char *)audioRtpRecord_.resampledData_.data(), samplesToGet*sizeof(SFLAudioSample)/2 );
@@ -339,7 +339,7 @@ int AudioRtpRecordHandler::processDataEncode()
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ScopedLock lock(audioRtpRecord_.audioProcessMutex_);
         RETURN_IF_NULL(audioRtpRecord_.noiseSuppressEncode_, 0, "Noise suppressor already destroyed");
-        audioRtpRecord_.noiseSuppressEncode_->process(&micData, getCodecFrameSize());
+        audioRtpRecord_.noiseSuppressEncode_->process(micData, getCodecFrameSize());
     }
 #endif
 
@@ -347,7 +347,7 @@ int AudioRtpRecordHandler::processDataEncode()
         ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
-        return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out, getCodecFrameSize());
+        return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, *out, getCodecFrameSize());
     }
 }
 #undef RETURN_IF_NULL
@@ -373,29 +373,29 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     int inSamples = 0;
     size = std::min(size, audioRtpRecord_.decData_.samples());
     //SFLAudioSample *spkrDataDecoded = audioRtpRecord_.decData_.data();
-    AudioBuffer *spkrDataDecoded = &(audioRtpRecord_.decData_);
+    //AudioBuffer *spkrDataDecoded = &(audioRtpRecord_.decData_);
 
     {
         ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
-        inSamples = audioRtpRecord_.getCurrentCodec()->decode(spkrDataDecoded, spkrData, size);
+        inSamples = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_, spkrData, size);
     }
 
 #if HAVE_SPEEXDSP
     if (Manager::instance().audioPreference.getNoiseReduce()) {
         ScopedLock lock(audioRtpRecord_.audioProcessMutex_);
         RETURN_IF_NULL(audioRtpRecord_.noiseSuppressDecode_, "Noise suppressor already destroyed");
-        audioRtpRecord_.noiseSuppressDecode_->process(spkrDataDecoded, getCodecFrameSize());
+        audioRtpRecord_.noiseSuppressDecode_->process(audioRtpRecord_.decData_, getCodecFrameSize());
     }
 #endif
 
     audioRtpRecord_.fadeInDecodedData();//(inSamples);
 
     // Normalize incomming signal
-    gainController.process(spkrDataDecoded);
+    gainController.process(audioRtpRecord_.decData_);
 
-    AudioBuffer *out = spkrDataDecoded;
+    AudioBuffer *out = &(audioRtpRecord_.decData_);
     int outSamples = inSamples;
 
     int codecSampleRate = out->getSampleRate();//getCodecSampleRate();
@@ -407,14 +407,14 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         out = &(audioRtpRecord_.resampledData_);
         // Do sample rate conversion
         //outSamples = ((float) inSamples * ((float) mainBufferSampleRate / (float) codecSampleRate));
-        audioRtpRecord_.converterDecode_->resample(spkrDataDecoded, out);
+        audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledData_);
         /*audioRtpRecord_.converterDecode_->resample(spkrDataDecoded, out,
                 audioRtpRecord_.resampledData_.size(), codecSampleRate,
                 mainBufferSampleRate, inSamples);*/
     }
 
     //Manager::instance().getMainBuffer().putData(out, outSamples * sizeof(SFLAudioSample), id_);
-    Manager::instance().getMainBuffer().putData(out, id_);
+    Manager::instance().getMainBuffer().putData(*out, id_);
 }
 #undef RETURN_IF_NULL
 

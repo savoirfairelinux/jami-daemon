@@ -104,7 +104,7 @@ class AudioRecord {
          * @param nSamples Number of samples (number of bytes) to be recorded
          */
         //void recData(SFLDataFormat* buffer, size_t nSamples);
-        void recData(AudioBuffer* buffer);
+        void recData(AudioBuffer& buffer);
 
     protected:
 

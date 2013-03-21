@@ -122,7 +122,7 @@ class AudioLayer {
          * Copy data in the urgent buffer.
          * @param buffer The buffer containing the data to be played ( ringtones )
          */
-        void putUrgent(AudioBuffer* buffer);
+        void putUrgent(AudioBuffer& buffer);
 
         /**
          * Flush main buffer

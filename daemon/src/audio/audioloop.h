@@ -57,7 +57,7 @@ class AudioLoop {
          * @param volume  The volume
          */
         //void getNext(SFLAudioSample* output, size_t samples, short volume=100);
-        void getNext(AudioBuffer* output, unsigned int volume=100);
+        void getNext(AudioBuffer& output, unsigned int volume=100);
 
         void seek(double relative_position);
 

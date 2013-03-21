@@ -97,7 +97,7 @@ class RingBuffer {
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
          */
-         void put(AudioBuffer* buf);
+         void put(AudioBuffer& buf);
         //void put(void* buffer, size_t toCopy);
 
         /**
@@ -112,7 +112,7 @@ class RingBuffer {
          * @param toCopy Number of bytes to copy
          * @return size_t Number of bytes copied
          */
-         size_t get(AudioBuffer* buf, const std::string &call_id);
+         size_t get(AudioBuffer& buf, const std::string &call_id);
         //size_t get(void* buffer, size_t toCopy, const std::string &call_id);
 
         /**

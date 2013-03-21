@@ -172,25 +172,25 @@ size_t AudioBuffer::mix(const AudioBuffer& other)
     return samp_num;
 }
 
-size_t AudioBuffer::copy(AudioBuffer* in, int sample_num /* = -1 */, size_t pos_in /* = 0 */, size_t pos_out /* = 0 */)
+size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_in /* = 0 */, size_t pos_out /* = 0 */)
 {
     if(sample_num == -1)
-        sample_num = in->samples();
+        sample_num = in.samples();
 
-    int to_copy = std::min((int)in->samples()-(int)pos_in, sample_num);
+    int to_copy = std::min((int)in.samples()-(int)pos_in, sample_num);
     if(to_copy <= 0) return 0;
 
-    const size_t chan_num = std::min(in->channels_, channels_);
+    const size_t chan_num = std::min(in.channels_, channels_);
 
     if(pos_out+to_copy > sampleNum_)
         resize(pos_out+to_copy);
 
-    sampleRate_ = in->sampleRate_;
+    sampleRate_ = in.sampleRate_;
     //setChannelNum(chan_num);
 
     unsigned i;
     for(i=0; i<chan_num; i++) {
-        std::copy(in->samples_[i].begin()+pos_in, in->samples_[i].begin()+pos_in+to_copy, samples_[i].begin()+pos_out);
+        std::copy(in.samples_[i].begin()+pos_in, in.samples_[i].begin()+pos_in+to_copy, samples_[i].begin()+pos_out);
     }
 
     return to_copy;
@@ -198,6 +198,7 @@ size_t AudioBuffer::copy(AudioBuffer* in, int sample_num /* = -1 */, size_t pos_
 
 size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /* = 0 */)
 {
+    if(in == NULL) return 0;
     if(pos_out+sample_num > sampleNum_)
         resize(pos_out+sample_num);
 
@@ -206,4 +207,5 @@ size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /
     for(i=0; i<chan_num; i++) {
         std::copy(in, in+sample_num, samples_[i].begin()+pos_out);
     }
+    return sample_num;
 }

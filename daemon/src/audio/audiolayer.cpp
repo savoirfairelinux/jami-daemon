@@ -70,7 +70,7 @@ void AudioLayer::flushUrgent()
     urgentRingBuffer_.flushAll();
 }
 
-void AudioLayer::putUrgent(AudioBuffer* buffer)
+void AudioLayer::putUrgent(AudioBuffer& buffer)
 {
     sfl::ScopedLock guard(mutex_);
     urgentRingBuffer_.put(buffer);
@@ -97,10 +97,10 @@ void AudioLayer::notifyIncomingCall()
     Tone tone("440/160", getSampleRate());
     unsigned int nbSample = tone.getSize();
     AudioBuffer buf(nbSample);
-    tone.getNext(&buf);
+    tone.getNext(buf);
 
     /* Put the data in the urgent ring buffer */
     flushUrgent();
-    putUrgent(&buf);
+    putUrgent(buf);
 }
 

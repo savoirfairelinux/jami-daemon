@@ -218,6 +218,8 @@ void MainBufferTest::testRingBufferInt()
 
     int testint1 = 12;
     int testint2 = 13;
+    AudioBuffer testbuf1(2,1);
+    AudioBuffer testbuf2(2,1);
 
     // test with default ring buffer
     mainbuffer_->createRingBuffer(MainBuffer::DEFAULT_ID);

@@ -77,7 +77,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 
     while (length >= encFrameSize) {
         //bufpos += audioCodec_->decode(bufpos, filepos, encFrameSize);
-        bufpos += audioCodec_->decode(buffer, filepos, encFrameSize, bufpos);
+        bufpos += audioCodec_->decode(*buffer, filepos, encFrameSize, bufpos);
         filepos += encFrameSize;
         length -= encFrameSize;
     }
@@ -224,16 +224,9 @@ WaveFile::WaveFile(const std::string &fileName, unsigned int sampleRate) : Audio
         const float ratio = sampleRate / (float) fileRate;
         const int outSamples = ceil(nbSamples * ratio);
         AudioBuffer * resampled = new AudioBuffer(nbSamples, chan, rate);
-        converter.resample(buffer, resampled);
+        converter.resample(*buffer, *resampled);
         delete [] buffer;
         buffer_ = resampled;
-        /*const float ratio = sampleRate_ / (float) fileRate;
-
-        size_ = outSamples;
-        buffer_ = new SFLAudioSample[size_];
-        converter.resample(tempBuffer, buffer_, size_, fileRate, sampleRate_, nbSamples);
-        delete [] buffer;*/
-
     } else
         buffer_ = buffer;
 }

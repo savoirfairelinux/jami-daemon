@@ -386,7 +386,7 @@ void PulseLayer::writeToSpeaker()
     if (urgentBytes) {
         AudioBuffer linearbuff(urgentSamples, n_channels);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
-        urgentRingBuffer_.get(&linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
+        urgentRingBuffer_.get(linearbuff, MainBuffer::DEFAULT_ID); // retrive only the first sample_spec->channels channels
         linearbuff.applyGain(getPlaybackGain());
         linearbuff.interleave(data);
         pa_stream_write(s, data, urgentBytes, NULL, 0, PA_SEEK_RELATIVE);
@@ -403,7 +403,7 @@ void PulseLayer::writeToSpeaker()
         if (playback_->isReady()) {
             pa_stream_begin_write(s, (void**)&data, &writableBytes);
             AudioBuffer linearbuff(writableSamples, n_channels);
-            toneToPlay->getNext(&linearbuff, getPlaybackGain()); // retrive only n_channels
+            toneToPlay->getNext(linearbuff, getPlaybackGain()); // retrive only n_channels
             linearbuff.interleave(data);
             pa_stream_write(s, data, writableBytes, NULL, 0, PA_SEEK_RELATIVE);
         }
@@ -441,11 +441,11 @@ void PulseLayer::writeToSpeaker()
     pa_stream_begin_write(s, (void**)&data, &resampledBytes);
 
     AudioBuffer linearbuff(readableSamples, n_channels);
-    Manager::instance().getMainBuffer().getData(&linearbuff, MainBuffer::DEFAULT_ID);
+    Manager::instance().getMainBuffer().getData(linearbuff, MainBuffer::DEFAULT_ID);
 
     if (resample) {
         AudioBuffer rsmpl_out(nResampled, 1, sampleRate_);
-        converter_.resample(&linearbuff, &rsmpl_out);
+        converter_.resample(linearbuff, rsmpl_out);
         rsmpl_out.applyGain(getPlaybackGain());
         rsmpl_out.interleave(data);
         pa_stream_write(s, data, resampledBytes, NULL, 0, PA_SEEK_RELATIVE);
@@ -499,14 +499,14 @@ void PulseLayer::readFromMic()
     if (resample) {
         mic_buffer_.setSampleRate(mainBufferSampleRate);
         //converter_.resample((SFLAudioSample*)data, mic_buffer_, samples, mainBufferSampleRate, sampleRate_, samples);
-        converter_.resample(&in, &mic_buffer_);
+        converter_.resample(in, mic_buffer_);
         out = &mic_buffer_;
     }
 
-    dcblocker_.process(out);
+    dcblocker_.process(*out);
     out->applyGain(getCaptureGain());
     //applyGain(mic_buffer_, bytes / sizeof(SFLAudioSample), getCaptureGain());
-    Manager::instance().getMainBuffer().putData(out, MainBuffer::DEFAULT_ID);
+    Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
 
 #ifdef RECTODISK
     outfileResampled.write((const char *)out->getChannel(), out->samples()*sizeof(SFLAudioSample));
@@ -544,7 +544,7 @@ void PulseLayer::ringtoneToSpeaker()
         AudioBuffer tmp(samples, ringtone_->channels());
         //fileToPlay->getNext((SFLAudioSample *) data, bytes / sizeof(SFLAudioSample), 100);
         //applyGain(static_cast<SFLAudioSample *>(data), bytes / sizeof(SFLAudioSample), getPlaybackGain());
-        fileToPlay->getNext(&tmp, getPlaybackGain());
+        fileToPlay->getNext(tmp, getPlaybackGain());
         tmp.interleave((SFLAudioSample*)data);
     }
     else

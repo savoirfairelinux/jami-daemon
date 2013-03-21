@@ -40,7 +40,7 @@ class NoiseSuppress {
         NoiseSuppress(int smplPerFrame, int samplingRate);
         ~NoiseSuppress();
         //void process(SFLAudioSample *data, int samples);
-        void process(AudioBuffer *buf, int samples);
+        void process(AudioBuffer& buf, int samples);
 
     private:
         NON_COPYABLE(NoiseSuppress);

@@ -196,7 +196,7 @@ IAXVoIPLink::sendAudioFromMic()
 
         // Get bytes from micRingBuffer to data_from_mic
         decData_.resize(samples);
-        samples = Manager::instance().getMainBuffer().getData(&decData_, currentCall->getCallId());
+        samples = Manager::instance().getMainBuffer().getData(decData_, currentCall->getCallId());
 
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
@@ -206,7 +206,7 @@ IAXVoIPLink::sendAudioFromMic()
         if (audioRate != mainBufferSampleRate) {
             decData_.setSampleRate(audioRate);
             resampledData_.setSampleRate(mainBufferSampleRate);
-            converter_.resample(&decData_, &resampledData_);
+            converter_.resample(decData_, resampledData_);
             in = &resampledData_;
             outSamples = 0;
         } else {
@@ -214,7 +214,7 @@ IAXVoIPLink::sendAudioFromMic()
             in = &decData_;
         }
 
-        compSize = audioCodec->encode(encodedData_, in, DEC_BUFFER_SIZE);
+        compSize = audioCodec->encode(encodedData_, *in, DEC_BUFFER_SIZE);
 
         if (currentCall->session and samples > 0) {
             sfl::ScopedLock m(mutexIAX_);
@@ -650,7 +650,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     if (size > max)
         size = max;
 
-    int samples = audioCodec->decode(&decData_, data , size);
+    int samples = audioCodec->decode(decData_, data , size);
     int outSize = samples * sizeof(SFLAudioSample);
     AudioBuffer *out = &decData_;
     unsigned int audioRate = audioCodec->getClockRate();
@@ -658,11 +658,11 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     if (audioRate != mainBufferSampleRate) {
         decData_.setSampleRate(mainBufferSampleRate);
         resampledData_.setSampleRate(audioRate);
-        converter_.resample(&decData_, &resampledData_);
+        converter_.resample(decData_, resampledData_);
         out = &resampledData_;
     }
 
-    Manager::instance().getMainBuffer().putData(out, call->getCallId());
+    Manager::instance().getMainBuffer().putData(*out, call->getCallId());
 }
 
 /**

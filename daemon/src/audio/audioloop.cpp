@@ -65,7 +65,7 @@ static unsigned int updatePlaybackScale = 0;
 
 void
 //AudioLoop::getNext(SFLAudioSample* output, size_t total_samples, short volume)
-AudioLoop::getNext(AudioBuffer* output, unsigned int volume)
+AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 {
     if(!buffer_) {
         ERROR("AudioLoop::buffer_ is not set (NULL pointer)");
@@ -74,7 +74,7 @@ AudioLoop::getNext(AudioBuffer* output, unsigned int volume)
 
     const size_t buf_samples = buffer_->samples();
     size_t pos = pos_;
-    size_t total_samples = output->samples();
+    size_t total_samples = output.samples();
     size_t output_pos = 0;
 
     if (buf_samples == 0) {
@@ -94,7 +94,7 @@ AudioLoop::getNext(AudioBuffer* output, unsigned int volume)
         // short->char conversion
         //memcpy(output, buffer_ + pos, samples * sizeof(SFLAudioSample));
         //buffer_.copy(output, pos, samples);
-        output->copy(buffer_, samples, pos, output_pos);
+        output.copy(*buffer_, samples, pos, output_pos);
 
         // Scaling needed
         /*if (volume != 100) {
@@ -111,7 +111,7 @@ AudioLoop::getNext(AudioBuffer* output, unsigned int volume)
         total_samples -= samples;
     }
 
-    output->applyGain(volume); // apply volume
+    output.applyGain(volume); // apply volume
 
     pos_ = pos;
 
