@@ -39,130 +39,144 @@
 
 class AudioBuffer {
 
-	public:
-		AudioBuffer(size_t sample_num=0, unsigned channel_num=1, int sample_rate=8000);
+    public:
+        /**
+         * Default constructor.
+         */
+        AudioBuffer(size_t sample_num=0, unsigned channel_num=1, int sample_rate=8000);
 
-		/**
-		 * Copy constructor that by default only copies the buffer parameters (channel number, sample rate and buffer size).
-		 * If copy_content is set to true, the buffer content is also copied.
-		 */
-		AudioBuffer(const AudioBuffer& other, bool copy_content=false);
+        /**
+         * Construtor from existing interleaved data (copied into the buffer).
+         */
+        AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned channel_num=1, int sample_rate=8000);
 
-		/**
-		 * Returns the sample rate (in samples/sec) associated to this buffer.
-		 */
-		int getSampleRate() const;
+        /**
+         * Copy constructor that by default only copies the buffer parameters (channel number, sample rate and buffer size).
+         * If copy_content is set to true, the buffer content is also copied.
+         */
+        AudioBuffer(const AudioBuffer& other, bool copy_content=false);
 
-		/**
-		 * Set the sample rate (in samples/sec) associated to this buffer.
-		 */
-		void setSampleRate(int sr);
+        /**
+         * Returns the sample rate (in samples/sec) associated to this buffer.
+         */
+        int getSampleRate() const;
 
-		/**
-		 * Returns the number of channels in this buffer.
-		 */
-		unsigned getChannelNum() const;
+        /**
+         * Set the sample rate (in samples/sec) associated to this buffer.
+         */
+        void setSampleRate(int sr);
 
-		inline unsigned channels() const {
-			return channels_;
-		}
+        /**
+         * Returns the number of channels in this buffer.
+         */
+        inline unsigned getChannelNum() const {
+            return channels_;
+        }
+        inline unsigned channels() const {
+            return channels_;
+        }
 
-		/**
-		 * Set the number of channels of this buffer.
-		 *
-		 * @param n: the new number of channels. If n < getChannelNum(), channels are deleted from the buffer, otherwise the behavior depends on copy_first.
-		 *
-		 * @param copy_first: if set to true and n > getChannelNum(), new channels are initialised with samples from the first channel. If set to false, new channels are initialised to 0.
-		 */
-		void setChannelNum(unsigned n, bool copy_first=false);
+        /**
+         * Set the number of channels of this buffer.
+         *
+         * @param n: the new number of channels. If n < getChannelNum(), channels are deleted from the buffer, otherwise the behavior depends on copy_first.
+         *
+         * @param copy_first: if set to true and n > getChannelNum(), new channels are initialised with samples from the first channel. If set to false, new channels are initialised to 0.
+         */
+        void setChannelNum(unsigned n, bool copy_first=false);
 
-		/**
-		 * Returns the number of (multichannel) samples in this buffer.
-		 */
-		size_t samples() const;
+        /**
+         * Returns the number of (multichannel) samples in this buffer.
+         */
+        inline size_t samples() const {
+            return sampleNum_;
+        }
+        inline size_t size() const {
+            return sampleNum_;
+        }
 
-		/**
-		 * Resize the buffer to make it able to hold sample_num multichannel samples.
-		 */
-		void resize(size_t sample_num);
+        /**
+         * Resize the buffer to make it able to hold sample_num multichannel samples.
+         */
+        void resize(size_t sample_num);
 
-		/**
-		 * Set all samples in this buffer to 0. Buffer size is not changed.
-		 */
-		void clear();
+        /**
+         * Set all samples in this buffer to 0. Buffer size is not changed.
+         */
+        void clear();
 
-		/**
-		 * Resize the buffer to 0. All samples are lost but the number of channels and sample rate are kept.
-		 */
-		void empty();
+        /**
+         * Resize the buffer to 0. All samples are lost but the number of channels and sample rate are kept.
+         */
+        void empty();
 
-		/**
-		 * Return the data (audio samples) for a given channel number.
-		 * Channel data can be modified but size of individual channel vectors should not be changed manually.
-		 */
-		std::vector<SFLAudioSample> *getChannel(unsigned chan=0);
+        /**
+         * Return the data (audio samples) for a given channel number.
+         * Channel data can be modified but size of individual channel vectors should not be changed manually.
+         */
+        std::vector<SFLAudioSample> *getChannel(unsigned chan=0);
 
-		/**
-		 * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
-		 * The out buffer must be at least of size getChannelNum()*samples()*sizeof(SFLAudioSample).
-		 *
-		 * @returns Number of samples writen.
-		 */
-		size_t interleave(SFLAudioSample* out) const;
+        /**
+         * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
+         * The out buffer must be at least of size getChannelNum()*samples()*sizeof(SFLAudioSample).
+         *
+         * @returns Number of samples writen.
+         */
+        size_t interleave(SFLAudioSample* out) const;
 
-		/**
-		 * Write interleaved multichannel data to the out buffer, while samples are converted to float.
-		 * The buffer must be at least of size getChannelNum()*samples()*sizeof(float).
-		 *
-		 * @returns Number of samples writen.
-		 */
-		size_t interleaveFloat(float* out) const;
+        /**
+         * Write interleaved multichannel data to the out buffer, while samples are converted to float.
+         * The buffer must be at least of size getChannelNum()*samples()*sizeof(float).
+         *
+         * @returns Number of samples writen.
+         */
+        size_t interleaveFloat(float* out) const;
 
-		/**
-		 * Import interleaved multichannel data. Internal buffer is resized as needed. Function will read sample_num*channel_num elements of the in buffer.
-		 */
-		void fromInterleaved(const SFLAudioSample* in, size_t sample_num, unsigned channel_num=1);
+        /**
+         * Import interleaved multichannel data. Internal buffer is resized as needed. Function will read sample_num*channel_num elements of the in buffer.
+         */
+        void fromInterleaved(const SFLAudioSample* in, size_t sample_num, unsigned channel_num=1);
 
-		/**
-		 * In-place gain transformation with integer parameter.
-		 *
-		 * @param gain: 0 -> 100 scale
-		 */
-		void applyGain(unsigned int gain);
+        /**
+         * In-place gain transformation with integer parameter.
+         *
+         * @param gain: 0 -> 100 scale
+         */
+        void applyGain(unsigned int gain);
 
-		/**
-		 * In-place gain transformation.
-		 *
-		 * @param gain: 0.0 -> 1.0 scale
-		 */
-		void applyGain(double gain);
+        /**
+         * In-place gain transformation.
+         *
+         * @param gain: 0.0 -> 1.0 scale
+         */
+        void applyGain(double gain);
 
-		/**
-		 * Mix elements of the other buffer with this buffer (in-place simple addition).
-		 * TODO: some kind of check for overflow/saturation.
-		 *
-		 * @returns Number of samples modified.
-		 */
-		size_t mix(const AudioBuffer& other);
+        /**
+         * Mix elements of the other buffer with this buffer (in-place simple addition).
+         * TODO: some kind of check for overflow/saturation.
+         *
+         * @returns Number of samples modified.
+         */
+        size_t mix(const AudioBuffer& other);
 
-		/**
-		 * Copy sample_num samples from in (from sample pos_in) to this (at sample pos_out).
-		 * If sample_num is -1 (the default), the entire in buffer is copied.
-		 *
-		 * The number of channels is changed to match the in channel number.
-		 * Buffer sample number is also increased if required to hold the new requested samples.
-		 */
-		size_t copy(AudioBuffer& in, int sample_num=-1, size_t pos_in=0, size_t pos_out=0);
+        /**
+         * Copy sample_num samples from in (from sample pos_in) to this buffer (at sample pos_out).
+         * If sample_num is -1 (the default), the entire in buffer is copied.
+         *
+         * The number of channels is changed to match the in channel number.
+         * Buffer sample number is also increased if required to hold the new requested samples.
+         */
+        size_t copy(AudioBuffer& in, int sample_num=-1, size_t pos_in=0, size_t pos_out=0);
 
-		/**
-		 * Copy sample_num samples from in to this (at sample pos_out).
-		 * Input data is treated as mono and samples are duplicated in the case of a multichannel buffer.
-		 *
-		 * Buffer sample number is increased if required to hold the new requested samples.
-		 */
-		size_t copy(SFLAudioSample* in, size_t sample_num, size_t pos_out=0);
+        /**
+         * Copy sample_num samples from in to this buffer (at sample pos_out).
+         * Input data is treated as mono and samples are duplicated in the case of a multichannel buffer.
+         *
+         * Buffer sample number is increased if required to hold the new requested samples.
+         */
+        size_t copy(SFLAudioSample* in, size_t sample_num, size_t pos_out=0);
 
-	private:
+    private:
         //NON_COPYABLE(AudioBuffer);
 
         int sampleRate_;

@@ -36,7 +36,7 @@
 #include "resamplertest.h"
 
 ResamplerTest::ResamplerTest() :
-    CppUnit::TestCase("Resampler module test"), inputBuffer(), outputBuffer()
+    CppUnit::TestCase("Resampler module test"), inputBuffer(MAX_BUFFER_LENGTH), outputBuffer(MAX_BUFFER_LENGTH)
 {}
 
 void ResamplerTest::setUp()
@@ -54,7 +54,7 @@ namespace {
     void print_buffer(T &buffer)
     {
         std::copy(buffer.begin(), buffer.end(),
-                std::ostream_iterator<SFLDataFormat>(std::cout, ", "));
+                std::ostream_iterator<SFLAudioSample>(std::cout, ", "));
         std::cout << std::endl;
     }
 }
@@ -69,16 +69,16 @@ void ResamplerTest::testUpsamplingRamp()
 
     performUpsampling(converter);
 
-    LowSmplrBuffer tmpInputBuffer;
-    HighSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size());
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(tmpInputBuffer);
+    print_buffer(*tmpInputBuffer.getChannel());
 
-    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    tmpOutputBuffer.copy(outputBuffer, tmpOutputBuffer.size());
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(tmpOutputBuffer);
+    print_buffer(*tmpOutputBuffer.getChannel());
 }
 
 void ResamplerTest::testDownsamplingRamp()
@@ -90,16 +90,16 @@ void ResamplerTest::testDownsamplingRamp()
 
     performDownsampling(converter);
 
-    HighSmplrBuffer tmpInputBuffer;
-    LowSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size());
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(tmpInputBuffer);
+    print_buffer(*tmpInputBuffer.getChannel());
 
-    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    tmpOutputBuffer.copy(outputBuffer, tmpOutputBuffer.size());
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(tmpOutputBuffer);
+    print_buffer(*tmpOutputBuffer.getChannel());
 }
 
 void ResamplerTest::testUpsamplingTriangle()
@@ -111,16 +111,16 @@ void ResamplerTest::testUpsamplingTriangle()
 
     performUpsampling(converter);
 
-    LowSmplrBuffer tmpInputBuffer;
-    HighSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size());
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(tmpInputBuffer);
+    print_buffer(*tmpInputBuffer.getChannel());
 
-    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    tmpOutputBuffer.copy(outputBuffer, tmpOutputBuffer.size());
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(tmpOutputBuffer);
+    print_buffer(*tmpOutputBuffer.getChannel());
 }
 
 void ResamplerTest::testDownsamplingTriangle()
@@ -132,16 +132,16 @@ void ResamplerTest::testDownsamplingTriangle()
 
     performDownsampling(converter);
 
-    HighSmplrBuffer tmpInputBuffer;
-    LowSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size());
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(tmpInputBuffer);
+    print_buffer(*tmpInputBuffer.getChannel());
 
-    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    tmpOutputBuffer.copy(outputBuffer, tmpOutputBuffer.size());
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(tmpOutputBuffer);
+    print_buffer(*tmpOutputBuffer.getChannel());
 }
 void ResamplerTest::testUpsamplingSine()
 {
@@ -153,16 +153,16 @@ void ResamplerTest::testUpsamplingSine()
 
     performUpsampling(converter);
 
-    LowSmplrBuffer tmpInputBuffer;
-    HighSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size());
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(tmpInputBuffer);
+    print_buffer(*tmpInputBuffer.getChannel());
 
-    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    tmpOutputBuffer.copy(outputBuffer, tmpOutputBuffer.size());
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(tmpOutputBuffer);
+    print_buffer(*tmpOutputBuffer.getChannel());
 }
 
 void ResamplerTest::testDownsamplingSine()
@@ -175,56 +175,59 @@ void ResamplerTest::testDownsamplingSine()
 
     performDownsampling(converter);
 
-    HighSmplrBuffer tmpInputBuffer;
-    LowSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
 
-    std::copy(inputBuffer.begin(), inputBuffer.begin() + tmpInputBuffer.size(), tmpInputBuffer.begin());
+    tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size());
     std::cout << "Input Buffer" << std::endl;
-    print_buffer(tmpInputBuffer);
+    print_buffer(*tmpInputBuffer.getChannel());
 
-    std::copy(outputBuffer.begin(), outputBuffer.begin() + tmpOutputBuffer.size(), tmpOutputBuffer.begin());
+    tmpOutputBuffer.copy(outputBuffer, tmpOutputBuffer.size());
     std::cout << "Output Buffer" << std::endl;
-    print_buffer(tmpOutputBuffer);
+    print_buffer(*tmpOutputBuffer.getChannel());
 }
 
 void ResamplerTest::generateRamp()
 {
-    for (size_t i = 0; i < inputBuffer.size(); ++i)
-        inputBuffer[i] = i;
+    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel();
+    for (size_t i = 0; i < buf->size(); ++i)
+        (*buf)[i] = i;
 }
 
 void ResamplerTest::generateTriangularSignal()
 {
-    for (size_t i = 0; i < inputBuffer.size(); ++i)
-        inputBuffer[i] = i * 10;
+    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel();
+    for (size_t i = 0; i < buf->size(); ++i)
+        (*buf)[i] = i * 10;
 }
 
 void ResamplerTest::generateSineSignal()
 {
-    for (size_t i = 0; i < inputBuffer.size(); ++i)
-        inputBuffer[i] = (SFLDataFormat) (1000.0 * sin(i));
+    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel();
+    for (size_t i = 0; i < buf->size(); ++i)
+        (*buf)[i] = (SFLAudioSample) (1000.0 * sin(i));
 }
 
 void ResamplerTest::performUpsampling(SamplerateConverter &converter)
 {
-    LowSmplrBuffer tmpInputBuffer;
-    HighSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
+    AudioBuffer tmpOutputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
 
     for (size_t i = 0, j = 0; i < (inputBuffer.size() / 2); i += tmpInputBuffer.size(), j += tmpOutputBuffer.size()) {
-        std::copy(inputBuffer.begin() + i, inputBuffer.begin() + tmpInputBuffer.size() + i, tmpInputBuffer.begin());
-        converter.resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 8000, 16000, tmpInputBuffer.size());
-        std::copy(tmpOutputBuffer.begin(), tmpOutputBuffer.end(), outputBuffer.begin() + j);
+        tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size(), i);
+        converter.resample(tmpInputBuffer, tmpOutputBuffer);
+        outputBuffer.copy(tmpOutputBuffer, -1, 0, j);
     }
 }
 
 void ResamplerTest::performDownsampling(SamplerateConverter &converter)
 {
-    HighSmplrBuffer tmpInputBuffer;
-    LowSmplrBuffer tmpOutputBuffer;
+    AudioBuffer tmpInputBuffer(TMP_HIGHSMPLR_BUFFER_LENGTH, 1, 16000);
+    AudioBuffer tmpOutputBuffer(TMP_LOWSMPLR_BUFFER_LENGTH, 1, 8000);
 
     for (size_t i = 0, j = 0; i < inputBuffer.size(); i += tmpInputBuffer.size(), j += tmpOutputBuffer.size()) {
-        std::copy(inputBuffer.begin() + i, inputBuffer.begin() + tmpInputBuffer.size() + i, tmpInputBuffer.begin());
-        converter.resample(tmpInputBuffer.data(), tmpOutputBuffer.data(), tmpOutputBuffer.size(), 16000, 8000, tmpInputBuffer.size());
-        std::copy(tmpOutputBuffer.begin(), tmpOutputBuffer.end(), outputBuffer.begin() + j);
+        tmpInputBuffer.copy(inputBuffer, tmpInputBuffer.size(), i);
+        converter.resample(tmpInputBuffer, tmpOutputBuffer);
+        outputBuffer.copy(tmpOutputBuffer, -1, 0, j);
     }
 }

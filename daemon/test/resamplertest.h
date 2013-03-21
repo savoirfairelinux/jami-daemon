@@ -45,8 +45,8 @@
 #define TMP_LOWSMPLR_BUFFER_LENGTH 160
 #define TMP_HIGHSMPLR_BUFFER_LENGTH 320
 
-typedef std::tr1::array<SFLDataFormat, TMP_LOWSMPLR_BUFFER_LENGTH> LowSmplrBuffer;
-typedef std::tr1::array<SFLDataFormat, TMP_HIGHSMPLR_BUFFER_LENGTH> HighSmplrBuffer;
+//typedef std::tr1::array<SFLDataFormat, TMP_LOWSMPLR_BUFFER_LENGTH> LowSmplrBuffer;
+//typedef std::tr1::array<SFLDataFormat, TMP_HIGHSMPLR_BUFFER_LENGTH> HighSmplrBuffer;
 
 class ResamplerTest : public CppUnit::TestCase {
 
@@ -138,12 +138,14 @@ private:
     /**
      * Used to store input samples
      */
-    std::tr1::array<SFLDataFormat, MAX_BUFFER_LENGTH> inputBuffer;
+    //std::tr1::array<SFLDataFormat, MAX_BUFFER_LENGTH> inputBuffer;
+    AudioBuffer inputBuffer;
 
     /**
      * Used to receive output samples
      */
-    std::tr1::array<SFLDataFormat, MAX_BUFFER_LENGTH> outputBuffer;
+    //std::tr1::array<SFLDataFormat, MAX_BUFFER_LENGTH> outputBuffer;
+    AudioBuffer outputBuffer;
 };
 
 /* Register the test module */
