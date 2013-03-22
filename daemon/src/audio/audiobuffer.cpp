@@ -28,6 +28,7 @@
  *  as that of the covered work.
  */
 
+#include <iostream>
 #include "audiobuffer.h"
 
 AudioBuffer::AudioBuffer(size_t sample_num /* = 0 */, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
@@ -56,7 +57,7 @@ AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false 
     unsigned i;
     if(copy_content) {
         for(i=0; i<channels_; i++)
-            samples_[i] = other.samples_[i];
+            samples_[i] = other.samples_[i]; // std::vector copy
     } else {
         for(i=0; i<channels_; i++)
             samples_[i].resize(sampleNum_, 0);
@@ -162,7 +163,7 @@ void AudioBuffer::fromInterleaved(const SFLAudioSample* in, size_t sample_num, u
 size_t AudioBuffer::mix(const AudioBuffer& other)
 {
     const size_t samp_num = std::min(sampleNum_, other.sampleNum_);
-    const size_t chan_num = std::min(channels_, other.channels_);
+    const unsigned chan_num = std::min(channels_, other.channels_);
     for(unsigned i=0; i<chan_num; i++) {
         for(unsigned j=0; j<samp_num; j++)
             samples_[i][j] += other.samples_[i][j];

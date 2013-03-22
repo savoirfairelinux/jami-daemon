@@ -51,7 +51,7 @@ class AudioBuffer {
 
         /**
          * Copy constructor that by default only copies the buffer parameters (channel number, sample rate and buffer size).
-         * If copy_content is set to true, the buffer content is also copied.
+         * If copy_content is set to true, the other buffer content is also copied.
          */
         AudioBuffer(const AudioBuffer& other, bool copy_content=false);
 
@@ -78,9 +78,9 @@ class AudioBuffer {
         /**
          * Set the number of channels of this buffer.
          *
-         * @param n: the new number of channels. If n < getChannelNum(), channels are deleted from the buffer, otherwise the behavior depends on copy_first.
+         * @param n: the new number of channels. If n < channels(), channels are removed from the buffer, otherwise the behavior depends on copy_first.
          *
-         * @param copy_first: if set to true and n > getChannelNum(), new channels are initialised with samples from the first channel. If set to false, new channels are initialised to 0.
+         * @param copy_first: if set to true and n > channels(), new channels are initialised as a copy of the first channel (channel 0). If set to false, new channels are initialised to 0.
          */
         void setChannelNum(unsigned n, bool copy_first=false);
 
@@ -186,7 +186,7 @@ class AudioBuffer {
         //NON_COPYABLE(AudioBuffer);
 
         int sampleRate_;
-        unsigned channels_; // should allways be samples_.size()
+        unsigned channels_; // should allways be the same as samples_.size()
         size_t sampleNum_;
 
         // main buffers holding data for each channels

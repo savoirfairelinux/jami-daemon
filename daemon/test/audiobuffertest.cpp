@@ -98,7 +98,7 @@ void AudioBufferTest::testAudioBufferMix()
     SFLAudioSample *output = new SFLAudioSample[test_buf2.capacity()];
     test_buf2.interleave(output);
     CPPUNIT_ASSERT(std::equal(test_samples2, test_samples2 + sizeof test_samples2 / sizeof *test_samples2, output));
-    //CPPUNIT_ASSERT(std::equal(std::begin(test_samples2), std::end(test_samples2), std::begin(output)));
+    //CPPUNIT_ASSERT(std::equal(std::begin(test_samples2), std::end(test_samples2), std::begin(output))); C++11
 
     test_buf1.mix(test_buf2);
     CPPUNIT_ASSERT(test_buf1.channels() == 2);
