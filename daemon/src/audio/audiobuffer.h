@@ -38,7 +38,6 @@
 //#include "noncopyable.h"
 
 class AudioBuffer {
-
     public:
         /**
          * Default constructor.
@@ -96,6 +95,13 @@ class AudioBuffer {
         }
 
         /**
+         * Return the total number of single samples in the buffer (same as samples()*channels()).
+         */
+        inline size_t capacity() const {
+			return samples()*channels();
+		}
+
+        /**
          * Resize the buffer to make it able to hold sample_num multichannel samples.
          */
         void resize(size_t sample_num);
@@ -118,7 +124,7 @@ class AudioBuffer {
 
         /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
-         * The out buffer must be at least of size getChannelNum()*samples()*sizeof(SFLAudioSample).
+         * The out buffer must be at least large by capacity()*sizeof(SFLAudioSample) bytes.
          *
          * @returns Number of samples writen.
          */

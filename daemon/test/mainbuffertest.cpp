@@ -336,7 +336,7 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 1);
 
     CPPUNIT_ASSERT(test_ring_buffer->get(testgetlarge, test_id) == 3);
-    CPPUNIT_ASSERT((*testgetlarge.getChannel())[1] == testsample2[3]);
+    CPPUNIT_ASSERT((*testgetlarge.getChannel())[1] == testsample2[2]);
     CPPUNIT_ASSERT(test_ring_buffer->availableForGet(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getLength(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 4);

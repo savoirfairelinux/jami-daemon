@@ -33,16 +33,16 @@
 AudioBuffer::AudioBuffer(size_t sample_num /* = 0 */, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
  :  sampleRate_(sample_rate),
     sampleNum_(sample_num),
-    channels_(channel_num),
-    samples_(channel_num, std::vector<SFLAudioSample>(sample_num, 0))
+    channels_(std::max(1U, channel_num)),
+    samples_(channels_, std::vector<SFLAudioSample>(sample_num, 0))
 {
 }
 
 AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, unsigned channel_num /* = 1 */, int sample_rate /* = 8000 */)
  :  sampleRate_(sample_rate),
     sampleNum_(sample_num),
-    channels_(channel_num),
-    samples_(channel_num, std::vector<SFLAudioSample>(sample_num, 0))
+    channels_(std::max(1U, channel_num)),
+    samples_(channels_, std::vector<SFLAudioSample>(sample_num, 0))
 {
     fromInterleaved(in, sample_num, channel_num);
 }
@@ -75,6 +75,7 @@ void AudioBuffer::setSampleRate(int sr)
 
 void AudioBuffer::setChannelNum(unsigned n, bool copy_content /* = false */)
 {
+    n = std::max(1U, n);
     if(channels_ != n) {
         channels_ = n;
         samples_.resize(n, (copy_content && samples_.size()>0)?samples_[0]:std::vector<SFLAudioSample>(sampleNum_, 0));
@@ -106,7 +107,9 @@ void AudioBuffer::empty()
 
 std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
 {
-    return &samples_[chan];
+    if(chan < channels_)
+        return &samples_[chan];
+    return NULL;
 }
 
 void AudioBuffer::applyGain(unsigned int gain)
