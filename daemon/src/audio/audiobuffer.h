@@ -123,6 +123,13 @@ class AudioBuffer {
         std::vector<SFLAudioSample> *getChannel(unsigned chan=0);
 
         /**
+         * Return a pointer to the raw data in this buffer.
+         */
+        inline std::vector<std::vector<SFLAudioSample> > *getData() {
+                return &samples_;
+        }
+
+        /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
          * The out buffer must be at least large by capacity()*sizeof(SFLAudioSample) bytes.
          *

@@ -347,7 +347,7 @@ int AudioRtpRecordHandler::processDataEncode()
         ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
-        return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, *out, getCodecFrameSize());
+        return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
     }
 }
 #undef RETURN_IF_NULL
@@ -379,7 +379,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
-        inSamples = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_, spkrData, size);
+        inSamples = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
     }
 
 #if HAVE_SPEEXDSP

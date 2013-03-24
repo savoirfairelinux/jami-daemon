@@ -36,7 +36,7 @@
 namespace Logger {
 
 bool consoleLog = false;
-bool debugMode = false;
+bool debugMode = true;
 
 void log(const int level, const char* format, ...)
 {

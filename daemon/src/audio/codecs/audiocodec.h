@@ -33,10 +33,12 @@
 #define __AUDIO_CODEC_H__
 
 #include <string>
+#include <vector>
+
 #include "cc_config.h"
 #include <ccrtp/formats.h> // for ost::DynamicPayloadFormat
 
-#include "audio/audiobuffer.h"
+//#include "audio/audiobuffer.h"
 
 /* bump when codec binary interface changes */
 #define AUDIO_CODEC_ENTRY create_1_2_2
@@ -81,13 +83,15 @@ class AudioCodec {
          * Multichannel version of decode().
          * Default implementation decode(short *, unsigned char *, size_t) to the first channel (assume 1 channel).
          */
-        int decode(AudioBuffer& dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
+        //int decode(AudioBuffer& dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
+        int decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
 
         /**
          * Multichannel version of encode().
          * Default implementation calls encode() on the first channel (assume 1 channel).
          */
-        int encode(unsigned char *dst, AudioBuffer& src, size_t buffer_size);
+        //int encode(unsigned char *dst, AudioBuffer& src, size_t buffer_size);
+        int encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size);
 
         uint8 getPayloadType() const;
 

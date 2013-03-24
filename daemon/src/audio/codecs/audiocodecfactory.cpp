@@ -56,8 +56,7 @@ AudioCodecFactory::AudioCodecFactory() :
     if (codecDynamicList.empty())
         ERROR("No codecs available");
     else {
-        for (AudioCodecVector::const_iterator iter = codecDynamicList.begin();
-                iter != codecDynamicList.end() ; ++iter) {
+        for (AudioCodecVector::const_iterator iter = codecDynamicList.begin(); iter != codecDynamicList.end() ; ++iter) {
             codecsMap_[(int)(*iter)->getPayloadType()] = *iter;
             DEBUG("Loaded codec %s" , (*iter)->getMimeSubtype().c_str());
         }

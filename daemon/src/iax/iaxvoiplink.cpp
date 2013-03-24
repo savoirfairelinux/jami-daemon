@@ -214,7 +214,7 @@ IAXVoIPLink::sendAudioFromMic()
             in = &decData_;
         }
 
-        compSize = audioCodec->encode(encodedData_, *in, DEC_BUFFER_SIZE);
+        compSize = audioCodec->encode(encodedData_, in->getData(), DEC_BUFFER_SIZE);
 
         if (currentCall->session and samples > 0) {
             sfl::ScopedLock m(mutexIAX_);
@@ -650,7 +650,7 @@ void IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     if (size > max)
         size = max;
 
-    int samples = audioCodec->decode(decData_, data , size);
+    int samples = audioCodec->decode(decData_.getData(), data , size);
     int outSize = samples * sizeof(SFLAudioSample);
     AudioBuffer *out = &decData_;
     unsigned int audioRate = audioCodec->getClockRate();

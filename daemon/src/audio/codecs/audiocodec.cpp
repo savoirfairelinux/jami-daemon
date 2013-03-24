@@ -59,15 +59,17 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}
 
-int AudioCodec::decode(AudioBuffer& dst, unsigned char *buf, size_t buffer_size, size_t dst_offset /* = 0 */)
+int AudioCodec::decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset /* = 0 */)
 {
-    dst.setSampleRate(clockRate_);
-    return decode(&(*(dst.getChannel()->begin()+dst_offset)), buf, buffer_size);
+    //dst.setSampleRate(clockRate_);
+    //return decode(&(*(dst.getChannel()->begin()+dst_offset)), buf, buffer_size);
+    return decode(&(*((*dst)[0].begin()+dst_offset)), buf, buffer_size);
 }
 
-int AudioCodec::encode(unsigned char *dst, AudioBuffer& src, size_t buffer_size)
+int AudioCodec::encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size)
 {
-    return encode(dst, src.getChannel()->data(), buffer_size);
+    //return encode(dst, src.getChannel()->data(), buffer_size);
+    return encode(dst, (*src)[0].data(), buffer_size);
 }
 
 std::string AudioCodec::getMimeSubtype() const

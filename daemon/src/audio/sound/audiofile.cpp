@@ -77,7 +77,7 @@ RawFile::RawFile(const std::string& name, sfl::AudioCodec *codec, unsigned int s
 
     while (length >= encFrameSize) {
         //bufpos += audioCodec_->decode(bufpos, filepos, encFrameSize);
-        bufpos += audioCodec_->decode(*buffer, filepos, encFrameSize, bufpos);
+        bufpos += audioCodec_->decode(buffer->getData(), filepos, encFrameSize, bufpos);
         filepos += encFrameSize;
         length -= encFrameSize;
     }
