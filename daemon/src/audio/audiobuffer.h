@@ -35,7 +35,6 @@
 #include <cstddef> // for size_t
 
 #include "sfl_types.h"
-//#include "noncopyable.h"
 
 class AudioBuffer {
     public:
@@ -98,8 +97,8 @@ class AudioBuffer {
          * Return the total number of single samples in the buffer (same as samples()*channels()).
          */
         inline size_t capacity() const {
-			return samples()*channels();
-		}
+            return samples()*channels();
+        }
 
         /**
          * Resize the buffer to make it able to hold sample_num multichannel samples.
@@ -165,12 +164,20 @@ class AudioBuffer {
         void applyGain(double gain);
 
         /**
-         * Mix elements of the other buffer with this buffer (in-place simple addition).
+         * Mix elements of the other buffer within this buffer (in-place simple addition).
+         * If other.channels() is higher than this.channels(), only the first this.channels() channels are imported.
+         * If other.channels() is lower than this.channels(), behavior depends on upmix.
+         * Sample rate is not considered by this function.
+         *
          * TODO: some kind of check for overflow/saturation.
+         *
+         * @param other: the other buffer to mix in this one.
+         * @param upmix: if true, upmixing occurs when other.channels() < this.channels().
+         *              If false, only the first other.channels() channels are edited in this buffer.
          *
          * @returns Number of samples modified.
          */
-        size_t mix(const AudioBuffer& other);
+        size_t mix(const AudioBuffer& other, bool upmix=true);
 
         /**
          * Copy sample_num samples from in (from sample pos_in) to this buffer (at sample pos_out).
@@ -179,7 +186,7 @@ class AudioBuffer {
          * The number of channels is changed to match the in channel number.
          * Buffer sample number is also increased if required to hold the new requested samples.
          */
-        size_t copy(AudioBuffer& in, int sample_num=-1, size_t pos_in=0, size_t pos_out=0);
+        size_t copy(AudioBuffer& in, int sample_num=-1, size_t pos_in=0, size_t pos_out=0, bool upmix=true);
 
         /**
          * Copy sample_num samples from in to this buffer (at sample pos_out).
@@ -190,8 +197,6 @@ class AudioBuffer {
         size_t copy(SFLAudioSample* in, size_t sample_num, size_t pos_out=0);
 
     private:
-        //NON_COPYABLE(AudioBuffer);
-
         int sampleRate_;
         unsigned channels_; // should allways be the same as samples_.size()
         size_t sampleNum_;

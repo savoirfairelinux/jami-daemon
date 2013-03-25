@@ -56,7 +56,6 @@ class AudioLoop {
          * @param nb of int16 to send
          * @param volume  The volume
          */
-        //void getNext(SFLAudioSample* output, size_t samples, short volume=100);
         void getNext(AudioBuffer& output, unsigned int volume=100);
 
         void seek(double relative_position);
@@ -73,7 +72,7 @@ class AudioLoop {
          * @return unsigned int The size
          */
         size_t getSize() {
-            return buffer_->samples();//size_;
+            return buffer_->samples();
         }
 
         /**
@@ -87,16 +86,9 @@ class AudioLoop {
     protected:
         /** The data buffer */
         AudioBuffer * buffer_;
-        //SFLAudioSample* buffer_;
-
-        /** Number of samples inside the buffer */
-        //size_t size_;
 
         /** current position, set to 0, when initialize */
         size_t pos_;
-
-        /** Sample rate */
-        //unsigned int sampleRate_;
 
         /** Is a playback recording */
         bool isRecording_;

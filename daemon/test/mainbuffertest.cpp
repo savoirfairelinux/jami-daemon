@@ -422,7 +422,7 @@ void MainBufferTest::testTwoPointer()
 
     input_buffer->put(test_input);
     CPPUNIT_ASSERT(output_buffer->get(test_output, MainBuffer::DEFAULT_ID) == 1);
-    CPPUNIT_ASSERT((*test_input.getChannel())[0] == (*test_output.getChannel())[0]);
+    CPPUNIT_ASSERT(test_sample == (*test_output.getChannel())[0]);
 
 }
 

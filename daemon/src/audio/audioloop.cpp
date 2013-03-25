@@ -49,7 +49,6 @@ AudioLoop::AudioLoop(unsigned int sampleRate) : buffer_(), pos_(0), isRecording_
 
 AudioLoop::~AudioLoop()
 {
-    //delete [] buffer_;
     delete buffer_;
 }
 
@@ -64,7 +63,6 @@ AudioLoop::seek(double relative_position)
 static unsigned int updatePlaybackScale = 0;
 
 void
-//AudioLoop::getNext(SFLAudioSample* output, size_t total_samples, short volume)
 AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
 {
     if(!buffer_) {
@@ -88,23 +86,8 @@ AudioLoop::getNext(AudioBuffer& output, unsigned int volume)
     while (total_samples > 0) {
         size_t samples = std::min(total_samples, buf_samples - pos);
 
-       /* if (samples > (buf_samples - pos))
-            samples = buf_samples - pos;*/
-
-        // short->char conversion
-        //memcpy(output, buffer_ + pos, samples * sizeof(SFLAudioSample));
-        //buffer_.copy(output, pos, samples);
         output.copy(*buffer_, samples, pos, output_pos);
 
-        // Scaling needed
-        /*if (volume != 100) {
-            const double gain = volume * 0.01;
-
-            for (size_t i = 0; i < samples; ++i, ++output)
-                *output *= gain;
-        } else
-            output_pos += samples;*/
-            //output += samples; // this is the destination...
         output_pos += samples;
         pos = (pos + samples) % buf_samples;
 

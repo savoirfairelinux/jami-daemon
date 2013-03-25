@@ -55,15 +55,15 @@ typedef struct PaDeviceInfos {
     pa_channel_map channel_map;
 
     PaDeviceInfos(unsigned idx, const char* ep_name, pa_sample_spec samp_spec, pa_channel_map chan_map)
-        : index(idx), name(ep_name), sample_spec(samp_spec), channel_map(chan_map)
-    {}
+        : index(idx), name(ep_name), sample_spec(samp_spec), channel_map(chan_map) {}
+    virtual ~PaDeviceInfos() {}
 
     /**
      * Unary function to search for a device by name in a list using std functions.
      */
     struct nameComparator : public std::unary_function<const PaDeviceInfos, bool>
     {
-        explicit nameComparator(const std::string &baseline) : baseline(baseline) {}
+        explicit nameComparator(const std::string &ref) : baseline(ref) {}
         bool operator() (const PaDeviceInfos &arg) {
             return arg.name == baseline;
         }

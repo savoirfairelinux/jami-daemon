@@ -3,6 +3,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -98,7 +99,6 @@ class RingBuffer {
          * @param toCopy Number of bytes to copy
          */
          void put(AudioBuffer& buf);
-        //void put(void* buffer, size_t toCopy);
 
         /**
          * To get how much samples are available in the buffer to read in
@@ -113,7 +113,6 @@ class RingBuffer {
          * @return size_t Number of bytes copied
          */
          size_t get(AudioBuffer& buf, const std::string &call_id);
-        //size_t get(void* buffer, size_t toCopy, const std::string &call_id);
 
         /**
          * Discard data from the buffer
@@ -141,10 +140,8 @@ class RingBuffer {
 
         /** Pointer on the last data */
         size_t endPos_;
-        /** Buffer size */
-        size_t bufferSize_;
         /** Data */
-        std::vector<std::vector<SFLAudioSample> > buffer_;
+        AudioBuffer buffer_;
 
         ReadPointer readpointers_;
         std::string buffer_id_;

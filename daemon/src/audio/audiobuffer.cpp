@@ -160,18 +160,21 @@ void AudioBuffer::fromInterleaved(const SFLAudioSample* in, size_t sample_num, u
     }
 }
 
-size_t AudioBuffer::mix(const AudioBuffer& other)
+size_t AudioBuffer::mix(const AudioBuffer& other, bool up /* = true */)
 {
+    const bool upmix = up && (other.channels_ < channels_);
     const size_t samp_num = std::min(sampleNum_, other.sampleNum_);
-    const unsigned chan_num = std::min(channels_, other.channels_);
+    const unsigned chan_num = upmix ? channels_ : std::min(channels_, other.channels_);
+
     for(unsigned i=0; i<chan_num; i++) {
+        unsigned src_chan = upmix ? std::min(i, other.channels_-1) : i;
         for(unsigned j=0; j<samp_num; j++)
-            samples_[i][j] += other.samples_[i][j];
+            samples_[i][j] += other.samples_[src_chan][j];
     }
     return samp_num;
 }
 
-size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_in /* = 0 */, size_t pos_out /* = 0 */)
+size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_in /* = 0 */, size_t pos_out /* = 0 */, bool up /* = true */)
 {
     if(sample_num == -1)
         sample_num = in.samples();
@@ -179,7 +182,8 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
     int to_copy = std::min((int)in.samples()-(int)pos_in, sample_num);
     if(to_copy <= 0) return 0;
 
-    const size_t chan_num = std::min(in.channels_, channels_);
+    const bool upmix = up && (in.channels_ < channels_);
+    const size_t chan_num = upmix ? channels_ : std::min(in.channels_, channels_);
 
     if(pos_out+to_copy > sampleNum_)
         resize(pos_out+to_copy);
@@ -189,7 +193,8 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
 
     unsigned i;
     for(i=0; i<chan_num; i++) {
-        std::copy(in.samples_[i].begin()+pos_in, in.samples_[i].begin()+pos_in+to_copy, samples_[i].begin()+pos_out);
+        unsigned src_chan = upmix ? std::min(i, in.channels_-1) : i;
+        std::copy(in.samples_[src_chan].begin()+pos_in, in.samples_[src_chan].begin()+pos_in+to_copy, samples_[i].begin()+pos_out);
     }
 
     return to_copy;

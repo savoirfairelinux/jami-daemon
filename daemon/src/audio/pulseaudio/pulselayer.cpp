@@ -135,8 +135,6 @@ PulseLayer::~PulseLayer()
 
     if (mainloop_)
         pa_threaded_mainloop_free(mainloop_);
-
-    //delete [] mic_buffer_;
 }
 
 void PulseLayer::context_state_callback(pa_context* c, void *user_data)
@@ -364,6 +362,8 @@ void PulseLayer::writeToSpeaker()
         return;
     } else if (ret == 0)
         return;
+
+    DEBUG("writeToSpeaker with n_channels=%d", n_channels);
 
     size_t writableBytes = ret;
     size_t writableSamples = writableBytes/sample_size;
