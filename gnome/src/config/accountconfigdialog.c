@@ -557,7 +557,8 @@ get_interface_addr_from_name(const gchar * const iface_name)
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(struct ifreq));
 
-    strcpy(ifr.ifr_name, iface_name);
+    strncpy(ifr.ifr_name, iface_name, sizeof ifr.ifr_name);
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
     ifr.ifr_addr.sa_family = AF_INET;
 
     if (ioctl(fd, SIOCGIFADDR, &ifr) < 0)
