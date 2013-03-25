@@ -80,6 +80,7 @@ int req(char *host, int port, char *request, char *ret)
     if (connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0) {
         perror("foo");
         strcpy(ret, "connect");
+        close(s);
         return -1;
     }
 
@@ -106,6 +107,7 @@ int req(char *host, int port, char *request, char *ret)
 
     if (status != 200) {
         sprintf(ret, "http error: %ld", status);
+        fclose(f);
         return -1;
     }
 
