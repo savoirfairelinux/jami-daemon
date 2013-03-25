@@ -761,6 +761,7 @@ void calltree_update_call(calltab_t* tab, callable_obj_t * call, SFLPhoneClient 
 void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *parent)
 {
     g_assert(tab != history_tab);
+    g_return_if_fail(call != NULL);
 
     account_t* account_details = NULL;
 
@@ -776,13 +777,11 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
 
     gtk_tree_store_prepend(tab->store, &iter, parent);
 
-    if (call) {
-        account_details = account_list_get_by_id(call->_accountID);
+    account_details = account_list_get_by_id(call->_accountID);
 
-        if (account_details) {
-            srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
-            key_exchange = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_KEY_EXCHANGE);
-        }
+    if (account_details) {
+        srtp_enabled = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_ENABLE);
+        key_exchange = g_hash_table_lookup(account_details->properties, CONFIG_SRTP_KEY_EXCHANGE);
     }
 
     g_debug("Added call key exchange is %s", key_exchange);
