@@ -908,8 +908,9 @@ create_video_configuration()
     g_signal_connect(G_OBJECT(preview_button), "toggled",
                      G_CALLBACK(preview_button_toggled), NULL);
 
+    gboolean active_call = FALSE;
     gchar **list = dbus_get_call_list();
-    gboolean active_call;
+
     if (list && *list) {
         active_call = TRUE;
         g_strfreev(list);
