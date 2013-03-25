@@ -118,7 +118,7 @@ int req(char *host, int port, char *request, char *ret)
 rest_account get_rest_account(char *host,char *email)
 {
     char ret[4096];
-    rest_account ra;
+    rest_account ra = {0,};
     bzero(ret, sizeof(ret));
     g_debug("HOST: %s", host);
     strcpy(ret,"GET /rest/accountcreator?email=");
