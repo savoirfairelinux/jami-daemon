@@ -175,8 +175,8 @@ static void account_store_fill()
 
     // IP2IP account must be first
     account_t *ip2ip = account_list_get_by_id(IP2IP_PROFILE);
-    ip2ip->state = ACCOUNT_STATE_IP2IP_READY;
     g_return_if_fail(ip2ip != NULL);
+    ip2ip->state = ACCOUNT_STATE_IP2IP_READY;
 
     GtkTreeIter iter;
     gtk_list_store_append(account_store, &iter);

@@ -291,8 +291,6 @@ addressbook_config_fill_book_list()
                            book_data->active, COLUMN_BOOK_UID, book_data->uid, COLUMN_BOOK_NAME,
                            book_data->name, -1);
     }
-
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
 }
 
 GtkWidget*

@@ -41,6 +41,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <errno.h>
 #include <gtk/gtk.h>
 
 #include "config.h"
@@ -548,13 +549,16 @@ get_interface_addr_from_name(const gchar * const iface_name)
 
     int fd;
 
-    if ((fd = socket(AF_INET, SOCK_DGRAM,0)) < 0)
-        g_debug("getInterfaceAddrFromName error could not open socket\n");
+    if ((fd = socket(AF_INET, SOCK_DGRAM,0)) < 0) {
+        g_warning("could not open socket: %s", g_strerror(errno));
+        return g_strdup("");
+    }
 
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(struct ifreq));
 
-    strcpy(ifr.ifr_name, iface_name);
+    strncpy(ifr.ifr_name, iface_name, sizeof ifr.ifr_name);
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
     ifr.ifr_addr.sa_family = AF_INET;
 
     if (ioctl(fd, SIOCGIFADDR, &ifr) < 0)

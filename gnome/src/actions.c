@@ -706,9 +706,7 @@ sflphone_keypad(guint keyval, const gchar * key, SFLPhoneClient *client)
             default:
                 break;
         }
-
-    } else
-        sflphone_new_call(client);
+    }
 }
 
 int

@@ -67,11 +67,9 @@ disable_conference_calls(conference_obj_t *call)
         guint size = g_slist_length(call->participant_list);
         for (guint i = 0; i < size;i++) {
                const gchar* id = (gchar*)g_slist_nth(call->participant_list,i)->data;
-               message_tab *tab = g_hash_table_lookup(tabs,id);
-               tab = force_lookup(id);
-               if (tab) {
+               message_tab *tab = force_lookup(id);
+               if (tab)
                    gtk_widget_hide(tab->entry);
-               }
         }
     }
 }

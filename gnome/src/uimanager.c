@@ -140,12 +140,12 @@ update_toolbar_for_call(callable_obj_t *selectedCall, gboolean instant_messaging
 {
     int pos = 0;
 
-    g_debug("Update actions for call %s", selectedCall->_callID);
-
-    if(selectedCall == NULL) {
+    if (selectedCall == NULL) {
         g_warning("Selected call is NULL while updating toolbar");
         return;
     }
+
+    g_debug("Update toolbar for call %s", selectedCall->_callID);
 
     // update icon in systray
     show_status_hangup_icon(client);

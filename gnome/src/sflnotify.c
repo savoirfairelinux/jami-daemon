@@ -109,9 +109,12 @@ notify_incoming_call(callable_obj_t* c, SFLPhoneClient *client)
     if (strlen(c->_accountID) == 0)
         title = g_markup_printf_escaped("IP-to-IP call");
     else {
+        account_t *account = account_list_get_by_id(c->_accountID);
+        g_return_if_fail(account != NULL);
+
         title = g_markup_printf_escaped(_("%s account : %s") ,
-                                        (gchar*) g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties, CONFIG_ACCOUNT_TYPE) ,
-                                        (gchar*) g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties, CONFIG_ACCOUNT_ALIAS)) ;
+                (gchar*) g_hash_table_lookup(account->properties, CONFIG_ACCOUNT_TYPE),
+                (gchar*) g_hash_table_lookup(account->properties, CONFIG_ACCOUNT_ALIAS)) ;
     }
 
     gchar *callerid = g_markup_printf_escaped(_("<i>From</i> %s"), c->_peer_number);

@@ -62,6 +62,7 @@ accel_edited(G_GNUC_UNUSED GtkCellRendererAccel *renderer, gchar *path, guint ac
 
     Accelerator* list = shortcuts_get_list();
     const guint code = XKeysymToKeycode(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), accel_key);
+
     for (guint i = 0; list[i].action != NULL; ++i) {
         if (list[i].key == code && list[i].mask == mask) {
             gtk_list_store_set(GTK_LIST_STORE(model), &iter, MASK, 0, VALUE, 0,
@@ -69,7 +70,8 @@ accel_edited(G_GNUC_UNUSED GtkCellRendererAccel *renderer, gchar *path, guint ac
             g_warning("This key was already affected");
         }
 
-        gtk_tree_model_iter_next(model, &iter);
+        if (!gtk_tree_model_iter_next(model, &iter))
+            break;
     }
 
     // Update treeview

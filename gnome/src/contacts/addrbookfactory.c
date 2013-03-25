@@ -89,6 +89,7 @@ handler_async_search(GList *hits, gpointer user_data)
 void abook_init()
 {
     const gchar *addrbook_path = PLUGINS_DIR "/libevladdrbook.so";
+    /* FIXME: handle should be unloaded with dlclose on exit */
     void *handle = dlopen(addrbook_path, RTLD_LAZY);
 
     if (handle == NULL) {
@@ -98,10 +99,15 @@ void abook_init()
 
     addrbook = g_new0(AddrBookHandle, 1);
 
-#define LOAD(func) do { \
-        addrbook-> func = dlsym(handle, "addressbook_" #func); \
-        if (addrbook-> func == NULL) \
-            g_warning("Couldn't load " # func); \
+#define LOAD(func) do {                                         \
+        addrbook-> func = dlsym(handle, "addressbook_" #func);  \
+        if (addrbook-> func == NULL) {                          \
+            g_warning("Couldn't load " # func);                 \
+            dlclose(handle);                                    \
+            g_free(addrbook);                                   \
+            addrbook = NULL;                                    \
+            return;                                             \
+        }                                                       \
     } while(0)
 
 
