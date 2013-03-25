@@ -49,14 +49,14 @@
 #include "sflphone_const.h"
 #include "reqaccount.h"
 
-int req(char *host, int port, char *request, char *ret)
+int req(char *host, int port, char request[], size_t request_size)
 {
     int s;
     struct sockaddr_in servSockAddr;
     struct hostent *servHostEnt;
-    long int length=0;
+    size_t length = 0;
     long int status=0;
-    int i=0;
+    size_t i = 0;
     FILE *f;
     char buf[1024];
 
@@ -64,7 +64,7 @@ int req(char *host, int port, char *request, char *ret)
     servHostEnt = gethostbyname(host);
 
     if (servHostEnt == NULL) {
-        strcpy(ret, "gethostbyname");
+        strcpy(request, "gethostbyname");
         return -1;
     }
 
@@ -73,13 +73,13 @@ int req(char *host, int port, char *request, char *ret)
     servSockAddr.sin_family = AF_INET;
 
     if ((s = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-        strcpy(ret, "socket");
+        strcpy(request, "socket");
         return -1;
     }
 
     if (connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0) {
         perror("foo");
-        strcpy(ret, "connect");
+        strcpy(request, "connect");
         close(s);
         return -1;
     }
@@ -102,11 +102,12 @@ int req(char *host, int port, char *request, char *ret)
             status = atoi(buf + strlen(status_h) + 1);
     }
 
+    length = length > request_size ? request_size : length;
     for (i = 0; i < length; i++)
-        ret[i] = fgetc(f);
+        request[i] = fgetc(f);
 
     if (status != 200) {
-        sprintf(ret, "http error: %ld", status);
+        sprintf(request, "http error: %ld", status);
         fclose(f);
         return -1;
     }
@@ -126,7 +127,7 @@ rest_account get_rest_account(char *host,char *email)
     strcpy(ret,"GET /rest/accountcreator?email=");
     strcat(ret, email);
 
-    if (req(host, 80, ret, ret) != -1) {
+    if (req(host, 80, ret, sizeof(ret)) != -1) {
         strcpy(ra.user, strtok(ret, "\n"));
         strcpy(ra.passwd, strtok(NULL, "\n"));
         ra.success = 1;
