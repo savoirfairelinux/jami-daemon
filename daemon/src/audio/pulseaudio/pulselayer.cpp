@@ -363,8 +363,6 @@ void PulseLayer::writeToSpeaker()
     } else if (ret == 0)
         return;
 
-    DEBUG("writeToSpeaker with n_channels=%d", n_channels);
-
     size_t writableBytes = ret;
     size_t writableSamples = writableBytes/sample_size;
 
