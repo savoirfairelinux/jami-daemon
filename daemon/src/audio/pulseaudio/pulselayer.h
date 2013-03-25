@@ -3,6 +3,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
+ *  Author: Adrien Beraud <adrien.beraud@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,9 +40,36 @@
 #include <pulse/stream.h>
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
+#include "logger.h"
 
 class AudioPreference;
 class AudioStream;
+
+/**
+ * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
+ */
+typedef struct PaDeviceInfos {
+    unsigned index; // TODO: should use uint32_t (with C++11) since it's the PA type for indexes
+    std::string name;
+    pa_sample_spec sample_spec;
+    pa_channel_map channel_map;
+
+    PaDeviceInfos(unsigned idx, const char* ep_name, pa_sample_spec samp_spec, pa_channel_map chan_map)
+        : index(idx), name(ep_name), sample_spec(samp_spec), channel_map(chan_map)
+    {}
+
+    /**
+     * Unary function to search for a device by name in a list using std functions.
+     */
+    struct nameComparator : public std::unary_function<const PaDeviceInfos, bool>
+    {
+        explicit nameComparator(const std::string &baseline) : baseline(baseline) {}
+        bool operator() (const PaDeviceInfos &arg) {
+            return arg.name == baseline;
+        }
+        const std::string &baseline;
+    };
+} PaDeviceInfos;
 
 class PulseLayer : public AudioLayer {
     public:
@@ -123,50 +151,21 @@ class PulseLayer : public AudioLayer {
         /**
          * Contain the list of playback devices
          */
-        //std::vector<std::string> sinkList_;
-        std::vector<pa_sink_info> sinkList_;
+        std::vector<PaDeviceInfos> sinkList_;
 
         /**
          * Contain the list of capture devices
          */
-        //std::vector<std::string> sourceList_;
-        std::vector<pa_source_info> sourceList_;
-
-        /** Helper unary_function to search for a device name in a list of pa_source_info */
-        struct source_info_compare_name : public std::unary_function<const pa_source_info, bool>
-        {
-            explicit source_info_compare_name(const std::string &baseline) : baseline(baseline) {}
-            bool operator() (const pa_source_info &arg) {
-                return std::strcmp(arg.name, baseline.c_str()) != 0;
-            }
-            std::string baseline;
-        };
-
-        /**  Helper unary_function to search for a device name in a list of pa_sink_info */
-        struct sink_info_compare_name : public std::unary_function<const pa_sink_info, bool>
-        {
-            explicit sink_info_compare_name(const std::string &baseline) : baseline(baseline) {}
-            bool operator() (const pa_sink_info &arg) {
-                return std::strcmp(arg.name, baseline.c_str()) != 0;
-            }
-            std::string baseline;
-        };
+        std::vector<PaDeviceInfos> sourceList_;
 
         /**
-         * Returns a pointer to the pa_source_info with the given name in sourceList_, or NULL if not found.
+         * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or NULL if not found.
          */
-        const pa_source_info* getCaptureDevice(const std::string& name) const;
-
-        /**
-         * Returns a pointer to the pa_sink_info with the given name in sinkList_, or NULL if not found.
-         */
-        const pa_sink_info* getPlaybackDevice(const std::string& name) const;
+        const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&, const std::string& name) const;
 
         /*
          * Buffers used to avoid doing malloc/free in the audio thread
          */
-        //SFLAudioSample *mic_buffer_;
-        //size_t mic_buf_size_;
         AudioBuffer mic_buffer_;
 
         /** PulseAudio context and asynchronous loop */

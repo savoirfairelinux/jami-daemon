@@ -3,6 +3,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
+ *  Author: Adrien Beraud <adrien.beraud@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +33,7 @@
 
 #include <algorithm> // for std::find
 #include <stdexcept>
+
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/samplerateconverter.h"
@@ -193,7 +195,7 @@ void PulseLayer::updateSourceList()
 
 bool PulseLayer::inSinkList(const std::string &deviceName)
 {
-    const bool found = std::find_if(sinkList_.begin(), sinkList_.end(), sink_info_compare_name(deviceName)) != sinkList_.end();
+    const bool found = std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::nameComparator(deviceName)) != sinkList_.end();
 
     DEBUG("seeking for %s in sinks. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
@@ -201,7 +203,7 @@ bool PulseLayer::inSinkList(const std::string &deviceName)
 
 bool PulseLayer::inSourceList(const std::string &deviceName)
 {
-    const bool found = std::find_if(sourceList_.begin(), sourceList_.end(), source_info_compare_name(deviceName)) != sourceList_.end();
+    const bool found = std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::nameComparator(deviceName)) != sourceList_.end();
 
     DEBUG("seeking for %s in sources. %s found", deviceName.c_str(), found ? "" : "NOT");
     return found;
@@ -227,29 +229,37 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
 
 int PulseLayer::getAudioDeviceIndex(const std::string& name) const
 {
-    int index = std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), source_info_compare_name(name)));
+    int index = std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::nameComparator(name)));
     if (index == std::distance(sourceList_.begin(), sourceList_.end())) {
-        index = std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), sink_info_compare_name(name)));
+        index = std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::nameComparator(name)));
     }
     return index;
 }
 
-const pa_source_info* PulseLayer::getCaptureDevice(const std::string& name) const
+const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name) const
 {
-    std::vector<pa_source_info>::const_iterator dev_info = std::find_if(sourceList_.begin(), sourceList_.end(), source_info_compare_name(name));
+    std::vector<PaDeviceInfos>::const_iterator dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::nameComparator(name));
+    if(dev_info == list.end()) return NULL;
+    return &(*dev_info);
+}
+/*
+const PaDeviceInfos* PulseLayer::getCaptureDevice(const std::string& name) const
+{
+    std::vector<PaEndpointInfos>::const_iterator dev_info = std::find_if(sourceList_.begin(), sourceList_.end(), PaEndpointInfos::nameComparator(name));
     if(dev_info == sourceList_.end()) return NULL;
     return &(*dev_info);
 }
 
-const pa_sink_info* PulseLayer::getPlaybackDevice(const std::string& name) const
+const PaDeviceInfos* PulseLayer::getPlaybackDevice(const std::string& name) const
 {
-    std::vector<pa_sink_info>::const_iterator dev_info = std::find_if(sinkList_.begin(), sinkList_.end(), sink_info_compare_name(name));
+    std::vector<PaEndpointInfos>::const_iterator dev_info = std::find_if(sinkList_.begin(), sinkList_.end(), PaEndpointInfos::nameComparator(name));
     if(dev_info == sinkList_.end()) return NULL;
     return &(*dev_info);
-}
+}*/
 
 std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
 {
+
     switch (type) {
         case SFL_PCM_PLAYBACK:
         case SFL_PCM_RINGTONE:
@@ -282,17 +292,17 @@ void PulseLayer::createStreams(pa_context* c)
     DEBUG("Devices:\n   playback: %s\n   record: %s\n   ringtone: %s",
            playbackDevice.c_str(), captureDevice.c_str(), ringtoneDevice.c_str());
 
-    playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_, getPlaybackDevice(playbackDevice));
+    playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_, getDeviceInfos(sinkList_, playbackDevice));
 
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback(playback_->pulseStream(), stream_moved_callback, this);
 
-    record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, sampleRate_, getCaptureDevice(captureDevice));
+    record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, sampleRate_, getDeviceInfos(sourceList_, captureDevice));
 
     pa_stream_set_read_callback(record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback(record_->pulseStream(), stream_moved_callback, this);
 
-    ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, sampleRate_, getPlaybackDevice(ringtoneDevice));
+    ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, sampleRate_, getDeviceInfos(sinkList_, ringtoneDevice));
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone_->pulseStream(), stream_moved_callback, this);
@@ -596,7 +606,7 @@ PulseLayer::context_changed_callback(pa_context* c,
 }
 
 
-void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_source_info *info, int eol, void *userdata)
+void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
     PulseLayer *context = static_cast<PulseLayer*>(userdata);
@@ -605,8 +615,6 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
         context->enumeratingSources_ = false;
         return;
     }
-
-    const pa_source_info i = *info;
 
     DEBUG("Source %u\n"
            "    Name: %s\n"
@@ -619,24 +627,25 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
            "    Monitor if Sink: %u\n"
            "    Latency: %0.0f usec\n"
            "    Flags: %s%s%s\n",
-           i.index,
-           i.name,
-           i.driver,
-           i.description,
-           pa_sample_spec_snprint(s, sizeof(s), &i.sample_spec),
-           pa_channel_map_snprint(cm, sizeof(cm), &i.channel_map),
-           i.owner_module,
-           i.mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i.volume),
-           i.monitor_of_sink,
-           (double) i.latency,
-           i.flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-           i.flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
-           i.flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
+           i->index,
+           i->name,
+           i->driver,
+           i->description,
+           pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+           pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+           i->owner_module,
+           i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+           i->monitor_of_sink,
+           (double) i->latency,
+           i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+           i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
+           i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
-    context->sourceList_.push_back(i);
+    PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
+    context->sourceList_.push_back(ep_infos);
 }
 
-void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *info, int eol, void *userdata)
+void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
 {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
     PulseLayer *context = static_cast<PulseLayer*>(userdata);
@@ -645,8 +654,6 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
         context->enumeratingSinks_ = false;
         return;
     }
-
-    const pa_sink_info i = *info;
 
     DEBUG("Sink %u\n"
           "    Name: %s\n"
@@ -659,21 +666,22 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
           "    Monitor Source: %u\n"
           "    Latency: %0.0f usec\n"
           "    Flags: %s%s%s\n",
-          i.index,
-          i.name,
-          i.driver,
-          i.description,
-          pa_sample_spec_snprint(s, sizeof(s), &i.sample_spec),
-          pa_channel_map_snprint(cm, sizeof(cm), &i.channel_map),
-          i.owner_module,
-          i.mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i.volume),
-          i.monitor_source,
-          static_cast<double>(i.latency),
-          i.flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-          i.flags & PA_SINK_LATENCY ? "LATENCY " : "",
-          i.flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
+          i->index,
+          i->name,
+          i->driver,
+          i->description,
+          pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+          pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+          i->owner_module,
+          i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+          i->monitor_source,
+          static_cast<double>(i->latency),
+          i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+          i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
+          i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-    context->sinkList_.push_back(i);
+    PaDeviceInfos ep_infos(i->index, i->name, i->sample_spec, i->channel_map);
+    context->sinkList_.push_back(ep_infos);
 }
 
 void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMType type)

@@ -34,6 +34,7 @@
 #include <pulse/pulseaudio.h>
 #include <string>
 #include "noncopyable.h"
+#include "pulselayer.h"
 
 /**
  * This data structure contains the different king of audio streams available
@@ -58,7 +59,7 @@ class AudioStream {
          * //@param channel number
          * //@param device name
          */
-        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const void*);
+        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const PaDeviceInfos*);
 
         ~AudioStream();
 
