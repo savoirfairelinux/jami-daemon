@@ -103,8 +103,12 @@ int req(char *host, int port, char request[], size_t request_size)
     }
 
     length = length > request_size ? request_size : length;
-    for (i = 0; i < length; i++)
-        request[i] = fgetc(f);
+    for (i = 0; i < length; i++) {
+        const int c = fgetc(f);
+        if (c == EOF)
+            break;
+        request[i] = (char) c;
+    }
 
     if (status != 200) {
         sprintf(request, "http error: %ld", status);
