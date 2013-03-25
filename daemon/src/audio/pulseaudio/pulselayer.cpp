@@ -242,20 +242,6 @@ const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>
     if(dev_info == list.end()) return NULL;
     return &(*dev_info);
 }
-/*
-const PaDeviceInfos* PulseLayer::getCaptureDevice(const std::string& name) const
-{
-    std::vector<PaEndpointInfos>::const_iterator dev_info = std::find_if(sourceList_.begin(), sourceList_.end(), PaEndpointInfos::nameComparator(name));
-    if(dev_info == sourceList_.end()) return NULL;
-    return &(*dev_info);
-}
-
-const PaDeviceInfos* PulseLayer::getPlaybackDevice(const std::string& name) const
-{
-    std::vector<PaEndpointInfos>::const_iterator dev_info = std::find_if(sinkList_.begin(), sinkList_.end(), PaEndpointInfos::nameComparator(name));
-    if(dev_info == sinkList_.end()) return NULL;
-    return &(*dev_info);
-}*/
 
 std::string PulseLayer::getAudioDeviceName(int index, PCMType type) const
 {
@@ -474,9 +460,8 @@ void PulseLayer::readFromMic()
     const char *data = NULL;
     size_t bytes;
 
-    //const pa_sample_spec * sample_spec = record_->sampleSpec();
-    size_t sample_size = record_->sampleSize(); //pa_sample_size(sample_spec);
-    uint8_t channels = record_->channels(); //sample_spec->channels;
+    size_t sample_size = record_->sampleSize();
+    uint8_t channels = record_->channels();
 
     if (pa_stream_peek(record_->pulseStream() , (const void**) &data , &bytes) < 0 or !data)
         return;
@@ -515,7 +500,6 @@ void PulseLayer::readFromMic()
 
     dcblocker_.process(*out);
     out->applyGain(getCaptureGain());
-    //applyGain(mic_buffer_, bytes / sizeof(SFLAudioSample), getCaptureGain());
     Manager::instance().getMainBuffer().putData(*out, MainBuffer::DEFAULT_ID);
 
 #ifdef RECTODISK

@@ -55,9 +55,6 @@ class AudioStream {
          * @param types
          * @param audio sampling rate
          * @param pointer to pa_source_info or pa_sink_info (depending on type).
-         *
-         * //@param channel number
-         * //@param device name
          */
         AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const PaDeviceInfos*);
 

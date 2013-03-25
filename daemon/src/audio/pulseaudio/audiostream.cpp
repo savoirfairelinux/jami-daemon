@@ -136,7 +136,7 @@ AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 
         case PA_STREAM_FAILED:
         default:
-            ERROR("Sink/Source doesn't exists: %s %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))), pa_stream_get_device_name(s));
+            ERROR("Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
             break;
     }
 }
