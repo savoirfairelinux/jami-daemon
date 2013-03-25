@@ -44,7 +44,7 @@ struct _wizard *wiz;
 static int account_type;
 static gboolean use_sflphone_org = TRUE;
 static account_t* current;
-static char message[1024];
+static char *message;
 /**
  * Forward function
  */
@@ -76,30 +76,22 @@ static void show_password_cb(GtkWidget *widget UNUSED, gpointer data)
  */
 void getMessageSummary(const gchar * alias, const gchar * server, const gchar * username, const gboolean zrtp)
 {
-    char var[64];
-    sprintf(message, _("This assistant is now finished."));
-    strcat(message, "\n");
-    strcat(message, _("You can at any time check your registration state or modify your accounts parameters in the Options/Accounts window."));
-    strcat(message, "\n\n");
-
-    strcat(message, _("Alias"));
-    snprintf(var, sizeof(var), " :   %s\n", alias);
-    strcat(message, var);
-
-    strcat(message, _("Server"));
-    snprintf(var, sizeof(var), " :   %s\n", server);
-    strcat(message, var);
-
-    strcat(message, _("Username"));
-    snprintf(var, sizeof(var), " :   %s\n", username);
-    strcat(message, var);
-
-    strcat(message, _("Security: "));
+    message = g_strdup(_("This assistant is now finished."));
+    gchar *tmp =
+    g_strconcat(message, "\n",
+    _("You can at any time check your registration state or modify your "
+      "accounts parameters in the Options/Accounts window."), "\n\n",
+     _("Alias"), " :   ", alias, "\n",
+    _("Server"), " :   ", server, "\n",
+    _("Username"), " :   ", username, "\n",
+    _("Security: "),
+    NULL);
 
     if (zrtp)
-        strcat(message, _("SRTP/ZRTP draft-zimmermann"));
+        message = g_strconcat(tmp, _("SRTP/ZRTP draft-zimmermann"), NULL);
     else
-        strcat(message, _("None"));
+        message = g_strconcat(tmp, _("None"), NULL);
+    g_free(tmp);
 }
 
 void set_sflphone_org(GtkWidget* widget, gpointer data UNUSED)
@@ -505,7 +497,9 @@ GtkWidget* build_summary()
 {
     wiz->summary = create_vbox(GTK_ASSISTANT_PAGE_SUMMARY, _("Account Registration"), _("Congratulations!"));
 
-    strcpy(message,"");
+    if (message)
+        g_free(message);
+    message = g_strdup("");
     wiz->label_summary = gtk_label_new(message);
     gtk_label_set_selectable(GTK_LABEL(wiz->label_summary), TRUE);
     gtk_misc_set_alignment(GTK_MISC(wiz->label_summary), 0, 0);
