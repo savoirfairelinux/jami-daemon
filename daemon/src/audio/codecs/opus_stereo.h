@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Author:  Adrien Beraud <adrienberaud@gmail.com>
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,21 +37,28 @@
 
 #include <opus/opus.h>
 
-class Opus : public sfl::AudioCodec {
+class OpusStereo : public sfl::AudioCodec {
 public:
-   Opus();
-   ~Opus();
+   OpusStereo();
+   ~OpusStereo();
 private:
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
 
-   NON_COPYABLE(Opus);
+   //multichannel version
+   virtual int decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
+   virtual int encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size);
+
+
+   NON_COPYABLE(OpusStereo);
    //Attributes
    OpusEncoder *encoder_;
    OpusDecoder *decoder_;
+   std::vector<opus_int16> interleaved_;
+
    static const int FRAME_SIZE = 160;
    static const int CLOCK_RATE = 16000;
-   static const int CHANNELS   = 1;
+   static const int CHANNELS   = 2;
 };
 
 #endif

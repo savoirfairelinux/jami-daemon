@@ -289,7 +289,6 @@ AudioCodecFactory::seemsValid(const std::string &lib)
 {
     // The name of the shared library seems valid  <==> it looks like libcodec_xxx.so
     // We check this
-
     static const std::string prefix("libcodec_");
     static const std::string suffix(".so");
 
@@ -309,6 +308,7 @@ AudioCodecFactory::seemsValid(const std::string &lib)
     "g722",
     "g729", //G729 have to be loaded first, if it is valid or not is checked later
     "opus", //Opus have to be loaded first, if it is valid or not is checked later
+    "opus_stereo",
 #ifdef HAVE_SPEEX_CODEC
     "speex_nb",
     "speex_wb",
@@ -326,6 +326,7 @@ AudioCodecFactory::seemsValid(const std::string &lib)
 
     const std::string name(lib.substr(prefix.length(), len));
     const std::string *end = validCodecs + ARRAYSIZE(validCodecs);
+
     return find(validCodecs, end, name) != end;
 }
 

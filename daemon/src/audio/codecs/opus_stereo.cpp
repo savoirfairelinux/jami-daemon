@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Author:  Adrien Beraud <adrienberaud@gmail.com>
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,15 +28,16 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "opus.h"
+#include "opus_stereo.h"
 #include <stdexcept>
 #include <iostream>
 
-static const int Opus_PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
+static const int OpusStereo_PAYLOAD_TYPE = 105; // dynamic payload type, out of range of video (96-99)
 
-Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "Opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
+OpusStereo::OpusStereo() : sfl::AudioCodec(OpusStereo_PAYLOAD_TYPE, "Opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
     encoder_(0),
-    decoder_(0)
+    decoder_(0),
+    interleaved_(FRAME_SIZE*CHANNELS)
 {
    hasDynamicPayload_ = true;
 
@@ -49,7 +51,7 @@ Opus::Opus() : sfl::AudioCodec(Opus_PAYLOAD_TYPE, "Opus", CLOCK_RATE, FRAME_SIZE
        throw std::runtime_error("opus: could not create decoder");
 }
 
-Opus::~Opus()
+OpusStereo::~OpusStereo()
 {
     if (encoder_)
         opus_encoder_destroy(encoder_);
@@ -57,21 +59,58 @@ Opus::~Opus()
         opus_decoder_destroy(decoder_);
 }
 
-int Opus::decode(short *dst, unsigned char *buf, size_t buffer_size)
+int OpusStereo::decode(short *dst, unsigned char *buf, size_t buffer_size)
 {
-   return opus_decode(decoder_, buf, buffer_size, dst, FRAME_SIZE, 0);
+   return 0;
 }
 
-int Opus::encode(unsigned char *dst, short *src, size_t buffer_size)
+int OpusStereo::encode(unsigned char *dst, short *src, size_t buffer_size)
 {
-   return opus_encode(encoder_, src, FRAME_SIZE, dst, buffer_size * 2);
+   return 0;
 }
+
+int OpusStereo::decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset /* = 0 */)
+{
+    if(dst == NULL || buf == NULL || dst->size()<2) return 0;
+    interleaved_.resize(4*FRAME_SIZE);
+    //return decode(&(*((*dst)[0].begin()+dst_offset)), buf, buffer_size);
+    unsigned samples = opus_decode(decoder_, buf, buffer_size, interleaved_.data(), 2*FRAME_SIZE, 0);
+
+    std::vector<opus_int16>::iterator left_it = dst->at(0).begin()+dst_offset;
+    std::vector<opus_int16>::iterator right_it = dst->at(1).begin()+dst_offset;
+    std::vector<opus_int16>::iterator it = interleaved_.begin();
+
+    // hard-coded 2-channels as it is the stereo version
+    for(unsigned i=0; i<samples; i++) {
+        *left_it++ = *it++;
+        *right_it++ = *it++;
+    }
+
+    return samples;
+}
+
+int OpusStereo::encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size)
+{
+    if(dst == NULL || src == NULL || src->size()<2) return 0;
+    const unsigned samples = src->at(0).size();
+    interleaved_.resize(2*samples);
+    std::vector<opus_int16>::iterator it = interleaved_.begin();
+
+    // hard-coded 2-channels as it is the stereo version
+    for(unsigned i=0; i<samples; i++) {
+        *it++ = src->at(0)[i];
+        *it++ = src->at(1)[i];
+    }
+
+    return opus_encode(encoder_, interleaved_.data(), FRAME_SIZE, dst, buffer_size * 2);
+}
+
 
 // cppcheck-suppress unusedFunction
 extern "C" sfl::AudioCodec* AUDIO_CODEC_ENTRY()
 {
     try {
-        return new Opus;
+        return new OpusStereo;
     } catch (const std::runtime_error &e) {
         std::cerr << e.what() << std::endl;
         return 0;
