@@ -88,6 +88,13 @@ class AudioCodecFactory {
         int getSampleRate(int payload) const;
 
         /**
+         * Get the number of channels of the specified codec
+         * @param payload The payload of the codec
+         * @return int The number of channels of the specified codec
+         */
+        unsigned getChannels(int payload) const;
+
+        /**
          * Set the order of codecs by their payload
          * @param list The ordered list sent by DBus
          */

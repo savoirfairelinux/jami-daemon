@@ -57,6 +57,7 @@ enum {
     COLUMN_CODEC_NAME,
     COLUMN_CODEC_FREQUENCY,
     COLUMN_CODEC_BITRATE,
+    COLUMN_CODEC_CHANNELS,
     CODEC_COLUMN_COUNT
 };
 
@@ -91,12 +92,14 @@ fill_codec_list(const account_t *account)
             gtk_list_store_append(codecStore, &iter);
             gchar *samplerate = g_strdup_printf("%d " KHZ, (gint) (c->sample_rate * 0.001));
             gchar *bitrate = g_strdup_printf("%s " KBPS, c->bitrate);
+            gchar *channels = g_strdup_printf("%d", c->channels);
 
             gtk_list_store_set(codecStore, &iter,
                                COLUMN_CODEC_ACTIVE, c->is_active,
                                COLUMN_CODEC_NAME, c->name,
                                COLUMN_CODEC_FREQUENCY, samplerate,
                                COLUMN_CODEC_BITRATE, bitrate,
+                               COLUMN_CODEC_CHANNELS, channels,
                                -1);
             g_free(samplerate);
             g_free(bitrate);
@@ -511,6 +514,7 @@ audiocodecs_box(const account_t *account)
             G_TYPE_STRING, /* Name */
             G_TYPE_STRING, /* Frequency */
             G_TYPE_STRING, /* Bitrate */
+            G_TYPE_STRING, /* Channels */
             G_TYPE_STRING  /* Bandwidth */);
 
     // Create codec tree view with list store
@@ -546,6 +550,11 @@ audiocodecs_box(const account_t *account)
     // Bandwith column
     renderer = gtk_cell_renderer_text_new();
     treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
+
+    // Channels column
+    renderer = gtk_cell_renderer_text_new();
+    treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Channels"), renderer, "text", COLUMN_CODEC_CHANNELS, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
     gtk_container_add(GTK_CONTAINER(scrolledWindow), codecTreeView);

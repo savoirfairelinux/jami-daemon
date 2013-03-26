@@ -36,11 +36,10 @@ using std::ptrdiff_t;
 
 namespace sfl {
 
-AudioCodec::AudioCodec(uint8 payload, const std::string &codecName,
-                       int clockRate, int frameSize, int channel) :
+AudioCodec::AudioCodec(uint8 payload, const std::string &codecName, int clockRate, int frameSize, unsigned channels) :
     codecName_(codecName),
     clockRate_(clockRate),
-    channel_(channel),
+    channel_(channels),
     frameSize_(frameSize),
     bitrate_(0.0),
     payload_(payload),
@@ -100,6 +99,11 @@ unsigned AudioCodec::getFrameSize() const
 double AudioCodec::getBitRate() const
 {
     return bitrate_;
+}
+
+unsigned AudioCodec::getChannels() const
+{
+    return channel_;
 }
 
 } // end namespace sfl

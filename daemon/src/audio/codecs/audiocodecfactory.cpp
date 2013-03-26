@@ -129,6 +129,17 @@ AudioCodecFactory::getSampleRate(int payload) const
         return 0;
 }
 
+unsigned
+AudioCodecFactory::getChannels(int payload) const
+{
+    AudioCodecsMap::const_iterator iter = codecsMap_.find(payload);
+
+    if (iter != codecsMap_.end())
+        return iter->second->getChannels();
+    else
+        return 0;
+}
+
 void
 AudioCodecFactory::saveActiveCodecs(const std::vector<std::string>& list)
 {
@@ -352,6 +363,11 @@ AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
 
     // Add the bit rate
     ss << getBitRate(static_cast<int>(payload));
+    v.push_back(ss.str());
+    ss.str("");
+
+    // Add the channel number
+    ss << getChannels(static_cast<int>(payload));
     v.push_back(ss.str());
 
     return v;
