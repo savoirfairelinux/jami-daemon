@@ -94,10 +94,7 @@ class AudioRtpRecord {
         int encoderPayloadType_;
         int decoderPayloadType_;
         bool hasDynamicPayloadType_;
-        //std::tr1::array<SFLAudioSample, DEC_BUFFER_SIZE> decData_;
         AudioBuffer decData_;
-// FIXME: resampledData should be resized as needed
-        //std::tr1::array<SFLAudioSample, DEC_BUFFER_SIZE * 4> resampledData_;
         AudioBuffer resampledData_;
         std::tr1::array<unsigned char, DEC_BUFFER_SIZE> encodedData_;
         SamplerateConverter *converterEncode_;

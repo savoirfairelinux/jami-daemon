@@ -287,49 +287,32 @@ int AudioRtpRecordHandler::processDataEncode()
     int samplesToGet = resampleFactor * getCodecFrameSize();
     if (Manager::instance().getMainBuffer().availableForGet(id_) < samplesToGet)
         return 0;
-    /*const size_t bytesToGet = samplesToGet * sizeof(SFLAudioSample);
 
-    if (Manager::instance().getMainBuffer().availableForGet(id_) < bytesToGet)
-        return 0;
-
-    SFLAudioSample *micData = audioRtpRecord_.decData_.data();
-    const size_t bytes = Manager::instance().getMainBuffer().getData(micData, bytesToGet, id_);*/
-    AudioBuffer micData(samplesToGet);
+    AudioBuffer& micData = audioRtpRecord_.decData_;
+    micData.resize(samplesToGet);
     const size_t samps = Manager::instance().getMainBuffer().getData(micData, id_);
 
 #ifdef RECTODISK
-    rtpNotResampled.write((const char *)micData, bytes);
+    rtpNotResampled << micData;
 #endif
 
-    /*if (bytes != bytesToGet) {
-        ERROR("Asked for %d bytes from mainbuffer, got %d", bytesToGet, bytes);
+    if (samps != samplesToGet) {
+        ERROR("Asked for %d samples from mainbuffer, got %d", samplesToGet, samps);
         return 0;
     }
-
-    int samples = bytesToGet / sizeof(SFLAudioSample);*/
-    //int samples = samplesToGet;
-
     audioRtpRecord_.fadeInDecodedData();
 
-    //SFLAudioSample *out = micData;
     AudioBuffer *out = &micData;
 
     if (codecSampleRate != mainBufferSampleRate) {
         RETURN_IF_NULL(audioRtpRecord_.converterEncode_, 0, "Converter already destroyed");
 
-/*
-        audioRtpRecord_.converterEncode_->resample(micData,
-                audioRtpRecord_.resampledData_.data(),
-                audioRtpRecord_.resampledData_.size(),
-                mainBufferSampleRate, codecSampleRate,
-                samplesToGet);
-                */
-
+        micData.setSampleRate(mainBufferSampleRate);
         audioRtpRecord_.resampledData_.setSampleRate(codecSampleRate);
         audioRtpRecord_.converterEncode_->resample(micData, audioRtpRecord_.resampledData_);
 
 #ifdef RECTODISK
-        rtpResampled.write((const char *)audioRtpRecord_.resampledData_.data(), samplesToGet*sizeof(SFLAudioSample)/2 );
+        rtpResampled << audioRtpRecord_.resampledData_;
 #endif
 
         out = &(audioRtpRecord_.resampledData_);
@@ -343,8 +326,7 @@ int AudioRtpRecordHandler::processDataEncode()
     }
 #endif
 
-    {
-        ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+    {   ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), 0, "Audio codec already destroyed");
         unsigned char *micDataEncoded = audioRtpRecord_.encodedData_.data();
         return audioRtpRecord_.getCurrentCodec()->encode(micDataEncoded, out->getData(), getCodecFrameSize());
@@ -372,11 +354,8 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
 
     int inSamples = 0;
     size = std::min(size, audioRtpRecord_.decData_.samples());
-    //SFLAudioSample *spkrDataDecoded = audioRtpRecord_.decData_.data();
-    //AudioBuffer *spkrDataDecoded = &(audioRtpRecord_.decData_);
 
-    {
-        ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
+    {   ScopedLock lock(audioRtpRecord_.audioCodecMutex_);
         RETURN_IF_NULL(audioRtpRecord_.getCurrentCodec(), "Audio codecs already destroyed");
         // Return the size of data in samples
         inSamples = audioRtpRecord_.getCurrentCodec()->decode(audioRtpRecord_.decData_.getData(), spkrData, size);
@@ -390,7 +369,7 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
     }
 #endif
 
-    audioRtpRecord_.fadeInDecodedData();//(inSamples);
+    audioRtpRecord_.fadeInDecodedData();
 
     // Normalize incomming signal
     gainController.process(audioRtpRecord_.decData_);
@@ -406,14 +385,9 @@ void AudioRtpRecordHandler::processDataDecode(unsigned char *spkrData, size_t si
         RETURN_IF_NULL(audioRtpRecord_.converterDecode_, "Converter already destroyed");
         out = &(audioRtpRecord_.resampledData_);
         // Do sample rate conversion
-        //outSamples = ((float) inSamples * ((float) mainBufferSampleRate / (float) codecSampleRate));
         audioRtpRecord_.converterDecode_->resample(audioRtpRecord_.decData_, audioRtpRecord_.resampledData_);
-        /*audioRtpRecord_.converterDecode_->resample(spkrDataDecoded, out,
-                audioRtpRecord_.resampledData_.size(), codecSampleRate,
-                mainBufferSampleRate, inSamples);*/
     }
 
-    //Manager::instance().getMainBuffer().putData(out, outSamples * sizeof(SFLAudioSample), id_);
     Manager::instance().getMainBuffer().putData(*out, id_);
 }
 #undef RETURN_IF_NULL
@@ -424,8 +398,6 @@ void AudioRtpRecord::fadeInDecodedData() //size_t size)
     if (fadeFactor_ >= 1.0)// or size > decData_.size())
         return;
 
-    /*for (size_t i = 0; i < size; ++i)
-        decData_[i] *= fadeFactor_;*/
     decData_.applyGain(fadeFactor_);
 
     // Factor used to increase volume in fade in
