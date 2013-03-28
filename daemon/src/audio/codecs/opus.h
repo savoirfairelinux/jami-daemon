@@ -40,17 +40,26 @@ class Opus : public sfl::AudioCodec {
 public:
    Opus();
    ~Opus();
+
+   static const int payloadType = 104; // dynamic payload type, out of range of video (96-99)
+
 private:
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);
    virtual int encode(unsigned char *dst, short *src, size_t buffer_size);
+
+   //multichannel version
+   virtual int decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size_t buffer_size, size_t dst_offset=0);
+   virtual int encode(unsigned char *dst, std::vector<std::vector<short> > *src, size_t buffer_size);
 
    NON_COPYABLE(Opus);
    //Attributes
    OpusEncoder *encoder_;
    OpusDecoder *decoder_;
+   std::vector<opus_int16> interleaved_;
+
    static const int FRAME_SIZE = 160;
    static const int CLOCK_RATE = 16000;
-   static const int CHANNELS   = 1;
+   static const int CHANNELS   = 2;
 };
 
 #endif

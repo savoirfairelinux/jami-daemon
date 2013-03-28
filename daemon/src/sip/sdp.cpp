@@ -40,6 +40,10 @@
 
 #include <algorithm>
 
+#ifdef HAVE_OPUS
+#include "audio/codecs/opus.h"
+#endif
+
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
@@ -216,12 +220,14 @@ Sdp::setMediaDescriptorLines(bool audio)
         unsigned clock_rate;
         string enc_name;
         int payload;
+        unsigned channels;
 
         if (audio) {
             sfl::AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getClockRate();
+            channels = codec->getChannels();
             // G722 require G722/8000 media description even if it is 16000 codec
             if (codec->getPayloadType () == 9)
                 clock_rate = 8000;
@@ -245,13 +251,34 @@ Sdp::setMediaDescriptorLines(bool audio)
         rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str((char*) enc_name.c_str());
         rtpmap.clock_rate = clock_rate;
-        rtpmap.param.ptr = ((char* const)"");
-        rtpmap.param.slen = 0;
+
+#ifdef HAVE_OPUS
+        // Opus sample rate is allways declared as 48000 and channel num is allways 2 in rtpmap as per
+        // http://tools.ietf.org/html/draft-spittka-payload-rtp-opus-03#section-6.2
+        if(payload == Opus::payloadType) {
+            rtpmap.clock_rate = 48000;
+            rtpmap.param.ptr = ((char* const)"2");
+            rtpmap.param.slen = 1;
+        } else
+#endif
+        {
+            rtpmap.param.ptr = ((char* const)"");
+            rtpmap.param.slen = 0;
+        }
 
         pjmedia_sdp_attr *attr;
         pjmedia_sdp_rtpmap_to_attr(memPool_, &rtpmap, &attr);
 
         med->attr[med->attr_count++] = attr;
+
+#ifdef HAVE_OPUS
+        // Declare stereo support for opus
+        if(payload == Opus::payloadType) {
+            std::ostringstream os;
+            os << "fmtp:" << dynamic_payload << " stereo=1; sprop-stereo=" << (channels>1 ? 1 : 0);
+            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
+        }
+#endif
 #ifdef SFL_VIDEO
         if (enc_name == "H264") {
             std::ostringstream os;

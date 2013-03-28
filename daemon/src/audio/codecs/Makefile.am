@@ -44,13 +44,6 @@ libcodec_opus_so_CXXFLAGS = -fPIC -g -Wall $(opus_CFLAGS)
 libcodec_opus_so_LDFLAGS  = --shared -lc -ldl -lstdc++ $(opus_LIBS)
 libcodec_opus_so_LDADD    = libcodecdescriptor.la
 INSTALL_OPUS_RULE = install-libcodec_opus_so
-
-OPUS_STEREO_LIB = libcodec_opus_stereo.so
-libcodec_opus_stereo_so_SOURCES  = opus_stereo.cpp opus_stereo.h
-libcodec_opus_stereo_so_CXXFLAGS = -fPIC -g -Wall $(opus_CFLAGS)
-libcodec_opus_stereo_so_LDFLAGS  = --shared -lc -ldl -lstdc++ $(opus_LIBS)
-libcodec_opus_stereo_so_LDADD    = libcodecdescriptor.la
-INSTALL_OPUS_STEREO_RULE = install-libcodec_opus_stereo_so
 endif
 
 if BUILD_ILBC
@@ -63,7 +56,7 @@ libcodec_ilbc_so_LDADD = libcodecdescriptor.la
 INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so $(OPUS_LIB) $(OPUS_STEREO_LIB) $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so libcodec_g729.so $(OPUS_LIB) $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(ILBC_LIB)
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall
@@ -85,8 +78,8 @@ libcodec_g729_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g729_so_LDADD = libcodecdescriptor.la
 libcodec_g729_so_LDFLAGS = --shared -lc -ldl -lstdc++
 
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so $(INSTALL_OPUS_RULE) $(INSTALL_OPUS_STEREO_RULE) $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
-uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_g729_so uninstall-libcodec_opus_so uninstall-libcodec_opus_stereo_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_ilbc_so
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so install-libcodec_g729_so $(INSTALL_OPUS_RULE) $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_ILBC_RULE)
+uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_g729_so uninstall-libcodec_opus_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_ilbc_so
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
 	mkdir -p $(sflcodecdir)
@@ -103,9 +96,6 @@ install-libcodec_g729_so: libcodec_g729.so
 install-libcodec_opus_so: libcodec_opus.so
 	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_opus.so $(sflcodecdir)
-install-libcodec_opus_stereo_so: libcodec_opus_stereo.so
-	mkdir -p $(sflcodecdir)
-	$(INSTALL_PROGRAM)  libcodec_opus_stereo.so $(sflcodecdir)
 install-libcodec_gsm_so: libcodec_gsm.so
 	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_gsm.so $(sflcodecdir)
@@ -132,8 +122,6 @@ uninstall-libcodec_g729_so:
 	rm -f $(sflcodecdir)/libcodec_g729.so
 uninstall-libcodec_opus_so:
 	rm -f $(sflcodecdir)/libcodec_opus.so
-uninstall-libcodec_opus_stereo_so:
-	rm -f $(sflcodecdir)/libcodec_opus_stereo.so
 uninstall-libcodec_gsm_so:
 	rm -f $(sflcodecdir)/libcodec_gsm.so
 uninstall-libcodec_speex_nb_so:
