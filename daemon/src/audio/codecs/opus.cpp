@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -70,11 +71,10 @@ int Opus::decode(std::vector<std::vector<short> > *dst, unsigned char *buf, size
 {
     if(dst == NULL || buf == NULL || dst->size()<2) return 0;
     interleaved_.resize(4*FRAME_SIZE);
-    //return decode(&(*((*dst)[0].begin()+dst_offset)), buf, buffer_size);
     unsigned samples = opus_decode(decoder_, buf, buffer_size, interleaved_.data(), 2*FRAME_SIZE, 0);
 
-    std::vector<opus_int16>::iterator left_it = dst->at(0).begin()+dst_offset;
-    std::vector<opus_int16>::iterator right_it = dst->at(1).begin()+dst_offset;
+    std::vector<short>::iterator left_it = dst->at(0).begin()+dst_offset;
+    std::vector<short>::iterator right_it = dst->at(1).begin()+dst_offset;
     std::vector<opus_int16>::iterator it = interleaved_.begin();
 
     // hard-coded 2-channels as it is the stereo version
