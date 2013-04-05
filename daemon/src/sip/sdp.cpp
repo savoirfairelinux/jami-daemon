@@ -40,9 +40,9 @@
 
 #include <algorithm>
 
-#ifdef HAVE_OPUS
+//#ifdef HAVE_OPUS
 #include "audio/codecs/opus.h"
-#endif
+//#endif
 
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
@@ -252,7 +252,7 @@ Sdp::setMediaDescriptorLines(bool audio)
         rtpmap.enc_name = pj_str((char*) enc_name.c_str());
         rtpmap.clock_rate = clock_rate;
 
-#ifdef HAVE_OPUS
+// #ifdef HAVE_OPUS
         // Opus sample rate is allways declared as 48000 and channel num is allways 2 in rtpmap as per
         // http://tools.ietf.org/html/draft-spittka-payload-rtp-opus-03#section-6.2
         if(payload == Opus::PAYLOAD_TYPE) {
@@ -260,7 +260,7 @@ Sdp::setMediaDescriptorLines(bool audio)
             rtpmap.param.ptr = ((char* const)"2");
             rtpmap.param.slen = 1;
         } else
-#endif
+// #endif
         {
             rtpmap.param.ptr = ((char* const)"");
             rtpmap.param.slen = 0;
@@ -271,14 +271,14 @@ Sdp::setMediaDescriptorLines(bool audio)
 
         med->attr[med->attr_count++] = attr;
 
-#ifdef HAVE_OPUS
+// #ifdef HAVE_OPUS
         // Declare stereo support for opus
         if(payload == Opus::PAYLOAD_TYPE) {
             std::ostringstream os;
-            os << "fmtp:" << dynamic_payload << " stereo=1; sprop-stereo=" << (channels>1 ? 1 : 0);
+            os << "fmtp:" << payload << " stereo=1; sprop-stereo=" << (channels>1 ? 1 : 0);
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_, os.str().c_str(), NULL);
         }
-#endif
+// #endif
 #ifdef SFL_VIDEO
         if (enc_name == "H264") {
             std::ostringstream os;
