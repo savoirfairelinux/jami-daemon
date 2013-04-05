@@ -33,7 +33,7 @@
 #include <iostream>
 
 
-Opus::Opus() : sfl::AudioCodec(payloadType, "Opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
+Opus::Opus() : sfl::AudioCodec(PAYLOAD_TYPE, "Opus", CLOCK_RATE, FRAME_SIZE, CHANNELS),
     encoder_(0),
     decoder_(0)
 {

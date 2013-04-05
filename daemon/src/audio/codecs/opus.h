@@ -42,7 +42,7 @@ public:
    Opus();
    ~Opus();
 
-   static const int payloadType = 104; // dynamic payload type, out of range of video (96-99)
+   static const int PAYLOAD_TYPE = 104; // dynamic payload type, out of range of video (96-99)
 
 private:
    virtual int decode(short *dst, unsigned char *buf, size_t buffer_size);

@@ -273,20 +273,38 @@ void PulseLayer::createStreams(pa_context* c)
     std::string ringtoneDevice(preference_.getPulseDeviceRingtone());
     std::string defaultDevice = "";
 
-    DEBUG("Devices:\n   playback: %s\n   record: %s\n   ringtone: %s",
+    DEBUG("Devices: playback: %s record: %s ringtone: %s",
            playbackDevice.c_str(), captureDevice.c_str(), ringtoneDevice.c_str());
 
-    playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_, getDeviceInfos(sinkList_, playbackDevice));
+    // Create playback stream
+    const PaDeviceInfos* dev_infos = getDeviceInfos(sinkList_, playbackDevice);
+    if(dev_infos == NULL) {
+        dev_infos = &sinkList_[0];
+        DEBUG("Prefered playback device not found in device list, selecting %s instead.", dev_infos->name.c_str());
+    }
+    playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, sampleRate_, dev_infos);
 
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback(playback_->pulseStream(), stream_moved_callback, this);
 
-    record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, sampleRate_, getDeviceInfos(sourceList_, captureDevice));
+    // Create capture stream
+    dev_infos = getDeviceInfos(sourceList_, captureDevice);
+    if(dev_infos == NULL) {
+        dev_infos = &sourceList_[0];
+        DEBUG("Prefered capture device not found in device list, selecting %s instead.", dev_infos->name.c_str());
+    }
+    record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, sampleRate_, dev_infos);
 
     pa_stream_set_read_callback(record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback(record_->pulseStream(), stream_moved_callback, this);
 
-    ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, sampleRate_, getDeviceInfos(sinkList_, ringtoneDevice));
+    // Create ringtone stream
+    dev_infos = getDeviceInfos(sinkList_, ringtoneDevice);
+    if(dev_infos == NULL) {
+        dev_infos = &sinkList_[0];
+        DEBUG("Prefered ringtone device not found in device list, selecting %s instead.", dev_infos->name.c_str());
+    }
+    ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, sampleRate_, dev_infos);
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone_->pulseStream(), stream_moved_callback, this);
