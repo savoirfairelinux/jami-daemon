@@ -138,7 +138,10 @@ static void incoming_call(const std::string& accountID, const std::string& callI
 
 	INFO("incoming_call");
 
-	// FIXME
+    /* if cannot get env, then
+     *    we have a native caller
+     * else it's a java caller, then
+     *    VM environment must be available */
 	status = gJavaVM->GetEnv((void **) &env, JNI_VERSION_1_6);
 	if (status < 0) {
 		WARN("incoming_call: failed to get JNI environment, assuming native thread");
@@ -151,7 +154,7 @@ static void incoming_call(const std::string& accountID, const std::string& callI
 	}
 
 	INFO("incoming_call: constructing jstring");
-	/* construct a java struct */
+	/* construct java strings */
 	jaccountID = env->NewStringUTF(accountID.c_str());
 	jcallID = env->NewStringUTF(callID.c_str());
 	jfrom = env->NewStringUTF(from.c_str());
@@ -162,7 +165,7 @@ static void incoming_call(const std::string& accountID, const std::string& callI
 		goto end;
 	}
 
-	/* Find the callBack method ID */
+	/* Find the callBack method ID: void incomingCall(String, String, String) */
 	method = env->GetStaticMethodID(managerImplClass, "incomingCall",
 			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
 	if (!method) {
@@ -170,6 +173,8 @@ static void incoming_call(const std::string& accountID, const std::string& callI
 		goto end;
 	}
 
+	/* native calling java function:
+     * ManagerImpl.incomingCall(jaccountID, jcallID, jfrom); */
 	env->CallStaticVoidMethod(managerImplClass, method, jaccountID, jcallID, jfrom);
 
 end:
