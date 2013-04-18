@@ -1,13 +1,12 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-#define HAVE_DBUS 0
-
 /* Use cc++ include prefix */
-#define CCPP_PREFIX 1
+/* #undef CCPP_PREFIX */
 
 /* Use commoncpp include prefix */
-/* #undef COMMONCPP_PREFIX */
+/* #define COMMONCPP_PREFIX 0 */
+#define CCPP_PREFIX 1
 
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
@@ -24,6 +23,9 @@
    */
 #define HAVE_ALLOCA_H 1
 
+/* Define if you have alsa */
+#define HAVE_ALSA 0
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #define HAVE_ARPA_INET_H 1
 
@@ -37,7 +39,7 @@
 #define HAVE_GETOPT_H 1
 
 /* Define if you have libgsm */
-#define HAVE_GSM 0
+#define HAVE_GSM 1
 
 /* Define if you have libiax2 */
 #define HAVE_IAX 0
@@ -49,16 +51,16 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `gsm' library (-lgsm). */
-/* #undef HAVE_LIBGSM */
+#define HAVE_LIBGSM 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
-/* #undef HAVE_LIBINTL_H */
+#define HAVE_LIBINTL_H 1
 
 /* Define to 1 if you have the `pcre' library (-lpcre). */
-/* #undef HAVE_LIBPCRE */
+#define HAVE_LIBPCRE 1
 
 /* Define to 1 if you have the `speex' library (-lspeex). */
-/* #undef HAVE_LIBSPEEX */
+#define HAVE_LIBSPEEX 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -94,7 +96,7 @@
 #define HAVE_SDES 0
 
 /* Define if you have libspeex */
-#define HAVE_SPEEX 0
+#define HAVE_SPEEX 1
 
 /* Define if you have libspeexdsp */
 #define HAVE_SPEEXDSP 0
@@ -149,7 +151,7 @@
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "com.savoirfairelinux.sflphone"
+#define PACKAGE "sflphone"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "sflphoneteam@savoirfairelinux.com"
@@ -158,7 +160,7 @@
 #define PACKAGE_NAME "sflphone"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "sflphone 1.1.0"
+#define PACKAGE_STRING "sflphone 1.2.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "sflphone"
@@ -167,7 +169,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.0"
+#define PACKAGE_VERSION "1.2.0"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -194,7 +196,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "1.1.0"
+#define VERSION "1.2.0"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

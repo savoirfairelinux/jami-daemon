@@ -119,7 +119,7 @@ void History::addEntry(const HistoryItem &item, int oldest)
 void History::ensurePath()
 {
     if (path_.empty()) {
-#ifdef ANDROID
+#ifdef __ANDROID__
         string xdg_data = path_;
 #else
         string xdg_data = string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";

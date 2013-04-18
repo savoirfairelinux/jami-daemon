@@ -47,7 +47,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sipcall.h"
 
-#ifndef ANDROID
+#ifndef __ANDROID__
 #include "im/instant_messaging.h"
 #endif
 
@@ -62,7 +62,7 @@
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 
-#ifndef ANDROID
+#ifndef __ANDROID__
 #include "audio/alsa/alsalayer.h"
 #endif
 
@@ -2121,7 +2121,7 @@ ManagerImpl::getTelephoneFile()
  */
 std::string ManagerImpl::retrieveConfigPath() const
 {
-#if ANDROID
+#ifdef __ANDROID__
     std::string configdir = "/data/data/com.savoirfairelinux.sflphone";
 #else
     std::string configdir = std::string(HOMEDIR) + DIR_SEPARATOR_STR +

@@ -170,7 +170,7 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
     const char *progDir = fileutils::get_program_dir();
 
     if (progDir) {
-#if ANDROID
+#if defined(__ANDROID__)
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "lib/");
 #else
         dirToScan.push_back(std::string(progDir) + DIR_SEPARATOR_STR + "audio/codecs/");
@@ -263,7 +263,7 @@ sfl::AudioCodec* AudioCodecFactory::instantiateCodec(int payload) const
 
             const char *error = dlerror();
 
-#if ANDROID
+#if defined(__ANDROID__)
             if (createCodec == NULL)
                 ERROR("Could not instantiate codec");
 #else
