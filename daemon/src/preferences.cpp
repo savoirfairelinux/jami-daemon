@@ -35,14 +35,15 @@
 #include "preferences.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
+#ifdef __ANDROID__
+#include "audio/opensl/opensllayer.h"
+#else
 #if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
 #endif
 #if HAVE_PULSE
 #include "audio/pulseaudio/pulselayer.h"
 #endif
-#if ANDROID
-#include "audio/opensl/opensllayer.h"
 #endif
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
@@ -323,7 +324,7 @@ void checkSoundCard(int &card, AudioLayer::PCMType stream)
 
 AudioLayer* AudioPreference::createAudioLayer()
 {
-#if ANDROID
+#ifdef __ANDROID__
     return new OpenSLLayer();
 #else
 #if HAVE_PULSE

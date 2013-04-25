@@ -33,7 +33,7 @@
 
 #include <syslog.h>
 #include <pthread.h>
-#ifdef ANDROID
+#ifdef __ANDROID__
 #include <android/log.h>
 #endif
 
@@ -48,7 +48,7 @@ bool getDebugMode();
 #define LOGGER(M, LEVEL, ...) Logger::log(LEVEL, "%s:%d:tid %lu:\t" M, __FILE__, \
                                           __LINE__, pthread_self() & 0xffff, ##__VA_ARGS__)
 
-#ifndef ANDROID
+#ifndef __ANDROID__
 #define ERROR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
 #define WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
 #define INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)

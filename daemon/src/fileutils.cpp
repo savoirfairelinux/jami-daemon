@@ -59,7 +59,7 @@ bool check_dir(const char *path)
     return true;
 }
 
-#if ANDROID
+#ifdef __ANDROID__
 static char *program_dir = "/data/data/com.savoirfairelinux.sflphone";
 #else
 static char *program_dir = NULL;
@@ -96,7 +96,7 @@ std::string get_path_for_cache_android(void) {
 bool create_pidfile()
 {
 
-#if ANDROID
+#ifdef __ANDROID__
     std::string path = get_path_for_cache_android();
 #else
     std::string path = get_path_for_cache();

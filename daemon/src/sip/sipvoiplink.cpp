@@ -65,7 +65,7 @@
 #include "dbus/video_controls.h"
 #endif
 
-#ifdef ANDROID
+#ifdef __ANDROID__
 #include <pjsua-lib/pjsua.h>
 #include <android/log.h>
 #endif
@@ -197,7 +197,7 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
-#ifdef ANDROID
+#ifdef __ANDROID__
 void showMsg(const char *format, ...)
 {
     va_list arg;
@@ -478,7 +478,7 @@ SIPVoIPLink::SIPVoIPLink() : sipTransport(endpt_, cp_, pool_), sipAccountMap_(),
 
     TRY(pjlib_util_init());
 
-#ifdef ANDROID
+#ifdef __ANDROID__
 	setSipLogFunc();
 #endif
     setSipLogLevel();
@@ -630,7 +630,7 @@ void SIPVoIPLink::setSipLogLevel()
         level = level < 0 ? 0 : level;
     }
 
-#ifdef ANDROID
+#ifdef __ANDROID__
 	/* level = Manager::instance().getSipLogLevel(); */
     level = 6;
 #endif
@@ -640,7 +640,7 @@ void SIPVoIPLink::setSipLogLevel()
 	DEBUG("SIP log level set to %d", level);
 }
 
-#ifdef ANDROID
+#ifdef __ANDROID__
 void SIPVoIPLink::setSipLogFunc()
 {
 	static pj_log_func *currentFunc = (pj_log_func*) pj_log_get_log_func();

@@ -90,7 +90,7 @@ class SIPVoIPLink : public VoIPLink {
          */
         static void setSipLogLevel();
 
-#ifdef ANDROID
+#ifdef __ANDROID__
         static void setSipLogFunc();
 #endif
 
