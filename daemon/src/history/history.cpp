@@ -118,9 +118,10 @@ void History::addEntry(const HistoryItem &item, int oldest)
 
 void History::ensurePath()
 {
-    if (path_.empty()) {
-#ifdef ANDROID
+
+#ifdef __ANDROID__
         string xdg_data = path_;
+        DEBUG("xdg_data: %s!", xdg_data.c_str());
 #else
         string xdg_data = string(HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 #endif
@@ -140,7 +141,9 @@ void History::ensurePath()
         }
         // Load user's history
         path_ = userdata + DIR_SEPARATOR_STR + "history";
-    }
+        DEBUG("path_: %s!", path_.c_str());
+    
+
 }
 
 vector<map<string, string> > History::getSerialized()

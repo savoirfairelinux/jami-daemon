@@ -10,3 +10,15 @@ dbusxx-xml2cpp configurationmanager-introspec.xml --adaptor=configurationmanager
 dbusxx-xml2cpp contactmanager-introspec.xml --adaptor=contactmanager-glue.h
 
 dbusxx-xml2cpp instance-introspec.xml --adaptor=instance-glue.h 
+
+Warning : depending on the dbusxx-xml2cpp version used, it can generate buggy code
+
+code generated
+
+::DBus::IntrospectedInterface *const introspect() const 
+
+instead of 
+
+::DBus::IntrospectedInterface *introspect() const 
+
+This issue is dealt with in make-swig.sh

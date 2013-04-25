@@ -117,7 +117,7 @@ public:
     std::map<std::string, std::string> getHookSettings();
     void setHookSettings(const std::map<std::string, std::string>& settings);
     void setAccountsOrder(const std::string& order);
-    /*std::vector<std::map<std::string, std::string>> getHistory();*/
+    std::vector<std::map<std::string, std::string> > getHistory();
     std::string getAddrFromInterfaceName(const std::string& interface);
     std::vector<std::string> getAllIpInterface();
     std::vector<std::string> getAllIpInterfaceByName();

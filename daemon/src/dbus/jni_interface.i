@@ -58,6 +58,7 @@
 namespace std {
     %template(StringMap) map<string, string>;
     %template(StringVect) vector<string>;
+    %template(VectMap) vector< map<string,string> >;
 }
 
 /* not parsed by SWIG but needed by generated C files */
