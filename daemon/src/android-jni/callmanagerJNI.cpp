@@ -120,13 +120,13 @@ CallManagerJNI::unhold(const std::string& callID)
     Manager::instance().offHoldCall(callID);
 }
 
-void
+bool
 CallManagerJNI::transfer(const std::string& callID, const std::string& to)
 {
-    Manager::instance().transferCall(callID, to);
+    return Manager::instance().transferCall(callID, to);
 }
 
-void CallManagerJNI::attendedTransfer(const std::string& transferID, const std::string& targetID)
+bool CallManagerJNI::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
     Manager::instance().attendedTransfer(transferID, targetID);
 }

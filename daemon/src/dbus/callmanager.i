@@ -44,6 +44,8 @@ typedef struct callmanager_callback
     void (*on_incoming_call)(const std::string& accountID,
                              const std::string& callID,
                              const std::string& from);
+
+    void (*on_transfer_state_changed) (const std::string& result);
 } callmanager_callback_t;
 
 
@@ -61,6 +63,8 @@ public:
     virtual void on_incoming_call(const std::string& arg1,
                                   const std::string& arg2,
                                   const std::string& arg3) {}
+
+    virtual void on_transfer_state_changed (const std::string& arg1) {}
 };
 
 
@@ -83,10 +87,15 @@ void on_incoming_call_wrapper (const std::string& accountID,
     registeredCallbackObject->on_incoming_call(accountID, callID, from);
 }
 
+void on_transfer_state_changed_wrapper (const std::string& result) {
+    registeredCallbackObject->on_transfer_state_changed(result);
+}
+
 static struct callmanager_callback wrapper_callback_struct = {
     &on_new_call_created_wrapper,
     &on_call_state_changed_wrapper,
     &on_incoming_call_wrapper,
+    &on_transfer_state_changed_wrapper,
 };
 
 void setCallbackObject(Callback* callback) {
@@ -111,6 +120,24 @@ public:
     void hangUp(const std::string& callID);
     void hold(const std::string& callID);
     void unhold(const std::string& callID);
+    bool transfer(const std::string& callID, const std::string& to);
+    bool attendedTransfer(const std::string& transferID, const std::string& targetID);
+
+     /* Conference related methods */
+    void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+    void createConfFromParticipantList(const std::vector< std::string >& participants);
+    void addParticipant(const std::string& callID, const std::string& confID);
+    void addMainParticipant(const std::string& confID);
+    void detachParticipant(const std::string& callID);
+    void joinConference(const std::string& sel_confID, const std::string& drag_confID);
+    void hangUpConference(const std::string& confID);
+    void holdConference(const std::string& confID);
+    void unholdConference(const std::string& confID);
+    std::vector<std::string> getConferenceList();
+    std::vector<std::string> getParticipantList(const std::string& confID);
+    std::string getConferenceId(const std::string& callID);
+    std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
+
 };
 
 class Callback {
@@ -127,6 +154,8 @@ public:
     virtual void on_incoming_call(const std::string& arg1,
                                   const std::string& arg2,
                                   const std::string& arg3);
+
+    virtual void on_transfer_state_changed (const std::string& arg1);
 };
 
 static Callback* registeredCallbackObject = NULL;

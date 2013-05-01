@@ -104,6 +104,7 @@ extern void on_call_state_changed_wrapper(const std::string& callID,
 extern void on_incoming_call_wrapper (const std::string& accountID,
                                       const std::string& callID,
                                       const std::string& from);
+extern void on_transfer_state_changed_wrapper (const std::string& result);
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_account_state_changed_wrapper ();
 
@@ -769,6 +770,7 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 //THREAD=Main
 bool ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 {
+    DEBUG("transferCall");
     if (isConferenceParticipant(callId)) {
         removeParticipant(callId);
     } else if (not isConference(getCurrentCallId()))
@@ -799,6 +801,9 @@ void ManagerImpl::transferFailed()
 {
 #if HAVE_DBUS
     dbus_.getCallManager()->transferFailed();
+#else
+    DEBUG("transferFailed");
+    on_transfer_state_changed_wrapper ("SUCCESS");
 #endif
 }
 
@@ -806,6 +811,9 @@ void ManagerImpl::transferSucceeded()
 {
 #if HAVE_DBUS
     dbus_.getCallManager()->transferSucceeded();
+#else
+    DEBUG("transferSucceeded");
+    on_transfer_state_changed_wrapper ("FAIL");
 #endif
 }
 
