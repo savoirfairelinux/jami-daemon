@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
  *  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
+ *          Alexandre Lision <alexnadre.L@savoirfairelinux.com>
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -46,6 +47,13 @@ typedef struct callmanager_callback
                              const std::string& from);
 
     void (*on_transfer_state_changed) (const std::string& result);
+
+    void (*on_conference_created) (const std::string& confID);
+
+    void (*on_conference_removed) (const std::string& confID);
+
+    void (*on_conference_state_changed) (const std::string& confID,
+                                          const std::string& state);
 } callmanager_callback_t;
 
 
@@ -65,6 +73,13 @@ public:
                                   const std::string& arg3) {}
 
     virtual void on_transfer_state_changed (const std::string& arg1) {}
+
+    virtual void on_conference_created (const std::string& arg1) {}
+
+    virtual void on_conference_removed (const std::string& arg1) {}
+
+    virtual void on_conference_state_changed (const std::string& arg1,
+                                            const std::string& arg2) {}
 };
 
 
@@ -91,11 +106,27 @@ void on_transfer_state_changed_wrapper (const std::string& result) {
     registeredCallbackObject->on_transfer_state_changed(result);
 }
 
+void on_conference_created_wrapper (const std::string& confID) {
+    registeredCallbackObject->on_conference_created(confID);
+}
+
+void on_conference_removed_wrapper (const std::string& confID) {
+    registeredCallbackObject->on_conference_removed(confID);
+}
+
+void on_conference_state_changed_wrapper (const std::string& confID,
+                                          const std::string& state) {
+    registeredCallbackObject->on_conference_state_changed(confID, state);
+}
+
 static struct callmanager_callback wrapper_callback_struct = {
     &on_new_call_created_wrapper,
     &on_call_state_changed_wrapper,
     &on_incoming_call_wrapper,
     &on_transfer_state_changed_wrapper,
+    &on_conference_created_wrapper,
+    &on_conference_removed_wrapper,
+    &on_conference_state_changed_wrapper,
 };
 
 void setCallbackObject(Callback* callback) {
@@ -124,6 +155,8 @@ public:
     bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 
      /* Conference related methods */
+
+    void removeConference(const std::string& conference_id);
     void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
     void createConfFromParticipantList(const std::vector< std::string >& participants);
     void addParticipant(const std::string& callID, const std::string& confID);
@@ -155,9 +188,16 @@ public:
                                   const std::string& arg2,
                                   const std::string& arg3);
 
-    virtual void on_transfer_state_changed (const std::string& arg1);
-};
+    virtual void on_transfer_state_changed(const std::string& arg1);
 
+    virtual void on_conference_created(const std::string& arg1);
+
+    virtual void on_conference_removed(const std::string& arg1);
+
+    virtual void on_conference_state_changed(const std::string& arg1,
+                                              const std::string& arg2);
+};
+ 
 static Callback* registeredCallbackObject = NULL;
 
 void setCallbackObject(Callback* callback) {

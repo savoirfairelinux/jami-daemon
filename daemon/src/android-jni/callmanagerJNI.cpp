@@ -182,6 +182,12 @@ CallManagerJNI::createConfFromParticipantList(const std::vector<std::string>& pa
 }
 
 void
+CallManagerJNI::removeConference(const std::string& conference_id)
+{
+    Manager::instance().removeConference(conference_id);
+}
+
+void
 CallManagerJNI::addParticipant(const std::string& callID, const std::string& confID)
 {
     Manager::instance().addParticipant(callID, confID);

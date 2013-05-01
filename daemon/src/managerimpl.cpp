@@ -105,6 +105,10 @@ extern void on_incoming_call_wrapper (const std::string& accountID,
                                       const std::string& callID,
                                       const std::string& from);
 extern void on_transfer_state_changed_wrapper (const std::string& result);
+
+extern void on_conference_created_wrapper (const std::string& confID);
+extern void on_conference_removed_wrapper (const std::string& confID);
+extern void on_conference_state_changed_wrapper(const std::string& confID,const std::string& state);
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_account_state_changed_wrapper ();
 
@@ -886,6 +890,8 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
 #if HAVE_DBUS
     // broadcast a signal over dbus
     dbus_.getCallManager()->conferenceCreated(conf->getConfID());
+#else
+    on_conference_created_wrapper(conf->getConfID());
 #endif
 
     return conf;
@@ -910,6 +916,8 @@ void ManagerImpl::removeConference(const std::string& conference_id)
 #if HAVE_DBUS
     // broadcast a signal over dbus
     dbus_.getCallManager()->conferenceRemoved(conference_id);
+#else
+    on_conference_removed_wrapper(conf->getConfID());
 #endif
 
     // We now need to bind the audio to the remain participant
@@ -973,6 +981,8 @@ void ManagerImpl::holdConference(const std::string& id)
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
 #if HAVE_DBUS
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#else
+    on_conference_state_changed_wrapper(conf->getConfID(), conf->getStateStr());
 #endif
 }
 
@@ -1001,6 +1011,8 @@ void ManagerImpl::unHoldConference(const std::string& id)
         conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
 #if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#else
+        on_conference_state_changed_wrapper(conf->getConfID(), conf->getStateStr());
 #endif
     }
 }
@@ -1129,6 +1141,8 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 
 #if HAVE_DBUS
         dbus_.getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+#else
+        on_conference_state_changed_wrapper(conf->getConfID(), conf->getStateStr());
 #endif
         }
     }
@@ -1374,8 +1388,9 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
             WARN("Undefined behavior, invalid conference state in detach participant");
 
 #if HAVE_DBUS
-        dbus_.getCallManager()->conferenceChanged(conf->getConfID(),
-                                                  conf->getStateStr());
+        dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#else
+        on_conference_state_changed_wrapper(conf->getConfID(), conf->getStateStr());
 #endif
 
         unsetCurrentCall();
@@ -1409,6 +1424,8 @@ void ManagerImpl::removeParticipant(const std::string& call_id)
     getMainBuffer().dumpInfo();
 #if HAVE_DBUS
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+#else
+    on_conference_state_changed_wrapper(conf->getConfID(), conf->getStateStr());
 #endif
     processRemainingParticipants(*conf);
 }
