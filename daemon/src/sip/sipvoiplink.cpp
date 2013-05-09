@@ -1941,11 +1941,11 @@ void transaction_state_changed_cb(pjsip_inv_session * inv,
                     ERROR("Received 404 Not found");
                     sendOK(inv->dlg, r_data, tsx);
                     return;
-                } else if (msg.find("Ringing") and call) {
+                } else if (msg.find("Ringing") != std::string::npos and call) {
                     makeCallRing(*call);
                     sendOK(inv->dlg, r_data, tsx);
                     return;
-                } else if (msg.find("Ok")) {
+                } else if (msg.find("Ok") != std::string::npos) {
                     sendOK(inv->dlg, r_data, tsx);
                     return;
                 }
