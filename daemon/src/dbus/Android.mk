@@ -1,5 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
+$(warning Android.mk -> $(LOCAL_PATH))
+
 # FIXME
 MY_PREFIX=/sdcard
 MY_DATADIR=

@@ -2060,6 +2060,8 @@ void registration_cb(pjsip_regc_cbparam *param)
         std::string state(description->ptr, description->slen);
 #if HAVE_DBUS
         Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(accountID, state, param->code);
+#else 
+        //Manager::instance().on_registration_state_changed_wrapper(accountID, state, param->code);
 #endif
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application

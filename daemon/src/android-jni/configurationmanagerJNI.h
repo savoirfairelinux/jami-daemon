@@ -98,18 +98,21 @@ class ConfigurationManagerJNI {
         void setAudioManager(const std::string& api);
 
         int32_t isIax2Enabled();
+
+        /* Recording */
         std::string getRecordPath();
         void setRecordPath(const std::string& recPath);
         bool getIsAlwaysRecording();
         void setIsAlwaysRecording(const bool& rec);
+        void setRecordingCall(const std::string& id);
 
+        /* History */
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
         void clearHistory();
 
         int32_t getMailNotify();
         void setMailNotify();
-
 
         std::map<std::string, int32_t> getAddressbookSettings();
         void setAddressbookSettings(const std::map<std::string, int32_t>& settings);

@@ -99,13 +99,17 @@ public:
     int getEchoCancelDelay();
     void setEchoCancelDelay(const int32_t& delay);
     int32_t isIax2Enabled();
+
     std::string getRecordPath();
     void setRecordPath(const std::string& recPath);
     bool getIsAlwaysRecording();
     void setIsAlwaysRecording(const bool& rec);
+    void setRecordingCall(const std::string& id);
+
     int32_t getHistoryLimit();
     void clearHistory();
     void setHistoryLimit(const int32_t& days);
+
     void setAudioManager(const std::string& api);
     std::string getAudioManager();
     /*void setMailNotify();

@@ -47,9 +47,9 @@
 #include "sip/sipaccount.h"
 #include "sip/sipcall.h"
 
-#ifndef __ANDROID__
+
 #include "im/instant_messaging.h"
-#endif
+
 
 #if HAVE_IAX
 #include "iax/iaxaccount.h"
@@ -111,6 +111,7 @@ extern void on_conference_removed_wrapper (const std::string& confID);
 extern void on_conference_state_changed_wrapper(const std::string& confID,const std::string& state);
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_account_state_changed_wrapper ();
+extern void on_registration_state_changed_wrapper(const std::string& accountID, const std::string& state, const int32_t& code);
 
 
 ManagerImpl::ManagerImpl() :

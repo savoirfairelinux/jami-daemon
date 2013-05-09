@@ -21,6 +21,7 @@ MY_DBUS=libdbus-c++-0.9.0-android
 MY_SPEEX=speex
 MY_OPENSSL=openssl
 MY_LIBYAML=libyaml
+MY_LIBEXPAT=libexpat
 MY_JNI_WRAP := $(LOCAL_PATH)/dbus/callmanager_wrap.cpp
 
 include $(CLEAR_VARS)
@@ -80,6 +81,7 @@ LOCAL_SRC_FILES := \
 		history/history.cpp \
 		history/historynamecache.cpp \
 		hooks/urlhook.cpp \
+		im/instant_messaging.cpp \
 		sip/sdp.cpp \
 		sip/sipaccount.cpp \
 		sip/sipcall.cpp \
@@ -102,6 +104,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 			$(LOCAL_PATH)/dbus \
 			$(LOCAL_PATH)/history \
 			$(LOCAL_PATH)/hooks \
+			$(LOCAL_PATH)/im \
 			$(LOCAL_PATH)/sip \
 			$(APP_PROJECT_PATH)/jni/$(MY_SPEEX)/include \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc \
@@ -116,6 +119,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 			$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjmedia/include \
 			$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjnath/include \
 			$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc \
+			$(APP_PROJECT_PATH)/jni/$(MY_LIBEXPAT) \
 			$(APP_PROJECT_PATH)/jni/$(MY_SPEEX)/include
 
 LOCAL_MODULE := libsflphone

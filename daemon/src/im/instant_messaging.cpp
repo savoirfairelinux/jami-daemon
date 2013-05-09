@@ -31,7 +31,7 @@
 
 #include "instant_messaging.h"
 #include "logger.h"
-#include "expat.h"
+#include <expat.h>
 
 namespace {
 void XMLCALL

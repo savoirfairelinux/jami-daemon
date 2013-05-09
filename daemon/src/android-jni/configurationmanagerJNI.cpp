@@ -384,6 +384,11 @@ void ConfigurationManagerJNI::setIsAlwaysRecording(const bool& rec)
     Manager::instance().setIsAlwaysRecording(rec);
 }
 
+void ConfigurationManagerJNI::setRecordingCall(const std::string& id)
+{
+    Manager::instance().setRecordingCall(id);
+}
+
 int32_t ConfigurationManagerJNI::getHistoryLimit()
 {
     return Manager::instance().getHistoryLimit();

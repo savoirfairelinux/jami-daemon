@@ -45,8 +45,6 @@
 #include <list>
 #include <stdexcept>
 
-#include <iax-client.h>
-
 #include "config.h"
 
 #define EMPTY_MESSAGE   pj_str((char*)"")

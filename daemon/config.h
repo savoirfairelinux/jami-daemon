@@ -45,7 +45,7 @@
 #define HAVE_IAX 0
 
 /* Define if you have instant messaging support */
-#define HAVE_INSTANT_MESSAGING 0
+#define HAVE_INSTANT_MESSAGING 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
