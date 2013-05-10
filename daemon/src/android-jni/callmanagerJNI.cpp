@@ -128,7 +128,7 @@ CallManagerJNI::transfer(const std::string& callID, const std::string& to)
 
 bool CallManagerJNI::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    Manager::instance().attendedTransfer(transferID, targetID);
+    return Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 void CallManagerJNI::setVolume(const std::string& device, const double& value)
@@ -167,6 +167,16 @@ CallManagerJNI::getVolume(const std::string& device)
         return audiolayer->getCaptureGain() / 100.0;
 
     return 0;
+}
+
+bool CallManagerJNI::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
+{
+    return Manager::instance().sendTextMessage(callID,message,from);
+}
+
+void CallManagerJNI::setRecordingCall(const std::string& id)
+{
+    Manager::instance().setRecordingCall(id);
 }
 
 void

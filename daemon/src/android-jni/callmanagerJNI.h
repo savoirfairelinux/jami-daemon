@@ -78,6 +78,7 @@ class CallManagerJNI {
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
 
+
         /* Conference related methods */
         void removeConference(const std::string& conference_id);
         void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
@@ -94,7 +95,10 @@ class CallManagerJNI {
         std::string getConferenceId(const std::string& callID);
         std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
+        bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+
         /* File Playback methods */
+        void setRecordingCall(const std::string& id);
         bool startRecordedFilePlayback(const std::string& filepath);
         void stopRecordedFilePlayback(const std::string& filepath);
 

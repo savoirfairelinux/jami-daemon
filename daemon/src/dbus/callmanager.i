@@ -154,6 +154,10 @@ public:
     bool transfer(const std::string& callID, const std::string& to);
     bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 
+    void setRecordingCall(const std::string& id);
+
+    bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+
      /* Conference related methods */
 
     void removeConference(const std::string& conference_id);
