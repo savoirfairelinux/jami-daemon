@@ -54,6 +54,10 @@ typedef struct callmanager_callback
 
     void (*on_conference_state_changed) (const std::string& confID,
                                           const std::string& state);
+
+    void (*on_incoming_message) (const std::string& ID,
+                                    const std::string& from,
+                                    const std::string& msg);
 } callmanager_callback_t;
 
 
@@ -80,6 +84,10 @@ public:
 
     virtual void on_conference_state_changed (const std::string& arg1,
                                             const std::string& arg2) {}
+
+    virtual void on_incoming_message(const std::string& ID,
+                                    const std::string& from,
+                                    const std::string& msg) {}
 };
 
 
@@ -119,6 +127,10 @@ void on_conference_state_changed_wrapper (const std::string& confID,
     registeredCallbackObject->on_conference_state_changed(confID, state);
 }
 
+void on_incoming_message_wrapper(const std::string& ID, const std::string& from, const std::string& msg) {
+  registeredCallbackObject->on_incoming_message(ID, from, msg);
+}
+
 static struct callmanager_callback wrapper_callback_struct = {
     &on_new_call_created_wrapper,
     &on_call_state_changed_wrapper,
@@ -127,6 +139,7 @@ static struct callmanager_callback wrapper_callback_struct = {
     &on_conference_created_wrapper,
     &on_conference_removed_wrapper,
     &on_conference_state_changed_wrapper,
+    &on_incoming_message_wrapper,
 };
 
 void setCallbackObject(Callback* callback) {
@@ -157,7 +170,7 @@ public:
     void setRecordingCall(const std::string& id);
 
     bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
-
+    
      /* Conference related methods */
 
     void removeConference(const std::string& conference_id);
@@ -200,6 +213,10 @@ public:
 
     virtual void on_conference_state_changed(const std::string& arg1,
                                               const std::string& arg2);
+
+    virtual void on_incoming_message(const std::string& ID,
+                                    const std::string& from,
+                                    const std::string& msg);
 };
  
 static Callback* registeredCallbackObject = NULL;

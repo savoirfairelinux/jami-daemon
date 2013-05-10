@@ -111,6 +111,7 @@ extern void on_conference_removed_wrapper (const std::string& confID);
 extern void on_conference_state_changed_wrapper(const std::string& confID,const std::string& state);
 extern struct configurationmanager_callback wrapper_configurationcallback_struct;
 extern void on_account_state_changed_wrapper ();
+extern void on_incoming_message_wrapper(const std::string& ID, const std::string& from, const std::string& msg);
 extern void on_registration_state_changed_wrapper(const std::string& accountID, const std::string& state, const int32_t& code);
 
 
@@ -1753,7 +1754,10 @@ void ManagerImpl::incomingMessage(const std::string& callID,
     } else
         dbus_.getCallManager()->incomingMessage(callID, from, message);
 #else
-    }
+
+        on_incoming_message_wrapper(conf->getConfID(), from, message);
+    } else 
+        on_incoming_message_wrapper(callID, from, message);
 #endif
 }
 
