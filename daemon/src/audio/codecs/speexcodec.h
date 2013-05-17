@@ -33,7 +33,7 @@
 #include "audiocodec.h"
 #include "noncopyable.h"
 #include "array_size.h"
-#include <speex/speex.h>
+#include <speex/include/speex/speex.h>
 #include <cassert>
 
 class Speex : public sfl::AudioCodec {

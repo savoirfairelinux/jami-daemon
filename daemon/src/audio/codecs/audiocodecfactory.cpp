@@ -190,14 +190,16 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
 
         while ((dirStruct = readdir(dir))) {
             std::string file = dirStruct->d_name ;
-
+            DEBUG("Trying %s",  file.c_str());
             if (file == "." or file == "..")
                 continue;
 
             if (seemsValid(file) && !alreadyInCache(file)) {
+                DEBUG("Seems LEGIT %s",  file.c_str());
                 sfl::Codec* audioCodec = loadCodec(dirStr + file);
 
                 if (audioCodec) {
+                    DEBUG("Codec OK %s",  file.c_str());
                     codecs.push_back(audioCodec);
                     libCache_.push_back(file);
                 }
@@ -212,18 +214,19 @@ std::vector<sfl::Codec*> AudioCodecFactory::scanCodecDirectory()
 
 sfl::AudioCodec *AudioCodecFactory::loadCodec(const std::string &path)
 {
+    DEBUG("Loading codec at: %s",  path.c_str());
     void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
 
     if (!codecHandle) {
-        ERROR("%s", dlerror());
+        ERROR("Error %s", dlerror());
         return NULL;
     }
 
     create_t* createCodec = (create_t*) dlsym(codecHandle, CODEC_ENTRY_SYMBOL);
     const char *error = dlerror();
 
-    if (error) {
-        ERROR("%s", error);
+    if (createCodec == NULL && error != NULL) {
+        ERROR("Can't create codec : %s", error);
         return NULL;
     }
 
