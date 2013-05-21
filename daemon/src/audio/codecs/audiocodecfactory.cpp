@@ -207,6 +207,9 @@ AudioCodecFactory::scanCodecDirectory()
 sfl::AudioCodec *
 AudioCodecFactory::loadCodec(const std::string &path)
 {
+    // Clear any existing error
+    dlerror();
+
     void * codecHandle = dlopen(path.c_str(), RTLD_NOW);
 
     if (!codecHandle) {
