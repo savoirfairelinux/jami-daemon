@@ -724,9 +724,13 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             break;
 
         case IAX_EVENT_HANGUP:
-            id = iaxFindCallBySession(event->session)->getCallId();
-            Manager::instance().peerHungupCall(id);
-            removeIaxCall(id);
+            call = iaxFindCallBySession(event->session);
+
+            if (call) {
+                id = call->getCallId();
+                Manager::instance().peerHungupCall(id);
+                removeIaxCall(id);
+            }
             break;
 
         case IAX_EVENT_TIMEOUT: // timeout for an unknown session
