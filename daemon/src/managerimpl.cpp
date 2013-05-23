@@ -481,9 +481,9 @@ bool ManagerImpl::hangupConference(const std::string& id)
 
 
 //THREAD=Main
-void ManagerImpl::onHoldCall(const std::string& callId)
+bool ManagerImpl::onHoldCall(const std::string& callId)
 {
-    DEBUG("Put call %s on hold", callId.c_str());
+    bool result = true;
 
     stopTone();
 
@@ -498,13 +498,14 @@ void ManagerImpl::onHoldCall(const std::string& callId)
 
             if (account_id.empty()) {
                 DEBUG("Account ID %s or callid %s doesn't exist in call onHold", account_id.c_str(), callId.c_str());
-                return;
+                return false;
             }
 
             getAccountLink(account_id)->onhold(callId);
         }
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
+        result = false;
     }
 
     // Unbind calls in main buffer
@@ -521,14 +522,14 @@ void ManagerImpl::onHoldCall(const std::string& callId)
     dbus_.getCallManager()->callStateChanged(callId, "HOLD");
 
     getMainBuffer().dumpInfo();
+    return result;
 }
 
 //THREAD=Main
-void ManagerImpl::offHoldCall(const std::string& callId)
+bool ManagerImpl::offHoldCall(const std::string& callId)
 {
     std::string codecName;
-
-    DEBUG("Put call %s off hold", callId.c_str());
+    bool result = true;
 
     stopTone();
 
@@ -555,6 +556,8 @@ void ManagerImpl::offHoldCall(const std::string& callId)
 
         if (call)
             getAccountLink(accountId)->offhold(callId);
+        else
+            result = false;
     }
 
     dbus_.getCallManager()->callStateChanged(callId, "UNHOLD");
@@ -563,13 +566,15 @@ void ManagerImpl::offHoldCall(const std::string& callId)
         Call *call = getCallFromCallID(callId);
         if (call)
             switchCall(call->getConfId());
-
+        else
+            result = false;
     } else
         switchCall(callId);
 
     addStream(callId);
 
     getMainBuffer().dumpInfo();
+    return result;
 }
 
 //THREAD=Main

@@ -114,6 +114,11 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="isOnHold" direction="out">
+              <tp:docstring>
+                Returns true is the call has been put on hold. False otherwise.
+              </tp:docstring>
+            </arg>
         </method>
 
         <method name="unhold" tp:name-for-bindings="unhold">
@@ -123,6 +128,11 @@
             <arg type="s" name="callID" direction="in">
               <tp:docstring>
                 The callID.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="isOffHold" direction="out">
+              <tp:docstring>
+                Returns true is the call has been taken off hold. False otherwise.
               </tp:docstring>
             </arg>
         </method>

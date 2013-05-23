@@ -193,14 +193,14 @@ class ManagerImpl {
          * Put the call on hold
          * @param id  The call identifier
          */
-        void onHoldCall(const std::string& id);
+        bool onHoldCall(const std::string& id);
 
         /**
          * Functions which occur with a user's action
          * Put the call off hold
          * @param id  The call identifier
          */
-        void offHoldCall(const std::string& id);
+        bool offHoldCall(const std::string& id);
 
         /**
          * Functions which occur with a user's action

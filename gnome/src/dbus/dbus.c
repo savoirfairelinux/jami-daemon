@@ -924,7 +924,8 @@ void dbus_clean()
 void dbus_hold(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hold(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_hold(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -932,7 +933,8 @@ void
 dbus_unhold(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_unhold(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_unhold(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 

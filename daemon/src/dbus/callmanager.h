@@ -79,8 +79,8 @@ class CallManager
         void refuse(const std::string& callID);
         void accept(const std::string& callID);
         bool hangUp(const std::string& callID);
-        void hold(const std::string& callID);
-        void unhold(const std::string& callID);
+        bool hold(const std::string& callID);
+        bool unhold(const std::string& callID);
         void transfer(const std::string& callID, const std::string& to);
         void attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);

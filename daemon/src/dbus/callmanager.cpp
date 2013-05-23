@@ -108,16 +108,16 @@ CallManager::hangUpConference(const std::string& confID)
     return Manager::instance().hangupConference(confID);
 }
 
-void
+bool
 CallManager::hold(const std::string& callID)
 {
-    Manager::instance().onHoldCall(callID);
+    return Manager::instance().onHoldCall(callID);
 }
 
-void
+bool
 CallManager::unhold(const std::string& callID)
 {
-    Manager::instance().offHoldCall(callID);
+    return Manager::instance().offHoldCall(callID);
 }
 
 void
