@@ -51,6 +51,8 @@ class AVFormatContext;
 class AVFrame;
 namespace sfl_video {
 
+class SocketPair;
+
 class VideoReceiveThread : public VideoProvider {
     private:
         NON_COPYABLE(VideoReceiveThread);
@@ -79,7 +81,8 @@ class VideoReceiveThread : public VideoProvider {
         void (* requestKeyFrameCallback_)(const std::string &);
         std::tr1::shared_ptr<unsigned char> sdpBuffer_;
         std::istringstream stream_;
-        std::tr1::shared_ptr<AVIOContext> avioContext_;
+        std::tr1::shared_ptr<AVIOContext> sdpContext_;
+        std::tr1::shared_ptr<AVIOContext> demuxContext_;
 
         void setup();
         void openDecoder();
@@ -95,6 +98,7 @@ class VideoReceiveThread : public VideoProvider {
 
     public:
         VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
+        void addIOContext(SocketPair &socketPair);
         void addDetails(std::map<std::string, std::string> &details);
         ~VideoReceiveThread();
         void start();

@@ -202,6 +202,10 @@ class Sdp {
             return remoteVideoPort_;
         }
 
+        unsigned int getLocalVideoPort() const {
+            return localVideoPort_;
+        }
+
         void addAttributeToLocalAudioMedia(const char *attr);
         void removeAttributeFromLocalAudioMedia(const char *attr);
         void addAttributeToLocalVideoMedia(const char *attr);

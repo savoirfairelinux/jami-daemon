@@ -1772,7 +1772,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     Manager::instance().getVideoControls()->stopPreview();
     call->getVideoRtp().updateSDP(*call->getLocalSDP());
     call->getVideoRtp().updateDestination(call->getLocalSDP()->getRemoteIP(), call->getLocalSDP()->getRemoteVideoPort());
-    call->getVideoRtp().start();
+    call->getVideoRtp().start(call->getLocalSDP()->getLocalVideoPort());
 #endif
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)

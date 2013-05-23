@@ -41,12 +41,15 @@ namespace sfl_video {
 
 class VideoSendThread;
 class VideoReceiveThread;
+class SocketPair;
 
 class VideoRtpSession {
     public:
         VideoRtpSession(const std::string &callID,
                         const std::map<std::string, std::string> &txArgs);
-        void start();
+        ~VideoRtpSession();
+
+        void start(int localPort);
         void stop();
         void updateDestination(const std::string &destination,
                                unsigned int port);
@@ -55,6 +58,7 @@ class VideoRtpSession {
         void addReceivingDetails(std::map<std::string, std::string> &details);
 
     private:
+        std::tr1::shared_ptr<SocketPair> socketPair_;
         std::tr1::shared_ptr<VideoSendThread> sendThread_;
         std::tr1::shared_ptr<VideoReceiveThread> receiveThread_;
         std::map<std::string, std::string> txArgs_;

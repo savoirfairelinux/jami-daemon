@@ -29,6 +29,7 @@
  */
 
 #include "video_send_thread.h"
+#include "socket_pair.h"
 #include "dbus/video_controls.h"
 #include "packet_handle.h"
 #include "check.h"
@@ -284,12 +285,10 @@ void VideoSendThread::setup()
     EXIT_IF_FAIL(stream_ != 0, "Could not allocate stream.");
     stream_->codec = encoderCtx_;
 
-    // open the output file, if needed
-    if (!(file_oformat->flags & AVFMT_NOFILE)) {
-        ret = avio_open2(&outputCtx_->pb, outputCtx_->filename, AVIO_FLAG_WRITE, &interruptCb_, NULL);
-        EXIT_IF_FAIL(ret >= 0, "Could not open \"%s\"!", outputCtx_->filename);
-    } else
-        DEBUG("No need to open \"%s\"", outputCtx_->filename);
+    // Set our output AVIOcontext
+    outputCtx_->pb = muxContext_.get();
+    outputCtx_->interrupt_callback = interruptCb_;
+    outputCtx_->packet_size = outputCtx_->pb->buffer_size;
 
     AVDictionary *outOptions = NULL;
     // write the stream header, if any
@@ -305,7 +304,6 @@ void VideoSendThread::setup()
 
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
     print_sdp();
-
 
     // allocate buffers for both scaled (pre-encoder) and encoded frames
     encoderBufferSize_ = avpicture_get_size(encoderCtx_->pix_fmt, encoderCtx_->width,
@@ -351,10 +349,17 @@ VideoSendThread::VideoSendThread(const std::string &id, const std::map<string, s
     threadRunning_(false),
     forceKeyFrame_(0),
     thread_(0),
-    frameNumber_(0)
+    frameNumber_(0),
+    muxContext_()
 {
     interruptCb_.callback = interruptCb;
     interruptCb_.opaque = this;
+}
+
+void
+VideoSendThread::addIOContext(SocketPair &socketPair)
+{
+    muxContext_.reset(socketPair.createAVIOContext(), &av_free);
 }
 
 struct VideoTxContextHandle {
@@ -373,9 +378,10 @@ struct VideoTxContextHandle {
         // was freed on av_codec_close()
         if (tx_.outputCtx_ and tx_.outputCtx_->priv_data) {
             av_write_trailer(tx_.outputCtx_);
-            if (tx_.outputCtx_->pb)
-                avio_close(tx_.outputCtx_->pb);
         }
+
+        if (tx_.muxContext_ and tx_.muxContext_->buffer)
+            av_free(tx_.muxContext_->buffer);
 
         if (tx_.scaledInputBuffer_)
             av_free(tx_.scaledInputBuffer_);
@@ -402,12 +408,13 @@ struct VideoTxContextHandle {
             avcodec_close(tx_.inputDecoderCtx_);
 
         // close the video file
-        if (tx_.inputCtx_)
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+        if (tx_.inputCtx_) {
+#if LIBAVFORMAT_VERSION_MAJOR < 55
             av_close_input_file(tx_.inputCtx_);
 #else
-        avformat_close_input(&tx_.inputCtx_);
+            avformat_close_input(&tx_.inputCtx_);
 #endif
+        }
     }
     VideoSendThread &tx_;
 };
