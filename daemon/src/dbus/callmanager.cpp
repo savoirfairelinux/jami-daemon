@@ -96,16 +96,16 @@ CallManager::accept(const std::string& callID)
     Manager::instance().answerCall(callID);
 }
 
-void
+bool
 CallManager::hangUp(const std::string& callID)
 {
-    Manager::instance().hangupCall(callID);
+    return Manager::instance().hangupCall(callID);
 }
 
-void
+bool
 CallManager::hangUpConference(const std::string& confID)
 {
-    Manager::instance().hangupConference(confID);
+    return Manager::instance().hangupConference(confID);
 }
 
 void

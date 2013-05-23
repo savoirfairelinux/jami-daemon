@@ -78,7 +78,7 @@ class CallManager
 
         void refuse(const std::string& callID);
         void accept(const std::string& callID);
-        void hangUp(const std::string& callID);
+        bool hangUp(const std::string& callID);
         void hold(const std::string& callID);
         void unhold(const std::string& callID);
         void transfer(const std::string& callID, const std::string& to);
@@ -94,7 +94,7 @@ class CallManager
         void addMainParticipant(const std::string& confID);
         void detachParticipant(const std::string& callID);
         void joinConference(const std::string& sel_confID, const std::string& drag_confID);
-        void hangUpConference(const std::string& confID);
+        bool hangUpConference(const std::string& confID);
         void holdConference(const std::string& confID);
         void unholdConference(const std::string& confID);
         std::vector<std::string> getConferenceList();

@@ -81,6 +81,11 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="isHungUp" direction="out">
+              <tp:docstring>
+                Returns true is the call has been hungup. False otherwise.
+              </tp:docstring>
+            </arg>
         </method>
 
         <method name="hangUpConference" tp:name-for-bindings="hangUpConference">
@@ -91,6 +96,11 @@
             <arg type="s" name="confID" direction="in">
               <tp:docstring>
                 The unique conference ID.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="isHungUp" direction="out">
+              <tp:docstring>
+                Returns true is the conference has been hungup. False otherwise.
               </tp:docstring>
             </arg>
         </method>
