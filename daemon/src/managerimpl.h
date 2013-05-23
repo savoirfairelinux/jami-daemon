@@ -178,7 +178,7 @@ class ManagerImpl {
          * Hangup the call
          * @param id  The call identifier
          */
-        void hangupCall(const std::string& id);
+        bool hangupCall(const std::string& id);
 
 
         /**

@@ -390,7 +390,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 }
 
 //THREAD=Main
-void ManagerImpl::hangupCall(const std::string& callId)
+bool ManagerImpl::hangupCall(const std::string& callId)
 {
     // store the current call id
     std::string currentCallId(getCurrentCallId());
@@ -408,7 +408,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     /* We often get here when the call was hungup before being created */
     if (not isValidCall(callId) and not isIPToIP(callId)) {
         DEBUG("Could not hang up call %s, call not valid", callId.c_str());
-        return;
+        return false;
     }
 
     // Disconnect streams
@@ -433,6 +433,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
             }
         } catch (const VoipLinkException &e) {
             ERROR("%s", e.what());
+            return false;
         }
     } else {
         std::string accountId(getAccountFromCall(callId));
@@ -447,6 +448,7 @@ void ManagerImpl::hangupCall(const std::string& callId)
     }
 
     getMainBuffer().dumpInfo();
+    return true;
 }
 
 bool ManagerImpl::hangupConference(const std::string& id)
