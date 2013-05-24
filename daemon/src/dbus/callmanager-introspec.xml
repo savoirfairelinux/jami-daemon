@@ -269,6 +269,8 @@
                 An existing conference ID
               </tp:docstring>
             </arg>
+            <arg type="b" name="addSucceeded" direction="out">
+            </arg>
         </method>
 
         <method name="addMainParticipant" tp:name-for-bindings="addMainParticipant">
@@ -281,6 +283,8 @@
               <tp:docstring>
                 An existing conference ID
               </tp:docstring>
+            </arg>
+            <arg type="b" name="addSucceeded" direction="out">
             </arg>
         </method>
 

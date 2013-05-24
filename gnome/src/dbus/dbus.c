@@ -1489,7 +1489,9 @@ dbus_add_participant(const gchar *callID, const gchar *confID)
 {
     g_debug("Add participant %s to %s\n", callID, confID);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID, confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID,
+            confID, &result, &error);
     check_error(error);
 }
 
@@ -1497,7 +1499,9 @@ void
 dbus_add_main_participant(const gchar *confID)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_add_main_participant(call_proxy, confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_add_main_participant(call_proxy, confID,
+            &result, &error);
     check_error(error);
 }
 

@@ -282,13 +282,13 @@ class ManagerImpl {
          * @param the call id
          * @param the conference id
          */
-        void addParticipant(const std::string& call_id, const std::string& conference_id);
+        bool addParticipant(const std::string& call_id, const std::string& conference_id);
 
         /**
          * Bind the main participant to a conference (mainly called on a double click action)
          * @param the conference id
          */
-        void addMainParticipant(const std::string& conference_id);
+        bool addMainParticipant(const std::string& conference_id);
 
         /**
          * Join two participants to create a conference

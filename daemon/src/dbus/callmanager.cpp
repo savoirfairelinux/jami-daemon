@@ -182,16 +182,16 @@ CallManager::createConfFromParticipantList(const std::vector<std::string>& parti
     Manager::instance().createConfFromParticipantList(participants);
 }
 
-void
+bool
 CallManager::addParticipant(const std::string& callID, const std::string& confID)
 {
-    Manager::instance().addParticipant(callID, confID);
+    return  Manager::instance().addParticipant(callID, confID);
 }
 
-void
+bool
 CallManager::addMainParticipant(const std::string& confID)
 {
-    Manager::instance().addMainParticipant(confID);
+    return Manager::instance().addMainParticipant(confID);
 }
 
 void

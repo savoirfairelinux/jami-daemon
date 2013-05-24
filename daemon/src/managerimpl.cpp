@@ -814,20 +814,21 @@ bool ManagerImpl::isConferenceParticipant(const std::string& call_id)
     return call and not call->getConfId().empty();
 }
 
-void ManagerImpl::addParticipant(const std::string& callId, const std::string& conferenceId)
+bool
+ManagerImpl::addParticipant(const std::string& callId, const std::string& conferenceId)
 {
     DEBUG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
     ConferenceMap::iterator iter = conferenceMap_.find(conferenceId);
 
     if (iter == conferenceMap_.end()) {
         ERROR("Conference id is not valid");
-        return;
+        return false;
     }
 
     Call *call = getCallFromCallID(callId);
     if (call == NULL) {
         ERROR("Call id %s is not valid", callId.c_str());
-        return;
+        return false;
     }
 
     // store the current call id (it will change in offHoldCall or in answerCall)
@@ -886,9 +887,11 @@ void ManagerImpl::addParticipant(const std::string& callId, const std::string& c
 
     // Connect stream
     addStream(callId);
+    return true;
 }
 
-void ManagerImpl::addMainParticipant(const std::string& conference_id)
+bool
+ManagerImpl::addMainParticipant(const std::string& conference_id)
 {
     if (hasCurrentCall()) {
         std::string current_call_id(getCurrentCallId());
@@ -904,8 +907,10 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
 
         ConferenceMap::const_iterator iter = conferenceMap_.find(conference_id);
 
-        if (iter != conferenceMap_.end()) {
-            Conference *conf = iter->second;
+        if (iter == conferenceMap_.end() or iter->second == 0)
+            return false;
+
+        Conference *conf = iter->second;
 
         ParticipantSet participants(conf->getParticipantList());
 
@@ -926,10 +931,10 @@ void ManagerImpl::addMainParticipant(const std::string& conference_id)
             WARN("Invalid conference state while adding main participant");
 
         dbus_.getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
-        }
     }
 
     switchCall(conference_id);
+    return true;
 }
 
 Call *
