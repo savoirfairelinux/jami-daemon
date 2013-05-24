@@ -58,6 +58,8 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="refuseSucceeded" direction="out">
+            </arg>
 
         </method>
 
@@ -70,6 +72,8 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="acceptSucceeded" direction="out">
+            </arg>
         </method>
 
         <method name="hangUp" tp:name-for-bindings="hangUp">
@@ -81,10 +85,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="isHungUp" direction="out">
-              <tp:docstring>
-                Returns true is the call has been hungup. False otherwise.
-              </tp:docstring>
+            <arg type="b" name="hangupSucceeded" direction="out">
             </arg>
         </method>
 
@@ -98,10 +99,7 @@
                 The unique conference ID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="isHungUp" direction="out">
-              <tp:docstring>
-                Returns true is the conference has been hungup. False otherwise.
-              </tp:docstring>
+            <arg type="b" name="hangupSucceeded" direction="out">
             </arg>
         </method>
 
@@ -114,10 +112,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="isOnHold" direction="out">
-              <tp:docstring>
-                Returns true is the call has been put on hold. False otherwise.
-              </tp:docstring>
+            <arg type="b" name="holdSucceeded" direction="out">
             </arg>
         </method>
 
@@ -130,10 +125,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="isOffHold" direction="out">
-              <tp:docstring>
-                Returns true is the call has been taken off hold. False otherwise.
-              </tp:docstring>
+            <arg type="b" name="offHoldSucceeded" direction="out">
             </arg>
         </method>
 
@@ -151,6 +143,8 @@
                 The phone number to which the call will be transferred.
               </tp:docstring>
             </arg>
+            <arg type="b" name="transferSucceeded" direction="out">
+            </arg>
         </method>
 
         <method name="attendedTransfer" tp:name-for-bindings="attendedTransfer">
@@ -166,6 +160,8 @@
               <tp:docstring>
                 The callID of the target call.
               </tp:docstring>
+            </arg>
+            <arg type="b" name="transferSucceeded" direction="out">
             </arg>
         </method>
 

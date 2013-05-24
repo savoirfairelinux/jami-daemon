@@ -325,6 +325,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
 //THREAD=Main : for outgoing Call
 bool ManagerImpl::answerCall(const std::string& call_id)
 {
+    bool result = true;
     Call *call = getCallFromCallID(call_id);
 
     if (call == NULL) {
@@ -364,6 +365,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
             link->answer(call);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
+        result = false;
     }
 
     // if it was waiting, it's waiting no more
@@ -386,7 +388,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
 
     // update call state on client side
     dbus_.getCallManager()->callStateChanged(call_id, "CURRENT");
-    return true;
+    return result;
 }
 
 //THREAD=Main
@@ -631,8 +633,11 @@ bool ManagerImpl::attendedTransfer(const std::string& transferID, const std::str
 }
 
 //THREAD=Main : Call:Incoming
-void ManagerImpl::refuseCall(const std::string& id)
+bool ManagerImpl::refuseCall(const std::string& id)
 {
+    if (!isValidCall(id))
+        return false;
+
     stopTone();
 
     if (getCallList().size() <= 1) {
@@ -649,7 +654,7 @@ void ManagerImpl::refuseCall(const std::string& id)
         std::string accountid = getAccountFromCall(id);
 
         if (accountid.empty())
-            return;
+            return false;
 
         getAccountLink(accountid)->refuse(id);
 
@@ -663,6 +668,7 @@ void ManagerImpl::refuseCall(const std::string& id)
     removeStream(id);
 
     getMainBuffer().dumpInfo();
+    return true;
 }
 
 Conference*

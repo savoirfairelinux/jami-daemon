@@ -84,16 +84,16 @@ void CallManager::placeCallFirstAccount(const std::string& callID,
     }
 }
 
-void
+bool
 CallManager::refuse(const std::string& callID)
 {
-    Manager::instance().refuseCall(callID);
+    return Manager::instance().refuseCall(callID);
 }
 
-void
+bool
 CallManager::accept(const std::string& callID)
 {
-    Manager::instance().answerCall(callID);
+    return Manager::instance().answerCall(callID);
 }
 
 bool
@@ -120,15 +120,16 @@ CallManager::unhold(const std::string& callID)
     return Manager::instance().offHoldCall(callID);
 }
 
-void
+bool
 CallManager::transfer(const std::string& callID, const std::string& to)
 {
-    Manager::instance().transferCall(callID, to);
+    return Manager::instance().transferCall(callID, to);
 }
 
-void CallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
+bool
+CallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    Manager::instance().attendedTransfer(transferID, targetID);
+    return Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 void CallManager::setVolume(const std::string& device, const double& value)

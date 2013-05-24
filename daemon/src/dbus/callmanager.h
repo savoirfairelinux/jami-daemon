@@ -76,13 +76,13 @@ class CallManager
         void placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
         void placeCallFirstAccount(const std::string& callID, const std::string& to);
 
-        void refuse(const std::string& callID);
-        void accept(const std::string& callID);
+        bool refuse(const std::string& callID);
+        bool accept(const std::string& callID);
         bool hangUp(const std::string& callID);
         bool hold(const std::string& callID);
         bool unhold(const std::string& callID);
-        void transfer(const std::string& callID, const std::string& to);
-        void attendedTransfer(const std::string& transferID, const std::string& targetID);
+        bool transfer(const std::string& callID, const std::string& to);
+        bool attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
         bool isValidCall(const std::string &callID);

@@ -232,7 +232,7 @@ class ManagerImpl {
          * Refuse the call
          * @param id  The call identifier
          */
-        void refuseCall(const std::string& id);
+        bool refuseCall(const std::string& id);
 
         /**
          * Create a new conference given two participant

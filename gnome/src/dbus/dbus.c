@@ -997,7 +997,9 @@ void
 dbus_transfer(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_transfer(call_proxy, c->_callID, c->_trsft_to, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_transfer(call_proxy, c->_callID,
+            c->_trsft_to, &result, &error);
     check_error(error);
 }
 
@@ -1005,8 +1007,9 @@ void
 dbus_attended_transfer(const callable_obj_t *transfer, const callable_obj_t *target)
 {
     GError *error = NULL;
+    gboolean result;
     org_sflphone_SFLphone_CallManager_attended_transfer(call_proxy, transfer->_callID,
-                           target->_callID, &error);
+                           target->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1015,7 +1018,8 @@ dbus_accept(const callable_obj_t *c)
 {
     status_tray_icon_blink(FALSE);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_accept(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_accept(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1024,7 +1028,8 @@ dbus_refuse(const callable_obj_t *c)
 {
     status_tray_icon_blink(FALSE);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_refuse(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_refuse(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
