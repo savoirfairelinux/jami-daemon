@@ -194,10 +194,10 @@ CallManager::addMainParticipant(const std::string& confID)
     return Manager::instance().addMainParticipant(confID);
 }
 
-void
+bool
 CallManager::detachParticipant(const std::string& callID)
 {
-    Manager::instance().detachParticipant(callID, "");
+    return Manager::instance().detachParticipant(callID, "");
 }
 
 void

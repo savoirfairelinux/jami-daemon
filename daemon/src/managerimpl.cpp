@@ -1106,26 +1106,25 @@ void ManagerImpl::createConfFromParticipantList(const std::vector< std::string >
     }
 }
 
-void ManagerImpl::detachParticipant(const std::string& call_id,
-                                    const std::string& current_id)
+bool
+ManagerImpl::detachParticipant(const std::string& call_id,
+                               const std::string& current_id)
 {
-    DEBUG("Detach participant %s (current id: %s)", call_id.c_str(),
-           current_id.c_str());
-    std::string current_call_id(getCurrentCallId());
+    const std::string current_call_id(getCurrentCallId());
 
     if (call_id != MainBuffer::DEFAULT_ID) {
         Call *call = getCallFromCallID(call_id);
 
         if (call == NULL) {
             ERROR("Could not find call %s", call_id.c_str());
-            return;
+            return false;
         }
 
         Conference *conf = getConferenceFromCallID(call_id);
 
         if (conf == NULL) {
             ERROR("Call is not conferencing, cannot detach");
-            return;
+            return false;
         }
 
         std::map<std::string, std::string> call_details(getCallDetails(call_id));
@@ -1133,7 +1132,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
 
         if (iter_details == call_details.end()) {
             ERROR("Could not find CALL_STATE");
-            return;
+            return false;
         }
 
         if (iter_details->second == "RINGING") {
@@ -1150,7 +1149,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
 
         if (not isConference(current_call_id)) {
             ERROR("Current call id (%s) is not a conference", current_call_id.c_str());
-            return;
+            return false;
         }
 
         ConferenceMap::iterator iter = conferenceMap_.find(current_call_id);
@@ -1158,7 +1157,7 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
         Conference *conf = iter->second;
         if (iter == conferenceMap_.end() or conf == 0) {
             DEBUG("Conference is NULL");
-            return;
+            return false;
         }
 
         if (conf->getState() == Conference::ACTIVE_ATTACHED)
@@ -1173,6 +1172,8 @@ void ManagerImpl::detachParticipant(const std::string& call_id,
 
         unsetCurrentCall();
     }
+
+    return true;
 }
 
 void ManagerImpl::removeParticipant(const std::string& call_id)

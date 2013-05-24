@@ -1509,7 +1509,9 @@ void
 dbus_detach_participant(const gchar *callID)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_detach_participant(call_proxy, callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_detach_participant(call_proxy, callID,
+            &result, &error);
     check_error(error);
 }
 

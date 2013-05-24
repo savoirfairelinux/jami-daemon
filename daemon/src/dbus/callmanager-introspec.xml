@@ -298,6 +298,8 @@
                 The call ID
               </tp:docstring>
             </arg>
+            <arg type="b" name="detachSucceeded" direction="out">
+            </arg>
         </method>
 
         <method name="joinConference" tp:name-for-bindings="joinConference">
