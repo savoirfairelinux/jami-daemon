@@ -61,31 +61,6 @@ bool CallManager::placeCall(const std::string& accountID,
     }
 }
 
-void CallManager::placeCallFirstAccount(const std::string& callID,
-                                        const std::string& to)
-{
-    using std::vector;
-    using std::string;
-
-    if (to.empty()) {
-        WARN("CallManager: Warning: No number entered, call stopped");
-        return;
-    }
-
-    vector<string> accountList(Manager::instance().loadAccountOrder());
-
-    if (accountList.empty())
-        accountList = Manager::instance().getAccountList();
-
-    for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
-        Account *account = Manager::instance().getAccount(*iter);
-        if (account && (*iter != SIPAccount::IP2IP_PROFILE) && account->isEnabled()) {
-            Manager::instance().outgoingCall(*iter, callID, to);
-            return;
-        }
-    }
-}
-
 bool
 CallManager::refuse(const std::string& callID)
 {
