@@ -410,12 +410,16 @@ OpenSLLayer::startAudioCapture()
 
     SLresult result;
 
+    
     // in case already recording, stop recording and clear buffer queue
     result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_STOPPED);
     assert(SL_RESULT_SUCCESS == result);
+
+    DEBUG("Clearing recorderBufferQueue\n");
     result = (*recorderBufferQueue)->Clear(recorderBufferQueue);
     assert(SL_RESULT_SUCCESS == result);
 
+    DEBUG("getting next record buffer\n");
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
     AudioBuffer &buffer = getNextRecordBuffer();
@@ -423,10 +427,14 @@ OpenSLLayer::startAudioCapture()
 
     memset(buffer.data(), 0, buffer.size());
 
+    DEBUG("Enqueue record buffer\n");
     result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, buffer.data(), buffer.size());
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
-    assert(SL_RESULT_SUCCESS == result);
+     if (SL_RESULT_SUCCESS != result) {
+            DEBUG("Error could not enqueue buffers in audio capture\n");
+            return;
+    }
 
     // start recording
     result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_RECORDING);
