@@ -88,7 +88,7 @@ class CallManager
         bool isValidCall(const std::string &callID);
 
         /* Conference related methods */
-        void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+        bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
         bool addParticipant(const std::string& callID, const std::string& confID);
         bool addMainParticipant(const std::string& confID);

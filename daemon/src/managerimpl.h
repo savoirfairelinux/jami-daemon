@@ -295,7 +295,8 @@ class ManagerImpl {
          * @param the fist call id
          * @param the second call id
          */
-        void joinParticipant(const std::string& call_id1, const std::string& call_id2);
+        bool joinParticipant(const std::string& call_id1,
+                             const std::string& call_id2);
 
         /**
          * Create a conference from a list of participant

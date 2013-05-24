@@ -1480,7 +1480,9 @@ dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
     g_debug("Join participant %s and %s\n", sel_callID, drag_callID);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID, drag_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID,
+            drag_callID, &result, &error);
     check_error(error);
 }
 

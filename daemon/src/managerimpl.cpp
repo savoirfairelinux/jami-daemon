@@ -953,12 +953,12 @@ ManagerImpl::getCallFromCallID(const std::string &callID)
     return call;
 }
 
-void ManagerImpl::joinParticipant(const std::string& callId1, const std::string& callId2)
+bool
+ManagerImpl::joinParticipant(const std::string& callId1, const std::string& callId2)
 {
-    DEBUG("Join participants %s, %s", callId1.c_str(), callId2.c_str());
     if (callId1 == callId2) {
         ERROR("Cannot join participant %s to itself", callId1.c_str());
-        return;
+        return false;
     }
 
     // Set corresponding conference ids for call 1
@@ -966,7 +966,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
 
     if (call1 == NULL) {
         ERROR("Could not find call %s", callId1.c_str());
-        return;
+        return false;
     }
 
     // Set corresponding conderence details
@@ -974,7 +974,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
 
     if (call2 == NULL) {
         ERROR("Could not find call %s", callId2.c_str());
-        return;
+        return false;
     }
 
     std::map<std::string, std::string> call1Details(getCallDetails(callId1));
@@ -1049,6 +1049,7 @@ void ManagerImpl::joinParticipant(const std::string& callId1, const std::string&
     }
 
     getMainBuffer().dumpInfo();
+    return true;
 }
 
 void ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &participantList)

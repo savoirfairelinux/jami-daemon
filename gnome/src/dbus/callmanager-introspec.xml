@@ -242,6 +242,7 @@
             </tp:docstring>
             <arg type="s" name="sel_callID" direction="in"/>
             <arg type="s" name="drag_callID" direction="in"/>
+            <arg type="b" name="joinSucceeded" direction="out"/>
         </method>
 
         <method name="createConfFromParticipantList" tp:name-for-bindings="createConfFromParticipantList">

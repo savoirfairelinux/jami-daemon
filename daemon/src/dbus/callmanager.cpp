@@ -170,10 +170,11 @@ CallManager::getVolume(const std::string& device)
     return 0;
 }
 
-void
-CallManager::joinParticipant(const std::string& sel_callID, const std::string& drag_callID)
+bool
+CallManager::joinParticipant(const std::string& sel_callID,
+                             const std::string& drag_callID)
 {
-    Manager::instance().joinParticipant(sel_callID, drag_callID);
+    return Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
