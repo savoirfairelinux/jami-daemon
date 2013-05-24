@@ -137,7 +137,7 @@ rest_account get_rest_account(char *host,char *email)
         ra.success = 1;
     } else {
         ra.success = 0;
-        strcpy(ra.reason, ret);
+        strncpy(ra.reason, ret, sizeof(ra.reason));
     }
 
     puts(ret);
