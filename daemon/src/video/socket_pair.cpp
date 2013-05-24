@@ -51,7 +51,7 @@ namespace {
 
 int ff_network_wait_fd(int fd)
 {
-    struct pollfd p = { .fd = fd, .events = POLLOUT, .revents = 0 };
+    struct pollfd p = { fd, POLLOUT, 0 };
     int ret;
     ret = poll(&p, 1, 100);
     return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : AVERROR(EAGAIN);
