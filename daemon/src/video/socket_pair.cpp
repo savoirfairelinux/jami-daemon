@@ -142,6 +142,10 @@ SocketPair::SocketPair(const char *uri, int localPort) :
            rtcpWriteMutex_(),
            rtpHandle_(0),
            rtcpHandle_(0),
+           rtpDestAddr_(),
+           rtpDestAddrLen_(),
+           rtcpDestAddr_(),
+           rtcpDestAddrLen_(),
            interrupted_(false)
 {
     pthread_mutex_init(&rtcpWriteMutex_, NULL);
