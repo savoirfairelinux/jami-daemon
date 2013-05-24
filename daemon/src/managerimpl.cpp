@@ -1244,19 +1244,18 @@ void ManagerImpl::processRemainingParticipants(Conference &conf)
     }
 }
 
-void ManagerImpl::joinConference(const std::string& conf_id1,
-                                 const std::string& conf_id2)
+bool
+ManagerImpl::joinConference(const std::string& conf_id1,
+                            const std::string& conf_id2)
 {
-    DEBUG("Join conferences %s and %s", conf_id1.c_str(), conf_id2.c_str());
-
     if (conferenceMap_.find(conf_id1) == conferenceMap_.end()) {
         ERROR("Not a valid conference ID: %s", conf_id1.c_str());
-        return;
+        return false;
     }
 
     if (conferenceMap_.find(conf_id2) == conferenceMap_.end()) {
         ERROR("Not a valid conference ID: %s", conf_id2.c_str());
-        return;
+        return false;
     }
 
     Conference *conf = conferenceMap_.find(conf_id1)->second;
@@ -1267,6 +1266,8 @@ void ManagerImpl::joinConference(const std::string& conf_id1,
         detachParticipant(*p, "");
         addParticipant(*p, conf_id2);
     }
+
+    return true;
 }
 
 void ManagerImpl::addStream(const std::string& call_id)

@@ -93,7 +93,7 @@ class CallManager
         bool addParticipant(const std::string& callID, const std::string& confID);
         bool addMainParticipant(const std::string& confID);
         bool detachParticipant(const std::string& callID);
-        void joinConference(const std::string& sel_confID, const std::string& drag_confID);
+        bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
         bool hangUpConference(const std::string& confID);
         bool holdConference(const std::string& confID);
         bool unholdConference(const std::string& confID);

@@ -310,6 +310,7 @@
             </tp:docstring>
             <arg type="s" name="sel_confID" direction="in"/>
             <arg type="s" name="drag_confID" direction="in"/>
+            <arg type="b" name="joinSucceeded" direction="out"/>
         </method>
 
         <method name="getConferenceDetails" tp:name-for-bindings="getConferenceDetails">

@@ -1520,9 +1520,10 @@ dbus_detach_participant(const gchar *callID)
 void
 dbus_join_conference(const gchar *sel_confID, const gchar *drag_confID)
 {
-    g_debug("dbus_join_conference %s and %s\n", sel_confID, drag_confID);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_join_conference(call_proxy, sel_confID, drag_confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_join_conference(call_proxy, sel_confID,
+            drag_confID, &result, &error);
     check_error(error);
 }
 

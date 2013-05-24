@@ -201,10 +201,10 @@ CallManager::detachParticipant(const std::string& callID)
     return Manager::instance().detachParticipant(callID, "");
 }
 
-void
+bool
 CallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
-    Manager::instance().joinConference(sel_confID, drag_confID);
+    return Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
 bool

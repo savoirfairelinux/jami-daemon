@@ -321,7 +321,7 @@ class ManagerImpl {
         /**
          * Join two conference together into one unique conference
          */
-        void joinConference(const std::string& conf_id1, const std::string& conf_id2);
+        bool joinConference(const std::string& conf_id1, const std::string& conf_id2);
 
         void addStream(const std::string& call_id);
 
