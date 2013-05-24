@@ -48,15 +48,17 @@ CallManager::CallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/CallManager")
 {}
 
-void CallManager::placeCall(const std::string& accountID,
+bool CallManager::placeCall(const std::string& accountID,
                             const std::string& callID,
                             const std::string& to)
 {
     // Check if a destination number is available
-    if (to.empty())
+    if (to.empty()) {
         DEBUG("No number entered - Call stopped");
-    else
-        Manager::instance().outgoingCall(accountID, callID, to);
+        return false;
+    } else {
+        return Manager::instance().outgoingCall(accountID, callID, to);
+    }
 }
 
 void CallManager::placeCallFirstAccount(const std::string& callID,

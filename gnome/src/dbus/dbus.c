@@ -1041,8 +1041,9 @@ void
 dbus_place_call(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_place_call(call_proxy, c->_accountID, c->_callID, c->_peer_number,
-                    &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_place_call(call_proxy, c->_accountID,
+            c->_callID, c->_peer_number, &result, &error);
     check_error(error);
 }
 

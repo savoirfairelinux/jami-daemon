@@ -27,6 +27,7 @@
                 If bound to a VoIP account, then the argument is the phone number. In case of calls involving "IP2IP_PROFILE", a complete SIP URI must be specified.
               </tp:docstring>
             </arg>
+            <arg type="b" name="callSucceeded" direction="out"/>
         </method>
 
         <method name="placeCallFirstAccount" tp:name-for-bindings="placeCallFirstAccount">
