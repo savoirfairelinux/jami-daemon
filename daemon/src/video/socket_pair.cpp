@@ -120,7 +120,11 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
 #if HAVE_SDP_CUSTOM_IO
     // bind socket so that we send from and receive
     // on local port
-    bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len);
+    if (bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len) < 0) {
+        ERROR("Bind failed: %s", strerror(errno));
+        close(udp_fd);
+        udp_fd = -1;
+    }
 #endif
 
     freeaddrinfo(res0);
