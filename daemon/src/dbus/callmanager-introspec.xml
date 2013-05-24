@@ -39,8 +39,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="refuseSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="refuseSucceeded" direction="out"/>
 
         </method>
 
@@ -53,8 +52,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="acceptSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="acceptSucceeded" direction="out"/>
         </method>
 
         <method name="hangUp" tp:name-for-bindings="hangUp">
@@ -66,8 +64,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="hangupSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="hangupSucceeded" direction="out"/>
         </method>
 
         <method name="hangUpConference" tp:name-for-bindings="hangUpConference">
@@ -80,8 +77,7 @@
                 The unique conference ID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="hangupSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="hangupSucceeded" direction="out"/>
         </method>
 
         <method name="hold" tp:name-for-bindings="hold">
@@ -93,8 +89,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="holdSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
         <method name="unhold" tp:name-for-bindings="unhold">
@@ -106,8 +101,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="unHoldSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="unHoldSucceeded" direction="out"/>
         </method>
 
         <method name="transfer" tp:name-for-bindings="transfer">
@@ -124,8 +118,7 @@
                 The phone number to which the call will be transferred.
               </tp:docstring>
             </arg>
-            <arg type="b" name="transferSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="transferSucceeded" direction="out"/>
         </method>
 
         <method name="attendedTransfer" tp:name-for-bindings="attendedTransfer">
@@ -142,8 +135,7 @@
                 The callID of the target call.
               </tp:docstring>
             </arg>
-            <arg type="b" name="transferSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="transferSucceeded" direction="out"/>
         </method>
 
         <method name="playDTMF" tp:name-for-bindings="playDTMF">
@@ -251,8 +243,7 @@
                 An existing conference ID
               </tp:docstring>
             </arg>
-            <arg type="b" name="addSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="addSucceeded" direction="out"/>
         </method>
 
         <method name="addMainParticipant" tp:name-for-bindings="addMainParticipant">
@@ -266,8 +257,7 @@
                 An existing conference ID
               </tp:docstring>
             </arg>
-            <arg type="b" name="addSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="addSucceeded" direction="out"/>
         </method>
 
         <method name="detachParticipant" tp:name-for-bindings="detachParticipant">
@@ -280,8 +270,7 @@
                 The call ID
               </tp:docstring>
             </arg>
-            <arg type="b" name="detachSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="detachSucceeded" direction="out"/>
         </method>
 
         <method name="joinConference" tp:name-for-bindings="joinConference">
@@ -622,8 +611,7 @@
                 The conference ID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="holdSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
         <method name="unholdConference" tp:name-for-bindings="unholdConference">
@@ -636,8 +624,7 @@
                 The conference ID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="unholdSucceeded" direction="out">
-            </arg>
+            <arg type="b" name="unholdSucceeded" direction="out"/>
         </method>
 
         <method name="startRecordedFilePlayback" tp:name-for-bindings="startRecordedFilePlayback">
