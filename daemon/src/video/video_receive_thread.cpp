@@ -70,8 +70,7 @@ const int SDP_BUFFER_SIZE = 8192;
 
 void VideoReceiveThread::openDecoder()
 {
-    if (decoderCtx_)
-        avcodec_close(decoderCtx_);
+    avcodec_close(decoderCtx_);
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     decoderCtx_->thread_count = 1;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
@@ -182,6 +181,7 @@ void VideoReceiveThread::setup()
 
     // Get a pointer to the codec context for the video stream
     decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
+    EXIT_IF_FAIL(decoderCtx_ != 0, "Decoder context is NULL");
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
