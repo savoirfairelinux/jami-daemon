@@ -77,14 +77,15 @@ udp_resolve_host(const char *node, int service)
     return res;
 }
 
-int udp_set_url(struct sockaddr_storage *addr,
-                const char *hostname, int port)
+unsigned
+udp_set_url(struct sockaddr_storage *addr,
+            const char *hostname, int port)
 {
     struct addrinfo *res0;
     int addr_len;
 
     res0 = udp_resolve_host(hostname, port);
-    if (res0 == 0) return AVERROR(EIO);
+    if (res0 == 0) return 0;
     memcpy(addr, res0->ai_addr, res0->ai_addrlen);
     addr_len = res0->ai_addrlen;
     freeaddrinfo(res0);
@@ -200,8 +201,8 @@ SocketPair::openSockets(const char *uri, int local_rtp_port)
     // Open sockets and store addresses for sending
     if ((rtpHandle_ = udp_socket_create(&rtp_addr, &rtp_len, local_rtp_port)) == -1 or
         (rtcpHandle_ = udp_socket_create(&rtcp_addr, &rtcp_len, local_rtcp_port)) == -1 or
-        (rtpDestAddrLen_ = udp_set_url(&rtpDestAddr_, hostname, rtp_port)) < 0 or
-        (rtcpDestAddrLen_ = udp_set_url(&rtcpDestAddr_, hostname, rtcp_port)) < 0) {
+        (rtpDestAddrLen_ = udp_set_url(&rtpDestAddr_, hostname, rtp_port)) == 0 or
+        (rtcpDestAddrLen_ = udp_set_url(&rtcpDestAddr_, hostname, rtcp_port)) == 0) {
 
         // Handle failed socket creation
         closeSockets();
