@@ -942,7 +942,9 @@ void
 dbus_hold_conference(const conference_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hold_conference(call_proxy, c->_confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_hold_conference(call_proxy, c->_confID,
+            &result, &error);
     check_error(error);
 }
 
@@ -950,7 +952,9 @@ void
 dbus_unhold_conference(const conference_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_unhold_conference(call_proxy, c->_confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_unhold_conference(call_proxy, c->_confID,
+            &result, &error);
     check_error(error);
 }
 

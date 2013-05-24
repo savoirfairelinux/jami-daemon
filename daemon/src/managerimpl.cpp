@@ -746,12 +746,13 @@ ManagerImpl::getConferenceFromCallID(const std::string& call_id)
         return NULL;
 }
 
-void ManagerImpl::holdConference(const std::string& id)
+bool
+ManagerImpl::holdConference(const std::string& id)
 {
     ConferenceMap::iterator iter_conf = conferenceMap_.find(id);
 
     if (iter_conf == conferenceMap_.end())
-        return;
+        return false;
 
     Conference *conf = iter_conf->second;
 
@@ -769,33 +770,37 @@ void ManagerImpl::holdConference(const std::string& id)
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
     dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    return true;
 }
 
-void ManagerImpl::unHoldConference(const std::string& id)
+bool
+ManagerImpl::unHoldConference(const std::string& id)
 {
     ConferenceMap::iterator iter_conf = conferenceMap_.find(id);
 
-    if (iter_conf != conferenceMap_.end() and iter_conf->second) {
-        Conference *conf = iter_conf->second;
+    if (iter_conf == conferenceMap_.end() or iter_conf->second == 0)
+        return false;
 
-        bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
-                     conf->getState() == Conference::ACTIVE_DETACHED_REC or
-                     conf->getState() == Conference::HOLD_REC;
+    Conference *conf = iter_conf->second;
 
-        ParticipantSet participants(conf->getParticipantList());
+    bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
+        conf->getState() == Conference::ACTIVE_DETACHED_REC or
+        conf->getState() == Conference::HOLD_REC;
 
-        for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
-            Call *call = getCallFromCallID(*iter);
-            if (call) {
-                // if one call is currently recording, the conference is in state recording
-                isRec |= call->isRecording();
-                offHoldCall(*iter);
-            }
+    ParticipantSet participants(conf->getParticipantList());
+
+    for (ParticipantSet::const_iterator iter = participants.begin(); iter!= participants.end(); ++iter) {
+        Call *call = getCallFromCallID(*iter);
+        if (call) {
+            // if one call is currently recording, the conference is in state recording
+            isRec |= call->isRecording();
+            offHoldCall(*iter);
         }
-
-        conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
-        dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
     }
+
+    conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+    dbus_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    return true;
 }
 
 bool ManagerImpl::isConference(const std::string& id) const

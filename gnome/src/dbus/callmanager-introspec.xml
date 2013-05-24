@@ -125,7 +125,7 @@
                 The callID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="offHoldSucceeded" direction="out">
+            <arg type="b" name="unHoldSucceeded" direction="out">
             </arg>
         </method>
 
@@ -633,6 +633,8 @@
                 The conference ID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="holdSucceeded" direction="out">
+            </arg>
         </method>
 
         <method name="unholdConference" tp:name-for-bindings="unholdConference">
@@ -644,6 +646,8 @@
               <tp:docstring>
                 The conference ID.
               </tp:docstring>
+            </arg>
+            <arg type="b" name="unholdSucceeded" direction="out">
             </arg>
         </method>
 

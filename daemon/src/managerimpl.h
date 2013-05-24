@@ -257,13 +257,13 @@ class ManagerImpl {
          * Hold every participant to a conference
          * @param the conference id
          */
-        void holdConference(const std::string& conference_id);
+        bool holdConference(const std::string& conference_id);
 
         /**
          * Unhold all conference participants
          * @param the conference id
          */
-        void unHoldConference(const std::string& conference_id);
+        bool unHoldConference(const std::string& conference_id);
 
         /**
          * Test if this id is a conference (usefull to test current call)

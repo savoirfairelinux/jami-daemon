@@ -95,8 +95,8 @@ class CallManager
         void detachParticipant(const std::string& callID);
         void joinConference(const std::string& sel_confID, const std::string& drag_confID);
         bool hangUpConference(const std::string& confID);
-        void holdConference(const std::string& confID);
-        void unholdConference(const std::string& confID);
+        bool holdConference(const std::string& confID);
+        bool unholdConference(const std::string& confID);
         std::vector<std::string> getConferenceList();
         std::vector<std::string> getParticipantList(const std::string& confID);
         std::string getConferenceId(const std::string& callID);

@@ -206,16 +206,16 @@ CallManager::joinConference(const std::string& sel_confID, const std::string& dr
     Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
-void
+bool
 CallManager::holdConference(const std::string& confID)
 {
-    Manager::instance().holdConference(confID);
+    return Manager::instance().holdConference(confID);
 }
 
-void
+bool
 CallManager::unholdConference(const std::string& confID)
 {
-    Manager::instance().unHoldConference(confID);
+    return Manager::instance().unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
