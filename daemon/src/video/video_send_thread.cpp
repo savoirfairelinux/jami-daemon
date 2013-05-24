@@ -249,6 +249,8 @@ void VideoSendThread::setup()
     outputCtx_->oformat = file_oformat;
     strncpy(outputCtx_->filename, args_["destination"].c_str(),
             sizeof outputCtx_->filename);
+    // guarantee that buffer is NULL terminated
+    outputCtx_->filename[sizeof outputCtx_->filename - 1] = '\0';
 
     /* find the video encoder */
     AVCodec *encoder = avcodec_find_encoder_by_name(enc_name);
