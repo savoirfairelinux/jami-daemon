@@ -102,15 +102,17 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
 
     res0 = udp_resolve_host(0, local_port);
     if (res0 == 0)
-        goto fail;
+        return -1;
     for (res = res0; res; res=res->ai_next) {
         udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
         if (udp_fd != -1) break;
         ERROR("socket error");
     }
 
-    if (udp_fd < 0)
-        goto fail;
+    if (udp_fd < 0) {
+        freeaddrinfo(res0);
+        return -1;
+    }
 
     memcpy(addr, res->ai_addr, res->ai_addrlen);
     *addr_len = res->ai_addrlen;
@@ -124,13 +126,6 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len,
     freeaddrinfo(res0);
 
     return udp_fd;
-
- fail:
-    if (udp_fd >= 0)
-        close(udp_fd);
-    if (res0)
-        freeaddrinfo(res0);
-    return -1;
 }
 
 const int RTP_BUFFER_SIZE = 1472;
