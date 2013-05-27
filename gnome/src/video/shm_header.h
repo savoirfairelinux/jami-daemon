@@ -44,8 +44,10 @@ typedef struct {
 
     unsigned buffer_gen;
     int buffer_size;
+    /* The header will be aligned on 16-bit boundaries */
+    char padding[8];
 
-    char data[0];
+    char data[];
 } SHMHeader;
 
 #endif
