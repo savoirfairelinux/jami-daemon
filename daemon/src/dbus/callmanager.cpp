@@ -175,7 +175,7 @@ CallManager::addMainParticipant(const std::string& confID)
 bool
 CallManager::detachParticipant(const std::string& callID)
 {
-    return Manager::instance().detachParticipant(callID, "");
+    return Manager::instance().detachParticipant(callID);
 }
 
 bool

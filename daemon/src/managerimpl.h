@@ -309,8 +309,7 @@ class ManagerImpl {
          * @param call id
          * @param the current call id
          */
-        bool detachParticipant(const std::string& call_id,
-                               const std::string& current_call_id);
+        bool detachParticipant(const std::string& call_id);
 
         /**
          * Remove the conference participant from a conference
