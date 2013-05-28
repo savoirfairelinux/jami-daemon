@@ -793,6 +793,8 @@ ManagerImpl::unHoldConference(const std::string& id)
         if (call) {
             // if one call is currently recording, the conference is in state recording
             isRec |= call->isRecording();
+
+            switchCall(*iter);
             offHoldCall(*iter);
         }
     }
