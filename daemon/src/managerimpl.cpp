@@ -530,16 +530,15 @@ bool ManagerImpl::onHoldCall(const std::string& callId)
 //THREAD=Main
 bool ManagerImpl::offHoldCall(const std::string& callId)
 {
-    std::string codecName;
     bool result = true;
 
     stopTone();
 
-    std::string currentCallId(getCurrentCallId());
+    const std::string currentCallId(getCurrentCallId());
 
-    //Place current call on hold if it isn't
+    // Place current call on hold if it isn't
     if (hasCurrentCall()) {
-        if (not currentCallId.empty() and not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
+        if (not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
             DEBUG("Has current call (%s), put on hold", currentCallId.c_str());
             onHoldCall(currentCallId);
         } else if (isConference(currentCallId) && callId != currentCallId) {
