@@ -183,7 +183,7 @@ class VoipPreference : public Serializable {
         std::string zidFile_;
 };
 
-class pjsip_msg;
+struct pjsip_msg;
 
 class HookPreference : public Serializable {
     public:

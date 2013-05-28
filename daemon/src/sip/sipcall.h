@@ -44,10 +44,10 @@
 
 #include "noncopyable.h"
 
-class pjsip_evsub;
-class pj_caching_pool;
-class pj_pool_t;
-class pjsip_inv_session;
+struct pjsip_evsub;
+struct pj_caching_pool;
+struct pj_pool_t;
+struct pjsip_inv_session;
 class Sdp;
 
 /**
