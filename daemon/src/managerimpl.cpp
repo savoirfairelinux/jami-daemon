@@ -1136,14 +1136,12 @@ ManagerImpl::detachParticipant(const std::string& call_id)
             return false;
         }
 
-        if (iter_details->second == "RINGING") {
-            // You've dragged a ringing call into the conference, and now
-            // you're detaching it but haven't answered it yet, so you shouldn't put it on hold
-            removeParticipant(call_id);
-        } else {
+        // Don't hold ringing calls when detaching them from conferences
+        if (iter_details->second != "RINGING")
             onHoldCall(call_id);
-            removeParticipant(call_id);
-        }
+
+        removeParticipant(call_id);
+
     } else {
         DEBUG("Unbind main participant from conference %d");
         getMainBuffer().unBindAll(MainBuffer::DEFAULT_ID);
