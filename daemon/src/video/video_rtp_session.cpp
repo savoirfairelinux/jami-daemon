@@ -128,7 +128,12 @@ void VideoRtpSession::start(int localPort)
     if (not sending_ and not receiving_)
         return;
 
-    socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
+    try {
+        socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
+    } catch (const std::runtime_error &e) {
+        ERROR("Socket creation failed: %s", e.what());
+        return;
+    }
 
     if (sending_) {
         if (sendThread_.get())
