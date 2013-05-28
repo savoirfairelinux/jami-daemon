@@ -832,6 +832,10 @@ ManagerImpl::addParticipant(const std::string& callId, const std::string& confer
         return false;
     }
 
+    // ensure that calls are only in one conference at a time
+    if (isConferenceParticipant(callId))
+        detachParticipant(callId);
+
     // store the current call id (it will change in offHoldCall or in answerCall)
     std::string current_call_id(getCurrentCallId());
 
@@ -977,6 +981,12 @@ ManagerImpl::joinParticipant(const std::string& callId1, const std::string& call
         ERROR("Could not find call %s", callId2.c_str());
         return false;
     }
+
+    // ensure that calls are only in one conference at a time
+    if (isConferenceParticipant(callId1))
+        detachParticipant(callId1);
+    if (isConferenceParticipant(callId2))
+        detachParticipant(callId2);
 
     std::map<std::string, std::string> call1Details(getCallDetails(callId1));
     std::map<std::string, std::string> call2Details(getCallDetails(callId2));
@@ -1260,10 +1270,8 @@ ManagerImpl::joinConference(const std::string& conf_id1,
     ParticipantSet participants(conf->getParticipantList());
 
     for (ParticipantSet::const_iterator p = participants.begin();
-            p != participants.end(); ++p) {
-        detachParticipant(*p);
+            p != participants.end(); ++p)
         addParticipant(*p, conf_id2);
-    }
 
     return true;
 }
