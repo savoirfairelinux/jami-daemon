@@ -45,7 +45,7 @@ void strip_chars(const std::string &to_strip, std::string &num)
 
 std::string NumberCleaner::clean(std::string to_clean, const std::string &prefix)
 {
-   int pos;
+   size_t pos;
    //Hostname and DNS can have '-'
    if ((pos = to_clean.find("@")) == std::string::npos) {
       strip_chars(INVALID_CHAR, to_clean);
