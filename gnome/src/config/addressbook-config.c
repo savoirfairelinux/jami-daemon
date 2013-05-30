@@ -55,44 +55,44 @@ enum {
     COLUMN_BOOK_ACTIVE, COLUMN_BOOK_NAME, COLUMN_BOOK_UID
 };
 
-AddressBook_Config *addressbook_config_load_parameters()
+AddressBook_Config *
+addressbook_config_load_parameters(GSettings *settings)
 {
-    static AddressBook_Config defconfig = {
-        .enable = 1,
-        .max_results = 30,
-        .display_contact_photo = 0,
-        .search_phone_business = 1,
-        .search_phone_home = 1,
-        .search_phone_mobile = 1,
-    };
+    static AddressBook_Config defconfig;
+    defconfig.enable = g_settings_get_boolean(settings,
+            "use-evolution-addressbook");
+    defconfig.max_results = g_settings_get_int(settings,
+            "addressbook-max-results");
+    defconfig.display_contact_photo = g_settings_get_boolean(settings,
+            "addressbook-display-photo");
+    defconfig.search_phone_business = g_settings_get_boolean(settings,
+            "addressbook-search-phone-business");
+    defconfig.search_phone_home = g_settings_get_boolean(settings,
+            "addressbook-search-phone-home");
+    defconfig.search_phone_mobile = g_settings_get_boolean(settings,
+            "addressbook-search-phone-mobile");
 
     return &defconfig;
 }
 
 void
-addressbook_config_save_parameters(void)
+addressbook_config_save_parameters(GSettings *settings)
 {
+    AddressBook_Config *config = addressbook_config;
+    g_settings_set_boolean(settings, "use-evolution-addressbook",
+            config->enable);
+    g_settings_set_int(settings, "addressbook-max-results",
+            config->max_results);
+    g_settings_set_boolean(settings, "addressbook-display-photo",
+            config->display_contact_photo);
+    g_settings_set_boolean(settings, "addressbook-search-phone-business",
+            config->search_phone_business);
+    g_settings_set_boolean(settings, "addressbook-search-phone-home",
+            config->search_phone_home);
+    g_settings_set_boolean(settings, "addressbook-search-phone-mobile",
+            config->search_phone_mobile);
 
-    GHashTable *params = NULL;
-
-    params = g_hash_table_new(NULL, g_str_equal);
-    g_hash_table_replace(params, (gpointer) ADDRESSBOOK_ENABLE,
-                         (gpointer)(size_t) addressbook_config->enable);
-    g_hash_table_replace(params, (gpointer) ADDRESSBOOK_MAX_RESULTS,
-                         (gpointer)(size_t) addressbook_config->max_results);
-    g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_CONTACT_PHOTO,
-                         (gpointer)(size_t) addressbook_config->display_contact_photo);
-    g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_BUSINESS,
-                         (gpointer)(size_t) addressbook_config->search_phone_business);
-    g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_HOME,
-                         (gpointer)(size_t) addressbook_config->search_phone_home);
-    g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_MOBILE,
-                         (gpointer)(size_t) addressbook_config->search_phone_mobile);
-
-    update_searchbar_addressbook_list();
-
-    // Decrement the reference count
-    g_hash_table_unref(params);
+    update_searchbar_addressbook_list(settings);
 }
 
 void
@@ -303,7 +303,7 @@ create_addressbook_settings(SFLPhoneClient *client)
     GtkTreeViewColumn *tree_view_column;
 
     // Load the default values
-    addressbook_config = addressbook_config_load_parameters();
+    addressbook_config = addressbook_config_load_parameters(client->settings);
 
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -408,9 +408,7 @@ create_addressbook_settings(SFLPhoneClient *client)
 
     gtk_widget_show_all(ret);
 
-    const gboolean enabled = g_settings_get_boolean(client->settings, "use-evolution-addressbook");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), enabled);
-    addressbook_config->enable = enabled;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), addressbook_config->enable);
 
     enable_options();
 

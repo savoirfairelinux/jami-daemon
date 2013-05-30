@@ -70,5 +70,30 @@
             <summary>Use Evolution Addressbook</summary>
             <description>Use Evolution Addressbook (if available)</description>
         </key>
+        <key name="addressbook-max-results" type="i">
+            <default>30</default>
+            <summary>Max search results</summary>
+            <description>Maximum results to display in addressbook search.</description>
+        </key>
+        <key name="addressbook-display-photo" type="b">
+            <default>true</default>
+            <summary>Display contact photo</summary>
+            <description>Display contact photo (if available)</description>
+        </key>
+        <key name="addressbook-search-phone-business" type="b">
+            <default>true</default>
+            <summary>Search phone business</summary>
+            <description>Search phone business</description>
+        </key>
+        <key name="addressbook-search-phone-home" type="b">
+            <default>true</default>
+            <summary>Search phone home</summary>
+            <description>Search phone home</description>
+        </key>
+        <key name="addressbook-search-phone-mobile" type="b">
+            <default>true</default>
+            <summary>Search phone mobile</summary>
+            <description>Search phone mobile</description>
+        </key>
     </schema>
 </schemalist>

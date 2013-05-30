@@ -492,7 +492,7 @@ calltree_create(calltab_t* tab, gboolean has_searchbar, SFLPhoneClient *client)
 
     // search bar if tab is either "history" or "addressbook"
     if (has_searchbar) {
-        calltab_create_searchbar(tab);
+        calltab_create_searchbar(tab, client);
 
         if (tab->searchbar != NULL) {
             GtkWidget *alignment =  gtk_alignment_new(0.0, 0.0, 1.0, 1.0);

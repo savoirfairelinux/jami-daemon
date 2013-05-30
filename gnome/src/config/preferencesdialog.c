@@ -252,7 +252,7 @@ void
 save_configuration_parameters(SFLPhoneClient *client)
 {
     if (addrbook)
-        addressbook_config_save_parameters();
+        addressbook_config_save_parameters(client->settings);
 
     hooks_save_parameters(client);
 

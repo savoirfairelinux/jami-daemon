@@ -60,10 +60,11 @@ static GdkPixbuf *outgoing_pixbuf;
 static GdkPixbuf *missed_pixbuf;
 
 static void
-searchbar_addressbook_activated(GtkEntry *entry, G_GNUC_UNUSED gchar *arg1, G_GNUC_UNUSED gpointer data)
+searchbar_addressbook_activated(GtkEntry *entry, G_GNUC_UNUSED gchar *arg1, gpointer data)
 {
     if (addrbook)
-        addrbook->search(addrbook->search_cb, entry, addressbook_config_load_parameters());
+        addrbook->search(addrbook->search_cb, entry,
+                addressbook_config_load_parameters(data));
 }
 
 static void
@@ -89,7 +90,7 @@ get_combobox_active_text(GtkWidget *widget)
 }
 
 static void
-update_current_addressbook(GtkWidget *widget)
+update_current_addressbook(GtkWidget *widget, GSettings *settings)
 {
     if (!addrbook)
         return;
@@ -99,16 +100,16 @@ update_current_addressbook(GtkWidget *widget)
         g_free(string);
     }
 
-    AddressBook_Config *addressbook_config = addressbook_config_load_parameters();
+    AddressBook_Config *addressbook_config = addressbook_config_load_parameters(settings);
     addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry), addressbook_config);
 }
 
 static void
-cbox_changed_cb(GtkWidget *widget, G_GNUC_UNUSED gpointer user_data)
+cbox_changed_cb(GtkWidget *widget, gpointer user_data)
 {
     if (!addrbook)
         return;
-    update_current_addressbook(widget);
+    update_current_addressbook(widget, user_data);
 }
 
 void
@@ -118,7 +119,7 @@ set_focus_on_addressbook_searchbar()
 }
 
 void
-update_searchbar_addressbook_list()
+update_searchbar_addressbook_list(GSettings *settings)
 {
     GSList *books_data = NULL;
 
@@ -169,12 +170,13 @@ update_searchbar_addressbook_list()
             addrbook->set_current_book(activeText);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(cbox), 0);
-            update_current_addressbook(cbox);
+            update_current_addressbook(cbox, settings);
         }
     }
 
     g_free(activeText);
-    cboxSignalId = g_signal_connect(G_OBJECT(cbox), "changed", G_CALLBACK(cbox_changed_cb), NULL);
+    cboxSignalId = g_signal_connect(G_OBJECT(cbox), "changed",
+            G_CALLBACK(cbox_changed_cb), settings);
 }
 
 static gboolean
@@ -184,7 +186,7 @@ label_matches(const gchar *label, GtkWidget *item)
 }
 
 static void
-select_search_type(GtkWidget *item, G_GNUC_UNUSED GtkEntry *entry)
+select_search_type(GtkWidget *item, GSettings *settings)
 {
     if (!addrbook)
         return;
@@ -203,7 +205,7 @@ select_search_type(GtkWidget *item, G_GNUC_UNUSED GtkEntry *entry)
         addrbook->set_search_type(ABOOK_QUERY_CONTAINS);
 
     addrbook->search(addrbook->search_cb, GTK_ENTRY(addressbookentry),
-                     addressbook_config_load_parameters());
+                     addressbook_config_load_parameters(settings));
 }
 
 static void
@@ -276,7 +278,7 @@ text_changed_cb(GtkEntry *entry, G_GNUC_UNUSED GParamSpec *pspec)
 
 
 GtkWidget *
-addressbook_menu_new()
+addressbook_menu_new(GSettings *settings)
 {
     // Create the menu
     GtkWidget *menu_widget = gtk_menu_new();
@@ -284,15 +286,15 @@ addressbook_menu_new()
 
     // Populate menu
     GtkWidget *item = gtk_menu_item_new_with_label("Search is");
-    g_signal_connect(item, "activate", G_CALLBACK(select_search_type), searchbox);
+    g_signal_connect(item, "activate", G_CALLBACK(select_search_type), settings);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), item);
 
     item = gtk_menu_item_new_with_label("Search begins with");
-    g_signal_connect(item, "activate", G_CALLBACK(select_search_type), searchbox);
+    g_signal_connect(item, "activate", G_CALLBACK(select_search_type), settings);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), item);
 
     item = gtk_menu_item_new_with_label("Search contains");
-    g_signal_connect(item, "activate", G_CALLBACK(select_search_type), searchbox);
+    g_signal_connect(item, "activate", G_CALLBACK(select_search_type), settings);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu_widget), item);
 
     gtk_widget_show_all(menu_widget);
@@ -365,7 +367,7 @@ history_searchbar_new()
 }
 
 GtkWidget*
-contacts_searchbar_new()
+contacts_searchbar_new(GSettings *settings)
 {
     GtkWidget *ret = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
@@ -415,7 +417,8 @@ contacts_searchbar_new()
     gtk_widget_get_size_request(GTK_WIDGET(cbox), &cbox_width, &cbox_height);
     gtk_widget_set_size_request(GTK_WIDGET(cbox), cbox_width, 26);
 
-    cboxSignalId = g_signal_connect(G_OBJECT(cbox), "changed", G_CALLBACK(cbox_changed_cb), NULL);
+    cboxSignalId = g_signal_connect(G_OBJECT(cbox), "changed",
+            G_CALLBACK(cbox_changed_cb), settings);
 
     GtkCellRenderer *cell = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(cbox), cell, TRUE);
@@ -436,7 +439,8 @@ contacts_searchbar_new()
     g_signal_connect(addressbookentry, "icon-press", G_CALLBACK(icon_press_cb), NULL);
 
     gtk_entry_set_activates_default(GTK_ENTRY(addressbookentry), TRUE);
-    g_signal_connect_after(GTK_ENTRY(addressbookentry), "activate", G_CALLBACK(searchbar_addressbook_activated), NULL);
+    g_signal_connect_after(GTK_ENTRY(addressbookentry), "activate",
+            G_CALLBACK(searchbar_addressbook_activated), settings);
 
     g_signal_connect_after(GTK_ENTRY(addressbookentry), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
 
@@ -451,7 +455,7 @@ contacts_searchbar_new()
 
     g_free(tooltip_text);
 
-    update_current_addressbook(cbox);
+    update_current_addressbook(cbox, settings);
 
     return ret;
 }

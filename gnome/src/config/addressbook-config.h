@@ -50,12 +50,13 @@
  * Save the parameters through D-BUS
  */
 void
-addressbook_config_save_parameters (void);
+addressbook_config_save_parameters(GSettings *settings);
 
 /**
  * Return the saved parameters through D-Bus
  */
-AddressBook_Config *addressbook_config_load_parameters();
+AddressBook_Config *
+addressbook_config_load_parameters(GSettings *settings);
 
 gboolean
 addressbook_display (AddressBook_Config *settings, const gchar *field);
