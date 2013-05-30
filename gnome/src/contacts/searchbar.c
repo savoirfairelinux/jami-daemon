@@ -60,7 +60,7 @@ static GdkPixbuf *outgoing_pixbuf;
 static GdkPixbuf *missed_pixbuf;
 
 static void
-searchbar_addressbook_activated(GtkEntry *entry, G_GNUC_UNUSED gchar *arg1, gpointer data)
+searchbar_addressbook_activated(GtkEntry *entry, gpointer data)
 {
     if (addrbook)
         addrbook->search(addrbook->search_cb, entry,
