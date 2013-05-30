@@ -56,22 +56,18 @@ handler_async_search(GList *hits, gpointer user_data)
         if (!entry)
             continue;
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+        if (addressbook_config->display_contact_photo)
             photo = entry->photo;
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+        if (addressbook_config->search_phone_business)
             calllist_add_contact(entry->name, entry->phone_business,
                                  CONTACT_PHONE_BUSINESS, photo);
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_PHONE_HOME))
+        if (addressbook_config->search_phone_home)
             calllist_add_contact(entry->name, entry->phone_home,
                                  CONTACT_PHONE_HOME, photo);
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+        if (addressbook_config->search_phone_mobile)
             calllist_add_contact(entry->name, entry->phone_mobile,
                                  CONTACT_PHONE_MOBILE, photo);
 

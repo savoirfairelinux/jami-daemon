@@ -29,6 +29,7 @@
  */
 
 #include "addressbook-config.h"
+#include "utils.h"
 #include "str_utils.h"
 #include "dbus.h"
 #include "searchbar.h"
@@ -413,23 +414,4 @@ create_addressbook_settings(SFLPhoneClient *client)
     enable_options();
 
     return ret;
-}
-
-gboolean
-addressbook_display(AddressBook_Config *settings, const gchar *field)
-{
-    gboolean display;
-
-    if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
-        display = settings->display_contact_photo == 1;
-    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
-        display = settings->search_phone_business == 1;
-    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_HOME))
-        display = settings->search_phone_home == 1;
-    else if (utf8_case_equal(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
-        display = settings->search_phone_mobile == 1;
-    else
-        display = FALSE;
-
-    return display;
 }

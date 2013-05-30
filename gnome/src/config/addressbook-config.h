@@ -32,19 +32,9 @@
 #define _ADDRESS_BOOK_CONFIG
 
 #include <gtk/gtk.h>
-#include <glib.h>
 
 #include "addressbook.h"
 #include "sflphone_client.h"
-#include "actions.h"
-#include "utils.h"
-
-#define ADDRESSBOOK_ENABLE                  "ADDRESSBOOK_ENABLE"
-#define ADDRESSBOOK_MAX_RESULTS             "ADDRESSBOOK_MAX_RESULTS"
-#define ADDRESSBOOK_DISPLAY_CONTACT_PHOTO   "ADDRESSBOOK_DISPLAY_CONTACT_PHOTO"
-#define ADDRESSBOOK_DISPLAY_PHONE_BUSINESS   "ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"
-#define ADDRESSBOOK_DISPLAY_PHONE_HOME       "ADDRESSBOOK_DISPLAY_PHONE_HOME"
-#define ADDRESSBOOK_DISPLAY_PHONE_MOBILE     "ADDRESSBOOK_DISPLAY_PHONE_MOBILE"
 
 /**
  * Save the parameters through D-BUS
@@ -57,9 +47,6 @@ addressbook_config_save_parameters(GSettings *settings);
  */
 AddressBook_Config *
 addressbook_config_load_parameters(GSettings *settings);
-
-gboolean
-addressbook_display (AddressBook_Config *settings, const gchar *field);
 
 GtkWidget*
 create_addressbook_settings(SFLPhoneClient *client);
