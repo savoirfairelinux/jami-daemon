@@ -129,11 +129,11 @@ rest_account get_rest_account(char *host,char *email)
     bzero(ret, sizeof(ret));
     g_debug("HOST: %s", host);
     strcpy(ret,"GET /rest/accountcreator?email=");
-    strcat(ret, email);
+    strncat(ret, email, sizeof(ret) - strlen(ret));
 
     if (req(host, 80, ret, sizeof(ret)) != -1) {
-        strcpy(ra.user, strtok(ret, "\n"));
-        strcpy(ra.passwd, strtok(NULL, "\n"));
+        strncpy(ra.user, strtok(ret, "\n"), sizeof(ra.user));
+        strncpy(ra.passwd, strtok(NULL, "\n"), sizeof(ra.passwd));
         ra.success = 1;
     } else {
         ra.success = 0;
