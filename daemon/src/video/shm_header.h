@@ -44,7 +44,7 @@ struct SHMHeader {
 
     unsigned buffer_gen;
     int buffer_size;
-    /* The header will be aligned on 16-bit boundaries */
+    /* The header will be aligned on 16-byte boundaries */
     char padding[8];
 
     char data[];
