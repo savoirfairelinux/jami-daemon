@@ -49,7 +49,8 @@
 #include "sflphone_const.h"
 #include "reqaccount.h"
 
-int req(char *host, int port, char request[], size_t request_size)
+static int
+req(const char *host, int port, char request[], size_t request_size)
 {
     int s;
     struct sockaddr_in servSockAddr;
@@ -122,11 +123,11 @@ int req(char *host, int port, char request[], size_t request_size)
     return 0;
 }
 
-rest_account get_rest_account(char *host,char *email)
+rest_account
+get_rest_account(const char *host, const char *email)
 {
-    char ret[4096];
-    rest_account ra = {0,};
-    bzero(ret, sizeof(ret));
+    char ret[4096] = {0};
+    rest_account ra = {0};
     g_debug("HOST: %s", host);
     strcpy(ret,"GET /rest/accountcreator?email=");
     strncat(ret, email, sizeof(ret) - strlen(ret));
