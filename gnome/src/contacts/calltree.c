@@ -853,7 +853,8 @@ void calltree_add_call(calltab_t* tab, callable_obj_t * call, GtkTreeIter *paren
     if (pixbuf_security != NULL)
         g_object_unref(G_OBJECT(pixbuf));
 
-    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
+    if (tab == active_calltree_tab)
+        gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
 }
 
 void calltree_add_history_entry(callable_obj_t *call)
