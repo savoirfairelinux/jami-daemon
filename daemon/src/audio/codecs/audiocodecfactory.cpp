@@ -229,6 +229,8 @@ AudioCodecFactory::loadCodec(const std::string &path)
     sfl::AudioCodec *a = static_cast<sfl::AudioCodec *>(createCodec());
     if (a)
         codecInMemory_.push_back(AudioCodecHandlePointer(a, codecHandle));
+    else
+        dlclose(codecHandle);
 
     return a;
 }
