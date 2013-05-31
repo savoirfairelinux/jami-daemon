@@ -158,6 +158,8 @@ sflphone_quit(gboolean force_quit, SFLPhoneClient *client)
         calllist_clean(current_calls_tab);
         calllist_clean(contacts_tab);
         calllist_clean(history_tab);
+        free_addressbook();
+
 #if GLIB_CHECK_VERSION(2,32,0)
         g_application_quit(G_APPLICATION(client));
 #else
