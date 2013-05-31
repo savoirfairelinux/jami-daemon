@@ -337,8 +337,12 @@ OpenSLLayer::initAudioCapture()
     DEBUG("Create audio recorder\n");
     const SLInterfaceID id[1] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
-    result = (*engineInterface)->CreateAudioRecorder(engineInterface, &recorderObject, &audioSource,
-                                                       &audioSink, 1, id, req);
+    if(engineInterface != NULL){
+        result = (*engineInterface)->CreateAudioRecorder(engineInterface, 
+                                                        &recorderObject, 
+                                                        &audioSource,
+                                                        &audioSink, 1, id, req);
+    }
     if (SL_RESULT_SUCCESS != result) {
         DEBUG("Error: could not create audio recorder");
         return;
@@ -412,8 +416,10 @@ OpenSLLayer::startAudioCapture()
 
     
     // in case already recording, stop recording and clear buffer queue
-    result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_STOPPED);
-    assert(SL_RESULT_SUCCESS == result);
+    if(recorderInterface != NULL){
+        result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_STOPPED);
+        assert(SL_RESULT_SUCCESS == result);
+    }
 
     DEBUG("Clearing recorderBufferQueue\n");
     result = (*recorderBufferQueue)->Clear(recorderBufferQueue);
@@ -448,9 +454,13 @@ OpenSLLayer::stopAudioPlayback()
 {
     DEBUG("Stop audio playback\n");
 
-    SLresult result;
-    result = (*playerInterface)->SetPlayState(playerInterface, SL_PLAYSTATE_STOPPED);
-    assert(SL_RESULT_SUCCESS == result);
+    if(playerInterface != NULL){
+        SLresult result;
+        result = (*playerInterface)->SetPlayState(playerInterface, SL_PLAYSTATE_STOPPED);
+        assert(SL_RESULT_SUCCESS == result);
+    }
+
+    DEBUG("Audio playback stopped\n");
 }
 
 void
@@ -458,9 +468,14 @@ OpenSLLayer::stopAudioCapture()
 {
     DEBUG("Stop audio capture\n");
 
-    SLresult result;
-    result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_STOPPED);
-    assert(SL_RESULT_SUCCESS == result);
+    if(recorderInterface != NULL){
+        SLresult result;
+        result = (*recorderInterface)->SetRecordState(recorderInterface, SL_RECORDSTATE_STOPPED);
+        assert(SL_RESULT_SUCCESS == result);
+    }
+
+    DEBUG("Audio capture stopped\n");
+    
 }
 
 std::vector<std::string>
