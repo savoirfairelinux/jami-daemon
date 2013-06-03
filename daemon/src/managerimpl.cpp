@@ -256,7 +256,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
     }
 
     // Call ID must be unique
-    if (not getAccountFromCall(call_id).empty()) {
+    if (isValidCall(call_id)) {
         ERROR("Call id already exists in outgoing call");
         return false;
     }
@@ -2513,7 +2513,7 @@ std::string ManagerImpl::getNewCallID()
     // when it's not found, it return ""
     // generate, something like s10000s20000s4394040
 
-    while (not getAccountFromCall(random_id.str()).empty()) {
+    while (isValidCall(random_id.str())) {
         random_id.clear();
         random_id << "s";
         random_id << (unsigned) rand();
