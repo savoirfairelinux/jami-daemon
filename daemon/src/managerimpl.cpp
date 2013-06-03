@@ -1646,16 +1646,19 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     /* Direct IP to IP call */
     if (isIPToIP(call_id)) {
         Call * call = SIPVoIPLink::instance()->getSipCall(call_id);
-        history_.addCall(call, preferences.getHistoryLimit());
-        SIPVoIPLink::instance()->hangup(call_id, 0);
-        saveHistory();
+        if (call) {
+            history_.addCall(call, preferences.getHistoryLimit());
+            SIPVoIPLink::instance()->hangup(call_id, 0);
+            saveHistory();
+        }
     } else {
-        const std::string account_id(getAccountFromCall(call_id));
-        VoIPLink *link = getAccountLink(account_id);
         Call * call = getCallFromCallID(call_id);
-        history_.addCall(call, preferences.getHistoryLimit());
-        link->peerHungup(call_id);
-        saveHistory();
+        if (call) {
+            VoIPLink *link = getAccountLink(call->getAccountId());
+            history_.addCall(call, preferences.getHistoryLimit());
+            link->peerHungup(call_id);
+            saveHistory();
+        }
     }
 
     /* Broadcast a signal over DBus */
@@ -1900,16 +1903,16 @@ std::string ManagerImpl::createConfigFile() const
 
 std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 {
-    std::string accountid = getAccountFromCall(id);
-    VoIPLink* link = getAccountLink(accountid);
     Call* call = getCallFromCallID(id);
     std::string codecName;
 
     if (call) {
         Call::CallState state = call->getState();
 
-        if (state == Call::ACTIVE or state == Call::CONFERENCING)
+        if (state == Call::ACTIVE or state == Call::CONFERENCING) {
+            VoIPLink* link = getAccountLink(call->getAccountId());
             codecName = link->getCurrentAudioCodecNames(call);
+        }
     }
 
     return codecName;
@@ -1918,13 +1921,13 @@ std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 std::string
 ManagerImpl::getCurrentVideoCodecName(const std::string& ID)
 {
-    std::string accountID = getAccountFromCall(ID);
-    VoIPLink* link = getAccountLink(accountID);
     Call *call(getCallFromCallID(ID));
-    if (call)
+    if (call) {
+        VoIPLink* link = getAccountLink(call->getAccountId());
         return link->getCurrentVideoCodecName(call);
-    else
+    } else {
         return "";
+    }
 }
 
 /**
@@ -2049,7 +2052,6 @@ void ManagerImpl::setRecordingCall(const std::string& id)
     ConferenceMap::const_iterator it(conferenceMap_.find(id));
     if (it == conferenceMap_.end()) {
         DEBUG("Set recording for call %s", id.c_str());
-        std::string accountid(getAccountFromCall(id));
         rec = getCallFromCallID(id);
     } else {
         DEBUG("Set recording for conference %s", id.c_str());
