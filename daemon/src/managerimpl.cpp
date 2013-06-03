@@ -940,7 +940,7 @@ ManagerImpl::getCallFromCallID(const std::string &callID)
 
     call = SIPVoIPLink::instance()->getSipCall(callID);
 #if HAVE_IAX
-    if(call != NULL)
+    if (call != NULL)
         return call;
 
     call = IAXVoIPLink::getIaxCall(callID);
