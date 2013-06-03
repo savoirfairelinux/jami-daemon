@@ -100,7 +100,6 @@ void AudioRtpFactory::initConfig()
 
 void AudioRtpFactory::initSession()
 {
-    DEBUG("AudioRtpFactory: init session2");
     ScopedLock m(audioRtpThreadMutex_);
 
     if (srtpEnabled_) {
