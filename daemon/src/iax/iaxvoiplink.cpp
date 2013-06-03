@@ -44,6 +44,7 @@
 #include "audio/samplerateconverter.h"
 #include "array_size.h"
 #include "scoped_lock.h"
+#include "map_utils.h"
 
 AccountMap IAXVoIPLink::iaxAccountMap_;
 IAXCallMap IAXVoIPLink::iaxCallMap_;
@@ -166,6 +167,16 @@ IAXVoIPLink::getEvent()
     // thread wait 3 millisecond
     usleep(3000);
     return handlingEvents_;
+}
+
+std::vector<std::string>
+IAXVoIPLink::getCallIDs()
+{
+    std::vector<std::string> v;
+    sfl::ScopedLock m(iaxCallMapMutex_);
+
+    map_utils::vectorFromMapKeys(iaxCallMap_, v);
+    return v;
 }
 
 void

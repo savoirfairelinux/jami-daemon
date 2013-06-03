@@ -43,6 +43,7 @@
 #include "dbus/callmanager.h"
 #include "global.h"
 #include "fileutils.h"
+#include "map_utils.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
 #include "sip/sipcall.h"
@@ -2796,20 +2797,14 @@ std::vector<std::map<std::string, std::string> > ManagerImpl::getHistory()
     return history_.getSerialized();
 }
 
-namespace {
-template <typename M, typename V>
-void vectorFromMapKeys(const M &m, V &v)
+std::vector<std::string>
+ManagerImpl::getCallList() const
 {
-    for (typename M::const_iterator it = m.begin(); it != m.end(); ++it)
-        v.push_back(it->first);
-}
-}
-
-// FIXME: get call ids from voiplinks
-std::vector<std::string> ManagerImpl::getCallList() const
-{
-    std::vector<std::string> v;
-    // vectorFromMapKeys(callAccountMap_, v);
+    std::vector<std::string> v(SIPVoIPLink::instance()->getCallIDs());
+#if HAVE_IAX
+    const std::vector<std::string> iaxCalls(IAXVoIPLink::getCallIDs());
+    v.insert(v.end(), iaxCalls.begin(), iaxCalls.end());
+#endif
     return v;
 }
 
@@ -2830,7 +2825,7 @@ std::map<std::string, std::string> ManagerImpl::getConferenceDetails(
 std::vector<std::string> ManagerImpl::getConferenceList() const
 {
     std::vector<std::string> v;
-    vectorFromMapKeys(conferenceMap_, v);
+    map_utils::vectorFromMapKeys(conferenceMap_, v);
     return v;
 }
 

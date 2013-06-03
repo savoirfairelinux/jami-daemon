@@ -96,6 +96,10 @@ class SIPVoIPLink : public VoIPLink {
          */
         virtual bool getEvent();
 
+        /* Returns a list of all callIDs */
+        std::vector<std::string>
+        getCallIDs();
+
         /**
          * Return the internal account map for this VOIP link
          */

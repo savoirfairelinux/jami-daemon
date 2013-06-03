@@ -40,6 +40,7 @@
 #include "sipvoiplink.h"
 #include "array_size.h"
 #include "manager.h"
+#include "map_utils.h"
 #include "logger.h"
 #include "scoped_lock.h"
 
@@ -1148,6 +1149,17 @@ SIPVoIPLink::clearSipCallMap()
         delete iter->second;
 
     sipCallMap_.clear();
+}
+
+
+std::vector<std::string>
+SIPVoIPLink::getCallIDs()
+{
+    std::vector<std::string> v;
+    sfl::ScopedLock m(sipCallMapMutex_);
+
+    map_utils::vectorFromMapKeys(sipCallMap_, v);
+    return v;
 }
 
 void SIPVoIPLink::addSipCall(SIPCall* call)

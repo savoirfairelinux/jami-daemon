@@ -32,6 +32,7 @@
 #define MAP_UTILS_H_
 
 #include <vector>
+#include <map>
 
 namespace map_utils {
 template <typename M, typename V>
