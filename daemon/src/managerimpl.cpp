@@ -1912,13 +1912,6 @@ std::vector<std::string> ManagerImpl::split_string(std::string s)
     return list;
 }
 
-std::string ManagerImpl::join_string(const std::vector<std::string> &v)
-{
-    std::ostringstream os;
-    std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
-    return os.str();
-}
-
 std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 {
     std::string accountid = getAccountFromCall(id);
