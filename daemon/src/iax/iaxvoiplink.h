@@ -72,8 +72,6 @@ class IAXVoIPLink : public VoIPLink {
          */
         virtual bool getEvent();
 
-        bool hasCalls();
-
         /**
          * Return the internal account map for all VOIP links
          */

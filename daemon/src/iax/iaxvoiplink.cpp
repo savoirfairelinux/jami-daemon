@@ -96,13 +96,6 @@ IAXVoIPLink::init()
     }
 }
 
-bool
-IAXVoIPLink::hasCalls()
-{
-    sfl::ScopedLock m(iaxCallMapMutex_);
-    return not iaxCallMap_.empty();
-}
-
 void
 IAXVoIPLink::terminate()
 {

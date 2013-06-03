@@ -1174,13 +1174,6 @@ void SIPVoIPLink::removeSipCall(const std::string& id)
     sipCallMap_.erase(id);
 }
 
-bool
-SIPVoIPLink::hasCalls()
-{
-    sfl::ScopedLock m(sipCallMapMutex_);
-    return not sipCallMap_.empty();
-}
-
 SIPCall*
 SIPVoIPLink::getSipCall(const std::string& id)
 {

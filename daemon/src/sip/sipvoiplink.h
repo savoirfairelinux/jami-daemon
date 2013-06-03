@@ -268,7 +268,6 @@ class SIPVoIPLink : public VoIPLink {
 #endif
         void clearSipCallMap();
         void addSipCall(SIPCall* call);
-        bool hasCalls();
 
         SIPCall* getSipCall(const std::string& id);
         SIPCall* tryGetSipCall(const std::string& id);
