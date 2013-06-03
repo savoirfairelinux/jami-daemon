@@ -50,6 +50,8 @@
 
 #include "im/instant_messaging.h"
 
+#include "dbus/jni_callbacks.h"
+
 
 #if HAVE_IAX
 #include "iax/iaxaccount.h"
@@ -93,26 +95,10 @@
 #include <sys/stat.h>  // mkdir(2)
 #include <jni.h>
 
+
 extern JavaVM *gJavaVM;
 static jobject gManagerObject, gDataObject;
-extern struct callmanager_callback wrapper_callback_struct;
-extern void on_new_call_created_wrapper (const std::string& accountID,
-                                         const std::string& callID,
-                                         const std::string& to);
-extern void on_call_state_changed_wrapper(const std::string& callID,
-                                          const std::string& to);
-extern void on_incoming_call_wrapper (const std::string& accountID,
-                                      const std::string& callID,
-                                      const std::string& from);
-extern void on_transfer_state_changed_wrapper (const std::string& result);
 
-extern void on_conference_created_wrapper (const std::string& confID);
-extern void on_conference_removed_wrapper (const std::string& confID);
-extern void on_conference_state_changed_wrapper(const std::string& confID,const std::string& state);
-extern struct configurationmanager_callback wrapper_configurationcallback_struct;
-extern void on_account_state_changed_wrapper ();
-extern void on_incoming_message_wrapper(const std::string& ID, const std::string& from, const std::string& msg);
-extern void on_registration_state_changed_wrapper(const std::string& accountID, const std::string& state, const int32_t& code);
 
 
 ManagerImpl::ManagerImpl() :
@@ -2726,8 +2712,8 @@ void ManagerImpl::setAccountDetails(const std::string& accountID,
     // Update account details to the client side
     dbus_.getConfigurationManager()->accountsChanged();
 #else
-    DEBUG("Notify the client on account state changed ===========");
-    on_account_state_changed_wrapper();
+    DEBUG("Notify the client on account changed");
+    on_accounts_changed_wrapper();
 #endif
 }
 
@@ -2794,8 +2780,8 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 #if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
 #else
-    DEBUG("Notify the client on account state changed ===========");
-    on_account_state_changed_wrapper();
+    DEBUG("Notify the client on accounts changed");
+    on_accounts_changed_wrapper();
 #endif
 
     return accountID.str();
@@ -2823,7 +2809,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 #if HAVE_DBUS
     dbus_.getConfigurationManager()->accountsChanged();
 #else
-    on_account_state_changed_wrapper();
+    on_accounts_changed_wrapper();
 #endif
 }
 

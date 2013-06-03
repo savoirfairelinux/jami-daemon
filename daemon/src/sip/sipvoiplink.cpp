@@ -68,6 +68,7 @@
 #ifdef __ANDROID__
 #include <pjsua-lib/pjsua.h>
 #include <android/log.h>
+#include "dbus/jni_callbacks.h"
 #endif
 
 #include "pjsip/sip_endpoint.h"
@@ -2061,7 +2062,9 @@ void registration_cb(pjsip_regc_cbparam *param)
 #if HAVE_DBUS
         Manager::instance().getDbusManager()->getCallManager()->registrationStateChanged(accountID, state, param->code);
 #else 
-        //Manager::instance().on_registration_state_changed_wrapper(accountID, state, param->code);
+        DEBUG("Notify the client on account state changed =========== %d", param->code);
+
+        on_account_state_changed_with_code_wrapper(accountID.c_str(), state, param->code);
 #endif
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application

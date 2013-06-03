@@ -42,6 +42,8 @@
 #include "manager.h"
 #include "dbus/configurationmanager.h"
 
+ #include "dbus/jni_callbacks.h"
+
 const char * const Account::AUDIO_CODECS_KEY =      "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY =      "videoCodecs";
 const char * const Account::VIDEO_CODEC_ENABLED =   "enabled";
@@ -97,11 +99,14 @@ void Account::setRegistrationState(const RegistrationState &state)
     if (state != registrationState_) {
         registrationState_ = state;
 
-#if HAVE_DBUS
-        // Notify the client
-        ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
-        c->registrationStateChanged(accountID_, registrationState_);
-#endif
+    #if HAVE_DBUS
+            // Notify the client
+            ConfigurationManager *c(Manager::instance().getDbusManager()->getConfigurationManager());
+            c->registrationStateChanged(accountID_, registrationState_);
+    #else
+        DEBUG("Notify the client on account state changed ===========");
+        on_account_state_changed_wrapper(accountID_.c_str(), registrationState_);
+    #endif
     }
 }
 

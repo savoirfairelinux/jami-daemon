@@ -32,24 +32,38 @@
 
 typedef struct configurationmanager_callback
 {
-    void (*on_account_state_changed)(void);
+    void (*on_accounts_changed)(void);
+    void (*on_account_state_changed)(const std::string& accoundID, const int32_t& state);
+    void (*on_account_state_changed_with_code)(const std::string& accoundID, const std::string& state, const int32_t& code);
 } configurationmanager_callback_t;
 
 
 class ConfigurationCallback {
 public:
     virtual ~ConfigurationCallback() {}
-    virtual void on_account_state_changed(void) {}
+    virtual void on_accounts_changed(void) {}
+    virtual void on_account_state_changed(const std::string& accoundID, const int32_t& state) {}
+    virtual void on_account_state_changed_with_code(const std::string& accoundID, const std::string& state, const int32_t& code) {}
 };
 
 static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;
 
-void on_account_state_changed_wrapper (void) {
-    registeredConfigurationCallbackObject->on_account_state_changed();
+void on_accounts_changed_wrapper (void) {
+    registeredConfigurationCallbackObject->on_accounts_changed();
+}
+
+void on_account_state_changed_wrapper (const std::string& accoundID, const int32_t& state) {
+    registeredConfigurationCallbackObject->on_account_state_changed(accoundID, state);
+}
+
+void on_account_state_changed_with_code_wrapper (const std::string& accoundID, const std::string& state, const int32_t& code) {
+    registeredConfigurationCallbackObject->on_account_state_changed_with_code(accoundID, state, code);
 }
 
 static struct configurationmanager_callback wrapper_configurationcallback_struct = {
-    &on_account_state_changed_wrapper
+    &on_accounts_changed_wrapper,
+    &on_account_state_changed_wrapper,
+    &on_account_state_changed_with_code_wrapper
 };
 
 void setConfigurationCallbackObject(ConfigurationCallback *callback) {
@@ -134,7 +148,9 @@ public:
 class ConfigurationCallback {
 public:
     virtual ~ConfigurationCallback();
-    virtual void on_account_state_changed(void);
+    virtual void on_accounts_changed(void);
+    virtual void on_account_state_changed(const std::string& accoundID, const int32_t& state);
+    virtual void on_account_state_changed_with_code(const std::string& accoundID, const std::string& state, const int32_t& code);
 };
 
 static ConfigurationCallback *registeredConfigurationCallbackObject = NULL;
