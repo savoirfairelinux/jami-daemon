@@ -577,8 +577,6 @@ class ManagerImpl {
          */
         void setEchoCancelState(const std::string &state);
 
-        static std::vector<std::string> split_string(std::string v);
-
         /**
          * Ringtone option.
          * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.

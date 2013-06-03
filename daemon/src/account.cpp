@@ -211,6 +211,22 @@ std::string join_string(const std::vector<std::string> &v)
 }
 }
 
+std::vector<std::string>
+Account::split_string(std::string s)
+{
+    std::vector<std::string> list;
+    std::string temp;
+
+    while (s.find("/", 0) != std::string::npos) {
+        size_t pos = s.find("/", 0);
+        temp = s.substr(0, pos);
+        s.erase(0, pos + 1);
+        list.push_back(temp);
+    }
+
+    return list;
+}
+
 
 void Account::setActiveAudioCodecs(const vector<string> &list)
 {

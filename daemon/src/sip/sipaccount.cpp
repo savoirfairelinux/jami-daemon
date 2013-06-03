@@ -318,7 +318,7 @@ void SIPAccount::unserialize(const Conf::YamlNode &mapNode)
     if (not isIP2IP()) mapNode.getValue(MAILBOX_KEY, &mailBox_);
     mapNode.getValue(AUDIO_CODECS_KEY, &audioCodecStr_);
     // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(ManagerImpl::split_string(audioCodecStr_));
+    setActiveAudioCodecs(split_string(audioCodecStr_));
 #ifdef SFL_VIDEO
     YamlNode *videoCodecsNode(mapNode.getValue(VIDEO_CODECS_KEY));
 

@@ -1897,21 +1897,6 @@ std::string ManagerImpl::createConfigFile() const
     return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 
-std::vector<std::string> ManagerImpl::split_string(std::string s)
-{
-    std::vector<std::string> list;
-    std::string temp;
-
-    while (s.find("/", 0) != std::string::npos) {
-        size_t pos = s.find("/", 0);
-        temp = s.substr(0, pos);
-        s.erase(0, pos + 1);
-        list.push_back(temp);
-    }
-
-    return list;
-}
-
 std::string ManagerImpl::getCurrentAudioCodecName(const std::string& id)
 {
     std::string accountid = getAccountFromCall(id);
@@ -2538,7 +2523,7 @@ std::string ManagerImpl::getNewCallID()
 
 std::vector<std::string> ManagerImpl::loadAccountOrder() const
 {
-    return split_string(preferences.getAccountOrder());
+    return Account::split_string(preferences.getAccountOrder());
 }
 
 namespace {
