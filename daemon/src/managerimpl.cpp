@@ -284,7 +284,7 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
     DEBUG("Selecting account %s", account_id.c_str());
 
     // fallback using the default sip account if the specied doesn't exist
-    std::string use_account_id = "";
+    std::string use_account_id;
     if (!accountExists(account_id)) {
         WARN("Account does not exist, trying with default SIP account");
         use_account_id = SIPAccount::IP2IP_PROFILE;
