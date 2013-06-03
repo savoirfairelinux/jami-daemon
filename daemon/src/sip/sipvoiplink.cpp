@@ -271,8 +271,7 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_);
-    Manager::instance().associateCallToAccount(call->getCallId(), account_id);
+    SIPCall* call = new SIPCall(Manager::instance().getNewCallID(), Call::INCOMING, cp_, account_id);
 
     // May use the published address as well
     std::string addrToUse = SipTransport::getInterfaceAddrFromName(account->getLocalInterface());
@@ -786,7 +785,7 @@ bool isValidIpAddress(const std::string &address)
 }
 
 
-Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
+Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
 {
     DEBUG("New outgoing call to %s", toUrl.c_str());
     std::string toCpy = toUrl;
@@ -797,10 +796,9 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     Manager::instance().setIPToIPForCall(id, IPToIP);
 
     if (IPToIP) {
-        Manager::instance().associateCallToAccount(id, SIPAccount::IP2IP_PROFILE);
         return SIPNewIpToIpCall(id, toUrl);
     } else {
-        return newRegisteredAccountCall(id, toUrl);
+        return newRegisteredAccountCall(id, toUrl, account_id);
     }
 }
 
@@ -813,7 +811,7 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     if (!account)
         throw VoipLinkException("Could not retrieve default account for IP2IP call");
 
-    SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_);
+    SIPCall *call = new SIPCall(id, Call::OUTGOING, cp_, SIPAccount::IP2IP_PROFILE);
 
     call->setIPToIP(true);
     call->initRecFilename(to);
@@ -854,16 +852,16 @@ Call *SIPVoIPLink::SIPNewIpToIpCall(const std::string& id, const std::string& to
     return call;
 }
 
-Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::string& toUrl)
+Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
 {
     DEBUG("UserAgent: New registered account call to %s", toUrl.c_str());
 
-    SIPAccount *account = Manager::instance().getSipAccount(Manager::instance().getAccountFromCall(id));
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
     if (account == NULL) // TODO: We should investigate how we could get rid of this error and create a IP2IP call instead
         throw VoipLinkException("Could not get account for this call");
 
-    SIPCall* call = new SIPCall(id, Call::OUTGOING, cp_);
+    SIPCall* call = new SIPCall(id, Call::OUTGOING, cp_, account->getAccountID());
 
     // If toUri is not a well formatted sip URI, use account information to process it
     std::string toUri;
@@ -954,7 +952,7 @@ SIPVoIPLink::hangup(const std::string& id, int reason)
     if (!call)
         return;
 
-    std::string account_id(Manager::instance().getAccountFromCall(id));
+    std::string account_id(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
     if (account == NULL)
@@ -1176,6 +1174,13 @@ void SIPVoIPLink::removeSipCall(const std::string& id)
     sipCallMap_.erase(id);
 }
 
+bool
+SIPVoIPLink::hasCalls()
+{
+    sfl::ScopedLock m(sipCallMapMutex_);
+    return not sipCallMap_.empty();
+}
+
 SIPCall*
 SIPVoIPLink::getSipCall(const std::string& id)
 {
@@ -1257,7 +1262,7 @@ SIPVoIPLink::transfer(const std::string& id, const std::string& to)
 
     call->stopRecording();
 
-    std::string account_id(Manager::instance().getAccountFromCall(id));
+    std::string account_id(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
     if (account == NULL)
@@ -1449,14 +1454,15 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
 void
 SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 {
-    std::string accountID(Manager::instance().getAccountFromCall(id));
+    SIPCall *call = getSipCall(id);
+    if (!call)
+        return;
+
+    const std::string accountID(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(accountID);
     if (!account)
         return;
 
-    SIPCall *call = getSipCall(id);
-    if (!call)
-        return;
     dtmfSend(*call, code, account->getDtmfType());
 }
 
@@ -1464,8 +1470,8 @@ SIPVoIPLink::carryingDTMFdigits(const std::string& id, char code)
 bool
 SIPVoIPLink::SIPStartCall(SIPCall *call)
 {
-    std::string id(Manager::instance().getAccountFromCall(call->getCallId()));
-    SIPAccount *account = Manager::instance().getSipAccount(id);
+    std::string account_id(call->getAccountId());
+    SIPAccount *account = Manager::instance().getSipAccount(account_id);
 
     if (account == NULL) {
         ERROR("Account is NULL in SIPStartCall");
@@ -1614,7 +1620,7 @@ void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         // After we sent or received a ACK - The connection is established
         link->SIPCallAnswered(call, ev->body.tsx_state.src.rdata);
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
-        std::string accId(Manager::instance().getAccountFromCall(call->getCallId()));
+        std::string accId(call->getAccountId());
 
         switch (inv->cause) {
                 // The call terminates normally - BYE / CANCEL
@@ -1651,7 +1657,7 @@ void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *off
     if (!call)
         return;
 
-    std::string accId(Manager::instance().getAccountFromCall(call->getCallId()));
+    std::string accId(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(accId);
     if (!account)
         return;
@@ -1669,7 +1675,7 @@ void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     SIPCall *call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
     if (!call)
         return;
-    std::string accountid(Manager::instance().getAccountFromCall(call->getCallId()));
+    std::string accountid(call->getAccountId());
 
     SIPAccount *account = Manager::instance().getSipAccount(accountid);
     if (!account)
@@ -1813,7 +1819,7 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         call->getAudioRtp().stop();
         call->getAudioRtp().setSrtpEnabled(false);
 
-        std::string accountID = Manager::instance().getAccountFromCall(call->getCallId());
+        const std::string accountID = call->getAccountId();
 
         SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
         if (sipaccount and sipaccount->getSrtpFallback())
@@ -2141,7 +2147,8 @@ void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 
     try {
-        SIPVoIPLink::instance()->newOutgoingCall(Manager::instance().getNewCallID(), std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen));
+        SIPVoIPLink::instance()->newOutgoingCall(Manager::instance().getNewCallID(),
+                std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen), currentCall->getAccountId());
         Manager::instance().hangupCall(currentCall->getCallId());
     } catch (const VoipLinkException &e) {
         ERROR("%s", e.what());
@@ -2230,7 +2237,7 @@ namespace {
 
 void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 {
-    std::string account_id(Manager::instance().getAccountFromCall(call->getCallId()));
+    std::string account_id(call->getAccountId());
     SIPAccount *account = Manager::instance().getSipAccount(account_id);
     if (!account)
         return;

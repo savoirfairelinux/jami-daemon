@@ -80,7 +80,8 @@ class VoIPLink {
          * @return Call* The current call
          */
         virtual Call* newOutgoingCall(const std::string &id,
-                                      const std::string &toUrl) = 0;
+                                      const std::string &toUrl,
+                                      const std::string &account_id) = 0;
 
         /**
          * Answer the call
@@ -148,6 +149,8 @@ class VoIPLink {
          */
         virtual std::string getCurrentVideoCodecName(Call *call) const = 0;
         virtual std::string getCurrentAudioCodecNames(Call *call) const = 0;
+
+        virtual bool hasCalls() = 0;
 
         /**
          * Send a message to a call identified by its callid

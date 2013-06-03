@@ -45,7 +45,8 @@ namespace {
 }
 
 SIPCall::SIPCall(const std::string& id, Call::CallType type,
-                 pj_caching_pool *caching_pool) : Call(id, type)
+        pj_caching_pool *caching_pool, const std::string &account_id) :
+    Call(id, type, account_id)
     , inv(NULL)
     , audiortp_(this)
 #ifdef SFL_VIDEO

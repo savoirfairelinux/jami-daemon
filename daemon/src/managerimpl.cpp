@@ -91,8 +91,7 @@ ManagerImpl::ManagerImpl() :
     currentCallId_(), currentCallMutex_(), audiodriver_(0), dtmfKey_(),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCall_(), waitingCallMutex_(), nbIncomingWaitingCall_(0), path_(),
-    callAccountMap_(), callAccountMapMutex_(), IPToIPMap_(),
-    mainBuffer_(), conferenceMap_(), history_(), finished_(false)
+    IPToIPMap_(), mainBuffer_(), conferenceMap_(), history_(), finished_(false)
 {
     pthread_mutex_init(&currentCallMutex_, NULL);
     pthread_mutex_init(&toneMutex_, NULL);
@@ -294,14 +293,12 @@ bool ManagerImpl::outgoingCall(const std::string& account_id,
         use_account_id = account_id;
     }
 
-    associateCallToAccount(call_id, use_account_id);
-
     try {
-        Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned);
+        Call *call = getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned, use_account_id);
 
         // try to reverse match the peer name using the cache
         if (call->getDisplayName().empty()) {
-            const std::string pseudo_contact_name(HistoryNameCache::getInstance().getNameFromHistory(call->getPeerNumber(), getAccountFromCall(call_id)));
+            const std::string pseudo_contact_name(HistoryNameCache::getInstance().getNameFromHistory(call->getPeerNumber(), call->getAccountId()));
             if (not pseudo_contact_name.empty())
                 call->setDisplayName(pseudo_contact_name);
         }
@@ -359,8 +356,7 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     }
 
     try {
-        const std::string account_id = getAccountFromCall(call_id);
-        VoIPLink *link = getAccountLink(account_id);
+        VoIPLink *link = getAccountLink(call->getAccountId());
         if (link)
             link->answer(call);
     } catch (const std::runtime_error &e) {
@@ -438,13 +434,11 @@ bool ManagerImpl::hangupCall(const std::string& callId)
             return false;
         }
     } else {
-        std::string accountId(getAccountFromCall(callId));
         Call * call = getCallFromCallID(callId);
         if (call) {
             history_.addCall(call, preferences.getHistoryLimit());
-            VoIPLink *link = getAccountLink(accountId);
+            VoIPLink *link = getAccountLink(call->getAccountId());
             link->hangup(callId, 0);
-            removeCallAccount(callId);
             saveHistory();
         }
     }
@@ -551,12 +545,10 @@ bool ManagerImpl::offHoldCall(const std::string& callId)
         SIPVoIPLink::instance()->offhold(callId);
     else {
         /* Classic call, attached to an account */
-        const std::string accountId(getAccountFromCall(callId));
-        DEBUG("Setting offhold, Account %s, callid %s", accountId.c_str(), callId.c_str());
         Call * call = getCallFromCallID(callId);
 
         if (call)
-            getAccountLink(accountId)->offhold(callId);
+            getAccountLink(call->getAccountId())->offhold(callId);
         else
             result = false;
     }
@@ -656,8 +648,6 @@ bool ManagerImpl::refuseCall(const std::string& id)
             return false;
 
         getAccountLink(accountid)->refuse(id);
-
-        removeCallAccount(id);
     }
 
     removeWaitingCall(id);
@@ -1458,8 +1448,6 @@ void ManagerImpl::incomingCall(Call &call, const std::string& accountId)
     stopTone();
     const std::string callID(call.getCallId());
 
-    associateCallToAccount(callID, accountId);
-
     if (accountId.empty())
         setIPToIPForCall(callID, true);
     else {
@@ -1673,7 +1661,6 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     dbus_.getCallManager()->callStateChanged(call_id, "HUNGUP");
 
     removeWaitingCall(call_id);
-    removeCallAccount(call_id);
     removeStream(call_id);
 
     if (getCallList().empty()) {
@@ -1694,7 +1681,6 @@ void ManagerImpl::callBusy(const std::string& id)
         unsetCurrentCall();
     }
 
-    removeCallAccount(id);
     removeWaitingCall(id);
 }
 
@@ -1714,7 +1700,6 @@ void ManagerImpl::callFailure(const std::string& call_id)
         removeParticipant(call_id);
     }
 
-    removeCallAccount(call_id);
     removeWaitingCall(call_id);
 }
 
@@ -2524,42 +2509,21 @@ void ManagerImpl::removeAccount(const std::string& accountID)
     dbus_.getConfigurationManager()->accountsChanged();
 }
 
-// ACCOUNT handling
-void ManagerImpl::associateCallToAccount(const std::string& callID,
-        const std::string& accountID)
-{
-    sfl::ScopedLock m(callAccountMapMutex_);
-    callAccountMap_[callID] = accountID;
-    DEBUG("Associate Call %s with Account %s", callID.data(), accountID.data());
-}
-
 std::string ManagerImpl::getAccountFromCall(const std::string& callID)
 {
-    sfl::ScopedLock m(callAccountMapMutex_);
-    CallAccountMap::iterator iter = callAccountMap_.find(callID);
-
-    return (iter == callAccountMap_.end()) ? "" : iter->second;
+    Call *call = getCallFromCallID(callID);
+    if (call)
+        return call->getAccountId();
+    else
+        return "";
 }
 
-void ManagerImpl::removeCallAccount(const std::string& callID)
-{
-    sfl::ScopedLock m(callAccountMapMutex_);
-    callAccountMap_.erase(callID);
-
-    // Stop audio layer if there is no call anymore
-    if (callAccountMap_.empty()) {
-        sfl::ScopedLock lock(audioLayerMutex_);
-
-        if (audiodriver_)
-            audiodriver_->stopStream();
-    }
-
-}
-
+// FIXME: get rid of this, there's no guarantee that
+// a Call will still exist after this has been called.
 bool ManagerImpl::isValidCall(const std::string& callID)
 {
-    sfl::ScopedLock m(callAccountMapMutex_);
-    return callAccountMap_.find(callID) != callAccountMap_.end();
+    Call *call = getCallFromCallID(callID);
+    return call != 0;
 }
 
 std::string ManagerImpl::getNewCallID()
@@ -2837,16 +2801,11 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails(const std::string
     // To achieve that, we need to get the voip link attached to the call
     // But to achieve that, we need to get the account the call was made with
 
-    // So first we fetch the account
-    const std::string accountid(getAccountFromCall(callID));
-
     // Then the VoIP link this account is linked with (IAX2 or SIP)
     Call *call = getCallFromCallID(callID);
 
     if (call) {
-        std::map<std::string, std::string> details(call->getDetails());
-        details["ACCOUNTID"] = accountid;
-        return details;
+        return call->getDetails();
     } else {
         ERROR("Call is NULL");
         // FIXME: is this even useful?
@@ -2868,10 +2827,11 @@ void vectorFromMapKeys(const M &m, V &v)
 }
 }
 
+// FIXME: get call ids from voiplinks
 std::vector<std::string> ManagerImpl::getCallList() const
 {
     std::vector<std::string> v;
-    vectorFromMapKeys(callAccountMap_, v);
+    // vectorFromMapKeys(callAccountMap_, v);
     return v;
 }
 

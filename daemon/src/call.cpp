@@ -34,7 +34,7 @@
 #include "history/historyitem.h"
 #include "scoped_lock.h"
 
-Call::Call(const std::string& id, Call::CallType type)
+Call::Call(const std::string& id, Call::CallType type, const std::string &accountID)
     : callMutex_()
     , localIPAddress_("")
     , localAudioPort_(0)
@@ -42,6 +42,7 @@ Call::Call(const std::string& id, Call::CallType type)
     , id_(id)
     , confID_()
     , type_(type)
+    , accountID_(accountID)
     , connectionState_(Call::DISCONNECTED)
     , callState_(Call::INACTIVE)
     , isIPToIP_(false)
@@ -203,7 +204,7 @@ std::map<std::string, std::string> Call::createHistoryEntry() const
     using sfl::HistoryItem;
     std::map<std::string, std::string> result;
 
-    result[HistoryItem::ACCOUNT_ID_KEY] = Manager::instance().getAccountFromCall(id_);
+    result[HistoryItem::ACCOUNT_ID_KEY] = accountID_;
     result[HistoryItem::CONFID_KEY] = confID_;
     result[HistoryItem::CALLID_KEY] = id_;
     result[HistoryItem::DISPLAY_NAME_KEY] = displayName_;
@@ -230,6 +231,7 @@ Call::getDetails()
     details["CALL_STATE"] = getStateStr();
     details["CONF_ID"] = confID_;
     details["TIMESTAMP_START"] = timestamp_to_string(timestamp_start_);
+    details["ACCOUNTID"] = accountID_;
     return details;
 }
 

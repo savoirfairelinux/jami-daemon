@@ -84,10 +84,6 @@ class Account;
 class SIPAccount;
 class IAXAccount;
 
-
-/** Define a type for a std::string to std::string Map inside ManagerImpl */
-typedef std::map<std::string, std::string> CallAccountMap;
-
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
@@ -359,8 +355,7 @@ class ManagerImpl {
         void stopTone();
 
         /**
-         * When receiving a new incoming call, add it to the callaccount map
-         * and notify user
+         * Handle incoming call and notify user
          * @param call A call pointer
          * @param accountId an account id
          */
@@ -926,12 +921,6 @@ class ManagerImpl {
         DNSService *DNSService_;
 #endif
 
-        /** Map to associate a CallID to the good account */
-        CallAccountMap callAccountMap_;
-
-        /** Mutex to lock the call account map (main thread + voiplink thread) */
-        pthread_mutex_t callAccountMapMutex_;
-
         std::map<std::string, bool> IPToIPMap_;
 
         bool isIPToIP(const std::string& callID) const;
@@ -957,14 +946,6 @@ class ManagerImpl {
     public:
 
         void setIPToIPForCall(const std::string& callID, bool IPToIP);
-
-        /** Associate a new std::string to a std::string
-         * Protected by mutex
-         * @param callID the new CallID not in the list yet
-         * @param accountID the known accountID present in accountMap
-         * @return bool True if the new association is create
-         */
-        void associateCallToAccount(const std::string& callID, const std::string& accountID);
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in

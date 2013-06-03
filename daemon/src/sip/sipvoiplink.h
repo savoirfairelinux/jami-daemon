@@ -128,7 +128,7 @@ class SIPVoIPLink : public VoIPLink {
          * @param toUrl  The Sip address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl);
+        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
 
         /**
          * Start a new SIP call using the IP2IP profile
@@ -142,7 +142,7 @@ class SIPVoIPLink : public VoIPLink {
          * @param The call id
          * @param The target sip uri
          */
-        Call *newRegisteredAccountCall(const std::string& id, const std::string& toUrl);
+        Call *newRegisteredAccountCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
 
         /**
          * Answer the call
@@ -268,6 +268,8 @@ class SIPVoIPLink : public VoIPLink {
 #endif
         void clearSipCallMap();
         void addSipCall(SIPCall* call);
+        bool hasCalls();
+
         SIPCall* getSipCall(const std::string& id);
         SIPCall* tryGetSipCall(const std::string& id);
         void removeSipCall(const std::string &id);

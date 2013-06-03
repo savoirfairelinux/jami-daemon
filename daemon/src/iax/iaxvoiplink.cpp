@@ -96,6 +96,13 @@ IAXVoIPLink::init()
     }
 }
 
+bool
+IAXVoIPLink::hasCalls()
+{
+    sfl::ScopedLock m(iaxCallMapMutex_);
+    return not iaxCallMap_.empty();
+}
+
 void
 IAXVoIPLink::terminate()
 {
@@ -271,9 +278,9 @@ IAXVoIPLink::sendUnregister(Account *a)
 }
 
 Call*
-IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl)
+IAXVoIPLink::newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id)
 {
-    IAXCall* call = new IAXCall(id, Call::OUTGOING);
+    IAXCall* call = new IAXCall(id, Call::OUTGOING, account_id);
 
     call->setPeerNumber(toUrl);
     call->initRecFilename(toUrl);
@@ -696,7 +703,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
         case IAX_EVENT_CONNECT:
             id = Manager::instance().getNewCallID();
 
-            call = new IAXCall(id, Call::INCOMING);
+            call = new IAXCall(id, Call::INCOMING, accountID_);
             call->session = event->session;
             call->setConnectionState(Call::PROGRESSING);
 

@@ -63,7 +63,8 @@ class SIPCall : public Call {
          * @param type  The type of the call. Could be Incoming
          *						 Outgoing
          */
-        SIPCall(const std::string& id, Call::CallType type, pj_caching_pool *caching_pool);
+        SIPCall(const std::string& id, Call::CallType type,
+                pj_caching_pool *caching_pool, const std::string &account_id);
 
         /**
          * Destructor
