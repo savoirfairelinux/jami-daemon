@@ -71,7 +71,7 @@ void AudioRtpFactory::initConfig()
     if (rtpSession_ != NULL)
         stop();
 
-    std::string accountId(Manager::instance().getAccountFromCall(ca_->getCallId()));
+    const std::string accountId(ca_->getAccountId());
 
     SIPAccount *account = Manager::instance().getSipAccount(accountId);
 
