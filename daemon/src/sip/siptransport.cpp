@@ -472,7 +472,6 @@ pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
     pj_str_t serverName = account.getStunServerName();
     pj_uint16_t port = account.getStunPort();
 
-    DEBUG("Create STUN transport  server name: %s, port: %d", serverName, port);
     RETURN_IF_STUN_FAIL(createStunResolver(serverName, port) == PJ_SUCCESS, "Can't resolve STUN server");
 
     pj_sock_t sock = PJ_INVALID_SOCKET;
