@@ -2233,10 +2233,12 @@ void transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 }
 
 namespace {
-    // returns port in range [10500, 64998]
-    unsigned int getRandomPort()
+    // returns even number in range [lower, upper]
+    unsigned int getRandomEvenNumber(int lower, int upper)
     {
-        return ((rand() % 27250) + 5250) * 2;
+        const unsigned halfUpper = upper * 0.5;
+        const unsigned halfLower = lower * 0.5;
+        return 2 * (halfLower + rand() % (halfUpper - halfLower + 1));
     }
 }
 
@@ -2249,7 +2251,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 
     // We only want to set ports to new values if they haven't been set
     if (call->getLocalAudioPort() == 0) {
-        const unsigned int callLocalAudioPort = getRandomPort();
+        const unsigned callLocalAudioPort = getRandomEvenNumber(10500, 64998);
 
         const unsigned int callLocalExternAudioPort = account->isStunEnabled()
             ? account->getStunPort()
@@ -2264,10 +2266,9 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
 #ifdef SFL_VIDEO
     if (call->getLocalVideoPort() == 0) {
         // https://projects.savoirfairelinux.com/issues/17498
-        const unsigned int MAX_VIDEO_PORT = 20001;
-        unsigned int callLocalVideoPort = 0;
+        unsigned int callLocalVideoPort;
         do
-            callLocalVideoPort = getRandomPort() % MAX_VIDEO_PORT;
+            callLocalVideoPort = getRandomEvenNumber(10000, 20000);
         while (call->getLocalAudioPort() == callLocalVideoPort);
 
         call->setLocalVideoPort(callLocalVideoPort);
