@@ -84,7 +84,6 @@ class CallManager
         bool attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
-        bool isValidCall(const std::string &callID);
 
         /* Conference related methods */
         bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);

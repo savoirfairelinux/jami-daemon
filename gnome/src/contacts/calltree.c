@@ -629,17 +629,12 @@ update_call(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeIter *i
     gchar *video_codec;
 
     /* Don't get codec names if call does not yet exist */
-    if (dbus_is_valid_call(call->_callID)) {
-        audio_codec = call_get_audio_codec(call);
+    audio_codec = call_get_audio_codec(call);
 #ifdef SFL_VIDEO
-        video_codec = call_get_video_codec(call);
+    video_codec = call_get_video_codec(call);
 #else
-        video_codec = g_strdup("");
+    video_codec = g_strdup("");
 #endif
-    } else {
-        audio_codec = g_strdup("");
-        video_codec = g_strdup("");
-    }
 
     if (call->_state == CALL_STATE_TRANSFER)
         description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "", "");

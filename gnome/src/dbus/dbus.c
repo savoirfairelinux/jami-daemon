@@ -1801,17 +1801,6 @@ dbus_get_call_details(const gchar *callID)
     return details;
 }
 
-gboolean
-dbus_is_valid_call(const gchar *callID)
-{
-    GError *error = NULL;
-    gboolean valid = FALSE;
-    org_sflphone_SFLphone_CallManager_is_valid_call(call_proxy, callID, &valid, &error);
-    check_error(error);
-
-    return valid;
-}
-
 gchar **
 dbus_get_call_list(void)
 {

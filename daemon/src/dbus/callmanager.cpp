@@ -267,12 +267,6 @@ CallManager::getCallList()
     return Manager::instance().getCallList();
 }
 
-bool
-CallManager::isValidCall(const std::string &callID)
-{
-    return Manager::instance().isValidCall(callID);
-}
-
 void
 CallManager::playDTMF(const std::string& key)
 {
