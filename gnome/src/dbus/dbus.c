@@ -427,6 +427,7 @@ registration_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *acco
     if (acc) {
         acc->state = state;
         update_account_list_status_bar(acc);
+        status_bar_display_account();
     }
 }
 
