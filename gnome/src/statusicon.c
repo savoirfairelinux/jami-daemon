@@ -42,7 +42,8 @@ static GtkWidget *show_menu_item, *hangup_menu_item;
 void
 set_minimized(gboolean state)
 {
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
+    if (show_menu_item)
+        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }
 
 void
