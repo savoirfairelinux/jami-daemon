@@ -116,9 +116,13 @@ incoming_call_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID,
     g_free(peer_number);
     g_free(display_name);
 
+    /* Legacy system tray option, requires TopIcons GNOME extension */
     status_tray_icon_blink(TRUE);
     if (g_settings_get_boolean(client->settings, "popup-main-window"))
         popup_main_window(client);
+
+    if (g_settings_get_boolean(client->settings, "bring-window-to-front"))
+        main_window_bring_to_front(client, c->_time_start);
 
     notify_incoming_call(c, client);
     sflphone_incoming_call(c, client);

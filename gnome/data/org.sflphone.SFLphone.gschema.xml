@@ -55,10 +55,16 @@
             <summary>Notify all</summary>
             <description>Notify all.</description>
         </key>
+        <key name="bring-window-to-front" type="b">
+            <default>true</default>
+            <summary>Bring window to front</summary>
+            <description>Bring window to foreground on incoming calls
+            </description>
+        </key>
         <key name="popup-main-window" type="b">
             <default>true</default>
             <summary>Popup main window</summary>
-            <description>Popup main window.</description>
+            <description>Popup main window (if in system tray).</description>
         </key>
         <key name='messaging-url-command' type='s'>
             <summary>Messaging URL command</summary>

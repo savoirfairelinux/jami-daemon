@@ -150,6 +150,14 @@ instant_messaging_load_configuration(SFLPhoneClient *client)
     instant_messaging_enabled = g_settings_get_boolean(client->settings, "instant-messaging-enabled");
 }
 
+static void
+win_to_front_cb(GtkToggleButton *widget, gpointer data)
+{
+    SFLPhoneClient *client = (SFLPhoneClient *) data;
+    const gboolean window_to_front = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    g_settings_set_boolean(client->settings, "bring-window-to-front", window_to_front);
+}
+
 GtkWidget*
 create_general_settings(SFLPhoneClient *client)
 {
@@ -177,8 +185,22 @@ create_general_settings(SFLPhoneClient *client)
     g_signal_connect(G_OBJECT(notifAll), "clicked", G_CALLBACK(set_notif_level), client);
     gtk_grid_attach(GTK_GRID(grid), notifAll, 0, 0, 1, 1);
 
+    // Window Behaviour frame
+    gnome_main_section_new_with_grid(_("Window Behaviour"), &frame, &grid);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+
+    // Whether or not to bring window to foreground on incoming call
+    const gboolean win_to_front = g_settings_get_boolean(client->settings, "bring-window-to-front");
+
+    GtkWidget *win_to_front_button =
+        gtk_check_button_new_with_mnemonic(_("Bring SFLphone to foreground on incoming calls"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(win_to_front_button), win_to_front);
+    g_signal_connect(G_OBJECT(win_to_front_button), "toggled",
+            G_CALLBACK(win_to_front_cb), client);
+    gtk_grid_attach(GTK_GRID(grid), win_to_front_button, 0, 0, 1, 1);
+
     // System Tray option frame
-    gnome_main_section_new_with_grid(_("System Tray Icon"), &frame, &grid);
+    gnome_main_section_new_with_grid(_("System Tray Icon (Legacy)"), &frame, &grid);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     // Whether or not displaying an icon in the system tray
