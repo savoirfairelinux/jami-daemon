@@ -255,12 +255,12 @@ row_single_click(G_GNUC_UNUSED GtkTreeView *tree_view, SFLPhoneClient *client)
                             selectedCall->_zrtp_confirmed = TRUE;
 
                         dbus_confirm_sas(selectedCall);
-                        calltree_update_call(current_calls_tab, selectedCall, client);
+                        calltree_update_call(current_calls_tab, selectedCall, client, TRUE);
                         break;
                     case SRTP_STATE_ZRTP_SAS_CONFIRMED:
                         selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
                         dbus_reset_sas(selectedCall);
-                        calltree_update_call(current_calls_tab, selectedCall, client);
+                        calltree_update_call(current_calls_tab, selectedCall, client, TRUE);
                         break;
                     default:
                         g_debug("Single click but no action");
@@ -579,6 +579,7 @@ static GdkPixbuf *history_state_to_pixbuf(callable_obj_t *call)
 typedef struct {
     calltab_t *tab;
     callable_obj_t *call;
+    gboolean update_codecs;
 } CallUpdateCtx;
 
 typedef struct {
@@ -628,13 +629,18 @@ update_call(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeIter *i
     gchar *audio_codec;
     gchar *video_codec;
 
-    /* Don't get codec names if call does not yet exist */
-    audio_codec = call_get_audio_codec(call);
+    /* Don't get codec names if call does not exist */
+    if (ctx->update_codecs) {
+        audio_codec = call_get_audio_codec(call);
 #ifdef SFL_VIDEO
-    video_codec = call_get_video_codec(call);
+        video_codec = call_get_video_codec(call);
 #else
-    video_codec = g_strdup("");
+        video_codec = g_strdup("");
 #endif
+    } else {
+        audio_codec = g_strdup("");
+        video_codec = g_strdup("");
+    }
 
     if (call->_state == CALL_STATE_TRANSFER)
         description = calltree_display_call_info(call, DISPLAY_TYPE_CALL_TRANSFER, "", "");
@@ -740,13 +746,14 @@ update_call(GtkTreeModel *model, G_GNUC_UNUSED GtkTreePath *path, GtkTreeIter *i
     return TRUE;
 }
 
-void calltree_update_call(calltab_t* tab, callable_obj_t * call, SFLPhoneClient *client)
+void
+calltree_update_call(calltab_t* tab, callable_obj_t * call, SFLPhoneClient *client, gboolean update_codecs)
 {
     if (!call) {
         g_warning("Call is NULL, ignoring");
         return;
     }
-    CallUpdateCtx ctx = {tab, call};
+    CallUpdateCtx ctx = {tab, call, update_codecs};
     GtkTreeStore *store = tab->store;
     GtkTreeModel *model = GTK_TREE_MODEL(store);
     gtk_tree_model_foreach(model, update_call, (gpointer) &ctx);

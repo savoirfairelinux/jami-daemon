@@ -195,7 +195,7 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state, SFLPho
         if (c->_state == CALL_STATE_CURRENT)
             time(&c->_time_stop);
 
-        calltree_update_call(history_tab, c, client);
+        calltree_update_call(history_tab, c, client, FALSE);
         status_bar_display_account();
         sflphone_hung_up(c, client);
     } else if (g_strcmp0(state, "UNHOLD") == 0 || g_strcmp0(state, "CURRENT") == 0)
