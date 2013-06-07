@@ -292,7 +292,7 @@ AudioPreference::AudioPreference() :
     , alwaysRecording_(false)
     , volumemic_(atoi(DFT_VOL_SPKR_STR))
     , volumespkr_(atoi(DFT_VOL_MICRO_STR))
-    , noisereduce_(true)
+    , noisereduce_(false)
     , echocancel_(false)
 {}
 
