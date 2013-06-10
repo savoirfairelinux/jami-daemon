@@ -316,9 +316,6 @@ class SIPAccount : public Account {
         pj_uint16_t getStunPort() const {
             return stunPort_;
         }
-        void setStunPort(pj_uint16_t port) {
-            stunPort_ = port;
-        }
 
         /**
          * @return bool Tells if current transport for that
