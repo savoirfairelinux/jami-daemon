@@ -287,11 +287,10 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
     std::string peerNumber(tmp, std::min(length, sizeof tmp));
     sip_utils::stripSipUriPrefix(peerNumber);
 
-    std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
-    std::string remove_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    if (remote_user.size() > 0 && remove_hostname.size() > 0) {
-        peerNumber = remote_user + "@" + remove_hostname;
-    }
+    const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
+    const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
+    if (not remote_user.empty() and not remote_hostname.empty())
+        peerNumber = remote_user + "@" + remote_hostname;
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
