@@ -47,6 +47,12 @@ AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     audioRtpRecord_.callId_ = call_.getCallId();
 }
 
+std::pair<unsigned, unsigned>
+AudioSymmetricRtpSession::getSocketDescriptors() const
+{
+    return std::pair<unsigned, unsigned>(dso->getRecvSocket(), cso->getRecvSocket());
+}
+
 void AudioSymmetricRtpSession::startReceiveThread()
 {
     ost::SymmetricRTPSession::start();

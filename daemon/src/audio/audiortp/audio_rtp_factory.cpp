@@ -126,6 +126,12 @@ void AudioRtpFactory::initSession()
         rtpSession_ = new AudioSymmetricRtpSession(*ca_);
 }
 
+std::pair<int, int>
+AudioRtpFactory::getSocketDescriptors() const
+{
+    return rtpSession_->getSocketDescriptors();
+}
+
 void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)
 {
     if (rtpSession_ == NULL)

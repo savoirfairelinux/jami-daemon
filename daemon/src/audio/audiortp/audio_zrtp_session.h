@@ -60,6 +60,9 @@ class AudioZrtpSession :
     public:
         AudioZrtpSession(SIPCall &call, const std::string& zidFilename);
 
+        std::pair<unsigned, unsigned>
+        getSocketDescriptors() const;
+
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt &pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }

@@ -61,6 +61,9 @@ class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRt
         */
         AudioSymmetricRtpSession(SIPCall &call);
 
+        std::pair<unsigned, unsigned>
+        getSocketDescriptors() const;
+
         virtual bool onRTPPacketRecv(ost::IncomingRTPPkt& pkt) {
             return AudioRtpSession::onRTPPacketRecv(pkt);
         }
