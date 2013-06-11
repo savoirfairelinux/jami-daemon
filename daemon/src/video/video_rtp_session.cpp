@@ -45,7 +45,8 @@ namespace sfl_video {
 using std::map;
 using std::string;
 
-VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string> &txArgs) :
+VideoRtpSession::VideoRtpSession(const string &callID,
+								 const map<string, string> &txArgs) :
     socketPair_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
     rxArgs_(), sending_(false), receiving_(false), callID_(callID)
 {}
