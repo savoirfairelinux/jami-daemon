@@ -461,6 +461,27 @@ pjsip_tpselector *SipTransport::createTransportSelector(pjsip_transport *transpo
     return tp;
 }
 
+std::vector<pj_sockaddr_in>
+SipTransport::getSTUNAddresses(const SIPAccount &account,
+        std::vector<long> &socketDescriptors) const
+{
+    const pj_str_t serverName = account.getStunServerName();
+    const pj_uint16_t port = account.getStunPort();
+
+    std::vector<pj_sockaddr_in> result(socketDescriptors.size());
+
+    if (pjstun_get_mapped_addr(&cp_->factory, socketDescriptors.size(), &socketDescriptors[0],
+                &serverName, port, &serverName, port, &result[0]) != PJ_SUCCESS)
+        throw std::runtime_error("Can't contact STUN server");
+
+    for (std::vector<pj_sockaddr_in>::const_iterator it = result.begin();
+            it != result.end(); ++it)
+        WARN("STUN PORTS: %ld", pj_ntohs(it->sin_port));
+
+    return result;
+}
+
+
 pjsip_transport *SipTransport::createStunTransport(SIPAccount &account)
 {
 #define RETURN_IF_STUN_FAIL(A, M, ...) \

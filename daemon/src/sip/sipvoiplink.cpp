@@ -189,6 +189,23 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
+void updateSDPFromSTUN(SIPCall &call, const SIPAccount &account, const SipTransport &transport)
+{
+    std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
+
+    try {
+        std::vector<pj_sockaddr_in> stunPorts(transport.getSTUNAddresses(account, socketDescriptors));
+
+        // FIXME: get video sockets
+        stunPorts.resize(4);
+
+        call.getLocalSDP()->updatePorts(stunPorts);
+    } catch (const std::runtime_error &e) {
+        ERROR("%s", e.what());
+    }
+}
+
+
 pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
 {
     if (!rdata or !rdata->msg_info.msg) {
@@ -309,6 +326,9 @@ pj_bool_t transaction_request_cb(pjsip_rx_data *rdata)
         delete call;
         return PJ_FALSE;
     }
+
+    if (account->isStunEnabled())
+        updateSDPFromSTUN(*call, *account, SIPVoIPLink::instance()->sipTransport);
 
     if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
         std::string sdpOffer(static_cast<const char*>(body->data), body->len);
@@ -900,6 +920,10 @@ Call *SIPVoIPLink::newRegisteredAccountCall(const std::string& id, const std::st
     try {
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
+
+        if (account->isStunEnabled())
+            updateSDPFromSTUN(*call, *account, SIPVoIPLink::instance()->sipTransport);
+
         call->getAudioRtp().initLocalCryptoInfo();
         call->getAudioRtp().start(audioCodecs);
     } catch (...) {
@@ -1100,6 +1124,13 @@ SIPVoIPLink::offhold(const std::string& id)
 
         call->getAudioRtp().initConfig();
         call->getAudioRtp().initSession();
+
+        const std::string account_id(call->getAccountId());
+        SIPAccount *account = Manager::instance().getSipAccount(account_id);
+
+        if (account and account->isStunEnabled())
+            updateSDPFromSTUN(*call, *account, SIPVoIPLink::instance()->sipTransport);
+
         call->getAudioRtp().restoreLocalContext();
         call->getAudioRtp().initLocalCryptoInfoOnOffHold();
         call->getAudioRtp().start(audioCodecs);
@@ -1830,8 +1861,12 @@ void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
         const std::string accountID = call->getAccountId();
 
         SIPAccount *sipaccount = Manager::instance().getSipAccount(accountID);
-        if (sipaccount and sipaccount->getSrtpFallback())
+        if (sipaccount and sipaccount->getSrtpFallback()) {
             call->getAudioRtp().initSession();
+
+            if (sipaccount->isStunEnabled())
+                updateSDPFromSTUN(*call, *sipaccount, SIPVoIPLink::instance()->sipTransport);
+        }
     }
 #endif // HAVE_SDES
 
@@ -2255,13 +2290,8 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     // We only want to set ports to new values if they haven't been set
     if (call->getLocalAudioPort() == 0) {
         const unsigned callLocalAudioPort = getRandomEvenNumber(10500, 64998);
-
-        const unsigned int callLocalExternAudioPort = account->isStunEnabled()
-            ? account->getStunPort()
-            : callLocalAudioPort;
-
         call->setLocalAudioPort(callLocalAudioPort);
-        call->getLocalSDP()->setLocalPublishedAudioPort(callLocalExternAudioPort);
+        call->getLocalSDP()->setLocalPublishedAudioPort(callLocalAudioPort);
     }
 
     call->setLocalIp(localIP);

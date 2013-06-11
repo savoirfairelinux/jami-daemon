@@ -73,7 +73,7 @@ class AudioRtpSession : public AudioRtpRecordHandler {
 
         virtual std::vector<uint8> getLocalMasterSalt() const = 0;
 
-        virtual std::pair<unsigned, unsigned>
+        virtual std::vector<long>
         getSocketDescriptors() const = 0;
 
     private:

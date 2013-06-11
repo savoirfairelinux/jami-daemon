@@ -126,7 +126,7 @@ void AudioRtpFactory::initSession()
         rtpSession_ = new AudioSymmetricRtpSession(*ca_);
 }
 
-std::pair<int, int>
+std::vector<long>
 AudioRtpFactory::getSocketDescriptors() const
 {
     return rtpSession_->getSocketDescriptors();

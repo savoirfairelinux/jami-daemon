@@ -62,8 +62,10 @@ Sdp::Sdp(pj_pool_t *pool)
     , sessionVideoMedia_()
     , localIpAddr_()
     , remoteIpAddr_()
-    , localAudioPort_(0)
-    , localVideoPort_(0)
+    , localAudioDataPort_(0)
+    , localAudioControlPort_(0)
+    , localVideoDataPort_(0)
+    , localVideoControlPort_(0)
     , remoteAudioPort_(0)
     , remoteVideoPort_(0)
     , zrtpHelloHash_()
@@ -205,7 +207,7 @@ Sdp::setMediaDescriptorLines(bool audio)
 
     med->desc.media = audio ? pj_str((char*) "audio") : pj_str((char*) "video");
     med->desc.port_count = 1;
-    med->desc.port = audio ? localAudioPort_ : localVideoPort_;
+    med->desc.port = audio ? localAudioDataPort_ : localVideoDataPort_;
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
     med->desc.transport = pj_str(srtpCrypto_.empty() ? (char*) "RTP/AVP" : (char*) "RTP/SAVP");
 
@@ -283,10 +285,8 @@ Sdp::setMediaDescriptorLines(bool audio)
 
 void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
-    // FIXME: get this from CCRTP directly, don't just assume that the RTCP port is
-    // RTP + 1
     std::ostringstream os;
-    os << localIpAddr_ << ":" << (localAudioPort_ + 1);
+    os << localIpAddr_ << ":" << localAudioControlPort_;
     const std::string str(os.str());
     pj_str_t input_str = pj_str((char*) str.c_str());
     pj_sockaddr outputAddr;
@@ -298,6 +298,15 @@ void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
     pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create_rtcp(memPool_, &outputAddr);
     if (attr)
         pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
+}
+
+void
+Sdp::updatePorts(const std::vector<pj_sockaddr_in> &sockets)
+{
+    localAudioDataPort_     = pj_ntohs(sockets[0].sin_port);
+    localAudioControlPort_  = pj_ntohs(sockets[1].sin_port);
+    localVideoDataPort_     = pj_ntohs(sockets[2].sin_port);
+    localVideoControlPort_  = pj_ntohs(sockets[3].sin_port);
 }
 
 
