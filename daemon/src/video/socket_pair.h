@@ -32,41 +32,24 @@
 #ifndef SOCKET_PAIR_H_
 #define SOCKET_PAIR_H_
 
+#include "video_base.h"
+
 #include <sys/socket.h>
 #include <pthread.h>
 #include <stdint.h>
 
-// FIXME: newer libavformat allows us to do forward declaration
-// of AVIOContext and thus avoid this include
-extern "C" {
-#include <libavformat/avio.h>
-}
-
-/* LIBAVFORMAT_VERSION_CHECK checks for the right version of libav and FFmpeg
- * a is the major version
- * b and c the minor and micro versions of libav
- * d and e the minor and micro versions of FFmpeg */
-#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
-    ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
-      (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
-
-#define HAVE_SDP_CUSTOM_IO LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
-
 namespace sfl_video {
 
-class VideoSendThread;
-class VideoReceiveThread;
+	class VideoSendThread;
+	class VideoReceiveThread;
 
-class SocketPair {
-    public:
+	class SocketPair {
+	public:
         SocketPair(const char *uri, int localPort);
         ~SocketPair();
 
         void interrupt();
-
-        AVIOContext *
-        createAVIOContext();
-
+        VideoIOHandle* getIOContext();
         void openSockets(const char *uri, int localPort);
         void closeSockets();
         static int readCallback(void *opaque, uint8_t *buf, int buf_size);
@@ -81,7 +64,11 @@ class SocketPair {
         sockaddr_storage rtcpDestAddr_;
         socklen_t rtcpDestAddrLen_;
         bool interrupted_;
-};
+		VideoIOHandle *ioHandle_;
+
+	private:
+		NON_COPYABLE(SocketPair);
+	};
 
 }
 

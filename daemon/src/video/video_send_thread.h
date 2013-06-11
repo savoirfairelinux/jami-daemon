@@ -37,76 +37,56 @@
 #include "noncopyable.h"
 #include "shm_sink.h"
 #include "video_provider.h"
-
-extern "C" {
-#include <libavformat/avformat.h>
-}
-
-class SwsContext;
-class AVCodecContext;
-class AVStream;
-class AVFormatContext;
-class AVFrame;
-class AVCodec;
+#include "video_encoder.h"
+#include "video_decoder.h"
 
 namespace sfl_video {
 
-class SocketPair;
+	class SocketPair;
 
-class VideoSendThread : public VideoProvider {
-    private:
-        NON_COPYABLE(VideoSendThread);
-        void forcePresetX264();
-        void print_sdp();
-        void setup();
-        void prepareEncoderContext(AVCodec *encoder);
-        void fillBuffer(void *data);
-        static int interruptCb(void *ctx);
+	class VideoSendThread : public VideoProvider {
+	private:
+		NON_COPYABLE(VideoSendThread);
+		void setup();
+		void fillBuffer(void *data);
+		static int interruptCb(void *ctx);
 
-        std::map<std::string, std::string> args_;
-        /*-------------------------------------------------------------*/
-        /* These variables should be used in thread (i.e. run()) only! */
-        /*-------------------------------------------------------------*/
-        uint8_t *scaledInputBuffer_;
-        uint8_t *encoderBuffer_;
-        AVCodecContext *inputDecoderCtx_;
-        AVFrame *rawFrame_;
-        AVFrame *scaledInput_;
-        int streamIndex_;
-        int encoderBufferSize_;
-        AVCodecContext *encoderCtx_;
-        AVStream *stream_;
-        AVFormatContext *inputCtx_;
-        AVFormatContext *outputCtx_;
-        SwsContext *previewConvertCtx_;
-        SwsContext *encoderConvertCtx_;
-        std::string sdp_;
+		std::map<std::string, std::string> args_;
+		/*-------------------------------------------------------------*/
+		/* These variables should be used in thread (i.e. run()) only! */
+		/*-------------------------------------------------------------*/
+		VideoDecoder *videoDecoder_;
+		VideoEncoder *videoEncoder_;
 
-        SHMSink sink_;
-        size_t bufferSize_;
-        const std::string id_;
+		uint8_t *scaledInputBuffer_;
+		uint8_t *encoderBuffer_;
+		int encoderBufferSize_;
+		std::string sdp_;
 
-        AVIOInterruptCB interruptCb_;
-        bool threadRunning_;
-        int forceKeyFrame_;
-        static void *runCallback(void *);
-        pthread_t thread_;
-        int frameNumber_;
-        std::tr1::shared_ptr<AVIOContext> muxContext_;
-        void run();
-        bool captureFrame();
-        void renderFrame();
-        void encodeAndSendVideo();
-        friend struct VideoTxContextHandle;
+		SHMSink sink_;
+		size_t bufferSize_;
+		const std::string id_;
 
-    public:
-        VideoSendThread(const std::string &id, const std::map<std::string, std::string> &args);
-        ~VideoSendThread();
-        void addIOContext(SocketPair &sock);
-        void start();
-        std::string getSDP() const { return sdp_; }
-        void forceKeyFrame();
-};
+		AVIOInterruptCB interruptCb_;
+		bool threadRunning_;
+		int forceKeyFrame_;
+		static void *runCallback(void *);
+		pthread_t thread_;
+		int frameNumber_;
+		VideoIOHandle* muxContext_;
+		void run();
+		bool captureFrame();
+		void renderFrame();
+		void encodeAndSendVideo();
+
+	public:
+		VideoSendThread(const std::string &id, const std::map<std::string, std::string> &args);
+		~VideoSendThread();
+		void addIOContext(SocketPair &sock);
+		void start();
+		std::string getSDP() const { return sdp_; }
+		void forceKeyFrame();
+	};
 }
 
 #endif // _VIDEO_SEND_THREAD_H_

@@ -39,16 +39,8 @@
 #include "shm_sink.h"
 #include "noncopyable.h"
 #include "video_provider.h"
+#include "video_decoder.h"
 
-extern "C" {
-#include <libavformat/avformat.h>
-}
-
-class SwsContext;
-class AVCodecContext;
-class AVStream;
-class AVFormatContext;
-class AVFrame;
 namespace sfl_video {
 
 class SocketPair;
@@ -61,14 +53,7 @@ class VideoReceiveThread : public VideoProvider {
         /*-------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. run()) only! */
         /*-------------------------------------------------------------*/
-
-        AVCodec *inputDecoder_;
-        AVCodecContext *decoderCtx_;
-        AVFrame *rawFrame_;
-        AVFrame *scaledPicture_;
-        int streamIndex_;
-        AVFormatContext *inputCtx_;
-        SwsContext *imgConvertCtx_;
+		VideoDecoder *videoDecoder_;
 
         int dstWidth_;
         int dstHeight_;
@@ -77,16 +62,13 @@ class VideoReceiveThread : public VideoProvider {
         bool threadRunning_;
         size_t bufferSize_;
         const std::string id_;
-        AVIOInterruptCB interruptCb_;
         void (* requestKeyFrameCallback_)(const std::string &);
-        std::tr1::shared_ptr<unsigned char> sdpBuffer_;
         std::istringstream stream_;
-        std::tr1::shared_ptr<AVIOContext> sdpContext_;
-        std::tr1::shared_ptr<AVIOContext> demuxContext_;
+        VideoIOHandle sdpContext_;
+        VideoIOHandle *demuxContext_;
 
-        void setup();
+        void setupDecoder(VideoDecoder *decoder);
         void openDecoder();
-        void createScalingContext();
         void fillBuffer(void *data);
         static int interruptCb(void *ctx);
         friend struct VideoRxContextHandle;
@@ -95,9 +77,11 @@ class VideoReceiveThread : public VideoProvider {
         void run();
         bool decodeFrame();
         void renderFrame();
+		static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
     public:
-        VideoReceiveThread(const std::string &id, const std::map<std::string, std::string> &args);
+        VideoReceiveThread(const std::string &id,
+						   const std::map<std::string, std::string> &args);
         void addIOContext(SocketPair &socketPair);
         void addDetails(std::map<std::string, std::string> &details);
         ~VideoReceiveThread();

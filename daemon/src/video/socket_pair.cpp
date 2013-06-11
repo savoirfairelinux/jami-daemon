@@ -42,11 +42,6 @@
 #include <netdb.h>
 
 
-extern "C" {
-#include <libavutil/avstring.h>
-#include <libavformat/avformat.h>
-}
-
 namespace {
 
 int ff_network_wait_fd(int fd)
@@ -60,10 +55,11 @@ int ff_network_wait_fd(int fd)
 struct addrinfo*
 udp_resolve_host(const char *node, int service)
 {
-    struct addrinfo hints = { 0 }, *res = 0;
+    struct addrinfo hints, *res = 0;
     int error;
     char sport[16];
 
+	memset(&hints, 0, sizeof(hints));
     snprintf(sport, sizeof(sport), "%d", service);
 
     hints.ai_socktype = SOCK_DGRAM;
@@ -146,7 +142,8 @@ SocketPair::SocketPair(const char *uri, int localPort) :
            rtpDestAddrLen_(),
            rtcpDestAddr_(),
            rtcpDestAddrLen_(),
-           interrupted_(false)
+           interrupted_(false),
+		   ioHandle_(0)
 {
     pthread_mutex_init(&rtcpWriteMutex_, NULL);
     openSockets(uri, localPort);
@@ -159,16 +156,17 @@ SocketPair::~SocketPair()
 
     // destroy in reverse order
     pthread_mutex_destroy(&rtcpWriteMutex_);
+
+	if (!ioHandle_)
+		delete ioHandle_;
 }
 
-void
-SocketPair::interrupt()
+void SocketPair::interrupt()
 {
     interrupted_ = true;
 }
 
-void
-SocketPair::closeSockets()
+void SocketPair::closeSockets()
 {
     if (rtcpHandle_ > 0 and close(rtcpHandle_))
         ERROR("%s", strerror(errno));
@@ -176,9 +174,7 @@ SocketPair::closeSockets()
         ERROR("%s", strerror(errno));
 }
 
-
-void
-SocketPair::openSockets(const char *uri, int local_rtp_port)
+void SocketPair::openSockets(const char *uri, int local_rtp_port)
 {
     char hostname[256];
     char path[1024];
@@ -212,18 +208,13 @@ SocketPair::openSockets(const char *uri, int local_rtp_port)
     }
 }
 
-AVIOContext *
-SocketPair::createAVIOContext()
+VideoIOHandle* SocketPair::getIOContext()
 {
-    // FIXME: Caller must free buffer!
-    unsigned char *buffer(static_cast<unsigned char *>(av_malloc(RTP_BUFFER_SIZE)));
-
-    AVIOContext *context = avio_alloc_context(buffer,
-            RTP_BUFFER_SIZE, 1, reinterpret_cast<void*>(this),
-            &readCallback, &writeCallback, 0);
-
-    context->max_packet_size = RTP_BUFFER_SIZE;
-    return context;
+	if (!ioHandle_)
+		ioHandle_ = new VideoIOHandle(RTP_BUFFER_SIZE,
+									  &readCallback, &writeCallback, 0,
+									  reinterpret_cast<void*>(this));
+	return ioHandle_;
 }
 
 int
@@ -234,7 +225,8 @@ SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
     struct sockaddr_storage from;
     socklen_t from_len;
     int len, n;
-    struct pollfd p[2] = { {context->rtpHandle_, POLLIN, 0}, {context->rtcpHandle_, POLLIN, 0}};
+    struct pollfd p[2] = { {context->rtpHandle_, POLLIN, 0},
+						   {context->rtcpHandle_, POLLIN, 0}};
 
     for(;;) {
         if (context->interrupted_)
