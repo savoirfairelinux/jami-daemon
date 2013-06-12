@@ -130,6 +130,8 @@ void ManagerImpl::init(const std::string &config_file)
     path_ = config_file.empty() ? createConfigFile() : config_file;
     DEBUG("Configuration file path: %s", path_.c_str());
 
+    bool no_errors = true;
+
     try {
         FILE *file = fopen(path_.c_str(), "rb");
 
@@ -141,8 +143,8 @@ void ManagerImpl::init(const std::string &config_file)
             const int error_count = loadAccountMap(parser);
             fclose(file);
             if (error_count > 0) {
-                WARN("Errors while parsing %s, making backup", path_.c_str());
-                make_backup(path_);
+                WARN("Errors while parsing %s", path_.c_str());
+                no_errors = false;
             }
         } else {
             WARN("Config file not found: creating default account map");
@@ -150,7 +152,12 @@ void ManagerImpl::init(const std::string &config_file)
         }
     } catch (const Conf::YamlParserException &e) {
         ERROR("%s", e.what());
+        no_errors = false;
     }
+
+    // always back up last error-free configuration
+    if (no_errors)
+        make_backup(path_);
 
     initAudioDriver();
 
