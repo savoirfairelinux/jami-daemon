@@ -2288,9 +2288,10 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
     if (!account)
         return;
 
+    // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
     if (call->getLocalAudioPort() == 0) {
-        const unsigned callLocalAudioPort = getRandomEvenNumber(10500, 64998);
+        const unsigned callLocalAudioPort = getRandomEvenNumber(16384, 32766);
         call->setLocalAudioPort(callLocalAudioPort);
         call->getLocalSDP()->setLocalPublishedAudioPort(callLocalAudioPort);
     }
@@ -2302,7 +2303,7 @@ void setCallMediaLocal(SIPCall* call, const std::string &localIP)
         // https://projects.savoirfairelinux.com/issues/17498
         unsigned int callLocalVideoPort;
         do
-            callLocalVideoPort = getRandomEvenNumber(10000, 20000);
+            callLocalVideoPort = getRandomEvenNumber(49152, 65534);
         while (call->getLocalAudioPort() == callLocalVideoPort);
 
         call->setLocalVideoPort(callLocalVideoPort);
