@@ -439,6 +439,11 @@ class SIPAccount : public Account {
             return publishedIpAddress_;
         }
 
+        void setPublishedAddress(const std::string &ip_addr) {
+            publishedIpAddress_ = ip_addr;
+        }
+
+
         std::string getServiceRoute() const {
             return serviceRoute_;
         }

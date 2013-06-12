@@ -189,7 +189,7 @@ pj_bool_t transaction_response_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
-void updateSDPFromSTUN(SIPCall &call, const SIPAccount &account, const SipTransport &transport)
+void updateSDPFromSTUN(SIPCall &call, SIPAccount &account, const SipTransport &transport)
 {
     std::vector<long> socketDescriptors(call.getAudioRtp().getSocketDescriptors());
 
@@ -199,6 +199,7 @@ void updateSDPFromSTUN(SIPCall &call, const SIPAccount &account, const SipTransp
         // FIXME: get video sockets
         stunPorts.resize(4);
 
+        account.setPublishedAddress(pj_inet_ntoa(stunPorts[0].sin_addr));
         call.getLocalSDP()->updatePorts(stunPorts);
     } catch (const std::runtime_error &e) {
         ERROR("%s", e.what());
