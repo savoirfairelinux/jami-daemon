@@ -39,6 +39,7 @@
 #include "siptest.h"
 #include "manager.h"
 #include "sip/sipvoiplink.h"
+#include "sip/sip_utils.h"
 
 // anonymous namespace
 namespace {
@@ -356,6 +357,13 @@ void SIPTest::testHoldIpCall()
     sleep(1);
 
     Manager::instance().hangupCall(testCallID);
+}
+
+void SIPTest::testSIPURI()
+{
+    std::string foo("<sip:17771234567@callcentric.com>");
+    sip_utils::stripSipUriPrefix(foo);
+    CPPUNIT_ASSERT(foo == "17771234567");
 }
 
 
