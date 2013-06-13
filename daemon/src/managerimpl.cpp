@@ -395,6 +395,15 @@ bool ManagerImpl::answerCall(const std::string& call_id)
     return result;
 }
 
+void ManagerImpl::checkAudio()
+{
+    if (getCallList().empty()) {
+        sfl::ScopedLock lock(audioLayerMutex_);
+        if (audiodriver_)
+            audiodriver_->stopStream();
+    }
+}
+
 //THREAD=Main
 bool ManagerImpl::hangupCall(const std::string& callId)
 {
@@ -435,6 +444,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
             if (call) {
                 history_.addCall(call, preferences.getHistoryLimit());
                 SIPVoIPLink::instance()->hangup(callId, 0);
+                checkAudio();
                 saveHistory();
             }
         } catch (const VoipLinkException &e) {
@@ -447,6 +457,7 @@ bool ManagerImpl::hangupCall(const std::string& callId)
             history_.addCall(call, preferences.getHistoryLimit());
             VoIPLink *link = getAccountLink(call->getAccountId());
             link->hangup(callId, 0);
+            checkAudio();
             saveHistory();
         }
     }
@@ -656,6 +667,8 @@ bool ManagerImpl::refuseCall(const std::string& id)
             return false;
 
         getAccountLink(accountid)->refuse(id);
+
+        checkAudio();
     }
 
     removeWaitingCall(id);
@@ -1672,13 +1685,8 @@ void ManagerImpl::peerHungupCall(const std::string& call_id)
     dbus_.getCallManager()->callStateChanged(call_id, "HUNGUP");
 
     removeWaitingCall(call_id);
+    checkAudio();
     removeStream(call_id);
-
-    if (getCallList().empty()) {
-        DEBUG("Stop audio stream, there are no calls remaining");
-        sfl::ScopedLock lock(audioLayerMutex_);
-        audiodriver_->stopStream();
-    }
 }
 
 //THREAD=VoIP
@@ -1692,6 +1700,7 @@ void ManagerImpl::callBusy(const std::string& id)
         unsetCurrentCall();
     }
 
+    checkAudio();
     removeWaitingCall(id);
 }
 
@@ -1711,6 +1720,7 @@ void ManagerImpl::callFailure(const std::string& call_id)
         removeParticipant(call_id);
     }
 
+    checkAudio();
     removeWaitingCall(call_id);
 }
 

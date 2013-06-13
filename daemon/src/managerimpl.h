@@ -1050,6 +1050,9 @@ class ManagerImpl {
          */
         AccountMap getAllAccounts() const;
 
+        void
+        checkAudio();
+
         /**
           * To handle the persistent history
           * TODO: move this to ConfigurationManager
