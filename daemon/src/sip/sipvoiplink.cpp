@@ -821,7 +821,7 @@ Call *SIPVoIPLink::newOutgoingCall(const std::string& id, const std::string& toU
     Manager::instance().setIPToIPForCall(id, IPToIP);
 
     if (IPToIP) {
-        return SIPNewIpToIpCall(id, toUrl);
+        return SIPNewIpToIpCall(id, toCpy);
     } else {
         return newRegisteredAccountCall(id, toUrl, account_id);
     }
