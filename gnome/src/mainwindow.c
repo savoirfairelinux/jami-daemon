@@ -210,6 +210,14 @@ static void pack_main_window_start(GtkBox *box, GtkWidget *widget, gboolean expa
 }
 
 void
+main_window_bring_to_front(SFLPhoneClient *client, guint32 timestamp)
+{
+    /* Window should not be in focus, in case user was entering sensitive
+     * information in another application */
+    gtk_window_present_with_time(GTK_WINDOW(client->win), timestamp);
+}
+
+void
 create_main_window(SFLPhoneClient *client)
 {
     // Get configuration stored in GSettings

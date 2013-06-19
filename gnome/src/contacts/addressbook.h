@@ -86,6 +86,7 @@ struct AddrBookHandle {
     void (*set_current_book)(const gchar *);
     void (*set_search_type)(AddrbookSearchType);
     void (*search_cb)(GList *, gpointer);
+    void *handle;
 };
 
 #endif

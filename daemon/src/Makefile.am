@@ -102,4 +102,5 @@ libsflphone_la_SOURCES = conference.cpp \
 		sfl_types.h \
 		array_size.h \
 		account_schema.h \
-		registration_states.h
+		registration_states.h \
+		map_utils.h

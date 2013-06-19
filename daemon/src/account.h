@@ -189,6 +189,9 @@ class Account : public Serializable {
             mailBox_ = mb;
         }
 
+        static std::vector<std::string>
+        split_string(std::string s);
+
         static const char * const VIDEO_CODEC_ENABLED;
         static const char * const VIDEO_CODEC_NAME;
         static const char * const VIDEO_CODEC_PARAMETERS;

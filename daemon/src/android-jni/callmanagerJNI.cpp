@@ -218,7 +218,7 @@ CallManagerJNI::addMainParticipant(const std::string& confID)
 void
 CallManagerJNI::detachParticipant(const std::string& callID)
 {
-    Manager::instance().detachParticipant(callID, "");
+    Manager::instance().detachParticipant(callID);
 }
 
 void

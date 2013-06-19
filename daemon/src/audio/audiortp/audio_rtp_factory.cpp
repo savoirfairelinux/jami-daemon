@@ -71,7 +71,7 @@ void AudioRtpFactory::initConfig()
     if (rtpSession_ != NULL)
         stop();
 
-    std::string accountId(Manager::instance().getAccountFromCall(ca_->getCallId()));
+    const std::string accountId(ca_->getAccountId());
 
     SIPAccount *account = Manager::instance().getSipAccount(accountId);
 
@@ -100,7 +100,6 @@ void AudioRtpFactory::initConfig()
 
 void AudioRtpFactory::initSession()
 {
-    DEBUG("AudioRtpFactory: init session2");
     ScopedLock m(audioRtpThreadMutex_);
 
     if (srtpEnabled_) {
@@ -125,6 +124,12 @@ void AudioRtpFactory::initSession()
         }
     } else
         rtpSession_ = new AudioSymmetricRtpSession(*ca_);
+}
+
+std::vector<long>
+AudioRtpFactory::getSocketDescriptors() const
+{
+    return rtpSession_->getSocketDescriptors();
 }
 
 void AudioRtpFactory::start(const std::vector<AudioCodec*> &audioCodecs)

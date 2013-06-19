@@ -27,26 +27,7 @@
                 If bound to a VoIP account, then the argument is the phone number. In case of calls involving "IP2IP_PROFILE", a complete SIP URI must be specified.
               </tp:docstring>
             </arg>
-        </method>
-
-        <method name="placeCallFirstAccount" tp:name-for-bindings="placeCallFirstAccount">
-            <tp:added version="0.9.8"/>
-            <tp:docstring>
-              Place a call with the first registered account in the account list.
-              <tp:rationale>
-                Use this function when you don't have any information about the accounts used (Ex: Firefly mozilla extension)
-              </tp:rationale>
-            </tp:docstring>
-            <arg type="s" name="callID" direction="in">
-              <tp:docstring>
-                The callID is a unique identifier that must be randomly generated on the client's side. Any subsequent actions refering to this call must use this callID.
-              </tp:docstring>
-            </arg>
-            <arg type="s" name="to" direction="in">
-              <tp:docstring>
-                If bound to a VoIP account, then the argument is the phone number. In case of calls involving "IP2IP_PROFILE", a complete SIP URI must be specified.
-              </tp:docstring>
-            </arg>
+            <arg type="b" name="callSucceeded" direction="out"/>
         </method>
 
         <method name="refuse" tp:name-for-bindings="refuse">
@@ -58,6 +39,7 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="refuseSucceeded" direction="out"/>
 
         </method>
 
@@ -70,6 +52,7 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="acceptSucceeded" direction="out"/>
         </method>
 
         <method name="hangUp" tp:name-for-bindings="hangUp">
@@ -81,6 +64,7 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="hangupSucceeded" direction="out"/>
         </method>
 
         <method name="hangUpConference" tp:name-for-bindings="hangUpConference">
@@ -93,6 +77,7 @@
                 The unique conference ID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="hangupSucceeded" direction="out"/>
         </method>
 
         <method name="hold" tp:name-for-bindings="hold">
@@ -104,6 +89,7 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
         <method name="unhold" tp:name-for-bindings="unhold">
@@ -115,6 +101,7 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="unHoldSucceeded" direction="out"/>
         </method>
 
         <method name="transfer" tp:name-for-bindings="transfer">
@@ -131,6 +118,7 @@
                 The phone number to which the call will be transferred.
               </tp:docstring>
             </arg>
+            <arg type="b" name="transferSucceeded" direction="out"/>
         </method>
 
         <method name="attendedTransfer" tp:name-for-bindings="attendedTransfer">
@@ -147,6 +135,7 @@
                 The callID of the target call.
               </tp:docstring>
             </arg>
+            <arg type="b" name="transferSucceeded" direction="out"/>
         </method>
 
         <method name="playDTMF" tp:name-for-bindings="playDTMF">
@@ -156,22 +145,6 @@
             <arg type="s" name="key" direction="in">
               <tp:docstring>
                 Unicode character for pressed key.
-              </tp:docstring>
-            </arg>
-        </method>
-
-        <method name="isValidCall" tp:name-for-bindings="isValidCall">
-            <tp:docstring>
-              Tests whether or not a call exists.
-            </tp:docstring>
-            <arg type="s" name="callID" direction="in">
-              <tp:docstring>
-                The call ID.
-              </tp:docstring>
-            </arg>
-            <arg type="b" name="isValid" direction="out">
-              <tp:docstring>
-                Returns true is the call has already been created/can be retrieved. False otherwise.
               </tp:docstring>
             </arg>
         </method>
@@ -226,6 +199,7 @@
             </tp:docstring>
             <arg type="s" name="sel_callID" direction="in"/>
             <arg type="s" name="drag_callID" direction="in"/>
+            <arg type="b" name="joinSucceeded" direction="out"/>
         </method>
 
         <method name="createConfFromParticipantList" tp:name-for-bindings="createConfFromParticipantList">
@@ -253,6 +227,7 @@
                 An existing conference ID
               </tp:docstring>
             </arg>
+            <arg type="b" name="addSucceeded" direction="out"/>
         </method>
 
         <method name="addMainParticipant" tp:name-for-bindings="addMainParticipant">
@@ -266,6 +241,7 @@
                 An existing conference ID
               </tp:docstring>
             </arg>
+            <arg type="b" name="addSucceeded" direction="out"/>
         </method>
 
         <method name="detachParticipant" tp:name-for-bindings="detachParticipant">
@@ -278,6 +254,7 @@
                 The call ID
               </tp:docstring>
             </arg>
+            <arg type="b" name="detachSucceeded" direction="out"/>
         </method>
 
         <method name="joinConference" tp:name-for-bindings="joinConference">
@@ -287,6 +264,7 @@
             </tp:docstring>
             <arg type="s" name="sel_confID" direction="in"/>
             <arg type="s" name="drag_confID" direction="in"/>
+            <arg type="b" name="joinSucceeded" direction="out"/>
         </method>
 
         <method name="getConferenceDetails" tp:name-for-bindings="getConferenceDetails">
@@ -617,6 +595,7 @@
                 The conference ID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
         <method name="unholdConference" tp:name-for-bindings="unholdConference">
@@ -629,6 +608,7 @@
                 The conference ID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="unholdSucceeded" direction="out"/>
         </method>
 
         <method name="startRecordedFilePlayback" tp:name-for-bindings="startRecordedFilePlayback">

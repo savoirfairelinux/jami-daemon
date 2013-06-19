@@ -561,7 +561,7 @@ help_about(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
             "artists", artists,
             "authors", authors,
             "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
-            "copyright", "Copyright © 2004-2012 Savoir-faire Linux Inc.",
+            "copyright", "Copyright © 2004-2013 Savoir-faire Linux Inc.",
             "name", PACKAGE_NAME,
             "title", _("About SFLphone"),
             "version", PACKAGE_VERSION,
@@ -843,7 +843,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
                     selectedCall->_peer_info = g_strconcat("\"\" <",
                                                            selectedCall->_peer_number, ">", NULL);
 
-                calltree_update_call(current_calls_tab, selectedCall, client);
+                calltree_update_call(current_calls_tab, selectedCall, client, FALSE);
             }
             break;
             case CALL_STATE_RINGING:
@@ -862,7 +862,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
                 selectedCall->_peer_info = g_strconcat("\"\" <",
                                                        selectedCall->_peer_number, ">", NULL);
 
-                calltree_update_call(current_calls_tab, selectedCall, client);
+                calltree_update_call(current_calls_tab, selectedCall, client, FALSE);
             }
             break;
             case CALL_STATE_CURRENT:
@@ -878,7 +878,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
                     selectedCall->_peer_info = get_peer_info(temp, selectedCall->_display_name);
                     g_free(temp);
                     g_free(oneNo);
-                    calltree_update_call(current_calls_tab, selectedCall, client);
+                    calltree_update_call(current_calls_tab, selectedCall, client, TRUE);
                 }
             }
             break;
@@ -894,7 +894,7 @@ edit_paste(G_GNUC_UNUSED GtkAction *action, SFLPhoneClient *client)
         g_free(selectedCall->_peer_info);
         selectedCall->_peer_info = g_strconcat("\"\" <",
                                                selectedCall->_peer_number, ">", NULL);
-        calltree_update_call(current_calls_tab, selectedCall, client);
+        calltree_update_call(current_calls_tab, selectedCall, client, FALSE);
     }
 
     g_free(no);
@@ -1505,7 +1505,11 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCli
         GtkWidget *menu_items = gtk_image_menu_item_new_from_stock(GTK_STOCK_DELETE,
                                 get_accel_group());
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_items);
-        g_signal_connect(G_OBJECT(menu_items), "activate", G_CALLBACK(remove_from_history), client);
+
+        EditNumberData *edit_number_data = g_new0(EditNumberData, 1);
+        edit_number_data->call = selectedCall;
+        edit_number_data->client = client;
+        g_signal_connect(G_OBJECT(menu_items), "activate", G_CALLBACK(remove_from_history), edit_number_data);
         gtk_widget_show(menu_items);
     }
 
@@ -1534,7 +1538,10 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event, SFLPhoneCl
         GtkWidget *edit = gtk_image_menu_item_new_from_stock(GTK_STOCK_EDIT,
                           get_accel_group());
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), edit);
-        g_signal_connect(edit, "activate", G_CALLBACK(edit_number_cb), selectedCall);
+        EditNumberData *edit_number_data = g_new0(EditNumberData, 1);
+        edit_number_data->call = selectedCall;
+        edit_number_data->client = client;
+        g_signal_connect(edit, "activate", G_CALLBACK(edit_number_cb), edit_number_data);
         gtk_widget_show(edit);
 
         add_registered_accounts_to_menu(menu);

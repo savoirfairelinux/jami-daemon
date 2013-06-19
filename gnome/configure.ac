@@ -1,6 +1,6 @@
 AC_PREREQ([2.64])
 
-AC_INIT([sflphone],[1.2.2],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
+AC_INIT([sflphone],[1.2.3],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -50,7 +50,7 @@ AM_CONDITIONAL(SFL_VIDEO, test "x$enable_video" = "xyes")
 PKG_CHECK_MODULES(GTK, gtk+-3.0, [AC_MSG_NOTICE(Using gtk+-3.0)],
                                  [AC_MSG_ERROR(gtk+-3.0 not found)])
 
-AC_SUBST([GETTEXT_PACKAGE], [$PACKAGE_TARNAME])
+AC_SUBST([GETTEXT_PACKAGE], [$PACKAGE_NAME])
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [GETTEXT package name])
 IT_PROG_INTLTOOL([0.40.0])
 AM_GNU_GETTEXT_VERSION([0.18])

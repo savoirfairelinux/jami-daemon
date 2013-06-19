@@ -48,87 +48,65 @@ CallManager::CallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/org/sflphone/SFLphone/CallManager")
 {}
 
-void CallManager::placeCall(const std::string& accountID,
+bool CallManager::placeCall(const std::string& accountID,
                             const std::string& callID,
                             const std::string& to)
 {
     // Check if a destination number is available
-    if (to.empty())
-        DEBUG("No number entered - Call stopped");
-    else
-        Manager::instance().outgoingCall(accountID, callID, to);
-}
-
-void CallManager::placeCallFirstAccount(const std::string& callID,
-                                        const std::string& to)
-{
-    using std::vector;
-    using std::string;
-
     if (to.empty()) {
-        WARN("CallManager: Warning: No number entered, call stopped");
-        return;
-    }
-
-    vector<string> accountList(Manager::instance().loadAccountOrder());
-
-    if (accountList.empty())
-        accountList = Manager::instance().getAccountList();
-
-    for (vector<string>::const_iterator iter = accountList.begin(); iter != accountList.end(); ++iter) {
-        Account *account = Manager::instance().getAccount(*iter);
-        if (account && (*iter != SIPAccount::IP2IP_PROFILE) && account->isEnabled()) {
-            Manager::instance().outgoingCall(*iter, callID, to);
-            return;
-        }
+        DEBUG("No number entered - Call stopped");
+        return false;
+    } else {
+        return Manager::instance().outgoingCall(accountID, callID, to);
     }
 }
 
-void
+bool
 CallManager::refuse(const std::string& callID)
 {
-    Manager::instance().refuseCall(callID);
+    return Manager::instance().refuseCall(callID);
 }
 
-void
+bool
 CallManager::accept(const std::string& callID)
 {
-    Manager::instance().answerCall(callID);
+    return Manager::instance().answerCall(callID);
 }
 
-void
+bool
 CallManager::hangUp(const std::string& callID)
 {
-    Manager::instance().hangupCall(callID);
+    return Manager::instance().hangupCall(callID);
 }
 
-void
+bool
 CallManager::hangUpConference(const std::string& confID)
 {
-    Manager::instance().hangupConference(confID);
+    return Manager::instance().hangupConference(confID);
 }
 
-void
+bool
 CallManager::hold(const std::string& callID)
 {
-    Manager::instance().onHoldCall(callID);
+    return Manager::instance().onHoldCall(callID);
 }
 
-void
+bool
 CallManager::unhold(const std::string& callID)
 {
-    Manager::instance().offHoldCall(callID);
+    return Manager::instance().offHoldCall(callID);
 }
 
-void
+bool
 CallManager::transfer(const std::string& callID, const std::string& to)
 {
-    Manager::instance().transferCall(callID, to);
+    return Manager::instance().transferCall(callID, to);
 }
 
-void CallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
+bool
+CallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    Manager::instance().attendedTransfer(transferID, targetID);
+    return Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 void CallManager::setVolume(const std::string& device, const double& value)
@@ -169,10 +147,11 @@ CallManager::getVolume(const std::string& device)
     return 0;
 }
 
-void
-CallManager::joinParticipant(const std::string& sel_callID, const std::string& drag_callID)
+bool
+CallManager::joinParticipant(const std::string& sel_callID,
+                             const std::string& drag_callID)
 {
-    Manager::instance().joinParticipant(sel_callID, drag_callID);
+    return Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
@@ -181,46 +160,40 @@ CallManager::createConfFromParticipantList(const std::vector<std::string>& parti
     Manager::instance().createConfFromParticipantList(participants);
 }
 
-void
-CallManager::createConference(const std::string& id1, const std::string& id2)
-{
-    Manager::instance().createConference(id1,id2);
-}
-
-void
+bool
 CallManager::addParticipant(const std::string& callID, const std::string& confID)
 {
-    Manager::instance().addParticipant(callID, confID);
+    return  Manager::instance().addParticipant(callID, confID);
 }
 
-void
+bool
 CallManager::addMainParticipant(const std::string& confID)
 {
-    Manager::instance().addMainParticipant(confID);
+    return Manager::instance().addMainParticipant(confID);
 }
 
-void
+bool
 CallManager::detachParticipant(const std::string& callID)
 {
-    Manager::instance().detachParticipant(callID, "");
+    return Manager::instance().detachParticipant(callID);
 }
 
-void
+bool
 CallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
-    Manager::instance().joinConference(sel_confID, drag_confID);
+    return Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
-void
+bool
 CallManager::holdConference(const std::string& confID)
 {
-    Manager::instance().holdConference(confID);
+    return Manager::instance().holdConference(confID);
 }
 
-void
+bool
 CallManager::unholdConference(const std::string& confID)
 {
-    Manager::instance().unHoldConference(confID);
+    return Manager::instance().unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
@@ -292,12 +265,6 @@ std::vector<std::string>
 CallManager::getCallList()
 {
     return Manager::instance().getCallList();
-}
-
-bool
-CallManager::isValidCall(const std::string &callID)
-{
-    return Manager::instance().isValidCall(callID);
 }
 
 void

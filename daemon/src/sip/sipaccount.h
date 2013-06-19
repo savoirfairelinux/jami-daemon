@@ -316,9 +316,6 @@ class SIPAccount : public Account {
         pj_uint16_t getStunPort() const {
             return stunPort_;
         }
-        void setStunPort(pj_uint16_t port) {
-            stunPort_ = port;
-        }
 
         /**
          * @return bool Tells if current transport for that
@@ -441,6 +438,11 @@ class SIPAccount : public Account {
         std::string getPublishedAddress() const {
             return publishedIpAddress_;
         }
+
+        void setPublishedAddress(const std::string &ip_addr) {
+            publishedIpAddress_ = ip_addr;
+        }
+
 
         std::string getServiceRoute() const {
             return serviceRoute_;

@@ -116,9 +116,13 @@ incoming_call_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *accountID,
     g_free(peer_number);
     g_free(display_name);
 
+    /* Legacy system tray option, requires TopIcons GNOME extension */
     status_tray_icon_blink(TRUE);
     if (g_settings_get_boolean(client->settings, "popup-main-window"))
         popup_main_window(client);
+
+    if (g_settings_get_boolean(client->settings, "bring-window-to-front"))
+        main_window_bring_to_front(client, c->_time_start);
 
     notify_incoming_call(c, client);
     sflphone_incoming_call(c, client);
@@ -191,7 +195,7 @@ process_existing_call_state_change(callable_obj_t *c, const gchar *state, SFLPho
         if (c->_state == CALL_STATE_CURRENT)
             time(&c->_time_stop);
 
-        calltree_update_call(history_tab, c, client);
+        calltree_update_call(history_tab, c, client, FALSE);
         status_bar_display_account();
         sflphone_hung_up(c, client);
     } else if (g_strcmp0(state, "UNHOLD") == 0 || g_strcmp0(state, "CURRENT") == 0)
@@ -423,6 +427,7 @@ registration_state_changed_cb(G_GNUC_UNUSED DBusGProxy *proxy, const gchar *acco
     if (acc) {
         acc->state = state;
         update_account_list_status_bar(acc);
+        status_bar_display_account();
     }
 }
 
@@ -924,7 +929,8 @@ void dbus_clean()
 void dbus_hold(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hold(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_hold(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -932,7 +938,8 @@ void
 dbus_unhold(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_unhold(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_unhold(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -940,7 +947,9 @@ void
 dbus_hold_conference(const conference_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_hold_conference(call_proxy, c->_confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_hold_conference(call_proxy, c->_confID,
+            &result, &error);
     check_error(error);
 }
 
@@ -948,7 +957,9 @@ void
 dbus_unhold_conference(const conference_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_unhold_conference(call_proxy, c->_confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_unhold_conference(call_proxy, c->_confID,
+            &result, &error);
     check_error(error);
 }
 
@@ -972,8 +983,10 @@ dbus_stop_recorded_file_playback(const gchar *filepath)
 }
 
 static void
-hang_up_reply_cb(G_GNUC_UNUSED DBusGProxy *proxy, GError *error, G_GNUC_UNUSED gpointer userdata)
+hang_up_reply_cb(G_GNUC_UNUSED DBusGProxy *proxy, gboolean is_hung_up, GError *error, G_GNUC_UNUSED gpointer userdata)
 {
+    if (!is_hung_up)
+        g_warning("Did not hang up properly");
     check_error(error);
 }
 
@@ -993,7 +1006,9 @@ void
 dbus_transfer(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_transfer(call_proxy, c->_callID, c->_trsft_to, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_transfer(call_proxy, c->_callID,
+            c->_trsft_to, &result, &error);
     check_error(error);
 }
 
@@ -1001,8 +1016,9 @@ void
 dbus_attended_transfer(const callable_obj_t *transfer, const callable_obj_t *target)
 {
     GError *error = NULL;
+    gboolean result;
     org_sflphone_SFLphone_CallManager_attended_transfer(call_proxy, transfer->_callID,
-                           target->_callID, &error);
+                           target->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1011,7 +1027,8 @@ dbus_accept(const callable_obj_t *c)
 {
     status_tray_icon_blink(FALSE);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_accept(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_accept(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1020,7 +1037,8 @@ dbus_refuse(const callable_obj_t *c)
 {
     status_tray_icon_blink(FALSE);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_refuse(call_proxy, c->_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_refuse(call_proxy, c->_callID, &result, &error);
     check_error(error);
 }
 
@@ -1028,8 +1046,9 @@ void
 dbus_place_call(const callable_obj_t *c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_place_call(call_proxy, c->_accountID, c->_callID, c->_peer_number,
-                    &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_place_call(call_proxy, c->_accountID,
+            c->_callID, c->_peer_number, &result, &error);
     check_error(error);
 }
 
@@ -1467,7 +1486,9 @@ dbus_join_participant(const gchar *sel_callID, const gchar *drag_callID)
 {
     g_debug("Join participant %s and %s\n", sel_callID, drag_callID);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID, drag_callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_join_participant(call_proxy, sel_callID,
+            drag_callID, &result, &error);
     check_error(error);
 }
 
@@ -1476,7 +1497,9 @@ dbus_add_participant(const gchar *callID, const gchar *confID)
 {
     g_debug("Add participant %s to %s\n", callID, confID);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID, confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_add_participant(call_proxy, callID,
+            confID, &result, &error);
     check_error(error);
 }
 
@@ -1484,7 +1507,9 @@ void
 dbus_add_main_participant(const gchar *confID)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_add_main_participant(call_proxy, confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_add_main_participant(call_proxy, confID,
+            &result, &error);
     check_error(error);
 }
 
@@ -1492,16 +1517,19 @@ void
 dbus_detach_participant(const gchar *callID)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_detach_participant(call_proxy, callID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_detach_participant(call_proxy, callID,
+            &result, &error);
     check_error(error);
 }
 
 void
 dbus_join_conference(const gchar *sel_confID, const gchar *drag_confID)
 {
-    g_debug("dbus_join_conference %s and %s\n", sel_confID, drag_confID);
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_join_conference(call_proxy, sel_confID, drag_confID, &error);
+    gboolean result;
+    org_sflphone_SFLphone_CallManager_join_conference(call_proxy, sel_confID,
+            drag_confID, &result, &error);
     check_error(error);
 }
 
@@ -1776,17 +1804,6 @@ dbus_get_call_details(const gchar *callID)
     check_error(error);
 
     return details;
-}
-
-gboolean
-dbus_is_valid_call(const gchar *callID)
-{
-    GError *error = NULL;
-    gboolean valid = FALSE;
-    org_sflphone_SFLphone_CallManager_is_valid_call(call_proxy, callID, &valid, &error);
-    check_error(error);
-
-    return valid;
 }
 
 gchar **

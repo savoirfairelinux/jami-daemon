@@ -42,7 +42,8 @@ static GtkWidget *show_menu_item, *hangup_menu_item;
 void
 set_minimized(gboolean state)
 {
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
+    if (show_menu_item)
+        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }
 
 void
@@ -73,7 +74,7 @@ hide_status_hangup_icon()
     }
 }
 
-void
+static void
 status_quit(SFLPhoneClient *client)
 {
     sflphone_quit(FALSE, client);
@@ -92,9 +93,9 @@ status_icon_unminimize()
 }
 
 void
-show_hide(SFLPhoneClient *client)
+show_hide(GtkWidget *widget, SFLPhoneClient *client)
 {
-    if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item))) {
+    if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget))) {
         gtk_widget_show(client->win);
         gtk_window_move(GTK_WINDOW(client->win),
                         g_settings_get_int(client->settings, "window-position-x"),

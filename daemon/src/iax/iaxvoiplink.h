@@ -72,6 +72,11 @@ class IAXVoIPLink : public VoIPLink {
          */
         virtual bool getEvent();
 
+
+        /* Returns a list of all callIDs */
+        static std::vector<std::string>
+        getCallIDs();
+
         /**
          * Return the internal account map for all VOIP links
          */
@@ -110,7 +115,7 @@ class IAXVoIPLink : public VoIPLink {
          * @param toUrl The address to call
          * @return Call*  A pointer on the call
          */
-        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl);
+        virtual Call* newOutgoingCall(const std::string& id, const std::string& toUrl, const std::string &account_id);
 
         /**
          * Answer a call

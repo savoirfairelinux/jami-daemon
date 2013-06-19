@@ -34,6 +34,7 @@
 #include <string>
 #include "video_send_thread.h"
 #include "video_receive_thread.h"
+#include "socket_pair.h"
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
 #include "manager.h"
@@ -45,9 +46,14 @@ using std::map;
 using std::string;
 
 VideoRtpSession::VideoRtpSession(const string &callID, const map<string, string> &txArgs) :
-    sendThread_(), receiveThread_(), txArgs_(txArgs),
+    socketPair_(), sendThread_(), receiveThread_(), txArgs_(txArgs),
     rxArgs_(), sending_(false), receiving_(false), callID_(callID)
 {}
+
+VideoRtpSession::~VideoRtpSession()
+{
+    stop();
+}
 
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
@@ -117,12 +123,23 @@ void VideoRtpSession::updateDestination(const string &destination,
     }
 }
 
-void VideoRtpSession::start()
+void VideoRtpSession::start(int localPort)
 {
+    if (not sending_ and not receiving_)
+        return;
+
+    try {
+        socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
+    } catch (const std::runtime_error &e) {
+        ERROR("Socket creation failed: %s", e.what());
+        return;
+    }
+
     if (sending_) {
         if (sendThread_.get())
             WARN("Restarting video sender");
         sendThread_.reset(new VideoSendThread("local", txArgs_));
+        sendThread_->addIOContext(*socketPair_);
         sendThread_->start();
     } else {
         DEBUG("Video sending disabled");
@@ -134,6 +151,7 @@ void VideoRtpSession::start()
             WARN("restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
+        receiveThread_->addIOContext(*socketPair_);
         receiveThread_->start();
     } else {
         DEBUG("Video receiving disabled");
@@ -143,8 +161,11 @@ void VideoRtpSession::start()
 
 void VideoRtpSession::stop()
 {
+    if (socketPair_.get())
+        socketPair_->interrupt();
     receiveThread_.reset();
     sendThread_.reset();
+    socketPair_.reset();
 }
 
 void VideoRtpSession::forceKeyFrame()

@@ -33,6 +33,7 @@
 
 #include <map>
 #include <string>
+#include <tr1/memory>
 #include "noncopyable.h"
 #include "shm_sink.h"
 #include "video_provider.h"
@@ -49,6 +50,8 @@ class AVFrame;
 class AVCodec;
 
 namespace sfl_video {
+
+class SocketPair;
 
 class VideoSendThread : public VideoProvider {
     private:
@@ -89,6 +92,7 @@ class VideoSendThread : public VideoProvider {
         static void *runCallback(void *);
         pthread_t thread_;
         int frameNumber_;
+        std::tr1::shared_ptr<AVIOContext> muxContext_;
         void run();
         bool captureFrame();
         void renderFrame();
@@ -98,6 +102,7 @@ class VideoSendThread : public VideoProvider {
     public:
         VideoSendThread(const std::string &id, const std::map<std::string, std::string> &args);
         ~VideoSendThread();
+        void addIOContext(SocketPair &sock);
         void start();
         std::string getSDP() const { return sdp_; }
         void forceKeyFrame();

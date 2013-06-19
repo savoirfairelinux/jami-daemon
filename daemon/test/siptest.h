@@ -86,7 +86,8 @@ class SIPTest : public CppUnit::TestCase {
         void testHoldIpCall(void);
 
         void testIncomingIpCallSdp(void);
-    private:
+
+        void testSIPURI();
 };
 
 /* Register our test module */

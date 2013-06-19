@@ -67,7 +67,7 @@ conference_obj_t *
 calltab_get_selected_conf(calltab_t *);
 
 void
-calltab_create_searchbar(calltab_t *);
+calltab_create_searchbar(calltab_t *, SFLPhoneClient *client);
 
 gboolean
 calltab_has_name(calltab_t *tab, const gchar *name);

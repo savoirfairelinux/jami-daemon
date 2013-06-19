@@ -109,6 +109,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 			$(LOCAL_PATH)/sip \
 			$(APP_PROJECT_PATH)/jni/$(MY_SPEEX)/include \
 			$(APP_PROJECT_PATH)/jni/$(MY_COMMONCPP)/inc \
+			$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc \
 			$(APP_PROJECT_PATH)/jni/$(MY_CCRTP)/src \
 			$(APP_PROJECT_PATH)/jni/$(MY_DBUSCPP)/include \
 			$(APP_PROJECT_PATH)/jni/$(MY_DBUS)/include \
@@ -119,7 +120,6 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 			$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjlib-util/include \
 			$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjmedia/include \
 			$(APP_PROJECT_PATH)/jni/$(MY_PJPROJECT)/pjnath/include \
-			$(APP_PROJECT_PATH)/jni/$(MY_LIBYAML)/inc \
 			$(APP_PROJECT_PATH)/jni/$(MY_LIBEXPAT) \
 			$(APP_PROJECT_PATH)/jni/$(MY_SPEEX)/include
 
@@ -131,6 +131,7 @@ LOCAL_CPPFLAGS += $(NETWORKMANAGER) \
 				  -DPREFIX=\"$(MY_PREFIX)\" \
 				  -DPROGSHAREDIR=\"${MY_DATADIR}/sflphone\" \
 				  -DHAVE_CONFIG_H \
+				  -w \
 				  -std=gnu++0x -frtti -fexceptions -fpermissive \
 				  -DAPP_NAME=\"sflphone\" \
 				  -DSWIG_JAVA_ATTACH_CURRENT_THREAD_AS_DAEMON \

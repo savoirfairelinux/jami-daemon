@@ -1,11 +1,6 @@
 /*
- *  Copyright (C) 2012 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
- *
- *  Portions derived from GStreamer:
- *  Copyright (C) <2009> Collabora Ltd
- *  @author: Olivier Crete <olivier.crete@collabora.co.uk
- *  Copyright (C) <2009> Nokia Inc
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,21 +28,19 @@
  *  as that of the covered work.
  */
 
-#ifndef SHM_HEADER_H_
-#define SHM_HEADER_H_
+#ifndef MAP_UTILS_H_
+#define MAP_UTILS_H_
 
-#include <semaphore.h>
+#include <vector>
+#include <map>
 
-typedef struct {
-    sem_t notification;
-    sem_t mutex;
+namespace map_utils {
+template <typename M, typename V>
+void vectorFromMapKeys(const M &m, V &v)
+{
+    for (typename M::const_iterator it = m.begin(); it != m.end(); ++it)
+        v.push_back(it->first);
+}
+}
 
-    unsigned buffer_gen;
-    int buffer_size;
-    /* The header will be aligned on 16-byte boundaries */
-    char padding[8];
-
-    char data[];
-} SHMHeader;
-
-#endif
+#endif  // MAP_UTILS_H_

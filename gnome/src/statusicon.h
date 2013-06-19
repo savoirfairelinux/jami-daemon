@@ -64,7 +64,7 @@ void status_icon_unminimize();
 /**
  * Show hangup icon
  */
-void show_status_hangup_icon();
+void show_status_hangup_icon(SFLPhoneClient *client);
 
 
 /**

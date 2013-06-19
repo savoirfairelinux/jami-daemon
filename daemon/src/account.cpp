@@ -34,6 +34,8 @@
 #endif
 #include "account.h"
 #include <algorithm>
+#include <iterator>
+
 #ifdef SFL_VIDEO
 #include "video/libav_utils.h"
 #endif
@@ -202,6 +204,37 @@ void Account::setVideoCodecs(const vector<map<string, string> > &list)
 #endif
 }
 
+namespace {
+
+// Convert a list of payloads in a special format, readable by the server.
+// Required format: payloads separated by slashes.
+// @return std::string The serializable string
+
+std::string join_string(const std::vector<std::string> &v)
+{
+    std::ostringstream os;
+    std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
+    return os.str();
+}
+}
+
+std::vector<std::string>
+Account::split_string(std::string s)
+{
+    std::vector<std::string> list;
+    std::string temp;
+
+    while (s.find("/", 0) != std::string::npos) {
+        size_t pos = s.find("/", 0);
+        temp = s.substr(0, pos);
+        s.erase(0, pos + 1);
+        list.push_back(temp);
+    }
+
+    return list;
+}
+
+
 void Account::setActiveAudioCodecs(const vector<string> &list)
 {
     // first clear the previously stored codecs
@@ -215,7 +248,7 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
     }
 
     // update the codec string according to new codec selection
-    audioCodecStr_ = ManagerImpl::join_string(list);
+    audioCodecStr_ = join_string(list);
 }
 
 string Account::mapStateNumberToString(RegistrationState state)

@@ -56,22 +56,18 @@ handler_async_search(GList *hits, gpointer user_data)
         if (!entry)
             continue;
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+        if (addressbook_config->display_contact_photo)
             photo = entry->photo;
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+        if (addressbook_config->search_phone_business)
             calllist_add_contact(entry->name, entry->phone_business,
                                  CONTACT_PHONE_BUSINESS, photo);
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_PHONE_HOME))
+        if (addressbook_config->search_phone_home)
             calllist_add_contact(entry->name, entry->phone_home,
                                  CONTACT_PHONE_HOME, photo);
 
-        if (addressbook_display(addressbook_config,
-                                ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+        if (addressbook_config->search_phone_mobile)
             calllist_add_contact(entry->name, entry->phone_mobile,
                                  CONTACT_PHONE_MOBILE, photo);
 
@@ -88,21 +84,26 @@ handler_async_search(GList *hits, gpointer user_data)
 
 void abook_init()
 {
+    /* Clear any existing error */
+    dlerror();
+
     const gchar *addrbook_path = PLUGINS_DIR "/libevladdrbook.so";
     /* FIXME: handle should be unloaded with dlclose on exit */
     void *handle = dlopen(addrbook_path, RTLD_LAZY);
 
     if (handle == NULL) {
-        g_debug("Did not load addressbook from path %s", addrbook_path);
+        g_debug("Did not load addressbook from path %s:%s", addrbook_path, dlerror());
         return;
     }
 
     addrbook = g_new0(AddrBookHandle, 1);
+    /* Keep the handle around to dlclose it later */
+    addrbook->handle = handle;
 
 #define LOAD(func) do {                                         \
         addrbook-> func = dlsym(handle, "addressbook_" #func);  \
         if (addrbook-> func == NULL) {                          \
-            g_warning("Couldn't load " # func);                 \
+            g_warning("Couldn't load " # func ":%s", dlerror());\
             dlclose(handle);                                    \
             g_free(addrbook);                                   \
             addrbook = NULL;                                    \
@@ -121,4 +122,16 @@ void abook_init()
     LOAD(set_search_type);
 
     addrbook->search_cb = handler_async_search;
+}
+
+void
+free_addressbook()
+{
+    if (!addrbook)
+        return;
+
+    if (addrbook->handle)
+        dlclose(addrbook->handle);
+
+    g_free(addrbook);
 }

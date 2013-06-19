@@ -586,7 +586,8 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
            i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
            i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 
-    context->sourceList_.push_back(i->name);
+    if (not context->inSourceList(i->name))
+        context->sourceList_.push_back(i->name);
 }
 
 void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
@@ -624,7 +625,8 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
           i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
           i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
-    context->sinkList_.push_back(i->name);
+    if (not context->inSinkList(i->name))
+        context->sinkList_.push_back(i->name);
 }
 
 void PulseLayer::updatePreference(AudioPreference &preference, int index, PCMType type)

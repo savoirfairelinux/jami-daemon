@@ -528,8 +528,7 @@ void prefill_sip(void)
 {
     if (use_sflphone_org) {
         char alias[300];
-        char *email;
-        email = (char *) gtk_entry_get_text(GTK_ENTRY(wiz->mailbox));
+        const char *email = gtk_entry_get_text(GTK_ENTRY(wiz->mailbox));
         rest_account ra = get_rest_account(SFLPHONE_ORG_SERVER,email);
 
         if (ra.success) {

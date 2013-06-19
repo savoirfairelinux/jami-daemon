@@ -86,10 +86,6 @@ class Account;
 class SIPAccount;
 class IAXAccount;
 
-
-/** Define a type for a std::string to std::string Map inside ManagerImpl */
-typedef std::map<std::string, std::string> CallAccountMap;
-
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
@@ -184,7 +180,7 @@ class ManagerImpl {
          * Hangup the call
          * @param id  The call identifier
          */
-        void hangupCall(const std::string& id);
+        bool hangupCall(const std::string& id);
 
 
         /**
@@ -199,14 +195,14 @@ class ManagerImpl {
          * Put the call on hold
          * @param id  The call identifier
          */
-        void onHoldCall(const std::string& id);
+        bool onHoldCall(const std::string& id);
 
         /**
          * Functions which occur with a user's action
          * Put the call off hold
          * @param id  The call identifier
          */
-        void offHoldCall(const std::string& id);
+        bool offHoldCall(const std::string& id);
 
         /**
          * Functions which occur with a user's action
@@ -238,7 +234,7 @@ class ManagerImpl {
          * Refuse the call
          * @param id  The call identifier
          */
-        void refuseCall(const std::string& id);
+        bool refuseCall(const std::string& id);
 
         /**
          * Create a new conference given two participant
@@ -263,13 +259,13 @@ class ManagerImpl {
          * Hold every participant to a conference
          * @param the conference id
          */
-        void holdConference(const std::string& conference_id);
+        bool holdConference(const std::string& conference_id);
 
         /**
          * Unhold all conference participants
          * @param the conference id
          */
-        void unHoldConference(const std::string& conference_id);
+        bool unHoldConference(const std::string& conference_id);
 
         /**
          * Test if this id is a conference (usefull to test current call)
@@ -288,20 +284,21 @@ class ManagerImpl {
          * @param the call id
          * @param the conference id
          */
-        void addParticipant(const std::string& call_id, const std::string& conference_id);
+        bool addParticipant(const std::string& call_id, const std::string& conference_id);
 
         /**
          * Bind the main participant to a conference (mainly called on a double click action)
          * @param the conference id
          */
-        void addMainParticipant(const std::string& conference_id);
+        bool addMainParticipant(const std::string& conference_id);
 
         /**
          * Join two participants to create a conference
          * @param the fist call id
          * @param the second call id
          */
-        void joinParticipant(const std::string& call_id1, const std::string& call_id2);
+        bool joinParticipant(const std::string& call_id1,
+                             const std::string& call_id2);
 
         /**
          * Create a conference from a list of participant
@@ -314,7 +311,7 @@ class ManagerImpl {
          * @param call id
          * @param the current call id
          */
-        void detachParticipant(const std::string& call_id, const std::string& current_call_id);
+        bool detachParticipant(const std::string& call_id);
 
         /**
          * Remove the conference participant from a conference
@@ -325,7 +322,7 @@ class ManagerImpl {
         /**
          * Join two conference together into one unique conference
          */
-        void joinConference(const std::string& conf_id1, const std::string& conf_id2);
+        bool joinConference(const std::string& conf_id1, const std::string& conf_id2);
 
         void addStream(const std::string& call_id);
 
@@ -364,8 +361,7 @@ class ManagerImpl {
         void stopTone();
 
         /**
-         * When receiving a new incoming call, add it to the callaccount map
-         * and notify user
+         * Handle incoming call and notify user
          * @param call A call pointer
          * @param accountId an account id
          */
@@ -586,15 +582,6 @@ class ManagerImpl {
          * Set the echo canceller engin state
          */
         void setEchoCancelState(const std::string &state);
-
-        /**
-         * Convert a list of payload in a special format, readable by the server.
-         * Required format: payloads separated with one slash.
-         * @return std::string The serializabled string
-         */
-        static std::string join_string(const std::vector<std::string> &v);
-
-        static std::vector<std::string> split_string(std::string v);
 
         /**
          * Ringtone option.
@@ -950,12 +937,6 @@ class ManagerImpl {
         DNSService *DNSService_;
 #endif
 
-        /** Map to associate a CallID to the good account */
-        CallAccountMap callAccountMap_;
-
-        /** Mutex to lock the call account map (main thread + voiplink thread) */
-        pthread_mutex_t callAccountMapMutex_;
-
         std::map<std::string, bool> IPToIPMap_;
 
         bool isIPToIP(const std::string& callID) const;
@@ -981,14 +962,6 @@ class ManagerImpl {
     public:
 
         void setIPToIPForCall(const std::string& callID, bool IPToIP);
-
-        /** Associate a new std::string to a std::string
-         * Protected by mutex
-         * @param callID the new CallID not in the list yet
-         * @param accountID the known accountID present in accountMap
-         * @return bool True if the new association is create
-         */
-        void associateCallToAccount(const std::string& callID, const std::string& accountID);
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in
@@ -1095,6 +1068,9 @@ class ManagerImpl {
          * Get a map with all the current SIP and IAX accounts
          */
         AccountMap getAllAccounts() const;
+
+        void
+        checkAudio();
 
         /**
           * To handle the persistent history

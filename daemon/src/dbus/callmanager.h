@@ -73,31 +73,30 @@ class CallManager
          */
 
         /* Call related methods */
-        void placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
-        void placeCallFirstAccount(const std::string& callID, const std::string& to);
+        bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
 
-        void refuse(const std::string& callID);
-        void accept(const std::string& callID);
-        void hangUp(const std::string& callID);
-        void hold(const std::string& callID);
-        void unhold(const std::string& callID);
-        void transfer(const std::string& callID, const std::string& to);
-        void attendedTransfer(const std::string& transferID, const std::string& targetID);
+        bool refuse(const std::string& callID);
+        bool accept(const std::string& callID);
+        bool hangUp(const std::string& callID);
+        bool hold(const std::string& callID);
+        bool unhold(const std::string& callID);
+        bool transfer(const std::string& callID, const std::string& to);
+        bool attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
-        bool isValidCall(const std::string &callID);
 
         /* Conference related methods */
-        void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+        bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
-        void createConference(const std::string& id1, const std::string& id2);
-        void addParticipant(const std::string& callID, const std::string& confID);
-        void addMainParticipant(const std::string& confID);
-        void detachParticipant(const std::string& callID);
-        void joinConference(const std::string& sel_confID, const std::string& drag_confID);
-        void hangUpConference(const std::string& confID);
-        void holdConference(const std::string& confID);
-        void unholdConference(const std::string& confID);
+
+        bool addParticipant(const std::string& callID, const std::string& confID);
+        bool addMainParticipant(const std::string& confID);
+        bool detachParticipant(const std::string& callID);
+        bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
+        bool hangUpConference(const std::string& confID);
+        bool holdConference(const std::string& confID);
+        bool unholdConference(const std::string& confID);
+
         std::vector<std::string> getConferenceList();
         std::vector<std::string> getParticipantList(const std::string& confID);
         std::string getConferenceId(const std::string& callID);

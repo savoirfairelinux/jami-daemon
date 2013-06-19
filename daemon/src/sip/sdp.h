@@ -163,12 +163,16 @@ class Sdp {
         }
 
         void setLocalPublishedAudioPort(int port) {
-            localAudioPort_ = port;
+            localAudioDataPort_ = port;
+            localAudioControlPort_ = port + 1;
         }
 
         void setLocalPublishedVideoPort (int port) {
-            localVideoPort_ = port;
+            localVideoDataPort_ = port;
+            localVideoControlPort_ = port + 1;
         }
+
+        void updatePorts(const std::vector<pj_sockaddr_in> &sockets);
 
         /**
          * Return IP of destination
@@ -200,6 +204,10 @@ class Sdp {
          */
         unsigned int getRemoteVideoPort() const {
             return remoteVideoPort_;
+        }
+
+        unsigned int getLocalVideoPort() const {
+            return localVideoDataPort_;
         }
 
         void addAttributeToLocalAudioMedia(const char *attr);
@@ -304,8 +312,10 @@ class Sdp {
         std::string localIpAddr_;
         std::string remoteIpAddr_;
 
-        int localAudioPort_;
-        int localVideoPort_;
+        int localAudioDataPort_;
+        int localAudioControlPort_;
+        int localVideoDataPort_;
+        int localVideoControlPort_;
         unsigned int remoteAudioPort_;
         unsigned int remoteVideoPort_;
 

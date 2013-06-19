@@ -113,6 +113,13 @@ class SipTransport {
         void shutdownSTUNResolver(SIPAccount &account);
 
         /**
+         * This function returns a list of STUN mapped sockets for
+         * a given set of socket file descriptors */
+        std::vector<pj_sockaddr_in>
+        getSTUNAddresses(const SIPAccount &account,
+                         std::vector<long> &socks) const;
+
+        /**
          * This function unset the transport for a given account.
          */
         void shutdownSipTransport(SIPAccount &account);

@@ -1,5 +1,7 @@
-These are translation files for both Gnome and KDE clients.
+These are translation files for GNOME.
 
-If you want to update the translations, refere to the lang folder at the root directory of git repository, where the po files to edit are gathered.
+If you want to update the translations, refer to https://translations.launchpad.net/sflphone/trunk
+To merge changes from launchpad, simply request a download of launchpad-export.tgz, move it to gnome/po,
+and execute ./update_translation.sh
 
-DO NOT EDIT THESE PO FILES since they are to be replaced by the new ones from lang folder. All changes might be lost.
+DO NOT EDIT THESE PO FILES since they are to be replaced by the new ones from launchpad. All changes might be lost.

@@ -180,7 +180,7 @@ void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
 }
 
 VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char *s) :
-    idx(idx), name(s), sizes_() {}
+    idx(idx), name(s), sizes_(), fourcc_() {}
 
 void VideoV4l2Channel::setFourcc(unsigned code)
 {
