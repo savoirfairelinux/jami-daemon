@@ -182,6 +182,12 @@ CallManager::createConfFromParticipantList(const std::vector<std::string>& parti
 }
 
 void
+CallManager::createConference(const std::string& id1, const std::string& id2)
+{
+    Manager::instance().createConference(id1,id2);
+}
+
+void
 CallManager::addParticipant(const std::string& callID, const std::string& confID)
 {
     Manager::instance().addParticipant(callID, confID);

@@ -89,6 +89,7 @@ class CallManager
         /* Conference related methods */
         void joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
+        void createConference(const std::string& id1, const std::string& id2);
         void addParticipant(const std::string& callID, const std::string& confID);
         void addMainParticipant(const std::string& confID);
         void detachParticipant(const std::string& callID);
