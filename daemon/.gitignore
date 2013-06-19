@@ -1,5 +1,6 @@
 aclocal.m4
 
+configure
 src/dbus/org.sflphone.SFLphone.service
 src/sflphoned
 
