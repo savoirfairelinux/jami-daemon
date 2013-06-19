@@ -48,7 +48,7 @@ pushd daemon
 ./autogen.sh
 popd
 
-pushd daemon/libs/pjproject-2.0.1
+pushd daemon/libs/pjproject-2.1.0
 find -name os-auto.mak -type f -exec rm {} \;
 
 # Remove pre-built binaries
